@@ -16,21 +16,8 @@ BaseMeshLocalDynamics::BaseMeshLocalDynamics(MeshWithGridDataPackagesType &data_
       data_spacing_(data_mesh.DataSpacing()),
       num_singular_pkgs_(data_mesh.NumSingularPackages()) {}
 //=================================================================================================//
-InitialCellTagging::InitialCellTagging(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
-    : BaseMeshLocalDynamics(data_mesh), shape_(shape),
-      bmv_cell_contain_id_(*data_mesh.registerBKGMeshVariable<int>(
-          "CellContainID", // default value is 2, indicating not near interface
-          [&](UnsignedInt index)
-          { return 2; })) // the value is not touched in this class
-{
-    data_mesh.addBKGMeshVariableToWrite<int>("CellContainID");
-}
-//=================================================================================================//
 void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 {
-    data_mesh_->assignDataPackageIndex(cell_index, 1); // outside far field by default
-    UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
-    cell_contain_id_[index_1d] = 2; // default value is 2, indicating not near interface
     Vecd cell_position = data_mesh_->CellPositionFromIndex(cell_index);
     Real signed_distance = shape_->findSignedDistance(cell_position);
     Vecd normal_direction = shape_->findNormalDirection(cell_position);
@@ -41,44 +28,9 @@ void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
         data_mesh_->assignDataPackageIndex(cell_index, 2);
         data_mesh_->registerOccupied(sort_index, 1);
     }
-}
-//=================================================================================================//
-InitialCellTaggingFromCoarse::InitialCellTaggingFromCoarse(
-    MeshWithGridDataPackagesType &data_mesh,
-    MeshWithGridDataPackagesType &coarse_mesh, Shape &shape)
-    : BaseMeshLocalDynamics(data_mesh),
-      coarse_mesh_(coarse_mesh), shape_(shape),
-      bmv_cell_contain_id_(*data_mesh.registerBKGMeshVariable<int>(
-          "CellContainID", // default value is 2, indicating not near interface
-          [&](UnsignedInt index)
-          { return 2; })),
-      bmv_cell_pkg_index__coarse_(coarse_mesh.getCellPackageIndex()),
-      dv_pkg_cell_info_coarse_(coarse_mesh.dvPkgCellInfo())
-{
-    data_mesh.addBKGMeshVariableToWrite<int>("CellContainID");
-}
-//=================================================================================================//
-void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index)
-{
-    Vecd cell_position = data_mesh_->CellPositionFromIndex(cell_index);
-    Real phi = probe_coarse_phi_(cell_position);
-    size_t package_index = phi < 0.0 ? 0 : 1;
-    data_mesh_->assignDataPackageIndex(cell_index, package_index);
-    UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
-    cell_contain_id_[index_1d] = 2;//phi < 0.0 ? -3 : 3;
-    if (coarse_mesh_->isWithinCorePackage(
-            cell_pkg_index_coarse_, pkg_cell_info_coarse_, cell_position))
+    else
     {
-        cell_contain_id_[index_1d] = 2; // set as default to be determined later
-        Real signed_distance = shape_->findSignedDistance(cell_position);
-        Vecd normal_direction = shape_->findNormalDirection(cell_position);
-        Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
-        if (measure < grid_spacing_)
-        {
-            size_t sort_index = base_dynamics_->SortIndexFromCellIndex(cell_index);
-            data_mesh_->assignDataPackageIndex(cell_index, 2);
-            data_mesh_->registerOccupied(sort_index, 1);
-        }
+        data_mesh_->assignDataPackageIndex(cell_index, 1); // outside far field by default
     }
 }
 //=================================================================================================//
@@ -105,6 +57,27 @@ void InitializeCellPackageInfo::UpdateKernel::update(const size_t &package_index
     std::pair<Arrayi, int> &metadata = pkg_cell_info_[package_index];
     metadata.first = cell_index;
     metadata.second = occupied_data_pkgs[package_index - num_singular_pkgs_].second;
+}
+//=================================================================================================//
+void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index)
+{
+    Vecd cell_position = data_mesh_->CellPositionFromIndex(cell_index);
+    size_t package_index = probe_coarse_phi_(cell_position) < 0.0 ? 0 : 1;
+    data_mesh_->assignDataPackageIndex(cell_index, package_index);
+    if (coarse_mesh_->isWithinCorePackage(coarse_mesh_->getCellPackageIndex().Data(),
+                                          coarse_mesh_->dvPkgCellInfo().Data(),
+                                          cell_position))
+    {
+        Real signed_distance = shape_->findSignedDistance(cell_position);
+        Vecd normal_direction = shape_->findNormalDirection(cell_position);
+        Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
+        if (measure < grid_spacing_)
+        {
+            size_t sort_index = base_dynamics_->SortIndexFromCellIndex(cell_index);
+            data_mesh_->assignDataPackageIndex(cell_index, 2);
+            data_mesh_->registerOccupied(sort_index, 1);
+        }
+    }
 }
 //=================================================================================================//
 InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)
@@ -157,7 +130,10 @@ ConsistencyCorrection::ConsistencyCorrection(MeshWithGridDataPackagesType &data_
 //=============================================================================================//
 NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
-      bmv_cell_contain_id_(*data_mesh.getBKGMeshVariable<int>("CellContainID")),
+      bmv_cell_contain_id_(
+          *data_mesh.registerBKGMeshVariable<int>(
+              "CellContainID", [&](UnsignedInt index)
+              { return 2; })), // default value is 2, indicating not near interface
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")) {}
 //=============================================================================================//
 CellContainDiffusion::CellContainDiffusion(
