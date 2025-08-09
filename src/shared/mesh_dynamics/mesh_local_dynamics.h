@@ -155,19 +155,16 @@ class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
 class InitialCellTagging : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitialCellTagging(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
-        : BaseMeshLocalDynamics(data_mesh),
-          shape_(shape) {};
+    explicit InitialCellTagging(MeshWithGridDataPackagesType &data_mesh, Shape &shape);
     virtual ~InitialCellTagging() {};
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_mesh_(&encloser.data_mesh_),
-              grid_spacing_(encloser.grid_spacing_),
-              shape_(&encloser.shape_),
-              base_dynamics(&encloser){};
+            : data_mesh_(&encloser.data_mesh_), grid_spacing_(encloser.grid_spacing_),
+              shape_(&encloser.shape_), base_dynamics(&encloser),
+              cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)){};
         void update(const Arrayi &cell_index);
 
       protected:
@@ -175,12 +172,54 @@ class InitialCellTagging : public BaseMeshLocalDynamics
         Real grid_spacing_;
         Shape *shape_;
         BaseMeshLocalDynamics *base_dynamics;
+        int *cell_contain_id_;
     };
 
   private:
     Shape &shape_;
+    BKGMeshVariable<int> &bmv_cell_contain_id_;
 };
 
+class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
+{
+  public:
+    explicit InitialCellTaggingFromCoarse(
+        MeshWithGridDataPackagesType &data_mesh,
+        MeshWithGridDataPackagesType &coarse_mesh, Shape &shape);
+    virtual ~InitialCellTaggingFromCoarse() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : shape_(&encloser.shape_), grid_spacing_(encloser.grid_spacing_),
+              data_mesh_(&encloser.data_mesh_), coarse_mesh_(&encloser.coarse_mesh_),
+              base_dynamics_(&encloser), probe_coarse_phi_(ex_policy, coarse_mesh_),
+              cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
+              cell_pkg_index_coarse_(encloser.bmv_cell_pkg_index__coarse_.DelegatedData(ex_policy)),
+              pkg_cell_info_coarse_(encloser.dv_pkg_cell_info_coarse_.DelegatedData(ex_policy)){};
+        void update(const Arrayi &cell_index);
+
+      protected:
+        Shape *shape_;
+        Real grid_spacing_;
+        MeshWithGridDataPackagesType *data_mesh_;
+        MeshWithGridDataPackagesType *coarse_mesh_;
+        BaseMeshLocalDynamics *base_dynamics_;
+        ProbeSignedDistance probe_coarse_phi_;
+        int *cell_contain_id_;
+        UnsignedInt *cell_pkg_index_coarse_;
+        std::pair<Arrayi, int> *pkg_cell_info_coarse_;
+    };
+
+  private:
+    MeshWithGridDataPackagesType &coarse_mesh_;
+    Shape &shape_;
+    BKGMeshVariable<int> &bmv_cell_contain_id_;
+    BKGMeshVariable<size_t> &bmv_cell_pkg_index__coarse_;
+    DiscreteVariable<std::pair<Arrayi, int>> &dv_pkg_cell_info_coarse_;
+};
 /**
  * @class InnerCellTagging
  * @brief Distinguish and categorize the inner data packages within the level set mesh.
@@ -705,42 +744,6 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
     MeshVariable<Real> &mv_phi_;
     MeshVariable<int> &mv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
-};
-
-class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
-{
-  public:
-    explicit InitialCellTaggingFromCoarse(MeshWithGridDataPackagesType &data_mesh, MeshWithGridDataPackagesType &coarse_mesh, Shape &shape)
-        : BaseMeshLocalDynamics(data_mesh),
-          coarse_mesh_(coarse_mesh),
-          shape_(shape) {};
-    virtual ~InitialCellTaggingFromCoarse() {};
-
-    class UpdateKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : shape_(&encloser.shape_),
-              grid_spacing_(encloser.grid_spacing_),
-              data_mesh_(&encloser.data_mesh_),
-              coarse_mesh_(&encloser.coarse_mesh_),
-              base_dynamics_(&encloser),
-              probe_coarse_phi_(ex_policy, coarse_mesh_){};
-        void update(const Arrayi &cell_index);
-
-      protected:
-        Shape *shape_;
-        Real grid_spacing_;
-        MeshWithGridDataPackagesType *data_mesh_;
-        MeshWithGridDataPackagesType *coarse_mesh_;
-        BaseMeshLocalDynamics *base_dynamics_;
-        ProbeSignedDistance probe_coarse_phi_;
-    };
-
-  private:
-    MeshWithGridDataPackagesType &coarse_mesh_;
-    Shape &shape_;
 };
 
 class ProbeIsWithinMeshBound : public BaseMeshLocalDynamics
