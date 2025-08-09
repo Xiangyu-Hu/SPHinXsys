@@ -162,9 +162,6 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
       protected:
         Real *contact_Vol_;
     };
-
-  protected:
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
 
 //------------------------------------------------------------------------------------------//

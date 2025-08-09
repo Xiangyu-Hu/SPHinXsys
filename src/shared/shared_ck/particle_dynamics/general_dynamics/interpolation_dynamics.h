@@ -57,7 +57,6 @@ class Interpolation<Contact<Base, DataType, Parameters...>> : public Interaction
 
   protected:
     DiscreteVariable<DataType> *dv_interpolated_quantities_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
     StdVec<DiscreteVariable<DataType> *> dv_contact_data_;
 };
 

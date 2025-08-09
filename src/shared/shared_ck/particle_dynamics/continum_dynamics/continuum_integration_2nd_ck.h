@@ -117,7 +117,7 @@ class PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *drho_dt_;
         Vecd *vel_, *force_;
-        Real *wall_Vol_;
+        Real *contact_Vol_;
         Vecd *wall_vel_ave_, *wall_n_;
         Matd *velocity_gradient_;
     };

@@ -69,7 +69,7 @@ void ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Parameter
 
         force += 2.0 * vec_r_ij.dot(this->correction_(index_i) * e_ij) *
                  this->viscosity_(index_i) * vel_derivative *
-                 this->dW_ij(index_i, index_j) * this->wall_Vol_[index_j];
+                 this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j];
     }
     this->viscous_force_[index_i] += force * this->Vol_[index_i];
 }

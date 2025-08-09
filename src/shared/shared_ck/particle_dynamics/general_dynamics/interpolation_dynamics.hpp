@@ -18,7 +18,6 @@ Interpolation<Contact<Base, DataType, Parameters...>>::Interpolation(
         exit(1);
     }
     // must be single contact body
-    dv_contact_Vol_.push_back(this->contact_particles_[0]->template getVariableByName<Real>("VolumetricMeasure"));
     dv_contact_data_.push_back(this->contact_particles_[0]->template getVariableByName<DataType>(variable_name));
 }
 //=================================================================================================//

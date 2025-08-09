@@ -101,14 +101,7 @@ template <class KernelCorrectionType, typename... Parameters>
 TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, Parameters...>>::
     TransportVelocityCorrectionCK(Contact<Parameters...> &contact_relation)
     : BaseInteraction(contact_relation), Interaction<Wall>(contact_relation),
-      kernel_correction_(this->particles_)
-{
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        dv_contact_wall_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
-    }
-}
+      kernel_correction_(this->particles_){}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -117,7 +110,7 @@ TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, Parameters...>
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
       correction_(ex_policy, encloser.kernel_correction_),
       zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
-      contact_wall_Vol_(encloser.dv_contact_wall_Vol_[contact_index]->DelegatedData(ex_policy)) {}
+      contact_contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 void TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, Parameters...>>::
@@ -127,7 +120,7 @@ void TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, Parameter
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        const Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_wall_Vol_[index_j];
+        const Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_contact_Vol_[index_j];
         const Vecd e_ij = this->e_ij(index_i, index_j);
 
         // acceleration for transport velocity

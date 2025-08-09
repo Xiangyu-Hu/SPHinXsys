@@ -47,14 +47,7 @@ void RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>::InteractKe
 template <class KernelCorrectionType, typename... Parameters>
 RelaxationResidueCK<Contact<Boundary, KernelCorrectionType, Parameters...>>::
     RelaxationResidueCK(Contact<Parameters...> &contact_relation)
-    : BaseInteraction(contact_relation), kernel_correction_(this->particles_)
-{
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
-    }
-}
+    : BaseInteraction(contact_relation), kernel_correction_(this->particles_){}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
