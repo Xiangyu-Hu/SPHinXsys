@@ -135,20 +135,6 @@ class ProbeKernelSecondGradientIntegral : public ProbeMesh<Matd, 4>
 };
 
 /**
- * @class InitializeDataForSingularPackage
- * @brief Update function for singular data initialization.
- */
-class InitializeDataForSingularPackage : public BaseMeshLocalDynamics
-{
-  public:
-    explicit InitializeDataForSingularPackage(MeshWithGridDataPackagesType &data_mesh)
-        : BaseMeshLocalDynamics(data_mesh) {};
-    virtual ~InitializeDataForSingularPackage() {};
-
-    void update(const size_t package_index, Real far_field_level_set);
-};
-
-/**
  * @class InitialCellTagging
  * @brief Distinguish and categorize the core data packages within the level set mesh.
  */
@@ -363,35 +349,6 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
     MeshVariable<Vecd> &mv_phi_gradient_;
     MeshVariable<int> &mv_near_interface_id_;
     void initializeSingularPackages(size_t package_index, Real far_field_level_set);
-};
-
-class ConsistencyCorrection : public BaseMeshLocalDynamics
-{
-  public:
-    explicit ConsistencyCorrection(MeshWithGridDataPackagesType &data_mesh);
-    virtual ~ConsistencyCorrection() {};
-
-    class UpdateKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
-              num_singular_pkgs_(encloser.num_singular_pkgs_),
-              phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-              threshold_(2.0 * encloser.data_spacing_){};
-        void update(const size_t &index);
-
-      protected:
-        MeshWithGridDataPackagesType *data_mesh_;
-        BaseMeshLocalDynamics *base_dynamics;
-        UnsignedInt num_singular_pkgs_;
-        MeshVariableData<Real> *phi_;
-        Real threshold_;
-    };
-
-  protected:
-    MeshVariable<Real> &mv_phi_;
 };
 
 class NearInterfaceCellTagging : public BaseMeshLocalDynamics

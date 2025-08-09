@@ -72,7 +72,6 @@ class FinishDataPackages
 
     MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package{mesh_data_, shape_};
-    MeshInnerDynamics<execution::ParallelPolicy, ConsistencyCorrection> consistency_correction{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, NearInterfaceCellTagging> near_interface_cell_tagging{mesh_data_};
     MeshAllDynamics<execution::ParallelPolicy, CellContainDiffusion> cell_contain_diffusion{mesh_data_, sv_count_modified_};
 };

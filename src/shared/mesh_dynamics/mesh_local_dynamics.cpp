@@ -157,10 +157,6 @@ InitializeBasicPackageData::InitializeBasicPackageData(
     initializeSingularPackages(1, far_field_distance);
 }
 //=============================================================================================//
-ConsistencyCorrection::ConsistencyCorrection(MeshWithGridDataPackagesType &data_mesh)
-    : BaseMeshLocalDynamics(data_mesh),
-      mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")) {}
-//=============================================================================================//
 NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
       bmv_cell_contain_id_(*data_mesh.getBKGMeshVariable<int>("CellContainID")),

@@ -7,30 +7,6 @@
 namespace SPH
 {
 //=================================================================================================//
-inline void ConsistencyCorrection::UpdateKernel::update(const size_t &package_index)
-{
-    MeshVariableData<Real> &grid_phi = phi_[package_index];
-    mesh_for_each2d<0, pkg_size_minus1>(
-        [&](int i, int j)
-        {
-            Real phi0 = grid_phi[i][j];
-            Real phi0_abs = ABS(phi0);
-            mesh_for_each2d<0, 2>(
-                [&](int l, int m)
-                {
-                    Real phi1 = grid_phi[i + l][j + m];
-                    Real phi1_abs = ABS(phi1);
-                    if ( // inconsistency criterion: level set must be continuous
-                        phi0 * phi1 < 0.0 && phi0_abs + phi1_abs > threshold_)
-                    {
-                        Real sgn = phi0 < phi1 ? SGN(phi0) : SGN(phi1);
-                        grid_phi[i][j] = sgn * phi0_abs;
-                        grid_phi[i + l][j + m] = sgn * phi1_abs;
-                    }
-                });
-        });
-}
-//=================================================================================================//
 inline void NearInterfaceCellTagging::UpdateKernel::update(const size_t &package_index)
 {
     size_t sort_index = data_mesh_->getOccupiedDataPackages()[package_index - num_singular_pkgs_].first;
