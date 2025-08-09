@@ -364,8 +364,8 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
               num_singular_pkgs_(encloser.num_singular_pkgs_),
-              cell_near_interface_id_(
-                  encloser.bmv_cell_near_interface_id_.DelegatedData(ex_policy)),
+              cell_contain_id_(
+                  encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
               phi_(encloser.mv_phi_.DelegatedData(ex_policy)){};
         void update(const size_t &index);
 
@@ -373,12 +373,12 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
         MeshWithGridDataPackagesType *data_mesh_;
         BaseMeshLocalDynamics *base_dynamics;
         UnsignedInt num_singular_pkgs_;
-        int *cell_near_interface_id_;
+        int *cell_contain_id_;
         MeshVariableData<Real> *phi_;
     };
 
   protected:
-    BKGMeshVariable<int> &bmv_cell_near_interface_id_;
+    BKGMeshVariable<int> &bmv_cell_contain_id_;
     MeshVariable<Real> &mv_phi_;
 };
 
@@ -395,7 +395,7 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
-              cell_near_interface_id_(encloser.bmv_cell_near_interface_id_.DelegatedData(ex_policy)),
+              cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
               cell_package_index_(encloser.bmv_cell_package_index_.DelegatedData(ex_policy)),
               count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)){};
         void update(const Arrayi &cell_index);
@@ -403,13 +403,13 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
       protected:
         MeshWithGridDataPackagesType *data_mesh_;
         BaseMeshLocalDynamics *base_dynamics;
-        int *cell_near_interface_id_;
+        int *cell_contain_id_;
         size_t *cell_package_index_;
         UnsignedInt *count_modified_;
     };
 
   protected:
-    BKGMeshVariable<int> &bmv_cell_near_interface_id_;
+    BKGMeshVariable<int> &bmv_cell_contain_id_;
     BKGMeshVariable<size_t> &bmv_cell_package_index_;
     SingularVariable<UnsignedInt> &sv_count_modified_;
 };

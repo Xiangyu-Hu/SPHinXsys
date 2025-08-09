@@ -39,20 +39,20 @@ inline void NearInterfaceCellTagging::UpdateKernel::update(const size_t &package
 
     MeshVariableData<Real> &grid_phi = phi_[package_index];
     Real phi0 = grid_phi[0][0][0];
-    cell_near_interface_id_[index_1d] = phi0 > 0.0 ? 1 : -1;
+    cell_contain_id_[index_1d] = phi0 > 0.0 ? 1 : -1;
     bool is_sign_changed = mesh_any_of3d<0, pkg_size>(
         [&](int i, int j, int k) -> bool
         {
             return grid_phi[i][j][k] * phi0 < 0.0;
         });
     if (is_sign_changed)
-        cell_near_interface_id_[index_1d] = 0;
+        cell_contain_id_[index_1d] = 0;
 }
 //=================================================================================================//
 inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
 {
     UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
-    if (cell_near_interface_id_[index_1d] == 2)
+    if (cell_contain_id_[index_1d] == 2)
     {
         if (mesh_any_of(
                 Arrayi::Zero().max(cell_index - Arrayi::Ones()),
@@ -60,10 +60,10 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
                 [&](int l, int m, int n)
                 {
                     UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m, n));
-                    return cell_near_interface_id_[neighbor_1d] == -1;
+                    return cell_contain_id_[neighbor_1d] == -1;
                 }))
         {
-            cell_near_interface_id_[index_1d] = -1;
+            cell_contain_id_[index_1d] = -1;
             cell_package_index_[index_1d] = 0; // inside far field package updated
             AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
             ++count_modified_cells;
@@ -74,10 +74,10 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
                      [&](int l, int m, int n)
                      {
                          UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m, n));
-                         return cell_near_interface_id_[neighbor_1d] == 1;
+                         return cell_contain_id_[neighbor_1d] == 1;
                      }))
         {
-            cell_near_interface_id_[index_1d] = 1;
+            cell_contain_id_[index_1d] = 1;
             cell_package_index_[index_1d] = 1; // outside far field package updated
             AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
             ++count_modified_cells;

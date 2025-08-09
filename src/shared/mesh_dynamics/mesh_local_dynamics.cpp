@@ -130,7 +130,7 @@ ConsistencyCorrection::ConsistencyCorrection(MeshWithGridDataPackagesType &data_
 //=============================================================================================//
 NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
-      bmv_cell_near_interface_id_(
+      bmv_cell_contain_id_(
           *data_mesh.registerBKGMeshVariable<int>(
               "CellContainID", [&](UnsignedInt index)
               { return 2; })), // default value is 2, indicating not near interface
@@ -139,7 +139,7 @@ NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType 
 CellContainDiffusion::CellContainDiffusion(
     MeshWithGridDataPackagesType &data_mesh, SingularVariable<UnsignedInt> &sv_count_modified)
     : BaseMeshLocalDynamics(data_mesh),
-      bmv_cell_near_interface_id_(*data_mesh.getBKGMeshVariable<int>("CellContainID")),
+      bmv_cell_contain_id_(*data_mesh.getBKGMeshVariable<int>("CellContainID")),
       bmv_cell_package_index_(data_mesh.getCellPackageIndex()),
       sv_count_modified_(sv_count_modified) {}
 //=============================================================================================//
