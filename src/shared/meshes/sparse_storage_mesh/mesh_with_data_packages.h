@@ -51,7 +51,7 @@ namespace SPH
  * The operation on field data is achieved by mesh dynamics.
  * Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
  */
-template <size_t PKG_SIZE>
+template <UnsignedInt PKG_SIZE>
 class MeshWithGridDataPackages : public Mesh
 {
   public:
@@ -76,7 +76,7 @@ class MeshWithGridDataPackages : public Mesh
   public:
     template <typename... Args>
     explicit MeshWithGridDataPackages(
-        BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size, UnsignedInt num_singular_pkgs = 2)
+        BoundingBox tentative_bounds, Real data_spacing, UnsignedInt buffer_size, UnsignedInt num_singular_pkgs = 2)
         : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
           global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
           num_singular_pkgs_(num_singular_pkgs), num_grid_pkgs_(num_singular_pkgs),
@@ -90,7 +90,7 @@ class MeshWithGridDataPackages : public Mesh
     /** spacing between the data, which is 1/ pkg_size of this grid spacing */
     Real DataSpacing() { return data_spacing_; };
     Real GridSpacing() { return grid_spacing_; };
-    size_t BufferWidth() { return buffer_width_; };
+    UnsignedInt BufferWidth() { return buffer_width_; };
     int DataPackageSize() { return pkg_size; };
     Mesh global_mesh_; /**< singular packages used for far field. */
 
@@ -111,12 +111,12 @@ class MeshWithGridDataPackages : public Mesh
         return checkOrganized("getCellNeighborhood", cell_neighborhood_);
     };
 
-    DiscreteVariable<size_t> &getCellPackageIndex()
+    DiscreteVariable<UnsignedInt> &getCellPackageIndex()
     {
         return checkOrganized("getCellPackageIndex", bmv_cell_pkg_index_);
     };
 
-    ConcurrentVec<std::pair<size_t, int>> &getOccupiedDataPackages()
+    ConcurrentVec<std::pair<UnsignedInt, int>> &getOccupiedDataPackages()
     {
         return checkOrganized("getOccupiedDataPackages", occupied_data_pkgs_);
     }
@@ -142,7 +142,7 @@ class MeshWithGridDataPackages : public Mesh
     DiscreteVariable<std::pair<Arrayi, int>> dv_pkg_cell_info_; /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> cell_neighborhood_;      /**< 3*3(*3) array to store indicies of neighborhood cells. */
     BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;          /**< the package index for each cell in a 1-d array. */
-    ConcurrentVec<std::pair<size_t, int>> occupied_data_pkgs_;  /**< (size_t)sort_index, (int)core1/inner0. */
+    ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_;  /**< (UnsignedInt)sort_index, (int)core1/inner0. */
     const Real data_spacing_;                                   /**< spacing of data in the data packages. */
     bool is_organized_ = false;                                 /**< whether the data packages are organized. */
 
@@ -186,7 +186,7 @@ class MeshWithGridDataPackages : public Mesh
         void operator()(DataContainerAddressKeeper<MeshVariable<DataType>> &all_mesh_variables_,
                         ExecutionPolicy &ex_policy)
         {
-            for (size_t l = 0; l != all_mesh_variables_.size(); l++)
+            for (UnsignedInt l = 0; l != all_mesh_variables_.size(); l++)
             {
                 MeshVariable<DataType> *variable = all_mesh_variables_[l];
                 variable->prepareForOutput(ex_policy);
@@ -230,9 +230,9 @@ class MeshWithGridDataPackages : public Mesh
         }
 
         /** return the package index in the data array from the cell index it belongs to. */
-        size_t PackageIndexFromCellIndex(size_t *cell_package_index, const Arrayi &cell_index)
+        UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index)
         {
-            size_t index_1d = mesh_.transferMeshIndexTo1D(all_cells_, cell_index);
+            UnsignedInt index_1d = mesh_.transferMeshIndexTo1D(all_cells_, cell_index);
             return cell_package_index[index_1d];
         }
     };
@@ -306,7 +306,7 @@ class MeshWithGridDataPackages : public Mesh
         return variable;
     }
 
-    void registerOccupied(size_t sort_index, int type)
+    void registerOccupied(UnsignedInt sort_index, int type)
     {
         occupied_data_pkgs_.push_back(std::make_pair(sort_index, type));
     }
@@ -315,7 +315,7 @@ class MeshWithGridDataPackages : public Mesh
     {
         parallel_sort(
             occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
-            [](const std::pair<size_t, int> &a, const std::pair<size_t, int> &b)
+            [](const std::pair<UnsignedInt, int> &a, const std::pair<UnsignedInt, int> &b)
             {
                 return a.first < b.first;
             });
@@ -327,7 +327,7 @@ class MeshWithGridDataPackages : public Mesh
 
     bool isInnerDataPackage(const Arrayi &cell_index)
     {
-        size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+        UnsignedInt index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
         /**
          * NOTE currently this func is only used in non-device mode;
          *      use the `DelegatedData` version when needed.
@@ -335,24 +335,24 @@ class MeshWithGridDataPackages : public Mesh
         return bmv_cell_pkg_index_.Data()[index_1d] > 1;
     }
 
-    bool isWithinCorePackage(size_t *cell_package_index,
+    bool isWithinCorePackage(UnsignedInt *cell_package_index,
                              std::pair<Arrayi, int> *meta_data_cell,
                              Vecd position)
     {
         Arrayi cell_index = CellIndexFromPosition(position);
-        size_t package_index = PackageIndexFromCellIndex(cell_package_index, cell_index);
+        UnsignedInt package_index = PackageIndexFromCellIndex(cell_package_index, cell_index);
         return meta_data_cell[package_index].second == 1;
     }
 
     /** return the package index in the data array from the cell index it belongs to. */
-    size_t PackageIndexFromCellIndex(size_t *cell_package_index, const Arrayi &cell_index)
+    UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index)
     {
-        size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+        UnsignedInt index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
         return cell_package_index[index_1d];
     }
-    void assignDataPackageIndex(const Arrayi &cell_index, const size_t package_index)
+    void assignDataPackageIndex(const Arrayi &cell_index, const UnsignedInt package_index)
     {
-        size_t index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+        UnsignedInt index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
         /**
          * NOTE currently the `bmv_cell_pkg_index_` is only assigned in the host;
          *      use the `DelegatedData` version when needed.

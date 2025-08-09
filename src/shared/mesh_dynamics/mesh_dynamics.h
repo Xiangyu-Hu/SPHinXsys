@@ -112,7 +112,7 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
         UnsignedInt num_grid_pkgs = mesh_data_.NumGridPackages();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         package_for(ExecutionPolicy(), num_singular_pkgs_, num_grid_pkgs,
-                    [=](size_t package_index)
+                    [=](UnsignedInt package_index)
                     {
                         update_kernel->update(package_index, args...);
                     });
@@ -146,7 +146,7 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         std::pair<SPH::Arrayi, int> *meta_data_cell = pkg_cell_info_;
         package_for(ExecutionPolicy(), num_singular_pkgs_, num_grid_pkgs,
-                    [=](size_t package_index)
+                    [=](UnsignedInt package_index)
                     {
                         if (meta_data_cell[package_index].second == 1)
                             update_kernel->update(package_index);

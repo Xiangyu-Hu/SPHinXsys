@@ -8,13 +8,13 @@
 namespace SPH
 {
 //=================================================================================================//
-template <size_t PKG_SIZE>
+template <UnsignedInt PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &output_file)
 {
     StdVec<Coord3D> active_cells;
     auto meta_data = dv_pkg_cell_info_.Data();
     package_for(execution::seq, num_singular_pkgs_, num_grid_pkgs_,
-                [&](size_t package_index)
+                [&](UnsignedInt package_index)
                 {
                     if (meta_data[package_index].second == 1)
                     {
@@ -52,7 +52,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
     output_file << "\n";
 
     // Write the zone header
-    for (size_t l = 0; l != clustered_blocks.size(); ++l)
+    for (UnsignedInt l = 0; l != clustered_blocks.size(); ++l)
     {
         auto &block = clustered_blocks[l];
         Array3i lower_bound_cell_index = Array3i(block.first[0], block.first[1], block.first[2]);
@@ -99,7 +99,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
     }
 }
 //=================================================================================================//
-template <size_t PKG_SIZE>
+template <UnsignedInt PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::writeBKGMeshVariableToPlt(std::ofstream &output_file)
 {
     output_file << "\n"

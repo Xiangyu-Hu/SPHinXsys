@@ -120,7 +120,7 @@ class CorrectTopology : public BaseMeshDynamics, public BaseExecDynamics
     void exec(Real small_shift_factor) override
     {
         mark_near_interface.exec(small_shift_factor);
-        for (size_t i = 0; i != 10; ++i)
+        for (UnsignedInt i = 0; i != 10; ++i)
             diffuse_level_set_sign.exec();
         update_level_set_gradient.exec();
         update_kernel_integrals.exec();

@@ -37,7 +37,7 @@ void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
     Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
     if (measure < grid_spacing_)
     {
-        size_t sort_index = base_dynamics->SortIndexFromCellIndex(cell_index);
+        UnsignedInt sort_index = base_dynamics->SortIndexFromCellIndex(cell_index);
         data_mesh_->assignDataPackageIndex(cell_index, 2);
         data_mesh_->registerOccupied(sort_index, 1);
     }
@@ -63,7 +63,7 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
 {
     Vecd cell_position = data_mesh_->CellPositionFromIndex(cell_index);
     Real phi = probe_coarse_phi_(cell_position);
-    size_t package_index = phi < 0.0 ? 0 : 1;
+    UnsignedInt package_index = phi < 0.0 ? 0 : 1;
     data_mesh_->assignDataPackageIndex(cell_index, package_index);
 
     UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
@@ -81,7 +81,7 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
         Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
         if (measure < grid_spacing_)
         {
-            size_t sort_index = base_dynamics_->SortIndexFromCellIndex(cell_index);
+            UnsignedInt sort_index = base_dynamics_->SortIndexFromCellIndex(cell_index);
             data_mesh_->assignDataPackageIndex(cell_index, 2);
             data_mesh_->registerOccupied(sort_index, 1);
         }
@@ -101,10 +101,10 @@ InitializeCellPackageInfo::InitializeCellPackageInfo(MeshWithGridDataPackagesTyp
       dv_pkg_cell_info_(data_mesh.dvPkgCellInfo()),
       bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()) {}
 //=================================================================================================//
-void InitializeCellPackageInfo::UpdateKernel::update(const size_t &package_index)
+void InitializeCellPackageInfo::UpdateKernel::update(const UnsignedInt &package_index)
 {
-    ConcurrentVec<std::pair<size_t, int>> &occupied_data_pkgs = data_mesh_->getOccupiedDataPackages();
-    size_t sort_index = occupied_data_pkgs[package_index - num_singular_pkgs_].first;
+    ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs = data_mesh_->getOccupiedDataPackages();
+    UnsignedInt sort_index = occupied_data_pkgs[package_index - num_singular_pkgs_].first;
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
     UnsignedInt linear_index = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
     cell_pkg_index_[linear_index] = package_index;
@@ -119,7 +119,7 @@ InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesT
       bmv_cell_pkg_index_(data_mesh.getCellPackageIndex())
 {
     CellNeighborhood *neighbor = dv_cell_neighborhood_.Data();
-    for (size_t i = 0; i != num_singular_pkgs_; i++)
+    for (UnsignedInt i = 0; i != num_singular_pkgs_; i++)
     {
         mesh_for_each(
             -Arrayi::Ones(), Arrayi::Ones() * 2,
@@ -130,7 +130,7 @@ InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesT
     }
 }
 //=============================================================================================//
-void InitializeCellNeighborhood::UpdateKernel::update(const size_t &package_index)
+void InitializeCellNeighborhood::UpdateKernel::update(const UnsignedInt &package_index)
 {
     CellNeighborhood &current = cell_neighborhood_[package_index];
     Arrayi cell_index = pkg_cell_info_[package_index].first;

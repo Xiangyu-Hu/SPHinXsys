@@ -70,8 +70,8 @@ class BaseMeshLocalDynamics
     Real data_spacing_;
     UnsignedInt num_singular_pkgs_;
 
-    size_t SortIndexFromCellIndex(const Arrayi &cell_index);
-    Arrayi CellIndexFromSortIndex(const size_t &sort_index);
+    UnsignedInt SortIndexFromCellIndex(const Arrayi &cell_index);
+    Arrayi CellIndexFromSortIndex(const UnsignedInt &sort_index);
     static void registerComputingKernel(execution::Implementation<Base> *implementation) {};
 };
 
@@ -206,7 +206,7 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
     Shape &shape_;
     Real far_field_distance_;
     BKGMeshVariable<int> &bmv_cell_contain_id_;
-    BKGMeshVariable<size_t> &bmv_cell_pkg_index__coarse_;
+    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index__coarse_;
     DiscreteVariable<std::pair<Arrayi, int>> &dv_pkg_cell_info_coarse_;
 };
 
@@ -259,19 +259,19 @@ class InitializeCellPackageInfo : public BaseMeshLocalDynamics
               num_singular_pkgs_(encloser.num_singular_pkgs_),
               pkg_cell_info_(encloser.dv_pkg_cell_info_.DelegatedData(ex_policy)),
               cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)){};
-        void update(const size_t &package_index);
+        void update(const UnsignedInt &package_index);
 
       protected:
         MeshWithGridDataPackagesType *data_mesh_;
         BaseMeshLocalDynamics *base_dynamics;
         UnsignedInt num_singular_pkgs_;
         std::pair<Arrayi, int> *pkg_cell_info_;
-        size_t *cell_pkg_index_;
+        UnsignedInt *cell_pkg_index_;
     };
 
   protected:
     DiscreteVariable<std::pair<Arrayi, int>> &dv_pkg_cell_info_;
-    BKGMeshVariable<size_t> &bmv_cell_pkg_index_;
+    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;
 };
 
 /**
@@ -294,12 +294,12 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
               cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
               data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
               num_singular_pkgs_(encloser.num_singular_pkgs_){};
-        void update(const size_t &package_index);
+        void update(const UnsignedInt &package_index);
 
       protected:
         std::pair<Arrayi, int> *pkg_cell_info_;
         CellNeighborhood *cell_neighborhood_;
-        size_t *cell_pkg_index_;
+        UnsignedInt *cell_pkg_index_;
         MeshWithGridDataPackagesType *data_mesh_;
         BaseMeshLocalDynamics *base_dynamics;
         UnsignedInt num_singular_pkgs_;
@@ -308,7 +308,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
   protected:
     DiscreteVariable<std::pair<Arrayi, int>> &dv_pkg_cell_info_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
-    BKGMeshVariable<size_t> &bmv_cell_pkg_index_;
+    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;
 };
 
 /**
@@ -331,7 +331,7 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
               shape_(&encloser.shape_),
               phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
               near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)){};
-        void update(const size_t &index);
+        void update(const UnsignedInt &index);
 
       protected:
         MeshWithGridDataPackagesType::IndexHandler *index_handler_;
@@ -348,7 +348,7 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
     MeshVariable<Real> &mv_phi_;
     MeshVariable<Vecd> &mv_phi_gradient_;
     MeshVariable<int> &mv_near_interface_id_;
-    void initializeSingularPackages(size_t package_index, Real far_field_level_set);
+    void initializeSingularPackages(UnsignedInt package_index, Real far_field_level_set);
 };
 
 class NearInterfaceCellTagging : public BaseMeshLocalDynamics
@@ -367,7 +367,7 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
               cell_contain_id_(
                   encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
               phi_(encloser.mv_phi_.DelegatedData(ex_policy)){};
-        void update(const size_t &index);
+        void update(const UnsignedInt &index);
 
       protected:
         MeshWithGridDataPackagesType *data_mesh_;
@@ -404,13 +404,13 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
         MeshWithGridDataPackagesType *data_mesh_;
         BaseMeshLocalDynamics *base_dynamics;
         int *cell_contain_id_;
-        size_t *cell_package_index_;
+        UnsignedInt *cell_package_index_;
         UnsignedInt *count_modified_;
     };
 
   protected:
     BKGMeshVariable<int> &bmv_cell_contain_id_;
-    BKGMeshVariable<size_t> &bmv_cell_package_index_;
+    BKGMeshVariable<UnsignedInt> &bmv_cell_package_index_;
     SingularVariable<UnsignedInt> &sv_count_modified_;
 };
 
@@ -433,7 +433,7 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
               phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
               phi_gradient_(encloser.mv_phi_gradient_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)){};
-        void update(const size_t &index);
+        void update(const UnsignedInt &index);
 
       protected:
         Real data_spacing_;
@@ -475,7 +475,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
               probe_signed_distance_(ex_policy, &encloser.data_mesh_),
               cutoff_radius_(kernel_->CutOffRadius(global_h_ratio_)),
               depth_(static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))){};
-        void update(const size_t &package_index)
+        void update(const UnsignedInt &package_index)
         {
             Arrayi cell_index = pkg_cell_info_[package_index].first;
             assignByGrid(
@@ -502,13 +502,13 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         KernelTabulatedCK *kernel_;
         MeshWithGridDataPackagesType::IndexHandler *index_handler_;
         CellNeighborhood *cell_neighborhood_;
-        size_t *cell_pkg_index_;
+        UnsignedInt *cell_pkg_index_;
         ProbeSignedDistance probe_signed_distance_;
 
         Real cutoff_radius_, depth_;
-        Real computeKernelIntegral(const size_t &package_index, const Arrayi &grid_index);
-        Vecd computeKernelGradientIntegral(const size_t &package_index, const Arrayi &grid_index);
-        Matd computeKernelSecondGradientIntegral(const size_t &package_index, const Arrayi &grid_index);
+        Real computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &grid_index);
+        Vecd computeKernelGradientIntegral(const UnsignedInt &package_index, const Arrayi &grid_index);
+        Matd computeKernelSecondGradientIntegral(const UnsignedInt &package_index, const Arrayi &grid_index);
         template <typename DataType, typename FunctionByGrid>
         void assignByGrid(MeshVariableData<DataType> *mesh_variable, const Arrayi &cell_index,
                           const FunctionByGrid &function_by_grid);
@@ -521,7 +521,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         {
             Real squared_norm_inv = 1.0 / (phi_gradient.squaredNorm() + TinyReal);
             Real volume_fraction(0);
-            for (size_t i = 0; i != Dimensions; ++i)
+            for (UnsignedInt i = 0; i != Dimensions; ++i)
             {
                 volume_fraction += phi_gradient[i] * phi_gradient[i] * squared_norm_inv *
                                    Heaviside(phi / (ABS(phi_gradient[i]) + TinyReal), 0.5 * data_spacing);
@@ -537,13 +537,13 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
     MeshVariable<Vecd> &mv_phi_gradient_;
     DiscreteVariable<std::pair<Arrayi, int>> &dv_pkg_cell_info_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
-    BKGMeshVariable<size_t> &bmv_cell_pkg_index_;
+    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;
     MeshVariable<Real> &mv_kernel_weight_;
     MeshVariable<Vecd> &mv_kernel_gradient_;
     MeshVariable<Matd> &mv_kernel_second_gradient_;
     Real far_field_distance;
 
-    void initializeSingularPackages(size_t package_index, Real far_field_level_set);
+    void initializeSingularPackages(UnsignedInt package_index, Real far_field_level_set);
 };
 
 class ReinitializeLevelSet : public BaseMeshLocalDynamics
@@ -561,7 +561,7 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
               phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
               near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)){};
-        void update(const size_t &index);
+        void update(const UnsignedInt &index);
 
       protected:
         Real data_spacing_;
@@ -611,7 +611,7 @@ class MarkNearInterface : public BaseMeshLocalDynamics
               phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
               near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)){};
-        void update(const size_t &index, Real small_shift_factor);
+        void update(const UnsignedInt &index, Real small_shift_factor);
 
       protected:
         Real data_spacing_;
@@ -642,7 +642,7 @@ class RedistanceInterface : public BaseMeshLocalDynamics
               phi_gradient_(encloser.mv_phi_gradient_.DelegatedData(ex_policy)),
               near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)){};
-        void update(const size_t &index);
+        void update(const UnsignedInt &index);
 
       protected:
         Real data_spacing_;
@@ -693,7 +693,7 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
             : phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
               near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)){};
-        void update(const size_t &index);
+        void update(const UnsignedInt &index);
 
       protected:
         MeshVariableData<Real> *phi_;

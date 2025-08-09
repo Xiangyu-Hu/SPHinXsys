@@ -129,7 +129,7 @@ class MultilevelLevelSet : public BaseMeshField
 
     Shape &shape_;        /**< the geometry is described by the level set. */
     size_t total_levels_; /**< level 0 is the coarsest */
-    StdVec<size_t *> cell_pkg_index_set_;
+    StdVec<UnsignedInt *> cell_pkg_index_set_;
     StdVec<std::pair<Arrayi, int> *> pkg_cell_info_set_;
     StdVec<Real> global_h_ratio_vec_;
     StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;

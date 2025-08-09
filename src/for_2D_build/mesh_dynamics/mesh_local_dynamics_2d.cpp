@@ -4,12 +4,12 @@
 namespace SPH
 {
 //=============================================================================================//
-size_t BaseMeshLocalDynamics::SortIndexFromCellIndex(const Arrayi &cell_index)
+UnsignedInt BaseMeshLocalDynamics::SortIndexFromCellIndex(const Arrayi &cell_index)
 {
     return cell_index[0] * all_cells_[1] + cell_index[1];
 }
 //=============================================================================================//
-Arrayi BaseMeshLocalDynamics::CellIndexFromSortIndex(const size_t &sort_index)
+Arrayi BaseMeshLocalDynamics::CellIndexFromSortIndex(const UnsignedInt &sort_index)
 {
     Array2i cell_index;
     cell_index[0] = sort_index / all_cells_[1];
@@ -18,7 +18,7 @@ Arrayi BaseMeshLocalDynamics::CellIndexFromSortIndex(const size_t &sort_index)
 }
 //=============================================================================================//
 void InitializeBasicPackageData::initializeSingularPackages(
-    const size_t package_index, Real far_field_level_set)
+    const UnsignedInt package_index, Real far_field_level_set)
 {
     auto &phi = mv_phi_.Data()[package_index];
     auto &near_interface_id = mv_near_interface_id_.Data()[package_index];
@@ -44,7 +44,7 @@ bool InnerCellTagging::UpdateKernel::isInnerPackage(const Arrayi &cell_index)
         });
 }
 //=============================================================================================//
-void InitializeBasicPackageData::UpdateKernel::update(const size_t &package_index)
+void InitializeBasicPackageData::UpdateKernel::update(const UnsignedInt &package_index)
 {
     auto &phi = phi_[package_index];
     auto &near_interface_id = near_interface_id_[package_index];
