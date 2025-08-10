@@ -83,8 +83,8 @@ class EulerianIntegrationCK<Inner<RiemannSolverType, KernelCorrectionType, Param
 };
 
 template <class RiemannSolverType, class KernelCorrectionType, class... Parameters>
-class EulerianIntegrationCK<Contact<Boundary, RiemannSolverType, KernelCorrectionType, Parameters...>>
-    : public EulerianIntegrationCK<Contact<Parameters...>>
+class EulerianIntegrationCK<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>
+    : public EulerianIntegrationCK<Contact<Parameters...>>, public Interaction<Wall>
 {
     using BaseInteraction = EulerianIntegrationCK<Contact<Parameters...>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
@@ -93,6 +93,21 @@ class EulerianIntegrationCK<Contact<Boundary, RiemannSolverType, KernelCorrectio
     template <class BaseRelationType>
     explicit EulerianIntegrationCK(BaseRelationType &base_relation);
     virtual ~EulerianIntegrationCK() {};
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(UnsignedInt index_i, Real dt = 0.0);
+
+      protected:
+        CorrectionKernel correction_;
+        RiemannSolverType riemann_solver_;
+        Real *rho_, *p_, *Vol_, *dmass_dt_;
+        Vecd *vel_, *mom_, *dmom_dt_;
+        Vecd *wall_n_, *wall_vel_ave_;
+    };
 
   protected:
     KernelCorrectionType kernel_correction_method_;
@@ -104,7 +119,7 @@ class EulerianIntegrationCK<RelationType<OneLevel, ForwardEuler, InteractionPara
     : public EulerianIntegrationCK<RelationType<InteractionParameters...>>
 {
     using EosKernel = typename WeaklyCompressibleFluid::EosKernel;
-  using BaseDynamicsType = EulerianIntegrationCK<RelationType<InteractionParameters...>>;
+    using BaseDynamicsType = EulerianIntegrationCK<RelationType<InteractionParameters...>>;
 
   public:
     template <typename... Args>
