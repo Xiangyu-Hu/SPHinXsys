@@ -42,7 +42,6 @@ class RelaxationResidueBase : public BaseInteractionType
     virtual ~RelaxationResidueBase() {}
 
   protected:
-    DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Vecd> *dv_residue_;
 };
@@ -105,7 +104,6 @@ class RelaxationResidueCK<Contact<Boundary, KernelCorrectionType, Parameters...>
 
   protected:
     KernelCorrectionType kernel_correction_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
 } // namespace SPH
 #endif // RELAXATION_RESIDUE_CK_H

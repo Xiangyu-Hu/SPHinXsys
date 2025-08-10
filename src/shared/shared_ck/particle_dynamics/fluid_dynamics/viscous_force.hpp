@@ -16,7 +16,6 @@ ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameter
       ForcePriorCK(this->particles_, "ViscousForce"),
       viscosity_model_(DynamicCast<ViscosityType>(this, this->particles_->getBaseMaterial())),
       kernel_correction_(this->particles_),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_viscous_force_(this->dv_current_force_),
       smoothing_length_sq_(pow(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength(), 2)) {}
@@ -69,7 +68,7 @@ void ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Parameter
 
         force += 2.0 * vec_r_ij.dot(this->correction_(index_i) * e_ij) *
                  this->viscosity_(index_i) * vel_derivative *
-                 this->dW_ij(index_i, index_j) * this->wall_Vol_[index_j];
+                 this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j];
     }
     this->viscous_force_[index_i] += force * this->Vol_[index_i];
 }

@@ -12,7 +12,6 @@ template <class BaseInteractionType>
 template <class DynamicsIdentifier>
 AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
     : BaseInteractionType(identifier),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_mass_(this->particles_->template getVariableByName<Real>("Mass")),
       dv_p_(this->particles_->template registerStateVariable<Real>("Pressure")),
@@ -141,7 +140,7 @@ AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
       force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)),
-      wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
       wall_acc_ave_(encloser.dv_wall_acc_ave_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -153,7 +152,7 @@ void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Real dW_ijV_j = this->dW_ij(index_i, index_j) * wall_Vol_[index_j];
+        Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
         Vecd e_ij = this->e_ij(index_i, index_j);
         Real r_ij = this->vec_r_ij(index_i, index_j).norm();
 
@@ -179,8 +178,6 @@ AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters.
         TargetFluidType &target_fluid =
             DynamicCast<TargetFluidType>(this, this->contact_bodies_[k]->getBaseMaterial());
         riemann_solvers_.push_back(RiemannSolverType(source_fluid, target_fluid));
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         dv_contact_p_.push_back(
             this->contact_particles_[k]->template getVariableByName<Real>("Pressure"));
     }

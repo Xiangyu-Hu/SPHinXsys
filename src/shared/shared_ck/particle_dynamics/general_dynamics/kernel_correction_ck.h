@@ -63,7 +63,6 @@ class LinearCorrectionMatrix<Base, RelationType<Parameters...>>
     };
 
   protected:
-    DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Matd> *dv_B_;
 };
 
@@ -129,9 +128,6 @@ class LinearCorrectionMatrix<Contact<Parameters...>>
       protected:
         Real *contact_Vol_k_;
     };
-
-  protected:
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
 
 using LinearCorrectionMatrixComplex = LinearCorrectionMatrix<Inner<WithUpdate>, Contact<>>;

@@ -19,7 +19,6 @@ class TransportVelocityCorrectionCKBase : public BaseInteractionType
     virtual ~TransportVelocityCorrectionCKBase() {}
 
   protected:
-    DiscreteVariable<Real> *dv_Vol_;                   ///< "VolumetricMeasure"
     DiscreteVariable<Vecd> *dv_dpos_;                  ///< "Position"
     DiscreteVariable<Vecd> *dv_zero_gradient_residue_; ///< "ZeroGradientResidue"
 };
@@ -103,12 +102,11 @@ class TransportVelocityCorrectionCK<Contact<Wall, KernelCorrectionType, Paramete
       protected:
         CorrectionKernel correction_;
         Vecd *zero_gradient_residue_;
-        Real *contact_wall_Vol_;
+        Real *contact_contact_Vol_;
     };
 
   protected:
     KernelCorrectionType kernel_correction_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_wall_Vol_;
 };
 //--------------------------------------------------------------------------------------
 // Alias Definitions for Specific Configurations

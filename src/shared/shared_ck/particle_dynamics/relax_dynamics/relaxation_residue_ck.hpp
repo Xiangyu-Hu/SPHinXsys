@@ -10,7 +10,6 @@ template <class BaseInteractionType>
 template <class DynamicsIdentifier>
 RelaxationResidueBase<BaseInteractionType>::RelaxationResidueBase(DynamicsIdentifier &identifier)
     : BaseInteractionType(identifier),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_residue_(this->particles_->template registerStateVariable<Vecd>("ZeroGradientResidue")) {}
 //=================================================================================================//
@@ -47,14 +46,7 @@ void RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>::InteractKe
 template <class KernelCorrectionType, typename... Parameters>
 RelaxationResidueCK<Contact<Boundary, KernelCorrectionType, Parameters...>>::
     RelaxationResidueCK(Contact<Parameters...> &contact_relation)
-    : BaseInteraction(contact_relation), kernel_correction_(this->particles_)
-{
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
-    }
-}
+    : BaseInteraction(contact_relation), kernel_correction_(this->particles_){}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>

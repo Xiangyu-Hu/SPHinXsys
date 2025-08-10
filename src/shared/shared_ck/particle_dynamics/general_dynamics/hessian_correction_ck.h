@@ -64,7 +64,6 @@ class HessianCorrectionMatrix<Base, RelationType<Parameters...>>
     };
 
   protected:
-    DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Matd> *dv_B_;
     DiscreteVariable<VecMatGrad> *dv_displacement_matrix_grad_;
     DiscreteVariable<MatTend> *dv_M_;
@@ -117,8 +116,6 @@ class DisplacementMatrixGradient<Contact<Parameters...>>
         Real *contact_Vol_;
     };
 
-  protected:
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
 
 template <typename... Parameters>
@@ -183,9 +180,6 @@ class HessianCorrectionMatrix<Contact<Parameters...>>
       protected:
         Real *contact_Vol_;
     };
-
-  protected:
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
 using HessianCorrectionMatrixComplex = HessianCorrectionMatrix<Inner<WithUpdate>, Contact<>>;
 } // namespace SPH

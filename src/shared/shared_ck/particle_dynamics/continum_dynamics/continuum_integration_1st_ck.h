@@ -136,7 +136,7 @@ class PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
         Vecd *force_, *force_prior_;
         Mat3d *stress_tensor_3D_;
 
-        Real *wall_Vol_;
+        Real *contact_Vol_;
         Vecd *wall_acc_ave_;
     };
 
