@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file relaxation_residue_ck.h
+ * @file relaxation_residual_ck.h
  * @brief TBD.
  * @author Xiangyu Hu
  */
@@ -34,31 +34,31 @@
 namespace SPH
 {
 template <class BaseInteractionType>
-class RelaxationResidueBase : public BaseInteractionType
+class RelaxationResidualBase : public BaseInteractionType
 {
   public:
     template <class DynamicsIdentifier>
-    explicit RelaxationResidueBase(DynamicsIdentifier &identifier);
-    virtual ~RelaxationResidueBase() {}
+    explicit RelaxationResidualBase(DynamicsIdentifier &identifier);
+    virtual ~RelaxationResidualBase() {}
 
   protected:
     DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<Vecd> *dv_residue_;
+    DiscreteVariable<Vecd> *dv_residual_;
 };
 
 template <typename...>
-class RelaxationResidueCK;
+class RelaxationResidualCK;
 
 template <class KernelCorrectionType, typename... Parameters>
-class RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>
-    : public RelaxationResidueBase<Interaction<Inner<Parameters...>>>
+class RelaxationResidualCK<Inner<KernelCorrectionType, Parameters...>>
+    : public RelaxationResidualBase<Interaction<Inner<Parameters...>>>
 {
-    using BaseInteraction = RelaxationResidueBase<Interaction<Inner<Parameters...>>>;
+    using BaseInteraction = RelaxationResidualBase<Interaction<Inner<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit RelaxationResidueCK(Inner<Parameters...> &inner_relation);
-    virtual ~RelaxationResidueCK() {}
+    explicit RelaxationResidualCK(Inner<Parameters...> &inner_relation);
+    virtual ~RelaxationResidualCK() {}
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
@@ -70,7 +70,7 @@ class RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>
       protected:
         CorrectionKernel correction_;
         Real *Vol_;
-        Vecd *residue_;
+        Vecd *residual_;
     };
 
   protected:
@@ -78,15 +78,15 @@ class RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>
 };
 
 template <class KernelCorrectionType, typename... Parameters>
-class RelaxationResidueCK<Contact<Boundary, KernelCorrectionType, Parameters...>>
-    : public RelaxationResidueBase<Interaction<Contact<Parameters...>>>
+class RelaxationResidualCK<Contact<Boundary, KernelCorrectionType, Parameters...>>
+    : public RelaxationResidualBase<Interaction<Contact<Parameters...>>>
 {
-    using BaseInteraction = RelaxationResidueBase<Interaction<Contact<Parameters...>>>;
+    using BaseInteraction = RelaxationResidualBase<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit RelaxationResidueCK(Contact<Parameters...> &contact_relation);
-    virtual ~RelaxationResidueCK() {}
+    explicit RelaxationResidualCK(Contact<Parameters...> &contact_relation);
+    virtual ~RelaxationResidualCK() {}
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
@@ -99,7 +99,7 @@ class RelaxationResidueCK<Contact<Boundary, KernelCorrectionType, Parameters...>
       protected:
         CorrectionKernel correction_;
         Real *contact_Vol_;
-        Vecd *residue_;
+        Vecd *residual_;
     };
 
   protected:

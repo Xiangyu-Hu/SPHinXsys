@@ -220,7 +220,7 @@ class PressureVelocityCondition : public BaseLocalDynamics<AlignedBoxByCell>,
         CorrectionKernel correction_kernel_;
         ConditionType condition_;
         Real *physical_time_;
-        Vecd *zero_gradient_residue_;
+        Vecd *zero_gradient_residual_;
         int axis_;
         Transform *transform_;
     };
@@ -230,7 +230,7 @@ class PressureVelocityCondition : public BaseLocalDynamics<AlignedBoxByCell>,
     KernelCorrectionType kernel_correction_method_;
     ConditionType condition_;
     SingularVariable<Real> *sv_physical_time_;
-    DiscreteVariable<Vecd> *dv_zero_gradient_residue_;
+    DiscreteVariable<Vecd> *dv_zero_gradient_residual_;
 };
 
 template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>

@@ -39,7 +39,7 @@ class TransportVelocityCorrectionCK<
         SmoothingRatio h_ratio_;
         LimiterType limiter_;
         Vecd *dpos_;
-        Vecd *zero_gradient_residue_;
+        Vecd *zero_gradient_residual_;
         ParticleScopeTypeKernel within_scope_;
     };
 

@@ -33,7 +33,7 @@ TransportVelocityCorrectionCK<
     : correction_scaling_(encloser.correction_scaling_),
       h_ratio_(encloser.h_ratio_), limiter_(encloser.limiter_),
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
-      zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
+      zero_gradient_residual_(encloser.dv_zero_gradient_residual_->DelegatedData(ex_policy)),
       within_scope_(ex_policy, encloser.within_scope_method_, *this) {}
 //=================================================================================================//
 template <class KernelCorrectionType, class LimiterType, class ParticleScopeType, typename... Parameters>
@@ -44,10 +44,10 @@ void TransportVelocityCorrectionCK<
     if (this->within_scope_(index_i))
     {
         Real inv_h_ratio = 1.0 / h_ratio_(index_i);
-        Vecd residue = this->zero_gradient_residue_[index_i];
-        Real squared_norm = residue.squaredNorm();
+        Vecd residual = this->zero_gradient_residual_[index_i];
+        Real squared_norm = residual.squaredNorm();
         dpos_[index_i] += correction_scaling_ * limiter_(squared_norm) *
-                          this->zero_gradient_residue_[index_i] * inv_h_ratio * inv_h_ratio;
+                          this->zero_gradient_residual_[index_i] * inv_h_ratio * inv_h_ratio;
     }
 }
 } // end namespace fluid_dynamics

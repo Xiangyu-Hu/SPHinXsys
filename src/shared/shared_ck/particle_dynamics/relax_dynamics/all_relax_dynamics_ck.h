@@ -31,7 +31,7 @@
 #define ALL_RELAX_DYNAMICS_CK_H
 
 #include "level_set_correction.hpp"
-#include "relaxation_residue_ck.hpp"
+#include "relaxation_residual_ck.hpp"
 #include "relaxation_stepping_ck.h"
 
 #endif // ALL_RELAX_DYNAMICS_CK_H

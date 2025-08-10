@@ -42,7 +42,7 @@ class ZeroGradientResidualBase : public BaseInteractionType
     virtual ~ZeroGradientResidualBase() {}
 
   protected:
-    DiscreteVariable<Vecd> *dv_zero_gradient_residue_; ///< "ZeroGradientResidue"
+    DiscreteVariable<Vecd> *dv_zero_gradient_residual_; ///< "ZeroGradientResidual"
 };
 
 template <typename...>
@@ -68,7 +68,7 @@ class ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>
 
       protected:
         CorrectionKernel correction_;
-        Vecd *zero_gradient_residue_;
+        Vecd *zero_gradient_residual_;
         Real *Vol_;
     };
 
@@ -96,7 +96,7 @@ class ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...
 
       protected:
         CorrectionKernel correction_;
-        Vecd *zero_gradient_residue_;
+        Vecd *zero_gradient_residual_;
         Real *contact_Vol_;
     };
 

@@ -19886,7 +19886,7 @@ a8 3 23 22 21 3 20 1f 1e 3 1d 1c 1b 3 1a 19 18 3 17 16 15 3 14 13 1b 3 12 11 10 
 (gocart/boundary/split-warp-threshold 0.1)
 (gocart/morph/method lyon)
 (gocart/morph/solver bcgstab)
-(gocart/morph/solver-residue 1e-08)
+(gocart/morph/solver-residual 1e-08)
 (gocart/morph/surfaces? #t)
 (gocart/morph/surface/steps 2)
 (gocart/morph/reduce-support? #t)
