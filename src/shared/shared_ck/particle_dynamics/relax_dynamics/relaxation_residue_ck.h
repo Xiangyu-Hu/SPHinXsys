@@ -42,7 +42,6 @@ class RelaxationResidueBase : public BaseInteractionType
     virtual ~RelaxationResidueBase() {}
 
   protected:
-    DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Vecd> *dv_residue_;
 };

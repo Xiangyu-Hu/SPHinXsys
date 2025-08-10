@@ -13,7 +13,6 @@ template <class DynamicsIdentifier>
 TransportVelocityCorrectionCKBase<BaseInteractionType>::
     TransportVelocityCorrectionCKBase(DynamicsIdentifier &identifier)
     : BaseInteractionType(identifier),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),
       dv_zero_gradient_residue_(
           this->particles_->template registerStateVariable<Vecd>("ZeroGradientResidue")) {}

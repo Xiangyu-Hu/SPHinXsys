@@ -11,7 +11,6 @@ template <class DynamicsIdentifier>
 LinearCorrectionMatrix<Base, RelationType<Parameters...>>::
     LinearCorrectionMatrix(DynamicsIdentifier &identifier)
     : Interaction<RelationType<Parameters...>>(identifier),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_B_(this->particles_->template registerStateVariable<Matd>(
           "LinearCorrectionMatrix", IdentityMatrix<Matd>::value)) {}
 //=================================================================================================//

@@ -40,7 +40,8 @@ Interaction<Contact<Parameters...>>::
       contact_relation_(contact_relation),
       contact_bodies_(contact_relation.getContactBodies()),
       contact_particles_(contact_relation.getContactParticles()),
-      contact_adaptations_(contact_relation.getContactAdaptations())
+      contact_adaptations_(contact_relation.getContactAdaptations()),
+      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure"))
 {
     for (auto &particles : contact_particles_)
     {

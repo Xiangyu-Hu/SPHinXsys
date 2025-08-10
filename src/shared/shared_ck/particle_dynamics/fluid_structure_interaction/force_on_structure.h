@@ -66,12 +66,10 @@ class ForceFromFluid : public Interaction<Contact<Parameters...>>, public ForceP
 
   protected:
     Solid &solid_;
-    DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Vecd> *dv_force_from_fluid_, *dv_vel_ave_;
 
     StdVec<KernelCorrectionType> contact_kernel_correction_;
-    StdVec<DiscreteVariable<Real> *> contact_Vol_;
-    StdVec<DiscreteVariable<Vecd> *> contact_vel_;
+    StdVec<DiscreteVariable<Vecd> *> dv_contact_vel_;
 };
 
 template <typename...>

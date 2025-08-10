@@ -14,15 +14,13 @@ ForceFromFluid<KernelCorrectionType, Parameters...>::
     ForceFromFluid(ContactRelationType &contact_relation, const std::string &force_name)
     : Interaction<Contact<Parameters...>>(contact_relation), ForcePriorCK(this->particles_, force_name),
       solid_(DynamicCast<Solid>(this, this->sph_body_.getBaseMaterial())),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_force_from_fluid_(this->dv_current_force_),
       dv_vel_ave_(solid_.AverageVelocityVariable(this->particles_))
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
         contact_kernel_correction_.push_back(KernelCorrectionType(this->contact_particles_[k]));
-        contact_Vol_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
-        contact_vel_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));
+        dv_contact_vel_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));
     }
 }
 //=================================================================================================//
@@ -35,8 +33,8 @@ ForceFromFluid<KernelCorrectionType, Parameters...>::InteractKernel::
       force_from_fluid_(encloser.dv_force_from_fluid_->DelegatedData(ex_policy)),
       vel_ave_(encloser.dv_vel_ave_->DelegatedData(ex_policy)),
       contact_correction_(ex_policy, encloser.contact_kernel_correction_[contact_index]),
-      contact_Vol_(encloser.contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      contact_vel_(encloser.contact_vel_[contact_index]->DelegatedData(ex_policy)) {}
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_vel_(encloser.dv_contact_vel_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename ViscousForceType, typename... Parameters>
 template <class ContactRelationType>

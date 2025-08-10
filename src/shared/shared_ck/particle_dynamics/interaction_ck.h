@@ -105,6 +105,7 @@ class Interaction<Contact<Parameters...>>
     StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
+    DiscreteVariable<Real> *dv_Vol_;
     StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
 

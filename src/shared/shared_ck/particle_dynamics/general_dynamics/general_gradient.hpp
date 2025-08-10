@@ -11,7 +11,6 @@ template <class DynamicsIdentifier>
 Gradient<Base, DataType, RelationType<Parameters...>>::
     Gradient(DynamicsIdentifier &identifier, std::string &variable_name)
     : BaseDynamicsType(identifier), variable_name_(variable_name),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
       dv_gradient_(this->particles_->template registerStateVariable<Grad<DataType>>(
           variable_name + "Gradient", ZeroData<Grad<DataType>>::value)),

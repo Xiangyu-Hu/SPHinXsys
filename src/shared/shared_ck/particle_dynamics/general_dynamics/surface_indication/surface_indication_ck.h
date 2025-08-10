@@ -64,7 +64,6 @@ class FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>
   protected:
     DiscreteVariable<int> *dv_indicator_;
     DiscreteVariable<Real> *dv_pos_div_;
-    DiscreteVariable<Real> *dv_Vol_;
     Real dv_threshold_by_dimensions_;
     Real dv_smoothing_length_;
 };

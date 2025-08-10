@@ -64,7 +64,6 @@ class HessianCorrectionMatrix<Base, RelationType<Parameters...>>
     };
 
   protected:
-    DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Matd> *dv_B_;
     DiscreteVariable<VecMatGrad> *dv_displacement_matrix_grad_;
     DiscreteVariable<MatTend> *dv_M_;

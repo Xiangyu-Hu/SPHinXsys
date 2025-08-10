@@ -12,7 +12,6 @@ template <class BaseInteractionType>
 template <class DynamicsIdentifier>
 AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
     : BaseInteractionType(identifier),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_mass_(this->particles_->template getVariableByName<Real>("Mass")),
       dv_p_(this->particles_->template registerStateVariable<Real>("Pressure")),

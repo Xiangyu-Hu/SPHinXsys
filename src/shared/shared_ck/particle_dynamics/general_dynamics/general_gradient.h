@@ -103,7 +103,6 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
 
   protected:
     std::string variable_name_;
-    DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<DataType> *dv_variable_;
     DiscreteVariable<Grad<DataType>> *dv_gradient_;
     DiscreteVariable<Matd> *dv_B_;

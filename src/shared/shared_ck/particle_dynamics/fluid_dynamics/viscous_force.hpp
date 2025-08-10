@@ -16,7 +16,6 @@ ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameter
       ForcePriorCK(this->particles_, "ViscousForce"),
       viscosity_model_(DynamicCast<ViscosityType>(this, this->particles_->getBaseMaterial())),
       kernel_correction_(this->particles_),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_viscous_force_(this->dv_current_force_),
       smoothing_length_sq_(pow(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength(), 2)) {}

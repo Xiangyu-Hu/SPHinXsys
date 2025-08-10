@@ -123,7 +123,6 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrecti
   protected:
     KernelCorrectionType kernel_correction_method_;
     ConstantArray<DiffusionType, InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
-    DiscreteVariable<Real> *dv_Vol_;
     Real smoothing_length_sq_;
 };
 

@@ -50,7 +50,7 @@ class AcousticStep : public BaseInteractionType
     virtual ~AcousticStep() {};
 
   protected:
-    DiscreteVariable<Real> *dv_Vol_, *dv_rho_, *dv_mass_, *dv_p_, *dv_drho_dt_;
+    DiscreteVariable<Real> *dv_rho_, *dv_mass_, *dv_p_, *dv_drho_dt_;
     DiscreteVariable<Vecd> *dv_vel_, *dv_dpos_, *dv_force_, *dv_force_prior_;
 };
 

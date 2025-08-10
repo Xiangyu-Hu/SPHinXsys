@@ -76,7 +76,6 @@ class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Par
 
     ViscosityType &viscosity_model_;
     KernelCorrectionType kernel_correction_;
-    DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Vecd> *dv_vel_, *dv_viscous_force_;
     Real smoothing_length_sq_;
 };

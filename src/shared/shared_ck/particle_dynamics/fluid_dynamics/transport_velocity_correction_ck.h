@@ -19,7 +19,6 @@ class TransportVelocityCorrectionCKBase : public BaseInteractionType
     virtual ~TransportVelocityCorrectionCKBase() {}
 
   protected:
-    DiscreteVariable<Real> *dv_Vol_;                   ///< "VolumetricMeasure"
     DiscreteVariable<Vecd> *dv_dpos_;                  ///< "Position"
     DiscreteVariable<Vecd> *dv_zero_gradient_residue_; ///< "ZeroGradientResidue"
 };

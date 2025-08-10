@@ -16,7 +16,6 @@ FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::
     : Interaction<RelationType<Parameters...>>(base_relation),
       dv_indicator_(this->particles_->template registerStateVariable<int>("Indicator")),
       dv_pos_div_(this->particles_->template registerStateVariable<Real>("PositionDivergence")),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_threshold_by_dimensions_(0.75 * Dimensions),
       dv_smoothing_length_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//

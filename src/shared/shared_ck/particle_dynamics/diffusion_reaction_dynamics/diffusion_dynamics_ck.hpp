@@ -102,7 +102,6 @@ DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrectionType
     : BaseInteraction(std::forward<Args>(args)...),
       kernel_correction_method_(this->particles_),
       ca_inter_particle_diffusion_coeff_(this->diffusions_),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       smoothing_length_sq_(pow(this->sph_adaptation_->ReferenceSmoothingLength(), 2)) {}
 //=================================================================================================//
 template <class DiffusionType, class KernelCorrectionType, class... Parameters>

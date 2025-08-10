@@ -10,7 +10,6 @@ template <class BaseInteractionType>
 template <class DynamicsIdentifier>
 RelaxationResidueBase<BaseInteractionType>::RelaxationResidueBase(DynamicsIdentifier &identifier)
     : BaseInteractionType(identifier),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_residue_(this->particles_->template registerStateVariable<Vecd>("ZeroGradientResidue")) {}
 //=================================================================================================//
