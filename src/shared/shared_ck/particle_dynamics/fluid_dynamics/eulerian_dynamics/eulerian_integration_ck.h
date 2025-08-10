@@ -30,6 +30,7 @@
 
 #include "base_fluid_dynamics.h"
 #include "interaction_ck.hpp"
+#include "riemann_solver.h"
 
 namespace SPH
 {
@@ -44,21 +45,40 @@ class EulerianIntegrationCK : public BaseInteractionType
     virtual ~EulerianIntegrationCK() {};
 
   protected:
-    DiscreteVariable<Vecd> *dv_mom_, *dv_dmom_dt_;
-    DiscreteVariable<Real> *dv_dmass_dt_;
+    DiscreteVariable<Real> *dv_rho_, *dv_p_, *dv_dmass_dt_;
+    DiscreteVariable<Vecd> *dv_vel_, *dv_mom_, *dv_dmom_dt_;
 };
 
 template <class RiemannSolverType, class KernelCorrectionType, class... Parameters>
 class EulerianIntegrationCK<Inner<RiemannSolverType, KernelCorrectionType, Parameters...>>
     : public EulerianIntegrationCK<Inner<Parameters...>>
 {
+    using EosKernel = typename WeaklyCompressibleFluid::EosKernel;
+    using BaseInteraction = EulerianIntegrationCK<Inner<Parameters...>>;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+
   public:
     template <class BaseRelationType>
     explicit EulerianIntegrationCK(BaseRelationType &base_relation);
     virtual ~EulerianIntegrationCK() {};
 
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(UnsignedInt index_i, Real dt = 0.0);
+
+      protected:
+        CorrectionKernel correction_;
+        RiemannSolverType riemann_solver_;
+        Real *rho_, *p_, *Vol_, *dmass_dt_;
+        Vecd *vel_, *mom_, *dmom_dt_;
+    };
+
   protected:
     KernelCorrectionType kernel_correction_method_;
+    WeaklyCompressibleFluid &fluid_;
     RiemannSolverType riemann_solver_;
 };
 
@@ -66,6 +86,9 @@ template <class RiemannSolverType, class KernelCorrectionType, class... Paramete
 class EulerianIntegrationCK<Contact<Boundary, RiemannSolverType, KernelCorrectionType, Parameters...>>
     : public EulerianIntegrationCK<Contact<Parameters...>>
 {
+    using BaseInteraction = EulerianIntegrationCK<Contact<Parameters...>>;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+
   public:
     template <class BaseRelationType>
     explicit EulerianIntegrationCK(BaseRelationType &base_relation);
@@ -80,12 +103,38 @@ template <template <typename...> class RelationType, class... InteractionParamet
 class EulerianIntegrationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>
     : public EulerianIntegrationCK<RelationType<InteractionParameters...>>
 {
-    using BaseDynamicsType = EulerianIntegrationCK<RelationType<InteractionParameters...>>;
+    using EosKernel = typename WeaklyCompressibleFluid::EosKernel;
+  using BaseDynamicsType = EulerianIntegrationCK<RelationType<InteractionParameters...>>;
 
   public:
     template <typename... Args>
     explicit EulerianIntegrationCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
     virtual ~EulerianIntegrationCK() {};
+
+    class InitializeKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void initialize(UnsignedInt index_i, Real dt = 0.0);
+
+      protected:
+        Real *dmass_dt_;
+        Vecd *dmom_dt_;
+    };
+
+    class UpdateKernel : public BaseInteraction::UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(UnsignedInt index_i, Real dt = 0.0);
+
+      protected:
+        EosKernel eos_;
+        Real *rho_, *p_, *Vol_, *dmass_dt_;
+        Vecd *vel_, *mom_, *dmom_dt_;
+    };
 };
 
 template <template <typename...> class RelationType, class... InteractionParameters>
@@ -110,6 +159,7 @@ class EulerianIntegrationCK<RelationType<OneLevel, RungeKutta2ndStage, Interacti
     template <typename... Args>
     explicit EulerianIntegrationCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
     virtual ~EulerianIntegrationCK() {};
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // EULERIAN_INTEGRATION_CK_H
