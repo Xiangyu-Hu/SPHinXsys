@@ -37,7 +37,7 @@ PackageGridPair GeneralNeighbourIndexShift(
     return NeighbourIndexShift<PKG_SIZE>(residual, neighbour[package_index]);
 }
 //=============================================================================================//
-template <typename DataType, size_t PKG_SIZE>
+template <typename DataType, UnsignedInt PKG_SIZE>
 DataType CornerAverage(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
                        Arrayi corner_direction, const CellNeighborhood &neighborhood, DataType zero)
 {
@@ -55,40 +55,54 @@ DataType CornerAverage(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data, Arrayi a
     return average / count;
 }
 //=============================================================================================//
-template <typename DataType, size_t PKG_SIZE>
+template <typename DataType, UnsignedInt PKG_SIZE>
 DataType DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data,
                                   const Arrayi &global_grid_index,
                                   MeshWithGridDataPackages<PKG_SIZE> *data_mesh,
-                                  size_t *cell_package_index)
+                                  UnsignedInt *cell_package_index)
 {
     Arrayi cell_index_on_mesh_ = global_grid_index / PKG_SIZE;
     Arrayi local_index = global_grid_index - cell_index_on_mesh_ * PKG_SIZE;
-    size_t package_index = data_mesh->PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh_);
+    UnsignedInt package_index = data_mesh->PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh_);
     return pkg_data[package_index](local_index);
 }
 //=============================================================================================//
-template <typename DataType, size_t PKG_SIZE>
+template <typename DataType, UnsignedInt PKG_SIZE>
 template <class ExecutionPolicy>
 ProbeMesh<DataType, PKG_SIZE>::ProbeMesh(
     const ExecutionPolicy &ex_policy, MeshWithGridDataPackages<PKG_SIZE> *data_mesh,
     const std::string variable_name)
     : pkg_data_(data_mesh->template getMeshVariable<DataType>(variable_name)->DelegatedData(ex_policy)),
       index_handler_(data_mesh->index_handler_.DelegatedData(ex_policy)),
-      cell_package_index_(data_mesh->cell_package_index_.DelegatedData(ex_policy)),
-      cell_neighborhood_(data_mesh->cell_neighborhood_.DelegatedData(ex_policy)) {}
+      cell_pkg_index_(data_mesh->getCellPackageIndex().DelegatedData(ex_policy)),
+      cell_neighborhood_(data_mesh->getCellNeighborhood().DelegatedData(ex_policy)) {}
 //=============================================================================================//
-template <typename DataType, size_t PKG_SIZE>
+template <typename DataType, UnsignedInt PKG_SIZE>
 DataType ProbeMesh<DataType, PKG_SIZE>::operator()(const Vecd &position)
 {
     Arrayi cell_index = index_handler_->CellIndexFromPosition(position);
-    size_t package_index = index_handler_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
+    UnsignedInt package_index = index_handler_->PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
     return package_index > 1 ? probeDataPackage(package_index, cell_index, position)
                              : pkg_data_[package_index](Arrayi::Zero());
 }
 //=============================================================================================//
-template <typename DataType, size_t PKG_SIZE>
+template <typename CellDataType, typename PackageDataType, UnsignedInt PKG_SIZE, typename FunctionByGrid>
+CellDataType assignByGrid(PackageDataMatrix<PackageDataType, PKG_SIZE> &pkg_data,
+                          const FunctionByGrid &function_by_grid, CellDataType inital_value)
+{
+    CellDataType value = inital_value;
+    mesh_for_each(
+        Arrayi::Zero(), Arrayi::Ones() * PKG_SIZE,
+        [&](const Arrayi &index)
+        {
+            value = function_by_grid(pkg_data(index), index, value);
+        });
+    return value;
+}
+//=============================================================================================//
+template <typename DataType, UnsignedInt PKG_SIZE>
 DataType ProbeMesh<DataType, PKG_SIZE>::probeDataPackage(
-    size_t package_index, const Array2i &cell_index, const Vec2d &position)
+    UnsignedInt package_index, const Array2i &cell_index, const Vec2d &position)
 {
     Array2i data_index = index_handler_->DataIndexFromPosition(cell_index, position);
     Vec2d data_position = index_handler_->DataPositionFromIndex(cell_index, data_index);
@@ -111,9 +125,9 @@ DataType ProbeMesh<DataType, PKG_SIZE>::probeDataPackage(
            pkg_data_[neighbour_index_4.first](neighbour_index_4.second) * alpha[0] * alpha[1];
 }
 //=============================================================================================//
-template <typename DataType, size_t PKG_SIZE>
+template <typename DataType, UnsignedInt PKG_SIZE>
 DataType ProbeMesh<DataType, PKG_SIZE>::probeDataPackage(
-    size_t package_index, const Array3i &cell_index, const Vec3d &position)
+    UnsignedInt package_index, const Array3i &cell_index, const Vec3d &position)
 {
     Array3i data_index = index_handler_->DataIndexFromPosition(cell_index, position);
     Vec3d data_position = index_handler_->DataPositionFromIndex(cell_index, data_index);

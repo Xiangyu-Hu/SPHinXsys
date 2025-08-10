@@ -36,7 +36,7 @@
 
 namespace SPH
 {
-template <class DataType, size_t PKG_SIZE>
+template <class DataType, UnsignedInt PKG_SIZE>
 class PackageDataMatrix2d
     : public std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>
 {
@@ -45,7 +45,7 @@ class PackageDataMatrix2d
     DataType &operator()(const Array2i &index) { return (*this)[index[0]][index[1]]; }
 };
 
-template <class DataType, size_t PKG_SIZE>
+template <class DataType, UnsignedInt PKG_SIZE>
 class PackageDataMatrix3d
     : public std::array<std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>, PKG_SIZE>
 {

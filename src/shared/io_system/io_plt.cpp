@@ -138,5 +138,11 @@ void MeshRecordingToPlt::writeToFile(size_t iteration_step)
     std::string extended_name = partial_file_name_ + "_" + std::to_string(iteration_step);
     mesh_field_.writeMeshFieldToPlt(extended_name);
 }
+//=============================================================================================//
+void MeshRecordingToPlt::writeBKGMeshVariableToFile(size_t iteration_step)
+{
+    std::string extended_name = partial_file_name_ + "_background_" + std::to_string(iteration_step);
+    mesh_field_.writeBKGMeshToPlt(extended_name);
+}
 //=================================================================================================//
 } // namespace SPH

@@ -6,8 +6,62 @@
 
 namespace SPH
 {
+//=================================================================================================//
+inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &package_index)
+{
+    UnsignedInt sort_index = data_mesh_->getOccupiedDataPackages()[package_index - num_singular_pkgs_].first;
+    Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
+    UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
+
+    MeshVariableData<Real> &grid_phi = phi_[package_index];
+    Real phi0 = grid_phi[0][0];
+    cell_contain_id_[index_1d] = phi0 > 0.0 ? 1 : -1;
+    bool is_sign_changed = mesh_any_of2d<0, pkg_size>(
+        [&](int i, int j) -> bool
+        {
+            return grid_phi[i][j] * phi0 < 0.0;
+        });
+    if (is_sign_changed)
+        cell_contain_id_[index_1d] = 0;
+}
+//=================================================================================================//
+inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
+{
+    UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
+    if (cell_contain_id_[index_1d] == 2)
+    {
+        if (mesh_any_of(
+                Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+                data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                [&](int l, int m)
+                {
+                    UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m));
+                    return cell_contain_id_[neighbor_1d] == -1;
+                }))
+        {
+            cell_contain_id_[index_1d] = -1;
+            cell_package_index_[index_1d] = 0; // inside far field package updated
+            AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
+            ++count_modified_cells;
+        }
+        else if (mesh_any_of(
+                     Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+                     data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                     [&](int l, int m)
+                     {
+                         UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m));
+                         return cell_contain_id_[neighbor_1d] == 1;
+                     }))
+        {
+            cell_contain_id_[index_1d] = 1;
+            cell_package_index_[index_1d] = 1; // outside far field package updated
+            AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
+            ++count_modified_cells;
+        }
+    }
+}
 //=============================================================================================//
-inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_index)
+inline void UpdateLevelSetGradient::UpdateKernel::update(const UnsignedInt &package_index)
 {
     auto &neighborhood = cell_neighborhood_[package_index];
     auto &pkg_data = phi_gradient_[package_index];
@@ -30,11 +84,11 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const size_t &package_i
 }
 //=============================================================================================//
 inline void UpdateKernelIntegrals::initializeSingularPackages(
-    size_t package_index, Real far_field_level_set)
+    UnsignedInt package_index, Real far_field_level_set)
 {
-    auto &kernel_weight = kernel_weight_.Data()[package_index];
-    auto &kernel_gradient = kernel_gradient_.Data()[package_index];
-    auto &kernel_second_gradient = kernel_second_gradient_.Data()[package_index];
+    auto &kernel_weight = mv_kernel_weight_.Data()[package_index];
+    auto &kernel_gradient = mv_kernel_gradient_.Data()[package_index];
+    auto &kernel_second_gradient = mv_kernel_second_gradient_.Data()[package_index];
 
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
@@ -50,7 +104,7 @@ void UpdateKernelIntegrals::UpdateKernel::assignByGrid(MeshVariableData<DataType
                                                        const Arrayi &cell_index,
                                                        const FunctionByGrid &function_by_grid)
 {
-    size_t package_index = index_handler_->PackageIndexFromCellIndex(cell_package_index_, cell_index);
+    UnsignedInt package_index = index_handler_->PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
     auto &pkg_data = mesh_variable[package_index];
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
@@ -60,7 +114,7 @@ void UpdateKernelIntegrals::UpdateKernel::assignByGrid(MeshVariableData<DataType
 }
 //=============================================================================================//
 inline Real UpdateKernelIntegrals::UpdateKernel::
-    computeKernelIntegral(const size_t &package_index, const Arrayi &grid_index)
+    computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &grid_index)
 {
     Real phi = phi_[package_index][grid_index[0]][grid_index[1]];
 
@@ -89,7 +143,7 @@ inline Real UpdateKernelIntegrals::UpdateKernel::
 }
 //=============================================================================================//
 inline Vecd UpdateKernelIntegrals::UpdateKernel::
-    computeKernelGradientIntegral(const size_t &package_index, const Arrayi &grid_index)
+    computeKernelGradientIntegral(const UnsignedInt &package_index, const Arrayi &grid_index)
 {
     Real phi = phi_[package_index][grid_index[0]][grid_index[1]];
 
@@ -120,7 +174,7 @@ inline Vecd UpdateKernelIntegrals::UpdateKernel::
 }
 //=============================================================================================//
 inline Matd UpdateKernelIntegrals::UpdateKernel::
-    computeKernelSecondGradientIntegral(const size_t &package_index, const Arrayi &grid_index)
+    computeKernelSecondGradientIntegral(const UnsignedInt &package_index, const Arrayi &grid_index)
 {
     Real phi = phi_[package_index][grid_index[0]][grid_index[1]];
 
@@ -149,7 +203,7 @@ inline Matd UpdateKernelIntegrals::UpdateKernel::
     return integral * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
-inline void ReinitializeLevelSet::UpdateKernel::update(const size_t &package_index)
+inline void ReinitializeLevelSet::UpdateKernel::update(const UnsignedInt &package_index)
 {
     auto &phi_addrs = phi_[package_index];
     auto &near_interface_id_addrs = near_interface_id_[package_index];
@@ -180,7 +234,7 @@ inline void ReinitializeLevelSet::UpdateKernel::update(const size_t &package_ind
         });
 }
 //=============================================================================================//
-inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
+inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_index,
                                                     Real small_shift_factor)
 {
     Real small_shift = data_spacing_ * small_shift_factor;
@@ -230,7 +284,7 @@ inline void MarkNearInterface::UpdateKernel::update(const size_t &package_index,
         });
 }
 //=============================================================================================//
-inline void RedistanceInterface::UpdateKernel::update(const size_t &package_index)
+inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package_index)
 {
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
@@ -306,7 +360,7 @@ inline void RedistanceInterface::UpdateKernel::update(const size_t &package_inde
         });
 }
 //=============================================================================================//
-inline void DiffuseLevelSetSign::UpdateKernel::update(const size_t &package_index)
+inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package_index)
 {
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)

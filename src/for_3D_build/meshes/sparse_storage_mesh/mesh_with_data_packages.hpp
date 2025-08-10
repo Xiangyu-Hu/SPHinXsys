@@ -8,20 +8,20 @@
 namespace SPH
 {
 //=================================================================================================//
-template <size_t PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::writeMeshFieldToPltByMesh(std::ofstream &output_file)
+template <UnsignedInt PKG_SIZE>
+void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &output_file)
 {
     StdVec<Coord3D> active_cells;
-    auto meta_data = meta_data_cell_.Data();
-    package_parallel_for(execution::seq, num_grid_pkgs_,
-                         [&](size_t package_index)
-                         {
-                             if (meta_data[package_index].second == 1)
-                             {
-                                 auto cell_index = meta_data[package_index].first;
-                                 active_cells.push_back({cell_index[0], cell_index[1], cell_index[2]});
-                             }
-                         });
+    auto meta_data = dv_pkg_cell_info_.Data();
+    package_for(execution::seq, num_singular_pkgs_, num_grid_pkgs_,
+                [&](UnsignedInt package_index)
+                {
+                    if (meta_data[package_index].second == 1)
+                    {
+                        auto cell_index = meta_data[package_index].first;
+                        active_cells.push_back({cell_index[0], cell_index[1], cell_index[2]});
+                    }
+                });
     StdVec<Block3D> clustered_blocks = clusterActiveCells3D(active_cells);
 
     output_file << "\n"
@@ -52,7 +52,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshFieldToPltByMesh(std::ofstream
     output_file << "\n";
 
     // Write the zone header
-    for (size_t l = 0; l != clustered_blocks.size(); ++l)
+    for (UnsignedInt l = 0; l != clustered_blocks.size(); ++l)
     {
         auto &block = clustered_blocks[l];
         Array3i lower_bound_cell_index = Array3i(block.first[0], block.first[1], block.first[2]);
@@ -76,27 +76,103 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshFieldToPltByMesh(std::ofstream
                 constexpr int type_index_int = DataTypeIndex<int>::value;
                 for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variable_to_write_))
                 {
-                    int value = DataValueFromGlobalIndex(variable->Data(), global_index, this, cell_package_index_.Data());
+                    int value = DataValueFromGlobalIndex(variable->Data(), global_index, this, bmv_cell_pkg_index_.Data());
                     output_file << value << " ";
                 };
 
                 constexpr int type_index_Vecd = DataTypeIndex<Vec3d>::value;
                 for (MeshVariable<Vec3d> *variable : std::get<type_index_Vecd>(mesh_variable_to_write_))
                 {
-                    Vec3d value = DataValueFromGlobalIndex(variable->Data(), global_index, this, cell_package_index_.Data());
+                    Vec3d value = DataValueFromGlobalIndex(variable->Data(), global_index, this, bmv_cell_pkg_index_.Data());
                     output_file << value[0] << " " << value[1] << " " << value[2] << " ";
                 };
 
                 constexpr int type_index_Real = DataTypeIndex<Real>::value;
                 for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variable_to_write_))
                 {
-                    Real value = DataValueFromGlobalIndex(variable->Data(), global_index, this, cell_package_index_.Data());
+                    Real value = DataValueFromGlobalIndex(variable->Data(), global_index, this, bmv_cell_pkg_index_.Data());
                     output_file << value << " ";
                 };
                 output_file << " \n";
             });
         output_file << " \n";
     }
+}
+//=================================================================================================//
+template <UnsignedInt PKG_SIZE>
+void MeshWithGridDataPackages<PKG_SIZE>::writeBKGMeshVariableToPlt(std::ofstream &output_file)
+{
+    output_file << "\n"
+                << "title='View'" << "\n";
+    output_file << " VARIABLES = " << "x, " << "y, " << "z";
+
+    constexpr int type_index_unsigned = DataTypeIndex<UnsignedInt>::value;
+    for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(bkg_mesh_variable_to_write_))
+    {
+        output_file << ",\"" << variable->Name() << "\"";
+    };
+
+    constexpr int type_index_int = DataTypeIndex<int>::value;
+    for (DiscreteVariable<int> *variable : std::get<type_index_int>(bkg_mesh_variable_to_write_))
+    {
+        output_file << ",\"" << variable->Name() << "\"";
+    };
+
+    constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
+    for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(bkg_mesh_variable_to_write_))
+    {
+        std::string variable_name = variable->Name();
+        output_file << ",\"" << variable_name << "_x\""
+                    << ",\"" << variable_name << "_y\""
+                    << ",\"" << variable_name << "_z\"";
+    };
+
+    constexpr int type_index_Real = DataTypeIndex<Real>::value;
+    for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(bkg_mesh_variable_to_write_))
+    {
+        output_file << ",\"" << variable->Name() << "\"";
+    };
+
+    output_file << " \n";
+
+    Arrayi number_of_operation = AllCells();
+    output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1]
+                << "  k=" << number_of_operation[2] << "  DATAPACKING=POINT \n";
+
+    mesh_for_column_major(
+        Arrayi::Zero(), number_of_operation,
+        [&](const Arrayi &cell_index)
+        {
+            UnsignedInt linear_index = transferMeshIndexTo1D(all_cells_, cell_index);
+            Vecd data_position = CellPositionFromIndex(cell_index);
+            output_file << data_position[0] << " " << data_position[1] << " " << data_position[2] << " ";
+
+            for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(bkg_mesh_variable_to_write_))
+            {
+                UnsignedInt value = variable->Data()[linear_index];
+                output_file << value << " ";
+            };
+
+            for (DiscreteVariable<int> *variable : std::get<type_index_int>(bkg_mesh_variable_to_write_))
+            {
+                int value = variable->Data()[linear_index];
+                output_file << value << " ";
+            };
+
+            for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(bkg_mesh_variable_to_write_))
+            {
+                Vecd value = variable->Data()[linear_index];
+                output_file << value[0] << " " << value[1] << " " << value[2] << " ";
+            };
+
+            for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(bkg_mesh_variable_to_write_))
+            {
+                Real value = variable->Data()[linear_index];
+                output_file << value << " ";
+            };
+            output_file << " \n";
+        });
+    output_file << " \n";
 }
 //=================================================================================================//
 } // namespace SPH

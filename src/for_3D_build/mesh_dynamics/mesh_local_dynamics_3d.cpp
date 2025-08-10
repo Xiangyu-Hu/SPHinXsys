@@ -3,12 +3,12 @@
 namespace SPH
 {
 //=============================================================================================//
-size_t BaseMeshLocalDynamics::SortIndexFromCellIndex(const Arrayi &cell_index)
+UnsignedInt BaseMeshLocalDynamics::SortIndexFromCellIndex(const Arrayi &cell_index)
 {
     return cell_index[0] * all_cells_[1] * all_cells_[2] + cell_index[1] * all_cells_[2] + cell_index[2];
 }
 //=============================================================================================//
-Arrayi BaseMeshLocalDynamics::CellIndexFromSortIndex(const size_t &sort_index)
+Arrayi BaseMeshLocalDynamics::CellIndexFromSortIndex(const UnsignedInt &sort_index)
 {
     Array3i cell_index;
     cell_index[0] = sort_index / (all_cells_[1] * all_cells_[2]);
@@ -18,11 +18,12 @@ Arrayi BaseMeshLocalDynamics::CellIndexFromSortIndex(const size_t &sort_index)
     return cell_index;
 }
 //=============================================================================================//
-void InitializeDataForSingularPackage::update(const size_t package_index, Real far_field_level_set)
+void InitializeBasicPackageData::initializeSingularPackages(
+    const UnsignedInt package_index, Real far_field_level_set)
 {
-    auto &phi = phi_.Data()[package_index];
-    auto &near_interface_id = near_interface_id_.Data()[package_index];
-    auto &phi_gradient = phi_gradient_.Data()[package_index];
+    auto &phi = mv_phi_.Data()[package_index];
+    auto &near_interface_id = mv_near_interface_id_.Data()[package_index];
+    auto &phi_gradient = mv_phi_gradient_.Data()[package_index];
 
     mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
@@ -33,7 +34,7 @@ void InitializeDataForSingularPackage::update(const size_t package_index, Real f
         });
 }
 //=============================================================================================//
-bool TagACellIsInnerPackage::UpdateKernel::isInnerPackage(const Arrayi &cell_index)
+bool InnerCellTagging::UpdateKernel::isInnerPackage(const Arrayi &cell_index)
 {
     return mesh_any_of(
         Array3i::Zero().max(cell_index - Array3i::Ones()),
@@ -44,11 +45,11 @@ bool TagACellIsInnerPackage::UpdateKernel::isInnerPackage(const Arrayi &cell_ind
         });
 }
 //=============================================================================================//
-void InitializeBasicDataForAPackage::UpdateKernel::update(const size_t &package_index)
+void InitializeBasicPackageData::UpdateKernel::update(const UnsignedInt &package_index)
 {
     auto &phi = phi_[package_index];
     auto &near_interface_id = near_interface_id_[package_index];
-    Arrayi cell_index = meta_data_cell_[package_index].first;
+    Arrayi cell_index = pkg_cell_info_[package_index].first;
     mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
         {

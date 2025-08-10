@@ -81,20 +81,11 @@ class MultilevelLevelSet : public BaseMeshField
     StdVec<MeshWithGridDataPackagesType *> getMeshLevels() { return mesh_data_set_; };
 
     template <typename DataType>
-    void addVariableToWrite(const std::string &variable_name);
-
-    void writeMeshFieldToPlt(const std::string &partial_file_name) override
-    {
-        sync_mesh_variable_data_();
-        resetProbes();
-        for (size_t l = 0; l != total_levels_; ++l)
-        {
-            std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
-            std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-            mesh_data_set_[l]->writeMeshFieldToPltByMesh(out_file);
-            out_file.close();
-        }
-    }
+    void addMeshVariableToWrite(const std::string &variable_name);
+    void writeMeshFieldToPlt(const std::string &partial_file_name) override;
+    template <typename DataType>
+    void addBKGMeshVariableToWrite(const std::string &variable_name);
+    void writeBKGMeshToPlt(const std::string &partial_file_name) override;
 
     template <class ExecutionPolicy>
     void syncMeshVariableData(ExecutionPolicy &ex_policy)
@@ -111,15 +102,15 @@ class MultilevelLevelSet : public BaseMeshField
         probe_kernel_integral_set_.clear();
         probe_kernel_gradient_integral_set_.clear();
         probe_kernel_second_gradient_integral_set_.clear();
-        cell_package_index_set_.clear();
-        meta_data_cell_set_.clear();
+        cell_pkg_index_set_.clear();
+        pkg_cell_info_set_.clear();
         for (size_t l = 0; l != total_levels_; l++)
         {
             registerProbes(execution::par, l);
-            cell_package_index_set_.push_back(
-                mesh_data_set_[l]->cell_package_index_.DelegatedData(execution::par));
-            meta_data_cell_set_.push_back(
-                mesh_data_set_[l]->meta_data_cell_.DelegatedData(execution::par));
+            cell_pkg_index_set_.push_back(
+                mesh_data_set_[l]->getCellPackageIndex().DelegatedData(execution::par));
+            pkg_cell_info_set_.push_back(
+                mesh_data_set_[l]->dvPkgCellInfo().DelegatedData(execution::par));
         }
     }
 
@@ -138,8 +129,8 @@ class MultilevelLevelSet : public BaseMeshField
 
     Shape &shape_;        /**< the geometry is described by the level set. */
     size_t total_levels_; /**< level 0 is the coarsest */
-    StdVec<size_t *> cell_package_index_set_;
-    StdVec<std::pair<Arrayi, int> *> meta_data_cell_set_;
+    StdVec<UnsignedInt *> cell_pkg_index_set_;
+    StdVec<std::pair<Arrayi, int> *> pkg_cell_info_set_;
     StdVec<Real> global_h_ratio_vec_;
     StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;
     StdVec<ProbeSignedDistance *> probe_signed_distance_set_;
