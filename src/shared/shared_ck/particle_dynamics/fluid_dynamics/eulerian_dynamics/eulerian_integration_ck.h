@@ -35,7 +35,7 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-template <class DataDelegationType>
+template <class BaseInteractionType>
 class EulerianIntegrationCK : public BaseInteractionType
 {
   public:
@@ -45,8 +45,71 @@ class EulerianIntegrationCK : public BaseInteractionType
 
   protected:
     DiscreteVariable<Vecd> *dv_mom_, *dv_dmom_dt_;
-    DiscreteVariable<Real> *dv_dmass_dt_, *dv_Vol_;
+    DiscreteVariable<Real> *dv_dmass_dt_;
 };
+
+template <class RiemannSolverType, class KernelCorrectionType, class... Parameters>
+class EulerianIntegrationCK<Inner<RiemannSolverType, KernelCorrectionType, Parameters...>>
+    : public EulerianIntegrationCK<Inner<Parameters...>>
+{
+  public:
+    template <class BaseRelationType>
+    explicit EulerianIntegrationCK(BaseRelationType &base_relation);
+    virtual ~EulerianIntegrationCK() {};
+
+  protected:
+    KernelCorrectionType kernel_correction_method_;
+    RiemannSolverType riemann_solver_;
+};
+
+template <class RiemannSolverType, class KernelCorrectionType, class... Parameters>
+class EulerianIntegrationCK<Contact<Boundary, RiemannSolverType, KernelCorrectionType, Parameters...>>
+    : public EulerianIntegrationCK<Contact<Parameters...>>
+{
+  public:
+    template <class BaseRelationType>
+    explicit EulerianIntegrationCK(BaseRelationType &base_relation);
+    virtual ~EulerianIntegrationCK() {};
+
+  protected:
+    KernelCorrectionType kernel_correction_method_;
+    RiemannSolverType riemann_solver_;
+};
+
+template <template <typename...> class RelationType, class... InteractionParameters>
+class EulerianIntegrationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>
+    : public EulerianIntegrationCK<RelationType<InteractionParameters...>>
+{
+    using BaseDynamicsType = EulerianIntegrationCK<RelationType<InteractionParameters...>>;
+
+  public:
+    template <typename... Args>
+    explicit EulerianIntegrationCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
+    virtual ~EulerianIntegrationCK() {};
+};
+
+template <template <typename...> class RelationType, class... InteractionParameters>
+class EulerianIntegrationCK<RelationType<OneLevel, RungeKutta1stStage, InteractionParameters...>>
+    : public EulerianIntegrationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>
+{
+    using BaseDynamicsType = EulerianIntegrationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>;
+
+  public:
+    template <typename... Args>
+    explicit EulerianIntegrationCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
+    virtual ~EulerianIntegrationCK() {};
+};
+
+template <template <typename...> class RelationType, class... InteractionParameters>
+class EulerianIntegrationCK<RelationType<OneLevel, RungeKutta2ndStage, InteractionParameters...>>
+    : public EulerianIntegrationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>
+{
+    using BaseDynamicsType = EulerianIntegrationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>;
+
+  public:
+    template <typename... Args>
+    explicit EulerianIntegrationCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
+    virtual ~EulerianIntegrationCK() {};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // EULERIAN_INTEGRATION_CK_H
