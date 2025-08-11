@@ -103,7 +103,6 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
 
   protected:
     std::string variable_name_;
-    DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<DataType> *dv_variable_;
     DiscreteVariable<Grad<DataType>> *dv_gradient_;
     DiscreteVariable<Matd> *dv_B_;
@@ -157,7 +156,6 @@ class LinearGradient<Contact<DataType, Parameters...>>
     };
 
   protected:
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
     StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
 };
 
@@ -236,7 +234,6 @@ class Hessian<Contact<DataType, Parameters...>>
     };
 
   protected:
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
     StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
 };
 
@@ -288,7 +285,6 @@ class SecondOrderGradient<Contact<DataType, Parameters...>>
     };
 
   protected:
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
     StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
 };
 } // namespace SPH

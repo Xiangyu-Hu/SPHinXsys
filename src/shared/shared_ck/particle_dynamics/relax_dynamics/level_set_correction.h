@@ -84,17 +84,17 @@ class LevelsetKernelGradientIntegral : public LocalDynamics
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            residue_[index_i] -= 2.0 * kernel_gradient_integral_(pos_[index_i]);
+            residual_[index_i] -= 2.0 * kernel_gradient_integral_(pos_[index_i]);
         };
 
       protected:
-        Vecd *pos_, *residue_;
+        Vecd *pos_, *residual_;
         ProbeKernelGradientIntegral kernel_gradient_integral_;
     };
 
   protected:
     DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<Vecd> *dv_residue_;
+    DiscreteVariable<Vecd> *dv_residual_;
     MultilevelLevelSet &level_set_;
 };
 

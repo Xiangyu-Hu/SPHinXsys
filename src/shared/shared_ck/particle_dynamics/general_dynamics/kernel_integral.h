@@ -21,83 +21,78 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file relaxation_stepping_ck.h
- * @brief TBD.
- * @author Xiangyu Hu
+ * @file kernel_integral.h
+ * @brief The integral of the kernel function throughout the support.
+ * @author	Xiangyu Hu
  */
 
-#ifndef RELAXATION_STEPPING_CK_H
-#define RELAXATION_STEPPING_CK_H
+#ifndef KERNEL_INTEGRAL_H
+#define KERNEL_INTEGRAL_H
 
 #include "base_general_dynamics.h"
 
 namespace SPH
 {
-class RelaxationScalingCK : public LocalDynamicsReduce<ReduceMax>
+template <class BaseInteractionType>
+class KernelIntegralBase : public BaseInteractionType
 {
   public:
-    RelaxationScalingCK(SPHBody &sph_body);
-    virtual ~RelaxationScalingCK() {};
-
-    class FinishDynamics
-    {
-        Real h_ref_;
-
-      public:
-        using OutputType = Real;
-        FinishDynamics(RelaxationScalingCK &encloser);
-        Real Result(Real reduced_value);
-    };
-
-    class ReduceKernel
-    {
-      public:
-        template <class ExecutionPolicy>
-        ReduceKernel(const ExecutionPolicy &ex_policy, RelaxationScalingCK &encloser)
-            : residual_(encloser.dv_residual_->DelegatedData(ex_policy)),
-              h_ref_(encloser.h_ref_){};
-
-        Real reduce(size_t index_i, Real dt)
-        {
-            return residual_[index_i].norm();
-        };
-
-      protected:
-        Vecd *residual_;
-        Real h_ref_;
-    };
+    template <class DynamicsIdentifier>
+    explicit KernelIntegralBase(DynamicsIdentifier &identifier);
+    virtual ~KernelIntegralBase() {}
 
   protected:
-    DiscreteVariable<Vecd> *dv_residual_;
-    Real h_ref_;
+    DiscreteVariable<Real> *dv_kernel_integral_; ///< "KernelIntegral"
 };
 
-class PositionRelaxationCK : public LocalDynamics
+template <typename...>
+class KernelIntegral;
+
+template <typename... Parameters>
+class KernelIntegral<Inner<Parameters...>>
+    : public KernelIntegralBase<Interaction<Inner<Parameters...>>>
 {
-  public:
-    explicit PositionRelaxationCK(SPHBody &sph_body);
-    virtual ~PositionRelaxationCK() {};
+    using BaseInteraction = KernelIntegralBase<Interaction<Inner<Parameters...>>>;
 
-    class UpdateKernel
+  public:
+    explicit KernelIntegral(Inner<Parameters...> &inner_relation);
+    virtual ~KernelIntegral() {}
+
+    class InteractKernel : public BaseInteraction::InteractKernel
     {
       public:
-        template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy, PositionRelaxationCK &encloser)
-            : pos_(encloser.pos_->DelegatedData(ex_policy)),
-              residual_(encloser.residual_->DelegatedData(ex_policy)){};
-
-        void update(size_t index_i, Real dt_square)
-        {
-            pos_[index_i] += residual_[index_i] * dt_square * 0.5;
-        };
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        Vecd *pos_, *residual_;
+        Real W0_;
+        Real *kernel_integral_;
+        Real *Vol_;
     };
-
-  protected:
-    DiscreteVariable<Vecd> *pos_, *residual_;
 };
 
+template <typename... Parameters>
+class KernelIntegral<Contact<Parameters...>>
+    : public KernelIntegralBase<Interaction<Contact<Parameters...>>>
+{
+    using BaseInteraction = KernelIntegralBase<Interaction<Contact<Parameters...>>>;
+
+  public:
+    explicit KernelIntegral(Contact<Parameters...> &contact_relation);
+    virtual ~KernelIntegral() {}
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *kernel_integral_;
+        Real *contact_Vol_;
+    };
+};
 } // namespace SPH
-#endif // RELAXATION_STEPPING_CK_H
+#endif // KERNEL_INTEGRAL_H

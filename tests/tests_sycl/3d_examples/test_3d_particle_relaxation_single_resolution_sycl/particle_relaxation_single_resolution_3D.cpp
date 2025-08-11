@@ -132,8 +132,8 @@ int main(int ac, char *av[])
     auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(input_body);
     auto &input_body_update_inner_relation = main_methods.addRelationDynamics(input_body_inner);
     auto &random_input_body_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(input_body);
-    auto &relaxation_residue =
-        main_methods.addInteractionDynamics<RelaxationResidueCK, NoKernelCorrectionCK>(input_body_inner)
+    auto &relaxation_residual =
+        main_methods.addInteractionDynamics<ZeroGradientResidual, NoKernelCorrectionCK>(input_body_inner)
             .addPostStateDynamics<LevelsetKernelGradientIntegral>(input_body, *level_set_shape);
     auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(input_body);
     auto &update_particle_position =
@@ -162,7 +162,7 @@ int main(int ac, char *av[])
         input_body_cell_linked_list.exec();
         input_body_update_inner_relation.exec();
 
-        relaxation_residue.exec();
+        relaxation_residual.exec();
         Real relaxation_step = relaxation_scaling.exec();
         update_particle_position.exec(relaxation_step);
         level_set_bounding.exec();

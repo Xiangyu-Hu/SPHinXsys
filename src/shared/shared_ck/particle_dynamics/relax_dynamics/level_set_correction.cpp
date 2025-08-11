@@ -12,7 +12,7 @@ LevelsetBounding::LevelsetBounding(NearShapeSurface &body_part)
 LevelsetKernelGradientIntegral::LevelsetKernelGradientIntegral(SPHBody &sph_body, LevelSetShape &level_set_shape)
     : LocalDynamics(sph_body),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-      dv_residue_(particles_->registerStateVariable<Vecd>("ZeroGradientResidue")),
+      dv_residual_(particles_->registerStateVariable<Vecd>("ZeroGradientResidual")),
       level_set_(level_set_shape.getLevelSet()) {}
 //=================================================================================================//
 } // namespace SPH

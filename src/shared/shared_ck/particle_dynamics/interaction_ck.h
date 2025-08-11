@@ -21,10 +21,10 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    interaction_ck.h
- * @brief 	This is for the base classes of local particle dynamics, which describe the
- * 			dynamics of a particle and it neighbors.
- * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
+ * @file interaction_ck.h
+ * @brief This is for the base classes of particle interaction with its neighbors,
+ * which describe the basic patterns of particle methods.
+ * @author Xiangyu Hu
  */
 
 #ifndef INTERACTION_CK_H
@@ -71,6 +71,7 @@ class Interaction<Inner<Parameters...>>
 
   protected:
     InnerRelationType &inner_relation_;
+    DiscreteVariable<Real> *dv_Vol_;
 };
 
 template <typename... Parameters>
@@ -104,6 +105,8 @@ class Interaction<Contact<Parameters...>>
     StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
+    DiscreteVariable<Real> *dv_Vol_;
+    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
 
 template <>
@@ -116,7 +119,6 @@ class Interaction<Wall>
 
   protected:
     StdVec<DiscreteVariable<Vecd> *> dv_wall_vel_ave_, dv_wall_acc_ave_, dv_wall_n_;
-    StdVec<DiscreteVariable<Real> *> dv_wall_Vol_;
 };
 } // namespace SPH
 #endif // INTERACTION_CK_H

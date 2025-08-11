@@ -114,7 +114,7 @@ class DensityRegularization<Base, RelationType<Parameters...>>
     };
 
   protected:
-    DiscreteVariable<Real> *dv_rho_, *dv_mass_, *dv_rho_sum_, *dv_Vol_;
+    DiscreteVariable<Real> *dv_rho_, *dv_mass_, *dv_rho_sum_;
     Real rho0_, inv_sigma0_;
 };
 

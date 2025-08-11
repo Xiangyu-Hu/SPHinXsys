@@ -50,7 +50,7 @@ class AcousticStep : public BaseInteractionType
     virtual ~AcousticStep() {};
 
   protected:
-    DiscreteVariable<Real> *dv_Vol_, *dv_rho_, *dv_mass_, *dv_p_, *dv_drho_dt_;
+    DiscreteVariable<Real> *dv_rho_, *dv_mass_, *dv_p_, *dv_drho_dt_;
     DiscreteVariable<Vecd> *dv_vel_, *dv_dpos_, *dv_force_, *dv_force_prior_;
 };
 
@@ -139,7 +139,7 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *mass_, *p_, *drho_dt_;
         Vecd *vel_, *force_, *force_prior_;
-        Real *wall_Vol_;
+        Real *contact_Vol_;
         Vecd *wall_acc_ave_;
     };
 
@@ -182,7 +182,7 @@ class AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
     KernelCorrectionType kernel_correction_;
     StdVec<KernelCorrectionType> contact_kernel_corrections_;
     StdVec<RiemannSolverType> riemann_solvers_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_, dv_contact_p_;
+    StdVec<DiscreteVariable<Real> *> dv_contact_p_;
 };
 
 using AcousticStep1stHalfWithWallRiemannCK =

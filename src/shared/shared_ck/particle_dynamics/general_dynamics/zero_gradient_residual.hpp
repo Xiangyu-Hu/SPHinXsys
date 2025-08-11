@@ -1,85 +1,85 @@
-#ifndef RELAXATION_RESIDUE_CK_HPP
-#define RELAXATION_RESIDUE_CK_HPP
+#ifndef ZERO_GRADIENT_RESIDUAL_HPP
+#define ZERO_GRADIENT_RESIDUAL_HPP
 
-#include "relaxation_residue_ck.h"
+#include "zero_gradient_residual.h"
 
 namespace SPH
 {
 //=================================================================================================//
 template <class BaseInteractionType>
 template <class DynamicsIdentifier>
-RelaxationResidueBase<BaseInteractionType>::RelaxationResidueBase(DynamicsIdentifier &identifier)
+ZeroGradientResidualBase<BaseInteractionType>::ZeroGradientResidualBase(DynamicsIdentifier &identifier)
     : BaseInteractionType(identifier),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-      dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
-      dv_residue_(this->particles_->template registerStateVariable<Vecd>("ZeroGradientResidue")) {}
+      dv_zero_gradient_residual_(
+          this->particles_->template registerStateVariable<Vecd>("ZeroGradientResidual")) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
-RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>::
-    RelaxationResidueCK(Inner<Parameters...> &inner_relation)
-    : BaseInteraction(inner_relation), kernel_correction_(this->particles_) {}
+ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>::ZeroGradientResidual(
+    Inner<Parameters...> &inner_relation)
+    : ZeroGradientResidualBase<Interaction<Inner<Parameters...>>>(inner_relation),
+      kernel_correction_(this->particles_)
+{
+    static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
+                  "KernelCorrectionType must derive from KernelCorrection!");
+}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>::InteractKernel::
+ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_),
-      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      residue_(encloser.dv_residue_->DelegatedData(ex_policy)) {}
+      zero_gradient_residual_(encloser.dv_zero_gradient_residual_->DelegatedData(ex_policy)),
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
-void RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>::InteractKernel::
-    interact(size_t index_i, Real dt)
+void ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>::
+    InteractKernel::interact(size_t index_i, Real dt)
 {
-    Vecd residue = Vecd::Zero();
+    Vecd inconsistency = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         const Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
         const Vecd e_ij = this->e_ij(index_i, index_j);
-
-        residue -= (this->correction_(index_i) + this->correction_(index_j)) * dW_ijV_j * e_ij;
+        inconsistency -= (correction_(index_i) + correction_(index_j)) * dW_ijV_j * e_ij;
     }
-    residue_[index_i] = residue;
+    zero_gradient_residual_[index_i] = inconsistency;
 }
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
-RelaxationResidueCK<Contact<Boundary, KernelCorrectionType, Parameters...>>::
-    RelaxationResidueCK(Contact<Parameters...> &contact_relation)
-    : BaseInteraction(contact_relation), kernel_correction_(this->particles_)
+ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...>>::
+    ZeroGradientResidual(Contact<Parameters...> &contact_relation)
+    : ZeroGradientResidualBase<Interaction<Contact<Parameters...>>>(contact_relation),
+      kernel_correction_(this->particles_)
 {
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
-    }
+    static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
+                  "KernelCorrectionType must derive from KernelCorrection!");
 }
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-RelaxationResidueCK<Contact<Boundary, KernelCorrectionType, Parameters...>>::InteractKernel::
+ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
       correction_(ex_policy, encloser.kernel_correction_),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      residue_(encloser.dv_residue_->DelegatedData(ex_policy)) {}
+      zero_gradient_residual_(encloser.dv_zero_gradient_residual_->DelegatedData(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
-void RelaxationResidueCK<Contact<Boundary, KernelCorrectionType, Parameters...>>::InteractKernel::
-    interact(size_t index_i, Real dt)
+void ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...>>::
+    InteractKernel::interact(size_t index_i, Real dt)
 {
-    Vecd residue = Vecd::Zero();
+    Vecd inconsistency = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         const Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
         const Vecd e_ij = this->e_ij(index_i, index_j);
-
-        residue -= 2.0 * this->correction_(index_i) * dW_ijV_j * e_ij;
+        inconsistency -= 2.0 * correction_(index_i) * dW_ijV_j * e_ij;
     }
-    residue_[index_i] += residue;
+    zero_gradient_residual_[index_i] += inconsistency;
 }
 //=================================================================================================//
 } // namespace SPH
-#endif // RELAXATION_RESIDUE_CK_HPP
+#endif // ZERO_GRADIENT_RESIDUAL_HPP

@@ -5,43 +5,43 @@ namespace SPH
 namespace relax_dynamics
 {
 //=================================================================================================//
-RelaxationResidue<Inner<>>::RelaxationResidue(BaseInnerRelation &inner_relation)
-    : RelaxationResidue<Base, DataDelegateInner>(inner_relation),
+RelaxationResidual<Inner<>>::RelaxationResidual(BaseInnerRelation &inner_relation)
+    : RelaxationResidual<Base, DataDelegateInner>(inner_relation),
       relax_shape_(sph_body_.getInitialShape()){};
 //=================================================================================================//
-RelaxationResidue<Inner<>>::
-    RelaxationResidue(BaseInnerRelation &inner_relation, const std::string &sub_shape_name)
-    : RelaxationResidue<Base, DataDelegateInner>(inner_relation),
+RelaxationResidual<Inner<>>::
+    RelaxationResidual(BaseInnerRelation &inner_relation, const std::string &sub_shape_name)
+    : RelaxationResidual<Base, DataDelegateInner>(inner_relation),
       relax_shape_(*DynamicCast<ComplexShape>(this, sph_body_.getInitialShape()).getSubShapeByName(sub_shape_name)) {}
 //=================================================================================================//
-void RelaxationResidue<Inner<>>::interaction(size_t index_i, Real dt)
+void RelaxationResidual<Inner<>>::interaction(size_t index_i, Real dt)
 {
-    Vecd residue = Vecd::Zero();
+    Vecd residual = Vecd::Zero();
     const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
     for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
     {
         size_t index_j = inner_neighborhood.j_[n];
-        residue -= 2.0 * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
+        residual -= 2.0 * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
     }
-    residue_[index_i] = residue;
+    residual_[index_i] = residual;
 };
 //=================================================================================================//
-void RelaxationResidue<Inner<LevelSetCorrection>>::interaction(size_t index_i, Real dt)
+void RelaxationResidual<Inner<LevelSetCorrection>>::interaction(size_t index_i, Real dt)
 {
-    RelaxationResidue<Inner<>>::interaction(index_i, dt);
-    residue_[index_i] -= 2.0 * level_set_shape_.computeKernelGradientIntegral(
+    RelaxationResidual<Inner<>>::interaction(index_i, dt);
+    residual_[index_i] -= 2.0 * level_set_shape_.computeKernelGradientIntegral(
                                    pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
 }
 //=================================================================================================//
-void RelaxationResidue<Inner<Implicit>>::interaction(size_t index_i, Real dt)
+void RelaxationResidual<Inner<Implicit>>::interaction(size_t index_i, Real dt)
 {
     ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters = computeErrorAndParameters(index_i, dt);
     updateStates(index_i, dt, error_and_parameters);
-    residue_[index_i] = -error_and_parameters.error_ / dt / dt;
-    kinetic_energy_[index_i] = residue_[index_i].norm();
+    residual_[index_i] = -error_and_parameters.error_ / dt / dt;
+    kinetic_energy_[index_i] = residual_[index_i].norm();
 }
 //=================================================================================================//
-ErrorAndParameters<Vecd, Matd, Matd> RelaxationResidue<Inner<Implicit>>::
+ErrorAndParameters<Vecd, Matd, Matd> RelaxationResidual<Inner<Implicit>>::
 computeErrorAndParameters(size_t index_i, Real dt)
 {
     ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters;
@@ -64,7 +64,7 @@ computeErrorAndParameters(size_t index_i, Real dt)
     return error_and_parameters;
 }
 //=================================================================================================//
-void RelaxationResidue<Inner<Implicit>>::updateStates(size_t index_i, Real dt,
+void RelaxationResidual<Inner<Implicit>>::updateStates(size_t index_i, Real dt,
     const ErrorAndParameters<Vecd, Matd, Matd>& error_and_parameters)
 {
     Matd parameter_l = error_and_parameters.a_ * error_and_parameters.a_ + error_and_parameters.c_;
@@ -82,19 +82,19 @@ void RelaxationResidue<Inner<Implicit>>::updateStates(size_t index_i, Real dt,
     }
 }
 //=================================================================================================//
-void RelaxationResidue<Inner<LevelSetCorrection, Implicit>>::interaction(size_t index_i, Real dt)
+void RelaxationResidual<Inner<LevelSetCorrection, Implicit>>::interaction(size_t index_i, Real dt)
 {
     ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters = computeErrorAndParameters(index_i, dt);
     updateStates(index_i, dt, error_and_parameters);
-    residue_[index_i] = -error_and_parameters.error_ / dt / dt;
-    kinetic_energy_[index_i] = residue_[index_i].norm();
+    residual_[index_i] = -error_and_parameters.error_ / dt / dt;
+    kinetic_energy_[index_i] = residual_[index_i].norm();
 }
 //=================================================================================================//
-ErrorAndParameters<Vecd, Matd, Matd> RelaxationResidue<Inner<LevelSetCorrection, Implicit>>::
+ErrorAndParameters<Vecd, Matd, Matd> RelaxationResidual<Inner<LevelSetCorrection, Implicit>>::
 computeErrorAndParameters(size_t index_i, Real dt)
 {
     ErrorAndParameters<Vecd, Matd, Matd> error_and_parameters =
-        RelaxationResidue<Inner<Implicit>>::computeErrorAndParameters(index_i, dt);
+        RelaxationResidual<Inner<Implicit>>::computeErrorAndParameters(index_i, dt);
     Real overlap = level_set_shape_.computeKernelIntegral(pos_[index_i],
         sph_adaptation_->SmoothingLengthRatio(index_i)) * dt * dt;
 
@@ -106,9 +106,9 @@ computeErrorAndParameters(size_t index_i, Real dt)
     return error_and_parameters;
 }
 //=================================================================================================//
-void RelaxationResidue<Contact<>>::interaction(size_t index_i, Real dt)
+void RelaxationResidual<Contact<>>::interaction(size_t index_i, Real dt)
 {
-    Vecd residue = Vecd::Zero();
+    Vecd residual = Vecd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         Real *Vol_k = contact_Vol_[k];
@@ -116,20 +116,20 @@ void RelaxationResidue<Contact<>>::interaction(size_t index_i, Real dt)
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
-            residue -= 2.0 * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
+            residual -= 2.0 * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
         }
     }
-    residue_[index_i] += residue;
+    residual_[index_i] += residual;
 }
 //=================================================================================================//
 RelaxationScaling::RelaxationScaling(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      residue_(particles_->getVariableDataByName<Vecd>("ZeroOrderResidue")),
+      residual_(particles_->getVariableDataByName<Vecd>("ZeroOrderResidual")),
       h_ref_(sph_body.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 Real RelaxationScaling::reduce(size_t index_i, Real dt)
 {
-    return residue_[index_i].norm();
+    return residual_[index_i].norm();
 }
 //=================================================================================================//
 Real RelaxationScaling::outputResult(Real reduced_value)
@@ -141,11 +141,11 @@ PositionRelaxation::PositionRelaxation(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       sph_adaptation_(&sph_body.getSPHAdaptation()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      residue_(particles_->getVariableDataByName<Vecd>("ZeroOrderResidue")) {}
+      residual_(particles_->getVariableDataByName<Vecd>("ZeroOrderResidual")) {}
 //=================================================================================================//
 void PositionRelaxation::update(size_t index_i, Real dt_square)
 {
-    pos_[index_i] += residue_[index_i] * dt_square * 0.5 / sph_adaptation_->SmoothingLengthRatio(index_i);
+    pos_[index_i] += residual_[index_i] * dt_square * 0.5 / sph_adaptation_->SmoothingLengthRatio(index_i);
 }
 //=================================================================================================//
 UpdateSmoothingLengthRatioByShape::

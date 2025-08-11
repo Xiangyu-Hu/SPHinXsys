@@ -116,7 +116,7 @@ PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
-      wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
       wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)),
       wall_n_(encloser.dv_wall_n_[contact_index]->DelegatedData(ex_policy)),
       velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)) {}
@@ -133,7 +133,7 @@ void PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectio
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd e_ij = this->e_ij(index_i, index_j);
-        Real dW_ijV_j = this->dW_ij(index_i, index_j) * wall_Vol_[index_j];
+        Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
         Vecd vel_in_wall = 2.0 * wall_vel_ave_[index_j] - vel_[index_i];
         density_change_rate += (vel_i - vel_in_wall).dot(e_ij) * dW_ijV_j;
         Real u_jump = 2.0 * (vel_i - wall_vel_ave_[index_j]).dot(wall_n_[index_j]);

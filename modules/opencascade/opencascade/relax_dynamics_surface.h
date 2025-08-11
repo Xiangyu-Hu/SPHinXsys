@@ -63,7 +63,7 @@ class RelaxationStepInnerFirstHalf : public BaseDynamics<void>
   protected:
     RealBody *real_body_;
     BaseInnerRelation &inner_relation_;
-    InteractionDynamics<RelaxationResidue<Inner<>>> relaxation_acceleration_inner_;
+    InteractionDynamics<RelaxationResidual<Inner<>>> relaxation_acceleration_inner_;
 };
 
 class RelaxationStepInnerSecondHalf : public BaseDynamics<void>
