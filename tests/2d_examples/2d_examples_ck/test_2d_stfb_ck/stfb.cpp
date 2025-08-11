@@ -162,8 +162,8 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    auto &wall_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall_boundary);  // run on CPU
-    auto &structure_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(structure); // run on CPU
+    auto &wall_boundary_normal_direction = host_methods.addStateDynamics<InitialNearSurfaceInfo>(wall_boundary);  // run on CPU
+    auto &structure_boundary_normal_direction = host_methods.addStateDynamics<InitialNearSurfaceInfo>(structure); // run on CPU
 
     auto &water_cell_linked_list = main_methods.addCellLinkedListDynamics(water_block);
     auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);

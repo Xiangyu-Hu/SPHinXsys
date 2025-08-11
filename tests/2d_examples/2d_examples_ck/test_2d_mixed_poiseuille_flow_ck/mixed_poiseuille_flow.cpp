@@ -294,7 +294,7 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_normal_direction(wall); // run on CPU
+    StateDynamics<execution::ParallelPolicy, InitialNearSurfaceInfo> wall_normal_direction(wall); // run on CPU
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>

@@ -46,18 +46,18 @@ class HostKernel
     }
 };
 
-class NormalFromBodyShapeCK : public LocalDynamics
+class InitialNearSurfaceInfo : public LocalDynamics
 {
   public:
-    explicit NormalFromBodyShapeCK(SPHBody &sph_body);
-    virtual ~NormalFromBodyShapeCK() {};
+    explicit InitialNearSurfaceInfo(SPHBody &sph_body);
+    virtual ~InitialNearSurfaceInfo() {};
 
     class UpdateKernel : public HostKernel
     {
       public:
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy,
-                     NormalFromBodyShapeCK &encloser);
+                     InitialNearSurfaceInfo &encloser);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:

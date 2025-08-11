@@ -8,8 +8,8 @@ namespace SPH
 {
 //=================================================================================================//
 template <class ExecutionPolicy>
-NormalFromBodyShapeCK::UpdateKernel::
-    UpdateKernel(const ExecutionPolicy &ex_policy, NormalFromBodyShapeCK &encloser)
+InitialNearSurfaceInfo::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, InitialNearSurfaceInfo &encloser)
     : HostKernel(ex_policy, encloser),
       initial_shape_(encloser.initial_shape_),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),

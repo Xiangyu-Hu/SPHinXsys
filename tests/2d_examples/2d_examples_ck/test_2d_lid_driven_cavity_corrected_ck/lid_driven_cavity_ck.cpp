@@ -183,7 +183,7 @@ int main(int ac, char *av[])
     ParticleSortCK<MainExecutionPolicy> particle_sort(water_body);
     //----------------------------------------------------------------------
 
-    StateDynamics<MainExecutionPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary); // run on CPU
+    StateDynamics<MainExecutionPolicy, InitialNearSurfaceInfo> wall_boundary_normal_direction(wall_boundary); // run on CPU
     /** Time step size with considering sound wave speed. */
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_body);

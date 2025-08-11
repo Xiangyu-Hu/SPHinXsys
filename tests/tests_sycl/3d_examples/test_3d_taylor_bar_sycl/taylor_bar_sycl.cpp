@@ -55,7 +55,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Run on CPU after relaxation finished and output results.
         //----------------------------------------------------------------------
-        auto &wall_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall);
+        auto &wall_boundary_normal_direction = host_methods.addStateDynamics<InitialNearSurfaceInfo>(wall);
         //----------------------------------------------------------------------
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------

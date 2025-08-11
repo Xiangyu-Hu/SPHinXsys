@@ -118,8 +118,8 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Run on CPU after relaxation finished and output results.
         //----------------------------------------------------------------------
-        auto &cylinder_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(cylinder);
-        auto &water_block_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(water_block);
+        auto &cylinder_normal_direction = host_methods.addStateDynamics<InitialNearSurfaceInfo>(cylinder);
+        auto &water_block_normal_direction = host_methods.addStateDynamics<InitialNearSurfaceInfo>(water_block);
         //----------------------------------------------------------------------
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------

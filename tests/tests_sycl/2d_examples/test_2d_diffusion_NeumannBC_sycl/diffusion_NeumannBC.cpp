@@ -162,7 +162,7 @@ int main(int ac, char *av[])
             diffusion_body_inner, diffusion_body_contact_Dirichlet, diffusion_body_contact_Neumann);
     UpdateRelation<MainExecutionPolicy, Contact<>> observer_contact_relation(temperature_observer_contact);
 
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_Neumann);
+    StateDynamics<execution::ParallelPolicy, InitialNearSurfaceInfo> wall_boundary_normal_direction(wall_Neumann);
     StateDynamics<MainExecutionPolicy, VariableAssignment<ConstantValue<Real>, SPHBody>>
         diffusion_initial_condition(diffusion_body, diffusion_species_name, initial_temperature);
     StateDynamics<MainExecutionPolicy, VariableAssignment<ConstantValue<Real>, BodyRegionByParticle>>

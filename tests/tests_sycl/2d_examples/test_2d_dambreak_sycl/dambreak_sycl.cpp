@@ -94,7 +94,7 @@ int main(int ac, char *av[])
 
     Gravity gravity(Vecd(0.0, -gravity_g));
     auto &constant_gravity = main_methods.addStateDynamics<GravityForceCK<Gravity>>(water_block, gravity);
-    auto &wall_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall_boundary); // run on CPU
+    auto &wall_boundary_normal_direction = host_methods.addStateDynamics<InitialNearSurfaceInfo>(wall_boundary); // run on CPU
     auto &water_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(water_block);
     auto &water_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(water_block);
 

@@ -204,8 +204,8 @@ int main(int ac, char *av[])
 
     Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
     StateDynamics<MainExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> structure_boundary_normal_direction(structure);
+    StateDynamics<execution::ParallelPolicy, InitialNearSurfaceInfo> wall_boundary_normal_direction(wall_boundary);
+    StateDynamics<execution::ParallelPolicy, InitialNearSurfaceInfo> structure_boundary_normal_direction(structure);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_block);
 

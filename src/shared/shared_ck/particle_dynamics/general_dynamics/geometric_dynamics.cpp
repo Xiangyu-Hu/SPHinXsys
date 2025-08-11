@@ -3,7 +3,7 @@
 namespace SPH
 {
 //=================================================================================================//
-NormalFromBodyShapeCK::NormalFromBodyShapeCK(SPHBody &sph_body)
+InitialNearSurfaceInfo::InitialNearSurfaceInfo(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       initial_shape_(&sph_body.getInitialShape()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
@@ -12,7 +12,7 @@ NormalFromBodyShapeCK::NormalFromBodyShapeCK(SPHBody &sph_body)
       dv_phi_(particles_->registerStateVariable<Real>("SignedDistance")),
       dv_phi0_(particles_->registerStateVariable<Real>("InitialSignedDistance", dv_phi_)) {}
 //=============================================================================================//
-void NormalFromBodyShapeCK::UpdateKernel::update(size_t index_i, Real dt)
+void InitialNearSurfaceInfo::UpdateKernel::update(size_t index_i, Real dt)
 {
     Vecd normal_direction = initial_shape_->findNormalDirection(pos_[index_i]);
     n_[index_i] = normal_direction;

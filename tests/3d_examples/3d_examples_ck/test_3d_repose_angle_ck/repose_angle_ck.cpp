@@ -122,7 +122,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
     StateDynamics<MainExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(soil_block, gravity);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
+    StateDynamics<execution::ParallelPolicy, InitialNearSurfaceInfo> wall_boundary_normal_direction(wall_boundary);
     StateDynamics<MainExecutionPolicy, SoilInitialConditionCK> soil_initial_condition(soil_block);
 
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> soil_advection_step_setup(soil_block);
