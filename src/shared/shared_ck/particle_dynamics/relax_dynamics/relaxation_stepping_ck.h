@@ -54,21 +54,21 @@ class RelaxationScalingCK : public LocalDynamicsReduce<ReduceMax>
       public:
         template <class ExecutionPolicy>
         ReduceKernel(const ExecutionPolicy &ex_policy, RelaxationScalingCK &encloser)
-            : residue_(encloser.dv_residue_->DelegatedData(ex_policy)),
+            : residual_(encloser.dv_residual_->DelegatedData(ex_policy)),
               h_ref_(encloser.h_ref_){};
 
         Real reduce(size_t index_i, Real dt)
         {
-            return residue_[index_i].norm();
+            return residual_[index_i].norm();
         };
 
       protected:
-        Vecd *residue_;
+        Vecd *residual_;
         Real h_ref_;
     };
 
   protected:
-    DiscreteVariable<Vecd> *dv_residue_;
+    DiscreteVariable<Vecd> *dv_residual_;
     Real h_ref_;
 };
 
@@ -84,19 +84,19 @@ class PositionRelaxationCK : public LocalDynamics
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy, PositionRelaxationCK &encloser)
             : pos_(encloser.pos_->DelegatedData(ex_policy)),
-              residue_(encloser.residue_->DelegatedData(ex_policy)){};
+              residual_(encloser.residual_->DelegatedData(ex_policy)){};
 
         void update(size_t index_i, Real dt_square)
         {
-            pos_[index_i] += residue_[index_i] * dt_square * 0.5;
+            pos_[index_i] += residual_[index_i] * dt_square * 0.5;
         };
 
       protected:
-        Vecd *pos_, *residue_;
+        Vecd *pos_, *residual_;
     };
 
   protected:
-    DiscreteVariable<Vecd> *pos_, *residue_;
+    DiscreteVariable<Vecd> *pos_, *residual_;
 };
 
 } // namespace SPH

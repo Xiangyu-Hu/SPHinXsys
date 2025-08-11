@@ -21,44 +21,43 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file relaxation_residue_ck.h
- * @brief TBD.
- * @author Xiangyu Hu
+ * @file zero_gradient_residual.h
+ * @brief The error residual for computing the gradient of unit.
+ * @author	Xiangyu Hu
  */
 
-#ifndef RELAXATION_RESIDUE_CK_H
-#define RELAXATION_RESIDUE_CK_H
+#ifndef ZERO_GRADIENT_RESIDUAL_H
+#define ZERO_GRADIENT_RESIDUAL_H
 
 #include "base_general_dynamics.h"
 
 namespace SPH
 {
 template <class BaseInteractionType>
-class RelaxationResidueBase : public BaseInteractionType
+class ZeroGradientResidualBase : public BaseInteractionType
 {
   public:
     template <class DynamicsIdentifier>
-    explicit RelaxationResidueBase(DynamicsIdentifier &identifier);
-    virtual ~RelaxationResidueBase() {}
+    explicit ZeroGradientResidualBase(DynamicsIdentifier &identifier);
+    virtual ~ZeroGradientResidualBase() {}
 
   protected:
-    DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<Vecd> *dv_residue_;
+    DiscreteVariable<Vecd> *dv_zero_gradient_residual_; ///< "ZeroGradientResidual"
 };
 
 template <typename...>
-class RelaxationResidueCK;
+class ZeroGradientResidual;
 
 template <class KernelCorrectionType, typename... Parameters>
-class RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>
-    : public RelaxationResidueBase<Interaction<Inner<Parameters...>>>
+class ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>
+    : public ZeroGradientResidualBase<Interaction<Inner<Parameters...>>>
 {
-    using BaseInteraction = RelaxationResidueBase<Interaction<Inner<Parameters...>>>;
+    using BaseInteraction = ZeroGradientResidualBase<Interaction<Inner<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit RelaxationResidueCK(Inner<Parameters...> &inner_relation);
-    virtual ~RelaxationResidueCK() {}
+    explicit ZeroGradientResidual(Inner<Parameters...> &inner_relation);
+    virtual ~ZeroGradientResidual() {}
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
@@ -69,8 +68,8 @@ class RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>
 
       protected:
         CorrectionKernel correction_;
+        Vecd *zero_gradient_residual_;
         Real *Vol_;
-        Vecd *residue_;
     };
 
   protected:
@@ -78,32 +77,31 @@ class RelaxationResidueCK<Inner<KernelCorrectionType, Parameters...>>
 };
 
 template <class KernelCorrectionType, typename... Parameters>
-class RelaxationResidueCK<Contact<Boundary, KernelCorrectionType, Parameters...>>
-    : public RelaxationResidueBase<Interaction<Contact<Parameters...>>>
+class ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...>>
+    : public ZeroGradientResidualBase<Interaction<Contact<Parameters...>>>
 {
-    using BaseInteraction = RelaxationResidueBase<Interaction<Contact<Parameters...>>>;
+    using BaseInteraction = ZeroGradientResidualBase<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit RelaxationResidueCK(Contact<Parameters...> &contact_relation);
-    virtual ~RelaxationResidueCK() {}
+    explicit ZeroGradientResidual(Contact<Parameters...> &contact_relation);
+    virtual ~ZeroGradientResidual() {}
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, 
-          EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
         CorrectionKernel correction_;
+        Vecd *zero_gradient_residual_;
         Real *contact_Vol_;
-        Vecd *residue_;
     };
 
   protected:
     KernelCorrectionType kernel_correction_;
 };
 } // namespace SPH
-#endif // RELAXATION_RESIDUE_CK_H
+#endif // ZERO_GRADIENT_RESIDUAL_H

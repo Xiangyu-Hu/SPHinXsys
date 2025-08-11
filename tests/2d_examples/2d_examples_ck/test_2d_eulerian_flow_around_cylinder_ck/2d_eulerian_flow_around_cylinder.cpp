@@ -101,15 +101,15 @@ int main(int ac, char *av[])
         auto &random_cylinder_particles = main_methods.addStateDynamics<RandomizeParticlePositionCK>(cylinder);
         auto &random_water_block_particles = main_methods.addStateDynamics<RandomizeParticlePositionCK>(water_block);
 
-        auto &cylinder_relaxation_residue =
-            main_methods.addInteractionDynamics<RelaxationResidueCK, NoKernelCorrectionCK>(cylinder_inner)
+        auto &cylinder_relaxation_residual =
+            main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(cylinder_inner)
                 .addPostStateDynamics<LevelsetKernelGradientIntegral>(cylinder, *cylinder_level_set_shape);
         auto &cylinder_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(cylinder);
         auto &cylinder_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(cylinder);
         auto &cylinder_level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_cylinder_surface);
 
-        auto &water_block_relaxation_residue =
-            main_methods.addInteractionDynamics<RelaxationResidueCK, NoKernelCorrectionCK>(water_block_inner)
+        auto &water_block_relaxation_residual =
+            main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(water_block_inner)
                 .addContactInteraction<Boundary, NoKernelCorrectionCK>(water_block_contact)
                 .addPostStateDynamics<LevelsetKernelGradientIntegral>(water_block, *outer_level_set_shape);
         auto &water_block_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(water_block);
@@ -148,14 +148,14 @@ int main(int ac, char *av[])
             cylinder_cell_linked_list.exec();
             cylinder_update_inner_relation.exec();
 
-            cylinder_relaxation_residue.exec();
+            cylinder_relaxation_residual.exec();
             Real cylinder_relaxation_step = cylinder_relaxation_scaling.exec();
             cylinder_update_particle_position.exec(cylinder_relaxation_step);
             cylinder_level_set_bounding.exec();
 
             water_block_cell_linked_list.exec();
             water_block_update_complex_relation.exec();
-            water_block_relaxation_residue.exec();
+            water_block_relaxation_residual.exec();
             Real water_block_relaxation_step = water_block_relaxation_scaling.exec();
             water_block_update_particle_position.exec(water_block_relaxation_step);
             water_block_level_set_bounding.exec();

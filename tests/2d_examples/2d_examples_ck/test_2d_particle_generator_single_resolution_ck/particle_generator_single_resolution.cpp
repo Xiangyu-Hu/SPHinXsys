@@ -92,15 +92,15 @@ int main(int ac, char *av[])
     auto &random_input_body_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(input_body);
     auto &random_filler_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(filler);
 
-    auto &relaxation_residue =
-        main_methods.addInteractionDynamics<RelaxationResidueCK, NoKernelCorrectionCK>(input_body_inner)
+    auto &relaxation_residual =
+        main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(input_body_inner)
             .addPostStateDynamics<LevelsetKernelGradientIntegral>(input_body, *level_set_shape);
     auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(input_body);
     auto &update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(input_body);
     auto &level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_body_surface);
 
-    auto &filler_relaxation_residue =
-        main_methods.addInteractionDynamics<RelaxationResidueCK, NoKernelCorrectionCK>(filler_inner)
+    auto &filler_relaxation_residual =
+        main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(filler_inner)
             .addContactInteraction<Boundary, NoKernelCorrectionCK>(filler_contact);
     auto &filler_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(filler);
     auto &filler_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(filler);
@@ -130,12 +130,12 @@ int main(int ac, char *av[])
         input_body_update_inner_relation.exec();
         filler_update_complex_relation.exec();
 
-        relaxation_residue.exec();
+        relaxation_residual.exec();
         Real relaxation_step = relaxation_scaling.exec();
         update_particle_position.exec(relaxation_step);
         level_set_bounding.exec();
 
-        filler_relaxation_residue.exec();
+        filler_relaxation_residual.exec();
         Real filler_relaxation_step = filler_relaxation_scaling.exec();
         filler_update_particle_position.exec(filler_relaxation_step);
 
