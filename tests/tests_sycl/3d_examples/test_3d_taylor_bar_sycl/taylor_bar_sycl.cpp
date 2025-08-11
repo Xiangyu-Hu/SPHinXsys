@@ -47,7 +47,7 @@ int main(int ac, char *av[])
         auto &input_body_update_inner_relation = main_methods.addRelationDynamics(column_inner);
         auto &random_input_body_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(column);
         auto &relaxation_residual =
-            main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(column_inner)
+            main_methods.addInteractionDynamics<ZeroGradientResidual, NoKernelCorrectionCK>(column_inner)
                 .addPostStateDynamics<LevelsetKernelGradientIntegral>(column, *level_set_shape);
         auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(column);
         auto &update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(column);

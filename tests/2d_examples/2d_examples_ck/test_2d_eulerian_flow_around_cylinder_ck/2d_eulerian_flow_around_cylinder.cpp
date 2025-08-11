@@ -102,14 +102,14 @@ int main(int ac, char *av[])
         auto &random_water_block_particles = main_methods.addStateDynamics<RandomizeParticlePositionCK>(water_block);
 
         auto &cylinder_relaxation_residual =
-            main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(cylinder_inner)
+            main_methods.addInteractionDynamics<ZeroGradientResidual, NoKernelCorrectionCK>(cylinder_inner)
                 .addPostStateDynamics<LevelsetKernelGradientIntegral>(cylinder, *cylinder_level_set_shape);
         auto &cylinder_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(cylinder);
         auto &cylinder_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(cylinder);
         auto &cylinder_level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_cylinder_surface);
 
         auto &water_block_relaxation_residual =
-            main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(water_block_inner)
+            main_methods.addInteractionDynamics<ZeroGradientResidual, NoKernelCorrectionCK>(water_block_inner)
                 .addContactInteraction<Boundary, NoKernelCorrectionCK>(water_block_contact)
                 .addPostStateDynamics<LevelsetKernelGradientIntegral>(water_block, *outer_level_set_shape);
         auto &water_block_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(water_block);

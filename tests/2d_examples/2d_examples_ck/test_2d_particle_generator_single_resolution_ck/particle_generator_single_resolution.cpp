@@ -93,14 +93,14 @@ int main(int ac, char *av[])
     auto &random_filler_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(filler);
 
     auto &relaxation_residual =
-        main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(input_body_inner)
+        main_methods.addInteractionDynamics<ZeroGradientResidual, NoKernelCorrectionCK>(input_body_inner)
             .addPostStateDynamics<LevelsetKernelGradientIntegral>(input_body, *level_set_shape);
     auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(input_body);
     auto &update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(input_body);
     auto &level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_body_surface);
 
     auto &filler_relaxation_residual =
-        main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(filler_inner)
+        main_methods.addInteractionDynamics<ZeroGradientResidual, NoKernelCorrectionCK>(filler_inner)
             .addContactInteraction<Boundary, NoKernelCorrectionCK>(filler_contact);
     auto &filler_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(filler);
     auto &filler_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(filler);
