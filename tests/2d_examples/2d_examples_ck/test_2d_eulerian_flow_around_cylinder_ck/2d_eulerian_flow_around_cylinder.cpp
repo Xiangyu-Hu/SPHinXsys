@@ -190,30 +190,33 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //	Note that the same relation should be defined only once.
     //----------------------------------------------------------------------
-    InnerRelation water_block_inner(water_block);
-    InnerRelation cylinder_inner(cylinder);
-    ContactRelation water_block_contact(water_block, {&cylinder});
-    ContactRelation cylinder_contact(cylinder, {&water_block});
-    //----------------------------------------------------------------------
-    // Combined relations built from basic relations
-    // which is only used for update configuration.
-    //----------------------------------------------------------------------
-    ComplexRelation water_wall_complex(water_block_inner, water_block_contact);
+    Inner<> water_block_inner(water_block);
+    Inner<> cylinder_inner(cylinder);
+    Contact<> water_cylinder_contact(water_block, {&cylinder});
+    Contact<> cylinder_water_contact(cylinder, {&water_block});
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<FreeSurfaceIndicationComplex> surface_indicator(water_block_inner, water_block_contact);
-    InteractionDynamics<SmearedSurfaceIndication> smeared_surface(water_block_inner);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> cylinder_kernel_correction_matrix(cylinder_inner, cylinder_contact);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> water_block_kernel_correction_matrix(water_block_inner, water_block_contact);
-    InteractionDynamics<KernelGradientCorrectionComplex> kernel_gradient_update(water_block_inner, water_block_contact);
+    SPHSolver sph_solver(sph_system);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par);
+    auto &host_methods = sph_solver.addParticleMethodContainer(par);
 
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::EulerianIntegration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
+    auto &water_cell_linked_list = main_methods.addCellLinkedListDynamics(water_block);
+    auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(cylinder);
+    auto &water_block_update_complex_relation = main_methods.addRelationDynamics(water_block_inner, water_cylinder_contact);
+    auto &cylinder_water_update_contact_relation = main_methods.addRelationDynamics(cylinder_water_contact);
 
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block, 0.5);
+    auto &water_time_integration =
+        main_methods.addInteractionDynamicsOneLevel<
+                        fluid_dynamics::EulerianIntegration, ForwardEuler, AcousticRiemannSolver, NoKernelCorrectionCK>(water_block_inner)
+            .addContactInteraction<AcousticRiemannSolver, NoKernelCorrectionCK>(water_cylinder_contact)
+            .addPostStateDynamics<fluid_dynamics::EulerianSurfaceCondition, NoKernelCorrectionCK, FarfieldState>(
+                water_block, FarfieldState(water_block_inner));
+    auto &viscous_force =
+        main_methods.addInteractionDynamics<
+            fluid_dynamics::ViscousForceWithWall, FixedViscosity, NoKernelCorrectionCK>(
+            water_block_inner, water_cylinder_contact);
     InteractionWithUpdate<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_inner);
     //----------------------------------------------------------------------
     //	Compute the force exerted on solid body due to fluid pressure and viscosity

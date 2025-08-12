@@ -140,9 +140,11 @@ void EulerianIntegrationCK<Contact<Wall, RiemannSolverType, KernelCorrectionType
 }
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
+template <class BaseRelationType, typename... Args>
 class EulerianIntegrationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
-    EulerianIntegrationCK(BaseRelationType &base_relation)
-    : BaseDynamicsType(base_relation) {}
+    EulerianIntegrationCK(BaseRelationType &base_relation, Args &&...args)
+    : BaseDynamicsType(base_relation, std::forward<Args>(args)...),
+      dv_force_prior_(this->particles_->template getVariableByName<Vecd>("ForcePrior")) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -171,16 +173,17 @@ void EulerianIntegrationCK<RelationType<OneLevel, ForwardEuler, InteractionParam
       dmass_dt_(encloser.dv_dmass_dt_->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
       mom_(encloser.dv_mom_->DelegatedData(ex_policy)),
-      dmom_dt_(encloser.dv_dmom_dt_->DelegatedData(ex_policy))
-      //=================================================================================================//
-      template <template <typename...> class RelationType, class... InteractionParameters>
-      void EulerianIntegrationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
-          UpdateKernel::update(UnsignedInt index_i, Real dt)
+      dmom_dt_(encloser.dv_dmom_dt_->DelegatedData(ex_policy)),
+      force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <template <typename...> class RelationType, class... InteractionParameters>
+void EulerianIntegrationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
+    UpdateKernel::update(UnsignedInt index_i, Real dt)
 {
     mass_[index_i] += dmass_dt_[index_i] * dt;
     rho_[index_i] = mass_[index_i] / Vol_[index_i];
     p_[index_i] = eos_.getPressure(rho_[index_i]);
-    mom_[index_i] += dmom_dt_[index_i] * dt;
+    mom_[index_i] += (dmom_dt_[index_i] + force_prior_[index_i]) * dt;
     vel_[index_i] = mom_[index_i] / mass_[index_i];
 }
 //=================================================================================================//

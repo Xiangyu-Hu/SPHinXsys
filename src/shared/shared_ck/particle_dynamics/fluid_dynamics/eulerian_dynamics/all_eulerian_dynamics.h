@@ -21,23 +21,15 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_shared_fluid_dynamics_ck.h
- * @brief   Head file for all shared physics dynamics for both 2- and 3D build.
- *          This is the header file that user code should include to pick up all
-            particle dynamics capabilities.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file    all_eulerian_dynamics.h
+ * @brief  TBD.
+ * @author	Xiangyu Hu
  */
 
-#ifndef ALL_SHARED_FLUID_DYNAMICS_CK_H
-#define ALL_SHARED_FLUID_DYNAMICS_CK_H
+#ifndef ALL_EULERIAN_DYNAMICS_H
+#define ALL_EULERIAN_DYNAMICS_H
 
-#include "acoustic_step_1st_half.hpp"
-#include "acoustic_step_2nd_half.hpp"
-#include "all_eulerian_dynamics.h"
-#include "all_fluid_boundary_condition_ck.h"
-#include "density_regularization.hpp"
-#include "fluid_time_step_ck.hpp"
-#include "transport_velocity_correction_ck.hpp"
-#include "viscous_force.hpp"
+#include "eulerian_integration.hpp"
+#include "eulerian_surface_condition.hpp"
 
-#endif // ALL_SHARED_FLUID_DYNAMICS_CK_H
+#endif // ALL_EULERIAN_DYNAMICS_H

@@ -78,5 +78,17 @@ struct VelocityPrescribed
     // to be implemented in derived class
 };
 
+struct FarfieldState
+{
+    Real far_field_pressure_;
+    Vecd far_field_velocity_;
+    FarfieldState(Real far_field_pressure, const Vecd &far_field_velocity)
+        : far_field_pressure_(far_field_pressure), far_field_velocity_(far_field_velocity) {};
+    Real getPressure(const Real &input_pressure, Real time) { return input_pressure; };
+    Vecd getVelocity(const Vecd &input_position, const Vecd &input_axis_velocity, Real time)
+    {
+        return far_field_velocity_;
+    };
+};
 } // namespace SPH
 #endif // FLUID_BOUNDARY_STATE_H

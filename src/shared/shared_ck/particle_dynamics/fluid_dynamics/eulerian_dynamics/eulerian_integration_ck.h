@@ -122,8 +122,8 @@ class EulerianIntegrationCK<RelationType<OneLevel, ForwardEuler, InteractionPara
     using BaseDynamicsType = EulerianIntegrationCK<RelationType<InteractionParameters...>>;
 
   public:
-    template <typename... Args>
-    explicit EulerianIntegrationCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
+    template <class BaseRelationType, typename... Args>
+    explicit EulerianIntegrationCK(BaseRelationType &base_relation, Args &&...args);
     virtual ~EulerianIntegrationCK() {};
 
     class InitializeKernel
@@ -148,8 +148,11 @@ class EulerianIntegrationCK<RelationType<OneLevel, ForwardEuler, InteractionPara
       protected:
         EosKernel eos_;
         Real *rho_, *p_, *Vol_, *dmass_dt_;
-        Vecd *vel_, *mom_, *dmom_dt_;
+        Vecd *vel_, *mom_, *dmom_dt_, *force_prior_;
     };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_force_prior_;
 };
 
 template <template <typename...> class RelationType, class... InteractionParameters>
