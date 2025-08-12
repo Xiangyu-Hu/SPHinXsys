@@ -30,8 +30,8 @@
 #ifndef ALL_RELAX_DYNAMICS_CK_H
 #define ALL_RELAX_DYNAMICS_CK_H
 
+#include "kernel_gradient_integral.hpp"
 #include "level_set_correction.hpp"
 #include "relaxation_stepping_ck.h"
-#include "zero_gradient_residual.hpp"
 
 #endif // ALL_RELAX_DYNAMICS_CK_H

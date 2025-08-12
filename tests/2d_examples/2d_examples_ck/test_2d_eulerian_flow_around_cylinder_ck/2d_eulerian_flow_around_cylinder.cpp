@@ -102,14 +102,14 @@ int main(int ac, char *av[])
         auto &random_water_block_particles = main_methods.addStateDynamics<RandomizeParticlePositionCK>(water_block);
 
         auto &cylinder_relaxation_residual =
-            main_methods.addInteractionDynamics<ZeroGradientResidual, NoKernelCorrectionCK>(cylinder_inner)
+            main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(cylinder_inner)
                 .addPostStateDynamics<LevelsetKernelGradientIntegral>(cylinder, *cylinder_level_set_shape);
         auto &cylinder_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(cylinder);
         auto &cylinder_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(cylinder);
         auto &cylinder_level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_cylinder_surface);
 
         auto &water_block_relaxation_residual =
-            main_methods.addInteractionDynamics<ZeroGradientResidual, NoKernelCorrectionCK>(water_block_inner)
+            main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(water_block_inner)
                 .addContactInteraction<Boundary, NoKernelCorrectionCK>(water_block_contact)
                 .addPostStateDynamics<LevelsetKernelGradientIntegral>(water_block, *outer_level_set_shape);
         auto &water_block_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(water_block);
@@ -126,9 +126,11 @@ int main(int ac, char *av[])
         auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
         body_state_recorder.addToWrite<Vecd>(cylinder, "NormalDirection");
         body_state_recorder.addToWrite<Vecd>(water_block, "NormalDirection");
+        body_state_recorder.addToWrite<Real>(water_block, "SignedDistance");
         auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(StdVec<SPHBody *>{&cylinder, &water_block});
         write_particle_reload_files.addToReload<Vecd>(cylinder, "NormalDirection");
         write_particle_reload_files.addToReload<Vecd>(water_block, "NormalDirection");
+        write_particle_reload_files.addToReload<Real>(water_block, "SignedDistance");
         //----------------------------------------------------------------------
         //	Prepare the simulation with cell linked list, configuration
         //	and case specified initial condition if necessary.
@@ -178,7 +180,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     water_block.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
-        ->reloadExtraVariable<Vecd>("NormalDirection");
+        ->reloadExtraVariable<Vecd>("NormalDirection")
+        ->reloadExtraVariable<Real>("SignedDistance");
     cylinder.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
         ->reloadExtraVariable<Vecd>("NormalDirection");

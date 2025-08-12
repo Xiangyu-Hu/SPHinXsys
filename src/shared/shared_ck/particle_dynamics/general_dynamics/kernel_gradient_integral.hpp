@@ -1,22 +1,22 @@
 #ifndef ZERO_GRADIENT_RESIDUAL_HPP
 #define ZERO_GRADIENT_RESIDUAL_HPP
 
-#include "zero_gradient_residual.h"
+#include "kernel_gradient_integral.h"
 
 namespace SPH
 {
 //=================================================================================================//
 template <class BaseInteractionType>
 template <class DynamicsIdentifier>
-ZeroGradientResidualBase<BaseInteractionType>::ZeroGradientResidualBase(DynamicsIdentifier &identifier)
+KernelGradientIntegralBase<BaseInteractionType>::KernelGradientIntegralBase(DynamicsIdentifier &identifier)
     : BaseInteractionType(identifier),
-      dv_zero_gradient_residual_(
-          this->particles_->template registerStateVariable<Vecd>("ZeroGradientResidual")) {}
+      dv_kernel_gradient_integral_(
+          this->particles_->template registerStateVariable<Vecd>("KernelGradientIntegral")) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
-ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>::ZeroGradientResidual(
+KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>::KernelGradientIntegral(
     Inner<Parameters...> &inner_relation)
-    : ZeroGradientResidualBase<Interaction<Inner<Parameters...>>>(inner_relation),
+    : KernelGradientIntegralBase<Interaction<Inner<Parameters...>>>(inner_relation),
       kernel_correction_(this->particles_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
@@ -25,15 +25,15 @@ ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>::ZeroGradientRe
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>::InteractKernel::
+KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_),
-      zero_gradient_residual_(encloser.dv_zero_gradient_residual_->DelegatedData(ex_policy)),
+      kernel_gradient_integral_(encloser.dv_kernel_gradient_integral_->DelegatedData(ex_policy)),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
-void ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>::
+void KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
     Vecd inconsistency = Vecd::Zero();
@@ -44,13 +44,13 @@ void ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>::
         const Vecd e_ij = this->e_ij(index_i, index_j);
         inconsistency -= (correction_(index_i) + correction_(index_j)) * dW_ijV_j * e_ij;
     }
-    zero_gradient_residual_[index_i] = inconsistency;
+    kernel_gradient_integral_[index_i] = inconsistency;
 }
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
-ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...>>::
-    ZeroGradientResidual(Contact<Parameters...> &contact_relation)
-    : ZeroGradientResidualBase<Interaction<Contact<Parameters...>>>(contact_relation),
+KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>::
+    KernelGradientIntegral(Contact<Parameters...> &contact_relation)
+    : KernelGradientIntegralBase<Interaction<Contact<Parameters...>>>(contact_relation),
       kernel_correction_(this->particles_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
@@ -59,15 +59,15 @@ ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...>>::
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...>>::InteractKernel::
+KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
       correction_(ex_policy, encloser.kernel_correction_),
-      zero_gradient_residual_(encloser.dv_zero_gradient_residual_->DelegatedData(ex_policy)),
+      kernel_gradient_integral_(encloser.dv_kernel_gradient_integral_->DelegatedData(ex_policy)),
       contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
-void ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...>>::
+void KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
     Vecd inconsistency = Vecd::Zero();
@@ -78,7 +78,7 @@ void ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...>
         const Vecd e_ij = this->e_ij(index_i, index_j);
         inconsistency -= 2.0 * correction_(index_i) * dW_ijV_j * e_ij;
     }
-    zero_gradient_residual_[index_i] += inconsistency;
+    kernel_gradient_integral_[index_i] += inconsistency;
 }
 //=================================================================================================//
 } // namespace SPH
