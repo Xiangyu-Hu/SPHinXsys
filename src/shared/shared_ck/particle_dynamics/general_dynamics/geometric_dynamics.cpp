@@ -10,7 +10,13 @@ InitialNearSurfaceInfo::InitialNearSurfaceInfo(SPHBody &sph_body)
       dv_n_(particles_->registerStateVariable<Vecd>("NormalDirection")),
       dv_n0_(particles_->registerStateVariable<Vecd>("InitialNormalDirection", dv_n_)),
       dv_phi_(particles_->registerStateVariable<Real>("SignedDistance")),
-      dv_phi0_(particles_->registerStateVariable<Real>("InitialSignedDistance", dv_phi_)) {}
+      dv_phi0_(particles_->registerStateVariable<Real>("InitialSignedDistance", dv_phi_))
+{
+    particles_->addEvolvingVariable<Vecd>(dv_n_);
+    particles_->addEvolvingVariable<Real>(dv_phi_);
+    particles_->addVariableToWrite<Vecd>(dv_n_);
+    particles_->addVariableToWrite<Real>(dv_phi_);
+}
 //=============================================================================================//
 void InitialNearSurfaceInfo::UpdateKernel::update(size_t index_i, Real dt)
 {

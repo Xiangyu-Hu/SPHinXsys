@@ -124,13 +124,7 @@ int main(int ac, char *av[])
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------
         auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
-        body_state_recorder.addToWrite<Vecd>(cylinder, "NormalDirection");
-        body_state_recorder.addToWrite<Vecd>(water_block, "NormalDirection");
-        body_state_recorder.addToWrite<Real>(water_block, "SignedDistance");
         auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(StdVec<SPHBody *>{&cylinder, &water_block});
-        write_particle_reload_files.addToReload<Vecd>(cylinder, "NormalDirection");
-        write_particle_reload_files.addToReload<Vecd>(water_block, "NormalDirection");
-        write_particle_reload_files.addToReload<Real>(water_block, "SignedDistance");
         //----------------------------------------------------------------------
         //	Prepare the simulation with cell linked list, configuration
         //	and case specified initial condition if necessary.

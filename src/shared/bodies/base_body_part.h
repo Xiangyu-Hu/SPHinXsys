@@ -172,40 +172,6 @@ class BodyRegionByParticle : public BodyPartByParticle
     bool tagByContain(size_t particle_index);
 };
 
-/**
- * @class BodySurface
- * @brief A  body part with the collection of particles at surface of a body
- */
-class BodySurface : public BodyPartByParticle
-{
-  public:
-    explicit BodySurface(SPHBody &sph_body);
-    virtual ~BodySurface() {};
-
-  protected:
-    Real particle_spacing_min_;
-    bool tagNearSurface(size_t particle_index);
-};
-
-/**
- * @class BodySurfaceLayer
- * @brief A  body part with the collection of particles within the surface layers of a body.
- */
-class BodySurfaceLayer : public BodyPartByParticle
-{
-  public:
-    explicit BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness = 3.0);
-    virtual ~BodySurfaceLayer() {};
-
-  private:
-    Real thickness_threshold_;
-    bool tagSurfaceLayer(size_t particle_index);
-};
-
-/**
- * @class BodyRegionByCell
- * @brief A body part with the cell lists within a prescribed shape.
- */
 class BodyRegionByCell : public BodyPartByCell
 {
   private:
@@ -220,31 +186,6 @@ class BodyRegionByCell : public BodyPartByCell
   private:
     Shape &body_part_shape_;
     bool checkNotFar(Vecd cell_position, Real threshold);
-};
-
-/**
- * @class NearShapeSurface
- * @brief A body part with the cell lists near the surface of a prescribed shape.
- * @ details The body part shape can be that of the body,
- * or a sub shape of the body shape, or a shape independent of the body shape.
- * Note that only cells near the surface of the body part shape are included.
- */
-class NearShapeSurface : public BodyPartByCell
-{
-  private:
-    UniquePtrKeeper<LevelSetShape> level_set_shape_keeper_;
-
-  public:
-    NearShapeSurface(RealBody &real_body, SharedPtr<Shape> shape_ptr);
-    NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape);
-    explicit NearShapeSurface(RealBody &real_body);
-    NearShapeSurface(RealBody &real_body, const std::string &sub_shape_name);
-    virtual ~NearShapeSurface() {};
-    LevelSetShape &getLevelSetShape() { return level_set_shape_; };
-
-  private:
-    LevelSetShape &level_set_shape_;
-    bool checkNearSurface(Vecd cell_position, Real threshold);
 };
 
 class AlignedBoxPart

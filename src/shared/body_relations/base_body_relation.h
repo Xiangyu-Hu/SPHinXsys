@@ -34,6 +34,7 @@
 #include "base_geometry.h"
 #include "base_implementation.h"
 #include "base_particles.h"
+#include "body_surface.h"
 #include "cell_linked_list.h"
 #include "neighborhood.h"
 
