@@ -88,5 +88,17 @@ class NearShapeSurface : public BodyPartByCell
     LevelSetShape &level_set_shape_;
     bool checkNearSurface(Vecd cell_position, Real threshold);
 };
+
+class KernelDepletionSurface : public BodyPartByParticle
+{
+  public:
+    explicit KernelDepletionSurface(SPHBody &sph_body);
+    virtual ~KernelDepletionSurface() {};
+
+  private:
+    Real *phi_;
+    Real smoothing_length_;
+    bool tagNearSurface(size_t particle_index);
+};
 } // namespace SPH
 #endif // BODY_SURFACE_H

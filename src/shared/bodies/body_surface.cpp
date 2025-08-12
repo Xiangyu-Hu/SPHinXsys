@@ -76,4 +76,20 @@ bool NearShapeSurface::checkNearSurface(Vecd cell_position, Real threshold)
     return level_set_shape_.checkNearSurface(cell_position, threshold);
 }
 //=================================================================================================//
+KernelDepletionSurface::KernelDepletionSurface(SPHBody &sph_body)
+    : BodyPartByParticle(sph_body),
+      phi_(sph_body.getBaseParticles().getVariableDataByName<Real>("SignedDistance")),
+      smoothing_length_(sph_body.getSPHAdaptation().ReferenceSmoothingLength())
+{
+    alias_ = "KernelDepletionSurface";
+    TaggingParticleMethod tagging_particle_method = std::bind(&KernelDepletionSurface::tagNearSurface, this, _1);
+    tagParticles(tagging_particle_method);
+    std::cout << "Number of kernel depletion surface particles : " << body_part_particles_.size() << std::endl;
+}
+//=================================================================================================//
+bool KernelDepletionSurface::tagNearSurface(size_t particle_index)
+{
+    return ABS(phi_[particle_index]) < smoothing_length_;
+}
+//=================================================================================================//
 } // namespace SPH

@@ -21,14 +21,12 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file non_reflective_boundary.h
- * @brief Here, we define the non-reflective boundary condition at
- * fluid surface particles. //TODO: extend the method so that it works for
- * both eulerian and lagrangian formulations.
- * @author	Zhentong Wang and Xiangyu Hu
+ * @file eulerian_surface_condition.h
+ * @brief TBD.
+ * @author Xiangyu Hu
  */
-#ifndef NON_REFLECTIVE_BOUNDARY_H
-#define NON_REFLECTIVE_BOUNDARY_H
+#ifndef EULERIAN_SURFACE_CONDITION_H
+#define EULERIAN_SURFACE_CONDITION_H
 
 #include "base_fluid_dynamics.h"
 
@@ -36,25 +34,41 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class NonReflectiveBoundaryCorrection : public LocalDynamics, public DataDelegateInner
+template <class KernelCorrectionType, typename ConditionType>
+class EulerianSurfaceCondition : public BaseLocalDynamics<BodyPartByParticle>,
+                                 public EulerianIntegrationCK
 {
+    using EosKernel = typename WeaklyCompressibleFluid::EosKernel;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+
   public:
-    NonReflectiveBoundaryCorrection(BaseInnerRelation &inner_relation);
-    virtual ~NonReflectiveBoundaryCorrection() {};
-    void interaction(size_t index_i, Real dt = 0.0);
-    void update(size_t index_i, Real dt = 0.0);
+    template <typename... Args>
+    EulerianSurfaceCondition(BodyPartByParticle &box_part, Args &&...args);
+
+    class UpdateKernel : public EulerianIntegrationCK::ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        CorrectionKernel correction_kernel_;
+        EosKernel eos_;
+        ConditionType condition_;
+        Real *physical_time_;
+        Vecd *n_, *vel_, *dmom_dt_;
+        Real *surface_area_, *rho_, *p_, *dmass_dt_;
+    };
 
   protected:
-    Fluid &fluid_;
-    Real rho_farfield_, sound_speed_;
-    Vecd vel_farfield_;
-    Real *rho_, *p_, *Vol_, *mass_;
-    Vecd *vel_, *mom_, *pos_;
-    Real *inner_weight_summation_, *rho_average_, *vel_normal_average_;
-    Vecd *vel_tangential_average_, *vel_average_;
-    int *indicator_, *smeared_surface_;
-    Vecd *n_;
+    KernelCorrectionType kernel_correction_method_;
+    WeaklyCompressibleFluid &fluid_;
+    ConditionType condition_;
+    SingularVariable<Real> *sv_physical_time_;
+    DiscreteVariable<Vecd> *dv_n_;
+    DiscreteVariable<Real> *dv_surface_area_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // NON_REFLECTIVE_BOUNDARY_H
+#endif // EULERIAN_SURFACE_CONDITION_H

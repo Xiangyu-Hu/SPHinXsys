@@ -176,9 +176,14 @@ int main(int ac, char *av[])
     water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
         ->reloadExtraVariable<Vecd>("NormalDirection")
         ->reloadExtraVariable<Real>("SignedDistance");
+
     cylinder.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
         ->reloadExtraVariable<Vecd>("NormalDirection");
+    //----------------------------------------------------------------------
+    //	Body parts.
+    //----------------------------------------------------------------------
+    KernelDepletionSurface water_block_depletion_surface(water_block);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
