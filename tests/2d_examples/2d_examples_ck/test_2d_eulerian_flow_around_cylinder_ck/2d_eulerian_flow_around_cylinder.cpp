@@ -61,13 +61,11 @@ int main(int ac, char *av[])
     water_block_shape.subtract<GeometricShapeBall>(cylinder_center, cylinder_radius);
     FluidBody water_block(sph_system, water_block_shape);
     water_block.getSPHAdaptation().resetKernel<KernelLaguerreGauss>();
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
 
     GeometricShapeBall cylinder_shape(cylinder_center, cylinder_radius, "Cylinder");
     SolidBody cylinder(sph_system, cylinder_shape);
     cylinder.defineAdaptationRatios(1.3, 2.0);
     cylinder.getSPHAdaptation().resetKernel<KernelLaguerreGauss>();
-    cylinder.defineMaterial<Solid>();
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
@@ -176,10 +174,12 @@ int main(int ac, char *av[])
     water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
         ->reloadExtraVariable<Vecd>("NormalDirection")
         ->reloadExtraVariable<Real>("SignedDistance");
+    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
 
     cylinder.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
         ->reloadExtraVariable<Vecd>("NormalDirection");
+    cylinder.defineMaterial<Solid>();
     //----------------------------------------------------------------------
     //	Body parts.
     //----------------------------------------------------------------------
@@ -213,11 +213,11 @@ int main(int ac, char *av[])
             .addContactInteraction<AcousticRiemannSolver, NoKernelCorrectionCK>(water_cylinder_contact)
             .addPostStateDynamics<fluid_dynamics::EulerianSurfaceCondition, NoKernelCorrectionCK, FarfieldState>(
                 water_block, FarfieldState(water_block_inner));
+
     auto &viscous_force =
-        main_methods.addInteractionDynamics<
-            fluid_dynamics::ViscousForceWithWall, FixedViscosity, NoKernelCorrectionCK>(
-            water_block_inner, water_cylinder_contact);
-    InteractionWithUpdate<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_inner);
+        main_methods.addInteractionDynamicsWithUpdate<
+                        fluid_dynamics::ViscousForce, FixedViscosity, NoKernelCorrectionCK>(water_block_inner)
+            .addContactInteraction<Wall, ViscosityType, NoKernelCorrectionCK>(water_cylinder_contact);
     //----------------------------------------------------------------------
     //	Compute the force exerted on solid body due to fluid pressure and viscosity
     //----------------------------------------------------------------------
