@@ -5,7 +5,7 @@ namespace SPH
 //=================================================================================================//
 RelaxationScalingCK::RelaxationScalingCK(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      dv_residual_(particles_->getVariableByName<Vecd>("ZeroGradientResidual")),
+      dv_residual_(particles_->getVariableByName<Vecd>("KernelGradientIntegral")),
       h_ref_(sph_body.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 RelaxationScalingCK::FinishDynamics::FinishDynamics(RelaxationScalingCK &encloser)
@@ -19,6 +19,6 @@ Real RelaxationScalingCK::FinishDynamics::Result(Real reduced_value)
 PositionRelaxationCK::PositionRelaxationCK(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       pos_(particles_->getVariableByName<Vecd>("Position")),
-      residual_(particles_->getVariableByName<Vecd>("ZeroGradientResidual")) {}
+      residual_(particles_->getVariableByName<Vecd>("KernelGradientIntegral")) {}
 //=================================================================================================//
 } // namespace SPH

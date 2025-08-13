@@ -11,7 +11,7 @@ template <class DynamicsIdentifier>
 RelaxationResidualBase<BaseInteractionType>::RelaxationResidualBase(DynamicsIdentifier &identifier)
     : BaseInteractionType(identifier),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
-      dv_residual_(this->particles_->template registerStateVariable<Vecd>("ZeroGradientResidual")) {}
+      dv_residual_(this->particles_->template registerStateVariable<Vecd>("KernelGradientIntegral")) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 RelaxationResidualCK<Inner<KernelCorrectionType, Parameters...>>::

@@ -5,7 +5,7 @@
 #include "interaction_ck.hpp"
 #include "kernel_correction_ck.hpp"
 #include "particle_functors_ck.h"
-#include "zero_gradient_residual.hpp"
+#include "kernel_gradient_integral.hpp"
 
 namespace SPH
 {
@@ -17,9 +17,9 @@ class TransportVelocityCorrectionCK;
 template <class KernelCorrectionType, class LimiterType, class ParticleScopeType, typename... Parameters>
 class TransportVelocityCorrectionCK<
     Inner<WithUpdate, KernelCorrectionType, LimiterType, ParticleScopeType, Parameters...>>
-    : public ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>
+    : public KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>
 {
-    using BaseInteraction = ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>;
+    using BaseInteraction = KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>;
     using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
     using SmoothingRatio = typename Inner<Parameters...>::NeighborMethodType::SmoothingRatio;
 
@@ -39,7 +39,7 @@ class TransportVelocityCorrectionCK<
         SmoothingRatio h_ratio_;
         LimiterType limiter_;
         Vecd *dpos_;
-        Vecd *zero_gradient_residual_;
+        Vecd *kernel_gradient_integral_;
         ParticleScopeTypeKernel within_scope_;
     };
 
@@ -54,9 +54,9 @@ class TransportVelocityCorrectionCK<
 
 template <class KernelCorrectionType, typename... Parameters>
 class TransportVelocityCorrectionCK<Contact<Boundary, KernelCorrectionType, Parameters...>>
-    : public ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...>>
+    : public KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>
 {
-    using BaseInteraction = ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...>>;
+    using BaseInteraction = KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>;
 
       public:
         explicit TransportVelocityCorrectionCK(Contact<Parameters...> & contact_relation)
