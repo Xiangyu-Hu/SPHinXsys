@@ -36,9 +36,9 @@ ForceFromFluid<KernelCorrectionType, Parameters...>::InteractKernel::
       contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
       contact_vel_(encloser.dv_contact_vel_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <typename ViscousForceType, typename... Parameters>
+template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 template <class ContactRelationType>
-ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::
+ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>::
     ViscousForceFromFluid(ContactRelationType &contact_relation)
     : BaseForceFromFluid(contact_relation, "ViscousForceFromFluid")
 {
@@ -50,16 +50,16 @@ ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::
     }
 }
 //=================================================================================================//
-template <typename ViscousForceType, typename... Parameters>
+template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::InteractKernel::
+ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
       viscosity_(ex_policy, *encloser.contact_viscosity_model_[contact_index]),
       smoothing_length_sq_(encloser.contact_smoothing_length_sq_[contact_index]) {}
 //=================================================================================================//
-template <typename ViscousForceType, typename... Parameters>
-void ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>::
+template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
+void ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
@@ -79,9 +79,9 @@ void ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>
     this->force_from_fluid_[index_i] = force * this->Vol_[index_i];
 }
 //=================================================================================================//
-template <class AcousticStep2ndHalfType, typename... Parameters>
+template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ContactRelationType>
-PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>::
+PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     PressureForceFromFluid(ContactRelationType &contact_relation)
     : BaseForceFromFluid(contact_relation, "PressureForceFromFluid"),
       dv_acc_ave_(this->solid_.AverageAccelerationVariable(this->particles_)),
@@ -98,9 +98,9 @@ PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters..
     }
 }
 //=================================================================================================//
-template <class AcousticStep2ndHalfType, typename... Parameters>
+template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>::InteractKernel::
+PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrectionType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
       acc_ave_(encloser.dv_acc_ave_->DelegatedData(ex_policy)),
@@ -111,8 +111,8 @@ PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters..
       contact_p_(encloser.dv_contact_p_[contact_index]->DelegatedData(ex_policy)),
       contact_force_prior_(encloser.dv_contact_force_prior_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <class AcousticStep2ndHalfType, typename... Parameters>
-void PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>::
+template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+void PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
