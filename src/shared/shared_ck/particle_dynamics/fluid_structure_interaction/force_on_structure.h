@@ -75,14 +75,12 @@ class ForceFromFluid : public Interaction<Contact<Parameters...>>, public ForceP
 template <typename...>
 class ViscousForceFromFluid;
 
-template <typename ViscousForceType, typename... Parameters>
-class ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>
-    : public ForceFromFluid<decltype(ViscousForceType::kernel_correction_), Parameters...>
+template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
+class ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>
+    : public ForceFromFluid<KernelCorrectionType, Parameters...>
 {
-
-    using ViscosityType = typename ViscousForceType::ViscosityModel;
     using ViscosityKernel = typename ViscosityType::ComputingKernel;
-    using BaseForceFromFluid = ForceFromFluid<decltype(ViscousForceType::kernel_correction_), Parameters...>;
+    using BaseForceFromFluid = ForceFromFluid<KernelCorrectionType, Parameters...>;
 
   public:
     template <class ContactRelationType>
@@ -104,20 +102,34 @@ class ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>
     StdVec<ViscosityType *> contact_viscosity_model_;
     StdVec<Real> contact_smoothing_length_sq_;
 };
+
+template <typename ViscousForceType, typename... Parameters>
+class ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>>
+    : public ViscousForceFromFluid<Contact<
+          WithUpdate,
+          typename ViscousForceType::ViscosityModel,
+          decltype(ViscousForceType::kernel_correction_), Parameters...>>
+{
+  public:
+    explicit ViscousForceFromFluid(Contact<Parameters...> &contact_relation)
+        : ViscousForceFromFluid<Contact<
+              WithUpdate, typename ViscousForceType::ViscosityModel,
+              decltype(ViscousForceType::kernel_correction_), Parameters...>>(contact_relation) {};
+    virtual ~ViscousForceFromFluid() {};
+};
+
 template <typename ViscousForceType>
 using ViscousForceOnStructure = ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType>>;
 
 template <typename...>
 class PressureForceFromFluid;
 
-template <class AcousticStep2ndHalfType, typename... Parameters>
-class PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>
-    : public ForceFromFluid<decltype(AcousticStep2ndHalfType::kernel_correction_), Parameters...>
+template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+class PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrectionType, Parameters...>>
+    : public ForceFromFluid<KernelCorrectionType, Parameters...>
 {
-    using RiemannSolverType = decltype(AcousticStep2ndHalfType::riemann_solver_);
     using FluidType = typename RiemannSolverType::SourceFluid;
-    using KernelCorrectionType = decltype(AcousticStep2ndHalfType::kernel_correction_);
-    using BaseForceFromFluid = ForceFromFluid<decltype(AcousticStep2ndHalfType::kernel_correction_), Parameters...>;
+    using BaseForceFromFluid = ForceFromFluid<KernelCorrectionType, Parameters...>;
 
   public:
     template <class ContactRelationType>
@@ -144,8 +156,27 @@ class PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parame
     StdVec<DiscreteVariable<Real> *> dv_contact_rho_, dv_contact_mass_, dv_contact_p_;
     StdVec<DiscreteVariable<Vecd> *> dv_contact_force_prior_;
 };
+
+template <class AcousticStep2ndHalfType, typename... Parameters>
+class PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parameters...>>
+    : public PressureForceFromFluid<Contact<
+          WithUpdate, decltype(AcousticStep2ndHalfType::riemann_solver_),
+          decltype(AcousticStep2ndHalfType::kernel_correction_),
+          Parameters...>>
+{
+  public:
+    template <class ContactRelationType>
+    explicit PressureForceFromFluid(ContactRelationType &contact_relation)
+        : PressureForceFromFluid<Contact<
+              WithUpdate, decltype(AcousticStep2ndHalfType::riemann_solver_),
+              decltype(AcousticStep2ndHalfType::kernel_correction_),
+              Parameters...>>(contact_relation){};
+    virtual ~PressureForceFromFluid() {};
+};
+
 template <typename AcousticStep2ndHalfType>
 using PressureForceOnStructure = PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType>>;
+
 } // namespace FSI
 } // namespace SPH
 #endif // FORCE_ON_STRUCTURE_H
