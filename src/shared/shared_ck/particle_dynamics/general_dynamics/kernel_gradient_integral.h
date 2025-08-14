@@ -21,43 +21,43 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file zero_gradient_residual.h
+ * @file kernel_gradient_integral.h
  * @brief The error residual for computing the gradient of unit.
  * @author	Xiangyu Hu
  */
 
-#ifndef ZERO_GRADIENT_RESIDUAL_H
-#define ZERO_GRADIENT_RESIDUAL_H
+#ifndef KERNEL_GRADIENT_INTEGRAL_H
+#define KERNEL_GRADIENT_INTEGRAL_H
 
 #include "base_general_dynamics.h"
 
 namespace SPH
 {
 template <class BaseInteractionType>
-class ZeroGradientResidualBase : public BaseInteractionType
+class KernelGradientIntegralBase : public BaseInteractionType
 {
   public:
     template <class DynamicsIdentifier>
-    explicit ZeroGradientResidualBase(DynamicsIdentifier &identifier);
-    virtual ~ZeroGradientResidualBase() {}
+    explicit KernelGradientIntegralBase(DynamicsIdentifier &identifier);
+    virtual ~KernelGradientIntegralBase() {}
 
   protected:
-    DiscreteVariable<Vecd> *dv_zero_gradient_residual_; ///< "ZeroGradientResidual"
+    DiscreteVariable<Vecd> *dv_kernel_gradient_integral_; ///< "KernelGradientIntegral"
 };
 
 template <typename...>
-class ZeroGradientResidual;
+class KernelGradientIntegral;
 
 template <class KernelCorrectionType, typename... Parameters>
-class ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>
-    : public ZeroGradientResidualBase<Interaction<Inner<Parameters...>>>
+class KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>
+    : public KernelGradientIntegralBase<Interaction<Inner<Parameters...>>>
 {
-    using BaseInteraction = ZeroGradientResidualBase<Interaction<Inner<Parameters...>>>;
+    using BaseInteraction = KernelGradientIntegralBase<Interaction<Inner<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit ZeroGradientResidual(Inner<Parameters...> &inner_relation);
-    virtual ~ZeroGradientResidual() {}
+    explicit KernelGradientIntegral(Inner<Parameters...> &inner_relation);
+    virtual ~KernelGradientIntegral() {}
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
@@ -68,7 +68,7 @@ class ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>
 
       protected:
         CorrectionKernel correction_;
-        Vecd *zero_gradient_residual_;
+        Vecd *kernel_gradient_integral_;
         Real *Vol_;
     };
 
@@ -77,15 +77,15 @@ class ZeroGradientResidual<Inner<KernelCorrectionType, Parameters...>>
 };
 
 template <class KernelCorrectionType, typename... Parameters>
-class ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...>>
-    : public ZeroGradientResidualBase<Interaction<Contact<Parameters...>>>
+class KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>
+    : public KernelGradientIntegralBase<Interaction<Contact<Parameters...>>>
 {
-    using BaseInteraction = ZeroGradientResidualBase<Interaction<Contact<Parameters...>>>;
+    using BaseInteraction = KernelGradientIntegralBase<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit ZeroGradientResidual(Contact<Parameters...> &contact_relation);
-    virtual ~ZeroGradientResidual() {}
+    explicit KernelGradientIntegral(Contact<Parameters...> &contact_relation);
+    virtual ~KernelGradientIntegral() {}
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
@@ -96,7 +96,7 @@ class ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...
 
       protected:
         CorrectionKernel correction_;
-        Vecd *zero_gradient_residual_;
+        Vecd *kernel_gradient_integral_;
         Real *contact_Vol_;
     };
 
@@ -104,4 +104,4 @@ class ZeroGradientResidual<Contact<Boundary, KernelCorrectionType, Parameters...
     KernelCorrectionType kernel_correction_;
 };
 } // namespace SPH
-#endif // ZERO_GRADIENT_RESIDUAL_H
+#endif // KERNEL_GRADIENT_RESIDUAL_H

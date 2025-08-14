@@ -120,7 +120,7 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
                 inconsistency -= (this->kernel_correction_(index_i) + this->kernel_correction_(index_j)) *
                                  inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
             }
-            this->zero_gradient_residual_[index_i] = inconsistency;
+            this->kernel_gradient_integral_[index_i] = inconsistency;
         }
     };
     void update(size_t index_i, Real dt = 0.0)
@@ -128,9 +128,9 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
         if (this->within_scope_(index_i))
         {
             Real inv_h_ratio = 1.0 / h_ratio_(index_i);
-            Real squared_norm = this->zero_gradient_residual_[index_i].squaredNorm();
+            Real squared_norm = this->kernel_gradient_integral_[index_i].squaredNorm();
             Vecd pos_transport = correction_scaling_ * limiter_(squared_norm) *
-                                 this->zero_gradient_residual_[index_i] * inv_h_ratio * inv_h_ratio;
+                                 this->kernel_gradient_integral_[index_i] * inv_h_ratio * inv_h_ratio;
             if (this->indicator_[index_i])
             {
                 pos_transport = pos_transport - pos_transport.dot(this->surface_normal_[index_i]) * this->surface_normal_[index_i];
@@ -185,7 +185,7 @@ class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
                                      wall_Vol_k[index_j] * contact_neighborhood.e_ij_[n];
                 }
             }
-            this->zero_gradient_residual_[index_i] += inconsistency;
+            this->kernel_gradient_integral_[index_i] += inconsistency;
         }
     };
 

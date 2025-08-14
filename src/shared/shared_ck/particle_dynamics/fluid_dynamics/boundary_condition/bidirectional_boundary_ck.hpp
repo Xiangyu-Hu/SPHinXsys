@@ -124,7 +124,7 @@ PressureVelocityCondition<KernelCorrectionType, ConditionType>::
       kernel_correction_method_(this->particles_),
       condition_(std::forward<Args>(args)...),
       sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime")),
-      dv_zero_gradient_residual_(this->particles_->template getVariableByName<Vecd>("ZeroGradientResidual")) {}
+      dv_kernel_gradient_integral_(this->particles_->template getVariableByName<Vecd>("KernelGradientIntegral")) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename ConditionType>
 template <class ExecutionPolicy, class EncloserType>
@@ -135,7 +135,7 @@ PressureVelocityCondition<KernelCorrectionType, ConditionType>::UpdateKernel::
       correction_kernel_(ex_policy, encloser.kernel_correction_method_),
       condition_(encloser.condition_),
       physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
-      zero_gradient_residual_(encloser.dv_zero_gradient_residual_->DelegatedData(ex_policy)),
+      kernel_gradient_integral_(encloser.dv_kernel_gradient_integral_->DelegatedData(ex_policy)),
       axis_(aligned_box_->AlignmentAxis()), transform_(&aligned_box_->getTransform()) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename ConditionType>
@@ -144,7 +144,7 @@ void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
 {
     if (aligned_box_->checkContain(pos_[index_i]))
     {
-        Vecd corrected_residual = correction_kernel_(index_i) * zero_gradient_residual_[index_i];
+        Vecd corrected_residual = correction_kernel_(index_i) * kernel_gradient_integral_[index_i];
         vel_[index_i] -= dt * condition_.getPressure(p_[index_i], *physical_time_) /
                          rho_[index_i] * corrected_residual;
 

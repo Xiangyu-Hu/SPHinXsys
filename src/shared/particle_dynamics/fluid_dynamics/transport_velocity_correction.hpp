@@ -12,7 +12,7 @@ template <class BaseRelationType>
 TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, ParticleScope>::
     TransportVelocityCorrection(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      zero_gradient_residual_(this->particles_->template registerStateVariableData<Vecd>("ZeroGradientResidual")),
+      kernel_gradient_integral_(this->particles_->template registerStateVariableData<Vecd>("KernelGradientIntegral")),
       kernel_correction_(this->particles_), within_scope_(this->particles_)
 {
     static_assert(std::is_base_of<WithinScope, ParticleScope>::value,
@@ -48,7 +48,7 @@ void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonContr
             inconsistency -= (this->kernel_correction_(index_i) + this->kernel_correction_(index_j, index_i)) *
                              inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
         }
-        this->zero_gradient_residual_[index_i] = inconsistency;
+        this->kernel_gradient_integral_[index_i] = inconsistency;
     }
 }
 //=================================================================================================//
@@ -59,9 +59,9 @@ void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonContr
     if (this->within_scope_(index_i))
     {
         Real inv_h_ratio = 1.0 / h_ratio_(index_i);
-        Real squared_norm = this->zero_gradient_residual_[index_i].squaredNorm();
+        Real squared_norm = this->kernel_gradient_integral_[index_i].squaredNorm();
         pos_[index_i] += correction_scaling_ * limiter_(squared_norm) *
-                         this->zero_gradient_residual_[index_i] * inv_h_ratio * inv_h_ratio;
+                         this->kernel_gradient_integral_[index_i] * inv_h_ratio * inv_h_ratio;
     }
 }
 //=================================================================================================//
@@ -95,7 +95,7 @@ void TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>::
                                  wall_Vol_k[index_j] * contact_neighborhood.e_ij_[n];
             }
         }
-        this->zero_gradient_residual_[index_i] += inconsistency;
+        this->kernel_gradient_integral_[index_i] += inconsistency;
     }
 }
 //=================================================================================================//
@@ -132,7 +132,7 @@ void TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlT
                                  contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * contact_neighborhood.e_ij_[n];
             }
         }
-        this->zero_gradient_residual_[index_i] += inconsistency;
+        this->kernel_gradient_integral_[index_i] += inconsistency;
     }
 }
 //=================================================================================================//
