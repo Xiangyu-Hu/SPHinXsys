@@ -171,8 +171,8 @@ ContainerType<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
 template <typename DataType>
-MeshWithGridDataPackages<PKG_SIZE>::MeshVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
-    registerMeshVariable(const std::string &variable_name)
+typename MeshWithGridDataPackages<PKG_SIZE>::template MeshVariable<DataType> *
+MeshWithGridDataPackages<PKG_SIZE>::registerMeshVariable(const std::string &variable_name)
 {
     if (!is_organized_)
     {
@@ -186,8 +186,8 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshVariable<DataType> *MeshWithGridDataPack
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
 template <typename DataType, typename... Args>
-MeshWithGridDataPackages<PKG_SIZE>::BKGMeshVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
-    registerBKGMeshVariable(const std::string &variable_name, Args &&...args)
+typename MeshWithGridDataPackages<PKG_SIZE>::template BKGMeshVariable<DataType> *
+MeshWithGridDataPackages<PKG_SIZE>::registerBKGMeshVariable(const std::string &variable_name, Args &&...args)
 {
     return registerVariable<BKGMeshVariable, DataType>(
         all_bkg_mesh_variables_, bkg_mesh_variable_ptrs_, variable_name, AllCells().prod(),
@@ -196,8 +196,8 @@ MeshWithGridDataPackages<PKG_SIZE>::BKGMeshVariable<DataType> *MeshWithGridDataP
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
 template <typename DataType>
-MeshWithGridDataPackages<PKG_SIZE>::MeshVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
-    getMeshVariable(const std::string &variable_name)
+typename MeshWithGridDataPackages<PKG_SIZE>::template MeshVariable<DataType> *
+MeshWithGridDataPackages<PKG_SIZE>::getMeshVariable(const std::string &variable_name)
 {
     MeshVariable<DataType> *variable =
         findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
@@ -211,8 +211,8 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshVariable<DataType> *MeshWithGridDataPack
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
 template <typename DataType>
-MeshWithGridDataPackages<PKG_SIZE>::BKGMeshVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
-    getBKGMeshVariable(const std::string &variable_name)
+typename MeshWithGridDataPackages<PKG_SIZE>::template BKGMeshVariable<DataType> *
+MeshWithGridDataPackages<PKG_SIZE>::getBKGMeshVariable(const std::string &variable_name)
 {
     BKGMeshVariable<DataType> *variable =
         findVariableByName<DataType, BKGMeshVariable>(all_bkg_mesh_variables_, variable_name);
