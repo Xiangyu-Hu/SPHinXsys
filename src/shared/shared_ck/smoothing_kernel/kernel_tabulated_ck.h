@@ -35,7 +35,7 @@
 namespace SPH
 {
 constexpr int kernel_resolution_ = 20;
-constexpr int tabulated_array_size_ = kernel_resolution_ + 4;
+constexpr int tabulated_size_ = kernel_resolution_ + 4;
 
 class KernelTabulatedCK
 {
@@ -173,6 +173,11 @@ class KernelTabulatedCK
         return interpolateCubic(dw_1d, normalized_distance);
     };
 
+    inline Real normalized_d2W(Real normalized_distance) const
+    {
+        return interpolateCubic(d2w_1d, normalized_distance);
+    };
+
   protected:
     Real dimension_factor_1D_, dimension_factor_2D_, dimension_factor_3D_;
 
@@ -182,7 +187,7 @@ class KernelTabulatedCK
     Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
     Real factor_d2W_1D_, factor_d2W_2D_, factor_d2W_3D_;
     Real dq_, delta_q_0_, delta_q_1_, delta_q_2_, delta_q_3_;
-    Real w_1d[tabulated_array_size_], dw_1d[tabulated_array_size_], d2w_1d[tabulated_array_size_];
+    Real w_1d[tabulated_size_], dw_1d[tabulated_size_], d2w_1d[tabulated_size_];
 };
 } // namespace SPH
 #endif // KERNEL_TABULATED_CK_H

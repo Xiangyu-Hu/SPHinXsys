@@ -23,7 +23,7 @@ KernelTabulatedCK::KernelTabulatedCK(Kernel &kernel)
     kernel_size_ = kernel.KernelSize();
 
     dq_ = kernel_size_ / Real(kernel_resolution_);
-    for (int i = 0; i < tabulated_array_size_; i++)
+    for (int i = 0; i < tabulated_size_; i++)
     {
         w_1d[i] = kernel.W_1D(Real(i - 1) * dq_);
         dw_1d[i] = kernel.dW_1D(Real(i - 1) * dq_);

@@ -121,9 +121,9 @@ class MultilevelLevelSet : public BaseMeshField
     void initializeLevel(Real reference_data_spacing, BoundingBox tentative_bounds,
                          MeshWithGridDataPackagesType *coarse_data = nullptr);
     template <class ExecutionPolicy>
-    void initializeMeshVariables(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel);
+    void initializeMeshVariables(const ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
-    void initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel);
+    void initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
     void registerProbes(const ExecutionPolicy &ex_policy, size_t level);
 
@@ -131,7 +131,8 @@ class MultilevelLevelSet : public BaseMeshField
     size_t total_levels_; /**< level 0 is the coarsest */
     StdVec<UnsignedInt *> cell_pkg_index_set_;
     StdVec<std::pair<Arrayi, int> *> pkg_cell_info_set_;
-    StdVec<Real> global_h_ratio_vec_;
+    StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
+    StdVec<NeighborMethod<SingleValued> *> neighbor_method_set_;
     StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;
     StdVec<ProbeSignedDistance *> probe_signed_distance_set_;
     StdVec<ProbeNormalDirection *> probe_normal_direction_set_;
@@ -149,11 +150,11 @@ class MultilevelLevelSet : public BaseMeshField
 
     UniquePtr<BaseDynamics<void>> correct_topology_keeper_;
     UniquePtr<BaseDynamics<void>> clean_interface_keeper_;
-    UniquePtr<SingularVariable<KernelTabulatedCK>> kernel_;
+    UniquePtrsKeeper<NeighborMethod<SingleValued>> neighbor_method_keeper_;
     std::function<void()> sync_mesh_variable_data_;
 
     template <class ExecutionPolicy>
-    void configLevelSetPostProcesses(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel);
+    void configLevelSetPostProcesses(const ExecutionPolicy &ex_policy);
 };
 } // namespace SPH
 #endif // LEVEL_SET_H

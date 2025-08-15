@@ -81,16 +81,26 @@ class NeighborMethod<SingleValued> : public NeighborMethod<Base>
         search_depth_ = static_cast<int>(std::ceil((source_h - Eps) / target_h));
     }
 
+    NeighborMethod(Kernel &base_kernel, Real h, Real search_increment)
+        : NeighborMethod<Base>(base_kernel), inv_h_(1.0 / h),
+          search_depth_(static_cast<int>(std::ceil((h - Eps) / search_increment))) {}
+
+    Real CutOffRadius() const
+    {
+        return base_kernel_.KernelSize() / inv_h_;
+    }
+
     class SmoothingKernel : public KernelTabulatedCK
     {
-        Real inv_h_, inv_h_squared_, inv_h_cubed_, inv_h_fourth_;
+        Real inv_h_, inv_h_squared_, inv_h_cubed_, inv_h_fourth_, inv_h_fifth_;
 
       public:
         template <class ExecutionPolicy, class EncloserType>
         SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : KernelTabulatedCK(encloser.base_kernel_),
               inv_h_(encloser.inv_h_), inv_h_squared_(inv_h_ * inv_h_),
-              inv_h_cubed_(inv_h_squared_ * inv_h_), inv_h_fourth_(inv_h_cubed_ * inv_h_){};
+              inv_h_cubed_(inv_h_squared_ * inv_h_), inv_h_fourth_(inv_h_cubed_ * inv_h_),
+              inv_h_fifth_(inv_h_fourth_ * inv_h_){};
 
         inline Real W(const Vecd &displacement) const
         {
@@ -102,11 +112,18 @@ class NeighborMethod<SingleValued> : public NeighborMethod<Base>
             return GradientFactor(displacement) * normalized_dW((displacement * inv_h_).norm());
         };
 
+        inline Real d2W(const Vecd &displacement) const
+        {
+            return Gradient2Factor(displacement) * normalized_d2W((displacement * inv_h_).norm());
+        };
+
       protected:
         inline Real Factor(const Vec2d &) const { return inv_h_squared_ * dimension_factor_2D_; };
         inline Real Factor(const Vec3d &) const { return inv_h_cubed_ * dimension_factor_3D_; };
         inline Real GradientFactor(const Vec2d &) const { return inv_h_cubed_ * dimension_factor_2D_; };
         inline Real GradientFactor(const Vec3d &) const { return inv_h_fourth_ * dimension_factor_3D_; };
+        inline Real Gradient2Factor(const Vec2d &) const { return inv_h_fourth_ * dimension_factor_2D_; };
+        inline Real Gradient2Factor(const Vec3d &) const { return inv_h_fifth_ * dimension_factor_3D_; };
     };
 
     class CriterionKernel

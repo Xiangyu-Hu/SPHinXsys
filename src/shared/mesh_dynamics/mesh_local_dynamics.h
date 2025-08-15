@@ -36,6 +36,7 @@
 #include "kernel_tabulated_ck.h"
 #include "mesh_iterators.hpp"
 #include "mesh_with_data_packages.hpp"
+#include "neighbor_method.h"
 
 namespace SPH
 {
@@ -447,9 +448,11 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 
 class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 {
+    using SmoothingKernel = typename NeighborMethod<SingleValued>::SmoothingKernel;
+
   public:
     explicit UpdateKernelIntegrals(
-        MeshWithGridDataPackagesType &data_mesh, KernelTabulatedCK *kernel, Real global_h_ratio);
+        MeshWithGridDataPackagesType &data_mesh, NeighborMethod<SingleValued> &neighbor_method);
     virtual ~UpdateKernelIntegrals() {};
 
     class UpdateKernel
@@ -458,19 +461,18 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_spacing_(encloser.data_spacing_),
-              global_h_ratio_(encloser.global_h_ratio_),
               phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
               phi_gradient_(encloser.mv_phi_gradient_.DelegatedData(ex_policy)),
               kernel_weight_(encloser.mv_kernel_weight_.DelegatedData(ex_policy)),
               kernel_gradient_(encloser.mv_kernel_gradient_.DelegatedData(ex_policy)),
               kernel_second_gradient_(encloser.mv_kernel_second_gradient_.DelegatedData(ex_policy)),
               pkg_cell_info_(encloser.dv_pkg_cell_info_.DelegatedData(ex_policy)),
-              kernel_(encloser.kernel_),
+              kernel_(ex_policy, encloser.neighbor_method_),
               index_handler_(encloser.data_mesh_.index_handler_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
               cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
               probe_signed_distance_(ex_policy, &encloser.data_mesh_),
-              cutoff_radius_(kernel_->CutOffRadius(global_h_ratio_)),
+              cutoff_radius_(encloser.neighbor_method_.CutOffRadius()),
               depth_(static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))){};
         void update(const UnsignedInt &package_index)
         {
@@ -496,7 +498,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         MeshVariableData<Matd> *kernel_second_gradient_;
         std::pair<Arrayi, int> *pkg_cell_info_;
 
-        KernelTabulatedCK *kernel_;
+        SmoothingKernel kernel_;
         MeshWithGridDataPackagesType::IndexHandler *index_handler_;
         CellNeighborhood *cell_neighborhood_;
         UnsignedInt *cell_pkg_index_;
@@ -528,7 +530,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
     };
 
   private:
-    KernelTabulatedCK *kernel_;
+    NeighborMethod<SingleValued> &neighbor_method_;
     Real global_h_ratio_;
     MeshVariable<Real> &mv_phi_;
     MeshVariable<Vecd> &mv_phi_gradient_;
