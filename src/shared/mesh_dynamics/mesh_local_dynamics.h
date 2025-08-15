@@ -35,7 +35,7 @@
 #include "execution_policy.h"
 #include "kernel_tabulated_ck.h"
 #include "mesh_iterators.hpp"
-#include "mesh_with_data_packages.h"
+#include "mesh_with_data_packages.hpp"
 
 namespace SPH
 {

@@ -1,7 +1,7 @@
 #ifndef MESH_WITH_DATA_PACKAGES_3D_HPP
 #define MESH_WITH_DATA_PACKAGES_3D_HPP
 
-#include "mesh_with_data_packages.h"
+#include "mesh_with_data_packages.hxx"
 
 #include "block_cluster_3d.h"
 
