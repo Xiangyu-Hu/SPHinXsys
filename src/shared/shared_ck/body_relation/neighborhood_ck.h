@@ -35,7 +35,7 @@
 
 namespace SPH
 {
-template <class NeighborMethod>
+template <class NeighborMethodType>
 class Neighbor
 {
   public:
@@ -47,7 +47,7 @@ class Neighbor
 
     class NeighborKernel
     {
-        using SmoothingKernel = typename NeighborMethod::SmoothingKernel;
+        using SmoothingKernel = typename NeighborMethodType::SmoothingKernel;
 
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -76,7 +76,7 @@ class Neighbor
 
     class NeighborCriterion
     {
-        using CriterionKernel = typename NeighborMethod::CriterionKernel;
+        using CriterionKernel = typename NeighborMethodType::CriterionKernel;
 
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -98,7 +98,7 @@ class Neighbor
 
     class SearchDepth
     {
-        using SearchDepthKernel = typename NeighborMethod::SearchDepthKernel;
+        using SearchDepthKernel = typename NeighborMethodType::SearchDepthKernel;
 
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -113,7 +113,7 @@ class Neighbor
 
     class SmoothingRatio
     {
-        using SmoothingRatioKernel = typename NeighborMethod::SmoothingRatioKernel;
+        using SmoothingRatioKernel = typename NeighborMethodType::SmoothingRatioKernel;
 
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -127,7 +127,7 @@ class Neighbor
     };
 
   protected:
-    NeighborMethod neighbor_method_; /**< The neighbor method for the neighborhood. */
+    NeighborMethodType neighbor_method_; /**< The neighbor method for the neighborhood. */
     DiscreteVariable<Vecd> *dv_source_pos_;
     DiscreteVariable<Vecd> *dv_target_pos_;
 };

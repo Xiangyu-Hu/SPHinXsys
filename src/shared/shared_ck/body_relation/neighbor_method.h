@@ -37,13 +37,13 @@ namespace SPH
 class BodyPartitionSpatial;
 
 template <typename...>
-class SmoothingLength;
+class NeighborMethod;
 
 template <>
-class SmoothingLength<Base>
+class NeighborMethod<Base>
 {
   public:
-    SmoothingLength(Kernel &base_kernel) : base_kernel_(base_kernel) {};
+    NeighborMethod(Kernel &base_kernel) : base_kernel_(base_kernel) {};
 
   protected:
     Kernel &base_kernel_;
@@ -68,12 +68,12 @@ class SmoothingLength<Base>
 };
 
 template <>
-class SmoothingLength<SingleValued> : public SmoothingLength<Base>
+class NeighborMethod<SingleValued> : public NeighborMethod<Base>
 {
   public:
     template <class SourceIdentifier, class TargetIdentifier>
-    SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : SmoothingLength<Base>(*source_identifier.getSPHAdaptation().getKernel())
+    NeighborMethod(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
+        : NeighborMethod<Base>(*source_identifier.getSPHAdaptation().getKernel())
     {
         Real source_h = getSmoothingLength(SingleValued{}, source_identifier);
         Real target_h = getSmoothingLength(SingleValued{}, contact_identifier);
