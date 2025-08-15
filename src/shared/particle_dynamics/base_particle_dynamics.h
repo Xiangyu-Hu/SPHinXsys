@@ -34,39 +34,12 @@
 #include "all_body_relations.h"
 #include "base_body.h"
 #include "base_data_package.h"
+#include "base_dynamics.h"
 #include "neighborhood.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH
 {
-/**
- * @class BaseDynamics
- * @brief The base class for all dynamics
- * This class contains only the interface functions available
- * for all dynamics. An specific implementation should be realized.
- */
-template <class ReturnType = void>
-class BaseDynamics
-{
-  public:
-    BaseDynamics() : is_newly_updated_(false) {};
-    virtual ~BaseDynamics() {};
-    bool checkNewlyUpdated() { return is_newly_updated_; };
-    void setNotNewlyUpdated() { is_newly_updated_ = false; };
-
-    void setUpdated(SPHBody &sph_body)
-    {
-        sph_body.setNewlyUpdated();
-        is_newly_updated_ = true;
-    };
-
-    /** There is the interface functions for computing. */
-    virtual ReturnType exec(Real dt = 0.0) = 0;
-
-  private:
-    bool is_newly_updated_;
-};
-
 /**
  * @class DataDelegateInner
  * @brief prepare data for inner particle dynamics

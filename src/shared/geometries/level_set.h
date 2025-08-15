@@ -147,8 +147,8 @@ class MultilevelLevelSet : public BaseMeshField
     UniquePtrsKeeper<ProbeKernelGradientIntegral> probe_kernel_gradient_integral_vector_keeper_;
     UniquePtrsKeeper<ProbeKernelSecondGradientIntegral> probe_kernel_second_gradient_integral_vector_keeper_;
 
-    UniquePtr<BaseExecDynamics> correct_topology_keeper_;
-    UniquePtr<BaseExecDynamics> clean_interface_keeper_;
+    UniquePtr<BaseDynamics<void>> correct_topology_keeper_;
+    UniquePtr<BaseDynamics<void>> clean_interface_keeper_;
     UniquePtr<SingularVariable<KernelTabulatedCK>> kernel_;
     std::function<void()> sync_mesh_variable_data_;
 

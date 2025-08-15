@@ -31,6 +31,7 @@
 #ifndef MESH_DYNAMICS_H
 #define MESH_DYNAMICS_H
 
+#include "base_dynamics.h"
 #include "implementation.h"
 #include "mesh_iterators.hpp"
 #include "mesh_local_dynamics.hpp"
