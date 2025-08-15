@@ -5,21 +5,9 @@ namespace SPH
 //=================================================================================================//
 KernelTabulatedCK::KernelTabulatedCK(Kernel &kernel)
 {
-    inv_h_ = 1.0 / kernel.SmoothingLength();
-    factor_W_1D_ = kernel.FactorW1D();
-    factor_W_2D_ = kernel.FactorW2D();
-    factor_W_3D_ = kernel.FactorW3D();
-    factor_dW_1D_ = inv_h_ * factor_W_1D_;
-    factor_dW_2D_ = inv_h_ * factor_W_2D_;
-    factor_dW_3D_ = inv_h_ * factor_W_3D_;
-    factor_d2W_1D_ = inv_h_ * factor_dW_1D_;
-    factor_d2W_2D_ = inv_h_ * factor_dW_2D_;
-    factor_d2W_3D_ = inv_h_ * factor_dW_3D_;
     dimension_factor_1D_ = kernel.DimensionFactor1D();
     dimension_factor_2D_ = kernel.DimensionFactor2D();
     dimension_factor_3D_ = kernel.DimensionFactor3D();
-    rc_ref_ = kernel.CutOffRadius();
-    rc_ref_sqr_ = kernel.CutOffRadiusSqr();
     kernel_size_ = kernel.KernelSize();
 
     dq_ = kernel_size_ / Real(kernel_resolution_);
