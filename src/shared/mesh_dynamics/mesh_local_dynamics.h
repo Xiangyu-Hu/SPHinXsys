@@ -32,13 +32,10 @@
 
 #include "base_geometry.h"
 #include "base_implementation.h"
-#include "base_kernel.h"
-#include "data_type.h"
 #include "execution_policy.h"
 #include "kernel_tabulated_ck.h"
 #include "mesh_iterators.hpp"
 #include "mesh_with_data_packages.h"
-#include "sphinxsys_variable.h"
 
 namespace SPH
 {
