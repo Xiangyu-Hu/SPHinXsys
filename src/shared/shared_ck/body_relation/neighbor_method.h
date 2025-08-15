@@ -44,36 +44,10 @@ template <>
 class SmoothingLength<Base>
 {
   public:
-    SmoothingLength(Kernel &base_kernel,
-                    DiscreteVariable<Vecd> *dv_source_pos, DiscreteVariable<Vecd> *dv_target_pos)
-        : base_kernel_(base_kernel), dv_source_pos_(dv_source_pos),
-          dv_target_pos_(dv_target_pos) {};
-
-    class SmoothingKernel : public KernelTabulatedCK
-    {
-        Vecd *source_pos_;
-        Vecd *target_pos_;
-
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : KernelTabulatedCK(encloser.base_kernel_),
-              source_pos_(encloser.dv_source_pos_->DelegatedData(ex_policy)),
-              target_pos_(encloser.dv_target_pos_->DelegatedData(ex_policy)){};
-
-        inline Vecd vec_r_ij(size_t i, size_t j) const { return source_pos_[i] - target_pos_[j]; };
-
-        inline Vecd e_ij(size_t i, size_t j) const
-        {
-            Vecd displacement = vec_r_ij(i, j);
-            return displacement / (displacement.norm() + TinyReal);
-        };
-    };
+    SmoothingLength(Kernel &base_kernel) : base_kernel_(base_kernel) {};
 
   protected:
     Kernel &base_kernel_;
-    DiscreteVariable<Vecd> *dv_source_pos_;
-    DiscreteVariable<Vecd> *dv_target_pos_;
 
     template <class DynamicsIdentifier>
     Real getSmoothingLength(const SingleValued &single_valued, DynamicsIdentifier &identifier)
@@ -98,15 +72,9 @@ template <>
 class SmoothingLength<SingleValued> : public SmoothingLength<Base>
 {
   public:
-    template <class DynamicsIdentifier>
-    SmoothingLength(DiscreteVariable<Vecd> *dv_configuration_pos, DynamicsIdentifier &identifier)
-        : SmoothingLength<Base>(*identifier.getSPHAdaptation().getKernel(), dv_configuration_pos, dv_configuration_pos),
-          inv_h_(1.0 / getSmoothingLength(SingleValued{}, identifier)), search_depth_(1){};
-
     template <class SourceIdentifier, class TargetIdentifier>
-    SmoothingLength(DiscreteVariable<Vecd> *dv_source_pos, DiscreteVariable<Vecd> *dv_target_pos,
-                    SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : SmoothingLength<Base>(*source_identifier.getSPHAdaptation().getKernel(), dv_source_pos, dv_target_pos)
+    SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
+        : SmoothingLength<Base>(*source_identifier.getSPHAdaptation().getKernel())
     {
         Real source_h = getSmoothingLength(SingleValued{}, source_identifier);
         Real target_h = getSmoothingLength(SingleValued{}, contact_identifier);
@@ -114,14 +82,14 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
         search_depth_ = static_cast<int>(std::ceil((source_h - Eps) / target_h));
     }
 
-    class SmoothingKernel : public SmoothingLength<Base>::SmoothingKernel
+    class SmoothingKernel : public KernelTabulatedCK
     {
         Real inv_h_, inv_h_squared_, inv_h_cubed_, inv_h_fourth_;
 
       public:
         template <class ExecutionPolicy, class EncloserType>
         SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : SmoothingLength<Base>::SmoothingKernel(ex_policy, encloser),
+            : KernelTabulatedCK(encloser.base_kernel_),
               inv_h_(encloser.inv_h_), inv_h_squared_(inv_h_ * inv_h_),
               inv_h_cubed_(inv_h_squared_ * inv_h_), inv_h_fourth_(inv_h_cubed_ * inv_h_){};
 
@@ -135,8 +103,7 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
             return GradientFactor(displacement) * normalized_dW((displacement * inv_h_).norm());
         };
 
-        inline Real W_ij(size_t i, size_t j) const { return W(vec_r_ij(i, j)); };
-        inline Real dW_ij(size_t i, size_t j) const { return dW(vec_r_ij(i, j)); };
+      protected:
         inline Real Factor(const Vec2d &) const { return inv_h_squared_ * dimension_factor_2D_; };
         inline Real Factor(const Vec3d &) const { return inv_h_cubed_ * dimension_factor_3D_; };
         inline Real GradientFactor(const Vec2d &) const { return inv_h_cubed_ * dimension_factor_2D_; };
@@ -145,39 +112,37 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
 
     class CriterionKernel
     {
-        Vecd *source_pos_;
-        Vecd *target_pos_;
         Real kernel_size_squared_, inv_h_;
 
       public:
         template <class ExecutionPolicy, class EncloserTYpe>
         CriterionKernel(const ExecutionPolicy &ex_policy, EncloserTYpe &encloser)
-            : source_pos_(encloser.dv_source_pos_->DelegatedData(ex_policy)),
-              target_pos_(encloser.dv_target_pos_->DelegatedData(ex_policy)),
-              kernel_size_squared_(math::pow(encloser.base_kernel_.KernelSize(), 2)),
+            : kernel_size_squared_(math::pow(encloser.base_kernel_.KernelSize(), 2)),
               inv_h_(encloser.inv_h_){};
 
-        inline bool operator()(UnsignedInt i, UnsignedInt j) const
+        inline bool operator()(const Vecd &displacement) const
         {
-            return (inv_h_ * (source_pos_[i] - target_pos_[j])).squaredNorm() < kernel_size_squared_;
+            return (inv_h_ * displacement).squaredNorm() < kernel_size_squared_;
         };
     };
 
-    class SmoothingRatio
+    class SmoothingRatioKernel
     {
       public:
-        SmoothingRatio(SmoothingLength<SingleValued> &smoothing_length) {};
+        template <class ExecutionPolicy, class EncloserType>
+        SmoothingRatioKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser){};
 
-        Real operator()(UnsignedInt index_i) const { return 1.0; };
+        Real operator()(UnsignedInt i) const { return 1.0; };
     };
 
-    class SearchDepth
+    class SearchDepthKernel
     {
       public:
-        SearchDepth(SmoothingLength<SingleValued> &smoothing_length)
-            : search_depth_(smoothing_length.search_depth_) {};
+        template <class ExecutionPolicy, class EncloserType>
+        SearchDepthKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : search_depth_(encloser.search_depth_){};
 
-        int operator()(UnsignedInt index_i) const { return search_depth_; };
+        int operator()(UnsignedInt i) const { return search_depth_; };
 
       private:
         int search_depth_;
@@ -186,96 +151,6 @@ class SmoothingLength<SingleValued> : public SmoothingLength<Base>
   protected:
     Real inv_h_;
     int search_depth_; /**< Search depth for neighbor search. */
-};
-
-template <>
-class SmoothingLength<Continuous> : public SmoothingLength<Base>
-{
-  public:
-    template <class DynamicsIdentifier>
-    SmoothingLength(DynamicsIdentifier &identifier)
-        : SmoothingLength<Base>(identifier),
-          dv_source_h_(getSmoothingLength(Continuous{}, identifier)),
-          dv_target_h_(dv_source_h_){};
-
-    template <class SourceIdentifier, class TargetIdentifier>
-    SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : SmoothingLength<Base>(source_identifier, contact_identifier),
-          dv_source_h_(getSmoothingLength(Continuous{}, source_identifier)),
-          dv_target_h_(getSmoothingLength(Continuous{}, contact_identifier)){};
-
-    class ComputingKernel
-    {
-        Real *source_h_;
-        Real *target_h_;
-
-      public:
-        template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Continuous> &smoothing_length)
-            : source_h_(smoothing_length.dv_source_h_->DelegatedData(ex_policy)),
-              target_h_(smoothing_length.dv_target_h_->DelegatedData(ex_policy)){};
-        Real displacement_factor(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_[i], target_h_[j]); };
-    };
-
-  protected:
-    DiscreteVariable<Real> *dv_source_h_;
-    DiscreteVariable<Real> *dv_target_h_;
-};
-
-template <>
-class SmoothingLength<SingleValued, Continuous> : public SmoothingLength<Base>
-{
-  public:
-    template <class SourceIdentifier, class TargetIdentifier>
-    SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : SmoothingLength<Base>(source_identifier, contact_identifier),
-          source_h_(getSmoothingLength(SingleValued{}, source_identifier)),
-          dv_target_h_(getSmoothingLength(Continuous{}, contact_identifier)){};
-
-    class ComputingKernel
-    {
-        Real source_h_;
-        Real *target_h_;
-
-      public:
-        template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<SingleValued, Continuous> &smoothing_length)
-            : source_h_(smoothing_length.source_h_),
-              target_h_(smoothing_length.dv_target_h_->DelegatedData(ex_policy)){};
-        Real displacement_factor(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_, target_h_[j]); };
-    };
-
-  protected:
-    Real source_h_;
-    DiscreteVariable<Real> *dv_target_h_;
-};
-
-template <>
-class SmoothingLength<Continuous, SingleValued> : public SmoothingLength<Base>
-{
-  public:
-    template <class SourceIdentifier, class TargetIdentifier>
-    SmoothingLength(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
-        : SmoothingLength<Base>(source_identifier, contact_identifier),
-          dv_source_h_(getSmoothingLength(Continuous{}, source_identifier)),
-          target_h_(getSmoothingLength(SingleValued{}, contact_identifier)){};
-
-    class ComputingKernel
-    {
-        Real *source_h_;
-        Real target_h_;
-
-      public:
-        template <class ExecutionPolicy>
-        ComputingKernel(const ExecutionPolicy &ex_policy, SmoothingLength<Continuous, SingleValued> &smoothing_length)
-            : source_h_(smoothing_length.dv_source_h_->DelegatedData(ex_policy)),
-              target_h_(smoothing_length.target_h_){};
-        Real displacement_factor(UnsignedInt i, UnsignedInt j) const { return 1.0 / SMAX(source_h_[i], target_h_); };
-    };
-
-  protected:
-    DiscreteVariable<Real> *dv_source_h_;
-    Real target_h_;
 };
 } // namespace SPH
 #endif // NEIGHBOR_METHOD_H

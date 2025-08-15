@@ -28,7 +28,7 @@ UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::InteractKernel::InteractK
       masked_source_(ex_policy, encloser.inner_relation_.getDynamicsIdentifier()),
       masked_criterion_(
           ex_policy, encloser.inner_relation_.getDynamicsIdentifier(),
-          ex_policy, encloser.inner_relation_.getNeighborMethod()),
+          ex_policy, encloser.inner_relation_.getNeighborhood()),
       neighbor_search_(encloser.cell_linked_list_.createNeighborSearch(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
@@ -146,10 +146,10 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
       masked_source_(ex_policy, encloser.contact_relation_.getSourceIdentifier()),
       masked_criterion_(
           ex_policy, encloser.contact_relation_.getContactIdentifier(contact_index),
-          ex_policy, encloser.contact_relation_.getNeighborMethod(contact_index)),
+          ex_policy, encloser.contact_relation_.getNeighborhood(contact_index)),
       neighbor_search_(
           encloser.contact_cell_linked_list_[contact_index]->createNeighborSearch(ex_policy)),
-      search_depth_(encloser.contact_relation_.getNeighborMethod(contact_index)) {}
+      search_depth_(ex_policy, encloser.contact_relation_.getNeighborhood(contact_index)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
@@ -165,7 +165,8 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
             {
                 if (masked_criterion_(target_index, source_index))
                     neighbor_count++;
-            }, search_depth_(source_index));
+            },
+            search_depth_(source_index));
     }
     this->neighbor_index_[source_index] = neighbor_count;
 }
@@ -186,7 +187,8 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
                     this->neighbor_index_[this->particle_offset_[source_index] + neighbor_count] = target_index;
                     neighbor_count++;
                 }
-            }, search_depth_(source_index));
+            },
+            search_depth_(source_index));
     }
 }
 //=================================================================================================//

@@ -55,14 +55,14 @@ template <typename NeighborMethod>
 class Relation<NeighborMethod> : public RelationBase
 {
     UniquePtrsKeeper<Entity> relation_variable_ptrs_;
-    UniquePtrsKeeper<NeighborMethod> neighbor_method_ptrs_;
+    UniquePtrsKeeper<Neighbor<NeighborMethod>> neighborhood_ptrs_;
     DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
 
     template <class DataType>
     DiscreteVariable<DataType> *addRelationVariable(const std::string &name, size_t data_size);
 
   public:
-    typedef NeighborMethod NeighborMethodType;
+    typedef Neighbor<NeighborMethod> NeighborhoodType;
     template <typename SourceIdentifier, typename TargetIdentifier>
     Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers,
              ConfigType config_type = ConfigType::Eulerian);
@@ -72,7 +72,7 @@ class Relation<NeighborMethod> : public RelationBase
     DiscreteVariable<Vecd> *getTargetPosition(UnsignedInt target_index = 0) { return dv_target_pos_[target_index]; };
     DiscreteVariable<UnsignedInt> *getNeighborIndex(UnsignedInt target_index = 0) { return dv_target_neighbor_index_[target_index]; };
     DiscreteVariable<UnsignedInt> *getParticleOffset(UnsignedInt target_index = 0) { return dv_target_particle_offset_[target_index]; };
-    NeighborMethod &getNeighborMethod(UnsignedInt target_index = 0) { return *neighbor_methods_[target_index]; };
+    Neighbor<NeighborMethod> &getNeighborhood(UnsignedInt target_index = 0) { return *neighborhoods_[target_index]; }
     void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index = 0);
     void resetComputingKernelUpdated(UnsignedInt target_index = 0);
 
@@ -98,7 +98,7 @@ class Relation<NeighborMethod> : public RelationBase
     UnsignedInt offset_list_size_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_neighbor_index_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_particle_offset_;
-    StdVec<NeighborMethod *> neighbor_methods_;
+    StdVec<Neighbor<NeighborMethod> *> neighborhoods_;
     StdVec<StdVec<execution::Implementation<Base> *>> registered_computing_kernels_;
 };
 

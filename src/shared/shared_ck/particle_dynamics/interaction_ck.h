@@ -51,14 +51,14 @@ class Interaction<Inner<Parameters...>>
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::SourceType>;
     typedef Inner<Parameters...> InnerRelationType;
     using NeighborList = typename InnerRelationType::NeighborList;
-    using NeighborMethod = typename InnerRelationType::NeighborMethodType;
-    using Neighborhood = Neighbor<NeighborMethod>;
+    using Neighborhood = typename InnerRelationType::NeighborhoodType;
+    using NeighborKernel = typename Neighborhood::NeighborKernel;
 
   public:
     explicit Interaction(InnerRelationType &inner_relation);
     virtual ~Interaction() {};
 
-    class InteractKernel : public NeighborList, public Neighborhood
+    class InteractKernel : public NeighborList, public NeighborKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -81,14 +81,14 @@ class Interaction<Contact<Parameters...>>
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
     typedef Contact<Parameters...> ContactRelationType;
     using NeighborList = typename ContactRelationType::NeighborList;
-    using NeighborMethod = typename ContactRelationType::NeighborMethodType;
-    using Neighborhood = Neighbor<NeighborMethod>;
+    using Neighborhood = typename ContactRelationType::NeighborhoodType;
+    using NeighborKernel = typename Neighborhood::NeighborKernel;
 
   public:
     explicit Interaction(ContactRelationType &contact_relation);
     virtual ~Interaction() {};
 
-    class InteractKernel : public NeighborList, public Neighborhood
+    class InteractKernel : public NeighborList, public NeighborKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
