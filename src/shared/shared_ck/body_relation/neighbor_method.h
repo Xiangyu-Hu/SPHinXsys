@@ -29,9 +29,8 @@
 #ifndef NEIGHBOR_METHOD_H
 #define NEIGHBOR_METHOD_H
 
-#include "base_body.h"
-#include "base_particles.hpp"
 #include "kernel_tabulated_ck.h"
+#include "sphinxsys_containers.h"
 
 namespace SPH
 {
