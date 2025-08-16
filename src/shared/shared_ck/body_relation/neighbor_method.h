@@ -78,7 +78,7 @@ class NeighborMethod<SingleValued> : public NeighborMethod<Base>
         Real source_h = getSmoothingLength(SingleValued{}, source_identifier);
         Real target_h = getSmoothingLength(SingleValued{}, contact_identifier);
         inv_h_ = 1.0 / SMAX(source_h, target_h);
-        search_depth_ = 1.0 ;//static_cast<int>(std::ceil((source_h - Eps) / target_h));
+        search_depth_ = static_cast<int>(std::ceil((source_h - Eps) / target_h));
     }
 
     class SmoothingKernel : public KernelTabulatedCK
@@ -121,7 +121,7 @@ class NeighborMethod<SingleValued> : public NeighborMethod<Base>
 
         inline bool operator()(const Vecd &displacement) const
         {
-            return (inv_h_ * displacement).squaredNorm() < kernel_size_squared_;
+            return (displacement * inv_h_).squaredNorm() < kernel_size_squared_;
         };
     };
 
