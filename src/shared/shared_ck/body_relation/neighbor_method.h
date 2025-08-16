@@ -138,7 +138,8 @@ class NeighborMethod<SingleValued> : public NeighborMethod<Base>
 
         inline bool operator()(const Vecd &displacement) const
         {
-            return (inv_h_ * displacement).squaredNorm() < kernel_size_squared_;
+            Vecd normalized_displacement = inv_h_ * displacement;
+            return normalized_displacement.squaredNorm() < kernel_size_squared_;
         };
     };
 
