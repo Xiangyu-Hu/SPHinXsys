@@ -36,14 +36,6 @@
 
 namespace SPH
 {
-class BaseExecDynamics
-{
-  public:
-    BaseExecDynamics() {};
-    virtual ~BaseExecDynamics() {};
-
-    virtual void exec(Real small_shift_factor) = 0;
-};
 class FinishDataPackages
 {
   public:
@@ -77,12 +69,12 @@ class FinishDataPackages
 };
 
 template <class ExecutionPolicy>
-class CleanInterface : public BaseMeshDynamics, public BaseExecDynamics
+class CleanInterface : public BaseMeshDynamics, public BaseDynamics<void>
 {
   public:
     explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data, KernelTabulatedCK *kernel, Real global_h_ratio)
         : BaseMeshDynamics(mesh_data),
-          BaseExecDynamics(),
+          BaseDynamics<void>(),
           kernel_(kernel),
           global_h_ratio_(global_h_ratio) {};
     virtual ~CleanInterface() {};
@@ -107,12 +99,12 @@ class CleanInterface : public BaseMeshDynamics, public BaseExecDynamics
 };
 
 template <class ExecutionPolicy>
-class CorrectTopology : public BaseMeshDynamics, public BaseExecDynamics
+class CorrectTopology : public BaseMeshDynamics, public BaseDynamics<void>
 {
   public:
     explicit CorrectTopology(MeshWithGridDataPackagesType &mesh_data, KernelTabulatedCK *kernel, Real global_h_ratio)
         : BaseMeshDynamics(mesh_data),
-          BaseExecDynamics(),
+          BaseDynamics<void>(),
           kernel_(kernel),
           global_h_ratio_(global_h_ratio) {};
     virtual ~CorrectTopology() {};

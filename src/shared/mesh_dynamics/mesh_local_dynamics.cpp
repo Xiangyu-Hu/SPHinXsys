@@ -1,11 +1,5 @@
 #include "mesh_local_dynamics.hpp"
 
-#include "all_body_relations.h"
-#include "all_particle_dynamics.h"
-#include "base_kernel.h"
-#include "base_particles.hpp"
-#include "cell_linked_list.h"
-
 namespace SPH
 {
 //=================================================================================================//
