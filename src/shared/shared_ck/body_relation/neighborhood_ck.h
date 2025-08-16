@@ -81,7 +81,7 @@ class Neighbor
 
         inline bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
         {
-            return criterion_kernel_(source_pos_[source_index] - target_pos_[target_index]);
+            return criterion_kernel_((source_pos_[source_index] - target_pos_[target_index]).eval());
         };
 
       protected:
