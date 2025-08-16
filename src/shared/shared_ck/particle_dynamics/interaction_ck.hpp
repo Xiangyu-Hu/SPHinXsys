@@ -31,7 +31,7 @@ template <class ExecutionPolicy, class EncloserType>
 Interaction<Inner<Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : NeighborList(ex_policy, encloser.inner_relation_),
-      Neighborhood(ex_policy, encloser.inner_relation_.getNeighborMethod()) {}
+      NeighborKernel(ex_policy, encloser.inner_relation_.getNeighborhood()) {}
 //=================================================================================================//
 template <typename... Parameters>
 Interaction<Contact<Parameters...>>::
@@ -69,7 +69,7 @@ template <class ExecutionPolicy, class EncloserType>
 Interaction<Contact<Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : NeighborList(ex_policy, encloser.contact_relation_, contact_index),
-      Neighborhood(ex_policy, encloser.contact_relation_.getNeighborMethod(contact_index)) {}
+      NeighborKernel(ex_policy, encloser.contact_relation_.getNeighborhood(contact_index)) {}
 //=================================================================================================//
 template <class WallContactRelationType>
 Interaction<Wall>::Interaction(WallContactRelationType &wall_contact_relation)

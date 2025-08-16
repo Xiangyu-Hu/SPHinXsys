@@ -134,7 +134,7 @@ inline Real UpdateKernelIntegrals::UpdateKernel::
                     Vecd displacement = -Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius_)
-                        integral += kernel_->W(global_h_ratio_, distance, displacement) *
+                        integral += kernel_.W(displacement) *
                                     CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_);
                 }
             });
@@ -163,7 +163,7 @@ inline Vecd UpdateKernelIntegrals::UpdateKernel::
                     Vecd displacement = -Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius_)
-                        integral += kernel_->dW(global_h_ratio_, distance, displacement) *
+                        integral += kernel_.dW(displacement) *
                                     CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
                                     displacement / (distance + TinyReal);
                 }
@@ -194,7 +194,7 @@ inline Matd UpdateKernelIntegrals::UpdateKernel::
                     Vecd displacement = -Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius_)
-                        integral += kernel_->d2W(global_h_ratio_, distance, displacement) *
+                        integral += kernel_.d2W(displacement) *
                                     CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_) *
                                     displacement * displacement.transpose() / (distance * distance + TinyReal);
                 }

@@ -51,10 +51,10 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::SourceType>;
     using InnerRelationType = Inner<Parameters...>;
     using NeighborList = typename InnerRelationType::NeighborList;
-    using NeighborMethod = typename InnerRelationType::NeighborMethodType;
     using Identifier = typename BaseLocalDynamicsType::Identifier;
     using MaskedSource = typename Identifier::SourceParticleMask;
-    using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion<NeighborMethod>>;
+    using NeighborCriterion = typename InnerRelationType::NeighborhoodType::NeighborCriterion;
+    using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion>;
 
   public:
     UpdateRelation(Inner<Parameters...> &inner_relation);
@@ -92,13 +92,14 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
     using ContactRelationType = Contact<Parameters...>;
     using NeighborList = typename ContactRelationType::NeighborList;
-    using NeighborMethod = typename ContactRelationType::NeighborMethodType;
-    using SearchDepth = typename NeighborMethod::SearchDepth;
+    using Neighborhood = typename ContactRelationType::NeighborhoodType;
+    using SearchDepth = typename Neighborhood::SearchDepth;
     using Identifier = typename BaseLocalDynamicsType::Identifier;
     using SourceType = typename ContactRelationType::SourceType;
     using TargetType = typename ContactRelationType::TargetType;
     using MaskedSource = typename SourceType::SourceParticleMask;
-    using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion<NeighborMethod>>;
+    using NeighborCriterion = typename Neighborhood::NeighborCriterion;
+    using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
 
   public:
     UpdateRelation(ContactRelationType &contact_relation);

@@ -4,7 +4,7 @@
 namespace SPH
 {
 //=================================================================================================//
-Real SmoothingLength<Base>::getSmoothingLength(
+Real NeighborMethod<Base>::getSmoothingLength(
     const SingleValued &single_valued, BodyPartitionSpatial &body_partition_spatial)
 {
     return body_partition_spatial.getReferenceSmoothingLength();

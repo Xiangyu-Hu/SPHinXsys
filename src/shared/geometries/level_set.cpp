@@ -11,43 +11,51 @@ MultilevelLevelSet::MultilevelLevelSet(
     Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
     : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(1)
 {
-    Real reference_data_spacing = coarse_data->DataSpacing() * 0.5;
-    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing / refinement_ratio;
-    kernel_ = makeUnique<SingularVariable<KernelTabulatedCK>>(
-        "levelset_kernel", KernelTabulatedCK(*sph_adaptation.getKernel()));
+    Real data_spacing = coarse_data->DataSpacing() * 0.5;
+    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
+    Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec_.push_back(global_h_ratio);
+    neighbor_method_set_.push_back(
+        neighbor_method_keeper_.template createPtr<NeighborMethod<SingleValued>>(
+            *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-    initializeLevel(reference_data_spacing, tentative_bounds, coarse_data);
+    initializeLevel(data_spacing, tentative_bounds, coarse_data);
 }
 //=================================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
-    BoundingBox tentative_bounds, Real reference_data_spacing,
+    BoundingBox tentative_bounds, Real data_spacing,
     size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
     : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(total_levels)
 {
-    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / reference_data_spacing / refinement_ratio;
+    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
+    Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec_.push_back(global_h_ratio);
-    kernel_ = makeUnique<SingularVariable<KernelTabulatedCK>>(
-        "levelset_kernel", KernelTabulatedCK(*sph_adaptation.getKernel()));
+    neighbor_method_set_.push_back(
+        neighbor_method_keeper_.template createPtr<NeighborMethod<SingleValued>>(
+            *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-    initializeLevel(reference_data_spacing, tentative_bounds);
+    initializeLevel(data_spacing, tentative_bounds);
     for (size_t level = 1; level < total_levels_; ++level)
     {
-        reference_data_spacing *= 0.5; // Halve the data spacing
-        global_h_ratio *= 2;           // Double the ratio
+        data_spacing *= 0.5;     // Halve the data spacing
+        global_h_ratio *= 2;     // Double the ratio
+        smoothing_length *= 0.5; // Halve the smoothing length
         global_h_ratio_vec_.push_back(global_h_ratio);
+        neighbor_method_set_.push_back(
+            neighbor_method_keeper_.template createPtr<NeighborMethod<SingleValued>>(
+                *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-        initializeLevel(reference_data_spacing, tentative_bounds, mesh_data_set_[level - 1]);
+        initializeLevel(data_spacing, tentative_bounds, mesh_data_set_[level - 1]);
     }
 }
 //=================================================================================================//
 void MultilevelLevelSet::initializeLevel(
-    Real reference_data_spacing, BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data)
+    Real data_spacing, BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data)
 {
     MeshWithGridDataPackagesType *mesh_data =
         mesh_data_ptr_vector_keeper_
             .template createPtr<MeshWithGridDataPackagesType>(
-                tentative_bounds, reference_data_spacing, 4);
+                tentative_bounds, data_spacing, 4);
     mesh_data_set_.push_back(mesh_data);
 
     if (coarse_data == nullptr)
