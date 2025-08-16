@@ -57,13 +57,7 @@ class Neighbor
               target_pos_(encloser.dv_target_pos_->DelegatedData(ex_policy)){};
 
         inline Vecd vec_r_ij(UnsignedInt i, UnsignedInt j) const { return source_pos_[i] - target_pos_[j]; };
-
-        inline Vecd e_ij(UnsignedInt i, UnsignedInt j) const
-        {
-            Vecd displacement = vec_r_ij(i, j);
-            return displacement / (displacement.norm() + TinyReal);
-        };
-
+        inline Vecd e_ij(UnsignedInt i, UnsignedInt j) const { return vec_r_ij(i, j).normalized(); };
         inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return smoothing_kernel_.W(vec_r_ij(i, j)); };
         inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return smoothing_kernel_.dW(vec_r_ij(i, j)); };
         inline Real W(const Vecd &displacement) const { return smoothing_kernel_.W(displacement); };
