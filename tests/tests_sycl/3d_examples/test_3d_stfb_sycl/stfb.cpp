@@ -215,7 +215,7 @@ int main(int ac, char *av[])
         fluid_acoustic_step_2nd_half(water_block_inner);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalf<Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>
         fluid_acoustic_step_2nd_half_with_wall(water_block_contact);
-    fluid_acoustic_step_2nd_half.addContactInteraction(fluid_acoustic_step_2nd_half_with_wall);
+    fluid_acoustic_step_2nd_half.addPostContactInteraction(fluid_acoustic_step_2nd_half_with_wall);
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
         fluid_density_regularization(water_block_inner, water_block_contact);
@@ -224,7 +224,7 @@ int main(int ac, char *av[])
         fluid_viscous_force(water_block_inner);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceCK<Contact<Wall, Viscosity, NoKernelCorrectionCK>>>
         fluid_viscous_force_from_wall(water_block_contact);
-    fluid_viscous_force.addContactInteraction(fluid_viscous_force_from_wall);
+    fluid_viscous_force.addPostContactInteraction(fluid_viscous_force_from_wall);
 
     InteractionDynamicsCK<MainExecutionPolicy, FSI::ViscousForceOnStructure<decltype(fluid_viscous_force_from_wall)>>
         viscous_force_on_structure(structure_contact);

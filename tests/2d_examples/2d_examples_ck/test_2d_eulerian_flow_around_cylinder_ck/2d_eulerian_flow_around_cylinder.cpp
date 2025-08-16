@@ -110,7 +110,7 @@ int main(int ac, char *av[])
 
         auto &water_block_relaxation_residual =
             main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(water_block_inner)
-                .addContactInteraction<Boundary, NoKernelCorrectionCK>(water_block_contact)
+                .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(water_block_contact)
                 .addPostStateDynamics<LevelsetKernelGradientIntegral>(water_block, *outer_level_set_shape);
         auto &water_block_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(water_block);
         auto &water_block_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(water_block);

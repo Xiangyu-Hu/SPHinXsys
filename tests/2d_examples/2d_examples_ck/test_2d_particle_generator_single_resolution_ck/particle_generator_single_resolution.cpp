@@ -101,7 +101,7 @@ int main(int ac, char *av[])
 
     auto &filler_relaxation_residual =
         main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(filler_inner)
-            .addContactInteraction<Boundary, NoKernelCorrectionCK>(filler_contact);
+            .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(filler_contact);
     auto &filler_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(filler);
     auto &filler_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(filler);
 

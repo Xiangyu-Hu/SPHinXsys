@@ -9,7 +9,7 @@ namespace SPH
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
 template <typename... ControlParameters, typename... RelationParameters, typename... Args>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args)
+    addPostContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args)
 {
     this->post_processes_.push_back(
         supplementary_dynamics_keeper_.template createPtr<
@@ -20,9 +20,16 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
 }
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addContactInteraction(BaseDynamics<void> &contact_interaction)
+    addPostContactInteraction(BaseDynamics<void> &contact_interaction)
 {
     this->post_processes_.push_back(&contact_interaction);
+    return *this;
+}
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
+    addPreContactInteraction(BaseDynamics<void> &contact_interaction)
+{
+    this->pre_processes_.push_back(&contact_interaction);
     return *this;
 }
 //=================================================================================================//

@@ -101,9 +101,13 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>
     InteractionDynamicsCK() {};
 
     template <typename... ControlParameters, typename... RelationParameters, typename... Args>
-    auto &addContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
+    auto &addPostContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
 
-    auto &addContactInteraction(BaseDynamics<void> &contact_interaction);
+    template <typename... ControlParameters, typename... RelationParameters, typename... Args>
+    auto &addPreContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
+
+    auto &addPostContactInteraction(BaseDynamics<void> &contact_interaction);
+    auto &addPreContactInteraction(BaseDynamics<void> &contact_interaction);
 
     template <class UpdateType, typename... Args>
     auto &addPostStateDynamics(Args &&...args);
