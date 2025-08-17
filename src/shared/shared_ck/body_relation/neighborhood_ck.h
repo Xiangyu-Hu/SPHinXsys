@@ -81,19 +81,16 @@ class Neighbor
       public:
         template <class ExecutionPolicy, class EncloserType>
         NeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : criterion_kernel_(ex_policy, encloser.neighbor_method_),
-              source_pos_(encloser.dv_source_pos_->DelegatedData(ex_policy)),
-              target_pos_(encloser.dv_target_pos_->DelegatedData(ex_policy)){};
+            : criterion_kernel_(ex_policy, encloser.neighbor_method_,
+                                encloser.dv_source_pos_, encloser.dv_target_pos_){};
 
         inline bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
         {
-            return criterion_kernel_(source_pos_[source_index] - target_pos_[target_index]);
+            return criterion_kernel_(source_index, target_index);
         };
 
       protected:
         CriterionKernel criterion_kernel_;
-        Vecd *source_pos_;
-        Vecd *target_pos_;
     };
 
     class SearchDepth
