@@ -126,7 +126,7 @@ class NeighborMethod<SingleValued> : public NeighborMethod<Base>
         inline Real Gradient2Factor(const Vec3d &) const { return inv_h_fifth_ * dimension_factor_3D_; };
     };
 
-    class CriterionKernel
+    class NeighborCriterion
     {
         Vecd *source_pos_;
         Vecd *target_pos_;
@@ -134,7 +134,7 @@ class NeighborMethod<SingleValued> : public NeighborMethod<Base>
 
       public:
         template <class ExecutionPolicy, class EncloserType>
-        CriterionKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser,
+        NeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser,
                         DiscreteVariable<Vecd> *dv_source_pos, DiscreteVariable<Vecd> *dv_target_pos)
             : source_pos_(dv_source_pos->DelegatedData(ex_policy)),
               target_pos_(dv_target_pos->DelegatedData(ex_policy)),
@@ -147,20 +147,20 @@ class NeighborMethod<SingleValued> : public NeighborMethod<Base>
         };
     };
     
-    class SmoothingRatioKernel
+    class SmoothingRatio
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        SmoothingRatioKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser){};
+        SmoothingRatio(const ExecutionPolicy &ex_policy, EncloserType &encloser){};
 
         Real operator()(UnsignedInt i) const { return 1.0; };
     };
 
-    class SearchDepthKernel
+    class SearchDepth
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        SearchDepthKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+        SearchDepth(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : search_depth_(encloser.search_depth_){};
 
         int operator()(UnsignedInt i) const { return search_depth_; };

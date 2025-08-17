@@ -36,89 +36,52 @@
 namespace SPH
 {
 template <class NeighborMethodType>
-class Neighbor
+class Neighbor : public NeighborMethodType
 {
   public:
     template <class SourceIdentifier, class TargetIdentifier>
     Neighbor(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier,
              DiscreteVariable<Vecd> *dv_source_pos, DiscreteVariable<Vecd> *dv_target_pos)
-        : neighbor_method_(source_identifier, contact_identifier),
+        : NeighborMethodType(source_identifier, contact_identifier),
           dv_source_pos_(dv_source_pos), dv_target_pos_(dv_target_pos){};
 
-    class NeighborKernel
+    class NeighborKernel : public NeighborMethodType::SmoothingKernel
     {
-        using SmoothingKernel = typename NeighborMethodType::SmoothingKernel;
+        using BaseKernel = typename NeighborMethodType::SmoothingKernel;
 
       public:
         template <class ExecutionPolicy, class EncloserType>
         NeighborKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : smoothing_kernel_(ex_policy, encloser.neighbor_method_),
+            : BaseKernel(ex_policy, encloser),
               source_pos_(encloser.dv_source_pos_->DelegatedData(ex_policy)),
               target_pos_(encloser.dv_target_pos_->DelegatedData(ex_policy)){};
 
         inline Vecd vec_r_ij(UnsignedInt i, UnsignedInt j) const { return source_pos_[i] - target_pos_[j]; };
         inline Vecd e_ij(UnsignedInt i, UnsignedInt j) const { return vec_r_ij(i, j).normalized(); };
-        inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return smoothing_kernel_.W(vec_r_ij(i, j)); };
-        inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return smoothing_kernel_.dW(vec_r_ij(i, j)); };
-        inline Real W(const Vecd &displacement) const { return smoothing_kernel_.W(displacement); };
+        inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return BaseKernel::W(vec_r_ij(i, j)); };
+        inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return BaseKernel::dW(vec_r_ij(i, j)); };
 
       protected:
-        SmoothingKernel smoothing_kernel_;
         Vecd *source_pos_;
         Vecd *target_pos_;
     };
 
-    class NeighborCriterion
+    class NeighborCriterion : public NeighborMethodType::NeighborCriterion
     {
-        using CriterionKernel = typename NeighborMethodType::CriterionKernel;
+        using BaseKernel = typename NeighborMethodType::NeighborCriterion;
 
       public:
         template <class ExecutionPolicy, class EncloserType>
         NeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : criterion_kernel_(ex_policy, encloser.neighbor_method_,
-                                encloser.dv_source_pos_, encloser.dv_target_pos_){};
+            : BaseKernel(ex_policy, encloser, encloser.dv_source_pos_, encloser.dv_target_pos_){};
 
         inline bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
         {
-            return criterion_kernel_(source_index, target_index);
+            return BaseKernel::operator()(source_index, target_index); // Note the order of indices
         };
-
-      protected:
-        CriterionKernel criterion_kernel_;
-    };
-
-    class SearchDepth
-    {
-        using SearchDepthKernel = typename NeighborMethodType::SearchDepthKernel;
-
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        SearchDepth(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : search_depth_kernel_(ex_policy, encloser.neighbor_method_){};
-
-        inline int operator()(UnsignedInt i) const { return search_depth_kernel_(i); };
-
-      protected:
-        SearchDepthKernel search_depth_kernel_;
-    };
-
-    class SmoothingRatio
-    {
-        using SmoothingRatioKernel = typename NeighborMethodType::SmoothingRatioKernel;
-
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        SmoothingRatio(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : smoothing_ratio_kernel_(ex_policy, encloser.neighbor_method_){};
-
-        inline Real operator()(UnsignedInt i) const { return smoothing_ratio_kernel_(i); };
-
-      protected:
-        SmoothingRatioKernel smoothing_ratio_kernel_;
     };
 
   protected:
-    NeighborMethodType neighbor_method_; /**< The neighbor method for the neighborhood. */
     DiscreteVariable<Vecd> *dv_source_pos_;
     DiscreteVariable<Vecd> *dv_target_pos_;
 };
