@@ -7,16 +7,16 @@ namespace SPH
 {
 //=================================================================================================//
 template <class ExecutionPolicy>
-void MultilevelLevelSet::configLevelSetPostProcesses(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel)
+void MultilevelLevelSet::configLevelSetPostProcesses(const ExecutionPolicy &ex_policy)
 {
     clean_interface_keeper_ = makeUnique<CleanInterface<ExecutionPolicy>>(
-        *mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
+        *mesh_data_set_.back(), *neighbor_method_set_.back());
     correct_topology_keeper_ = makeUnique<CorrectTopology<ExecutionPolicy>>(
-        *mesh_data_set_.back(), kernel, global_h_ratio_vec_.back());
+        *mesh_data_set_.back(), *neighbor_method_set_.back());
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void MultilevelLevelSet::initializeMeshVariables(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel)
+void MultilevelLevelSet::initializeMeshVariables(const ExecutionPolicy &ex_policy)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
@@ -35,23 +35,23 @@ void MultilevelLevelSet::initializeMeshVariables(const ExecutionPolicy &ex_polic
 template <class ExecutionPolicy>
 void MultilevelLevelSet::finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type)
 {
-    initializeMeshVariables(ex_policy, kernel_->Data());
+    initializeMeshVariables(ex_policy);
     if (usage_type == UsageType::Volumetric)
     {
-        initializeKernelIntegralVariables(ex_policy, kernel_->Data());
-        configLevelSetPostProcesses(ex_policy, kernel_->Data());
+        initializeKernelIntegralVariables(ex_policy);
+        configLevelSetPostProcesses(ex_policy);
     }
     sync_mesh_variable_data_ = [&]()
     { this->syncMeshVariableData(ex_policy); };
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void MultilevelLevelSet::initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy, KernelTabulatedCK *kernel)
+void MultilevelLevelSet::initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
         MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals>
-            update_kernel_integrals{*mesh_data_set_[level], kernel, global_h_ratio_vec_[level]};
+            update_kernel_integrals{*mesh_data_set_[level], *neighbor_method_set_[level]};
         update_kernel_integrals.exec();
 
         probe_kernel_integral_set_.push_back(

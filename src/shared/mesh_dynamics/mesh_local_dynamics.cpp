@@ -1,11 +1,5 @@
 #include "mesh_local_dynamics.hpp"
 
-#include "all_body_relations.h"
-#include "all_particle_dynamics.h"
-#include "base_kernel.h"
-#include "base_particles.hpp"
-#include "cell_linked_list.h"
-
 namespace SPH
 {
 //=================================================================================================//
@@ -176,8 +170,8 @@ UpdateLevelSetGradient::UpdateLevelSetGradient(MeshWithGridDataPackagesType &dat
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
 UpdateKernelIntegrals::UpdateKernelIntegrals(
-    MeshWithGridDataPackagesType &data_mesh, KernelTabulatedCK *kernel, Real global_h_ratio)
-    : BaseMeshLocalDynamics(data_mesh), kernel_(kernel), global_h_ratio_(global_h_ratio),
+    MeshWithGridDataPackagesType &data_mesh, NeighborMethod<SingleValued> &neighbor_method)
+    : BaseMeshLocalDynamics(data_mesh), neighbor_method_(neighbor_method),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.getMeshVariable<Vecd>("LevelSetGradient")),
       dv_pkg_cell_info_(data_mesh.dvPkgCellInfo()),

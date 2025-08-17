@@ -1,7 +1,7 @@
 #ifndef MESH_WITH_DATA_PACKAGES_2D_HPP
 #define MESH_WITH_DATA_PACKAGES_2D_HPP
 
-#include "mesh_with_data_packages.h"
+#include "mesh_with_data_packages.hxx"
 
 namespace SPH
 {

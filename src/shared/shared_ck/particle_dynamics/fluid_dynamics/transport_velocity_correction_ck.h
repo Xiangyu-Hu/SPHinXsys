@@ -4,8 +4,8 @@
 #include "base_fluid_dynamics.h"
 #include "interaction_ck.hpp"
 #include "kernel_correction_ck.hpp"
-#include "particle_functors_ck.h"
 #include "kernel_gradient_integral.hpp"
+#include "particle_functors_ck.h"
 
 namespace SPH
 {
@@ -21,7 +21,7 @@ class TransportVelocityCorrectionCK<
 {
     using BaseInteraction = KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>;
     using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
-    using SmoothingRatio = typename Inner<Parameters...>::NeighborMethodType::SmoothingRatio;
+    using SmoothingRatio = typename Inner<Parameters...>::NeighborhoodType::SmoothingRatio;
 
   public:
     explicit TransportVelocityCorrectionCK(Inner<Parameters...> &inner_relation, Real coefficient = 0.2);
@@ -46,7 +46,6 @@ class TransportVelocityCorrectionCK<
   protected:
     Real h_ref_;              ///< e.g. reference smoothing length
     Real correction_scaling_; ///< typically coefficient * h_ref^2
-    SmoothingRatio h_ratio_;  ///< e.g. for adaptive resolution
     LimiterType limiter_;     ///< e.g. a limiter on the final correction step
     ParticleScopeTypeCK<ParticleScopeType> within_scope_method_;
     DiscreteVariable<Vecd> *dv_dpos_;
@@ -58,10 +57,10 @@ class TransportVelocityCorrectionCK<Contact<Boundary, KernelCorrectionType, Para
 {
     using BaseInteraction = KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>;
 
-      public:
-        explicit TransportVelocityCorrectionCK(Contact<Parameters...> & contact_relation)
-            : BaseInteraction(contact_relation){}
-        virtual ~TransportVelocityCorrectionCK() {}
+  public:
+    explicit TransportVelocityCorrectionCK(Contact<Parameters...> &contact_relation)
+        : BaseInteraction(contact_relation) {}
+    virtual ~TransportVelocityCorrectionCK() {}
 };
 //--------------------------------------------------------------------------------------
 // Alias Definitions for Specific Configurations

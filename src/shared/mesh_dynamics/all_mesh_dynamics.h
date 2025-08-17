@@ -36,14 +36,6 @@
 
 namespace SPH
 {
-class BaseExecDynamics
-{
-  public:
-    BaseExecDynamics() {};
-    virtual ~BaseExecDynamics() {};
-
-    virtual void exec(Real small_shift_factor) = 0;
-};
 class FinishDataPackages
 {
   public:
@@ -77,14 +69,13 @@ class FinishDataPackages
 };
 
 template <class ExecutionPolicy>
-class CleanInterface : public BaseMeshDynamics, public BaseExecDynamics
+class CleanInterface : public BaseMeshDynamics, public BaseDynamics<void>
 {
   public:
-    explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data, KernelTabulatedCK *kernel, Real global_h_ratio)
+    explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data, NeighborMethod<SingleValued> &neighbor_method)
         : BaseMeshDynamics(mesh_data),
-          BaseExecDynamics(),
-          kernel_(kernel),
-          global_h_ratio_(global_h_ratio) {};
+          BaseDynamics<void>(),
+          neighbor_method_(neighbor_method) {};
     virtual ~CleanInterface() {};
 
     void exec(Real small_shift_factor) override
@@ -97,24 +88,22 @@ class CleanInterface : public BaseMeshDynamics, public BaseExecDynamics
     }
 
   private:
-    KernelTabulatedCK *kernel_;
-    Real global_h_ratio_;
+    NeighborMethod<SingleValued> &neighbor_method_;
     MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
-    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, neighbor_method_};
     MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
     MeshCoreDynamics<ExecutionPolicy, RedistanceInterface> redistance_interface{mesh_data_};
     MeshInnerDynamics<ExecutionPolicy, ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
 };
 
 template <class ExecutionPolicy>
-class CorrectTopology : public BaseMeshDynamics, public BaseExecDynamics
+class CorrectTopology : public BaseMeshDynamics, public BaseDynamics<void>
 {
   public:
-    explicit CorrectTopology(MeshWithGridDataPackagesType &mesh_data, KernelTabulatedCK *kernel, Real global_h_ratio)
+    explicit CorrectTopology(MeshWithGridDataPackagesType &mesh_data, NeighborMethod<SingleValued> &neighbor_method)
         : BaseMeshDynamics(mesh_data),
-          BaseExecDynamics(),
-          kernel_(kernel),
-          global_h_ratio_(global_h_ratio) {};
+          BaseDynamics<void>(),
+          neighbor_method_(neighbor_method) {};
     virtual ~CorrectTopology() {};
 
     void exec(Real small_shift_factor) override
@@ -127,10 +116,9 @@ class CorrectTopology : public BaseMeshDynamics, public BaseExecDynamics
     }
 
   private:
-    KernelTabulatedCK *kernel_;
-    Real global_h_ratio_;
+    NeighborMethod<SingleValued> &neighbor_method_;
     MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
-    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, kernel_, global_h_ratio_};
+    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, neighbor_method_};
     MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
     MeshInnerDynamics<ExecutionPolicy, DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
 };
