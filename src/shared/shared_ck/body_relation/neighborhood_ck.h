@@ -74,24 +74,13 @@ class Neighbor
         Vecd *target_pos_;
     };
 
-    class NeighborCriterion
+    typedef typename NeighborMethodType::CriterionKernel CriterionKernelType;
+
+    template <class ExecutionPolicy>
+    CriterionKernelType createCriterionKernel(const ExecutionPolicy &ex_policy)
     {
-        using CriterionKernel = typename NeighborMethodType::CriterionKernel;
-
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        NeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : criterion_kernel_(ex_policy, encloser.neighbor_method_,
-                                encloser.dv_source_pos_, encloser.dv_target_pos_){};
-
-        inline bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
-        {
-            return criterion_kernel_(source_index, target_index);
-        };
-
-      protected:
-        CriterionKernel criterion_kernel_;
-    };
+        return CriterionKernelType(ex_policy, neighbor_method_, dv_source_pos_, dv_target_pos_);
+    }
 
     class SearchDepth
     {

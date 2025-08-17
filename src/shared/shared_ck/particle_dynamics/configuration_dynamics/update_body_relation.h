@@ -53,8 +53,9 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     using NeighborList = typename InnerRelationType::NeighborList;
     using Identifier = typename BaseLocalDynamicsType::Identifier;
     using MaskedSource = typename Identifier::SourceParticleMask;
-    using NeighborCriterion = typename InnerRelationType::NeighborhoodType::NeighborCriterion;
-    using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion>;
+    using Neighborhood = typename InnerRelationType::NeighborhoodType;
+    using KernelCriterion = typename Neighborhood::CriterionKernelType;
+    using MaskedCriterion = typename Identifier::template TargetParticleMask<KernelCriterion>;
 
   public:
     UpdateRelation(Inner<Parameters...> &inner_relation);
@@ -98,11 +99,10 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     using SourceType = typename ContactRelationType::SourceType;
     using TargetType = typename ContactRelationType::TargetType;
     using MaskedSource = typename SourceType::SourceParticleMask;
-    using NeighborCriterion = typename Neighborhood::NeighborCriterion;
-    using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
+    using KernelCriterion = typename Neighborhood::CriterionKernelType;
+    using MaskedCriterion = typename Identifier::template TargetParticleMask<KernelCriterion>;
 
-  public:
-    UpdateRelation(ContactRelationType &contact_relation);
+      public : UpdateRelation(ContactRelationType &contact_relation);
     virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
 
