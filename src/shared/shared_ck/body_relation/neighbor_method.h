@@ -128,21 +128,25 @@ class NeighborMethod<SingleValued> : public NeighborMethod<Base>
 
     class CriterionKernel
     {
+        Vecd *source_pos_;
+        Vecd *target_pos_;
         Real kernel_size_squared_, inv_h_;
 
       public:
-        template <class ExecutionPolicy, class EncloserTYpe>
-        CriterionKernel(const ExecutionPolicy &ex_policy, EncloserTYpe &encloser)
-            : kernel_size_squared_(math::pow(encloser.base_kernel_.KernelSize(), 2)),
-              inv_h_(encloser.inv_h_){};
+        template <class ExecutionPolicy, class EncloserType>
+        CriterionKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser,
+                        DiscreteVariable<Vecd> *dv_source_pos, DiscreteVariable<Vecd> *dv_target_pos)
+            : source_pos_(dv_source_pos->DelegatedData(ex_policy)),
+              target_pos_(dv_target_pos->DelegatedData(ex_policy)),
+              kernel_size_squared_(math::pow(encloser.base_kernel_.KernelSize(), 2)),
+              inv_h_(encloser.inv_h_) {}
 
-        inline bool operator()(const Vecd &displacement) const
+        inline bool operator()(UnsignedInt i, UnsignedInt j) const
         {
-            Real square_norm = (displacement * inv_h_).squaredNorm();
-            return square_norm < kernel_size_squared_;
+            return (inv_h_ * (source_pos_[i] - target_pos_[j])).squaredNorm() < kernel_size_squared_;
         };
     };
-
+    
     class SmoothingRatioKernel
     {
       public:
