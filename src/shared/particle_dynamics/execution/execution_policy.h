@@ -74,6 +74,12 @@ inline constexpr auto par_unseq = ParallelUnsequencedPolicy{};
 inline constexpr auto par_device = ParallelDevicePolicy{};
 inline constexpr auto seq_device = SequencedDevicePolicy{};
 
+#if SPHINXSYS_USE_SYCL
+inline constexpr auto par_ck = ParallelDevicePolicy{};
+#else
+inline constexpr auto par_ck = ParallelPolicy{};
+#endif // SPHINXSYS_USE_SYCL
+
 } // namespace execution
 } // namespace SPH
 #endif // EXECUTION_POLICY_H

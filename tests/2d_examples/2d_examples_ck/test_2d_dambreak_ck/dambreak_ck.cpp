@@ -3,7 +3,7 @@
  * @brief 2D dambreak example using computing kernels.
  * @author Xiangyu Hu
  */
-#include "sphinxsys_ck.h"
+#include "sphinxsys.h"
 
 using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
