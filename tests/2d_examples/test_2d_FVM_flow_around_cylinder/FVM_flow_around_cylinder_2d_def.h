@@ -21,13 +21,13 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	common_weakly_compressible_FVM_classes.h
+ * @file 	FVM_flow_around_cylinder_2d_def.h
  * @brief 	Here, we define the common weakly compressible classes for fluid dynamics in FVM.
  * @author	Zhentong Wang and Xiangyu Hu
  */
 
-#ifndef COMMON_WEAKLY_COMPRESSIBLE_FVM_CLASSES_H
-#define COMMON_WEAKLY_COMPRESSIBLE_FVM_CLASSES_H
+#ifndef FVM_FLOW_AROUND_CYLINDER_DEF_2D_H
+#define FVM_FLOW_AROUND_CYLINDER_DEF_2D_H
 
 #include "sphinxsys.h"
 
@@ -141,4 +141,4 @@ class PressureForceFromFluidInFVM : public BaseForceFromFluidInFVM
 };
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // COMMON_WEAKLY_COMPRESSIBLE_FVM_CLASSES_H
+#endif // FVM_FLOW_AROUND_CYLINDER_DEF_2D_H

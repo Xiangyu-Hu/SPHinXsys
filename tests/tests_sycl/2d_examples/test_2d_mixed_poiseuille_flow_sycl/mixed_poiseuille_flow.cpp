@@ -273,10 +273,6 @@ int main(int ac, char *av[])
     Contact<> water_wall_contact(water_body, {&wall});
     Contact<> velocity_observer_contact(velocity_observer, {&water_body});
     //----------------------------------------------------------------------
-    // Define the main execution policy for this case.
-    //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelDevicePolicy;
-    //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
     //----------------------------------------------------------------------

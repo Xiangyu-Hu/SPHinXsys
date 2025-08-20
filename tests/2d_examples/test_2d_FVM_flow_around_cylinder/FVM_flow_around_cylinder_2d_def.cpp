@@ -1,5 +1,5 @@
 
-#include "common_weakly_compressible_FVM_classes.h"
+#include "FVM_flow_around_cylinder_2d_def.h"
 
 namespace SPH
 {

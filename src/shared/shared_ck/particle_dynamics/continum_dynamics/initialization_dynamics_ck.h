@@ -21,13 +21,13 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	initilization_dynamics_ck.h
+ * @file 	initialization_dynamics_ck.h
  * @brief 	Here, we define the ck_version for stress diffusion.
  * @details Refer to Feng et al(2021).
  * @author	Shuang Li, Xiangyu Hu and Shuaihao Zhang
  */
-#ifndef INITILIZATION_DYNAMICS_CK_H
-#define INITILIZATION_DYNAMICS_CK_H
+#ifndef INITIALIZATION_DYNAMICS_CK_H
+#define INITIALIZATION_DYNAMICS_CK_H
 
 #include "base_continuum_dynamics.h"
 #include "constraint_dynamics.h"
@@ -64,4 +64,4 @@ class ContinuumInitialConditionCK : public LocalDynamics
 
 } // namespace continuum_dynamics
 } // namespace SPH
-#endif // INITILIZATION_DYNAMICS_CK_H
+#endif // INITIALIZATION_DYNAMICS_CK_H

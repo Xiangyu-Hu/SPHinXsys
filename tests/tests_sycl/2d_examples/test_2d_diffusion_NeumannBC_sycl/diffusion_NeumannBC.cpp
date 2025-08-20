@@ -139,10 +139,6 @@ int main(int ac, char *av[])
     Contact<> diffusion_body_contact_Neumann(diffusion_body, {&wall_Neumann});
     Contact<> temperature_observer_contact(temperature_observer, {&diffusion_body});
     //----------------------------------------------------------------------
-    // Define the main execution policy for this case.
-    //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelDevicePolicy;
-    //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,

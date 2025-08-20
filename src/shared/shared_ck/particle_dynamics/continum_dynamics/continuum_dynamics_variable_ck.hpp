@@ -8,28 +8,15 @@ namespace SPH
 namespace continuum_dynamics
 {
 //=============================================================================================//
-VerticalStressCK::VerticalStressCK(SPHBody &sph_body)
-    : BaseDerivedVariable<Real>(sph_body, "VerticalStress"),
-      dv_stress_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StressTensor3D")),
-      dv_derived_variable_(this->particles_->template registerStateVariable<Real>("VerticalStress")) {}
-//=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 VerticalStressCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),
       derived_variable_(encloser.dv_derived_variable_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-void VerticalStressCK::UpdateKernel::update(size_t index_i, Real dt)
+inline void VerticalStressCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     derived_variable_[index_i] = stress_tensor_3D_[index_i](1, 1);
 }
-//=============================================================================================//
-AccDeviatoricPlasticStrainCK::AccDeviatoricPlasticStrainCK(SPHBody &sph_body)
-    : BaseDerivedVariable<Real>(sph_body, "AccDeviatoricPlasticStrain"),
-      plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->sph_body_.getBaseMaterial())),
-      dv_stress_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StressTensor3D")),
-      dv_strain_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainTensor3D")),
-      dv_derived_variable_(this->particles_->template registerStateVariable<Real>("AccDeviatoricPlasticStrain")),
-      E_(plastic_continuum_.getYoungsModulus()), nu_(plastic_continuum_.getPoissonRatio()) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 AccDeviatoricPlasticStrainCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
@@ -39,7 +26,7 @@ AccDeviatoricPlasticStrainCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &
       derived_variable_(encloser.dv_derived_variable_->DelegatedData(ex_policy)),
       E_(encloser.E_), nu_(encloser.nu_) {}
 //=================================================================================================//
-void AccDeviatoricPlasticStrainCK::UpdateKernel::update(size_t index_i, Real dt)
+inline void AccDeviatoricPlasticStrainCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     Mat3d deviatoric_stress = stress_tensor_3D_[index_i] - (1.0 / 3.0) * stress_tensor_3D_[index_i].trace() * Mat3d::Identity();
     Real hydrostatic_pressure = (1.0 / 3.0) * stress_tensor_3D_[index_i].trace();
@@ -50,7 +37,7 @@ void AccDeviatoricPlasticStrainCK::UpdateKernel::update(size_t index_i, Real dt)
     Real sum = (deviatoric_strain_tensor.cwiseProduct(deviatoric_strain_tensor)).sum();
     derived_variable_[index_i] = sqrt(sum * 2.0 / 3.0);
 }
+//=================================================================================================//
 } // namespace continuum_dynamics
 } // namespace SPH
-
 #endif // CONTINUUM_DYNAMICS_VARIABLE_CK_HPP

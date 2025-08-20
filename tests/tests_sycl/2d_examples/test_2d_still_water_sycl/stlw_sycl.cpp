@@ -83,10 +83,6 @@ int main(int ac, char *av[])
     Inner<> water_body_inner(water_body);
     Contact<> water_wall_contact(water_body, {&wall});
     //----------------------------------------------------------------------
-    // Define the main execution policy for this case.
-    //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelDevicePolicy;
-    //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,

@@ -4,7 +4,7 @@
  * @details We consider a Eulerian flow passing by a cylinder in 2D.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-#include "sphinxsys_ck.h"
+#include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.

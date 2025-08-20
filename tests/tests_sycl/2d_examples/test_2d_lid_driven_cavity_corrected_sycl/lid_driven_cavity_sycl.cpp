@@ -158,11 +158,6 @@ int main(int ac, char *av[])
     Contact<> water_wall_contact(water_body, {&wall_boundary});
     Contact<> horizontal_observer_contact(horizontal_observer, {&water_body});
     Contact<> vertical_observer_contact(vertical_observer, {&water_body});
-    //----------------------------------------------------------------------
-    // Define the main execution policy for this case.
-    //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelDevicePolicy; // define
-
     // ComplexRelation water_block_complex(water_block_inner, water_wall_contact);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.

@@ -1,7 +1,7 @@
 #ifndef CONTINUUM_INTERATION_2ND_CK_HPP
 #define CONTINUUM_INTERATION_2ND_CK_HPP
 
-#include "acoustic_step_2nd_half.h"
+#include "continuum_integration_2nd_ck.h"
 
 namespace SPH
 {
