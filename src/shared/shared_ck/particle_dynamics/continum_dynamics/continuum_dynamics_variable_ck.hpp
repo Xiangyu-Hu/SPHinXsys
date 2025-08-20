@@ -14,8 +14,9 @@ VerticalStressCK::VerticalStressCK(SPHBody &sph_body)
       dv_derived_variable_(this->particles_->template registerStateVariable<Real>("VerticalStress")) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
-VerticalStressCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser) : stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),
-                                                                                                         derived_variable_(encloser.dv_derived_variable_->DelegatedData(ex_policy)) {}
+VerticalStressCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),
+      derived_variable_(encloser.dv_derived_variable_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 void VerticalStressCK::UpdateKernel::update(size_t index_i, Real dt)
 {
@@ -31,11 +32,12 @@ AccDeviatoricPlasticStrainCK::AccDeviatoricPlasticStrainCK(SPHBody &sph_body)
       E_(plastic_continuum_.getYoungsModulus()), nu_(plastic_continuum_.getPoissonRatio()) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
-AccDeviatoricPlasticStrainCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser) : plastic_kernel_(encloser.plastic_continuum_),
-                                                                                                                     stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),
-                                                                                                                     strain_tensor_3D_(encloser.dv_strain_tensor_3D_->DelegatedData(ex_policy)),
-                                                                                                                     derived_variable_(encloser.dv_derived_variable_->DelegatedData(ex_policy)),
-                                                                                                                     E_(encloser.E_), nu_(encloser.nu_) {}
+AccDeviatoricPlasticStrainCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : plastic_kernel_(encloser.plastic_continuum_),
+      stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),
+      strain_tensor_3D_(encloser.dv_strain_tensor_3D_->DelegatedData(ex_policy)),
+      derived_variable_(encloser.dv_derived_variable_->DelegatedData(ex_policy)),
+      E_(encloser.E_), nu_(encloser.nu_) {}
 //=================================================================================================//
 void AccDeviatoricPlasticStrainCK::UpdateKernel::update(size_t index_i, Real dt)
 {

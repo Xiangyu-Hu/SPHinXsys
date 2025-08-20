@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_continum_dynamics.h
+ * @file    all_continuum_dynamics.h
  */
 
 #pragma once

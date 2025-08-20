@@ -5,8 +5,8 @@
  * It can be run successfully (using CMake's CTest) in Linux system installed with Python 3.
  * @author 	Bo Zhang and Xiangyu Hu
  */
-#include "sphinxsys_sycl.h" //SPHinXsys Library
-using namespace SPH;        // namespace cite here
+#include "sphinxsys.h" //SPHinXsys Library
+using namespace SPH;   // namespace cite here
 //----------------------------------------------------------------------
 //	Basic geometry parameters and simulation setup.
 //----------------------------------------------------------------------
@@ -151,7 +151,7 @@ int main(int ac, char *av[])
     // Define SPH solver with particle methods and execution policies.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_device);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.

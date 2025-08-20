@@ -3,7 +3,7 @@
  * @brief 	This is the case file for 2D still water.
  * @author   Nicolò Salis
  */
-#include "sphinxsys_sycl.h" //SPHinXsys Library.
+#include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.

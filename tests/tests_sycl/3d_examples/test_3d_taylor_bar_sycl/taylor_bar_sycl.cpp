@@ -8,7 +8,7 @@
  * //TODO: Seems that the wall contact force should be improved.
  */
 #include "taylor_bar_sycl.h" /**< Case setup for this example. */
-// #include "sphinxsys_sycl.h"
+// #include "sphinxsys.h"
 
 using namespace SPH;
 
@@ -31,7 +31,7 @@ int main(int ac, char *av[])
 
     if (sph_system.RunParticleRelaxation())
     {
-        LevelSetShape *level_set_shape = column.defineBodyLevelSetShape(par_device, 2.0)->writeLevelSet(sph_system);
+        LevelSetShape *level_set_shape = column.defineBodyLevelSetShape(par_ck, 2.0)->writeLevelSet(sph_system);
         column.generateParticles<BaseParticles, Lattice>();
         wall.generateParticles<BaseParticles, Lattice>();
         NearShapeSurface near_body_surface(column);
@@ -40,7 +40,7 @@ int main(int ac, char *av[])
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
         SPHSolver sph_solver(sph_system);
-        auto &main_methods = sph_solver.addParticleMethodContainer(par_device);
+        auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
         auto &host_methods = sph_solver.addParticleMethodContainer(par);
 
         auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(column);

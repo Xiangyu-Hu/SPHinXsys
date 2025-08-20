@@ -5,7 +5,7 @@
  * @author 	YuVirtonomy, Xiangyu Hu
  */
 
-#include "sphinxsys_sycl.h" // SPHinXsys Library.
+#include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 
 //----------------------------------------------------------------------

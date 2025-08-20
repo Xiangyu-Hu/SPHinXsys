@@ -5,7 +5,7 @@
  * 			understanding how emitter inflow is working.
  * @author 	Xiangyu Hu
  */
-#include "sphinxsys_sycl.h"
+#include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Global geometry, material parameters and numerical setup.

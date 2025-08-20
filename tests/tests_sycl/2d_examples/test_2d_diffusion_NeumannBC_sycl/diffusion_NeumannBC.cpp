@@ -4,7 +4,7 @@
  * @details This is the first case to validate multiple boundary conditions.
  * @author 	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
-#include "sphinxsys_sycl.h"
+#include "sphinxsys.h"
 
 using namespace SPH;
 //----------------------------------------------------------------------

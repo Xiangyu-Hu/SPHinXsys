@@ -4,7 +4,7 @@
  * @details This is a fundamental GPU-accelerated test for soil dynamics.
  * @author SHuang Li, Xiangyu Hu and Shuaihao Zhang
  */
-#include "sphinxsys_sycl.h" // SPHinXsys Library.
+#include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 // general parameters for geometry
 Real radius = 0.1;                                         // Soil column length

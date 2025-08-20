@@ -4,8 +4,8 @@
  * @details This is the one of the basic test cases for the RKGC inner flow.
  * @author 	Bo Zhang, Xiangyu Hu
  */
-#include "sphinxsys_sycl.h" //	SPHinXsys Library.
-using namespace SPH;        //	Namespace cite here.
+#include "sphinxsys.h" //	SPHinXsys Library.
+using namespace SPH;   //	Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------

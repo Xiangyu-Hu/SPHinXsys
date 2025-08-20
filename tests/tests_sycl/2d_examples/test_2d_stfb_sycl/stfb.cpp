@@ -3,7 +3,7 @@
  * @brief 	This is the test for 2D still floating body using compute kernel.
  * @author   Nicolò Salis and Xiangyu Hu
  */
-#include "sphinxsys_sycl.h"
+#include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -149,7 +149,7 @@ int main(int ac, char *av[])
     // Define SPH solver with particle methods and execution policies.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_device);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     auto &host_methods = sph_solver.addParticleMethodContainer(par);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.

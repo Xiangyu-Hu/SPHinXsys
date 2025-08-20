@@ -3,7 +3,7 @@
  * @brief 3D dambreak example using computing kernels.
  * @author Xiangyu Hu
  */
-#include "sphinxsys_sycl.h"
+#include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
