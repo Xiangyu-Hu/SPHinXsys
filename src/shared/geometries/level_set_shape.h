@@ -51,17 +51,25 @@ class LevelSetShape : public Shape
   public:
     /** refinement_ratio is between body reference resolution and level set resolution */
     LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation,
-                  Real refinement_ratio = 1.0,
-                  UsageType usage_type = UsageType::Volumetric);
+                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric);
     LevelSetShape(SPHBody &sph_body, Shape &shape,
-                  Real refinement_ratio = 1.0,
-                  UsageType usage_type = UsageType::Volumetric);
-    LevelSetShape(const ParallelDevicePolicy &par_device, Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation,
-                  Real refinement_ratio = 1.0,
-                  UsageType usage_type = UsageType::Volumetric);
-    LevelSetShape(const ParallelDevicePolicy &par_device, SPHBody &sph_body, Shape &shape,
-                  Real refinement_ratio = 1.0,
-                  UsageType usage_type = UsageType::Volumetric);
+                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric);
+
+    template <class ExecutionPolicy>
+    LevelSetShape(const ExecutionPolicy &ex_policy, Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation,
+                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric)
+        : LevelSetShape(shape.getBounds(), shape, sph_adaptation, refinement_ratio)
+    {
+        finishInitialization(ex_policy, usage_type);
+    };
+
+    template <class ExecutionPolicy>
+    LevelSetShape(const ExecutionPolicy &ex_policy, SPHBody &sph_body, Shape &shape,
+                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric)
+        : LevelSetShape(shape.getBounds(), sph_body, shape, refinement_ratio)
+    {
+        finishInitialization(ex_policy, usage_type);
+    };
 
     virtual ~LevelSetShape() {};
 

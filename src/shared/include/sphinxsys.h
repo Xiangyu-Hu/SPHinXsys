@@ -37,9 +37,25 @@
 #include "all_particles.h"
 #include "all_physical_dynamics.h"
 #include "all_regression_test_methods.h"
+#include "all_shared_physical_dynamics_ck.h"
 #include "all_simbody.h"
 #include "io_all.h"
+#include "io_all_ck.h"
 #include "parameterization.h"
+#include "particle_method_container.h"
+#include "sph_solver.h"
 #include "sph_system.hpp"
+
+#if SPHINXSYS_USE_SYCL
+#include "base_configuration_dynamics_sycl.h"
+#include "device_copyable_variable.h"
+#include "mesh_iterators_sycl.hpp"
+#include "particle_iterators_sycl.h"
+#include "particle_sort_sycl.hpp"
+#include "sphinxsys_buffer_array_sycl.hpp"
+#include "sphinxsys_constant_sycl.hpp"
+#include "sphinxsys_variable_array_sycl.hpp"
+#include "sphinxsys_variable_sycl.hpp"
+#endif // SPHINXSYS_USE_SYCL
 
 #endif // SPHINXSYS_H

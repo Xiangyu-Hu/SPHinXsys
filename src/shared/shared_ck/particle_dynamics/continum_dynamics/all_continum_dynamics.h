@@ -21,18 +21,13 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_continum_dynamics.h
+ * @file    all_continuum_dynamics.h
  */
 
 #pragma once
 
-#include "continuum_dynamics_variable_ck.h"
 #include "continuum_dynamics_variable_ck.hpp"
-#include "continuum_integration_1st_ck.h"
 #include "continuum_integration_1st_ck.hpp"
-#include "continuum_integration_2nd_ck.h"
 #include "continuum_integration_2nd_ck.hpp"
-#include "initilization_dynamics_ck.h"
-#include "initilization_dynamics_ck.hpp"
-#include "stress_diffusion_ck.h"
+#include "initialization_dynamics_ck.hpp"
 #include "stress_diffusion_ck.hpp"

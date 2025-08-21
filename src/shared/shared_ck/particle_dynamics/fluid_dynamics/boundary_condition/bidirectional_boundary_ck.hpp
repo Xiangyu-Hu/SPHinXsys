@@ -16,7 +16,7 @@ BufferIndicationCK::UpdateKernel::
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       buffer_indicator_(encloser.dv_buffer_indicator_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
+inline void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (aligned_box_->checkContain(pos_[index_i]))
     {
@@ -89,7 +89,7 @@ BufferOutflowIndication::UpdateKernel::
                    encloser.dv_buffer_indicator_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-void BufferOutflowIndication::UpdateKernel::update(size_t index_i, Real dt)
+inline void BufferOutflowIndication::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (!aligned_box_->checkInBounds(pos_[index_i]))
     {
@@ -106,7 +106,7 @@ OutflowParticleDeletion::UpdateKernel::
     : remove_real_particle_(ex_policy, encloser.remove_real_particle_method_),
       life_status_(encloser.dv_life_status_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-void OutflowParticleDeletion::UpdateKernel::update(UnsignedInt index_i, Real dt)
+inline void OutflowParticleDeletion::UpdateKernel::update(UnsignedInt index_i, Real dt)
 {
     if (life_status_[index_i] == 1) // to delete
     {

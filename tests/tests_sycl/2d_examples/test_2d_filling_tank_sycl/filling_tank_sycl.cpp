@@ -5,7 +5,7 @@
  * 			understanding how emitter inflow is working.
  * @author 	Xiangyu Hu
  */
-#include "sphinxsys_sycl.h"
+#include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Global geometry, material parameters and numerical setup.
@@ -125,10 +125,6 @@ int main(int ac, char *av[])
     Inner<> water_body_inner(water_body);
     Contact<> water_wall_contact(water_body, {&wall});
     Contact<> fluid_observer_contact(fluid_observer, {&water_body});
-    //----------------------------------------------------------------------
-    // Define the main execution policy for this case.
-    //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelDevicePolicy;
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.

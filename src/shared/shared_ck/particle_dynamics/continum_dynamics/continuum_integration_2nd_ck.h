@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	continuum_integration.h
+ * @file 	continuum_integration_2nd_ck.h
  * @brief 	Here, we define the algorithm classes for continuum dynamics within the body.
  * @details CK and SYCL version.
  * @author	Shuang Li, Xiangyu Hu and Shuaihao Zhang

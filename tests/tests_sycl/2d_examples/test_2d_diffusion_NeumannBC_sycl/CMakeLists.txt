@@ -8,7 +8,13 @@ SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/ DESTINATION ${BUILD_INPUT_PATH})
+if(SPHINXSYS_USE_SYCL) # this case gives more significant differences when use sycl as float other double is used
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool_sycl/ DESTINATION ${BUILD_INPUT_PATH})
+else()
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool_ck/ DESTINATION ${BUILD_INPUT_PATH})
+endif()
+
+
 
 add_executable(${PROJECT_NAME})
 aux_source_directory(. DIR_SRCS)

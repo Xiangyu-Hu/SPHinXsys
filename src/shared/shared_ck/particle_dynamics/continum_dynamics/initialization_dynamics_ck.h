@@ -21,67 +21,47 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	execution_policy.h
- * @brief 	Here we define the execution policy relevant to parallel computing.
- * @details This analog of the standard library on the same functions.
- * @author	Xiangyu Hu and  Fabien Pean
+ * @file 	initialization_dynamics_ck.h
+ * @brief 	Here, we define the ck_version for stress diffusion.
+ * @details Refer to Feng et al(2021).
+ * @author	Shuang Li, Xiangyu Hu and Shuaihao Zhang
  */
+#ifndef INITIALIZATION_DYNAMICS_CK_H
+#define INITIALIZATION_DYNAMICS_CK_H
 
-#ifndef EXECUTION_POLICY_H
-#define EXECUTION_POLICY_H
+#include "base_continuum_dynamics.h"
+#include "constraint_dynamics.h"
+#include "fluid_integration.hpp"
+#include "general_continuum.h"
+#include "general_continuum.hpp"
 
 namespace SPH
 {
-namespace execution
+namespace continuum_dynamics
 {
-class SequencedPolicy
+class ContinuumInitialConditionCK : public LocalDynamics
 {
+  public:
+    explicit ContinuumInitialConditionCK(SPHBody &sph_body);
+    virtual ~ContinuumInitialConditionCK() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(UnsignedInt index_i, Real dt = 0.0) {};
+
+      protected:
+        Vecd *pos_, *vel_;
+        Mat3d *stress_tensor_3D_;
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
+    DiscreteVariable<Mat3d> *dv_stress_tensor_3D_;
 };
 
-class UnsequencedPolicy
-{
-};
-
-class ParallelPolicy
-{
-};
-
-class ParallelUnsequencedPolicy
-{
-};
-
-template <typename...>
-class DeviceExecution;
-
-template <>
-class DeviceExecution<>
-{
-};
-
-template <typename PolicyType>
-class DeviceExecution<PolicyType>
-    : public DeviceExecution<>, public PolicyType
-{
-};
-
-using ParallelDevicePolicy = DeviceExecution<ParallelPolicy>;
-using SequencedDevicePolicy = DeviceExecution<SequencedPolicy>;
-
-inline constexpr auto seq = SequencedPolicy{};
-inline constexpr auto unseq = UnsequencedPolicy{};
-inline constexpr auto par = ParallelPolicy{};
-inline constexpr auto par_unseq = ParallelUnsequencedPolicy{};
-inline constexpr auto par_device = ParallelDevicePolicy{};
-inline constexpr auto seq_device = SequencedDevicePolicy{};
-
-#if SPHINXSYS_USE_SYCL
-using MainExecutionPolicy = ParallelDevicePolicy;
-inline constexpr auto par_ck = ParallelDevicePolicy{};
-#else
-using MainExecutionPolicy = ParallelPolicy;
-inline constexpr auto par_ck = ParallelPolicy{};
-#endif // SPHINXSYS_USE_SYCL
-
-} // namespace execution
+} // namespace continuum_dynamics
 } // namespace SPH
-#endif // EXECUTION_POLICY_H
+#endif // INITIALIZATION_DYNAMICS_CK_H

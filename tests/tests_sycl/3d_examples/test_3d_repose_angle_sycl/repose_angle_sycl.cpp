@@ -4,7 +4,7 @@
  * @details This is a fundamental GPU-accelerated test for soil dynamics.
  * @author SHuang Li, Xiangyu Hu and Shuaihao Zhang
  */
-#include "sphinxsys_sycl.h" // SPHinXsys Library.
+#include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 // general parameters for geometry
 Real radius = 0.1;                                         // Soil column length
@@ -104,7 +104,6 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelDevicePolicy; // define execution policy for this case
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> soil_cell_linked_list(soil_block);
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall_boundary);
     //----------------------------------------------------------------------

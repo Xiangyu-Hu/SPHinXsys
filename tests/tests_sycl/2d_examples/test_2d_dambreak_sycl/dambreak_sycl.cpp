@@ -3,7 +3,7 @@
  * @brief 2D dambreak example using SYCL.
  * @author Xiangyu Hu
  */
-#include "sphinxsys_sycl.h"
+#include "sphinxsys.h"
 
 using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
@@ -73,7 +73,7 @@ int main(int ac, char *av[])
     // Define SPH solver with particle methods and execution policies.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_device);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     auto &host_methods = sph_solver.addParticleMethodContainer(par);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
