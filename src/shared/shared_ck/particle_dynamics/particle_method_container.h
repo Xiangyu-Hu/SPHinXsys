@@ -44,14 +44,14 @@
 namespace SPH
 {
 
-class ParticleDynamicsGroup
+class ParticleDynamicsGroup : public BaseDynamics<void>
 {
     StdVec<BaseDynamics<void> *> particle_dynamics_;
 
   public:
-    ParticleDynamicsGroup() {};
+    ParticleDynamicsGroup() : BaseDynamics<void>() {};
     ParticleDynamicsGroup(const StdVec<BaseDynamics<void> *> &particle_dynamics)
-        : particle_dynamics_(particle_dynamics) {}
+        : BaseDynamics<void>(), particle_dynamics_(particle_dynamics) {}
     ~ParticleDynamicsGroup() {};
 
     void add(BaseDynamics<void> *dynamics)
@@ -72,7 +72,7 @@ class ParticleDynamicsGroup
         return particle_dynamics_;
     }
 
-    void exec(Real dt = 0.0)
+    void exec(Real dt = 0.0) override
     {
         for (UnsignedInt i = 0; i != particle_dynamics_.size(); ++i)
         {
@@ -81,14 +81,19 @@ class ParticleDynamicsGroup
     }
 };
 
-template <class ReduceDynamicsType>
-class ReduceDynamicsGroup
+template <class Operation, class ReduceDynamicsType>
+class ReduceDynamicsGroup : public BaseDynamics<typename ReduceDynamicsType::OutputType>
 {
+    Operation operation_;
     StdVec<ReduceDynamicsType *> reduce_dynamics_;
     using OutputType = typename ReduceDynamicsType::OutputType;
 
   public:
-    ReduceDynamicsGroup() = default;
+    ReduceDynamicsGroup(const Operation &operation)
+        : BaseDynamics<typename ReduceDynamicsType::OutputType>(), operation_(operation) {}
+    ReduceDynamicsGroup(const Operation &operation, const StdVec<ReduceDynamicsType *> &reduce_dynamics)
+        : BaseDynamics<typename ReduceDynamicsType::OutputType>(),
+          operation_(operation), reduce_dynamics_(reduce_dynamics) {}
     ~ReduceDynamicsGroup() = default;
 
     void add(ReduceDynamicsType *dynamics)
@@ -101,23 +106,21 @@ class ReduceDynamicsGroup
         return reduce_dynamics_;
     }
 
-    ReduceDynamicsGroup<ReduceDynamicsType> operator+(
-        const ReduceDynamicsGroup<ReduceDynamicsType> &other) const
+    ReduceDynamicsGroup<Operation, ReduceDynamicsType> operator+(
+        const ReduceDynamicsGroup<Operation, ReduceDynamicsType> &other) const
     {
         StdVec<ReduceDynamicsType *> other_dynamics = other.getAllDynamics();
         StdVec<ReduceDynamicsType *> result_dynamics = reduce_dynamics_;
         result_dynamics.insert(result_dynamics.end(), other_dynamics.begin(), other_dynamics.end());
-        return ReduceDynamicsGroup<ReduceDynamicsType>(result_dynamics);
+        return ReduceDynamicsGroup<Operation, ReduceDynamicsType>(operation_, result_dynamics);
     }
 
-    template <class Operation>
-    OutputType exec(Real dt = 0.0)
+    OutputType exec(Real dt = 0.0) override
     {
         OutputType result = ReduceReference<Operation>::value;
-        Operation operation;
         for (auto *dynamics : reduce_dynamics_)
         {
-            result = operation(result, dynamics->exec(dt));
+            result = operation_(result, dynamics->exec(dt));
         }
         return result;
     };
@@ -210,16 +213,17 @@ class ParticleMethodContainer : public BaseMethodContainer
             ReduceDynamicsCK<ExecutionPolicy, ReduceType>>(std::forward<Args>(args)...);
     };
 
-    template <class ReduceType, typename DynamicsIdentifier>
-    ReduceDynamicsGroup<ReduceDynamicsCK<ExecutionPolicy, ReduceType>> addReduceDynamics(
-        StdVec<DynamicsIdentifier *> &identifiers)
+    template <typename Operation, class ReduceType, typename DynamicsIdentifier>
+    ReduceDynamicsGroup<Operation, ReduceDynamicsCK<ExecutionPolicy, ReduceType>> addReduceDynamics(
+        const StdVec<DynamicsIdentifier *> &identifiers)
     {
-        ReduceDynamicsGroup<ReduceDynamicsCK<ExecutionPolicy, ReduceType>> group;
+        StdVec<ReduceDynamicsCK<ExecutionPolicy, ReduceType> *> reduce_dynamics;
         for (auto *identifier : identifiers)
         {
-            group.add(&addReduceDynamics<ReduceType>(*identifier));
+            reduce_dynamics.push_back(&addReduceDynamics<ReduceType>(*identifier));
         }
-        return group;
+        return ReduceDynamicsGroup<Operation, ReduceDynamicsCK<ExecutionPolicy, ReduceType>>(
+            Operation(), reduce_dynamics);
     };
 
     template <class InteractionType, typename... Args>
