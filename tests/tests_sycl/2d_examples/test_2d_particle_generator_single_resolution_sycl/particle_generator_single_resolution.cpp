@@ -68,10 +68,12 @@ int main(int ac, char *av[])
     Inner<> filler_inner(filler);
     Contact<> filler_contact(filler, {&input_body});
     //----------------------------------------------------------------------
-    //	Methods used for particle relaxation.
+    // Define SPH solver with particle methods and execution policies.
+    // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -85,13 +87,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     StdVec<RealBody *> real_bodies = {&input_body, &filler};
 
+    host_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies).exec(); // host method able to run immediately
+
     ParticleDynamicsGroup update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
     ParticleDynamicsGroup update_relation;
     update_relation.add(&main_methods.addRelationDynamics(input_body_inner));
     update_relation.add(&main_methods.addRelationDynamics(filler_inner, filler_contact));
     ParticleDynamicsGroup update_configuration = update_cell_linked_list + update_relation;
-
-    ParticleDynamicsGroup randomize_particles = main_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies);
 
     ParticleDynamicsGroup relaxation_residual;
     relaxation_residual.add(&main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(input_body_inner)
@@ -107,11 +109,6 @@ int main(int ac, char *av[])
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
-    //----------------------------------------------------------------------
-    //	Prepare the simulation with cell linked list, configuration
-    //	and case specified initial condition if necessary.
-    //----------------------------------------------------------------------
-    randomize_particles.exec();
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------

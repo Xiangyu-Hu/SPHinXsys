@@ -128,7 +128,7 @@ void mesh_for(const execution::SequencedPolicy &seq, const MeshRange &mesh_range
 };
 
 template <typename LocalFunction, typename... Args>
-void mesh_for(const execution::ParallelPolicy &par, const MeshRange &mesh_range,
+void mesh_for(const execution::ParallelPolicy &par_host, const MeshRange &mesh_range,
               const LocalFunction &local_function, Args &&...args)
 {
     mesh_parallel_for(mesh_range, local_function, std::forward<Args>(args)...);
@@ -143,7 +143,7 @@ void package_for(const execution::SequencedPolicy &seq, UnsignedInt start_index,
 }
 
 template <typename FunctionOnData>
-void package_for(const execution::ParallelPolicy &par, UnsignedInt start_index,
+void package_for(const execution::ParallelPolicy &par_host, UnsignedInt start_index,
                  UnsignedInt num_grid_pkgs, const FunctionOnData &function)
 {
     parallel_for(IndexRange(start_index, num_grid_pkgs), [&](const IndexRange &r)
