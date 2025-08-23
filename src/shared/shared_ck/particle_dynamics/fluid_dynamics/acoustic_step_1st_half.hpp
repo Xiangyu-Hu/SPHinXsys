@@ -37,21 +37,38 @@ AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
     this->particles_->template addVariableToWrite<Vecd>("Velocity");
 }
 //=================================================================================================//
-template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
-AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
+template <class BaseInteractionType>
+template <class ExecutionPolicy, class EncloserType>
+AcousticStep1stHalf<UpdateOnly, BaseInteractionType>::
+    UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      force_(encloser.dv_force_->DelegatedData(ex_policy)),
+      force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <class BaseInteractionType>
+void AcousticStep1stHalf<UpdateOnly, BaseInteractionType>::UpdateKernel::update(size_t index_i, Real dt)
+{
+    vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
+}
+//=================================================================================================//
+template <class BaseAlgorithmType, class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+AcousticStep1stHalf<Inner<BaseAlgorithmType, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep1stHalf(Inner<Parameters...> &inner_relation)
-    : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
-      kernel_correction_(this->particles_),
+    : BaseInteraction(inner_relation), kernel_correction_(this->particles_),
       fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
       riemann_solver_(this->fluid_, this->fluid_)
 {
-    static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
+    static_assert(std::is_base_of_v<KernelCorrection, KernelCorrectionType>,
                   "KernelCorrection is not the base of KernelCorrectionType!");
+    static_assert(std::is_base_of_v<OneLevel, BaseAlgorithmType> ||
+                      std::is_base_of_v<WithInitialization, BaseAlgorithmType>,
+                  "OneLevel or WithInitialization is not the base of BaseAlgorithmType!");
 }
 //=================================================================================================//
-template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+template <class BaseAlgorithmType, class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
+AcousticStep1stHalf<Inner<BaseAlgorithmType, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : eos_(encloser.fluid_),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
@@ -60,8 +77,8 @@ AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
-void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
+template <class BaseAlgorithmType, class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+void AcousticStep1stHalf<Inner<BaseAlgorithmType, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InitializeKernel::initialize(size_t index_i, Real dt)
 {
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
@@ -69,9 +86,9 @@ void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
     dpos_[index_i] += vel_[index_i] * dt * 0.5;
 }
 //=================================================================================================//
-template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+template <class BaseAlgorithmType, class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
+AcousticStep1stHalf<Inner<BaseAlgorithmType, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_),
@@ -82,8 +99,8 @@ AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
-void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
+template <class BaseAlgorithmType, class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+void AcousticStep1stHalf<Inner<BaseAlgorithmType, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
@@ -99,22 +116,6 @@ void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
     }
     force_[index_i] += force * Vol_[index_i];
     drho_dt_[index_i] = rho_dissipation * rho_[index_i];
-}
-//=================================================================================================//
-template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
-template <class ExecutionPolicy, class EncloserType>
-AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
-      force_(encloser.dv_force_->DelegatedData(ex_policy)),
-      force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)) {}
-//=================================================================================================//
-template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
-void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    UpdateKernel::update(size_t index_i, Real dt)
-{
-    vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
