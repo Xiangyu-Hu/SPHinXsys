@@ -41,7 +41,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         SPHSolver sph_solver(sph_system);
         auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-        auto &host_methods = sph_solver.addParticleMethodContainer(par);
+        auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
 
         auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(column);
         auto &input_body_update_inner_relation = main_methods.addRelationDynamics(column_inner);

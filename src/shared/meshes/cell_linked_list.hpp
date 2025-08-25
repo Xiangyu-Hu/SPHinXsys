@@ -239,7 +239,7 @@ void MultilevelCellLinkedList::particle_for_split(const execution::SequencedPoli
 }
 //=================================================================================================//
 template <class LocalDynamicsFunction>
-void MultilevelCellLinkedList::particle_for_split(const execution::ParallelPolicy &par,
+void MultilevelCellLinkedList::particle_for_split(const execution::ParallelPolicy &par_host,
                                                   const LocalDynamicsFunction &local_dynamics_function)
 {
     for (UnsignedInt level = 0; level != meshes_.size(); ++level)

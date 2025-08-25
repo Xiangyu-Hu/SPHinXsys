@@ -12,14 +12,14 @@ LevelSetShape::
                   Real refinement_ratio, UsageType usage_type)
     : LevelSetShape(shape.getBounds(), shape, sph_adaptation, refinement_ratio)
 {
-    finishInitialization(execution::par, usage_type);
+    finishInitialization(execution::par_host, usage_type);
 }
 //=================================================================================================//
 LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape,
                              Real refinement_ratio, UsageType usage_type)
     : LevelSetShape(shape.getBounds(), sph_body, shape, refinement_ratio)
 {
-    finishInitialization(execution::par, usage_type);
+    finishInitialization(execution::par_host, usage_type);
 }
 //=================================================================================================//
 LevelSetShape::LevelSetShape(BoundingBox bounding_box, Shape &shape,

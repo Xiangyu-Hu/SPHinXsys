@@ -90,13 +90,14 @@ class ReduceDynamicsCK : public ReduceType,
     using ReduceReturnType = typename ReduceType::ReturnType;
     using Operation = typename ReduceType::OperationType;
     using FinishDynamics = typename ReduceType::FinishDynamics;
-    using OutputType = typename FinishDynamics::OutputType;
     using KernelImplementation =
         Implementation<ExecutionPolicy, ReduceType, ReduceKernel>;
     KernelImplementation kernel_implementation_;
     FinishDynamics finish_dynamics_;
 
   public:
+    using OutputType = typename FinishDynamics::OutputType;
+
     template <typename... Args>
     ReduceDynamicsCK(Args &&...args)
         : ReduceType(std::forward<Args>(args)...),
