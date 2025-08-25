@@ -6,7 +6,7 @@
  * @author 	Yongchuan Yu and Xiangyu Hu
  */
 
-#include "sphinxsys.h"
+#include "sphinxsys_sycl.h"
 
 using namespace SPH;
 
@@ -41,7 +41,7 @@ int main(int ac, char *av[])
     input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * resolution_ref, original_logo);
     input_shape.subtract<MultiPolygonShape>(original_logo);
     RealBody input_body(sph_system, input_shape);
-    LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(par_ck)
+    LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(par_device)
                                          ->writeLevelSet(sph_system);
     input_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
@@ -61,7 +61,7 @@ int main(int ac, char *av[])
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_device);
     auto &host_methods = sph_solver.addParticleMethodContainer(par);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.

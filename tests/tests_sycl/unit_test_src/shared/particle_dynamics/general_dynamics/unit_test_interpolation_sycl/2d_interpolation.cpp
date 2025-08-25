@@ -3,7 +3,7 @@
  * @brief 	test the linear reproducing approximation of interpolation.
  * @author 	Xiangyu Hu
  */
-#include "sphinxsys.h"
+#include "sphinxsys_sycl.h"
 #include <gtest/gtest.h>
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -73,6 +73,10 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     Contact<> fluid_observer_contact(fluid_observer, {&water_block});
+    //----------------------------------------------------------------------
+    // Define the main execution policy for this case.
+    //----------------------------------------------------------------------
+    using MainExecutionPolicy = execution::ParallelDevicePolicy;
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.

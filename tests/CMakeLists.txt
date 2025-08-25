@@ -31,7 +31,9 @@ if(SPHINXSYS_BUILD_UNIT_TESTS)
     ADD_SUBDIRECTORY(unit_tests_src)
 endif()
 
-ADD_SUBDIRECTORY(tests_sycl)
+if(SPHINXSYS_USE_SYCL)
+    ADD_SUBDIRECTORY(tests_sycl)
+endif()
 
 if(SPHINXSYS_BUILD_MODULES)
     add_subdirectory(modules)

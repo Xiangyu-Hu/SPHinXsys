@@ -24,7 +24,7 @@
  * @file continuum_dynamics_variable_ck.h
  * @brief Here, we define the algorithm classes for computing derived solid dynamics variables.
  * @details These variable can be added into variable list for state output.
- * @author Shuang Li and Xiangyu Hu
+ * @author Shuang Li, Xiangyu Hu and Xiangyu Hu
  */
 
 #ifndef CONTINUUM_DYNAMICS_VARIABLE_CK_H

@@ -3,7 +3,7 @@
  * @brief 	test the linear and parabolic reproducing gradient and hessian
  * @author 	Xiangyu Hu
  */
-#include "sphinxsys.h"
+#include "sphinxsys_ck.h"
 #include <gtest/gtest.h>
 using namespace SPH;
 //----------------------------------------------------------------------

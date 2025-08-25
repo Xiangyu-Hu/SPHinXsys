@@ -3,7 +3,7 @@
  * @brief 	 This is the case file for 3D still floating body using computing kernel.
  * @author   Nicolò Salis and Xiangyu Hu
  */
-#include "sphinxsys.h" //SPHinXsys Library.
+#include "sphinxsys_sycl.h" //SPHinXsys Library.
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -172,6 +172,10 @@ int main(int ac, char *av[])
     Contact<> structure_contact(structure, {&water_block});
     Contact<> observer_contact(observer, {&structure}, ConfigType::Lagrangian);
     Contact<SPHBody, BodyPartByParticle> structure_proxy_contact(structure_proxy, {&structure_surface}, ConfigType::Lagrangian);
+    //----------------------------------------------------------------------
+    // Define the main execution policy for this case.
+    //----------------------------------------------------------------------
+    using MainExecutionPolicy = execution::ParallelDevicePolicy;
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.

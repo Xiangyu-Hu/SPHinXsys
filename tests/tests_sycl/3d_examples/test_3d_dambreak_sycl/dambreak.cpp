@@ -3,7 +3,7 @@
  * @brief 3D dambreak example using computing kernels.
  * @author Xiangyu Hu
  */
-#include "sphinxsys.h"
+#include "sphinxsys_sycl.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -97,6 +97,10 @@ int main(int ac, char *av[])
     Inner<> water_block_inner(water_block);
     Contact<> water_wall_contact(water_block, {&wall_boundary});
     Contact<> fluid_observer_contact(fluid_observer, {&water_block});
+    //----------------------------------------------------------------------
+    // Define the main execution policy for this case.
+    //----------------------------------------------------------------------
+    using MainExecutionPolicy = execution::ParallelDevicePolicy;
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.

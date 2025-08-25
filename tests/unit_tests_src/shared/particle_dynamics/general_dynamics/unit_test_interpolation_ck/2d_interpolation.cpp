@@ -3,7 +3,7 @@
  * @brief 	test the linear reproducing approximation of interpolation.
  * @author 	Xiangyu Hu
  */
-#include "sphinxsys.h"
+#include "sphinxsys_ck.h"
 #include <gtest/gtest.h>
 using namespace SPH;
 //----------------------------------------------------------------------

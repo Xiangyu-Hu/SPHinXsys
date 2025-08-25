@@ -68,6 +68,7 @@ class MultilevelLevelSet : public BaseMeshField
 
     template <class ExecutionPolicy>
     void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type);
+    void finishInitialization(const ParallelDevicePolicy &par_device, UsageType usage_type);
     void cleanInterface(Real small_shift_factor);
     void correctTopology(Real small_shift_factor);
     bool probeIsWithinMeshBound(const Vecd &position);
