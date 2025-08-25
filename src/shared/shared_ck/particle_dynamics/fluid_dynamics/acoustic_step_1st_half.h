@@ -57,58 +57,13 @@ class AcousticStep : public BaseInteractionType
 template <typename...>
 class AcousticStep1stHalf;
 
-template <typename BaseAlgorithmType, class BaseInteractionType>
-class AcousticStep1stHalf<BaseAlgorithmType, BaseInteractionType>
-    : public AcousticStep<BaseInteractionType>
-{
-  public:
-    template <class DynamicsIdentifier>
-    AcousticStep1stHalf(DynamicsIdentifier &identifier)
-        : AcousticStep<BaseInteractionType>(identifier){};
-    virtual ~AcousticStep1stHalf() {};
-};
-
-template <class BaseInteractionType>
-class AcousticStep1stHalf<UpdateOnly, BaseInteractionType>
-    : public AcousticStep<BaseInteractionType>
-{
-  public:
-    template <class DynamicsIdentifier>
-    AcousticStep1stHalf(DynamicsIdentifier &identifier)
-        : AcousticStep<BaseInteractionType>(identifier){};
-    virtual ~AcousticStep1stHalf() {};
-
-    class UpdateKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
-
-      protected:
-        Real *mass_;
-        Vecd *vel_, *force_, *force_prior_;
-    };
-};
-
-template <class BaseInteractionType>
-class AcousticStep1stHalf<OneLevel, BaseInteractionType>
-    : public AcousticStep1stHalf<UpdateOnly, BaseInteractionType>
-{
-  public:
-    template <class DynamicsIdentifier>
-    AcousticStep1stHalf(DynamicsIdentifier &identifier)
-        : AcousticStep1stHalf<UpdateOnly, BaseInteractionType>(identifier){};
-    virtual ~AcousticStep1stHalf() {};
-};
-
-template <class BaseAlgorithmType, class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
-class AcousticStep1stHalf<Inner<BaseAlgorithmType, RiemannSolverType, KernelCorrectionType, Parameters...>>
-    : public AcousticStep1stHalf<BaseAlgorithmType, Interaction<Inner<Parameters...>>>
+template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+class AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>
+    : public AcousticStep<Interaction<Inner<Parameters...>>>
 {
     using FluidType = typename RiemannSolverType::SourceFluid;
     using EosKernel = typename FluidType::EosKernel;
-    using BaseInteraction = AcousticStep1stHalf<BaseAlgorithmType, Interaction<Inner<Parameters...>>>;
+    using BaseInteraction = AcousticStep<Interaction<Inner<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
@@ -140,6 +95,18 @@ class AcousticStep1stHalf<Inner<BaseAlgorithmType, RiemannSolverType, KernelCorr
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *p_, *drho_dt_;
         Vecd *force_;
+    };
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *mass_;
+        Vecd *vel_, *force_, *force_prior_;
     };
 
   protected:

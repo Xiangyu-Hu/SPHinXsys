@@ -36,24 +36,10 @@
 
 namespace SPH
 {
-class WithUpdate
-{
-};
-class WithInitialization
-{
-};
-class OneLevel
-{
-};
-class InteractionOnly
-{
-};
-class UpdateOnly
-{
-};
-class InitializationOnly
-{
-};
+class WithUpdate;
+class WithInitialization;
+class OneLevel;
+class InteractionOnly;
 
 template <typename... T>
 class Interaction;
