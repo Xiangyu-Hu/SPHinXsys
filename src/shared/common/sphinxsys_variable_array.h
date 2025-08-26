@@ -67,7 +67,12 @@ class VariableArray : public Entity
     };
 
     template <class PolicyType>
-    DataArray<DataType> *DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy);
+    DataArray<DataType> *DelegatedOnDevice();
+    template <class PolicyType>
+    DataArray<DataType> *DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy)
+    {
+        return DelegatedOnDevice<PolicyType>();
+    };
 
     void setDelegateDataArray(DataArray<DataType> *data_array_)
     {
