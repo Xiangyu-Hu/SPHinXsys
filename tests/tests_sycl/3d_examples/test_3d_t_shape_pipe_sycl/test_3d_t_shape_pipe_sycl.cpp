@@ -85,7 +85,46 @@ struct BoundaryPressurePrescribed
     };
 };
 
-template <typename ExecutionPolicy>
+class ResetBufferCorrectionMatrixCK : public BaseLocalDynamics<AlignedBoxByCell>
+{
+  private:
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<Matd> *dv_B_;
+    Real radius_;
+
+  public:
+    explicit ResetBufferCorrectionMatrixCK(AlignedBoxByCell &aligned_box_part)
+        : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
+          sv_aligned_box_(aligned_box_part.svAlignedBox()),
+          dv_pos_(particles_->getVariableByName<Vecd>("Position")),
+          dv_B_(particles_->registerStateVariable<Matd>(
+              "LinearCorrectionMatrix", IdentityMatrix<Matd>::value)),
+          radius_(this->sph_body_.getSPHAdaptation().getKernel()->CutOffRadius()) {}
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        explicit UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+              pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+              B_(encloser.dv_B_->DelegatedData(ex_policy)),
+              radius_(encloser.radius_) {}
+        void update(size_t index_i, Real dt = 0.0)
+        {
+            if (aligned_box_->checkLowerBound(pos_[index_i], -radius_))
+                B_[index_i] = Matd::Identity();
+        }
+
+      protected:
+        AlignedBox *aligned_box_;
+        Vecd *pos_;
+        Matd *B_;
+        Real radius_;
+    };
+};
+
+template <typename ExecutionPolicy, typename CorrectionType>
 struct PressureBC
 {
     Vec3d normal;
@@ -94,7 +133,8 @@ struct PressureBC
     Vec3d buffer_halfsize;
     AlignedBox alignedbox;
     AlignedBoxByCell alignedbox_by_cell;
-    fluid_dynamics::BidirectionalBoundaryCK<ExecutionPolicy, LinearCorrectionCK, BoundaryPressurePrescribed> boundary_condition;
+    fluid_dynamics::BidirectionalBoundaryCK<ExecutionPolicy, CorrectionType, BoundaryPressurePrescribed> boundary_condition;
+    StateDynamics<ExecutionPolicy, ResetBufferCorrectionMatrixCK> reset_buffer_correction_matrix;
 
     PressureBC(FluidBody &fluid_body, const BoundaryParameter &params, ParticleBuffer<Base> &in_outlet_particle_buffer, Real t_ref)
         : normal(params.normal.normalized()),
@@ -106,7 +146,8 @@ struct PressureBC
           alignedbox(xAxis, Transform(rot, center), buffer_halfsize),
           alignedbox_by_cell(fluid_body, alignedbox),
           boundary_condition(alignedbox_by_cell, in_outlet_particle_buffer,
-                             params.pressure, t_ref) {}
+                             params.pressure, t_ref),
+          reset_buffer_correction_matrix(alignedbox_by_cell) {}
 };
 
 void run_t_shape_pipe(int ac, char *av[], Parameters &params);
@@ -277,15 +318,10 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
     InteractionDynamicsCK<MainExecutionPolicy,
                           fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
-    // TODO: might need to switch to the other density regularization
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        fluid_dynamics::DensityRegularizationComplexInternalPressureBoundary>
-        fluid_density_regularization(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK>
         transport_correction_ck(water_body_inner, water_wall_contact);
 
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK>
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionViscousTimeStepCK>
         fluid_advection_time_step(water_block, params.U_max);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>>
         fluid_acoustic_time_step(water_block);
@@ -297,12 +333,17 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
     const Real dt_ref = fluid_acoustic_time_step.exec() / 20.0;
 
     // --- Section 9: Boundary Conditions Setup ---
-    std::vector<std::unique_ptr<PressureBC<MainExecutionPolicy>>> bidirectional_pressure_conditions;
+    std::vector<std::unique_ptr<PressureBC<MainExecutionPolicy, LinearCorrectionCK>>> bidirectional_pressure_conditions;
     for (const auto &boundary : boundaries)
         bidirectional_pressure_conditions.emplace_back(
-            std::make_unique<PressureBC<MainExecutionPolicy>>(
+            std::make_unique<PressureBC<MainExecutionPolicy, LinearCorrectionCK>>(
                 water_block, boundary, in_outlet_particle_buffer, params.t_ref));
     StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> particle_deletion(water_block);
+    // TODO: might need to switch to the other density regularization
+    InteractionDynamicsCK<
+        MainExecutionPolicy,
+        fluid_dynamics::DensityRegularizationComplexInternalPressureBoundary>
+        fluid_density_regularization(water_body_inner, water_wall_contact);
 
     // --- Section 12: Setup Recording for Body States and Observers ---
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
@@ -312,6 +353,7 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
     body_states_recording.addToWrite<Real>(water_block, "Density");
     body_states_recording.addToWrite<int>(water_block, "BufferIndicator");
     body_states_recording.addToWrite<Vecd>(water_block, "ZeroGradientResidue");
+    body_states_recording.addToWrite<Matd>(water_block, "LinearCorrectionMatrix");
 
     // --- Section 13: Simulation Initialization and Particle Updates ---
     wall_normal_direction.exec();
@@ -376,6 +418,8 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
                 fluid_density_regularization.exec();
                 water_advection_step_setup.exec();
                 fluid_linear_correction_matrix.exec();
+                for (auto &bc : bidirectional_pressure_conditions)
+                    bc->reset_buffer_correction_matrix.exec();
                 fluid_viscous_force.exec();
                 transport_correction_ck.exec();
 
@@ -441,9 +485,9 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
                 }
                 water_cell_linked_list.exec();
                 water_body_update_relation.exec();
+                fluid_boundary_indicator.exec();
                 for (auto &bc : bidirectional_pressure_conditions)
                     bc->boundary_condition.tagBufferParticles();
-                fluid_boundary_indicator.exec();
 
                 // ─── SCREEN‐OUTPUT LOGGING
                 // ──────────────────────────────────────────
