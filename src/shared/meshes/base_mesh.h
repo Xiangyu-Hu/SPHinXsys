@@ -106,8 +106,6 @@ class Mesh
         return Array3i(page, column, left_over - column * row_size);
     }
 
-    Arrayi transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i) const;
-
     size_t transferMeshIndexTo1D(const Array2i &mesh_size, const Array2i &mesh_index) const
     {
         return mesh_index[0] * mesh_size[1] + mesh_index[1];
