@@ -221,7 +221,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     auto &addStateDynamics(DynamicsIdentifier &dynamics_identifier, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
-            StateDynamics<ExecutionPolicy, UpdateType<ControlParameters...>>>(
+            StateDynamics<ExecutionPolicy, UpdateType<ControlParameters..., DynamicsIdentifier>>>(
             dynamics_identifier, std::forward<Args>(args)...);
     };
 
