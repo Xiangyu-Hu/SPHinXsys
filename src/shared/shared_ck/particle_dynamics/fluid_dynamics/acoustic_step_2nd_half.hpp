@@ -171,11 +171,11 @@ void AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parame
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
-        Vecd corrected_e_ij = correction_(index_i) * this->e_ij(index_i, index_j);
+        Vecd e_ij = this->e_ij(index_i, index_j);
 
-        Real u_jump = (vel_[index_i] - contact_vel_[index_j]).dot(corrected_e_ij);
-        density_change_rate += u_jump * dW_ijV_j;
-        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * corrected_e_ij;
+        Vecd vel_diff = (vel_[index_i] - riemann_solver_.AverageV(this->vel_[index_i], contact_vel_[index_j]));
+        density_change_rate += 2.0 * vel_diff.dot(correction_(index_i) * e_ij) * dW_ijV_j;
+        p_dissipation += riemann_solver_.DissipativePJump((vel_[index_i] - contact_vel_[index_j]).dot(e_ij)) * dW_ijV_j * e_ij;
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
     force_[index_i] += p_dissipation * Vol_[index_i];

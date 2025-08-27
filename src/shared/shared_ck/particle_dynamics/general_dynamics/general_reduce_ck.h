@@ -93,7 +93,7 @@ class TotalMechanicalEnergyCK : public TotalKineticEnergyCK
 template <typename ReturnFunctionType, class DynamicsIdentifier = SPHBody>
 class QuantityReduce : public BaseLocalDynamicsReduce<ReturnFunctionType, DynamicsIdentifier>
 {
-    using DataType = typename ReturnFunctionType::DataType;
+    using DataType = typename ReturnFunctionType::ReturnType;
 
   public:
     QuantityReduce(DynamicsIdentifier &identifier, const std::string &variable_name);

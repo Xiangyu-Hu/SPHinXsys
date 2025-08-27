@@ -74,6 +74,12 @@ class SingularVariable : public Entity
   public:
     SingularVariable(const std::string &name, const DataType &value)
         : Entity(name), data_(new DataType(value)), delegated_(data_) {};
+
+    template <typename... Args>
+    SingularVariable(const std::string &name, Args &&...args)
+        : Entity(name), data_(new DataType(std::forward<Args>(args)...)),
+          delegated_(data_){};
+
     ~SingularVariable() { delete data_; };
 
     DataType *Data() { return delegated_; };
