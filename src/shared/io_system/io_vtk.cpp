@@ -15,7 +15,7 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
 
             if (state_recording_)
             {
-                std::string filefullpath = io_environment_.output_folder_ + "/" + body->getName() + "_" + sequence + ".vtp";
+                std::string filefullpath = io_environment_.OutputFolder() + "/" + body->getName() + "_" + sequence + ".vtp";
                 if (fs::exists(filefullpath))
                 {
                     fs::remove(filefullpath);
@@ -164,7 +164,7 @@ void ParticleGenerationRecordingToVtp::writeWithFileName(const std::string &sequ
 
     if (state_recording_)
     {
-        std::string filefullpath = io_environment_.output_folder_ + "/" + sph_body_.getName() +
+        std::string filefullpath = io_environment_.OutputFolder() + "/" + sph_body_.getName() +
                                    "particle_generation_" + sequence + ".vtp";
         if (fs::exists(filefullpath))
         {

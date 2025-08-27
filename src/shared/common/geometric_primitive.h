@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -45,9 +45,9 @@ class BaseBoundingBox
     VecType first_, second_;
     int dimension_;
 
-    BaseBoundingBox() : first_(VecType::Zero()), second_(VecType::Zero()), dimension_(VecType::Zero().size()){};
+    BaseBoundingBox() : first_(VecType::Zero()), second_(VecType::Zero()), dimension_(VecType::Zero().size()) {};
     BaseBoundingBox(const VecType &lower_bound, const VecType &upper_bound)
-        : first_(lower_bound), second_(upper_bound), dimension_(lower_bound.size()){};
+        : first_(lower_bound), second_(upper_bound), dimension_(lower_bound.size()) {};
     /** Check the bounding box contain. */
     bool checkContain(const VecType &point)
     {
@@ -66,6 +66,13 @@ class BaseBoundingBox
     VecType getBoundSize()
     {
         return second_ - first_;
+    };
+
+    BaseBoundingBox expand(const VecType &expand_size)
+    {
+        VecType new_first = first_ - expand_size;
+        VecType new_second = second_ + expand_size;
+        return BaseBoundingBox(new_first, new_second);
     };
 };
 /** Operator define. */
@@ -116,10 +123,10 @@ class BaseTransform
 
   public:
     explicit BaseTransform(const RotationType &rotation, const VecType &translation = VecType::Zero())
-        : rotation_(rotation.toRotationMatrix()), inv_rotation_(rotation_.transpose()), translation_(translation){};
+        : rotation_(rotation.toRotationMatrix()), inv_rotation_(rotation_.transpose()), translation_(translation) {};
     explicit BaseTransform(const VecType &translation)
-        : rotation_(MatType::Identity()), inv_rotation_(rotation_.transpose()), translation_(translation){};
-    BaseTransform() : BaseTransform(VecType::Zero()){};
+        : rotation_(MatType::Identity()), inv_rotation_(rotation_.transpose()), translation_(translation) {};
+    BaseTransform() : BaseTransform(VecType::Zero()) {};
 
     /** Forward rotation. */
     VecType xformFrameVecToBase(const VecType &origin)

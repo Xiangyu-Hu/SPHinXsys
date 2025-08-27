@@ -5,7 +5,7 @@
  * @author 	YuVirtonomy, Xiangyu Hu
  */
 
-#include "sphinxsys_sycl.h" // SPHinXsys Library.
+#include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 
 //----------------------------------------------------------------------
@@ -253,10 +253,6 @@ int main(int ac, char *av[])
     Contact<> water_wall_contact(water_body, {&wall});
     Contact<> velocity_observer_contact(velocity_observer, {&water_body});
     //----------------------------------------------------------------------
-    // Define the main execution policy for this case.
-    //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelDevicePolicy;
-    //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
     //----------------------------------------------------------------------
@@ -287,7 +283,7 @@ int main(int ac, char *av[])
         fluid_density_regularization(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
         fluid_boundary_indicator(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionComplexBulkParticlesCK>
         transport_correction_ck(water_body_inner, water_wall_contact);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);

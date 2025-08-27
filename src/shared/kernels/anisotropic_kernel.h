@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
  * HU1527/12-1 and HU1527/12-4.                                                 *
  *                                                                              *
- * Portions copyright (c) 2017-2023 Technical University of Munich and          *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and          *
  * the authors' affiliations.                                                   *
  *                                                                              *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
@@ -92,7 +92,7 @@ class AnisotropicKernel : public KernelType
     Mat2d getCoordinateTransformationTensorG(Vec2d kernel_vector, Vec2d transform_vector);
     Mat3d getCoordinateTransformationTensorG(Vec3d kernel_vector, Vec3d transform_vector);
 
-   /** Calculates the unit vector between a pair of particles **/
+    /** Calculates the unit vector between a pair of particles **/
     virtual Vec2d e(const Real &distance, const Vec2d &displacement) const override;
     virtual Vec3d e(const Real &distance, const Vec3d &displacement) const override;
 
@@ -125,7 +125,7 @@ class AnisotropicKernel : public KernelType
     virtual Real d2W(const Real &r_ij, const Vec2d &displacement) const override;
     virtual Real d2W(const Real &r_ij, const Vec3d &displacement) const override;
 
-    virtual ~AnisotropicKernel(){};
+    virtual ~AnisotropicKernel() {};
 };
 
 } // namespace SPH

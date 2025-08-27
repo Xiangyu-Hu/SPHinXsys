@@ -4,7 +4,7 @@
  * @details Column collapse using computing kernels.
  * @author Shuang Li, Xiangyu Hu and Shuaihao Zhang
  */
-#include "sphinxsys_sycl.h"
+#include "sphinxsys.h"
 using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -85,8 +85,6 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelDevicePolicy; // define execution policy for this case
-
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> soil_cell_linked_list(soil_block);
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall_boundary);
 

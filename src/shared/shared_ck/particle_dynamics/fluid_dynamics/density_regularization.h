@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -114,7 +114,7 @@ class DensityRegularization<Base, RelationType<Parameters...>>
     };
 
   protected:
-    DiscreteVariable<Real> *dv_rho_, *dv_mass_, *dv_rho_sum_, *dv_Vol_;
+    DiscreteVariable<Real> *dv_rho_, *dv_mass_, *dv_rho_sum_;
     Real rho0_, inv_sigma0_;
 };
 

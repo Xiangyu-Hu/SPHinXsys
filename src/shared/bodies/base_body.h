@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -164,8 +164,6 @@ class SPHBody
     {
         LevelSetShape *level_set_shape =
             shape_ptr_keeper_.resetPtr<LevelSetShape>(ex_policy, *this, *initial_shape_, std::forward<Args>(args)...);
-
-        level_set_shape->finishInitialization(ex_policy);
         initial_shape_ = level_set_shape;
         return level_set_shape;
     };
@@ -192,7 +190,7 @@ class SPHBody
     // The local material parameters are also initialized.
     //----------------------------------------------------------------------
     template <class ParticleType, class... Parameters, typename... Args>
-    void generateParticles(Args &&...args)
+    ParticleType *generateParticles(Args &&...args)
     {
         ParticleType *particles = base_particles_ptr_keeper_.createPtr<ParticleType>(*this, base_material_);
         ParticleGenerator<ParticleType, Parameters...> particle_generator(*this, *particles, std::forward<Args>(args)...);
@@ -200,13 +198,14 @@ class SPHBody
         particles->initializeBasicParticleVariables();
         sph_adaptation_->initializeAdaptationVariables(*particles);
         base_material_->setLocalParameters(sph_system_, particles);
+        return particles;
     };
 
     // Buffer or ghost particles can be generated together with real particles
     template <class ParticleType, typename... Parameters, class ReserveType, typename... Args>
-    void generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
+    ParticleType *generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
     {
-        generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
+        return generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
 };
 

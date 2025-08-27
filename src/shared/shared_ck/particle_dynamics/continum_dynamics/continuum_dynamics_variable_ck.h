@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -24,7 +24,7 @@
  * @file continuum_dynamics_variable_ck.h
  * @brief Here, we define the algorithm classes for computing derived solid dynamics variables.
  * @details These variable can be added into variable list for state output.
- * @author Shuang Li, Xiangyu Hu and Xiangyu Hu
+ * @author Shuang Li and Xiangyu Hu
  */
 
 #ifndef CONTINUUM_DYNAMICS_VARIABLE_CK_H
@@ -45,7 +45,7 @@ class VerticalStressCK : public BaseDerivedVariable<Real>
 {
   public:
     explicit VerticalStressCK(SPHBody &sph_body);
-    virtual ~VerticalStressCK(){};
+    virtual ~VerticalStressCK() {};
     class UpdateKernel
     {
       public:
@@ -57,6 +57,7 @@ class VerticalStressCK : public BaseDerivedVariable<Real>
         Mat3d *stress_tensor_3D_;
         Real *derived_variable_;
     };
+
   protected:
     DiscreteVariable<Mat3d> *dv_stress_tensor_3D_;
     DiscreteVariable<Real> *dv_derived_variable_;
@@ -67,10 +68,11 @@ class VerticalStressCK : public BaseDerivedVariable<Real>
  */
 class AccDeviatoricPlasticStrainCK : public BaseDerivedVariable<Real>
 {
-  using PlasticKernel = typename PlasticContinuum::PlasticKernel;
+    using PlasticKernel = typename PlasticContinuum::PlasticKernel;
+
   public:
     explicit AccDeviatoricPlasticStrainCK(SPHBody &sph_body);
-    virtual ~AccDeviatoricPlasticStrainCK(){};
+    virtual ~AccDeviatoricPlasticStrainCK() {};
 
     class UpdateKernel
     {

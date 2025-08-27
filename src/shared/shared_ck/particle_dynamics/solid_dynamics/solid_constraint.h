@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -46,7 +46,7 @@ class ConstraintBySimBodyCK : public BaseLocalDynamics<DynamicsIdentifier>
   public:
     explicit ConstraintBySimBodyCK(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
                                    SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
-    virtual ~ConstraintBySimBodyCK(){};
+    virtual ~ConstraintBySimBodyCK() {};
     virtual void setupDynamics(Real dt = 0.0) override;
 
     class UpdateKernel
@@ -83,7 +83,7 @@ class TotalForceForSimBodyCK
     TotalForceForSimBodyCK(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
                            SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
 
-    virtual ~TotalForceForSimBodyCK(){};
+    virtual ~TotalForceForSimBodyCK() {};
     virtual void setupDynamics(Real dt = 0.0) override;
 
     class ReduceKernel

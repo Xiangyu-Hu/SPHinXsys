@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -51,10 +51,10 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::SourceType>;
     using InnerRelationType = Inner<Parameters...>;
     using NeighborList = typename InnerRelationType::NeighborList;
-    using NeighborMethod = typename InnerRelationType::NeighborMethodType;
     using Identifier = typename BaseLocalDynamicsType::Identifier;
     using MaskedSource = typename Identifier::SourceParticleMask;
-    using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion<NeighborMethod>>;
+    using NeighborCriterion = typename InnerRelationType::NeighborhoodType::NeighborCriterion;
+    using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion>;
 
   public:
     UpdateRelation(Inner<Parameters...> &inner_relation);
@@ -92,12 +92,14 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
     using ContactRelationType = Contact<Parameters...>;
     using NeighborList = typename ContactRelationType::NeighborList;
-    using NeighborMethod = typename ContactRelationType::NeighborMethodType;
+    using Neighborhood = typename ContactRelationType::NeighborhoodType;
+    using SearchDepth = typename Neighborhood::SearchDepth;
     using Identifier = typename BaseLocalDynamicsType::Identifier;
     using SourceType = typename ContactRelationType::SourceType;
     using TargetType = typename ContactRelationType::TargetType;
     using MaskedSource = typename SourceType::SourceParticleMask;
-    using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion<NeighborMethod>>;
+    using NeighborCriterion = typename Neighborhood::NeighborCriterion;
+    using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
 
   public:
     UpdateRelation(ContactRelationType &contact_relation);
@@ -118,6 +120,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
         MaskedSource masked_source_;
         MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
+        SearchDepth search_depth_;
     };
 
     typedef UpdateRelation<ExecutionPolicy, Contact<Parameters...>> LocalDynamicsType;

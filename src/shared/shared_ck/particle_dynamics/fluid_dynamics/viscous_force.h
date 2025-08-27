@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -76,7 +76,6 @@ class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Par
 
     ViscosityType &viscosity_model_;
     KernelCorrectionType kernel_correction_;
-    DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Vecd> *dv_vel_, *dv_viscous_force_;
     Real smoothing_length_sq_;
 };
@@ -120,12 +119,12 @@ class ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Paramete
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
             : BaseViscousForceType::InteractKernel(ex_policy, encloser, contact_index),
-              wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedData(ex_policy)),
+              contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
               wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)){};
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        Real *wall_Vol_;
+        Real *contact_Vol_;
         Vecd *wall_vel_ave_;
     };
 

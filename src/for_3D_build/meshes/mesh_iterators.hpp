@@ -24,6 +24,17 @@ inline void mesh_for_each3d(const FunctionOnEach &function)
             }
 }
 //=================================================================================================//
+template <typename FunctionOnEach>
+inline void mesh_for_each_neighbor3d(int depth, const FunctionOnEach &function)
+{
+    for (int i = -depth; i <= depth; ++i)
+        for (int j = -depth; j <= depth; ++j)
+            for (int k = -depth; k <= depth; ++k)
+            {
+                function(i, j, k);
+            }
+}
+//=================================================================================================//
 template <int lower0, int upper0,
           int lower1, int upper1,
           int lower2, int upper2, typename CheckOnEach>

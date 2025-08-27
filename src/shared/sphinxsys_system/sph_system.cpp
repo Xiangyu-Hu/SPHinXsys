@@ -16,7 +16,7 @@ SPHSystem::SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref, size
       run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true)
 {
-    Log::init(*io_environment_);
+    Log::init();
     spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
     registerSystemVariable<Real>("PhysicalTime", 0.0);
 }
@@ -124,6 +124,11 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
         {
             std::cout << "Particle relaxation was set to default ("
                       << run_particle_relaxation_ << ").\n";
+        }
+
+        if (run_particle_relaxation_)
+        {
+            io_environment_->reinitializeReloadFolder();
         }
 
         if (vm.count("reload"))

@@ -130,7 +130,7 @@ PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
       force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)),
       stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),
-      wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
       wall_acc_ave_(encloser.dv_wall_acc_ave_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -146,7 +146,7 @@ void PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectio
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd e_ij = this->e_ij(index_i, index_j);
-        Real dW_ijV_j = this->dW_ij(index_i, index_j) * wall_Vol_[index_j];
+        Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
         Real r_ij = this->vec_r_ij(index_i, index_j).norm();
         Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_[index_j]).dot(-e_ij);
         Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);

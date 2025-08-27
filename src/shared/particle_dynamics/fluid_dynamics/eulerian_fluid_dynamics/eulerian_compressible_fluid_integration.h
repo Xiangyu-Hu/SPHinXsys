@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -45,7 +45,7 @@ class BaseIntegrationInCompressible : public BaseIntegration<DataDelegateInner>
 {
   public:
     explicit BaseIntegrationInCompressible(BaseInnerRelation &inner_relation);
-    virtual ~BaseIntegrationInCompressible(){};
+    virtual ~BaseIntegrationInCompressible() {};
 
   protected:
     CompressibleFluid compressible_fluid_;
@@ -58,7 +58,7 @@ class EulerianCompressibleIntegration1stHalf : public BaseIntegrationInCompressi
 {
   public:
     explicit EulerianCompressibleIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 5.0);
-    virtual ~EulerianCompressibleIntegration1stHalf(){};
+    virtual ~EulerianCompressibleIntegration1stHalf() {};
     RiemannSolverType riemann_solver_;
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
@@ -76,7 +76,7 @@ class EulerianCompressibleIntegration2ndHalf : public BaseIntegrationInCompressi
 {
   public:
     explicit EulerianCompressibleIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 5.0);
-    virtual ~EulerianCompressibleIntegration2ndHalf(){};
+    virtual ~EulerianCompressibleIntegration2ndHalf() {};
     RiemannSolverType riemann_solver_;
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
@@ -104,7 +104,7 @@ class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStep
 
   public:
     explicit EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.6);
-    virtual ~EulerianCompressibleAcousticTimeStepSize(){};
+    virtual ~EulerianCompressibleAcousticTimeStepSize() {};
 
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;

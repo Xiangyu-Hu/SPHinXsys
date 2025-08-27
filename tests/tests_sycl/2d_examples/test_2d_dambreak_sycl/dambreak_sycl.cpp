@@ -3,7 +3,7 @@
  * @brief 2D dambreak example using SYCL.
  * @author Xiangyu Hu
  */
-#include "sphinxsys_sycl.h"
+#include "sphinxsys.h"
 
 using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
@@ -73,7 +73,7 @@ int main(int ac, char *av[])
     // Define SPH solver with particle methods and execution policies.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_device);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     auto &host_methods = sph_solver.addParticleMethodContainer(par);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
@@ -100,19 +100,19 @@ int main(int ac, char *av[])
 
     auto &fluid_linear_correction_matrix =
         main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(water_block_inner, 0.5)
-            .addContactInteraction(water_wall_contact);
+            .addPostContactInteraction(water_wall_contact);
     auto &fluid_acoustic_step_1st_half =
         main_methods.addInteractionDynamics<
                         fluid_dynamics::AcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
-            .addContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
     auto &fluid_acoustic_step_2nd_half =
         main_methods.addInteractionDynamics<
                         fluid_dynamics::AcousticStep2ndHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
-            .addContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
     auto &fluid_density_regularization =
         main_methods.addInteractionDynamics<
                         fluid_dynamics::DensityRegularization, WithUpdate, FreeSurface, AllParticles>(water_block_inner)
-            .addContactInteraction(water_wall_contact);
+            .addPostContactInteraction(water_wall_contact);
 
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_ref);
     auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_block);

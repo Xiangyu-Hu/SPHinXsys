@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -35,44 +35,55 @@
 
 namespace SPH
 {
-template <class NeighborMethod>
-class Neighbor
+template <class NeighborMethodType>
+class Neighbor : public NeighborMethodType
 {
-    using SmoothingKernel = typename NeighborMethod::SmoothingKernel;
-
   public:
-    template <class ExecutionPolicy>
-    Neighbor(const ExecutionPolicy &ex_policy, NeighborMethod &neighbor_method)
-        : smoothing_kernel_(ex_policy, neighbor_method){};
+    template <class SourceIdentifier, class TargetIdentifier>
+    Neighbor(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier,
+             DiscreteVariable<Vecd> *dv_source_pos, DiscreteVariable<Vecd> *dv_target_pos)
+        : NeighborMethodType(source_identifier, contact_identifier),
+          dv_source_pos_(dv_source_pos), dv_target_pos_(dv_target_pos){};
 
-    inline Vecd vec_r_ij(size_t i, size_t j) const { return smoothing_kernel_.vec_r_ij(i, j); };
-    inline Real W_ij(size_t i, size_t j) const { return smoothing_kernel_.W_ij(i, j); };
-    inline Real dW_ij(size_t i, size_t j) const { return smoothing_kernel_.dW_ij(i, j); };
-    inline Vecd e_ij(size_t i, size_t j) const { return smoothing_kernel_.e_ij(i, j); };
-    inline Real W(const Vecd &displacement) const { return smoothing_kernel_.W(displacement); };
-
-  protected:
-    SmoothingKernel smoothing_kernel_;
-};
-
-template <class NeighborMethod>
-class NeighborCriterion
-{
-    using CriterionKernel = typename NeighborMethod::CriterionKernel;
-
-  public:
-    template <class ExecutionPolicy>
-    NeighborCriterion(const ExecutionPolicy &ex_policy, NeighborMethod &neighbor_method)
-        : criterion_kernel_(ex_policy, neighbor_method){};
-
-    inline bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
+    class NeighborKernel : public NeighborMethodType::SmoothingKernel
     {
-        return criterion_kernel_(source_index, target_index);
+        using BaseKernel = typename NeighborMethodType::SmoothingKernel;
+
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        NeighborKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseKernel(ex_policy, encloser),
+              source_pos_(encloser.dv_source_pos_->DelegatedData(ex_policy)),
+              target_pos_(encloser.dv_target_pos_->DelegatedData(ex_policy)){};
+
+        inline Vecd vec_r_ij(UnsignedInt i, UnsignedInt j) const { return source_pos_[i] - target_pos_[j]; };
+        inline Vecd e_ij(UnsignedInt i, UnsignedInt j) const { return vec_r_ij(i, j).normalized(); };
+        inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return BaseKernel::W(vec_r_ij(i, j)); };
+        inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return BaseKernel::dW(vec_r_ij(i, j)); };
+
+      protected:
+        Vecd *source_pos_;
+        Vecd *target_pos_;
+    };
+
+    class NeighborCriterion : public NeighborMethodType::NeighborCriterion
+    {
+        using BaseKernel = typename NeighborMethodType::NeighborCriterion;
+
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        NeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseKernel(ex_policy, encloser, encloser.dv_source_pos_, encloser.dv_target_pos_){};
+
+        inline bool operator()(UnsignedInt target_index, UnsignedInt source_index) const
+        {
+            return BaseKernel::operator()(source_index, target_index); // Note the order of indices
+        };
     };
 
   protected:
-    CriterionKernel criterion_kernel_;
+    DiscreteVariable<Vecd> *dv_source_pos_;
+    DiscreteVariable<Vecd> *dv_target_pos_;
 };
-
 } // namespace SPH
 #endif // NEIGHBORHOOD_CK_H

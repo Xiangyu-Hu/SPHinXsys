@@ -106,7 +106,7 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
         {
             if (state_recording_)
             {
-                std::string filefullpath = io_environment_.output_folder_ +
+                std::string filefullpath = io_environment_.OutputFolder() +
                                            "/SPHBody_" + body->getName() + "_" + sequence + ".plt";
                 if (fs::exists(filefullpath))
                 {
@@ -131,12 +131,18 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
 //=============================================================================================//
 MeshRecordingToPlt ::MeshRecordingToPlt(SPHSystem &sph_system, BaseMeshField &mesh_field)
     : BaseIO(sph_system), mesh_field_(mesh_field),
-      partial_file_name_(io_environment_.output_folder_ + "/" + mesh_field.Name()) {}
+      partial_file_name_(io_environment_.OutputFolder() + "/" + mesh_field.Name()) {}
 //=============================================================================================//
 void MeshRecordingToPlt::writeToFile(size_t iteration_step)
 {
     std::string extended_name = partial_file_name_ + "_" + std::to_string(iteration_step);
     mesh_field_.writeMeshFieldToPlt(extended_name);
+}
+//=============================================================================================//
+void MeshRecordingToPlt::writeBKGMeshVariableToFile(size_t iteration_step)
+{
+    std::string extended_name = partial_file_name_ + "_background_" + std::to_string(iteration_step);
+    mesh_field_.writeBKGMeshToPlt(extended_name);
 }
 //=================================================================================================//
 } // namespace SPH

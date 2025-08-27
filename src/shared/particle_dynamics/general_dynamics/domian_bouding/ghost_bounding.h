@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -39,7 +39,7 @@ class Ghost<PeriodicAlongAxis> : public Ghost<Base>, public PeriodicAlongAxis
 {
   public:
     Ghost(BoundingBox bounding_bounds, int axis);
-    virtual ~Ghost(){};
+    virtual ~Ghost() {};
     void reserveGhostParticles(BaseParticles &base_particles, Real particle_spacing);
     ParticlesBound &LowerGhostBound() { return lower_ghost_bound_; };
     ParticlesBound &UpperGhostBound() { return upper_ghost_bound_; };
@@ -83,7 +83,7 @@ class PeriodicConditionUsingGhostParticles : public BasePeriodicCondition<execut
       public:
         CreatPeriodicGhostParticles(StdVec<CellLists> &bound_cells_data, RealBody &real_body,
                                     Ghost<PeriodicAlongAxis> &ghost_boundary);
-        virtual ~CreatPeriodicGhostParticles(){};
+        virtual ~CreatPeriodicGhostParticles() {};
 
         virtual void setupDynamics(Real dt = 0.0) override;
         virtual void exec(Real dt = 0.0) override;
@@ -107,14 +107,14 @@ class PeriodicConditionUsingGhostParticles : public BasePeriodicCondition<execut
       public:
         UpdatePeriodicGhostParticles(StdVec<CellLists> &bound_cells_data, RealBody &real_body,
                                      Ghost<PeriodicAlongAxis> &ghost_boundary);
-        virtual ~UpdatePeriodicGhostParticles(){};
+        virtual ~UpdatePeriodicGhostParticles() {};
 
         virtual void exec(Real dt = 0.0) override;
     };
 
   public:
     PeriodicConditionUsingGhostParticles(RealBody &real_body, Ghost<PeriodicAlongAxis> &ghost_boundary);
-    virtual ~PeriodicConditionUsingGhostParticles(){};
+    virtual ~PeriodicConditionUsingGhostParticles() {};
 
     PeriodicBounding bounding_;
     CreatPeriodicGhostParticles ghost_creation_;

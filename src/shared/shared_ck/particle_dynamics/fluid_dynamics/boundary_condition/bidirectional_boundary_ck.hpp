@@ -16,7 +16,7 @@ BufferIndicationCK::UpdateKernel::
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       buffer_indicator_(encloser.dv_buffer_indicator_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
+inline void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (aligned_box_->checkContain(pos_[index_i]))
     {
@@ -89,7 +89,7 @@ BufferOutflowIndication::UpdateKernel::
                    encloser.dv_buffer_indicator_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-void BufferOutflowIndication::UpdateKernel::update(size_t index_i, Real dt)
+inline void BufferOutflowIndication::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (!aligned_box_->checkInBounds(pos_[index_i]))
     {
@@ -106,7 +106,7 @@ OutflowParticleDeletion::UpdateKernel::
     : remove_real_particle_(ex_policy, encloser.remove_real_particle_method_),
       life_status_(encloser.dv_life_status_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-void OutflowParticleDeletion::UpdateKernel::update(UnsignedInt index_i, Real dt)
+inline void OutflowParticleDeletion::UpdateKernel::update(UnsignedInt index_i, Real dt)
 {
     if (life_status_[index_i] == 1) // to delete
     {
@@ -124,7 +124,7 @@ PressureVelocityCondition<KernelCorrectionType, ConditionType>::
       kernel_correction_method_(this->particles_),
       condition_(std::forward<Args>(args)...),
       sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime")),
-      dv_zero_gradient_residue_(this->particles_->template getVariableByName<Vecd>("ZeroGradientResidue")) {}
+      dv_kernel_gradient_integral_(this->particles_->template getVariableByName<Vecd>("KernelGradientIntegral")) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename ConditionType>
 template <class ExecutionPolicy, class EncloserType>
@@ -135,7 +135,7 @@ PressureVelocityCondition<KernelCorrectionType, ConditionType>::UpdateKernel::
       correction_kernel_(ex_policy, encloser.kernel_correction_method_),
       condition_(encloser.condition_),
       physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
-      zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
+      kernel_gradient_integral_(encloser.dv_kernel_gradient_integral_->DelegatedData(ex_policy)),
       axis_(aligned_box_->AlignmentAxis()), transform_(&aligned_box_->getTransform()) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename ConditionType>
@@ -144,9 +144,9 @@ void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
 {
     if (aligned_box_->checkContain(pos_[index_i]))
     {
-        Vecd corrected_residue = correction_kernel_(index_i) * zero_gradient_residue_[index_i];
+        Vecd corrected_residual = correction_kernel_(index_i) * kernel_gradient_integral_[index_i];
         vel_[index_i] -= dt * condition_.getPressure(p_[index_i], *physical_time_) /
-                         rho_[index_i] * corrected_residue;
+                         rho_[index_i] * corrected_residual;
 
         Vecd frame_velocity = Vecd::Zero();
         frame_velocity[axis_] = transform_->xformBaseVecToFrame(vel_[index_i])[axis_];

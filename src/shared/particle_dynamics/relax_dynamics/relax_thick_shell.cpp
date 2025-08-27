@@ -172,7 +172,7 @@ ShellRelaxationStep::ShellRelaxationStep(BaseInnerRelation &inner_relation)
     : BaseDynamics<void>(),
       real_body_(DynamicCast<RealBody>(this, inner_relation.getSPHBody())),
       inner_relation_(inner_relation), near_shape_surface_(real_body_),
-      relaxation_residue_(inner_relation),
+      relaxation_residual_(inner_relation),
       relaxation_scaling_(real_body_), position_relaxation_(real_body_),
       mid_surface_bounding_(near_shape_surface_) {}
 //=================================================================================================//
@@ -180,7 +180,7 @@ void ShellRelaxationStep::exec(Real ite_p)
 {
     real_body_.updateCellLinkedList();
     inner_relation_.updateConfiguration();
-    relaxation_residue_.exec();
+    relaxation_residual_.exec();
     Real scaling = relaxation_scaling_.exec();
     position_relaxation_.exec(scaling);
     mid_surface_bounding_.exec();

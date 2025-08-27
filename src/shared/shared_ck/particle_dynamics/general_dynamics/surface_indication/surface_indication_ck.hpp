@@ -16,7 +16,6 @@ FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::
     : Interaction<RelationType<Parameters...>>(base_relation),
       dv_indicator_(this->particles_->template registerStateVariable<int>("Indicator")),
       dv_pos_div_(this->particles_->template registerStateVariable<Real>("PositionDivergence")),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_threshold_by_dimensions_(0.75 * Dimensions),
       dv_smoothing_length_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
@@ -128,14 +127,7 @@ void FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
 template <typename... Parameters>
 FreeSurfaceIndicationCK<Contact<Parameters...>>::
     FreeSurfaceIndicationCK(Contact<Parameters...> &contact_relation)
-    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>(contact_relation)
-{
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
-    }
-}
+    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>(contact_relation){}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>

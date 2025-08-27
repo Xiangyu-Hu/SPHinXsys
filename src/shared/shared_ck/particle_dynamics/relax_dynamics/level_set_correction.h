@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -70,10 +70,10 @@ class LevelsetBounding : public BaseLocalDynamics<BodyPartByCell>
     Real constrained_distance_;
 };
 
-class LevelsetKernelGradientIntegral : public BaseLocalDynamics<BodyPartByCell>
+class LevelsetKernelGradientIntegral : public LocalDynamics
 {
   public:
-    LevelsetKernelGradientIntegral(NearShapeSurface &body_part);
+    LevelsetKernelGradientIntegral(SPHBody &sph_body, LevelSetShape &level_set_shape);
     virtual ~LevelsetKernelGradientIntegral() {};
 
     class UpdateKernel
@@ -84,17 +84,17 @@ class LevelsetKernelGradientIntegral : public BaseLocalDynamics<BodyPartByCell>
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            residue_[index_i] -= 2.0 * kernel_gradient_integral_(pos_[index_i]);
+            residual_[index_i] -= 2.0 * kernel_gradient_integral_(pos_[index_i]);
         };
 
       protected:
-        Vecd *pos_, *residue_;
+        Vecd *pos_, *residual_;
         ProbeKernelGradientIntegral kernel_gradient_integral_;
     };
 
   protected:
     DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<Vecd> *dv_residue_;
+    DiscreteVariable<Vecd> *dv_residual_;
     MultilevelLevelSet &level_set_;
 };
 

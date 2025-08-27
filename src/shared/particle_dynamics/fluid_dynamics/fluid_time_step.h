@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -46,7 +46,7 @@ class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax>
 {
   public:
     explicit AcousticTimeStep(SPHBody &sph_body, Real acousticCFL = 0.6);
-    virtual ~AcousticTimeStep(){};
+    virtual ~AcousticTimeStep() {};
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
 
@@ -65,8 +65,9 @@ class SurfaceTensionTimeStep : public AcousticTimeStep
 {
   public:
     explicit SurfaceTensionTimeStep(SPHBody &sph_body, Real acousticCFL = 0.6);
-    virtual ~SurfaceTensionTimeStep(){};
+    virtual ~SurfaceTensionTimeStep() {};
     Real reduce(size_t index_i, Real dt = 0.0);
+
   protected:
     Real rho0_, &surface_tension_coeff_;
 };
@@ -85,7 +86,7 @@ class AdvectionTimeStep
 
   public:
     AdvectionTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
-    virtual ~AdvectionTimeStep(){};
+    virtual ~AdvectionTimeStep() {};
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
 };
@@ -98,7 +99,7 @@ class AdvectionViscousTimeStep : public AdvectionTimeStep
 {
   public:
     AdvectionViscousTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
-    virtual ~AdvectionViscousTimeStep(){};
+    virtual ~AdvectionViscousTimeStep() {};
     Real reduce(size_t index_i, Real dt = 0.0);
 };
 } // namespace fluid_dynamics

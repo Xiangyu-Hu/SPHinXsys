@@ -20,7 +20,7 @@ template <class ExecutionPolicy, class EncloserType>
 LevelsetKernelGradientIntegral::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
-      residue_(encloser.dv_residue_->DelegatedData(ex_policy)),
+      residual_(encloser.dv_residual_->DelegatedData(ex_policy)),
       kernel_gradient_integral_(encloser.level_set_.getProbeKernelGradientIntegral(ex_policy)) {}
 //=================================================================================================//
 } // namespace SPH

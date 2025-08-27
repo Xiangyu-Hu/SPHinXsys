@@ -228,7 +228,7 @@ TEST(test_optimization, test_problem1_non_optimized)
     //	Main loop starts here.
     //----------------------------------------------------------------------
     std::string filefullpath_nonopt_temperature =
-        sph_system.getIOEnvironment().output_folder_ + "/" + "nonopt_temperature.dat";
+        sph_system.getIOEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app);
 
     while (physical_time < End_Time)

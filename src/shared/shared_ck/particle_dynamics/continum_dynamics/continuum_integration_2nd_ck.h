@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	continuum_integration.h
+ * @file 	continuum_integration_2nd_ck.h
  * @brief 	Here, we define the algorithm classes for continuum dynamics within the body.
  * @details CK and SYCL version.
  * @author	Shuang Li, Xiangyu Hu and Shuaihao Zhang
@@ -117,7 +117,7 @@ class PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *drho_dt_;
         Vecd *vel_, *force_;
-        Real *wall_Vol_;
+        Real *contact_Vol_;
         Vecd *wall_vel_ave_, *wall_n_;
         Matd *velocity_gradient_;
     };

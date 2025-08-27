@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -53,22 +53,24 @@ class IOEnvironment
     UniquePtrKeeper<ParameterizationIO> parameterization_io_ptr_keeper_;
 
   public:
-    SPHSystem &sph_system_;
-    std::string input_folder_;
-    std::string output_folder_;
-    std::string restart_folder_;
-    std::string reload_folder_;
-
     explicit IOEnvironment(SPHSystem &sph_system);
     virtual ~IOEnvironment() {};
     void resetForRestart();
     ParameterizationIO *defineParameterizationIO();
     void appendOutputFolder(const std::string &append_name);
     void resetOutputFolder(const std::string &new_name);
-    std::string inputFolder() const { return input_folder_; }
-    std::string outputFolder() const { return output_folder_; }
-    std::string restartFolder() const { return restart_folder_; }
-    std::string reloadFolder() const { return reload_folder_; }
+    void reinitializeReloadFolder();
+    std::string InputFolder() const { return input_folder_; }
+    std::string OutputFolder() const { return output_folder_; }
+    std::string RestartFolder() const { return restart_folder_; }
+    std::string ReloadFolder() const { return reload_folder_; }
+
+  protected:
+    SPHSystem &sph_system_;
+    std::string input_folder_;
+    std::string output_folder_;
+    std::string restart_folder_;
+    std::string reload_folder_;
 };
 } // namespace SPH
 #endif // IO_ENVIRONMENT_H

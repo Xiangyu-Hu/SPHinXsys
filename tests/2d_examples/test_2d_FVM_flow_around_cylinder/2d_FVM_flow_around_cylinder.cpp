@@ -4,7 +4,7 @@
  * @details We consider a flow passing by a cylinder in 2D in FVM framework.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-#include "common_weakly_compressible_FVM_classes.h"
+#include "FVM_flow_around_cylinder_2d_def.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.

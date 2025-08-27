@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -51,18 +51,18 @@ class RelationBase
     virtual ~RelationBase() {};
 };
 
-template <typename NeighborMethod>
-class Relation<NeighborMethod> : public RelationBase
+template <typename NeighborMethodType>
+class Relation<NeighborMethodType> : public RelationBase
 {
     UniquePtrsKeeper<Entity> relation_variable_ptrs_;
-    UniquePtrsKeeper<NeighborMethod> neighbor_method_ptrs_;
+    UniquePtrsKeeper<Neighbor<NeighborMethodType>> neighborhood_ptrs_;
     DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
 
     template <class DataType>
     DiscreteVariable<DataType> *addRelationVariable(const std::string &name, size_t data_size);
 
   public:
-    typedef NeighborMethod NeighborMethodType;
+    typedef Neighbor<NeighborMethodType> NeighborhoodType;
     template <typename SourceIdentifier, typename TargetIdentifier>
     Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers,
              ConfigType config_type = ConfigType::Eulerian);
@@ -72,7 +72,7 @@ class Relation<NeighborMethod> : public RelationBase
     DiscreteVariable<Vecd> *getTargetPosition(UnsignedInt target_index = 0) { return dv_target_pos_[target_index]; };
     DiscreteVariable<UnsignedInt> *getNeighborIndex(UnsignedInt target_index = 0) { return dv_target_neighbor_index_[target_index]; };
     DiscreteVariable<UnsignedInt> *getParticleOffset(UnsignedInt target_index = 0) { return dv_target_particle_offset_[target_index]; };
-    NeighborMethod &getNeighborMethod(UnsignedInt target_index = 0) { return *neighbor_methods_[target_index]; };
+    Neighbor<NeighborMethodType> &getNeighborhood(UnsignedInt target_index = 0) { return *neighborhoods_[target_index]; }
     void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index = 0);
     void resetComputingKernelUpdated(UnsignedInt target_index = 0);
 
@@ -98,12 +98,12 @@ class Relation<NeighborMethod> : public RelationBase
     UnsignedInt offset_list_size_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_neighbor_index_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_particle_offset_;
-    StdVec<NeighborMethod *> neighbor_methods_;
+    StdVec<Neighbor<NeighborMethodType> *> neighborhoods_;
     StdVec<StdVec<execution::Implementation<Base> *>> registered_computing_kernels_;
 };
 
-template <typename DynamicsIdentifier, typename NeighborMethod>
-class Inner<DynamicsIdentifier, NeighborMethod> : public Relation<NeighborMethod>
+template <typename DynamicsIdentifier, typename NeighborMethodType>
+class Inner<DynamicsIdentifier, NeighborMethodType> : public Relation<NeighborMethodType>
 {
   public:
     typedef DynamicsIdentifier SourceType;
@@ -117,26 +117,26 @@ class Inner<DynamicsIdentifier, NeighborMethod> : public Relation<NeighborMethod
 };
 
 template <>
-class Inner<> : public Inner<RealBody, SmoothingLength<SingleValued>>
+class Inner<> : public Inner<RealBody, NeighborMethod<SingleValued>>
 {
   public:
     template <typename... Args>
     Inner(RealBody &real_body, Args &&...args)
-        : Inner<RealBody, SmoothingLength<SingleValued>>(real_body, std::forward<Args>(args)...) {}
+        : Inner<RealBody, NeighborMethod<SingleValued>>(real_body, std::forward<Args>(args)...) {}
     virtual ~Inner() {};
 };
 
-template <typename SourceIdentifier, class TargetIdentifier, typename NeighborMethod>
-class Contact<SourceIdentifier, TargetIdentifier, NeighborMethod> : public Relation<NeighborMethod>
+template <typename SourceIdentifier, class TargetIdentifier, typename NeighborMethodType>
+class Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType> : public Relation<NeighborMethodType>
 {
-    using ContactRelationType = Contact<SourceIdentifier, TargetIdentifier, NeighborMethod>;
+    using ContactRelationType = Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType>;
 
   public:
     typedef SourceIdentifier SourceType;
     typedef TargetIdentifier TargetType;
     Contact(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers,
             ConfigType config_type = ConfigType::Eulerian);
-    Contact(const Contact<SourceIdentifier, TargetIdentifier, NeighborMethod> &original,
+    Contact(const Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType> &original,
             StdVec<UnsignedInt> target_indexes); // delegate constructor
     virtual ~Contact() {};
     SourceIdentifier &getSourceIdentifier() { return source_identifier_; };
@@ -159,23 +159,23 @@ class Contact<SourceIdentifier, TargetIdentifier, NeighborMethod> : public Relat
 
 template <class SourceIdentifier, class TargetIdentifier>
 class Contact<SourceIdentifier, TargetIdentifier>
-    : public Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<SingleValued>>
+    : public Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<SingleValued>>
 {
   public:
     template <typename... Args>
     Contact(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, Args &&...args)
-        : Contact<SourceIdentifier, TargetIdentifier, SmoothingLength<SingleValued>>(
+        : Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<SingleValued>>(
               source_identifier, contact_identifiers, std::forward<Args>(args)...) {}
     virtual ~Contact() {};
 };
 
 template <>
-class Contact<> : public Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>
+class Contact<> : public Contact<SPHBody, RealBody, NeighborMethod<SingleValued>>
 {
   public:
     template <typename... Args>
     Contact(SPHBody &sph_body, StdVec<RealBody *> contact_bodies, Args &&...args)
-        : Contact<SPHBody, RealBody, SmoothingLength<SingleValued>>(
+        : Contact<SPHBody, RealBody, NeighborMethod<SingleValued>>(
               sph_body, contact_bodies, std::forward<Args>(args)...) {}
     virtual ~Contact() {};
 };

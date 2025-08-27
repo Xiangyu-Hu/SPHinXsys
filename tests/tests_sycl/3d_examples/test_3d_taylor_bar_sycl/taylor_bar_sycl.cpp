@@ -8,7 +8,7 @@
  * //TODO: Seems that the wall contact force should be improved.
  */
 #include "taylor_bar_sycl.h" /**< Case setup for this example. */
-// #include "sphinxsys_sycl.h"
+// #include "sphinxsys.h"
 
 using namespace SPH;
 
@@ -26,73 +26,104 @@ int main(int ac, char *av[])
     /** create a body with corresponding material, particles and reaction model. */
     SolidBody column(sph_system, makeShared<Column>("Column"));
     column.defineAdaptationRatios(1.3, 1.0);
-    /** Offload the levelset computation to the GPU device. */
-    column.defineBodyLevelSetShape(execution::par_device)->writeLevelSet(sph_system);
-    column.defineMaterial<HardeningPlasticSolid>(
-        rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? column.generateParticles<BaseParticles, Reload>(column.getName())
-        : column.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall(sph_system, makeShared<WallShape>("Wall"));
+
+    if (sph_system.RunParticleRelaxation())
+    {
+        LevelSetShape *level_set_shape = column.defineBodyLevelSetShape(par_ck, 2.0)->writeLevelSet(sph_system);
+        column.generateParticles<BaseParticles, Lattice>();
+        wall.generateParticles<BaseParticles, Lattice>();
+        NearShapeSurface near_body_surface(column);
+        Inner<> column_inner(column);
+        //----------------------------------------------------------------------
+        //	Methods used for particle relaxation.
+        //----------------------------------------------------------------------
+        SPHSolver sph_solver(sph_system);
+        auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+        auto &host_methods = sph_solver.addParticleMethodContainer(par);
+
+        auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(column);
+        auto &input_body_update_inner_relation = main_methods.addRelationDynamics(column_inner);
+        auto &random_input_body_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(column);
+        auto &relaxation_residual =
+            main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(column_inner)
+                .addPostStateDynamics<LevelsetKernelGradientIntegral>(column, *level_set_shape);
+        auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(column);
+        auto &update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(column);
+        auto &level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_body_surface);
+        //----------------------------------------------------------------------
+        //	Run on CPU after relaxation finished and output results.
+        //----------------------------------------------------------------------
+        auto &wall_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall);
+        //----------------------------------------------------------------------
+        //	Define simple file input and outputs functions.
+        //----------------------------------------------------------------------
+        auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(column);
+        auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(StdVec<SPHBody *>{&column, &wall});
+        write_particle_reload_files.addToReload<Vecd>(wall, "NormalDirection");
+        //----------------------------------------------------------------------
+        //	Prepare the simulation with cell linked list, configuration
+        //	and case specified initial condition if necessary.
+        //----------------------------------------------------------------------
+        random_input_body_particles.exec();
+
+        //----------------------------------------------------------------------
+        //	First output before the simulation.
+        //----------------------------------------------------------------------
+        body_state_recorder.writeToFile(0);
+        //----------------------------------------------------------------------
+        //	Particle relaxation time stepping start here.
+        //----------------------------------------------------------------------
+        int ite_p = 0;
+        while (ite_p < 1000)
+        {
+            input_body_cell_linked_list.exec();
+            input_body_update_inner_relation.exec();
+
+            relaxation_residual.exec();
+            Real relaxation_step = relaxation_scaling.exec();
+            update_particle_position.exec(relaxation_step);
+            level_set_bounding.exec();
+
+            ite_p += 1;
+            if (ite_p % 100 == 0)
+            {
+                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
+                body_state_recorder.writeToFile(ite_p);
+            }
+        }
+        std::cout << "The physics relaxation process finish !" << std::endl;
+        /** Output results. */
+        wall_boundary_normal_direction.exec();
+        write_particle_reload_files.writeToFile();
+        return 0;
+    }
+
+    column.defineMaterial<HardeningPlasticSolid>(
+        rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
+    column.generateParticles<BaseParticles, Reload>(column.getName());
+
     wall.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    wall.generateParticles<BaseParticles, Lattice>();
+    wall.generateParticles<BaseParticles, Reload>(wall.getName())
+        ->reloadExtraVariable<Vecd>("NormalDirection");
 
     /** Define Observer. */
     ObserverBody my_observer(sph_system, "MyObserver");
     StdVec<Vecd> observation_location = {Vecd(0.0, 0.0, PW)};
     my_observer.generateParticles<ObserverParticles>(observation_location);
-
     /**body relation topology */
     InnerRelation column_inner(column);
     ContactRelation my_observer_contact(my_observer, {&column});
     SurfaceContactRelation column_wall_contact(column, {&wall});
     /**define simple data file input and outputs functions. */
     BodyStatesRecordingToVtp write_states(sph_system);
-
-    if (sph_system.RunParticleRelaxation())
-    {
-        using namespace relax_dynamics;
-        /** Random reset the insert body particle position. */
-        SimpleDynamics<RandomizeParticlePosition> random_column_particles(column);
-        /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_column_to_vtp(column);
-        /** Write the particle reload files. */
-
-        ReloadParticleIO write_particle_reload_files(column);
-        /** A  Physics relaxation step. */
-        RelaxationStepInner relaxation_step_inner(column_inner);
-        /**
-         * @brief 	Particle relaxation starts here.
-         */
-        random_column_particles.exec(0.25);
-        relaxation_step_inner.SurfaceBounding().exec();
-        write_states.writeToFile(0.0);
-
-        /** relax particles of the insert body. */
-        int ite_p = 0;
-        while (ite_p < 1000)
-        {
-            relaxation_step_inner.exec();
-            ite_p += 1;
-            if (ite_p % 200 == 0)
-            {
-                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the column body N = " << ite_p << "\n";
-                write_column_to_vtp.writeToFile(ite_p);
-            }
-        }
-        std::cout << "The physics relaxation process of cylinder body finish !" << std::endl;
-        /** Output results. */
-        write_particle_reload_files.writeToFile(0.0);
-        return 0;
-    }
     //----------------------------------------------------------------------
     //	All numerical methods will be used in this case.
     //----------------------------------------------------------------------
     SimpleDynamics<::InitialCondition> initial_condition(column);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(column_inner);
-
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> stress_relaxation_first_half(column_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
     InteractionDynamics<DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);

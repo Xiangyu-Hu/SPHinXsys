@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -36,13 +36,25 @@
 
 namespace SPH
 {
-using CellNeighborhood2d = std::array<std::array<int, 3>, 3>;
-using CellNeighborhood3d = std::array<std::array<std::array<int, 3>, 3>, 3>;
+template <class DataType, UnsignedInt PKG_SIZE>
+class PackageDataMatrix2d
+    : public std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>
+{
+  public:
+    DataType operator()(const Array2i &index) const { return (*this)[index[0]][index[1]]; }
+    DataType &operator()(const Array2i &index) { return (*this)[index[0]][index[1]]; }
+};
 
-template <class DataType, size_t PKG_SIZE>
-using PackageDataMatrix2d = std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>;
+template <class DataType, UnsignedInt PKG_SIZE>
+class PackageDataMatrix3d
+    : public std::array<std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>, PKG_SIZE>
+{
+  public:
+    DataType operator()(const Array3i &index) const { return (*this)[index[0]][index[1]][index[2]]; }
+    DataType &operator()(const Array3i &index) { return (*this)[index[0]][index[1]][index[2]]; }
+};
 
-template <class DataType, size_t PKG_SIZE>
-using PackageDataMatrix3d = std::array<std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>, PKG_SIZE>;
+using CellNeighborhood2d = PackageDataMatrix2d<UnsignedInt, 3>;
+using CellNeighborhood3d = PackageDataMatrix3d<UnsignedInt, 3>;
 } // namespace SPH
 #endif // GRID_DATA_PACKAGE_TYPE_H

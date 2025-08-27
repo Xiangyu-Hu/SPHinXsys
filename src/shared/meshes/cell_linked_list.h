@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -135,7 +135,7 @@ class NeighborSearch : public Mesh
 
     template <typename FunctionOnEach>
     void forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
-                       const FunctionOnEach &function) const;
+                       const FunctionOnEach &function, int depth = 1) const;
 
   protected:
     UnsignedInt *particle_index_;

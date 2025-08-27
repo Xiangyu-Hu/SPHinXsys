@@ -51,7 +51,7 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
 //=============================================================================================//
 RestartIO::RestartIO(SPHSystem &sph_system)
     : BaseIO(sph_system), bodies_(sph_system.getSPHBodies()),
-      overall_file_path_(io_environment_.restart_folder_ + "/Restart_time_")
+      overall_file_path_(io_environment_.RestartFolder() + "/Restart_time_")
 {
     if (sph_system_.RestartStep() == 0)
     {
@@ -60,7 +60,7 @@ RestartIO::RestartIO(SPHSystem &sph_system)
 
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
-        file_names_.push_back(io_environment_.restart_folder_ + "/" + bodies_[i]->getName() + "_rst_");
+        file_names_.push_back(io_environment_.RestartFolder() + "/" + bodies_[i]->getName() + "_rst_");
     }
 }
 //=============================================================================================//
@@ -128,14 +128,14 @@ ReloadParticleIO::ReloadParticleIO(SPHBodyVector bodies)
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
-        file_names_.push_back(io_environment_.reload_folder_ + "/" + bodies_[i]->getName() + "_rld.xml");
+        file_names_.push_back(io_environment_.ReloadFolder() + "/" + bodies_[i]->getName() + "_rld.xml");
     }
 }
 //=============================================================================================//
 ReloadParticleIO::ReloadParticleIO(SPHBody &sph_body, const std::string &given_body_name)
     : BaseIO(sph_body.getSPHSystem()), bodies_({&sph_body})
 {
-    file_names_.push_back(io_environment_.reload_folder_ + "/" + given_body_name + "_rld.xml");
+    file_names_.push_back(io_environment_.ReloadFolder() + "/" + given_body_name + "_rld.xml");
 }
 //=============================================================================================//
 ReloadParticleIO::ReloadParticleIO(SPHBody &sph_body)

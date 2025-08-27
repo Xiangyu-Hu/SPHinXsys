@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -48,6 +48,11 @@ inline void mesh_for_each2d(const FunctionOnEach &function)
     mesh_for_each2d<lower, upper, lower, upper, FunctionOnEach>(function);
 };
 
+template <typename FunctionOnEach>
+inline void mesh_for_each_neighbor2d(int depth, const FunctionOnEach &function);
+template <typename FunctionOnEach>
+inline void mesh_for_each_neighbor3d(int depth, const FunctionOnEach &function);
+
 /** iteration with boolean return function. 2D case. */
 template <int lower0, int upper0,
           int lower1, int upper1, typename CheckOnEach>
@@ -60,8 +65,9 @@ inline Array2i mesh_find_if2d(const CheckOnEach &function)
 template <int lower, int upper, typename CheckOnEach>
 inline bool mesh_any_of2d(const CheckOnEach &function)
 {
-    return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(
-               function) != Array2i(upper, upper);
+    return (mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(
+                function) != Array2i(upper, upper))
+        .all();
 };
 
 /** iteration with void (non_value_returning) function. 3D case. */
@@ -88,8 +94,9 @@ inline Array3i mesh_find_if3d(const CheckOnEach &function)
 template <int lower, int upper, typename CheckOnEach>
 inline bool mesh_any_of3d(const CheckOnEach &function)
 {
-    return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(
-               function) != Array3i(upper, upper, upper);
+    return (mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(
+                function) != Array3i(upper, upper, upper))
+        .all();
 };
 
 template <typename FunctionOnEach>
@@ -128,18 +135,18 @@ void mesh_for(const execution::ParallelPolicy &par, const MeshRange &mesh_range,
 };
 
 template <typename FunctionOnData>
-void package_parallel_for(const execution::SequencedPolicy &seq,
-                          size_t num_grid_pkgs, const FunctionOnData &function)
+void package_for(const execution::SequencedPolicy &seq, UnsignedInt start_index,
+                 UnsignedInt num_grid_pkgs, const FunctionOnData &function)
 {
-    for (size_t i = 2; i != num_grid_pkgs; ++i)
+    for (size_t i = start_index; i != num_grid_pkgs; ++i)
         function(i);
 }
 
 template <typename FunctionOnData>
-void package_parallel_for(const execution::ParallelPolicy &par,
-                          size_t num_grid_pkgs, const FunctionOnData &function)
+void package_for(const execution::ParallelPolicy &par, UnsignedInt start_index,
+                 UnsignedInt num_grid_pkgs, const FunctionOnData &function)
 {
-    parallel_for(IndexRange(2, num_grid_pkgs), [&](const IndexRange &r)
+    parallel_for(IndexRange(start_index, num_grid_pkgs), [&](const IndexRange &r)
                  {
                     for (size_t i = r.begin(); i != r.end(); ++i)
                     {
@@ -148,7 +155,8 @@ void package_parallel_for(const execution::ParallelPolicy &par,
 }
 
 template <typename FunctionOnData>
-void package_parallel_for(const execution::ParallelDevicePolicy &par_device,
-                          size_t num_grid_pkgs, const FunctionOnData &function);
+void package_for(const execution::ParallelDevicePolicy &par_device,
+                 UnsignedInt start_index, UnsignedInt num_grid_pkgs,
+                 const FunctionOnData &function);
 } // namespace SPH
 #endif // MESH_ITERATORS_H

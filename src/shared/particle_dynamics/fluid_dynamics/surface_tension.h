@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -24,8 +24,8 @@
  * @file surface_tension.h
  * @brief A momentum-conservative formulation for surface tension is used here
  * to reach a long-term stable simulation.
- * @details The zero-surface-energy modes in surface tension are identified and 
- * sovlved by introducting a penalty force. The method can be used to simulate 
+ * @details The zero-surface-energy modes in surface tension are identified and
+ * sovlved by introducting a penalty force. The method can be used to simulate
  * surface tension in multiphase flows with extra high Reynolds numbers and Weber numbers.
  * @author	Shuaihao Zhang and Xiangyu Hu
  */
@@ -44,7 +44,7 @@ class SurfaceTensionStress : public LocalDynamics, public DataDelegateContact
 {
   public:
     explicit SurfaceTensionStress(BaseContactRelation &contact_relation, Real surface_tension_coeff);
-    virtual ~SurfaceTensionStress(){};
+    virtual ~SurfaceTensionStress() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -65,7 +65,7 @@ class SurfaceStressForce<DataDelegationType>
   public:
     template <class BaseRelationType>
     explicit SurfaceStressForce(BaseRelationType &base_relation);
-    virtual ~SurfaceStressForce(){};
+    virtual ~SurfaceStressForce() {};
 
   protected:
     Real *rho_, *mass_, *Vol_;
@@ -82,7 +82,7 @@ class SurfaceStressForce<Inner<>> : public SurfaceStressForce<DataDelegateInner>
     template <typename BodyRelationType, typename FirstArg>
     explicit SurfaceStressForce(DynamicsArgs<BodyRelationType, FirstArg> parameters)
         : SurfaceStressForce(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~SurfaceStressForce(){};
+    virtual ~SurfaceStressForce() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -97,7 +97,7 @@ class SurfaceStressForce<Contact<>> : public SurfaceStressForce<DataDelegateCont
     template <typename BodyRelationType, typename FirstArg>
     explicit SurfaceStressForce(DynamicsArgs<BodyRelationType, FirstArg> parameters)
         : SurfaceStressForce(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~SurfaceStressForce(){};
+    virtual ~SurfaceStressForce() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:

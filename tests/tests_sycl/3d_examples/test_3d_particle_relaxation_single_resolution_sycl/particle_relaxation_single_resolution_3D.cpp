@@ -6,7 +6,7 @@
  * @author 	Yongchuan Yu and Xiangyu Hu
  */
 
-#include "sphinxsys_sycl.h"
+#include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Setting for the first geometry.
@@ -95,7 +95,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody input_body(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     // level set shape is used for particle relaxation
-    input_body.defineBodyLevelSetShape(par_device)->correctLevelSetSign()->writeLevelSet(sph_system);
+    LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(par_ck)
+                                         ->correctLevelSetSign()
+                                         ->writeLevelSet(sph_system);
     input_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Creating body parts.
@@ -114,7 +116,7 @@ int main(int ac, char *av[])
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_device);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     auto &host_methods = sph_solver.addParticleMethodContainer(par);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
@@ -130,9 +132,9 @@ int main(int ac, char *av[])
     auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(input_body);
     auto &input_body_update_inner_relation = main_methods.addRelationDynamics(input_body_inner);
     auto &random_input_body_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(input_body);
-    auto &relaxation_residue =
-        main_methods.addInteractionDynamics<RelaxationResidueCK, NoKernelCorrectionCK>(input_body_inner)
-            .addPostStateDynamics<LevelsetKernelGradientIntegral>(near_body_surface);
+    auto &relaxation_residual =
+        main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(input_body_inner)
+            .addPostStateDynamics<LevelsetKernelGradientIntegral>(input_body, *level_set_shape);
     auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(input_body);
     auto &update_particle_position =
         main_methods.addStateDynamics<PositionRelaxationCK>(input_body);
@@ -160,7 +162,7 @@ int main(int ac, char *av[])
         input_body_cell_linked_list.exec();
         input_body_update_inner_relation.exec();
 
-        relaxation_residue.exec();
+        relaxation_residual.exec();
         Real relaxation_step = relaxation_scaling.exec();
         update_particle_position.exec(relaxation_step);
         level_set_bounding.exec();

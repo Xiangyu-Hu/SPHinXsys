@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -47,7 +47,7 @@ class BaseForceFromFluid : public ForcePrior, public DataDelegateContact
 {
   public:
     explicit BaseForceFromFluid(BaseContactRelation &contact_relation, const std::string &force_name);
-    virtual ~BaseForceFromFluid(){};
+    virtual ~BaseForceFromFluid() {};
     Vecd *getForceFromFluid() { return force_from_fluid_; };
 
   protected:
@@ -65,7 +65,7 @@ class ViscousForceFromFluid : public BaseForceFromFluid
 {
   public:
     explicit ViscousForceFromFluid(BaseContactRelation &contact_relation);
-    virtual ~ViscousForceFromFluid(){};
+    virtual ~ViscousForceFromFluid() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -90,7 +90,7 @@ class PressureForceFromFluid : public BaseForceFromFluid
 
   public:
     explicit PressureForceFromFluid(BaseContactRelation &contact_relation);
-    virtual ~PressureForceFromFluid(){};
+    virtual ~PressureForceFromFluid() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -113,7 +113,7 @@ class InitializeDisplacement : public LocalDynamics
 
   public:
     explicit InitializeDisplacement(SPHBody &sph_body);
-    virtual ~InitializeDisplacement(){};
+    virtual ~InitializeDisplacement() {};
 
     void update(size_t index_i, Real dt = 0.0);
 };
@@ -131,7 +131,7 @@ class UpdateAverageVelocityAndAcceleration : public LocalDynamics
 
   public:
     explicit UpdateAverageVelocityAndAcceleration(SPHBody &sph_body);
-    virtual ~UpdateAverageVelocityAndAcceleration(){};
+    virtual ~UpdateAverageVelocityAndAcceleration() {};
 
     void update(size_t index_i, Real dt = 0.0);
 };
@@ -149,7 +149,7 @@ class AverageVelocityAndAcceleration
     SimpleDynamics<UpdateAverageVelocityAndAcceleration> update_averages_;
 
     explicit AverageVelocityAndAcceleration(SolidBody &solid_body);
-    ~AverageVelocityAndAcceleration(){};
+    ~AverageVelocityAndAcceleration() {};
 };
 } // namespace solid_dynamics
 } // namespace SPH

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -38,14 +38,14 @@ namespace SPH
 struct CopyParticleStateCK
 {
     template <typename DataType>
-    void operator()(VariableAllocationPair<AllocatedDataArray<DataType>> &variable_allocation_pair,
+    void operator()(VariableAllocationSet<AllocatedDataArray<DataType>> &variable_allocation_pair,
                     size_t index, size_t another_index);
 };
 
 class SpawnRealParticle
 {
     ParticleVariables &evolving_variables_;
-    DiscreteVariableArrays copyable_states_;
+    DiscreteVariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
     UnsignedInt particles_bound_;
@@ -76,15 +76,15 @@ class SpawnRealParticle
         UnsignedInt *total_real_particles_;
         UnsignedInt particles_bound_;
         UnsignedInt *original_id_;
-        VariableDataArrays copyable_state_data_arrays_;
-        OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
+        VariableDataArrayAssemble copyable_state_data_arrays_;
+        OperationOnDataAssemble<VariableDataArrayAssemble, CopyParticleStateCK> copy_particle_state_;
     };
 };
 
 class RemoveRealParticle
 {
     ParticleVariables &evolving_variables_;
-    DiscreteVariableArrays copyable_states_;
+    DiscreteVariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
 
@@ -119,8 +119,8 @@ class RemoveRealParticle
       protected:
         UnsignedInt *total_real_particles_;
         UnsignedInt *original_id_;
-        VariableDataArrays copyable_state_data_arrays_;
-        OperationOnDataAssemble<VariableDataArrays, CopyParticleStateCK> copy_particle_state_;
+        VariableDataArrayAssemble copyable_state_data_arrays_;
+        OperationOnDataAssemble<VariableDataArrayAssemble, CopyParticleStateCK> copy_particle_state_;
     };
 };
 } // namespace SPH

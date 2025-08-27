@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -44,7 +44,7 @@ class GeneratingMethod<Lattice>
 {
   public:
     explicit GeneratingMethod(SPHBody &sph_body);
-    virtual ~GeneratingMethod(){};
+    virtual ~GeneratingMethod() {};
 
   protected:
     Real lattice_spacing_;      /**< Initial particle spacing. */
@@ -58,7 +58,7 @@ class ParticleGenerator<BaseParticles, Lattice>
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles);
-    virtual ~ParticleGenerator(){};
+    virtual ~ParticleGenerator() {};
     virtual void prepareGeometricData() override;
 };
 
@@ -68,7 +68,7 @@ class ParticleGenerator<BaseParticles, Lattice, Adaptive> : public ParticleGener
   public:
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape);
     explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles);
-    virtual ~ParticleGenerator(){};
+    virtual ~ParticleGenerator() {};
 
   protected:
     Shape &target_shape_;
@@ -82,7 +82,7 @@ class ParticleGenerator<SurfaceParticles, Lattice>
 {
   public:
     ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles, Real thickness);
-    virtual ~ParticleGenerator(){};
+    virtual ~ParticleGenerator() {};
     virtual void prepareGeometricData() override;
 
   protected:

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -35,10 +35,15 @@
 #include "kernel_tabulated_ck.h"
 #include "mesh_dynamics.h"
 #include "mesh_local_dynamics.hpp"
-#include "mesh_with_data_packages.h"
+#include "mesh_with_data_packages.hpp"
 #include "sphinxsys_variable.h"
 namespace SPH
 {
+enum class UsageType
+{
+    Volumetric,
+    Surface,
+};
 /**
  * @class MultilevelLevelSet
  * @brief Defining a multilevel level set for a complex region.
@@ -47,9 +52,9 @@ class MultilevelLevelSet : public BaseMeshField
 {
   public:
     MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
-                       Shape &shape, SPHAdaptation &sph_adaptation);
+                       Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
     MultilevelLevelSet(BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
-                       Shape &shape, SPHAdaptation &sph_adaptation);
+                       Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
     ~MultilevelLevelSet() {};
 
     template <class ExecutionPolicy>
@@ -62,12 +67,7 @@ class MultilevelLevelSet : public BaseMeshField
     ProbeKernelGradientIntegral getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy);
 
     template <class ExecutionPolicy>
-    void finishInitialization(const ExecutionPolicy &ex_policy)
-    {
-        initializeMeshVariables(ex_policy, host_kernel_);
-        configOperationExecutionPolicy(ex_policy, host_kernel_);
-    }
-    void finishInitialization(const ParallelDevicePolicy &par_device);
+    void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type);
     void cleanInterface(Real small_shift_factor);
     void correctTopology(Real small_shift_factor);
     bool probeIsWithinMeshBound(const Vecd &position);
@@ -79,18 +79,12 @@ class MultilevelLevelSet : public BaseMeshField
     Matd probeKernelSecondGradientIntegral(const Vecd &position, Real h_ratio = 1.0);
     StdVec<MeshWithGridDataPackagesType *> getMeshLevels() { return mesh_data_set_; };
 
-    void writeMeshFieldToPlt(const std::string &partial_file_name) override
-    {
-        sync_mesh_variable_data_();
-        resetProbes();
-        for (size_t l = 0; l != total_levels_; ++l)
-        {
-            std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
-            std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-            WriteMeshFieldToPlt(*mesh_data_set_[l]).update(out_file);
-            out_file.close();
-        }
-    }
+    template <typename DataType>
+    void addMeshVariableToWrite(const std::string &variable_name);
+    void writeMeshFieldToPlt(const std::string &partial_file_name) override;
+    template <typename DataType>
+    void addBKGMeshVariableToWrite(const std::string &variable_name);
+    void writeBKGMeshToPlt(const std::string &partial_file_name) override;
 
     template <class ExecutionPolicy>
     void syncMeshVariableData(ExecutionPolicy &ex_policy)
@@ -107,15 +101,15 @@ class MultilevelLevelSet : public BaseMeshField
         probe_kernel_integral_set_.clear();
         probe_kernel_gradient_integral_set_.clear();
         probe_kernel_second_gradient_integral_set_.clear();
-        cell_package_index_set_.clear();
-        meta_data_cell_set_.clear();
+        cell_pkg_index_set_.clear();
+        pkg_cell_info_set_.clear();
         for (size_t l = 0; l != total_levels_; l++)
         {
             registerProbes(execution::par, l);
-            cell_package_index_set_.push_back(
-                mesh_data_set_[l]->cell_package_index_.DelegatedData(execution::par));
-            meta_data_cell_set_.push_back(
-                mesh_data_set_[l]->meta_data_cell_.DelegatedData(execution::par));
+            cell_pkg_index_set_.push_back(
+                mesh_data_set_[l]->getCellPackageIndex().DelegatedData(execution::par));
+            pkg_cell_info_set_.push_back(
+                mesh_data_set_[l]->dvPkgCellInfo().DelegatedData(execution::par));
         }
     }
 
@@ -125,16 +119,19 @@ class MultilevelLevelSet : public BaseMeshField
 
     void initializeLevel(Real reference_data_spacing, BoundingBox tentative_bounds,
                          MeshWithGridDataPackagesType *coarse_data = nullptr);
-    template <class ExecutionPolicy, class KernelType>
-    void initializeMeshVariables(const ExecutionPolicy &ex_policy, KernelType *kernel);
+    template <class ExecutionPolicy>
+    void initializeMeshVariables(const ExecutionPolicy &ex_policy);
+    template <class ExecutionPolicy>
+    void initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
     void registerProbes(const ExecutionPolicy &ex_policy, size_t level);
 
     Shape &shape_;        /**< the geometry is described by the level set. */
     size_t total_levels_; /**< level 0 is the coarsest */
-    StdVec<size_t *> cell_package_index_set_;
-    StdVec<std::pair<Arrayi, int> *> meta_data_cell_set_;
-    StdVec<Real> global_h_ratio_vec_;
+    StdVec<UnsignedInt *> cell_pkg_index_set_;
+    StdVec<std::pair<Arrayi, int> *> pkg_cell_info_set_;
+    StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
+    StdVec<NeighborMethod<SingleValued> *> neighbor_method_set_;
     StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;
     StdVec<ProbeSignedDistance *> probe_signed_distance_set_;
     StdVec<ProbeNormalDirection *> probe_normal_direction_set_;
@@ -150,14 +147,13 @@ class MultilevelLevelSet : public BaseMeshField
     UniquePtrsKeeper<ProbeKernelGradientIntegral> probe_kernel_gradient_integral_vector_keeper_;
     UniquePtrsKeeper<ProbeKernelSecondGradientIntegral> probe_kernel_second_gradient_integral_vector_keeper_;
 
-    UniquePtr<BaseExecDynamics> correct_topology_keeper_;
-    UniquePtr<BaseExecDynamics> clean_interface_keeper_;
-    Kernel *host_kernel_;
-    UniquePtr<SingularVariable<KernelTabulatedCK>> device_kernel_;
+    UniquePtr<BaseDynamics<void>> correct_topology_keeper_;
+    UniquePtr<BaseDynamics<void>> clean_interface_keeper_;
+    UniquePtrsKeeper<NeighborMethod<SingleValued>> neighbor_method_keeper_;
     std::function<void()> sync_mesh_variable_data_;
 
-    template <class ExecutionPolicy, class KernelType>
-    void configOperationExecutionPolicy(const ExecutionPolicy &ex_policy, KernelType *kernel);
+    template <class ExecutionPolicy>
+    void configLevelSetPostProcesses(const ExecutionPolicy &ex_policy);
 };
 } // namespace SPH
 #endif // LEVEL_SET_H

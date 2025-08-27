@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,10 +21,10 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    interaction_ck.h
- * @brief 	This is for the base classes of local particle dynamics, which describe the
- * 			dynamics of a particle and it neighbors.
- * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
+ * @file interaction_ck.h
+ * @brief This is for the base classes of particle interaction with its neighbors,
+ * which describe the basic patterns of particle methods.
+ * @author Xiangyu Hu
  */
 
 #ifndef INTERACTION_CK_H
@@ -51,14 +51,14 @@ class Interaction<Inner<Parameters...>>
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::SourceType>;
     typedef Inner<Parameters...> InnerRelationType;
     using NeighborList = typename InnerRelationType::NeighborList;
-    using NeighborMethod = typename InnerRelationType::NeighborMethodType;
-    using Neighborhood = Neighbor<NeighborMethod>;
+    using Neighborhood = typename InnerRelationType::NeighborhoodType;
+    using NeighborKernel = typename Neighborhood::NeighborKernel;
 
   public:
     explicit Interaction(InnerRelationType &inner_relation);
     virtual ~Interaction() {};
 
-    class InteractKernel : public NeighborList, public Neighborhood
+    class InteractKernel : public NeighborList, public NeighborKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -71,6 +71,7 @@ class Interaction<Inner<Parameters...>>
 
   protected:
     InnerRelationType &inner_relation_;
+    DiscreteVariable<Real> *dv_Vol_;
 };
 
 template <typename... Parameters>
@@ -80,14 +81,14 @@ class Interaction<Contact<Parameters...>>
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
     typedef Contact<Parameters...> ContactRelationType;
     using NeighborList = typename ContactRelationType::NeighborList;
-    using NeighborMethod = typename ContactRelationType::NeighborMethodType;
-    using Neighborhood = Neighbor<NeighborMethod>;
+    using Neighborhood = typename ContactRelationType::NeighborhoodType;
+    using NeighborKernel = typename Neighborhood::NeighborKernel;
 
   public:
     explicit Interaction(ContactRelationType &contact_relation);
     virtual ~Interaction() {};
 
-    class InteractKernel : public NeighborList, public Neighborhood
+    class InteractKernel : public NeighborList, public NeighborKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -104,6 +105,8 @@ class Interaction<Contact<Parameters...>>
     StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
+    DiscreteVariable<Real> *dv_Vol_;
+    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
 
 template <>
@@ -116,7 +119,6 @@ class Interaction<Wall>
 
   protected:
     StdVec<DiscreteVariable<Vecd> *> dv_wall_vel_ave_, dv_wall_acc_ave_, dv_wall_n_;
-    StdVec<DiscreteVariable<Real> *> dv_wall_Vol_;
 };
 } // namespace SPH
 #endif // INTERACTION_CK_H
