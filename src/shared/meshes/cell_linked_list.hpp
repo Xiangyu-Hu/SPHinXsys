@@ -51,12 +51,15 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
     const execution::SequencedPolicy &, Mesh &mesh, UnsignedInt mesh_offset,
     const LocalDynamicsFunction &local_dynamics_function)
 {
+    const Arrayi array3s = 3 * Arrayi::Ones();
+
     // forward sweeping
-    for (UnsignedInt k = 0; k < number_of_split_cell_lists_; k++)
+    for (int k = 0; k < array3s.prod(); k++)
     {
+
         // get the corresponding 2D/3D split cell index (m, n)
         // e.g., for k = 0, split_cell_index = (0,0), for k = 3, split_cell_index = (1,0), etc.
-        const Arrayi split_cell_index = mesh.transfer1DtoMeshIndex(Arrayi(Arrayi::Constant(3)), k);
+        const Arrayi split_cell_index = mesh.transfer1DtoMeshIndex(array3s, k);
         // get the number of cells belonging to the split cell k
         // i_max = (M - m - 1) / 3 + 1, j_max = (N - n - 1) / 3 + 1
         // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), then i_max = 2, j_max = 3
@@ -83,9 +86,9 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
     }
 
     // backward sweeping
-    for (UnsignedInt k = number_of_split_cell_lists_; k != 0; --k)
+    for (int k = array3s.prod(); k != 0; --k)
     {
-        const Arrayi split_cell_index = mesh.transfer1DtoMeshIndex(Arrayi(Arrayi::Constant(3)), k - 1);
+        const Arrayi split_cell_index = mesh.transfer1DtoMeshIndex(array3s, k - 1);
         const Arrayi all_cells_k = (mesh.AllCells() - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
         const UnsignedInt number_of_cells = all_cells_k.prod();
 
@@ -107,10 +110,12 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
     const execution::ParallelPolicy &, Mesh &mesh, UnsignedInt mesh_offset,
     const LocalDynamicsFunction &local_dynamics_function)
 {
+    const Arrayi array3s = 3 * Arrayi::Ones();
+
     // forward sweeping
-    for (UnsignedInt k = 0; k < number_of_split_cell_lists_; k++)
+    for (int k = 0; k < array3s.prod(); k++)
     {
-        const Arrayi split_cell_index = mesh.transfer1DtoMeshIndex(Arrayi(Arrayi::Constant(3)), k);
+        const Arrayi split_cell_index = mesh.transfer1DtoMeshIndex(array3s, k);
         const Arrayi all_cells_k = (mesh.AllCells() - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
         const UnsignedInt number_of_cells = all_cells_k.prod();
 
@@ -133,9 +138,9 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
     }
 
     // backward sweeping
-    for (UnsignedInt k = number_of_split_cell_lists_; k != 0; --k)
+    for (int k = array3s.prod(); k != 0; --k)
     {
-        const Arrayi split_cell_index = mesh.transfer1DtoMeshIndex(Arrayi(Arrayi::Constant(3)), k - 1);
+        const Arrayi split_cell_index = mesh.transfer1DtoMeshIndex(array3s, k - 1);
         const Arrayi all_cells_k = (mesh.AllCells() - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
         const UnsignedInt number_of_cells = all_cells_k.prod();
 

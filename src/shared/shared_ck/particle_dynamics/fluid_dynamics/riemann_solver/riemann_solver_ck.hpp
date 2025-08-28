@@ -37,13 +37,13 @@ RiemannSolver<FluidI, FluidJ, LimiterType>::
 template <class FluidI, class FluidJ, typename LimiterType>
 Real RiemannSolver<FluidI, FluidJ, LimiterType>::DissipativePJump(const Real &u_jump)
 {
-    return 0.5 * rho0c0_geo_ave_ * u_jump * limiter_(SMAX(u_jump, Real(0)));
+    return rho0c0_geo_ave_ * u_jump * limiter_(SMAX(u_jump, Real(0))); // the factor 0.5 canceled
 }
 //=================================================================================================//
 template <class FluidI, class FluidJ, typename LimiterType>
 Real RiemannSolver<FluidI, FluidJ, LimiterType>::DissipativeUJump(const Real &p_jump)
 {
-    return 0.5 * p_jump * inv_rho0c0_ave_;
+    return p_jump * inv_rho0c0_ave_; // the factor 0.5 canceled with 2.0 in kernel approximation
 }
 //=================================================================================================//
 } // namespace SPH
