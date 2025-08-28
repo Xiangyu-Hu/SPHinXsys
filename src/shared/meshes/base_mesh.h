@@ -59,7 +59,7 @@ class Mesh
     Arrayi AllGridPoints() const { return all_grid_points_; };
     Arrayi AllCells() const { return all_cells_; };
     size_t NumberOfGridPoints() const { return transferMeshIndexTo1D(all_grid_points_, all_grid_points_); };
-    size_t NumberOfCells() const { return transferMeshIndexTo1D(all_cells_, all_cells_); };
+    size_t NumberOfCells() const { return all_cells_.prod(); };
 
     Arrayi CellIndexFromPosition(const Vecd &position) const
     {
@@ -89,7 +89,22 @@ class Mesh
     // Transferring between 1D mesh indexes.
     // Here, mesh size can be either AllGridPoints or AllCells.
     //----------------------------------------------------------------------
-    Arrayi transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i) const;
+    Array2i transfer1DtoMeshIndex(const Array2i &mesh_size, size_t i) const
+    {
+        size_t row_size = mesh_size[1];
+        size_t column = i / row_size;
+        return Array2i(column, i - column * row_size);
+    };
+
+    Array3i transfer1DtoMeshIndex(const Array3i &mesh_size, size_t i) const
+    {
+        size_t row_times_column_size = mesh_size[1] * mesh_size[2];
+        size_t page = i / row_times_column_size;
+        size_t left_over = (i - page * row_times_column_size);
+        size_t row_size = mesh_size[2];
+        size_t column = left_over / row_size;
+        return Array3i(page, column, left_over - column * row_size);
+    }
 
     size_t transferMeshIndexTo1D(const Array2i &mesh_size, const Array2i &mesh_index) const
     {

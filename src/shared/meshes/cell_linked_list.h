@@ -94,7 +94,6 @@ class BaseCellLinkedList : public BaseMeshField
   protected:
     Kernel &kernel_;
     UnsignedInt total_number_of_cells_;
-    UnsignedInt number_of_split_cell_lists_;
     UnsignedInt cell_offset_list_size_;
     UnsignedInt index_list_size_; // at least number_of_cells_pluse_one_
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
@@ -155,7 +154,7 @@ class CellLinkedList : public BaseCellLinkedList
   public:
     CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    ~CellLinkedList() {};
+    ~CellLinkedList(){};
     Mesh &getMesh() { return *mesh_; };
     void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
@@ -196,7 +195,7 @@ class MultilevelCellLinkedList : public BaseCellLinkedList
     MultilevelCellLinkedList(BoundingBox tentative_bounds,
                              Real reference_grid_spacing, UnsignedInt total_levels,
                              BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    virtual ~MultilevelCellLinkedList() {};
+    virtual ~MultilevelCellLinkedList(){};
     void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
     virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero()); }; // mocking, not implemented

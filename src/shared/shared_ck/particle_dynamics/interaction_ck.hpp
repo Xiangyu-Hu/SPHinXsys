@@ -58,8 +58,7 @@ void Interaction<Contact<Parameters...>>::
 }
 //=================================================================================================//
 template <typename... Parameters>
-void Interaction<Contact<Parameters...>>::
-    resetComputingKernelUpdated(UnsignedInt contact_index)
+void Interaction<Contact<Parameters...>>::resetComputingKernelUpdated(UnsignedInt contact_index)
 {
     contact_relation_.resetComputingKernelUpdated(contact_index);
 }

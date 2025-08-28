@@ -105,11 +105,11 @@ class MultilevelLevelSet : public BaseMeshField
         pkg_cell_info_set_.clear();
         for (size_t l = 0; l != total_levels_; l++)
         {
-            registerProbes(execution::par, l);
+            registerProbes(execution::par_host, l);
             cell_pkg_index_set_.push_back(
-                mesh_data_set_[l]->getCellPackageIndex().DelegatedData(execution::par));
+                mesh_data_set_[l]->getCellPackageIndex().DelegatedData(execution::par_host));
             pkg_cell_info_set_.push_back(
-                mesh_data_set_[l]->dvPkgCellInfo().DelegatedData(execution::par));
+                mesh_data_set_[l]->dvPkgCellInfo().DelegatedData(execution::par_host));
         }
     }
 

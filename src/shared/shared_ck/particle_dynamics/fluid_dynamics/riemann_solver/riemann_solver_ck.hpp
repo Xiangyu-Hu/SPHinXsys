@@ -15,7 +15,7 @@ RiemannSolver<Base, FluidI, FluidJ>::RiemannSolver(FluidI &fluid_i, FluidJ &flui
 //=================================================================================================//
 template <class FluidI, class FluidJ>
 template <typename T>
-T RiemannSolver<Base, FluidI, FluidJ>::AverageP(const T &p_i, const T &p_j)
+T RiemannSolver<Base, FluidI, FluidJ>::AverageP(const T &p_i, const T &p_j) const
 {
     return (p_i * rho0c0_j_ + p_j * rho0c0_i_) * inv_rho0c0_sum_;
 }
@@ -37,13 +37,13 @@ RiemannSolver<FluidI, FluidJ, LimiterType>::
 template <class FluidI, class FluidJ, typename LimiterType>
 Real RiemannSolver<FluidI, FluidJ, LimiterType>::DissipativePJump(const Real &u_jump)
 {
-    return rho0c0_geo_ave_ * u_jump * limiter_(SMAX(u_jump, Real(0)));
+    return rho0c0_geo_ave_ * u_jump * limiter_(SMAX(u_jump, Real(0))); // the factor 0.5 canceled
 }
 //=================================================================================================//
 template <class FluidI, class FluidJ, typename LimiterType>
 Real RiemannSolver<FluidI, FluidJ, LimiterType>::DissipativeUJump(const Real &p_jump)
 {
-    return p_jump * inv_rho0c0_ave_;
+    return p_jump * inv_rho0c0_ave_; // the factor 0.5 canceled with 2.0 in kernel approximation
 }
 //=================================================================================================//
 } // namespace SPH

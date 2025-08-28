@@ -135,6 +135,7 @@ using LinearCorrectionMatrixComplex = LinearCorrectionMatrix<Inner<WithUpdate>, 
 class NoKernelCorrectionCK : public KernelCorrection
 {
   public:
+     typedef Real CorrectionDataType;
     NoKernelCorrectionCK(BaseParticles *particles) : KernelCorrection() {};
 
     class ComputingKernel : public ParameterFixed<Real>
@@ -150,6 +151,7 @@ class NoKernelCorrectionCK : public KernelCorrection
 class LinearCorrectionCK : public KernelCorrection
 {
   public:
+    typedef Matd CorrectionDataType;
     LinearCorrectionCK(BaseParticles *particles)
         : KernelCorrection(),
           dv_B_(particles->getVariableByName<Matd>("LinearCorrectionMatrix")) {};

@@ -15,10 +15,14 @@ Relation<NeighborMethodType>::Relation(
       dv_source_pos_(this->assignConfigPosition(particles_, config_type)),
       offset_list_size_(particles_.ParticlesBound() + 1)
 {
+    std::string source_name = source_identifier.getName();
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
     {
         SPHBody &contact_body = contact_identifiers[k]->getSPHBody();
-        const std::string name = source_identifier.getName() + contact_identifiers[k]->getName();
+        std::string target_name = contact_identifiers[k]->getName();
+        std::string name = source_name == target_name
+                               ? source_name + "Inner"
+                               : source_name + "To" + target_name;
         BaseParticles &contact_particles = contact_body.getBaseParticles();
         dv_target_pos_.push_back(assignConfigPosition(contact_particles, config_type));
         dv_target_neighbor_index_.push_back(addRelationVariable<UnsignedInt>(

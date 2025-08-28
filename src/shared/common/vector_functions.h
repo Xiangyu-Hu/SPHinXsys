@@ -83,6 +83,7 @@ VecType getVectorProjectionOfVector(const VecType &vector_1, const VecType &vect
     return vector_1.dot(vector_2) * vector_2 / (vector_2.squaredNorm() + TinyReal);
 };
 
+/** generalized formulation for scalar and tensor */
 template <typename Datatype>
 Real getNorm(const Datatype &variable) { return variable.norm(); };
 
@@ -90,8 +91,15 @@ inline Real getNorm(const Real &variable) { return ABS(variable); };
 
 template <typename Datatype>
 Real getSquaredNorm(const Datatype &variable) { return variable.squaredNorm(); };
-
 inline Real getSquaredNorm(const Real &variable) { return variable * variable; };
+
+template <int Dim>
+Eigen::Matrix<Real, Dim, Dim> getInverse(const Eigen::Matrix<Real, Dim, Dim> &variable)
+{
+    return variable.inverse();
+};
+
+inline Real getInverse(const Real &variable) { return variable / (variable * variable + TinyReal); };
 
 /** von Mises stress from stress matrix */
 Real getVonMisesStressFromMatrix(const Mat2d &sigma);

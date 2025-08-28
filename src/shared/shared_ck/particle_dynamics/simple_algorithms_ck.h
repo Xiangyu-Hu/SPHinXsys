@@ -90,27 +90,30 @@ class ReduceDynamicsCK : public ReduceType,
     using ReduceReturnType = typename ReduceType::ReturnType;
     using Operation = typename ReduceType::OperationType;
     using FinishDynamics = typename ReduceType::FinishDynamics;
-    using OutputType = typename FinishDynamics::OutputType;
     using KernelImplementation =
         Implementation<ExecutionPolicy, ReduceType, ReduceKernel>;
     KernelImplementation kernel_implementation_;
+    ReduceReturnType reduced_value_;
     FinishDynamics finish_dynamics_;
 
   public:
+    using OutputType = typename FinishDynamics::OutputType;
+
     template <typename... Args>
     ReduceDynamicsCK(Args &&...args)
         : ReduceType(std::forward<Args>(args)...),
           BaseReduceDynamics(),
           BaseDynamics<OutputType>(), kernel_implementation_(*this),
-          finish_dynamics_(*this){};
+          reduced_value_(this->reference_), finish_dynamics_(*this){};
     virtual ~ReduceDynamicsCK() {};
     std::string QuantityName() { return this->quantity_name_; };
+    ReduceReturnType ReducedValue() { return reduced_value_; };
 
     virtual OutputType exec(Real dt = 0.0) override
     {
         this->setupDynamics(dt);
         ReduceKernel *reduce_kernel = kernel_implementation_.getComputingKernel();
-        ReduceReturnType temp = particle_reduce<Operation>(
+        reduced_value_ = particle_reduce<Operation>(
             LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
             this->reference_,
             [=](size_t i)
@@ -121,7 +124,7 @@ class ReduceDynamicsCK : public ReduceType,
             type_name<ReduceType>(),
             this->sph_body_.getName());
 
-        return finish_dynamics_.Result(temp);
+        return finish_dynamics_.Result(reduced_value_);
     };
 };
 } // namespace SPH
