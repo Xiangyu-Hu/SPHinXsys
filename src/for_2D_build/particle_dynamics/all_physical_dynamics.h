@@ -32,5 +32,6 @@
 #define ALL_PHYSICAL_DYNAMICS_2D_H
 
 #include "all_shared_physical_dynamics.h"
+#include "all_shared_physical_dynamics_ck.h"
 
 #endif // ALL_PHYSICAL_DYNAMICS_2D_H

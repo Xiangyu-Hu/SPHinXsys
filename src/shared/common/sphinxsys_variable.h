@@ -155,9 +155,9 @@ class DiscreteVariable : public Entity
 
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return data_field_; };
-    DataType *DelegatedOnDevice();
     template <class PolicyType>
     DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy) { return DelegatedOnDevice(); };
+    DataType *DelegatedOnDevice();
     bool isDataDelegated() { return device_data_field_ != nullptr; };
     size_t getDataSize() { return data_size_; }
     void setDeviceData(DataType *data_field) { device_data_field_ = data_field; };
@@ -171,10 +171,13 @@ class DiscreteVariable : public Entity
         }
     };
 
-    void reallocateData(const ParallelDevicePolicy &par_device, size_t tentative_size);
-
-    void synchronizeWithDevice();
-    void synchronizeToDevice();
+    void reallocateData(const ParallelDevicePolicy &par_device, size_t tentative_size)
+    {
+        if (data_size_ < tentative_size)
+        {
+            reallocateDataOnDevice(tentative_size);
+        }
+    };
 
     template <class ExecutionPolicy>
     void prepareForOutput(const ExecutionPolicy &ex_policy) {};
@@ -196,6 +199,10 @@ class DiscreteVariable : public Entity
         data_size_ = tentative_size + tentative_size / 4;
         data_field_ = new DataType[data_size_];
     };
+
+    void reallocateDataOnDevice(size_t tentative_size);
+    void synchronizeWithDevice();
+    void synchronizeToDevice();
 };
 
 template <typename DataType, template <typename VariableDataType> class VariableType>

@@ -75,9 +75,13 @@ class VariableBufferArray : public DiscreteVariableArray<DataType>
     {
         return buffer_array_;
     };
-
     template <class PolicyType>
-    DataArray<DataType> *DelegatedBufferArray(const DeviceExecution<PolicyType> &ex_policy);
+    DataArray<DataType> *DelegatedBufferArrayOnDevice();
+    template <class PolicyType>
+    DataArray<DataType> *DelegatedBufferArray(const DeviceExecution<PolicyType> &ex_policy)
+    {
+        return DelegatedBufferArrayOnDevice<PolicyType>();
+    };
 
     void setDelegateBufferArray(DataArray<DataType> *buffer_array_)
     {
@@ -91,9 +95,13 @@ class VariableBufferArray : public DiscreteVariableArray<DataType>
         return host_staging_buffer_array_;
     };
 
+    DataArray<DataType> *synchronizeBufferArrayFromDevice(UnsignedInt data_size);
     template <class PolicyType>
     DataArray<DataType> *synchronizeHostStagingBufferArray(
-        const DeviceExecution<PolicyType> &ex_policy, UnsignedInt data_size);
+        const DeviceExecution<PolicyType> &ex_policy, UnsignedInt data_size)
+    {
+        return synchronizeBufferArrayFromDevice(data_size);
+    };
 
     void setHostStagingBufferArray(DataArray<DataType> *buffer_array_)
     {

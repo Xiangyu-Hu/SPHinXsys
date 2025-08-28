@@ -9,13 +9,12 @@ namespace SPH
 //=================================================================================================//
 template <typename DataType, template <typename> class VariableType>
 template <class PolicyType>
-DataArray<DataType> *VariableArray<DataType, VariableType>::
-    DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy)
+DataArray<DataType> *VariableArray<DataType, VariableType>::DelegatedOnDevice()
 {
     if (!isDataArrayDelegated())
     {
         device_only_variable_array_keeper_
-            .createPtr<DeviceOnlyVariableArray<DataType, VariableType>>(ex_policy, this);
+            .createPtr<DeviceOnlyVariableArray<DataType, VariableType>>(DeviceExecution<PolicyType>{}, this);
     }
     return delegated_data_array_;
 }

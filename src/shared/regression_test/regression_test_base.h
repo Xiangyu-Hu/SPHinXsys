@@ -29,8 +29,8 @@
 #ifndef REGRESSION_TEST_BASE_H
 #define REGRESSION_TEST_BASE_H
 
+#include "all_io.h"
 #include "all_physical_dynamics.h"
-#include "io_all.h"
 #include "xml_engine.h"
 
 namespace SPH
