@@ -1,0 +1,3 @@
+[submodule "3rd_party/wasmtbb"]
+	path = 3rd_party/wasmtbb
+	url = https://github.com/hpcwasm/wasmtbb.git
