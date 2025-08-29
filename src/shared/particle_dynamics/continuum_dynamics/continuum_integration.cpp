@@ -162,9 +162,11 @@ void ShearStressRelaxationHourglassControl2ndHalf::interaction(size_t index_i, R
         Vecd v_ij = vel_[index_i] - vel_[index_j];
         Real r_ij = inner_neighborhood.r_ij_[n];
         Vecd v_ij_correction = v_ij - 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_j]) * r_ij * e_ij;
-        acceleration_hourglass += 0.5 * (scale_penalty_force_[index_i] + scale_penalty_force_[index_j]) * G_ * v_ij_correction * dW_ijV_j * dt / (rho_i * r_ij);
+        acceleration_hourglass += 0.5 * (scale_penalty_force_[index_i] + scale_penalty_force_[index_j]) * G_ * v_ij_correction.dot(e_ij) * e_ij * dW_ijV_j * dt / (rho_i * r_ij);
     }
-    acc_hourglass_[index_i] += acceleration_hourglass;
+    Matd spin_rate = 0.5 * (velocity_gradient_[index_i] - velocity_gradient_[index_i].transpose());
+    Matd rotation_matrix = computeRotationMatrixRodrigues(spin_rate, dt);
+    acc_hourglass_[index_i] = rotation_matrix * acc_hourglass_[index_i] + acceleration_hourglass;
     acc_shear_[index_i] = acceleration + acc_hourglass_[index_i];
 }
 //====================================================================================//
