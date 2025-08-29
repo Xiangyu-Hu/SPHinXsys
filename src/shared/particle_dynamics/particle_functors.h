@@ -163,7 +163,7 @@ class GeomAverage : public ParticleAverage
 template <typename T>
 class PairGeomAverageFixed : public GeomAverage
 {
-    const T geom_average_;
+    T geom_average_;
 
   public:
     PairGeomAverageFixed(const T &c1, const T &c2)
