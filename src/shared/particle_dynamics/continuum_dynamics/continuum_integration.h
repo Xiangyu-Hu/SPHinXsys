@@ -207,6 +207,7 @@ class ShearStressRelaxationHourglassControl2ndHalf : public fluid_dynamics::Base
     explicit ShearStressRelaxationHourglassControl2ndHalf(BaseInnerRelation &inner_relation);
     virtual ~ShearStressRelaxationHourglassControl2ndHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
+    Matd computeRotationMatrixRodrigues(const Matd &spin_rate, Real dt = 0.0);
 
   protected:
     GeneralContinuum &continuum_;

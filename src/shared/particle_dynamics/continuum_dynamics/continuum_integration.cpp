@@ -116,6 +116,36 @@ ShearStressRelaxationHourglassControl2ndHalf ::
     particles_->addEvolvingVariable<Vecd>("AccelerationHourglass");
 }
 //====================================================================================//
+Matd ShearStressRelaxationHourglassControl2ndHalf::computeRotationMatrixRodrigues(const Matd &spin_rate, Real dt)
+{
+    Matd spin_rate_square = spin_rate * spin_rate;
+
+    // 计算旋转角速度的模 |ω|
+    Real trace_value = -0.5 * spin_rate_square.trace();
+    if (trace_value < 0.0)
+    {
+        trace_value = 0.0; // 修正负数误差
+    }
+    Real omega_norm = std::sqrt(trace_value);
+
+    // 计算旋转角 θ = |ω| * t
+    Real theta = omega_norm * dt;
+
+    // 数值保护
+    if (std::abs(theta) < 1e-8)
+    {
+        return Matd::Identity(); // 如果 θ 接近 0，返回单位矩阵
+    }
+    // std::cout << theta << std::endl;
+    //  归一化旋转速率矩阵
+    Matd spin_rate_normalized = spin_rate / omega_norm;
+
+    // 使用 Rodrigues 公式计算旋转矩阵
+    Matd rotation_matrix = Matd::Identity() + std::sin(theta) * spin_rate_normalized + (1 - std::cos(theta)) * (spin_rate_normalized * spin_rate_normalized);
+
+    return rotation_matrix;
+}
+//====================================================================================//
 void ShearStressRelaxationHourglassControl2ndHalf::interaction(size_t index_i, Real dt)
 {
     Real rho_i = rho_[index_i];
