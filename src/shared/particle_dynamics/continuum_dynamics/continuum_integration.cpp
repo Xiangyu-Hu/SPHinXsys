@@ -120,16 +120,10 @@ Matd ShearStressRelaxationHourglassControl2ndHalf::computeRotationMatrixRodrigue
 {
     Matd spin_rate_square = spin_rate * spin_rate;
     Real trace_value = -0.5 * spin_rate_square.trace();
-    if (trace_value < 0.0)
-    {
-        trace_value = 0.0;
-    }
     Real omega_norm = std::sqrt(trace_value);
     Real theta = omega_norm * dt;
-    if (std::abs(theta) < 1e-8)
-    {
+    if (std::abs(theta) < Eps)
         return Matd::Identity();
-    }
     Matd spin_rate_normalized = spin_rate / omega_norm;
     Matd rotation_matrix = Matd::Identity() + std::sin(theta) * spin_rate_normalized + (1 - std::cos(theta)) * (spin_rate_normalized * spin_rate_normalized);
     return rotation_matrix;
