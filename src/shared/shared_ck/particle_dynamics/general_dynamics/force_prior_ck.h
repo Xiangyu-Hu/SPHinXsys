@@ -37,10 +37,13 @@ namespace SPH
 
 class ForcePriorCK
 {
+    DiscreteVariable<Vecd> *dv_force_prior_, *dv_current_force_, *dv_previous_force_;
+
   public:
     ForcePriorCK(BaseParticles *particles, DiscreteVariable<Vecd> *dv_current_force);
     ForcePriorCK(BaseParticles *particles, const std::string &force_name);
     virtual ~ForcePriorCK() {};
+    DiscreteVariable<Vecd> *getCurrentForce() { return dv_current_force_; }
 
     class UpdateKernel
     {
@@ -56,9 +59,6 @@ class ForcePriorCK
       protected:
         Vecd *force_prior_, *current_force_, *previous_force_;
     };
-
-  protected:
-    DiscreteVariable<Vecd> *dv_force_prior_, *dv_current_force_, *dv_previous_force_;
 };
 
 template <class GravityType>

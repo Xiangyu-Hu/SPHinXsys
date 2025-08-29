@@ -23,7 +23,7 @@ template <typename ViscosityType, class KernelCorrectionType, typename... Parame
 ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>::
     ViscousForceCK(Inner<Parameters...> &inner_relation)
     : BaseViscousForceType(inner_relation),
-      ForcePriorCK(this->particles_, this->dv_current_force_) {}
+      ForcePriorCK(this->particles_, this->dv_viscous_force_) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -74,6 +74,7 @@ ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Parameters...>
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      viscous_force_(encloser.dv_viscous_force_->DelegatedData(ex_policy)),
       wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)),
       smoothing_length_sq_(encloser.smoothing_length_sq_) {}
 //=================================================================================================//
