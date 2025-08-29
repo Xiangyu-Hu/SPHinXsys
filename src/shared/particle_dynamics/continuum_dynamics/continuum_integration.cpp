@@ -119,8 +119,7 @@ ShearStressRelaxationHourglassControl2ndHalf ::
 Matd ShearStressRelaxationHourglassControl2ndHalf::computeRotationMatrixRodrigues(const Matd &spin_rate, Real dt)
 {
     Matd spin_rate_square = spin_rate * spin_rate;
-    Real trace_value = -0.5 * spin_rate_square.trace();
-    Real omega_norm = std::sqrt(trace_value);
+    Real omega_norm = std::sqrt(-0.5 * spin_rate_square.trace());
     Real theta = omega_norm * dt;
     if (std::abs(theta) < Eps)
         return Matd::Identity();
