@@ -91,7 +91,7 @@ int main(int ac, char *av[])
     write_states.addToWrite<Real>(column, "Density");
     SimpleDynamics<continuum_dynamics::VonMisesStress> column_von_mises_stress(column);
     write_states.addToWrite<Real>(column, "VonMisesStress");
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement("Position", my_observer_contact);
+    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>> write_displacement("Position", my_observer_contact);
     //----------------------------------------------------------------------
     // From here the time stepping begins.
     //----------------------------------------------------------------------
@@ -168,7 +168,7 @@ int main(int ac, char *av[])
 
     if (system.GenerateRegressionData())
     {
-        write_displacement.generateDataBase(0.1);
+        write_displacement.generateDataBase(Vec3d(5.0e-2, 5.0e-2, 5.0e-2), Vec3d(5.0e-2, 5.0e-2, 5.0e-2));
     }
     else
     {
