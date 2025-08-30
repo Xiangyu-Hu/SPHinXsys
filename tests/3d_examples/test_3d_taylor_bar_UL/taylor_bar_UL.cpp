@@ -91,7 +91,8 @@ int main(int ac, char *av[])
     write_states.addToWrite<Real>(column, "Density");
     SimpleDynamics<continuum_dynamics::VonMisesStress> column_von_mises_stress(column);
     write_states.addToWrite<Real>(column, "VonMisesStress");
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>> write_displacement("Position", my_observer_contact);
+    ObservedQuantityRecording<Vecd> write_displacement("Position", my_observer_contact);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_kinetic_energy(column);
     //----------------------------------------------------------------------
     // From here the time stepping begins.
     //----------------------------------------------------------------------
@@ -116,6 +117,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     write_states.writeToFile();
     write_displacement.writeToFile(0);
+    write_kinetic_energy.writeToFile(0);
     //----------------------------------------------------------------------
     // Main time-stepping loop.
     //----------------------------------------------------------------------
@@ -158,6 +160,7 @@ int main(int ac, char *av[])
         column_von_mises_stress.exec();
         write_states.writeToFile(ite);
         write_displacement.writeToFile(ite);
+        write_kinetic_energy.writeToFile(ite);
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
@@ -168,11 +171,11 @@ int main(int ac, char *av[])
 
     if (system.GenerateRegressionData())
     {
-        write_displacement.generateDataBase(Vec3d(5.0e-2, 5.0e-2, 5.0e-2), Vec3d(5.0e-2, 5.0e-2, 5.0e-2));
+        write_kinetic_energy.generateDataBase(1.0e-3);
     }
     else
     {
-        write_displacement.testResult();
+        write_kinetic_energy.testResult();
     }
 
     return 0;
