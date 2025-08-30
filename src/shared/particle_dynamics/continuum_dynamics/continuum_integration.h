@@ -190,7 +190,7 @@ class StressDiffusion : public BasePlasticIntegration<DataDelegateInner>
 class ShearStressRelaxationHourglassControl1stHalf : public fluid_dynamics::BaseIntegration<DataDelegateInner>
 {
   public:
-    explicit ShearStressRelaxationHourglassControl1stHalf(BaseInnerRelation &inner_relation, Real xi = 4.0);
+    explicit ShearStressRelaxationHourglassControl1stHalf(BaseInnerRelation &inner_relation, Real xi = 2.0);
     virtual ~ShearStressRelaxationHourglassControl1stHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
@@ -207,6 +207,7 @@ class ShearStressRelaxationHourglassControl2ndHalf : public fluid_dynamics::Base
     explicit ShearStressRelaxationHourglassControl2ndHalf(BaseInnerRelation &inner_relation);
     virtual ~ShearStressRelaxationHourglassControl2ndHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
+    Matd computeRotationMatrixRodrigues(const Matd &spin_rate, Real dt = 0.0);
 
   protected:
     GeneralContinuum &continuum_;
@@ -218,7 +219,7 @@ class ShearStressRelaxationHourglassControl2ndHalf : public fluid_dynamics::Base
 class ShearStressRelaxationHourglassControl1stHalfJ2Plasticity : public ShearStressRelaxationHourglassControl1stHalf
 {
   public:
-    explicit ShearStressRelaxationHourglassControl1stHalfJ2Plasticity(BaseInnerRelation &inner_relation, Real xi = 0.2);
+    explicit ShearStressRelaxationHourglassControl1stHalfJ2Plasticity(BaseInnerRelation &inner_relation, Real xi = 2.0);
     virtual ~ShearStressRelaxationHourglassControl1stHalfJ2Plasticity() {};
     void update(size_t index_i, Real dt = 0.0);
 

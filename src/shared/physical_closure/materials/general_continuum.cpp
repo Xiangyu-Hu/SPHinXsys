@@ -80,7 +80,8 @@ Matd J2Plasticity::ConstitutiveRelationShearStressWithHardening(Matd &velocity_g
 {
     Matd strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     Matd deviatoric_strain_rate = strain_rate - (1.0 / (Real)Dimensions) * strain_rate.trace() * Matd::Identity();
-    Matd shear_stress_rate_elastic = 2.0 * G_ * deviatoric_strain_rate;
+    Matd spin_rate = 0.5 * (velocity_gradient - velocity_gradient.transpose());
+    Matd shear_stress_rate_elastic = 2.0 * G_ * deviatoric_strain_rate + shear_stress * (spin_rate.transpose()) + spin_rate * shear_stress;
     Real stress_tensor_J2 = 0.5 * (shear_stress.cwiseProduct(shear_stress.transpose())).sum();
     Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_);
     Real lambda_dot_ = 0;
