@@ -24,7 +24,7 @@ BasePorousMediaRelaxation::BasePorousMediaRelaxation(BaseInnerRelation &inner_re
 {
     rho0_ = porous_solid_.ReferenceDensity();
     inv_rho0_ = 1.0 / rho0_;
-    smoothing_length_ = sph_body_->getSPHAdaptation().ReferenceSmoothingLength();
+    smoothing_length_ = getSPHAdaptation().ReferenceSmoothingLength();
 }
 //=================================================================================================//
 MomentumConstraint::MomentumConstraint(BodyPartByParticle &body_part)

@@ -96,7 +96,7 @@ class DynamicContactForceWithWall : public LocalDynamics,
         {
             Real particle_spacing_j1 = 1.0 / contact_bodies_[k]->getSPHAdaptation().ReferenceSpacing();
             Real particle_spacing_ratio2 =
-                1.0 / (sph_body_->getSPHAdaptation().ReferenceSpacing() * particle_spacing_j1);
+                1.0 / (getSPHAdaptation().ReferenceSpacing() * particle_spacing_j1);
             particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
             Vecd *n_k = contact_n_[k];

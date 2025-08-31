@@ -12,7 +12,7 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 RelaxationResidual<Base, DataDelegationType>::RelaxationResidual(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      sph_adaptation_(&this->sph_body_->getSPHAdaptation()),
+      sph_adaptation_(&this->getSPHAdaptation()),
       kernel_(base_relation.getSPHBody().getSPHAdaptation().getKernel()),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       kinetic_energy_(this->particles_->template registerStateVariableData<Real>("ParticleKineticEnergy")),

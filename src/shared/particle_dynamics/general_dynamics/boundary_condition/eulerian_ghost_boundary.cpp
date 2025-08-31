@@ -71,7 +71,7 @@ GhostBoundaryConditionSetupInESPH::
       ghost_bound_(ghost_creation.ghost_bound_),
       real_and_ghost_particle_data_(ghost_creation.real_and_ghost_particle_data_),
       boundary_type_(particles_->registerStateVariableData<int>("BoundaryType")),
-      W0_(sph_body_->getSPHAdaptation().getKernel()->W0(ZeroVecd))
+      W0_(getSPHAdaptation().getKernel()->W0(ZeroVecd))
 {
     setupBoundaryTypes();
 }

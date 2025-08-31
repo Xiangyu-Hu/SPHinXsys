@@ -14,8 +14,8 @@ DensitySummationPressure<Base, DataDelegationType>::DensitySummationPressure(Bas
       mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
       rho_sum_(this->particles_->template registerStateVariableData<Real>("DensitySummation")),
       rho0_(this->sph_body_->getBaseMaterial().ReferenceDensity()),
-      inv_sigma0_(1.0 / this->sph_body_->getSPHAdaptation().LatticeNumberDensity()),
-      W0_(this->sph_body_->getSPHAdaptation().getKernel()->W0(ZeroVecd)) {}
+      inv_sigma0_(1.0 / this->getSPHAdaptation().LatticeNumberDensity()),
+      W0_(this->getSPHAdaptation().getKernel()->W0(ZeroVecd)) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

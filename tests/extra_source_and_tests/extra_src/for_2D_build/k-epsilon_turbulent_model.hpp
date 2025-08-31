@@ -42,7 +42,7 @@ BaseTurbulentModel<Base, DataDelegationType>::BaseTurbulentModel(BaseRelationTyp
       turbu_strain_rate_(this->particles_->template registerStateVariableData<Matd>("TurbulentStrainRate")),
       viscosity_(DynamicCast<Viscosity>(this, this->particles_->getBaseMaterial())),
       mu_(viscosity_.ReferenceViscosity()),
-      smoothing_length_(this->sph_body_->getSPHAdaptation().ReferenceSmoothingLength()),
+      smoothing_length_(this->getSPHAdaptation().ReferenceSmoothingLength()),
       particle_spacing_min_(base_relation.getSPHBody().getSPHAdaptation().MinimumSpacing()),
       rho_(this->particles_->template getVariableDataByName<Real>("Density")),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),

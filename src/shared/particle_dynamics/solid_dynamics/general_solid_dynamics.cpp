@@ -31,8 +31,8 @@ DistributingPointForces::
 //=================================================================================================//
 void DistributingPointForces::getWeight()
 {
-    Kernel *kernel_ = sph_body_->getSPHAdaptation().getKernel();
-    Real reference_smoothing_length = sph_body_->getSPHAdaptation().ReferenceSmoothingLength();
+    Kernel *kernel_ = getSPHAdaptation().getKernel();
+    Real reference_smoothing_length = getSPHAdaptation().ReferenceSmoothingLength();
     Real smoothing_length = h_spacing_ratio_ * particle_spacing_ref_;
     Real h_ratio = reference_smoothing_length / smoothing_length;
     Real cutoff_radius_sqr = pow(2.0 * smoothing_length, 2);

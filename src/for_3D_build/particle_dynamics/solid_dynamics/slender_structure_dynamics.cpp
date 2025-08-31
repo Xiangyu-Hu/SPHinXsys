@@ -100,7 +100,7 @@ BarStressRelaxationFirstHalf::
     : BaseBarRelaxation(inner_relation),
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
-      smoothing_length_(sph_body_->getSPHAdaptation().ReferenceSmoothingLength()),
+      smoothing_length_(getSPHAdaptation().ReferenceSmoothingLength()),
       numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),

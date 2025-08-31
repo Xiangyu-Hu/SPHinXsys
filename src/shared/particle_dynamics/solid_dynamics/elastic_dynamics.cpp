@@ -76,7 +76,7 @@ BaseIntegration1stHalf::
       rho_(particles_->getVariableDataByName<Real>("Density")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       force_prior_(particles_->registerStateVariableData<Vecd>("ForcePrior")),
-      smoothing_length_(sph_body_->getSPHAdaptation().ReferenceSmoothingLength()) {}
+      smoothing_length_(getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 void BaseIntegration1stHalf::update(size_t index_i, Real dt)
 {

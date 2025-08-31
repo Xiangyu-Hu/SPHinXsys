@@ -18,7 +18,7 @@ TurbulentViscousForceInFVM<DataDelegationType>::TurbulentViscousForceInFVM(BaseR
       wall_adjacent_cell_flag_(this->particles_->template getVariableDataByName<Real>("FlagForWallAdjacentCells")),
       vel_(this->particles_->template getVariableDataByName<Vecd>("Velocity")),
       turbulent_viscous_force_(this->particles_->template registerStateVariableData<Vecd>("TurbulentViscousForce")),
-      smoothing_length_(this->sph_body_->getSPHAdaptation().ReferenceSmoothingLength()) {}
+      smoothing_length_(this->getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 TurbulentViscousForceInFVM<Inner<>>::TurbulentViscousForceInFVM(BaseInnerRelation &inner_relation)
     : TurbulentViscousForceInFVM<DataDelegateInner>(inner_relation)

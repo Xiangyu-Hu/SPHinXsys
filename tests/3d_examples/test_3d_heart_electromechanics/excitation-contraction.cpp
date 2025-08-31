@@ -89,7 +89,7 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
         }
         else
         {
-            if (pos_[index_i][1] < -sph_body_->getSPHAdaptation().ReferenceSpacing())
+            if (pos_[index_i][1] < -getSPHAdaptation().ReferenceSpacing())
                 phi_[index_i] = 0.0;
         }
     };
@@ -144,7 +144,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
         Vecd f_0 = cos(beta) * cd_norm + sin(beta) * getCrossProduct(face_norm, cd_norm) +
                    face_norm.dot(cd_norm) * (1.0 - cos(beta)) * face_norm;
 
-        if (pos_[index_i][1] < -sph_body_->getSPHAdaptation().ReferenceSpacing())
+        if (pos_[index_i][1] < -getSPHAdaptation().ReferenceSpacing())
         {
             muscle_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
             muscle_material_.local_s0_[index_i] = face_norm;

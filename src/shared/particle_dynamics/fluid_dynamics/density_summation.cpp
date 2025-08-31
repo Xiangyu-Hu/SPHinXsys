@@ -23,7 +23,7 @@ void DensitySummation<Inner<>>::update(size_t index_i, Real dt)
 //=================================================================================================//
 DensitySummation<Inner<Adaptive>>::DensitySummation(BaseInnerRelation &inner_relation)
     : DensitySummation<Inner<Base>>(inner_relation),
-      sph_adaptation_(sph_body_->getSPHAdaptation()),
+      sph_adaptation_(getSPHAdaptation()),
       kernel_(*sph_adaptation_.getKernel()),
       h_ratio_(particles_->getVariableDataByName<Real>("SmoothingLengthRatio")) {}
 //=================================================================================================//
@@ -80,7 +80,7 @@ void DensitySummation<Contact<>>::interaction(size_t index_i, Real dt)
 DensitySummation<Contact<Adaptive>>::
     DensitySummation(BaseContactRelation &contact_relation)
     : DensitySummation<Contact<Base>>(contact_relation),
-      sph_adaptation_(sph_body_->getSPHAdaptation()),
+      sph_adaptation_(getSPHAdaptation()),
       h_ratio_(particles_->getVariableDataByName<Real>("SmoothingLengthRatio")) {}
 //=================================================================================================//
 void DensitySummation<Contact<Adaptive>>::interaction(size_t index_i, Real dt)
