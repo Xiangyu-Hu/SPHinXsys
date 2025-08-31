@@ -17,7 +17,7 @@ ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameter
       kernel_correction_(this->particles_),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_viscous_force_(this->particles_->template registerStateVariable<Vecd>("ViscousForce")),
-      smoothing_length_sq_(pow(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength(), 2)) {}
+      smoothing_length_sq_(pow(this->sph_body_->getSPHAdaptation().ReferenceSmoothingLength(), 2)) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>::

@@ -205,7 +205,7 @@ class Integration1stHalf : public BaseIntegration1stHalf
   protected:
     Matd *stress_PK1_B_;
     Real numerical_dissipation_factor_;
-    Real inv_W0_ = 1.0 / sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd);
+    Real inv_W0_ = 1.0 / sph_body_->getSPHAdaptation().getKernel()->W0(ZeroVecd);
 };
 
 /**

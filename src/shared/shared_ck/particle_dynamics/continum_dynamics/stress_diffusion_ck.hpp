@@ -12,7 +12,7 @@ template <typename... Parameters>
 StressDiffusionCK<Inner<Parameters...>>::StressDiffusionCK(Inner<Parameters...> &inner_relation)
     : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
       dv_phi_(DynamicCast<PlasticContinuum>(this, this->plastic_continuum_).getFrictionAngle()),
-      dv_smoothing_length_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
+      dv_smoothing_length_(this->sph_body_->getSPHAdaptation().ReferenceSmoothingLength()),
       dv_sound_speed_(this->plastic_continuum_.ReferenceSoundSpeed()),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")){};
 //=================================================================================================//

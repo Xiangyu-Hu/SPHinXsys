@@ -57,10 +57,10 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
 
     virtual void exec(Real dt = 0.0) override
     {
-        this->setUpdated(this->identifier_.getSPHBody());
+        this->setUpdated(this->identifier_->getSPHBody());
         this->setupDynamics(dt);
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
+        particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(*this->identifier_),
                      [=](size_t i)
                      { update_kernel->update(i, dt); });
 
@@ -69,7 +69,7 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
         this->logger_->debug(
             "StateDynamics::exec() for {} at {}",
             type_name<UpdateType>(),
-            this->sph_body_.getName());
+            this->sph_body_->getName());
     };
 };
 
@@ -107,7 +107,7 @@ class ReduceDynamicsCK : public ReduceType,
         this->setupDynamics(dt);
         ReduceKernel *reduce_kernel = kernel_implementation_.getComputingKernel();
         reduced_value_ = particle_reduce<Operation>(
-            LoopRangeCK<ExecutionPolicy, Identifier>(this->identifier_),
+            LoopRangeCK<ExecutionPolicy, Identifier>(*this->identifier_),
             this->reference_,
             [=](size_t i)
             { return reduce_kernel->reduce(i, dt); });
@@ -115,7 +115,7 @@ class ReduceDynamicsCK : public ReduceType,
         this->logger_->debug(
             "ReduceDynamicsCK::exec() for {} at {}",
             type_name<ReduceType>(),
-            this->sph_body_.getName());
+            this->sph_body_->getName());
 
         return finish_dynamics_.Result(reduced_value_);
     };

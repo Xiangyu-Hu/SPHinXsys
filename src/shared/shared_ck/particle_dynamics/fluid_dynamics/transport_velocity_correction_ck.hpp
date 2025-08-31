@@ -13,7 +13,7 @@ TransportVelocityCorrectionCK<
     Inner<WithUpdate, KernelCorrectionType, LimiterType, ParticleScopeType, Parameters...>>::
     TransportVelocityCorrectionCK(Inner<Parameters...> &inner_relation, Real coefficient)
     : BaseInteraction(inner_relation),
-      h_ref_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
+      h_ref_(this->sph_body_->getSPHAdaptation().ReferenceSmoothingLength()),
       correction_scaling_(coefficient * h_ref_ * h_ref_),
       limiter_(h_ref_ * h_ref_), within_scope_method_(this->particles_),
       dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement"))

@@ -16,7 +16,7 @@ DistributingPointForces::
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
       thickness_(particles_->getVariableDataByName<Real>("Thickness")),
-      physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
+      physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime"))
 {
     weight_.resize(point_forces_.size());
     for (size_t i = 0; i < point_forces_.size(); i++)
@@ -31,8 +31,8 @@ DistributingPointForces::
 //=================================================================================================//
 void DistributingPointForces::getWeight()
 {
-    Kernel *kernel_ = sph_body_.getSPHAdaptation().getKernel();
-    Real reference_smoothing_length = sph_body_.getSPHAdaptation().ReferenceSmoothingLength();
+    Kernel *kernel_ = sph_body_->getSPHAdaptation().getKernel();
+    Real reference_smoothing_length = sph_body_->getSPHAdaptation().ReferenceSmoothingLength();
     Real smoothing_length = h_spacing_ratio_ * particle_spacing_ref_;
     Real h_ratio = reference_smoothing_length / smoothing_length;
     Real cutoff_radius_sqr = pow(2.0 * smoothing_length, 2);

@@ -400,7 +400,7 @@ TurbuViscousForce<Contact<Wall>>::TurbuViscousForce(BaseContactRelation &wall_co
     : BaseTurbuViscousForceWithWall(wall_contact_relation),
       wall_particle_spacing_(wall_contact_relation.getSPHBody().getSPHAdaptation().ReferenceSpacing()),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-      physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {}
+      physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {}
 //=================================================================================================//
 void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
@@ -750,7 +750,7 @@ StandardWallFunctionCorrection::
       index_nearest(particles_->getVariableDataByName<int>("NearestIndex")),
       e_nearest_tau_(particles_->getVariableDataByName<Vecd>("WallNearestTangentialUnitVector")),
       e_nearest_normal_(particles_->getVariableDataByName<Vecd>("WallNearestNormalUnitVector")),
-      physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
+      physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime"))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {

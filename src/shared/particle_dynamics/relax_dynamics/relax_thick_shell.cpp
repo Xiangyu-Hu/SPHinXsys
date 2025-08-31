@@ -8,9 +8,9 @@ namespace relax_dynamics
 ShellMidSurfaceBounding::ShellMidSurfaceBounding(NearShapeSurface &body_part)
     : BaseLocalDynamics<BodyPartByCell>(body_part),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      constrained_distance_(0.5 * sph_body_.getSPHAdaptation().MinimumSpacing()),
-      particle_spacing_ref_(sph_body_.getSPHAdaptation().MinimumSpacing()),
-      level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body_.getInitialShape())) {}
+      constrained_distance_(0.5 * sph_body_->getSPHAdaptation().MinimumSpacing()),
+      particle_spacing_ref_(sph_body_->getSPHAdaptation().MinimumSpacing()),
+      level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body_->getInitialShape())) {}
 //=================================================================================================//
 void ShellMidSurfaceBounding::update(size_t index_i, Real dt)
 {

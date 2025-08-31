@@ -33,7 +33,7 @@ Real AcousticTimeStep::outputResult(Real reduced_value)
 StressDiffusion::StressDiffusion(BaseInnerRelation &inner_relation)
     : BasePlasticIntegration<DataDelegateInner>(inner_relation),
       phi_(DynamicCast<PlasticContinuum>(this, plastic_continuum_).getFrictionAngle()),
-      smoothing_length_(sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
+      smoothing_length_(sph_body_->getSPHAdaptation().ReferenceSmoothingLength()),
       sound_speed_(plastic_continuum_.ReferenceSoundSpeed()) {}
 //====================================================================================//
 void StressDiffusion::interaction(size_t index_i, Real dt)

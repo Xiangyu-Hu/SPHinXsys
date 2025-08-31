@@ -35,7 +35,7 @@ Real AcousticTimeStep::outputResult(Real reduced_value)
 //=================================================================================================//
 SurfaceTensionTimeStep::SurfaceTensionTimeStep(SPHBody &sph_body, Real acousticCFL)
     : AcousticTimeStep(sph_body, acousticCFL),
-      rho0_(sph_body_.getBaseMaterial().ReferenceDensity()),
+      rho0_(sph_body_->getBaseMaterial().ReferenceDensity()),
       surface_tension_coeff_(*(particles_->getSingularVariableByName<Real>("SurfaceTensionCoef")->Data()))  {}
 //=================================================================================================//
 Real SurfaceTensionTimeStep::reduce(size_t index_i, Real dt)

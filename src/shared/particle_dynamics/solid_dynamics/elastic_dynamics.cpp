@@ -71,12 +71,12 @@ BaseElasticIntegration::
 BaseIntegration1stHalf::
     BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
     : BaseElasticIntegration(inner_relation),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       force_prior_(particles_->registerStateVariableData<Vecd>("ForcePrior")),
-      smoothing_length_(sph_body_.getSPHAdaptation().ReferenceSmoothingLength()) {}
+      smoothing_length_(sph_body_->getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 void BaseIntegration1stHalf::update(size_t index_i, Real dt)
 {
