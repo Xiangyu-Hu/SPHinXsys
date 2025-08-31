@@ -42,7 +42,7 @@ class Gravity
     Vecd zero_potential_reference_;
 
   public:
-    Gravity(Vecd gravity_vector, Vecd reference_position = Vecd::Zero());
+    Gravity(Vecd gravity_vector = Vecd::Zero(), Vecd reference_position = Vecd::Zero());
     ~Gravity() {};
 
     Vecd InducedAcceleration(const Vecd &position = Vecd::Zero(), Real physical_time = 0.0) const

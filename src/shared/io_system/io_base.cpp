@@ -132,6 +132,9 @@ ReloadParticleIO::ReloadParticleIO(SPHBodyVector bodies)
     }
 }
 //=============================================================================================//
+ReloadParticleIO::ReloadParticleIO(SPHSystem &sph_system)
+    : ReloadParticleIO(sph_system.getRealBodies()) {}
+//=============================================================================================//
 ReloadParticleIO::ReloadParticleIO(SPHBody &sph_body, const std::string &given_body_name)
     : BaseIO(sph_body.getSPHSystem()), bodies_({&sph_body})
 {
