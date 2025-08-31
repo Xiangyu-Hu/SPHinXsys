@@ -30,7 +30,7 @@ TransportVelocityCorrectionCK<
     Inner<WithUpdate, KernelCorrectionType, LimiterType, ParticleScopeType, Parameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : correction_scaling_(encloser.correction_scaling_),
-      h_ratio_(ex_policy, encloser.inner_relation_.getNeighborhood()),
+      h_ratio_(ex_policy, encloser.inner_relation_->getNeighborhood()),
       limiter_(encloser.limiter_), dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
       kernel_gradient_integral_(encloser.dv_kernel_gradient_integral_->DelegatedData(ex_policy)),
       within_scope_(ex_policy, encloser.within_scope_method_, *this) {}
