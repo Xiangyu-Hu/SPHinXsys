@@ -55,8 +55,8 @@ class RelationBase
 template <typename NeighborMethodType>
 class Relation<NeighborMethodType> : public RelationBase
 {
-    UniquePtrsKeeper<Entity> relation_variable_ptrs_;
-    UniquePtrsKeeper<Neighbor<NeighborMethodType>> neighborhood_ptrs_;
+    SharedPtrsKeeper<Entity> relation_variable_ptrs_;
+    SharedPtrsKeeper<Neighbor<NeighborMethodType>> neighborhood_ptrs_;
     DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
 
     template <class DataType>
