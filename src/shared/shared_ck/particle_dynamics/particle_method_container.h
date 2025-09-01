@@ -89,43 +89,61 @@ class ParticleDynamicsGroup : public BaseDynamics<void>
     }
 };
 
-template <class Operation, class ReduceDynamicsType>
-class ReduceDynamicsGroup : public BaseDynamics<typename ReduceDynamicsType::OutputType>
+template <class Operation>
+class ReduceDynamicsGroup : public BaseDynamics<typename Operation::ReturnType>
 {
     Operation operation_;
-    StdVec<ReduceDynamicsType *> reduce_dynamics_;
-    using OutputType = typename ReduceDynamicsType::OutputType;
+    using ReturnType = typename Operation::ReturnType;
+    StdVec<BaseDynamics<ReturnType> *> reduce_dynamics_;
 
   public:
     ReduceDynamicsGroup(const Operation &operation)
-        : BaseDynamics<typename ReduceDynamicsType::OutputType>(), operation_(operation) {}
-    ReduceDynamicsGroup(const Operation &operation, const StdVec<ReduceDynamicsType *> &reduce_dynamics)
-        : BaseDynamics<typename ReduceDynamicsType::OutputType>(),
+        : BaseDynamics<ReturnType>(), operation_(operation) {}
+    ReduceDynamicsGroup(const Operation &operation,
+                        const StdVec<BaseDynamics<ReturnType> *> &reduce_dynamics)
+        : BaseDynamics<ReturnType>(),
           operation_(operation), reduce_dynamics_(reduce_dynamics) {}
     ~ReduceDynamicsGroup() = default;
 
-    void add(ReduceDynamicsType *dynamics)
+    void add(BaseDynamics<ReturnType> *dynamics)
     {
         reduce_dynamics_.push_back(dynamics);
     }
 
-    StdVec<ReduceDynamicsType *> getAllDynamics() const
+    void add(const ReduceDynamicsGroup<Operation> &dynamics)
+    {
+        for (auto *dynamics : dynamics.getAllDynamics())
+        {
+            reduce_dynamics_.push_back(dynamics);
+        }
+    }
+
+    template <class DerivedReduceDynamicsType>
+    void add(const StdVec<DerivedReduceDynamicsType *> &dynamics)
+    {
+        for (auto *dynamics : dynamics)
+        {
+            reduce_dynamics_.push_back(dynamics);
+        }
+    }
+
+    StdVec<BaseDynamics<ReturnType> *> getAllDynamics() const
     {
         return reduce_dynamics_;
     }
 
-    ReduceDynamicsGroup<Operation, ReduceDynamicsType> operator+(
-        const ReduceDynamicsGroup<Operation, ReduceDynamicsType> &other) const
+    ReduceDynamicsGroup<Operation> operator+(
+        const ReduceDynamicsGroup<Operation> &other) const
     {
-        StdVec<ReduceDynamicsType *> other_dynamics = other.getAllDynamics();
-        StdVec<ReduceDynamicsType *> result_dynamics = reduce_dynamics_;
+        StdVec<BaseDynamics<ReturnType> *> other_dynamics = other.getAllDynamics();
+        StdVec<BaseDynamics<ReturnType> *> result_dynamics = reduce_dynamics_;
         result_dynamics.insert(result_dynamics.end(), other_dynamics.begin(), other_dynamics.end());
-        return ReduceDynamicsGroup<Operation, ReduceDynamicsType>(operation_, result_dynamics);
+        return ReduceDynamicsGroup<Operation>(operation_, result_dynamics);
     }
 
-    OutputType exec(Real dt = 0.0) override
+    ReturnType exec(Real dt = 0.0) override
     {
-        OutputType result = ReduceReference<Operation>::value;
+        ReturnType result = ReduceReference<Operation>::value;
         for (auto *dynamics : reduce_dynamics_)
         {
             result = operation_(result, dynamics->exec(dt));
@@ -144,7 +162,7 @@ template <typename ExecutionPolicy>
 class ParticleMethodContainer : public BaseMethodContainer
 {
     UniquePtrsKeeper<BaseDynamics<void>> particle_dynamics_keeper_;
-    UniquePtrsKeeper<BaseReduceDynamics> reduce_dynamics_keeper_;
+    UniquePtrsKeeper<BaseReturnDynamics> return_dynamics_keeper_;
     UniquePtrsKeeper<BodyStatesRecording> state_recorders_keeper_;
     UniquePtrsKeeper<BaseIO> other_io_keeper_;
 
@@ -152,6 +170,23 @@ class ParticleMethodContainer : public BaseMethodContainer
     ParticleMethodContainer(const ExecutionPolicy &ex_policy)
         : BaseMethodContainer() {};
     virtual ~ParticleMethodContainer() {};
+
+    template <class GeneralDynamicsType, class DynamicsIdentifier, typename... Args>
+    auto &addReturnDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    {
+        return *return_dynamics_keeper_.createPtr<GeneralDynamicsType>(identifier, std::forward<Args>(args)...);
+    };
+
+    template <class GeneralDynamicsType, class DynamicsIdentifier, typename... Args>
+    StdVec<GeneralDynamicsType *> addReturnDynamics(StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
+    {
+        StdVec<GeneralDynamicsType *> result;
+        for (auto *identifier : identifiers)
+        {
+            result.push_back(&addReturnDynamics<GeneralDynamicsType>(*identifier, std::forward<Args>(args)...));
+        }
+        return result;
+    };
 
     template <class DynamicsIdentifier, typename... Args>
     auto &addCellLinkedListDynamics(DynamicsIdentifier &identifier, Args &&...args)
@@ -240,21 +275,19 @@ class ParticleMethodContainer : public BaseMethodContainer
     template <class ReduceType, typename... Args>
     auto &addReduceDynamics(Args &&...args)
     {
-        return *reduce_dynamics_keeper_.template createPtr<
+        return *return_dynamics_keeper_.template createPtr<
             ReduceDynamicsCK<ExecutionPolicy, ReduceType>>(std::forward<Args>(args)...);
     };
 
     template <typename Operation, class ReduceType, typename DynamicsIdentifier, typename... Args>
-    ReduceDynamicsGroup<Operation, ReduceDynamicsCK<ExecutionPolicy, ReduceType>> addReduceDynamics(
-        const StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
+    ReduceDynamicsGroup<Operation> addReduceDynamics(const StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
     {
-        StdVec<ReduceDynamicsCK<ExecutionPolicy, ReduceType> *> reduce_dynamics;
+        StdVec<BaseDynamics<typename Operation::ReturnType> *> reduce_dynamics;
         for (auto &identifier : identifiers)
         {
             reduce_dynamics.push_back(&addReduceDynamics<ReduceType>(*identifier, std::forward<Args>(args)...));
         }
-        return ReduceDynamicsGroup<Operation, ReduceDynamicsCK<ExecutionPolicy, ReduceType>>(
-            Operation(), reduce_dynamics);
+        return ReduceDynamicsGroup<Operation>(Operation(), reduce_dynamics);
     };
 
     template <class InteractionType, typename... Args>

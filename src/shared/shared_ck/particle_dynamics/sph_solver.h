@@ -44,6 +44,7 @@ class TimeStepper
     void setPhysicalTime(Real time);
     Real getPhysicalTime();
     Real getGlobalTimeStepSize();
+    Real getEndTime() { return end_time_; };
     Real incrementPhysicalTime(Real global_time_step);
     Real incrementPhysicalTime(BaseDynamics<Real> &step_evaluator);
 

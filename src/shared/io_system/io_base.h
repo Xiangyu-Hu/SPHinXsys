@@ -205,6 +205,7 @@ class ReloadParticleIO : public BaseIO
     StdVec<std::string> file_names_;
 
   public:
+    ReloadParticleIO(SPHSystem &sph_system);
     ReloadParticleIO(SPHBodyVector bodies);
     ReloadParticleIO(SPHBody &sph_body);
     ReloadParticleIO(SPHBody &sph_body, const std::string &given_body_name);
