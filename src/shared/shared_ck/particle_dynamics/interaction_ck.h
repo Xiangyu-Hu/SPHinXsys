@@ -84,7 +84,7 @@ class Interaction<Inner<Parameters...>>
     void resetComputingKernelUpdated();
 
   protected:
-    InnerRelationType &inner_relation_;
+    InnerRelationType *inner_relation_;
     DiscreteVariable<Real> *dv_Vol_;
 };
 
@@ -115,7 +115,7 @@ class Interaction<Contact<Parameters...>>
     void resetComputingKernelUpdated(UnsignedInt contact_index);
 
   protected:
-    ContactRelationType &contact_relation_;
+    ContactRelationType *contact_relation_;
     StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;

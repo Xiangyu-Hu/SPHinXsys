@@ -114,7 +114,7 @@ class FreeStreamCondition : public fluid_dynamics::FlowVelocityBuffer
     FreeStreamCondition(BodyPartByCell &constrained_region)
         : fluid_dynamics::FlowVelocityBuffer(constrained_region),
           u_ave_(0), u_ref_(U_f), t_ref(2.0),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {}
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {}
     Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
     {
         return Vecd(u_ave_, 0.0);

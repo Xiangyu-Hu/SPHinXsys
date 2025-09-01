@@ -36,7 +36,7 @@ void VerticalStress::update(size_t index_i, Real dt)
 //=============================================================================================//
 AccDeviatoricPlasticStrain::AccDeviatoricPlasticStrain(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "AccDeviatoricPlasticStrain"),
-      plastic_continuum_(DynamicCast<PlasticContinuum>(this, sph_body_.getBaseMaterial())),
+      plastic_continuum_(DynamicCast<PlasticContinuum>(this, sph_body_->getBaseMaterial())),
       stress_tensor_3D_(particles_->getVariableDataByName<Mat3d>("StressTensor3D")),
       strain_tensor_3D_(particles_->getVariableDataByName<Mat3d>("StrainTensor3D")),
       E_(plastic_continuum_.getYoungsModulus()), nu_(plastic_continuum_.getPoissonRatio()) {}

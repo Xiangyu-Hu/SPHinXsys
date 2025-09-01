@@ -30,7 +30,7 @@ GravityForce<GravityType>::GravityForce(SPHBody &sph_body, const GravityType &gr
     : ForcePrior(sph_body, "GravityForce"), gravity_(gravity),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       mass_(particles_->registerStateVariableData<Real>("Mass")),
-      physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {}
+      physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {}
 //=================================================================================================//
 template <class GravityType>
 void GravityForce<GravityType>::GravityForce::update(size_t index_i, Real dt)

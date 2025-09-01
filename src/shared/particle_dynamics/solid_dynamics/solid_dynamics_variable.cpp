@@ -48,10 +48,10 @@ void GreenLagrangeStrain::update(size_t index_i, Real dt)
 //=============================================================================================//
 VonMisesStress::VonMisesStress(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "VonMisesStress"),
-      rho0_(sph_body_.getBaseMaterial().ReferenceDensity()),
+      rho0_(sph_body_->getBaseMaterial().ReferenceDensity()),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       F_(particles_->getVariableDataByName<Matd>("DeformationGradient")),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())) {}
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())) {}
 //=============================================================================================//
 VonMisesStrain::VonMisesStrain(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "VonMisesStrain"),
@@ -59,7 +59,7 @@ VonMisesStrain::VonMisesStrain(SPHBody &sph_body)
 //=============================================================================================//
 VonMisesStrainDynamic::VonMisesStrainDynamic(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "VonMisesStrainDynamic"),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())),
       poisson_ratio_(elastic_solid_.PoissonRatio()),
       F_(particles_->getVariableDataByName<Matd>("DeformationGradient")) {}
 //=============================================================================================//

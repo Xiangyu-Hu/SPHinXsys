@@ -49,7 +49,7 @@ class PressureBoundaryCondition : public BaseFlowBoundaryCondition
           target_pressure_(*this),
           kernel_sum_(particles_->getVariableDataByName<Vecd>("KernelSummation")),
           kernel_correction_(this->particles_),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {};
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
     virtual ~PressureBoundaryCondition() {};
     AlignedBox &getAlignedBox() { return aligned_box_; };
 

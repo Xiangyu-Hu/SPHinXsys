@@ -17,7 +17,7 @@ SurfaceTensionStress::
     particles_->addVariableToWrite<Vecd>("ColorGradient");
     particles_->addEvolvingVariable<Matd>("SurfaceTensionStress");
     particles_->addVariableToWrite<Matd>("SurfaceTensionStress");
-    Real rho0 = sph_body_.getBaseMaterial().ReferenceDensity();
+    Real rho0 = sph_body_->getBaseMaterial().ReferenceDensity();
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
@@ -76,7 +76,7 @@ void SurfaceStressForce<Inner<>>::interaction(size_t index_i, Real dt)
 SurfaceStressForce<Contact<>>::SurfaceStressForce(BaseContactRelation &contact_relation, Real hourglass_control_coeff)
     : SurfaceStressForce<DataDelegateContact>(contact_relation), hourglass_control_coeff_(hourglass_control_coeff)
 {
-    Real rho0 = sph_body_.getBaseMaterial().ReferenceDensity();
+    Real rho0 = sph_body_->getBaseMaterial().ReferenceDensity();
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         Real rho0_k = contact_bodies_[k]->getBaseMaterial().ReferenceDensity();

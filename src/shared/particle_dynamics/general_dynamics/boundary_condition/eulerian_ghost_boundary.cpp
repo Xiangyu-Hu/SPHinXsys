@@ -34,7 +34,7 @@ void GhostCreationInESPH::ghostGenerationAndAddToConfiguration()
             }
             Real ghost_particle_dW_ijV_j = -gradient_summation.norm();
             Vecd ghost_particle_eij = -gradient_summation / ghost_particle_dW_ijV_j;
-            Real distance_to_ghost = fabs(sph_body_.getInitialShape().findSignedDistance(pos_[index_i]));
+            Real distance_to_ghost = fabs(sph_body_->getInitialShape().findSignedDistance(pos_[index_i]));
             Vecd displacement_to_ghost = distance_to_ghost * ghost_particle_eij;
             Vecd ghost_position = pos_[index_i] - displacement_to_ghost;
             mutex_create_ghost_particle_.lock();
@@ -71,7 +71,7 @@ GhostBoundaryConditionSetupInESPH::
       ghost_bound_(ghost_creation.ghost_bound_),
       real_and_ghost_particle_data_(ghost_creation.real_and_ghost_particle_data_),
       boundary_type_(particles_->registerStateVariableData<int>("BoundaryType")),
-      W0_(sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd))
+      W0_(getSPHAdaptation().getKernel()->W0(ZeroVecd))
 {
     setupBoundaryTypes();
 }

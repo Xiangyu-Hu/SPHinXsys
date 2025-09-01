@@ -13,7 +13,7 @@ template <class ContactRelationType>
 ForceFromFluid<KernelCorrectionType, Parameters...>::
     ForceFromFluid(ContactRelationType &contact_relation, const std::string &force_name)
     : Interaction<Contact<Parameters...>>(contact_relation), ForcePriorCK(this->particles_, force_name),
-      solid_(DynamicCast<Solid>(this, this->sph_body_.getBaseMaterial())),
+      solid_(DynamicCast<Solid>(this, this->sph_body_->getBaseMaterial())),
       dv_force_from_fluid_(ForcePriorCK::getCurrentForce()),
       dv_vel_ave_(solid_.AverageVelocityVariable(this->particles_))
 {

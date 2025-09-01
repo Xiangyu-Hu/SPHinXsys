@@ -10,7 +10,7 @@ namespace solid_dynamics
 //=================================================================================================//
 BaseForceFromFluid::BaseForceFromFluid(BaseContactRelation &contact_relation, const std::string &force_name)
     : ForcePrior(contact_relation.getSPHBody(), force_name), DataDelegateContact(contact_relation),
-      solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
+      solid_(DynamicCast<Solid>(this, sph_body_->getBaseMaterial())),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       force_from_fluid_(particles_->getVariableDataByName<Vecd>(force_name))
 {
