@@ -10,10 +10,10 @@ template <typename NeighborMethodType>
 template <class SourceIdentifier, class TargetIdentifier>
 Relation<NeighborMethodType>::Relation(
     SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, ConfigType config_type)
-    : sph_body_(source_identifier.getSPHBody()),
-      particles_(sph_body_.getBaseParticles()),
-      dv_source_pos_(this->assignConfigPosition(particles_, config_type)),
-      offset_list_size_(particles_.ParticlesBound() + 1)
+    : sph_body_(&source_identifier.getSPHBody()),
+      particles_(&sph_body_->getBaseParticles()),
+      dv_source_pos_(this->assignConfigPosition(*particles_, config_type)),
+      offset_list_size_(particles_->ParticlesBound() + 1)
 {
     std::string source_name = source_identifier.getName();
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
@@ -89,13 +89,13 @@ Inner<DynamicsIdentifier, NeighborMethodType>::
     Inner(DynamicsIdentifier &identifier, Args &&...args)
     : Relation<NeighborMethodType>(
           identifier, StdVec<DynamicsIdentifier *>{&identifier}, std::forward<Args>(args)...),
-      identifier_(identifier) {}
+      identifier_(&identifier) {}
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier, typename NeighborMethodType>
 Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType>::Contact(
     SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, ConfigType config_type)
     : Relation<NeighborMethodType>(source_identifier, contact_identifiers, config_type),
-      source_identifier_(source_identifier), contact_identifiers_(contact_identifiers)
+      source_identifier_(&source_identifier), contact_identifiers_(contact_identifiers)
 {
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
     {
