@@ -171,7 +171,7 @@ int main(int ac, char *av[])
 
     if (system.GenerateRegressionData())
     {
-        write_kinetic_energy.generateDataBase(5.0e-3);
+        write_kinetic_energy.generateDataBase(5.0e-2);
     }
     else
     {
