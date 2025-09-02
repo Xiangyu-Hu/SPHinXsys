@@ -119,7 +119,8 @@ ShearStressRelaxationHourglassControl2ndHalf ::
 Matd ShearStressRelaxationHourglassControl2ndHalf::computeRotationMatrixRodrigues(const Matd &spin_rate, Real dt)
 {
     Matd spin_rate_square = spin_rate * spin_rate;
-    Real omega_norm = std::sqrt(-0.5 * spin_rate_square.trace());
+    Real trace_val = spin_rate_square.trace();
+    Real omega_norm = (trace_val <= 0) ? std::sqrt(-0.5 * trace_val) : 0.0;
     Real theta = omega_norm * dt;
     if (std::abs(theta) < Eps)
         return Matd::Identity();
@@ -144,7 +145,8 @@ void ShearStressRelaxationHourglassControl2ndHalf::interaction(size_t index_i, R
         Vecd v_ij = vel_[index_i] - vel_[index_j];
         Real r_ij = inner_neighborhood.r_ij_[n];
         Vecd v_ij_correction = v_ij - 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_j]) * r_ij * e_ij;
-        acceleration_hourglass += 0.5 * (scale_penalty_force_[index_i] + scale_penalty_force_[index_j]) * G_ * v_ij_correction.dot(e_ij) * e_ij * dW_ijV_j * dt / (rho_i * r_ij);
+        Real penalty_scale = 0.5 * (scale_penalty_force_[index_i] + scale_penalty_force_[index_j]); 
+        acceleration_hourglass += penalty_scale * G_ * v_ij_correction.dot(e_ij) * e_ij * dW_ijV_j * dt / (rho_i * r_ij);
     }
     Matd spin_rate = 0.5 * (velocity_gradient_[index_i] - velocity_gradient_[index_i].transpose());
     Matd rotation_matrix = computeRotationMatrixRodrigues(spin_rate, dt);
