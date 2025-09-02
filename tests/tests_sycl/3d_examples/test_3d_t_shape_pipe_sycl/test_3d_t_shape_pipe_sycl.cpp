@@ -3,7 +3,7 @@
  * @brief 3D dambreak example using computing kernels.
  * @author Xiangyu Hu
  */
-#include "sphinxsys_sycl.h"
+#include "sphinxsys.h"
 using namespace SPH;
 
 struct Parameters
@@ -19,7 +19,7 @@ struct Parameters
     // Material parameters
     const Real rho0_f = 1060.0; /**< Density of Blood. */
     const Real mu_f = 3.5e-3;
-    Real U_max = 2.5;        // From experience
+    Real U_max = 0.6;        // From experience
     Real c_f = 10.0 * U_max; // Speed of sound
 };
 
@@ -167,7 +167,7 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
     // --- Section 1: Initialization of Scale and Simulation Parameters ---
     const Real scale = 0.001;
     // Process boundaries
-    Real outlet_pressure = params.inlet_pressure - 0.1 * mmHg_to_Pa;
+    Real outlet_pressure = params.inlet_pressure - 1 * mmHg_to_Pa;
     std::vector<BoundaryParameter> boundaries;
     {
         BoundaryParameter inlet_boundary{
@@ -226,13 +226,6 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
     std::cout << "Domain upper bounds: " << system_bounds.second_.transpose() << std::endl;
 
     SPHSystem sph_system(system_bounds, resolution_ref);
-    auto &io_env = sph_system.getIOEnvironment();
-    std::filesystem::path fluid_file_path(params.fluid_file_path);
-    io_env.output_folder_ += std::to_string(params.number_of_particles) + "_" +
-                             fluid_file_path.parent_path().filename().string();
-    if (std::filesystem::exists(io_env.output_folder_))
-        std::filesystem::remove_all(io_env.output_folder_);
-    std::filesystem::create_directories(io_env.output_folder_);
 
     // --- Section 7: Create Fluid and Solid Bodies ---
     FluidBody water_block(sph_system, water_block_shape);
@@ -314,11 +307,15 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
         MainExecutionPolicy,
         fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
+    // InteractionDynamicsCK<
+    //     MainExecutionPolicy,
+    //     fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
+    //     fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
 
     InteractionDynamicsCK<MainExecutionPolicy,
                           fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionWallNoCorrectionBulkParticlesCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionComplexBulkParticlesCK>
         transport_correction_ck(water_body_inner, water_wall_contact);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionViscousTimeStepCK>
@@ -352,8 +349,6 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
     body_states_recording.addToWrite<Real>(water_block, "VolumetricMeasure");
     body_states_recording.addToWrite<Real>(water_block, "Density");
     body_states_recording.addToWrite<int>(water_block, "BufferIndicator");
-    body_states_recording.addToWrite<Vecd>(water_block, "ZeroGradientResidue");
-    body_states_recording.addToWrite<Matd>(water_block, "LinearCorrectionMatrix");
 
     // --- Section 13: Simulation Initialization and Particle Updates ---
     wall_normal_direction.exec();
