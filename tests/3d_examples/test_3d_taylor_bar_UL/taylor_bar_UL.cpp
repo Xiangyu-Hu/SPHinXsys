@@ -23,13 +23,13 @@ int main(int ac, char *av[])
     wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
-    ObserverBody my_observer(system, "MyObserver");
+    ObserverBody column_observer(system, "ColumnObserver");
     StdVec<Vecd> observation_location = {Vecd(0.0, 0.0, PW)};
-    my_observer.generateParticles<ObserverParticles>(observation_location);
+    column_observer.generateParticles<ObserverParticles>(observation_location);
 
     /**body relation topology */
     InnerRelation column_inner(column);
-    ContactRelation my_observer_contact(my_observer, {&column});
+    ContactRelation column_observer_contact(column_observer, {&column});
     SurfaceContactRelation column_wall_contact(column, {&wall_boundary});
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
@@ -91,7 +91,8 @@ int main(int ac, char *av[])
     write_states.addToWrite<Real>(column, "Density");
     SimpleDynamics<continuum_dynamics::VonMisesStress> column_von_mises_stress(column);
     write_states.addToWrite<Real>(column, "VonMisesStress");
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement("Position", my_observer_contact);
+    ObservedQuantityRecording<Vecd> write_displacement("Position", column_observer_contact);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_kinetic_energy(column);
     //----------------------------------------------------------------------
     // From here the time stepping begins.
     //----------------------------------------------------------------------
@@ -116,6 +117,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     write_states.writeToFile();
     write_displacement.writeToFile(0);
+    write_kinetic_energy.writeToFile(0);
     //----------------------------------------------------------------------
     // Main time-stepping loop.
     //----------------------------------------------------------------------
@@ -158,6 +160,7 @@ int main(int ac, char *av[])
         column_von_mises_stress.exec();
         write_states.writeToFile(ite);
         write_displacement.writeToFile(ite);
+        write_kinetic_energy.writeToFile(ite);
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
@@ -168,11 +171,11 @@ int main(int ac, char *av[])
 
     if (system.GenerateRegressionData())
     {
-        write_displacement.generateDataBase(0.1);
+        write_kinetic_energy.generateDataBase(5.0e-2);
     }
     else
     {
-        write_displacement.testResult();
+        write_kinetic_energy.testResult();
     }
 
     return 0;
