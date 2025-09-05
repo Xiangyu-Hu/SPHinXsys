@@ -188,10 +188,13 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
 {
   private:
     Vec3d *b_n0_;
-    Matd *lambda_; // transformation matrix from initial local to current local coordinates
-    Vec3d *Tau_;   // material tensile-shear strain
-    Vec3d *Kappa_; // material bending strain
-    Vec3d *dr_ds_; // material bending strain
+    Matd *lambda_;     // transformation matrix from initial local to current local coordinates
+    Vec3d *Tau_;       // material tensile-shear strain
+    Vec3d *Kappa_;     // material bending strain
+    Vec3d *dkappa_dt_; // spatial bending strain rate
+    Vec3d *dr_ds_;     // dr_ds in global coordinates
+    Vec3d *dv_ds_;     // dv_ds in global coordinates
+    Mat3d *initial_curvature_;
 
   public:
     explicit SimoReissnerStressRelaxationSecondHalf(BaseInnerRelation &inner_relation)
@@ -200,7 +203,10 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
           lambda_(particles_->registerStateVariableData<Mat3d>("TransformationFromInitialToCurrent", IdentityMatrix<Matd>::value)),
           Tau_(particles_->registerStateVariableData<Vec3d>("MaterialTensileShearStrain")),
           Kappa_(particles_->registerStateVariableData<Vec3d>("MaterialBendingStrain")),
-          dr_ds_(particles_->registerStateVariableData<Vec3d>("DrDs")) {};
+          dkappa_dt_(particles_->registerStateVariableData<Vec3d>("SpatialBendingStrainRate")),
+          dr_ds_(particles_->registerStateVariableData<Vec3d>("DrDs")),
+          dv_ds_(particles_->registerStateVariableData<Vec3d>("DvDs")),
+          initial_curvature_(particles_->registerStateVariableData<Mat3d>("InitialCurvature")) {};
 
     void initialization(size_t index_i, Real dt = 0.0)
     {
@@ -211,37 +217,117 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
         pseudo_b_n_[index_i] = lambda_[index_i] * b_n0_[index_i];
         pseudo_n_[index_i] = lambda_[index_i] * n0_[index_i];
     }
-    inline void interaction(size_t index_i, Real dt = 0.0)
+    void interaction(size_t index_i, Real dt = 0.0)
     {
         const auto &Q0_i = transformation_matrix0_[index_i];
 
-        Matd grad_r = Matd::Zero();
-        Mat3d grad_dtheta = Matd::Zero();
+        Mat3d grad_vel = Matd::Zero();
+        Mat3d grad_dangular_vel = Matd::Zero();
 
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
             Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
-            grad_r -= (pos_[index_i] - pos_[index_j]) * gradW_ijV_j.transpose();
-            grad_dtheta -= (angular_vel_[index_i] - angular_vel_[index_j]) * dt * gradW_ijV_j.transpose();
+            grad_vel -= (vel_[index_i] - vel_[index_j]) * gradW_ijV_j.transpose();
+            grad_dangular_vel -= (angular_vel_[index_i] - angular_vel_[index_j]) * gradW_ijV_j.transpose();
         }
         // in initial local coordinate
-        grad_r = Q0_i * grad_r * Q0_i.transpose() * B_[index_i];
-        grad_dtheta = Q0_i * grad_dtheta * Q0_i.transpose() * B_[index_i];
+        grad_vel = Q0_i * grad_vel * Q0_i.transpose() * B_[index_i];
+        grad_dangular_vel = Q0_i * grad_dangular_vel * Q0_i.transpose() * B_[index_i];
 
         // tranform back to global
-        const Vec3d dr_ds_L = grad_r.col(xAxis);
-        dr_ds_[index_i] = Q0_i.transpose() * dr_ds_L;
-        const Vec3d ddtheta_ds = Q0_i.transpose() * grad_dtheta.col(xAxis);
+        dv_ds_[index_i] = Q0_i.transpose() * grad_vel.col(xAxis);
+        const Vec3d dw_ds = Q0_i.transpose() * grad_dangular_vel.col(xAxis);
 
-        // compute material strains
-        Mat3d Q = getTransformationMatrix(pseudo_n_[index_i], pseudo_b_n_[index_i]);
-        Tau_[index_i] = Q * dr_ds_[index_i] - Vec3d::UnitX();
+        // compute dkappa_dt
         Vec3d dtheta = angular_vel_[index_i] * dt;
         Mat3d T_operator = get_T_operator(dtheta);
-        Kappa_[index_i] += Q * T_operator.transpose() * ddtheta_ds;
+        dkappa_dt_[index_i] = T_operator.transpose() * dw_ds;
     }
-    void update(size_t index_i, Real dt = 0.0) {}
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        Mat3d Q = getTransformationMatrix(pseudo_n_[index_i], pseudo_b_n_[index_i]);
+        dr_ds_[index_i] += dv_ds_[index_i] * dt;
+        Tau_[index_i] = Q * dr_ds_[index_i] - Vec3d::UnitX();
+        Kappa_[index_i] += Q * dkappa_dt_[index_i] * dt;
+
+        // update F and F_bending in global coordinates
+        const auto &Q0_i = transformation_matrix0_[index_i];
+        F_[index_i].col(xAxis) = dr_ds_[index_i];
+        F_bending_[index_i].col(yAxis) = pseudo_b_n_[index_i];
+        F_bending_[index_i].col(zAxis) = pseudo_n_[index_i];
+        F_[index_i] = F_[index_i] * Q0_i;
+
+        Mat3d S_K = get_skew_matrix(Kappa_[index_i]);
+        Mat3d dlambda_ds = Q.transpose() * (S_K + initial_curvature_[index_i]);
+        Vec3d dbn_ds = dlambda_ds.col(yAxis);
+        Vec3d dn_ds = dlambda_ds.col(zAxis);
+        F_b_bending_[index_i] = dbn_ds * Q0_i.row(xAxis);
+        F_bending_[index_i] = dn_ds * Q0_i.row(xAxis);
+    }
+};
+
+class BeamInitialGeometry : public LocalDynamics, public DataDelegateInner
+{
+  private:
+    Vec3d *dr0_ds_;            // initial dr_ds (tangential direction)
+    Vec3d *dr_ds_;             // current dr_ds (tangential direction)
+    Mat3d *initial_curvature_; // lambda0.t * d(lambda0)/ds
+
+    Vec3d *pos0_; // initial position
+    Real *Vol_;
+    Mat3d *transformation_matrix0_;
+    Mat3d *B_;
+
+  public:
+    explicit BeamInitialGeometry(BaseInnerRelation &inner_relation)
+        : LocalDynamics(inner_relation.getSPHBody()),
+          DataDelegateInner(inner_relation),
+          dr0_ds_(particles_->registerStateVariableData<Vec3d>("InitialDrDs")),
+          dr_ds_(particles_->registerStateVariableData<Vec3d>("DrDs")),
+          initial_curvature_(particles_->registerStateVariableData<Mat3d>("InitialCurvature")),
+          pos0_(particles_->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
+          Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+          transformation_matrix0_(particles_->getVariableDataByName<Mat3d>("TransformationMatrix")),
+          B_(particles_->getVariableDataByName<Mat3d>("LinearGradientCorrectionMatrix")) {}
+
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        const auto &Q0_i = transformation_matrix0_[index_i];
+        Mat3d grad_r = Matd::Zero();
+        Mat3d grad_g1 = Matd::Zero();
+        Mat3d grad_b_n = Matd::Zero();
+        Mat3d grad_n = Matd::Zero();
+
+        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+        {
+            size_t index_j = inner_neighborhood.j_[n];
+            Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
+            grad_r -= (pos0_[index_i] - pos0_[index_j]) * gradW_ijV_j.transpose();
+            const auto &Q0_j = transformation_matrix0_[index_j];
+            grad_g1 -= (Q0_i.row(xAxis).transpose() - Q0_j.row(xAxis).transpose()) * gradW_ijV_j.transpose();
+            grad_b_n -= (Q0_i.row(yAxis).transpose() - Q0_j.row(yAxis).transpose()) * gradW_ijV_j.transpose();
+            grad_n -= (Q0_i.row(zAxis).transpose() - Q0_j.row(zAxis).transpose()) * gradW_ijV_j.transpose();
+        }
+
+        grad_r = Q0_i * grad_r * Q0_i.transpose() * B_[index_i];
+        grad_b_n = Q0_i * grad_b_n * Q0_i.transpose() * B_[index_i];
+        grad_n = Q0_i * grad_n * Q0_i.transpose() * B_[index_i];
+
+        // tranform back to global
+        dr0_ds_[index_i] = Q0_i.transpose() * grad_r.col(xAxis);
+        dr_ds_[index_i] = dr0_ds_[index_i];
+
+        Vec3d dg1_ds = Q0_i.transpose() * grad_g1.col(xAxis);
+        Vec3d db_n0_ds = Q0_i.transpose() * grad_b_n.col(xAxis);
+        Vec3d dn0_ds = Q0_i.transpose() * grad_n.col(xAxis);
+        Mat3d dlamba0_ds{};
+        dlamba0_ds.col(xAxis) = dg1_ds;
+        dlamba0_ds.col(yAxis) = db_n0_ds;
+        dlamba0_ds.col(zAxis) = dn0_ds;
+        initial_curvature_[index_i] = Q0_i * dlamba0_ds;
+    }
 };
 } // namespace SPH::slender_structure_dynamics

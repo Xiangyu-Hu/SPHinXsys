@@ -22,6 +22,7 @@ void beam_arc_rotation(int res_factor)
 
     BarParameters bar_params;
     bar_params.body_name = "Beam";
+    bar_params.hourglass_control = true;
 
     // bar geometry parameters
     {
@@ -105,6 +106,7 @@ void beam_arc_rotation(int res_factor)
     };
 
     // Output
+    bar_particles.addVariableToWrite<Vec3d>("DrDs");
     bar_particles.addVariableToWrite<Vec3d>("Velocity");
     bar_particles.addVariableToWrite<Vec3d>("ForcePrior");
     bar_particles.addVariableToWrite<Vec3d>("PriorAngularAcceleration");
