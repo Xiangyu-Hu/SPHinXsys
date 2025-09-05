@@ -107,7 +107,7 @@ class ParameterFixed : public ParticleParameter
 
   public:
     explicit ParameterFixed(const T &c) : ParticleParameter(), parameter_(c) {};
-    T operator()(size_t index_i)
+    T &operator()(size_t index_i)
     {
         return parameter_;
     };
@@ -120,7 +120,7 @@ class ParameterVariable : public ParticleParameter
 
   public:
     explicit ParameterVariable(T *v) : ParticleParameter(), v_(v) {};
-    T operator()(size_t index_i)
+    T &operator()(size_t index_i)
     {
         return v_[index_i];
     };
@@ -142,7 +142,7 @@ class PairAverageFixed : public ParticleAverage
         : ParticleAverage(), average_(0.5 * (c1 + c2)) {};
     explicit PairAverageFixed(const T &c)
         : PairAverageFixed(c, c) {};
-    T operator()(size_t index_i, size_t index_j)
+    T &operator()(size_t index_i, size_t index_j)
     {
         return average_;
     };
@@ -170,7 +170,7 @@ class PairGeomAverageFixed : public GeomAverage
         : GeomAverage(), geom_average_(2.0 * c1 * c2 * inverse(c1 + c2)) {};
     explicit PairGeomAverageFixed(const T &c)
         : PairGeomAverageFixed(c, c) {};
-    T operator()(size_t index_i, size_t index_j)
+    T &operator()(size_t index_i, size_t index_j)
     {
         return geom_average_;
     };
