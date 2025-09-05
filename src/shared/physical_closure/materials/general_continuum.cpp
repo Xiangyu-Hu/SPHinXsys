@@ -4,6 +4,22 @@
 namespace SPH
 {
 //=================================================================================================//
+GeneralContinuum::GeneralContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio)
+    : WeaklyCompressibleFluid(rho0, c0), E_(youngs_modulus), nu_(poisson_ratio),
+      G_(this->getShearModulus(youngs_modulus, poisson_ratio)),
+      K_(this->getBulkModulus(youngs_modulus, poisson_ratio)),
+      contact_stiffness_(rho0_ * c0 * c0),
+      lambda0_(this->getLambda(youngs_modulus, poisson_ratio))
+{
+    material_type_name_ = "GeneralContinuum";
+}
+//=================================================================================================//
+GeneralContinuum::GeneralContinuumKernel::GeneralContinuumKernel(GeneralContinuum &encloser)
+    : WeaklyCompressibleFluid::EosKernel(encloser),
+      E_(encloser.E_), G_(encloser.G_), K_(encloser.K_),
+      nu_(encloser.nu_), contact_stiffness_(encloser.contact_stiffness_),
+      rho0_(encloser.rho0_) {}
+//=================================================================================================//
 Real GeneralContinuum::getBulkModulus(Real youngs_modulus, Real poisson_ratio)
 {
     return youngs_modulus / 3.0 / (1.0 - 2.0 * poisson_ratio);
@@ -27,6 +43,22 @@ Matd GeneralContinuum::ConstitutiveRelationShearStress(Matd &velocity_gradient, 
     Matd stress_rate = 2.0 * G_ * deviatoric_strain_rate + shear_stress * (spin_rate.transpose()) + spin_rate * shear_stress;
     return stress_rate;
 }
+//=================================================================================================//
+PlasticContinuum::PlasticContinuum(
+    Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio,
+    Real friction_angle, Real cohesion, Real dilatancy)
+    : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),
+      c_(cohesion), phi_(friction_angle), psi_(dilatancy),
+      alpha_phi_(this->getDPConstantsA(friction_angle)),
+      k_c_(this->getDPConstantsK(cohesion, friction_angle))
+{
+    material_type_name_ = "PlasticContinuum";
+}
+//=================================================================================================//
+PlasticContinuum::PlasticKernel::PlasticKernel(PlasticContinuum &encloser)
+    : GeneralContinuum::GeneralContinuumKernel(encloser),
+      c_(encloser.c_), phi_(encloser.phi_),
+      psi_(encloser.psi_), alpha_phi_(encloser.alpha_phi_), k_c_(encloser.k_c_) {}
 //=================================================================================================//
 Real PlasticContinuum::getDPConstantsA(Real friction_angle)
 {
@@ -76,6 +108,14 @@ Mat3d PlasticContinuum::ReturnMapping(Mat3d &stress_tensor)
     return stress_tensor;
 }
 //=================================================================================================//
+J2Plasticity::J2Plasticity(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio,
+                           Real yield_stress, Real hardening_modulus)
+    : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),
+      yield_stress_(yield_stress), hardening_modulus_(hardening_modulus)
+{
+    material_type_name_ = "J2Plasticity";
+}
+//=================================================================================================//
 Matd J2Plasticity::ConstitutiveRelationShearStressWithHardening(Matd &velocity_gradient, Matd &shear_stress, Real &hardening_factor)
 {
     Matd strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
@@ -109,7 +149,10 @@ Real J2Plasticity::ScalePenaltyForce(Matd &shear_stress, Real &hardening_factor)
 {
     Real stress_tensor_J2 = 0.5 * (shear_stress.cwiseProduct(shear_stress.transpose())).sum();
     Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_);
-    return (f > TinyReal) ? (sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_)) / (sqrt(2.0 * stress_tensor_J2) + TinyReal) : 1.0;
+    return (f > TinyReal)
+               ? (sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_)) /
+                     (sqrt(2.0 * stress_tensor_J2) + TinyReal)
+               : 1.0;
 }
 //=================================================================================================//
 Real J2Plasticity::HardeningFactorRate(const Matd &shear_stress, Real &hardening_factor)
@@ -118,4 +161,5 @@ Real J2Plasticity::HardeningFactorRate(const Matd &shear_stress, Real &hardening
     Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_);
     return (f > TinyReal) ? 0.5 * f / (G_ + hardening_modulus_ / 3.0) : 0.0;
 }
+//=================================================================================================//
 } // namespace SPH

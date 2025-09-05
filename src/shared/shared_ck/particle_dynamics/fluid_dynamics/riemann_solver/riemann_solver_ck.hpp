@@ -41,7 +41,8 @@ Real RiemannSolver<FluidI, FluidJ, LimiterType>::DissipativePJump(const Real &u_
 }
 //=================================================================================================//
 template <class FluidI, class FluidJ, typename LimiterType>
-Real RiemannSolver<FluidI, FluidJ, LimiterType>::DissipativeUJump(const Real &p_jump)
+template <typename T>
+T RiemannSolver<FluidI, FluidJ, LimiterType>::DissipativeUJump(const T &p_jump)
 {
     return p_jump * inv_rho0c0_ave_; // the factor 0.5 canceled with 2.0 in kernel approximation
 }

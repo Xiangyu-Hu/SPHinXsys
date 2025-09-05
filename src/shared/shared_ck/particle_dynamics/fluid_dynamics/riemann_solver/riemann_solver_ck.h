@@ -75,7 +75,8 @@ class RiemannSolver<FluidI, FluidJ, LimiterType> : public RiemannSolver<NotUsed,
   public:
     RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j, Real limiter_coeff = 3.0);
     Real DissipativePJump(const Real &u_jump);
-    Real DissipativeUJump(const Real &p_jump);
+    template <typename T>
+    T DissipativeUJump(const T &p_jump);
 
   protected:
     Real inv_rho0c0_ave_, rho0c0_geo_ave_;
