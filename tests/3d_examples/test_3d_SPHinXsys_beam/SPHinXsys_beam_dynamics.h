@@ -170,6 +170,9 @@ class BeamStressRelaxationFirstHalf : public BaseBarRelaxation
     Mat3d *global_b_moment_;
     Vec3d *global_shear_stress_;
     Vec3d *global_b_shear_stress_;
+    Mat3d *global_F_;
+    Mat3d *global_F_bending_;
+    Mat3d *global_F_b_bending_;
 
     Real G0_;
     Real hourglass_control_factor_;
@@ -199,6 +202,9 @@ class BeamStressRelaxationFirstHalf : public BaseBarRelaxation
           global_b_moment_(particles_->registerStateVariableData<Matd>("GlobalBinormalMoment")),
           global_shear_stress_(particles_->registerStateVariableData<Vec3d>("GlobalShearStress")),
           global_b_shear_stress_(particles_->registerStateVariableData<Vecd>("GlobalBinormalShearStress")),
+          global_F_(particles_->registerStateVariableData<Mat3d>("GlobalDeformationGradient")),
+          global_F_bending_(particles_->registerStateVariableData<Mat3d>("GlobalBendingDeformationGradient")),
+          global_F_b_bending_(particles_->registerStateVariableData<Mat3d>("GlobalBinormalBendingDeformationGradient")),
           G0_(elastic_solid_.ShearModulus()),
           hourglass_control_(hourglass_control),
           m_prior_(particles_->registerStateVariableData<Vec3d>("ExternalTorquePerUnitLength")),
@@ -213,6 +219,10 @@ class BeamStressRelaxationFirstHalf : public BaseBarRelaxation
         rho_[index_i] = rho0_ / J;
 
         const Mat3d &Q_0 = transformation_matrix0_[index_i];
+
+        global_F_[index_i] = Q_0.transpose() * F_[index_i] * Q_0;
+        global_F_bending_[index_i] = Q_0.transpose() * F_bending_[index_i] * Q_0;
+        global_F_b_bending_[index_i] = Q_0.transpose() * F_b_bending_[index_i] * Q_0;
 
         auto [resultant_stress_L, resultant_moment_L] = compute_resultant_stress(index_i);
 
@@ -318,9 +328,9 @@ class BeamStressRelaxationFirstHalf : public BaseBarRelaxation
                 e_ij,
                 r_ij,
                 pos_[index_i],
-                Q_0_i.transpose() * F_[index_i] * Q_0_i,
+                global_F_[index_i],
                 pos_[index_j],
-                Q_0_j.transpose() * F_[index_j] * Q_0_j);
+                global_F_[index_j]);
             Real limiter_pos = SMIN(2.0 * pos_jump.norm() / r_ij, 1.0);
             pos_hourglass += hourglass_control_factor_ * weight * G0_ * pos_jump * Dimensions *
                              inner_neighborhood.dW_ij_[n] * Vol_[index_j] * limiter_pos;
@@ -331,9 +341,9 @@ class BeamStressRelaxationFirstHalf : public BaseBarRelaxation
                 e_ij,
                 r_ij,
                 pseudo_n_variation_i,
-                Q_0_i.transpose() * F_bending_[index_i] * Q_0_i,
+                global_F_bending_[index_i],
                 pseudo_n_variation_j,
-                Q_0_j.transpose() * F_bending_[index_j] * Q_0_j);
+                global_F_bending_[index_j]);
             Real limiter_pseudo_n = SMIN(
                 2.0 * pseudo_n_jump.norm() / ((pseudo_n_variation_i - pseudo_n_variation_j).norm() + Eps), 1.0);
             n_hourglass += hourglass_control_factor_ * weight * G0_ * pseudo_n_jump * Dimensions *
@@ -345,9 +355,9 @@ class BeamStressRelaxationFirstHalf : public BaseBarRelaxation
                 e_ij,
                 r_ij,
                 pseudo_b_variation_i,
-                Q_0_i.transpose() * F_b_bending_[index_i] * Q_0_i,
+                global_F_b_bending_[index_i],
                 pseudo_b_variation_j,
-                Q_0_j.transpose() * F_b_bending_[index_j] * Q_0_j);
+                global_F_b_bending_[index_j]);
             Real limiter_pseudo_b = SMIN(
                 2.0 * pseudo_b_jump.norm() / ((pseudo_b_variation_i - pseudo_b_variation_j).norm() + Eps), 1.0);
             b_n_hourglass += hourglass_control_factor_ * weight * G0_ * pseudo_b_jump * Dimensions *
