@@ -54,7 +54,7 @@ void pure_bending_test(int res_factor)
 
     // load
     const double t_ref = length / (c_s / 20.0);
-    const double M = 2.5 * Pi; // Nm
+    const double M = 20 * Pi; // Nm
 
     // Setup the system
     bar_simulation simulation(dp);
@@ -119,8 +119,8 @@ void pure_bending_test(int res_factor)
      * Set the starting time.
      */
     simulation.output_number = 100;
-    double end_time = 50 * t_ref;
-    simulation.run_until(end_time, false);
+    double end_time = 100 * t_ref;
+    simulation.run_until(end_time, true);
 }
 
 void beam_arc_rotation(int res_factor)

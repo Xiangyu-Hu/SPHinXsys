@@ -215,18 +215,28 @@ class BeamStressRelaxationFirstHalf : public BaseBarRelaxation
 
     void initialization(size_t index_i, Real dt = 0.0)
     {
+        // update position and rotation
+        pos_[index_i] += vel_[index_i] * dt * 0.5;
+        rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
+        pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
+        pseudo_b_n_[index_i] += dpseudo_b_n_dt_[index_i] * dt * 0.5;
+
+        F_[index_i] += dF_dt_[index_i] * dt * 0.5;
+        F_bending_[index_i] += dF_bending_dt_[index_i] * dt * 0.5;
+        F_b_bending_[index_i] += dF_b_bending_dt_[index_i] * dt * 0.5;
+
         Real J = F_[index_i].determinant();
         rho_[index_i] = rho0_ / J;
 
+        // compute global F
         const Mat3d &Q_0 = transformation_matrix0_[index_i];
-
         global_F_[index_i] = Q_0.transpose() * F_[index_i] * Q_0;
         global_F_bending_[index_i] = Q_0.transpose() * F_bending_[index_i] * Q_0;
         global_F_b_bending_[index_i] = Q_0.transpose() * F_b_bending_[index_i] * Q_0;
 
+        // compute resultant stress and moment
         auto [resultant_stress_L, resultant_moment_L] = compute_resultant_stress(index_i);
 
-        /** stress and moment in global coordinates for pair interaction */
         Mat3d stress_L = Mat3d::Zero();
         stress_L.col(xAxis) = resultant_stress_L.col(xAxis);
         global_stress_[index_i] = Q_0.transpose() * (stress_L * B_[index_i]) * Q_0;
@@ -432,14 +442,14 @@ class BeamStressRelaxationSecondHalf : public BaseBarRelaxation
     void initialization(size_t index_i, Real dt = 0.0)
     {
         Mat3d Q0_t = transformation_matrix0_[index_i].transpose();
-        pos_[index_i] += vel_[index_i] * dt;
-        rotation_[index_i] += angular_vel_[index_i] * dt;
+        pos_[index_i] += vel_[index_i] * dt * 0.5;
+        rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
         Vec3d local_db_n_dt = get_db_from_angular_acc(rotation_[index_i], angular_vel_[index_i]);
         Vec3d local_dn_dt = get_dn_from_angular_acc(rotation_[index_i], angular_vel_[index_i]);
         dpseudo_n_dt_[index_i] = Q0_t * local_dn_dt;
         dpseudo_b_n_dt_[index_i] = Q0_t * local_db_n_dt;
-        pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt;
-        pseudo_b_n_[index_i] += dpseudo_b_n_dt_[index_i] * dt;
+        pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
+        pseudo_b_n_[index_i] += dpseudo_b_n_dt_[index_i] * dt * 0.5;
     }
 
     void interaction(size_t index_i, Real dt = 0.0)
@@ -471,9 +481,9 @@ class BeamStressRelaxationSecondHalf : public BaseBarRelaxation
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        F_[index_i] += dF_dt_[index_i] * dt;
-        F_bending_[index_i] += dF_bending_dt_[index_i] * dt;
-        F_b_bending_[index_i] += dF_b_bending_dt_[index_i] * dt;
+        F_[index_i] += dF_dt_[index_i] * dt * 0.5;
+        F_bending_[index_i] += dF_bending_dt_[index_i] * dt * 0.5;
+        F_b_bending_[index_i] += dF_b_bending_dt_[index_i] * dt * 0.5;
     };
 };
 } // namespace SPH::slender_structure_dynamics
