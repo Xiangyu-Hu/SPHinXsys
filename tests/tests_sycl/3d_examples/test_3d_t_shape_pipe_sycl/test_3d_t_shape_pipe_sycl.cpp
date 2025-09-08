@@ -8,7 +8,7 @@ using namespace SPH;
 
 struct Parameters
 {
-    Real inlet_pressure = 1333.0; // 10mmHg
+    Real inlet_pressure = 133.3; // 1mmHg
     int number_of_particles = 10;
     Real t_ref = 0.5;
     std::string fluid_file_path = "./input/full_fluid_raw.stl";
@@ -161,13 +161,12 @@ int main(int ac, char *av[])
 
 void run_t_shape_pipe(int ac, char *av[], Parameters &params)
 {
-    constexpr Real mmHg_to_Pa = 133.3224;
     // --- Define the main execution policy for this case  ---
     using MainExecutionPolicy = execution::ParallelDevicePolicy;
     // --- Section 1: Initialization of Scale and Simulation Parameters ---
     const Real scale = 0.001;
     // Process boundaries
-    Real outlet_pressure = params.inlet_pressure - 1 * mmHg_to_Pa;
+    Real outlet_pressure = 0;
     std::vector<BoundaryParameter> boundaries;
     {
         BoundaryParameter inlet_boundary{
