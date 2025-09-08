@@ -213,8 +213,8 @@ void AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Parame
         Vecd e_ij = this->e_ij(index_i, index_j);
 
         force -= riemann_solver_.AverageP(
-                     CorrectionDataType(contact_correction_(index_j) * p_[index_i]),
-                     CorrectionDataType(correction_(index_i) * contact_p_[index_j])) *
+                     static_cast<CorrectionDataType>(contact_correction_(index_j) * p_[index_i]),
+                     static_cast<CorrectionDataType>(correction_(index_i) * contact_p_[index_j])) *
                  2.0 * dW_ijV_j * e_ij;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - contact_p_[index_j]) * dW_ijV_j;
     }
