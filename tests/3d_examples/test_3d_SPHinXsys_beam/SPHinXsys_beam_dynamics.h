@@ -392,6 +392,9 @@ class BeamStressRelaxationFirstHalf : public BaseBarRelaxation
         Mat3d resultant_stress_L = Mat3d::Zero();
         Mat3d resultant_moment_L = Mat3d::Zero();
 
+        numerical_damping_scaling_matrix_(1, 1) = width_[index_i] < smoothing_length_ ? width_[index_i] : smoothing_length_;
+        numerical_damping_scaling_matrix_(2, 2) = thickness_[index_i] < smoothing_length_ ? thickness_[index_i] : smoothing_length_;
+
         for (size_t i = 0; i != gaussian_.number_of_gaussian_points_; ++i)
         {
             Real weight_y = gaussian_.gaussian_weights_[i];
@@ -411,8 +414,7 @@ class BeamStressRelaxationFirstHalf : public BaseBarRelaxation
                 Mat3d P_gaussian_point_L = elastic_solid_.StressPK1(F_gaussian_L, index_i);
 
                 // The numerical stress is S, need to convert it to P
-                numerical_damping_scaling_matrix_(1, 1) = width_[i] < smoothing_length_ ? width_[i] : smoothing_length_;
-                numerical_damping_scaling_matrix_(2, 2) = thickness_[i] < smoothing_length_ ? thickness_[i] : smoothing_length_;
+
                 Matd dF_dt_gaussian_L =
                     dF_dt_[index_i] + y_G * dF_b_bending_dt_[index_i] + z_G * dF_bending_dt_[index_i];
                 Mat3d damping_L =
