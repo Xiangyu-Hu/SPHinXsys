@@ -50,6 +50,10 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
     Vec3d *b_n0_;
     Real inv_W0_;
 
+    Vec3d *dTau_;   // Tau^n+1 - Tau^n, used for numerical damping
+    Vec3d *dKappa_; // Kappa^n+1 - Kappa^n, used for numerical damping
+    Real numerical_damping_factor_ = 0.5;
+
     Mat3d *C_N_;               // diag[EA,GA2,GA3]
     Mat3d *C_M_;               // diag[GJ,EI2,EI3]
     Mat3d *I_rho_l_;           // rho0*diag[J,I2,I3]the inertia matrix in current local coordinates
@@ -63,10 +67,15 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
     Vec3d *m_;     // resultant moment per unit length in global coordinates
     Vec3d *dr_ds_; // dr_ds in global coordinates
 
+    Mat3d *global_F_;
+    Mat3d *global_F_bending_;
+    Mat3d *global_F_b_bending_;
+
   public:
     explicit SimoReissnerStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
                                                    bool hourglass_control = false,
-                                                   Real hourglass_control_factor = 0.005)
+                                                   Real hourglass_control_factor = 0.005,
+                                                   size_t number_of_gaussian_points = 3)
         : BaseBarRelaxation(inner_relation),
           G0_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial()).ShearModulus()),
           hourglass_control_(hourglass_control),
@@ -74,6 +83,8 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
           mass_(particles_->getVariableDataByName<Real>("Mass")),
           b_n0_(particles_->registerStateVariableDataFrom<Vecd>("InitialBinormalDirection", "BinormalDirection")),
           inv_W0_(1.0 / sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd)),
+          dTau_(particles_->registerStateVariableData<Vec3d>("dTau")),
+          dKappa_(particles_->registerStateVariableData<Vec3d>("dKappa")),
           C_N_(particles_->registerStateVariableData<Matd>("TensileConstitutiveMatrix")),
           C_M_(particles_->registerStateVariableData<Matd>("BendingConstitutiveMatrix")),
           I_rho_l_(particles_->registerStateVariableData<Matd>("InertiaMatrix")),
@@ -84,14 +95,19 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
           Kappa_(particles_->registerStateVariableData<Vecd>("MaterialBendingStrain")),
           f_(particles_->registerStateVariableData<Vecd>("ResultantForce")),
           m_(particles_->registerStateVariableData<Vecd>("ResultantMoment")),
-          dr_ds_(particles_->registerStateVariableData<Vecd>("DrDs")) {}
+          dr_ds_(particles_->registerStateVariableData<Vecd>("DrDs")),
+          global_F_(particles_->registerStateVariableData<Mat3d>("GlobalDeformationGradient")),
+          global_F_bending_(particles_->registerStateVariableData<Mat3d>("GlobalBendingDeformationGradient")),
+          global_F_b_bending_(particles_->registerStateVariableData<Mat3d>("GlobalBinormalBendingDeformationGradient")) {}
 
     void initialization(size_t index_i, Real dt = 0.0)
     {
         // compute spatial resultant force and moment in global coordinates
         Mat3d Q_t = getTransformationMatrix(pseudo_n_[index_i], pseudo_b_n_[index_i]).transpose();
-        f_[index_i] = Q_t * C_N_[index_i] * Tau_[index_i];
-        m_[index_i] = Q_t * C_M_[index_i] * Kappa_[index_i];
+        Vec3d f_m = C_N_[index_i] * (Tau_[index_i] + numerical_damping_factor_ * dTau_[index_i]);
+        Vec3d m_m = C_M_[index_i] * (Kappa_[index_i] + numerical_damping_factor_ * dKappa_[index_i]);
+        f_[index_i] = Q_t * f_m;
+        m_[index_i] = Q_t * m_m;
     }
 
     void interaction(size_t index_i, Real dt = 0.0)
@@ -152,7 +168,7 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
             Real r_ij = inner_neighborhood.r_ij_[n];
             Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
             Vecd pos_jump = thin_structure_dynamics::getLinearVariableJump(
-                e_ij, r_ij, pos_[index_i], F_[index_i], pos_[index_j], F_[index_j]);
+                e_ij, r_ij, pos_[index_i], global_F_[index_i], pos_[index_j], global_F_[index_j]);
             Real limiter_pos = SMIN(2.0 * pos_jump.norm() / r_ij, 1.0);
             pos_hourglass += hourglass_control_factor_ * weight * G0_ * pos_jump * Dimensions *
                              inner_neighborhood.dW_ij_[n] * Vol_[index_j] * limiter_pos;
@@ -160,7 +176,7 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
             Vecd pseudo_n_variation_i = pseudo_n_[index_i] - n0_[index_i];
             Vecd pseudo_n_variation_j = pseudo_n_[index_j] - n0_[index_j];
             Vecd pseudo_n_jump = thin_structure_dynamics::getLinearVariableJump(
-                e_ij, r_ij, pseudo_n_variation_i, F_bending_[index_i], pseudo_n_variation_j, F_bending_[index_j]);
+                e_ij, r_ij, pseudo_n_variation_i, global_F_bending_[index_i], pseudo_n_variation_j, global_F_bending_[index_j]);
             Real limiter_pseudo_n = SMIN(
                 2.0 * pseudo_n_jump.norm() / ((pseudo_n_variation_i - pseudo_n_variation_j).norm() + Eps), 1.0);
             Vec3d n_hourglass = hourglass_control_factor_ * weight * G0_ * pseudo_n_jump * Dimensions *
@@ -170,7 +186,7 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
             Vecd pseudo_b_variation_i = pseudo_b_n_[index_i] - b_n0_[index_i];
             Vecd pseudo_b_variation_j = pseudo_b_n_[index_j] - b_n0_[index_j];
             Vecd pseudo_b_jump = thin_structure_dynamics::getLinearVariableJump(
-                e_ij, r_ij, pseudo_b_variation_i, F_b_bending_[index_i], pseudo_b_variation_j, F_b_bending_[index_j]);
+                e_ij, r_ij, pseudo_b_variation_i, global_F_b_bending_[index_i], pseudo_b_variation_j, global_F_b_bending_[index_j]);
             Real limiter_pseudo_b = SMIN(
                 2.0 * pseudo_b_jump.norm() / ((pseudo_b_variation_i - pseudo_b_variation_j).norm() + Eps), 1.0);
             Vec3d b_hourglass = hourglass_control_factor_ * weight * G0_ * pseudo_b_jump * Dimensions *
@@ -194,7 +210,8 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
     Vec3d *dkappa_dt_; // spatial bending strain rate
     Vec3d *dr_ds_;     // dr_ds in global coordinates
     Vec3d *dv_ds_;     // dv_ds in global coordinates
-    Mat3d *initial_curvature_;
+    Vec3d *dTau_;      // Tau^n+1 - Tau^n, used for numerical damping
+    Vec3d *dKappa_;    // Kappa^n+1 - Kappa^n, used for numerical damping
 
   public:
     explicit SimoReissnerStressRelaxationSecondHalf(BaseInnerRelation &inner_relation)
@@ -206,7 +223,8 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
           dkappa_dt_(particles_->registerStateVariableData<Vec3d>("SpatialBendingStrainRate")),
           dr_ds_(particles_->registerStateVariableData<Vec3d>("DrDs")),
           dv_ds_(particles_->registerStateVariableData<Vec3d>("DvDs")),
-          initial_curvature_(particles_->registerStateVariableData<Mat3d>("InitialCurvature")) {};
+          dTau_(particles_->registerStateVariableData<Vec3d>("dTau")),
+          dKappa_(particles_->registerStateVariableData<Vec3d>("dKappa")) {};
 
     void initialization(size_t index_i, Real dt = 0.0)
     {
@@ -249,22 +267,12 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
     {
         Mat3d Q = getTransformationMatrix(pseudo_n_[index_i], pseudo_b_n_[index_i]);
         dr_ds_[index_i] += dv_ds_[index_i] * dt;
+        Vec3d Tau_n = Tau_[index_i];
+        Vec3d Kappa_n = Kappa_[index_i];
         Tau_[index_i] = Q * dr_ds_[index_i] - Vec3d::UnitX();
         Kappa_[index_i] += Q * dkappa_dt_[index_i] * dt;
-
-        // update F and F_bending in global coordinates
-        const auto &Q0_i = transformation_matrix0_[index_i];
-        F_[index_i].col(xAxis) = dr_ds_[index_i];
-        F_bending_[index_i].col(yAxis) = pseudo_b_n_[index_i];
-        F_bending_[index_i].col(zAxis) = pseudo_n_[index_i];
-        F_[index_i] = F_[index_i] * Q0_i;
-
-        Mat3d S_K = get_skew_matrix(Kappa_[index_i]);
-        Mat3d dlambda_ds = Q.transpose() * (S_K + initial_curvature_[index_i]);
-        Vec3d dbn_ds = dlambda_ds.col(yAxis);
-        Vec3d dn_ds = dlambda_ds.col(zAxis);
-        F_b_bending_[index_i] = dbn_ds * Q0_i.row(xAxis);
-        F_bending_[index_i] = dn_ds * Q0_i.row(xAxis);
+        dTau_[index_i] = Tau_[index_i] - Tau_n;
+        dKappa_[index_i] = Kappa_[index_i] - Kappa_n;
     }
 };
 
