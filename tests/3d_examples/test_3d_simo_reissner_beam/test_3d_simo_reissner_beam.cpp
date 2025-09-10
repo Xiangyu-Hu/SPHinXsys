@@ -26,7 +26,7 @@ void pure_bending_test(int res_factor)
     // bar geometry parameters
     BarParameters bar_params;
     bar_params.body_name = "Beam";
-    bar_params.hourglass_control = false;
+    bar_params.hourglass_control = true;
     {
         bar_params.geometry_params.dp_ = dp;
         double x = 0.5 * dp;

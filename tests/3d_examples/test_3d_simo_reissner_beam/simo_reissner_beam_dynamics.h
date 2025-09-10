@@ -61,15 +61,13 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
     Vec3d *m_prior_;           // the external torque per unit length in global coordinates
     Vec3d *angular_acc_prior_; // the angular acceleration caused by external torque
 
-    Vec3d *Tau_;   // material tensile-shear strain
-    Vec3d *Kappa_; // material bending strain
-    Vec3d *f_;     // resultant force per unit length in global coordinates
-    Vec3d *m_;     // resultant moment per unit length in global coordinates
-    Vec3d *dr_ds_; // dr_ds in global coordinates
-
-    Mat3d *global_F_;
-    Mat3d *global_F_bending_;
-    Mat3d *global_F_b_bending_;
+    Vec3d *Tau_;        // material tensile-shear strain
+    Vec3d *Kappa_;      // material bending strain
+    Vec3d *f_;          // resultant force per unit length in global coordinates
+    Vec3d *m_;          // resultant moment per unit length in global coordinates
+    Vec3d *dr_ds_;      // dr_ds in global coordinates
+    Mat3d *grad_r_;     // nabla_r in global coordinates
+    Mat3d *grad_theta_; // nabla_theta in global coordinates
 
   public:
     explicit SimoReissnerStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
@@ -96,9 +94,8 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
           f_(particles_->registerStateVariableData<Vecd>("ResultantForce")),
           m_(particles_->registerStateVariableData<Vecd>("ResultantMoment")),
           dr_ds_(particles_->registerStateVariableData<Vecd>("DrDs")),
-          global_F_(particles_->registerStateVariableData<Mat3d>("GlobalDeformationGradient")),
-          global_F_bending_(particles_->registerStateVariableData<Mat3d>("GlobalBendingDeformationGradient")),
-          global_F_b_bending_(particles_->registerStateVariableData<Mat3d>("GlobalBinormalBendingDeformationGradient")) {}
+          grad_r_(particles_->registerStateVariableData<Mat3d>("NablaR")),
+          grad_theta_(particles_->registerStateVariableData<Mat3d>("NablaTheta")) {}
 
     void initialization(size_t index_i, Real dt = 0.0)
     {
@@ -136,9 +133,9 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
 
         if (hourglass_control_)
         {
-            auto [pos_hourglass_force, angular_momentum_hourglass_torque] = compute_hourglass_control_force(index_i);
+            auto [pos_hourglass_force, theta_hourglass_torque] = compute_hourglass_control_force(index_i);
             df_ds += pos_hourglass_force;
-            dm_ds += angular_momentum_hourglass_torque;
+            dm_ds += theta_hourglass_torque;
         }
 
         force_[index_i] = df_ds / A_rho_[index_i] * mass_[index_i];
@@ -157,7 +154,7 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
     std::pair<Vec3d, Vec3d> compute_hourglass_control_force(size_t index_i)
     {
         Vec3d pos_hourglass = Vec3d::Zero();
-        Vec3d angular_momentum_hourglass = Vec3d::Zero();
+        Vec3d theta_hourglass = Vec3d::Zero();
 
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -168,35 +165,19 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
             Real r_ij = inner_neighborhood.r_ij_[n];
             Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
             Vecd pos_jump = thin_structure_dynamics::getLinearVariableJump(
-                e_ij, r_ij, pos_[index_i], global_F_[index_i], pos_[index_j], global_F_[index_j]);
+                e_ij, r_ij, pos_[index_i], grad_r_[index_i], pos_[index_j], grad_r_[index_j]);
             Real limiter_pos = SMIN(2.0 * pos_jump.norm() / r_ij, 1.0);
             pos_hourglass += hourglass_control_factor_ * weight * G0_ * pos_jump * Dimensions *
                              inner_neighborhood.dW_ij_[n] * Vol_[index_j] * limiter_pos;
 
-            Vecd pseudo_n_variation_i = pseudo_n_[index_i] - n0_[index_i];
-            Vecd pseudo_n_variation_j = pseudo_n_[index_j] - n0_[index_j];
-            Vecd pseudo_n_jump = thin_structure_dynamics::getLinearVariableJump(
-                e_ij, r_ij, pseudo_n_variation_i, global_F_bending_[index_i], pseudo_n_variation_j, global_F_bending_[index_j]);
-            Real limiter_pseudo_n = SMIN(
-                2.0 * pseudo_n_jump.norm() / ((pseudo_n_variation_i - pseudo_n_variation_j).norm() + Eps), 1.0);
-            Vec3d n_hourglass = hourglass_control_factor_ * weight * G0_ * pseudo_n_jump * Dimensions *
-                                inner_neighborhood.dW_ij_[n] * Vol_[index_j] *
-                                pow(thickness_[index_i], 3) * limiter_pseudo_n;
-
-            Vecd pseudo_b_variation_i = pseudo_b_n_[index_i] - b_n0_[index_i];
-            Vecd pseudo_b_variation_j = pseudo_b_n_[index_j] - b_n0_[index_j];
-            Vecd pseudo_b_jump = thin_structure_dynamics::getLinearVariableJump(
-                e_ij, r_ij, pseudo_b_variation_i, global_F_b_bending_[index_i], pseudo_b_variation_j, global_F_b_bending_[index_j]);
-            Real limiter_pseudo_b = SMIN(
-                2.0 * pseudo_b_jump.norm() / ((pseudo_b_variation_i - pseudo_b_variation_j).norm() + Eps), 1.0);
-            Vec3d b_hourglass = hourglass_control_factor_ * weight * G0_ * pseudo_b_jump * Dimensions *
-                                inner_neighborhood.dW_ij_[n] * Vol_[index_j] *
-                                pow(width_[index_i], 3) * limiter_pseudo_b;
-
-            angular_momentum_hourglass +=
-                pseudo_n_[index_i].cross(n_hourglass) + pseudo_b_n_[index_i].cross(b_hourglass);
+            Vecd theta_jump = thin_structure_dynamics::getLinearVariableJump(
+                e_ij, r_ij, rotation_[index_i], grad_theta_[index_i], rotation_[index_j], grad_theta_[index_j]);
+            Real limiter_theta = SMIN(
+                2.0 * theta_jump.norm() / ((rotation_[index_i] - rotation_[index_j]).norm() + Eps), 1.0);
+            theta_hourglass += hourglass_control_factor_ * weight * G0_ * theta_jump * Dimensions *
+                               inner_neighborhood.dW_ij_[n] * Vol_[index_j] * limiter_theta;
         }
-        return std::make_pair(pos_hourglass, angular_momentum_hourglass);
+        return std::make_pair(pos_hourglass, theta_hourglass);
     }
 };
 
@@ -204,14 +185,17 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
 {
   private:
     Vec3d *b_n0_;
-    Matd *lambda_;     // transformation matrix from initial local to current local coordinates
-    Vec3d *Tau_;       // material tensile-shear strain
-    Vec3d *Kappa_;     // material bending strain
-    Vec3d *dkappa_dt_; // spatial bending strain rate
-    Vec3d *dr_ds_;     // dr_ds in global coordinates
-    Vec3d *dv_ds_;     // dv_ds in global coordinates
-    Vec3d *dTau_;      // Tau^n+1 - Tau^n, used for numerical damping
-    Vec3d *dKappa_;    // Kappa^n+1 - Kappa^n, used for numerical damping
+    Matd *lambda_;            // transformation matrix from initial local to current local coordinates
+    Vec3d *Tau_;              // material tensile-shear strain
+    Vec3d *Kappa_;            // material bending strain
+    Vec3d *dkappa_dt_;        // spatial bending strain rate
+    Vec3d *dr_ds_;            // dr_ds in global coordinates
+    Vec3d *dv_ds_;            // dv_ds in global coordinates
+    Mat3d *grad_r_;           // nabla_r in global coordinates
+    Mat3d *grad_angular_vel_; // nabla_w in global coordinates
+    Mat3d *grad_theta_;       // nabla_theta in global coordinates
+    Vec3d *dTau_;             // Tau^n+1 - Tau^n, used for numerical damping
+    Vec3d *dKappa_;           // Kappa^n+1 - Kappa^n, used for numerical damping
 
   public:
     explicit SimoReissnerStressRelaxationSecondHalf(BaseInnerRelation &inner_relation)
@@ -223,6 +207,9 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
           dkappa_dt_(particles_->registerStateVariableData<Vec3d>("SpatialBendingStrainRate")),
           dr_ds_(particles_->registerStateVariableData<Vec3d>("DrDs")),
           dv_ds_(particles_->registerStateVariableData<Vec3d>("DvDs")),
+          grad_r_(particles_->registerStateVariableData<Mat3d>("NablaR")),
+          grad_angular_vel_(particles_->registerStateVariableData<Mat3d>("NablaW")),
+          grad_theta_(particles_->registerStateVariableData<Mat3d>("NablaTheta")),
           dTau_(particles_->registerStateVariableData<Vec3d>("dTau")),
           dKappa_(particles_->registerStateVariableData<Vec3d>("dKappa")) {};
 
@@ -252,11 +239,11 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
         }
         // in initial local coordinate
         grad_vel = Q0_i * grad_vel * Q0_i.transpose() * B_[index_i];
-        grad_dangular_vel = Q0_i * grad_dangular_vel * Q0_i.transpose() * B_[index_i];
+        grad_angular_vel_[index_i] = Q0_i * grad_dangular_vel * Q0_i.transpose() * B_[index_i];
 
         // tranform back to global
         dv_ds_[index_i] = Q0_i.transpose() * grad_vel.col(xAxis);
-        const Vec3d dw_ds = Q0_i.transpose() * grad_dangular_vel.col(xAxis);
+        Vec3d dw_ds = Q0_i.transpose() * grad_angular_vel_[index_i].col(xAxis);
 
         // compute dkappa_dt
         Vec3d dtheta = angular_vel_[index_i] * dt;
@@ -273,6 +260,10 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
         Kappa_[index_i] += Q * dkappa_dt_[index_i] * dt;
         dTau_[index_i] = Tau_[index_i] - Tau_n;
         dKappa_[index_i] = Kappa_[index_i] - Kappa_n;
+
+        const auto &Q0_i = transformation_matrix0_[index_i];
+        grad_r_[index_i] = dr_ds_[index_i] * Q0_i.row(xAxis);
+        grad_theta_[index_i] += grad_angular_vel_[index_i] * dt;
     }
 };
 
