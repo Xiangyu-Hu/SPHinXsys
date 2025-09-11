@@ -72,8 +72,7 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
   public:
     explicit SimoReissnerStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
                                                    bool hourglass_control = false,
-                                                   Real hourglass_control_factor = 0.005,
-                                                   size_t number_of_gaussian_points = 3)
+                                                   Real hourglass_control_factor = 0.005)
         : BaseBarRelaxation(inner_relation),
           G0_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial()).ShearModulus()),
           hourglass_control_(hourglass_control),
