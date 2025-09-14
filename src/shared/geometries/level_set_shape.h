@@ -75,6 +75,7 @@ class LevelSetShape : public Shape
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
+    virtual BoundingBox findBounds() override;
 
     template <class ExecutionPolicy>
     void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type)
@@ -86,9 +87,9 @@ class LevelSetShape : public Shape
     Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
     Matd computeKernelSecondGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
     /** small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing */
-    LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
+    LevelSetShape *cleanLevelSet(UnsignedInt repeat_times = 1);
     /** required to build level set from triangular mesh in stl file format. */
-    LevelSetShape *correctLevelSetSign(Real small_shift_factor = 1.0);
+    LevelSetShape *correctLevelSetSign();
     LevelSetShape *writeLevelSet(SPHSystem &sph_system);
     LevelSetShape *writeBKGMesh(SPHSystem &sph_system);
     MultilevelLevelSet &getLevelSet() { return level_set_; }
@@ -112,7 +113,6 @@ class LevelSetShape : public Shape
                   SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio);
     LevelSetShape(BoundingBox bounding_box, SPHBody &sph_body, Shape &shape, Real refinement_ratio);
     MultilevelLevelSet &level_set_; /**< narrow bounded level set mesh. */
-    virtual BoundingBox findBounds() override;
 };
 } // namespace SPH
 #endif // LEVEL_SET_SHAPE_H

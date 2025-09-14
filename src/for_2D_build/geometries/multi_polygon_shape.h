@@ -120,11 +120,10 @@ class MultiPolygonShape : public Shape
     virtual bool isValid() override;
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
+    virtual BoundingBox findBounds() override;
 
   protected:
     MultiPolygon multi_polygon_;
-
-    virtual BoundingBox findBounds() override;
 };
 } // namespace SPH
 

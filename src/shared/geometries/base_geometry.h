@@ -83,13 +83,12 @@ class Shape
     Real findSignedDistance(const Vecd &probe_point);
     /** Normal direction point toward outside of the shape. */
     Vecd findNormalDirection(const Vecd &probe_point);
+    virtual BoundingBox findBounds() = 0;
 
   protected:
     std::string name_;
     bool is_bounds_found_;
     std::shared_ptr<spdlog::logger> logger_;
-
-    virtual BoundingBox findBounds() = 0;
 };
 
 using SubShapeAndOp = std::pair<Shape *, ShapeBooleanOps>;
@@ -136,6 +135,7 @@ class BinaryShapes : public Shape
     virtual bool isValid() override;
     virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
+    virtual BoundingBox findBounds() override;
     Shape *getSubShapeByName(const std::string &name);
     SubShapeAndOp *getSubShapeAndOpByName(const std::string &name);
     size_t getSubShapeIndexByName(const std::string &name);
@@ -143,8 +143,6 @@ class BinaryShapes : public Shape
   protected:
     UniquePtrsKeeper<Shape> sub_shape_ptrs_keeper_;
     StdVec<SubShapeAndOp> sub_shapes_and_ops_;
-
-    virtual BoundingBox findBounds() override;
 };
 
 /**

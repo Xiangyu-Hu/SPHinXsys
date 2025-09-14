@@ -66,12 +66,13 @@ class MeshWithGridDataPackages : public Mesh
   protected:
     typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
     DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
-    MeshVariableAssemble all_mesh_variables_;     /**< all mesh variables on this mesh. */
-    MeshVariableAssemble mesh_variable_to_write_; /**< mesh variables to write, which are not empty. */
+    MeshVariableAssemble all_mesh_variables_;      /**< all mesh variables on this mesh. */
+    MeshVariableAssemble mesh_variables_to_write_;  /**< mesh variables to write, which are not empty. */
+    MeshVariableAssemble mesh_variables_to_probe_; /**< mesh variables to probe. */
     typedef DataContainerAddressAssemble<DiscreteVariable> BKGMeshVariableAssemble;
     DataContainerUniquePtrAssemble<DiscreteVariable> bkg_mesh_variable_ptrs_;
     BKGMeshVariableAssemble all_bkg_mesh_variables_;     /**< all discrete variables on this mesh. */
-    BKGMeshVariableAssemble bkg_mesh_variable_to_write_; /**< discrete variables to write, which are not empty. */
+    BKGMeshVariableAssemble bkg_mesh_variables_to_write_; /**< discrete variables to write, which are not empty. */
 
   public:
     MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing,
@@ -91,6 +92,8 @@ class MeshWithGridDataPackages : public Mesh
     ConcurrentVec<std::pair<UnsignedInt, int>> &getOccupiedDataPackages();
     template <typename DataType>
     void addMeshVariableToWrite(const std::string &variable_name);
+    template <typename DataType>
+    void addMeshVariableToProbe(const std::string &variable_name);
     template <typename DataType>
     void addBKGMeshVariableToWrite(const std::string &variable_name);
     void writeMeshVariableToPlt(std::ofstream &output_file);
@@ -115,13 +118,15 @@ class MeshWithGridDataPackages : public Mesh
                            DataContainerAddressAssemble<ContainerType> &all_variable_set,
                            const std::string &variable_name);
 
+    template <template <typename> class MeshVariableType>
     struct SyncMeshVariableData
     {
         template <typename DataType, class ExecutionPolicy>
-        void operator()(DataContainerAddressKeeper<MeshVariable<DataType>> &all_mesh_variables_,
+        void operator()(DataContainerAddressKeeper<MeshVariableType<DataType>> &mesh_variables,
                         ExecutionPolicy &ex_policy);
     };
-    OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData> sync_mesh_variable_data_{};
+    OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData<MeshVariable>> sync_mesh_variable_data_{};
+    OperationOnDataAssemble<BKGMeshVariableAssemble, SyncMeshVariableData<BKGMeshVariable>> sync_bkg_mesh_variable_data_{};
 
   public:
     /** wrapper for all index exchange related functions. */
@@ -141,7 +146,11 @@ class MeshWithGridDataPackages : public Mesh
 
   public:
     template <class ExecutionPolicy>
-    void syncMeshVariableData(ExecutionPolicy &ex_policy) { sync_mesh_variable_data_(all_mesh_variables_, ex_policy); };
+    void syncMeshVariablesToWrite(ExecutionPolicy &ex_policy);
+    template <class ExecutionPolicy>
+    void syncBKGMeshVariablesToWrite(ExecutionPolicy &ex_policy);
+    template <class ExecutionPolicy>
+    void syncMeshVariablesToProbe(ExecutionPolicy &ex_policy);
     template <template <typename> typename ContainerType, typename DataType, typename... Args>
     ContainerType<DataType> *registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
                                               DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
@@ -159,6 +168,7 @@ class MeshWithGridDataPackages : public Mesh
     void organizeOccupiedPackages();
     bool isInnerDataPackage(const Arrayi &cell_index);
     bool isWithinCorePackage(UnsignedInt *cell_package_index, std::pair<Arrayi, int> *meta_data_cell, Vecd position);
+    Arrayi boundCellIndex(const Arrayi &input) const;
     UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index);
     void assignDataPackageIndex(const Arrayi &cell_index, const UnsignedInt package_index);
 };
