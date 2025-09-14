@@ -9,7 +9,7 @@ namespace SPH
 {
 //=================================================================================================//
 BaseCellLinkedList::BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
-    : BaseMeshField("CellLinkedList"),
+    : BaseMeshField("CellLinkedList"), base_particles_(base_particles),
       kernel_(*sph_adaptation.getKernel()), total_number_of_cells_(0), dv_particle_index_(nullptr),
       dv_cell_offset_(nullptr), cell_index_lists_(nullptr), cell_data_lists_(nullptr) {}
 //=================================================================================================//
@@ -143,7 +143,9 @@ CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation), mesh_(nullptr)
 {
-    mesh_ = mesh_ptrs_keeper_.createPtr<Mesh>(tentative_bounds, grid_spacing, 2);
+    sv_mesh_ = mesh_ptrs_keeper_.createPtr<SingularVariable<Mesh>>(
+        "BackgroundMesh", tentative_bounds, grid_spacing, 2);
+    mesh_ = sv_mesh_->Data();
     meshes_.push_back(mesh_);
     mesh_offsets_.push_back(0);
     total_number_of_cells_ = mesh_->NumberOfCells();
@@ -203,14 +205,20 @@ MultilevelCellLinkedList::MultilevelCellLinkedList(
       h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_),
       level_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->level_)
 {
-    meshes_.push_back(mesh_ptrs_keeper_.createPtr<Mesh>(tentative_bounds, reference_grid_spacing, 2));
+    meshes_.push_back(mesh_ptrs_keeper_
+                          .createPtr<SingularVariable<Mesh>>(
+                              "BackgroundMesh0", tentative_bounds, reference_grid_spacing, 2)
+                          ->Data());
     mesh_offsets_.push_back(0);
     total_number_of_cells_ = meshes_[0]->NumberOfCells();
     for (UnsignedInt level = 1; level != total_levels; ++level)
     {
         /** all mesh levels aligned at the lower bound of tentative_bounds */
         Real refined_spacing = meshes_[level - 1]->GridSpacing() / 2.0;
-        meshes_.push_back(mesh_ptrs_keeper_.createPtr<Mesh>(tentative_bounds, refined_spacing, 2));
+        meshes_.push_back(mesh_ptrs_keeper_
+                              .createPtr<SingularVariable<Mesh>>(
+                                  "BackgroundMesh" + std::to_string(level), tentative_bounds, refined_spacing, 2)
+                              ->Data());
         mesh_offsets_.push_back(total_number_of_cells_);
         total_number_of_cells_ += meshes_[level]->NumberOfCells();
     }

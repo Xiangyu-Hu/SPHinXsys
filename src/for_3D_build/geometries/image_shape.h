@@ -51,15 +51,14 @@ class ImageShape : public Shape
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
-
+    virtual BoundingBox findBounds() override;
+    
   protected:
     Vecd translation_;
     Matd rotation_;
     std::unique_ptr<ImageMHD<float, 3>> image_;
     Real max_distance_;
     Real min_distance_;
-
-    virtual BoundingBox findBounds() override;
 };
 
 class ImageShapeFromFile : public ImageShape

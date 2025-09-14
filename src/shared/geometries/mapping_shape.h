@@ -65,9 +65,12 @@ class InverseShape : public BaseShapeType
  * @brief Positive thickness will extend the shape and negative thickness will shrink the shape.
  */
 template <class BaseShapeType>
-class ExtrudeShape : public BaseShapeType
+class ExtrudeShape : public Shape
 {
+    UniquePtrKeeper<BaseShapeType> base_shape_keeper_;
     Real thickness_, thickness_sqr_;
+
+    BaseShapeType *base_shape_;
     Vecd getShift(const Vecd &probe_point, const Vecd &original_closest_point)
     {
         Vecd displacement = original_closest_point - probe_point;
@@ -75,17 +78,25 @@ class ExtrudeShape : public BaseShapeType
     };
 
   public:
+    explicit ExtrudeShape(BaseShapeType *base_shape, Real thickness)
+        : Shape("Extruded" + base_shape->getName()),
+          thickness_(thickness), thickness_sqr_(thickness * thickness),
+          base_shape_(base_shape) {};
+
     template <typename... Args>
     explicit ExtrudeShape(Real thickness, Args &&...args)
-        : BaseShapeType(std::forward<Args>(args)...),
-          thickness_(thickness), thickness_sqr_(thickness * thickness){};
+        : Shape("Extruded"), thickness_(thickness), thickness_sqr_(thickness * thickness),
+          base_shape_(base_shape_keeper_.template createPtr<BaseShapeType>(std::forward<Args>(args)...))
+    {
+        name_ = "Extruded" + base_shape_->getName();
+    };
     virtual ~ExtrudeShape() {};
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
     {
-        Vecd original_closest_point = BaseShapeType::findClosestPoint(probe_point);
+        Vecd original_closest_point = base_shape_->findClosestPoint(probe_point);
         Vecd displacement = original_closest_point - probe_point;
-        if (BaseShapeType::checkContain(probe_point))
+        if (base_shape_->checkContain(probe_point))
         {
             return thickness_ > 0.0 ? true : displacement.squaredNorm() > thickness_sqr_;
         }
@@ -97,16 +108,15 @@ class ExtrudeShape : public BaseShapeType
 
     virtual Vecd findClosestPoint(const Vecd &probe_point) override
     {
-        Vecd closest_point = BaseShapeType::findClosestPoint(probe_point);
+        Vecd closest_point = base_shape_->findClosestPoint(probe_point);
         Vecd shift = getShift(probe_point, closest_point);
-        closest_point += BaseShapeType::checkContain(probe_point) ? shift : -shift;
+        closest_point += base_shape_->checkContain(probe_point) ? shift : -shift;
         return closest_point;
     };
 
-  protected:
     virtual BoundingBox findBounds() override
     {
-        BoundingBox bounds = BaseShapeType::findBounds();
+        BoundingBox bounds = base_shape_->findBounds();
         return bounds.expand(thickness_ * Vecd::Ones());
     };
 };

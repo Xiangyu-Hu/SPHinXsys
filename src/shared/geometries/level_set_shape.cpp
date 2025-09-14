@@ -55,15 +55,15 @@ LevelSetShape *LevelSetShape::writeBKGMesh(SPHSystem &sph_system)
     return this;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::cleanLevelSet(Real small_shift_factor)
+LevelSetShape *LevelSetShape::cleanLevelSet(UnsignedInt repeat_times)
 {
-    level_set_.cleanInterface(small_shift_factor);
+    level_set_.cleanInterface(repeat_times);
     return this;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::correctLevelSetSign(Real small_shift_factor)
+LevelSetShape *LevelSetShape::correctLevelSetSign()
 {
-    level_set_.correctTopology(small_shift_factor);
+    level_set_.correctTopology();
     return this;
 }
 //=================================================================================================//
