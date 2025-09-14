@@ -159,7 +159,7 @@ UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::
 UniquePtr<MultilevelLevelSet> ParticleWithLocalRefinement::createLevelSet(Shape &shape, Real refinement_ratio)
 {
     return makeUnique<MultilevelLevelSet>(shape.getBounds(), ReferenceSpacing() / refinement_ratio,
-                                          getLevelSetTotalLevel(), shape, *this);
+                                          getLevelSetTotalLevel(), shape, *this, refinement_ratio);
 }
 //=================================================================================================//
 Real ParticleRefinementByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)

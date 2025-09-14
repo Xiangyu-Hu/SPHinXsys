@@ -50,7 +50,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody airfoil(sph_system, makeShared<ImportModel>("AirFoil"));
     airfoil.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
-    airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(sph_system);
+    airfoil.defineBodyLevelSetShape()->cleanLevelSet(2.0)->writeLevelSet(sph_system);
     airfoil.generateParticles<BaseParticles, Lattice, Adaptive>();
     //----------------------------------------------------------------------
     //	Define outputs functions.
