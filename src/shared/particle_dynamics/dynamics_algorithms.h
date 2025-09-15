@@ -112,10 +112,10 @@ class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
 
     virtual void exec(Real dt = 0.0) override
     {
-        this->setUpdated(this->identifier_.getSPHBody());
+        this->setUpdated(this->identifier_->getSPHBody());
         this->setupDynamics(dt);
         particle_for(ExecutionPolicy(),
-                     this->identifier_.LoopRange(),
+                     this->identifier_->LoopRange(),
                      [&](size_t i)
                      { this->update(i, dt); });
     };
@@ -142,7 +142,7 @@ class ReduceDynamics : public LocalDynamicsType,
     {
         this->setupDynamics(dt);
         ReturnType temp = particle_reduce(ExecutionPolicy(),
-                                          this->identifier_.LoopRange(), this->Reference(), this->getOperation(),
+                                          this->identifier_->LoopRange(), this->Reference(), this->getOperation(),
                                           [&](size_t i) -> ReturnType
                                           { return this->reduce(i, dt); });
         return this->outputResult(temp);
@@ -184,7 +184,7 @@ class BaseInteractionDynamics : public LocalDynamicsType, public BaseDynamics<vo
 
     virtual void exec(Real dt = 0.0) override
     {
-        this->setUpdated(this->identifier_.getSPHBody());
+        this->setUpdated(this->identifier_->getSPHBody());
         this->setupDynamics(dt);
         runInteraction(dt);
     };
@@ -249,7 +249,7 @@ class InteractionDynamics : public BaseInteractionDynamics<LocalDynamicsType, Ex
     virtual void runMainStep(Real dt) override
     {
         particle_for(ExecutionPolicy(),
-                     this->identifier_.LoopRange(),
+                     this->identifier_->LoopRange(),
                      [&](size_t i)
                      { this->interaction(i, dt); });
     }
@@ -281,7 +281,7 @@ class InteractionWithUpdate : public InteractionDynamics<LocalDynamicsType, Exec
     {
         InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
         particle_for(ExecutionPolicy(),
-                     this->identifier_.LoopRange(),
+                     this->identifier_->LoopRange(),
                      [&](size_t i)
                      { this->update(i, dt); });
     };
@@ -307,7 +307,7 @@ class InteractionWithInitialization : public InteractionDynamics<LocalDynamicsTy
     virtual void exec(Real dt = 0.0) override
     {
         particle_for(ExecutionPolicy(),
-                     this->identifier_.LoopRange(),
+                     this->identifier_->LoopRange(),
                      [&](size_t i)
                      { this->initialization(i, dt); });
         InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::exec(dt);
@@ -332,18 +332,18 @@ class Dynamics1Level : public InteractionDynamics<LocalDynamicsType, ExecutionPo
 
     virtual void exec(Real dt = 0.0) override
     {
-        this->setUpdated(this->identifier_.getSPHBody());
+        this->setUpdated(this->identifier_->getSPHBody());
         this->setupDynamics(dt);
 
         particle_for(ExecutionPolicy(),
-                     this->identifier_.LoopRange(),
+                     this->identifier_->LoopRange(),
                      [&](size_t i)
                      { this->initialization(i, dt); });
 
         InteractionDynamics<LocalDynamicsType, ExecutionPolicy>::runInteraction(dt);
 
         particle_for(ExecutionPolicy(),
-                     this->identifier_.LoopRange(),
+                     this->identifier_->LoopRange(),
                      [&](size_t i)
                      { this->update(i, dt); });
     };

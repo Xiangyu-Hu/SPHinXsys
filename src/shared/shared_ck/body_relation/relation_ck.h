@@ -33,6 +33,7 @@
 #include "base_particles.h"
 #include "implementation.h"
 #include "neighbor_method.h"
+#include "neighborhood_ck.h"
 
 namespace SPH
 {
@@ -54,8 +55,8 @@ class RelationBase
 template <typename NeighborMethodType>
 class Relation<NeighborMethodType> : public RelationBase
 {
-    UniquePtrsKeeper<Entity> relation_variable_ptrs_;
-    UniquePtrsKeeper<Neighbor<NeighborMethodType>> neighborhood_ptrs_;
+    SharedPtrsKeeper<Entity> relation_variable_ptrs_;
+    SharedPtrsKeeper<Neighbor<NeighborMethodType>> neighborhood_ptrs_;
     DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
 
     template <class DataType>
@@ -67,7 +68,7 @@ class Relation<NeighborMethodType> : public RelationBase
     Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers,
              ConfigType config_type = ConfigType::Eulerian);
     virtual ~Relation() {};
-    SPHBody &getSPHBody() { return sph_body_; };
+    SPHBody &getSPHBody() { return *sph_body_; };
     DiscreteVariable<Vecd> *getSourcePosition() { return dv_source_pos_; };
     DiscreteVariable<Vecd> *getTargetPosition(UnsignedInt target_index = 0) { return dv_target_pos_[target_index]; };
     DiscreteVariable<UnsignedInt> *getNeighborIndex(UnsignedInt target_index = 0) { return dv_target_neighbor_index_[target_index]; };
@@ -91,8 +92,8 @@ class Relation<NeighborMethodType> : public RelationBase
     };
 
   protected:
-    SPHBody &sph_body_;
-    BaseParticles &particles_;
+    SPHBody *sph_body_;
+    BaseParticles *particles_;
     DiscreteVariable<Vecd> *dv_source_pos_;
     StdVec<DiscreteVariable<Vecd> *> dv_target_pos_;
     UnsignedInt offset_list_size_;
@@ -110,10 +111,10 @@ class Inner<DynamicsIdentifier, NeighborMethodType> : public Relation<NeighborMe
     template <typename... Args>
     explicit Inner(DynamicsIdentifier &identifier, Args &&...args);
     virtual ~Inner() {};
-    DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
+    DynamicsIdentifier &getDynamicsIdentifier() { return *identifier_; };
 
   protected:
-    DynamicsIdentifier &identifier_;
+    DynamicsIdentifier *identifier_;
 };
 
 template <>
@@ -139,7 +140,7 @@ class Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType> : public R
     Contact(const Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType> &original,
             StdVec<UnsignedInt> target_indexes); // delegate constructor
     virtual ~Contact() {};
-    SourceIdentifier &getSourceIdentifier() { return source_identifier_; };
+    SourceIdentifier &getSourceIdentifier() { return *source_identifier_; };
     StdVec<SPHBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
@@ -150,7 +151,7 @@ class Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType> : public R
     TargetIdentifier &getContactIdentifier(UnsignedInt target_index) { return *contact_identifiers_[target_index]; };
 
   protected:
-    SourceIdentifier &source_identifier_;
+    SourceIdentifier *source_identifier_;
     StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;

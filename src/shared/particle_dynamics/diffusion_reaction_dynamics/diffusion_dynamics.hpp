@@ -39,7 +39,7 @@ DiffusionRelaxation<DataDelegationType, DiffusionType>::
 template <class DataDelegationType, class DiffusionType>
 void DiffusionRelaxation<DataDelegationType, DiffusionType>::getDiffusions()
 {
-    AbstractDiffusion &abstract_diffusion = DynamicCast<AbstractDiffusion>(this, this->sph_body_.getBaseMaterial());
+    AbstractDiffusion &abstract_diffusion = DynamicCast<AbstractDiffusion>(this, this->sph_body_->getBaseMaterial());
     StdVec<AbstractDiffusion *> all_diffusions = abstract_diffusion.AllDiffusions();
     for (auto &diffusion : all_diffusions)
     {

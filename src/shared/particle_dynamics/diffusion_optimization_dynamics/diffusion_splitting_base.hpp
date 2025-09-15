@@ -15,7 +15,7 @@ template <typename DataType>
 OptimizationBySplittingAlgorithmBase<DataType>::
     OptimizationBySplittingAlgorithmBase(BaseInnerRelation &inner_relation, const std::string &variable_name)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
-      diffusion_(DynamicCast<LocalIsotropicDiffusion>(this, sph_body_.getBaseMaterial())),
+      diffusion_(DynamicCast<LocalIsotropicDiffusion>(this, sph_body_->getBaseMaterial())),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
       normal_vector_(this->particles_->template getVariableDataByName<Vecd>("NormalDirection")),

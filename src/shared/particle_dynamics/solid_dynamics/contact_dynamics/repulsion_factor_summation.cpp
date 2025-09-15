@@ -47,7 +47,7 @@ void RepulsionFactorSummation<Contact<>>::interaction(size_t index_i, Real dt)
 //=================================================================================================//
 ShellContactFactor::ShellContactFactor(ShellSurfaceContactRelation &solid_body_contact_relation)
     : RepulsionFactorSummation<Base, DataDelegateContact>(solid_body_contact_relation, "RepulsionFactor"),
-      solid_(DynamicCast<Solid>(this, sph_body_.getBaseMaterial())),
+      solid_(DynamicCast<Solid>(this, sph_body_->getBaseMaterial())),
       kernel_(solid_body_contact_relation.getSPHBody().getSPHAdaptation().getKernel()),
       particle_spacing_(solid_body_contact_relation.getSPHBody().getSPHAdaptation().ReferenceSpacing())
 {

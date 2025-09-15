@@ -20,16 +20,21 @@
  * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
  *                                                                           *
  * ------------------------------------------------------------------------- */
-
-/** @file io_all_ck.h
+/** @file all_io.h
 This is the header file that user code should include to pick up all
 io class used in SPHinXsys. **/
 
-#ifndef IO_ALL_CK_H
-#define IO_ALL_CK_H
+#ifndef ALL_IO_H
+#define ALL_IO_H
 
+#include "io_base.h"
 #include "io_base_ck.h"
+#include "io_log.h"
+#include "io_observation.h"
 #include "io_observation_ck.h"
+#include "io_plt.hpp"
+#include "io_simbody.h"
+#include "io_vtk.h"
+#include "io_vtk_mesh.h"
 #include "io_vtk_mesh_ck.h"
-
-#endif // IO_ALL_CK_H
+#endif // ALL_IO_H

@@ -71,10 +71,11 @@ int main(int ac, char *av[])
     Contact<> fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
+    // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-    auto &host_methods = sph_solver.addParticleMethodContainer(par);
+    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.

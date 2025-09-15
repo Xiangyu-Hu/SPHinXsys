@@ -42,8 +42,14 @@ template <typename... T>
 struct SortMethod;
 
 class QuickSort;
-template <class ExecutionPolicy>
-struct SortMethod<ExecutionPolicy>
+template <>
+struct SortMethod<SequencedPolicy>
+{
+    typedef QuickSort type;
+};
+
+template <>
+struct SortMethod<ParallelPolicy>
 {
     typedef QuickSort type;
 };
@@ -51,8 +57,14 @@ struct SortMethod<ExecutionPolicy>
 template <typename... T>
 struct PlusUnsignedInt;
 
-template <class ExecutionPolicy>
-struct PlusUnsignedInt<ExecutionPolicy>
+template <>
+struct PlusUnsignedInt<SequencedPolicy>
+{
+    typedef std::plus<UnsignedInt> type;
+};
+
+template <>
+struct PlusUnsignedInt<ParallelPolicy>
 {
     typedef std::plus<UnsignedInt> type;
 };

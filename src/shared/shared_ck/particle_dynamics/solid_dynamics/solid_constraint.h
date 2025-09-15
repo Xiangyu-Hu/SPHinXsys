@@ -48,6 +48,7 @@ class ConstraintBySimBodyCK : public BaseLocalDynamics<DynamicsIdentifier>
                                    SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
     virtual ~ConstraintBySimBodyCK() {};
     virtual void setupDynamics(Real dt = 0.0) override;
+    SingularVariable<SimbodyState> *svSimbodyState() { return sv_simbody_state_; };
 
     class UpdateKernel
     {

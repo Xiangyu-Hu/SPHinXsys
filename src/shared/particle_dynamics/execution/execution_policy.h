@@ -69,7 +69,7 @@ using SequencedDevicePolicy = DeviceExecution<SequencedPolicy>;
 
 inline constexpr auto seq = SequencedPolicy{};
 inline constexpr auto unseq = UnsequencedPolicy{};
-inline constexpr auto par = ParallelPolicy{};
+inline constexpr auto par_host = ParallelPolicy{};
 inline constexpr auto par_unseq = ParallelUnsequencedPolicy{};
 inline constexpr auto par_device = ParallelDevicePolicy{};
 inline constexpr auto seq_device = SequencedDevicePolicy{};

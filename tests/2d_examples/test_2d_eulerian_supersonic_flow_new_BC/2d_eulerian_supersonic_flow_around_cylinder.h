@@ -123,7 +123,7 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
     // For outer boundaries, we set the non-refective far-field boundary conditions as boundary_type 9.
     void applyFarFieldBoundary(size_t ghost_index, size_t index_i) override
     {
-        Vecd normal_direction_index_i = sph_body_.getInitialShape().findNormalDirection(pos_[index_i]);
+        Vecd normal_direction_index_i = sph_body_->getInitialShape().findNormalDirection(pos_[index_i]);
         Vecd velocity_farfield = Vecd::Zero();
         Real sound_speed = sqrt(p_farfield * heat_capacity_ratio / rho_farfield);
         velocity_farfield[0] = Mach_number * sound_speed;

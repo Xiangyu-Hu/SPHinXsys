@@ -48,12 +48,20 @@ class Viscosity
     virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
     virtual void initializeLocalParameters(BaseParticles *base_particles) {};
 
-    class ComputingKernel : public ParameterFixed<Real>
+    typedef ParameterFixed<Real> OneSideViscosity;
+
+    template <typename ExecutionPolicy>
+    ParameterFixed<Real> getOneSideViscosity(const ExecutionPolicy &ex_policy)
     {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : ParameterFixed<Real>(encloser.mu_){};
+        return ParameterFixed<Real>(mu_);
+    };
+
+    typedef PairGeomAverageFixed<Real> InterParticleViscosity;
+
+    template <typename ExecutionPolicy>
+    PairGeomAverageFixed<Real> getInterParticleViscosity(const ExecutionPolicy &ex_policy, Viscosity &other_viscosity)
+    {
+        return PairGeomAverageFixed<Real>(mu_, other_viscosity.ReferenceViscosity());
     };
 };
 

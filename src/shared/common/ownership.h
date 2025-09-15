@@ -161,8 +161,8 @@ class UniquePtrsKeeper
     DerivedType *createPtr(Args &&...args)
     {
         ptr_keepers_.push_back(UniquePtrKeeper<BaseType>());
-        BaseType *observer = ptr_keepers_.back()
-                                 .template createPtr<DerivedType>(std::forward<Args>(args)...);
+        BaseType *observer =
+            ptr_keepers_.back().template createPtr<DerivedType>(std::forward<Args>(args)...);
         return static_cast<DerivedType *>(observer);
     };
 
@@ -235,5 +235,46 @@ class SharedPtrKeeper
   private:
     SharedPtr<BaseType> ptr_member_;
 };
+
+/**
+ * @class SharedPtrsKeeper
+ * @brief A wrapper to provide an ownership for
+ * a vector of base class shared pointers which point to derived objects.
+ * This is designed to be a private member of class whose objects are copyable.
+ */
+template <class BaseType>
+class SharedPtrsKeeper
+{
+  public:
+    /** used to create a new derived object in the vector
+     * and output its pointer as observer */
+    template <class DerivedType, typename... Args>
+    DerivedType *createPtr(Args &&...args)
+    {
+        ptr_keepers_.push_back(SharedPtrKeeper<BaseType>());
+        BaseType *observer =
+            ptr_keepers_.back().template resetPtr<DerivedType>(std::forward<Args>(args)...);
+        return static_cast<DerivedType *>(observer);
+    };
+
+    SharedPtrKeeper<BaseType> &operator[](size_t index)
+    {
+        if (index < ptr_keepers_.size())
+        {
+            return ptr_keepers_[index];
+        }
+        std::cout << "\n Error in UniquePtrsKeeper : UniquePtr index is out of bound! \n";
+        exit(1);
+    }
+
+    size_t size() const
+    {
+        return ptr_keepers_.size();
+    }
+
+  private:
+    std::vector<SharedPtrKeeper<BaseType>> ptr_keepers_;
+};
+
 } // namespace SPH
 #endif // OWNERSHIP_H

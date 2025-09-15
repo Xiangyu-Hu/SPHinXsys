@@ -157,6 +157,7 @@ class AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
     using TargetFluidType = typename RiemannSolverType::TargetFluid;
     using BaseInteraction = AcousticStep<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+    using CorrectionDataType = typename KernelCorrectionType::CorrectionDataType;
 
   public:
     explicit AcousticStep1stHalf(Contact<Parameters...> &wall_contact_relation);

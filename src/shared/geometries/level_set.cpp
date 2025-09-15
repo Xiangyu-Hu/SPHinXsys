@@ -95,14 +95,17 @@ size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
     return 999; // means an error in level searching
 };
 //=================================================================================================//
-void MultilevelLevelSet::cleanInterface(Real small_shift_factor)
+void MultilevelLevelSet::cleanInterface(UnsignedInt repeat_times)
 {
-    clean_interface_keeper_->exec(small_shift_factor);
+    DynamicCast<RepeatTimes>(this, *clean_interface_keeper_.get())(repeat_times);
+    clean_interface_keeper_->exec();
+    sync_mesh_variables_to_probe_();
 }
 //=============================================================================================//
-void MultilevelLevelSet::correctTopology(Real small_shift_factor)
+void MultilevelLevelSet::correctTopology()
 {
-    correct_topology_keeper_->exec(small_shift_factor);
+    correct_topology_keeper_->exec();
+    sync_mesh_variables_to_probe_();
 }
 //=============================================================================================//
 Real MultilevelLevelSet::probeSignedDistance(const Vecd &position)
@@ -196,8 +199,7 @@ bool MultilevelLevelSet::probeIsWithinMeshBound(const Vecd &position)
 //=================================================================================================//
 void MultilevelLevelSet::writeMeshFieldToPlt(const std::string &partial_file_name)
 {
-    sync_mesh_variable_data_();
-    resetProbes();
+    sync_mesh_variables_to_write_();
     for (size_t l = 0; l != total_levels_; ++l)
     {
         std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
@@ -209,6 +211,7 @@ void MultilevelLevelSet::writeMeshFieldToPlt(const std::string &partial_file_nam
 //=================================================================================================//
 void MultilevelLevelSet::writeBKGMeshToPlt(const std::string &partial_file_name)
 {
+    sync_bkg_mesh_variables_to_write_();
     for (size_t l = 0; l != total_levels_; ++l)
     {
         std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";

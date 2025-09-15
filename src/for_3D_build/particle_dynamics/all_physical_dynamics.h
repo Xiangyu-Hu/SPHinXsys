@@ -32,6 +32,7 @@
 #define ALL_PHYSICAL_DYNAMICS_3D_H
 
 #include "all_shared_physical_dynamics.h"
+#include "all_shared_physical_dynamics_ck.h"
 #include "slender_structure_dynamics.h"
 
 #endif // ALL_PHYSICAL_DYNAMICS_3D_H

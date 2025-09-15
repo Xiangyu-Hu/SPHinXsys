@@ -52,5 +52,12 @@ class BaseDynamics
   private:
     bool is_newly_updated_;
 };
+
+class BaseReturnDynamics
+{
+  public:
+    BaseReturnDynamics() {};
+    virtual ~BaseReturnDynamics() {};
+};
 } // namespace SPH
 #endif // BASE_DYNAMICS_H

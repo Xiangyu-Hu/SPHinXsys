@@ -13,7 +13,7 @@ TransportVelocityCorrectionCK<
     Inner<WithUpdate, KernelCorrectionType, LimiterType, ParticleScopeType, Parameters...>>::
     TransportVelocityCorrectionCK(Inner<Parameters...> &inner_relation, Real coefficient)
     : BaseInteraction(inner_relation),
-      h_ref_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
+      h_ref_(this->getSPHAdaptation().ReferenceSmoothingLength()),
       correction_scaling_(coefficient * h_ref_ * h_ref_),
       limiter_(h_ref_ * h_ref_), within_scope_method_(this->particles_),
       dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement"))
@@ -30,7 +30,7 @@ TransportVelocityCorrectionCK<
     Inner<WithUpdate, KernelCorrectionType, LimiterType, ParticleScopeType, Parameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : correction_scaling_(encloser.correction_scaling_),
-      h_ratio_(ex_policy, encloser.inner_relation_.getNeighborhood()),
+      h_ratio_(ex_policy, encloser.inner_relation_->getNeighborhood()),
       limiter_(encloser.limiter_), dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
       kernel_gradient_integral_(encloser.dv_kernel_gradient_integral_->DelegatedData(ex_policy)),
       within_scope_(ex_policy, encloser.within_scope_method_, *this) {}

@@ -100,7 +100,7 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
           angular_vel_(particles_->getVariableDataByName<Vecd>("AngularVelocity")),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {};
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
     virtual ~ControlledRotation() {};
 
   protected:

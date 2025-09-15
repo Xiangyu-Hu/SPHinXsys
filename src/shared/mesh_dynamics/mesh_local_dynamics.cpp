@@ -186,8 +186,17 @@ UpdateKernelIntegrals::UpdateKernelIntegrals(
     initializeSingularPackages(1, far_field_distance);
 }
 //=============================================================================================//
+MarkCutInterfaces::MarkCutInterfaces(MeshWithGridDataPackagesType &data_mesh, Real perturbation_ratio)
+    : BaseMeshLocalDynamics(data_mesh),
+      threshold_(data_spacing_ * std::pow(Dimensions, 1.0 / Real(Dimensions))),
+      perturbation_ratio_(perturbation_ratio),
+      mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
+      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
+      dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
+//=============================================================================================//
 MarkNearInterface::MarkNearInterface(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
+      threshold_(data_spacing_ * std::pow(Dimensions, 1.0 / Real(Dimensions))),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
@@ -205,10 +214,12 @@ RedistanceInterface::RedistanceInterface(MeshWithGridDataPackagesType &data_mesh
       mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
-DiffuseLevelSetSign::DiffuseLevelSetSign(MeshWithGridDataPackagesType &data_mesh)
+DiffuseLevelSetSign::DiffuseLevelSetSign(
+    MeshWithGridDataPackagesType &data_mesh, SingularVariable<UnsignedInt> &sv_count_modified)
     : BaseMeshLocalDynamics(data_mesh),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
-      dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
+      dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
+      sv_count_modified_(sv_count_modified) {}
 //=================================================================================================//
 } // namespace SPH
