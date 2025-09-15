@@ -100,7 +100,7 @@ class ResetBufferCorrectionMatrixCK : public BaseLocalDynamics<AlignedBoxByCell>
           dv_pos_(particles_->getVariableByName<Vecd>("Position")),
           dv_B_(particles_->registerStateVariable<Matd>(
               "LinearCorrectionMatrix", IdentityMatrix<Matd>::value)),
-          radius_(this->sph_body_.getSPHAdaptation().getKernel()->CutOffRadius()) {}
+          radius_(this->sph_body_->getSPHAdaptation().getKernel()->CutOffRadius()) {}
     class UpdateKernel
     {
       public:
