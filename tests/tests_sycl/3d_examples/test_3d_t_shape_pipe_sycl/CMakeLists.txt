@@ -14,6 +14,10 @@ file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/input/ DESTINATION ${BUILD_INPUT_PATH})
 
+file(MAKE_DIRECTORY ${BUILD_RELOAD_PATH})
+execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_RELOAD_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/reload/ DESTINATION ${BUILD_RELOAD_PATH})
+
 add_executable(${PROJECT_NAME})
 aux_source_directory(. DIR_SRCS)
 target_sources(${PROJECT_NAME} PRIVATE ${DIR_SRCS})

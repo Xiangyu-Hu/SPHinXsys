@@ -10,11 +10,11 @@ struct Parameters
 {
     Real inlet_pressure = 133.3; // 1mmHg
     int number_of_particles = 10;
-    Real t_ref = 0.5;
+    Real t_ref = 0.25;
     std::string fluid_file_path = "./input/full_fluid_raw.stl";
     std::string wall_file_path = "./input/wall.stl";
     // Time and output parameters
-    Real end_time = 2.5;
+    Real end_time = 0.5;
     Real output_dt = end_time / 100.0;
     // Material parameters
     const Real rho0_f = 1060.0; /**< Density of Blood. */
@@ -150,19 +150,22 @@ struct PressureBC
           reset_buffer_correction_matrix(alignedbox_by_cell) {}
 };
 
-void run_t_shape_pipe(int ac, char *av[], Parameters &params);
+void run_t_shape_pipe(Parameters &params, bool run_relaxation = false, bool reload_particles = true);
 
 int main(int ac, char *av[])
 {
     Parameters params;
-    run_t_shape_pipe(ac, av, params);
+    run_t_shape_pipe(params);
     return 0;
 }
 
-void run_t_shape_pipe(int ac, char *av[], Parameters &params)
+void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_particles)
 {
     // --- Define the main execution policy for this case  ---
     using MainExecutionPolicy = execution::ParallelDevicePolicy;
+
+    TickCount function_start_time = TickCount::now();
+
     // --- Section 1: Initialization of Scale and Simulation Parameters ---
     const Real scale = 0.001;
     // Process boundaries
@@ -225,25 +228,33 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
     std::cout << "Domain upper bounds: " << system_bounds.second_.transpose() << std::endl;
 
     SPHSystem sph_system(system_bounds, resolution_ref);
+    sph_system.setRunParticleRelaxation(run_relaxation); // Tag for run particle relaxation for body-fitted distribution
+    sph_system.setReloadParticles(reload_particles);     // Tag for computation with save particles distribution
 
     // --- Section 7: Create Fluid and Solid Bodies ---
     FluidBody water_block(sph_system, water_block_shape);
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(params.rho0_f, params.c_f), params.mu_f);
     water_block.defineComponentLevelSetShape("OuterBoundary");
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(10.);
-    water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
-    std::cout << "total water particles:" << water_block.getBaseParticles().TotalRealParticles() << std::endl;
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+        ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(in_outlet_particle_buffer, water_block.getName())
+        : water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
     SolidBody wall_boundary(sph_system, wall_boundary_shape);
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.defineBodyLevelSetShape();
-    wall_boundary.generateParticles<BaseParticles, Lattice>();
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
+        : wall_boundary.generateParticles<BaseParticles, Lattice>();
 
+    if (sph_system.RunParticleRelaxation())
     { // relaxation of wall boundary
       // Define inner relations
         InnerRelation wall_block_inner(wall_boundary);
         InnerRelation water_block_inner(water_block);
         ContactRelation water_contact(water_block, {&wall_boundary});
+
+        ReloadParticleIO write_particle_reload_files({&wall_boundary, &water_block});
 
         // Randomize particle positions for relaxation
         using namespace relax_dynamics;
@@ -284,6 +295,10 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
             }
         }
         std::cout << "The physics relaxation process of wall finish !" << std::endl;
+
+        write_particle_reload_files.writeToFile(0);
+
+        return;
     }
 
     // --- Section 8: Define Body Relations and Cell Linking ---
@@ -306,10 +321,6 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
         MainExecutionPolicy,
         fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
-    // InteractionDynamicsCK<
-    //     MainExecutionPolicy,
-    //     fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
-    //     fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
 
     InteractionDynamicsCK<MainExecutionPolicy,
                           fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
@@ -335,7 +346,6 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
             std::make_unique<PressureBC<MainExecutionPolicy, LinearCorrectionCK>>(
                 water_block, boundary, in_outlet_particle_buffer, params.t_ref));
     StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> particle_deletion(water_block);
-    // TODO: might need to switch to the other density regularization
     InteractionDynamicsCK<
         MainExecutionPolicy,
         fluid_dynamics::DensityRegularizationComplexInternalPressureBoundary>
@@ -504,4 +514,7 @@ void run_t_shape_pipe(int ac, char *av[], Parameters &params)
         std::cout << "Total wall time for computation: " << total_time.seconds()
                   << " seconds.\n";
     }
+    TimeInterval function_total_time = TickCount::now() - function_start_time;
+    std::cout << "Total wall time for the whole process: " << function_total_time.seconds()
+              << " seconds." << std::endl;
 }
