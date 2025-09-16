@@ -169,33 +169,33 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
     Real outlet_pressure = 0;
     std::vector<BoundaryParameter> boundaries;
     {
-        BoundaryParameter inlet_boundary{
-            .name = "inlet",
-            .center = -10 * scale * Vec3d::UnitX(),
-            .normal = Vec3d::UnitX(),
-            .diameter = Real(1.85 * 2.0 * scale),
-            .is_outlet = false,
-            .pressure = params.inlet_pressure};
+        BoundaryParameter inlet_boundary;
+        inlet_boundary.name = "inlet";
+        inlet_boundary.center = -10 * scale * Vec3d::UnitX();
+        inlet_boundary.normal = Vec3d::UnitX();
+        inlet_boundary.diameter = Real(1.85 * 2.0 * scale);
+        inlet_boundary.is_outlet = false;
+        inlet_boundary.pressure = params.inlet_pressure;
         boundaries.emplace_back(inlet_boundary);
     }
     {
-        BoundaryParameter upper_outlet_boundary{
-            .name = "upper_outlet",
-            .center = scale * Vec3d(5, 30, 0),
-            .normal = -Vec3d::UnitY(),
-            .diameter = Real(1.45 * 2.0 * scale),
-            .is_outlet = true,
-            .pressure = outlet_pressure};
+        BoundaryParameter upper_outlet_boundary;
+        upper_outlet_boundary.name = "upper_outlet";
+        upper_outlet_boundary.center = scale * Vec3d(5, 30, 0);
+        upper_outlet_boundary.normal = -Vec3d::UnitY();
+        upper_outlet_boundary.diameter = Real(1.45 * 2.0 * scale);
+        upper_outlet_boundary.is_outlet = true;
+        upper_outlet_boundary.pressure = outlet_pressure;
         boundaries.emplace_back(upper_outlet_boundary);
     }
     {
-        BoundaryParameter lower_outlet_boundary{
-            .name = "lower_outlet",
-            .center = scale * Vec3d(5, -30, 0),
-            .normal = Vec3d::UnitY(),
-            .diameter = Real(1.21 * 2.0 * scale),
-            .is_outlet = true,
-            .pressure = outlet_pressure};
+        BoundaryParameter lower_outlet_boundary;
+        lower_outlet_boundary.name = "lower_outlet";
+        lower_outlet_boundary.center = scale * Vec3d(5, -30, 0);
+        lower_outlet_boundary.normal = Vec3d::UnitY();
+        lower_outlet_boundary.diameter = Real(1.21 * 2.0 * scale);
+        lower_outlet_boundary.is_outlet = true;
+        lower_outlet_boundary.pressure = outlet_pressure;
         boundaries.emplace_back(lower_outlet_boundary);
     }
     // Set additional simulation parameters
