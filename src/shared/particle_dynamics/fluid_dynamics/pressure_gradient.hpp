@@ -14,7 +14,7 @@ PressureGradient<DataDelegationType>::PressureGradient(BaseRelationType &base_re
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       p_(this->particles_->template getVariableDataByName<Real>("Pressure")),
-      rho_(this->particles_->template getVariableDataByName<Real>("Density")), // YOĞUNLUK EKLENDİ
+      rho_(this->particles_->template getVariableDataByName<Real>("Density")),
       p_grad_(this->particles_->template registerStateVariable<Vecd>("PressureGradient")) {}
 
 template <class KernelCorrectionType>
@@ -34,21 +34,16 @@ void PressureGradient<Inner<KernelCorrectionType>>::interaction(size_t index_i, 
         size_t index_j = inner_neighborhood.j_[n];
         Real p_j = p_[index_j];
 
-        // Follow exactly the same pattern as velocity gradient
         Vecd nablaW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
-        
-        // Note: For pressure (scalar), we don't need transpose() as in velocity (vector)
         pressure_grad -= (p_i - p_j) * nablaW_ijV_j;
     }
 
-    // Direct assignment as in velocity gradient
     p_grad_[index_i] = pressure_grad;
 }
 
 template <class KernelCorrectionType>
 void PressureGradient<Inner<KernelCorrectionType>>::update(size_t index_i, Real dt)
 {
-    // Apply the full kernel correction matrix (linear reproducing condition)
     p_grad_[index_i] = kernel_correction_(index_i) * p_grad_[index_i];
 }
 

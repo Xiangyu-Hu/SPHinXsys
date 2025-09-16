@@ -41,9 +41,8 @@ void EnergyGradient<Contact<Wall>>::interaction(size_t index_i, Real dt)
         {
             size_t index_j = contact_neighborhood.j_[n];
             const Vecd &e_ij = contact_neighborhood.e_ij_[n];
+            Real energy_j = wall_E_[k][index_j];
             
-            Real energy_j = wall_E_[k][index_j]; // e_j değerini aldık
-            //Real energy_j = energy_[index_j]; // e_j değerini aldık
             Vecd nablaW_ijV_j = contact_neighborhood.dW_ij_[n] * Vol_k[index_j] * e_ij;
 
 

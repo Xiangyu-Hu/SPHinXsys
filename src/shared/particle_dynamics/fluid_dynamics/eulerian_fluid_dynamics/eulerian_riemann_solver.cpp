@@ -30,8 +30,25 @@ CompressibleFluidStarState HLLCRiemannSolver::
     Real ur = -e_ij.dot(state_j.vel_);
     Real s_l = ul - compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
     Real s_r = ur + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
-    Real s_star = (state_j.rho_ * ur * (s_r - ur) + state_i.rho_ * ul * (ul - s_l) + state_i.p_ - state_j.p_) /
-                  (state_j.rho_ * (s_r - ur) + state_i.rho_ * (ul - s_l));
+    Real denominator = state_j.rho_ * (s_r - ur) + state_i.rho_ * (ul - s_l);
+    Real s_star;
+    
+    // Fallback for small denominator or extreme s_star values
+    if (std::abs(denominator) < 1e-14) {
+        s_star = 0.5 * (ul + ur);  // Simple average fallback
+    } else {
+        s_star = (state_j.rho_ * ur * (s_r - ur) + state_i.rho_ * ul * (ul - s_l) + state_i.p_ - state_j.p_) / denominator;
+        
+        // Clamp s_star to reasonable range
+        if (s_star < s_l - 1000.0 || s_star > s_r + 1000.0) {
+            s_star = 0.5 * (ul + ur);  // Fallback to average
+        }
+    }
+    
+    // Debug output
+    #ifdef SPH_DEBUG_MUSCL
+    std::cout << "HLLC Debug: ul=" << ul << " ur=" << ur << " s_l=" << s_l << " s_r=" << s_r << " s_star=" << s_star << " denom=" << denominator << std::endl;
+    #endif
     Real p_star = 0.0;
     Vecd v_star = Vecd::Zero();
     Real rho_star = 0.0;
