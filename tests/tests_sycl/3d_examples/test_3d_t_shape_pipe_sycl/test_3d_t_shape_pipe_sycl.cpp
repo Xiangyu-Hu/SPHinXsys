@@ -161,9 +161,6 @@ int main(int ac, char *av[])
 
 void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_particles)
 {
-    // --- Define the main execution policy for this case  ---
-    using MainExecutionPolicy = execution::ParallelDevicePolicy;
-
     TickCount function_start_time = TickCount::now();
 
     // --- Section 1: Initialization of Scale and Simulation Parameters ---
