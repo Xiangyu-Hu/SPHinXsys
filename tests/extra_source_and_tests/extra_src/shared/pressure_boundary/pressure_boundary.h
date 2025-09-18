@@ -41,15 +41,16 @@ class PressureBoundaryCondition : public BaseFlowBoundaryCondition
 {
   public:
     /** default parameter indicates prescribe pressure */
-    explicit PressureBoundaryCondition(AlignedBoxByCell &aligned_box_part)
+    template <typename... Args>
+    explicit PressureBoundaryCondition(AlignedBoxByCell &aligned_box_part, Args &&...args)
         : BaseFlowBoundaryCondition(aligned_box_part),
           aligned_box_(aligned_box_part.getAlignedBox()),
           alignment_axis_(aligned_box_.AlignmentAxis()),
           transform_(aligned_box_.getTransform()),
-          target_pressure_(*this),
+          target_pressure_(*this, std::forward<Args>(args)...),
           kernel_sum_(particles_->getVariableDataByName<Vecd>("KernelSummation")),
           kernel_correction_(this->particles_),
-          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~PressureBoundaryCondition() {};
     AlignedBox &getAlignedBox() { return aligned_box_; };
 
