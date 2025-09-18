@@ -332,7 +332,7 @@ DiscreteVariable<DataType> *BaseParticles::
 
     if (variable == nullptr)
     {
-        std::cout << "\n Error: the variable '" << name << "' is  not exist!" << std::endl;
+        std::cout << "\n Error: the " << type_name<DataType>() << " variable '" << name << "' is  not exist!" << std::endl;
         printBodyName();
         exit(1);
     }

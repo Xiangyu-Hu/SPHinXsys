@@ -42,6 +42,13 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
         supplementary_dynamics_keeper_.template createPtr<
             StateDynamics<ExecutionPolicy, UpdateType>>(std::forward<Args>(args)...));
     return *this;
+} //=================================================================================================//
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
+    addPostStateDynamics(BaseDynamics<void> &state_dynamics)
+{
+    this->post_processes_.push_back(&state_dynamics);
+    return *this;
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
@@ -52,6 +59,14 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
     this->pre_processes_.push_back(
         supplementary_dynamics_keeper_.template createPtr<
             StateDynamics<ExecutionPolicy, UpdateType>>(std::forward<Args>(args)...));
+    return *this;
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
+    addPreStateDynamics(BaseDynamics<void> &state_dynamics)
+{
+    this->pre_processes_.push_back(&state_dynamics);
     return *this;
 }
 //=================================================================================================//

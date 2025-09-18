@@ -61,7 +61,7 @@ class Regularization<Internal>
                         Regularization<Internal> &encloser,
                         ComputingKernelType &computing_kernel){};
 
-        Real operator()(Real &rho_sum) { return rho_sum; };
+        Real operator()(UnsignedInt index_i, Real &rho_sum) { return rho_sum; };
     };
 };
 
@@ -80,7 +80,7 @@ class Regularization<FreeSurface>
                         ComputingKernelType &computing_kernel)
             : rho0_(computing_kernel.InitialDensity()){};
 
-        Real operator()(Real &rho_sum) { return SMAX(rho_sum, rho0_); };
+        Real operator()(UnsignedInt index_i, Real &rho_sum) { return SMAX(rho_sum, rho0_); };
 
       protected:
         Real rho0_;

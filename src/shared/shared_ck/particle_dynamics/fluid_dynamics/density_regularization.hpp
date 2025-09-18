@@ -79,7 +79,7 @@ void DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeTy
     UpdateKernel::update(size_t index_i, Real dt)
 {
     if (this->particle_scope_(index_i))
-        this->rho_[index_i] = regularization_(this->rho_sum_[index_i]);
+        this->rho_[index_i] = regularization_(index_i, this->rho_sum_[index_i]);
 }
 //=================================================================================================//
 template <typename... Parameters>

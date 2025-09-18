@@ -71,7 +71,7 @@ class FinishDataPackages
 class RepeatTimes
 {
   public:
-    explicit RepeatTimes(){};
+    explicit RepeatTimes() {};
     virtual ~RepeatTimes() {};
     void operator()(UnsignedInt repeat_times) { repeat_times_ = repeat_times; }
 
@@ -112,7 +112,7 @@ class CleanInterface : public RepeatTimes, public BaseMeshDynamics, public BaseD
     NeighborMethod<SingleValued> &neighbor_method_;
     MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, neighbor_method_};
-    MeshInnerDynamics<ExecutionPolicy, MarkCutInterfaces> mark_cut_interfaces{mesh_data_, 0.5};
+    MeshInnerDynamics<ExecutionPolicy, MarkCutInterfaces> mark_cut_interfaces{mesh_data_, 1.0};
     MeshCoreDynamics<ExecutionPolicy, RedistanceInterface> redistance_interface{mesh_data_};
     MeshInnerDynamics<ExecutionPolicy, ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
 };

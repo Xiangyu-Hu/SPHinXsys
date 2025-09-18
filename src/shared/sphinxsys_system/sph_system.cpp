@@ -19,6 +19,7 @@ SPHSystem::SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref, size
     Log::init();
     spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
     registerSystemVariable<Real>("PhysicalTime", 0.0);
+    Log::get()->info("The reference resolution of the SPHSystem is {}.", resolution_ref_);
 }
 //=================================================================================================//
 void SPHSystem::setLogLevel(size_t log_level)
