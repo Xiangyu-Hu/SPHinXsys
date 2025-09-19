@@ -1,10 +1,75 @@
 #include "triangle_mesh_shape.h"
 
+#include "sph_system.h"
 namespace SPH
 {
 //=================================================================================================//
-TriangleMeshShape::TriangleMeshShape(const std::string &shape_name)
-    : Shape(shape_name) {}
+TriangleMeshShape::TriangleMeshShape(const std::string &shape_name) : Shape(shape_name) {}
+//=================================================================================================//
+void TriangleMeshShape::writeMeshToFile(SPHSystem &sph_system, Transform transform)
+{
+    std::string filefullpath = sph_system.getIOEnvironment().OutputFolder() + "/" + name_ + ".vtp";
+
+    if (fs::exists(filefullpath))
+    {
+        fs::remove(filefullpath);
+    }
+    std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
+
+    // begin of the XML file
+    out_file << "<?xml version=\"1.0\"?>\n";
+    out_file << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">\n";
+    out_file << "<PolyData>\n";
+
+    // Write point data
+    out_file << "<Piece NumberOfPoints=\"" << vertices_.size()
+             << "\" NumberOfVerts=\"0\" NumberOfLines=\"0\" NumberOfStrips=\"0\" NumberOfPolys=\""
+             << faces_.size() << "\">\n";
+    out_file << "<Points>\n";
+    out_file << "<DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+
+    for (const auto &vertex : vertices_)
+    {
+        Vecd transformed_vertex = transform.shiftFrameStationToBase(Vecd(vertex[0], vertex[1], vertex[2]));
+        out_file << transformed_vertex[0] << " " << transformed_vertex[1] << " " << transformed_vertex[2] << "\n";
+    }
+
+    out_file << "</DataArray>\n";
+    out_file << "</Points>\n";
+
+    // Write face data
+    out_file << "<Polys>\n";
+    out_file << "<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n";
+
+    for (const auto &face : faces_)
+    {
+        for (const auto &vertex : face)
+        {
+            out_file << vertex << " ";
+        }
+        out_file << "\n";
+    }
+
+    out_file << "</DataArray>\n";
+    out_file << "<DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n";
+
+    size_t offset = 0;
+    for (const auto &face : faces_)
+    {
+        offset += face.size();
+        out_file << offset << " ";
+    }
+
+    out_file << "\n</DataArray>\n";
+    out_file << "</Polys>\n";
+
+    // Write file footer
+    out_file << "</Piece>\n";
+    out_file << "</PolyData>\n";
+    out_file << "</VTKFile>\n";
+
+    out_file.close();
+}
 //=================================================================================================//
 void TriangleMeshShape::initializeFromPolygonalMesh(const SimTK::PolygonalMesh &poly_mesh)
 {

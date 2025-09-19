@@ -106,7 +106,7 @@ class RandomizeParticlePositionCK : public LocalDynamics
     explicit RandomizeParticlePositionCK(SPHBody &sph_body, Real randomize_factor = 0.25);
     virtual ~RandomizeParticlePositionCK() {};
 
-    class UpdateKernel : public HostKernel //due to random number generation
+    class UpdateKernel : public HostKernel // due to random number generation
     {
       public:
         template <class ExecutionPolicy, class EncloserType>

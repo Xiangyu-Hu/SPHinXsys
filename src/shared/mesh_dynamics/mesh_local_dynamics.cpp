@@ -188,15 +188,14 @@ UpdateKernelIntegrals::UpdateKernelIntegrals(
 //=============================================================================================//
 MarkCutInterfaces::MarkCutInterfaces(MeshWithGridDataPackagesType &data_mesh, Real perturbation_ratio)
     : BaseMeshLocalDynamics(data_mesh),
-      threshold_(data_spacing_ * std::pow(Dimensions, 1.0 / Real(Dimensions))),
-      perturbation_ratio_(perturbation_ratio),
+      threshold_(data_spacing_ * sqrt(Dimensions)), perturbation_ratio_(perturbation_ratio),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
 MarkNearInterface::MarkNearInterface(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
-      threshold_(data_spacing_ * std::pow(Dimensions, 1.0 / Real(Dimensions))),
+      threshold_(data_spacing_ * sqrt(Dimensions)),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}

@@ -598,7 +598,7 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
 class MarkCutInterfaces : public BaseMeshLocalDynamics
 {
   public:
-    explicit MarkCutInterfaces(MeshWithGridDataPackagesType &data_mesh, Real perturbation_ratio = 1.0);
+    explicit MarkCutInterfaces(MeshWithGridDataPackagesType &data_mesh, Real perturbation_ratio);
     virtual ~MarkCutInterfaces() {};
 
     class UpdateKernel

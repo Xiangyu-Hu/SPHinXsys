@@ -10,7 +10,7 @@ template <class ExecutionPolicy>
 void MultilevelLevelSet::configLevelSetPostProcesses(const ExecutionPolicy &ex_policy)
 {
     clean_interface_keeper_ = makeUnique<CleanInterface<ExecutionPolicy>>(
-        *mesh_data_set_.back(), *neighbor_method_set_.back());
+        *mesh_data_set_.back(), *neighbor_method_set_.back(), refinement_ratio_);
     correct_topology_keeper_ = makeUnique<CorrectTopology<ExecutionPolicy>>(
         *mesh_data_set_.back(), *neighbor_method_set_.back());
 }

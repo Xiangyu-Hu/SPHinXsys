@@ -43,6 +43,7 @@ namespace fs = std::filesystem;
 
 namespace SPH
 {
+class SPHSystem;
 /**
  * @class TriangleMeshShape
  * @brief Derived class for triangle shape processing.
@@ -59,6 +60,7 @@ class TriangleMeshShape : public Shape
     virtual BoundingBox findBounds() override;
     StdVec<std::array<Real, 3>> &getVertices() { return vertices_; }
     StdVec<std::array<int, 3>> &getFaces() { return faces_; }
+    void writeMeshToFile(SPHSystem &sph_system, Transform transform = Transform());
 
   protected:
     StdVec<std::array<Real, 3>> vertices_;

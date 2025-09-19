@@ -256,6 +256,7 @@ class AlignedBoxPart
     virtual ~AlignedBoxPart() {};
     SingularVariable<AlignedBox> *svAlignedBox() { return sv_aligned_box_keeper_.getPtr(); };
     AlignedBox &getAlignedBox() { return aligned_box_; };
+    void writeShapeProxy(SPHSystem &sph_system);
 
   protected:
     AlignedBox &aligned_box_;

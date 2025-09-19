@@ -9,7 +9,8 @@ namespace SPH
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
     Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
-    : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(1)
+    : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(1),
+      refinement_ratio_(refinement_ratio)
 {
     Real data_spacing = coarse_data->DataSpacing() * 0.5;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
@@ -25,7 +26,8 @@ MultilevelLevelSet::MultilevelLevelSet(
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, Real data_spacing,
     size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
-    : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(total_levels)
+    : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(total_levels),
+      refinement_ratio_(refinement_ratio)
 {
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;

@@ -109,6 +109,7 @@ class MultilevelLevelSet : public BaseMeshField
 
     Shape &shape_;        /**< the geometry is described by the level set. */
     size_t total_levels_; /**< level 0 is the coarsest */
+    Real refinement_ratio_;
     StdVec<UnsignedInt *> cell_pkg_index_set_;
     StdVec<std::pair<Arrayi, int> *> pkg_cell_info_set_;
     StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
