@@ -36,7 +36,7 @@ Mat3d get_T_operator(const Vec3d &dtheta)
     Real a2 = (1.0 - cos(dtheta_norm)) / dtheta_norm / dtheta_norm;
     Real a3 = (dtheta_norm - sin(dtheta_norm)) / (dtheta_norm * dtheta_norm * dtheta_norm);
     Mat3d S_dtheta = get_skew_matrix(dtheta);
-    return a1 * Mat3d::Identity() + a2 * S_dtheta + a3 * S_dtheta * S_dtheta.transpose();
+    return a1 * Mat3d::Identity() + a2 * S_dtheta + a3 * dtheta * dtheta.transpose();
 }
 
 class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
@@ -500,7 +500,6 @@ class SimoReissnerRelaxationFirstHalf_v2 : public BaseBarRelaxation
             return std::make_pair(residual, grad_residual);
         };
         constexpr int max_iterations = 20; // @WARN hard-coded maximum number of iterations
-        constexpr auto infinity = std::numeric_limits<Real>::infinity();
         constexpr Real tolerance = 1e-6;
         Vec3d dtheta = dtheta_[index_i]; // use the last step value as the initial guess
         int it = 0;
