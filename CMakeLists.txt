@@ -118,7 +118,10 @@ endif()
 
 # ------ Setup the concrete libraries
 add_subdirectory(src)
-add_subdirectory(modules)
+
+if(SPHINXSYS_BUILD_MODULES)
+    add_subdirectory(modules)
+endif()
 
 # ------ Setup the tests
 if(SPHINXSYS_BUILD_TESTS)
