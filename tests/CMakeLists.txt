@@ -33,6 +33,10 @@ endif()
 
 ADD_SUBDIRECTORY(tests_sycl)
 
+if(SPHINXSYS_BUILD_MODULES)
+    add_subdirectory(modules)
+endif()
+
 if(SPHINXSYS_3D AND SPHINXSYS_BUILD_3D_EXAMPLES)
     ADD_SUBDIRECTORY(3d_examples)
 
