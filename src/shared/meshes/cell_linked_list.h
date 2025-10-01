@@ -56,13 +56,11 @@ class BaseCellLinkedList : public BaseMeshField
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
     UniquePtrsKeeper<SingularVariable<Mesh>> mesh_ptrs_keeper_;
     StdVec<Mesh *> meshes_;
-    StdVec<UnsignedInt> mesh_offsets_; // off sets linear index for each mesh
 
   public:
     BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
     virtual ~BaseCellLinkedList();
     StdVec<Mesh *> &getMeshes() { return meshes_; };
-    StdVec<UnsignedInt> &getMeshOffsets() { return mesh_offsets_; };
     BaseParticles &getBaseParticles() { return base_particles_; };
     void UpdateCellLists(BaseParticles &base_particles);
     /** Insert a cell-linked_list entry to the concurrent index list. */
@@ -81,8 +79,7 @@ class BaseCellLinkedList : public BaseMeshField
     virtual void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis) = 0;
     /** generalized particle search algorithm */
     template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
-    void searchNeighborsByMesh(Mesh &mesh, UnsignedInt mesh_offset,
-                               DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
+    void searchNeighborsByMesh(Mesh &mesh, DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
                                GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
     DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
@@ -109,22 +106,20 @@ class BaseCellLinkedList : public BaseMeshField
     void initialize(BaseParticles &base_particles);
     void clearCellLists();
     void UpdateCellListData(BaseParticles &base_particles);
-    void tagBodyPartByCellByMesh(Mesh &mesh, UnsignedInt mesh_offset,
-                                 ConcurrentCellLists &cell_lists,
+    void tagBodyPartByCellByMesh(Mesh &mesh, ConcurrentCellLists &cell_lists,
                                  ConcurrentIndexVector &cell_indexes,
                                  std::function<bool(Vecd, Real)> &check_included);
-    void writeMeshFieldToPltByMesh(Mesh &mesh, UnsignedInt mesh_offset, std::ofstream &output_file);
-    void tagBoundingCellsByMesh(Mesh &mesh, UnsignedInt mesh_offset,
-                                StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis);
-    void findNearestListDataEntryByMesh(Mesh &mesh, UnsignedInt mesh_offset,
-                                        Real &min_distance_sqr, ListData &nearest_entry,
+    void writeMeshFieldToPltByMesh(Mesh &mesh, std::ofstream &output_file);
+    void tagBoundingCellsByMesh(Mesh &mesh, StdVec<CellLists> &cell_data_lists,
+                                const BoundingBox &bounding_bounds, int axis);
+    void findNearestListDataEntryByMesh(Mesh &mesh, Real &min_distance_sqr, ListData &nearest_entry,
                                         const Vecd &position);
     /** split algorithm */;
     template <class LocalDynamicsFunction>
-    void particle_for_split_by_mesh(const execution::SequencedPolicy &, Mesh &mesh, UnsignedInt mesh_offset,
+    void particle_for_split_by_mesh(const execution::SequencedPolicy &, Mesh &mesh,
                                     const LocalDynamicsFunction &local_dynamics_function);
     template <class LocalDynamicsFunction>
-    void particle_for_split_by_mesh(const execution::ParallelPolicy &, Mesh &mesh, UnsignedInt mesh_offset,
+    void particle_for_split_by_mesh(const execution::ParallelPolicy &, Mesh &mesh,
                                     const LocalDynamicsFunction &local_dynamics_function);
 };
 
@@ -157,7 +152,7 @@ class CellLinkedList : public BaseCellLinkedList
   public:
     CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    ~CellLinkedList(){};
+    ~CellLinkedList() {};
     Mesh &getMesh() { return *mesh_; };
     SingularVariable<Mesh> *svMesh() { return sv_mesh_; };
     void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
@@ -199,7 +194,7 @@ class MultilevelCellLinkedList : public BaseCellLinkedList
     MultilevelCellLinkedList(BoundingBox tentative_bounds,
                              Real reference_grid_spacing, UnsignedInt total_levels,
                              BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    virtual ~MultilevelCellLinkedList(){};
+    virtual ~MultilevelCellLinkedList() {};
     void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
     virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd::Zero()); }; // mocking, not implemented

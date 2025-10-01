@@ -50,7 +50,8 @@ namespace SPH
 class Mesh
 {
   public:
-    Mesh(BoundingBox tentative_bounds, Real grid_spacing, UnsignedInt buffer_width);
+    Mesh(BoundingBox tentative_bounds, Real grid_spacing,
+         UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset = 0);
     Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
     ~Mesh() {};
 
@@ -71,12 +72,13 @@ class Mesh
 
     UnsignedInt LinearCellIndexFromPosition(const Vecd &position) const
     {
-        return transferMeshIndexTo1D(all_cells_, CellIndexFromPosition(position));
+        return linear_cell_index_offset_ +
+               transferMeshIndexTo1D(all_cells_, CellIndexFromPosition(position));
     };
 
     UnsignedInt LinearCellIndex(const Arrayi &cell_index) const
     {
-        return transferMeshIndexTo1D(all_cells_, cell_index);
+        return linear_cell_index_offset_ + transferMeshIndexTo1D(all_cells_, cell_index);
     };
 
     Vecd CellPositionFromIndex(const Arrayi &cell_index) const;
@@ -134,11 +136,12 @@ class Mesh
     };
 
   protected:
-    Vecd mesh_lower_bound_;    /**< mesh lower bound as reference coordinate */
-    Real grid_spacing_;        /**< grid_spacing */
-    UnsignedInt buffer_width_; /**< buffer width to avoid bound check.*/
-    Arrayi all_grid_points_;   /**< number of grid points by dimension */
-    Arrayi all_cells_;         /**< number of cells by dimension */
+    Vecd mesh_lower_bound_;                /**< mesh lower bound as reference coordinate */
+    Real grid_spacing_;                    /**< grid_spacing */
+    UnsignedInt buffer_width_;             /**< buffer width to avoid bound check.*/
+    Arrayi all_grid_points_;               /**< number of grid points by dimension */
+    Arrayi all_cells_;                     /**< number of cells by dimension */
+    UnsignedInt linear_cell_index_offset_; /**< offset for linear cell index, used for sub-mesh */
 
     static UnsignedInt MortonCode(const UnsignedInt &i)
     {

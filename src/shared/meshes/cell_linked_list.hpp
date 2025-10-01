@@ -19,8 +19,7 @@ namespace SPH
 //=================================================================================================//
 template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
 void BaseCellLinkedList::searchNeighborsByMesh(
-    Mesh &mesh, UnsignedInt mesh_offset,
-    DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
+    Mesh &mesh, DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
     GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation)
 {
     Vecd *pos = dynamics_range.getBaseParticles().ParticlePositions();
@@ -36,7 +35,7 @@ void BaseCellLinkedList::searchNeighborsByMesh(
                          mesh.AllCells().min(target_cell_index + (search_depth + 1) * Arrayi::Ones()),
                          [&](const Arrayi &cell_index)
                          {
-                             UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndex(cell_index);
+                             UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
                              ListDataVector &target_particles = cell_data_lists_[linear_index];
                              for (const ListData &data_list : target_particles)
                              {
@@ -48,8 +47,7 @@ void BaseCellLinkedList::searchNeighborsByMesh(
 //=================================================================================================//
 template <class LocalDynamicsFunction>
 void BaseCellLinkedList::particle_for_split_by_mesh(
-    const execution::SequencedPolicy &, Mesh &mesh, UnsignedInt mesh_offset,
-    const LocalDynamicsFunction &local_dynamics_function)
+    const execution::SequencedPolicy &, Mesh &mesh, const LocalDynamicsFunction &local_dynamics_function)
 {
     const Arrayi array3s = 3 * Arrayi::Ones();
 
@@ -74,7 +72,7 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
             // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), l = 0, then (i, j) = (1, 1)
             // l = 1, then (i, j) = (1, 4), l = 3, then (i, j) = (4, 1), etc.
             const Arrayi cell_index = split_cell_index + 3 * Mesh::transfer1DtoMeshIndex(all_cells_k, l);
-            UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndex(cell_index);
+            UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
             // get the list of particles in the cell (i, j)
             const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
             // looping over all particles in the cell (i, j)
@@ -95,7 +93,7 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
         for (UnsignedInt l = 0; l < number_of_cells; l++)
         {
             const Arrayi cell_index = split_cell_index + 3 * Mesh::transfer1DtoMeshIndex(all_cells_k, l);
-            UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndex(cell_index);
+            UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
             const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
             for (UnsignedInt i = cell_list.size(); i != 0; --i)
             {
@@ -107,8 +105,7 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
 //=================================================================================================//
 template <class LocalDynamicsFunction>
 void BaseCellLinkedList::particle_for_split_by_mesh(
-    const execution::ParallelPolicy &, Mesh &mesh, UnsignedInt mesh_offset,
-    const LocalDynamicsFunction &local_dynamics_function)
+    const execution::ParallelPolicy &, Mesh &mesh, const LocalDynamicsFunction &local_dynamics_function)
 {
     const Arrayi array3s = 3 * Arrayi::Ones();
 
@@ -126,7 +123,7 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
                 for (UnsignedInt l = r.begin(); l < r.end(); ++l)
                 {
                     const Arrayi cell_index = split_cell_index + 3 * Mesh::transfer1DtoMeshIndex(all_cells_k, l);
-                    UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndex(cell_index);
+                    UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
                     const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
                     for (const UnsignedInt index_i : cell_list)
                     {
@@ -151,7 +148,7 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
                 for (UnsignedInt l = r.begin(); l < r.end(); ++l)
                 {
                     const Arrayi cell_index = split_cell_index + 3 * Mesh::transfer1DtoMeshIndex(all_cells_k, l);
-                    UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndex(cell_index);
+                    UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
                     const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
                     for (UnsignedInt i = cell_list.size(); i != 0; --i)
                     {
@@ -224,14 +221,14 @@ template <class LocalDynamicsFunction>
 void CellLinkedList::particle_for_split(const execution::SequencedPolicy &,
                                         const LocalDynamicsFunction &local_dynamics_function)
 {
-    particle_for_split_by_mesh(execution::SequencedPolicy(), *mesh_, 0, local_dynamics_function);
+    particle_for_split_by_mesh(execution::SequencedPolicy(), *mesh_, local_dynamics_function);
 }
 //=================================================================================================//
 template <class LocalDynamicsFunction>
 void CellLinkedList::particle_for_split(const execution::ParallelPolicy &,
                                         const LocalDynamicsFunction &local_dynamics_function)
 {
-    particle_for_split_by_mesh(execution::ParallelPolicy(), *mesh_, 0, local_dynamics_function);
+    particle_for_split_by_mesh(execution::ParallelPolicy(), *mesh_, local_dynamics_function);
 }
 //=================================================================================================//
 template <class LocalDynamicsFunction>
@@ -240,7 +237,7 @@ void MultilevelCellLinkedList::particle_for_split(const execution::SequencedPoli
 {
     for (UnsignedInt level = 0; level != meshes_.size(); ++level)
         particle_for_split_by_mesh(execution::SequencedPolicy(),
-                                   *meshes_[level], mesh_offsets_[level], local_dynamics_function);
+                                   *meshes_[level], local_dynamics_function);
 }
 //=================================================================================================//
 template <class LocalDynamicsFunction>
@@ -249,7 +246,7 @@ void MultilevelCellLinkedList::particle_for_split(const execution::ParallelPolic
 {
     for (UnsignedInt level = 0; level != meshes_.size(); ++level)
         particle_for_split_by_mesh(execution::ParallelPolicy(),
-                                   *meshes_[level], mesh_offsets_[level], local_dynamics_function);
+                                   *meshes_[level], local_dynamics_function);
 }
 //=================================================================================================//
 } // namespace SPH
