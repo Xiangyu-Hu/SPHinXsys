@@ -3,7 +3,7 @@
 namespace SPH
 {
 //=================================================================================================//
-Mesh::Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width)
+Mesh::Mesh(BoundingBox tentative_bounds, Real grid_spacing, UnsignedInt buffer_width)
     : grid_spacing_(grid_spacing), buffer_width_(buffer_width)
 {
     Vecd mesh_buffer = Real(buffer_width) * grid_spacing * Vecd::Ones();

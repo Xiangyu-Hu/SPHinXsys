@@ -156,7 +156,7 @@ template <UnsignedInt PKG_SIZE>
 UnsignedInt MeshWithGridDataPackages<PKG_SIZE>::
     IndexHandler::PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index)
 {
-    UnsignedInt index_1d = mesh_.transferMeshIndexTo1D(all_cells_, cell_index);
+    UnsignedInt index_1d = mesh_.LinearCellIndex(cell_index);
     return cell_package_index[index_1d];
 }
 //=============================================================================================//
@@ -279,7 +279,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
 template <UnsignedInt PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::isInnerDataPackage(const Arrayi &cell_index)
 {
-    UnsignedInt index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+    UnsignedInt index_1d = LinearCellIndex(cell_index);
     /**
      * NOTE currently this func is only used in non-device mode;
      *      use the `DelegatedData` version when needed.
@@ -316,7 +316,7 @@ template <UnsignedInt PKG_SIZE>
 UnsignedInt MeshWithGridDataPackages<PKG_SIZE>::
     PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index)
 {
-    UnsignedInt index_1d = transferMeshIndexTo1D(all_cells_, boundCellIndex(cell_index));
+    UnsignedInt index_1d = LinearCellIndex(boundCellIndex(cell_index));
     return cell_package_index[index_1d];
 }
 //=============================================================================================//
@@ -324,7 +324,7 @@ template <UnsignedInt PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::
     assignDataPackageIndex(const Arrayi &cell_index, const UnsignedInt package_index)
 {
-    UnsignedInt index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+    UnsignedInt index_1d = LinearCellIndex(cell_index);
     /**
      * NOTE currently the `bmv_cell_pkg_index_` is only assigned in the host;
      *      use the `DelegatedData` version when needed.

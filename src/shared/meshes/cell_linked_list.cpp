@@ -89,7 +89,7 @@ void BaseCellLinkedList::tagBodyPartByCellByMesh(Mesh &mesh, UnsignedInt mesh_of
                 });
             if (is_included == true)
             {
-                UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell_index);
+                UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndex(cell_index);
                 cell_lists.push_back(&cell_index_lists_[linear_index]);
                 cell_indexes.push_back(linear_index);
             }
@@ -125,7 +125,7 @@ void BaseCellLinkedList::findNearestListDataEntryByMesh(Mesh &mesh, UnsignedInt 
         mesh.AllCells().min(cell + 2 * Arrayi::Ones()),
         [&](const Arrayi &cell_index)
         {
-            UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell_index);
+            UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndex(cell_index);
             ListDataVector &target_particles = cell_data_lists_[linear_index];
             for (const ListData &list_data : target_particles)
             {
@@ -180,7 +180,7 @@ ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
 //=================================================================================================//
 UnsignedInt CellLinkedList::computingSequence(Vecd &position, UnsignedInt index_i)
 {
-    return mesh_->transferMeshIndexToMortonOrder(mesh_->CellIndexFromPosition(position));
+    return Mesh::transferMeshIndexToMortonOrder(mesh_->CellIndexFromPosition(position));
 }
 //=================================================================================================//
 void CellLinkedList::tagBodyPartByCell(ConcurrentCellLists &cell_lists,
@@ -258,8 +258,7 @@ void MultilevelCellLinkedList::InsertListDataEntry(UnsignedInt particle_index, c
 UnsignedInt MultilevelCellLinkedList::computingSequence(Vecd &position, UnsignedInt index_i)
 {
     UnsignedInt level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[index_i]));
-    return meshes_[level]->transferMeshIndexToMortonOrder(
-        meshes_[level]->CellIndexFromPosition(position));
+    return Mesh::transferMeshIndexToMortonOrder(meshes_[level]->CellIndexFromPosition(position));
 }
 //=================================================================================================//
 void MultilevelCellLinkedList::tagBodyPartByCell(ConcurrentCellLists &cell_lists,
