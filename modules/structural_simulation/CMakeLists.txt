@@ -1,3 +1,8 @@
 add_library(structural_simulation_module structural_simulation_class.cpp structural_simulation_class.h)
 target_include_directories(structural_simulation_module PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 target_link_libraries(structural_simulation_module PUBLIC sphinxsys_3d)
+
+if(SPHINXSYS_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
