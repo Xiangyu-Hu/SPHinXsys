@@ -185,6 +185,24 @@ DiscreteVariable<DataType> *BaseCellLinkedList::registerDiscreteVariable(
     return variable;
 }
 //=================================================================================================//
+template <class LocalDynamicsFunction>
+void BaseCellLinkedList::particle_for_split(const execution::SequencedPolicy &seq,
+                                            const LocalDynamicsFunction &local_dynamics_function)
+{
+    for (UnsignedInt level = 0; level != meshes_.size(); ++level)
+        particle_for_split_by_mesh(execution::SequencedPolicy(),
+                                   *meshes_[level], local_dynamics_function);
+}
+//=================================================================================================//
+template <class LocalDynamicsFunction>
+void BaseCellLinkedList::particle_for_split(const execution::ParallelPolicy &par_host,
+                                            const LocalDynamicsFunction &local_dynamics_function)
+{
+    for (UnsignedInt level = 0; level != meshes_.size(); ++level)
+        particle_for_split_by_mesh(execution::ParallelPolicy(),
+                                   *meshes_[level], local_dynamics_function);
+}
+//=================================================================================================//
 template <class ExecutionPolicy>
 NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list)
     : Mesh(cell_linked_list.getMesh()),
@@ -215,38 +233,6 @@ template <class ExecutionPolicy>
 NeighborSearch CellLinkedList::createNeighborSearch(const ExecutionPolicy &ex_policy)
 {
     return NeighborSearch(ex_policy, *this);
-}
-//=================================================================================================//
-template <class LocalDynamicsFunction>
-void CellLinkedList::particle_for_split(const execution::SequencedPolicy &,
-                                        const LocalDynamicsFunction &local_dynamics_function)
-{
-    particle_for_split_by_mesh(execution::SequencedPolicy(), *mesh_, local_dynamics_function);
-}
-//=================================================================================================//
-template <class LocalDynamicsFunction>
-void CellLinkedList::particle_for_split(const execution::ParallelPolicy &,
-                                        const LocalDynamicsFunction &local_dynamics_function)
-{
-    particle_for_split_by_mesh(execution::ParallelPolicy(), *mesh_, local_dynamics_function);
-}
-//=================================================================================================//
-template <class LocalDynamicsFunction>
-void MultilevelCellLinkedList::particle_for_split(const execution::SequencedPolicy &seq,
-                                                  const LocalDynamicsFunction &local_dynamics_function)
-{
-    for (UnsignedInt level = 0; level != meshes_.size(); ++level)
-        particle_for_split_by_mesh(execution::SequencedPolicy(),
-                                   *meshes_[level], local_dynamics_function);
-}
-//=================================================================================================//
-template <class LocalDynamicsFunction>
-void MultilevelCellLinkedList::particle_for_split(const execution::ParallelPolicy &par_host,
-                                                  const LocalDynamicsFunction &local_dynamics_function)
-{
-    for (UnsignedInt level = 0; level != meshes_.size(); ++level)
-        particle_for_split_by_mesh(execution::ParallelPolicy(),
-                                   *meshes_[level], local_dynamics_function);
 }
 //=================================================================================================//
 } // namespace SPH
