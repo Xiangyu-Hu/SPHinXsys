@@ -49,28 +49,30 @@ class BaseCellLinkedList;
  * @class SPHAdaptation
  * @brief Base class for all adaptations.
  * The base class defines essential global parameters. It is also used for single-resolution method.
- * In the constructor parameter, system_refinement_ratio defines the relation between present resolution to the system reference resolution.
+ * In the constructor parameter, overall_refinement_ratio defines the relation between present resolution to the system reference resolution.
  * The derived classes are defined for more complex adaptations.
  */
 class SPHAdaptation
 {
   protected:
-    Real h_spacing_ratio_;         /**< ratio of reference kernel smoothing length to particle spacing */
-    Real system_refinement_ratio_; /**< ratio of system resolution to body resolution, set to 1.0 by default */
-    int local_refinement_level_;   /**< refinement level respect to reference particle spacing */
-    Real spacing_ref_;             /**< reference particle spacing used to determine local particle spacing */
-    Real h_ref_;                   /**< reference smoothing length */
-    UniquePtr<Kernel> kernel_ptr_; /**< unique pointer of kernel function owned this class */
-    Real sigma0_ref_;              /**< Reference number density dependent on h_spacing_ratio_ and kernel function */
-    Real spacing_min_;             /**< minimum particle spacing determined by local refinement level */
-    Real Vol_min_;                 /**< minimum particle volume measure determined by local refinement level */
-    Real h_ratio_max_;             /**< the ratio between the reference smoothing length to the minimum smoothing length */
+    Real system_resolution_;        /**< reference resolution of the SPH system */
+    Real h_spacing_ratio_;          /**< ratio of reference kernel smoothing length to particle spacing */
+    Real overall_refinement_ratio_; /**< ratio of system resolution to body resolution, set to 1.0 by default */
+    int local_refinement_level_;    /**< refinement level respect to reference particle spacing */
+    Real spacing_ref_;              /**< reference particle spacing used to determine local particle spacing */
+    Real h_ref_;                    /**< reference smoothing length */
+    SharedPtr<Kernel> kernel_ptr_;  /**< shared pointer of kernel function so the class is copyable */
+    Real sigma0_ref_;               /**< Reference number density dependent on h_spacing_ratio_ and kernel function */
+    Real spacing_min_;              /**< minimum particle spacing determined by local refinement level */
+    Real Vol_min_;                  /**< minimum particle volume measure determined by local refinement level */
+    Real h_ratio_max_;              /**< the ratio between the reference smoothing length to the minimum smoothing length */
 
   public:
-    explicit SPHAdaptation(Real resolution_ref, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
-    explicit SPHAdaptation(SPHSystem &sph_system, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
+    explicit SPHAdaptation(Real system_resolution, Real h_spacing_ratio = 1.3, Real overall_refinement_ratio = 1.0);
     virtual ~SPHAdaptation() {};
 
+    Real SystemResolution() { return system_resolution_; };
+    Real OverallRefinementRatio() { return overall_refinement_ratio_; };
     int LocalRefinementLevel() { return local_refinement_level_; };
     Real SmoothingLengthSpacingRatio() { return h_spacing_ratio_; };
     Real ReferenceSpacing() { return spacing_ref_; };
@@ -81,7 +83,7 @@ class SPHAdaptation
     Real LatticeNumberDensity() { return sigma0_ref_; };
     Real NumberDensityScaleFactor(Real smoothing_length_ratio);
     virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
-    void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
+    void resetAdaptationRatios(Real h_spacing_ratio, Real new_overall_refinement_ratio = 1.0);
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) {};
     Real SmoothingLengthByLevel(int level) { return h_ref_ / pow(2.0, level); };
     DiscreteVariable<Real> *AdaptiveSmoothingLength(BaseParticles &base_particles);
@@ -118,8 +120,8 @@ class ParticleWithLocalRefinement : public SPHAdaptation
     Real *h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
     int *level_;    /**< the mesh level of the particle */
 
-    ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
-    ParticleWithLocalRefinement(SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
+    ParticleWithLocalRefinement(Real system_resolution, Real h_spacing_ratio_, Real overall_refinement_ratio, int local_refinement_level);
+    ParticleWithLocalRefinement(SPHSystem &sph_system, Real h_spacing_ratio_, Real overall_refinement_ratio, int local_refinement_level);
     virtual ~ParticleWithLocalRefinement() {};
 
     virtual size_t getCellLinkedListTotalLevel();

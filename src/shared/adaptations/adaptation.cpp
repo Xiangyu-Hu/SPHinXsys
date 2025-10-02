@@ -11,16 +11,14 @@
 namespace SPH
 {
 //=================================================================================================//
-SPHAdaptation::SPHAdaptation(Real resolution_ref, Real h_spacing_ratio, Real system_refinement_ratio)
-    : h_spacing_ratio_(h_spacing_ratio), system_refinement_ratio_(system_refinement_ratio),
-      local_refinement_level_(0), spacing_ref_(resolution_ref / system_refinement_ratio_),
+SPHAdaptation::SPHAdaptation(Real system_resolution, Real h_spacing_ratio, Real overall_refinement_ratio)
+    : system_resolution_(system_resolution), h_spacing_ratio_(h_spacing_ratio),
+      overall_refinement_ratio_(overall_refinement_ratio), local_refinement_level_(0),
+      spacing_ref_(system_resolution / overall_refinement_ratio_),
       h_ref_(h_spacing_ratio_ * spacing_ref_), kernel_ptr_(makeUnique<KernelWendlandC2>(h_ref_)),
       sigma0_ref_(computeLatticeNumberDensity(Vecd())),
       spacing_min_(this->MostRefinedSpacingRegular(spacing_ref_, local_refinement_level_)),
       Vol_min_(pow(spacing_min_, Dimensions)), h_ratio_max_(spacing_ref_ / spacing_min_) {};
-//=================================================================================================//
-SPHAdaptation::SPHAdaptation(SPHSystem &sph_system, Real h_spacing_ratio, Real system_refinement_ratio)
-    : SPHAdaptation(sph_system.ReferenceResolution(), h_spacing_ratio, system_refinement_ratio) {}
 //=================================================================================================//
 Real SPHAdaptation::MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level)
 {
@@ -58,8 +56,7 @@ Real SPHAdaptation::computeLatticeNumberDensity(Vec3d zero)
         for (int j = -search_depth; j <= search_depth; ++j)
             for (int i = -search_depth; i <= search_depth; ++i)
             {
-                Vec3d particle_location(i * particle_spacing,
-                                        j * particle_spacing, k * particle_spacing);
+                Vec3d particle_location(i * particle_spacing, j * particle_spacing, k * particle_spacing);
                 Real distance = particle_location.norm();
                 if (distance < cutoff_radius)
                     sigma += kernel_ptr_->W(distance, particle_location);
@@ -72,11 +69,11 @@ Real SPHAdaptation::NumberDensityScaleFactor(Real smoothing_length_ratio)
     return pow(smoothing_length_ratio, Dimensions);
 }
 //=================================================================================================//
-void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
+void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_overall_refinement_ratio)
 {
     h_spacing_ratio_ = h_spacing_ratio;
-    spacing_ref_ = spacing_ref_ * system_refinement_ratio_ / new_system_refinement_ratio;
-    system_refinement_ratio_ = new_system_refinement_ratio;
+    spacing_ref_ = spacing_ref_ * overall_refinement_ratio_ / new_overall_refinement_ratio;
+    overall_refinement_ratio_ = new_overall_refinement_ratio;
     h_ref_ = h_spacing_ratio_ * spacing_ref_;
     getKernel()->resetSmoothingLength(h_ref_);
     sigma0_ref_ = computeLatticeNumberDensity(Vecd());
@@ -111,9 +108,9 @@ UniquePtr<MultilevelLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real r
 }
 //=================================================================================================//
 ParticleWithLocalRefinement::
-    ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio, Real system_refinement_ratio,
+    ParticleWithLocalRefinement(Real system_resolution, Real h_spacing_ratio, Real overall_refinement_ratio,
                                 int local_refinement_level)
-    : SPHAdaptation(resolution_ref, h_spacing_ratio, system_refinement_ratio), h_ratio_(nullptr), level_(nullptr)
+    : SPHAdaptation(system_resolution, h_spacing_ratio, overall_refinement_ratio), h_ratio_(nullptr), level_(nullptr)
 {
     local_refinement_level_ = local_refinement_level;
     spacing_min_ = MostRefinedSpacingRegular(spacing_ref_, local_refinement_level_);
@@ -125,8 +122,8 @@ ParticleWithLocalRefinement::
 }
 //=================================================================================================//
 ParticleWithLocalRefinement::ParticleWithLocalRefinement(
-    SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level)
-    : ParticleWithLocalRefinement(sph_system.ReferenceResolution(), h_spacing_ratio_, system_refinement_ratio,
+    SPHSystem &sph_system, Real h_spacing_ratio_, Real overall_refinement_ratio, int local_refinement_level)
+    : ParticleWithLocalRefinement(sph_system.ReferenceResolution(), h_spacing_ratio_, overall_refinement_ratio,
                                   local_refinement_level) {}
 //=================================================================================================//
 void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &base_particles)

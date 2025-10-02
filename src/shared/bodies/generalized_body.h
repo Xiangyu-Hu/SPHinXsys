@@ -21,22 +21,34 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	all_bodies.h
- * @brief 	This is the header file that user code should include to pick up all
- *          bodies used in SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file    generalized_body.h
+ * @brief 	This is the class for templated bodies.
+ * @author	Xiangyu Hu
  */
-#ifndef ALL_BODIES_H
-#define ALL_BODIES_H
 
-#pragma once
+#ifndef GENERALIZED_BODY_H
+#define GENERALIZED_BODY_H
 
-#include "all_complex_bodies.h"
-#include "base_body_part.h"
-#include "body_partition.h"
-#include "fluid_body.h"
-#include "generalized_body.h"
-#include "observer_body.h"
-#include "solid_body.h"
+#include "base_body.h"
 
-#endif // ALL_BODIES_H
+namespace SPH
+{
+template <typename...>
+class GeneralizedBody;
+
+template <class BaseBodyType, class AdaptationType>
+class GeneralizedBody<BaseBodyType, AdaptationType> : public BaseBodyType
+{
+    AdaptationType adaptation_;
+
+  public:
+    template <typename... Args>
+    GeneralizedBody(AdaptationType adaptation, SPHSystem &sph_system, Args &&...args)
+        : BaseBodyType(sph_system, std::forward<Args>(args)...), adaptation_(adaptation)
+    {
+        this->sph_adaptation_ = &adaptation_;
+    };
+    virtual ~GeneralizedBody() {};
+};
+} // namespace SPH
+#endif // GENERALIZED_BODY_H

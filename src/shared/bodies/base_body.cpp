@@ -74,9 +74,9 @@ BoundingBox SPHBody::getSPHBodyBounds()
     return is_bound_set_ ? bound_ : initial_shape_->getBounds();
 }
 //=================================================================================================//
-void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
+void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_overall_refinement_ratio)
 {
-    sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
+    sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_overall_refinement_ratio);
 }
 //=================================================================================================//
 BaseCellLinkedList &RealBody::getCellLinkedList()
