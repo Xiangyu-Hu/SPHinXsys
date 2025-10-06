@@ -143,7 +143,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeBKGMeshVariableToPlt(std::ofstream
         Arrayi::Zero(), number_of_operation,
         [&](const Arrayi &cell_index)
         {
-            UnsignedInt linear_index = transferMeshIndexTo1D(all_cells_, cell_index);
+            UnsignedInt linear_index = LinearCellIndex(cell_index);
             Vecd data_position = CellPositionFromIndex(cell_index);
             output_file << data_position[0] << " " << data_position[1] << " " << data_position[2] << " ";
 

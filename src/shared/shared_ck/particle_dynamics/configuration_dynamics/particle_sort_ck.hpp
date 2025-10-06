@@ -100,7 +100,7 @@ template <class ExecutionPolicy>
 void ParticleSortCK<ExecutionPolicy>::ComputingKernel::
     prepareSequence(UnsignedInt index_i)
 {
-    sequence_[index_i] = mesh_.transferMeshIndexToMortonOrder(mesh_.CellIndexFromPosition(pos_[index_i]));
+    sequence_[index_i] = Mesh::transferMeshIndexToMortonOrder(mesh_.CellIndexFromPosition(pos_[index_i]));
     index_permutation_[index_i] = index_i;
 }
 //=================================================================================================//
