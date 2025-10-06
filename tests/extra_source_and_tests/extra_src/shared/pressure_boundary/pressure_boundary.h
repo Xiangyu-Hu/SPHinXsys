@@ -47,12 +47,14 @@ class PressureBoundaryCondition : public BaseFlowBoundaryCondition
           aligned_box_(aligned_box_part.getAlignedBox()),
           alignment_axis_(aligned_box_.AlignmentAxis()),
           transform_(aligned_box_.getTransform()),
-          target_pressure_(*this, std::forward<Args>(args)...),
+          target_pressure_(TargetPressure(aligned_box_part), std::forward<Args>(args)...),
           kernel_sum_(particles_->getVariableDataByName<Vecd>("KernelSummation")),
           kernel_correction_(this->particles_),
           physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~PressureBoundaryCondition() {};
     AlignedBox &getAlignedBox() { return aligned_box_; };
+
+    TargetPressure *getTargetPressure() { return &target_pressure_; }
 
     void update(size_t index_i, Real dt = 0.0)
     {
