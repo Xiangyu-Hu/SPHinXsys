@@ -3,8 +3,10 @@
 namespace SPH
 {
 //=================================================================================================//
-Mesh::Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width)
-    : grid_spacing_(grid_spacing), buffer_width_(buffer_width)
+Mesh::Mesh(BoundingBox tentative_bounds, Real grid_spacing,
+           UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset)
+    : grid_spacing_(grid_spacing), buffer_width_(buffer_width),
+      linear_cell_index_offset_(linear_cell_index_offset)
 {
     Vecd mesh_buffer = Real(buffer_width) * grid_spacing * Vecd::Ones();
     mesh_lower_bound_ = tentative_bounds.first_ - mesh_buffer;
@@ -15,7 +17,8 @@ Mesh::Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width)
 //=================================================================================================//
 Mesh::Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points)
     : mesh_lower_bound_{mesh_lower_bound}, grid_spacing_{grid_spacing},
-      buffer_width_(0), all_grid_points_{all_grid_points}
+      buffer_width_(0), all_grid_points_{all_grid_points},
+      linear_cell_index_offset_(0)
 {
     all_cells_ = all_grid_points_ - Arrayi::Ones();
 }

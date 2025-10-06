@@ -10,6 +10,7 @@ namespace SPH
 //=================================================================================================//
 BaseCellLinkedList::BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseMeshField("CellLinkedList"), base_particles_(base_particles),
+      coarsest_mesh_(nullptr), finest_mesh_(nullptr),
       kernel_(*sph_adaptation.getKernel()), total_number_of_cells_(0), dv_particle_index_(nullptr),
       dv_cell_offset_(nullptr), cell_index_lists_(nullptr), cell_data_lists_(nullptr) {}
 //=================================================================================================//
@@ -29,6 +30,19 @@ void BaseCellLinkedList::initialize(BaseParticles &base_particles)
                           .createPtr<DiscreteVariable<UnsignedInt>>("CellOffset", cell_offset_list_size_);
     cell_index_lists_ = new ConcurrentIndexVector[total_number_of_cells_];
     cell_data_lists_ = new ListDataVector[total_number_of_cells_];
+    coarsest_mesh_ = meshes_.front();
+    finest_mesh_ = meshes_.back();
+}
+//=================================================================================================//
+void BaseCellLinkedList::writeMeshFieldToPlt(const std::string &partial_file_name)
+{
+    for (UnsignedInt l = 0; l != meshes_.size(); ++l)
+    {
+        std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
+        std::ofstream out_file(full_file_name.c_str(), std::ios::app);
+        writeMeshFieldToPltByMesh(*meshes_[l], out_file);
+        out_file.close();
+    }
 }
 //=================================================================================================//
 void BaseCellLinkedList::clearCellLists()
@@ -67,8 +81,7 @@ void BaseCellLinkedList::UpdateCellListData(BaseParticles &base_particles)
         ap);
 }
 //=================================================================================================//
-void BaseCellLinkedList::tagBodyPartByCellByMesh(Mesh &mesh, UnsignedInt mesh_offset,
-                                                 ConcurrentCellLists &cell_lists,
+void BaseCellLinkedList::tagBodyPartByCellByMesh(Mesh &mesh, ConcurrentCellLists &cell_lists,
                                                  ConcurrentIndexVector &cell_indexes,
                                                  std::function<bool(Vecd, Real)> &check_included)
 {
@@ -89,7 +102,7 @@ void BaseCellLinkedList::tagBodyPartByCellByMesh(Mesh &mesh, UnsignedInt mesh_of
                 });
             if (is_included == true)
             {
-                UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell_index);
+                UnsignedInt linear_index = +mesh.LinearCellIndex(cell_index);
                 cell_lists.push_back(&cell_index_lists_[linear_index]);
                 cell_indexes.push_back(linear_index);
             }
@@ -115,8 +128,7 @@ void BaseCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     UpdateCellListData(base_particles);
 }
 //=================================================================================================//
-void BaseCellLinkedList::findNearestListDataEntryByMesh(Mesh &mesh, UnsignedInt mesh_offset,
-                                                        Real &min_distance_sqr, ListData &nearest_entry,
+void BaseCellLinkedList::findNearestListDataEntryByMesh(Mesh &mesh, Real &min_distance_sqr, ListData &nearest_entry,
                                                         const Vecd &position)
 {
     Arrayi cell = mesh.CellIndexFromPosition(position);
@@ -125,7 +137,7 @@ void BaseCellLinkedList::findNearestListDataEntryByMesh(Mesh &mesh, UnsignedInt 
         mesh.AllCells().min(cell + 2 * Arrayi::Ones()),
         [&](const Arrayi &cell_index)
         {
-            UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell_index);
+            UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
             ListDataVector &target_particles = cell_data_lists_[linear_index];
             for (const ListData &list_data : target_particles)
             {
@@ -139,6 +151,39 @@ void BaseCellLinkedList::findNearestListDataEntryByMesh(Mesh &mesh, UnsignedInt 
         });
 }
 //=================================================================================================//
+UnsignedInt BaseCellLinkedList::computingSequence(Vecd &position, UnsignedInt index_i)
+{
+    return Mesh::transferMeshIndexToMortonOrder(finest_mesh_->CellIndexFromPosition(position));
+}
+//=================================================================================================//
+ListData BaseCellLinkedList::findNearestListDataEntry(const Vecd &position)
+{
+    Real min_distance_sqr = MaxReal;
+    ListData nearest_entry = std::make_pair(MaxSize_t, MaxReal * Vecd::Ones());
+    for (UnsignedInt level = 0; level != meshes_.size(); ++level)
+        findNearestListDataEntryByMesh(*meshes_[level], min_distance_sqr, nearest_entry, position);
+    return nearest_entry;
+}
+//=================================================================================================//
+void BaseCellLinkedList::tagBodyPartByCell(ConcurrentCellLists &cell_lists,
+                                           ConcurrentIndexVector &cell_indexes,
+                                           std::function<bool(Vecd, Real)> &check_included)
+{
+    for (UnsignedInt l = 0; l != meshes_.size(); ++l)
+    {
+        tagBodyPartByCellByMesh(*meshes_[l], cell_lists, cell_indexes, check_included);
+    }
+}
+//=================================================================================================//
+void BaseCellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_data_lists,
+                                          const BoundingBox &bounding_bounds, int axis)
+{
+    for (UnsignedInt l = 0; l != meshes_.size(); ++l)
+    {
+        tagBoundingCellsByMesh(*meshes_[l], cell_data_lists, bounding_bounds, axis);
+    }
+}
+//=================================================================================================//
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation), mesh_(nullptr)
@@ -147,7 +192,6 @@ CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
         "BackgroundMesh", tentative_bounds, grid_spacing, 2);
     mesh_ = sv_mesh_->Data();
     meshes_.push_back(mesh_);
-    mesh_offsets_.push_back(0);
     total_number_of_cells_ = mesh_->NumberOfCells();
     initialize(base_particles);
 }
@@ -164,40 +208,6 @@ void CellLinkedList ::InsertListDataEntry(UnsignedInt particle_index, const Vecd
     cell_data_lists_[linear_index].emplace_back(std::make_pair(particle_index, particle_position));
 }
 //=================================================================================================//
-void CellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_data_lists,
-                                      const BoundingBox &bounding_bounds, int axis)
-{
-    tagBoundingCellsByMesh(*mesh_, 0, cell_data_lists, bounding_bounds, axis);
-}
-//=================================================================================================//
-ListData CellLinkedList::findNearestListDataEntry(const Vecd &position)
-{
-    Real min_distance_sqr = MaxReal;
-    ListData nearest_entry = std::make_pair(MaxSize_t, MaxReal * Vecd::Ones());
-    findNearestListDataEntryByMesh(*mesh_, 0, min_distance_sqr, nearest_entry, position);
-    return nearest_entry;
-}
-//=================================================================================================//
-UnsignedInt CellLinkedList::computingSequence(Vecd &position, UnsignedInt index_i)
-{
-    return mesh_->transferMeshIndexToMortonOrder(mesh_->CellIndexFromPosition(position));
-}
-//=================================================================================================//
-void CellLinkedList::tagBodyPartByCell(ConcurrentCellLists &cell_lists,
-                                       ConcurrentIndexVector &cell_indexes,
-                                       std::function<bool(Vecd, Real)> &check_included)
-{
-    tagBodyPartByCellByMesh(*mesh_, 0, cell_lists, cell_indexes, check_included);
-}
-//=================================================================================================//
-void CellLinkedList::writeMeshFieldToPlt(const std::string &partial_file_name)
-{
-    std::string full_file_name = partial_file_name + ".dat";
-    std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-    writeMeshFieldToPltByMesh(*mesh_, 0, out_file);
-    out_file.close();
-}
-//=================================================================================================//
 MultilevelCellLinkedList::MultilevelCellLinkedList(
     BoundingBox tentative_bounds, Real reference_grid_spacing, UnsignedInt total_levels,
     BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
@@ -207,9 +217,8 @@ MultilevelCellLinkedList::MultilevelCellLinkedList(
 {
     meshes_.push_back(mesh_ptrs_keeper_
                           .createPtr<SingularVariable<Mesh>>(
-                              "BackgroundMesh0", tentative_bounds, reference_grid_spacing, 2)
+                              "BackgroundMesh0", tentative_bounds, reference_grid_spacing, 2, 0)
                           ->Data());
-    mesh_offsets_.push_back(0);
     total_number_of_cells_ = meshes_[0]->NumberOfCells();
     for (UnsignedInt level = 1; level != total_levels; ++level)
     {
@@ -217,9 +226,9 @@ MultilevelCellLinkedList::MultilevelCellLinkedList(
         Real refined_spacing = meshes_[level - 1]->GridSpacing() / 2.0;
         meshes_.push_back(mesh_ptrs_keeper_
                               .createPtr<SingularVariable<Mesh>>(
-                                  "BackgroundMesh" + std::to_string(level), tentative_bounds, refined_spacing, 2)
+                                  "BackgroundMesh" + std::to_string(level),
+                                  tentative_bounds, refined_spacing, 2, total_number_of_cells_)
                               ->Data());
-        mesh_offsets_.push_back(total_number_of_cells_);
         total_number_of_cells_ += meshes_[level]->NumberOfCells();
     }
     initialize(base_particles);
@@ -243,53 +252,16 @@ void MultilevelCellLinkedList::insertParticleIndex(UnsignedInt particle_index, c
 {
     UnsignedInt level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
     level_[particle_index] = level;
-    UnsignedInt linear_index = mesh_offsets_[level] + meshes_[level]->LinearCellIndexFromPosition(particle_position);
+    UnsignedInt linear_index = meshes_[level]->LinearCellIndexFromPosition(particle_position);
     cell_index_lists_[linear_index].emplace_back(particle_index);
 }
 //=================================================================================================//
 void MultilevelCellLinkedList::InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position)
 {
     UnsignedInt level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
-    UnsignedInt linear_index = mesh_offsets_[level] + meshes_[level]->LinearCellIndexFromPosition(particle_position);
+    UnsignedInt linear_index = meshes_[level]->LinearCellIndexFromPosition(particle_position);
     cell_data_lists_[linear_index]
         .emplace_back(std::make_pair(particle_index, particle_position));
-}
-//=================================================================================================//
-UnsignedInt MultilevelCellLinkedList::computingSequence(Vecd &position, UnsignedInt index_i)
-{
-    UnsignedInt level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[index_i]));
-    return meshes_[level]->transferMeshIndexToMortonOrder(
-        meshes_[level]->CellIndexFromPosition(position));
-}
-//=================================================================================================//
-void MultilevelCellLinkedList::tagBodyPartByCell(ConcurrentCellLists &cell_lists,
-                                                 ConcurrentIndexVector &cell_indexes,
-                                                 std::function<bool(Vecd, Real)> &check_included)
-{
-    for (UnsignedInt l = 0; l != meshes_.size(); ++l)
-    {
-        tagBodyPartByCellByMesh(*meshes_[l], mesh_offsets_[l], cell_lists, cell_indexes, check_included);
-    }
-}
-//=================================================================================================//
-void MultilevelCellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_data_lists,
-                                                const BoundingBox &bounding_bounds, int axis)
-{
-    for (UnsignedInt l = 0; l != meshes_.size(); ++l)
-    {
-        tagBoundingCellsByMesh(*meshes_[l], mesh_offsets_[l], cell_data_lists, bounding_bounds, axis);
-    }
-}
-//=================================================================================================//
-void MultilevelCellLinkedList::writeMeshFieldToPlt(const std::string &partial_file_name)
-{
-    for (UnsignedInt l = 0; l != meshes_.size(); ++l)
-    {
-        std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
-        std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-        writeMeshFieldToPltByMesh(*meshes_[l], mesh_offsets_[l], out_file);
-        out_file.close();
-    }
 }
 //=================================================================================================//
 } // namespace SPH

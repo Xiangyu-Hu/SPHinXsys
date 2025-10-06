@@ -11,7 +11,7 @@ inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &pa
 {
     UnsignedInt sort_index = data_mesh_->getOccupiedDataPackages()[package_index - num_singular_pkgs_].first;
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
-    UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
+    UnsignedInt index_1d = data_mesh_->LinearCellIndex(cell_index);
 
     MeshVariableData<Real> &grid_phi = phi_[package_index];
     Real phi0 = grid_phi[0][0];
@@ -27,7 +27,7 @@ inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &pa
 //=================================================================================================//
 inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
 {
-    UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
+    UnsignedInt index_1d = data_mesh_->LinearCellIndex(cell_index);
     if (cell_contain_id_[index_1d] == 2)
     {
         if (mesh_any_of(
@@ -35,7 +35,7 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
                 data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
                 [&](int l, int m)
                 {
-                    UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m));
+                    UnsignedInt neighbor_1d = data_mesh_->LinearCellIndex(Arrayi(l, m));
                     return cell_contain_id_[neighbor_1d] == -1;
                 }))
         {
@@ -49,7 +49,7 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
                      data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
                      [&](int l, int m)
                      {
-                         UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m));
+                         UnsignedInt neighbor_1d = data_mesh_->LinearCellIndex(Arrayi(l, m));
                          return cell_contain_id_[neighbor_1d] == 1;
                      }))
         {

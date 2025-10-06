@@ -15,7 +15,7 @@ void InnerRelation::updateConfiguration()
 {
     resetNeighborhoodCurrentSize();
     Mesh &mesh = cell_linked_list_.getMesh();
-    cell_linked_list_.searchNeighborsByMesh(mesh, 0, sph_body_, inner_configuration_,
+    cell_linked_list_.searchNeighborsByMesh(mesh, sph_body_, inner_configuration_,
                                             get_single_search_depth_, get_inner_neighbor_);
 }
 //=================================================================================================//
@@ -39,11 +39,10 @@ void AdaptiveInnerRelation::updateConfiguration()
 {
     resetNeighborhoodCurrentSize();
     StdVec<Mesh *> &meshes = multi_level_cell_linked_list_.getMeshes();
-    StdVec<UnsignedInt> &mesh_offsets = multi_level_cell_linked_list_.getMeshOffsets();
     for (size_t l = 0; l != meshes.size(); ++l)
     {
         multi_level_cell_linked_list_.searchNeighborsByMesh(
-            *meshes[l], mesh_offsets[l], sph_body_, inner_configuration_,
+            *meshes[l], sph_body_, inner_configuration_,
             *get_multi_level_search_depth_[l], get_adaptive_inner_neighbor_);
     }
 }
@@ -70,7 +69,7 @@ void SelfSurfaceContactRelation::updateConfiguration()
     resetNeighborhoodCurrentSize();
     Mesh &mesh = cell_linked_list_.getMesh();
     cell_linked_list_.searchNeighborsByMesh(
-        mesh, 0, body_surface_layer_, inner_configuration_,
+        mesh, body_surface_layer_, inner_configuration_,
         get_single_search_depth_, get_self_contact_neighbor_);
 }
 //=================================================================================================//
@@ -94,7 +93,7 @@ void ShellInnerRelationWithContactKernel::updateConfiguration()
     resetNeighborhoodCurrentSize();
     Mesh &mesh = cell_linked_list_.getMesh();
     cell_linked_list_.searchNeighborsByMesh(
-        mesh, 0, sph_body_, inner_configuration_,
+        mesh, sph_body_, inner_configuration_,
         get_contact_search_depth_, get_inner_neighbor_with_contact_kernel_);
 }
 //=================================================================================================//
@@ -109,7 +108,7 @@ void ShellSelfContactRelation::updateConfiguration()
     resetNeighborhoodCurrentSize();
     Mesh &mesh = cell_linked_list_.getMesh();
     cell_linked_list_.searchNeighborsByMesh(
-        mesh, 0, sph_body_, inner_configuration_,
+        mesh, sph_body_, inner_configuration_,
         get_single_search_depth_, get_shell_self_contact_neighbor_);
 }
 //=================================================================================================//
@@ -117,11 +116,10 @@ void AdaptiveSplittingInnerRelation::updateConfiguration()
 {
     resetNeighborhoodCurrentSize();
     StdVec<Mesh *> &meshes = multi_level_cell_linked_list_.getMeshes();
-    StdVec<UnsignedInt> &mesh_offsets = multi_level_cell_linked_list_.getMeshOffsets();
     for (size_t l = 0; l != meshes.size(); ++l)
     {
         multi_level_cell_linked_list_.searchNeighborsByMesh(
-            *meshes[l], mesh_offsets[l], sph_body_, inner_configuration_,
+            *meshes[l], sph_body_, inner_configuration_,
             *get_multi_level_search_depth_[l], get_adaptive_splitting_inner_neighbor_);
     }
 }
