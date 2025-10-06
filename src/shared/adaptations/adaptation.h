@@ -158,7 +158,7 @@ class ParticleWithLocalRefinement : public SPHAdaptation
                 if (h_ratio_[index_i] < pow(2.0, i))
                     return i - 1;
             }
-            return local_refinement_level_;
+            return local_refinement_level_ - 1;
         }
 
       public:
