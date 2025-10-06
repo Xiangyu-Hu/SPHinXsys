@@ -111,8 +111,9 @@ struct InflowVelocity
         Real w = 2 * Pi / 1;
         for (size_t i = 0; i < 8; i++)
         {
-            u_ave = SMAX(u_ave + a[i] * cos(w * (i + 1) * current_time) + b[i] * sin(w * (i + 1) * current_time),
-                         0.0);
+            Real theta = w * Real(i + 1) * current_time;
+            Real term  = a[i] * cos(theta) + b[i] * sin(theta);
+            u_ave = SMAX(u_ave + term, Real(0));
         }
 
         target_velocity[0] = u_ave;
