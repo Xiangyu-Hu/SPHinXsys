@@ -15,14 +15,15 @@ template <class ExecutionPolicy, typename DynamicsIdentifier>
 UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::
     UpdateCellLinkedList(DynamicsIdentifier &identifier)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier), BaseDynamics<void>(),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, identifier.getCellLinkedList())),
+      cell_linked_list_(DynamicCast<BaseCellLinkedList>(this, identifier.getCellLinkedList())),
       adaptation_method_(DynamicCast<ParticleAdaptation>(this, identifier.getSPHAdaptation())),
       ca_mesh_(cell_linked_list_.getMeshes()),
       cell_offset_list_size_(cell_linked_list_.getCellOffsetListSize()),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_particle_index_(cell_linked_list_.dvParticleIndex()),
       dv_cell_offset_(cell_linked_list_.dvCellOffset()),
-      dv_current_cell_size_(DiscreteVariable<UnsignedInt>("CurrentCellSize", cell_offset_list_size_)),
+      dv_current_cell_size_(DiscreteVariable<UnsignedInt>(
+          "CurrentCellSize", cell_linked_list_.TotalNumberOfCells())),
       identifier_(identifier), kernel_implementation_(*this) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename DynamicsIdentifier>

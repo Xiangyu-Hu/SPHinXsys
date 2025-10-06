@@ -44,6 +44,21 @@ class Kernel;
 class SPHAdaptation;
 class CellLinkedList;
 
+class NeighborSearch : public Mesh
+{
+  public:
+    template <class ExecutionPolicy>
+    NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list);
+
+    template <typename FunctionOnEach>
+    void forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
+                       const FunctionOnEach &function, int depth = 1) const;
+
+  protected:
+    UnsignedInt *particle_index_;
+    UnsignedInt *cell_offset_;
+};
+
 /**
  * @class BaseCellLinkedList
  * @brief The Abstract class for mesh cell linked list derived from BaseMeshField.
@@ -100,6 +115,10 @@ class BaseCellLinkedList : public BaseMeshField
     template <typename DataType, typename... Args>
     DiscreteVariable<DataType> *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
 
+    template <class ExecutionPolicy>
+    NeighborSearch createNeighborSearch(const ExecutionPolicy &ex_policy);
+    UnsignedInt getCellOffsetListSize() { return cell_offset_list_size_; };
+
   protected:
     Kernel &kernel_;
     UnsignedInt total_number_of_cells_;
@@ -133,21 +152,6 @@ class BaseCellLinkedList : public BaseMeshField
                                     const LocalDynamicsFunction &local_dynamics_function);
 };
 
-class NeighborSearch : public Mesh
-{
-  public:
-    template <class ExecutionPolicy>
-    NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list);
-
-    template <typename FunctionOnEach>
-    void forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
-                       const FunctionOnEach &function, int depth = 1) const;
-
-  protected:
-    UnsignedInt *particle_index_;
-    UnsignedInt *cell_offset_;
-};
-
 /**
  * @class CellLinkedList
  * @brief Defining a mesh cell linked list for a body.
@@ -167,10 +171,6 @@ class CellLinkedList : public BaseCellLinkedList
     SingularVariable<Mesh> *svMesh() { return sv_mesh_; };
     void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
-
-    template <class ExecutionPolicy>
-    NeighborSearch createNeighborSearch(const ExecutionPolicy &ex_policy);
-    UnsignedInt getCellOffsetListSize() { return cell_offset_list_size_; };
 };
 
 /**

@@ -139,27 +139,18 @@ void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &b
     base_particles.addEvolvingVariable<Real>("SmoothingLengthRatio");
 }
 //=================================================================================================//
-size_t ParticleWithLocalRefinement::getCellLinkedListTotalLevel()
-{
-    return size_t(local_refinement_level_) + 1;
-}
-//=================================================================================================//
-size_t ParticleWithLocalRefinement::getLevelSetTotalLevel()
-{
-    return getCellLinkedListTotalLevel();
-}
-//=================================================================================================//
 UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::
     createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles)
 {
     return makeUnique<MultilevelCellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(),
-                                                getCellLinkedListTotalLevel(), base_particles, *this);
+                                                local_refinement_level_, base_particles, *this);
 }
 //=================================================================================================//
 UniquePtr<MultilevelLevelSet> ParticleWithLocalRefinement::createLevelSet(Shape &shape, Real refinement_ratio)
 {
+    // one more level for interpolation
     return makeUnique<MultilevelLevelSet>(shape.getBounds(), ReferenceSpacing() / refinement_ratio,
-                                          getLevelSetTotalLevel(), shape, *this, refinement_ratio);
+                                          local_refinement_level_ + 1, shape, *this, refinement_ratio);
 }
 //=================================================================================================//
 Real ParticleRefinementByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)

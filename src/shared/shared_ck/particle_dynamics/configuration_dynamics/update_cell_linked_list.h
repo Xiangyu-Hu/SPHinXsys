@@ -49,7 +49,7 @@ class UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>
     using AdaptationKernel = typename ParticleAdaptation::AdaptationKernel;
 
   protected:
-    CellLinkedList &cell_linked_list_;
+    BaseCellLinkedList &cell_linked_list_;
     ParticleAdaptation &adaptation_method_;
     ConstantArray<Mesh, Mesh> ca_mesh_;
     UnsignedInt cell_offset_list_size_;

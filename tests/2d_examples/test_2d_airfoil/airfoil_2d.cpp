@@ -82,7 +82,6 @@ int main(int ac, char *av[])
     //	First output before the simulation.
     //----------------------------------------------------------------------
     airfoil_recording_to_vtp.writeToFile();
-    cell_linked_list_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
@@ -98,6 +97,7 @@ int main(int ac, char *av[])
             airfoil_recording_to_vtp.writeToFile(ite_p);
         }
     }
+    cell_linked_list_recording.writeToFile();
     std::cout << "The physics relaxation process finished !" << std::endl;
 
     return 0;

@@ -17,6 +17,32 @@
 namespace SPH
 {
 //=================================================================================================//
+template <class ExecutionPolicy>
+NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list)
+    : Mesh(cell_linked_list.getMesh()),
+      particle_index_(cell_linked_list.dvParticleIndex()->DelegatedData(ex_policy)),
+      cell_offset_(cell_linked_list.dvCellOffset()->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void NeighborSearch::forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
+                                   const FunctionOnEach &function, int depth) const
+{
+    const Arrayi target_cell_index = CellIndexFromPosition(source_pos[source_index]);
+    mesh_for_each(
+        Arrayi::Zero().max(target_cell_index - depth * Arrayi::Ones()),
+        all_cells_.min(target_cell_index + (depth + 1) * Arrayi::Ones()),
+        [&](const Arrayi &cell_index)
+        {
+            const UnsignedInt linear_index = LinearCellIndex(cell_index);
+            // Since offset_cell_size_ has linear_cell_size_+1 elements, no boundary checks are needed.
+            // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
+            for (UnsignedInt n = cell_offset_[linear_index]; n < cell_offset_[linear_index + 1]; ++n)
+            {
+                function(particle_index_[n]);
+            }
+        });
+}
+//=================================================================================================//
 template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
 void BaseCellLinkedList::searchNeighborsByMesh(
     Mesh &mesh, DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,
@@ -204,33 +230,7 @@ void BaseCellLinkedList::particle_for_split(const execution::ParallelPolicy &par
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list)
-    : Mesh(cell_linked_list.getMesh()),
-      particle_index_(cell_linked_list.dvParticleIndex()->DelegatedData(ex_policy)),
-      cell_offset_(cell_linked_list.dvCellOffset()->DelegatedData(ex_policy)) {}
-//=================================================================================================//
-template <typename FunctionOnEach>
-void NeighborSearch::forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
-                                   const FunctionOnEach &function, int depth) const
-{
-    const Arrayi target_cell_index = CellIndexFromPosition(source_pos[source_index]);
-    mesh_for_each(
-        Arrayi::Zero().max(target_cell_index - depth * Arrayi::Ones()),
-        all_cells_.min(target_cell_index + (depth + 1) * Arrayi::Ones()),
-        [&](const Arrayi &cell_index)
-        {
-            const UnsignedInt linear_index = LinearCellIndex(cell_index);
-            // Since offset_cell_size_ has linear_cell_size_+1 elements, no boundary checks are needed.
-            // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
-            for (UnsignedInt n = cell_offset_[linear_index]; n < cell_offset_[linear_index + 1]; ++n)
-            {
-                function(particle_index_[n]);
-            }
-        });
-}
-//=================================================================================================//
-template <class ExecutionPolicy>
-NeighborSearch CellLinkedList::createNeighborSearch(const ExecutionPolicy &ex_policy)
+NeighborSearch BaseCellLinkedList::createNeighborSearch(const ExecutionPolicy &ex_policy)
 {
     return NeighborSearch(ex_policy, *this);
 }

@@ -62,7 +62,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp airfoil_recording_to_vtp(airfoil);
     airfoil_recording_to_vtp.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
-    MeshRecordingToPlt cell_linked_list_recording(sph_system, airfoil.getCellLinkedList());
+    WriteCellLinkedListToPlt<MainExecutionPolicy> cell_linked_list_recording(sph_system, airfoil.getCellLinkedList());
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.
@@ -82,13 +82,12 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     host_methods.addStateDynamics<RandomizeParticlePositionCK>(airfoil).exec();
-
     auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(airfoil);
-
     input_body_cell_linked_list.exec();
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------
     airfoil_recording_to_vtp.writeToFile();
+    cell_linked_list_recording.writeToFile();
     return 0;
 }

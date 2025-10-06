@@ -35,6 +35,5 @@ io class used in SPHinXsys. **/
 #include "io_plt.hpp"
 #include "io_simbody.h"
 #include "io_vtk.h"
-#include "io_vtk_mesh.h"
 #include "io_vtk_mesh_ck.h"
 #endif // ALL_IO_H

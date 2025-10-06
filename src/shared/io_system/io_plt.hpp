@@ -39,5 +39,18 @@ void PltEngine::writeAQuantity(std::ofstream &out_file, const Eigen::Matrix<Real
             out_file << std::fixed << std::setprecision(9) << quantity(i, j) << "   ";
 }
 //=================================================================================================//
+template <class ExecutionPolicy>
+WriteCellLinkedListToPlt<ExecutionPolicy>::WriteCellLinkedListToPlt(
+    SPHSystem &sph_system, BaseCellLinkedList &cell_linked_list)
+    : MeshRecordingToPlt(sph_system, cell_linked_list),
+      cell_linked_list_(cell_linked_list) {}
+//=================================================================================================//
+template <class ExecutionPolicy>
+void WriteCellLinkedListToPlt<ExecutionPolicy>::writeToFile(size_t iteration_step)
+{
+    cell_linked_list_.dvCellOffset()->prepareForOutput(ExecutionPolicy{});
+    MeshRecordingToPlt::writeToFile(iteration_step);
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // IO_PLT_HPP

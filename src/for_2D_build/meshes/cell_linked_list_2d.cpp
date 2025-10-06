@@ -15,10 +15,11 @@ void BaseCellLinkedList::writeMeshFieldToPltByMesh(Mesh &mesh, std::ofstream &ou
     output_file << "variables= "
                 << "x, "
                 << "y, "
-                << "particles_in_cell "
+                << "particles_in_cell, "
+                << "particles_in_cell_ck "
                 << "\n";
     output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << 1
-                << "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
+                << "  DATAPACKING=BLOCK" << "\n";
 
     for (int j = 0; j != number_of_operation[1]; ++j)
     {
@@ -46,6 +47,17 @@ void BaseCellLinkedList::writeMeshFieldToPltByMesh(Mesh &mesh, std::ofstream &ou
         {
             UnsignedInt linear_index = mesh.LinearCellIndex(Array2i(i, j));
             output_file << cell_index_lists_[linear_index].size() << " ";
+        }
+        output_file << " \n";
+    }
+
+    UnsignedInt *cell_offset = dv_cell_offset_->Data();
+    for (int j = 0; j != number_of_operation[1]; ++j)
+    {
+        for (int i = 0; i != number_of_operation[0]; ++i)
+        {
+            UnsignedInt linear_index = mesh.LinearCellIndex(Array2i(i, j));
+            output_file << cell_offset[linear_index + 1] - cell_offset[linear_index] << " ";
         }
         output_file << " \n";
     }

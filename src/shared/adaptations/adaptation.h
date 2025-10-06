@@ -137,8 +137,6 @@ class ParticleWithLocalRefinement : public SPHAdaptation
     ParticleWithLocalRefinement(SPHSystem &sph_system, Real h_spacing_ratio_, Real overall_refinement_ratio, int local_refinement_level);
     virtual ~ParticleWithLocalRefinement() {};
 
-    virtual size_t getCellLinkedListTotalLevel();
-    size_t getLevelSetTotalLevel();
     virtual Real SmoothingLengthRatio(size_t particle_index_i) override
     {
         return h_ratio_[particle_index_i];
@@ -151,7 +149,17 @@ class ParticleWithLocalRefinement : public SPHAdaptation
     class AdaptationKernel
     {
         Real *h_ratio_;
-        int *level_;
+        int local_refinement_level_;
+
+        int Level(UnsignedInt index_i) const
+        {
+            for (int i = 1; i <= local_refinement_level_; ++i)
+            {
+                if (h_ratio_[index_i] < pow(2.0, i))
+                    return i - 1;
+            }
+            return local_refinement_level_;
+        }
 
       public:
         template <class ExecutionPolicy, class EnclosureType>
@@ -160,7 +168,7 @@ class ParticleWithLocalRefinement : public SPHAdaptation
         template <typename T>
         T &DataLevel(UnsignedInt index_i, T *data) const
         {
-            return data[level_[index_i]];
+            return data[Level(index_i)];
         };
     };
 

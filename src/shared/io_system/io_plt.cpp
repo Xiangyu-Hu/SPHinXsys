@@ -129,7 +129,7 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
     }
 }
 //=============================================================================================//
-MeshRecordingToPlt ::MeshRecordingToPlt(SPHSystem &sph_system, BaseMeshField &mesh_field)
+MeshRecordingToPlt::MeshRecordingToPlt(SPHSystem &sph_system, BaseMeshField &mesh_field)
     : BaseIO(sph_system), mesh_field_(mesh_field),
       partial_file_name_(io_environment_.OutputFolder() + "/" + mesh_field.Name()) {}
 //=============================================================================================//

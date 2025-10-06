@@ -18,7 +18,7 @@ template <class ExecutionPolicy, class EnclosureType>
 ParticleWithLocalRefinement::AdaptationKernel::
     AdaptationKernel(const ExecutionPolicy &ex_policy, EnclosureType &enclosure)
     : h_ratio_(enclosure.dv_h_ratio_->DelegatedData(ex_policy)),
-      level_(enclosure.dv_level_->DelegatedData(ex_policy)) {}
+      local_refinement_level_(enclosure.local_refinement_level_) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // ADAPTATION_HPP

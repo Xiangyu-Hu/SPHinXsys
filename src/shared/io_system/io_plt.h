@@ -91,5 +91,17 @@ class MeshRecordingToPlt : public BaseIO
     virtual void writeToFile(size_t iteration_step = 0) override;
     virtual void writeBKGMeshVariableToFile(size_t iteration_step = 0);
 };
+
+template <class ExecutionPolicy>
+class WriteCellLinkedListToPlt : public MeshRecordingToPlt
+{
+  protected:
+    BaseCellLinkedList &cell_linked_list_;
+
+  public:
+    WriteCellLinkedListToPlt(SPHSystem &sph_system, BaseCellLinkedList &cell_linked_list);
+    virtual ~WriteCellLinkedListToPlt() {};
+    virtual void writeToFile(size_t iteration_step = 0) override;
+};
 } // namespace SPH
 #endif // IO_PLT_H
