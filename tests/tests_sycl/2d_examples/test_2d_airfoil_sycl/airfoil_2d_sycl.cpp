@@ -54,15 +54,21 @@ int main(int ac, char *av[])
     airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(sph_system);
     airfoil.generateParticles<BaseParticles, Lattice, Adaptive>();
     //----------------------------------------------------------------------
+    //	Creating body parts.
+    //----------------------------------------------------------------------
+    NearShapeSurface near_body_surface(airfoil);
+    //----------------------------------------------------------------------
     //	Define outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp airfoil_recording_to_vtp(airfoil);
     airfoil_recording_to_vtp.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
+    MeshRecordingToPlt cell_linked_list_recording(sph_system, airfoil.getCellLinkedList());
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
@@ -76,6 +82,10 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     host_methods.addStateDynamics<RandomizeParticlePositionCK>(airfoil).exec();
+
+    auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(airfoil);
+
+    input_body_cell_linked_list.exec();
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------

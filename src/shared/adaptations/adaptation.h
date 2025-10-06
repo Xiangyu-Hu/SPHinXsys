@@ -102,6 +102,19 @@ class SPHAdaptation
         sigma0_ref_ = computeLatticeNumberDensity(Vecd());
     };
 
+    class AdaptationKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EnclosureType>
+        AdaptationKernel(const ExecutionPolicy &ex_policy, EnclosureType &enclosure) {}
+
+        template <typename T>
+        constexpr T &DataLevel(UnsignedInt index_i, T *data) const
+        {
+            return data[0];
+        };
+    };
+
   protected:
     Real computeLatticeNumberDensity(Vec2d zero);
     Real computeLatticeNumberDensity(Vec3d zero);
@@ -135,9 +148,27 @@ class ParticleWithLocalRefinement : public SPHAdaptation
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles) override;
     virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 
+    class AdaptationKernel
+    {
+        Real *h_ratio_;
+        int *level_;
+
+      public:
+        template <class ExecutionPolicy, class EnclosureType>
+        AdaptationKernel(const ExecutionPolicy &ex_policy, EnclosureType &enclosure);
+
+        template <typename T>
+        T &DataLevel(UnsignedInt index_i, T *data) const
+        {
+            return data[level_[index_i]];
+        };
+    };
+
   protected:
-    Real finest_spacing_bound_;   /**< the adaptation bound for finest particles */
-    Real coarsest_spacing_bound_; /**< the adaptation bound for coarsest particles */
+    DiscreteVariable<Real> *dv_h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
+    DiscreteVariable<int> *dv_level_;    /**< the mesh level of the particle */
+    Real finest_spacing_bound_;          /**< the adaptation bound for finest particles */
+    Real coarsest_spacing_bound_;        /**< the adaptation bound for coarsest particles */
 };
 
 /**

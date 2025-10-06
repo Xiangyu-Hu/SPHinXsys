@@ -50,6 +50,7 @@ namespace SPH
 class Mesh
 {
   public:
+    Mesh() {};
     Mesh(BoundingBox tentative_bounds, Real grid_spacing,
          UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset = 0);
     Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);

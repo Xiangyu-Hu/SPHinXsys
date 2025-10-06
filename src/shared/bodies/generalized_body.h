@@ -42,6 +42,8 @@ class GeneralizedBody<BaseBodyType, AdaptationType> : public BaseBodyType
     AdaptationType adaptation_;
 
   public:
+    typedef AdaptationType Adaptation;
+
     template <typename... Args>
     GeneralizedBody(AdaptationType adaptation, SPHSystem &sph_system, Args &&...args)
         : BaseBodyType(sph_system, std::forward<Args>(args)...), adaptation_(adaptation)

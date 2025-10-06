@@ -14,5 +14,11 @@ MeshType SPHAdaptation::createBackGroundMesh(SPHBody &sph_body, Args &&...args)
                     std::forward<Args>(args)...);
 }
 //=================================================================================================//
+template <class ExecutionPolicy, class EnclosureType>
+ParticleWithLocalRefinement::AdaptationKernel::
+    AdaptationKernel(const ExecutionPolicy &ex_policy, EnclosureType &enclosure)
+    : h_ratio_(enclosure.dv_h_ratio_->DelegatedData(ex_policy)),
+      level_(enclosure.dv_level_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
 } // namespace SPH
 #endif // ADAPTATION_HPP
