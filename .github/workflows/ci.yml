@@ -180,7 +180,7 @@ jobs:
           choco install ccache
           choco install ninja
           choco install wget
-          wget -P C:\ https://registrationcenter-download.intel.com/akdlm/IRC_NAS/f5881e61-dcdc-40f1-9bd9-717081ac623c/intel-oneapi-base-toolkit-2025.2.1.46_offline.exe
+          wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/f5881e61-dcdc-40f1-9bd9-717081ac623c/intel-oneapi-base-toolkit-2025.2.1.46_offline.exe -P C:\
           C:\intel-oneapi-base-toolkit-2025.2.1.46_offline.exe -s -a --silent --eula accept
 
       - uses: hendrikmuhs/ccache-action@v1.2
