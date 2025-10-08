@@ -226,7 +226,7 @@ jobs:
       - name: Build libraries and tests which are using SYCL
         run: |
           # sycl environment has to be setup for each session
-          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
+          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cmake.exe --build C:\build --config Release --verbose
 
       - name: Test with the first try
