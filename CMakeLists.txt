@@ -28,7 +28,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Enable for all targets, needed for p
 # ------ Declare core library
 add_library(sphinxsys_core INTERFACE)
 
-# ------ Constrain compiler if SYCL is used
+# ------ Constrain compilesr if SYCL is used
 if(SPHINXSYS_USE_SYCL)
     if(NOT SPHINXSYS_USE_FLOAT)
     set(SPHINXSYS_USE_FLOAT ON)
@@ -39,7 +39,6 @@ if(SPHINXSYS_USE_SYCL)
     # Force CMake to use icx-cl rather than the default C++ compiler/linker 
     # (needed on Windows only)
     include (CMakeForceCompiler)
-    CMAKE_FORCE_CXX_COMPILER (icx-cl IntelDPCPP)
     include (Platform/Windows-Clang)
     else()
         if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
