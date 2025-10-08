@@ -155,6 +155,127 @@ jobs:
           ctest --rerun-failed --output-on-failure --timeout 1000
 
   ###############################################################################
+  Windows-sycl:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build_debug_enabled }}
+    runs-on: windows-latest
+    # make sure these permissions are set so that
+    # VS Code can connect to the machine
+    permissions:
+      actions: read
+      contents: read
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-windows
+
+    steps:
+      - uses: actions/checkout@v4 # Checks-out the repository under ${{github.workspace}}
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
+
+      - name: Update ccache and ninja # For correct caching with ccache on Windows
+        shell: bash
+        run: |
+          choco install ccache
+          choco install ninja
+          choco install 7zip
+          choco install wget
+          wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/f5881e61-dcdc-40f1-9bd9-717081ac623c/intel-oneapi-base-toolkit-2025.2.1.46_offline.exe
+          intel-oneapi-base-toolkit-2025.2.1.46_offline.exe -s -a --silent --eula accept
+
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}
+
+      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
+        with:
+          committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
+
+      - name: Install dependencies
+        run: |
+          ${{github.workspace}}\vcpkg\vcpkg.exe install --clean-after-build `
+            eigen3 `
+            tbb `
+            boost-program-options `
+            boost-geometry `
+            simbody `
+            gtest `
+            spdlog `
+            xsimd `
+            pybind11
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Generate buildsystem
+        run: |
+          # sycl environment has to be setup for each session
+          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
+          cmake.exe -G Ninja `
+            -D CMAKE_BUILD_TYPE=Release `
+            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
+            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache `
+            -D SPHINXSYS_CI=ON `
+            -D SPHINXSYS_USE_SYCL=ON `
+            -D TEST_STATE_RECORDING=OFF `
+            -S ${{github.workspace}} `
+            -B C:\build
+
+      - name: Build libraries and tests which are using SYCL
+        run: |
+          # sycl environment has to be setup for each session
+          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
+          cmake.exe --build C:\build --config Release --verbose
+
+      - name: Test with the first try
+        id: first-try
+        run: |
+          cd C:\build\tests\tests_sycl
+          # sycl environment has to be setup for each session
+          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
+          ctest.exe --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the second try for failed cases
+        id: second-try
+        if: ${{ steps.first-try.outcome == 'failure' }}
+        run: |
+          cd C:\build\tests\tests_sycl
+          # sycl environment has to be setup for each session
+          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
+          ctest.exe --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the third try for failed cases
+        id: third-try
+        if: ${{ steps.second-try.outcome == 'failure' }}
+        run: |
+          cd C:\build\tests\tests_sycl
+          # sycl environment has to be setup for each session
+          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
+          ctest.exe --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the fourth try for failed cases
+        id: fourth-try
+        if: ${{ steps.third-try.outcome == 'failure' }}
+        run: |
+          cd C:\build\tests\tests_sycl
+          # sycl environment has to be setup for each session
+          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
+          ctest.exe --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.fourth-try.outcome == 'failure' }}
+        run: |
+          cd C:\build\tests\tests_sycl
+          # sycl environment has to be setup for each session
+          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
+
+  ###############################################################################
   Linux-build:
     if: ${{ github.event_name != 'workflow_dispatch' }}
     runs-on: ubuntu-22.04
@@ -343,7 +464,6 @@ jobs:
         if: ${{ failure() && github.event_name != 'workflow_dispatch' || inputs.linux_test_debug_enabled }}
 
   ###############################################################################
-
   Windows-build:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build_debug_enabled }}
     runs-on: windows-latest

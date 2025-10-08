@@ -46,6 +46,17 @@ if(SPHINXSYS_USE_SYCL)
     set(SPHINXSYS_USE_FLOAT ON)
     message("-- Float is used as required by SPHinXsysSYCL.")
     endif()
+    
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    # Force CMake to use icx-cl rather than the default C++ compiler/linker 
+    # (needed on Windows only)
+    include (CMakeForceCompiler)
+    CMAKE_FORCE_CXX_COMPILER (icx-cl IntelDPCPP)
+    include (Platform/Windows-Clang)
+    else()
+    # Direct CMake to use icpx rather than the default C++ compiler/linker
+    set(CMAKE_CXX_COMPILER icpx)
+    endif()
 endif()
 
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_SYCL=$<BOOL:${SPHINXSYS_USE_SYCL}>)
