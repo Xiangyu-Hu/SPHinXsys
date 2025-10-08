@@ -53,9 +53,6 @@ if(SPHINXSYS_USE_SYCL)
     include (CMakeForceCompiler)
     CMAKE_FORCE_CXX_COMPILER (icx-cl IntelDPCPP)
     include (Platform/Windows-Clang)
-    else()
-    # Direct CMake to use icpx rather than the default C++ compiler/linker
-    set(CMAKE_CXX_COMPILER icpx)
     endif()
 endif()
 
