@@ -28,19 +28,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Enable for all targets, needed for p
 # ------ Declare core library
 add_library(sphinxsys_core INTERFACE)
 
-# ------ Local properties
-target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
-
-if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
-    set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
-    target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES NOMINMAX)
-    target_compile_options(sphinxsys_core INTERFACE /MP)
-    target_compile_options(sphinxsys_core INTERFACE /permissive-)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
-    target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
-endif()
-
+# ------ Constrain compiler if SYCL is used
 if(SPHINXSYS_USE_SYCL)
     if(NOT SPHINXSYS_USE_FLOAT)
     set(SPHINXSYS_USE_FLOAT ON)
@@ -58,6 +46,19 @@ if(SPHINXSYS_USE_SYCL)
             message(FATAL_ERROR "-- SPHinXsysSYCL is only supported with IntelLLVM compiler.")
         endif()
     endif()
+endif()
+
+# ------ Local properties
+target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
+
+if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
+    set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
+    target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES NOMINMAX)
+    target_compile_options(sphinxsys_core INTERFACE /MP)
+    target_compile_options(sphinxsys_core INTERFACE /permissive-)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
+    target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
 endif()
 
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_SYCL=$<BOOL:${SPHINXSYS_USE_SYCL}>)
