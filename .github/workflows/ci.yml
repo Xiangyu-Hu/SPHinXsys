@@ -213,7 +213,7 @@ jobs:
           "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cmake.exe -G Ninja `
             -D CMAKE_BUILD_TYPE=Release `
-            -D CMAKE_C_COMPILER="C:\Program Files (x86)\Intel\oneAPI\compiler\latest\windows\bin\icx-cl.exe" 
+            -D CMAKE_C_COMPILER="C:\Program Files (x86)\Intel\oneAPI\compiler\latest\windows\bin\icx-cl.exe" ` 
             -D CMAKE_CXX_COMPILER="C:\Program Files (x86)\Intel\oneAPI\compiler\latest\windows\bin\icx-cl.exe" `
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache `
