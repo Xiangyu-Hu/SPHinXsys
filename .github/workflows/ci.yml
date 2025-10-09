@@ -210,7 +210,7 @@ jobs:
       - name: Generate buildsystem
         run: |
           # sycl environment has to be setup for each session
-          C:\Program Files (x86)\Intel\oneAPI\setvars.bat
+          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cmake.exe -G Ninja `
             -D CMAKE_BUILD_TYPE=Release `
             -D CMAKE_C_COMPILER="C:\Program Files (x86)\Intel\oneAPI\compiler\latest\windows\bin\icx-cl.exe" ` 
@@ -226,7 +226,7 @@ jobs:
       - name: Build libraries and tests which are using SYCL
         run: |
           # sycl environment has to be setup for each session
-          C:\Program Files (x86)\Intel\oneAPI\setvars.bat
+          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
           cmake.exe --build C:\build --config Release --verbose
 
       - name: Test with the first try
@@ -234,7 +234,7 @@ jobs:
         run: |
           cd C:\build\tests\tests_sycl
           # sycl environment has to be setup for each session
-          C:\Program Files (x86)\Intel\oneAPI\setvars.bat
+          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           ctest.exe --output-on-failure --timeout 1000
         continue-on-error: true
 
@@ -244,7 +244,7 @@ jobs:
         run: |
           cd C:\build\tests\tests_sycl
           # sycl environment has to be setup for each session
-          C:\Program Files (x86)\Intel\oneAPI\setvars.bat
+          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           ctest.exe --output-on-failure --timeout 1000
         continue-on-error: true
 
@@ -254,7 +254,7 @@ jobs:
         run: |
           cd C:\build\tests\tests_sycl
           # sycl environment has to be setup for each session
-          C:\Program Files (x86)\Intel\oneAPI\setvars.bat
+          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           ctest.exe --output-on-failure --timeout 1000
         continue-on-error: true
 
@@ -264,7 +264,7 @@ jobs:
         run: |
           cd C:\build\tests\tests_sycl
           # sycl environment has to be setup for each session
-          C:\Program Files (x86)\Intel\oneAPI\setvars.bat
+          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           ctest.exe --output-on-failure --timeout 1000
         continue-on-error: true
 
@@ -273,7 +273,7 @@ jobs:
         run: |
           cd C:\build\tests\tests_sycl
           # sycl environment has to be setup for each session
-          C:\Program Files (x86)\Intel\oneAPI\setvars.bat
+          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
 
   ###############################################################################
