@@ -211,7 +211,7 @@ jobs:
         shell: pwsh
         run: |
           # sycl environment has to be setup for each session
-          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
+          cmd.exe "/K" "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cmake.exe -G Ninja `
             -D CMAKE_BUILD_TYPE=Release `
             -D CMAKE_C_COMPILER="C:\Program Files (x86)\Intel\oneAPI\compiler\latest\windows\bin\icx-cl.exe" ` 
