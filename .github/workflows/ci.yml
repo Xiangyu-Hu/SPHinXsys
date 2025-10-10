@@ -283,8 +283,12 @@ jobs:
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
       
       # Enable debugging of manually-triggered workflows if the input option was provided
-      - name: 🐛 Setup Debug Session
-        uses: csexton/debugger-action@master
+      - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
+        shell: pwsh
+        run: |
+          wget https://update.code.visualstudio.com/1.90.0/win32-x64-archive/stable
+          7z.exe x stable
+          .\bin\code tunnel
         if: ${{ failure() && github.event_name == 'workflow_dispatch' && inputs.windows_sycl_build_debug_enabled }}
 
   ###############################################################################
