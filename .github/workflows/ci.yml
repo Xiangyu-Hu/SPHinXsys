@@ -20,6 +20,11 @@ on:
         description: "Run the windows build with VS Code Sever debugging enabled"
         required: false
         default: false
+      windows_sycl_build_debug_enabled:
+        type: boolean
+        description: "Run the windows SYCL build with VS Code Sever debugging enabled"
+        required: false
+        default: false
       macos_build_debug_enabled:
         type: boolean
         description: "Run the macOS build with VS Code Sever debugging enabled"
@@ -156,7 +161,7 @@ jobs:
 
   ###############################################################################
   Windows-sycl:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build_debug_enabled }}
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_sycl_build_debug_enabled }}
     runs-on: windows-latest
     # make sure these permissions are set so that
     # VS Code can connect to the machine
@@ -179,6 +184,7 @@ jobs:
         run: |
           choco install ccache
           choco install ninja
+          choco install 7zip
           choco install wget
           wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/f5881e61-dcdc-40f1-9bd9-717081ac623c/intel-oneapi-base-toolkit-2025.2.1.46_offline.exe
           intel-oneapi-base-toolkit-2025.2.1.46_offline.exe -s -a --silent --eula accept
@@ -275,6 +281,11 @@ jobs:
           # sycl environment has to be setup for each session
           "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
+      
+      # Enable debugging of manually-triggered workflows if the input option was provided
+      - name: 🐛 Setup Debug Session
+        uses: csexton/debugger-action@master
+        if: ${{ failure() && github.event_name == 'workflow_dispatch' && inputs.windows_sycl_build_debug_enabled }}
 
   ###############################################################################
   Linux-build:
