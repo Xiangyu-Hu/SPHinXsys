@@ -65,8 +65,8 @@ class Shape
   public:
     BoundingBox bounding_box_;
 
-    explicit Shape(const std::string &shape_name) : name_(shape_name), is_bounds_found_(false){};
-    virtual ~Shape(){};
+    explicit Shape(const std::string &shape_name) : name_(shape_name), is_bounds_found_(false) {};
+    virtual ~Shape() {};
 
     std::string getName() { return name_; };
     void setName(const std::string &name) { name_ = name; };
@@ -101,9 +101,9 @@ using ShapeAndOp = std::pair<Shape *, ShapeBooleanOps>;
 class BinaryShapes : public Shape
 {
   public:
-    BinaryShapes() : Shape("BinaryShapes"){};
-    explicit BinaryShapes(const std::string &shapes_name) : Shape(shapes_name){};
-    virtual ~BinaryShapes(){};
+    BinaryShapes() : Shape("BinaryShapes") {};
+    explicit BinaryShapes(const std::string &shapes_name) : Shape(shapes_name) {};
+    virtual ~BinaryShapes() {};
 
     template <class ShapeType, typename... Args>
     void add(Args &&...args)
@@ -111,6 +111,7 @@ class BinaryShapes : public Shape
         Shape *shape = shapes_ptr_keeper_.createPtr<ShapeType>(std::forward<Args>(args)...);
         ShapeAndOp shape_and_op(shape, ShapeBooleanOps::add);
         shapes_and_ops_.push_back(shape_and_op);
+        bounding_box_ = findBounds();
     };
 
     template <class ShapeType, typename... Args>
@@ -119,6 +120,7 @@ class BinaryShapes : public Shape
         Shape *shape = shapes_ptr_keeper_.createPtr<ShapeType>(std::forward<Args>(args)...);
         ShapeAndOp shape_and_op(shape, ShapeBooleanOps::sub);
         shapes_and_ops_.push_back(shape_and_op);
+        bounding_box_ = findBounds();
     };
 
     virtual bool isValid() override;
@@ -154,7 +156,7 @@ class Edge
     template <class EdgeStructureType>
     Edge(InEdgeType in_edge, EdgeStructureType *structure)
         : id_(structure->ContainerSize()), in_edge_(in_edge){};
-    virtual ~Edge(){};
+    virtual ~Edge() {};
 
     size_t id_;            /**< id of this edge */
     InEdgeType in_edge_;   /**< id(s) of parent edge(s) */
