@@ -471,8 +471,12 @@ jobs:
           cd build 
           ctest --rerun-failed --output-on-failure --timeout 1000
 
-      - name: 🐛 If failed in dispatch work flow, initialize VS Code Server for debug
-        uses: stateful/vscode-server-action@v1
+      - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
+        shell: pwsh
+        run: |
+          wget https://update.code.visualstudio.com/1.105.0/win32-x64-user/stable
+          7z.exe x stable
+          .\bin\code tunnel
         if: ${{ failure() && github.event_name != 'workflow_dispatch' || inputs.linux_test_debug_enabled }}
 
   ###############################################################################
