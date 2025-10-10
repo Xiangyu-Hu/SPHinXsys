@@ -28,6 +28,25 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Enable for all targets, needed for p
 # ------ Declare core library
 add_library(sphinxsys_core INTERFACE)
 
+# ------ Constrain compilesr if SYCL is used
+if(SPHINXSYS_USE_SYCL)
+    if(NOT SPHINXSYS_USE_FLOAT)
+    set(SPHINXSYS_USE_FLOAT ON)
+    message("-- Float is used as required by SPHinXsysSYCL.")
+    endif()
+    
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    # Force CMake to use icx-cl rather than the default C++ compiler/linker 
+    # (needed on Windows only)
+    include (CMakeForceCompiler)
+    include (Platform/Windows-Clang)
+    else()
+        if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+            message(FATAL_ERROR "-- SPHinXsysSYCL is only supported with IntelLLVM compiler.")
+        endif()
+    endif()
+endif()
+
 # ------ Local properties
 target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
 
@@ -42,13 +61,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
-endif()
-
-if(SPHINXSYS_USE_SYCL)
-    if(NOT SPHINXSYS_USE_FLOAT)
-    set(SPHINXSYS_USE_FLOAT ON)
-    message("-- Float is used as required by SPHinXsysSYCL.")
-    endif()
 endif()
 
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_SYCL=$<BOOL:${SPHINXSYS_USE_SYCL}>)
@@ -113,9 +125,6 @@ if(SPHINXSYS_USE_SYCL)
         target_compile_options(sphinxsys_core INTERFACE -Wno-unused-value)
     endif()
     
-    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-        message(FATAL_ERROR "-- SPHinXsysSYCL is only supported with IntelLLVM compiler.")
-    endif()
 
     if(NOT SPHINXSYS_SYCL_TARGETS)
         set(SPHINXSYS_SYCL_TARGETS spir64_x86_64)
