@@ -826,7 +826,7 @@ jobs:
 
   ###############################################################################
   Windows-dispatch-build:
-    if: ${{ github.event_name == 'workflow_dispatch' || inputs.windows_build_debug_enabled }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
     runs-on: windows-latest
     # make sure these permissions are set so that
     # VS Code can connect to the machine
