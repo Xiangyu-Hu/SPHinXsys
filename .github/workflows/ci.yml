@@ -50,7 +50,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Install system dependencies
         run: |
@@ -177,10 +177,10 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Install ccache, ninja, wget and oneAPI
-        shell: cmd 
+        shell: cmd
         run: |
           choco install ccache
           choco install ninja
@@ -281,11 +281,12 @@ jobs:
           # sycl environment has to be setup for each session
           "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
-      
+
       # Enable debugging of manually-triggered workflows if the input option was provided
       - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
         shell: pwsh
         run: |
+          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
           wget https://update.code.visualstudio.com/1.90.0/win32-x64-archive/stable
           7z.exe x stable
           .\bin\code tunnel
@@ -305,7 +306,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Install system dependencies
         run: |
@@ -392,7 +393,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Install system dependencies
         run: |
@@ -501,7 +502,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
@@ -581,7 +582,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
@@ -671,7 +672,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Install system dependencies
         run: |
@@ -746,8 +747,8 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
-          
+          cmake-version: "3.x"
+
       - name: Install system dependencies
         run: |
           brew reinstall gfortran # to force having gfortran on PATH because github runners don't have it, just the versioned aliases, i.e. gfortran-11
@@ -840,10 +841,10 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Install ccache, ninja, wget and oneAPI
-        shell: cmd 
+        shell: cmd
         run: |
           choco install ccache
           choco install ninja
@@ -873,7 +874,7 @@ jobs:
             spdlog `
             xsimd `
             pybind11
-      
+
       # Enable debugging of manually-triggered workflows if the input option was provided
       - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
         shell: pwsh
@@ -881,4 +882,3 @@ jobs:
           wget https://update.code.visualstudio.com/1.90.0/win32-x64-archive/stable
           7z.exe x stable
           .\bin\code tunnel
-
