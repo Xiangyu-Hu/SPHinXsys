@@ -212,81 +212,85 @@ jobs:
             pybind11
 
       - name: Generate buildsystem
-        shell: pwsh
+        shell: cmd
         run: |
           # sycl environment has to be setup for each session
-          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
-          cmake.exe -G Ninja `
-            -D CMAKE_BUILD_TYPE=Release `
-            -D CMAKE_C_COMPILER=icx-cl `
-            -D CMAKE_CXX_COMPILER=icx-cl `
-            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
-            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache `
-            -D SPHINXSYS_CI=ON `
-            -D SPHINXSYS_USE_SYCL=ON `
-            -D TEST_STATE_RECORDING=OFF `
-            -S ${{github.workspace}} `
+          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          cmake.exe -G Ninja -D CMAKE_BUILD_TYPE=Release ^
+            -D CMAKE_C_COMPILER=icx-cl ^
+            -D CMAKE_CXX_COMPILER=icx-cl ^
+            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" ^
+            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache ^
+            -D SPHINXSYS_CI=ON ^
+            -D SPHINXSYS_USE_SYCL=ON ^
+            -D TEST_STATE_RECORDING=OFF ^
+            -S ${{github.workspace}} ^
             -B C:\build
 
       - name: Build libraries and tests which are using SYCL
-        shell: pwsh
+        shell: cmd
         run: |
           # sycl environment has to be setup for each session
-          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
+          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cmake.exe --build C:\build --config Release --verbose
 
       - name: Test with the first try
         id: first-try
+        shell: cmd
         run: |
-          cd C:\build\tests\tests_sycl
           # sycl environment has to be setup for each session
           "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          cd C:\build\tests\tests_sycl
           ctest.exe --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the second try for failed cases
         id: second-try
         if: ${{ steps.first-try.outcome == 'failure' }}
+        shell: cmd
         run: |
-          cd C:\build\tests\tests_sycl
           # sycl environment has to be setup for each session
           "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          cd C:\build\tests\tests_sycl
           ctest.exe --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the third try for failed cases
         id: third-try
         if: ${{ steps.second-try.outcome == 'failure' }}
+        shell: cmd
         run: |
-          cd C:\build\tests\tests_sycl
           # sycl environment has to be setup for each session
           "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          cd C:\build\tests\tests_sycl
           ctest.exe --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the fourth try for failed cases
         id: fourth-try
-        if: ${{ steps.third-try.outcome == 'failure' }}
+        if: ${{ steps.third-try.outcome == 'failure' }}        
+        shell: cmd
         run: |
-          cd C:\build\tests\tests_sycl
           # sycl environment has to be setup for each session
           "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          cd C:\build\tests\tests_sycl
           ctest.exe --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the last try for failed cases
         if: ${{ steps.fourth-try.outcome == 'failure' }}
+        shell: cmd
         run: |
-          cd C:\build\tests\tests_sycl
           # sycl environment has to be setup for each session
           "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          cd C:\build\tests\tests_sycl
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
 
       # Enable debugging of manually-triggered workflows if the input option was provided
       - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
-        shell: pwsh
+        shell: cmd
         run: |
-          cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell'
+          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           wget https://update.code.visualstudio.com/1.90.0/win32-x64-archive/stable
           7z.exe x stable
           .\bin\code tunnel
