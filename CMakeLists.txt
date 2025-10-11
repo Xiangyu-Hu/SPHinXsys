@@ -52,8 +52,11 @@ target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compil
 
 if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
     set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
-    target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES NOMINMAX)
-    target_compile_options(sphinxsys_core INTERFACE /MP)
+    target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES)
+    if(NOT SPHINXSYS_USE_SYCL)
+        target_compile_definitions(sphinxsys_core INTERFACE NOMINMAX)
+        target_compile_options(sphinxsys_core INTERFACE /MP)
+    endif()
     target_compile_options(sphinxsys_core INTERFACE /permissive-)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
@@ -115,6 +118,13 @@ target_link_libraries(sphinxsys_core INTERFACE spdlog::spdlog_header_only)
 
 if(SPHINXSYS_USE_SYCL)
     set(SPHINXSYS_USE_SYCL ON)
+    
+    if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
+        target_compile_options(sphinxsys_core INTERFACE -Wno-ignored-attributes)
+        target_compile_options(sphinxsys_core INTERFACE -Wno-null-dereference)
+        target_compile_options(sphinxsys_core INTERFACE -Wno-unused-value)
+    endif()
+    
 
     if(NOT SPHINXSYS_SYCL_TARGETS)
         set(SPHINXSYS_SYCL_TARGETS spir64_x86_64)
