@@ -201,33 +201,30 @@ jobs:
       - name: Install dependencies
         run: |
           ${{github.workspace}}\vcpkg\vcpkg.exe install --clean-after-build `
-            eigen3 `
-            tbb `
-            boost-program-options `
-            boost-geometry `
-            simbody `
-            gtest `
-            spdlog `
-            xsimd `
-            pybind11
-
-      - uses: ilammy/msvc-dev-cmd@v1
+            eigen3:x64-windows-static `
+            tbb:x64-windows-static `
+            boost-program-options:x64-windows-static `
+            boost-geometry:x64-windows-static `
+            simbody:x64-windows-static `
+            gtest:x64-windows-static `
+            spdlog:x64-windows-static `
+            xsimd:x64-windows-static `
+            pybind11:x64-windows-static
 
       - name: Generate buildsystem
         shell: cmd
         run: |
           # sycl environment has to be setup for each session
-          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
-          cmake.exe -G Ninja `
-            -D CMAKE_BUILD_TYPE=Release `
-            -D CMAKE_C_COMPILER="C:\Program Files (x86)\Intel\oneAPI\compiler\latest\windows\bin\icx-cl.exe" 
-            -D CMAKE_CXX_COMPILER="C:\Program Files (x86)\Intel\oneAPI\compiler\latest\windows\bin\icx-cl.exe" `
-            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
-            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache `
-            -D SPHINXSYS_CI=ON `
-            -D SPHINXSYS_USE_SYCL=ON `
-            -D TEST_STATE_RECORDING=OFF `
-            -S ${{github.workspace}} `
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          cmake.exe -G Ninja -D CMAKE_BUILD_TYPE=Release ^
+            -D CMAKE_C_COMPILER=icx-cl ^
+            -D CMAKE_CXX_COMPILER=icx-cl ^
+            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" ^
+            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache ^
+            -D SPHINXSYS_CI=ON ^
+            -D SPHINXSYS_USE_SYCL=ON ^
+            -D TEST_STATE_RECORDING=OFF ^
+            -S ${{github.workspace}} ^
             -B C:\build
 
       - name: Build libraries and tests which are using SYCL
@@ -288,15 +285,6 @@ jobs:
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cd C:\build\tests\tests_sycl
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
-      
-      # Enable debugging of manually-triggered workflows if the input option was provided
-      - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
-        shell: pwsh
-        run: |
-          wget https://update.code.visualstudio.com/1.90.0/win32-x64-archive/stable
-          7z.exe x stable
-          .\bin\code tunnel
-        if: ${{ failure() && github.event_name == 'workflow_dispatch' && inputs.windows_sycl_build_debug_enabled }}
 
       # Enable debugging of manually-triggered workflows if the input option was provided
       - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
@@ -857,10 +845,10 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Install ccache, ninja, wget and oneAPI
-        shell: cmd 
+        shell: cmd
         run: |
           choco install ccache
           choco install ninja
@@ -890,7 +878,7 @@ jobs:
             spdlog `
             xsimd `
             pybind11
-      
+
       # Enable debugging of manually-triggered workflows if the input option was provided
       - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
         shell: pwsh
