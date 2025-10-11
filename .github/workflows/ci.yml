@@ -220,8 +220,8 @@ jobs:
           sycl-ls
           cmake.exe -G Ninja `
             -D CMAKE_BUILD_TYPE=Release `
-            -D CMAKE_C_COMPILER=icx-cl `            
-            -D CMAKE_CXX_COMPILER=icx-cl `            
+            -D CMAKE_C_COMPILER=icx-cl `
+            -D CMAKE_CXX_COMPILER=icx-cl `
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache `
             -D SPHINXSYS_CI=ON `
@@ -827,7 +827,7 @@ jobs:
 
   ###############################################################################
   Windows-dispatch-build:
-    if: ${{ github.event_name == 'workflow_dispatch' || inputs.windows_build_debug_enabled }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_build_debug_enabled }}
     runs-on: windows-latest
     # make sure these permissions are set so that
     # VS Code can connect to the machine
