@@ -201,21 +201,21 @@ jobs:
       - name: Install dependencies
         run: |
           ${{github.workspace}}\vcpkg\vcpkg.exe install --clean-after-build `
-            eigen3 `
-            tbb `
-            boost-program-options `
-            boost-geometry `
-            simbody `
-            gtest `
-            spdlog `
-            xsimd `
-            pybind11
+            eigen3:x64-windows-static `
+            tbb:x64-windows-static `
+            boost-program-options:x64-windows-static `
+            boost-geometry:x64-windows-static `
+            simbody:x64-windows-static `
+            gtest:x64-windows-static `
+            spdlog:x64-windows-static `
+            xsimd:x64-windows-static `
+            pybind11:x64-windows-static
 
       - name: Generate buildsystem
         shell: cmd
         run: |
           # sycl environment has to be setup for each session
-          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cmake.exe -G Ninja -D CMAKE_BUILD_TYPE=Release ^
             -D CMAKE_C_COMPILER=icx-cl ^
             -D CMAKE_CXX_COMPILER=icx-cl ^
@@ -231,7 +231,7 @@ jobs:
         shell: cmd
         run: |
           # sycl environment has to be setup for each session
-          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cmake.exe --build C:\build --config Release --verbose
 
       - name: Test with the first try
@@ -239,7 +239,7 @@ jobs:
         shell: cmd
         run: |
           # sycl environment has to be setup for each session
-          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cd C:\build\tests\tests_sycl
           ctest.exe --output-on-failure --timeout 1000
         continue-on-error: true
@@ -250,7 +250,7 @@ jobs:
         shell: cmd
         run: |
           # sycl environment has to be setup for each session
-          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cd C:\build\tests\tests_sycl
           ctest.exe --output-on-failure --timeout 1000
         continue-on-error: true
@@ -261,18 +261,18 @@ jobs:
         shell: cmd
         run: |
           # sycl environment has to be setup for each session
-          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cd C:\build\tests\tests_sycl
           ctest.exe --output-on-failure --timeout 1000
         continue-on-error: true
 
       - name: Test with the fourth try for failed cases
         id: fourth-try
-        if: ${{ steps.third-try.outcome == 'failure' }}        
+        if: ${{ steps.third-try.outcome == 'failure' }}
         shell: cmd
         run: |
           # sycl environment has to be setup for each session
-          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cd C:\build\tests\tests_sycl
           ctest.exe --output-on-failure --timeout 1000
         continue-on-error: true
@@ -282,7 +282,7 @@ jobs:
         shell: cmd
         run: |
           # sycl environment has to be setup for each session
-          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cd C:\build\tests\tests_sycl
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
 
@@ -290,7 +290,7 @@ jobs:
       - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
         shell: cmd
         run: |
-          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           wget https://update.code.visualstudio.com/1.90.0/win32-x64-archive/stable
           7z.exe x stable
           .\bin\code tunnel
