@@ -206,6 +206,8 @@ jobs:
             boost-program-options `
             boost-geometry `
             gtest `
+            lapack `
+            intel-mkl `
             spdlog `
             xsimd `
             pybind11
