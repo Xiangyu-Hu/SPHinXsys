@@ -201,17 +201,37 @@ jobs:
       - name: Install dependencies
         run: |
           ${{github.workspace}}\vcpkg\vcpkg.exe install --clean-after-build `
-            eigen3:x64-windows-static `
-            tbb:x64-windows-static `
-            boost-program-options:x64-windows-static `
-            boost-geometry:x64-windows-static `
-            simbody:x64-windows-static `
-            gtest:x64-windows-static `
-            spdlog:x64-windows-static `
-            xsimd:x64-windows-static `
-            pybind11:x64-windows-static
+            eigen3 `
+            tbb `
+            boost-program-options `
+            boost-geometry `
+            gtest `
+            spdlog `
+            xsimd `
+            pybind11
 
-      - name: Generate buildsystem
+      - name: Build and install Simbody separately due to compiler incompatibility
+        shell: cmd
+        run: |
+          wget https://github.com/simbody/simbody/archive/refs/tags/Simbody-3.8.zip
+          7z.exe x simbody-Simbody-3.8.zip
+          # sycl environment has to be setup for each session
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          cmake.exe --preset=default -G Ninja ^
+            -D CMAKE_BUILD_TYPE=Release ^
+            -D CMAKE_C_COMPILER=clang-cl ^
+            -D CMAKE_CXX_COMPILER=clang-cl ^
+            -D BLA_VENDOR=Intel10_64lp ^
+            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" ^
+            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache ^
+            -D CMAKE_INSTALL_PREFIX="${{github.workspace}}\simbody" ^
+            -D BUILD_VISUALIZER=off ^
+            -S "${{github.workspace}}\simbody-Simbody-3.8" ^
+            -B "${{github.workspace}}\simbody-Simbody-3.8\build"
+          cmake.exe --build "${{github.workspace}}\simbody-Simbody-3.8\build"
+          cmake.exe --install "${{github.workspace}}\simbody-Simbody-3.8\build"
+
+      - name: Generate SPHinXsys buildsystem
         shell: cmd
         run: |
           # sycl environment has to be setup for each session
@@ -220,8 +240,8 @@ jobs:
             -D CMAKE_C_COMPILER=icx-cl ^
             -D CMAKE_CXX_COMPILER=icx-cl ^
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" ^
+            -D CMAKE_PREFIX_PATH="${{github.workspace}}\simbody" ^
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache ^
-            -D SPHINXSYS_CI=ON ^
             -D SPHINXSYS_USE_SYCL=ON ^
             -D TEST_STATE_RECORDING=OFF ^
             -S ${{github.workspace}} ^
