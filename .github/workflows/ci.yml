@@ -219,7 +219,7 @@ jobs:
           7z.exe x simbody-Simbody-3.8.zip
           # sycl environment has to be setup for each session
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
-          cmake.exe --preset=default -G Ninja ^
+          cmake.exe -G Ninja ^
             -D CMAKE_BUILD_TYPE=Release ^
             -D CMAKE_C_COMPILER=clang-cl ^
             -D CMAKE_CXX_COMPILER=clang-cl ^
