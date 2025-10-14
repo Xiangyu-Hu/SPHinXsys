@@ -206,8 +206,6 @@ jobs:
             boost-program-options `
             boost-geometry `
             gtest `
-            lapack `
-            intel-mkl `
             spdlog `
             xsimd `
             pybind11
@@ -216,7 +214,7 @@ jobs:
         shell: cmd
         run: |
           wget https://github.com/simbody/simbody/archive/refs/tags/Simbody-3.8.zip
-          7z.exe x simbody-Simbody-3.8.zip
+          7z.exe x Simbody-3.8.zip
           # sycl environment has to be setup for each session
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           cmake.exe -G Ninja ^
@@ -241,7 +239,6 @@ jobs:
           cmake.exe -G Ninja -D CMAKE_BUILD_TYPE=Release ^
             -D CMAKE_C_COMPILER=icx-cl ^
             -D CMAKE_CXX_COMPILER=icx-cl ^
-            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" ^
             -D CMAKE_PREFIX_PATH="${{github.workspace}}\simbody" ^
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache ^
             -D SPHINXSYS_USE_SYCL=ON ^
