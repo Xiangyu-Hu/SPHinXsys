@@ -210,6 +210,8 @@ jobs:
             xsimd `
             pybind11
 
+      - uses: ilammy/msvc-dev-cmd@v1
+      
       - name: Build and install Simbody separately due to compiler incompatibility
         shell: cmd
         run: |
