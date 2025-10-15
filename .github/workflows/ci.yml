@@ -225,6 +225,7 @@ jobs:
             -D CMAKE_C_COMPILER=icx-cl ^
             -D CMAKE_CXX_COMPILER=icx-cl ^
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache ^
+            -D CMAKE_CXX_FLAGS="/fp:precise /Qno-svml /Qimf-arch-consistency:true /QxSSE2 /Qstd=c++17" ^
             -D CMAKE_INSTALL_PREFIX="${{github.workspace}}\simbody" ^
             -D BUILD_VISUALIZER=off ^
             -S "${{github.workspace}}\simbody-Simbody-3.8" ^
