@@ -71,9 +71,9 @@ void pure_tensile_test(int res_factor)
 
     // load
     const double t_ref = length / (c_s / 20.0);
-    // const double M = 20 * Pi; // Nm
+    const double M = 20 * Pi; // Nm
     // const double F = M * 0.1;
-    const double F = 500;
+    // const double F = 500;
 
     // Setup the system
     bar_simulation simulation(dp);
@@ -111,13 +111,13 @@ void pure_tensile_test(int res_factor)
     // loading condition
     Vec3d tip_pos = length * Vec3d::UnitX();
     auto tip_id = get_closest_particle(bar_particles, tip_pos);
-    // auto *m_prior = bar_particles.getVariableDataByName<Vec3d>("ExternalTorquePerUnitLength");
-    auto *force_prior = bar_particles.registerStateVariableData<Vec3d>("ForcePrior");
+    auto *m_prior = bar_particles.getVariableDataByName<Vec3d>("ExternalTorquePerUnitLength");
+    // auto *force_prior = bar_particles.registerStateVariableData<Vec3d>("ForcePrior");
     simulation.acceleration_bc = [&](Real)
     {
-        // double m_t = M / dp;
-        //  m_prior[tip_id] = m_t * Vec3d::UnitZ();
-        force_prior[tip_id] = F * Vec3d::UnitX();
+        double m_t = M / dp;
+        m_prior[tip_id] = m_t * Vec3d::UnitZ();
+        // force_prior[tip_id] = F * Vec3d::UnitX();
     };
 
     // Output
@@ -140,7 +140,7 @@ void pure_tensile_test(int res_factor)
      * Set the starting time.
      */
     simulation.output_number = 100;
-    double end_time = 100 * t_ref;
+    double end_time = t_ref;
     simulation.run_until(end_time, true);
 }
 
@@ -149,8 +149,9 @@ void pure_bending_test(int res_factor)
     // Global parameters
     const double length = 10.0;
     const double EI = 100.0;
-    const double GA = 5000.0;
+    const double GA = 5e3;
     const double width = sqrt(6.0 * EI / GA); // radius is determined by the ratio of EI and GA
+    std::cout << "width = " << width << std::endl;
 
     const auto g2 = Vec3d::UnitY();
     const auto g3 = Vec3d::UnitZ();
@@ -179,8 +180,10 @@ void pure_bending_test(int res_factor)
 
     // material
     const double rho0_s = 1.0;
-    const double Youngs_modulus = 7.95e4; // Pa
+    const double I = get_moment_of_inertia_rectangular_shape(width, width);
+    const double Youngs_modulus = EI / I; // Pa
     const double poisson = 0;
+    std::cout << "Youngs_modulus = " << Youngs_modulus << std::endl;
 
     // Material models
     bar_params.material = std::make_shared<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
@@ -190,22 +193,23 @@ void pure_bending_test(int res_factor)
     size_t particle_number = bar_params.geometry_params.pos_.size();
     Real G = bar_params.material->ShearModulus();
     Real area = get_area_rectangular_shape(width, width);
-    Real I_y = get_moment_of_inertia_rectangular_shape(width, width);
-    Real I_z = get_moment_of_inertia_rectangular_shape(width, width);
-    Real J = I_y + I_z; // torsional constant for rectangular section
-    Mat3d I_rho = rho0_s * Vec3d(J, I_y, I_z).asDiagonal();
-    Mat3d C_N = Vec3d(Youngs_modulus * area, G * area, G * area).asDiagonal();
-    Mat3d C_M = Vec3d(G * J, Youngs_modulus * I_y, Youngs_modulus * I_z).asDiagonal();
+    Real J = 2 * I; // torsional constant for rectangular section
+    Mat3d I_rho = rho0_s * Vec3d(J, I, I).asDiagonal();
+    Mat3d C_N = Vec3d(Youngs_modulus * area, GA, GA).asDiagonal();
+    Mat3d C_M = Vec3d(G * J, EI, EI).asDiagonal();
+    std::cout << "C_N = " << C_N << std::endl;
+    std::cout << "C_M = " << C_M << std::endl;
     bar_params.material_params.rho_A_.resize(particle_number, rho0_s * area);
     bar_params.material_params.I_rho_l_.resize(particle_number, I_rho);
     bar_params.material_params.C_N_.resize(particle_number, C_N);
     bar_params.material_params.C_M_.resize(particle_number, C_M);
     bar_params.physical_viscosity = get_physical_viscosity_general(rho0_s, Youngs_modulus, width);
+    std::cout << "physical_viscosity = " << bar_params.physical_viscosity << std::endl;
 
     // load
     const double t_ref = length / (c_s / 20.0);
     const double M = 20 * Pi; // Nm
-    const double F = M * 0.1;
+    const double F = 0.5;
 
     // Setup the system
     bar_simulation simulation(dp);
@@ -245,11 +249,18 @@ void pure_bending_test(int res_factor)
     auto tip_id = get_closest_particle(bar_particles, tip_pos);
     auto *m_prior = bar_particles.getVariableDataByName<Vec3d>("ExternalTorquePerUnitLength");
     auto *force_prior = bar_particles.registerStateVariableData<Vec3d>("ForcePrior");
-    simulation.acceleration_bc = [&](Real)
+    double force_time = 20 * t_ref;
+    double momemnt_time = 80 * t_ref;
+    const Real &physical_time = *simulation.system.getSystemVariableDataByName<Real>("PhysicalTime");
+    simulation.acceleration_bc = [&, m = M / dp](Real)
     {
-        double m_t = M / dp;
-        m_prior[tip_id] = m_t * Vec3d::UnitZ();
-        force_prior[tip_id] = F * Vec3d::UnitZ();
+        // if (physical_time > force_time)
+        //{
+        //    Real m_t = m * (physical_time - force_time) / (momemnt_time - force_time);
+        //    m_prior[tip_id] = m_t * Vec3d::UnitZ();
+        //}
+        // force_prior[tip_id] = F * Vec3d::UnitZ();
+        m_prior[tip_id] = m * Vec3d::UnitZ();
     };
 
     // Output
@@ -259,7 +270,6 @@ void pure_bending_test(int res_factor)
     bar_particles.addVariableToWrite<Vec3d>("AngularVelocity");
     bar_particles.addVariableToWrite<Vec3d>("PseudoNormal");
     bar_particles.addVariableToWrite<Vec3d>("PseudoBinormal");
-    bar_particles.addVariableToWrite<Vec3d>("IncrementalRotation");
     BodyStatesRecordingToVtp vtp_output(simulation.system);
     vtp_output.writeToFile(0);
     simulation.output_function = [&](size_t ite)
@@ -272,7 +282,7 @@ void pure_bending_test(int res_factor)
      * Set the starting time.
      */
     simulation.output_number = 100;
-    double end_time = 100 * t_ref;
+    double end_time = 50 * t_ref;
     simulation.run_until(end_time, true);
 }
 

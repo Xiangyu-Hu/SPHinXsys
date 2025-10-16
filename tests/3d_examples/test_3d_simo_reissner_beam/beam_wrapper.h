@@ -49,9 +49,8 @@ class ParticleGenerator<LinearParticles, BarParticleGenerator> : public Particle
 struct bar_algorithm
 {
     InteractionDynamics<slender_structure_dynamics::BarCorrectConfiguration> corrected_configuration;
-    Dynamics1Level<slender_structure_dynamics::SimoReissnerRelaxationFirstHalf_v2> stress_relaxation_first_half;
-    Dynamics1Level<slender_structure_dynamics::SimoReissnerRelaxationSecondHalf_v2> stress_relaxation_second_half;
-    SimpleDynamics<slender_structure_dynamics::VelocityUpdate> velocity_update;
+    Dynamics1Level<slender_structure_dynamics::SimoReissnerStressRelaxationFirstHalf> stress_relaxation_first_half;
+    Dynamics1Level<slender_structure_dynamics::SimoReissnerStressRelaxationSecondHalf> stress_relaxation_second_half;
     ReduceDynamics<slender_structure_dynamics::BarAcousticTimeStepSize> computing_time_step_size;
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> bar_position_damping;
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> bar_rotation_damping;
@@ -61,7 +60,6 @@ struct bar_algorithm
         : corrected_configuration(inner),
           stress_relaxation_first_half(inner),
           stress_relaxation_second_half(inner),
-          velocity_update(inner.getSPHBody()),
           computing_time_step_size(inner.getSPHBody()),
           bar_position_damping(0.5, inner, "Velocity", physical_viscosity),
           bar_rotation_damping(0.5, inner, "AngularVelocity", physical_viscosity),
@@ -107,7 +105,6 @@ struct bar_object
     Real get_time_step_size() { return alg->computing_time_step_size.exec(); }
     void stress_relaxation_first_half(Real dt) { alg->stress_relaxation_first_half.exec(dt); }
     void stress_relaxation_second_half(Real dt) { alg->stress_relaxation_second_half.exec(dt); }
-    void update_velocity(Real dt) { alg->velocity_update.exec(dt); }
     void damping(Real dt)
     {
         alg->bar_position_damping.exec(dt);
@@ -211,26 +208,26 @@ struct bar_simulation
                     std::cout << "N=" << ite << " Time: " << physical_time << "	dt: " << dt << std::endl;
                 }
 
+                acceleration_bc(dt);
+
                 dt = get_time_step_size();
                 if (dt < dt_ref / 1.1)
                 {
                     output_function(output_ite++);
                     throw std::runtime_error("Time step size too small, simulation stopped.");
                 }
-                // dt = 0.25 * dt;
+
                 for (auto &obj : objects)
-                    obj.update_velocity(dt);
+                    obj.stress_relaxation_first_half(dt);
+
                 velocity_bc(dt);
                 if (use_damping)
                     for (auto &obj : objects)
                         obj.damping(dt);
                 velocity_bc(dt);
-                for (auto &obj : objects)
-                    obj.stress_relaxation_first_half(dt);
-                acceleration_bc(dt);
+
                 for (auto &obj : objects)
                     obj.stress_relaxation_second_half(dt);
-                velocity_bc(dt);
 
                 ite++;
                 integral_time += dt;
