@@ -12,19 +12,6 @@ Mat3d get_skew_matrix(const Vec3d &v)
         {-v.y(), v.x(), 0.0}};
 }
 
-// Update the transformation matrix g_i = lambada * g0_i based on the incremental rotation
-// lambda^n+1 = exp(dtheta) * lambda^n
-Mat3d get_lambda(const Mat3d &lambda, const Vec3d &dtheta)
-{
-    Real min = std::numeric_limits<Real>::epsilon();
-    Real dtheta_norm = dtheta.norm();
-    Mat3d S_dtheta = get_skew_matrix(dtheta);
-    Real a1 = dtheta_norm > min ? sin(dtheta_norm) / dtheta_norm : 1.0;
-    Real a2 = dtheta_norm > min ? (1.0 - cos(dtheta_norm)) / dtheta_norm / dtheta_norm : 0.5;
-    Mat3d exp_S_dtheta = Mat3d::Identity() + a1 * S_dtheta + a2 * S_dtheta * S_dtheta;
-    return exp_S_dtheta * lambda;
-}
-
 // Get the T operator based on the incremental rotation
 Mat3d get_T_operator(const Vec3d &dtheta)
 {
@@ -217,26 +204,12 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
         pos_[index_i] += vel_[index_i] * dt;
         Vec3d dtheta = angular_vel_[index_i] * dt;
         rotation_[index_i] += dtheta;
-        // lambda_[index_i] = get_lambda(lambda_[index_i], dtheta);
-        // pseudo_b_n_[index_i] = lambda_[index_i] * b_n0_[index_i];
-        // pseudo_n_[index_i] = lambda_[index_i] * n0_[index_i];
 
         Real q0 = cos(0.5 * dtheta.norm());
         Real factor = dtheta.norm() > Eps ? sin(0.5 * dtheta.norm()) / dtheta.norm() : 0.5;
         Vec3d q_vec = factor * dtheta;
-        Real q1 = q_vec.x();
-        Real q2 = q_vec.y();
-        Real q3 = q_vec.z();
-        Mat3d Q = 2 * Mat3d{{q0 * q0 + q1 * q1 - Real(0.5),
-                             q1 * q2 - q0 * q3,
-                             q1 * q3 + q0 * q2},
-                            {q2 * q1 + q0 * q3,
-                             q0 * q0 + q2 * q2 - Real(0.5),
-                             q2 * q3 - q0 * q1},
-                            {q3 * q1 - q0 * q2,
-                             q3 * q2 + q0 * q1,
-                             q0 * q0 + q3 * q3 - Real(0.5)}};
-        lambda_[index_i] = Q * lambda_[index_i];
+        Eigen::Quaternion<Real> q(q0, q_vec.x(), q_vec.y(), q_vec.z());
+        lambda_[index_i] = q.toRotationMatrix() * lambda_[index_i];
         pseudo_b_n_[index_i] = lambda_[index_i] * b_n0_[index_i];
         pseudo_n_[index_i] = lambda_[index_i] * n0_[index_i];
     }
