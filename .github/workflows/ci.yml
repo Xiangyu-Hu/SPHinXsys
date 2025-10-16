@@ -210,8 +210,6 @@ jobs:
             xsimd `
             pybind11
 
-      - uses: ilammy/msvc-dev-cmd@v1
-      
       - name: Build and install Simbody separately due to compiler incompatibility
         shell: cmd
         run: |
@@ -222,10 +220,9 @@ jobs:
           setx PATH "%PATH%;C:\Program Files (x86)\Intel\oneAPI\compiler\latest\bin"
           cmake.exe -G Ninja ^
             -D CMAKE_BUILD_TYPE=Release ^
-            -D CMAKE_C_COMPILER=icx-cl ^
-            -D CMAKE_CXX_COMPILER=icx-cl ^
+            -D CMAKE_C_COMPILER=clang-cl ^
+            -D CMAKE_CXX_COMPILER=clang-cl ^
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache ^
-            -D CMAKE_CXX_FLAGS="/fp:precise /Qno-svml /Qimf-arch-consistency:true /QxSSE2 /Qstd=c++17" ^
             -D CMAKE_INSTALL_PREFIX="${{github.workspace}}\simbody" ^
             -D BUILD_VISUALIZER=off ^
             -S "${{github.workspace}}\simbody-Simbody-3.8" ^
