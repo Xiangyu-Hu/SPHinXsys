@@ -236,7 +236,7 @@ jobs:
             -D CMAKE_C_COMPILER=icx-cl ^
             -D CMAKE_CXX_COMPILER=icx-cl ^
             -D CMAKE_PREFIX_PATH="${{github.workspace}}\simbody" ^
-            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" ^    
+            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\vcpkg\scripts\buildsystems\vcpkg.cmake" ^
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache ^
             -D SPHINXSYS_USE_SYCL=ON ^
             -D TEST_STATE_RECORDING=OFF ^
