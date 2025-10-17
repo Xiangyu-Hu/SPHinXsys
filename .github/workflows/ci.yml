@@ -205,7 +205,8 @@ jobs:
             tbb `
             boost-program-options `
             boost-geometry `
-            lapack `
+            lapack:x64-windows-static `
+            blas:x64-windows-static `            
             gtest `
             spdlog `
             xsimd `
@@ -214,17 +215,9 @@ jobs:
       - name: Build and install Simbody separately due to compiler incompatibility
         shell: cmd
         run: |
-          git clone https://github.com/simbody/simbody.git "${{github.workspace}}\..\simbody-source"
+          git clone https://github.com/Xiangyu-Hu/simbody.git "${{github.workspace}}\..\simbody-source"
           7z.exe x Simbody-3.8.zip
-          cmake.exe -G Ninja ^
-            -D CMAKE_BUILD_TYPE=Release ^
-            -D CMAKE_C_COMPILER=icx-cl ^
-            -D CMAKE_CXX_COMPILER=icx-cl ^
-            -D CMAKE_CXX_FLAGS="-fsycl /EHsc" ^
-            -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}\..\vcpkg\scripts\buildsystems\vcpkg.cmake"            
-            -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache ^
-            -D CMAKE_INSTALL_PREFIX="${{github.workspace}}\..\simbody" ^
-            -D BUILD_VISUALIZER=off ^
+          cmake.exe --preset="Windows sycl_cpu release" -G Ninja ^
             -S "${{github.workspace}}\..\simbody-source" ^
             -B "${{github.workspace}}\..\simbody-source\build"
           cmake.exe --build "${{github.workspace}}\..\simbody-source\build"
