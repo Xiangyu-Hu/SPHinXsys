@@ -283,7 +283,14 @@ void pure_bending_test(int res_factor)
      */
     simulation.output_number = 100;
     double end_time = 50 * t_ref;
-    simulation.run_until(end_time, true);
+    try
+    {
+        simulation.run_until(end_time, true);
+    }
+    catch (std::exception &)
+    {
+        vtp_output.writeToFile();
+    }
 }
 
 void beam_arc_rotation(int res_factor)

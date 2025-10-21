@@ -26,7 +26,32 @@ Mat3d get_T_operator(const Vec3d &dtheta)
     return a1 * Mat3d::Identity() + a2 * S_dtheta + a3 * dtheta * dtheta.transpose();
 }
 
-class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
+class BaseSimoRelaxation : public BaseBarRelaxation
+{
+  protected:
+    Vec3d *b_n0_;
+    Vec3d *dTau_;       // Tau^n+1 - Tau^n, used for numerical damping
+    Vec3d *dKappa_;     // Kappa^n+1 - Kappa^n, used for numerical damping
+    Vec3d *Tau_;        // material tensile-shear strain
+    Vec3d *Kappa_;      // material bending strain
+    Vec3d *dr_ds_;      // dr_ds in global coordinates
+    Mat3d *grad_r_;     // nabla_r in global coordinates
+    Mat3d *grad_theta_; // nabla_theta in global coordinates
+
+  public:
+    explicit BaseSimoRelaxation(BaseInnerRelation &inner_relation)
+        : BaseBarRelaxation(inner_relation),
+          b_n0_(particles_->registerStateVariableDataFrom<Vecd>("InitialBinormalDirection", "BinormalDirection")),
+          dTau_(particles_->registerStateVariableData<Vec3d>("dTau")),
+          dKappa_(particles_->registerStateVariableData<Vec3d>("dKappa")),
+          Tau_(particles_->registerStateVariableData<Vecd>("Tau")),
+          Kappa_(particles_->registerStateVariableData<Vecd>("Kappa")),
+          dr_ds_(particles_->registerStateVariableData<Vecd>("DrDs")),
+          grad_r_(particles_->registerStateVariableData<Mat3d>("NablaR")),
+          grad_theta_(particles_->registerStateVariableData<Mat3d>("NablaTheta")) {}
+};
+
+class SimoReissnerStressRelaxationFirstHalf : public BaseSimoRelaxation
 {
   private:
     Real G0_;
@@ -34,11 +59,8 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
     Real hourglass_control_factor_;
 
     Real *mass_;
-    Vec3d *b_n0_;
     Real inv_W0_;
 
-    Vec3d *dTau_;   // Tau^n+1 - Tau^n, used for numerical damping
-    Vec3d *dKappa_; // Kappa^n+1 - Kappa^n, used for numerical damping
     Real numerical_damping_factor_ = 0.5;
 
     Mat3d *C_N_;               // diag[EA,GA2,GA3]
@@ -48,40 +70,27 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
     Vec3d *m_prior_;           // the external torque per unit length in global coordinates
     Vec3d *angular_acc_prior_; // the angular acceleration caused by external torque
 
-    Vec3d *Tau_;        // material tensile-shear strain
-    Vec3d *Kappa_;      // material bending strain
-    Vec3d *f_;          // resultant force per unit length in global coordinates
-    Vec3d *m_;          // resultant moment per unit length in global coordinates
-    Vec3d *dr_ds_;      // dr_ds in global coordinates
-    Mat3d *grad_r_;     // nabla_r in global coordinates
-    Mat3d *grad_theta_; // nabla_theta in global coordinates
+    Vec3d *f_; // resultant force per unit length in global coordinates
+    Vec3d *m_; // resultant moment per unit length in global coordinates
 
   public:
     explicit SimoReissnerStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
                                                    bool hourglass_control = false,
                                                    Real hourglass_control_factor = 0.005)
-        : BaseBarRelaxation(inner_relation),
+        : BaseSimoRelaxation(inner_relation),
           G0_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial()).ShearModulus()),
           hourglass_control_(hourglass_control),
           hourglass_control_factor_(hourglass_control_factor),
           mass_(particles_->getVariableDataByName<Real>("Mass")),
-          b_n0_(particles_->registerStateVariableDataFrom<Vecd>("InitialBinormalDirection", "BinormalDirection")),
           inv_W0_(1.0 / sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd)),
-          dTau_(particles_->registerStateVariableData<Vec3d>("dTau")),
-          dKappa_(particles_->registerStateVariableData<Vec3d>("dKappa")),
           C_N_(particles_->registerStateVariableData<Matd>("TensileConstitutiveMatrix")),
           C_M_(particles_->registerStateVariableData<Matd>("BendingConstitutiveMatrix")),
           I_rho_l_(particles_->registerStateVariableData<Matd>("InertiaMatrix")),
           A_rho_(particles_->registerStateVariableData<Real>("RhoCrossSectionArea")),
           m_prior_(particles_->registerStateVariableData<Vecd>("ExternalTorquePerUnitLength")),
           angular_acc_prior_(particles_->registerStateVariableData<Vecd>("PriorAngularAcceleration")),
-          Tau_(particles_->registerStateVariableData<Vecd>("MaterialTensileShearStrain")),
-          Kappa_(particles_->registerStateVariableData<Vecd>("MaterialBendingStrain")),
           f_(particles_->registerStateVariableData<Vecd>("ResultantForce")),
-          m_(particles_->registerStateVariableData<Vecd>("ResultantMoment")),
-          dr_ds_(particles_->registerStateVariableData<Vecd>("DrDs")),
-          grad_r_(particles_->registerStateVariableData<Mat3d>("NablaR")),
-          grad_theta_(particles_->registerStateVariableData<Mat3d>("NablaTheta")) {}
+          m_(particles_->registerStateVariableData<Vecd>("ResultantMoment")) {}
 
     void initialization(size_t index_i, Real dt = 0.0)
     {
@@ -167,58 +176,37 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseBarRelaxation
     }
 };
 
-class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
+class SimoReissnerStressRelaxationSecondHalf : public BaseSimoRelaxation
 {
   private:
-    Vec3d *b_n0_;
-    // To facilitate Verlet scheme, I store quaternion as registered variables
-    Real *quaternion_w_;       // w component of quaternion
-    Vec3d *quaternion_coeffs_; // (x,y,z) components of quaternion
-    Vec3d *Tau_;               // material tensile-shear strain
-    Vec3d *Kappa_;             // material bending strain
-    Vec3d *dkappa_dt_;         // spatial bending strain rate
-    Vec3d *dr_ds_;             // dr_ds in global coordinates
-    Vec3d *dv_ds_;             // dv_ds in global coordinates
-    Mat3d *grad_r_;            // nabla_r in global coordinates
-    Mat3d *grad_angular_vel_;  // nabla_w in global coordinates
-    Mat3d *grad_theta_;        // nabla_theta in global coordinates
-    Vec3d *dTau_;              // Tau^n+1 - Tau^n, used for numerical damping
-    Vec3d *dKappa_;            // Kappa^n+1 - Kappa^n, used for numerical damping
+    Eigen::Quaternion<Real> *quaternion_; // quaternion
+
+    Vec3d *dkappa_dt_;        // spatial bending strain rate
+    Vec3d *dv_ds_;            // dv_ds in global coordinates
+    Mat3d *grad_angular_vel_; // nabla_w in global coordinates
 
   public:
     explicit SimoReissnerStressRelaxationSecondHalf(BaseInnerRelation &inner_relation)
-        : BaseBarRelaxation(inner_relation),
-          b_n0_(particles_->registerStateVariableDataFrom<Vecd>("InitialBinormalDirection", "BinormalDirection")),
-          quaternion_w_(particles_->registerStateVariableData<Real>("QuaternionW", Real(1.0))),
-          quaternion_coeffs_(particles_->registerStateVariableData<Vec3d>("QuaternionCoeffs")),
-          Tau_(particles_->registerStateVariableData<Vec3d>("MaterialTensileShearStrain")),
-          Kappa_(particles_->registerStateVariableData<Vec3d>("MaterialBendingStrain")),
+        : BaseSimoRelaxation(inner_relation),
+          quaternion_(particles_->addUniqueStateVariableData<Eigen::Quaternion<Real>>("Quaternion", Eigen::Quaternion<Real>::Identity())),
           dkappa_dt_(particles_->registerStateVariableData<Vec3d>("SpatialBendingStrainRate")),
-          dr_ds_(particles_->registerStateVariableData<Vec3d>("DrDs")),
           dv_ds_(particles_->registerStateVariableData<Vec3d>("DvDs")),
-          grad_r_(particles_->registerStateVariableData<Mat3d>("NablaR")),
-          grad_angular_vel_(particles_->registerStateVariableData<Mat3d>("NablaW")),
-          grad_theta_(particles_->registerStateVariableData<Mat3d>("NablaTheta")),
-          dTau_(particles_->registerStateVariableData<Vec3d>("dTau")),
-          dKappa_(particles_->registerStateVariableData<Vec3d>("dKappa")) {}
+          grad_angular_vel_(particles_->registerStateVariableData<Mat3d>("NablaW")) {}
 
     void initialization(size_t index_i, Real dt = 0.0)
     {
         pos_[index_i] += vel_[index_i] * dt;
         rotation_[index_i] += angular_vel_[index_i] * dt;
 
-        Vec3d xyz_coeff = quaternion_coeffs_[index_i];
-        Eigen::Quaternion<Real> q_n(quaternion_w_[index_i], xyz_coeff.x(), xyz_coeff.y(), xyz_coeff.z());
         Eigen::Quaternion<Real> omega_q(0.0, angular_vel_[index_i].x(), angular_vel_[index_i].y(), angular_vel_[index_i].z());
-        auto dq_dt = Eigen::Quaternion<Real>(omega_q * q_n);
-        auto q_np1 = Eigen::Quaternion<Real>(q_n.coeffs() + 0.5 * dt * dq_dt.coeffs());
-        q_np1.normalize();
-        quaternion_w_[index_i] = q_np1.w();
-        quaternion_coeffs_[index_i] = Vec3d(q_np1.x(), q_np1.y(), q_np1.z());
+        auto dq_dt = Eigen::Quaternion<Real>(omega_q * quaternion_[index_i]);
+        quaternion_[index_i] = quaternion_[index_i].coeffs() + 0.5 * dt * dq_dt.coeffs();
+        quaternion_[index_i].normalize();
 
-        pseudo_b_n_[index_i] = q_np1 * b_n0_[index_i];
-        pseudo_n_[index_i] = q_np1 * n0_[index_i];
+        pseudo_b_n_[index_i] = quaternion_[index_i] * b_n0_[index_i];
+        pseudo_n_[index_i] = quaternion_[index_i] * n0_[index_i];
     }
+
     void interaction(size_t index_i, Real dt = 0.0)
     {
         const auto &Q0_i = transformation_matrix0_[index_i];
@@ -247,6 +235,7 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
         Mat3d T_operator = get_T_operator(dtheta);
         dkappa_dt_[index_i] = T_operator.transpose() * dw_ds;
     }
+
     void update(size_t index_i, Real dt = 0.0)
     {
         Mat3d Q = getTransformationMatrix(pseudo_n_[index_i], pseudo_b_n_[index_i]);
