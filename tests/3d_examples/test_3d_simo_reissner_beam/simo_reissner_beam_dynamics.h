@@ -171,23 +171,26 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
 {
   private:
     Vec3d *b_n0_;
-    Matd *lambda_;            // transformation matrix from initial local to current local coordinates
-    Vec3d *Tau_;              // material tensile-shear strain
-    Vec3d *Kappa_;            // material bending strain
-    Vec3d *dkappa_dt_;        // spatial bending strain rate
-    Vec3d *dr_ds_;            // dr_ds in global coordinates
-    Vec3d *dv_ds_;            // dv_ds in global coordinates
-    Mat3d *grad_r_;           // nabla_r in global coordinates
-    Mat3d *grad_angular_vel_; // nabla_w in global coordinates
-    Mat3d *grad_theta_;       // nabla_theta in global coordinates
-    Vec3d *dTau_;             // Tau^n+1 - Tau^n, used for numerical damping
-    Vec3d *dKappa_;           // Kappa^n+1 - Kappa^n, used for numerical damping
+    // To facilitate Verlet scheme, I store quaternion as registered variables
+    Real *quaternion_w_;       // w component of quaternion
+    Vec3d *quaternion_coeffs_; // (x,y,z) components of quaternion
+    Vec3d *Tau_;               // material tensile-shear strain
+    Vec3d *Kappa_;             // material bending strain
+    Vec3d *dkappa_dt_;         // spatial bending strain rate
+    Vec3d *dr_ds_;             // dr_ds in global coordinates
+    Vec3d *dv_ds_;             // dv_ds in global coordinates
+    Mat3d *grad_r_;            // nabla_r in global coordinates
+    Mat3d *grad_angular_vel_;  // nabla_w in global coordinates
+    Mat3d *grad_theta_;        // nabla_theta in global coordinates
+    Vec3d *dTau_;              // Tau^n+1 - Tau^n, used for numerical damping
+    Vec3d *dKappa_;            // Kappa^n+1 - Kappa^n, used for numerical damping
 
   public:
     explicit SimoReissnerStressRelaxationSecondHalf(BaseInnerRelation &inner_relation)
         : BaseBarRelaxation(inner_relation),
           b_n0_(particles_->registerStateVariableDataFrom<Vecd>("InitialBinormalDirection", "BinormalDirection")),
-          lambda_(particles_->registerStateVariableData<Mat3d>("TransformationFromInitialToCurrent", IdentityMatrix<Matd>::value)),
+          quaternion_w_(particles_->registerStateVariableData<Real>("QuaternionW", Real(1.0))),
+          quaternion_coeffs_(particles_->registerStateVariableData<Vec3d>("QuaternionCoeffs")),
           Tau_(particles_->registerStateVariableData<Vec3d>("MaterialTensileShearStrain")),
           Kappa_(particles_->registerStateVariableData<Vec3d>("MaterialBendingStrain")),
           dkappa_dt_(particles_->registerStateVariableData<Vec3d>("SpatialBendingStrainRate")),
@@ -202,16 +205,19 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseBarRelaxation
     void initialization(size_t index_i, Real dt = 0.0)
     {
         pos_[index_i] += vel_[index_i] * dt;
-        Vec3d dtheta = angular_vel_[index_i] * dt;
-        rotation_[index_i] += dtheta;
+        rotation_[index_i] += angular_vel_[index_i] * dt;
 
-        Real q0 = cos(0.5 * dtheta.norm());
-        Real factor = dtheta.norm() > Eps ? sin(0.5 * dtheta.norm()) / dtheta.norm() : 0.5;
-        Vec3d q_vec = factor * dtheta;
-        Eigen::Quaternion<Real> q(q0, q_vec.x(), q_vec.y(), q_vec.z());
-        lambda_[index_i] = q.toRotationMatrix() * lambda_[index_i];
-        pseudo_b_n_[index_i] = lambda_[index_i] * b_n0_[index_i];
-        pseudo_n_[index_i] = lambda_[index_i] * n0_[index_i];
+        Vec3d xyz_coeff = quaternion_coeffs_[index_i];
+        Eigen::Quaternion<Real> q_n(quaternion_w_[index_i], xyz_coeff.x(), xyz_coeff.y(), xyz_coeff.z());
+        Eigen::Quaternion<Real> omega_q(0.0, angular_vel_[index_i].x(), angular_vel_[index_i].y(), angular_vel_[index_i].z());
+        auto dq_dt = Eigen::Quaternion<Real>(omega_q * q_n);
+        auto q_np1 = Eigen::Quaternion<Real>(q_n.coeffs() + 0.5 * dt * dq_dt.coeffs());
+        q_np1.normalize();
+        quaternion_w_[index_i] = q_np1.w();
+        quaternion_coeffs_[index_i] = Vec3d(q_np1.x(), q_np1.y(), q_np1.z());
+
+        pseudo_b_n_[index_i] = q_np1 * b_n0_[index_i];
+        pseudo_n_[index_i] = q_np1 * n0_[index_i];
     }
     void interaction(size_t index_i, Real dt = 0.0)
     {
