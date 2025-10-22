@@ -18,7 +18,7 @@ SPHinXsys depends on the following:
 * GCC 8 or later (Linux)
 * Python3
 * Git
-* vcpkg (please use the branch "2024.02.14", which is the same that we have used in CI)
+* vcpkg (please use the branch "2024.11.16", or the same one that we have used in CI: (line 29) https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/.github/workflows/ci.yml)
 
 Installing on Ubuntu
 ---------------------------------------
@@ -59,7 +59,7 @@ The following block will install the direct dependencies required by SPHinXsys i
 ..  code-block:: bash
     
     cd $HOME
-    git clone -b 2024.02.14 https://www.github.com/microsoft/vcpkg.git
+    git clone -b 2024.11.16 https://www.github.com/microsoft/vcpkg.git
     cd vcpkg
     ./bootstrap-vcpkg.sh
     ./vcpkg install --clean-after-build \
@@ -287,7 +287,7 @@ First clone the vcpkg repository to your home directory.
 
 ..  code-block:: pwsh
     
-    git clone -b 2024.02.14 https://www.github.com/microsoft/vcpkg.git
+    git clone -b 2024.11.16 https://www.github.com/microsoft/vcpkg.git
     cd vcpkg
     .\bootstrap-vcpkg.bat
     .\vcpkg install --clean-after-build         \
@@ -307,7 +307,7 @@ i.e., you need to use the slash :code:`/` instead of the backslash:code:`\`, as 
 
 ..  code-block:: bash
     
-    git clone -b 2024.02.14 https://www.github.com/microsoft/vcpkg.git
+    git clone -b 2024.11.16 https://www.github.com/microsoft/vcpkg.git
     cd vcpkg
     ./bootstrap-vcpkg.bat
     ./vcpkg install --clean-after-build             \
@@ -394,7 +394,7 @@ The following block will install the direct dependencies required by SPHinXsys i
 ..  code-block:: bash
     
     cd $HOME
-    git clone -b 2024.02.14 https://www.github.com/microsoft/vcpkg.git
+    git clone -b 2024.11.16 https://www.github.com/microsoft/vcpkg.git
     cd vcpkg
     ./bootstrap-vcpkg.sh -disableMetrics
     ./vcpkg env --triplet=x64-osx
