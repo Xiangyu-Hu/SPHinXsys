@@ -105,7 +105,10 @@ jobs:
             -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -D SPHINXSYS_CI=ON \
+            -D SPHINXSYS_2D=OFF \
+            -D SPHINXSYS_BUILD_2D_EXAMPLES=OFF \
+            -D SPHINXSYS_BUILD_OPTIMIZATION_EXAMPLES=OFF \
+            -D SPHINXSYS_BUILD_PYTHON_INTERFACE=OFF \
             -D SPHINXSYS_USE_SYCL=ON \
             -D TEST_STATE_RECORDING=OFF \
             -S ${{github.workspace}} \
