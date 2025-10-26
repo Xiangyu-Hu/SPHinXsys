@@ -554,6 +554,7 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             ninja \
+            python \
             autoconf automake autoconf-archive
 
       - uses: hendrikmuhs/ccache-action@v1.2
@@ -629,6 +630,7 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             ninja \
+            python \            
             autoconf automake autoconf-archive
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
