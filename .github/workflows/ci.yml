@@ -554,7 +554,6 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             ninja \
-            python \
             autoconf automake autoconf-archive
 
       - uses: hendrikmuhs/ccache-action@v1.2
@@ -609,7 +608,6 @@ jobs:
     runs-on: macos-13
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
-      VCPKG_VERSION: "2024.02.14"
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -630,7 +628,6 @@ jobs:
             pkg-config `# for installing libraries with vcpkg`\
             git \
             ninja \
-            python \            
             autoconf automake autoconf-archive
 
       - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
