@@ -82,10 +82,8 @@ class BaseCellLinkedList : public BaseMeshField
     void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis);
 
     /** split algorithm */;
-    template <class LocalDynamicsFunction>
-    void particle_for_split(const execution::SequencedPolicy &, const LocalDynamicsFunction &local_dynamics_function);
-    template <class LocalDynamicsFunction>
-    void particle_for_split(const execution::ParallelPolicy &, const LocalDynamicsFunction &local_dynamics_function);
+    template <class ExecutionPolicy, class LocalDynamicsFunction>
+    void particle_for_split(const ExecutionPolicy &ex_policy, const LocalDynamicsFunction &local_dynamics_function);
 
     /** generalized particle search algorithm */
     template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
@@ -125,11 +123,8 @@ class BaseCellLinkedList : public BaseMeshField
     void findNearestListDataEntryByMesh(Mesh &mesh, Real &min_distance_sqr, ListData &nearest_entry,
                                         const Vecd &position);
     /** split algorithm */;
-    template <class LocalDynamicsFunction>
-    void particle_for_split_by_mesh(const execution::SequencedPolicy &, Mesh &mesh,
-                                    const LocalDynamicsFunction &local_dynamics_function);
-    template <class LocalDynamicsFunction>
-    void particle_for_split_by_mesh(const execution::ParallelPolicy &, Mesh &mesh,
+    template <class ExecutionPolicy, class LocalDynamicsFunction>
+    void particle_for_split_by_mesh(const ExecutionPolicy &ex_policy, Mesh &mesh,
                                     const LocalDynamicsFunction &local_dynamics_function);
 };
 
