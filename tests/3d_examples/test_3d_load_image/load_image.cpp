@@ -7,6 +7,7 @@
  */
 
 #include "sphinxsys.h"
+#include "image_shape.h"
 
 using namespace SPH;
 
