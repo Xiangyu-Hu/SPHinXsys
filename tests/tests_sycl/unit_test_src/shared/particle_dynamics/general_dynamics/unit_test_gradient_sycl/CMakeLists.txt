@@ -1,3 +1,5 @@
+if(SPHINXSYS_2D AND SPHINXSYS_BUILD_2D_EXAMPLES)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake) # main (top) cmake dir
 
 set(CMAKE_VERBOSE_MAKEFILE on)
@@ -21,3 +23,5 @@ add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --state_recording=${TEST_S
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 target_link_libraries(${PROJECT_NAME} sphinxsys_2d)
+
+endif()

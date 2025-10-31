@@ -2,7 +2,7 @@ file(GLOB_RECURSE EXTRA_SOURCES_SHARED_HEADERS CONFIGURE_DEPENDS shared/*.h shar
 file(GLOB_RECURSE EXTRA_SOURCES_SHARED_SOURCES CONFIGURE_DEPENDS shared/*.cpp)
 
 
-
+if(SPHINXSYS_2D AND SPHINXSYS_BUILD_2D_EXAMPLES)
     add_library(extra_sources_2d)
 
     file(GLOB_RECURSE EXTRA_SOURCES_2D_HEADERS CONFIGURE_DEPENDS for_2D_build/*.h for_2D_build/*.hpp)
@@ -26,7 +26,7 @@ file(GLOB_RECURSE EXTRA_SOURCES_SHARED_SOURCES CONFIGURE_DEPENDS shared/*.cpp)
     target_sources(extra_sources_2d PRIVATE ${EXTRA_SOURCES_SHARED_SOURCES} ${EXTRA_SOURCES_2D_SOURCES})
 
     target_link_libraries(extra_sources_2d PUBLIC sphinxsys_2d)
-
+endif()
 
 
 

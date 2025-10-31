@@ -1,6 +1,5 @@
 #include "all_simbody.h"
 
-using namespace SPH; // Namespace cite here.
 //------------------------------------------------------------------------------
 //                               udf motion
 //------------------------------------------------------------------------------
@@ -8,7 +7,7 @@ class UdfSinusoidMotionImplementation
     : public SimTK::Motion::Custom::Implementation
 {
   public:
-    UdfSinusoidMotionImplementation(Real amplitude, Real t0, Real rate, Real phase)
+    UdfSinusoidMotionImplementation(double amplitude, double t0, double rate, double phase)
         : SimTK::Motion::Custom::Implementation(), defAmplitude(amplitude),
           defRate(rate), defPhase(phase), defT(t0) {};
 
@@ -18,26 +17,26 @@ class UdfSinusoidMotionImplementation
         return copy;
     };
 
-    void calcPrescribedPosition(const SimTK::State &s, int nq, Real *q) const
+    void calcPrescribedPosition(const SimTK::State &s, int nq, double *q) const
     {
-        const Real t = s.getTime();
-        Real out = defAmplitude * std::sin(defRate * t + defPhase);
+        const double t = s.getTime();
+        double out = defAmplitude * std::sin(defRate * t + defPhase);
         if (t < defT)
         {
-            Real q = t / defT;
+            double q = t / defT;
             out *= pow(q, 3) * (10.0 - 15.0 * q + 6.0 * q * q);
         }
         for (int i = 0; i < nq; ++i)
             q[i] = out;
     };
 
-    void calcPrescribedPositionDot(const SimTK::State &s, int nq, Real *qdot) const
+    void calcPrescribedPositionDot(const SimTK::State &s, int nq, double *qdot) const
     {
-        const Real t = s.getTime();
-        Real outd = defAmplitude * defRate * std::cos(defRate * t + defPhase);
+        const double t = s.getTime();
+        double outd = defAmplitude * defRate * std::cos(defRate * t + defPhase);
         if (t < defT)
         {
-            Real q = t / defT;
+            double q = t / defT;
             outd *= pow(q, 3) * (10.0 - 15.0 * q + 6.0 * q * q);
             outd += defAmplitude * std::sin(defRate * t + defPhase) *
                     (pow(q, 3) * (12.0 * q - 15.0) + 3.0 * q * q * (6.0 * q * q - 15.0 * q + 10.0)) / defT;
@@ -46,14 +45,14 @@ class UdfSinusoidMotionImplementation
             qdot[i] = outd;
     };
 
-    void calcPrescribedPositionDotDot(const SimTK::State &s, int nq, Real *qdotdot) const
+    void calcPrescribedPositionDotDot(const SimTK::State &s, int nq, double *qdotdot) const
     {
-        const Real t = s.getTime();
-        Real outdd = -defAmplitude * defRate * defRate * std::sin(defRate * t + defPhase);
+        const double t = s.getTime();
+        double outdd = -defAmplitude * defRate * defRate * std::sin(defRate * t + defPhase);
 
         if (t < defT)
         {
-            Real q = t / defT;
+            double q = t / defT;
             outdd *= pow(q, 3) * (10.0 - 15.0 * q + 6.0 * q * q);
             outdd += 2.0 * defAmplitude * defRate * std::cos(defRate * t + defPhase) *
                      (pow(q, 3) * (12.0 * q - 15.0) + 3.0 * q * q * (6.0 * q * q - 15.0 * q + 10.0)) / defT;
@@ -72,13 +71,13 @@ class UdfSinusoidMotionImplementation
     };
 
   private:
-    Real defAmplitude, defRate, defPhase;
-    Real defT;
+    double defAmplitude, defRate, defPhase;
+    double defT;
 };
 
 class MyMotion : public SimTK::Motion::Custom
 {
   public:
-    MyMotion(SimTK::MobilizedBody &mobod, Real A, Real t0, Real w, Real phi)
+    MyMotion(SimTK::MobilizedBody &mobod, double A, double t0, double w, double phi)
         : SimTK::Motion::Custom(mobod, new UdfSinusoidMotionImplementation(A, t0, w, phi)) {}
 };

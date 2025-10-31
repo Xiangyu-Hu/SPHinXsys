@@ -17,7 +17,7 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/
 
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS})
-target_link_libraries(${PROJECT_NAME} sphinxsys_2d GTest::gtest GTest::gtest_main)				 
+target_link_libraries(${PROJECT_NAME} sphinxsys_3d GTest::gtest GTest::gtest_main)				 
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation 

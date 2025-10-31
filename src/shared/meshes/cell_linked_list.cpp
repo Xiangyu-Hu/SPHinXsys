@@ -102,7 +102,7 @@ void BaseCellLinkedList::tagBodyPartByCellByMesh(Mesh &mesh, ConcurrentCellLists
                 });
             if (is_included == true)
             {
-                UnsignedInt linear_index = +mesh.LinearCellIndex(cell_index);
+                UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
                 cell_lists.push_back(&cell_index_lists_[linear_index]);
                 cell_indexes.push_back(linear_index);
             }
