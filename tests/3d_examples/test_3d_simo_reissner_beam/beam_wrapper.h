@@ -159,6 +159,8 @@ struct bar_simulation
     std::function<void(Real)> acceleration_bc = [&](Real dt = 0) {};
     std::function<void(Real)> velocity_bc = [&](Real dt = 0) {};
     size_t output_number = 50;
+    size_t ite = 0;
+    size_t output_ite = 0;
 
     explicit bar_simulation(Real dp) : system(BoundingBox{}, dp),
                                        io_environment(system) {}
@@ -190,8 +192,8 @@ struct bar_simulation
     void run_until(Real end_time, bool use_damping = true)
     {
         Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
-        size_t ite = 0;
-        size_t output_ite = 0;
+        ite = 0;
+        output_ite = 0;
         Real output_period = end_time / output_number;
         Real dt = 0.0;
         Real dt_ref = get_time_step_size();

@@ -60,6 +60,7 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseSimoRelaxation
 
     Real *mass_;
     Real inv_W0_;
+    Real dp_;
 
     Real numerical_damping_factor_ = 0.5;
 
@@ -67,7 +68,7 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseSimoRelaxation
     Mat3d *C_M_;               // diag[GJ,EI2,EI3]
     Mat3d *I_rho_l_;           // rho0*diag[J,I2,I3]the inertia matrix in current local coordinates
     Real *A_rho_;              // rho0*A, the mass per unit length
-    Vec3d *m_prior_;           // the external torque per unit length in global coordinates
+    Vec3d *M_prior_;           // the external torque on a particle in global coordinates
     Vec3d *angular_acc_prior_; // the angular acceleration caused by external torque
 
     Vec3d *f_; // resultant force per unit length in global coordinates
@@ -83,11 +84,12 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseSimoRelaxation
           hourglass_control_factor_(hourglass_control_factor),
           mass_(particles_->getVariableDataByName<Real>("Mass")),
           inv_W0_(1.0 / sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd)),
+          dp_(sph_body_.getSPHAdaptation().ReferenceSpacing()),
           C_N_(particles_->registerStateVariableData<Matd>("TensileConstitutiveMatrix")),
           C_M_(particles_->registerStateVariableData<Matd>("BendingConstitutiveMatrix")),
           I_rho_l_(particles_->registerStateVariableData<Matd>("InertiaMatrix")),
           A_rho_(particles_->registerStateVariableData<Real>("RhoCrossSectionArea")),
-          m_prior_(particles_->registerStateVariableData<Vecd>("ExternalTorquePerUnitLength")),
+          M_prior_(particles_->registerStateVariableData<Vecd>("ExternalTorque")),
           angular_acc_prior_(particles_->registerStateVariableData<Vecd>("PriorAngularAcceleration")),
           f_(particles_->registerStateVariableData<Vecd>("ResultantForce")),
           m_(particles_->registerStateVariableData<Vecd>("ResultantMoment")) {}
@@ -136,7 +138,7 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseSimoRelaxation
         force_[index_i] = df_ds / A_rho_[index_i] * mass_[index_i];
         dangular_vel_dt_[index_i] = I_i_inverse * (dm_ds + dr_ds_[index_i].cross(f_[index_i]) - w_cross_h);
 
-        angular_acc_prior_[index_i] = I_i_inverse * m_prior_[index_i];
+        angular_acc_prior_[index_i] = I_i_inverse * M_prior_[index_i] / dp_;
     }
 
     void update(size_t index_i, Real dt = 0.0)
@@ -256,9 +258,8 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseSimoRelaxation
 class BeamInitialGeometry : public LocalDynamics, public DataDelegateInner
 {
   private:
-    Vec3d *dr0_ds_;            // initial dr_ds (tangential direction)
-    Vec3d *dr_ds_;             // current dr_ds (tangential direction)
-    Mat3d *initial_curvature_; // lambda0.t * d(lambda0)/ds
+    Vec3d *dr0_ds_; // initial dr_ds (tangential direction)
+    Vec3d *dr_ds_;  // current dr_ds (tangential direction)
 
     Vec3d *pos0_; // initial position
     Real *Vol_;
@@ -271,7 +272,6 @@ class BeamInitialGeometry : public LocalDynamics, public DataDelegateInner
           DataDelegateInner(inner_relation),
           dr0_ds_(particles_->registerStateVariableData<Vec3d>("InitialDrDs")),
           dr_ds_(particles_->registerStateVariableData<Vec3d>("DrDs")),
-          initial_curvature_(particles_->registerStateVariableData<Mat3d>("InitialCurvature")),
           pos0_(particles_->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
           Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
           transformation_matrix0_(particles_->getVariableDataByName<Mat3d>("TransformationMatrix")),
@@ -281,38 +281,17 @@ class BeamInitialGeometry : public LocalDynamics, public DataDelegateInner
     {
         const auto &Q0_i = transformation_matrix0_[index_i];
         Mat3d grad_r = Matd::Zero();
-        Mat3d grad_g1 = Matd::Zero();
-        Mat3d grad_b_n = Matd::Zero();
-        Mat3d grad_n = Matd::Zero();
-
         const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
         for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
         {
             size_t index_j = inner_neighborhood.j_[n];
             Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
             grad_r -= (pos0_[index_i] - pos0_[index_j]) * gradW_ijV_j.transpose();
-            const auto &Q0_j = transformation_matrix0_[index_j];
-            grad_g1 -= (Q0_i.row(xAxis).transpose() - Q0_j.row(xAxis).transpose()) * gradW_ijV_j.transpose();
-            grad_b_n -= (Q0_i.row(yAxis).transpose() - Q0_j.row(yAxis).transpose()) * gradW_ijV_j.transpose();
-            grad_n -= (Q0_i.row(zAxis).transpose() - Q0_j.row(zAxis).transpose()) * gradW_ijV_j.transpose();
         }
-
         grad_r = Q0_i * grad_r * Q0_i.transpose() * B_[index_i];
-        grad_b_n = Q0_i * grad_b_n * Q0_i.transpose() * B_[index_i];
-        grad_n = Q0_i * grad_n * Q0_i.transpose() * B_[index_i];
-
         // tranform back to global
         dr0_ds_[index_i] = Q0_i.transpose() * grad_r.col(xAxis);
         dr_ds_[index_i] = dr0_ds_[index_i];
-
-        Vec3d dg1_ds = Q0_i.transpose() * grad_g1.col(xAxis);
-        Vec3d db_n0_ds = Q0_i.transpose() * grad_b_n.col(xAxis);
-        Vec3d dn0_ds = Q0_i.transpose() * grad_n.col(xAxis);
-        Mat3d dlamba0_ds{};
-        dlamba0_ds.col(xAxis) = dg1_ds;
-        dlamba0_ds.col(yAxis) = db_n0_ds;
-        dlamba0_ds.col(zAxis) = dn0_ds;
-        initial_curvature_[index_i] = Q0_i * dlamba0_ds;
     }
 };
 } // namespace SPH::slender_structure_dynamics
