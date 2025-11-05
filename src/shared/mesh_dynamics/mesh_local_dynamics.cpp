@@ -23,7 +23,7 @@ InitialCellTagging::InitialCellTagging(MeshWithGridDataPackagesType &data_mesh, 
 void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 {
     data_mesh_->assignDataPackageIndex(cell_index, 1); // outside far field by default
-    UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
+    UnsignedInt index_1d = data_mesh_->LinearCellIndex(cell_index);
     cell_contain_id_[index_1d] = 2; // default value is 2, indicating not near interface
     Vecd cell_position = data_mesh_->CellPositionFromIndex(cell_index);
     Real signed_distance = shape_->findSignedDistance(cell_position);
@@ -60,7 +60,7 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
     UnsignedInt package_index = phi < 0.0 ? 0 : 1;
     data_mesh_->assignDataPackageIndex(cell_index, package_index);
 
-    UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
+    UnsignedInt index_1d = data_mesh_->LinearCellIndex(cell_index);
     cell_contain_id_[index_1d] = 2;
     if (ABS(phi) > far_field_distance_)
     {
@@ -100,7 +100,7 @@ void InitializeCellPackageInfo::UpdateKernel::update(const UnsignedInt &package_
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs = data_mesh_->getOccupiedDataPackages();
     UnsignedInt sort_index = occupied_data_pkgs[package_index - num_singular_pkgs_].first;
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
-    UnsignedInt linear_index = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
+    UnsignedInt linear_index = data_mesh_->LinearCellIndex(cell_index);
     cell_pkg_index_[linear_index] = package_index;
     std::pair<Arrayi, int> &metadata = pkg_cell_info_[package_index];
     metadata.first = cell_index;

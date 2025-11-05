@@ -91,8 +91,12 @@ BoundingBoxType getIntersectionOfBoundingBoxes(const BoundingBoxType &bb1, const
     BoundingBoxType bb(bb1);
     /** #1 check that there is overlap, if not, exception. */
     for (int i = 0; i < dimension; ++i)
+    {
         if (bb2.first_[i] > bb1.second_[i] || bb2.second_[i] < bb1.first_[i])
-            std::runtime_error("getIntersectionOfBoundingBoxes: no overlap!");
+        {
+            std::cerr << "getIntersectionOfBoundingBoxes: no overlap!" << std::endl;
+        }
+    }
     /** #2 otherwise modify the first one to get the intersection. */
     for (int i = 0; i < dimension; ++i)
     {

@@ -50,7 +50,8 @@ namespace SPH
 class Mesh
 {
   public:
-    Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
+    Mesh(BoundingBox tentative_bounds, Real grid_spacing,
+         UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset = 0);
     Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
     ~Mesh() {};
 
@@ -58,8 +59,8 @@ class Mesh
     Real GridSpacing() const { return grid_spacing_; };
     Arrayi AllGridPoints() const { return all_grid_points_; };
     Arrayi AllCells() const { return all_cells_; };
-    size_t NumberOfGridPoints() const { return transferMeshIndexTo1D(all_grid_points_, all_grid_points_); };
-    size_t NumberOfCells() const { return all_cells_.prod(); };
+    UnsignedInt NumberOfGridPoints() const { return all_grid_points_.prod(); };
+    UnsignedInt NumberOfCells() const { return all_cells_.prod(); };
 
     Arrayi CellIndexFromPosition(const Vecd &position) const
     {
@@ -69,14 +70,15 @@ class Mesh
             .min(all_grid_points_ - 2 * Arrayi::Ones());
     };
 
-    size_t LinearCellIndexFromPosition(const Vecd &position) const
+    UnsignedInt LinearCellIndexFromPosition(const Vecd &position) const
     {
-        return transferMeshIndexTo1D(all_cells_, CellIndexFromPosition(position));
+        return linear_cell_index_offset_ +
+               transferMeshIndexTo1D(all_cells_, CellIndexFromPosition(position));
     };
 
-    size_t LinearCellIndexFromCellIndex(const Arrayi &cell_index) const
+    UnsignedInt LinearCellIndex(const Arrayi &cell_index) const
     {
-        return transferMeshIndexTo1D(all_cells_, cell_index);
+        return linear_cell_index_offset_ + transferMeshIndexTo1D(all_cells_, cell_index);
     };
 
     Vecd CellPositionFromIndex(const Arrayi &cell_index) const;
@@ -89,59 +91,61 @@ class Mesh
     // Transferring between 1D mesh indexes.
     // Here, mesh size can be either AllGridPoints or AllCells.
     //----------------------------------------------------------------------
-    Array2i transfer1DtoMeshIndex(const Array2i &mesh_size, size_t i) const
+    static Array2i transfer1DtoMeshIndex(const Array2i &mesh_size, UnsignedInt i)
     {
-        size_t row_size = mesh_size[1];
-        size_t column = i / row_size;
+        UnsignedInt row_size = mesh_size[1];
+        UnsignedInt column = i / row_size;
         return Array2i(column, i - column * row_size);
     };
 
-    Array3i transfer1DtoMeshIndex(const Array3i &mesh_size, size_t i) const
+    static Array3i transfer1DtoMeshIndex(const Array3i &mesh_size, UnsignedInt i)
     {
-        size_t row_times_column_size = mesh_size[1] * mesh_size[2];
-        size_t page = i / row_times_column_size;
-        size_t left_over = (i - page * row_times_column_size);
-        size_t row_size = mesh_size[2];
-        size_t column = left_over / row_size;
+        UnsignedInt row_times_column_size = mesh_size[1] * mesh_size[2];
+        UnsignedInt page = i / row_times_column_size;
+        UnsignedInt left_over = (i - page * row_times_column_size);
+        UnsignedInt row_size = mesh_size[2];
+        UnsignedInt column = left_over / row_size;
         return Array3i(page, column, left_over - column * row_size);
     }
 
-    size_t transferMeshIndexTo1D(const Array2i &mesh_size, const Array2i &mesh_index) const
+    static UnsignedInt transferMeshIndexTo1D(const Array2i &mesh_size, const Array2i &mesh_index)
     {
         return mesh_index[0] * mesh_size[1] + mesh_index[1];
     };
 
-    size_t transferMeshIndexTo1D(const Array3i &mesh_size, const Array3i &mesh_index) const
+    static UnsignedInt transferMeshIndexTo1D(const Array3i &mesh_size, const Array3i &mesh_index)
     {
         return mesh_index[0] * mesh_size[1] * mesh_size[2] +
                mesh_index[1] * mesh_size[2] +
                mesh_index[2];
     };
+
     /** converts mesh index into a Morton order.
      * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
      * https://stackoverflow.com/questions/18529057/
      * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
      */
-    size_t transferMeshIndexToMortonOrder(const Array2i &mesh_index) const
+    static UnsignedInt transferMeshIndexToMortonOrder(const Array2i &mesh_index)
     {
         return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1);
     };
 
-    size_t transferMeshIndexToMortonOrder(const Array3i &mesh_index) const
+    static UnsignedInt transferMeshIndexToMortonOrder(const Array3i &mesh_index)
     {
         return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1) | (MortonCode(mesh_index[2]) << 2);
     };
 
   protected:
-    Vecd mesh_lower_bound_;  /**< mesh lower bound as reference coordinate */
-    Real grid_spacing_;      /**< grid_spacing */
-    size_t buffer_width_;    /**< buffer width to avoid bound check.*/
-    Arrayi all_grid_points_; /**< number of grid points by dimension */
-    Arrayi all_cells_;       /**< number of cells by dimension */
+    Vecd mesh_lower_bound_;                /**< mesh lower bound as reference coordinate */
+    Real grid_spacing_;                    /**< grid_spacing */
+    UnsignedInt buffer_width_;             /**< buffer width to avoid bound check.*/
+    Arrayi all_grid_points_;               /**< number of grid points by dimension */
+    Arrayi all_cells_;                     /**< number of cells by dimension */
+    UnsignedInt linear_cell_index_offset_; /**< offset for linear cell index, used for sub-mesh */
 
-    size_t MortonCode(const size_t &i) const
+    static UnsignedInt MortonCode(const UnsignedInt &i)
     {
-        size_t x = i;
+        UnsignedInt x = i;
         x &= 0x3ff;
         x = (x | x << 16) & 0x30000ff;
         x = (x | x << 8) & 0x300f00f;
