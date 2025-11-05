@@ -14,10 +14,7 @@ AcousticTimeStepCK<FluidType>::AcousticTimeStepCK(SPHBody &sph_body, Real acoust
       fluid_(DynamicCast<FluidType>(this, particles_->getBaseMaterial())),
       dv_rho_(particles_->getVariableByName<Real>("Density")),
       dv_p_(particles_->getVariableByName<Real>("Pressure")),
-      dv_mass_(particles_->getVariableByName<Real>("Mass")),
       dv_vel_(particles_->getVariableByName<Vecd>("Velocity")),
-      dv_force_(particles_->getVariableByName<Vecd>("Force")),
-      dv_force_prior_(particles_->getVariableByName<Vecd>("ForcePrior")),
       h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
@@ -41,10 +38,7 @@ AcousticTimeStepCK<FluidType>::ReduceKernel::ReduceKernel(
     : eos_(encloser.fluid_),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       p_(encloser.dv_p_->DelegatedData(ex_policy)),
-      mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
-      force_(encloser.dv_force_->DelegatedData(ex_policy)),
-      force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)),
       h_min_(encloser.h_min_) {}
 //=================================================================================================//
 template <class ExecutionPolicy>

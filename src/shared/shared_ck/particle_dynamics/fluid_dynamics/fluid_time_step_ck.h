@@ -66,22 +66,20 @@ class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
 
         Real reduce(size_t index_i, Real dt = 0.0)
         {
-            Real acceleration_scale = 4.0 * h_min_ *
-                                      (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
-            return SMAX(eos_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm(), acceleration_scale);
+            return eos_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
         };
 
       protected:
         EosKernel eos_;
-        Real *rho_, *p_, *mass_;
-        Vecd *vel_, *force_, *force_prior_;
+        Real *rho_, *p_;
+        Vecd *vel_;
         Real h_min_;
     };
 
   protected:
     FluidType &fluid_;
-    DiscreteVariable<Real> *dv_rho_, *dv_p_, *dv_mass_;
-    DiscreteVariable<Vecd> *dv_vel_, *dv_force_, *dv_force_prior_;
+    DiscreteVariable<Real> *dv_rho_, *dv_p_;
+    DiscreteVariable<Vecd> *dv_vel_;
     Real h_min_;
     Real acousticCFL_;
 };
