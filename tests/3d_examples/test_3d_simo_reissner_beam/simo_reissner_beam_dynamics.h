@@ -46,8 +46,11 @@ class BaseSimoRelaxation : public BaseBarRelaxation
           dKappa_(particles_->registerStateVariableData<Vec3d>("dKappa")),
           Tau_(particles_->registerStateVariableData<Vecd>("Tau")),
           Kappa_(particles_->registerStateVariableData<Vecd>("Kappa")),
-          dr_ds_(particles_->registerStateVariableData<Vecd>("DrDs")),
-          grad_r_(particles_->registerStateVariableData<Mat3d>("NablaR")),
+          dr_ds_(particles_->registerStateVariableData<Vec3d>("DrDs", [this](size_t index_i) -> Vec3d
+                                                              { return transformation_matrix0_[index_i].row(xAxis); })),
+          grad_r_(particles_->registerStateVariableData<Mat3d>("NablaR", [this](size_t index_i) -> Mat3d
+                                                               {Vec3d t1 = transformation_matrix0_[index_i].row(xAxis); 
+                                                                return t1*t1.transpose(); })),
           grad_theta_(particles_->registerStateVariableData<Mat3d>("NablaTheta")) {}
 };
 
@@ -61,6 +64,7 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseSimoRelaxation
     Real *mass_;
     Real inv_W0_;
     Real dp_;
+    Vec3d *pos_hourglass_;
 
     Real numerical_damping_factor_ = 0.5;
 
@@ -79,12 +83,13 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseSimoRelaxation
                                                    bool hourglass_control = false,
                                                    Real hourglass_control_factor = 0.005)
         : BaseSimoRelaxation(inner_relation),
-          G0_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial()).ShearModulus()),
+          G0_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial()).ShearModulus()),
           hourglass_control_(hourglass_control),
           hourglass_control_factor_(hourglass_control_factor),
           mass_(particles_->getVariableDataByName<Real>("Mass")),
-          inv_W0_(1.0 / sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd)),
-          dp_(sph_body_.getSPHAdaptation().ReferenceSpacing()),
+          inv_W0_(1.0 / sph_body_->getSPHAdaptation().getKernel()->W0(ZeroVecd)),
+          dp_(sph_body_->getSPHAdaptation().ReferenceSpacing()),
+          pos_hourglass_(particles_->registerStateVariableData<Vec3d>("PositionHourglassForce")),
           C_N_(particles_->registerStateVariableData<Matd>("TensileConstitutiveMatrix")),
           C_M_(particles_->registerStateVariableData<Matd>("BendingConstitutiveMatrix")),
           I_rho_l_(particles_->registerStateVariableData<Matd>("InertiaMatrix")),
@@ -131,6 +136,7 @@ class SimoReissnerStressRelaxationFirstHalf : public BaseSimoRelaxation
         if (hourglass_control_)
         {
             auto [pos_hourglass_force, theta_hourglass_torque] = compute_hourglass_control_force(index_i);
+            pos_hourglass_[index_i] = pos_hourglass_force;
             df_ds += pos_hourglass_force;
             dm_ds += theta_hourglass_torque;
         }
@@ -252,46 +258,6 @@ class SimoReissnerStressRelaxationSecondHalf : public BaseSimoRelaxation
         const auto &Q0_i = transformation_matrix0_[index_i];
         grad_r_[index_i] = dr_ds_[index_i] * Q0_i.row(xAxis);
         grad_theta_[index_i] += grad_angular_vel_[index_i] * dt;
-    }
-};
-
-class BeamInitialGeometry : public LocalDynamics, public DataDelegateInner
-{
-  private:
-    Vec3d *dr0_ds_; // initial dr_ds (tangential direction)
-    Vec3d *dr_ds_;  // current dr_ds (tangential direction)
-
-    Vec3d *pos0_; // initial position
-    Real *Vol_;
-    Mat3d *transformation_matrix0_;
-    Mat3d *B_;
-
-  public:
-    explicit BeamInitialGeometry(BaseInnerRelation &inner_relation)
-        : LocalDynamics(inner_relation.getSPHBody()),
-          DataDelegateInner(inner_relation),
-          dr0_ds_(particles_->registerStateVariableData<Vec3d>("InitialDrDs")),
-          dr_ds_(particles_->registerStateVariableData<Vec3d>("DrDs")),
-          pos0_(particles_->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
-          Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-          transformation_matrix0_(particles_->getVariableDataByName<Mat3d>("TransformationMatrix")),
-          B_(particles_->getVariableDataByName<Mat3d>("LinearGradientCorrectionMatrix")) {}
-
-    void update(size_t index_i, Real dt = 0.0)
-    {
-        const auto &Q0_i = transformation_matrix0_[index_i];
-        Mat3d grad_r = Matd::Zero();
-        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            size_t index_j = inner_neighborhood.j_[n];
-            Vecd gradW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inner_neighborhood.e_ij_[n];
-            grad_r -= (pos0_[index_i] - pos0_[index_j]) * gradW_ijV_j.transpose();
-        }
-        grad_r = Q0_i * grad_r * Q0_i.transpose() * B_[index_i];
-        // tranform back to global
-        dr0_ds_[index_i] = Q0_i.transpose() * grad_r.col(xAxis);
-        dr_ds_[index_i] = dr0_ds_[index_i];
     }
 };
 } // namespace SPH::slender_structure_dynamics

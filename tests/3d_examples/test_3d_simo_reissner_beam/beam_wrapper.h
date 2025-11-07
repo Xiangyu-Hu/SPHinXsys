@@ -54,16 +54,14 @@ struct bar_algorithm
     ReduceDynamics<slender_structure_dynamics::BarAcousticTimeStepSize> computing_time_step_size;
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> bar_position_damping;
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> bar_rotation_damping;
-    SimpleDynamics<slender_structure_dynamics::BeamInitialGeometry> initial_geometry;
 
     explicit bar_algorithm(InnerRelation &inner, Real physical_viscosity, bool hourglass_control = false)
         : corrected_configuration(inner),
-          stress_relaxation_first_half(inner),
+          stress_relaxation_first_half(inner, hourglass_control),
           stress_relaxation_second_half(inner),
           computing_time_step_size(inner.getSPHBody()),
           bar_position_damping(0.5, inner, "Velocity", physical_viscosity),
-          bar_rotation_damping(0.5, inner, "AngularVelocity", physical_viscosity),
-          initial_geometry(inner) {};
+          bar_rotation_damping(0.5, inner, "AngularVelocity", physical_viscosity) {};
 };
 
 struct BarParameters
@@ -110,7 +108,6 @@ struct bar_object
         alg->bar_position_damping.exec(dt);
         alg->bar_rotation_damping.exec(dt);
     }
-    void compute_initial_geometry() { alg->initial_geometry.exec(); }
 
     // help functions
     void register_variables(BarMaterialProperties &material_params)
@@ -175,10 +172,7 @@ struct bar_simulation
         system.initializeSystemCellLinkedLists();
         system.initializeSystemConfigurations();
         for (auto &obj : objects)
-        {
             obj.corrected_matrix();
-            obj.compute_initial_geometry();
-        }
     }
 
     Real get_time_step_size()
