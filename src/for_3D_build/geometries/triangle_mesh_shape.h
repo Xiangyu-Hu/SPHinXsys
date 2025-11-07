@@ -43,6 +43,7 @@ namespace fs = std::filesystem;
 
 namespace SPH
 {
+class SPHSystem;
 /**
  * @class TriangleMeshShape
  * @brief Derived class for triangle shape processing.
@@ -56,8 +57,10 @@ class TriangleMeshShape : public Shape
      * when probe distance is far from the surface. */
     virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
+    virtual BoundingBox findBounds() override;
     StdVec<std::array<Real, 3>> &getVertices() { return vertices_; }
     StdVec<std::array<int, 3>> &getFaces() { return faces_; }
+    void writeMeshToFile(SPHSystem &sph_system, Transform transform = Transform());
 
   protected:
     StdVec<std::array<Real, 3>> vertices_;
@@ -65,7 +68,6 @@ class TriangleMeshShape : public Shape
     tmd::TriangleMeshDistance triangle_mesh_distance_;
     void initializeFromPolygonalMesh(const SimTK::PolygonalMesh &poly_mesh);
     void initializeFromSTLMesh(const std::string &file_path_name, Vec3d translation, Real scale_factor);
-    virtual BoundingBox findBounds() override;
 };
 
 /**

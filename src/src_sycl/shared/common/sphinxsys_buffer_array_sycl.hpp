@@ -10,22 +10,19 @@ namespace SPH
 //=================================================================================================//
 template <typename DataType>
 template <class PolicyType>
-DataArray<DataType> *VariableBufferArray<DataType>::
-    DelegatedBufferArray(const DeviceExecution<PolicyType> &ex_policy)
+DataArray<DataType> *VariableBufferArray<DataType>::DelegatedBufferArrayOnDevice()
 {
-    DiscreteVariableArray<DataType>::DelegatedDataArray(ex_policy);
+    DiscreteVariableArray<DataType>::DelegatedDataArray(DeviceExecution<PolicyType>{}); // check variable array first
     if (!isBufferArrayDelegated())
     {
         device_buffer_array_keeper_
-            .template createPtr<DeviceVariableBufferArray<DataType>>(ex_policy, this);
+            .template createPtr<DeviceVariableBufferArray<DataType>>(DeviceExecution<PolicyType>{}, this);
     }
     return delegated_buffer_array_;
 }
 //=================================================================================================//
 template <typename DataType>
-template <class PolicyType>
-DataArray<DataType> *VariableBufferArray<DataType>::synchronizeHostStagingBufferArray(
-    const DeviceExecution<PolicyType> &ex_policy, UnsignedInt data_size)
+DataArray<DataType> *VariableBufferArray<DataType>::synchronizeBufferArrayFromDevice(UnsignedInt data_size)
 {
     if (!isBufferArrayHostStaged())
     {

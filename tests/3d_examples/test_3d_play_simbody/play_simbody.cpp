@@ -9,22 +9,22 @@
 
 int main(int ac, char *av[])
 {
-    BoundingBox system_domain_bounds(Vec3d(0, 0, 0), Vec3d(1, 1, 1));
-    SPHSystem sph_system(system_domain_bounds, 1.0);
+    SPH::BoundingBox system_domain_bounds(SPH::Vec3d(0, 0, 0), SPH::Vec3d(1, 1, 1));
+    SPH::SPHSystem sph_system(system_domain_bounds, 1.0);
     sph_system.handleCommandlineOptions(ac, av);
-
+    double Pi = SPH::Pi;
     /** Create the multi_body_system, with subsystems for the bodies and some forces. */
     SimTK::MultibodySystem multi_body_system;
     SimTK::SimbodyMatterSubsystem matter(multi_body_system);
     SimTK::GeneralForceSubsystem forces(multi_body_system);
-    SimbodyStateEngine state_engine(sph_system, multi_body_system);
+    SPH::SimbodyStateEngine state_engine(sph_system, multi_body_system);
 
     // Force::UniformGravity gravity(forces, matter, SimTK::Vec3(10, Real(-9.8), 3));
     /** Create the body and some artwork for it. */
     SimTK::Body::Rigid pendulumBody(SimTK::MassProperties(1.0, SimTK::Vec3(0), SimTK::Inertia(1)));
     pendulumBody.addDecoration(SimTK::Transform(),
-                               SimTK::DecorativeSphere(Real(0.1)).setColor(SimTK::Red));
-    /** Add an instance of the body to the multibody system by connecting
+                               SimTK::DecorativeSphere(0.1).setColor(SimTK::Red));
+                               /** Add an instance of the body to the multibody system by connecting
       it to Ground via a pin mobilizer.
      */
     SimTK::MobilizedBody::Pin pendulum1(matter.updGround(),
@@ -42,7 +42,6 @@ int main(int ac, char *av[])
                                          pendulumBody,
                                          SimTK::Transform(SimTK::Vec3(0, 1, 0)));
     MyMotion motion3(pendulum1c, Pi / 20.0, 10.0, 2.0 * Pi, -0.8 * Pi);
-
     multi_body_system.realizeTopology();
     SimTK::State state = multi_body_system.getDefaultState();
     pendulum1.setOneQ(state, 0, 0.0);
@@ -54,7 +53,7 @@ int main(int ac, char *av[])
     if (restart != 0)
     {
         state_engine.readStateFromXml(restart, state);
-        state.setTime(Real(restart));
+        state.setTime(double(restart));
     }
     multi_body_system.realize(state);
     SimTK::RungeKuttaMersonIntegrator integ(multi_body_system);
@@ -64,7 +63,7 @@ int main(int ac, char *av[])
     while (step < num_steps)
     {
         step++;
-        ts.stepTo(Real(step));
+        ts.stepTo(double(step));
         state_engine.writeStateToXml(step, integ);
     }
     return 0;

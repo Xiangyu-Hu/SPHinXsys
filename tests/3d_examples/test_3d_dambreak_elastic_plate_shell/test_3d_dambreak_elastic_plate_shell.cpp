@@ -134,7 +134,7 @@ class GateMotionConstraint : public MotionConstraint<SPHBody>
   public:
     GateMotionConstraint(SPHBody &body)
         : MotionConstraint<SPHBody>(body),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")) {};
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
     virtual ~GateMotionConstraint() {};
     void update(size_t index_i, Real dt)
     {

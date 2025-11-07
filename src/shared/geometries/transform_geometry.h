@@ -93,7 +93,6 @@ class TransformShape : public TransformGeometry<GeometryType>, public Shape
         return TransformGeometry<GeometryType>::findClosestPoint(probe_point);
     };
 
-  protected:
     // Returns the AABB of the rotated underlying shape's AABB
     // It is not the tight fit AABB of the underlying shape
     // But at least it encloses the underlying shape fully

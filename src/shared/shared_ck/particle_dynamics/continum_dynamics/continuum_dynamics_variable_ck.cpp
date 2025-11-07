@@ -12,7 +12,7 @@ VerticalStressCK::VerticalStressCK(SPHBody &sph_body)
 //=============================================================================================//
 AccDeviatoricPlasticStrainCK::AccDeviatoricPlasticStrainCK(SPHBody &sph_body)
     : BaseDerivedVariable<Real>(sph_body, "AccDeviatoricPlasticStrain"),
-      plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->sph_body_.getBaseMaterial())),
+      plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->sph_body_->getBaseMaterial())),
       dv_stress_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StressTensor3D")),
       dv_strain_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainTensor3D")),
       dv_derived_variable_(this->particles_->template registerStateVariable<Real>("AccDeviatoricPlasticStrain")),

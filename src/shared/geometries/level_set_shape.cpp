@@ -1,7 +1,7 @@
 #include "level_set_shape.h"
 
+#include "all_io.h"
 #include "base_body.h"
-#include "io_all.h"
 #include "sph_system.h"
 
 namespace SPH
@@ -12,14 +12,14 @@ LevelSetShape::
                   Real refinement_ratio, UsageType usage_type)
     : LevelSetShape(shape.getBounds(), shape, sph_adaptation, refinement_ratio)
 {
-    finishInitialization(execution::par, usage_type);
+    finishInitialization(execution::par_host, usage_type);
 }
 //=================================================================================================//
 LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape,
                              Real refinement_ratio, UsageType usage_type)
     : LevelSetShape(shape.getBounds(), sph_body, shape, refinement_ratio)
 {
-    finishInitialization(execution::par, usage_type);
+    finishInitialization(execution::par_host, usage_type);
 }
 //=================================================================================================//
 LevelSetShape::LevelSetShape(BoundingBox bounding_box, Shape &shape,
@@ -55,15 +55,15 @@ LevelSetShape *LevelSetShape::writeBKGMesh(SPHSystem &sph_system)
     return this;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::cleanLevelSet(Real small_shift_factor)
+LevelSetShape *LevelSetShape::cleanLevelSet(UnsignedInt repeat_times)
 {
-    level_set_.cleanInterface(small_shift_factor);
+    level_set_.cleanInterface(repeat_times);
     return this;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::correctLevelSetSign(Real small_shift_factor)
+LevelSetShape *LevelSetShape::correctLevelSetSign()
 {
-    level_set_.correctTopology(small_shift_factor);
+    level_set_.correctTopology();
     return this;
 }
 //=================================================================================================//

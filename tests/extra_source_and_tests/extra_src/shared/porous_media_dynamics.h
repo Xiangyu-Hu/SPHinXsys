@@ -116,7 +116,7 @@ class PorousMediaStressRelaxationFirstHalf
 
     const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
     Real numerical_dissipation_factor_ = 0.25;
-    Real inv_W0_ = 1.0 / sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd);
+    Real inv_W0_ = 1.0 / getSPHAdaptation().getKernel()->W0(ZeroVecd);
 
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0)

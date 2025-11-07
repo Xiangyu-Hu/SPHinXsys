@@ -52,7 +52,14 @@ template <UnsignedInt PKG_SIZE>
 template <typename DataType>
 void MeshWithGridDataPackages<PKG_SIZE>::addMeshVariableToWrite(const std::string &variable_name)
 {
-    addVariableToList<MeshVariable, DataType>(mesh_variable_to_write_, all_mesh_variables_, variable_name);
+    addVariableToList<MeshVariable, DataType>(mesh_variables_to_write_, all_mesh_variables_, variable_name);
+}
+//=============================================================================================//
+template <UnsignedInt PKG_SIZE>
+template <typename DataType>
+void MeshWithGridDataPackages<PKG_SIZE>::addMeshVariableToProbe(const std::string &variable_name)
+{
+    addVariableToList<MeshVariable, DataType>(mesh_variables_to_probe_, all_mesh_variables_, variable_name);
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
@@ -60,7 +67,7 @@ template <typename DataType>
 void MeshWithGridDataPackages<PKG_SIZE>::addBKGMeshVariableToWrite(const std::string &variable_name)
 {
     addVariableToList<DiscreteVariable, DataType>(
-        bkg_mesh_variable_to_write_, all_bkg_mesh_variables_, variable_name);
+        bkg_mesh_variables_to_write_, all_bkg_mesh_variables_, variable_name);
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
@@ -101,14 +108,15 @@ void MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
+template <template <typename> class MeshVariableType>
 template <typename DataType, class ExecutionPolicy>
-void MeshWithGridDataPackages<PKG_SIZE>::SyncMeshVariableData::
-operator()(DataContainerAddressKeeper<MeshVariable<DataType>> &all_mesh_variables_,
+void MeshWithGridDataPackages<PKG_SIZE>::SyncMeshVariableData<MeshVariableType>::
+operator()(DataContainerAddressKeeper<MeshVariableType<DataType>> &mesh_variables,
            ExecutionPolicy &ex_policy)
 {
-    for (UnsignedInt l = 0; l != all_mesh_variables_.size(); l++)
+    for (UnsignedInt l = 0; l != mesh_variables.size(); l++)
     {
-        MeshVariable<DataType> *variable = all_mesh_variables_[l];
+        MeshVariableType<DataType> *variable = mesh_variables[l];
         variable->prepareForOutput(ex_policy);
     }
 }
@@ -148,8 +156,31 @@ template <UnsignedInt PKG_SIZE>
 UnsignedInt MeshWithGridDataPackages<PKG_SIZE>::
     IndexHandler::PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index)
 {
-    UnsignedInt index_1d = mesh_.transferMeshIndexTo1D(all_cells_, cell_index);
+    UnsignedInt index_1d = mesh_.LinearCellIndex(cell_index);
     return cell_package_index[index_1d];
+}
+//=============================================================================================//
+template <UnsignedInt PKG_SIZE>
+template <class ExecutionPolicy>
+void MeshWithGridDataPackages<PKG_SIZE>::syncMeshVariablesToWrite(ExecutionPolicy &ex_policy)
+{
+    sync_mesh_variable_data_(mesh_variables_to_write_, ex_policy);
+}
+//=============================================================================================//
+template <UnsignedInt PKG_SIZE>
+template <class ExecutionPolicy>
+void MeshWithGridDataPackages<PKG_SIZE>::syncBKGMeshVariablesToWrite(ExecutionPolicy &ex_policy)
+{
+    sync_bkg_mesh_variable_data_(bkg_mesh_variables_to_write_, ex_policy);
+}
+//=============================================================================================//
+template <UnsignedInt PKG_SIZE>
+template <class ExecutionPolicy>
+void MeshWithGridDataPackages<PKG_SIZE>::syncMeshVariablesToProbe(ExecutionPolicy &ex_policy)
+{
+    sync_mesh_variable_data_(mesh_variables_to_probe_, ex_policy);
+    dv_pkg_cell_info_.prepareForOutput(ex_policy);
+    bmv_cell_pkg_index_.prepareForOutput(ex_policy);
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
@@ -240,15 +271,15 @@ void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
             return a.first < b.first;
         });
     num_grid_pkgs_ = occupied_data_pkgs_.size() + num_singular_pkgs_;
-    cell_neighborhood_.reallocateData(par, num_grid_pkgs_);
-    dv_pkg_cell_info_.reallocateData(par, num_grid_pkgs_);
+    cell_neighborhood_.reallocateData(par_host, num_grid_pkgs_);
+    dv_pkg_cell_info_.reallocateData(par_host, num_grid_pkgs_);
     is_organized_ = true;
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::isInnerDataPackage(const Arrayi &cell_index)
 {
-    UnsignedInt index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+    UnsignedInt index_1d = LinearCellIndex(cell_index);
     /**
      * NOTE currently this func is only used in non-device mode;
      *      use the `DelegatedData` version when needed.
@@ -268,10 +299,24 @@ bool MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
+Arrayi MeshWithGridDataPackages<PKG_SIZE>::boundCellIndex(const Arrayi &input) const
+{
+    Arrayi output = input;
+    for (int i = 0; i < Dimensions; ++i)
+    {
+        if (output[i] < 0)
+            output[i] = 0;
+        if (output[i] >= all_cells_[i])
+            output[i] = all_cells_[i] - 1;
+    }
+    return output;
+}
+//=============================================================================================//
+template <UnsignedInt PKG_SIZE>
 UnsignedInt MeshWithGridDataPackages<PKG_SIZE>::
     PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index)
 {
-    UnsignedInt index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+    UnsignedInt index_1d = LinearCellIndex(boundCellIndex(cell_index));
     return cell_package_index[index_1d];
 }
 //=============================================================================================//
@@ -279,7 +324,7 @@ template <UnsignedInt PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::
     assignDataPackageIndex(const Arrayi &cell_index, const UnsignedInt package_index)
 {
-    UnsignedInt index_1d = transferMeshIndexTo1D(all_cells_, cell_index);
+    UnsignedInt index_1d = LinearCellIndex(cell_index);
     /**
      * NOTE currently the `bmv_cell_pkg_index_` is only assigned in the host;
      *      use the `DelegatedData` version when needed.

@@ -45,6 +45,7 @@ class BaseParticles;
 class AbstractDiffusion
 {
   public:
+    typedef Real DataType;
     AbstractDiffusion() {};
     virtual ~AbstractDiffusion() {};
     virtual StdVec<AbstractDiffusion *> AllDiffusions() = 0;
@@ -126,6 +127,7 @@ class IsotropicDiffusion : public BaseDiffusion
         InterParticleDiffusionCoeff(const ExecutionPolicy &ex_policy, IsotropicDiffusion &encloser)
             : InterParticleDiffusionCoeff(encloser){};
         Real operator()(size_t index_i, size_t index_j, const Vecd &e_ij) { return d_coeff_; };
+        Real operator()(size_t index_i, size_t index_j) { return d_coeff_; };
     };
 };
 

@@ -12,7 +12,7 @@ template <class AlignedBoxPartType, class ConditionFunction>
 EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>::
     EmitterInflowConditionCK(AlignedBoxPartType &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
-      sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime")),
+      sv_physical_time_(this->sph_system_->template getSystemVariableByName<Real>("PhysicalTime")),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       condition_function_(this->particles_) {}
 //=================================================================================================//

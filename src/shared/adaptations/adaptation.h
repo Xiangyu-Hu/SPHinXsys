@@ -122,8 +122,6 @@ class ParticleWithLocalRefinement : public SPHAdaptation
     ParticleWithLocalRefinement(SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
     virtual ~ParticleWithLocalRefinement() {};
 
-    virtual size_t getCellLinkedListTotalLevel();
-    size_t getLevelSetTotalLevel();
     virtual Real SmoothingLengthRatio(size_t particle_index_i) override
     {
         return h_ratio_[particle_index_i];

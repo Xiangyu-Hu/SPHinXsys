@@ -31,17 +31,17 @@ BufferInflowInjectionCK<ConditionType>::
                             ParticleBuffer<Base> &buffer, Args &&...args)
     : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
       part_id_(aligned_box_part.getPartID()), buffer_(buffer),
-      fluid_(DynamicCast<FluidType>(this, sph_body_.getBaseMaterial())),
+      fluid_(DynamicCast<FluidType>(this, sph_body_->getBaseMaterial())),
       condition_(std::forward<Args>(args)...),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       sv_total_real_particles_(this->particles_->svTotalRealParticles()),
       spawn_real_particle_method_(this->particles_),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_buffer_indicator_(this->particles_->template getVariableByName<int>("BufferIndicator")),
-      sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime")),
+      sv_physical_time_(this->sph_system_->template getSystemVariableByName<Real>("PhysicalTime")),
       dv_p_(this->particles_->template getVariableByName<Real>("Pressure")),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
-      upper_bound_fringe_(0.5 * this->sph_body_.getSPHBodyResolutionRef())
+      upper_bound_fringe_(0.5 * this->sph_body_->getSPHBodyResolutionRef())
 {
     buffer_.checkParticlesReserved();
 }
@@ -123,7 +123,7 @@ PressureVelocityCondition<KernelCorrectionType, ConditionType>::
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       kernel_correction_method_(this->particles_),
       condition_(std::forward<Args>(args)...),
-      sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime")),
+      sv_physical_time_(this->sph_system_->template getSystemVariableByName<Real>("PhysicalTime")),
       dv_kernel_gradient_integral_(this->particles_->template getVariableByName<Vecd>("KernelGradientIntegral")) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename ConditionType>

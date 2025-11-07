@@ -111,9 +111,11 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>
 
     template <class UpdateType, typename... Args>
     auto &addPostStateDynamics(Args &&...args);
+    auto &addPostStateDynamics(BaseDynamics<void> &state_dynamics);
 
     template <class UpdateType, typename... Args>
     auto &addPreStateDynamics(Args &&...args);
+    auto &addPreStateDynamics(BaseDynamics<void> &state_dynamics);
 };
 
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>

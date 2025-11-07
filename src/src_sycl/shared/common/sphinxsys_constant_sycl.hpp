@@ -15,7 +15,7 @@ DataType *ConstantArray<GeneratorType, DataType>::
     if (!isDataDelegated())
     {
         device_only_constant_array_keeper_
-            .createPtr<DeviceOnlyConstantArray<GeneratorType, DataType>>(ex_policy, this);
+            .createPtr<DeviceOnlyConstantArray<GeneratorType, DataType>>(DeviceExecution<PolicyType>{}, this);
     }
     return delegated_;
 };

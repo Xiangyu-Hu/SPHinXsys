@@ -1,5 +1,7 @@
 #include "base_configuration_dynamics.h"
+#include "base_configuration_dynamics_sycl.h"
 #include "particle_functors.h"
+#include "particle_iterators_ck.h"
 #include "particle_iterators_sycl.h"
 
 #include <gtest/gtest.h>

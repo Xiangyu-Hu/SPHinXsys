@@ -595,6 +595,38 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
+class MarkCutInterfaces : public BaseMeshLocalDynamics
+{
+  public:
+    explicit MarkCutInterfaces(MeshWithGridDataPackagesType &data_mesh, Real perturbation_ratio);
+    virtual ~MarkCutInterfaces() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : threshold_(encloser.threshold_),
+              perturbation_(threshold_ * encloser.perturbation_ratio_),
+              phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
+              near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
+              cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)){};
+        void update(const UnsignedInt &index, Real dt = 0.0);
+
+      protected:
+        Real threshold_, perturbation_;
+        MeshVariableData<Real> *phi_;
+        MeshVariableData<int> *near_interface_id_;
+        CellNeighborhood *cell_neighborhood_;
+    };
+
+  protected:
+    Real threshold_, perturbation_ratio_;
+    MeshVariable<Real> &mv_phi_;
+    MeshVariable<int> &mv_near_interface_id_;
+    DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
+};
+
 class MarkNearInterface : public BaseMeshLocalDynamics
 {
   public:
@@ -606,20 +638,21 @@ class MarkNearInterface : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_spacing_(encloser.data_spacing_),
+            : threshold_(encloser.threshold_),
               phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
               near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)){};
-        void update(const UnsignedInt &index, Real small_shift_factor);
+        void update(const UnsignedInt &index, Real dt = 0.0);
 
       protected:
-        Real data_spacing_;
+        Real threshold_;
         MeshVariableData<Real> *phi_;
         MeshVariableData<int> *near_interface_id_;
         CellNeighborhood *cell_neighborhood_;
     };
 
   protected:
+    Real threshold_;
     MeshVariable<Real> &mv_phi_;
     MeshVariable<int> &mv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
@@ -681,7 +714,8 @@ class RedistanceInterface : public BaseMeshLocalDynamics
 class DiffuseLevelSetSign : public BaseMeshLocalDynamics
 {
   public:
-    explicit DiffuseLevelSetSign(MeshWithGridDataPackagesType &data_mesh);
+    explicit DiffuseLevelSetSign(MeshWithGridDataPackagesType &data_mesh,
+                                 SingularVariable<UnsignedInt> &sv_count_modified);
     virtual ~DiffuseLevelSetSign() {};
 
     class UpdateKernel
@@ -691,19 +725,22 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
               near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
-              cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)){};
+              cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
+              count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)){};
         void update(const UnsignedInt &index);
 
       protected:
         MeshVariableData<Real> *phi_;
         MeshVariableData<int> *near_interface_id_;
         CellNeighborhood *cell_neighborhood_;
+        UnsignedInt *count_modified_;
     };
 
   protected:
     MeshVariable<Real> &mv_phi_;
     MeshVariable<int> &mv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
+    SingularVariable<UnsignedInt> &sv_count_modified_;
 };
 
 class ProbeIsWithinMeshBound : public BaseMeshLocalDynamics

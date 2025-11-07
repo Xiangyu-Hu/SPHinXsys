@@ -42,7 +42,7 @@ AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
     AcousticStep1stHalf(Inner<Parameters...> &inner_relation)
     : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
       kernel_correction_(this->particles_),
-      fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_->getBaseMaterial())),
       riemann_solver_(this->fluid_, this->fluid_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
@@ -122,7 +122,7 @@ AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
     AcousticStep1stHalf(Contact<Parameters...> &wall_contact_relation)
     : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
       kernel_correction_(this->particles_),
-      fluid_(DynamicCast<FluidType>(this, this->sph_body_.getBaseMaterial())),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_->getBaseMaterial())),
       riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -171,7 +171,7 @@ AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters.
     : BaseInteraction(contact_relation), kernel_correction_(this->particles_)
 {
     SourceFluidType &source_fluid =
-        DynamicCast<SourceFluidType>(this, this->sph_body_.getBaseMaterial());
+        DynamicCast<SourceFluidType>(this, this->sph_body_->getBaseMaterial());
     for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
     {
         contact_kernel_corrections_.push_back(KernelCorrectionType(this->contact_particles_[k]));
@@ -179,7 +179,7 @@ AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters.
             DynamicCast<TargetFluidType>(this, this->contact_bodies_[k]->getBaseMaterial());
         riemann_solvers_.push_back(RiemannSolverType(source_fluid, target_fluid));
         dv_contact_p_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("Pressure"));
+            this->contact_particles_[k]->template registerStateVariable<Real>("Pressure"));
     }
 }
 //=================================================================================================//
@@ -212,7 +212,10 @@ void AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Parame
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
         Vecd e_ij = this->e_ij(index_i, index_j);
 
-        force -= (p_[index_i] * contact_correction_(index_j) + contact_p_[index_j] * correction_(index_i)) * dW_ijV_j * e_ij;
+        force -= riemann_solver_.AverageP(
+                     static_cast<CorrectionDataType>(contact_correction_(index_j) * p_[index_i]),
+                     static_cast<CorrectionDataType>(correction_(index_i) * contact_p_[index_j])) *
+                 2.0 * dW_ijV_j * e_ij;
         rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - contact_p_[index_j]) * dW_ijV_j;
     }
     force_[index_i] += force * Vol_[index_i];

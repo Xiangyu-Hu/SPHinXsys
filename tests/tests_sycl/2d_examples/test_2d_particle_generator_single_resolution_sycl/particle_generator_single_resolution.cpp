@@ -41,9 +41,17 @@ int main(int ac, char *av[])
     input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * resolution_ref, original_logo);
     input_shape.subtract<MultiPolygonShape>(original_logo);
     RealBody input_body(sph_system, input_shape);
-    LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(par_ck)
-                                         ->writeLevelSet(sph_system);
+    LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(par_ck, 2.0)
+                                         ->addMeshVariableToWrite<Real>("KernelWeight")
+                                         ->writeLevelSet(sph_system)
+                                         ->addBKGMeshVariableToWrite<UnsignedInt>("CellPackageIndex")
+                                         ->addBKGMeshVariableToWrite<int>("CellContainID")
+                                         ->writeBKGMesh(sph_system);
     input_body.generateParticles<BaseParticles, Lattice>();
+
+    MultiPolygonShape filler_shape(original_logo, "Filler");
+    RealBody filler(sph_system, filler_shape);
+    filler.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
@@ -57,12 +65,15 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     Inner<> input_body_inner(input_body);
+    Inner<> filler_inner(filler);
+    Contact<> filler_contact(filler, {&input_body});
     //----------------------------------------------------------------------
-    //	Methods used for particle relaxation.
+    // Define SPH solver with particle methods and execution policies.
+    // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-    auto &host_methods = sph_solver.addParticleMethodContainer(par);
+    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -74,26 +85,30 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(input_body);
-    auto &input_body_update_inner_relation = main_methods.addRelationDynamics(input_body_inner);
-    auto &random_input_body_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(input_body);
-    auto &relaxation_residual =
-        main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(input_body_inner)
-            .addPostStateDynamics<LevelsetKernelGradientIntegral>(input_body, *level_set_shape);
-    auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(input_body);
-    auto &update_particle_position =
-        main_methods.addStateDynamics<PositionRelaxationCK>(input_body);
-    auto &level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_body_surface);
+    StdVec<RealBody *> real_bodies = {&input_body, &filler};
+
+    host_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies).exec(); // host method able to run immediately
+
+    ParticleDynamicsGroup update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
+    ParticleDynamicsGroup update_relation;
+    update_relation.add(&main_methods.addRelationDynamics(input_body_inner));
+    update_relation.add(&main_methods.addRelationDynamics(filler_inner, filler_contact));
+    ParticleDynamicsGroup update_configuration = update_cell_linked_list + update_relation;
+
+    ParticleDynamicsGroup relaxation_residual;
+    relaxation_residual.add(&main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(input_body_inner)
+                                 .addPostStateDynamics<LevelsetKernelGradientIntegral>(input_body, *level_set_shape));
+    relaxation_residual.add(&main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(filler_inner)
+                                 .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(filler_contact));
+
+    ReduceDynamicsGroup relaxation_scaling = main_methods.addReduceDynamics<ReduceMin, RelaxationScalingCK>(real_bodies);
+
+    ParticleDynamicsGroup update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(real_bodies);
+    update_particle_position.add(&main_methods.addStateDynamics<LevelsetBounding>(near_body_surface));
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(input_body);
-    //----------------------------------------------------------------------
-    //	Prepare the simulation with cell linked list, configuration
-    //	and case specified initial condition if necessary.
-    //----------------------------------------------------------------------
-    random_input_body_particles.exec();
-
+    auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------
@@ -104,13 +119,10 @@ int main(int ac, char *av[])
     int ite_p = 0;
     while (ite_p < 1000)
     {
-        input_body_cell_linked_list.exec();
-        input_body_update_inner_relation.exec();
-
+        update_configuration.exec();
         relaxation_residual.exec();
         Real relaxation_step = relaxation_scaling.exec();
         update_particle_position.exec(relaxation_step);
-        level_set_bounding.exec();
 
         ite_p += 1;
         if (ite_p % 100 == 0)

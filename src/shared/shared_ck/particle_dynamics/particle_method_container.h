@@ -44,6 +44,114 @@
 namespace SPH
 {
 
+class ParticleDynamicsGroup : public BaseDynamics<void>
+{
+    StdVec<BaseDynamics<void> *> particle_dynamics_;
+
+  public:
+    ParticleDynamicsGroup() : BaseDynamics<void>() {};
+    ParticleDynamicsGroup(const StdVec<BaseDynamics<void> *> &particle_dynamics)
+        : BaseDynamics<void>(), particle_dynamics_(particle_dynamics) {}
+    ~ParticleDynamicsGroup() {};
+
+    void add(BaseDynamics<void> *dynamics)
+    {
+        particle_dynamics_.push_back(dynamics);
+    }
+
+    void add(const ParticleDynamicsGroup &dynamics)
+    {
+        for (auto *dynamics : dynamics.getAllDynamics())
+        {
+            particle_dynamics_.push_back(dynamics);
+        }
+    }
+
+    ParticleDynamicsGroup operator+(const ParticleDynamicsGroup &other) const
+    {
+        StdVec<BaseDynamics<void> *> other_dynamics = other.getAllDynamics();
+        StdVec<BaseDynamics<void> *> result_dynamics = particle_dynamics_;
+        result_dynamics.insert(result_dynamics.end(), other_dynamics.begin(), other_dynamics.end());
+        return ParticleDynamicsGroup(result_dynamics);
+    }
+
+    StdVec<BaseDynamics<void> *> getAllDynamics() const
+    {
+        return particle_dynamics_;
+    }
+
+    void exec(Real dt = 0.0) override
+    {
+        for (UnsignedInt i = 0; i != particle_dynamics_.size(); ++i)
+        {
+            particle_dynamics_[i]->exec(dt);
+        }
+    }
+};
+
+template <class Operation>
+class ReduceDynamicsGroup : public BaseDynamics<typename Operation::ReturnType>
+{
+    Operation operation_;
+    using ReturnType = typename Operation::ReturnType;
+    StdVec<BaseDynamics<ReturnType> *> reduce_dynamics_;
+
+  public:
+    ReduceDynamicsGroup(const Operation &operation)
+        : BaseDynamics<ReturnType>(), operation_(operation) {}
+    ReduceDynamicsGroup(const Operation &operation,
+                        const StdVec<BaseDynamics<ReturnType> *> &reduce_dynamics)
+        : BaseDynamics<ReturnType>(),
+          operation_(operation), reduce_dynamics_(reduce_dynamics) {}
+    ~ReduceDynamicsGroup() = default;
+
+    void add(BaseDynamics<ReturnType> *dynamics)
+    {
+        reduce_dynamics_.push_back(dynamics);
+    }
+
+    void add(const ReduceDynamicsGroup<Operation> &dynamics)
+    {
+        for (auto *dynamics : dynamics.getAllDynamics())
+        {
+            reduce_dynamics_.push_back(dynamics);
+        }
+    }
+
+    template <class DerivedReduceDynamicsType>
+    void add(const StdVec<DerivedReduceDynamicsType *> &dynamics)
+    {
+        for (auto *dynamics : dynamics)
+        {
+            reduce_dynamics_.push_back(dynamics);
+        }
+    }
+
+    StdVec<BaseDynamics<ReturnType> *> getAllDynamics() const
+    {
+        return reduce_dynamics_;
+    }
+
+    ReduceDynamicsGroup<Operation> operator+(
+        const ReduceDynamicsGroup<Operation> &other) const
+    {
+        StdVec<BaseDynamics<ReturnType> *> other_dynamics = other.getAllDynamics();
+        StdVec<BaseDynamics<ReturnType> *> result_dynamics = reduce_dynamics_;
+        result_dynamics.insert(result_dynamics.end(), other_dynamics.begin(), other_dynamics.end());
+        return ReduceDynamicsGroup<Operation>(operation_, result_dynamics);
+    }
+
+    ReturnType exec(Real dt = 0.0) override
+    {
+        ReturnType result = ReduceReference<Operation>::value;
+        for (auto *dynamics : reduce_dynamics_)
+        {
+            result = operation_(result, dynamics->exec(dt));
+        }
+        return result;
+    };
+};
+
 class BaseMethodContainer
 {
   public:
@@ -54,7 +162,7 @@ template <typename ExecutionPolicy>
 class ParticleMethodContainer : public BaseMethodContainer
 {
     UniquePtrsKeeper<BaseDynamics<void>> particle_dynamics_keeper_;
-    UniquePtrsKeeper<BaseReduceDynamics> reduce_dynamics_keeper_;
+    UniquePtrsKeeper<BaseReturnDynamics> return_dynamics_keeper_;
     UniquePtrsKeeper<BodyStatesRecording> state_recorders_keeper_;
     UniquePtrsKeeper<BaseIO> other_io_keeper_;
 
@@ -63,6 +171,23 @@ class ParticleMethodContainer : public BaseMethodContainer
         : BaseMethodContainer() {};
     virtual ~ParticleMethodContainer() {};
 
+    template <class GeneralDynamicsType, class DynamicsIdentifier, typename... Args>
+    auto &addReturnDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    {
+        return *return_dynamics_keeper_.createPtr<GeneralDynamicsType>(identifier, std::forward<Args>(args)...);
+    };
+
+    template <class GeneralDynamicsType, class DynamicsIdentifier, typename... Args>
+    StdVec<GeneralDynamicsType *> addReturnDynamics(StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
+    {
+        StdVec<GeneralDynamicsType *> result;
+        for (auto *identifier : identifiers)
+        {
+            result.push_back(&addReturnDynamics<GeneralDynamicsType>(*identifier, std::forward<Args>(args)...));
+        }
+        return result;
+    };
+
     template <class DynamicsIdentifier, typename... Args>
     auto &addCellLinkedListDynamics(DynamicsIdentifier &identifier, Args &&...args)
     {
@@ -70,6 +195,17 @@ class ParticleMethodContainer : public BaseMethodContainer
             UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>>(
             identifier, std::forward<Args>(args)...);
     };
+
+    template <class DynamicsIdentifier>
+    ParticleDynamicsGroup addCellLinkedListDynamics(StdVec<DynamicsIdentifier *> &identifiers)
+    {
+        ParticleDynamicsGroup group;
+        for (auto *identifier : identifiers)
+        {
+            group.add(&addCellLinkedListDynamics(*identifier));
+        }
+        return group;
+    }
 
     template <class FirstRelation, typename... OtherRelations>
     auto &addRelationDynamics(FirstRelation &first_relation, OtherRelations &...other_relations)
@@ -86,12 +222,34 @@ class ParticleMethodContainer : public BaseMethodContainer
             ParticleSortCK<ExecutionPolicy>>(std::forward<Args>(args)...);
     };
 
-    template <class UpdateType, typename... Args>
-    auto &addStateDynamics(Args &&...args)
+    template <class DynamicsIdentifier>
+    ParticleDynamicsGroup addSortDynamics(StdVec<DynamicsIdentifier *> &identifiers)
+    {
+        ParticleDynamicsGroup group;
+        for (auto *identifier : identifiers)
+        {
+            group.add(&addSortDynamics(*identifier));
+        }
+        return group;
+    }
+
+    template <class UpdateType, class DynamicsIdentifier, typename... Args>
+    auto &addStateDynamics(DynamicsIdentifier &dynamics_identifier, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
-            StateDynamics<ExecutionPolicy, UpdateType>>(std::forward<Args>(args)...);
+            StateDynamics<ExecutionPolicy, UpdateType>>(dynamics_identifier, std::forward<Args>(args)...);
     };
+
+    template <class UpdateType, class DynamicsIdentifier, typename... Args>
+    ParticleDynamicsGroup addStateDynamics(StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
+    {
+        ParticleDynamicsGroup group;
+        for (auto &identifier : identifiers)
+        {
+            group.add(&addStateDynamics<UpdateType>(*identifier, std::forward<Args>(args)...));
+        }
+        return group;
+    }
 
     template <template <typename...> class UpdateType, typename... ControlParameters,
               class DynamicsIdentifier, typename... Args>
@@ -102,11 +260,34 @@ class ParticleMethodContainer : public BaseMethodContainer
             dynamics_identifier, std::forward<Args>(args)...);
     };
 
+    template <template <typename...> class UpdateType, typename... ControlParameters,
+              class DynamicsIdentifier, typename... Args>
+    ParticleDynamicsGroup addStateDynamics(StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
+    {
+        ParticleDynamicsGroup group;
+        for (auto &identifier : identifiers)
+        {
+            group.add(&addStateDynamics<UpdateType, ControlParameters...>(*identifier, std::forward<Args>(args)...));
+        }
+        return group;
+    }
+
     template <class ReduceType, typename... Args>
     auto &addReduceDynamics(Args &&...args)
     {
-        return *reduce_dynamics_keeper_.template createPtr<
+        return *return_dynamics_keeper_.template createPtr<
             ReduceDynamicsCK<ExecutionPolicy, ReduceType>>(std::forward<Args>(args)...);
+    };
+
+    template <typename Operation, class ReduceType, typename DynamicsIdentifier, typename... Args>
+    ReduceDynamicsGroup<Operation> addReduceDynamics(const StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
+    {
+        StdVec<BaseDynamics<typename Operation::ReturnType> *> reduce_dynamics;
+        for (auto &identifier : identifiers)
+        {
+            reduce_dynamics.push_back(&addReduceDynamics<ReduceType>(*identifier, std::forward<Args>(args)...));
+        }
+        return ReduceDynamicsGroup<Operation>(Operation(), reduce_dynamics);
     };
 
     template <class InteractionType, typename... Args>
@@ -146,6 +327,17 @@ class ParticleMethodContainer : public BaseMethodContainer
         return *particle_dynamics_keeper_.createPtr<
             InteractionDynamicsCK<
                 ExecutionPolicy, InteractionType<RelationType<WithUpdate, ControlParameters..., RelationParameters...>>>>(
+            relation, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addInteractionDynamicsWithInitialization(
+        RelationType<RelationParameters...> &relation, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<RelationType<WithInitialization, ControlParameters..., RelationParameters...>>>>(
             relation, std::forward<Args>(args)...);
     };
 

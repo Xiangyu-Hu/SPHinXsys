@@ -52,8 +52,8 @@ class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax>
 
   protected:
     Fluid &fluid_;
-    Real *rho_, *p_, *mass_;
-    Vecd *vel_, *force_, *force_prior_;
+    Real *rho_, *p_;
+    Vecd *vel_;
     Real h_min_;
     Real acousticCFL_;
 };
@@ -66,7 +66,7 @@ class SurfaceTensionTimeStep : public AcousticTimeStep
   public:
     explicit SurfaceTensionTimeStep(SPHBody &sph_body, Real acousticCFL = 0.6);
     virtual ~SurfaceTensionTimeStep() {};
-    Real reduce(size_t index_i, Real dt = 0.0);
+    virtual Real outputResult(Real reduced_value) override;
 
   protected:
     Real rho0_, &surface_tension_coeff_;

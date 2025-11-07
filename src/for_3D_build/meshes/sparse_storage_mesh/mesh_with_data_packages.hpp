@@ -29,13 +29,13 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
     output_file << " VARIABLES = " << "x, " << "y, " << "z";
 
     constexpr int type_index_int = DataTypeIndex<int>::value;
-    for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variable_to_write_))
+    for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variables_to_write_))
     {
         output_file << ",\"" << variable->Name() << "\"";
     };
 
     constexpr int type_index_Vecd = DataTypeIndex<Vec3d>::value;
-    for (MeshVariable<Vec3d> *variable : std::get<type_index_Vecd>(mesh_variable_to_write_))
+    for (MeshVariable<Vec3d> *variable : std::get<type_index_Vecd>(mesh_variables_to_write_))
     {
         std::string variable_name = variable->Name();
         output_file << ",\"" << variable_name << "_x\""
@@ -44,7 +44,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
     };
 
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
-    for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variable_to_write_))
+    for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variables_to_write_))
     {
         output_file << ",\"" << variable->Name() << "\"";
     };
@@ -74,21 +74,21 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
                 output_file << data_position[0] << " " << data_position[1] << " " << data_position[2] << " ";
 
                 constexpr int type_index_int = DataTypeIndex<int>::value;
-                for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variable_to_write_))
+                for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variables_to_write_))
                 {
                     int value = DataValueFromGlobalIndex(variable->Data(), global_index, this, bmv_cell_pkg_index_.Data());
                     output_file << value << " ";
                 };
 
                 constexpr int type_index_Vecd = DataTypeIndex<Vec3d>::value;
-                for (MeshVariable<Vec3d> *variable : std::get<type_index_Vecd>(mesh_variable_to_write_))
+                for (MeshVariable<Vec3d> *variable : std::get<type_index_Vecd>(mesh_variables_to_write_))
                 {
                     Vec3d value = DataValueFromGlobalIndex(variable->Data(), global_index, this, bmv_cell_pkg_index_.Data());
                     output_file << value[0] << " " << value[1] << " " << value[2] << " ";
                 };
 
                 constexpr int type_index_Real = DataTypeIndex<Real>::value;
-                for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variable_to_write_))
+                for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variables_to_write_))
                 {
                     Real value = DataValueFromGlobalIndex(variable->Data(), global_index, this, bmv_cell_pkg_index_.Data());
                     output_file << value << " ";
@@ -107,19 +107,19 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeBKGMeshVariableToPlt(std::ofstream
     output_file << " VARIABLES = " << "x, " << "y, " << "z";
 
     constexpr int type_index_unsigned = DataTypeIndex<UnsignedInt>::value;
-    for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(bkg_mesh_variable_to_write_))
+    for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(bkg_mesh_variables_to_write_))
     {
         output_file << ",\"" << variable->Name() << "\"";
     };
 
     constexpr int type_index_int = DataTypeIndex<int>::value;
-    for (DiscreteVariable<int> *variable : std::get<type_index_int>(bkg_mesh_variable_to_write_))
+    for (DiscreteVariable<int> *variable : std::get<type_index_int>(bkg_mesh_variables_to_write_))
     {
         output_file << ",\"" << variable->Name() << "\"";
     };
 
     constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
-    for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(bkg_mesh_variable_to_write_))
+    for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(bkg_mesh_variables_to_write_))
     {
         std::string variable_name = variable->Name();
         output_file << ",\"" << variable_name << "_x\""
@@ -128,7 +128,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeBKGMeshVariableToPlt(std::ofstream
     };
 
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
-    for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(bkg_mesh_variable_to_write_))
+    for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(bkg_mesh_variables_to_write_))
     {
         output_file << ",\"" << variable->Name() << "\"";
     };
@@ -143,29 +143,29 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeBKGMeshVariableToPlt(std::ofstream
         Arrayi::Zero(), number_of_operation,
         [&](const Arrayi &cell_index)
         {
-            UnsignedInt linear_index = transferMeshIndexTo1D(all_cells_, cell_index);
+            UnsignedInt linear_index = LinearCellIndex(cell_index);
             Vecd data_position = CellPositionFromIndex(cell_index);
             output_file << data_position[0] << " " << data_position[1] << " " << data_position[2] << " ";
 
-            for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(bkg_mesh_variable_to_write_))
+            for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(bkg_mesh_variables_to_write_))
             {
                 UnsignedInt value = variable->Data()[linear_index];
                 output_file << value << " ";
             };
 
-            for (DiscreteVariable<int> *variable : std::get<type_index_int>(bkg_mesh_variable_to_write_))
+            for (DiscreteVariable<int> *variable : std::get<type_index_int>(bkg_mesh_variables_to_write_))
             {
                 int value = variable->Data()[linear_index];
                 output_file << value << " ";
             };
 
-            for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(bkg_mesh_variable_to_write_))
+            for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(bkg_mesh_variables_to_write_))
             {
                 Vecd value = variable->Data()[linear_index];
                 output_file << value[0] << " " << value[1] << " " << value[2] << " ";
             };
 
-            for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(bkg_mesh_variable_to_write_))
+            for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(bkg_mesh_variables_to_write_))
             {
                 Real value = variable->Data()[linear_index];
                 output_file << value << " ";

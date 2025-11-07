@@ -68,8 +68,8 @@ class MultilevelLevelSet : public BaseMeshField
 
     template <class ExecutionPolicy>
     void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type);
-    void cleanInterface(Real small_shift_factor);
-    void correctTopology(Real small_shift_factor);
+    void cleanInterface(UnsignedInt repeat_times);
+    void correctTopology();
     bool probeIsWithinMeshBound(const Vecd &position);
     Real probeSignedDistance(const Vecd &position);
     Vecd probeNormalDirection(const Vecd &position);
@@ -85,33 +85,12 @@ class MultilevelLevelSet : public BaseMeshField
     template <typename DataType>
     void addBKGMeshVariableToWrite(const std::string &variable_name);
     void writeBKGMeshToPlt(const std::string &partial_file_name) override;
-
     template <class ExecutionPolicy>
-    void syncMeshVariableData(ExecutionPolicy &ex_policy)
-    {
-        for (size_t l = 0; l != total_levels_; l++)
-            mesh_data_set_[l]->syncMeshVariableData(ex_policy);
-    }
-
-    void resetProbes()
-    {
-        probe_signed_distance_set_.clear();
-        probe_normal_direction_set_.clear();
-        probe_level_set_gradient_set_.clear();
-        probe_kernel_integral_set_.clear();
-        probe_kernel_gradient_integral_set_.clear();
-        probe_kernel_second_gradient_integral_set_.clear();
-        cell_pkg_index_set_.clear();
-        pkg_cell_info_set_.clear();
-        for (size_t l = 0; l != total_levels_; l++)
-        {
-            registerProbes(execution::par, l);
-            cell_pkg_index_set_.push_back(
-                mesh_data_set_[l]->getCellPackageIndex().DelegatedData(execution::par));
-            pkg_cell_info_set_.push_back(
-                mesh_data_set_[l]->dvPkgCellInfo().DelegatedData(execution::par));
-        }
-    }
+    void syncMeshVariablesToWrite(ExecutionPolicy &ex_policy);
+    template <class ExecutionPolicy>
+    void syncBKGMeshVariablesToWrite(ExecutionPolicy &ex_policy);
+    template <class ExecutionPolicy>
+    void syncMeshVariablesToProbe(ExecutionPolicy &ex_policy);
 
   protected:
     inline size_t getProbeLevel(const Vecd &position);
@@ -124,10 +103,13 @@ class MultilevelLevelSet : public BaseMeshField
     template <class ExecutionPolicy>
     void initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
-    void registerProbes(const ExecutionPolicy &ex_policy, size_t level);
+    void registerProbes(const ExecutionPolicy &ex_policy);
+    template <class ExecutionPolicy>
+    void registerKernelIntegralProbes(const ExecutionPolicy &ex_policy);
 
     Shape &shape_;        /**< the geometry is described by the level set. */
     size_t total_levels_; /**< level 0 is the coarsest */
+    Real refinement_ratio_;
     StdVec<UnsignedInt *> cell_pkg_index_set_;
     StdVec<std::pair<Arrayi, int> *> pkg_cell_info_set_;
     StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
@@ -150,7 +132,7 @@ class MultilevelLevelSet : public BaseMeshField
     UniquePtr<BaseDynamics<void>> correct_topology_keeper_;
     UniquePtr<BaseDynamics<void>> clean_interface_keeper_;
     UniquePtrsKeeper<NeighborMethod<SingleValued>> neighbor_method_keeper_;
-    std::function<void()> sync_mesh_variable_data_;
+    std::function<void()> sync_mesh_variables_to_write_, sync_bkg_mesh_variables_to_write_, sync_mesh_variables_to_probe_;
 
     template <class ExecutionPolicy>
     void configLevelSetPostProcesses(const ExecutionPolicy &ex_policy);

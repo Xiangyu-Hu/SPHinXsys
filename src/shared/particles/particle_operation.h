@@ -65,9 +65,8 @@ class SpawnRealParticle
             UnsignedInt last_real_particle_index = total_real_particles_ref.fetch_add(1);
             if (last_real_particle_index < particles_bound_)
             {
-                UnsignedInt new_original_id = original_id_[last_real_particle_index];
                 copy_particle_state_(copyable_state_data_arrays_, last_real_particle_index, index_i);
-                original_id_[last_real_particle_index] = new_original_id; // keep the original id
+                original_id_[last_real_particle_index] = last_real_particle_index; // reinitialize original id
             }
             return last_real_particle_index;
         };
@@ -111,8 +110,8 @@ class RemoveRealParticle
             {
                 UnsignedInt old_original_id = original_id_[index_i];
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
-                life_status[index_i] = 0;                                     // reset the life status
-                original_id_[last_real_particle_index] = old_original_id;     // swap the original id
+                life_status[index_i] = 0;                                 // reset the life status
+                original_id_[last_real_particle_index] = old_original_id; // swap the original id
             }
         };
 

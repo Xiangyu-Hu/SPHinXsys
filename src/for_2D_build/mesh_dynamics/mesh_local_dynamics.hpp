@@ -11,7 +11,7 @@ inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &pa
 {
     UnsignedInt sort_index = data_mesh_->getOccupiedDataPackages()[package_index - num_singular_pkgs_].first;
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
-    UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
+    UnsignedInt index_1d = data_mesh_->LinearCellIndex(cell_index);
 
     MeshVariableData<Real> &grid_phi = phi_[package_index];
     Real phi0 = grid_phi[0][0];
@@ -27,7 +27,7 @@ inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &pa
 //=================================================================================================//
 inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
 {
-    UnsignedInt index_1d = data_mesh_->LinearCellIndexFromCellIndex(cell_index);
+    UnsignedInt index_1d = data_mesh_->LinearCellIndex(cell_index);
     if (cell_contain_id_[index_1d] == 2)
     {
         if (mesh_any_of(
@@ -35,7 +35,7 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
                 data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
                 [&](int l, int m)
                 {
-                    UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m));
+                    UnsignedInt neighbor_1d = data_mesh_->LinearCellIndex(Arrayi(l, m));
                     return cell_contain_id_[neighbor_1d] == -1;
                 }))
         {
@@ -49,7 +49,7 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
                      data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
                      [&](int l, int m)
                      {
-                         UnsignedInt neighbor_1d = data_mesh_->transferMeshIndexTo1D(data_mesh_->AllCells(), Arrayi(l, m));
+                         UnsignedInt neighbor_1d = data_mesh_->LinearCellIndex(Arrayi(l, m));
                          return cell_contain_id_[neighbor_1d] == 1;
                      }))
         {
@@ -234,10 +234,8 @@ inline void ReinitializeLevelSet::UpdateKernel::update(const UnsignedInt &packag
         });
 }
 //=============================================================================================//
-inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_index,
-                                                    Real small_shift_factor)
+inline void MarkCutInterfaces::UpdateKernel::update(const UnsignedInt &package_index, Real dt)
 {
-    Real small_shift = data_spacing_ * small_shift_factor;
     auto &phi_addrs = phi_[package_index];
     auto &near_interface_id_addrs = near_interface_id_[package_index];
 
@@ -256,7 +254,7 @@ inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_i
             // first assume far cells
             Real phi_0 = phi_addrs[i][j];
             int near_interface_id = phi_0 > 0.0 ? 2 : -2;
-            if (fabs(phi_0) < small_shift)
+            if (fabs(phi_0) < perturbation_)
             {
                 near_interface_id = 0;
                 Real phi_average_0 = corner_averages[i][j];
@@ -265,9 +263,9 @@ inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_i
                     [&](int l, int m)
                     {
                         Real phi_average = corner_averages[i + l][j + m];
-                        if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
+                        if ((phi_average_0 - perturbation_) * (phi_average - perturbation_) < 0.0)
                             near_interface_id = 1;
-                        if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
+                        if ((phi_average_0 + perturbation_) * (phi_average + perturbation_) < 0.0)
                             near_interface_id = -1;
                     });
                 // find zero cut cells
@@ -281,6 +279,42 @@ inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_i
             }
             // assign this is to package
             near_interface_id_addrs[i][j] = near_interface_id;
+        });
+}
+//=============================================================================================//
+inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_index, Real dt)
+{
+    mesh_for_each2d<0, pkg_size>(
+        [&](int i, int j)
+        {
+            near_interface_id_[package_index][i][j] = 3; // undetermined
+            Real phi0 = phi_[package_index][i][j];
+            if (ABS(phi0) < 2.0 * threshold_) // only consider data close to the interface
+            {
+                bool is_sign_changed = mesh_any_of2d<-1, 2>( // check in the 3x3x3 neighborhood
+                    [&](int l, int m) -> bool
+                    {
+                        PackageGridPair neighbour_index = NeighbourIndexShift<pkg_size>(
+                            Arrayi(i + l, j + m), cell_neighborhood_[package_index]);
+
+                        return phi0 * phi_[neighbour_index.first]
+                                          [neighbour_index.second[0]]
+                                          [neighbour_index.second[1]] <
+                               0.0;
+                    });
+
+                if (is_sign_changed)
+                {
+                    if (ABS(phi0) < threshold_)
+                    {
+                        near_interface_id_[package_index][i][j] = 0; // cut cell
+                    }
+                }
+                else
+                {
+                    near_interface_id_[package_index][i][j] = phi0 > 0.0 ? 1 : -1; // in the band
+                }
+            }
         });
 }
 //=============================================================================================//

@@ -83,7 +83,7 @@ void run_simulation()
     //	Creating body, materials and particles
     //----------------------------------------------------------------------
     SolidBody free_cube(sph_system, makeShared<Cube>("FreeCube"));
-    free_cube.defineBodyLevelSetShape()->cleanLevelSet(0);
+    free_cube.defineBodyLevelSetShape();
     free_cube.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     free_cube.generateParticles<BaseParticles, Lattice>();
 

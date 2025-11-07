@@ -148,7 +148,7 @@ DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, Kern
         contact_dv_transfer_array_.push_back(
             contact_transfer_array_ptrs_keeper_.createPtr<DiscreteVariableArray<Real>>(
                 this->particles_->template registerStateVariables<Real>(
-                    this->diffusion_species_names_, "TransferWith" + this->sph_body_.getName())));
+                    this->diffusion_species_names_, "TransferWith" + this->sph_body_->getName())));
         contact_boundary_method_.push_back(
             boundary_ptrs_keeper_.template createPtr<BoundaryType<DiffusionType>>(
                 *this, this->contact_particles_[k]));

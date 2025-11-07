@@ -18,7 +18,7 @@ DensityRegularization<Base, RelationType<Parameters...>>::
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_mass_(this->particles_->template getVariableByName<Real>("Mass")),
       dv_rho_sum_(this->particles_->template registerStateVariable<Real>("DensitySummation")),
-      rho0_(this->sph_body_.getBaseMaterial().ReferenceDensity()),
+      rho0_(this->sph_body_->getBaseMaterial().ReferenceDensity()),
       inv_sigma0_(1.0 / this->sph_adaptation_->LatticeNumberDensity()) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
@@ -79,7 +79,7 @@ void DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeTy
     UpdateKernel::update(size_t index_i, Real dt)
 {
     if (this->particle_scope_(index_i))
-        this->rho_[index_i] = regularization_(this->rho_sum_[index_i]);
+        this->rho_[index_i] = regularization_(index_i, this->rho_sum_[index_i]);
 }
 //=================================================================================================//
 template <typename... Parameters>

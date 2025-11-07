@@ -98,8 +98,8 @@ class BidirectionalBuffer
               p_(particles_->getVariableDataByName<Real>("Pressure")),
               previous_surface_indicator_(particles_->getVariableDataByName<int>("PreviousSurfaceIndicator")),
               buffer_indicator_(particles_->getVariableDataByName<int>("BufferIndicator")),
-              upper_bound_fringe_(0.5 * sph_body_.getSPHBodyResolutionRef()),
-              physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")),
+              upper_bound_fringe_(0.5 * sph_body_->getSPHBodyResolutionRef()),
+              physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")),
               target_pressure_(target_pressure)
         {
             particle_buffer_.checkParticlesReserved();
@@ -181,11 +181,12 @@ class BidirectionalBuffer
     };
 
   public:
-    BidirectionalBuffer(AlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer)
-        : target_pressure_(*this),
+    template <typename... Args>
+    BidirectionalBuffer(AlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer, Args &&...args)
+        : target_pressure_(*this, std::forward<Args>(args)...),
           tag_buffer_particles(aligned_box_part),
           injection(aligned_box_part, particle_buffer, target_pressure_),
-          deletion(aligned_box_part) {};
+          deletion(aligned_box_part){};
     virtual ~BidirectionalBuffer() {};
 
     SimpleDynamics<TagBufferParticles, ExecutionPolicy> tag_buffer_particles;

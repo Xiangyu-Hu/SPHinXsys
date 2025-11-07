@@ -79,7 +79,7 @@ template <typename ViscosityType, class KernelCorrectionType, typename... Parame
 class ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>
     : public ForceFromFluid<KernelCorrectionType, Parameters...>
 {
-    using ViscosityKernel = typename ViscosityType::ComputingKernel;
+    using OneSideViscosity = typename ViscosityType::OneSideViscosity;
     using BaseForceFromFluid = ForceFromFluid<KernelCorrectionType, Parameters...>;
 
   public:
@@ -94,7 +94,7 @@ class ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionT
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        ViscosityKernel viscosity_;
+        OneSideViscosity one_side_viscosity_;
         Real smoothing_length_sq_;
     };
 

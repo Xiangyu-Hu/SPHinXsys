@@ -60,7 +60,7 @@ class FinishDataPackages
   private:
     MeshWithGridDataPackagesType &mesh_data_;
     Shape &shape_;
-    SingularVariable<UnsignedInt> sv_count_modified_{"CountModified", 1};
+    SingularVariable<UnsignedInt> sv_count_modified_{"CountModifiedCell", 1};
 
     MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
     MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package{mesh_data_, shape_};
@@ -68,30 +68,53 @@ class FinishDataPackages
     MeshAllDynamics<execution::ParallelPolicy, CellContainDiffusion> cell_contain_diffusion{mesh_data_, sv_count_modified_};
 };
 
-template <class ExecutionPolicy>
-class CleanInterface : public BaseMeshDynamics, public BaseDynamics<void>
+class RepeatTimes
 {
   public:
-    explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data, NeighborMethod<SingleValued> &neighbor_method)
-        : BaseMeshDynamics(mesh_data),
-          BaseDynamics<void>(),
-          neighbor_method_(neighbor_method) {};
+    explicit RepeatTimes() {};
+    virtual ~RepeatTimes() {};
+    void operator()(UnsignedInt repeat_times) { repeat_times_ = repeat_times; }
+
+  protected:
+    UnsignedInt repeat_times_ = 1;
+};
+
+template <class ExecutionPolicy>
+class CleanInterface : public RepeatTimes, public BaseMeshDynamics, public BaseDynamics<void>
+{
+  public:
+    explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data,
+                            NeighborMethod<SingleValued> &neighbor_method,
+                            Real refinement_ratio)
+        : RepeatTimes(), BaseMeshDynamics(mesh_data), BaseDynamics<void>(),
+          neighbor_method_(neighbor_method), refinement_ratio_(refinement_ratio) {};
     virtual ~CleanInterface() {};
 
-    void exec(Real small_shift_factor) override
+    void exec(Real dt = 0.0) override
     {
-        mark_near_interface.exec(small_shift_factor);
-        redistance_interface.exec();
-        reinitialize_level_set.exec();
+        for (UnsignedInt k = 0; k != 2 * repeat_times_; ++k)
+        {
+            for (UnsignedInt l = 0; l != 2; ++l)
+            {
+                mark_cut_interfaces.exec();
+                redistance_interface.exec();
+            }
+
+            for (UnsignedInt m = 0; m != 10; ++m)
+            {
+                reinitialize_level_set.exec();
+            }
+        }
         update_level_set_gradient.exec();
         update_kernel_integrals.exec();
     }
 
   private:
     NeighborMethod<SingleValued> &neighbor_method_;
+    Real refinement_ratio_;
     MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, neighbor_method_};
-    MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, MarkCutInterfaces> mark_cut_interfaces{mesh_data_, 0.5 * refinement_ratio_};
     MeshCoreDynamics<ExecutionPolicy, RedistanceInterface> redistance_interface{mesh_data_};
     MeshInnerDynamics<ExecutionPolicy, ReinitializeLevelSet> reinitialize_level_set{mesh_data_};
 };
@@ -106,21 +129,25 @@ class CorrectTopology : public BaseMeshDynamics, public BaseDynamics<void>
           neighbor_method_(neighbor_method) {};
     virtual ~CorrectTopology() {};
 
-    void exec(Real small_shift_factor) override
+    void exec(Real dt = 0.0) override
     {
-        mark_near_interface.exec(small_shift_factor);
-        for (UnsignedInt i = 0; i != 10; ++i)
+        mark_near_interface.exec();
+        while (sv_count_modified_.getValue() > 0)
+        {
+            sv_count_modified_.setValue(0);
             diffuse_level_set_sign.exec();
+        }
         update_level_set_gradient.exec();
         update_kernel_integrals.exec();
     }
 
   private:
     NeighborMethod<SingleValued> &neighbor_method_;
+    SingularVariable<UnsignedInt> sv_count_modified_{"CountModifiedData", 1};
     MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, neighbor_method_};
     MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface{mesh_data_};
-    MeshInnerDynamics<ExecutionPolicy, DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_};
+    MeshInnerDynamics<ExecutionPolicy, DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_, sv_count_modified_};
 };
 } // namespace SPH
 #endif // ALL_MESH_DYNAMICS_H

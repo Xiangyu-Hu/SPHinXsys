@@ -26,7 +26,7 @@ void ContactRelation::updateConfiguration()
     {
         Mesh &mesh = target_cell_linked_lists_[k]->getMesh();
         target_cell_linked_lists_[k]->searchNeighborsByMesh(
-            mesh, 0, sph_body_, contact_configuration_[k],
+            mesh, sph_body_, contact_configuration_[k],
             *get_search_depths_[k], *get_contact_neighbors_[k]);
     }
 }
@@ -63,7 +63,7 @@ void ShellSurfaceContactRelation::updateConfiguration()
     {
         Mesh &mesh = target_cell_linked_lists_[k]->getMesh();
         target_cell_linked_lists_[k]->searchNeighborsByMesh(
-            mesh, 0, *body_surface_layer_, contact_configuration_[k],
+            mesh, *body_surface_layer_, contact_configuration_[k],
             *get_search_depths_[k], *get_contact_neighbors_[k]);
     }
 }
@@ -87,7 +87,7 @@ void ContactRelationToBodyPart::updateConfiguration()
     {
         Mesh &mesh = target_cell_linked_lists_[k]->getMesh();
         target_cell_linked_lists_[k]->searchNeighborsByMesh(
-            mesh, 0, sph_body_, contact_configuration_[k],
+            mesh, sph_body_, contact_configuration_[k],
             *get_search_depths_[k], *get_part_contact_neighbors_[k]);
     }
 }
@@ -122,11 +122,10 @@ void AdaptiveContactRelation::updateConfiguration()
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         StdVec<Mesh *> &meshes = cell_linked_lists_[k]->getMeshes();
-        StdVec<UnsignedInt> &mesh_offsets = cell_linked_lists_[k]->getMeshOffsets();
         for (size_t l = 0; l != meshes.size(); ++l)
         {
             cell_linked_lists_[k]->searchNeighborsByMesh(
-                *meshes[l], mesh_offsets[l], sph_body_, contact_configuration_[k],
+                *meshes[l], sph_body_, contact_configuration_[k],
                 *get_multi_level_search_range_[k][l], *get_contact_neighbors_adaptive_[k][l]);
         }
     }
@@ -156,7 +155,7 @@ void ContactRelationFromShellToFluid::updateConfiguration()
     {
         Mesh &mesh = target_cell_linked_lists_[k]->getMesh();
         target_cell_linked_lists_[k]->searchNeighborsByMesh(
-            mesh, 0, sph_body_, contact_configuration_[k],
+            mesh, sph_body_, contact_configuration_[k],
             *get_search_depths_[k], *get_shell_contact_neighbors_[k]);
     }
 }
@@ -185,7 +184,7 @@ void ContactRelationFromFluidToShell::updateConfiguration()
     {
         Mesh &mesh = target_cell_linked_lists_[k]->getMesh();
         target_cell_linked_lists_[k]->searchNeighborsByMesh(
-            mesh, 0, sph_body_, contact_configuration_[k],
+            mesh, sph_body_, contact_configuration_[k],
             *get_search_depths_[k], *get_contact_neighbors_[k]);
     }
 }
@@ -245,7 +244,7 @@ void SurfaceContactRelation::updateConfiguration()
     {
         Mesh &mesh = target_cell_linked_lists_[k]->getMesh();
         target_cell_linked_lists_[k]->searchNeighborsByMesh(
-            mesh, 0, *body_surface_layer_, contact_configuration_[k],
+            mesh, *body_surface_layer_, contact_configuration_[k],
             *get_search_depths_[k], *get_contact_neighbors_[k]);
     }
 }

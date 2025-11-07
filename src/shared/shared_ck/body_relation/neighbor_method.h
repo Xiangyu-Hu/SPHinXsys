@@ -43,10 +43,10 @@ template <>
 class NeighborMethod<Base>
 {
   public:
-    NeighborMethod(Kernel &base_kernel) : base_kernel_(base_kernel) {};
+    NeighborMethod(Kernel &base_kernel) : base_kernel_(&base_kernel) {};
 
   protected:
-    Kernel &base_kernel_;
+    Kernel *base_kernel_;
 
     template <class DynamicsIdentifier>
     Real getSmoothingLength(const SingleValued &single_valued, DynamicsIdentifier &identifier)
@@ -87,7 +87,7 @@ class NeighborMethod<SingleValued> : public NeighborMethod<Base>
 
     Real CutOffRadius() const
     {
-        return base_kernel_.KernelSize() / inv_h_;
+        return base_kernel_->KernelSize() / inv_h_;
     }
 
     class SmoothingKernel : public KernelTabulatedCK
@@ -97,7 +97,7 @@ class NeighborMethod<SingleValued> : public NeighborMethod<Base>
       public:
         template <class ExecutionPolicy, class EncloserType>
         SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : KernelTabulatedCK(encloser.base_kernel_),
+            : KernelTabulatedCK(*encloser.base_kernel_),
               inv_h_(encloser.inv_h_), inv_h_squared_(inv_h_ * inv_h_),
               inv_h_cubed_(inv_h_squared_ * inv_h_), inv_h_fourth_(inv_h_cubed_ * inv_h_),
               inv_h_fifth_(inv_h_fourth_ * inv_h_){};
@@ -135,10 +135,10 @@ class NeighborMethod<SingleValued> : public NeighborMethod<Base>
       public:
         template <class ExecutionPolicy, class EncloserType>
         NeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser,
-                        DiscreteVariable<Vecd> *dv_source_pos, DiscreteVariable<Vecd> *dv_target_pos)
+                          DiscreteVariable<Vecd> *dv_source_pos, DiscreteVariable<Vecd> *dv_target_pos)
             : source_pos_(dv_source_pos->DelegatedData(ex_policy)),
               target_pos_(dv_target_pos->DelegatedData(ex_policy)),
-              kernel_size_squared_(math::pow(encloser.base_kernel_.KernelSize(), 2)),
+              kernel_size_squared_(math::pow(encloser.base_kernel_->KernelSize(), 2)),
               inv_h_(encloser.inv_h_) {}
 
         inline bool operator()(UnsignedInt i, UnsignedInt j) const
@@ -146,7 +146,7 @@ class NeighborMethod<SingleValued> : public NeighborMethod<Base>
             return (inv_h_ * (source_pos_[i] - target_pos_[j])).squaredNorm() < kernel_size_squared_;
         };
     };
-    
+
     class SmoothingRatio
     {
       public:

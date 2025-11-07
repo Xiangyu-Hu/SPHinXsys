@@ -49,7 +49,7 @@ class RiemannSolver<Base, FluidI, FluidJ>
     RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j);
 
     template <typename T>
-    T AverageP(const T &p_i, const T &p_j);
+    T AverageP(const T &p_i, const T &p_j) const;
     Vecd AverageV(const Vecd &vel_i, const Vecd &vel_j);
 
   protected:

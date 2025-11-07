@@ -25,7 +25,7 @@ QuantityReduce<ReturnFunctionType, DynamicsIdentifier>::
     : BaseLocalDynamicsReduce<ReturnFunctionType, DynamicsIdentifier>(identifier),
       dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name))
 {
-    this->quantity_name_ = type_name<ReturnFunctionType>() + variable_name;
+    this->quantity_name_ = std::string(type_name<ReturnFunctionType>()) + variable_name;
 }
 //=================================================================================================//
 template <typename ReturnFunctionType, class DynamicsIdentifier>

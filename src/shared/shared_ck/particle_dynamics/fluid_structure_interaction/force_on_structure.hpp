@@ -13,8 +13,8 @@ template <class ContactRelationType>
 ForceFromFluid<KernelCorrectionType, Parameters...>::
     ForceFromFluid(ContactRelationType &contact_relation, const std::string &force_name)
     : Interaction<Contact<Parameters...>>(contact_relation), ForcePriorCK(this->particles_, force_name),
-      solid_(DynamicCast<Solid>(this, this->sph_body_.getBaseMaterial())),
-      dv_force_from_fluid_(this->dv_current_force_),
+      solid_(DynamicCast<Solid>(this, this->sph_body_->getBaseMaterial())),
+      dv_force_from_fluid_(ForcePriorCK::getCurrentForce()),
       dv_vel_ave_(solid_.AverageVelocityVariable(this->particles_))
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -55,7 +55,7 @@ template <class ExecutionPolicy, class EncloserType>
 ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
-      viscosity_(ex_policy, *encloser.contact_viscosity_model_[contact_index]),
+      one_side_viscosity_(encloser.contact_viscosity_model_[contact_index]->getOneSideViscosity(ex_policy)),
       smoothing_length_sq_(encloser.contact_smoothing_length_sq_[contact_index]) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
@@ -72,7 +72,7 @@ void ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionTy
                               (vec_r_ij.squaredNorm() + 0.01 * smoothing_length_sq_);
 
         force += vec_r_ij.dot(this->contact_correction_(index_j) * e_ij) *
-                 viscosity_(index_j) * vel_derivative *
+                 one_side_viscosity_(index_j) * vel_derivative *
                  this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j];
     }
 

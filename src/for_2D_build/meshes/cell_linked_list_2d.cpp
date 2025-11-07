@@ -5,7 +5,7 @@
 namespace SPH
 {
 //=============================================================================================//
-void BaseCellLinkedList::writeMeshFieldToPltByMesh(Mesh &mesh, UnsignedInt mesh_offset, std::ofstream &output_file)
+void BaseCellLinkedList::writeMeshFieldToPltByMesh(Mesh &mesh, std::ofstream &output_file)
 {
     Array2i number_of_operation = mesh.AllCells();
 
@@ -44,15 +44,14 @@ void BaseCellLinkedList::writeMeshFieldToPltByMesh(Mesh &mesh, UnsignedInt mesh_
     {
         for (int i = 0; i != number_of_operation[0]; ++i)
         {
-            UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(Array2i(i, j));
+            UnsignedInt linear_index = mesh.LinearCellIndex(Array2i(i, j));
             output_file << cell_index_lists_[linear_index].size() << " ";
         }
         output_file << " \n";
     }
 }
 //=================================================================================================//
-void BaseCellLinkedList::tagBoundingCellsByMesh(Mesh &mesh, UnsignedInt mesh_offset,
-                                                StdVec<CellLists> &cell_data_lists,
+void BaseCellLinkedList::tagBoundingCellsByMesh(Mesh &mesh, StdVec<CellLists> &cell_data_lists,
                                                 const BoundingBox &bounding_bounds, int axis)
 {
     int second_axis = NextAxis(axis);
@@ -68,7 +67,7 @@ void BaseCellLinkedList::tagBoundingCellsByMesh(Mesh &mesh, UnsignedInt mesh_off
             Array2i cell = Array2i::Zero();
             cell[axis] = i;
             cell[second_axis] = j;
-            UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell);
+            UnsignedInt linear_index = mesh.LinearCellIndex(cell);
             cell_data_lists[0].first.push_back(&cell_index_lists_[linear_index]);
             cell_data_lists[0].second.push_back(&cell_data_lists_[linear_index]);
         }
@@ -82,7 +81,7 @@ void BaseCellLinkedList::tagBoundingCellsByMesh(Mesh &mesh, UnsignedInt mesh_off
             Array2i cell = Array2i::Zero();
             cell[axis] = i;
             cell[second_axis] = j;
-            UnsignedInt linear_index = mesh_offset + mesh.LinearCellIndexFromCellIndex(cell);
+            UnsignedInt linear_index = mesh.LinearCellIndex(cell);
             cell_data_lists[1].first.push_back(&cell_index_lists_[linear_index]);
             cell_data_lists[1].second.push_back(&cell_data_lists_[linear_index]);
         }
