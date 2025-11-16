@@ -97,6 +97,7 @@ class ReduceDynamicsGroup : public BaseDynamics<typename Operation::ReturnType>
     StdVec<BaseDynamics<ReturnType> *> reduce_dynamics_;
 
   public:
+    ReduceDynamicsGroup() : BaseDynamics<ReturnType>(), operation_() {}
     ReduceDynamicsGroup(const Operation &operation)
         : BaseDynamics<ReturnType>(), operation_(operation) {}
     ReduceDynamicsGroup(const Operation &operation,
@@ -161,8 +162,7 @@ class BaseMethodContainer
 template <typename ExecutionPolicy>
 class ParticleMethodContainer : public BaseMethodContainer
 {
-    UniquePtrsKeeper<BaseDynamics<void>> particle_dynamics_keeper_;
-    UniquePtrsKeeper<BaseReturnDynamics> return_dynamics_keeper_;
+    UniquePtrsKeeper<AbstractDynamics> particle_dynamics_keeper_;
     UniquePtrsKeeper<BodyStatesRecording> state_recorders_keeper_;
     UniquePtrsKeeper<BaseIO> other_io_keeper_;
 
@@ -171,10 +171,17 @@ class ParticleMethodContainer : public BaseMethodContainer
         : BaseMethodContainer() {};
     virtual ~ParticleMethodContainer() {};
 
+    template <template <typename...> class GeneralDynamicsType, typename... Parameters, class DynamicsIdentifier, typename... Args>
+    auto &addGeneralDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            GeneralDynamicsType<ExecutionPolicy, Parameters...>>(identifier, std::forward<Args>(args)...);
+    };
+
     template <class GeneralDynamicsType, class DynamicsIdentifier, typename... Args>
     auto &addReturnDynamics(DynamicsIdentifier &identifier, Args &&...args)
     {
-        return *return_dynamics_keeper_.createPtr<GeneralDynamicsType>(identifier, std::forward<Args>(args)...);
+        return *particle_dynamics_keeper_.createPtr<GeneralDynamicsType>(identifier, std::forward<Args>(args)...);
     };
 
     template <class GeneralDynamicsType, class DynamicsIdentifier, typename... Args>
@@ -275,7 +282,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     template <class ReduceType, typename... Args>
     auto &addReduceDynamics(Args &&...args)
     {
-        return *return_dynamics_keeper_.template createPtr<
+        return *particle_dynamics_keeper_.template createPtr<
             ReduceDynamicsCK<ExecutionPolicy, ReduceType>>(std::forward<Args>(args)...);
     };
 

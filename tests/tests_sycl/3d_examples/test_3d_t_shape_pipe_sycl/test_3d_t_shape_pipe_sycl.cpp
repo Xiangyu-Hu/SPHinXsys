@@ -136,7 +136,7 @@ struct PressureBC
     fluid_dynamics::BidirectionalBoundaryCK<ExecutionPolicy, CorrectionType, BoundaryPressurePrescribed> boundary_condition;
     StateDynamics<ExecutionPolicy, ResetBufferCorrectionMatrixCK> reset_buffer_correction_matrix;
 
-    PressureBC(FluidBody &fluid_body, const BoundaryParameter &params, ParticleBuffer<Base> &in_outlet_particle_buffer, Real t_ref)
+    PressureBC(FluidBody &fluid_body, const BoundaryParameter &params, Real t_ref)
         : normal(params.normal.normalized()),
           center(params.center + 0.5 * params.L_emitter * normal),
           rot(compute_rotation(normal)),
@@ -145,8 +145,7 @@ struct PressureBC
                           params.diameter * 0.505),
           alignedbox(xAxis, Transform(rot, center), buffer_halfsize),
           alignedbox_by_cell(fluid_body, alignedbox),
-          boundary_condition(alignedbox_by_cell, in_outlet_particle_buffer,
-                             params.pressure, t_ref),
+          boundary_condition(alignedbox_by_cell, params.pressure, t_ref),
           reset_buffer_correction_matrix(alignedbox_by_cell) {}
 };
 
@@ -341,7 +340,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
     for (const auto &boundary : boundaries)
         bidirectional_pressure_conditions.emplace_back(
             std::make_unique<PressureBC<MainExecutionPolicy, LinearCorrectionCK>>(
-                water_block, boundary, in_outlet_particle_buffer, params.t_ref));
+                water_block, boundary, params.t_ref));
     StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> particle_deletion(water_block);
     InteractionDynamicsCK<
         MainExecutionPolicy,

@@ -75,7 +75,6 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
 
 template <class ExecutionPolicy, class ReduceType>
 class ReduceDynamicsCK : public ReduceType,
-                         public BaseReturnDynamics,
                          public BaseDynamics<typename ReduceType::FinishDynamics::OutputType>
 {
     using Identifier = typename ReduceType::Identifier;
@@ -95,7 +94,6 @@ class ReduceDynamicsCK : public ReduceType,
     template <typename... Args>
     ReduceDynamicsCK(Args &&...args)
         : ReduceType(std::forward<Args>(args)...),
-          BaseReturnDynamics(),
           BaseDynamics<OutputType>(), kernel_implementation_(*this),
           reduced_value_(this->reference_), finish_dynamics_(*this){};
     virtual ~ReduceDynamicsCK() {};

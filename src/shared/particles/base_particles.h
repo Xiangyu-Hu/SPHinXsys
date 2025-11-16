@@ -106,6 +106,7 @@ class BaseParticles
     void initializeAllParticlesBounds(size_t total_real_particles);
     void initializeAllParticlesBoundsFromReloadXml();
     void increaseParticlesBounds(size_t extra_size);
+    void checkEnoughReserve();
     //----------------------------------------------------------------------
     // Parameterized management on particle variables and data
     //----------------------------------------------------------------------
@@ -176,6 +177,7 @@ class BaseParticles
     // Particle data ouput functions
     //----------------------------------------------------------------------
     void resizeXmlDocForParticles(XmlParser &xml_parser);
+    void resetTotalRealParticlesFromXmlDoc(XmlParser &xml_parser);
     void writeParticlesToXmlForRestart(const std::string &filefullpath);
     void readParticlesFromXmlForRestart(const std::string &filefullpath);
     void writeParticlesToXmlForReload(const std::string &filefullpath);

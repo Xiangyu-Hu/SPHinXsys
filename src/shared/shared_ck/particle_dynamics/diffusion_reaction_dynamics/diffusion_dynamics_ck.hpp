@@ -20,9 +20,9 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
       diffusions_(this->obtainConcreteDiffusions(*abstract_diffusion)),
       diffusion_species_names_(this->obtainDiffusionSpeciesNames(diffusions_)),
       gradient_species_names_(this->obtainGradientSpeciesNames(diffusions_)),
-      dv_diffusion_species_array_(this->particles_->template getVariablesByName<Real>(
+      dv_diffusion_species_array_(this->particles_->template registerStateVariables<Real>(
           diffusion_species_names_, "")),
-      dv_gradient_species_array_(this->particles_->template getVariablesByName<Real>(
+      dv_gradient_species_array_(this->particles_->template registerStateVariables<Real>(
           gradient_species_names_, "")),
       dv_diffusion_dt_array_(this->particles_->template registerStateVariables<Real>(
           diffusion_species_names_, "ChangeRate")),
