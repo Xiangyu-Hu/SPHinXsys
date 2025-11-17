@@ -100,6 +100,15 @@ class SPHAdaptation
         sigma0_ref_ = computeLatticeNumberDensity(Vecd());
     };
 
+    class UnitSmoothingLengthRatio
+    {
+      public:
+        explicit UnitSmoothingLengthRatio(SPHAdaptation &adaptation) {};
+        Real operator()(size_t /*particle_index_i*/) { return 1.0; };
+    };
+
+    typedef UnitSmoothingLengthRatio SmoothingRatioType;
+
   protected:
     Real computeLatticeNumberDensity(Vec2d zero);
     Real computeLatticeNumberDensity(Vec3d zero);
@@ -108,19 +117,19 @@ class SPHAdaptation
 };
 
 /**
- * @class ParticleWithLocalRefinement
+ * @class AdaptiveResolution
  * @brief Base class for particle with local refinement.
  * @details Different refinement strategies will be used in derived classes.
  */
-class ParticleWithLocalRefinement : public SPHAdaptation
+class AdaptiveResolution : public SPHAdaptation
 {
   public:
     Real *h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
     int *level_;    /**< the mesh level of the particle */
 
-    ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
-    ParticleWithLocalRefinement(SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
-    virtual ~ParticleWithLocalRefinement() {};
+    AdaptiveResolution(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
+    AdaptiveResolution(SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
+    virtual ~AdaptiveResolution() {};
 
     virtual Real SmoothingLengthRatio(size_t particle_index_i) override
     {
@@ -131,6 +140,18 @@ class ParticleWithLocalRefinement : public SPHAdaptation
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles) override;
     virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 
+    class ContinuousSmoothingLengthRatio
+    {
+        Real *h_ratio_;
+
+      public:
+        explicit ContinuousSmoothingLengthRatio(AdaptiveResolution &adaptation)
+            : h_ratio_(adaptation.h_ratio_) {};
+        Real operator()(size_t index_i) { return h_ratio_[index_i]; };
+    };
+
+    typedef ContinuousSmoothingLengthRatio SmoothingRatioType;
+
   protected:
     Real finest_spacing_bound_;   /**< the adaptation bound for finest particles */
     Real coarsest_spacing_bound_; /**< the adaptation bound for coarsest particles */
@@ -140,12 +161,12 @@ class ParticleWithLocalRefinement : public SPHAdaptation
  * @class ParticleRefinementByShape
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
  */
-class ParticleRefinementByShape : public ParticleWithLocalRefinement
+class ParticleRefinementByShape : public AdaptiveResolution
 {
   public:
     template <typename... Args>
     ParticleRefinementByShape(Args &&...args)
-        : ParticleWithLocalRefinement(std::forward<Args>(args)...){};
+        : AdaptiveResolution(std::forward<Args>(args)...){};
 
     virtual ~ParticleRefinementByShape() {};
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) = 0;

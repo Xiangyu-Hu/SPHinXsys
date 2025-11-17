@@ -273,32 +273,5 @@ class LinearGradientCorrectionWithBulkScope : public KernelCorrection
     Matd *B_;
     BulkParticles within_scope_;
 };
-
-class SingleResolution
-{
-  public:
-    SingleResolution(BaseParticles *particles) {};
-    Real operator()(size_t index_i)
-    {
-        return 1.0;
-    };
-};
-//----------------------------------------------------------------------
-// Particle adaptation functors
-//----------------------------------------------------------------------
-class AdaptiveResolution
-{
-  public:
-    AdaptiveResolution(BaseParticles *particles)
-        : h_ratio_(particles->getVariableDataByName<Real>("SmoothingLengthRatio")) {};
-
-    Real operator()(size_t index_i)
-    {
-        return h_ratio_[index_i];
-    };
-
-  protected:
-    Real *h_ratio_;
-};
 } // namespace SPH
 #endif // PARTICLE_FUNCTORS_H

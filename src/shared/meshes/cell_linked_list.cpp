@@ -212,8 +212,8 @@ MultilevelCellLinkedList::MultilevelCellLinkedList(
     BoundingBox tentative_bounds, Real reference_grid_spacing, UnsignedInt total_levels,
     BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation),
-      h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_),
-      level_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->level_)
+      h_ratio_(DynamicCast<AdaptiveResolution>(this, &sph_adaptation)->h_ratio_),
+      level_(DynamicCast<AdaptiveResolution>(this, &sph_adaptation)->level_)
 {
     meshes_.push_back(mesh_ptrs_keeper_
                           .createPtr<SingularVariable<Mesh>>(

@@ -110,9 +110,9 @@ UniquePtr<MultilevelLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real r
                                           shape, *this, refinement_ratio);
 }
 //=================================================================================================//
-ParticleWithLocalRefinement::
-    ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio, Real system_refinement_ratio,
-                                int local_refinement_level)
+AdaptiveResolution::
+    AdaptiveResolution(Real resolution_ref, Real h_spacing_ratio, Real system_refinement_ratio,
+                       int local_refinement_level)
     : SPHAdaptation(resolution_ref, h_spacing_ratio, system_refinement_ratio), h_ratio_(nullptr), level_(nullptr)
 {
     local_refinement_level_ = local_refinement_level;
@@ -124,12 +124,12 @@ ParticleWithLocalRefinement::
     coarsest_spacing_bound_ = spacing_ref_ - Eps;
 }
 //=================================================================================================//
-ParticleWithLocalRefinement::ParticleWithLocalRefinement(
+AdaptiveResolution::AdaptiveResolution(
     SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level)
-    : ParticleWithLocalRefinement(sph_system.ReferenceResolution(), h_spacing_ratio_, system_refinement_ratio,
-                                  local_refinement_level) {}
+    : AdaptiveResolution(sph_system.ReferenceResolution(), h_spacing_ratio_, system_refinement_ratio,
+                         local_refinement_level) {}
 //=================================================================================================//
-void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &base_particles)
+void AdaptiveResolution::initializeAdaptationVariables(BaseParticles &base_particles)
 {
     SPHAdaptation::initializeAdaptationVariables(base_particles);
     h_ratio_ = base_particles.registerStateVariableData<Real>(
@@ -139,14 +139,14 @@ void ParticleWithLocalRefinement::initializeAdaptationVariables(BaseParticles &b
     base_particles.addEvolvingVariable<Real>("SmoothingLengthRatio");
 }
 //=================================================================================================//
-UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::
+UniquePtr<BaseCellLinkedList> AdaptiveResolution::
     createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles)
 {
     return makeUnique<MultilevelCellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(),
                                                 local_refinement_level_, base_particles, *this);
 }
 //=================================================================================================//
-UniquePtr<MultilevelLevelSet> ParticleWithLocalRefinement::createLevelSet(Shape &shape, Real refinement_ratio)
+UniquePtr<MultilevelLevelSet> AdaptiveResolution::createLevelSet(Shape &shape, Real refinement_ratio)
 {
     // one more level for interpolation
     return makeUnique<MultilevelLevelSet>(shape.getBounds(), ReferenceSpacing() / refinement_ratio,
