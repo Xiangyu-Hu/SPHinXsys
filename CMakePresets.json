@@ -107,7 +107,6 @@
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_TOOLCHAIN_FILE": "'${env:HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake'",
-                "Simbody_DIR": "'${env:HOME}/simbody/lib/cmake/simbody'",
                 "CMAKE_C_COMPILER_LAUNCHER": "ccache",
                 "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
             }
@@ -128,7 +127,6 @@
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_TOOLCHAIN_FILE": "'${env:HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake'",
-                "Simbody_DIR": "'${env:HOME}/simbody/lib/cmake/simbody'",
                 "CMAKE_C_COMPILER_LAUNCHER": "ccache",
                 "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
             }

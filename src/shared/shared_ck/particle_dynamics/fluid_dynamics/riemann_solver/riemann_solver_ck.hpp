@@ -30,7 +30,8 @@ template <class FluidI, class FluidJ, typename LimiterType>
 RiemannSolver<FluidI, FluidJ, LimiterType>::
     RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j, Real limiter_coeff)
     : RiemannSolver<NotUsed, FluidI, FluidJ>(fluid_i, fluid_j),
-      inv_rho0c0_ave_(2.0 * this->inv_rho0c0_sum_),
+      inv_rho0c0_ave_((this->rho0c0_i_ + this->rho0c0_j_) /
+                      (math::pow(this->rho0c0_i_, 2) + math::pow(this->rho0c0_j_, 2))),
       rho0c0_geo_ave_(2.0 * this->rho0c0_i_ * this->rho0c0_j_ * this->inv_rho0c0_sum_),
       limiter_(0.5 * (this->rho0_i_ + this->rho0_j_) * inv_rho0c0_ave_, limiter_coeff) {}
 //=================================================================================================//

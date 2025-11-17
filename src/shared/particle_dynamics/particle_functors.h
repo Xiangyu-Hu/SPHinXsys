@@ -93,6 +93,7 @@ class NotIndicatedParticles : public WithinScope
     };
 };
 
+using ExcludeFreeSurfaceParticles = NotIndicatedParticles<1>;
 //----------------------------------------------------------------------
 // Particle parameter functors
 //----------------------------------------------------------------------

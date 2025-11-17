@@ -90,7 +90,6 @@ void RestartIO::writeToFile(size_t iteration_step)
 //=============================================================================================//
 Real RestartIO::readRestartTime(size_t restart_step)
 {
-    std::cout << "\n Reading restart files from the restart step = " << restart_step << std::endl;
     std::string overall_filefullpath = overall_file_path_ + padValueWithZeros(restart_step) + ".dat";
     if (!fs::exists(overall_filefullpath))
     {
@@ -108,6 +107,7 @@ Real RestartIO::readRestartTime(size_t restart_step)
 //=============================================================================================//
 void RestartIO::readFromFile(size_t restart_step)
 {
+    std::cout << "\n Reading restart files from the restart step = " << restart_step << std::endl;
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         std::string filefullpath = file_names_[i] + padValueWithZeros(restart_step) + ".xml";

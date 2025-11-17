@@ -107,7 +107,7 @@ void FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
     // If the particle’s pos_div is under threshold but isolated (no surface neighbors),
     // push it above threshold to avoid false positives.
     if ((this->pos_div_[index_i] < this->threshold_by_dimensions_) &&
-        !is_near_surface && !is_near_previous_surface)
+        previous_surface_indicator_[index_i] != 1 && !is_near_previous_surface)
     {
         this->pos_div_[index_i] = 2.0 * this->threshold_by_dimensions_;
     }
@@ -127,7 +127,7 @@ void FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
 template <typename... Parameters>
 FreeSurfaceIndicationCK<Contact<Parameters...>>::
     FreeSurfaceIndicationCK(Contact<Parameters...> &contact_relation)
-    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>(contact_relation){}
+    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>(contact_relation) {}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>

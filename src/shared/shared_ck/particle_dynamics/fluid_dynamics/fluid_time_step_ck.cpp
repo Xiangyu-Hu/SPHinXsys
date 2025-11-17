@@ -15,7 +15,10 @@ AdvectionTimeStepCK::
       dv_mass_(particles_->getVariableByName<Real>("Mass")),
       dv_vel_(particles_->getVariableByName<Vecd>("Velocity")),
       dv_force_(particles_->getVariableByName<Vecd>("Force")),
-      dv_force_prior_(particles_->getVariableByName<Vecd>("ForcePrior")) {}
+      dv_force_prior_(particles_->getVariableByName<Vecd>("ForcePrior"))
+{
+    std::cout << sph_body.getName() << ": AdvectionTimeStepCK::speed_ref_ = " << speed_ref_ << std::endl;
+}
 //=================================================================================================//
 AdvectionTimeStepCK::FinishDynamics::FinishDynamics(AdvectionTimeStepCK &encloser)
     : h_min_(encloser.h_min_), speed_ref_(encloser.speed_ref_),

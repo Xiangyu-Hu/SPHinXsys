@@ -1,27 +1,5 @@
 # ![SPHinXsys Logo](assets/logo.png) SPHinXsys
 
-## SPHinXsys new feature: turning “mesh nightmares” into smooth simulations
-
-Ever had a perfect-looking CAD model that refused to mesh?
-
-Hidden leaks (those tiny yellow marks in the figure) can completely derail numerical simulations — and repairing them can be tedious and frustrating.
-
-![Leaking Geometry](https://media.licdn.com/dms/image/v2/D4D22AQF5CCANH4NQgQ/feedshare-shrink_2048_1536/B4DZiQ_oVfHYAw-/0/1754779257657?e=1758153600&v=beta&t=ugXbUmTgQQ4s7bjkO_f-zY7Y5yIOsUzlE1-sobnqLWc)
-
-With SPHinXsys level set techniques, you can skip the repair work.  
-We directly convert your original (even leaky) geometry into particles, then apply a physics-based relaxation to produce a clean, body-fitted, and uniformly distributed particle set — ready for simulation.
-
-![Levelset and Particles](https://media.licdn.com/dms/image/v2/D4D22AQFmcHYYO-ji2Q/feedshare-shrink_2048_1536/B4DZiQ_oWQGsAo-/0/1754779257939?e=1758153600&v=beta&t=_IWXfhpGhLDzw4ukFiOrrOJlOx3jtS6J48xk5J9pPC4)
-
-No more chasing tiny gaps. Just upload your model and let the algorithm do the work.
-
-You can check the test cases
-`test_3d_particle_relaxation_single_resolution_sycl`
-for different geometries in the `data` folder,
-which showcase the capabilities of our specially designed framework.
-
-Your tests, comments and modification of these test cases would be very welcomed!
-
 **Project status**
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Linux](https://img.shields.io/badge/os-Linux-green.svg)](https://shields.io/)

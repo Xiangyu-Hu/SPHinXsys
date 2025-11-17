@@ -215,7 +215,11 @@ bool NearShapeSurface::checkNearSurface(Vecd cell_position, Real threshold)
 AlignedBoxPart::AlignedBoxPart(const std::string &part_name, const AlignedBox &aligned_box)
     : aligned_box_(*sv_aligned_box_keeper_
                         .createPtr<SingularVariable<AlignedBox>>(part_name, aligned_box)
-                        ->Data()) {}
+                        ->Data())
+{
+    std::cout << part_name << " direction facing to fluid domain: "
+              << aligned_box_.getTransform().xformFrameVecToBase(Vecd::UnitX()) << std::endl;
+}
 //=================================================================================================//
 AlignedBoxByParticle::AlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box)
     : BodyPartByParticle(real_body), AlignedBoxPart(part_name_, aligned_box)

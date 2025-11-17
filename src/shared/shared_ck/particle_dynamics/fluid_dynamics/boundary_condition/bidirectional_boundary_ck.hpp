@@ -27,10 +27,9 @@ inline void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
 template <class ConditionType>
 template <typename... Args>
 BufferInflowInjectionCK<ConditionType>::
-    BufferInflowInjectionCK(AlignedBoxByCell &aligned_box_part,
-                            ParticleBuffer<Base> &buffer, Args &&...args)
+    BufferInflowInjectionCK(AlignedBoxByCell &aligned_box_part, Args &&...args)
     : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
-      part_id_(aligned_box_part.getPartID()), buffer_(buffer),
+      part_id_(aligned_box_part.getPartID()),
       fluid_(DynamicCast<FluidType>(this, sph_body_->getBaseMaterial())),
       condition_(std::forward<Args>(args)...),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
@@ -43,7 +42,7 @@ BufferInflowInjectionCK<ConditionType>::
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       upper_bound_fringe_(0.5 * this->sph_body_->getSPHBodyResolutionRef())
 {
-    buffer_.checkParticlesReserved();
+    particles_->checkEnoughReserve();
 }
 //=================================================================================================//
 template <class ConditionType>
@@ -159,11 +158,10 @@ void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
 template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>
 template <typename... Args>
 BidirectionalBoundaryCK<ExecutionPolicy, KernelCorrectionType, ConditionType>::
-    BidirectionalBoundaryCK(AlignedBoxByCell &aligned_box_part,
-                            ParticleBuffer<Base> &particle_buffer, Args &&...args)
-    : tag_buffer_particles_(aligned_box_part),
+    BidirectionalBoundaryCK(AlignedBoxByCell &aligned_box_part, Args &&...args)
+    : AbstractDynamics(), tag_buffer_particles_(aligned_box_part),
       boundary_condition_(aligned_box_part, std::forward<Args>(args)...),
-      inflow_injection_(aligned_box_part, particle_buffer, std::forward<Args>(args)...),
+      inflow_injection_(aligned_box_part, std::forward<Args>(args)...),
       outflow_indication_(aligned_box_part) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
