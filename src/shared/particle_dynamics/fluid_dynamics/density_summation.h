@@ -77,7 +77,7 @@ class DensitySummation<Inner<>> : public DensitySummation<Inner<Base>>
 using DensitySummationInner = DensitySummation<Inner<>>;
 
 template <>
-class DensitySummation<Inner<Adaptive>> : public DensitySummation<Inner<Base>>
+class DensitySummation<Inner<AdaptiveResolution>> : public DensitySummation<Inner<Base>>
 {
   public:
     explicit DensitySummation(BaseInnerRelation &inner_relation);
@@ -115,7 +115,7 @@ class DensitySummation<Contact<>> : public DensitySummation<Contact<Base>>
 };
 
 template <>
-class DensitySummation<Contact<Adaptive>> : public DensitySummation<Contact<Base>>
+class DensitySummation<Contact<AdaptiveResolution>> : public DensitySummation<Contact<Base>>
 {
   public:
     explicit DensitySummation(BaseContactRelation &contact_relation);
@@ -180,11 +180,11 @@ template <class InnerInteractionType, class... ContactInteractionTypes>
 using BaseDensitySummationComplex = ComplexInteraction<DensitySummation<InnerInteractionType, ContactInteractionTypes...>>;
 
 using DensitySummationComplex = BaseDensitySummationComplex<Inner<>, Contact<>>;
-using DensitySummationComplexAdaptive = BaseDensitySummationComplex<Inner<Adaptive>, Contact<Adaptive>>;
+using DensitySummationComplexAdaptive = BaseDensitySummationComplex<Inner<AdaptiveResolution>, Contact<AdaptiveResolution>>;
 using DensitySummationComplexFreeSurface = BaseDensitySummationComplex<Inner<FreeSurface>, Contact<>>;
-using DensitySummationFreeSurfaceComplexAdaptive = BaseDensitySummationComplex<Inner<FreeSurface, Adaptive>, Contact<Adaptive>>;
+using DensitySummationFreeSurfaceComplexAdaptive = BaseDensitySummationComplex<Inner<FreeSurface, AdaptiveResolution>, Contact<AdaptiveResolution>>;
 using DensitySummationFreeStreamComplex = BaseDensitySummationComplex<Inner<FreeStream>, Contact<>>;
-using DensitySummationFreeStreamComplexAdaptive = BaseDensitySummationComplex<Inner<FreeStream, Adaptive>, Contact<Adaptive>>;
+using DensitySummationFreeStreamComplexAdaptive = BaseDensitySummationComplex<Inner<FreeStream, AdaptiveResolution>, Contact<AdaptiveResolution>>;
 using DensitySummationNotNearSurfaceComplex = BaseDensitySummationComplex<Inner<NotNearSurface>, Contact<>>;
 } // namespace fluid_dynamics
 } // namespace SPH

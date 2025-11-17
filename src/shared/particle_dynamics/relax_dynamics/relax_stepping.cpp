@@ -156,7 +156,7 @@ UpdateSmoothingLengthRatioByShape::
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       target_shape_(target_shape),
-      particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, &sph_body.getSPHAdaptation())),
+      particle_adaptation_(DynamicCast<RefinedByShape>(this, &sph_body.getSPHAdaptation())),
       reference_spacing_(particle_adaptation_->ReferenceSpacing()) {}
 //=================================================================================================//
 UpdateSmoothingLengthRatioByShape::UpdateSmoothingLengthRatioByShape(SPHBody &sph_body)

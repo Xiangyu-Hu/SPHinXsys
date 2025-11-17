@@ -153,7 +153,7 @@ UniquePtr<MultilevelLevelSet> AdaptiveResolution::createLevelSet(Shape &shape, R
                                           local_refinement_level_ + 1, shape, *this, refinement_ratio);
 }
 //=================================================================================================//
-Real ParticleRefinementByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)
+Real RefinedByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)
 {
     Real ratio_ref = measure / (2.0 * transition_thickness);
     Real target_spacing = coarsest_spacing_bound_;
@@ -165,13 +165,13 @@ Real ParticleRefinementByShape::smoothedSpacing(const Real &measure, const Real 
     return target_spacing;
 }
 //=================================================================================================//
-Real ParticleRefinementNearSurface::getLocalSpacing(Shape &shape, const Vecd &position)
+Real RefinedNearSurface::getLocalSpacing(Shape &shape, const Vecd &position)
 {
     Real phi = fabs(shape.findSignedDistance(position));
     return smoothedSpacing(phi, spacing_ref_);
 }
 //=================================================================================================//
-Real ParticleRefinementWithinShape::getLocalSpacing(Shape &shape, const Vecd &position)
+Real RefinedWithinShape::getLocalSpacing(Shape &shape, const Vecd &position)
 {
     Real phi = shape.findSignedDistance(position);
     return phi < 0.0 ? finest_spacing_bound_ : smoothedSpacing(phi, 2.0 * spacing_ref_);

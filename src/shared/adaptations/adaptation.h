@@ -158,17 +158,17 @@ class AdaptiveResolution : public SPHAdaptation
 };
 
 /**
- * @class ParticleRefinementByShape
+ * @class RefinedByShape
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
  */
-class ParticleRefinementByShape : public AdaptiveResolution
+class RefinedByShape : public AdaptiveResolution
 {
   public:
     template <typename... Args>
-    ParticleRefinementByShape(Args &&...args)
+    RefinedByShape(Args &&...args)
         : AdaptiveResolution(std::forward<Args>(args)...){};
 
-    virtual ~ParticleRefinementByShape() {};
+    virtual ~RefinedByShape() {};
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) = 0;
 
   protected:
@@ -176,31 +176,31 @@ class ParticleRefinementByShape : public AdaptiveResolution
 };
 
 /**
- * @class ParticleRefinementNearSurface
+ * @class RefinedNearSurface
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
  */
-class ParticleRefinementNearSurface : public ParticleRefinementByShape
+class RefinedNearSurface : public RefinedByShape
 {
   public:
     template <typename... Args>
-    ParticleRefinementNearSurface(Args &&...args)
-        : ParticleRefinementByShape(std::forward<Args>(args)...){};
-    virtual ~ParticleRefinementNearSurface() {};
+    RefinedNearSurface(Args &&...args)
+        : RefinedByShape(std::forward<Args>(args)...){};
+    virtual ~RefinedNearSurface() {};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
 };
 
 /**
- * @class ParticleRefinementWithinShape
+ * @class RefinedWithinShape
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
  */
-class ParticleRefinementWithinShape : public ParticleRefinementByShape
+class RefinedWithinShape : public RefinedByShape
 {
   public:
     template <typename... Args>
-    ParticleRefinementWithinShape(Args &&...args)
-        : ParticleRefinementByShape(std::forward<Args>(args)...){};
-    virtual ~ParticleRefinementWithinShape() {};
+    RefinedWithinShape(Args &&...args)
+        : RefinedByShape(std::forward<Args>(args)...){};
+    virtual ~RefinedWithinShape() {};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
 };
