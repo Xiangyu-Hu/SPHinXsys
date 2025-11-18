@@ -61,15 +61,11 @@ jobs:
             curl zip unzip tar `# when starting fresh on a WSL image for bootstrapping vcpkg`\
             pkg-config `# for installing libraries with vcpkg`\
             git \
-            ninja-build \
-            libfontconfig1-dev `# From here required for vcpkg opencascade`\
-            libx11-dev \
-            libgl-dev
+            ninja-build
           wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
           echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt update
-          sudo apt install intel-basekit \
-            intel-oneapi-runtime-opencl
+          sudo apt install intel-basekit
           sudo apt-get install autoconf automake autoconf-archive
 
       - uses: hendrikmuhs/ccache-action@v1.2
