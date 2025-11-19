@@ -15,7 +15,7 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
       dv_pkg_cell_info_("PackageCellInfo", num_singular_pkgs_),
       cell_neighborhood_("CellNeighborhood", num_singular_pkgs_),
       bmv_cell_pkg_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
-      data_spacing_(data_spacing), index_handler_("index_handler", IndexHandler(*this, data_spacing)){};
+      data_spacing_(data_spacing), index_handler_(*this, data_spacing){};
 //=============================================================================================//
 template <int PKG_SIZE>
 UnsignedInt MeshWithGridDataPackages<PKG_SIZE>::NumGridPackages()
@@ -127,14 +127,14 @@ MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
 //=============================================================================================//
 template <int PKG_SIZE>
 Vecd MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
-    DataLowerBoundInCell(const Arrayi &cell_index)
+    DataLowerBoundInCell(const Arrayi &cell_index) const
 {
     return CellLowerCornerPosition(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
 }
 //=============================================================================================//
 template <int PKG_SIZE>
 Arrayi MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
-    DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position)
+    DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const
 {
     return floor((position - DataLowerBoundInCell(cell_index)).array() / data_spacing_)
         .template cast<int>()
@@ -144,14 +144,14 @@ Arrayi MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
 //=============================================================================================//
 template <int PKG_SIZE>
 Vecd MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
-    DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index)
+    DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const
 {
     return DataLowerBoundInCell(cell_index) + data_index.cast<Real>().matrix() * data_spacing_;
 }
 //=============================================================================================//
 template <int PKG_SIZE>
 UnsignedInt MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
-    PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index)
+    PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index) const
 {
     UnsignedInt index_1d = LinearCellIndex(cell_index);
     return cell_package_index[index_1d];
@@ -253,6 +253,18 @@ MeshWithGridDataPackages<PKG_SIZE>::getBKGMeshVariable(const std::string &variab
 }
 //=============================================================================================//
 template <int PKG_SIZE>
+template <typename DataType>
+DataType MeshWithGridDataPackages<PKG_SIZE>::
+    DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data,
+                             const Arrayi &global_grid_index, UnsignedInt *cell_package_index)
+{
+    Arrayi cell_index_on_mesh_ = global_grid_index / PKG_SIZE;
+    Arrayi local_index = global_grid_index - cell_index_on_mesh_ * PKG_SIZE;
+    UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh_);
+    return pkg_data[package_index](local_index);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::registerOccupied(UnsignedInt sort_index, int type)
 {
     occupied_data_pkgs_.push_back(std::make_pair(sort_index, type));
@@ -287,20 +299,11 @@ bool MeshWithGridDataPackages<PKG_SIZE>::isInnerDataPackage(const Arrayi &cell_i
 template <int PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::
     isWithinCorePackage(UnsignedInt *cell_package_index,
-                        std::pair<Arrayi, int> *meta_data_cell,
-                        Vecd position)
+                        std::pair<Arrayi, int> *meta_data_cell, Vecd position)
 {
     Arrayi cell_index = CellIndexFromPosition(position);
-    UnsignedInt package_index = PackageIndexFromCellIndex(cell_package_index, cell_index);
+    UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_package_index, cell_index);
     return meta_data_cell[package_index].second == 1;
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-UnsignedInt MeshWithGridDataPackages<PKG_SIZE>::
-    PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index)
-{
-    UnsignedInt index_1d = LinearCellIndex(boundCellIndex(cell_index));
-    return cell_package_index[index_1d];
 }
 //=============================================================================================//
 template <int PKG_SIZE>

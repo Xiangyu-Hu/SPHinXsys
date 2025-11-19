@@ -133,7 +133,7 @@ void InitializeCellNeighborhood::UpdateKernel::update(const UnsignedInt &package
         [&](const Arrayi &index)
         {
             current(index + Arrayi::Ones()) =
-                data_mesh_->PackageIndexFromCellIndex(cell_pkg_index_, cell_index + index);
+                index_handler_.PackageIndexFromCellIndex(cell_pkg_index_, cell_index + index);
         });
 }
 //=============================================================================================//

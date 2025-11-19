@@ -47,11 +47,6 @@ template <typename DataType, int PKG_SIZE>
 DataType CornerAverage(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
                        Arrayi corner_direction, const CellNeighborhood &neighborhood, DataType zero);
 
-template <typename DataType, int PKG_SIZE>
-DataType DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data,
-                                  const Arrayi &global_grid_index,
-                                  MeshWithGridDataPackages<PKG_SIZE> *data_mesh,
-                                  UnsignedInt *cell_package_index);
 template <typename CellDataType, typename PackageDataType, UnsignedInt PKG_SIZE, typename FunctionByGrid>
 CellDataType assignByGrid(PackageDataMatrix<PackageDataType, PKG_SIZE> &pkg_data,
                           const FunctionByGrid &function_by_grid, CellDataType inital_value);
@@ -69,7 +64,7 @@ class ProbeMesh
 
   protected:
     PackageDataMatrix<DataType, PKG_SIZE> *pkg_data_;
-    IndexHandler *index_handler_;
+    IndexHandler index_handler_;
     UnsignedInt *cell_pkg_index_;
     CellNeighborhood *cell_neighborhood_;
     /** probe by applying bi and tri-linear interpolation within the package. */

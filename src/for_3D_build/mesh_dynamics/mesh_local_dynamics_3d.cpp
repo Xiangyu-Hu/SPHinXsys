@@ -53,7 +53,7 @@ void InitializeBasicPackageData::UpdateKernel::update(const UnsignedInt &package
     mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
         {
-            Vec3d position = index_handler_->DataPositionFromIndex(cell_index, Array3i(i, j, k));
+            Vec3d position = index_handler_.DataPositionFromIndex(cell_index, Array3i(i, j, k));
             phi[i][j][k] = shape_->findSignedDistance(position);
             near_interface_id[i][j][k] = phi[i][j][k] < 0.0 ? -2 : 2;
         });

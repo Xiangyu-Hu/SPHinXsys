@@ -287,7 +287,8 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : pkg_cell_info_(encloser.dv_pkg_cell_info_.DelegatedData(ex_policy)),
+            : index_handler_(encloser.data_mesh_.getIndexHandler()),
+              pkg_cell_info_(encloser.dv_pkg_cell_info_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
               cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
               data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
@@ -295,6 +296,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
         void update(const UnsignedInt &package_index);
 
       protected:
+        MeshWithGridDataPackagesType::IndexHandler index_handler_;
         std::pair<Arrayi, int> *pkg_cell_info_;
         CellNeighborhood *cell_neighborhood_;
         UnsignedInt *cell_pkg_index_;
@@ -324,7 +326,7 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : index_handler_(encloser.data_mesh_.index_handler_.DelegatedData(ex_policy)),
+            : index_handler_(encloser.data_mesh_.getIndexHandler()),
               pkg_cell_info_(encloser.dv_pkg_cell_info_.DelegatedData(ex_policy)),
               shape_(&encloser.shape_),
               phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
@@ -332,7 +334,7 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
         void update(const UnsignedInt &index);
 
       protected:
-        MeshWithGridDataPackagesType::IndexHandler *index_handler_;
+        MeshWithGridDataPackagesType::IndexHandler index_handler_;
         std::pair<Arrayi, int> *pkg_cell_info_;
         Shape *shape_;
         MeshVariableData<Real> *phi_;
@@ -468,7 +470,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
               kernel_second_gradient_(encloser.mv_kernel_second_gradient_.DelegatedData(ex_policy)),
               pkg_cell_info_(encloser.dv_pkg_cell_info_.DelegatedData(ex_policy)),
               kernel_(ex_policy, encloser.neighbor_method_),
-              index_handler_(encloser.data_mesh_.index_handler_.DelegatedData(ex_policy)),
+              index_handler_(encloser.data_mesh_.getIndexHandler()),
               cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
               cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
               probe_signed_distance_(ex_policy, &encloser.data_mesh_),
@@ -499,7 +501,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         std::pair<Arrayi, int> *pkg_cell_info_;
 
         SmoothingKernel kernel_;
-        MeshWithGridDataPackagesType::IndexHandler *index_handler_;
+        MeshWithGridDataPackagesType::IndexHandler index_handler_;
         CellNeighborhood *cell_neighborhood_;
         UnsignedInt *cell_pkg_index_;
         ProbeSignedDistance probe_signed_distance_;

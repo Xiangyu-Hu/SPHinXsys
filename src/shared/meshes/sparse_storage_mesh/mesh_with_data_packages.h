@@ -62,6 +62,20 @@ class MeshWithGridDataPackages : public Mesh
     template <typename DataType>
     using BKGMeshVariable = DiscreteVariable<DataType>;
 
+    /** wrapper for all index exchange related functions. */
+    class IndexHandler : public Mesh
+    {
+        Real data_spacing_;
+
+      public:
+        IndexHandler(const Mesh &mesh, Real data_spacing);
+        Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
+        Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
+        Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
+        UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index) const;
+        Real DataSpacing() const { return data_spacing_; };
+    };
+
   protected:
     typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
     DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
@@ -108,6 +122,7 @@ class MeshWithGridDataPackages : public Mesh
     ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_; /**< (UnsignedInt)sort_index, (int)core1/inner0. */
     const Real data_spacing_;                                       /**< spacing of data in the data packages. */
     bool is_organized_ = false;                                     /**< whether the data packages are organized. */
+    IndexHandler index_handler_;
 
     template <typename T>
     T &checkOrganized(std::string func_name, T &value);
@@ -127,23 +142,12 @@ class MeshWithGridDataPackages : public Mesh
     OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData<MeshVariable>> sync_mesh_variable_data_{};
     OperationOnDataAssemble<BKGMeshVariableAssemble, SyncMeshVariableData<BKGMeshVariable>> sync_bkg_mesh_variable_data_{};
 
-  public:
-    /** wrapper for all index exchange related functions. */
-    class IndexHandler : public Mesh
-    {
-        Real data_spacing_;
-
-      public:
-        IndexHandler(const Mesh &mesh, Real data_spacing);
-        Vecd DataLowerBoundInCell(const Arrayi &cell_index);
-        Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position);
-        Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index);
-        UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index);
-        Real DataSpacing() { return data_spacing_; };
-    };
-    SingularVariable<IndexHandler> index_handler_;
+    template <typename DataType>
+    DataType DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data,
+                                      const Arrayi &global_grid_index, UnsignedInt *cell_package_index);
 
   public:
+    IndexHandler &getIndexHandler() { return index_handler_; };
     template <class ExecutionPolicy>
     void syncMeshVariablesToWrite(ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
@@ -167,7 +171,6 @@ class MeshWithGridDataPackages : public Mesh
     void organizeOccupiedPackages();
     bool isInnerDataPackage(const Arrayi &cell_index);
     bool isWithinCorePackage(UnsignedInt *cell_package_index, std::pair<Arrayi, int> *meta_data_cell, Vecd position);
-    UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index);
     void assignDataPackageIndex(const Arrayi &cell_index, const UnsignedInt package_index);
 };
 } // namespace SPH

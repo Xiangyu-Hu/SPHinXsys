@@ -110,7 +110,7 @@ template <typename DataType, typename FunctionByGrid>
 void UpdateKernelIntegrals::UpdateKernel::assignByGrid(
     MeshVariableData<DataType> *mesh_variable, const Arrayi &cell_index, const FunctionByGrid &function_by_grid)
 {
-    UnsignedInt package_index = index_handler_->PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
+    UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
     auto &pkg_data = mesh_variable[package_index];
     mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
