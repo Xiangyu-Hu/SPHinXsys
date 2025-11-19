@@ -8,7 +8,7 @@
 namespace SPH
 {
 //=================================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &output_file)
 {
     StdVec<Coord3D> active_cells;
@@ -99,7 +99,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
     }
 }
 //=================================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::writeBKGMeshVariableToPlt(std::ofstream &output_file)
 {
     output_file << "\n"

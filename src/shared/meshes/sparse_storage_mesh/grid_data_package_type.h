@@ -36,25 +36,28 @@
 
 namespace SPH
 {
-template <class DataType, UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
+inline constexpr std::size_t as_size_t_v = static_cast<std::size_t>(PKG_SIZE);
+
+template <class DataType, int PKG_SIZE>
 class PackageDataMatrix2d
-    : public std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>
+    : public std::array<std::array<DataType, as_size_t_v<PKG_SIZE>>, as_size_t_v<PKG_SIZE>>
 {
   public:
     DataType operator()(const Array2i &index) const { return (*this)[index[0]][index[1]]; }
     DataType &operator()(const Array2i &index) { return (*this)[index[0]][index[1]]; }
 };
 
-template <class DataType, UnsignedInt PKG_SIZE>
+template <class DataType, int PKG_SIZE>
 class PackageDataMatrix3d
-    : public std::array<std::array<std::array<DataType, PKG_SIZE>, PKG_SIZE>, PKG_SIZE>
+    : public std::array<std::array<std::array<DataType, as_size_t_v<PKG_SIZE>>, as_size_t_v<PKG_SIZE>>, as_size_t_v<PKG_SIZE>>
 {
   public:
     DataType operator()(const Array3i &index) const { return (*this)[index[0]][index[1]][index[2]]; }
     DataType &operator()(const Array3i &index) { return (*this)[index[0]][index[1]][index[2]]; }
 };
 
-using CellNeighborhood2d = PackageDataMatrix2d<UnsignedInt, 3>;
-using CellNeighborhood3d = PackageDataMatrix3d<UnsignedInt, 3>;
+using CellNeighborhood2d = PackageDataMatrix2d<int, 3>;
+using CellNeighborhood3d = PackageDataMatrix3d<int, 3>;
 } // namespace SPH
 #endif // GRID_DATA_PACKAGE_TYPE_H

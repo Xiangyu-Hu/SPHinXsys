@@ -43,11 +43,11 @@ template <int PKG_SIZE>
 PackageGridPair GeneralNeighbourIndexShift(
     UnsignedInt package_index, CellNeighborhood *neighbour, const Arrayi &shift_index);
 
-template <typename DataType, UnsignedInt PKG_SIZE>
+template <typename DataType, int PKG_SIZE>
 DataType CornerAverage(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
                        Arrayi corner_direction, const CellNeighborhood &neighborhood, DataType zero);
 
-template <typename DataType, UnsignedInt PKG_SIZE>
+template <typename DataType, int PKG_SIZE>
 DataType DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data,
                                   const Arrayi &global_grid_index,
                                   MeshWithGridDataPackages<PKG_SIZE> *data_mesh,
@@ -56,7 +56,7 @@ template <typename CellDataType, typename PackageDataType, UnsignedInt PKG_SIZE,
 CellDataType assignByGrid(PackageDataMatrix<PackageDataType, PKG_SIZE> &pkg_data,
                           const FunctionByGrid &function_by_grid, CellDataType inital_value);
 
-template <typename DataType, UnsignedInt PKG_SIZE>
+template <typename DataType, int PKG_SIZE>
 class ProbeMesh
 {
     using IndexHandler = typename MeshWithGridDataPackages<PKG_SIZE>::IndexHandler;

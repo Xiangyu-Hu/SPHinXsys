@@ -6,7 +6,7 @@
 namespace SPH
 {
 //=================================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &output_file)
 {
     output_file << "\n"
@@ -80,7 +80,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
     output_file << " \n";
 }
 //=================================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::writeBKGMeshVariableToPlt(std::ofstream &output_file)
 {
     output_file << "\n"

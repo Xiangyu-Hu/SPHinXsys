@@ -61,7 +61,7 @@ class BaseMeshLocalDynamics
     virtual ~BaseMeshLocalDynamics() {};
 
     MeshWithGridDataPackagesType &data_mesh_;
-    static constexpr int pkg_size = 4;
+    static constexpr int pkg_size = MeshWithGridDataPackagesType::DataPackageSize();
     static constexpr int pkg_size_minus1 = pkg_size - 1;
     Arrayi all_cells_;
     Real grid_spacing_;

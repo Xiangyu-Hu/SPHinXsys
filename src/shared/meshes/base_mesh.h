@@ -87,6 +87,19 @@ class Mesh
     {
         return mesh_lower_bound_ + cell_index.cast<Real>().matrix() * grid_spacing_;
     }
+
+    Arrayi boundCellIndex(const Arrayi &input) const
+    {
+        Arrayi output = input;
+        for (int i = 0; i < Dimensions; ++i)
+        {
+            if (output[i] < 0)
+                output[i] = 0;
+            if (output[i] >= all_cells_[i])
+                output[i] = all_cells_[i] - 1;
+        }
+        return output;
+    }
     //----------------------------------------------------------------------
     // Transferring between 1D mesh indexes.
     // Here, mesh size can be either AllGridPoints or AllCells.
