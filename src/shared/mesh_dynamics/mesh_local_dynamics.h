@@ -63,13 +63,8 @@ class BaseMeshLocalDynamics
     MeshWithGridDataPackagesType &data_mesh_;
     static constexpr int pkg_size = MeshWithGridDataPackagesType::DataPackageSize();
     static constexpr int pkg_size_minus1 = pkg_size - 1;
-    Arrayi all_cells_;
-    Real grid_spacing_;
     Real data_spacing_;
-    UnsignedInt num_singular_pkgs_;
 
-    UnsignedInt SortIndexFromCellIndex(const Arrayi &cell_index);
-    Arrayi CellIndexFromSortIndex(const UnsignedInt &sort_index);
     static void registerComputingKernel(execution::Implementation<Base> *implementation) {};
 };
 
@@ -146,8 +141,8 @@ class InitialCellTagging : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_mesh_(&encloser.data_mesh_), grid_spacing_(encloser.grid_spacing_),
-              shape_(&encloser.shape_), base_dynamics(&encloser),
+            : data_mesh_(&encloser.data_mesh_), grid_spacing_(data_mesh_->GridSpacing()),
+              shape_(&encloser.shape_),
               cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)){};
         void update(const Arrayi &cell_index);
 
@@ -155,7 +150,6 @@ class InitialCellTagging : public BaseMeshLocalDynamics
         MeshWithGridDataPackagesType *data_mesh_;
         Real grid_spacing_;
         Shape *shape_;
-        BaseMeshLocalDynamics *base_dynamics;
         int *cell_contain_id_;
     };
 
@@ -177,9 +171,10 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : shape_(&encloser.shape_), grid_spacing_(encloser.grid_spacing_),
-              far_field_distance_(encloser.far_field_distance_),
+            : shape_(&encloser.shape_),
               data_mesh_(&encloser.data_mesh_), coarse_mesh_(&encloser.coarse_mesh_),
+              grid_spacing_(data_mesh_->GridSpacing()),
+              far_field_distance_(encloser.far_field_distance_),
               base_dynamics_(&encloser), probe_coarse_phi_(ex_policy, coarse_mesh_),
               cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
               cell_pkg_index_coarse_(encloser.bmv_cell_pkg_index__coarse_.DelegatedData(ex_policy)),
@@ -188,10 +183,10 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
 
       protected:
         Shape *shape_;
-        Real grid_spacing_;
-        Real far_field_distance_;
         MeshWithGridDataPackagesType *data_mesh_;
         MeshWithGridDataPackagesType *coarse_mesh_;
+        Real grid_spacing_;
+        Real far_field_distance_;
         BaseMeshLocalDynamics *base_dynamics_;
         ProbeSignedDistance probe_coarse_phi_;
         int *cell_contain_id_;
@@ -224,15 +219,11 @@ class InnerCellTagging : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : all_cells_(encloser.all_cells_),
-              data_mesh_(&encloser.data_mesh_),
-              base_dynamics(&encloser){};
+            : data_mesh_(&encloser.data_mesh_){};
         void update(const Arrayi &cell_index);
 
       protected:
-        Arrayi all_cells_;
         MeshWithGridDataPackagesType *data_mesh_;
-        BaseMeshLocalDynamics *base_dynamics;
 
         bool isInnerPackage(const Arrayi &cell_index);
     };
@@ -253,15 +244,14 @@ class InitializeCellPackageInfo : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
-              num_singular_pkgs_(encloser.num_singular_pkgs_),
+            : data_mesh_(&encloser.data_mesh_),
+              num_singular_pkgs_(data_mesh_->NumSingularPackages()),
               pkg_cell_info_(encloser.dv_pkg_cell_info_.DelegatedData(ex_policy)),
               cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)){};
         void update(const UnsignedInt &package_index);
 
       protected:
         MeshWithGridDataPackagesType *data_mesh_;
-        BaseMeshLocalDynamics *base_dynamics;
         UnsignedInt num_singular_pkgs_;
         std::pair<Arrayi, int> *pkg_cell_info_;
         UnsignedInt *cell_pkg_index_;
@@ -291,8 +281,8 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
               pkg_cell_info_(encloser.dv_pkg_cell_info_.DelegatedData(ex_policy)),
               cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
               cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
-              data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
-              num_singular_pkgs_(encloser.num_singular_pkgs_){};
+              data_mesh_(&encloser.data_mesh_),
+              num_singular_pkgs_(data_mesh_->NumSingularPackages()){};
         void update(const UnsignedInt &package_index);
 
       protected:
@@ -301,7 +291,6 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
         CellNeighborhood *cell_neighborhood_;
         UnsignedInt *cell_pkg_index_;
         MeshWithGridDataPackagesType *data_mesh_;
-        BaseMeshLocalDynamics *base_dynamics;
         UnsignedInt num_singular_pkgs_;
     };
 
@@ -362,8 +351,8 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
-              num_singular_pkgs_(encloser.num_singular_pkgs_),
+            : data_mesh_(&encloser.data_mesh_),
+              num_singular_pkgs_(data_mesh_->NumSingularPackages()),
               cell_contain_id_(
                   encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
               phi_(encloser.mv_phi_.DelegatedData(ex_policy)){};
@@ -371,7 +360,6 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
 
       protected:
         MeshWithGridDataPackagesType *data_mesh_;
-        BaseMeshLocalDynamics *base_dynamics;
         UnsignedInt num_singular_pkgs_;
         int *cell_contain_id_;
         MeshVariableData<Real> *phi_;
@@ -394,7 +382,7 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_mesh_(&encloser.data_mesh_), base_dynamics(&encloser),
+            : data_mesh_(&encloser.data_mesh_),
               cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
               cell_package_index_(encloser.bmv_cell_package_index_.DelegatedData(ex_policy)),
               count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)){};
@@ -402,7 +390,6 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
 
       protected:
         MeshWithGridDataPackagesType *data_mesh_;
-        BaseMeshLocalDynamics *base_dynamics;
         int *cell_contain_id_;
         UnsignedInt *cell_package_index_;
         UnsignedInt *count_modified_;
@@ -743,28 +730,6 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
     MeshVariable<int> &mv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
     SingularVariable<UnsignedInt> &sv_count_modified_;
-};
-
-class ProbeIsWithinMeshBound : public BaseMeshLocalDynamics
-{
-  public:
-    explicit ProbeIsWithinMeshBound(MeshWithGridDataPackagesType &data_mesh)
-        : BaseMeshLocalDynamics(data_mesh) {};
-    virtual ~ProbeIsWithinMeshBound() {};
-
-    bool update(const Vecd &position)
-    {
-        bool is_bounded = true;
-        Arrayi cell_pos = data_mesh_.CellIndexFromPosition(position);
-        for (int i = 0; i != position.size(); ++i)
-        {
-            if (cell_pos[i] < 2)
-                is_bounded = false;
-            if (cell_pos[i] > (all_cells_[i] - 2))
-                is_bounded = false;
-        }
-        return is_bounded;
-    }
 };
 } // namespace SPH
 #endif // MESH_LOCAL_DYNAMICS_H
