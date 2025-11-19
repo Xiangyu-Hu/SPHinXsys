@@ -31,7 +31,7 @@ on:
         required: false
         default: false
 env:
-  VCPKG_VERSION: "2025.08.27"
+  VCPKG_VERSION: "2024.11.16"
   CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
@@ -526,7 +526,7 @@ jobs:
 
   macOS-build:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.macos_build_debug_enabled  }}
-    runs-on: macos-14
+    runs-on: macos-15-intel
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
@@ -600,7 +600,7 @@ jobs:
   macOS-test:
     if: ${{ github.event_name != 'workflow_dispatch' }}
     needs: macOS-build
-    runs-on: macos-14
+    runs-on: macos-15-intel
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
