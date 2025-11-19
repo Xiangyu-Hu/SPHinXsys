@@ -31,7 +31,7 @@ on:
         required: false
         default: false
 env:
-  VCPKG_VERSION: "2024.11.16"
+  VCPKG_VERSION: "2025.08.27"
   CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
