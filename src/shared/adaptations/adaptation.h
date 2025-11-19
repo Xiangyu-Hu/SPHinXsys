@@ -117,19 +117,19 @@ class SPHAdaptation
 };
 
 /**
- * @class AdaptiveResolution
+ * @class AdaptiveSmoothingLength
  * @brief Base class for particle with local refinement.
  * @details Different refinement strategies will be used in derived classes.
  */
-class AdaptiveResolution : public SPHAdaptation
+class AdaptiveSmoothingLength : public SPHAdaptation
 {
   public:
     Real *h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
     int *level_;    /**< the mesh level of the particle */
 
-    AdaptiveResolution(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
-    AdaptiveResolution(SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
-    virtual ~AdaptiveResolution() {};
+    AdaptiveSmoothingLength(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
+    AdaptiveSmoothingLength(SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
+    virtual ~AdaptiveSmoothingLength() {};
 
     virtual Real SmoothingLengthRatio(size_t particle_index_i) override
     {
@@ -145,7 +145,7 @@ class AdaptiveResolution : public SPHAdaptation
         Real *h_ratio_;
 
       public:
-        explicit ContinuousSmoothingLengthRatio(AdaptiveResolution &adaptation)
+        explicit ContinuousSmoothingLengthRatio(AdaptiveSmoothingLength &adaptation)
             : h_ratio_(adaptation.h_ratio_) {};
         Real operator()(size_t index_i) { return h_ratio_[index_i]; };
     };
@@ -158,17 +158,17 @@ class AdaptiveResolution : public SPHAdaptation
 };
 
 /**
- * @class RefinedByShape
+ * @class AdaptiveByShape
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
  */
-class RefinedByShape : public AdaptiveResolution
+class AdaptiveByShape : public AdaptiveSmoothingLength
 {
   public:
     template <typename... Args>
-    RefinedByShape(Args &&...args)
-        : AdaptiveResolution(std::forward<Args>(args)...){};
+    AdaptiveByShape(Args &&...args)
+        : AdaptiveSmoothingLength(std::forward<Args>(args)...){};
 
-    virtual ~RefinedByShape() {};
+    virtual ~AdaptiveByShape() {};
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) = 0;
 
   protected:
@@ -176,31 +176,31 @@ class RefinedByShape : public AdaptiveResolution
 };
 
 /**
- * @class RefinedNearSurface
+ * @class AdaptiveNearSurface
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
  */
-class RefinedNearSurface : public RefinedByShape
+class AdaptiveNearSurface : public AdaptiveByShape
 {
   public:
     template <typename... Args>
-    RefinedNearSurface(Args &&...args)
-        : RefinedByShape(std::forward<Args>(args)...){};
-    virtual ~RefinedNearSurface() {};
+    AdaptiveNearSurface(Args &&...args)
+        : AdaptiveByShape(std::forward<Args>(args)...){};
+    virtual ~AdaptiveNearSurface() {};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
 };
 
 /**
- * @class RefinedWithinShape
+ * @class AdaptiveWithinShape
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
  */
-class RefinedWithinShape : public RefinedByShape
+class AdaptiveWithinShape : public AdaptiveByShape
 {
   public:
     template <typename... Args>
-    RefinedWithinShape(Args &&...args)
-        : RefinedByShape(std::forward<Args>(args)...){};
-    virtual ~RefinedWithinShape() {};
+    AdaptiveWithinShape(Args &&...args)
+        : AdaptiveByShape(std::forward<Args>(args)...){};
+    virtual ~AdaptiveWithinShape() {};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
 };

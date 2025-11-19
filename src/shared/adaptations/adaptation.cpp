@@ -110,9 +110,9 @@ UniquePtr<MultilevelLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real r
                                           shape, *this, refinement_ratio);
 }
 //=================================================================================================//
-AdaptiveResolution::
-    AdaptiveResolution(Real resolution_ref, Real h_spacing_ratio, Real system_refinement_ratio,
-                       int local_refinement_level)
+AdaptiveSmoothingLength::
+    AdaptiveSmoothingLength(Real resolution_ref, Real h_spacing_ratio, Real system_refinement_ratio,
+                            int local_refinement_level)
     : SPHAdaptation(resolution_ref, h_spacing_ratio, system_refinement_ratio), h_ratio_(nullptr), level_(nullptr)
 {
     local_refinement_level_ = local_refinement_level;
@@ -124,12 +124,12 @@ AdaptiveResolution::
     coarsest_spacing_bound_ = spacing_ref_ - Eps;
 }
 //=================================================================================================//
-AdaptiveResolution::AdaptiveResolution(
+AdaptiveSmoothingLength::AdaptiveSmoothingLength(
     SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level)
-    : AdaptiveResolution(sph_system.ReferenceResolution(), h_spacing_ratio_, system_refinement_ratio,
-                         local_refinement_level) {}
+    : AdaptiveSmoothingLength(sph_system.ReferenceResolution(), h_spacing_ratio_, system_refinement_ratio,
+                              local_refinement_level) {}
 //=================================================================================================//
-void AdaptiveResolution::initializeAdaptationVariables(BaseParticles &base_particles)
+void AdaptiveSmoothingLength::initializeAdaptationVariables(BaseParticles &base_particles)
 {
     SPHAdaptation::initializeAdaptationVariables(base_particles);
     h_ratio_ = base_particles.registerStateVariableData<Real>(
@@ -139,21 +139,21 @@ void AdaptiveResolution::initializeAdaptationVariables(BaseParticles &base_parti
     base_particles.addEvolvingVariable<Real>("SmoothingLengthRatio");
 }
 //=================================================================================================//
-UniquePtr<BaseCellLinkedList> AdaptiveResolution::
+UniquePtr<BaseCellLinkedList> AdaptiveSmoothingLength::
     createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles)
 {
     return makeUnique<MultilevelCellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(),
                                                 local_refinement_level_, base_particles, *this);
 }
 //=================================================================================================//
-UniquePtr<MultilevelLevelSet> AdaptiveResolution::createLevelSet(Shape &shape, Real refinement_ratio)
+UniquePtr<MultilevelLevelSet> AdaptiveSmoothingLength::createLevelSet(Shape &shape, Real refinement_ratio)
 {
     // one more level for interpolation
     return makeUnique<MultilevelLevelSet>(shape.getBounds(), ReferenceSpacing() / refinement_ratio,
                                           local_refinement_level_ + 1, shape, *this, refinement_ratio);
 }
 //=================================================================================================//
-Real RefinedByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)
+Real AdaptiveByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)
 {
     Real ratio_ref = measure / (2.0 * transition_thickness);
     Real target_spacing = coarsest_spacing_bound_;
@@ -165,13 +165,13 @@ Real RefinedByShape::smoothedSpacing(const Real &measure, const Real &transition
     return target_spacing;
 }
 //=================================================================================================//
-Real RefinedNearSurface::getLocalSpacing(Shape &shape, const Vecd &position)
+Real AdaptiveNearSurface::getLocalSpacing(Shape &shape, const Vecd &position)
 {
     Real phi = fabs(shape.findSignedDistance(position));
     return smoothedSpacing(phi, spacing_ref_);
 }
 //=================================================================================================//
-Real RefinedWithinShape::getLocalSpacing(Shape &shape, const Vecd &position)
+Real AdaptiveWithinShape::getLocalSpacing(Shape &shape, const Vecd &position)
 {
     Real phi = shape.findSignedDistance(position);
     return phi < 0.0 ? finest_spacing_bound_ : smoothedSpacing(phi, 2.0 * spacing_ref_);

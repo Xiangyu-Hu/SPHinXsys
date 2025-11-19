@@ -143,7 +143,7 @@ using TransportVelocityLimitedCorrectionCorrectedComplex =
 
 template <class ParticleScope>
 using TransportVelocityCorrectionComplexAdaptive =
-    BaseTransportVelocityCorrectionComplex<AdaptiveResolution, NoLimiter, NoKernelCorrection, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<AdaptiveSmoothingLength, NoLimiter, NoKernelCorrection, ParticleScope>;
 
 template <class AdaptationType, typename... CommonControlTypes>
 using BaseMultiPhaseTransportVelocityCorrectionComplex =

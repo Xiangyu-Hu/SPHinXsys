@@ -47,9 +47,9 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
-    imported_model.defineAdaptation<RefinedNearSurface>(1.15, 1.0, 3);
+    imported_model.defineAdaptation<AdaptiveNearSurface>(1.15, 1.0, 3);
     imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
-    imported_model.generateParticles<BaseParticles, Lattice, RefinedByShape>();
+    imported_model.generateParticles<BaseParticles, Lattice, AdaptiveByShape>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
