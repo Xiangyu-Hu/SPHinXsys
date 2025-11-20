@@ -21,7 +21,8 @@ UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_particle_index_(cell_linked_list_.dvParticleIndex()),
       dv_cell_offset_(cell_linked_list_.dvCellOffset()),
-      dv_current_cell_size_(DiscreteVariable<UnsignedInt>("CurrentCellSize", cell_offset_list_size_)),
+      dv_current_cell_size_(cell_linked_list_.registerCellVariable<UnsignedInt>(
+          "CurrentCellSize", cell_offset_list_size_)),
       identifier_(identifier), kernel_implementation_(*this) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename DynamicsIdentifier>

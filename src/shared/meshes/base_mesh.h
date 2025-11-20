@@ -123,8 +123,6 @@ class BaseMeshField
 template <class MeshType>
 class MultiLevelMeshField : public BaseMeshField
 {
-    template <typename DataType>
-    using CellVariable = DiscreteVariable<DataType>;
     typedef DataContainerAddressAssemble<DiscreteVariable> CellVariableAssemble;
     DataContainerUniquePtrAssemble<DiscreteVariable> cell_variable_ptrs_;
     UniquePtrsKeeper<MeshType> mesh_ptrs_keeper_;
@@ -135,10 +133,13 @@ class MultiLevelMeshField : public BaseMeshField
         Real Reference_grid_spacing, UnsignedInt buffer_width, size_t total_levels = 1);
     virtual ~MultiLevelMeshField() {};
 
+    StdVec<MeshType *> &getMeshes() { return meshes_; };
+    UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
+
     template <typename DataType, typename... Args>
-    CellVariable<DataType> *registerCellVariable(const std::string &variable_name, Args &&...args);
+    DiscreteVariable<DataType> *registerCellVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>
-    CellVariable<DataType> *getCellVariable(const std::string &variable_name);
+    DiscreteVariable<DataType> *getCellVariable(const std::string &variable_name);
 
     template <typename DataType>
     void addCellVariableToWrite(const std::string &variable_name);
@@ -146,7 +147,7 @@ class MultiLevelMeshField : public BaseMeshField
 
   protected:
     size_t total_levels_; /**< level 0 is the coarsest */
-    StdVec<MeshType *> mesh_levels_;
+    StdVec<MeshType *> meshes_;
     UnsignedInt total_number_of_cells_;
     CellVariableAssemble all_cell_variables_;
     CellVariableAssemble cell_variables_to_write_;
@@ -155,7 +156,6 @@ class MultiLevelMeshField : public BaseMeshField
     ContainerType<DataType> *registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
                                               DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
                                               const std::string &variable_name, Args &&...args);
-
     template <template <typename> typename ContainerType, typename DataType>
     void addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
                            DataContainerAddressAssemble<ContainerType> &all_variable_set,

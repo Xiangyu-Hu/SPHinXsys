@@ -8,41 +8,24 @@
 namespace SPH
 {
 //=================================================================================================//
-BaseCellLinkedList::BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
-    : BaseMeshField("CellLinkedList"), base_particles_(base_particles),
-      coarsest_mesh_(nullptr), finest_mesh_(nullptr),
-      kernel_(*sph_adaptation.getKernel()), total_number_of_cells_(0), dv_particle_index_(nullptr),
-      dv_cell_offset_(nullptr), cell_index_lists_(nullptr), cell_data_lists_(nullptr) {}
+BaseCellLinkedList::BaseCellLinkedList(
+    BaseParticles &base_particles, SPHAdaptation &sph_adaptation,
+    BoundingBox tentative_bounds, Real Reference_grid_spacing, size_t total_levels)
+    : MultiLevelMeshField<Mesh>("CellLinkedList", tentative_bounds, Reference_grid_spacing, 2, total_levels),
+      base_particles_(base_particles), coarsest_mesh_(meshes_.front()), finest_mesh_(meshes_.back()),
+      kernel_(*sph_adaptation.getKernel()), cell_offset_list_size_(total_number_of_cells_ + 1),
+      index_list_size_(SMAX(base_particles.ParticlesBound(), cell_offset_list_size_)),
+      dv_particle_index_(
+          unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>("ParticleIndex", index_list_size_)),
+      dv_cell_offset_(
+          unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>("CellOffset", cell_offset_list_size_)),
+      cell_index_lists_(new ConcurrentIndexVector[total_number_of_cells_]),
+      cell_data_lists_(new ListDataVector[total_number_of_cells_]) {}
 //=================================================================================================//
 BaseCellLinkedList::~BaseCellLinkedList()
 {
     delete[] cell_index_lists_;
     delete[] cell_data_lists_;
-}
-//=================================================================================================//
-void BaseCellLinkedList::initialize(BaseParticles &base_particles)
-{
-    cell_offset_list_size_ = total_number_of_cells_ + 1;
-    index_list_size_ = SMAX(base_particles.ParticlesBound(), cell_offset_list_size_);
-    dv_particle_index_ = unique_variable_ptrs_
-                             .createPtr<DiscreteVariable<UnsignedInt>>("ParticleIndex", index_list_size_);
-    dv_cell_offset_ = unique_variable_ptrs_
-                          .createPtr<DiscreteVariable<UnsignedInt>>("CellOffset", cell_offset_list_size_);
-    cell_index_lists_ = new ConcurrentIndexVector[total_number_of_cells_];
-    cell_data_lists_ = new ListDataVector[total_number_of_cells_];
-    coarsest_mesh_ = meshes_.front();
-    finest_mesh_ = meshes_.back();
-}
-//=================================================================================================//
-void BaseCellLinkedList::writeMeshFieldToPlt(const std::string &partial_file_name)
-{
-    for (UnsignedInt l = 0; l != meshes_.size(); ++l)
-    {
-        std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
-        std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-        writeMeshFieldToPltByMesh(*meshes_[l], out_file);
-        out_file.close();
-    }
 }
 //=================================================================================================//
 void BaseCellLinkedList::clearCellLists()
@@ -186,15 +169,8 @@ void BaseCellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_data_lists,
 //=================================================================================================//
 CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
                                BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
-    : BaseCellLinkedList(base_particles, sph_adaptation), mesh_(nullptr)
-{
-    sv_mesh_ = mesh_ptrs_keeper_.createPtr<SingularVariable<Mesh>>(
-        "BackgroundMesh", tentative_bounds, grid_spacing, 2);
-    mesh_ = sv_mesh_->Data();
-    meshes_.push_back(mesh_);
-    total_number_of_cells_ = mesh_->NumberOfCells();
-    initialize(base_particles);
-}
+    : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, grid_spacing, 1),
+      mesh_(meshes_[0]) {}
 //=================================================================================================//
 void CellLinkedList ::insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position)
 {
@@ -211,28 +187,9 @@ void CellLinkedList ::InsertListDataEntry(UnsignedInt particle_index, const Vecd
 MultilevelCellLinkedList::MultilevelCellLinkedList(
     BoundingBox tentative_bounds, Real reference_grid_spacing, UnsignedInt total_levels,
     BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
-    : BaseCellLinkedList(base_particles, sph_adaptation),
+    : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, reference_grid_spacing, total_levels),
       h_ratio_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->h_ratio_),
-      level_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->level_)
-{
-    meshes_.push_back(mesh_ptrs_keeper_
-                          .createPtr<SingularVariable<Mesh>>(
-                              "BackgroundMesh0", tentative_bounds, reference_grid_spacing, 2, 0)
-                          ->Data());
-    total_number_of_cells_ = meshes_[0]->NumberOfCells();
-    for (UnsignedInt level = 1; level != total_levels; ++level)
-    {
-        /** all mesh levels aligned at the lower bound of tentative_bounds */
-        Real refined_spacing = meshes_[level - 1]->GridSpacing() / 2.0;
-        meshes_.push_back(mesh_ptrs_keeper_
-                              .createPtr<SingularVariable<Mesh>>(
-                                  "BackgroundMesh" + std::to_string(level),
-                                  tentative_bounds, refined_spacing, 2, total_number_of_cells_)
-                              ->Data());
-        total_number_of_cells_ += meshes_[level]->NumberOfCells();
-    }
-    initialize(base_particles);
-}
+      level_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->level_) {}
 //=================================================================================================//
 UnsignedInt MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 {

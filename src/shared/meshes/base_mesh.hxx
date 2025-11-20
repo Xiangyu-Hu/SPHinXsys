@@ -104,15 +104,13 @@ MultiLevelMeshField<MeshType>::MultiLevelMeshField(
     Real Reference_grid_spacing, UnsignedInt buffer_width, size_t total_levels)
     : BaseMeshField(name), total_levels_(total_levels), total_number_of_cells_(0)
 {
-    size_t linear_cell_index_offset = 0;
     for (size_t level = 0; level < total_levels; ++level)
     {
-        mesh_levels_.push_back(mesh_ptrs_keeper_.template createPtr<MeshType>(
+        meshes_.push_back(mesh_ptrs_keeper_.template createPtr<MeshType>(
             tentative_bounds, Reference_grid_spacing / math::pow(2.0, level),
-            buffer_width, linear_cell_index_offset));
-        linear_cell_index_offset += mesh_levels_.back()->NumberOfCells();
+            buffer_width, total_number_of_cells_));
+        total_number_of_cells_ += meshes_.back()->NumberOfCells();
     };
-    total_number_of_cells_ = linear_cell_index_offset;
 }
 //=============================================================================================//
 template <class MeshType>
@@ -126,11 +124,11 @@ void MultiLevelMeshField<MeshType>::addCellVariableToWrite(const std::string &va
 template <class MeshType>
 void MultiLevelMeshField<MeshType>::writeMeshFieldToPlt(const std::string &partial_file_name)
 {
-    for (UnsignedInt l = 0; l != mesh_levels_.size(); ++l)
+    for (UnsignedInt l = 0; l != meshes_.size(); ++l)
     {
         std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
         std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-        writeCellVariableToPltByMesh(*mesh_levels_[l], out_file);
+        writeCellVariableToPltByMesh(*meshes_[l], out_file);
         out_file.close();
     }
 }
@@ -157,7 +155,7 @@ template <typename DataType, typename... Args>
 DiscreteVariable<DataType> *MultiLevelMeshField<MeshType>::registerCellVariable(
     const std::string &variable_name, Args &&...args)
 {
-    return registerVariable<CellVariable, DataType>(
+    return registerVariable<DiscreteVariable, DataType>(
         all_cell_variables_, cell_variable_ptrs_, variable_name, total_number_of_cells_,
         std::forward<Args>(args)...);
 }
@@ -167,8 +165,8 @@ template <typename DataType>
 DiscreteVariable<DataType> *MultiLevelMeshField<MeshType>::getCellVariable(
     const std::string &variable_name)
 {
-    CellVariable<DataType> *variable =
-        findVariableByName<DataType, CellVariable>(all_cell_variables_, variable_name);
+    DiscreteVariable<DataType> *variable =
+        findVariableByName<DataType, DiscreteVariable>(all_cell_variables_, variable_name);
     if (variable == nullptr)
     {
         std::cout << "\n Error: the cell variable '" << variable_name << "' is not exist!" << std::endl;
