@@ -528,7 +528,7 @@ jobs:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.macos_build_debug_enabled  }}
     runs-on: macos-15
     env:
-      VCPKG_DEFAULT_TRIPLET: arm-osx
+      VCPKG_DEFAULT_TRIPLET: arm64-osx
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -602,7 +602,7 @@ jobs:
     needs: macOS-build
     runs-on: macos-15
     env:
-      VCPKG_DEFAULT_TRIPLET: arm-osx
+      VCPKG_DEFAULT_TRIPLET: arm64-osx
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
