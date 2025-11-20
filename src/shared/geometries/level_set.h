@@ -70,7 +70,6 @@ class MultilevelLevelSet : public BaseMeshField
     void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type);
     void cleanInterface(UnsignedInt repeat_times);
     void correctTopology();
-    bool probeIsWithinMeshBound(const Vecd &position);
     Real probeSignedDistance(const Vecd &position);
     Vecd probeNormalDirection(const Vecd &position);
     Vecd probeLevelSetGradient(const Vecd &position);

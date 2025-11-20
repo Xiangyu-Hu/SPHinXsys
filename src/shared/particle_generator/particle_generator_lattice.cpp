@@ -25,21 +25,21 @@ ParticleGenerator<BaseParticles, Lattice>::
     : ParticleGenerator<BaseParticles>(sph_body, base_particles),
       GeneratingMethod<Lattice>(sph_body) {}
 //=================================================================================================//
-ParticleGenerator<BaseParticles, Lattice, Adaptive>::
+ParticleGenerator<BaseParticles, Lattice, AdaptiveByShape>::
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape)
     : ParticleGenerator<BaseParticles, Lattice>(sph_body, base_particles),
       target_shape_(target_shape),
-      particle_adaptation_(DynamicCast<ParticleRefinementByShape>(this, &sph_body.getSPHAdaptation()))
+      particle_adaptation_(DynamicCast<AdaptiveByShape>(this, &sph_body.getSPHAdaptation()))
 {
     lattice_spacing_ = particle_adaptation_->MinimumSpacing();
 }
 //=================================================================================================//
-ParticleGenerator<BaseParticles, Lattice, Adaptive>::
+ParticleGenerator<BaseParticles, Lattice, AdaptiveByShape>::
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
-    : ParticleGenerator<BaseParticles, Lattice, Adaptive>(
+    : ParticleGenerator<BaseParticles, Lattice, AdaptiveByShape>(
           sph_body, base_particles, sph_body.getInitialShape()) {}
 //=================================================================================================//
-void ParticleGenerator<BaseParticles, Lattice, Adaptive>::
+void ParticleGenerator<BaseParticles, Lattice, AdaptiveByShape>::
     addPositionAndVolumetricMeasure(const Vecd &position, Real volume)
 {
     Real local_particle_spacing = particle_adaptation_->getLocalSpacing(target_shape_, position);

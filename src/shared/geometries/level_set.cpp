@@ -184,21 +184,6 @@ Matd MultilevelLevelSet::probeKernelSecondGradientIntegral(const Vecd &position,
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }
 //=================================================================================================//
-bool MultilevelLevelSet::probeIsWithinMeshBound(const Vecd &position)
-{
-    bool is_bounded = true;
-    for (size_t l = 0; l != total_levels_; ++l)
-    {
-        ProbeIsWithinMeshBound probe_is_within_mesh_bound{*mesh_data_set_[l]};
-        if (!probe_is_within_mesh_bound.update(position))
-        {
-            is_bounded = false;
-            break;
-        };
-    }
-    return is_bounded;
-}
-//=================================================================================================//
 void MultilevelLevelSet::writeMeshFieldToPlt(const std::string &partial_file_name)
 {
     sync_mesh_variables_to_write_();

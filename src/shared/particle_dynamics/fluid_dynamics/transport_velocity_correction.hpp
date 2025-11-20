@@ -19,22 +19,23 @@ TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType, Part
                   "WithinScope is not the base of ParticleScope!");
 }
 //=================================================================================================//
-template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
-TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTypes...>::
+template <class AdaptationType, class LimiterType, typename... CommonControlTypes>
+TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonControlTypes...>::
     TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient)
     : TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>(inner_relation),
       h_ref_(this->getSPHAdaptation().ReferenceSmoothingLength()),
       correction_scaling_(coefficient * h_ref_ * h_ref_),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
-      h_ratio_(this->particles_), limiter_(h_ref_ * h_ref_)
+      h_ratio_(DynamicCast<AdaptationType>(this, this->getSPHAdaptation())),
+      limiter_(h_ref_ * h_ref_)
 {
     static_assert(std::is_base_of<Limiter, LimiterType>::value,
                   "Limiter is not the base of LimiterType!");
 }
 //=================================================================================================//
-template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
-void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTypes...>::
+template <class AdaptationType, class LimiterType, typename... CommonControlTypes>
+void TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonControlTypes...>::
     interaction(size_t index_i, Real dt)
 {
     if (this->within_scope_(index_i))
@@ -52,8 +53,8 @@ void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonContr
     }
 }
 //=================================================================================================//
-template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
-void TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTypes...>::
+template <class AdaptationType, class LimiterType, typename... CommonControlTypes>
+void TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonControlTypes...>::
     update(size_t index_i, Real dt)
 {
     if (this->within_scope_(index_i))

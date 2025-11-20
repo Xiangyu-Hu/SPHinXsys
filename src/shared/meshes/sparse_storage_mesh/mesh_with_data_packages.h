@@ -47,11 +47,11 @@ namespace SPH
  * A typical example is a level-set field which only has meaningful values near the interface,
  * while the latter is in the inner region of a mesh.
  * In this class, only some inner mesh cells are filled with data packages.
- * Each data package is again a mesh, but grid based with pkg_size grids on each dimension.
+ * Each data package is again a mesh, but grid based with PKG_SIZE grids on each dimension.
  * The operation on field data is achieved by mesh dynamics.
  * Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
  */
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 class MeshWithGridDataPackages : public Mesh
 {
   public:
@@ -61,17 +61,30 @@ class MeshWithGridDataPackages : public Mesh
     using MeshVariable = DiscreteVariable<MeshVariableData<DataType>>;
     template <typename DataType>
     using BKGMeshVariable = DiscreteVariable<DataType>;
-    static constexpr int pkg_size = PKG_SIZE; /**< the size of the data package matrix. */
+
+    /** wrapper for all index exchange related functions. */
+    class IndexHandler : public Mesh
+    {
+        Real data_spacing_;
+
+      public:
+        IndexHandler(const Mesh &mesh, Real data_spacing);
+        Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
+        Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
+        Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
+        UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index) const;
+        Real DataSpacing() const { return data_spacing_; };
+    };
 
   protected:
     typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
     DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
     MeshVariableAssemble all_mesh_variables_;      /**< all mesh variables on this mesh. */
-    MeshVariableAssemble mesh_variables_to_write_;  /**< mesh variables to write, which are not empty. */
+    MeshVariableAssemble mesh_variables_to_write_; /**< mesh variables to write, which are not empty. */
     MeshVariableAssemble mesh_variables_to_probe_; /**< mesh variables to probe. */
     typedef DataContainerAddressAssemble<DiscreteVariable> BKGMeshVariableAssemble;
     DataContainerUniquePtrAssemble<DiscreteVariable> bkg_mesh_variable_ptrs_;
-    BKGMeshVariableAssemble all_bkg_mesh_variables_;     /**< all discrete variables on this mesh. */
+    BKGMeshVariableAssemble all_bkg_mesh_variables_;      /**< all discrete variables on this mesh. */
     BKGMeshVariableAssemble bkg_mesh_variables_to_write_; /**< discrete variables to write, which are not empty. */
 
   public:
@@ -79,11 +92,11 @@ class MeshWithGridDataPackages : public Mesh
                              UnsignedInt buffer_size, UnsignedInt num_singular_pkgs = 2);
     virtual ~MeshWithGridDataPackages() {};
 
-    /** spacing between the data, which is 1/ pkg_size of this grid spacing */
+    /** spacing between the data, which is 1 / PKG_SIZE of this grid spacing */
     Real DataSpacing() { return data_spacing_; };
     Real GridSpacing() { return grid_spacing_; };
     UnsignedInt BufferWidth() { return buffer_width_; };
-    int DataPackageSize() { return pkg_size; };
+    static constexpr int DataPackageSize() { return PKG_SIZE; };
     UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
     UnsignedInt NumGridPackages();
     DiscreteVariable<std::pair<Arrayi, int>> &dvPkgCellInfo();
@@ -109,6 +122,7 @@ class MeshWithGridDataPackages : public Mesh
     ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_; /**< (UnsignedInt)sort_index, (int)core1/inner0. */
     const Real data_spacing_;                                       /**< spacing of data in the data packages. */
     bool is_organized_ = false;                                     /**< whether the data packages are organized. */
+    IndexHandler index_handler_;
 
     template <typename T>
     T &checkOrganized(std::string func_name, T &value);
@@ -128,23 +142,12 @@ class MeshWithGridDataPackages : public Mesh
     OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData<MeshVariable>> sync_mesh_variable_data_{};
     OperationOnDataAssemble<BKGMeshVariableAssemble, SyncMeshVariableData<BKGMeshVariable>> sync_bkg_mesh_variable_data_{};
 
-  public:
-    /** wrapper for all index exchange related functions. */
-    struct IndexHandler
-    {
-        Real data_spacing_;
-        Arrayi all_cells_;
-        Mesh mesh_;
-
-        Arrayi CellIndexFromPosition(const Vecd &position) const;
-        Vecd DataLowerBoundInCell(const Arrayi &cell_index);
-        Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position);
-        Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index);
-        UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index);
-    };
-    SingularVariable<IndexHandler> index_handler_;
+    template <typename DataType>
+    DataType DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data,
+                                      const Arrayi &global_grid_index, UnsignedInt *cell_package_index);
 
   public:
+    IndexHandler &getIndexHandler() { return index_handler_; };
     template <class ExecutionPolicy>
     void syncMeshVariablesToWrite(ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
@@ -168,8 +171,6 @@ class MeshWithGridDataPackages : public Mesh
     void organizeOccupiedPackages();
     bool isInnerDataPackage(const Arrayi &cell_index);
     bool isWithinCorePackage(UnsignedInt *cell_package_index, std::pair<Arrayi, int> *meta_data_cell, Vecd position);
-    Arrayi boundCellIndex(const Arrayi &input) const;
-    UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index);
     void assignDataPackageIndex(const Arrayi &cell_index, const UnsignedInt package_index);
 };
 } // namespace SPH

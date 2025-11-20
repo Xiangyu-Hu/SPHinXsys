@@ -10,7 +10,7 @@ namespace SPH
 inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &package_index)
 {
     UnsignedInt sort_index = data_mesh_->getOccupiedDataPackages()[package_index - num_singular_pkgs_].first;
-    Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
+    Arrayi cell_index = data_mesh_->DimensionalCellIndex(sort_index);
     UnsignedInt index_1d = data_mesh_->LinearCellIndex(cell_index);
 
     MeshVariableData<Real> &grid_phi = phi_[package_index];
@@ -110,7 +110,7 @@ template <typename DataType, typename FunctionByGrid>
 void UpdateKernelIntegrals::UpdateKernel::assignByGrid(
     MeshVariableData<DataType> *mesh_variable, const Arrayi &cell_index, const FunctionByGrid &function_by_grid)
 {
-    UnsignedInt package_index = index_handler_->PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
+    UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
     auto &pkg_data = mesh_variable[package_index];
     mesh_for_each3d<0, pkg_size>(
         [&](int i, int j, int k)
