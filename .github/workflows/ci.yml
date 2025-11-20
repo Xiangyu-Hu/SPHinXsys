@@ -570,7 +570,6 @@ jobs:
             gtest \
             simbody \
             spdlog \
-            xsimd \
             pybind11
 
       - name: Generate buildsystem
@@ -640,7 +639,6 @@ jobs:
             gtest \
             simbody \
             spdlog \
-            xsimd \
             pybind11
 
       - uses: actions/download-artifact@v4
