@@ -122,11 +122,12 @@ void MultiLevelMeshField<MeshType>::addCellVariableToWrite(const std::string &va
 }
 //=================================================================================================//
 template <class MeshType>
-void MultiLevelMeshField<MeshType>::writeMeshFieldToPlt(const std::string &partial_file_name)
+void MultiLevelMeshField<MeshType>::writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequnce)
 {
     for (UnsignedInt l = 0; l != meshes_.size(); ++l)
     {
-        std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
+        std::string full_file_name = partial_file_name + "_" + std::to_string(l) +
+                                     "_" + std::to_string(sequnce) + ".dat";
         std::ofstream out_file(full_file_name.c_str(), std::ios::app);
         writeCellVariableToPltByMesh(*meshes_[l], out_file);
         out_file.close();

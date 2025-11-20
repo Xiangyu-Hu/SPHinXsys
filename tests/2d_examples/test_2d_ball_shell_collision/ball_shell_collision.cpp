@@ -114,7 +114,6 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         BodyStatesRecordingToVtp write_relaxed_particles(sph_system);
         write_relaxed_particles.addToWrite<int>(rigid_shell, "UpdatedIndicator");
-        MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, rigid_shell.getCellLinkedList());
         ReloadParticleIO write_particle_reload({&ball, &rigid_shell});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -124,7 +123,6 @@ int main(int ac, char *av[])
         rigid_shell_random_particles.exec(0.25);
         rigid_shell_relaxation_step.MidSurfaceBounding().exec();
         write_relaxed_particles.writeToFile(0);
-        write_mesh_cell_linked_list.writeToFile(0);
         //----------------------------------------------------------------------
         //	From here iteration for particle relaxation begins.
         //----------------------------------------------------------------------

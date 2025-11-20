@@ -115,7 +115,7 @@ class BaseMeshField
     std::string Name() { return name_; };
     void setName(const std::string &new_name) { name_ = new_name; };
     /** output mesh data for Tecplot visualization */
-    virtual void writeMeshFieldToPlt(const std::string &partial_file_name) = 0;
+    virtual void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequnce = 0) = 0;
     /** output mesh data for Tecplot visualization */
     virtual void writeBKGMeshToPlt(const std::string &partial_file_name) {};
 };
@@ -143,7 +143,7 @@ class MultiLevelMeshField : public BaseMeshField
 
     template <typename DataType>
     void addCellVariableToWrite(const std::string &variable_name);
-    void writeMeshFieldToPlt(const std::string &partial_file_name) override;
+    void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequnce = 0) override;
 
   protected:
     size_t total_levels_; /**< level 0 is the coarsest */

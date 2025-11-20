@@ -80,7 +80,7 @@ class MultilevelLevelSet : public SparseStorageMeshField<4>
 
     template <typename DataType>
     void addMeshVariableToWrite(const std::string &variable_name);
-    void writeMeshFieldToPlt(const std::string &partial_file_name) override;
+    void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequnce = 0) override;
     template <typename DataType>
     void addBKGMeshVariableToWrite(const std::string &variable_name);
     void writeBKGMeshToPlt(const std::string &partial_file_name) override;
