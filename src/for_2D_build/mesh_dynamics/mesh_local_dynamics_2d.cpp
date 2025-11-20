@@ -4,19 +4,6 @@
 namespace SPH
 {
 //=============================================================================================//
-UnsignedInt BaseMeshLocalDynamics::SortIndexFromCellIndex(const Arrayi &cell_index)
-{
-    return cell_index[0] * all_cells_[1] + cell_index[1];
-}
-//=============================================================================================//
-Arrayi BaseMeshLocalDynamics::CellIndexFromSortIndex(const UnsignedInt &sort_index)
-{
-    Array2i cell_index;
-    cell_index[0] = sort_index / all_cells_[1];
-    cell_index[1] = sort_index % all_cells_[1];
-    return cell_index;
-}
-//=============================================================================================//
 void InitializeBasicPackageData::initializeSingularPackages(
     const UnsignedInt package_index, Real far_field_level_set)
 {
@@ -37,7 +24,7 @@ bool InnerCellTagging::UpdateKernel::isInnerPackage(const Arrayi &cell_index)
 {
     return mesh_any_of(
         Array2i::Zero().max(cell_index - Array2i::Ones()),
-        all_cells_.min(cell_index + 2 * Array2i::Ones()),
+        data_mesh_->AllCells().min(cell_index + 2 * Array2i::Ones()),
         [&](int l, int m)
         {
             return data_mesh_->isInnerDataPackage(Arrayi(l, m)); // actually a core test here, because only core pkgs are assigned
