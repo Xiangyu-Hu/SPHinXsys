@@ -35,6 +35,7 @@
 #define BASE_MESH_H
 
 #include "base_data_package.h"
+#include "sphinxsys_variable.h"
 
 #include <fstream>
 
@@ -62,96 +63,30 @@ class Mesh
     UnsignedInt NumberOfGridPoints() const { return all_grid_points_.prod(); };
     UnsignedInt NumberOfCells() const { return all_cells_.prod(); };
 
-    Arrayi CellIndexFromPosition(const Vecd &position) const
-    {
-        return floor((position - mesh_lower_bound_).array() / grid_spacing_)
-            .cast<int>()
-            .max(Arrayi::Zero())
-            .min(all_grid_points_ - 2 * Arrayi::Ones());
-    };
-
-    UnsignedInt LinearCellIndexFromPosition(const Vecd &position) const
-    {
-        return linear_cell_index_offset_ +
-               transferMeshIndexTo1D(all_cells_, CellIndexFromPosition(position));
-    };
-
-    UnsignedInt LinearCellIndex(const Arrayi &cell_index) const
-    {
-        return linear_cell_index_offset_ + transferMeshIndexTo1D(all_cells_, cell_index);
-    };
-
-    Arrayi DimensionalCellIndex(UnsignedInt linear_index) const
-    {
-        return transfer1DtoMeshIndex(all_cells_, linear_index - linear_cell_index_offset_);
-    };
-
+    Arrayi CellIndexFromPosition(const Vecd &position) const;
+    UnsignedInt LinearCellIndexFromPosition(const Vecd &position) const;
+    UnsignedInt LinearCellIndex(const Arrayi &cell_index) const;
+    Arrayi DimensionalCellIndex(UnsignedInt linear_index) const;
     Vecd CellPositionFromIndex(const Arrayi &cell_index) const;
     Vecd GridPositionFromIndex(const Arrayi &grid_index) const;
-    Vecd CellLowerCornerPosition(const Arrayi &cell_index) const
-    {
-        return mesh_lower_bound_ + cell_index.cast<Real>().matrix() * grid_spacing_;
-    }
-
-    Arrayi boundCellIndex(const Arrayi &input) const
-    {
-        Arrayi output = input;
-        for (int i = 0; i < Dimensions; ++i)
-        {
-            if (output[i] < 0)
-                output[i] = 0;
-            if (output[i] >= all_cells_[i])
-                output[i] = all_cells_[i] - 1;
-        }
-        return output;
-    }
+    Vecd CellLowerCornerPosition(const Arrayi &cell_index) const;
+    Arrayi boundCellIndex(const Arrayi &input) const;
     //----------------------------------------------------------------------
     // Transferring between 1D mesh indexes.
     // Here, mesh size can be either AllGridPoints or AllCells.
     //----------------------------------------------------------------------
-    static Array2i transfer1DtoMeshIndex(const Array2i &mesh_size, UnsignedInt i)
-    {
-        UnsignedInt row_size = mesh_size[1];
-        UnsignedInt column = i / row_size;
-        return Array2i(column, i - column * row_size);
-    };
-
-    static Array3i transfer1DtoMeshIndex(const Array3i &mesh_size, UnsignedInt i)
-    {
-        UnsignedInt row_times_column_size = mesh_size[1] * mesh_size[2];
-        UnsignedInt page = i / row_times_column_size;
-        UnsignedInt left_over = (i - page * row_times_column_size);
-        UnsignedInt row_size = mesh_size[2];
-        UnsignedInt column = left_over / row_size;
-        return Array3i(page, column, left_over - column * row_size);
-    }
-
-    static UnsignedInt transferMeshIndexTo1D(const Array2i &mesh_size, const Array2i &mesh_index)
-    {
-        return mesh_index[0] * mesh_size[1] + mesh_index[1];
-    };
-
-    static UnsignedInt transferMeshIndexTo1D(const Array3i &mesh_size, const Array3i &mesh_index)
-    {
-        return mesh_index[0] * mesh_size[1] * mesh_size[2] +
-               mesh_index[1] * mesh_size[2] +
-               mesh_index[2];
-    };
+    static Array2i transfer1DtoMeshIndex(const Array2i &mesh_size, UnsignedInt i);
+    static Array3i transfer1DtoMeshIndex(const Array3i &mesh_size, UnsignedInt i);
+    static UnsignedInt transferMeshIndexTo1D(const Array2i &mesh_size, const Array2i &mesh_index);
+    static UnsignedInt transferMeshIndexTo1D(const Array3i &mesh_size, const Array3i &mesh_index);
 
     /** converts mesh index into a Morton order.
      * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
      * https://stackoverflow.com/questions/18529057/
      * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
      */
-    static UnsignedInt transferMeshIndexToMortonOrder(const Array2i &mesh_index)
-    {
-        return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1);
-    };
-
-    static UnsignedInt transferMeshIndexToMortonOrder(const Array3i &mesh_index)
-    {
-        return MortonCode(mesh_index[0]) | (MortonCode(mesh_index[1]) << 1) | (MortonCode(mesh_index[2]) << 2);
-    };
+    static UnsignedInt transferMeshIndexToMortonOrder(const Array2i &mesh_index);
+    static UnsignedInt transferMeshIndexToMortonOrder(const Array3i &mesh_index);
 
   protected:
     Vecd mesh_lower_bound_;                /**< mesh lower bound as reference coordinate */
@@ -161,16 +96,7 @@ class Mesh
     Arrayi all_cells_;                     /**< number of cells by dimension */
     UnsignedInt linear_cell_index_offset_; /**< offset for linear cell index, used for sub-mesh */
 
-    static UnsignedInt MortonCode(const UnsignedInt &i)
-    {
-        UnsignedInt x = i;
-        x &= 0x3ff;
-        x = (x | x << 16) & 0x30000ff;
-        x = (x | x << 8) & 0x300f00f;
-        x = (x | x << 4) & 0x30c30c3;
-        x = (x | x << 2) & 0x9249249;
-        return x;
-    };
+    static UnsignedInt MortonCode(const UnsignedInt &i);
 };
 
 /**
@@ -192,6 +118,49 @@ class BaseMeshField
     virtual void writeMeshFieldToPlt(const std::string &partial_file_name) = 0;
     /** output mesh data for Tecplot visualization */
     virtual void writeBKGMeshToPlt(const std::string &partial_file_name) {};
+};
+
+template <class MeshType>
+class MultiLevelMeshField : public BaseMeshField
+{
+    template <typename DataType>
+    using CellVariable = DiscreteVariable<DataType>;
+    typedef DataContainerAddressAssemble<DiscreteVariable> CellVariableAssemble;
+    DataContainerUniquePtrAssemble<DiscreteVariable> cell_variable_ptrs_;
+    UniquePtrsKeeper<MeshType> mesh_ptrs_keeper_;
+
+  public:
+    MultiLevelMeshField(
+        const std::string &name, BoundingBox tentative_bounds,
+        Real Reference_grid_spacing, UnsignedInt buffer_width, size_t total_levels = 1);
+    virtual ~MultiLevelMeshField() {};
+
+    template <typename DataType, typename... Args>
+    CellVariable<DataType> *registerCellVariable(const std::string &variable_name, Args &&...args);
+    template <typename DataType>
+    CellVariable<DataType> *getCellVariable(const std::string &variable_name);
+
+    template <typename DataType>
+    void addCellVariableToWrite(const std::string &variable_name);
+    void writeMeshFieldToPlt(const std::string &partial_file_name) override;
+
+  protected:
+    size_t total_levels_; /**< level 0 is the coarsest */
+    StdVec<MeshType *> mesh_levels_;
+    UnsignedInt total_number_of_cells_;
+    CellVariableAssemble all_cell_variables_;
+    CellVariableAssemble cell_variables_to_write_;
+
+    template <template <typename> typename ContainerType, typename DataType, typename... Args>
+    ContainerType<DataType> *registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
+                                              DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
+                                              const std::string &variable_name, Args &&...args);
+
+    template <template <typename> typename ContainerType, typename DataType>
+    void addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
+                           DataContainerAddressAssemble<ContainerType> &all_variable_set,
+                           const std::string &variable_name);
+    void writeCellVariableToPltByMesh(const MeshType &mesh, std::ofstream &output_file);
 };
 } // namespace SPH
 #endif // BASE_MESH_H

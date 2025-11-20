@@ -1,4 +1,4 @@
-#include "base_mesh.h"
+#include "base_mesh.hpp"
 
 namespace SPH
 {

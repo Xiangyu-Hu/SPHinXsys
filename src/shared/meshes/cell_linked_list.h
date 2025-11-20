@@ -32,7 +32,7 @@
 #ifndef MESH_CELL_LINKED_LIST_H
 #define MESH_CELL_LINKED_LIST_H
 
-#include "base_mesh.h"
+#include "base_mesh.hpp"
 #include "execution_policy.h"
 #include "neighborhood.h"
 

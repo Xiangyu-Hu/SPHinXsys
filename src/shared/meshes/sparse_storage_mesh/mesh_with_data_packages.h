@@ -29,11 +29,10 @@
 #ifndef MESH_WITH_DATA_PACKAGES_H
 #define MESH_WITH_DATA_PACKAGES_H
 
-#include "base_mesh.h"
+#include "base_mesh.hpp"
 
 #include "execution_policy.h"
 #include "grid_data_package_type.hpp"
-#include "sphinxsys_variable.h"
 
 #include "tbb/parallel_sort.h"
 
@@ -172,6 +171,31 @@ class MeshWithGridDataPackages : public Mesh
     bool isInnerDataPackage(const Arrayi &cell_index);
     bool isWithinCorePackage(UnsignedInt *cell_package_index, std::pair<Arrayi, int> *meta_data_cell, Vecd position);
     void assignDataPackageIndex(const Arrayi &cell_index, const UnsignedInt package_index);
+};
+
+template <int PKG_SIZE>
+class MeshWithDataPackage : public Mesh
+{
+    Real data_spacing_;
+
+  public:
+    MeshWithDataPackage(BoundingBox tentative_bounds, Real grid_spacing,
+                        UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset = 0);
+    Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
+    Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
+    Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
+    UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index) const;
+    Real DataSpacing() const { return data_spacing_; };
+};
+
+template <int PKG_SIZE>
+class SparseStorageMeshField : public MultiLevelMeshField<MeshWithDataPackage<PKG_SIZE>>
+{
+  public:
+    SparseStorageMeshField(const std::string &name, BoundingBox tentative_bounds,
+                           Real reference_data_spacing, UnsignedInt buffer_width,
+                           size_t total_levels);
+    virtual ~SparseStorageMeshField() {};
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H

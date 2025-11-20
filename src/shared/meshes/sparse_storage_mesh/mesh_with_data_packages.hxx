@@ -318,5 +318,19 @@ void MeshWithGridDataPackages<PKG_SIZE>::
     bmv_cell_pkg_index_.Data()[index_1d] = package_index;
 }
 //=============================================================================================//
+template <int PKG_SIZE>
+MeshWithDataPackage<PKG_SIZE>::MeshWithDataPackage(
+    BoundingBox tentative_bounds, Real grid_spacing,
+    UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset)
+    : Mesh(tentative_bounds, grid_spacing, buffer_width, linear_cell_index_offset),
+      data_spacing_(grid_spacing / PKG_SIZE){};
+//=============================================================================================//
+template <int PKG_SIZE>
+SparseStorageMeshField<PKG_SIZE>::SparseStorageMeshField(
+    const std::string &name, BoundingBox tentative_bounds,
+    Real reference_data_spacing, UnsignedInt buffer_width, size_t total_levels)
+    : MultiLevelMeshField<MeshWithDataPackage<PKG_SIZE>>(
+          name, tentative_bounds, reference_data_spacing, buffer_width, total_levels){};
+//=============================================================================================//
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_HXX

@@ -48,7 +48,7 @@ enum class UsageType
  * @class MultilevelLevelSet
  * @brief Defining a multilevel level set for a complex region.
  */
-class MultilevelLevelSet : public BaseMeshField
+class MultilevelLevelSet : public SparseStorageMeshField<4>
 {
   public:
     MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
@@ -106,8 +106,7 @@ class MultilevelLevelSet : public BaseMeshField
     template <class ExecutionPolicy>
     void registerKernelIntegralProbes(const ExecutionPolicy &ex_policy);
 
-    Shape &shape_;        /**< the geometry is described by the level set. */
-    size_t total_levels_; /**< level 0 is the coarsest */
+    Shape &shape_; /**< the geometry is described by the level set. */
     Real refinement_ratio_;
     StdVec<UnsignedInt *> cell_pkg_index_set_;
     StdVec<std::pair<Arrayi, int> *> pkg_cell_info_set_;
