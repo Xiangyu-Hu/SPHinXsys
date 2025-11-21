@@ -222,8 +222,10 @@ class SparseStorageMeshField : public MultiLevelMeshField
   protected:
     UnsignedInt num_singular_pkgs_;
     UnsignedInt pkgs_bound_ = 0;
+    UnsignedInt pkg_offset_list_size_;
     bool is_allocation_organized_ = false;
     StdVec<Mesh *> data_meshes_;
+    DiscreteVariable<UnsignedInt> dv_pkg_offset_;               /**< the offsets indicates the starting and end index for data packages on each levels. */
     DiscreteVariable<std::pair<Arrayi, int>> dv_pkg_cell_info_; /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> dv_cell_neighborhood_;   /**< 3*3(*3) array to store indicies of neighborhood cells. */
     DiscreteVariable<UnsignedInt> *cell_dv_pkg_index_;          /**< the package index for each cell in a 1-d array. */

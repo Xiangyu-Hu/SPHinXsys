@@ -57,7 +57,7 @@ class PackageDataMatrix3d
     DataType &operator()(const Array3i &index) { return (*this)[index[0]][index[1]][index[2]]; }
 };
 
-using CellNeighborhood2d = PackageDataMatrix2d<int, 3>;
-using CellNeighborhood3d = PackageDataMatrix3d<int, 3>;
+using CellNeighborhood2d = PackageDataMatrix2d<UnsignedInt, 3>;
+using CellNeighborhood3d = PackageDataMatrix3d<UnsignedInt, 3>;
 } // namespace SPH
 #endif // GRID_DATA_PACKAGE_TYPE_H

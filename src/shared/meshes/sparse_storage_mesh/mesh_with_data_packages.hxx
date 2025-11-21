@@ -325,7 +325,8 @@ SparseStorageMeshField<PKG_SIZE>::SparseStorageMeshField(
     size_t total_levels, UnsignedInt num_singular_pkgs)
     : MultiLevelMeshField(name, tentative_bounds, reference_data_spacing * PKG_SIZE,
                           buffer_width, total_levels),
-      num_singular_pkgs_(num_singular_pkgs),
+      num_singular_pkgs_(num_singular_pkgs), pkg_offset_list_size_(total_levels + 2),
+      dv_pkg_offset_("PackageOffset", pkg_offset_list_size_),
       dv_pkg_cell_info_("PackageCellInfo", num_singular_pkgs_ * total_levels),
       dv_cell_neighborhood_("CellNeighborhood", num_singular_pkgs_ * total_levels),
       cell_dv_pkg_index_(registerCellVariable<UnsignedInt>("CellPackageIndex"))
