@@ -116,17 +116,16 @@ class BaseMeshField
     std::string Name() { return name_; };
     void setName(const std::string &new_name) { name_ = new_name; };
     /** output mesh data for Tecplot visualization */
-    virtual void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequnce = 0) = 0;
+    virtual void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) = 0;
     /** output mesh data for Tecplot visualization */
     virtual void writeBKGMeshToPlt(const std::string &partial_file_name) {};
 };
 
-template <class MeshType>
 class MultiLevelMeshField : public BaseMeshField
 {
     typedef DataContainerAddressAssemble<DiscreteVariable> CellVariableAssemble;
     DataContainerUniquePtrAssemble<DiscreteVariable> cell_variable_ptrs_;
-    UniquePtrsKeeper<MeshType> mesh_ptrs_keeper_;
+    UniquePtrsKeeper<Mesh> mesh_ptrs_keeper_;
 
   public:
     MultiLevelMeshField(
@@ -134,7 +133,7 @@ class MultiLevelMeshField : public BaseMeshField
         Real Reference_grid_spacing, UnsignedInt buffer_width, size_t total_levels = 1);
     virtual ~MultiLevelMeshField() {};
 
-    StdVec<MeshType *> &getMeshes() { return meshes_; };
+    StdVec<Mesh *> &getMeshes() { return meshes_; };
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
 
     template <typename DataType, typename... Args>
@@ -144,11 +143,14 @@ class MultiLevelMeshField : public BaseMeshField
 
     template <typename DataType>
     void addCellVariableToWrite(const std::string &variable_name);
-    void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequnce = 0) override;
+    void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
+
+    template <class ExecutionPolicy>
+    void syncCellVariablesToWrite(ExecutionPolicy &ex_policy);
 
   protected:
     size_t total_levels_; /**< level 0 is the coarsest */
-    StdVec<MeshType *> meshes_;
+    StdVec<Mesh *> meshes_;
     UnsignedInt total_number_of_cells_;
     CellVariableAssemble all_cell_variables_;
     CellVariableAssemble cell_variables_to_write_;
@@ -161,7 +163,18 @@ class MultiLevelMeshField : public BaseMeshField
     void addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
                            DataContainerAddressAssemble<ContainerType> &all_variable_set,
                            const std::string &variable_name);
-    void writeCellVariableToPltByMesh(const MeshType &mesh, std::ofstream &output_file);
+    void writeCellVariableToPltByMesh(const Mesh &mesh, std::ofstream &output_file);
+
+  protected:
+    template <template <typename> class MeshVariableType>
+    struct SyncMeshVariableData
+    {
+        template <typename DataType, class ExecutionPolicy>
+        void operator()(DataContainerAddressKeeper<MeshVariableType<DataType>> &mesh_variables,
+                        ExecutionPolicy &ex_policy);
+    };
+
+    OperationOnDataAssemble<CellVariableAssemble, SyncMeshVariableData<DiscreteVariable>> sync_cell_variable_data_{};
 };
 } // namespace SPH
 #endif // BASE_MESH_H

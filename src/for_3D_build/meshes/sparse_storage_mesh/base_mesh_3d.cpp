@@ -1,14 +1,11 @@
-#ifndef BASE_MESH_3D_HPP
-#define BASE_MESH_3D_HPP
+#include "base_mesh.hpp"
 
-#include "base_mesh.hxx"
+#include "mesh_iterators.hpp"
 
 namespace SPH
 {
 //=================================================================================================//
-template <class MeshType>
-void MultiLevelMeshField<MeshType>::writeCellVariableToPltByMesh(
-    const MeshType &mesh, std::ofstream &output_file)
+void MultiLevelMeshField::writeCellVariableToPltByMesh(const Mesh &mesh, std::ofstream &output_file)
 {
     output_file << "\n"
                 << "title='View'" << "\n";
@@ -84,4 +81,3 @@ void MultiLevelMeshField<MeshType>::writeCellVariableToPltByMesh(
 }
 //=================================================================================================//
 } // namespace SPH
-#endif // BASE_MESH_3D_HPP

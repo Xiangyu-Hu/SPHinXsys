@@ -186,7 +186,7 @@ Matd MultilevelLevelSet::probeKernelSecondGradientIntegral(const Vecd &position,
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }
 //=================================================================================================//
-void MultilevelLevelSet::writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequnce)
+void MultilevelLevelSet::writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence)
 {
     sync_mesh_variables_to_write_();
     for (size_t l = 0; l != total_levels_; ++l)

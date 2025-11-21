@@ -1,5 +1,5 @@
-#ifndef BASE_MESH_HXX
-#define BASE_MESH_HXX
+#ifndef BASE_MESH_HPP
+#define BASE_MESH_HPP
 
 #include "base_mesh.h"
 
@@ -97,46 +97,16 @@ inline UnsignedInt Mesh::MortonCode(const UnsignedInt &i)
     x = (x | x << 2) & 0x9249249;
     return x;
 }
-//=================================================================================================//
-template <class MeshType>
-MultiLevelMeshField<MeshType>::MultiLevelMeshField(
-    const std::string &name, BoundingBox tentative_bounds,
-    Real Reference_grid_spacing, UnsignedInt buffer_width, size_t total_levels)
-    : BaseMeshField(name), total_levels_(total_levels), total_number_of_cells_(0)
-{
-    for (size_t level = 0; level < total_levels; ++level)
-    {
-        meshes_.push_back(mesh_ptrs_keeper_.template createPtr<MeshType>(
-            tentative_bounds, Reference_grid_spacing / math::pow(2.0, level),
-            buffer_width, total_number_of_cells_));
-        total_number_of_cells_ += meshes_.back()->NumberOfCells();
-    };
-}
 //=============================================================================================//
-template <class MeshType>
 template <typename DataType>
-void MultiLevelMeshField<MeshType>::addCellVariableToWrite(const std::string &variable_name)
+void MultiLevelMeshField::addCellVariableToWrite(const std::string &variable_name)
 {
     addVariableToList<DiscreteVariable, DataType>(
         cell_variables_to_write_, all_cell_variables_, variable_name);
 }
-//=================================================================================================//
-template <class MeshType>
-void MultiLevelMeshField<MeshType>::writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequnce)
-{
-    for (UnsignedInt l = 0; l != meshes_.size(); ++l)
-    {
-        std::string full_file_name = partial_file_name + "_" + std::to_string(l) +
-                                     "_" + std::to_string(sequnce) + ".dat";
-        std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-        writeCellVariableToPltByMesh(*meshes_[l], out_file);
-        out_file.close();
-    }
-}
 //=============================================================================================//
-template <class MeshType>
 template <template <typename> typename ContainerType, typename DataType, typename... Args>
-ContainerType<DataType> *MultiLevelMeshField<MeshType>::
+ContainerType<DataType> *MultiLevelMeshField::
     registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
                      DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
                      const std::string &variable_name, Args &&...args)
@@ -151,9 +121,8 @@ ContainerType<DataType> *MultiLevelMeshField<MeshType>::
     return variable;
 }
 //=============================================================================================//
-template <class MeshType>
 template <typename DataType, typename... Args>
-DiscreteVariable<DataType> *MultiLevelMeshField<MeshType>::registerCellVariable(
+DiscreteVariable<DataType> *MultiLevelMeshField::registerCellVariable(
     const std::string &variable_name, Args &&...args)
 {
     return registerVariable<DiscreteVariable, DataType>(
@@ -161,9 +130,8 @@ DiscreteVariable<DataType> *MultiLevelMeshField<MeshType>::registerCellVariable(
         std::forward<Args>(args)...);
 }
 //=============================================================================================//
-template <class MeshType>
 template <typename DataType>
-DiscreteVariable<DataType> *MultiLevelMeshField<MeshType>::getCellVariable(
+DiscreteVariable<DataType> *MultiLevelMeshField::getCellVariable(
     const std::string &variable_name)
 {
     DiscreteVariable<DataType> *variable =
@@ -176,9 +144,8 @@ DiscreteVariable<DataType> *MultiLevelMeshField<MeshType>::getCellVariable(
     return variable;
 }
 //=============================================================================================//
-template <class MeshType>
 template <template <typename> typename ContainerType, typename DataType>
-void MultiLevelMeshField<MeshType>::addVariableToList(
+void MultiLevelMeshField::addVariableToList(
     DataContainerAddressAssemble<ContainerType> &variable_set,
     DataContainerAddressAssemble<ContainerType> &all_variable_set,
     const std::string &variable_name)
@@ -201,6 +168,12 @@ void MultiLevelMeshField<MeshType>::addVariableToList(
         std::get<type_index>(variable_set).push_back(variable);
     }
 }
+//=============================================================================================//
+template <class ExecutionPolicy>
+void MultiLevelMeshField::syncCellVariablesToWrite(ExecutionPolicy &ex_policy)
+{
+    sync_cell_variable_data_(cell_variables_to_write_, ex_policy);
+}
 //=================================================================================================//
 } // namespace SPH
-#endif // BASE_MESH_HXX
+#endif // BASE_MESH_HPP

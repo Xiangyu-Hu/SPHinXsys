@@ -332,12 +332,11 @@ SparseStorageMeshField<PKG_SIZE>::SparseStorageMeshField(
     const std::string &name, BoundingBox tentative_bounds,
     Real reference_data_spacing, UnsignedInt buffer_width,
     size_t total_levels, UnsignedInt num_singular_pkgs)
-    : MultiLevelMeshField<MeshWithDataPackage<PKG_SIZE>>(
-          name, tentative_bounds, reference_data_spacing, buffer_width, total_levels),
+    : MultiLevelMeshField(name, tentative_bounds, reference_data_spacing, buffer_width, total_levels),
       num_singular_pkgs_(num_singular_pkgs),
       dv_pkg_cell_info_("PackageCellInfo", num_singular_pkgs_ * total_levels),
       dv_cell_neighborhood_("CellNeighborhood", num_singular_pkgs_ * total_levels),
-      cell_dv_pkg_index_(this->template registerCellVariable<UnsignedInt>("CellPackageIndex")){};
+      cell_dv_pkg_index_(registerCellVariable<UnsignedInt>("CellPackageIndex")){};
 //=============================================================================================//
 template <int PKG_SIZE>
 template <typename DataType>
@@ -350,7 +349,7 @@ DiscreteVariable<PackageDataMatrix<DataType, PKG_SIZE>> *SparseStorageMeshField<
                   << "' is registered before the allocation of data packages are organized!" << std::endl;
         exit(1);
     }
-    return this->template registerVariable<PackageVariable, DataType>(
+    return registerVariable<PackageVariable, DataType>(
         all_pkg_variables_, pkg_variable_ptrs_, name, pkgs_bound_);
 }
 //=============================================================================================//
@@ -358,7 +357,7 @@ template <int PKG_SIZE>
 template <typename DataType>
 void SparseStorageMeshField<PKG_SIZE>::addPackageVariableToWrite(const std::string &name)
 {
-    this->template addVariableToList<PackageVariable, DataType>(
+    addVariableToList<PackageVariable, DataType>(
         pkg_variables_to_write_, all_pkg_variables_, name);
 }
 //=============================================================================================//
@@ -366,8 +365,24 @@ template <int PKG_SIZE>
 template <typename DataType>
 void SparseStorageMeshField<PKG_SIZE>::addPackageVariableToProbe(const std::string &name)
 {
-    this->template addVariableToList<PackageVariable, DataType>(
+    addVariableToList<PackageVariable, DataType>(
         pkg_variables_to_probe_, all_pkg_variables_, name);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <class ExecutionPolicy>
+void SparseStorageMeshField<PKG_SIZE>::syncPackageVariablesToWrite(ExecutionPolicy &ex_policy)
+{
+    sync_pkg_variable_data_(pkg_variables_to_write_, ex_policy);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <class ExecutionPolicy>
+void SparseStorageMeshField<PKG_SIZE>::syncPackageVariablesToProbe(ExecutionPolicy &ex_policy)
+{
+    sync_pkg_variable_data_(pkg_variables_to_probe_, ex_policy);
+    dv_pkg_cell_info_.prepareForOutput(ex_policy);
+    cell_dv_pkg_index_->prepareForOutput(ex_policy);
 }
 //=============================================================================================//
 } // namespace SPH

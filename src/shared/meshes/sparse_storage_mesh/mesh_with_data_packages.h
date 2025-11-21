@@ -189,7 +189,7 @@ class MeshWithDataPackage : public Mesh
 };
 
 template <int PKG_SIZE>
-class SparseStorageMeshField : public MultiLevelMeshField<MeshWithDataPackage<PKG_SIZE>>
+class SparseStorageMeshField : public MultiLevelMeshField
 {
   public:
     template <class DataType>
@@ -217,6 +217,11 @@ class SparseStorageMeshField : public MultiLevelMeshField<MeshWithDataPackage<PK
     template <typename DataType>
     void addPackageVariableToProbe(const std::string &name);
 
+    template <class ExecutionPolicy>
+    void syncPackageVariablesToWrite(ExecutionPolicy &ex_policy);
+    template <class ExecutionPolicy>
+    void syncPackageVariablesToProbe(ExecutionPolicy &ex_policy);
+
   protected:
     UnsignedInt num_singular_pkgs_;
     UnsignedInt pkgs_bound_ = 0;
@@ -224,6 +229,7 @@ class SparseStorageMeshField : public MultiLevelMeshField<MeshWithDataPackage<PK
     DiscreteVariable<std::pair<Arrayi, int>> dv_pkg_cell_info_; /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> dv_cell_neighborhood_;   /**< 3*3(*3) array to store indicies of neighborhood cells. */
     DiscreteVariable<UnsignedInt> *cell_dv_pkg_index_;          /**< the package index for each cell in a 1-d array. */
+    OperationOnDataAssemble<PackageVariableAssemble, SyncMeshVariableData<PackageVariable>> sync_pkg_variable_data_{};
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H
