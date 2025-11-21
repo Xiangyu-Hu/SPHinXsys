@@ -58,6 +58,7 @@ class Mesh
 
     Vecd MeshLowerBound() const { return mesh_lower_bound_; };
     Real GridSpacing() const { return grid_spacing_; };
+    UnsignedInt BufferWidth() { return buffer_width_; };
     Arrayi AllGridPoints() const { return all_grid_points_; };
     Arrayi AllCells() const { return all_cells_; };
     UnsignedInt NumberOfGridPoints() const { return all_grid_points_.prod(); };

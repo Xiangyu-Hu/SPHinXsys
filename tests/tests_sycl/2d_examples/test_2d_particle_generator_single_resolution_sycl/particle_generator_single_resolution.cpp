@@ -110,7 +110,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     BaseCellLinkedList &input_body_cell_linked_list = input_body.getCellLinkedList();
-    input_body_cell_linked_list.addCellVariableToWrite<UnsignedInt>("CurrentCellSize");
+    input_body_cell_linked_list.addCellVariableToWrite<UnsignedInt>("CurrentListSize");
     MeshRecordingToPlt cell_linked_list_recording(sph_system, input_body_cell_linked_list);
     //----------------------------------------------------------------------
     //	First output before the simulation.
