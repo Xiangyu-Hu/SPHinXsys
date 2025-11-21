@@ -173,22 +173,6 @@ class MeshWithGridDataPackages : public Mesh
 };
 
 template <int PKG_SIZE>
-class MeshWithDataPackage : public Mesh
-{
-    Real data_spacing_;
-    Mesh data_mesh_;
-
-  public:
-    MeshWithDataPackage(BoundingBox tentative_bounds, Real grid_spacing,
-                        UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset = 0);
-    Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
-    Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
-    Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
-    UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index) const;
-    Real DataSpacing() const { return data_spacing_; };
-};
-
-template <int PKG_SIZE>
 class SparseStorageMeshField : public MultiLevelMeshField
 {
   public:
@@ -196,6 +180,19 @@ class SparseStorageMeshField : public MultiLevelMeshField
     using PackageData = PackageDataMatrix<DataType, PKG_SIZE>;
     template <typename DataType>
     using PackageVariable = DiscreteVariable<PackageData<DataType>>;
+
+    class IndexHandler : public Mesh
+    {
+        Real data_spacing_;
+
+      public:
+        IndexHandler(const Mesh &mesh);
+        Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
+        Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
+        Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
+        UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index) const;
+        Real DataSpacing() const { return data_spacing_; };
+    };
 
   private:
     typedef DataContainerAddressAssemble<PackageVariable> PackageVariableAssemble;
@@ -226,6 +223,7 @@ class SparseStorageMeshField : public MultiLevelMeshField
     UnsignedInt num_singular_pkgs_;
     UnsignedInt pkgs_bound_ = 0;
     bool is_allocation_organized_ = false;
+    StdVec<Mesh *> data_meshes_;
     DiscreteVariable<std::pair<Arrayi, int>> dv_pkg_cell_info_; /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> dv_cell_neighborhood_;   /**< 3*3(*3) array to store indicies of neighborhood cells. */
     DiscreteVariable<UnsignedInt> *cell_dv_pkg_index_;          /**< the package index for each cell in a 1-d array. */

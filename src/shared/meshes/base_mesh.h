@@ -125,7 +125,6 @@ class MultiLevelMeshField : public BaseMeshField
 {
     typedef DataContainerAddressAssemble<DiscreteVariable> CellVariableAssemble;
     DataContainerUniquePtrAssemble<DiscreteVariable> cell_variable_ptrs_;
-    UniquePtrsKeeper<Mesh> mesh_ptrs_keeper_;
 
   public:
     MultiLevelMeshField(
@@ -133,6 +132,7 @@ class MultiLevelMeshField : public BaseMeshField
         Real Reference_grid_spacing, UnsignedInt buffer_width, size_t total_levels = 1);
     virtual ~MultiLevelMeshField() {};
 
+    UniquePtrsKeeper<Mesh> mesh_ptrs_keeper_;
     StdVec<Mesh *> &getMeshes() { return meshes_; };
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
 

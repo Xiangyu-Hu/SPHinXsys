@@ -319,24 +319,30 @@ void MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=============================================================================================//
 template <int PKG_SIZE>
-MeshWithDataPackage<PKG_SIZE>::MeshWithDataPackage(
-    BoundingBox tentative_bounds, Real grid_spacing,
-    UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset)
-    : Mesh(tentative_bounds, grid_spacing, buffer_width, linear_cell_index_offset),
-      data_spacing_(grid_spacing / PKG_SIZE),
-      data_mesh_(mesh_lower_bound_ + 0.5 * data_spacing_ * Vecd::Ones(),
-                 data_spacing_, all_cells_ * PKG_SIZE){};
-//=============================================================================================//
-template <int PKG_SIZE>
 SparseStorageMeshField<PKG_SIZE>::SparseStorageMeshField(
     const std::string &name, BoundingBox tentative_bounds,
     Real reference_data_spacing, UnsignedInt buffer_width,
     size_t total_levels, UnsignedInt num_singular_pkgs)
-    : MultiLevelMeshField(name, tentative_bounds, reference_data_spacing, buffer_width, total_levels),
+    : MultiLevelMeshField(name, tentative_bounds, reference_data_spacing * PKG_SIZE,
+                          buffer_width, total_levels),
       num_singular_pkgs_(num_singular_pkgs),
       dv_pkg_cell_info_("PackageCellInfo", num_singular_pkgs_ * total_levels),
       dv_cell_neighborhood_("CellNeighborhood", num_singular_pkgs_ * total_levels),
-      cell_dv_pkg_index_(registerCellVariable<UnsignedInt>("CellPackageIndex")){};
+      cell_dv_pkg_index_(registerCellVariable<UnsignedInt>("CellPackageIndex"))
+{
+    for (size_t level = 0; level < total_levels; ++level)
+    {
+        Mesh &mesh = *meshes_[level];
+        Real data_spacing = mesh.GridSpacing() / PKG_SIZE;
+        data_meshes_.push_back(mesh_ptrs_keeper_.template createPtr<Mesh>(
+            mesh.MeshLowerBound() + 0.5 * data_spacing * Vecd::Ones(),
+            data_spacing, mesh.AllCells() * PKG_SIZE));
+    };
+};
+//=============================================================================================//
+template <int PKG_SIZE>
+SparseStorageMeshField<PKG_SIZE>::IndexHandler::IndexHandler(const Mesh &mesh)
+    : Mesh(mesh), data_spacing_(grid_spacing_ / PKG_SIZE){};
 //=============================================================================================//
 template <int PKG_SIZE>
 template <typename DataType>
