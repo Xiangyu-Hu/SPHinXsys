@@ -51,11 +51,11 @@ class UpdateSortableVariables
     OperationOnDataAssemble<TemporaryVariables, InitializeTemporaryVariables> initialize_temp_variables_;
 
   public:
-    UpdateSortableVariables(BaseParticles *particles);
+    UpdateSortableVariables(UnsignedInt data_size);
 
     template <class ExecutionPolicy, typename DataType>
     void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
-                    ExecutionPolicy &ex_policy, UnsignedInt total_real_particles,
+                    ExecutionPolicy &ex_policy, UnsignedInt sorted_size,
                     DiscreteVariable<UnsignedInt> *dv_index_permutation);
 };
 

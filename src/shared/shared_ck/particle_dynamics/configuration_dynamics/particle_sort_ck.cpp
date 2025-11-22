@@ -3,10 +3,10 @@
 namespace SPH
 {
 //=================================================================================================//
-UpdateSortableVariables::UpdateSortableVariables(BaseParticles *particles)
+UpdateSortableVariables::UpdateSortableVariables(UnsignedInt data_size)
     : initialize_temp_variables_()
 {
-    initialize_temp_variables_(temp_variables_, particles->ParticlesBound());
+    initialize_temp_variables_(temp_variables_, data_size);
 }
 //=================================================================================================//
 } // namespace SPH

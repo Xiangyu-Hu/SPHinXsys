@@ -16,7 +16,7 @@ void UpdateSortableVariables::InitializeTemporaryVariables::operator()(
 template <class ExecutionPolicy, typename DataType>
 void UpdateSortableVariables::operator()(
     DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
-    ExecutionPolicy &ex_policy, UnsignedInt total_real_particles,
+    ExecutionPolicy &ex_policy, UnsignedInt sorted_size,
     DiscreteVariable<UnsignedInt> *dv_index_permutation)
 {
     constexpr int type_index = DataTypeIndex<DataType>::value;
@@ -27,10 +27,10 @@ void UpdateSortableVariables::operator()(
     for (size_t k = 0; k != variables.size(); ++k)
     {
         DataType *sorted_data_field = variables[k]->DelegatedData(ex_policy);
-        particle_for(ex_policy, IndexRange(0, total_real_particles),
+        particle_for(ex_policy, IndexRange(0, sorted_size),
                      [=](size_t i)
                      { temp_data_field[i] = sorted_data_field[i]; });
-        particle_for(ex_policy, IndexRange(0, total_real_particles),
+        particle_for(ex_policy, IndexRange(0, sorted_size),
                      [=](size_t i)
                      { sorted_data_field[i] = temp_data_field[index_permutation[i]]; });
     }
@@ -48,7 +48,7 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
           "IndexPermutation", particles_->ParticlesBound())),
       dv_original_id_(particles_->getVariableByName<UnsignedInt>("OriginalID")),
       dv_sorted_id_(particles_->getVariableByName<UnsignedInt>("SortedID")),
-      update_variables_to_sort_(particles_),
+      update_variables_to_sort_(particles_->ParticlesBound()),
       sort_method_(ExecutionPolicy{}, dv_sequence_, dv_index_permutation_),
       kernel_implementation_(*this)
 {
