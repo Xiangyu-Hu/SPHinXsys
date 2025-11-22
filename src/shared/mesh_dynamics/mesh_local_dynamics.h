@@ -30,7 +30,6 @@
 #ifndef MESH_LOCAL_DYNAMICS_H
 #define MESH_LOCAL_DYNAMICS_H
 
-#include "base_configuration_dynamics.h"
 #include "base_dynamics.h"
 #include "base_geometry.h"
 #include "base_implementation.h"
@@ -244,51 +243,6 @@ class InnerCellTagging : public BaseMeshLocalDynamics
     };
 };
 
-template <class ExecutionPolicy>
-class PackageSort : public BaseMeshLocalDynamics, public BaseDynamics<void>
-{
-    using SortMethodType = typename SortMethod<ExecutionPolicy>::type;
-
-  public:
-    explicit PackageSort(MeshWithGridDataPackagesType &data_mesh)
-        : BaseMeshLocalDynamics(data_mesh), BaseDynamics<void>(),
-          occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
-          dv_sequence_(nullptr), dv_index_permutation_(nullptr),
-          update_bkg_mesh_variables_to_sort_(occupied_data_pkgs_.size()),
-          update_mesh_variables_to_sort_(occupied_data_pkgs_.size()),
-          sort_method_(nullptr) {};
-    virtual ~PackageSort() {};
-    class ComputingKernel
-    {
-      public:
-        template <class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : sequence_(encloser.dv_sequence_.DelegatedData(ex_policy)),
-              index_permutation_(encloser.dv_index_permutation_.DelegatedData(ex_policy)){};
-        void update(UnsignedInt &pkg_index) {};
-
-      protected:
-        UnsignedInt *sequence_, *index_permutation_;
-    };
-
-    virtual void exec(Real dt = 0.0) override
-    {
-        parallel_sort(
-            occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
-            [](const std::pair<UnsignedInt, int> &a, const std::pair<UnsignedInt, int> &b)
-            {
-                return a.first < b.first;
-            });
-    };
-
-  private:
-    ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
-    DiscreteVariable<UnsignedInt> *dv_sequence_;
-    DiscreteVariable<UnsignedInt> *dv_index_permutation_;
-    OperationOnDataAssemble<BKGMeshVariableAssemble, UpdateSortableVariables<BKGMeshVariable>> update_bkg_mesh_variables_to_sort_;
-    OperationOnDataAssemble<MeshVariableAssemble, UpdateSortableVariables<MeshVariable>> update_mesh_variables_to_sort_;
-    SortMethodType *sort_method_;
-};
 /**
  * @class InitializeCellPackageInfo
  * @brief Store the 1-D array package index for each occupied cell on the mesh.
