@@ -102,9 +102,8 @@ void InitializeCellPackageInfo::UpdateKernel::update(const UnsignedInt &package_
     Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
     UnsignedInt linear_index = data_mesh_->LinearCellIndex(cell_index);
     cell_pkg_index_[linear_index] = package_index;
-    std::pair<Arrayi, int> &metadata = pkg_cell_info_[package_index];
-    metadata.first = cell_index;
-    metadata.second = occupied_data_pkgs[package_index - num_singular_pkgs_].second;
+    pkg_cell_info_[package_index] = std::make_pair(cell_index, 
+        occupied_data_pkgs[package_index - num_singular_pkgs_].second);
 }
 //=================================================================================================//
 InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)
