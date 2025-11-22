@@ -31,12 +31,12 @@
 #ifndef MESH_DYNAMICS_H
 #define MESH_DYNAMICS_H
 
+#include "base_configuration_dynamics.h"
 #include "base_dynamics.h"
 #include "implementation.h"
 #include "mesh_iterators.hpp"
 #include "mesh_local_dynamics.hpp"
 #include "mesh_with_data_packages.h"
-#include "base_configuration_dynamics.h"
 
 namespace SPH
 {
@@ -128,7 +128,7 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
 template <class ExecutionPolicy, class LocalDynamicsType>
 class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
 {
-    int *pkg_type_;
+    DiscreteVariable<int> &dv_pkg_type_;
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
@@ -137,8 +137,7 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
     template <typename... Args>
     MeshCoreDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
-          BaseMeshDynamics(mesh_data),
-          pkg_type_(mesh_data.getPackageType().DelegatedData(ExecutionPolicy())),
+          BaseMeshDynamics(mesh_data), dv_pkg_type_(mesh_data.getPackageType()),
           kernel_implementation_(*this){};
     virtual ~MeshCoreDynamics() {};
 
@@ -146,10 +145,11 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
     {
         UnsignedInt num_grid_pkgs = mesh_data_.NumGridPackages();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
+        int *pkg_type = dv_pkg_type_.DelegatedData(ExecutionPolicy());
         package_for(ExecutionPolicy(), num_singular_pkgs_, num_grid_pkgs,
                     [=](UnsignedInt package_index)
                     {
-                        if (pkg_type_[package_index] == 1)
+                        if (pkg_type[package_index] == 1)
                             update_kernel->update(package_index);
                     });
     };
