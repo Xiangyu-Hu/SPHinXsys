@@ -62,16 +62,17 @@ class MeshWithGridDataPackages : public Mesh
     template <typename DataType>
     using BKGMeshVariable = DiscreteVariable<DataType>;
     static constexpr int pkg_size = PKG_SIZE; /**< the size of the data package matrix. */
+    typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
+    typedef DataContainerAddressAssemble<DiscreteVariable> BKGMeshVariableAssemble;
 
   protected:
-    typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
     DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
     MeshVariableAssemble all_mesh_variables_;      /**< all mesh variables on this mesh. */
-    MeshVariableAssemble mesh_variables_to_write_;  /**< mesh variables to write, which are not empty. */
+    MeshVariableAssemble mesh_variables_to_write_; /**< mesh variables to write, which are not empty. */
     MeshVariableAssemble mesh_variables_to_probe_; /**< mesh variables to probe. */
-    typedef DataContainerAddressAssemble<DiscreteVariable> BKGMeshVariableAssemble;
+
     DataContainerUniquePtrAssemble<DiscreteVariable> bkg_mesh_variable_ptrs_;
-    BKGMeshVariableAssemble all_bkg_mesh_variables_;     /**< all discrete variables on this mesh. */
+    BKGMeshVariableAssemble all_bkg_mesh_variables_;      /**< all discrete variables on this mesh. */
     BKGMeshVariableAssemble bkg_mesh_variables_to_write_; /**< discrete variables to write, which are not empty. */
 
   public:

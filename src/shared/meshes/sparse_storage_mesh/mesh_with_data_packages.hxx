@@ -264,12 +264,6 @@ void MeshWithGridDataPackages<PKG_SIZE>::registerOccupied(UnsignedInt sort_index
 template <UnsignedInt PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
 {
-    parallel_sort(
-        occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
-        [](const std::pair<UnsignedInt, int> &a, const std::pair<UnsignedInt, int> &b)
-        {
-            return a.first < b.first;
-        });
     num_grid_pkgs_ = occupied_data_pkgs_.size() + num_singular_pkgs_;
     cell_neighborhood_.reallocateData(par_host, num_grid_pkgs_);
     dv_pkg_cell_info_.reallocateData(par_host, num_grid_pkgs_);
