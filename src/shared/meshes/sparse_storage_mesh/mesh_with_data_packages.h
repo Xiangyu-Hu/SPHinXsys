@@ -61,9 +61,12 @@ class MeshWithGridDataPackages : public Mesh
     using MeshVariable = DiscreteVariable<MeshVariableData<DataType>>;
     template <typename DataType>
     using BKGMeshVariable = DiscreteVariable<DataType>;
+    template <typename DataType>
+    using MetaVariable = DiscreteVariable<DataType>;
     static constexpr int pkg_size = PKG_SIZE; /**< the size of the data package matrix. */
     typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
     typedef DataContainerAddressAssemble<DiscreteVariable> BKGMeshVariableAssemble;
+    typedef DataContainerAddressAssemble<DiscreteVariable> PackageMetaVariableAssemble;
 
   protected:
     DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
@@ -74,6 +77,10 @@ class MeshWithGridDataPackages : public Mesh
     DataContainerUniquePtrAssemble<DiscreteVariable> bkg_mesh_variable_ptrs_;
     BKGMeshVariableAssemble all_bkg_mesh_variables_;      /**< all discrete variables on this mesh. */
     BKGMeshVariableAssemble bkg_mesh_variables_to_write_; /**< discrete variables to write, which are not empty. */
+
+    DataContainerUniquePtrAssemble<DiscreteVariable> meta_variable_ptrs_;
+    PackageMetaVariableAssemble all_meta_variables_;
+    PackageMetaVariableAssemble evolving_meta_variables_;
 
   public:
     MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing,
@@ -97,6 +104,8 @@ class MeshWithGridDataPackages : public Mesh
     void addMeshVariableToProbe(const std::string &variable_name);
     template <typename DataType>
     void addBKGMeshVariableToWrite(const std::string &variable_name);
+    template <typename DataType>
+    void addEvolvingMetaVariable(const std::string &variable_name);
     void writeMeshVariableToPlt(std::ofstream &output_file);
     void writeBKGMeshVariableToPlt(std::ofstream &output_file);
 
@@ -161,9 +170,13 @@ class MeshWithGridDataPackages : public Mesh
     template <typename DataType, typename... Args>
     BKGMeshVariable<DataType> *registerBKGMeshVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>
+    MetaVariable<DataType> *registerMetaVariable(const std::string &variable_name);
+    template <typename DataType>
     MeshVariable<DataType> *getMeshVariable(const std::string &variable_name);
     template <typename DataType>
     BKGMeshVariable<DataType> *getBKGMeshVariable(const std::string &variable_name);
+    template <typename DataType>
+    MetaVariable<DataType> *getMetaVariable(const std::string &variable_name);
 
     void registerOccupied(UnsignedInt sort_index, int type);
     void organizeOccupiedPackages();

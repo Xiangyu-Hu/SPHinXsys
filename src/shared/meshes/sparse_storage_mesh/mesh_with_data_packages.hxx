@@ -71,6 +71,14 @@ void MeshWithGridDataPackages<PKG_SIZE>::addBKGMeshVariableToWrite(const std::st
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
+template <typename DataType>
+void MeshWithGridDataPackages<PKG_SIZE>::addEvolvingMetaVariable(const std::string &variable_name)
+{
+    addVariableToList<DiscreteVariable, DataType>(
+        evolving_meta_variables_, all_meta_variables_, variable_name);
+}
+//=============================================================================================//
+template <UnsignedInt PKG_SIZE>
 template <typename T>
 T &MeshWithGridDataPackages<PKG_SIZE>::checkOrganized(std::string func_name, T &value)
 {
@@ -223,6 +231,21 @@ MeshWithGridDataPackages<PKG_SIZE>::registerBKGMeshVariable(const std::string &v
     return registerVariable<BKGMeshVariable, DataType>(
         all_bkg_mesh_variables_, bkg_mesh_variable_ptrs_, variable_name, AllCells().prod(),
         std::forward<Args>(args)...);
+}
+//=============================================================================================//
+template <UnsignedInt PKG_SIZE>
+template <typename DataType>
+DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::registerMetaVariable(
+    const std::string &variable_name)
+{
+    if (!is_organized_)
+    {
+        std::cout << "\n Error: the meta variable '" << variable_name
+                  << "' is registered before the data packages are organized!" << std::endl;
+        exit(1);
+    }
+    return registerVariable<DiscreteVariable, DataType>(
+        all_meta_variables_, meta_variable_ptrs_, variable_name, num_grid_pkgs_);
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
