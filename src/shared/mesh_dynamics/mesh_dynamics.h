@@ -128,7 +128,7 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
 template <class ExecutionPolicy, class LocalDynamicsType>
 class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
 {
-    std::pair<Arrayi, int> *pkg_cell_info_;
+    int *pkg_type_;
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
@@ -138,7 +138,7 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
     MeshCoreDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseMeshDynamics(mesh_data),
-          pkg_cell_info_(mesh_data.dvPkgCellInfo().DelegatedData(ExecutionPolicy())),
+          pkg_type_(mesh_data.getPackageType().DelegatedData(ExecutionPolicy())),
           kernel_implementation_(*this){};
     virtual ~MeshCoreDynamics() {};
 
@@ -146,11 +146,10 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
     {
         UnsignedInt num_grid_pkgs = mesh_data_.NumGridPackages();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        std::pair<SPH::Arrayi, int> *meta_data_cell = pkg_cell_info_;
         package_for(ExecutionPolicy(), num_singular_pkgs_, num_grid_pkgs,
                     [=](UnsignedInt package_index)
                     {
-                        if (meta_data_cell[package_index].second == 1)
+                        if (pkg_type_[package_index] == 1)
                             update_kernel->update(package_index);
                     });
     };

@@ -12,7 +12,8 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
       global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
       num_singular_pkgs_(num_singular_pkgs), num_grid_pkgs_(num_singular_pkgs),
-      dv_pkg_cell_info_("PackageCellInfo", num_singular_pkgs_),
+      dv_pkg_cell_index_("PackageCellIndex", num_singular_pkgs_),
+      dv_pkg_type_("PackageType", num_singular_pkgs_),
       cell_neighborhood_("CellNeighborhood", num_singular_pkgs_),
       bmv_cell_pkg_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
       data_spacing_(data_spacing),
@@ -22,12 +23,6 @@ template <UnsignedInt PKG_SIZE>
 UnsignedInt MeshWithGridDataPackages<PKG_SIZE>::NumGridPackages()
 {
     return checkOrganized("NumGridPackages", num_grid_pkgs_);
-}
-//=============================================================================================//
-template <UnsignedInt PKG_SIZE>
-DiscreteVariable<std::pair<Arrayi, int>> &MeshWithGridDataPackages<PKG_SIZE>::dvPkgCellInfo()
-{
-    return checkOrganized("dvPkgCellInfo", dv_pkg_cell_info_);
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
@@ -46,6 +41,18 @@ template <UnsignedInt PKG_SIZE>
 ConcurrentVec<std::pair<UnsignedInt, int>> &MeshWithGridDataPackages<PKG_SIZE>::getOccupiedDataPackages()
 {
     return checkOrganized("getOccupiedDataPackages", occupied_data_pkgs_);
+}
+//=============================================================================================//
+template <UnsignedInt PKG_SIZE>
+DiscreteVariable<Arrayi> &MeshWithGridDataPackages<PKG_SIZE>::getPackageCellIndex()
+{
+    return checkOrganized("getPackageCellIndex", dv_pkg_cell_index_);
+}
+//=============================================================================================//
+template <UnsignedInt PKG_SIZE>
+DiscreteVariable<int> &MeshWithGridDataPackages<PKG_SIZE>::getPackageType()
+{
+    return checkOrganized("getPackageType", dv_pkg_type_);
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
@@ -187,7 +194,8 @@ template <class ExecutionPolicy>
 void MeshWithGridDataPackages<PKG_SIZE>::syncMeshVariablesToProbe(ExecutionPolicy &ex_policy)
 {
     sync_mesh_variable_data_(mesh_variables_to_probe_, ex_policy);
-    dv_pkg_cell_info_.prepareForOutput(ex_policy);
+    dv_pkg_cell_index_.prepareForOutput(ex_policy);
+    dv_pkg_type_.prepareForOutput(ex_policy);
     bmv_cell_pkg_index_.prepareForOutput(ex_policy);
 }
 //=============================================================================================//
@@ -289,7 +297,8 @@ void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
 {
     num_grid_pkgs_ = occupied_data_pkgs_.size() + num_singular_pkgs_;
     cell_neighborhood_.reallocateData(par_host, num_grid_pkgs_);
-    dv_pkg_cell_info_.reallocateData(par_host, num_grid_pkgs_);
+    dv_pkg_cell_index_.reallocateData(par_host, num_grid_pkgs_);
+    dv_pkg_type_.reallocateData(par_host, num_grid_pkgs_);
     is_organized_ = true;
 }
 //=============================================================================================//
@@ -305,14 +314,12 @@ bool MeshWithGridDataPackages<PKG_SIZE>::isInnerDataPackage(const Arrayi &cell_i
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
-bool MeshWithGridDataPackages<PKG_SIZE>::
-    isWithinCorePackage(UnsignedInt *cell_package_index,
-                        std::pair<Arrayi, int> *meta_data_cell,
-                        Vecd position)
+bool MeshWithGridDataPackages<PKG_SIZE>::isWithinCorePackage(
+    UnsignedInt *cell_package_index, int *pkg_type, Vecd position)
 {
     Arrayi cell_index = CellIndexFromPosition(position);
     UnsignedInt package_index = PackageIndexFromCellIndex(cell_package_index, cell_index);
-    return meta_data_cell[package_index].second == 1;
+    return pkg_type[package_index] == 1;
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>

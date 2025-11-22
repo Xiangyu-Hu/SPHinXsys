@@ -132,9 +132,8 @@ size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
 {
     for (size_t level = total_levels_; level != 0; --level)
     {
-        if (mesh_data_set_[level - 1]->isWithinCorePackage(cell_pkg_index_set_[level - 1],
-                                                           pkg_cell_info_set_[level - 1],
-                                                           position))
+        if (mesh_data_set_[level - 1]->isWithinCorePackage(
+                cell_pkg_index_set_[level - 1], pkg_type_set_[level - 1], position))
             return level - 1; // jump out of the loop!
     }
     return 0;

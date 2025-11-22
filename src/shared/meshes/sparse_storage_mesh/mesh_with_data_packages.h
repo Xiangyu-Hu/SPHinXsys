@@ -94,9 +94,10 @@ class MeshWithGridDataPackages : public Mesh
     int DataPackageSize() { return pkg_size; };
     UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
     UnsignedInt NumGridPackages();
-    DiscreteVariable<std::pair<Arrayi, int>> &dvPkgCellInfo();
     DiscreteVariable<CellNeighborhood> &getCellNeighborhood();
     DiscreteVariable<UnsignedInt> &getCellPackageIndex();
+    DiscreteVariable<Arrayi> &getPackageCellIndex();
+    DiscreteVariable<int> &getPackageType();
     ConcurrentVec<std::pair<UnsignedInt, int>> &getOccupiedDataPackages();
     template <typename DataType>
     void addMeshVariableToWrite(const std::string &variable_name);
@@ -113,7 +114,8 @@ class MeshWithGridDataPackages : public Mesh
     Mesh global_mesh_;                                              /**< the global mesh with the size of data spacing. */
     UnsignedInt num_singular_pkgs_;                                 /**< the number of all packages, initially only singular packages. */
     UnsignedInt num_grid_pkgs_;                                     /**< the number of all packages, initially only with singular packages. */
-    DiscreteVariable<std::pair<Arrayi, int>> dv_pkg_cell_info_;     /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
+    DiscreteVariable<Arrayi> dv_pkg_cell_index_;                    /**< metadata for data pckages: cell index. */
+    DiscreteVariable<int> dv_pkg_type_;                             /**< metadata for data pckages: (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> cell_neighborhood_;          /**< 3*3(*3) array to store indicies of neighborhood cells. */
     BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;              /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_; /**< (UnsignedInt)sort_index, (int)core1/inner0. */
@@ -181,7 +183,7 @@ class MeshWithGridDataPackages : public Mesh
     void registerOccupied(UnsignedInt sort_index, int type);
     void organizeOccupiedPackages();
     bool isInnerDataPackage(const Arrayi &cell_index);
-    bool isWithinCorePackage(UnsignedInt *cell_package_index, std::pair<Arrayi, int> *meta_data_cell, Vecd position);
+    bool isWithinCorePackage(UnsignedInt *cell_package_index, int *pkg_type, Vecd position);
     Arrayi boundCellIndex(const Arrayi &input) const;
     UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index);
     void assignDataPackageIndex(const Arrayi &cell_index, const UnsignedInt package_index);

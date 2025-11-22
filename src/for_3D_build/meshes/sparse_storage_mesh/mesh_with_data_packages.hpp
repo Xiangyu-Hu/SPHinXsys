@@ -12,13 +12,14 @@ template <UnsignedInt PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &output_file)
 {
     StdVec<Coord3D> active_cells;
-    auto meta_data = dv_pkg_cell_info_.Data();
+    auto pkg_cell_index = dv_pkg_cell_index_.Data();
+    auto pkg_type = dv_pkg_type_.Data();
     package_for(execution::seq, num_singular_pkgs_, num_grid_pkgs_,
                 [&](UnsignedInt package_index)
                 {
-                    if (meta_data[package_index].second == 1)
+                    if (pkg_type[package_index] == 1)
                     {
-                        auto cell_index = meta_data[package_index].first;
+                        auto cell_index = pkg_cell_index[package_index];
                         active_cells.push_back({cell_index[0], cell_index[1], cell_index[2]});
                     }
                 });
