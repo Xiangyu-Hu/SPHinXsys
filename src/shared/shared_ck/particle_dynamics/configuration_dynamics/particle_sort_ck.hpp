@@ -6,16 +6,25 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename DataType>
-void UpdateSortableVariables::InitializeTemporaryVariables::operator()(
-    UniquePtr<DiscreteVariable<DataType>> &variable_ptr, UnsignedInt data_size)
+template <template <typename> class ContanierType>
+UpdateSortableVariables<ContanierType>::UpdateSortableVariables(UnsignedInt data_size)
+    : initialize_temp_variables_()
 {
-    variable_ptr = makeUnique<DiscreteVariable<DataType>>("Temporary", data_size);
+    initialize_temp_variables_(temp_variables_, data_size);
+}    
+//=================================================================================================//
+template <template <typename> class ContanierType>
+template <typename DataType>
+void UpdateSortableVariables<ContanierType>::InitializeTemporaryVariables::operator()(
+    UniquePtr<ContanierType<DataType>> &variable_ptr, UnsignedInt data_size)
+{
+    variable_ptr = makeUnique<ContanierType<DataType>>("Temporary", data_size);
 }
 //=================================================================================================//
+template <template <typename> class ContanierType>
 template <class ExecutionPolicy, typename DataType>
-void UpdateSortableVariables::operator()(
-    DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
+void UpdateSortableVariables<ContanierType>::operator()(
+    DataContainerAddressKeeper<ContanierType<DataType>> &variables,
     ExecutionPolicy &ex_policy, UnsignedInt sorted_size,
     DiscreteVariable<UnsignedInt> *dv_index_permutation)
 {

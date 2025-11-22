@@ -37,14 +37,16 @@
  */
 namespace SPH
 {
+
+template <template <typename> class ContanierType>
 class UpdateSortableVariables
 {
-    typedef DataAssemble<UniquePtr, DiscreteVariable> TemporaryVariables;
+    typedef DataAssemble<UniquePtr, ContanierType> TemporaryVariables;
 
     struct InitializeTemporaryVariables
     {
         template <typename DataType>
-        void operator()(UniquePtr<DiscreteVariable<DataType>> &variable_ptr, UnsignedInt data_size);
+        void operator()(UniquePtr<ContanierType<DataType>> &variable_ptr, UnsignedInt data_size);
     };
 
     TemporaryVariables temp_variables_;
@@ -54,7 +56,7 @@ class UpdateSortableVariables
     UpdateSortableVariables(UnsignedInt data_size);
 
     template <class ExecutionPolicy, typename DataType>
-    void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
+    void operator()(DataContainerAddressKeeper<ContanierType<DataType>> &variables,
                     ExecutionPolicy &ex_policy, UnsignedInt sorted_size,
                     DiscreteVariable<UnsignedInt> *dv_index_permutation);
 };
@@ -110,7 +112,7 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
     DiscreteVariable<UnsignedInt> *dv_index_permutation_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
     DiscreteVariable<UnsignedInt> *dv_sorted_id_;
-    OperationOnDataAssemble<ParticleVariables, UpdateSortableVariables> update_variables_to_sort_;
+    OperationOnDataAssemble<ParticleVariables, UpdateSortableVariables<DiscreteVariable>> update_variables_to_sort_;
     SortMethodType sort_method_;
     Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel> kernel_implementation_;
 
