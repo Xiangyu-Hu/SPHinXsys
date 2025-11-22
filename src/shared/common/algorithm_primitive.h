@@ -40,7 +40,7 @@ namespace interface9
 {
 /** sorting particle */
 template <typename RandomAccessIterator, typename Compare, typename SwapType>
-class QuickSortParticleRange
+class QuickSortRange
 {
     inline size_t median_of_three(const RandomAccessIterator &array, size_t l, size_t m, size_t r) const
     {
@@ -48,7 +48,7 @@ class QuickSortParticleRange
                                          : (comp_(array[r], array[m]) ? m : (comp_(array[r], array[l]) ? r : l));
     }
 
-    inline size_t PseudoMedianOfNine(const RandomAccessIterator &array, const QuickSortParticleRange &range) const
+    inline size_t PseudoMedianOfNine(const RandomAccessIterator &array, const QuickSortRange &range) const
     {
         size_t offset = range.size_ / 8u;
         return median_of_three(array,
@@ -57,7 +57,7 @@ class QuickSortParticleRange
                                median_of_three(array, offset * 6, offset * 7, range.size_ - 1));
     }
 
-    size_t splitRange(QuickSortParticleRange &range)
+    size_t splitRange(QuickSortRange &range)
     {
         RandomAccessIterator array = range.begin_;
         RandomAccessIterator key0 = range.begin_;
@@ -101,9 +101,9 @@ class QuickSortParticleRange
     }
 
   public:
-    void operator=(const QuickSortParticleRange &) = delete;
-    QuickSortParticleRange(const QuickSortParticleRange &) = default;
-    QuickSortParticleRange() = default;
+    void operator=(const QuickSortRange &) = delete;
+    QuickSortRange(const QuickSortRange &) = default;
+    QuickSortRange() = default;
 
     static const size_t grainsize_ = 500;
     const Compare &comp_;
@@ -111,7 +111,7 @@ class QuickSortParticleRange
     size_t size_;
     RandomAccessIterator begin_;
 
-    QuickSortParticleRange(RandomAccessIterator begin,
+    QuickSortRange(RandomAccessIterator begin,
                            size_t size, const Compare &compare, SwapType &swap_particle_data)
         : comp_(compare), swap_sortable_particle_data_(swap_particle_data),
           size_(size), begin_(begin) {}
@@ -119,7 +119,7 @@ class QuickSortParticleRange
     bool empty() const { return size_ == 0; }
     bool is_divisible() const { return size_ >= grainsize_; }
 
-    QuickSortParticleRange(QuickSortParticleRange &range, split)
+    QuickSortRange(QuickSortRange &range, split)
         : comp_(range.comp_), swap_sortable_particle_data_(range.swap_sortable_particle_data_), size_(splitRange(range))
           // +1 accounts for the pivot element, which is at its correct place
           // already and, therefore, is not included into sub-ranges.
@@ -183,9 +183,9 @@ void InsertionSort(RandomAccessIterator First, RandomAccessIterator Last, Compar
 
 /** Body class used to sort elements in a range that is smaller than the grainsize. */
 template <typename RandomAccessIterator, typename Compare, typename SwapType>
-struct QuickSortParticleBody
+struct QuickSortBody
 {
-    void operator()(const QuickSortParticleRange<RandomAccessIterator, Compare, SwapType> &range) const
+    void operator()(const QuickSortRange<RandomAccessIterator, Compare, SwapType> &range) const
     {
         SerialQuickSort(range.begin_, range.begin_ + range.size_, range.comp_, range.swap_sortable_particle_data_);
     }
@@ -234,8 +234,8 @@ class QuickSort
     UnsignedInt *index_permutation_;
     SwapIndex swap_index_;
     CompareSequence compare_;
-    tbb::interface9::QuickSortParticleRange<UnsignedInt *, CompareSequence, SwapIndex> quick_sort_range_;
-    tbb::interface9::QuickSortParticleBody<UnsignedInt *, CompareSequence, SwapIndex> quick_sort_body_;
+    tbb::interface9::QuickSortRange<UnsignedInt *, CompareSequence, SwapIndex> quick_sort_range_;
+    tbb::interface9::QuickSortBody<UnsignedInt *, CompareSequence, SwapIndex> quick_sort_body_;
 };
 
 template <typename T, typename Op>

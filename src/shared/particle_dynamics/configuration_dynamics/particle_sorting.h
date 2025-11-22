@@ -98,10 +98,10 @@ class ParticleDataSort<ParallelPolicy>
     /** using pointer because it is constructed after particles. */
     SwapSortableParticleData swap_sortable_particle_data_;
     CompareSequence compare_;
-    tbb::interface9::QuickSortParticleRange<
+    tbb::interface9::QuickSortRange<
         UnsignedInt *, CompareSequence, SwapSortableParticleData>
         quick_sort_particle_range_;
-    tbb::interface9::QuickSortParticleBody<
+    tbb::interface9::QuickSortBody<
         UnsignedInt *, CompareSequence, SwapSortableParticleData>
         quick_sort_particle_body_;
 
