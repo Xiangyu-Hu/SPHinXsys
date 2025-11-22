@@ -3,10 +3,10 @@
 namespace SPH
 {
 //=================================================================================================//
-QuickSort::SwapParticleIndex::SwapParticleIndex(UnsignedInt *sequence, UnsignedInt *index_permutation)
+QuickSort::SwapIndex::SwapIndex(UnsignedInt *sequence, UnsignedInt *index_permutation)
     : sequence_(sequence), index_permutation_(index_permutation) {}
 //=================================================================================================//
-void QuickSort::SwapParticleIndex::operator()(UnsignedInt *a, UnsignedInt *b)
+void QuickSort::SwapIndex::operator()(UnsignedInt *a, UnsignedInt *b)
 {
     std::swap(*a, *b);
 
@@ -17,9 +17,9 @@ void QuickSort::SwapParticleIndex::operator()(UnsignedInt *a, UnsignedInt *b)
 //=================================================================================================//
 void QuickSort::sort(const ParallelPolicy &ex_policy, UnsignedInt size)
 {
-    quick_sort_particle_range_.begin_ = sequence_;
-    quick_sort_particle_range_.size_ = size;
-    tbb::parallel_for(quick_sort_particle_range_, quick_sort_particle_body_);
+    quick_sort_range_.begin_ = sequence_;
+    quick_sort_range_.size_ = size;
+    tbb::parallel_for(quick_sort_range_, quick_sort_body_);
 }
 //=================================================================================================//
 } // namespace SPH

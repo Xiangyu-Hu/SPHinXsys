@@ -37,16 +37,6 @@ void UpdateSortableVariables::operator()(
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-QuickSort::QuickSort(const ExecutionPolicy &ex_policy,
-                     DiscreteVariable<UnsignedInt> *dv_sequence,
-                     DiscreteVariable<UnsignedInt> *dv_index_permutation)
-    : sequence_(dv_sequence->DelegatedData(ex_policy)),
-      index_permutation_(dv_index_permutation->DelegatedData(ex_policy)),
-      swap_particle_index_(sequence_, index_permutation_), compare_(),
-      quick_sort_particle_range_(sequence_, 0, compare_, swap_particle_index_),
-      quick_sort_particle_body_() {}
-//=================================================================================================//
-template <class ExecutionPolicy>
 ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
     : LocalDynamics(real_body), BaseDynamics<void>(),
       ex_policy_(ExecutionPolicy{}),

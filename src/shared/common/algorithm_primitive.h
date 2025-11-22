@@ -193,7 +193,7 @@ struct QuickSortParticleBody
 
 namespace SPH
 {
-struct CompareParticleSequence
+struct CompareSequence
 {
     bool operator()(const size_t &x, const size_t &y) const
     {
@@ -203,14 +203,14 @@ struct CompareParticleSequence
 
 class QuickSort
 {
-    class SwapParticleIndex
+    class SwapIndex
     {
         UnsignedInt *sequence_;
         UnsignedInt *index_permutation_;
 
       public:
-        SwapParticleIndex(UnsignedInt *sequence, UnsignedInt *index_permutation);
-        ~SwapParticleIndex() {};
+        SwapIndex(UnsignedInt *sequence, UnsignedInt *index_permutation);
+        ~SwapIndex() {};
 
         void operator()(UnsignedInt *a, UnsignedInt *b);
     };
@@ -219,17 +219,59 @@ class QuickSort
     template <class ExecutionPolicy>
     explicit QuickSort(const ExecutionPolicy &ex_policy,
                        DiscreteVariable<UnsignedInt> *dv_sequence,
-                       DiscreteVariable<UnsignedInt> *dv_index_permutation);
+                       DiscreteVariable<UnsignedInt> *dv_index_permutation)
+        : sequence_(dv_sequence->DelegatedData(ex_policy)),
+          index_permutation_(dv_index_permutation->DelegatedData(ex_policy)),
+          swap_index_(sequence_, index_permutation_), compare_(),
+          quick_sort_range_(sequence_, 0, compare_, swap_index_),
+          quick_sort_body_(){};
     void sort(const ParallelPolicy &ex_policy, UnsignedInt size);
 
   protected:
     UnsignedInt *sequence_;
     UnsignedInt *index_permutation_;
-    SwapParticleIndex swap_particle_index_;
-    CompareParticleSequence compare_;
-    tbb::interface9::QuickSortParticleRange<UnsignedInt *, CompareParticleSequence, SwapParticleIndex> quick_sort_particle_range_;
-    tbb::interface9::QuickSortParticleBody<UnsignedInt *, CompareParticleSequence, SwapParticleIndex> quick_sort_particle_body_;
+    SwapIndex swap_index_;
+    CompareSequence compare_;
+    tbb::interface9::QuickSortParticleRange<UnsignedInt *, CompareSequence, SwapIndex> quick_sort_range_;
+    tbb::interface9::QuickSortParticleBody<UnsignedInt *, CompareSequence, SwapIndex> quick_sort_body_;
 };
+
+template <typename T, typename Op>
+T exclusive_scan(const SequencedPolicy &seq_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
+{
+    UnsignedInt scan_size = d_size - 1;
+    std::exclusive_scan(first, first + d_size, d_first, T{0}, op);
+    return d_first[scan_size];
+}
+
+template <typename T, typename Op>
+T exclusive_scan(const ParallelPolicy &par_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
+{
+    // Exclusive scan is the same as inclusive, but shifted by one
+    UnsignedInt scan_size = d_size - 1;
+    d_first[0] = T{0};
+    using range_type = tbb::blocked_range<UnsignedInt>;
+    tbb::parallel_scan(
+        range_type(0, scan_size), d_first[0],
+        [=](const range_type &r, T sum, bool is_final_scan) -> T
+        {
+            T tmp = sum;
+            for (UnsignedInt i = r.begin(); i < r.end(); ++i)
+            {
+                tmp = op(tmp, first[i]);
+                if (is_final_scan)
+                {
+                    d_first[i + 1] = tmp;
+                }
+            }
+            return tmp;
+        },
+        [&](const T &a, const T &b)
+        {
+            return op(a, b);
+        });
+    return d_first[scan_size];
+}
 } // namespace SPH
 
 #endif // ALGORITHM_PRIMITIVE_H

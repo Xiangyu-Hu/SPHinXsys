@@ -29,7 +29,7 @@
 #ifndef BASE_CONFIGURATION_DYNAMICS_SYCL_H
 #define BASE_CONFIGURATION_DYNAMICS_SYCL_H
 
-#include "algorithm_primitive.h"
+#include "algorithm_primitive_sycl.h"
 #include "base_configuration_dynamics.h"
 namespace SPH
 {

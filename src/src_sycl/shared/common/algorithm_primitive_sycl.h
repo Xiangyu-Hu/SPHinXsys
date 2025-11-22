@@ -29,6 +29,7 @@
 #ifndef ALGORITHM_PRIMITIVE_SYCL_H
 #define ALGORITHM_PRIMITIVE_SYCL_H
 
+#include "implementation_sycl.h"
 #include "sphinxsys_variable.h"
 
 namespace SPH
@@ -41,12 +42,36 @@ class RadixSort
     template <class ExecutionPolicy>
     explicit RadixSort(const ExecutionPolicy &ex_policy,
                        DiscreteVariable<UnsignedInt> *dv_sequence,
-                       DiscreteVariable<UnsignedInt> *dv_index_permutation);
+                       DiscreteVariable<UnsignedInt> *dv_index_permutation)
+        : dv_sequence_(dv_sequence), dv_index_permutation_(dv_index_permutation){};
     void sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size);
 
   protected:
     DiscreteVariable<UnsignedInt> *dv_sequence_;
     DiscreteVariable<UnsignedInt> *dv_index_permutation_;
 };
+
+template <typename T, typename Op>
+T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
+{
+    execution_instance.getQueue()
+        .submit([=](sycl::handler &cgh)
+                { cgh.parallel_for(
+                      execution_instance.getUniformNdRange(execution_instance.getWorkGroupSize()),
+                      [=](sycl::nd_item<1> item)
+                      {
+                          if (item.get_group_linear_id() == 0)
+                          {
+                              sycl::joint_exclusive_scan(
+                                  item.get_group(), first, first + d_size, d_first, T{0}, op);
+                          }
+                      }); })
+        .wait_and_throw();
+
+    UnsignedInt scan_size = d_size - 1;
+    T last_value;
+    copyFromDevice(&last_value, d_first + scan_size, 1);
+    return last_value;
+}
 } // namespace SPH
 #endif // ALGORITHM_PRIMITIVE_SYCL_H
