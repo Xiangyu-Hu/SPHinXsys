@@ -32,8 +32,6 @@
 #include "implementation.h"
 #include "loop_range.h"
 
-#include <numeric>
-
 namespace SPH
 {
 using namespace execution;

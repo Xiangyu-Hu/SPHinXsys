@@ -31,6 +31,8 @@
 
 #include "sphinxsys_variable.h"
 
+#include <numeric>
+
 /** this is a reformulation of tbb parallel_sort for particle data */
 namespace tbb
 {
