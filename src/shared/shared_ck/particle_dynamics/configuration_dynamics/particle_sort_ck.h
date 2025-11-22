@@ -59,40 +59,6 @@ class UpdateSortableVariables
                     DiscreteVariable<UnsignedInt> *dv_index_permutation);
 };
 
-class QuickSort
-{
-    class SwapParticleIndex
-    {
-        UnsignedInt *sequence_;
-        UnsignedInt *index_permutation_;
-
-      public:
-        SwapParticleIndex(UnsignedInt *sequence, UnsignedInt *index_permutation);
-        ~SwapParticleIndex() {};
-
-        void operator()(UnsignedInt *a, UnsignedInt *b);
-    };
-
-  public:
-    template <class ExecutionPolicy>
-    explicit QuickSort(const ExecutionPolicy &ex_policy,
-                       DiscreteVariable<UnsignedInt> *dv_sequence,
-                       DiscreteVariable<UnsignedInt> *dv_index_permutation);
-    void sort(const ParallelPolicy &ex_policy, BaseParticles *particles);
-
-  protected:
-    UnsignedInt *sequence_;
-    UnsignedInt *index_permutation_;
-    SwapParticleIndex swap_particle_index_;
-    CompareParticleSequence compare_;
-    tbb::interface9::QuickSortParticleRange<
-        UnsignedInt *, CompareParticleSequence, SwapParticleIndex>
-        quick_sort_particle_range_;
-    tbb::interface9::QuickSortParticleBody<
-        UnsignedInt *, CompareParticleSequence, SwapParticleIndex>
-        quick_sort_particle_body_;
-};
-
 template <class ExecutionPolicy>
 class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
 {

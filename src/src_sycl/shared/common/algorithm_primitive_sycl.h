@@ -21,17 +21,15 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file particle_sort_sycl.h
+ * @file algorithm_primitive_sycl.h
  * @brief Here gives the classes for particle sorting.
  * @author Xiangyu Hu
  */
 
-#ifndef PARTICLE_SORT_SYCL_H
-#define PARTICLE_SORT_SYCL_H
+#ifndef ALGORITHM_PRIMITIVE_SYCL_H
+#define ALGORITHM_PRIMITIVE_SYCL_H
 
-#include "base_configuration_dynamics_sycl.h"
-#include "implementation_sycl.h"
-#include "particle_sort_ck.h"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {
@@ -44,11 +42,11 @@ class RadixSort
     explicit RadixSort(const ExecutionPolicy &ex_policy,
                        DiscreteVariable<UnsignedInt> *dv_sequence,
                        DiscreteVariable<UnsignedInt> *dv_index_permutation);
-    void sort(const ParallelDevicePolicy &ex_policy, BaseParticles *particles);
+    void sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size);
 
   protected:
     DiscreteVariable<UnsignedInt> *dv_sequence_;
     DiscreteVariable<UnsignedInt> *dv_index_permutation_;
 };
 } // namespace SPH
-#endif // PARTICLE_SORT_SYCL_H
+#endif // ALGORITHM_PRIMITIVE_SYCL_H
