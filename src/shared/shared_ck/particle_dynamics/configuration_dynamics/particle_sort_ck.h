@@ -37,30 +37,6 @@
  */
 namespace SPH
 {
-
-template <template <typename> class ContanierType>
-class UpdateSortableVariables
-{
-    typedef DataAssemble<UniquePtr, ContanierType> TemporaryVariables;
-
-    struct InitializeTemporaryVariables
-    {
-        template <typename DataType>
-        void operator()(UniquePtr<ContanierType<DataType>> &variable_ptr, UnsignedInt data_size);
-    };
-
-    TemporaryVariables temp_variables_;
-    OperationOnDataAssemble<TemporaryVariables, InitializeTemporaryVariables> initialize_temp_variables_;
-
-  public:
-    UpdateSortableVariables(UnsignedInt data_size);
-
-    template <class ExecutionPolicy, typename DataType>
-    void operator()(DataContainerAddressKeeper<ContanierType<DataType>> &variables,
-                    ExecutionPolicy &ex_policy, UnsignedInt sorted_size,
-                    DiscreteVariable<UnsignedInt> *dv_index_permutation);
-};
-
 template <class ExecutionPolicy>
 class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
 {

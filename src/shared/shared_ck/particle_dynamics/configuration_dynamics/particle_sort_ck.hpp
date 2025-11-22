@@ -6,45 +6,6 @@
 namespace SPH
 {
 //=================================================================================================//
-template <template <typename> class ContanierType>
-UpdateSortableVariables<ContanierType>::UpdateSortableVariables(UnsignedInt data_size)
-    : initialize_temp_variables_()
-{
-    initialize_temp_variables_(temp_variables_, data_size);
-}    
-//=================================================================================================//
-template <template <typename> class ContanierType>
-template <typename DataType>
-void UpdateSortableVariables<ContanierType>::InitializeTemporaryVariables::operator()(
-    UniquePtr<ContanierType<DataType>> &variable_ptr, UnsignedInt data_size)
-{
-    variable_ptr = makeUnique<ContanierType<DataType>>("Temporary", data_size);
-}
-//=================================================================================================//
-template <template <typename> class ContanierType>
-template <class ExecutionPolicy, typename DataType>
-void UpdateSortableVariables<ContanierType>::operator()(
-    DataContainerAddressKeeper<ContanierType<DataType>> &variables,
-    ExecutionPolicy &ex_policy, UnsignedInt sorted_size,
-    DiscreteVariable<UnsignedInt> *dv_index_permutation)
-{
-    constexpr int type_index = DataTypeIndex<DataType>::value;
-    DataType *temp_data_field = std::get<type_index>(temp_variables_)->DelegatedData(ex_policy);
-
-    UnsignedInt *index_permutation = dv_index_permutation->DelegatedData(ex_policy);
-
-    for (size_t k = 0; k != variables.size(); ++k)
-    {
-        DataType *sorted_data_field = variables[k]->DelegatedData(ex_policy);
-        particle_for(ex_policy, IndexRange(0, sorted_size),
-                     [=](size_t i)
-                     { temp_data_field[i] = sorted_data_field[i]; });
-        particle_for(ex_policy, IndexRange(0, sorted_size),
-                     [=](size_t i)
-                     { sorted_data_field[i] = temp_data_field[index_permutation[i]]; });
-    }
-}
-//=================================================================================================//
 template <class ExecutionPolicy>
 ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
     : LocalDynamics(real_body), BaseDynamics<void>(),
