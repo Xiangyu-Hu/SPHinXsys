@@ -111,7 +111,7 @@ class MultilevelLevelSet : public BaseMeshField
     size_t total_levels_; /**< level 0 is the coarsest */
     Real refinement_ratio_;
     StdVec<UnsignedInt *> cell_pkg_index_set_;
-    StdVec<std::pair<Arrayi, int> *> pkg_cell_info_set_;
+    StdVec<int *> pkg_type_set_;
     StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
     StdVec<NeighborMethod<SingleValued> *> neighbor_method_set_;
     StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;

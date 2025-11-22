@@ -31,6 +31,7 @@
 #ifndef MESH_DYNAMICS_H
 #define MESH_DYNAMICS_H
 
+#include "base_configuration_dynamics.h"
 #include "base_dynamics.h"
 #include "implementation.h"
 #include "mesh_iterators.hpp"
@@ -127,7 +128,7 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
 template <class ExecutionPolicy, class LocalDynamicsType>
 class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
 {
-    std::pair<Arrayi, int> *pkg_cell_info_;
+    DiscreteVariable<int> &dv_pkg_type_;
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
@@ -136,8 +137,7 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
     template <typename... Args>
     MeshCoreDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
-          BaseMeshDynamics(mesh_data),
-          pkg_cell_info_(mesh_data.dvPkgCellInfo().DelegatedData(ExecutionPolicy())),
+          BaseMeshDynamics(mesh_data), dv_pkg_type_(mesh_data.getPackageType()),
           kernel_implementation_(*this){};
     virtual ~MeshCoreDynamics() {};
 
@@ -145,15 +145,60 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
     {
         UnsignedInt num_grid_pkgs = mesh_data_.NumGridPackages();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        std::pair<SPH::Arrayi, int> *meta_data_cell = pkg_cell_info_;
+        int *pkg_type = dv_pkg_type_.DelegatedData(ExecutionPolicy());
         package_for(ExecutionPolicy(), num_singular_pkgs_, num_grid_pkgs,
                     [=](UnsignedInt package_index)
                     {
-                        if (meta_data_cell[package_index].second == 1)
+                        if (pkg_type[package_index] == 1)
                             update_kernel->update(package_index);
                     });
     };
 };
 
+template <class ExecutionPolicy>
+class PackageSort : public BaseMeshLocalDynamics, public BaseDynamics<void>
+{
+    using SortMethodType = typename SortMethod<ExecutionPolicy>::type;
+
+  public:
+    explicit PackageSort(MeshWithGridDataPackagesType &data_mesh)
+        : BaseMeshLocalDynamics(data_mesh), BaseDynamics<void>(),
+          occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
+          dv_sequence_(nullptr), dv_index_permutation_(nullptr),
+          update_bkg_mesh_variables_to_sort_(occupied_data_pkgs_.size()),
+          update_mesh_variables_to_sort_(occupied_data_pkgs_.size()),
+          sort_method_(nullptr) {};
+    virtual ~PackageSort() {};
+    class ComputingKernel
+    {
+      public:
+        template <class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : sequence_(encloser.dv_sequence_.DelegatedData(ex_policy)),
+              index_permutation_(encloser.dv_index_permutation_.DelegatedData(ex_policy)){};
+        void update(UnsignedInt &pkg_index) {};
+
+      protected:
+        UnsignedInt *sequence_, *index_permutation_;
+    };
+
+    virtual void exec(Real dt = 0.0) override
+    {
+        parallel_sort(
+            occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
+            [](const std::pair<UnsignedInt, int> &a, const std::pair<UnsignedInt, int> &b)
+            {
+                return a.first < b.first;
+            });
+    };
+
+  private:
+    ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
+    DiscreteVariable<UnsignedInt> *dv_sequence_;
+    DiscreteVariable<UnsignedInt> *dv_index_permutation_;
+    OperationOnDataAssemble<BKGMeshVariableAssemble, UpdateSortableVariables<BKGMeshVariable>> update_bkg_mesh_variables_to_sort_;
+    OperationOnDataAssemble<MeshVariableAssemble, UpdateSortableVariables<MeshVariable>> update_mesh_variables_to_sort_;
+    SortMethodType *sort_method_;
+};
 } // namespace SPH
 #endif // MESH_DYNAMICS_H

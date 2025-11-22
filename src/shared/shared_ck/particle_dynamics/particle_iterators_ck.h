@@ -32,8 +32,6 @@
 #include "implementation.h"
 #include "loop_range.h"
 
-#include <numeric>
-
 namespace SPH
 {
 using namespace execution;
@@ -94,42 +92,5 @@ ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, Identifier> &loop_r
             return operation(x, y);
         });
 };
-
-template <typename T, typename Op>
-T exclusive_scan(const SequencedPolicy &seq_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
-{
-    UnsignedInt scan_size = d_size - 1;
-    std::exclusive_scan(first, first + d_size, d_first, T{0}, op);
-    return d_first[scan_size];
-}
-
-template <typename T, typename Op>
-T exclusive_scan(const ParallelPolicy &par_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
-{
-    // Exclusive scan is the same as inclusive, but shifted by one
-    UnsignedInt scan_size = d_size - 1;
-    d_first[0] = T{0};
-    using range_type = tbb::blocked_range<UnsignedInt>;
-    tbb::parallel_scan(
-        range_type(0, scan_size), d_first[0],
-        [=](const range_type &r, T sum, bool is_final_scan) -> T
-        {
-            T tmp = sum;
-            for (UnsignedInt i = r.begin(); i < r.end(); ++i)
-            {
-                tmp = op(tmp, first[i]);
-                if (is_final_scan)
-                {
-                    d_first[i + 1] = tmp;
-                }
-            }
-            return tmp;
-        },
-        [&](const T &a, const T &b)
-        {
-            return op(a, b);
-        });
-    return d_first[scan_size];
-}
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_CK_H

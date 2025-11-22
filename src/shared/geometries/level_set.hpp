@@ -120,7 +120,7 @@ void MultilevelLevelSet::registerProbes(const ExecutionPolicy &ex_policy)
         mesh_data_set_[level]->addMeshVariableToProbe<Vecd>("LevelSetGradient"); // shared with normal direction
 
         cell_pkg_index_set_.push_back(mesh_data_set_[level]->getCellPackageIndex().DelegatedData(ex_policy));
-        pkg_cell_info_set_.push_back(mesh_data_set_[level]->dvPkgCellInfo().DelegatedData(ex_policy));
+        pkg_type_set_.push_back(mesh_data_set_[level]->getPackageType().DelegatedData(ex_policy));
     }
 }
 //=================================================================================================//

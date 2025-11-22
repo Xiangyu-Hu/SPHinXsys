@@ -33,7 +33,6 @@
 #include "device_copyable_variable.h"
 #include "mesh_iterators_sycl.hpp"
 #include "particle_iterators_sycl.h"
-#include "particle_sort_sycl.hpp"
 #include "sphinxsys_buffer_array_sycl.hpp"
 #include "sphinxsys_constant_sycl.hpp"
 #include "sphinxsys_variable_array_sycl.hpp"

@@ -72,12 +72,15 @@ void MultilevelLevelSet::initializeLevel(
             initial_cell_tagging_from_coarse(*mesh_data, *coarse_data, shape_);
         initial_cell_tagging_from_coarse.exec();
     }
-
     MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package(*mesh_data);
     tag_a_cell_is_inner_package.exec();
     mesh_data->organizeOccupiedPackages();
+    PackageSort<execution::ParallelPolicy> pkg_sort(*mesh_data);
+    pkg_sort.exec();
 
-    MeshInnerDynamics<execution::ParallelPolicy, InitializeCellPackageInfo> initialize_cell_pkg_info(*mesh_data);
+    MeshInnerDynamics<execution::ParallelPolicy, InitializeCellPackageInfo>
+        initialize_cell_pkg_info(*mesh_data);
+
     initialize_cell_pkg_info.exec();
 
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
@@ -129,9 +132,8 @@ size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
 {
     for (size_t level = total_levels_; level != 0; --level)
     {
-        if (mesh_data_set_[level - 1]->isWithinCorePackage(cell_pkg_index_set_[level - 1],
-                                                           pkg_cell_info_set_[level - 1],
-                                                           position))
+        if (mesh_data_set_[level - 1]->isWithinCorePackage(
+                cell_pkg_index_set_[level - 1], pkg_type_set_[level - 1], position))
             return level - 1; // jump out of the loop!
     }
     return 0;
