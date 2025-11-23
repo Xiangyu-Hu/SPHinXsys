@@ -129,7 +129,7 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
 template <class ExecutionPolicy, class LocalDynamicsType>
 class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
 {
-    DiscreteVariable<int> &dv_pkg_type_;
+    MetaVariable<int> &dv_pkg_type_;
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;

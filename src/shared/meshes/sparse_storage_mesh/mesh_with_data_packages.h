@@ -107,7 +107,7 @@ class MeshWithGridDataPackages : public Mesh
     SingularVariable<UnsignedInt> &svNumGridPackages();
     BKGMeshVariable<UnsignedInt> &getCellPackageIndex();
     MetaVariable<CellNeighborhood> &getCellNeighborhood();
-    MetaVariable<Arrayi> &getPackageCellIndex();
+    MetaVariable<UnsignedInt> &getPackage1DCellIndex();
     MetaVariable<int> &getPackageType();
     ConcurrentVec<std::pair<UnsignedInt, int>> &getOccupiedDataPackages();
     template <typename DataType>
@@ -126,7 +126,7 @@ class MeshWithGridDataPackages : public Mesh
     UnsignedInt num_singular_pkgs_;               /**< the number of all packages, initially only singular packages. */
     SingularVariable<UnsignedInt> sv_num_grid_pkgs_; /**< the number of all packages, initially only with singular packages. */
     UnsignedInt pkgs_bound_;
-    MetaVariable<Arrayi> dv_pkg_cell_index_;                    /**< metadata for data pckages: cell index. */
+    MetaVariable<UnsignedInt> dv_pkg_1d_cell_index_;                    /**< metadata for data pckages: cell index. */
     MetaVariable<int> dv_pkg_type_;                             /**< metadata for data pckages: (int)core1/inner0. */
     MetaVariable<CellNeighborhood> cell_neighborhood_;          /**< 3*3(*3) array to store indicies of neighborhood cells. */
     BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;              /**< the package index for each cell in a 1-d array. */
@@ -173,8 +173,8 @@ class MeshWithGridDataPackages : public Mesh
     MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name);
     template <typename DataType, typename... Args>
     BKGMeshVariable<DataType> *registerBKGMeshVariable(const std::string &variable_name, Args &&...args);
-    template <typename DataType>
-    MetaVariable<DataType> *registerMetaVariable(const std::string &variable_name);
+    template <typename DataType, typename... Args>
+    MetaVariable<DataType> *registerMetaVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>
     MeshVariable<DataType> *getMeshVariable(const std::string &variable_name);
     template <typename DataType>

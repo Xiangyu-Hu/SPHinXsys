@@ -87,7 +87,7 @@ void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 //=================================================================================================//
 InitializeCellPackageInfo::InitializeCellPackageInfo(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
-      dv_pkg_cell_index_(data_mesh.getPackageCellIndex()),
+      dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       dv_pkg_type_(data_mesh.getPackageType()),
       bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()) {}
 //=================================================================================================//
@@ -95,15 +95,13 @@ void InitializeCellPackageInfo::UpdateKernel::update(const UnsignedInt &package_
 {
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs = data_mesh_->getOccupiedDataPackages();
     UnsignedInt sort_index = occupied_data_pkgs[package_index - num_singular_pkgs_].first;
-    Arrayi cell_index = data_mesh_->DimensionalCellIndex(sort_index);
-    UnsignedInt linear_index = data_mesh_->LinearCellIndex(cell_index);
-    cell_pkg_index_[linear_index] = package_index;
-    pkg_cell_index_[package_index] = cell_index;
+    cell_pkg_index_[sort_index] = package_index;
+    pkg_1d_cell_index_[package_index] = sort_index;
     pkg_type_[package_index] = occupied_data_pkgs[package_index - num_singular_pkgs_].second;
 }
 //=================================================================================================//
 InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)
-    : BaseMeshLocalDynamics(data_mesh), dv_pkg_cell_index_(data_mesh.getPackageCellIndex()),
+    : BaseMeshLocalDynamics(data_mesh), dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
       bmv_cell_pkg_index_(data_mesh.getCellPackageIndex())
 {
@@ -122,7 +120,7 @@ InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesT
 void InitializeCellNeighborhood::UpdateKernel::update(const UnsignedInt &package_index)
 {
     CellNeighborhood &current = cell_neighborhood_[package_index];
-    Arrayi cell_index = pkg_cell_index_[package_index];
+    Arrayi cell_index = index_handler_.DimensionalCellIndex(pkg_1d_cell_index_[package_index]);
     mesh_for_each(
         -Arrayi::Ones(), Arrayi::Ones() * 2,
         [&](const Arrayi &index)
@@ -136,7 +134,7 @@ InitializeBasicPackageData::InitializeBasicPackageData(
     MeshWithGridDataPackagesType &data_mesh, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh), shape_(shape),
       far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth()),
-      dv_pkg_cell_index_(data_mesh.getPackageCellIndex()),
+      dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       mv_phi_(*data_mesh.registerMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.registerMeshVariable<Vecd>("LevelSetGradient")),
       mv_near_interface_id_(*data_mesh.registerMeshVariable<int>("NearInterfaceID"))
@@ -169,7 +167,7 @@ UpdateKernelIntegrals::UpdateKernelIntegrals(
     : BaseMeshLocalDynamics(data_mesh), neighbor_method_(neighbor_method),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.getMeshVariable<Vecd>("LevelSetGradient")),
-      dv_pkg_cell_index_(data_mesh.getPackageCellIndex()),
+      dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
       bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
       mv_kernel_weight_(*data_mesh.registerMeshVariable<Real>("KernelWeight")),

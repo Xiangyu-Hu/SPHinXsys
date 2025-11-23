@@ -35,7 +35,7 @@ void InitializeBasicPackageData::UpdateKernel::update(const UnsignedInt &package
 {
     auto &phi = phi_[package_index];
     auto &near_interface_id = near_interface_id_[package_index];
-    Arrayi cell_index = pkg_cell_index_[package_index];
+    Arrayi cell_index = index_handler_.DimensionalCellIndex(pkg_1d_cell_index_[package_index]);
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
         {
