@@ -5,10 +5,7 @@ namespace SPH
 //=================================================================================================//
 BaseMeshLocalDynamics::BaseMeshLocalDynamics(MeshWithGridDataPackagesType &data_mesh)
     : data_mesh_(data_mesh),
-      all_cells_(data_mesh.AllCells()),
-      grid_spacing_(data_mesh.GridSpacing()),
-      data_spacing_(data_mesh.DataSpacing()),
-      num_singular_pkgs_(data_mesh.NumSingularPackages()) {}
+      data_spacing_(data_mesh.DataSpacing()) {}
 //=================================================================================================//
 InitialCellTagging::InitialCellTagging(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh), shape_(shape),
@@ -31,9 +28,8 @@ void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
     Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
     if (measure < grid_spacing_)
     {
-        UnsignedInt sort_index = base_dynamics->SortIndexFromCellIndex(cell_index);
         data_mesh_->assignDataPackageIndex(cell_index, 2);
-        data_mesh_->registerOccupied(sort_index, 1);
+        data_mesh_->registerOccupied(index_1d, 1);
     }
 }
 //=================================================================================================//
@@ -75,9 +71,8 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
         Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
         if (measure < grid_spacing_)
         {
-            UnsignedInt sort_index = base_dynamics_->SortIndexFromCellIndex(cell_index);
             data_mesh_->assignDataPackageIndex(cell_index, 2);
-            data_mesh_->registerOccupied(sort_index, 1);
+            data_mesh_->registerOccupied(index_1d, 1);
         }
     }
 }
@@ -86,7 +81,7 @@ void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 {
     if (isInnerPackage(cell_index) && !data_mesh_->isInnerDataPackage(cell_index))
     {
-        data_mesh_->registerOccupied(base_dynamics->SortIndexFromCellIndex(cell_index), 0);
+        data_mesh_->registerOccupied(data_mesh_->LinearCellIndex(cell_index), 0);
     }
 }
 //=================================================================================================//
@@ -100,7 +95,7 @@ void InitializeCellPackageInfo::UpdateKernel::update(const UnsignedInt &package_
 {
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs = data_mesh_->getOccupiedDataPackages();
     UnsignedInt sort_index = occupied_data_pkgs[package_index - num_singular_pkgs_].first;
-    Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
+    Arrayi cell_index = data_mesh_->DimensionalCellIndex(sort_index);
     UnsignedInt linear_index = data_mesh_->LinearCellIndex(cell_index);
     cell_pkg_index_[linear_index] = package_index;
     pkg_cell_index_[package_index] = cell_index;
@@ -113,7 +108,7 @@ InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesT
       bmv_cell_pkg_index_(data_mesh.getCellPackageIndex())
 {
     CellNeighborhood *neighbor = dv_cell_neighborhood_.Data();
-    for (UnsignedInt i = 0; i != num_singular_pkgs_; i++)
+    for (UnsignedInt i = 0; i != data_mesh.NumSingularPackages(); i++)
     {
         mesh_for_each(
             -Arrayi::Ones(), Arrayi::Ones() * 2,
@@ -133,7 +128,7 @@ void InitializeCellNeighborhood::UpdateKernel::update(const UnsignedInt &package
         [&](const Arrayi &index)
         {
             current(index + Arrayi::Ones()) =
-                data_mesh_->PackageIndexFromCellIndex(cell_pkg_index_, cell_index + index);
+                index_handler_.PackageIndexFromCellIndex(cell_pkg_index_, cell_index + index);
         });
 }
 //=============================================================================================//
@@ -146,7 +141,6 @@ InitializeBasicPackageData::InitializeBasicPackageData(
       mv_phi_gradient_(*data_mesh.registerMeshVariable<Vecd>("LevelSetGradient")),
       mv_near_interface_id_(*data_mesh.registerMeshVariable<int>("NearInterfaceID"))
 {
-    data_mesh.addMeshVariableToWrite<Real>("LevelSet");
     initializeSingularPackages(0, -far_field_distance);
     initializeSingularPackages(1, far_field_distance);
 }

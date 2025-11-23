@@ -6,70 +6,57 @@
 namespace SPH
 {
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     BoundingBox tentative_bounds, Real data_spacing, UnsignedInt buffer_size, UnsignedInt num_singular_pkgs)
-    : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
-      global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
+    : Mesh(tentative_bounds, PKG_SIZE * data_spacing, buffer_size),
+      global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * PKG_SIZE),
       num_singular_pkgs_(num_singular_pkgs), sv_num_grid_pkgs_("NumGridPackages", num_singular_pkgs),
       dv_pkg_cell_index_("PackageCellIndex", num_singular_pkgs_),
       dv_pkg_type_("PackageType", num_singular_pkgs_),
       cell_neighborhood_("CellNeighborhood", num_singular_pkgs_),
       bmv_cell_pkg_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
-      data_spacing_(data_spacing),
-      index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh *>(this)}){};
+      data_spacing_(data_spacing), index_handler_(*this, data_spacing){};
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 SingularVariable<UnsignedInt> &MeshWithGridDataPackages<PKG_SIZE>::svNumGridPackages()
 {
     return checkOrganized("svNumGridPackages", sv_num_grid_pkgs_);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 DiscreteVariable<CellNeighborhood> &MeshWithGridDataPackages<PKG_SIZE>::getCellNeighborhood()
 {
     return checkOrganized("getCellNeighborhood", cell_neighborhood_);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 DiscreteVariable<UnsignedInt> &MeshWithGridDataPackages<PKG_SIZE>::getCellPackageIndex()
 {
     return checkOrganized("getCellPackageIndex", bmv_cell_pkg_index_);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 ConcurrentVec<std::pair<UnsignedInt, int>> &MeshWithGridDataPackages<PKG_SIZE>::getOccupiedDataPackages()
 {
     return checkOrganized("getOccupiedDataPackages", occupied_data_pkgs_);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
-DiscreteVariable<Arrayi> &MeshWithGridDataPackages<PKG_SIZE>::getPackageCellIndex()
-{
-    return checkOrganized("getPackageCellIndex", dv_pkg_cell_index_);
-}
-//=============================================================================================//
-template <UnsignedInt PKG_SIZE>
-DiscreteVariable<int> &MeshWithGridDataPackages<PKG_SIZE>::getPackageType()
-{
-    return checkOrganized("getPackageType", dv_pkg_type_);
-}
-//=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <typename DataType>
 void MeshWithGridDataPackages<PKG_SIZE>::addMeshVariableToWrite(const std::string &variable_name)
 {
     addVariableToList<MeshVariable, DataType>(mesh_variables_to_write_, all_mesh_variables_, variable_name);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <typename DataType>
 void MeshWithGridDataPackages<PKG_SIZE>::addMeshVariableToProbe(const std::string &variable_name)
 {
     addVariableToList<MeshVariable, DataType>(mesh_variables_to_probe_, all_mesh_variables_, variable_name);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <typename DataType>
 void MeshWithGridDataPackages<PKG_SIZE>::addBKGMeshVariableToWrite(const std::string &variable_name)
 {
@@ -85,7 +72,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::addEvolvingMetaVariable(const std::stri
         evolving_meta_variables_, all_meta_variables_, variable_name);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <typename T>
 T &MeshWithGridDataPackages<PKG_SIZE>::checkOrganized(std::string func_name, T &value)
 {
@@ -97,7 +84,7 @@ T &MeshWithGridDataPackages<PKG_SIZE>::checkOrganized(std::string func_name, T &
     return value;
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <template <typename> typename ContainerType, typename DataType>
 void MeshWithGridDataPackages<PKG_SIZE>::
     addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
@@ -122,7 +109,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::
     }
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <template <typename> class MeshVariableType>
 template <typename DataType, class ExecutionPolicy>
 void MeshWithGridDataPackages<PKG_SIZE>::SyncMeshVariableData<MeshVariableType>::
@@ -136,60 +123,58 @@ operator()(DataContainerAddressKeeper<MeshVariableType<DataType>> &mesh_variable
     }
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
-Arrayi MeshWithGridDataPackages<PKG_SIZE>::
-    IndexHandler::CellIndexFromPosition(const Vecd &position) const
+template <int PKG_SIZE>
+MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
+    IndexHandler(const Mesh &mesh, Real data_spacing)
+    : Mesh(mesh), data_spacing_(data_spacing) {}
+//=============================================================================================//
+template <int PKG_SIZE>
+Vecd MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
+    DataLowerBoundInCell(const Arrayi &cell_index) const
 {
-    return mesh_.CellIndexFromPosition(position);
+    return CellLowerCornerPosition(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
-Vecd MeshWithGridDataPackages<PKG_SIZE>::
-    IndexHandler::DataLowerBoundInCell(const Arrayi &cell_index)
-{
-    return mesh_.CellLowerCornerPosition(cell_index) + 0.5 * data_spacing_ * Vecd::Ones();
-}
-//=============================================================================================//
-template <UnsignedInt PKG_SIZE>
-Arrayi MeshWithGridDataPackages<PKG_SIZE>::
-    IndexHandler::DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position)
+template <int PKG_SIZE>
+Arrayi MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
+    DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const
 {
     return floor((position - DataLowerBoundInCell(cell_index)).array() / data_spacing_)
         .template cast<int>()
         .max(Arrayi::Zero())
-        .min((pkg_size - 1) * Arrayi::Ones());
+        .min((PKG_SIZE - 1) * Arrayi::Ones());
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
-Vecd MeshWithGridDataPackages<PKG_SIZE>::
-    IndexHandler::DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index)
+template <int PKG_SIZE>
+Vecd MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
+    DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const
 {
     return DataLowerBoundInCell(cell_index) + data_index.cast<Real>().matrix() * data_spacing_;
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
-UnsignedInt MeshWithGridDataPackages<PKG_SIZE>::
-    IndexHandler::PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index)
+template <int PKG_SIZE>
+UnsignedInt MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
+    PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index) const
 {
-    UnsignedInt index_1d = mesh_.LinearCellIndex(cell_index);
+    UnsignedInt index_1d = LinearCellIndex(cell_index);
     return cell_package_index[index_1d];
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <class ExecutionPolicy>
 void MeshWithGridDataPackages<PKG_SIZE>::syncMeshVariablesToWrite(ExecutionPolicy &ex_policy)
 {
     sync_mesh_variable_data_(mesh_variables_to_write_, ex_policy);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <class ExecutionPolicy>
 void MeshWithGridDataPackages<PKG_SIZE>::syncBKGMeshVariablesToWrite(ExecutionPolicy &ex_policy)
 {
     sync_bkg_mesh_variable_data_(bkg_mesh_variables_to_write_, ex_policy);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <class ExecutionPolicy>
 void MeshWithGridDataPackages<PKG_SIZE>::syncMeshVariablesToProbe(ExecutionPolicy &ex_policy)
 {
@@ -199,7 +184,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::syncMeshVariablesToProbe(ExecutionPolic
     bmv_cell_pkg_index_.prepareForOutput(ex_policy);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <template <typename> typename ContainerType, typename DataType, typename... Args>
 ContainerType<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
     registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
@@ -216,7 +201,7 @@ ContainerType<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
     return variable;
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <typename DataType>
 typename MeshWithGridDataPackages<PKG_SIZE>::template MeshVariable<DataType> *
 MeshWithGridDataPackages<PKG_SIZE>::registerMeshVariable(const std::string &variable_name)
@@ -231,7 +216,7 @@ MeshWithGridDataPackages<PKG_SIZE>::registerMeshVariable(const std::string &vari
         all_mesh_variables_, mesh_variable_ptrs_, variable_name, pkgs_bound_);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <typename DataType, typename... Args>
 typename MeshWithGridDataPackages<PKG_SIZE>::template BKGMeshVariable<DataType> *
 MeshWithGridDataPackages<PKG_SIZE>::registerBKGMeshVariable(const std::string &variable_name, Args &&...args)
@@ -256,7 +241,7 @@ DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::registerMetaVari
         all_meta_variables_, meta_variable_ptrs_, variable_name, pkgs_bound_);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <typename DataType>
 typename MeshWithGridDataPackages<PKG_SIZE>::template MeshVariable<DataType> *
 MeshWithGridDataPackages<PKG_SIZE>::getMeshVariable(const std::string &variable_name)
@@ -271,7 +256,7 @@ MeshWithGridDataPackages<PKG_SIZE>::getMeshVariable(const std::string &variable_
     return variable;
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <typename DataType>
 typename MeshWithGridDataPackages<PKG_SIZE>::template BKGMeshVariable<DataType> *
 MeshWithGridDataPackages<PKG_SIZE>::getBKGMeshVariable(const std::string &variable_name)
@@ -286,13 +271,25 @@ MeshWithGridDataPackages<PKG_SIZE>::getBKGMeshVariable(const std::string &variab
     return variable;
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
+template <typename DataType>
+DataType MeshWithGridDataPackages<PKG_SIZE>::
+    DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data,
+                             const Arrayi &global_grid_index, UnsignedInt *cell_package_index)
+{
+    Arrayi cell_index_on_mesh_ = global_grid_index / PKG_SIZE;
+    Arrayi local_index = global_grid_index - cell_index_on_mesh_ * PKG_SIZE;
+    UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh_);
+    return pkg_data[package_index](local_index);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::registerOccupied(UnsignedInt sort_index, int type)
 {
     occupied_data_pkgs_.push_back(std::make_pair(sort_index, type));
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
 {
     sv_num_grid_pkgs_.setValue(occupied_data_pkgs_.size() + num_singular_pkgs_);
@@ -303,7 +300,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
     is_organized_ = true;
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::isInnerDataPackage(const Arrayi &cell_index)
 {
     UnsignedInt index_1d = LinearCellIndex(cell_index);
@@ -314,38 +311,16 @@ bool MeshWithGridDataPackages<PKG_SIZE>::isInnerDataPackage(const Arrayi &cell_i
     return bmv_cell_pkg_index_.Data()[index_1d] > 1;
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 bool MeshWithGridDataPackages<PKG_SIZE>::isWithinCorePackage(
     UnsignedInt *cell_package_index, int *pkg_type, Vecd position)
 {
     Arrayi cell_index = CellIndexFromPosition(position);
-    UnsignedInt package_index = PackageIndexFromCellIndex(cell_package_index, cell_index);
+    UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_package_index, cell_index);
     return pkg_type[package_index] == 1;
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
-Arrayi MeshWithGridDataPackages<PKG_SIZE>::boundCellIndex(const Arrayi &input) const
-{
-    Arrayi output = input;
-    for (int i = 0; i < Dimensions; ++i)
-    {
-        if (output[i] < 0)
-            output[i] = 0;
-        if (output[i] >= all_cells_[i])
-            output[i] = all_cells_[i] - 1;
-    }
-    return output;
-}
-//=============================================================================================//
-template <UnsignedInt PKG_SIZE>
-UnsignedInt MeshWithGridDataPackages<PKG_SIZE>::
-    PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index)
-{
-    UnsignedInt index_1d = LinearCellIndex(boundCellIndex(cell_index));
-    return cell_package_index[index_1d];
-}
-//=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::
     assignDataPackageIndex(const Arrayi &cell_index, const UnsignedInt package_index)
 {
@@ -355,6 +330,80 @@ void MeshWithGridDataPackages<PKG_SIZE>::
      *      use the `DelegatedData` version when needed.
      */
     bmv_cell_pkg_index_.Data()[index_1d] = package_index;
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+SparseStorageMeshField<PKG_SIZE>::SparseStorageMeshField(
+    const std::string &name, BoundingBox tentative_bounds,
+    Real reference_data_spacing, UnsignedInt buffer_width,
+    size_t total_levels, UnsignedInt num_singular_pkgs)
+    : MultiLevelMeshField(name, tentative_bounds, reference_data_spacing * PKG_SIZE,
+                          buffer_width, total_levels),
+      num_singular_pkgs_(num_singular_pkgs), pkg_offset_list_size_(total_levels + 2),
+      dv_pkg_offset_("PackageOffset", pkg_offset_list_size_),
+      dv_pkg_cell_info_("PackageCellInfo", num_singular_pkgs_ * total_levels),
+      dv_cell_neighborhood_("CellNeighborhood", num_singular_pkgs_ * total_levels),
+      cell_dv_pkg_index_(registerCellVariable<UnsignedInt>("CellPackageIndex"))
+{
+    for (size_t level = 0; level < total_levels; ++level)
+    {
+        Mesh &mesh = *meshes_[level];
+        Real data_spacing = mesh.GridSpacing() / PKG_SIZE;
+        data_meshes_.push_back(mesh_ptrs_keeper_.template createPtr<Mesh>(
+            mesh.MeshLowerBound() + 0.5 * data_spacing * Vecd::Ones(),
+            data_spacing, mesh.AllCells() * PKG_SIZE));
+    };
+};
+//=============================================================================================//
+template <int PKG_SIZE>
+SparseStorageMeshField<PKG_SIZE>::IndexHandler::IndexHandler(const Mesh &mesh)
+    : Mesh(mesh), data_spacing_(grid_spacing_ / PKG_SIZE){};
+//=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+DiscreteVariable<PackageDataMatrix<DataType, PKG_SIZE>> *SparseStorageMeshField<PKG_SIZE>::
+    registerPackageVariable(const std::string &name)
+{
+    if (!is_allocation_organized_)
+    {
+        std::cout << "\n Error: the package variable '" << name
+                  << "' is registered before the allocation of data packages are organized!" << std::endl;
+        exit(1);
+    }
+    return registerVariable<PackageVariable, DataType>(
+        all_pkg_variables_, pkg_variable_ptrs_, name, pkgs_bound_);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+void SparseStorageMeshField<PKG_SIZE>::addPackageVariableToWrite(const std::string &name)
+{
+    addVariableToList<PackageVariable, DataType>(
+        pkg_variables_to_write_, all_pkg_variables_, name);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+void SparseStorageMeshField<PKG_SIZE>::addPackageVariableToProbe(const std::string &name)
+{
+    addVariableToList<PackageVariable, DataType>(
+        pkg_variables_to_probe_, all_pkg_variables_, name);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <class ExecutionPolicy>
+void SparseStorageMeshField<PKG_SIZE>::syncPackageVariablesToWrite(ExecutionPolicy &ex_policy)
+{
+    sync_pkg_variable_data_(pkg_variables_to_write_, ex_policy);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <class ExecutionPolicy>
+void SparseStorageMeshField<PKG_SIZE>::syncPackageVariablesToProbe(ExecutionPolicy &ex_policy)
+{
+    sync_pkg_variable_data_(pkg_variables_to_probe_, ex_policy);
+    dv_pkg_cell_info_.prepareForOutput(ex_policy);
+    cell_dv_pkg_index_->prepareForOutput(ex_policy);
 }
 //=============================================================================================//
 } // namespace SPH

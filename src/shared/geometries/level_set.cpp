@@ -9,8 +9,9 @@ namespace SPH
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
     Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
-    : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(1),
-      refinement_ratio_(refinement_ratio)
+    : SparseStorageMeshField<4>(
+          "LevelSet_" + shape.getName(), tentative_bounds, coarse_data->DataSpacing(), 4, 1),
+      shape_(shape), refinement_ratio_(refinement_ratio)
 {
     Real data_spacing = coarse_data->DataSpacing() * 0.5;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
@@ -26,8 +27,9 @@ MultilevelLevelSet::MultilevelLevelSet(
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, Real data_spacing,
     size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
-    : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(total_levels),
-      refinement_ratio_(refinement_ratio)
+    : SparseStorageMeshField<4>(
+          "LevelSet_" + shape.getName(), tentative_bounds, data_spacing, 4, total_levels),
+      shape_(shape), refinement_ratio_(refinement_ratio)
 {
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
@@ -186,22 +188,7 @@ Matd MultilevelLevelSet::probeKernelSecondGradientIntegral(const Vecd &position,
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }
 //=================================================================================================//
-bool MultilevelLevelSet::probeIsWithinMeshBound(const Vecd &position)
-{
-    bool is_bounded = true;
-    for (size_t l = 0; l != total_levels_; ++l)
-    {
-        ProbeIsWithinMeshBound probe_is_within_mesh_bound{*mesh_data_set_[l]};
-        if (!probe_is_within_mesh_bound.update(position))
-        {
-            is_bounded = false;
-            break;
-        };
-    }
-    return is_bounded;
-}
-//=================================================================================================//
-void MultilevelLevelSet::writeMeshFieldToPlt(const std::string &partial_file_name)
+void MultilevelLevelSet::writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence)
 {
     sync_mesh_variables_to_write_();
     for (size_t l = 0; l != total_levels_; ++l)

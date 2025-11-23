@@ -29,11 +29,10 @@
 #ifndef MESH_WITH_DATA_PACKAGES_H
 #define MESH_WITH_DATA_PACKAGES_H
 
-#include "base_mesh.h"
+#include "base_mesh.hpp"
 
 #include "execution_policy.h"
 #include "grid_data_package_type.hpp"
-#include "sphinxsys_variable.h"
 
 #include "tbb/parallel_sort.h"
 
@@ -47,11 +46,11 @@ namespace SPH
  * A typical example is a level-set field which only has meaningful values near the interface,
  * while the latter is in the inner region of a mesh.
  * In this class, only some inner mesh cells are filled with data packages.
- * Each data package is again a mesh, but grid based with pkg_size grids on each dimension.
+ * Each data package is again a mesh, but grid based with PKG_SIZE grids on each dimension.
  * The operation on field data is achieved by mesh dynamics.
  * Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
  */
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 class MeshWithGridDataPackages : public Mesh
 {
   public:
@@ -63,7 +62,20 @@ class MeshWithGridDataPackages : public Mesh
     using BKGMeshVariable = DiscreteVariable<DataType>;
     template <typename DataType>
     using MetaVariable = DiscreteVariable<DataType>;
-    static constexpr int pkg_size = PKG_SIZE; /**< the size of the data package matrix. */
+
+    /** wrapper for all index exchange related functions. */
+    class IndexHandler : public Mesh
+    {
+        Real data_spacing_;
+
+      public:
+        IndexHandler(const Mesh &mesh, Real data_spacing);
+        Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
+        Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
+        Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
+        UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index) const;
+        Real DataSpacing() const { return data_spacing_; };
+    };
     typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
     typedef DataContainerAddressAssemble<DiscreteVariable> BKGMeshVariableAssemble;
     typedef DataContainerAddressAssemble<DiscreteVariable> MetaVariableAssemble;
@@ -87,11 +99,10 @@ class MeshWithGridDataPackages : public Mesh
                              UnsignedInt buffer_size, UnsignedInt num_singular_pkgs = 2);
     virtual ~MeshWithGridDataPackages() {};
 
-    /** spacing between the data, which is 1/ pkg_size of this grid spacing */
+    /** spacing between the data, which is 1 / PKG_SIZE of this grid spacing */
     Real DataSpacing() { return data_spacing_; };
     Real GridSpacing() { return grid_spacing_; };
-    UnsignedInt BufferWidth() { return buffer_width_; };
-    int DataPackageSize() { return pkg_size; };
+    static constexpr int DataPackageSize() { return PKG_SIZE; };
     UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
     SingularVariable<UnsignedInt> &svNumGridPackages();
     DiscreteVariable<CellNeighborhood> &getCellNeighborhood();
@@ -122,6 +133,7 @@ class MeshWithGridDataPackages : public Mesh
     ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_; /**< (UnsignedInt)sort_index, (int)core1/inner0. */
     const Real data_spacing_;                                       /**< spacing of data in the data packages. */
     bool is_organized_ = false;                                     /**< whether the data packages are organized. */
+    IndexHandler index_handler_;
 
     template <typename T>
     T &checkOrganized(std::string func_name, T &value);
@@ -141,23 +153,12 @@ class MeshWithGridDataPackages : public Mesh
     OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData<MeshVariable>> sync_mesh_variable_data_{};
     OperationOnDataAssemble<BKGMeshVariableAssemble, SyncMeshVariableData<BKGMeshVariable>> sync_bkg_mesh_variable_data_{};
 
-  public:
-    /** wrapper for all index exchange related functions. */
-    struct IndexHandler
-    {
-        Real data_spacing_;
-        Arrayi all_cells_;
-        Mesh mesh_;
-
-        Arrayi CellIndexFromPosition(const Vecd &position) const;
-        Vecd DataLowerBoundInCell(const Arrayi &cell_index);
-        Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position);
-        Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index);
-        UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index);
-    };
-    SingularVariable<IndexHandler> index_handler_;
+    template <typename DataType>
+    DataType DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data,
+                                      const Arrayi &global_grid_index, UnsignedInt *cell_package_index);
 
   public:
+    IndexHandler &getIndexHandler() { return index_handler_; };
     template <class ExecutionPolicy>
     void syncMeshVariablesToWrite(ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
@@ -185,9 +186,67 @@ class MeshWithGridDataPackages : public Mesh
     void organizeOccupiedPackages();
     bool isInnerDataPackage(const Arrayi &cell_index);
     bool isWithinCorePackage(UnsignedInt *cell_package_index, int *pkg_type, Vecd position);
-    Arrayi boundCellIndex(const Arrayi &input) const;
-    UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index);
     void assignDataPackageIndex(const Arrayi &cell_index, const UnsignedInt package_index);
+};
+
+template <int PKG_SIZE>
+class SparseStorageMeshField : public MultiLevelMeshField
+{
+  public:
+    template <class DataType>
+    using PackageData = PackageDataMatrix<DataType, PKG_SIZE>;
+    template <typename DataType>
+    using PackageVariable = DiscreteVariable<PackageData<DataType>>;
+
+    class IndexHandler : public Mesh
+    {
+        Real data_spacing_;
+
+      public:
+        IndexHandler(const Mesh &mesh);
+        Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
+        Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
+        Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
+        UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index) const;
+        Real DataSpacing() const { return data_spacing_; };
+    };
+
+  private:
+    typedef DataContainerAddressAssemble<PackageVariable> PackageVariableAssemble;
+    DataContainerUniquePtrAssemble<PackageVariable> pkg_variable_ptrs_;
+    PackageVariableAssemble all_pkg_variables_;
+    PackageVariableAssemble pkg_variables_to_write_;
+    PackageVariableAssemble pkg_variables_to_probe_;
+
+  public:
+    SparseStorageMeshField(const std::string &name, BoundingBox tentative_bounds,
+                           Real reference_data_spacing, UnsignedInt buffer_width,
+                           size_t total_levels, UnsignedInt num_singular_pkgs = 2);
+    virtual ~SparseStorageMeshField() {};
+
+    template <typename DataType>
+    PackageVariable<DataType> *registerPackageVariable(const std::string &name);
+    template <typename DataType>
+    void addPackageVariableToWrite(const std::string &name);
+    template <typename DataType>
+    void addPackageVariableToProbe(const std::string &name);
+
+    template <class ExecutionPolicy>
+    void syncPackageVariablesToWrite(ExecutionPolicy &ex_policy);
+    template <class ExecutionPolicy>
+    void syncPackageVariablesToProbe(ExecutionPolicy &ex_policy);
+
+  protected:
+    UnsignedInt num_singular_pkgs_;
+    UnsignedInt pkgs_bound_ = 0;
+    UnsignedInt pkg_offset_list_size_;
+    bool is_allocation_organized_ = false;
+    StdVec<Mesh *> data_meshes_;
+    DiscreteVariable<UnsignedInt> dv_pkg_offset_;               /**< the offsets indicates the starting and end index for data packages on each levels. */
+    DiscreteVariable<std::pair<Arrayi, int>> dv_pkg_cell_info_; /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
+    DiscreteVariable<CellNeighborhood> dv_cell_neighborhood_;   /**< 3*3(*3) array to store indicies of neighborhood cells. */
+    DiscreteVariable<UnsignedInt> *cell_dv_pkg_index_;          /**< the package index for each cell in a 1-d array. */
+    OperationOnDataAssemble<PackageVariableAssemble, SyncMeshVariableData<PackageVariable>> sync_pkg_variable_data_{};
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H

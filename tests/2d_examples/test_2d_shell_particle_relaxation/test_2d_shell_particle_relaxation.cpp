@@ -58,7 +58,6 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_real_body_states({pipe_body});
     write_real_body_states.addToWrite<Vecd>(pipe_body, "NormalDirection");
     write_real_body_states.addToWrite<int>(pipe_body, "UpdatedIndicator");
-    MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, pipe_body.getCellLinkedList());
     /**
      * @brief 	Particle relaxation starts here.
      */
@@ -66,7 +65,6 @@ int main(int ac, char *av[])
     relaxation_step_pipe_body_inner.MidSurfaceBounding().exec();
     write_real_body_states.writeToFile(0.0);
     pipe_body.updateCellLinkedList();
-    write_mesh_cell_linked_list.writeToFile(0.0);
 
     /** relax particles of the insert body. */
     int ite_p = 0;
