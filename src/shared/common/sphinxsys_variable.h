@@ -84,7 +84,7 @@ class SingularVariable : public Entity
 
     DataType *Data() { return delegated_; };
     void setValue(const DataType &value) { *delegated_ = value; };
-    DataType getValue() { return *delegated_; };
+    DataType getValue() const { return *delegated_; };
     void incrementValue(const DataType &value) { *delegated_ += value; };
 
     template <class ExecutionPolicy>

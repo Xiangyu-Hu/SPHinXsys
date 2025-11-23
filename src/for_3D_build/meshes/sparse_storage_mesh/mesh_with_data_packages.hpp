@@ -14,7 +14,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
     StdVec<Coord3D> active_cells;
     auto pkg_cell_index = dv_pkg_cell_index_.Data();
     auto pkg_type = dv_pkg_type_.Data();
-    package_for(execution::seq, num_singular_pkgs_, num_grid_pkgs_,
+    package_for(execution::seq, num_singular_pkgs_, sv_num_grid_pkgs_.getValue(),
                 [&](UnsignedInt package_index)
                 {
                     if (pkg_type[package_index] == 1)

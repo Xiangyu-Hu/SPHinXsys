@@ -66,7 +66,7 @@ class MeshWithGridDataPackages : public Mesh
     static constexpr int pkg_size = PKG_SIZE; /**< the size of the data package matrix. */
     typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
     typedef DataContainerAddressAssemble<DiscreteVariable> BKGMeshVariableAssemble;
-    typedef DataContainerAddressAssemble<DiscreteVariable> PackageMetaVariableAssemble;
+    typedef DataContainerAddressAssemble<DiscreteVariable> MetaVariableAssemble;
 
   protected:
     DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
@@ -79,8 +79,8 @@ class MeshWithGridDataPackages : public Mesh
     BKGMeshVariableAssemble bkg_mesh_variables_to_write_; /**< discrete variables to write, which are not empty. */
 
     DataContainerUniquePtrAssemble<DiscreteVariable> meta_variable_ptrs_;
-    PackageMetaVariableAssemble all_meta_variables_;
-    PackageMetaVariableAssemble evolving_meta_variables_;
+    MetaVariableAssemble all_meta_variables_;
+    MetaVariableAssemble evolving_meta_variables_;
 
   public:
     MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing,
@@ -93,7 +93,7 @@ class MeshWithGridDataPackages : public Mesh
     UnsignedInt BufferWidth() { return buffer_width_; };
     int DataPackageSize() { return pkg_size; };
     UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
-    UnsignedInt NumGridPackages();
+    SingularVariable<UnsignedInt> &svNumGridPackages();
     DiscreteVariable<CellNeighborhood> &getCellNeighborhood();
     DiscreteVariable<UnsignedInt> &getCellPackageIndex();
     DiscreteVariable<Arrayi> &getPackageCellIndex();
@@ -111,9 +111,10 @@ class MeshWithGridDataPackages : public Mesh
     void writeBKGMeshVariableToPlt(std::ofstream &output_file);
 
   protected:
-    Mesh global_mesh_;                                              /**< the global mesh with the size of data spacing. */
-    UnsignedInt num_singular_pkgs_;                                 /**< the number of all packages, initially only singular packages. */
-    UnsignedInt num_grid_pkgs_;                                     /**< the number of all packages, initially only with singular packages. */
+    Mesh global_mesh_;                            /**< the global mesh with the size of data spacing. */
+    UnsignedInt num_singular_pkgs_;               /**< the number of all packages, initially only singular packages. */
+    SingularVariable<UnsignedInt> sv_num_grid_pkgs_; /**< the number of all packages, initially only with singular packages. */
+    UnsignedInt pkgs_bound_;
     DiscreteVariable<Arrayi> dv_pkg_cell_index_;                    /**< metadata for data pckages: cell index. */
     DiscreteVariable<int> dv_pkg_type_;                             /**< metadata for data pckages: (int)core1/inner0. */
     DiscreteVariable<CellNeighborhood> cell_neighborhood_;          /**< 3*3(*3) array to store indicies of neighborhood cells. */

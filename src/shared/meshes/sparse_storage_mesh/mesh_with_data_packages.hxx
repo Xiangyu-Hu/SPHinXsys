@@ -11,7 +11,7 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     BoundingBox tentative_bounds, Real data_spacing, UnsignedInt buffer_size, UnsignedInt num_singular_pkgs)
     : Mesh(tentative_bounds, pkg_size * data_spacing, buffer_size),
       global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * pkg_size),
-      num_singular_pkgs_(num_singular_pkgs), num_grid_pkgs_(num_singular_pkgs),
+      num_singular_pkgs_(num_singular_pkgs), sv_num_grid_pkgs_("NumGridPackages", num_singular_pkgs),
       dv_pkg_cell_index_("PackageCellIndex", num_singular_pkgs_),
       dv_pkg_type_("PackageType", num_singular_pkgs_),
       cell_neighborhood_("CellNeighborhood", num_singular_pkgs_),
@@ -20,9 +20,9 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
       index_handler_("index_handler", IndexHandler{data_spacing_, all_cells_, *static_cast<Mesh *>(this)}){};
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
-UnsignedInt MeshWithGridDataPackages<PKG_SIZE>::NumGridPackages()
+SingularVariable<UnsignedInt> &MeshWithGridDataPackages<PKG_SIZE>::svNumGridPackages()
 {
-    return checkOrganized("NumGridPackages", num_grid_pkgs_);
+    return checkOrganized("svNumGridPackages", sv_num_grid_pkgs_);
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
@@ -228,7 +228,7 @@ MeshWithGridDataPackages<PKG_SIZE>::registerMeshVariable(const std::string &vari
         exit(1);
     }
     return registerVariable<MeshVariable, DataType>(
-        all_mesh_variables_, mesh_variable_ptrs_, variable_name, num_grid_pkgs_);
+        all_mesh_variables_, mesh_variable_ptrs_, variable_name, pkgs_bound_);
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
@@ -253,7 +253,7 @@ DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::registerMetaVari
         exit(1);
     }
     return registerVariable<DiscreteVariable, DataType>(
-        all_meta_variables_, meta_variable_ptrs_, variable_name, num_grid_pkgs_);
+        all_meta_variables_, meta_variable_ptrs_, variable_name, pkgs_bound_);
 }
 //=============================================================================================//
 template <UnsignedInt PKG_SIZE>
@@ -295,10 +295,11 @@ void MeshWithGridDataPackages<PKG_SIZE>::registerOccupied(UnsignedInt sort_index
 template <UnsignedInt PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
 {
-    num_grid_pkgs_ = occupied_data_pkgs_.size() + num_singular_pkgs_;
-    cell_neighborhood_.reallocateData(par_host, num_grid_pkgs_);
-    dv_pkg_cell_index_.reallocateData(par_host, num_grid_pkgs_);
-    dv_pkg_type_.reallocateData(par_host, num_grid_pkgs_);
+    sv_num_grid_pkgs_.setValue(occupied_data_pkgs_.size() + num_singular_pkgs_);
+    pkgs_bound_ = sv_num_grid_pkgs_.getValue();
+    cell_neighborhood_.reallocateData(par_host, pkgs_bound_);
+    dv_pkg_cell_index_.reallocateData(par_host, pkgs_bound_);
+    dv_pkg_type_.reallocateData(par_host, pkgs_bound_);
     is_organized_ = true;
 }
 //=============================================================================================//
