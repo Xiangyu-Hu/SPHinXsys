@@ -43,6 +43,18 @@ ConcurrentVec<std::pair<UnsignedInt, int>> &MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=============================================================================================//
 template <int PKG_SIZE>
+DiscreteVariable<Arrayi> &MeshWithGridDataPackages<PKG_SIZE>::getPackageCellIndex()
+{
+    return checkOrganized("getPackageCellIndex", dv_pkg_cell_index_);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+DiscreteVariable<int> &MeshWithGridDataPackages<PKG_SIZE>::getPackageType()
+{
+    return checkOrganized("getPackageType", dv_pkg_type_);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
 template <typename DataType>
 void MeshWithGridDataPackages<PKG_SIZE>::addMeshVariableToWrite(const std::string &variable_name)
 {
@@ -64,7 +76,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::addBKGMeshVariableToWrite(const std::st
         bkg_mesh_variables_to_write_, all_bkg_mesh_variables_, variable_name);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <typename DataType>
 void MeshWithGridDataPackages<PKG_SIZE>::addEvolvingMetaVariable(const std::string &variable_name)
 {
@@ -226,7 +238,7 @@ MeshWithGridDataPackages<PKG_SIZE>::registerBKGMeshVariable(const std::string &v
         std::forward<Args>(args)...);
 }
 //=============================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 template <typename DataType>
 DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::registerMetaVariable(
     const std::string &variable_name)
