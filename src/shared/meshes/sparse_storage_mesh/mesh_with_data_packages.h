@@ -77,8 +77,8 @@ class MeshWithGridDataPackages : public Mesh
         Real DataSpacing() const { return data_spacing_; };
     };
     typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
-    typedef DataContainerAddressAssemble<DiscreteVariable> BKGMeshVariableAssemble;
-    typedef DataContainerAddressAssemble<DiscreteVariable> MetaVariableAssemble;
+    typedef DataContainerAddressAssemble<BKGMeshVariable> BKGMeshVariableAssemble;
+    typedef DataContainerAddressAssemble<MetaVariable> MetaVariableAssemble;
 
   protected:
     DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
@@ -86,11 +86,11 @@ class MeshWithGridDataPackages : public Mesh
     MeshVariableAssemble mesh_variables_to_write_; /**< mesh variables to write, which are not empty. */
     MeshVariableAssemble mesh_variables_to_probe_; /**< mesh variables to probe. */
 
-    DataContainerUniquePtrAssemble<DiscreteVariable> bkg_mesh_variable_ptrs_;
+    DataContainerUniquePtrAssemble<BKGMeshVariable> bkg_mesh_variable_ptrs_;
     BKGMeshVariableAssemble all_bkg_mesh_variables_;      /**< all discrete variables on this mesh. */
     BKGMeshVariableAssemble bkg_mesh_variables_to_write_; /**< discrete variables to write, which are not empty. */
 
-    DataContainerUniquePtrAssemble<DiscreteVariable> meta_variable_ptrs_;
+    DataContainerUniquePtrAssemble<MetaVariable> meta_variable_ptrs_;
     MetaVariableAssemble all_meta_variables_;
     MetaVariableAssemble evolving_meta_variables_;
 
@@ -105,10 +105,10 @@ class MeshWithGridDataPackages : public Mesh
     static constexpr int DataPackageSize() { return PKG_SIZE; };
     UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
     SingularVariable<UnsignedInt> &svNumGridPackages();
-    DiscreteVariable<CellNeighborhood> &getCellNeighborhood();
-    DiscreteVariable<UnsignedInt> &getCellPackageIndex();
-    DiscreteVariable<Arrayi> &getPackageCellIndex();
-    DiscreteVariable<int> &getPackageType();
+    BKGMeshVariable<UnsignedInt> &getCellPackageIndex();
+    MetaVariable<CellNeighborhood> &getCellNeighborhood();
+    MetaVariable<Arrayi> &getPackageCellIndex();
+    MetaVariable<int> &getPackageType();
     ConcurrentVec<std::pair<UnsignedInt, int>> &getOccupiedDataPackages();
     template <typename DataType>
     void addMeshVariableToWrite(const std::string &variable_name);
@@ -126,9 +126,9 @@ class MeshWithGridDataPackages : public Mesh
     UnsignedInt num_singular_pkgs_;               /**< the number of all packages, initially only singular packages. */
     SingularVariable<UnsignedInt> sv_num_grid_pkgs_; /**< the number of all packages, initially only with singular packages. */
     UnsignedInt pkgs_bound_;
-    DiscreteVariable<Arrayi> dv_pkg_cell_index_;                    /**< metadata for data pckages: cell index. */
-    DiscreteVariable<int> dv_pkg_type_;                             /**< metadata for data pckages: (int)core1/inner0. */
-    DiscreteVariable<CellNeighborhood> cell_neighborhood_;          /**< 3*3(*3) array to store indicies of neighborhood cells. */
+    MetaVariable<Arrayi> dv_pkg_cell_index_;                    /**< metadata for data pckages: cell index. */
+    MetaVariable<int> dv_pkg_type_;                             /**< metadata for data pckages: (int)core1/inner0. */
+    MetaVariable<CellNeighborhood> cell_neighborhood_;          /**< 3*3(*3) array to store indicies of neighborhood cells. */
     BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;              /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_; /**< (UnsignedInt)sort_index, (int)core1/inner0. */
     const Real data_spacing_;                                       /**< spacing of data in the data packages. */
@@ -187,66 +187,6 @@ class MeshWithGridDataPackages : public Mesh
     bool isInnerDataPackage(const Arrayi &cell_index);
     bool isWithinCorePackage(UnsignedInt *cell_package_index, int *pkg_type, Vecd position);
     void assignDataPackageIndex(const Arrayi &cell_index, const UnsignedInt package_index);
-};
-
-template <int PKG_SIZE>
-class SparseStorageMeshField : public MultiLevelMeshField
-{
-  public:
-    template <class DataType>
-    using PackageData = PackageDataMatrix<DataType, PKG_SIZE>;
-    template <typename DataType>
-    using PackageVariable = DiscreteVariable<PackageData<DataType>>;
-
-    class IndexHandler : public Mesh
-    {
-        Real data_spacing_;
-
-      public:
-        IndexHandler(const Mesh &mesh);
-        Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
-        Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
-        Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
-        UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index) const;
-        Real DataSpacing() const { return data_spacing_; };
-    };
-
-  private:
-    typedef DataContainerAddressAssemble<PackageVariable> PackageVariableAssemble;
-    DataContainerUniquePtrAssemble<PackageVariable> pkg_variable_ptrs_;
-    PackageVariableAssemble all_pkg_variables_;
-    PackageVariableAssemble pkg_variables_to_write_;
-    PackageVariableAssemble pkg_variables_to_probe_;
-
-  public:
-    SparseStorageMeshField(const std::string &name, BoundingBox tentative_bounds,
-                           Real reference_data_spacing, UnsignedInt buffer_width,
-                           size_t total_levels, UnsignedInt num_singular_pkgs = 2);
-    virtual ~SparseStorageMeshField() {};
-
-    template <typename DataType>
-    PackageVariable<DataType> *registerPackageVariable(const std::string &name);
-    template <typename DataType>
-    void addPackageVariableToWrite(const std::string &name);
-    template <typename DataType>
-    void addPackageVariableToProbe(const std::string &name);
-
-    template <class ExecutionPolicy>
-    void syncPackageVariablesToWrite(ExecutionPolicy &ex_policy);
-    template <class ExecutionPolicy>
-    void syncPackageVariablesToProbe(ExecutionPolicy &ex_policy);
-
-  protected:
-    UnsignedInt num_singular_pkgs_;
-    UnsignedInt pkgs_bound_ = 0;
-    UnsignedInt pkg_offset_list_size_;
-    bool is_allocation_organized_ = false;
-    StdVec<Mesh *> data_meshes_;
-    DiscreteVariable<UnsignedInt> dv_pkg_offset_;               /**< the offsets indicates the starting and end index for data packages on each levels. */
-    DiscreteVariable<std::pair<Arrayi, int>> dv_pkg_cell_info_; /**< metadata for each occupied cell: (arrayi)cell index, (int)core1/inner0. */
-    DiscreteVariable<CellNeighborhood> dv_cell_neighborhood_;   /**< 3*3(*3) array to store indicies of neighborhood cells. */
-    DiscreteVariable<UnsignedInt> *cell_dv_pkg_index_;          /**< the package index for each cell in a 1-d array. */
-    OperationOnDataAssemble<PackageVariableAssemble, SyncMeshVariableData<PackageVariable>> sync_pkg_variable_data_{};
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H
