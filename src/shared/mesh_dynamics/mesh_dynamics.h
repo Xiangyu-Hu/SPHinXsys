@@ -165,27 +165,44 @@ class PackageSort : public BaseMeshDynamics
   public:
     explicit PackageSort(MeshWithGridDataPackagesType &data_mesh)
         : BaseMeshDynamics(data_mesh),
+          sv_num_grid_pkgs_(data_mesh.svNumGridPackages()),
+          kernel_implementation_(*this),
           occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
-          dv_sequence_(nullptr), dv_index_permutation_(nullptr),
+          dv_sequence_(data_mesh.registerMetaVariable<UnsignedInt>("Sequence")),
+          dv_index_permutation_(data_mesh.registerMetaVariable<UnsignedInt>("IndexPermutation")),
+          dv_pkg_1d_cell_index_(&data_mesh.getPackage1DCellIndex()),
           update_bkg_mesh_variables_to_sort_(occupied_data_pkgs_.size()),
           update_mesh_variables_to_sort_(occupied_data_pkgs_.size()),
           sort_method_(nullptr) {};
     virtual ~PackageSort() {};
-    class ComputingKernel
+
+    class UpdateKernel
     {
       public:
         template <class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : sequence_(encloser.dv_sequence_.DelegatedData(ex_policy)),
-              index_permutation_(encloser.dv_index_permutation_.DelegatedData(ex_policy)){};
-        void update(UnsignedInt &pkg_index) {};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : sequence_(encloser.dv_sequence_->DelegatedData(ex_policy)),
+              index_permutation_(encloser.dv_index_permutation_->DelegatedData(ex_policy)),
+              pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_->DelegatedData(ex_policy)){};
+        void update(UnsignedInt &pkg_index)
+        {
+            sequence_[pkg_index] = pkg_1d_cell_index_[pkg_index];
+            index_permutation_[pkg_index] = pkg_index;
+        };
 
       protected:
-        UnsignedInt *sequence_, *index_permutation_;
+        UnsignedInt *sequence_, *index_permutation_, *pkg_1d_cell_index_;
     };
 
     void exec(Real dt = 0.0)
     {
+        UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
+        package_for(ExecutionPolicy(), num_singular_pkgs_, sv_num_grid_pkgs_.getValue(),
+                    [=](UnsignedInt package_index)
+                    {
+                        update_kernel->update(package_index);
+                    });
+
         parallel_sort(
             occupied_data_pkgs_.begin() + num_singular_pkgs_, occupied_data_pkgs_.end(),
             [](const std::pair<UnsignedInt, int> &a, const std::pair<UnsignedInt, int> &b)
@@ -195,9 +212,13 @@ class PackageSort : public BaseMeshDynamics
     };
 
   private:
+    SingularVariable<UnsignedInt> &sv_num_grid_pkgs_;
+    using KernelImplementation = Implementation<ExecutionPolicy, PackageSort<ExecutionPolicy>, UpdateKernel>;
+    KernelImplementation kernel_implementation_;
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
     DiscreteVariable<UnsignedInt> *dv_sequence_;
     DiscreteVariable<UnsignedInt> *dv_index_permutation_;
+    MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;
     OperationOnDataAssemble<MetaVariableAssemble, UpdateSortableVariables<MetaVariable>> update_bkg_mesh_variables_to_sort_;
     OperationOnDataAssemble<MeshVariableAssemble, UpdateSortableVariables<MeshVariable>> update_mesh_variables_to_sort_;
     SortMethodType *sort_method_;

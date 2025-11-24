@@ -112,7 +112,7 @@ class QuickSortRange
     RandomAccessIterator begin_;
 
     QuickSortRange(RandomAccessIterator begin,
-                           size_t size, const Compare &compare, SwapType &swap_particle_data)
+                   size_t size, const Compare &compare, SwapType &swap_particle_data)
         : comp_(compare), swap_sortable_particle_data_(swap_particle_data),
           size_(size), begin_(begin) {}
 
