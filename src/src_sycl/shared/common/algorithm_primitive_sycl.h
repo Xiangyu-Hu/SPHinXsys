@@ -44,7 +44,7 @@ class RadixSort
                        DiscreteVariable<UnsignedInt> *dv_sequence,
                        DiscreteVariable<UnsignedInt> *dv_index_permutation)
         : dv_sequence_(dv_sequence), dv_index_permutation_(dv_index_permutation){};
-    void sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size);
+    void sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size, UnsignedInt start_index = 0);
 
   protected:
     DiscreteVariable<UnsignedInt> *dv_sequence_;

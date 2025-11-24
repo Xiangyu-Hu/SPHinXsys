@@ -106,6 +106,7 @@ class MeshWithGridDataPackages
 
     static constexpr int DataPackageSize() { return PKG_SIZE; };
     UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
+    UnsignedInt PackageBound() const { return pkgs_bound_; };
     SingularVariable<UnsignedInt> &svNumGridPackages();
     BKGMeshVariable<UnsignedInt> &getCellPackageIndex() { return *bmv_cell_pkg_index_; };
     ConcurrentVec<std::pair<UnsignedInt, int>> &getOccupiedDataPackages() { return occupied_data_pkgs_; };

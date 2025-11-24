@@ -227,7 +227,7 @@ class QuickSort
           swap_index_(sequence_, index_permutation_), compare_(),
           quick_sort_range_(sequence_, 0, compare_, swap_index_),
           quick_sort_body_(){};
-    void sort(const ParallelPolicy &ex_policy, UnsignedInt size);
+    void sort(const ParallelPolicy &ex_policy, UnsignedInt size, UnsignedInt start_index = 0);
 
   protected:
     UnsignedInt *sequence_;

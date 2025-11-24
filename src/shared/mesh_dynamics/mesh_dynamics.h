@@ -171,9 +171,9 @@ class PackageSort : public BaseMeshDynamics
           dv_sequence_(data_mesh.registerMetaVariable<UnsignedInt>("Sequence")),
           dv_index_permutation_(data_mesh.registerMetaVariable<UnsignedInt>("IndexPermutation")),
           dv_pkg_1d_cell_index_(&data_mesh.getPackage1DCellIndex()),
-          update_bkg_mesh_variables_to_sort_(occupied_data_pkgs_.size()),
-          update_mesh_variables_to_sort_(occupied_data_pkgs_.size()),
-          sort_method_(nullptr) {};
+          update_meta_variables_to_sort_(data_mesh.PackageBound()),
+          update_mesh_variables_to_sort_(data_mesh.PackageBound()),
+          sort_method_(ExecutionPolicy{}, dv_sequence_, dv_index_permutation_) {};
     virtual ~PackageSort() {};
 
     class UpdateKernel
@@ -197,7 +197,7 @@ class PackageSort : public BaseMeshDynamics
     void exec(Real dt = 0.0)
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        package_for(ExecutionPolicy(), num_singular_pkgs_, sv_num_grid_pkgs_.getValue(),
+        package_for(ExecutionPolicy(), 0, sv_num_grid_pkgs_.getValue(),
                     [=](UnsignedInt package_index)
                     {
                         update_kernel->update(package_index);
@@ -219,9 +219,9 @@ class PackageSort : public BaseMeshDynamics
     DiscreteVariable<UnsignedInt> *dv_sequence_;
     DiscreteVariable<UnsignedInt> *dv_index_permutation_;
     MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;
-    OperationOnDataAssemble<MetaVariableAssemble, UpdateSortableVariables<MetaVariable>> update_bkg_mesh_variables_to_sort_;
+    OperationOnDataAssemble<MetaVariableAssemble, UpdateSortableVariables<MetaVariable>> update_meta_variables_to_sort_;
     OperationOnDataAssemble<MeshVariableAssemble, UpdateSortableVariables<MeshVariable>> update_mesh_variables_to_sort_;
-    SortMethodType *sort_method_;
+    SortMethodType sort_method_;
 };
 } // namespace SPH
 #endif // MESH_DYNAMICS_H

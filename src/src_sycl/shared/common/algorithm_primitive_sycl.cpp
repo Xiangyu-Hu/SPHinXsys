@@ -8,12 +8,12 @@
 namespace SPH
 {
 //=================================================================================================//
-void RadixSort::sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size)
+void RadixSort::sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size, UnsignedInt start_index)
 {
     UnsignedInt *index_permutation = dv_index_permutation_->DelegatedData(ex_policy);
-    UnsignedInt *sequence = dv_sequence_->DelegatedData(ex_policy);
+    UnsignedInt *begin = dv_sequence_->DelegatedData(ex_policy) + start_index;
     oneapi::dpl::sort_by_key(oneapi::dpl::execution::make_device_policy(execution_instance.getQueue()),
-                             sequence, sequence + size, index_permutation);
+                             begin, begin + size, index_permutation);
 }
 //=================================================================================================//
 } // namespace SPH

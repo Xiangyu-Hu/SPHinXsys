@@ -15,9 +15,9 @@ void QuickSort::SwapIndex::operator()(UnsignedInt *a, UnsignedInt *b)
     std::swap(index_permutation_[index_a], index_permutation_[index_b]);
 }
 //=================================================================================================//
-void QuickSort::sort(const ParallelPolicy &ex_policy, UnsignedInt size)
+void QuickSort::sort(const ParallelPolicy &ex_policy, UnsignedInt size, UnsignedInt start_index)
 {
-    quick_sort_range_.begin_ = sequence_;
+    quick_sort_range_.begin_ = sequence_ + start_index;
     quick_sort_range_.size_ = size;
     tbb::parallel_for(quick_sort_range_, quick_sort_body_);
 }
