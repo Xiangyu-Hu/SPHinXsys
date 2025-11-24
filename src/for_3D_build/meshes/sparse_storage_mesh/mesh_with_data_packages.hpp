@@ -12,14 +12,14 @@ template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &output_file)
 {
     StdVec<Coord3D> active_cells;
-    auto pkg_cell_index = dv_pkg_1d_cell_index_.Data();
-    auto pkg_type = dv_pkg_type_.Data();
+    auto pkg_1d_cell_index = dv_pkg_1d_cell_index_->Data();
+    auto pkg_type = dv_pkg_type_->Data();
     package_for(execution::seq, num_singular_pkgs_, sv_num_grid_pkgs_.getValue(),
                 [&](UnsignedInt package_index)
                 {
                     if (pkg_type[package_index] == 1)
                     {
-                        auto cell_index = index_handler_.DimensionalCellIndex(pkg_cell_index[package_index]);
+                        auto cell_index = index_handler_.DimensionalCellIndex(pkg_1d_cell_index[package_index]);
                         active_cells.push_back({cell_index[0], cell_index[1], cell_index[2]});
                     }
                 });
@@ -67,6 +67,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
                     << block_size[2] * DataPackageSize() + 2
                     << "  DATAPACKING=POINT \n";
 
+        auto cell_pkg_index = bmv_cell_pkg_index_->Data();
         mesh_for_column_major(
             global_lower_bound, global_upper_bound,
             [&](const Array3i &global_index)
@@ -77,21 +78,21 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
                 constexpr int type_index_int = DataTypeIndex<int>::value;
                 for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variables_to_write_))
                 {
-                    int value = DataValueFromGlobalIndex(variable->Data(), global_index, bmv_cell_pkg_index_.Data());
+                    int value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                     output_file << value << " ";
                 };
 
                 constexpr int type_index_Vecd = DataTypeIndex<Vec3d>::value;
                 for (MeshVariable<Vec3d> *variable : std::get<type_index_Vecd>(mesh_variables_to_write_))
                 {
-                    Vec3d value = DataValueFromGlobalIndex(variable->Data(), global_index, bmv_cell_pkg_index_.Data());
+                    Vec3d value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                     output_file << value[0] << " " << value[1] << " " << value[2] << " ";
                 };
 
                 constexpr int type_index_Real = DataTypeIndex<Real>::value;
                 for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variables_to_write_))
                 {
-                    Real value = DataValueFromGlobalIndex(variable->Data(), global_index, bmv_cell_pkg_index_.Data());
+                    Real value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                     output_file << value << " ";
                 };
                 output_file << " \n";
