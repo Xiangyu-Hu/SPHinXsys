@@ -364,21 +364,19 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_mesh_(&encloser.data_mesh_),
-              num_singular_pkgs_(data_mesh_->NumSingularPackages()),
-              cell_contain_id_(
-                  encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
+            : pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_.DelegatedData(ex_policy)),
+              cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
               phi_(encloser.mv_phi_.DelegatedData(ex_policy)){};
         void update(const UnsignedInt &index);
 
       protected:
-        MeshWithGridDataPackagesType *data_mesh_;
-        UnsignedInt num_singular_pkgs_;
+        UnsignedInt *pkg_1d_cell_index_;
         int *cell_contain_id_;
         MeshVariableData<Real> *phi_;
     };
 
   protected:
+    MetaVariable<UnsignedInt> &dv_pkg_1d_cell_index_;
     BKGMeshVariable<int> &bmv_cell_contain_id_;
     MeshVariable<Real> &mv_phi_;
 };

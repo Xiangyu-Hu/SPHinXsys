@@ -146,6 +146,7 @@ InitializeBasicPackageData::InitializeBasicPackageData(
 //=============================================================================================//
 NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
+      dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       bmv_cell_contain_id_(*data_mesh.getBKGMeshVariable<int>("CellContainID")),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")) {}
 //=============================================================================================//

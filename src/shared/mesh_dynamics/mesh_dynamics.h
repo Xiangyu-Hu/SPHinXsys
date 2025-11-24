@@ -187,7 +187,7 @@ class PackageSort : public BaseMeshLocalDynamics, public BaseDynamics<void>
     virtual void exec(Real dt = 0.0) override
     {
         parallel_sort(
-            occupied_data_pkgs_.begin(), occupied_data_pkgs_.end(),
+            occupied_data_pkgs_.begin() + 0, occupied_data_pkgs_.end(),
             [](const std::pair<UnsignedInt, int> &a, const std::pair<UnsignedInt, int> &b)
             {
                 return a.first < b.first;
