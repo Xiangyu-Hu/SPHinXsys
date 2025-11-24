@@ -151,13 +151,18 @@ class InitialCellTagging : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_mesh_(&encloser.data_mesh_), grid_spacing_(data_mesh_->GridSpacing()),
+            : occupied_data_pkgs_(&encloser.occupied_data_pkgs_),
+              cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
+              index_handler_(encloser.data_mesh_.getIndexHandler()),
+              grid_spacing_(index_handler_.GridSpacing()),
               shape_(&encloser.shape_),
               cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)){};
         void update(const Arrayi &cell_index);
 
       protected:
-        MeshWithGridDataPackagesType *data_mesh_;
+        ConcurrentVec<std::pair<UnsignedInt, int>> *occupied_data_pkgs_;
+        UnsignedInt *cell_pkg_index_;
+        IndexHandler index_handler_;
         Real grid_spacing_;
         Shape *shape_;
         int *cell_contain_id_;
@@ -165,6 +170,8 @@ class InitialCellTagging : public BaseMeshLocalDynamics
 
   private:
     Shape &shape_;
+    ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
+    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;
     BKGMeshVariable<int> &bmv_cell_contain_id_;
 };
 
@@ -182,17 +189,23 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : shape_(&encloser.shape_),
+              occupied_data_pkgs_(&encloser.occupied_data_pkgs_),
+              cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
+              index_handler_(encloser.data_mesh_.getIndexHandler()),
               data_mesh_(&encloser.data_mesh_), coarse_mesh_(&encloser.coarse_mesh_),
               grid_spacing_(data_mesh_->GridSpacing()),
               far_field_distance_(encloser.far_field_distance_),
               base_dynamics_(&encloser), probe_coarse_phi_(ex_policy, coarse_mesh_),
               cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
-              cell_pkg_index_coarse_(encloser.bmv_cell_pkg_index__coarse_.DelegatedData(ex_policy)),
+              cell_pkg_index_coarse_(encloser.bmv_cell_pkg_index_coarse_.DelegatedData(ex_policy)),
               pkg_type_coarse_(encloser.dv_pkg_type_coarse_.DelegatedData(ex_policy)){};
         void update(const Arrayi &cell_index);
 
       protected:
         Shape *shape_;
+        ConcurrentVec<std::pair<UnsignedInt, int>> *occupied_data_pkgs_;
+        UnsignedInt *cell_pkg_index_;
+        IndexHandler index_handler_;
         MeshWithGridDataPackagesType *data_mesh_;
         MeshWithGridDataPackagesType *coarse_mesh_;
         Real grid_spacing_;
@@ -207,9 +220,11 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
   private:
     MeshWithGridDataPackagesType &coarse_mesh_;
     Shape &shape_;
+    ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
+    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;
     Real far_field_distance_;
     BKGMeshVariable<int> &bmv_cell_contain_id_;
-    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index__coarse_;
+    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_coarse_;
     MetaVariable<int> &dv_pkg_type_coarse_;
 };
 
@@ -220,8 +235,7 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
 class InnerCellTagging : public BaseMeshLocalDynamics
 {
   public:
-    explicit InnerCellTagging(MeshWithGridDataPackagesType &data_mesh)
-        : BaseMeshLocalDynamics(data_mesh) {};
+    explicit InnerCellTagging(MeshWithGridDataPackagesType &data_mesh);
     virtual ~InnerCellTagging() {};
 
     class UpdateKernel
@@ -229,14 +243,21 @@ class InnerCellTagging : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_mesh_(&encloser.data_mesh_){};
+            : data_mesh_(&encloser.data_mesh_),
+              occupied_data_pkgs_(&encloser.occupied_data_pkgs_),
+              index_handler_(encloser.data_mesh_.getIndexHandler()){};
         void update(const Arrayi &cell_index);
 
       protected:
         MeshWithGridDataPackagesType *data_mesh_;
+        ConcurrentVec<std::pair<UnsignedInt, int>> *occupied_data_pkgs_;
+        IndexHandler index_handler_;
 
         bool isInnerPackage(const Arrayi &cell_index);
     };
+
+    ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
+    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;
 };
 
 /**

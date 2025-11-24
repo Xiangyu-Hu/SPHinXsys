@@ -105,11 +105,12 @@ class MeshWithGridDataPackages : public Mesh
     static constexpr int DataPackageSize() { return PKG_SIZE; };
     UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
     SingularVariable<UnsignedInt> &svNumGridPackages();
-    BKGMeshVariable<UnsignedInt> &getCellPackageIndex();
+    BKGMeshVariable<UnsignedInt> &getCellPackageIndex() { return bmv_cell_pkg_index_; };
+    ConcurrentVec<std::pair<UnsignedInt, int>> &getOccupiedDataPackages() { return occupied_data_pkgs_; };
     MetaVariable<CellNeighborhood> &getCellNeighborhood();
     MetaVariable<UnsignedInt> &getPackage1DCellIndex();
     MetaVariable<int> &getPackageType();
-    ConcurrentVec<std::pair<UnsignedInt, int>> &getOccupiedDataPackages();
+
     template <typename DataType>
     void addMeshVariableToWrite(const std::string &variable_name);
     template <typename DataType>
@@ -122,13 +123,13 @@ class MeshWithGridDataPackages : public Mesh
     void writeBKGMeshVariableToPlt(std::ofstream &output_file);
 
   protected:
-    Mesh global_mesh_;                            /**< the global mesh with the size of data spacing. */
-    UnsignedInt num_singular_pkgs_;               /**< the number of all packages, initially only singular packages. */
+    Mesh global_mesh_;                               /**< the global mesh with the size of data spacing. */
+    UnsignedInt num_singular_pkgs_;                  /**< the number of all packages, initially only singular packages. */
     SingularVariable<UnsignedInt> sv_num_grid_pkgs_; /**< the number of all packages, initially only with singular packages. */
     UnsignedInt pkgs_bound_;
-    MetaVariable<UnsignedInt> dv_pkg_1d_cell_index_;                    /**< metadata for data pckages: cell index. */
-    MetaVariable<int> dv_pkg_type_;                             /**< metadata for data pckages: (int)core1/inner0. */
-    MetaVariable<CellNeighborhood> cell_neighborhood_;          /**< 3*3(*3) array to store indicies of neighborhood cells. */
+    MetaVariable<UnsignedInt> dv_pkg_1d_cell_index_;                /**< metadata for data pckages: cell index. */
+    MetaVariable<int> dv_pkg_type_;                                 /**< metadata for data pckages: (int)core1/inner0. */
+    MetaVariable<CellNeighborhood> cell_neighborhood_;              /**< 3*3(*3) array to store indicies of neighborhood cells. */
     BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;              /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_; /**< (UnsignedInt)sort_index, (int)core1/inner0. */
     const Real data_spacing_;                                       /**< spacing of data in the data packages. */
@@ -182,11 +183,9 @@ class MeshWithGridDataPackages : public Mesh
     template <typename DataType>
     MetaVariable<DataType> *getMetaVariable(const std::string &variable_name);
 
-    void registerOccupied(UnsignedInt sort_index, int type);
     void organizeOccupiedPackages();
     bool isInnerDataPackage(const Arrayi &cell_index);
     bool isWithinCorePackage(UnsignedInt *cell_package_index, int *pkg_type, Vecd position);
-    void assignDataPackageIndex(const Arrayi &cell_index, const UnsignedInt package_index);
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H

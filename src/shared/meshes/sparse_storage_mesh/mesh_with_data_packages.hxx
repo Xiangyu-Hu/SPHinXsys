@@ -31,18 +31,6 @@ DiscreteVariable<CellNeighborhood> &MeshWithGridDataPackages<PKG_SIZE>::getCellN
 }
 //=============================================================================================//
 template <int PKG_SIZE>
-DiscreteVariable<UnsignedInt> &MeshWithGridDataPackages<PKG_SIZE>::getCellPackageIndex()
-{
-    return checkOrganized("getCellPackageIndex", bmv_cell_pkg_index_);
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-ConcurrentVec<std::pair<UnsignedInt, int>> &MeshWithGridDataPackages<PKG_SIZE>::getOccupiedDataPackages()
-{
-    return checkOrganized("getOccupiedDataPackages", occupied_data_pkgs_);
-}
-//=============================================================================================//
-template <int PKG_SIZE>
 DiscreteVariable<UnsignedInt> &MeshWithGridDataPackages<PKG_SIZE>::getPackage1DCellIndex()
 {
     return checkOrganized("getPackage1DCellIndex", dv_pkg_1d_cell_index_);
@@ -239,7 +227,7 @@ MeshWithGridDataPackages<PKG_SIZE>::registerBKGMeshVariable(const std::string &v
 }
 //=============================================================================================//
 template <int PKG_SIZE>
-    template <typename DataType, typename... Args>
+template <typename DataType, typename... Args>
 DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::registerMetaVariable(
     const std::string &variable_name, Args &&...args)
 {
@@ -296,12 +284,6 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
 }
 //=============================================================================================//
 template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::registerOccupied(UnsignedInt sort_index, int type)
-{
-    occupied_data_pkgs_.push_back(std::make_pair(sort_index, type));
-}
-//=============================================================================================//
-template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
 {
     sv_num_grid_pkgs_.setValue(occupied_data_pkgs_.size() + num_singular_pkgs_);
@@ -330,18 +312,6 @@ bool MeshWithGridDataPackages<PKG_SIZE>::isWithinCorePackage(
     Arrayi cell_index = CellIndexFromPosition(position);
     UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_package_index, cell_index);
     return pkg_type[package_index] == 1;
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    assignDataPackageIndex(const Arrayi &cell_index, const UnsignedInt package_index)
-{
-    UnsignedInt index_1d = LinearCellIndex(cell_index);
-    /**
-     * NOTE currently the `bmv_cell_pkg_index_` is only assigned in the host;
-     *      use the `DelegatedData` version when needed.
-     */
-    bmv_cell_pkg_index_.Data()[index_1d] = package_index;
 }
 //=============================================================================================//
 } // namespace SPH
