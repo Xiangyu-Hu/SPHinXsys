@@ -11,10 +11,8 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     BoundingBox tentative_bounds, Real data_spacing, UnsignedInt buffer_size, UnsignedInt num_singular_pkgs)
     : index_handler_(tentative_bounds, data_spacing * PKG_SIZE, buffer_size, 0, data_spacing),
       num_singular_pkgs_(num_singular_pkgs), sv_num_grid_pkgs_("NumGridPackages", num_singular_pkgs),
-      dv_pkg_1d_cell_index_("Package1DCellIndex", num_singular_pkgs_),
-      dv_pkg_type_("PackageType", num_singular_pkgs_),
-      cell_neighborhood_("CellNeighborhood", num_singular_pkgs_),
-      bmv_cell_pkg_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
+      dv_pkg_1d_cell_index_(nullptr), dv_pkg_type_(nullptr), cell_neighborhood_(nullptr),
+      bmv_cell_pkg_index_(registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
       global_mesh_(index_handler_.MeshLowerBound() + 0.5 * data_spacing * Vecd::Ones(),
                    data_spacing, index_handler_.AllCells() * PKG_SIZE)
 {
@@ -33,19 +31,19 @@ SingularVariable<UnsignedInt> &MeshWithGridDataPackages<PKG_SIZE>::svNumGridPack
 template <int PKG_SIZE>
 DiscreteVariable<CellNeighborhood> &MeshWithGridDataPackages<PKG_SIZE>::getCellNeighborhood()
 {
-    return checkOrganized("getCellNeighborhood", cell_neighborhood_);
+    return checkOrganized("getCellNeighborhood", *cell_neighborhood_);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
 DiscreteVariable<UnsignedInt> &MeshWithGridDataPackages<PKG_SIZE>::getPackage1DCellIndex()
 {
-    return checkOrganized("getPackage1DCellIndex", dv_pkg_1d_cell_index_);
+    return checkOrganized("getPackage1DCellIndex", *dv_pkg_1d_cell_index_);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
 DiscreteVariable<int> &MeshWithGridDataPackages<PKG_SIZE>::getPackageType()
 {
-    return checkOrganized("getPackageType", dv_pkg_type_);
+    return checkOrganized("getPackageType", *dv_pkg_type_);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
@@ -196,9 +194,9 @@ template <class ExecutionPolicy>
 void MeshWithGridDataPackages<PKG_SIZE>::syncMeshVariablesToProbe(ExecutionPolicy &ex_policy)
 {
     sync_mesh_variable_data_(mesh_variables_to_probe_, ex_policy);
-    dv_pkg_1d_cell_index_.prepareForOutput(ex_policy);
-    dv_pkg_type_.prepareForOutput(ex_policy);
-    bmv_cell_pkg_index_.prepareForOutput(ex_policy);
+    dv_pkg_1d_cell_index_->prepareForOutput(ex_policy);
+    dv_pkg_type_->prepareForOutput(ex_policy);
+    bmv_cell_pkg_index_->prepareForOutput(ex_policy);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
@@ -255,7 +253,7 @@ DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::registerMetaVari
         exit(1);
     }
     return registerVariable<DiscreteVariable, DataType>(
-        all_meta_variables_, meta_variable_ptrs_, variable_name, std::forward<Args>(args)...);
+        all_meta_variables_, meta_variable_ptrs_, variable_name, pkgs_bound_, std::forward<Args>(args)...);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
@@ -305,10 +303,20 @@ void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
 {
     sv_num_grid_pkgs_.setValue(occupied_data_pkgs_.size());
     pkgs_bound_ = sv_num_grid_pkgs_.getValue();
-    cell_neighborhood_.reallocateData(par_host, pkgs_bound_);
-    dv_pkg_1d_cell_index_.reallocateData(par_host, pkgs_bound_);
-    dv_pkg_type_.reallocateData(par_host, pkgs_bound_);
     is_organized_ = true;
+
+    dv_pkg_1d_cell_index_ = registerMetaVariable<UnsignedInt>(
+        "Package1DCellIndex",
+        [&](UnsignedInt i)
+        { return occupied_data_pkgs_[i].first; });
+    dv_pkg_type_ = registerMetaVariable<int>(
+        "PackageType",
+        [&](UnsignedInt i)
+        { return occupied_data_pkgs_[i].second; });
+    addEvolvingMetaVariable<UnsignedInt>("Package1DCellIndex");
+    addEvolvingMetaVariable<int>("PackageType");
+    cell_neighborhood_ = unique_variable_ptrs_.createPtr<
+        MetaVariable<CellNeighborhood>>("CellNeighborhood", pkgs_bound_);
 }
 //=============================================================================================//
 } // namespace SPH
