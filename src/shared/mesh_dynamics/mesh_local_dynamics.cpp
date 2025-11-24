@@ -4,8 +4,7 @@ namespace SPH
 {
 //=================================================================================================//
 BaseMeshLocalDynamics::BaseMeshLocalDynamics(MeshWithGridDataPackagesType &data_mesh)
-    : data_mesh_(data_mesh),
-      data_spacing_(data_mesh.DataSpacing()) {}
+    : data_mesh_(data_mesh), index_handler_(data_mesh.getIndexHandler()) {}
 //=================================================================================================//
 InitialCellTagging::InitialCellTagging(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh), shape_(shape),
@@ -42,7 +41,6 @@ InitialCellTaggingFromCoarse::InitialCellTaggingFromCoarse(
       coarse_mesh_(coarse_mesh), shape_(shape),
       occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
       bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
-      far_field_distance_(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth()),
       bmv_cell_contain_id_(*data_mesh.registerBKGMeshVariable<int>(
           "CellContainID", // default value is 2, indicating not near interface
           [&](UnsignedInt index)
@@ -94,17 +92,17 @@ void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 //=================================================================================================//
 InitializeCellPackageInfo::InitializeCellPackageInfo(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
+      occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
       dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       dv_pkg_type_(data_mesh.getPackageType()),
       bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()) {}
 //=================================================================================================//
 void InitializeCellPackageInfo::UpdateKernel::update(const UnsignedInt &package_index)
 {
-    ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs = data_mesh_->getOccupiedDataPackages();
-    UnsignedInt sort_index = occupied_data_pkgs[package_index - num_singular_pkgs_].first;
+    UnsignedInt sort_index = (*occupied_data_pkgs_)[package_index - num_singular_pkgs_].first;
     cell_pkg_index_[sort_index] = package_index;
     pkg_1d_cell_index_[package_index] = sort_index;
-    pkg_type_[package_index] = occupied_data_pkgs[package_index - num_singular_pkgs_].second;
+    pkg_type_[package_index] = (*occupied_data_pkgs_)[package_index - num_singular_pkgs_].second;
 }
 //=================================================================================================//
 InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)
@@ -140,12 +138,13 @@ void InitializeCellNeighborhood::UpdateKernel::update(const UnsignedInt &package
 InitializeBasicPackageData::InitializeBasicPackageData(
     MeshWithGridDataPackagesType &data_mesh, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh), shape_(shape),
-      far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth()),
       dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       mv_phi_(*data_mesh.registerMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.registerMeshVariable<Vecd>("LevelSetGradient")),
       mv_near_interface_id_(*data_mesh.registerMeshVariable<int>("NearInterfaceID"))
 {
+    IndexHandler &index_handler = data_mesh.getIndexHandler();
+    Real far_field_distance = index_handler.GridSpacing() * (Real)index_handler.BufferWidth();
     data_mesh.addMeshVariableToWrite<Real>("LevelSet");
     initializeSingularPackages(0, -far_field_distance);
     initializeSingularPackages(1, far_field_distance);
@@ -180,23 +179,23 @@ UpdateKernelIntegrals::UpdateKernelIntegrals(
       bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
       mv_kernel_weight_(*data_mesh.registerMeshVariable<Real>("KernelWeight")),
       mv_kernel_gradient_(*data_mesh.registerMeshVariable<Vecd>("KernelGradient")),
-      mv_kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient")),
-      far_field_distance(data_mesh.GridSpacing() * (Real)data_mesh.BufferWidth())
+      mv_kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient"))
 {
+    IndexHandler &index_handler = data_mesh.getIndexHandler();
+    Real far_field_distance = index_handler.GridSpacing() * (Real)index_handler.BufferWidth();
     initializeSingularPackages(0, -far_field_distance);
     initializeSingularPackages(1, far_field_distance);
 }
 //=============================================================================================//
 MarkCutInterfaces::MarkCutInterfaces(MeshWithGridDataPackagesType &data_mesh, Real perturbation_ratio)
     : BaseMeshLocalDynamics(data_mesh),
-      threshold_(data_spacing_ * sqrt(Dimensions)), perturbation_ratio_(perturbation_ratio),
+      perturbation_ratio_(perturbation_ratio),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
 MarkNearInterface::MarkNearInterface(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
-      threshold_(data_spacing_ * sqrt(Dimensions)),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}

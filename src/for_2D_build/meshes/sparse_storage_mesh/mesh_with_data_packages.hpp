@@ -115,7 +115,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeBKGMeshVariableToPlt(std::ofstream
 
     output_file << " \n";
 
-    Arrayi number_of_operation = AllCells();
+    Arrayi number_of_operation = index_handler_.AllCells();
     output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << 1
                 << "  DATAPACKING=POINT \n";
 
@@ -123,8 +123,8 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeBKGMeshVariableToPlt(std::ofstream
         Arrayi::Zero(), number_of_operation,
         [&](const Array2i &cell_index)
         {
-            UnsignedInt linear_index = LinearCellIndex(cell_index);
-            Vecd data_position = CellPositionFromIndex(cell_index);
+            UnsignedInt linear_index = index_handler_.LinearCellIndex(cell_index);
+            Vecd data_position = index_handler_.CellPositionFromIndex(cell_index);
             output_file << data_position[0] << " " << data_position[1] << " ";
 
             for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(bkg_mesh_variables_to_write_))

@@ -12,7 +12,7 @@ MultilevelLevelSet::MultilevelLevelSet(
     : BaseMeshField("LevelSet_" + shape.getName()), total_levels_(1),
       shape_(shape), refinement_ratio_(refinement_ratio)
 {
-    Real data_spacing = coarse_data->DataSpacing() * 0.5;
+    Real data_spacing = coarse_data->getIndexHandler().DataSpacing() * 0.5;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec_.push_back(global_h_ratio);

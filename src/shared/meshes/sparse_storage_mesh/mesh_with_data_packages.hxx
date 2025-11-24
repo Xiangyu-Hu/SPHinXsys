@@ -9,14 +9,14 @@ namespace SPH
 template <int PKG_SIZE>
 MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     BoundingBox tentative_bounds, Real data_spacing, UnsignedInt buffer_size, UnsignedInt num_singular_pkgs)
-    : Mesh(tentative_bounds, PKG_SIZE * data_spacing, buffer_size),
-      global_mesh_(mesh_lower_bound_ + 0.5 * data_spacing * Vecd::Ones(), data_spacing, all_cells_ * PKG_SIZE),
+    : index_handler_(tentative_bounds, data_spacing * PKG_SIZE, buffer_size, 0, data_spacing),
       num_singular_pkgs_(num_singular_pkgs), sv_num_grid_pkgs_("NumGridPackages", num_singular_pkgs),
       dv_pkg_1d_cell_index_("Package1DCellIndex", num_singular_pkgs_),
       dv_pkg_type_("PackageType", num_singular_pkgs_),
       cell_neighborhood_("CellNeighborhood", num_singular_pkgs_),
       bmv_cell_pkg_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
-      data_spacing_(data_spacing), index_handler_(*this, data_spacing){};
+      global_mesh_(index_handler_.MeshLowerBound() + 0.5 * data_spacing * Vecd::Ones(),
+                   data_spacing, index_handler_.AllCells() * PKG_SIZE){};
 //=============================================================================================//
 template <int PKG_SIZE>
 SingularVariable<UnsignedInt> &MeshWithGridDataPackages<PKG_SIZE>::svNumGridPackages()
@@ -125,8 +125,10 @@ operator()(DataContainerAddressKeeper<MeshVariableType<DataType>> &mesh_variable
 //=============================================================================================//
 template <int PKG_SIZE>
 MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
-    IndexHandler(const Mesh &mesh, Real data_spacing)
-    : Mesh(mesh), data_spacing_(data_spacing) {}
+    IndexHandler(BoundingBox tentative_bounds, Real grid_spacing,
+                 UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset, Real data_spacing)
+    : Mesh(tentative_bounds, grid_spacing, buffer_width, linear_cell_index_offset),
+      data_spacing_(data_spacing) {}
 //=============================================================================================//
 template <int PKG_SIZE>
 Vecd MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
@@ -231,7 +233,7 @@ typename MeshWithGridDataPackages<PKG_SIZE>::template BKGMeshVariable<DataType> 
 MeshWithGridDataPackages<PKG_SIZE>::registerBKGMeshVariable(const std::string &variable_name, Args &&...args)
 {
     return registerVariable<BKGMeshVariable, DataType>(
-        all_bkg_mesh_variables_, bkg_mesh_variable_ptrs_, variable_name, AllCells().prod(),
+        all_bkg_mesh_variables_, bkg_mesh_variable_ptrs_, variable_name, index_handler_.NumberOfCells(),
         std::forward<Args>(args)...);
 }
 //=============================================================================================//

@@ -24,15 +24,15 @@ inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &pa
 //=================================================================================================//
 inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
 {
-    UnsignedInt index_1d = data_mesh_->LinearCellIndex(cell_index);
+    UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
     if (cell_contain_id_[index_1d] == 2)
     {
         if (mesh_any_of(
                 Arrayi::Zero().max(cell_index - Arrayi::Ones()),
-                data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                index_handler_.AllCells().min(cell_index + 2 * Arrayi::Ones()),
                 [&](int l, int m)
                 {
-                    UnsignedInt neighbor_1d = data_mesh_->LinearCellIndex(Arrayi(l, m));
+                    UnsignedInt neighbor_1d = index_handler_.LinearCellIndex(Arrayi(l, m));
                     return cell_contain_id_[neighbor_1d] == -1;
                 }))
         {
@@ -43,10 +43,10 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
         }
         else if (mesh_any_of(
                      Arrayi::Zero().max(cell_index - Arrayi::Ones()),
-                     data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                     index_handler_.AllCells().min(cell_index + 2 * Arrayi::Ones()),
                      [&](int l, int m)
                      {
-                         UnsignedInt neighbor_1d = data_mesh_->LinearCellIndex(Arrayi(l, m));
+                         UnsignedInt neighbor_1d = index_handler_.LinearCellIndex(Arrayi(l, m));
                          return cell_contain_id_[neighbor_1d] == 1;
                      }))
         {

@@ -51,13 +51,13 @@ class BaseMeshDynamics
   public:
     BaseMeshDynamics(MeshWithGridDataPackagesType &mesh_data)
         : mesh_data_(mesh_data),
-          all_cells_(mesh_data.AllCells()),
+          index_handler_(mesh_data_.getIndexHandler()),
           num_singular_pkgs_(mesh_data.NumSingularPackages()) {};
     virtual ~BaseMeshDynamics() {};
 
   protected:
     MeshWithGridDataPackagesType &mesh_data_;
-    Arrayi all_cells_;
+    IndexHandler &index_handler_;
     UnsignedInt num_singular_pkgs_;
 };
 
@@ -82,7 +82,7 @@ class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics
     void exec()
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        mesh_for(ExecutionPolicy(), MeshRange(Arrayi::Zero(), all_cells_),
+        mesh_for(ExecutionPolicy(), MeshRange(Arrayi::Zero(), index_handler_.AllCells()),
                  [&](Arrayi cell_index)
                  {
                      update_kernel->update(cell_index);

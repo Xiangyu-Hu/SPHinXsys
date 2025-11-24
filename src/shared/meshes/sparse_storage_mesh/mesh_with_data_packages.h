@@ -51,7 +51,7 @@ namespace SPH
  * Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
  */
 template <int PKG_SIZE>
-class MeshWithGridDataPackages : public Mesh
+class MeshWithGridDataPackages
 {
   public:
     template <class DataType>
@@ -69,7 +69,9 @@ class MeshWithGridDataPackages : public Mesh
         Real data_spacing_;
 
       public:
-        IndexHandler(const Mesh &mesh, Real data_spacing);
+        IndexHandler(BoundingBox tentative_bounds, Real grid_spacing,
+                     UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset,
+                     Real data_spacing);
         Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
         Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
         Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
@@ -100,9 +102,6 @@ class MeshWithGridDataPackages : public Mesh
                              UnsignedInt buffer_size, UnsignedInt num_singular_pkgs = 2);
     virtual ~MeshWithGridDataPackages() {};
 
-    /** spacing between the data, which is 1 / PKG_SIZE of this grid spacing */
-    Real DataSpacing() { return data_spacing_; };
-    Real GridSpacing() { return grid_spacing_; };
     static constexpr int DataPackageSize() { return PKG_SIZE; };
     UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
     SingularVariable<UnsignedInt> &svNumGridPackages();
@@ -124,7 +123,7 @@ class MeshWithGridDataPackages : public Mesh
     void writeBKGMeshVariableToPlt(std::ofstream &output_file);
 
   protected:
-    Mesh global_mesh_;                               /**< the global mesh with the size of data spacing. */
+    IndexHandler index_handler_;
     UnsignedInt num_singular_pkgs_;                  /**< the number of all packages, initially only singular packages. */
     SingularVariable<UnsignedInt> sv_num_grid_pkgs_; /**< the number of all packages, initially only with singular packages. */
     UnsignedInt pkgs_bound_;
@@ -133,9 +132,8 @@ class MeshWithGridDataPackages : public Mesh
     MetaVariable<CellNeighborhood> cell_neighborhood_;              /**< 3*3(*3) array to store indicies of neighborhood cells. */
     BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;              /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_; /**< (UnsignedInt)sort_index, (int)core1/inner0. */
-    const Real data_spacing_;                                       /**< spacing of data in the data packages. */
     bool is_organized_ = false;                                     /**< whether the data packages are organized. */
-    IndexHandler index_handler_;
+    Mesh global_mesh_;                                              /**< the global mesh with the size of data spacing. */
 
     template <typename T>
     T &checkOrganized(std::string func_name, T &value);
