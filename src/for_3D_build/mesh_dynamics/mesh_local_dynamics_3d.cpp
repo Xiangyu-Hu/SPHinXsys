@@ -19,14 +19,14 @@ void InitializeBasicPackageData::initializeSingularPackages(
         });
 }
 //=============================================================================================//
-bool InnerCellTagging::UpdateKernel::isInnerPackage(const Arrayi &cell_index)
+bool InnerCellTagging::UpdateKernel::isNearInitiallyTagged(const Arrayi &cell_index)
 {
     return mesh_any_of(
         Array3i::Zero().max(cell_index - Array3i::Ones()),
-        data_mesh_->AllCells().min(cell_index + 2 * Array3i::Ones()),
+        index_handler_.AllCells().min(cell_index + 2 * Array3i::Ones()),
         [&](int l, int m, int n)
         {
-            return data_mesh_->isInnerDataPackage(Arrayi(l, m, n)); // actually a core test here, because only core pkgs are assigned
+            return isInitiallyTagged(Arrayi(l, m, n));
         });
 }
 //=============================================================================================//

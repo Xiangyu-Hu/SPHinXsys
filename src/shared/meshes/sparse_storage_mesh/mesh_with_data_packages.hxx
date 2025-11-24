@@ -161,6 +161,15 @@ UnsignedInt MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
 }
 //=============================================================================================//
 template <int PKG_SIZE>
+bool MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
+    isWithinCorePackage(UnsignedInt *cell_package_index, int *pkg_type, const Vecd &position)
+{
+    Arrayi cell_index = CellIndexFromPosition(position);
+    UnsignedInt pkg_index = PackageIndexFromCellIndex(cell_package_index, cell_index);
+    return pkg_type[pkg_index] == 1;
+}
+//=============================================================================================//
+template <int PKG_SIZE>
 template <class ExecutionPolicy>
 void MeshWithGridDataPackages<PKG_SIZE>::syncMeshVariablesToWrite(ExecutionPolicy &ex_policy)
 {
@@ -292,26 +301,6 @@ void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
     dv_pkg_1d_cell_index_.reallocateData(par_host, pkgs_bound_);
     dv_pkg_type_.reallocateData(par_host, pkgs_bound_);
     is_organized_ = true;
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-bool MeshWithGridDataPackages<PKG_SIZE>::isInnerDataPackage(const Arrayi &cell_index)
-{
-    UnsignedInt index_1d = LinearCellIndex(cell_index);
-    /**
-     * NOTE currently this func is only used in non-device mode;
-     *      use the `DelegatedData` version when needed.
-     */
-    return bmv_cell_pkg_index_.Data()[index_1d] > 1;
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-bool MeshWithGridDataPackages<PKG_SIZE>::isWithinCorePackage(
-    UnsignedInt *cell_package_index, int *pkg_type, Vecd position)
-{
-    Arrayi cell_index = CellIndexFromPosition(position);
-    UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_package_index, cell_index);
-    return pkg_type[package_index] == 1;
 }
 //=============================================================================================//
 } // namespace SPH

@@ -193,6 +193,7 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
               cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
               index_handler_(encloser.data_mesh_.getIndexHandler()),
               data_mesh_(&encloser.data_mesh_), coarse_mesh_(&encloser.coarse_mesh_),
+              coarse_index_handler_(coarse_mesh_->getIndexHandler()),
               grid_spacing_(data_mesh_->GridSpacing()),
               far_field_distance_(encloser.far_field_distance_),
               base_dynamics_(&encloser), probe_coarse_phi_(ex_policy, coarse_mesh_),
@@ -208,6 +209,7 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
         IndexHandler index_handler_;
         MeshWithGridDataPackagesType *data_mesh_;
         MeshWithGridDataPackagesType *coarse_mesh_;
+        IndexHandler coarse_index_handler_;
         Real grid_spacing_;
         Real far_field_distance_;
         BaseMeshLocalDynamics *base_dynamics_;
@@ -245,15 +247,22 @@ class InnerCellTagging : public BaseMeshLocalDynamics
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : data_mesh_(&encloser.data_mesh_),
               occupied_data_pkgs_(&encloser.occupied_data_pkgs_),
-              index_handler_(encloser.data_mesh_.getIndexHandler()){};
+              index_handler_(encloser.data_mesh_.getIndexHandler()),
+              cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)){};
         void update(const Arrayi &cell_index);
 
       protected:
         MeshWithGridDataPackagesType *data_mesh_;
         ConcurrentVec<std::pair<UnsignedInt, int>> *occupied_data_pkgs_;
         IndexHandler index_handler_;
+        UnsignedInt *cell_pkg_index_;
 
-        bool isInnerPackage(const Arrayi &cell_index);
+        bool isNearInitiallyTagged(const Arrayi &cell_index);
+        bool isInitiallyTagged(const Arrayi &cell_index)
+        {
+            UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
+            return cell_pkg_index_[index_1d] == 2;
+        };
     };
 
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;

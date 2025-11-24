@@ -9,7 +9,7 @@ namespace SPH
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
     Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
-    : BaseMeshField("LevelSet_" + shape.getName()),total_levels_(1),
+    : BaseMeshField("LevelSet_" + shape.getName()), total_levels_(1),
       shape_(shape), refinement_ratio_(refinement_ratio)
 {
     Real data_spacing = coarse_data->DataSpacing() * 0.5;
@@ -132,7 +132,7 @@ size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
 {
     for (size_t level = total_levels_; level != 0; --level)
     {
-        if (mesh_data_set_[level - 1]->isWithinCorePackage(
+        if (mesh_index_handler_set_[level - 1]->isWithinCorePackage(
                 cell_pkg_index_set_[level - 1], pkg_type_set_[level - 1], position))
             return level - 1; // jump out of the loop!
     }

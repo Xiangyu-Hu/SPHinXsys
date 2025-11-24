@@ -74,6 +74,7 @@ class MeshWithGridDataPackages : public Mesh
         Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
         Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
         UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index) const;
+        bool isWithinCorePackage(UnsignedInt *cell_package_index, int *pkg_type, const Vecd &position);
         Real DataSpacing() const { return data_spacing_; };
     };
     typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
@@ -184,8 +185,6 @@ class MeshWithGridDataPackages : public Mesh
     MetaVariable<DataType> *getMetaVariable(const std::string &variable_name);
 
     void organizeOccupiedPackages();
-    bool isInnerDataPackage(const Arrayi &cell_index);
-    bool isWithinCorePackage(UnsignedInt *cell_package_index, int *pkg_type, Vecd position);
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H

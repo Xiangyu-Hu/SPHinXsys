@@ -107,13 +107,14 @@ class MultilevelLevelSet : public BaseMeshField
     void registerKernelIntegralProbes(const ExecutionPolicy &ex_policy);
 
     size_t total_levels_; /**< level 0 is the coarsest */
-    Shape &shape_; /**< the geometry is described by the level set. */
+    Shape &shape_;        /**< the geometry is described by the level set. */
     Real refinement_ratio_;
     StdVec<UnsignedInt *> cell_pkg_index_set_;
     StdVec<int *> pkg_type_set_;
     StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
     StdVec<NeighborMethod<SingleValued> *> neighbor_method_set_;
     StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;
+    StdVec<MeshWithGridDataPackagesType::IndexHandler *> mesh_index_handler_set_;
     StdVec<ProbeSignedDistance *> probe_signed_distance_set_;
     StdVec<ProbeNormalDirection *> probe_normal_direction_set_;
     StdVec<ProbeLevelSetGradient *> probe_level_set_gradient_set_;

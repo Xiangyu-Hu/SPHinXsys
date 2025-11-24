@@ -30,7 +30,7 @@ void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
     Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
     if (measure < grid_spacing_)
     {
-        cell_pkg_index_[index_1d] = 2;                               // exact index later
+        cell_pkg_index_[index_1d] = 2;                               // indicate initially tagged temporarily
         occupied_data_pkgs_->push_back(std::make_pair(index_1d, 1)); // core package
     }
 }
@@ -65,15 +65,14 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
         cell_contain_id_[index_1d] = phi < 0.0 ? -1 : 1;
     }
 
-    if (coarse_mesh_->isWithinCorePackage(
-            cell_pkg_index_coarse_, pkg_type_coarse_, cell_position))
+    if (coarse_index_handler_.isWithinCorePackage(cell_pkg_index_coarse_, pkg_type_coarse_, cell_position))
     {
         Real signed_distance = shape_->findSignedDistance(cell_position);
         Vecd normal_direction = shape_->findNormalDirection(cell_position);
         Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
         if (measure < grid_spacing_)
         {
-            cell_pkg_index_[index_1d] = 2;                               // exact index later
+            cell_pkg_index_[index_1d] = 2;                               // indicate initially tagged temporarily
             occupied_data_pkgs_->push_back(std::make_pair(index_1d, 1)); // core package
         }
     }
@@ -86,7 +85,7 @@ InnerCellTagging::InnerCellTagging(MeshWithGridDataPackagesType &data_mesh)
 //=================================================================================================//
 void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 {
-    if (isInnerPackage(cell_index) && !data_mesh_->isInnerDataPackage(cell_index))
+    if (isNearInitiallyTagged(cell_index) && !isInitiallyTagged(cell_index))
     {
         UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
         occupied_data_pkgs_->push_back(std::make_pair(index_1d, 0)); // inner package
