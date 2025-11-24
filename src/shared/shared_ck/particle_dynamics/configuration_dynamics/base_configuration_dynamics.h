@@ -96,20 +96,21 @@ class UpdateSortableVariables
                     ExecutionPolicy &ex_policy, UnsignedInt sorted_size,
                     DiscreteVariable<UnsignedInt> *dv_index_permutation)
     {
+        using ContainedDataType = typename ContanierType<DataType>::ContainedDataType;
         constexpr int type_index = DataTypeIndex<DataType>::value;
-        DataType *temp_data_field = std::get<type_index>(temp_variables_)->DelegatedData(ex_policy);
+        ContainedDataType *temp_data_field = std::get<type_index>(temp_variables_)->DelegatedData(ex_policy);
 
         UnsignedInt *index_permutation = dv_index_permutation->DelegatedData(ex_policy);
 
         for (size_t k = 0; k != variables.size(); ++k)
         {
-            DataType *sorted_data_field = variables[k]->DelegatedData(ex_policy);
-            particle_for(ex_policy, IndexRange(0, sorted_size),
-                         [=](size_t i)
-                         { temp_data_field[i] = sorted_data_field[i]; });
-            particle_for(ex_policy, IndexRange(0, sorted_size),
-                         [=](size_t i)
-                         { sorted_data_field[i] = temp_data_field[index_permutation[i]]; });
+            ContainedDataType *sorted_data_field = variables[k]->DelegatedData(ex_policy);
+            generic_for(ex_policy, IndexRange(0, sorted_size),
+                        [=](size_t i)
+                        { temp_data_field[i] = sorted_data_field[i]; });
+            generic_for(ex_policy, IndexRange(0, sorted_size),
+                        [=](size_t i)
+                        { sorted_data_field[i] = temp_data_field[index_permutation[i]]; });
         }
     };
 };

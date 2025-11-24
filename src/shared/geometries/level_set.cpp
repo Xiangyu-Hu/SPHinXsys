@@ -78,11 +78,6 @@ void MultilevelLevelSet::initializeLevel(
     PackageSort<execution::ParallelPolicy> pkg_sort(*mesh_data);
     pkg_sort.exec();
 
-    MeshInnerDynamics<execution::ParallelPolicy, InitializeCellPackageInfo>
-        initialize_cell_pkg_info(*mesh_data);
-
-    initialize_cell_pkg_info.exec();
-
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
     FinishDataPackages finish_data_packages(*mesh_data, shape_);
     finish_data_packages.exec();

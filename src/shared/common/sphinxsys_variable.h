@@ -131,6 +131,7 @@ class DiscreteVariable : public Entity
     UniquePtrKeeper<Entity> device_only_variable_keeper_;
 
   public:
+    typedef DataType ContainedDataType;
     DiscreteVariable(const std::string &name, size_t data_size)
         : Entity(name), data_size_(data_size),
           data_field_(nullptr), device_only_variable_(nullptr),

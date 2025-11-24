@@ -73,5 +73,20 @@ T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *d_first, U
     copyFromDevice(&last_value, d_first + scan_size, 1);
     return last_value;
 }
+
+template <class UnaryFunc>
+void generic_for(const ParallelDevicePolicy &par_device,
+                 const IndexRange &index_range,
+                 const UnaryFunc &unary_func)
+{
+    auto &sycl_queue = execution_instance.getQueue();
+    const size_t loop_bound = index_range.size();
+    sycl_queue.submit([&](sycl::handler &cgh)
+                      { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
+                                         {
+                                 if(index.get_global_id(0) < loop_bound)
+                                     unary_func(index.get_global_id(0)); }); })
+        .wait_and_throw();
+}
 } // namespace SPH
 #endif // ALGORITHM_PRIMITIVE_SYCL_H

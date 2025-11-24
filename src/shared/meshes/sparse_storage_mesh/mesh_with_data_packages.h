@@ -88,6 +88,7 @@ class MeshWithGridDataPackages
     MeshVariableAssemble all_mesh_variables_;      /**< all mesh variables on this mesh. */
     MeshVariableAssemble mesh_variables_to_write_; /**< mesh variables to write, which are not empty. */
     MeshVariableAssemble mesh_variables_to_probe_; /**< mesh variables to probe. */
+    MeshVariableAssemble evolving_mesh_variables_;
 
     DataContainerUniquePtrAssemble<BKGMeshVariable> bkg_mesh_variable_ptrs_;
     BKGMeshVariableAssemble all_bkg_mesh_variables_;      /**< all discrete variables on this mesh. */
@@ -113,6 +114,8 @@ class MeshWithGridDataPackages
     MetaVariable<CellNeighborhood> &getCellNeighborhood();
     MetaVariable<UnsignedInt> &getPackage1DCellIndex();
     MetaVariable<int> &getPackageType();
+    MetaVariableAssemble &getEvolvingMetaVariables() { return evolving_meta_variables_; };
+    MeshVariableAssemble &getEvolvingMeshVariables() { return evolving_mesh_variables_; };
 
     template <typename DataType>
     void addMeshVariableToWrite(const std::string &variable_name);

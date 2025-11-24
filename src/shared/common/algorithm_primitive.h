@@ -274,6 +274,30 @@ T exclusive_scan(const ParallelPolicy &par_policy, T *first, T *d_first, Unsigne
         });
     return d_first[scan_size];
 }
+
+template <class LocalDynamicsFunction>
+inline void generic_for(const SequencedPolicy &seq, const IndexRange &index_range,
+                         const LocalDynamicsFunction &local_dynamics_function)
+{
+    for (size_t i = index_range.begin(); i < index_range.end(); ++i)
+        local_dynamics_function(i);
+};
+
+template <class LocalDynamicsFunction>
+inline void generic_for(const ParallelPolicy &par_host, const IndexRange &particles_range,
+                         const LocalDynamicsFunction &local_dynamics_function)
+{
+    tbb::parallel_for(
+        particles_range,
+        [&](const IndexRange &r)
+        {
+            for (size_t i = r.begin(); i < r.end(); ++i)
+            {
+                local_dynamics_function(i);
+            }
+        },
+        ap);
+};
 } // namespace SPH
 
 #endif // ALGORITHM_PRIMITIVE_H
