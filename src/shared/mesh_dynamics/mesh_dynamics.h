@@ -158,13 +158,13 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
 };
 
 template <class ExecutionPolicy>
-class PackageSort : public BaseMeshLocalDynamics, public BaseDynamics<void>
+class PackageSort : public BaseMeshDynamics
 {
     using SortMethodType = typename SortMethod<ExecutionPolicy>::type;
 
   public:
     explicit PackageSort(MeshWithGridDataPackagesType &data_mesh)
-        : BaseMeshLocalDynamics(data_mesh), BaseDynamics<void>(),
+        : BaseMeshDynamics(data_mesh),
           occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
           dv_sequence_(nullptr), dv_index_permutation_(nullptr),
           update_bkg_mesh_variables_to_sort_(occupied_data_pkgs_.size()),
@@ -184,10 +184,10 @@ class PackageSort : public BaseMeshLocalDynamics, public BaseDynamics<void>
         UnsignedInt *sequence_, *index_permutation_;
     };
 
-    virtual void exec(Real dt = 0.0) override
+    void exec(Real dt = 0.0)
     {
         parallel_sort(
-            occupied_data_pkgs_.begin() + 0, occupied_data_pkgs_.end(),
+            occupied_data_pkgs_.begin() + num_singular_pkgs_, occupied_data_pkgs_.end(),
             [](const std::pair<UnsignedInt, int> &a, const std::pair<UnsignedInt, int> &b)
             {
                 return a.first < b.first;

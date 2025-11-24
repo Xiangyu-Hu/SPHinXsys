@@ -99,10 +99,10 @@ InitializeCellPackageInfo::InitializeCellPackageInfo(MeshWithGridDataPackagesTyp
 //=================================================================================================//
 void InitializeCellPackageInfo::UpdateKernel::update(const UnsignedInt &package_index)
 {
-    UnsignedInt sort_index = (*occupied_data_pkgs_)[package_index - num_singular_pkgs_].first;
+    UnsignedInt sort_index = (*occupied_data_pkgs_)[package_index].first;
     cell_pkg_index_[sort_index] = package_index;
     pkg_1d_cell_index_[package_index] = sort_index;
-    pkg_type_[package_index] = (*occupied_data_pkgs_)[package_index - num_singular_pkgs_].second;
+    pkg_type_[package_index] = (*occupied_data_pkgs_)[package_index].second;
 }
 //=================================================================================================//
 InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)

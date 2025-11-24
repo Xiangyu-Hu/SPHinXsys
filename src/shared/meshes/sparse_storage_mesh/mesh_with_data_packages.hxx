@@ -16,7 +16,13 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
       cell_neighborhood_("CellNeighborhood", num_singular_pkgs_),
       bmv_cell_pkg_index_(*registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
       global_mesh_(index_handler_.MeshLowerBound() + 0.5 * data_spacing * Vecd::Ones(),
-                   data_spacing, index_handler_.AllCells() * PKG_SIZE){};
+                   data_spacing, index_handler_.AllCells() * PKG_SIZE)
+{
+    for (UnsignedInt i = 0; i != num_singular_pkgs_; i++)
+    {
+        occupied_data_pkgs_.push_back(std::make_pair(0, 0)); // for data alignment
+    }
+};
 //=============================================================================================//
 template <int PKG_SIZE>
 SingularVariable<UnsignedInt> &MeshWithGridDataPackages<PKG_SIZE>::svNumGridPackages()
@@ -297,7 +303,7 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
 template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
 {
-    sv_num_grid_pkgs_.setValue(occupied_data_pkgs_.size() + num_singular_pkgs_);
+    sv_num_grid_pkgs_.setValue(occupied_data_pkgs_.size());
     pkgs_bound_ = sv_num_grid_pkgs_.getValue();
     cell_neighborhood_.reallocateData(par_host, pkgs_bound_);
     dv_pkg_1d_cell_index_.reallocateData(par_host, pkgs_bound_);
