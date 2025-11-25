@@ -102,17 +102,6 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
     }
 }
 //=================================================================================================//
-template <typename DataType>
-DataType *BaseCellLinkedList::initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
-{
-    DataType *data_field = variable->Data();
-    for (size_t i = 0; i != variable->getDataSize(); ++i)
-    {
-        data_field[i] = initial_value;
-    }
-    return data_field;
-}
-//=================================================================================================//
 template <typename DataType, typename... Args>
 DiscreteVariable<DataType> *BaseCellLinkedList::registerDiscreteVariable(
     const std::string &name, size_t data_size, Args &&...args)
@@ -121,8 +110,7 @@ DiscreteVariable<DataType> *BaseCellLinkedList::registerDiscreteVariable(
     if (variable == nullptr)
     {
         variable = addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_,
-                                                   name, data_size);
-        initializeVariable(variable, std::forward<Args>(args)...);
+                                                   name, data_size, std::forward<Args>(args)...);
     }
     return variable;
 }

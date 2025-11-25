@@ -93,8 +93,6 @@ class BaseCellLinkedList : public BaseMeshField
     DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
 
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
-    template <typename DataType>
-    DataType *initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType, typename... Args>
     DiscreteVariable<DataType> *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
 

@@ -30,9 +30,9 @@ template <class DataType>
 DiscreteVariable<DataType> *BaseParticles::addUniqueDiscreteVariableFrom(
     const std::string &name, DiscreteVariable<DataType> *old_variable)
 {
-    DataType *old_data_field = old_variable->Data();
     DiscreteVariable<DataType> *variable =
-        unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name, old_variable);
+        unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(
+            name, old_variable->getDataSize(), old_variable);
     return variable;
 }
 //=================================================================================================//
