@@ -68,17 +68,17 @@ struct PlusUnsignedInt<ParallelPolicy>
     typedef std::plus<UnsignedInt> type;
 };
 
-template <template <typename> class ContanierType>
+template <template <typename> class ContainerType>
 class UpdateSortableVariables
 {
-    typedef DataAssemble<UniquePtr, ContanierType> TemporaryVariables;
+    typedef DataAssemble<UniquePtr, ContainerType> TemporaryVariables;
 
     struct InitializeTemporaryVariables
     {
         template <typename DataType>
-        void operator()(UniquePtr<ContanierType<DataType>> &variable_ptr, UnsignedInt data_size)
+        void operator()(UniquePtr<ContainerType<DataType>> &variable_ptr, UnsignedInt data_size)
         {
-            variable_ptr = makeUnique<ContanierType<DataType>>("Temporary", data_size);
+            variable_ptr = makeUnique<ContainerType<DataType>>("Temporary", data_size);
         };
     };
 
@@ -92,11 +92,11 @@ class UpdateSortableVariables
     };
 
     template <class ExecutionPolicy, typename DataType>
-    void operator()(DataContainerAddressKeeper<ContanierType<DataType>> &variables,
+    void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables,
                     ExecutionPolicy &ex_policy, UnsignedInt sorted_size,
                     DiscreteVariable<UnsignedInt> *dv_index_permutation)
     {
-        using ContainedDataType = typename ContanierType<DataType>::ContainedDataType;
+        using ContainedDataType = typename ContainerType<DataType>::ContainedDataType;
         constexpr int type_index = DataTypeIndex<DataType>::value;
         ContainedDataType *temp_data_field = std::get<type_index>(temp_variables_)->DelegatedData(ex_policy);
 

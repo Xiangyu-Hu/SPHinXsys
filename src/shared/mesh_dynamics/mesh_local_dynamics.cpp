@@ -90,21 +90,6 @@ void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
     }
 }
 //=================================================================================================//
-InitializeCellPackageInfo::InitializeCellPackageInfo(MeshWithGridDataPackagesType &data_mesh)
-    : BaseMeshLocalDynamics(data_mesh),
-      occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
-      dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
-      dv_pkg_type_(data_mesh.getPackageType()),
-      bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()) {}
-//=================================================================================================//
-void InitializeCellPackageInfo::UpdateKernel::update(const UnsignedInt &package_index)
-{
-    UnsignedInt sort_index = (*occupied_data_pkgs_)[package_index].first;
-    cell_pkg_index_[sort_index] = package_index;
-    pkg_1d_cell_index_[package_index] = sort_index;
-    pkg_type_[package_index] = (*occupied_data_pkgs_)[package_index].second;
-}
-//=================================================================================================//
 InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh), dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
