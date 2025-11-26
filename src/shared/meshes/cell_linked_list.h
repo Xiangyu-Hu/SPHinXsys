@@ -88,6 +88,10 @@ class BaseCellLinkedList : public MultiLevelMeshField
     DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
 
+    UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
+    template <typename DataType, typename... Args>
+    DiscreteVariable<DataType> *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
+
   protected:
     Kernel &kernel_;
     UnsignedInt cell_offset_list_size_;

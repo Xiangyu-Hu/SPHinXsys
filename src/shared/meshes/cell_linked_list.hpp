@@ -102,6 +102,19 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
     }
 }
 //=================================================================================================//
+template <typename DataType, typename... Args>
+DiscreteVariable<DataType> *BaseCellLinkedList::registerDiscreteVariable(
+    const std::string &name, size_t data_size, Args &&...args)
+{
+    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);
+    if (variable == nullptr)
+    {
+        variable = addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_,
+                                                   name, data_size, std::forward<Args>(args)...);
+    }
+    return variable;
+}
+//=================================================================================================//
 template <class ExecutionPolicy, class LocalDynamicsFunction>
 void BaseCellLinkedList::particle_for_split(const ExecutionPolicy &ex_policy,
                                             const LocalDynamicsFunction &local_dynamics_function)
