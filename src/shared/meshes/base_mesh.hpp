@@ -99,22 +99,6 @@ inline UnsignedInt Mesh::MortonCode(const UnsignedInt &i)
 }
 //=============================================================================================//
 template <typename DataType>
-void MultiLevelMeshField::addCellVariableToWrite(const std::string &variable_name)
-{
-    addVariableToList<DiscreteVariable, DataType>(
-        cell_variables_to_write_, all_cell_variables_, variable_name);
-}
-//=============================================================================================//
-template <typename DataType, typename... Args>
-DiscreteVariable<DataType> *MultiLevelMeshField::registerCellVariable(
-    const std::string &variable_name, Args &&...args)
-{
-    return registerVariable<DiscreteVariable, DataType>(
-        all_cell_variables_, cell_variable_ptrs_, variable_name, total_number_of_cells_,
-        std::forward<Args>(args)...);
-}
-//=============================================================================================//
-template <typename DataType>
 DiscreteVariable<DataType> *MultiLevelMeshField::getCellVariable(
     const std::string &variable_name)
 {
@@ -126,6 +110,22 @@ DiscreteVariable<DataType> *MultiLevelMeshField::getCellVariable(
         exit(1);
     }
     return variable;
+}
+//=============================================================================================//
+template <typename DataType>
+void MultiLevelMeshField::addCellVariableToWrite(const std::string &variable_name)
+{
+    DiscreteVariable<DataType> *variable = getCellVariable<DataType>(variable_name);
+    addVariableToList<DiscreteVariable, DataType>(all_cell_variables_, variable);
+}
+//=============================================================================================//
+template <typename DataType, typename... Args>
+DiscreteVariable<DataType> *MultiLevelMeshField::registerCellVariable(
+    const std::string &variable_name, Args &&...args)
+{
+    return registerVariable<DiscreteVariable, DataType>(
+        all_cell_variables_, cell_variable_ptrs_, variable_name, total_number_of_cells_,
+        std::forward<Args>(args)...);
 }
 //=============================================================================================//
 template <class ExecutionPolicy>
