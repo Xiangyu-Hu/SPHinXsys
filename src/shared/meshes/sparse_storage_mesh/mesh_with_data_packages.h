@@ -144,11 +144,6 @@ class MeshWithGridDataPackages
     template <typename T>
     T &checkOrganized(std::string func_name, T &value);
 
-    template <template <typename> typename ContainerType, typename DataType>
-    void addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
-                           DataContainerAddressAssemble<ContainerType> &all_variable_set,
-                           const std::string &variable_name);
-
     template <template <typename> class MeshVariableType>
     struct SyncMeshVariableData
     {
@@ -171,10 +166,6 @@ class MeshWithGridDataPackages
     void syncBKGMeshVariablesToWrite(ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
     void syncMeshVariablesToProbe(ExecutionPolicy &ex_policy);
-    template <template <typename> typename ContainerType, typename DataType, typename... Args>
-    ContainerType<DataType> *registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
-                                              DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
-                                              const std::string &variable_name, Args &&...args);
     template <typename DataType>
     MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name);
     template <typename DataType, typename... Args>

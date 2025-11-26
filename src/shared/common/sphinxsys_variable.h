@@ -146,9 +146,9 @@ class DiscreteVariable : public Entity
     };
 
     DiscreteVariable(const std::string &name, size_t data_size,
-                     DataType intial_value = ZeroData<DataType>::value)
+                     DataType initial_value = ZeroData<DataType>::value)
         : DiscreteVariable(name, data_size, [&](UnsignedInt index)
-                           { return intial_value; }) {};
+                           { return initial_value; }) {};
 
     DiscreteVariable(const std::string &name, size_t data_size,
                      DiscreteVariable<DataType> *origin_variable)
@@ -225,6 +225,7 @@ VariableType<DataType> *findVariableByName(DataContainerAddressAssemble<Variable
 
     return result != variables.end() ? *result : nullptr;
 };
+
 template <typename DataType, template <typename VariableDataType> class VariableType, typename... Args>
 VariableType<DataType> *addVariableToAssemble(DataContainerAddressAssemble<VariableType> &assemble,
                                               DataContainerUniquePtrAssemble<VariableType> &ptr_assemble, Args &&...args)
@@ -235,6 +236,45 @@ VariableType<DataType> *addVariableToAssemble(DataContainerAddressAssemble<Varia
         variable_ptrs.template createPtr<VariableType<DataType>>(std::forward<Args>(args)...);
     std::get<type_index>(assemble).push_back(new_variable);
     return new_variable;
+};
+
+template <template <typename> typename ContainerType, typename DataType, typename... Args>
+ContainerType<DataType> *registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
+                                          DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
+                                          const std::string &variable_name, Args &&...args)
+{
+    ContainerType<DataType> *variable =
+        findVariableByName<DataType, ContainerType>(all_variable_set, variable_name);
+    if (variable == nullptr)
+    {
+        return addVariableToAssemble<DataType, ContainerType>(
+            all_variable_set, all_variable_ptrs_, variable_name, std::forward<Args>(args)...);
+    }
+    return variable;
+};
+
+template <template <typename> typename ContainerType, typename DataType>
+void addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
+                       DataContainerAddressAssemble<ContainerType> &all_variable_set,
+                       const std::string &variable_name)
+{
+    ContainerType<DataType> *variable =
+        findVariableByName<DataType, ContainerType>(all_variable_set, variable_name);
+
+    if (variable == nullptr)
+    {
+        std::cout << "\n Error: the" << type_name<ContainerType<DataType>>() << " variable '"
+                  << variable_name << "' is  not exist!" << std::endl;
+        exit(1);
+    }
+
+    ContainerType<DataType> *listed_variable =
+        findVariableByName<DataType, ContainerType>(variable_set, variable_name);
+    if (listed_variable == nullptr)
+    {
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        std::get<type_index>(variable_set).push_back(variable);
+    }
 };
 } // namespace SPH
 #endif // SPHINXSYS_VARIABLE_H

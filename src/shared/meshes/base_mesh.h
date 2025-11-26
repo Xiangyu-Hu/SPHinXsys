@@ -155,14 +155,6 @@ class MultiLevelMeshField : public BaseMeshField
     CellVariableAssemble all_cell_variables_;
     CellVariableAssemble cell_variables_to_write_;
 
-    template <template <typename> typename ContainerType, typename DataType, typename... Args>
-    ContainerType<DataType> *registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
-                                              DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
-                                              const std::string &variable_name, Args &&...args);
-    template <template <typename> typename ContainerType, typename DataType>
-    void addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
-                           DataContainerAddressAssemble<ContainerType> &all_variable_set,
-                           const std::string &variable_name);
     void writeCellVariableToPltByMesh(const Mesh &mesh, std::ofstream &output_file);
 
   protected:

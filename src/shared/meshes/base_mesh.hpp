@@ -105,22 +105,6 @@ void MultiLevelMeshField::addCellVariableToWrite(const std::string &variable_nam
         cell_variables_to_write_, all_cell_variables_, variable_name);
 }
 //=============================================================================================//
-template <template <typename> typename ContainerType, typename DataType, typename... Args>
-ContainerType<DataType> *MultiLevelMeshField::
-    registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
-                     DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
-                     const std::string &variable_name, Args &&...args)
-{
-    ContainerType<DataType> *variable =
-        findVariableByName<DataType, ContainerType>(all_variable_set, variable_name);
-    if (variable == nullptr)
-    {
-        return addVariableToAssemble<DataType, ContainerType>(
-            all_variable_set, all_variable_ptrs_, variable_name, std::forward<Args>(args)...);
-    }
-    return variable;
-}
-//=============================================================================================//
 template <typename DataType, typename... Args>
 DiscreteVariable<DataType> *MultiLevelMeshField::registerCellVariable(
     const std::string &variable_name, Args &&...args)
@@ -142,31 +126,6 @@ DiscreteVariable<DataType> *MultiLevelMeshField::getCellVariable(
         exit(1);
     }
     return variable;
-}
-//=============================================================================================//
-template <template <typename> typename ContainerType, typename DataType>
-void MultiLevelMeshField::addVariableToList(
-    DataContainerAddressAssemble<ContainerType> &variable_set,
-    DataContainerAddressAssemble<ContainerType> &all_variable_set,
-    const std::string &variable_name)
-{
-    ContainerType<DataType> *variable =
-        findVariableByName<DataType, ContainerType>(all_variable_set, variable_name);
-
-    if (variable == nullptr)
-    {
-        std::cout << "\n Error: the" << type_name<ContainerType<DataType>>() << " variable '"
-                  << variable_name << "' is  not exist!" << std::endl;
-        exit(1);
-    }
-
-    ContainerType<DataType> *listed_variable =
-        findVariableByName<DataType, ContainerType>(variable_set, variable_name);
-    if (listed_variable == nullptr)
-    {
-        constexpr int type_index = DataTypeIndex<DataType>::value;
-        std::get<type_index>(variable_set).push_back(variable);
-    }
 }
 //=============================================================================================//
 template <class ExecutionPolicy>

@@ -89,31 +89,6 @@ T &MeshWithGridDataPackages<PKG_SIZE>::checkOrganized(std::string func_name, T &
 }
 //=============================================================================================//
 template <int PKG_SIZE>
-template <template <typename> typename ContainerType, typename DataType>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
-                      DataContainerAddressAssemble<ContainerType> &all_variable_set,
-                      const std::string &variable_name)
-{
-    ContainerType<DataType> *variable =
-        findVariableByName<DataType, ContainerType>(all_variable_set, variable_name);
-
-    if (variable == nullptr)
-    {
-        std::cout << "\n Error: the mesh variable '" << variable_name << "' is  not exist!" << std::endl;
-        exit(1);
-    }
-
-    ContainerType<DataType> *listed_variable =
-        findVariableByName<DataType, ContainerType>(variable_set, variable_name);
-    if (listed_variable == nullptr)
-    {
-        constexpr int type_index = DataTypeIndex<DataType>::value;
-        std::get<type_index>(variable_set).push_back(variable);
-    }
-}
-//=============================================================================================//
-template <int PKG_SIZE>
 template <template <typename> class MeshVariableType>
 template <typename DataType, class ExecutionPolicy>
 void MeshWithGridDataPackages<PKG_SIZE>::SyncMeshVariableData<MeshVariableType>::
@@ -197,23 +172,6 @@ void MeshWithGridDataPackages<PKG_SIZE>::syncMeshVariablesToProbe(ExecutionPolic
     dv_pkg_1d_cell_index_->prepareForOutput(ex_policy);
     dv_pkg_type_->prepareForOutput(ex_policy);
     bmv_cell_pkg_index_->prepareForOutput(ex_policy);
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-template <template <typename> typename ContainerType, typename DataType, typename... Args>
-ContainerType<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
-    registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
-                     DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
-                     const std::string &variable_name, Args &&...args)
-{
-    ContainerType<DataType> *variable =
-        findVariableByName<DataType, ContainerType>(all_variable_set, variable_name);
-    if (variable == nullptr)
-    {
-        return addVariableToAssemble<DataType, ContainerType>(
-            all_variable_set, all_variable_ptrs_, variable_name, std::forward<Args>(args)...);
-    }
-    return variable;
 }
 //=============================================================================================//
 template <int PKG_SIZE>
