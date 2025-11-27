@@ -494,10 +494,10 @@ using TurbulentLinearGradientCorrectionMatrixInner = TurbulentLinearGradientCorr
 //=================================================================================================//
 template <class ParticleScope>
 using TVC_Limited_withLinearGradientCorrection =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, TruncatedLinear, LinearGradientCorrection, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, TruncatedLinear, LinearGradientCorrection, ParticleScope>;
 template <class ParticleScope>
 using TVC_NoLimiter_withLinearGradientCorrection =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, LinearGradientCorrection, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, NoLimiter, LinearGradientCorrection, ParticleScope>;
 //=================================================================================================//
 class ModifiedTruncatedLinear : public Limiter
 {
@@ -515,7 +515,7 @@ class ModifiedTruncatedLinear : public Limiter
 
 template <class ParticleScope>
 using TVC_ModifiedLimited_RKGC_OBFCorrection =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, ModifiedTruncatedLinear, LinearGradientCorrectionWithBulkScope, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, ModifiedTruncatedLinear, LinearGradientCorrectionWithBulkScope, ParticleScope>;
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

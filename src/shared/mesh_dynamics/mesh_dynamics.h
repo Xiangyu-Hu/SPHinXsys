@@ -31,6 +31,7 @@
 #ifndef MESH_DYNAMICS_H
 #define MESH_DYNAMICS_H
 
+#include "base_configuration_dynamics.h"
 #include "base_dynamics.h"
 #include "implementation.h"
 #include "mesh_iterators.hpp"
@@ -50,13 +51,13 @@ class BaseMeshDynamics
   public:
     BaseMeshDynamics(MeshWithGridDataPackagesType &mesh_data)
         : mesh_data_(mesh_data),
-          all_cells_(mesh_data.AllCells()),
+          index_handler_(mesh_data_.getIndexHandler()),
           num_singular_pkgs_(mesh_data.NumSingularPackages()) {};
     virtual ~BaseMeshDynamics() {};
 
   protected:
     MeshWithGridDataPackagesType &mesh_data_;
-    Arrayi all_cells_;
+    IndexHandler &index_handler_;
     UnsignedInt num_singular_pkgs_;
 };
 
@@ -81,7 +82,7 @@ class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics
     void exec()
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        mesh_for(ExecutionPolicy(), MeshRange(Arrayi::Zero(), all_cells_),
+        mesh_for(ExecutionPolicy(), MeshRange(Arrayi::Zero(), index_handler_.AllCells()),
                  [&](Arrayi cell_index)
                  {
                      update_kernel->update(cell_index);
@@ -99,20 +100,21 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
+    SingularVariable<UnsignedInt> &sv_num_grid_pkgs_;
 
   public:
     template <typename... Args>
     MeshInnerDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
-          BaseMeshDynamics(mesh_data), kernel_implementation_(*this){};
+          BaseMeshDynamics(mesh_data), kernel_implementation_(*this),
+          sv_num_grid_pkgs_(mesh_data.svNumGridPackages()){};
     virtual ~MeshInnerDynamics() {};
 
     template <typename... Args>
     void exec(Args &&...args)
     {
-        UnsignedInt num_grid_pkgs = mesh_data_.NumGridPackages();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        package_for(ExecutionPolicy(), num_singular_pkgs_, num_grid_pkgs,
+        package_for(ExecutionPolicy(), num_singular_pkgs_, sv_num_grid_pkgs_.getValue(),
                     [=](UnsignedInt package_index)
                     {
                         update_kernel->update(package_index, args...);
@@ -127,33 +129,113 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
 template <class ExecutionPolicy, class LocalDynamicsType>
 class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
 {
-    std::pair<Arrayi, int> *pkg_cell_info_;
+    MetaVariable<int> &dv_pkg_type_;
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
+    SingularVariable<UnsignedInt> &sv_num_grid_pkgs_;
 
   public:
     template <typename... Args>
     MeshCoreDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
-          BaseMeshDynamics(mesh_data),
-          pkg_cell_info_(mesh_data.dvPkgCellInfo().DelegatedData(ExecutionPolicy())),
-          kernel_implementation_(*this){};
+          BaseMeshDynamics(mesh_data), dv_pkg_type_(mesh_data.getPackageType()),
+          kernel_implementation_(*this),
+          sv_num_grid_pkgs_(mesh_data.svNumGridPackages()){};
     virtual ~MeshCoreDynamics() {};
 
     void exec()
     {
-        UnsignedInt num_grid_pkgs = mesh_data_.NumGridPackages();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        std::pair<SPH::Arrayi, int> *meta_data_cell = pkg_cell_info_;
-        package_for(ExecutionPolicy(), num_singular_pkgs_, num_grid_pkgs,
+        int *pkg_type = dv_pkg_type_.DelegatedData(ExecutionPolicy());
+        package_for(ExecutionPolicy(), num_singular_pkgs_, sv_num_grid_pkgs_.getValue(),
                     [=](UnsignedInt package_index)
                     {
-                        if (meta_data_cell[package_index].second == 1)
+                        if (pkg_type[package_index] == 1)
                             update_kernel->update(package_index);
                     });
     };
 };
 
+template <class ExecutionPolicy>
+class PackageSort : public BaseMeshDynamics
+{
+    using SortMethodType = typename SortMethod<ExecutionPolicy>::type;
+
+  public:
+    explicit PackageSort(MeshWithGridDataPackagesType &data_mesh)
+        : BaseMeshDynamics(data_mesh),
+          ex_policy_(ExecutionPolicy{}),
+          sv_num_grid_pkgs_(data_mesh.svNumGridPackages()),
+          kernel_implementation_(*this),
+          dv_sequence_(data_mesh.registerMetaVariable<UnsignedInt>("Sequence")),
+          dv_index_permutation_(data_mesh.registerMetaVariable<UnsignedInt>("IndexPermutation")),
+          dv_pkg_1d_cell_index_(&data_mesh.getPackage1DCellIndex()),
+          bmv_cell_pkg_index_(&data_mesh.getCellPackageIndex()),
+          update_meta_variables_to_sort_(data_mesh.PackageBound()),
+          update_mesh_variables_to_sort_(data_mesh.PackageBound()),
+          sort_method_(ExecutionPolicy{}, dv_sequence_, dv_index_permutation_) {};
+    virtual ~PackageSort() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : sequence_(encloser.dv_sequence_->DelegatedData(ex_policy)),
+              index_permutation_(encloser.dv_index_permutation_->DelegatedData(ex_policy)),
+              pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_->DelegatedData(ex_policy)){};
+        void update(UnsignedInt &pkg_index)
+        {
+            sequence_[pkg_index] = pkg_1d_cell_index_[pkg_index];
+            index_permutation_[pkg_index] = pkg_index;
+        };
+
+      protected:
+        UnsignedInt *sequence_, *index_permutation_, *pkg_1d_cell_index_;
+    };
+
+    void exec(Real dt = 0.0)
+    {
+        UnsignedInt num_grid_pkgs = sv_num_grid_pkgs_.getValue();
+        UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
+        package_for(ex_policy_, 0, num_grid_pkgs,
+                    [=](UnsignedInt package_index)
+                    {
+                        update_kernel->update(package_index);
+                    });
+
+        UnsignedInt sortable_size = num_grid_pkgs - num_singular_pkgs_;
+        sort_method_.sort(ex_policy_, sortable_size, num_singular_pkgs_);
+        update_meta_variables_to_sort_(
+            mesh_data_.getEvolvingMetaVariables(),
+            ex_policy_, num_grid_pkgs, dv_index_permutation_);
+        update_mesh_variables_to_sort_(
+            mesh_data_.getEvolvingMeshVariables(),
+            ex_policy_, num_grid_pkgs, dv_index_permutation_);
+
+        UnsignedInt *pkg_1d_cell_index = dv_pkg_1d_cell_index_->DelegatedData(ex_policy_);
+        UnsignedInt *cell_pkg_index = bmv_cell_pkg_index_->DelegatedData(ex_policy_);
+        package_for(ex_policy_, num_singular_pkgs_, num_grid_pkgs,
+                    [=](UnsignedInt package_index)
+                    {
+                        UnsignedInt sort_index = pkg_1d_cell_index[package_index];
+                        cell_pkg_index[sort_index] = package_index;
+                    });
+    };
+
+  private:
+    ExecutionPolicy ex_policy_;
+    SingularVariable<UnsignedInt> &sv_num_grid_pkgs_;
+    using KernelImplementation = Implementation<ExecutionPolicy, PackageSort<ExecutionPolicy>, UpdateKernel>;
+    KernelImplementation kernel_implementation_;
+    DiscreteVariable<UnsignedInt> *dv_sequence_;
+    DiscreteVariable<UnsignedInt> *dv_index_permutation_;
+    MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;
+    BKGMeshVariable<UnsignedInt> *bmv_cell_pkg_index_;
+    OperationOnDataAssemble<MetaVariableAssemble, UpdateSortableVariables<MetaVariable>> update_meta_variables_to_sort_;
+    OperationOnDataAssemble<MeshVariableAssemble, UpdateSortableVariables<MeshVariable>> update_mesh_variables_to_sort_;
+    SortMethodType sort_method_;
+};
 } // namespace SPH
 #endif // MESH_DYNAMICS_H

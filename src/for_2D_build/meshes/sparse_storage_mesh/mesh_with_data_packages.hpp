@@ -6,7 +6,7 @@
 namespace SPH
 {
 //=================================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &output_file)
 {
     output_file << "\n"
@@ -45,6 +45,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
     output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << 1
                 << "  DATAPACKING=POINT \n";
 
+    UnsignedInt *cell_package_index = bmv_cell_pkg_index_->Data();
     mesh_for_column_major(
         Arrayi::Zero(), number_of_operation,
         [&](const Array2i &global_index)
@@ -54,25 +55,25 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
 
             for (MeshVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(mesh_variables_to_write_))
             {
-                UnsignedInt value = DataValueFromGlobalIndex(variable->Data(), global_index, this, bmv_cell_pkg_index_.Data());
+                UnsignedInt value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
                 output_file << value << " ";
             };
 
             for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variables_to_write_))
             {
-                int value = DataValueFromGlobalIndex(variable->Data(), global_index, this, bmv_cell_pkg_index_.Data());
+                int value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
                 output_file << value << " ";
             };
 
             for (MeshVariable<Vecd> *variable : std::get<type_index_Vecd>(mesh_variables_to_write_))
             {
-                Vecd value = DataValueFromGlobalIndex(variable->Data(), global_index, this, bmv_cell_pkg_index_.Data());
+                Vecd value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
                 output_file << value[0] << " " << value[1] << " ";
             };
 
             for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variables_to_write_))
             {
-                Real value = DataValueFromGlobalIndex(variable->Data(), global_index, this, bmv_cell_pkg_index_.Data());
+                Real value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
                 output_file << value << " ";
             };
             output_file << " \n";
@@ -80,7 +81,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
     output_file << " \n";
 }
 //=================================================================================================//
-template <UnsignedInt PKG_SIZE>
+template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::writeBKGMeshVariableToPlt(std::ofstream &output_file)
 {
     output_file << "\n"
@@ -115,7 +116,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeBKGMeshVariableToPlt(std::ofstream
 
     output_file << " \n";
 
-    Arrayi number_of_operation = AllCells();
+    Arrayi number_of_operation = index_handler_.AllCells();
     output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << 1
                 << "  DATAPACKING=POINT \n";
 
@@ -123,8 +124,8 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeBKGMeshVariableToPlt(std::ofstream
         Arrayi::Zero(), number_of_operation,
         [&](const Array2i &cell_index)
         {
-            UnsignedInt linear_index = LinearCellIndex(cell_index);
-            Vecd data_position = CellPositionFromIndex(cell_index);
+            UnsignedInt linear_index = index_handler_.LinearCellIndex(cell_index);
+            Vecd data_position = index_handler_.CellPositionFromIndex(cell_index);
             output_file << data_position[0] << " " << data_position[1] << " ";
 
             for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(bkg_mesh_variables_to_write_))

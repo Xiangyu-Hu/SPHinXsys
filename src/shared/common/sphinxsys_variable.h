@@ -84,7 +84,7 @@ class SingularVariable : public Entity
 
     DataType *Data() { return delegated_; };
     void setValue(const DataType &value) { *delegated_ = value; };
-    DataType getValue() { return *delegated_; };
+    DataType getValue() const { return *delegated_; };
     void incrementValue(const DataType &value) { *delegated_ += value; };
 
     template <class ExecutionPolicy>
@@ -131,6 +131,7 @@ class DiscreteVariable : public Entity
     UniquePtrKeeper<Entity> device_only_variable_keeper_;
 
   public:
+    typedef DataType ContainedDataType;
     template <class InitializationFunction>
     DiscreteVariable(const std::string &name, size_t data_size,
                      const InitializationFunction &initialization)

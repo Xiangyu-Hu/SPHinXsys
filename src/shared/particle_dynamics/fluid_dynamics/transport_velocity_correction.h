@@ -60,10 +60,12 @@ class TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType
     ParticleScope within_scope_;
 };
 
-template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
-class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTypes...>
+template <class AdaptationType, class LimiterType, typename... CommonControlTypes>
+class TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonControlTypes...>
     : public TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>
 {
+    using SmoothingRatioType = typename AdaptationType::SmoothingRatioType;
+
   public:
     explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
     template <typename BodyRelationType, typename FirstArg>
@@ -77,12 +79,12 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
     const Real h_ref_, correction_scaling_;
     Real *Vol_;
     Vecd *pos_;
-    ResolutionType h_ratio_;
+    SmoothingRatioType h_ratio_;
     LimiterType limiter_;
 };
 template <class LimiterType, class ParticleScope>
 using TransportVelocityCorrectionInner =
-    TransportVelocityCorrection<Inner<SingleResolution, LimiterType>, NoKernelCorrection, ParticleScope>;
+    TransportVelocityCorrection<Inner<SPHAdaptation, LimiterType>, NoKernelCorrection, ParticleScope>;
 
 template <typename... CommonControlTypes>
 class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
@@ -111,45 +113,45 @@ class TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControl
     StdVec<Real *> contact_Vol_;
 };
 
-template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
+template <class AdaptationType, class LimiterType, typename... CommonControlTypes>
 using BaseTransportVelocityCorrectionComplex =
-    ComplexInteraction<TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, Contact<Boundary>>, CommonControlTypes...>;
+    ComplexInteraction<TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, Contact<Boundary>>, CommonControlTypes...>;
 
 template <class ParticleScope>
 using TransportVelocityCorrectionComplex =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, NoKernelCorrection, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, NoLimiter, NoKernelCorrection, ParticleScope>;
 
 template <class ParticleScope>
 using TransportVelocityCorrectionCorrectedComplex =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, LinearGradientCorrection, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, NoLimiter, LinearGradientCorrection, ParticleScope>;
 
 template <class ParticleScope>
 using TransportVelocityCorrectionCorrectedForOpenBoundaryFlowComplex =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, LinearGradientCorrectionWithBulkScope, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, NoLimiter, LinearGradientCorrectionWithBulkScope, ParticleScope>;
 
 template <class ParticleScope>
 using TransportVelocityLimitedCorrectionCorrectedForOpenBoundaryFlowComplex =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, TruncatedLinear, LinearGradientCorrectionWithBulkScope, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, TruncatedLinear, LinearGradientCorrectionWithBulkScope, ParticleScope>;
 
 template <class ParticleScope>
 using TransportVelocityLimitedCorrectionComplex =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, TruncatedLinear, NoKernelCorrection, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, TruncatedLinear, NoKernelCorrection, ParticleScope>;
 
 template <class ParticleScope>
 using TransportVelocityLimitedCorrectionCorrectedComplex =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, TruncatedLinear, LinearGradientCorrection, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, TruncatedLinear, LinearGradientCorrection, ParticleScope>;
 
 template <class ParticleScope>
 using TransportVelocityCorrectionComplexAdaptive =
-    BaseTransportVelocityCorrectionComplex<AdaptiveResolution, NoLimiter, NoKernelCorrection, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<AdaptiveSmoothingLength, NoLimiter, NoKernelCorrection, ParticleScope>;
 
-template <class ResolutionType, typename... CommonControlTypes>
+template <class AdaptationType, typename... CommonControlTypes>
 using BaseMultiPhaseTransportVelocityCorrectionComplex =
-    ComplexInteraction<TransportVelocityCorrection<Inner<ResolutionType, NoLimiter>, Contact<>, Contact<Boundary>>, CommonControlTypes...>;
+    ComplexInteraction<TransportVelocityCorrection<Inner<AdaptationType, NoLimiter>, Contact<>, Contact<Boundary>>, CommonControlTypes...>;
 
 template <class ParticleScope>
 using MultiPhaseTransportVelocityCorrectionComplex =
-    BaseMultiPhaseTransportVelocityCorrectionComplex<SingleResolution, NoKernelCorrection, ParticleScope>;
+    BaseMultiPhaseTransportVelocityCorrectionComplex<SPHAdaptation, NoKernelCorrection, ParticleScope>;
 
 } // namespace fluid_dynamics
 } // namespace SPH
