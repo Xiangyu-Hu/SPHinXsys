@@ -132,23 +132,30 @@ class DiscreteVariable : public Entity
 
   public:
     typedef DataType ContainedDataType;
-    DiscreteVariable(const std::string &name, size_t data_size)
-        : Entity(name), data_size_(data_size),
-          data_field_(nullptr), device_only_variable_(nullptr),
-          device_data_field_(nullptr)
-    {
-        data_field_ = new DataType[data_size];
-    };
     template <class InitializationFunction>
     DiscreteVariable(const std::string &name, size_t data_size,
                      const InitializationFunction &initialization)
-        : DiscreteVariable(name, data_size)
+        : Entity(name), data_size_(data_size), data_field_(nullptr),
+          device_only_variable_(nullptr), device_data_field_(nullptr)
     {
+        data_field_ = new DataType[data_size];
         for (size_t i = 0; i < data_size; ++i)
         {
             data_field_[i] = initialization(i);
         }
     };
+
+    DiscreteVariable(const std::string &name, size_t data_size,
+                     DataType intial_value = ZeroData<DataType>::value)
+        : DiscreteVariable(name, data_size, [&](UnsignedInt index)
+                           { return intial_value; }) {};
+
+    DiscreteVariable(const std::string &name, size_t data_size,
+                     DiscreteVariable<DataType> *origin_variable)
+        : DiscreteVariable(name, SMAX(origin_variable->getDataSize(), data_size),
+                           [&](UnsignedInt index)
+                           { return origin_variable->getValue(index); }) {};
+
     ~DiscreteVariable() { delete[] data_field_; };
     DataType *Data() { return data_field_; };
     void setValue(size_t index, const DataType &value) { data_field_[index] = value; };

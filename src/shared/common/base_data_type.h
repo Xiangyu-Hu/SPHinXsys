@@ -68,15 +68,15 @@ namespace math = std;
 #endif // SPHINXSYS_USE_SYCL
 
 #if SPHINXSYS_USE_FLOAT
-    using Real = float;
+using Real = float;
 #if defined(_MSC_VER)
-    using UnsignedInt = uint32_t;
+using UnsignedInt = uint32_t;
 #else
-    using UnsignedInt = u_int32_t;
+using UnsignedInt = u_int32_t;
 #endif // _MSC_VER
 #else
-    using Real = double;
-    using UnsignedInt = size_t;
+using Real = double;
+using UnsignedInt = size_t;
 #endif // SPHINXSYS_USE_FLOAT
 
 /** Vector with integers. */
@@ -105,7 +105,13 @@ using MatXd = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
 template <typename DataType>
 struct ZeroData
 {
-    static inline const DataType value = DataType::Zero();
+    static inline const DataType value = DataType{};
+};
+
+template <typename DataType, int N, int M>
+struct ZeroData<Eigen::Matrix<DataType, N, M>>
+{
+    static inline const Eigen::Matrix<DataType, N, M> value = Eigen::Matrix<DataType, N, M>::Zero();
 };
 
 template <>

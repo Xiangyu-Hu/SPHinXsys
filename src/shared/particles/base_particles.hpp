@@ -6,49 +6,13 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename DataType>
-DataType *BaseParticles::initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
-{
-    DataType *data_field = variable->Data();
-    for (size_t i = 0; i != variable->getDataSize(); ++i)
-    {
-        data_field[i] = initial_value;
-    }
-    return data_field;
-}
-//=================================================================================================//
-template <typename DataType, class InitializationFunction>
-DataType *BaseParticles::
-    initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization)
-{
-    DataType *data_field = initializeVariable(variable);
-    for (size_t i = 0; i != variable->getDataSize(); ++i)
-    {
-        data_field[i] = initialization(i); // Here, function object is applied for initialization.
-    }
-    return data_field;
-}
-//=================================================================================================//
-template <typename DataType>
-DataType *BaseParticles::initializeVariable(
-    DiscreteVariable<DataType> *variable, DiscreteVariable<DataType> *old_variable)
-{
-    DataType *data_field = variable->Data();
-    DataType *old_data_field = old_variable->Data();
-    for (size_t i = 0; i != variable->getDataSize(); ++i)
-    {
-        data_field[i] = old_data_field[i];
-    }
-    return data_field;
-}
-//=================================================================================================//
 template <class DataType, typename... Args>
 DataType *BaseParticles::
     addUniqueDiscreteVariableData(const std::string &name, size_t data_size, Args &&...args)
 {
     DiscreteVariable<DataType> *variable =
-        unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name, data_size);
-    initializeVariable(variable, std::forward<Args>(args)...);
+        unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(
+            name, data_size, std::forward<Args>(args)...);
     return variable->Data();
 }
 //=================================================================================================//
@@ -57,8 +21,8 @@ DiscreteVariable<DataType> *BaseParticles::
     addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args)
 {
     DiscreteVariable<DataType> *variable =
-        unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name, data_size);
-    initializeVariable(variable, std::forward<Args>(args)...);
+        unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(
+            name, data_size, std::forward<Args>(args)...);
     return variable;
 }
 //=================================================================================================//
@@ -66,24 +30,22 @@ template <class DataType>
 DiscreteVariable<DataType> *BaseParticles::addUniqueDiscreteVariableFrom(
     const std::string &name, DiscreteVariable<DataType> *old_variable)
 {
-    DataType *old_data_field = old_variable->Data();
     DiscreteVariable<DataType> *variable =
-        unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name, old_variable->getDataSize());
-    initializeVariable(variable, [&](size_t index)
-                       { return old_data_field[index]; });
+        unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(
+            name, old_variable->getDataSize(), old_variable);
     return variable;
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
-DataType *BaseParticles::registerDiscreteVariableData(const std::string &name,
-                                                      size_t data_size, Args &&...args)
+DataType *BaseParticles::registerDiscreteVariableData(
+    const std::string &name, size_t data_size, Args &&...args)
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);
     if (variable == nullptr)
     {
-        variable = addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_,
-                                                   name, data_size);
-        initializeVariable(variable, std::forward<Args>(args)...);
+        variable = addVariableToAssemble<DataType>(
+            all_discrete_variables_, all_discrete_variable_ptrs_,
+            name, data_size, std::forward<Args>(args)...);
     }
     return variable->Data();
 }
@@ -95,9 +57,9 @@ DiscreteVariable<DataType> *BaseParticles::
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);
     if (variable == nullptr)
     {
-        variable = addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_,
-                                                   name, data_size);
-        initializeVariable(variable, std::forward<Args>(args)...);
+        variable = addVariableToAssemble<DataType>(
+            all_discrete_variables_, all_discrete_variable_ptrs_,
+            name, data_size, std::forward<Args>(args)...);
     }
     return variable;
 }
@@ -444,9 +406,7 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
     for (size_t i = 0; i != variables.size(); ++i)
     {
         size_t index = 0;
-        DataType *data_field = variables[i]->Data() != nullptr
-                                   ? variables[i]->Data()
-                                   : base_particles->initializeVariable<DataType>(variables[i]);
+        DataType *data_field = variables[i]->Data();
         for (auto child = xml_parser.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
             xml_parser.queryAttributeValue(child, variables[i]->Name(), data_field[index]);

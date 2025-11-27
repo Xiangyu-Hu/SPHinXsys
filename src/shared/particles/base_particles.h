@@ -110,14 +110,6 @@ class BaseParticles
     //----------------------------------------------------------------------
     // Parameterized management on particle variables and data
     //----------------------------------------------------------------------
-  private:
-    template <typename DataType>
-    DataType *initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
-    template <typename DataType, class InitializationFunction>
-    DataType *initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization);
-    template <typename DataType>
-    DataType *initializeVariable(DiscreteVariable<DataType> *variable, DiscreteVariable<DataType> *old_variable);
-
   public:
     template <typename DataType>
     DiscreteVariable<DataType> *getVariableByName(const std::string &name);
