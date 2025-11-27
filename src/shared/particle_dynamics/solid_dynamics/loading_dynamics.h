@@ -36,7 +36,6 @@
 #include "base_kernel.h"
 #include "elastic_solid.h"
 #include "force_prior.hpp"
-#include "solid_body.h"
 
 namespace SPH
 {

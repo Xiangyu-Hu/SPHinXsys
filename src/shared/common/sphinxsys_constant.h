@@ -23,7 +23,7 @@
 /**
  * @file sphinxsys_constant.h
  * @brief Here gives classes for the constants and variables used in simulation.
- * @details These variables are those discretized in spaces and time.
+ * @details TBD.
  * @author Xiangyu Hu
  */
 

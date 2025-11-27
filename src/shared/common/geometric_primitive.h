@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	geometric_primitive.h
- * @brief 	This is the date type definition for SPHinXsys.
+ * @brief 	TBD.
  * @author	Chi Zhang and Xiangyu Hu
  */
 

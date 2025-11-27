@@ -18,4 +18,3 @@ struct Coord3DHash
 
 std::vector<Block3D> clusterActiveCells3D(const std::vector<Coord3D> &activeCells);
 } // namespace SPH
-//=============================================================================================//

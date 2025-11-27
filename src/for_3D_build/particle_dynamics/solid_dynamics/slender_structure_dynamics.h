@@ -35,7 +35,6 @@
 #include "base_kernel.h"
 #include "elastic_solid.h"
 #include "slender_structure_math.h"
-#include "solid_body.h"
 
 namespace SPH
 {

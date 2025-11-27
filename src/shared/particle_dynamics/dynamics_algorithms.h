@@ -50,6 +50,7 @@
 #ifndef DYNAMICS_ALGORITHMS_H
 #define DYNAMICS_ALGORITHMS_H
 
+#include "base_dynamics.h"
 #include "base_local_dynamics.h"
 #include "base_particle_dynamics.h"
 #include "cell_linked_list.hpp"

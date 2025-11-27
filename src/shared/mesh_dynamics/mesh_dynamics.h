@@ -22,9 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	mesh_dynamics.h
- * @brief 	This is for the base classes of particle dynamics, which describe the
- * 			interaction between particles. These interactions are used to define
- *			differential operators for surface forces or fluxes in continuum mechanics
+ * @brief TBD
  * @author	Chi Zhang and Xiangyu Hu
  */
 

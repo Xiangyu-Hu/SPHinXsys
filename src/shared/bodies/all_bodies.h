@@ -29,12 +29,9 @@
 #ifndef ALL_BODIES_H
 #define ALL_BODIES_H
 
-#pragma once
-
 #include "all_complex_bodies.h"
 #include "base_body_part.h"
 #include "body_partition.h"
-#include "fluid_body.h"
-#include "observer_body.h"
-#include "solid_body.h"
+#include "predefined_bodies.h"
+
 #endif // ALL_BODIES_H

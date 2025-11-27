@@ -36,7 +36,6 @@
 #include "elastic_solid.h"
 #include "general_constraint.h"
 #include "general_reduce.h"
-#include "solid_body.h"
 
 namespace SPH
 {

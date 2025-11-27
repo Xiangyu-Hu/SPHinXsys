@@ -22,10 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file grid_data_package_type.h
- * @brief This is for the base functions for mesh iterator.
- * There are two types of functions: one is for static ranged
- * which are defined by template parameters,
- * the other for dynamics ranges which are input parameters.
+ * @brief TBD.
  * @author  Xiangyu Hu
  */
 

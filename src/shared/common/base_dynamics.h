@@ -28,6 +28,8 @@
 #ifndef BASE_DYNAMICS_H
 #define BASE_DYNAMICS_H
 
+#include "base_data_package.h"
+
 namespace SPH
 {
 class AbstractDynamics

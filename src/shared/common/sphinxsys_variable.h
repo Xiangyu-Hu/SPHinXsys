@@ -22,8 +22,8 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file sphinxsys_variable.h
- * @brief Here gives classes for the constants and variables used in simulation.
- * @details These variables are those discretized in spaces and time.
+ * @brief Here gives classes for the singular and discrete variables used in simulation.
+ * @details These discrete variables are those discretized in spaces and time.
  * @author Xiangyu Hu
  */
 

@@ -20,9 +20,12 @@
  * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
  *                                                                           *
  * ------------------------------------------------------------------------- */
-/** @file all_io.h
-This is the header file that user code should include to pick up all
-io class used in SPHinXsys. **/
+/**
+ * @file all_io.h
+ * @brief This is the header file that user code should include to pick up all
+ * IO class used in SPHinXsys.
+ * @author Xiangyu Hu
+ */
 
 #ifndef ALL_IO_H
 #define ALL_IO_H
@@ -37,4 +40,5 @@ io class used in SPHinXsys. **/
 #include "io_vtk.h"
 #include "io_vtk_mesh.h"
 #include "io_vtk_mesh_ck.h"
+
 #endif // ALL_IO_H

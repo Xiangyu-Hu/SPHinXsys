@@ -59,7 +59,7 @@ class BaseCellLinkedList : public MultiLevelMeshField
   public:
     BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation,
                        BoundingBox tentative_bounds, Real Reference_grid_spacing, size_t total_levels);
-    virtual ~BaseCellLinkedList();
+    virtual ~BaseCellLinkedList() {};
     BaseParticles &getBaseParticles() { return base_particles_; };
     void UpdateCellLists(BaseParticles &base_particles);
     /** Insert a cell-linked_list entry to the concurrent index list. */
@@ -95,9 +95,9 @@ class BaseCellLinkedList : public MultiLevelMeshField
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
     DiscreteVariable<UnsignedInt> *dv_cell_offset_;
     /** using concurrent vectors due to writing conflicts when building the list */
-    ConcurrentIndexVector *cell_index_lists_;
+    StdVec<ConcurrentIndexVector> cell_index_lists_;
     /** non-concurrent list data rewritten for building neighbor list */
-    ListDataVector *cell_data_lists_;
+    StdVec<ListDataVector> cell_data_lists_;
 
     void clearCellLists();
     void UpdateCellListData(BaseParticles &base_particles);

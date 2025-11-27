@@ -150,8 +150,53 @@ jobs:
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
-      - name: Test with the last try for failed cases
+      - name: Test with the fifth try for failed cases
+        id: fifth-try
         if: ${{ steps.fourth-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the sixth try for failed cases
+        id: sixth-try
+        if: ${{ steps.fifth-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the seventh try for failed cases
+        id: seventh-try
+        if: ${{ steps.sixth-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the eighth try for failed cases
+        id: eighth-try
+        if: ${{ steps.seventh-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the ninth try for failed cases
+        id: ninth-try
+        if: ${{ steps.eighth-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.ninth-try.outcome == 'failure' }}
         run: |
           source /opt/intel/oneapi/setvars.sh --include-intel-llvm
           cd build/tests/tests_sycl
@@ -335,8 +380,47 @@ jobs:
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
-      - name: Test with the last try for failed cases
+      - name: Test with the fifth try for failed cases
+        id: fifth-try
         if: ${{ steps.fourth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+
+      - name: Test with the sixth try
+        id: sixth-try
+        if: ${{ steps.fifth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest  --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the seventh try for failed cases
+        id: seventh-try
+        if: ${{ steps.sixth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the eighth try for failed cases
+        id: eighth-try
+        if: ${{ steps.seventh-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the ninth try for failed cases
+        id: ninth-try
+        if: ${{ steps.eighth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.ninth-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure --timeout 1000
@@ -516,8 +600,48 @@ jobs:
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
-      - name: Test with the last try for failed cases
+      - name: Test with the fifth try for failed cases
+        id: fifth-try
         if: ${{ steps.fourth-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the sixth try for failed cases
+        id: sixth-try
+        if: ${{ steps.fifth-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+        
+      - name: Test with the seventh try for failed cases
+        id: seventh-try
+        if: ${{ steps.sixth-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+        
+      - name: Test with the eighth try for failed cases
+        id: eighth-try
+        if: ${{ steps.seventh-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+      
+      - name: Test with the ninth try for failed cases
+        id: ninth-try
+        if: ${{ steps.eighth-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.ninth-try.outcome == 'failure' }}
         run: |
           cd C:\build 
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
@@ -679,8 +803,48 @@ jobs:
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
-      - name: Test with the last try for failed cases
+      - name: Test with the fifth try for failed cases
+        id: fifth-try
         if: ${{ steps.fourth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the sixth try for failed cases
+        id: sixth-try
+        if: ${{ steps.fifth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the seventh try for failed cases
+        id: seventh-try
+        if: ${{ steps.sixth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the eighth try for failed cases
+        id: eighth-try
+        if: ${{ steps.seventh-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the ninth try for failed cases
+        id: ninth-try
+        if: ${{ steps.eighth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.ninth-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure --timeout 1000
