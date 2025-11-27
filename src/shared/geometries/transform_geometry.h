@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	transform_geometry.h
- * @brief 	transformation related class for geometries.
+ * @brief 	Linear transformation related class for geometries.
  * @author	Chi Zhang and Xiangyu Hu
  */
 

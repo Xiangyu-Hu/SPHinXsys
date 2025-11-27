@@ -22,13 +22,12 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	base_data_package.h
- * @brief 	Base data package for the library.
+ * @brief 	The collection of base data types for the library.
  * @author	Chi Zhang and Xiangyu Hu
  */
 #ifndef BASE_DATA_PACKAGE_H
 #define BASE_DATA_PACKAGE_H
 
-#include "array_allocation.h"
 #include "common_functors.h"
 #include "data_type.h"
 #include "large_data_containers.h"

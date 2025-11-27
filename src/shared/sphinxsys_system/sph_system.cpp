@@ -1,9 +1,9 @@
 #include "sph_system.hpp"
 
 #include "all_body_relations.h"
-#include "base_body.h"
 #include "elastic_dynamics.h"
 #include "io_log.h"
+#include "predefined_bodies.h"
 
 namespace SPH
 {

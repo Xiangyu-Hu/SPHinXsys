@@ -24,8 +24,7 @@
  * @file sphinxsys_buffer_array.h
  * @brief A buffer array defines temporary data corresponding to
  * a discrete variable array so that the data in the array can be temporarily saved
- * at device in the buffer. I expect that these temporary data
- * can be synchronize to host for future use.
+ * at device in the buffer.
  * @author Xiangyu Hu
  */
 
