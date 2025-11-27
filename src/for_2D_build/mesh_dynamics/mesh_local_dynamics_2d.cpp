@@ -4,19 +4,6 @@
 namespace SPH
 {
 //=============================================================================================//
-UnsignedInt BaseMeshLocalDynamics::SortIndexFromCellIndex(const Arrayi &cell_index)
-{
-    return cell_index[0] * all_cells_[1] + cell_index[1];
-}
-//=============================================================================================//
-Arrayi BaseMeshLocalDynamics::CellIndexFromSortIndex(const UnsignedInt &sort_index)
-{
-    Array2i cell_index;
-    cell_index[0] = sort_index / all_cells_[1];
-    cell_index[1] = sort_index % all_cells_[1];
-    return cell_index;
-}
-//=============================================================================================//
 void InitializeBasicPackageData::initializeSingularPackages(
     const UnsignedInt package_index, Real far_field_level_set)
 {
@@ -33,14 +20,14 @@ void InitializeBasicPackageData::initializeSingularPackages(
         });
 }
 //=============================================================================================//
-bool InnerCellTagging::UpdateKernel::isInnerPackage(const Arrayi &cell_index)
+bool InnerCellTagging::UpdateKernel::isNearInitiallyTagged(const Arrayi &cell_index)
 {
     return mesh_any_of(
         Array2i::Zero().max(cell_index - Array2i::Ones()),
-        all_cells_.min(cell_index + 2 * Array2i::Ones()),
+        index_handler_.AllCells().min(cell_index + 2 * Array2i::Ones()),
         [&](int l, int m)
         {
-            return data_mesh_->isInnerDataPackage(Arrayi(l, m)); // actually a core test here, because only core pkgs are assigned
+            return isInitiallyTagged(Arrayi(l, m));
         });
 }
 //=============================================================================================//
@@ -48,11 +35,11 @@ void InitializeBasicPackageData::UpdateKernel::update(const UnsignedInt &package
 {
     auto &phi = phi_[package_index];
     auto &near_interface_id = near_interface_id_[package_index];
-    Arrayi cell_index = pkg_cell_info_[package_index].first;
+    Arrayi cell_index = index_handler_.DimensionalCellIndex(pkg_1d_cell_index_[package_index]);
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
         {
-            Vec2d position = index_handler_->DataPositionFromIndex(cell_index, Array2i(i, j));
+            Vec2d position = index_handler_.DataPositionFromIndex(cell_index, Array2i(i, j));
             phi[i][j] = shape_->findSignedDistance(position);
             near_interface_id[i][j] = phi[i][j] < 0.0 ? -2 : 2;
         });

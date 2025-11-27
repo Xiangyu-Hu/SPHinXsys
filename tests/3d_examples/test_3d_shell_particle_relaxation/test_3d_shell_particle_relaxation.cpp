@@ -57,7 +57,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_imported_model_to_vtp({imported_model});
     write_imported_model_to_vtp.addToWrite<Vecd>(imported_model, "NormalDirection");
-    MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, imported_model.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -82,7 +81,6 @@ int main(int ac, char *av[])
     relaxation_step_inner.MidSurfaceBounding().exec();
     write_imported_model_to_vtp.writeToFile(0.0);
     imported_model.updateCellLinkedList();
-    write_mesh_cell_linked_list.writeToFile(0.0);
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------

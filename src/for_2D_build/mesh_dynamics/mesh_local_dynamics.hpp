@@ -9,10 +9,7 @@ namespace SPH
 //=================================================================================================//
 inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &package_index)
 {
-    UnsignedInt sort_index = data_mesh_->getOccupiedDataPackages()[package_index - num_singular_pkgs_].first;
-    Arrayi cell_index = base_dynamics->CellIndexFromSortIndex(sort_index);
-    UnsignedInt index_1d = data_mesh_->LinearCellIndex(cell_index);
-
+    UnsignedInt index_1d = pkg_1d_cell_index_[package_index];
     MeshVariableData<Real> &grid_phi = phi_[package_index];
     Real phi0 = grid_phi[0][0];
     cell_contain_id_[index_1d] = phi0 > 0.0 ? 1 : -1;
@@ -27,15 +24,15 @@ inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &pa
 //=================================================================================================//
 inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
 {
-    UnsignedInt index_1d = data_mesh_->LinearCellIndex(cell_index);
+    UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
     if (cell_contain_id_[index_1d] == 2)
     {
         if (mesh_any_of(
                 Arrayi::Zero().max(cell_index - Arrayi::Ones()),
-                data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                index_handler_.AllCells().min(cell_index + 2 * Arrayi::Ones()),
                 [&](int l, int m)
                 {
-                    UnsignedInt neighbor_1d = data_mesh_->LinearCellIndex(Arrayi(l, m));
+                    UnsignedInt neighbor_1d = index_handler_.LinearCellIndex(Arrayi(l, m));
                     return cell_contain_id_[neighbor_1d] == -1;
                 }))
         {
@@ -46,10 +43,10 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
         }
         else if (mesh_any_of(
                      Arrayi::Zero().max(cell_index - Arrayi::Ones()),
-                     data_mesh_->AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                     index_handler_.AllCells().min(cell_index + 2 * Arrayi::Ones()),
                      [&](int l, int m)
                      {
-                         UnsignedInt neighbor_1d = data_mesh_->LinearCellIndex(Arrayi(l, m));
+                         UnsignedInt neighbor_1d = index_handler_.LinearCellIndex(Arrayi(l, m));
                          return cell_contain_id_[neighbor_1d] == 1;
                      }))
         {
@@ -104,7 +101,7 @@ void UpdateKernelIntegrals::UpdateKernel::assignByGrid(MeshVariableData<DataType
                                                        const Arrayi &cell_index,
                                                        const FunctionByGrid &function_by_grid)
 {
-    UnsignedInt package_index = index_handler_->PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
+    UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
     auto &pkg_data = mesh_variable[package_index];
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)

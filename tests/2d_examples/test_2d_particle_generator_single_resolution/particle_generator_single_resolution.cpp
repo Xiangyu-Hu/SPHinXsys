@@ -72,7 +72,6 @@ int main(int ac, char *av[])
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp input_body_recording_to_vtp(input_body);
-    MeshRecordingToPlt cell_linked_list_recording(sph_system, input_body.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -84,7 +83,6 @@ int main(int ac, char *av[])
     //	First output before the simulation.
     //----------------------------------------------------------------------
     input_body_recording_to_vtp.writeToFile();
-    cell_linked_list_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------

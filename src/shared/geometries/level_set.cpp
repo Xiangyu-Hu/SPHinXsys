@@ -9,10 +9,10 @@ namespace SPH
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
     Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
-    : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(1),
-      refinement_ratio_(refinement_ratio)
+    : BaseMeshField("LevelSet_" + shape.getName()), total_levels_(1),
+      shape_(shape), refinement_ratio_(refinement_ratio)
 {
-    Real data_spacing = coarse_data->DataSpacing() * 0.5;
+    Real data_spacing = coarse_data->getIndexHandler().DataSpacing() * 0.5;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec_.push_back(global_h_ratio);
@@ -26,8 +26,8 @@ MultilevelLevelSet::MultilevelLevelSet(
 MultilevelLevelSet::MultilevelLevelSet(
     BoundingBox tentative_bounds, Real data_spacing,
     size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
-    : BaseMeshField("LevelSet_" + shape.getName()), shape_(shape), total_levels_(total_levels),
-      refinement_ratio_(refinement_ratio)
+    : BaseMeshField("LevelSet_" + shape.getName()), total_levels_(total_levels),
+      shape_(shape), refinement_ratio_(refinement_ratio)
 {
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
@@ -72,13 +72,11 @@ void MultilevelLevelSet::initializeLevel(
             initial_cell_tagging_from_coarse(*mesh_data, *coarse_data, shape_);
         initial_cell_tagging_from_coarse.exec();
     }
-
     MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package(*mesh_data);
     tag_a_cell_is_inner_package.exec();
     mesh_data->organizeOccupiedPackages();
-
-    MeshInnerDynamics<execution::ParallelPolicy, InitializeCellPackageInfo> initialize_cell_pkg_info(*mesh_data);
-    initialize_cell_pkg_info.exec();
+    PackageSort<execution::ParallelPolicy> pkg_sort(*mesh_data);
+    pkg_sort.exec();
 
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
     FinishDataPackages finish_data_packages(*mesh_data, shape_);
@@ -129,9 +127,8 @@ size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
 {
     for (size_t level = total_levels_; level != 0; --level)
     {
-        if (mesh_data_set_[level - 1]->isWithinCorePackage(cell_pkg_index_set_[level - 1],
-                                                           pkg_cell_info_set_[level - 1],
-                                                           position))
+        if (mesh_index_handler_set_[level - 1]->isWithinCorePackage(
+                cell_pkg_index_set_[level - 1], pkg_type_set_[level - 1], position))
             return level - 1; // jump out of the loop!
     }
     return 0;
@@ -184,22 +181,7 @@ Matd MultilevelLevelSet::probeKernelSecondGradientIntegral(const Vecd &position,
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }
 //=================================================================================================//
-bool MultilevelLevelSet::probeIsWithinMeshBound(const Vecd &position)
-{
-    bool is_bounded = true;
-    for (size_t l = 0; l != total_levels_; ++l)
-    {
-        ProbeIsWithinMeshBound probe_is_within_mesh_bound{*mesh_data_set_[l]};
-        if (!probe_is_within_mesh_bound.update(position))
-        {
-            is_bounded = false;
-            break;
-        };
-    }
-    return is_bounded;
-}
-//=================================================================================================//
-void MultilevelLevelSet::writeMeshFieldToPlt(const std::string &partial_file_name)
+void MultilevelLevelSet::writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence)
 {
     sync_mesh_variables_to_write_();
     for (size_t l = 0; l != total_levels_; ++l)

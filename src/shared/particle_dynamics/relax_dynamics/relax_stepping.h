@@ -205,7 +205,7 @@ class UpdateSmoothingLengthRatioByShape : public LocalDynamics
     Real *h_ratio_, *Vol_;
     Vecd *pos_;
     Shape &target_shape_;
-    ParticleRefinementByShape *particle_adaptation_;
+    AdaptiveByShape *particle_adaptation_;
     Real reference_spacing_;
 
   public:

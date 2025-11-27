@@ -70,7 +70,6 @@ class MultilevelLevelSet : public BaseMeshField
     void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type);
     void cleanInterface(UnsignedInt repeat_times);
     void correctTopology();
-    bool probeIsWithinMeshBound(const Vecd &position);
     Real probeSignedDistance(const Vecd &position);
     Vecd probeNormalDirection(const Vecd &position);
     Vecd probeLevelSetGradient(const Vecd &position);
@@ -81,7 +80,7 @@ class MultilevelLevelSet : public BaseMeshField
 
     template <typename DataType>
     void addMeshVariableToWrite(const std::string &variable_name);
-    void writeMeshFieldToPlt(const std::string &partial_file_name) override;
+    void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
     template <typename DataType>
     void addBKGMeshVariableToWrite(const std::string &variable_name);
     void writeBKGMeshToPlt(const std::string &partial_file_name) override;
@@ -107,14 +106,15 @@ class MultilevelLevelSet : public BaseMeshField
     template <class ExecutionPolicy>
     void registerKernelIntegralProbes(const ExecutionPolicy &ex_policy);
 
-    Shape &shape_;        /**< the geometry is described by the level set. */
     size_t total_levels_; /**< level 0 is the coarsest */
+    Shape &shape_;        /**< the geometry is described by the level set. */
     Real refinement_ratio_;
     StdVec<UnsignedInt *> cell_pkg_index_set_;
-    StdVec<std::pair<Arrayi, int> *> pkg_cell_info_set_;
+    StdVec<int *> pkg_type_set_;
     StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
     StdVec<NeighborMethod<SingleValued> *> neighbor_method_set_;
     StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;
+    StdVec<MeshWithGridDataPackagesType::IndexHandler *> mesh_index_handler_set_;
     StdVec<ProbeSignedDistance *> probe_signed_distance_set_;
     StdVec<ProbeNormalDirection *> probe_normal_direction_set_;
     StdVec<ProbeLevelSetGradient *> probe_level_set_gradient_set_;
