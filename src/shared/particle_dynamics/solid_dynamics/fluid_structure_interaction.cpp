@@ -85,9 +85,9 @@ void UpdateAverageVelocityAndAcceleration::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 AverageVelocityAndAcceleration::
-    AverageVelocityAndAcceleration(SolidBody &solid_body)
-    : initialize_displacement_(solid_body),
-      update_averages_(solid_body) {}
+    AverageVelocityAndAcceleration(SPHBody &sph_body)
+    : initialize_displacement_(sph_body),
+      update_averages_(sph_body) {}
 //=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH

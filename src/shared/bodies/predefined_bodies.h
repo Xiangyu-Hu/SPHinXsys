@@ -21,25 +21,41 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	observer_body.h
- * @brief 	This is the base classes of SPH bodies. The real body is for
- *			that with cell linked list and the fictitious one does not.
- * 			Before the definition of the SPH bodies, the shapes with complex
- *			geometries, i.e. those are produced by advanced binary operation,
- * 			such as intersection, should be produced first.
- * 			Then, all shapes used in body definition should be either contain
- * 			or not contain each other.
- *			Partial overlap between them are not permitted.
+ * @file    predefined_bodies.h
+ * @brief 	This is the class for several predefined bodies.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef OBSERVER_BODY_H
-#define OBSERVER_BODY_H
+#ifndef PREDEFINED_BODIES_H
+#define PREDEFINED_BODIES_H
 
 #include "base_body.h"
 
 namespace SPH
 {
+class FluidBody : public RealBody
+{
+  public:
+    template <typename... Args>
+    FluidBody(Args &&...args) : RealBody(std::forward<Args>(args)...){};
+    virtual ~FluidBody() {};
+};
+
+class SolidBody : public RealBody
+{
+    void addSolidBodyToSPHSystem();
+
+  public:
+    template <typename... Args>
+    SolidBody(Args &&...args)
+        : RealBody(std::forward<Args>(args)...)
+    {
+        addSolidBodyToSPHSystem();
+        defineAdaptation<SPHAdaptation>(1.15);
+    };
+    virtual ~SolidBody() {};
+};
+
 class ObserverBody : public SPHBody
 {
     void addObserverBodyToSPHSystem();
@@ -53,4 +69,4 @@ class ObserverBody : public SPHBody
     virtual ~ObserverBody() {};
 };
 } // namespace SPH
-#endif // OBSERVER_BODY_H
+#endif // PREDEFINED_BODIES_H

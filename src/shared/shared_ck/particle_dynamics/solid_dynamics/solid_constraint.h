@@ -33,7 +33,6 @@
 #include "all_simbody.h"
 #include "general_constraint_ck.h"
 #include "general_reduce_ck.h"
-#include "solid_body.h"
 
 namespace SPH
 {

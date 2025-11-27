@@ -18,14 +18,10 @@ BaseCellLinkedList::BaseCellLinkedList(
       dv_particle_index_(
           unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>("ParticleIndex", index_list_size_)),
       dv_cell_offset_(
-          unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>("CellOffset", cell_offset_list_size_)),
-      cell_index_lists_(new ConcurrentIndexVector[total_number_of_cells_]),
-      cell_data_lists_(new ListDataVector[total_number_of_cells_]) {}
-//=================================================================================================//
-BaseCellLinkedList::~BaseCellLinkedList()
+          unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>("CellOffset", cell_offset_list_size_))
 {
-    delete[] cell_index_lists_;
-    delete[] cell_data_lists_;
+    cell_index_lists_.resize(total_number_of_cells_);
+    cell_data_lists_.resize(total_number_of_cells_);
 }
 //=================================================================================================//
 void BaseCellLinkedList::clearCellLists()
