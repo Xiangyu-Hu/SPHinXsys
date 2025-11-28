@@ -31,8 +31,8 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
             body_parts_by_particle_[i]->dvParticleList();
         dv_particle_lists_.push_back(dv_particle_list);
         DiscreteVariable<UnsignedInt> *original_id_list =
-            particles_->addUniqueDiscreteVariableFrom<UnsignedInt>(
-                dv_particle_list->Name() + "Initial", dv_particle_list);
+            particles_->addUniqueDiscreteVariable<UnsignedInt>(
+                dv_particle_list->Name() + "Initial", dv_particle_list->getDataSize(), dv_particle_list);
         dv_original_id_lists_.push_back(original_id_list);
     }
 

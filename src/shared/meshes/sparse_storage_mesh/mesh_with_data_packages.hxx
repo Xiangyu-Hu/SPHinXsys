@@ -47,36 +47,6 @@ DiscreteVariable<int> &MeshWithGridDataPackages<PKG_SIZE>::getPackageType()
 }
 //=============================================================================================//
 template <int PKG_SIZE>
-template <typename DataType>
-void MeshWithGridDataPackages<PKG_SIZE>::addMeshVariableToWrite(const std::string &variable_name)
-{
-    addVariableToList<MeshVariable, DataType>(mesh_variables_to_write_, all_mesh_variables_, variable_name);
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-template <typename DataType>
-void MeshWithGridDataPackages<PKG_SIZE>::addMeshVariableToProbe(const std::string &variable_name)
-{
-    addVariableToList<MeshVariable, DataType>(mesh_variables_to_probe_, all_mesh_variables_, variable_name);
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-template <typename DataType>
-void MeshWithGridDataPackages<PKG_SIZE>::addBKGMeshVariableToWrite(const std::string &variable_name)
-{
-    addVariableToList<DiscreteVariable, DataType>(
-        bkg_mesh_variables_to_write_, all_bkg_mesh_variables_, variable_name);
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-template <typename DataType>
-void MeshWithGridDataPackages<PKG_SIZE>::addEvolvingMetaVariable(const std::string &variable_name)
-{
-    addVariableToList<DiscreteVariable, DataType>(
-        evolving_meta_variables_, all_meta_variables_, variable_name);
-}
-//=============================================================================================//
-template <int PKG_SIZE>
 template <typename T>
 T &MeshWithGridDataPackages<PKG_SIZE>::checkOrganized(std::string func_name, T &value)
 {
@@ -86,45 +56,6 @@ T &MeshWithGridDataPackages<PKG_SIZE>::checkOrganized(std::string func_name, T &
         exit(1);
     }
     return value;
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-template <template <typename> typename ContainerType, typename DataType>
-void MeshWithGridDataPackages<PKG_SIZE>::
-    addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
-                      DataContainerAddressAssemble<ContainerType> &all_variable_set,
-                      const std::string &variable_name)
-{
-    ContainerType<DataType> *variable =
-        findVariableByName<DataType, ContainerType>(all_variable_set, variable_name);
-
-    if (variable == nullptr)
-    {
-        std::cout << "\n Error: the mesh variable '" << variable_name << "' is  not exist!" << std::endl;
-        exit(1);
-    }
-
-    ContainerType<DataType> *listed_variable =
-        findVariableByName<DataType, ContainerType>(variable_set, variable_name);
-    if (listed_variable == nullptr)
-    {
-        constexpr int type_index = DataTypeIndex<DataType>::value;
-        std::get<type_index>(variable_set).push_back(variable);
-    }
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-template <template <typename> class MeshVariableType>
-template <typename DataType, class ExecutionPolicy>
-void MeshWithGridDataPackages<PKG_SIZE>::SyncMeshVariableData<MeshVariableType>::
-operator()(DataContainerAddressKeeper<MeshVariableType<DataType>> &mesh_variables,
-           ExecutionPolicy &ex_policy)
-{
-    for (UnsignedInt l = 0; l != mesh_variables.size(); l++)
-    {
-        MeshVariableType<DataType> *variable = mesh_variables[l];
-        variable->prepareForOutput(ex_policy);
-    }
 }
 //=============================================================================================//
 template <int PKG_SIZE>
@@ -200,26 +131,9 @@ void MeshWithGridDataPackages<PKG_SIZE>::syncMeshVariablesToProbe(ExecutionPolic
 }
 //=============================================================================================//
 template <int PKG_SIZE>
-template <template <typename> typename ContainerType, typename DataType, typename... Args>
-ContainerType<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
-    registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
-                     DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
-                     const std::string &variable_name, Args &&...args)
-{
-    ContainerType<DataType> *variable =
-        findVariableByName<DataType, ContainerType>(all_variable_set, variable_name);
-    if (variable == nullptr)
-    {
-        return addVariableToAssemble<DataType, ContainerType>(
-            all_variable_set, all_variable_ptrs_, variable_name, std::forward<Args>(args)...);
-    }
-    return variable;
-}
-//=============================================================================================//
-template <int PKG_SIZE>
 template <typename DataType>
-typename MeshWithGridDataPackages<PKG_SIZE>::template MeshVariable<DataType> *
-MeshWithGridDataPackages<PKG_SIZE>::registerMeshVariable(const std::string &variable_name)
+DiscreteVariable<PackageDataMatrix<DataType, PKG_SIZE>> *MeshWithGridDataPackages<PKG_SIZE>::
+    registerMeshVariable(const std::string &variable_name)
 {
     if (!is_organized_)
     {
@@ -233,12 +147,12 @@ MeshWithGridDataPackages<PKG_SIZE>::registerMeshVariable(const std::string &vari
 //=============================================================================================//
 template <int PKG_SIZE>
 template <typename DataType, typename... Args>
-typename MeshWithGridDataPackages<PKG_SIZE>::template BKGMeshVariable<DataType> *
-MeshWithGridDataPackages<PKG_SIZE>::registerBKGMeshVariable(const std::string &variable_name, Args &&...args)
+DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::registerBKGMeshVariable(
+    const std::string &variable_name, Args &&...args)
 {
     return registerVariable<BKGMeshVariable, DataType>(
-        all_bkg_mesh_variables_, bkg_mesh_variable_ptrs_, variable_name, index_handler_.NumberOfCells(),
-        std::forward<Args>(args)...);
+        all_bkg_mesh_variables_, bkg_mesh_variable_ptrs_, variable_name,
+        index_handler_.NumberOfCells(), std::forward<Args>(args)...);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
@@ -258,8 +172,8 @@ DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::registerMetaVari
 //=============================================================================================//
 template <int PKG_SIZE>
 template <typename DataType>
-typename MeshWithGridDataPackages<PKG_SIZE>::template MeshVariable<DataType> *
-MeshWithGridDataPackages<PKG_SIZE>::getMeshVariable(const std::string &variable_name)
+DiscreteVariable<PackageDataMatrix<DataType, PKG_SIZE>> *MeshWithGridDataPackages<PKG_SIZE>::
+    getMeshVariable(const std::string &variable_name)
 {
     MeshVariable<DataType> *variable =
         findVariableByName<DataType, MeshVariable>(all_mesh_variables_, variable_name);
@@ -273,14 +187,29 @@ MeshWithGridDataPackages<PKG_SIZE>::getMeshVariable(const std::string &variable_
 //=============================================================================================//
 template <int PKG_SIZE>
 template <typename DataType>
-typename MeshWithGridDataPackages<PKG_SIZE>::template BKGMeshVariable<DataType> *
-MeshWithGridDataPackages<PKG_SIZE>::getBKGMeshVariable(const std::string &variable_name)
+DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
+    getBKGMeshVariable(const std::string &variable_name)
 {
     BKGMeshVariable<DataType> *variable =
         findVariableByName<DataType, BKGMeshVariable>(all_bkg_mesh_variables_, variable_name);
     if (variable == nullptr)
     {
         std::cout << "\n Error: the BKG mesh variable '" << variable_name << "' is not exist!" << std::endl;
+        exit(1);
+    }
+    return variable;
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
+    getMetaVariable(const std::string &variable_name)
+{
+    MetaVariable<DataType> *variable =
+        findVariableByName<DataType, MetaVariable>(all_meta_variables_, variable_name);
+    if (variable == nullptr)
+    {
+        std::cout << "\n Error: the meta variable '" << variable_name << "' is not exist!" << std::endl;
         exit(1);
     }
     return variable;
@@ -296,6 +225,38 @@ DataType MeshWithGridDataPackages<PKG_SIZE>::
     Arrayi local_index = global_grid_index - cell_index_on_mesh_ * PKG_SIZE;
     UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh_);
     return pkg_data[package_index](local_index);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+void MeshWithGridDataPackages<PKG_SIZE>::addMeshVariableToWrite(const std::string &variable_name)
+{
+    addVariableToList<MeshVariable, DataType>(
+        mesh_variables_to_write_, getMeshVariable<DataType>(variable_name));
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+void MeshWithGridDataPackages<PKG_SIZE>::addMeshVariableToProbe(const std::string &variable_name)
+{
+    addVariableToList<MeshVariable, DataType>(
+        mesh_variables_to_probe_, getMeshVariable<DataType>(variable_name));
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+void MeshWithGridDataPackages<PKG_SIZE>::addBKGMeshVariableToWrite(const std::string &variable_name)
+{
+    addVariableToList<DiscreteVariable, DataType>(
+        bkg_mesh_variables_to_write_, getBKGMeshVariable<DataType>(variable_name));
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+void MeshWithGridDataPackages<PKG_SIZE>::addEvolvingMetaVariable(const std::string &variable_name)
+{
+    addVariableToList<MetaVariable, DataType>(
+        evolving_meta_variables_, getMetaVariable<DataType>(variable_name));
 }
 //=============================================================================================//
 template <int PKG_SIZE>

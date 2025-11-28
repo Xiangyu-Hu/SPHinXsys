@@ -24,10 +24,10 @@ SPHAdaptation &BaseParticles::getSPHAdaptation()
     return sph_body_.getSPHAdaptation();
 }
 //=================================================================================================//
-void BaseParticles::printBodyName()
+std::string BaseParticles::getBodyName()
 {
-    std::cout << "\nBodyName: " << sph_body_.getName() << std::endl;
-}
+    return sph_body_.getName();
+};
 //=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {

@@ -117,17 +117,6 @@ class MeshWithGridDataPackages
     MetaVariableAssemble &getEvolvingMetaVariables() { return evolving_meta_variables_; };
     MeshVariableAssemble &getEvolvingMeshVariables() { return evolving_mesh_variables_; };
 
-    template <typename DataType>
-    void addMeshVariableToWrite(const std::string &variable_name);
-    template <typename DataType>
-    void addMeshVariableToProbe(const std::string &variable_name);
-    template <typename DataType>
-    void addBKGMeshVariableToWrite(const std::string &variable_name);
-    template <typename DataType>
-    void addEvolvingMetaVariable(const std::string &variable_name);
-    void writeMeshVariableToPlt(std::ofstream &output_file);
-    void writeBKGMeshVariableToPlt(std::ofstream &output_file);
-
   protected:
     IndexHandler index_handler_;
     UnsignedInt num_singular_pkgs_;                  /**< the number of all packages, initially only singular packages. */
@@ -144,20 +133,8 @@ class MeshWithGridDataPackages
     template <typename T>
     T &checkOrganized(std::string func_name, T &value);
 
-    template <template <typename> typename ContainerType, typename DataType>
-    void addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
-                           DataContainerAddressAssemble<ContainerType> &all_variable_set,
-                           const std::string &variable_name);
-
-    template <template <typename> class MeshVariableType>
-    struct SyncMeshVariableData
-    {
-        template <typename DataType, class ExecutionPolicy>
-        void operator()(DataContainerAddressKeeper<MeshVariableType<DataType>> &mesh_variables,
-                        ExecutionPolicy &ex_policy);
-    };
-    OperationOnDataAssemble<MeshVariableAssemble, SyncMeshVariableData<MeshVariable>> sync_mesh_variable_data_{};
-    OperationOnDataAssemble<BKGMeshVariableAssemble, SyncMeshVariableData<BKGMeshVariable>> sync_bkg_mesh_variable_data_{};
+    OperationOnDataAssemble<MeshVariableAssemble, PrepareVariablesToWrite<MeshVariable>> sync_mesh_variable_data_{};
+    OperationOnDataAssemble<BKGMeshVariableAssemble, PrepareVariablesToWrite<BKGMeshVariable>> sync_bkg_mesh_variable_data_{};
 
     template <typename DataType>
     DataType DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data,
@@ -171,10 +148,6 @@ class MeshWithGridDataPackages
     void syncBKGMeshVariablesToWrite(ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
     void syncMeshVariablesToProbe(ExecutionPolicy &ex_policy);
-    template <template <typename> typename ContainerType, typename DataType, typename... Args>
-    ContainerType<DataType> *registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
-                                              DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
-                                              const std::string &variable_name, Args &&...args);
     template <typename DataType>
     MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name);
     template <typename DataType, typename... Args>
@@ -187,6 +160,16 @@ class MeshWithGridDataPackages
     BKGMeshVariable<DataType> *getBKGMeshVariable(const std::string &variable_name);
     template <typename DataType>
     MetaVariable<DataType> *getMetaVariable(const std::string &variable_name);
+    template <typename DataType>
+    void addMeshVariableToWrite(const std::string &variable_name);
+    template <typename DataType>
+    void addMeshVariableToProbe(const std::string &variable_name);
+    template <typename DataType>
+    void addBKGMeshVariableToWrite(const std::string &variable_name);
+    template <typename DataType>
+    void addEvolvingMetaVariable(const std::string &variable_name);
+    void writeMeshVariableToPlt(std::ofstream &output_file);
+    void writeBKGMeshVariableToPlt(std::ofstream &output_file);
 
     void organizeOccupiedPackages();
 };

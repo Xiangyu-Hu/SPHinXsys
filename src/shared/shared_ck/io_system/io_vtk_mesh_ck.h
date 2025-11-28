@@ -61,7 +61,7 @@ class BodyStatesRecordingToTriangleMeshVtpCK : public BodyStatesRecordingToTrian
     };
 
   protected:
-    OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite> prepare_variable_to_write_;
+    OperationOnDataAssemble<ParticleVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
 };
 } // namespace SPH
 #endif // IO_VTK_MESH_CK_H

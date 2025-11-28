@@ -40,7 +40,7 @@ template <class ExecutionPolicy>
 class BodyStatesRecordingToVtpCK : public BodyStatesRecordingToVtp
 {
   protected:
-    OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite> prepare_variable_to_write_;
+    OperationOnDataAssemble<ParticleVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
 
     void prepareToWrite()
     {
@@ -109,8 +109,8 @@ class RestartIOCK : public RestartIO
     };
 
   protected:
-    OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite> prepare_variable_to_write_;
-    OperationOnDataAssemble<ParticleVariables, finalizeVariablesAfterRead> finalize_variables_after_read_;
+    OperationOnDataAssemble<ParticleVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
+    OperationOnDataAssemble<ParticleVariables, FinalizeVariablesAfterRead<DiscreteVariable>> finalize_variables_after_read_;
 };
 
 template <class ExecutionPolicy>
@@ -132,7 +132,7 @@ class ReloadParticleIOCK : public ReloadParticleIO
     };
 
   protected:
-    OperationOnDataAssemble<ParticleVariables, prepareVariablesToWrite> prepare_variable_to_reload_;
+    OperationOnDataAssemble<ParticleVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_reload_;
 };
 } // namespace SPH
 #endif // IO_BASE_CK_H
