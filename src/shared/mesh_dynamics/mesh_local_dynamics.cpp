@@ -24,10 +24,7 @@ void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
     cell_pkg_index_[index_1d] = 1;  // outside far field by default
     cell_contain_id_[index_1d] = 2; // default value is 2, indicating not near interface
     Vecd cell_position = index_handler_.CellPositionFromIndex(cell_index);
-    Real signed_distance = shape_->findSignedDistance(cell_position);
-    Vecd normal_direction = shape_->findNormalDirection(cell_position);
-    Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
-    if (measure < grid_spacing_)
+    if (ABS(shape_->findSignedDistance(cell_position)) < grid_spacing_)
     {
         cell_pkg_index_[index_1d] = 2;                               // indicate initially tagged temporarily
         occupied_data_pkgs_->push_back(std::make_pair(index_1d, 1)); // core package
@@ -65,10 +62,7 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
 
     if (coarse_index_handler_.isWithinCorePackage(cell_pkg_index_coarse_, pkg_type_coarse_, cell_position))
     {
-        Real signed_distance = shape_->findSignedDistance(cell_position);
-        Vecd normal_direction = shape_->findNormalDirection(cell_position);
-        Real measure = (signed_distance * normal_direction).cwiseAbs().maxCoeff();
-        if (measure < grid_spacing_)
+        if (ABS(shape_->findSignedDistance(cell_position)) < grid_spacing_)
         {
             cell_pkg_index_[index_1d] = 2;                               // indicate initially tagged temporarily
             occupied_data_pkgs_->push_back(std::make_pair(index_1d, 1)); // core package
