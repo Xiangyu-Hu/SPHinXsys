@@ -44,8 +44,12 @@ class BoundingBox
     BoundingBox() : lower_(VecType::Zero()), upper_(VecType::Zero()) {};
     BoundingBox(const VecType &lower, const VecType &upper)
         : lower_(lower), upper_(upper) {};
-    BoundingBox(const VecType &center, const VecType &hlf_size)
-        : lower_(center - hlf_size), upper_(center + hlf_size) {};
+    BoundingBox(VecType &hlfsize) : lower_(-hlfsize), upper_(hlfsize) {};
+
+    BoundingBox translate(const VecType &translate) const
+    {
+        return BoundingBox(translate + lower_, translate + upper_);
+    };
 
     bool checkContain(const VecType &point) const
     {
