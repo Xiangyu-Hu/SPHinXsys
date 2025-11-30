@@ -21,7 +21,7 @@ Real DH = 0.001;                                             /**< Channel height
 Real resolution_ref = DH / 20.0;                             /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;                                /**< Extending width for BCs. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------

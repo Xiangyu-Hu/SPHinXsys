@@ -16,7 +16,7 @@ Real DL = 10.0;
 Real DH = 10.0;
 Real resolution_ref = 1 / 25.0;
 Real BW = resolution_ref * 4;
-BoundingBox system_domain_bounds(Vec2d(-BW - DL, -BW - DH), Vec2d(BW + DL, BW + DH));
+BoundingBoxd system_domain_bounds(Vec2d(-BW - DL, -BW - DH), Vec2d(BW + DL, BW + DH));
 //----------------------------------------------------------------------
 //	Define geometries
 //----------------------------------------------------------------------

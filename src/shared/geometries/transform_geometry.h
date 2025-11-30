@@ -96,9 +96,9 @@ class TransformShape : public TransformGeometry<GeometryType>, public Shape
     // Returns the AABB of the rotated underlying shape's AABB
     // It is not the tight fit AABB of the underlying shape
     // But at least it encloses the underlying shape fully
-    virtual BoundingBox findBounds() override
+    virtual BoundingBoxd findBounds() override
     {
-        BoundingBox original_bound = TransformGeometry<GeometryType>::findBounds();
+        BoundingBoxd original_bound = TransformGeometry<GeometryType>::findBounds();
         Vecd bb_min = Vecd::Constant(MaxReal);
         Vecd bb_max = Vecd::Constant(-MaxReal);
         for (auto x : {original_bound.first_.x(), original_bound.second_.x()})
@@ -120,7 +120,7 @@ class TransformShape : public TransformGeometry<GeometryType>, public Shape
                 }
             }
         }
-        return BoundingBox(bb_min, bb_max);
+        return BoundingBoxd(bb_min, bb_max);
     };
 };
 } // namespace SPH

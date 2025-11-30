@@ -7,7 +7,7 @@ namespace SPH
 {
 //=================================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
-    BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
+    BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
     Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
     : BaseMeshField("LevelSet_" + shape.getName()), total_levels_(1),
       shape_(shape), refinement_ratio_(refinement_ratio)
@@ -24,7 +24,7 @@ MultilevelLevelSet::MultilevelLevelSet(
 }
 //=================================================================================================//
 MultilevelLevelSet::MultilevelLevelSet(
-    BoundingBox tentative_bounds, Real data_spacing,
+    BoundingBoxd tentative_bounds, Real data_spacing,
     size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
     : BaseMeshField("LevelSet_" + shape.getName()), total_levels_(total_levels),
       shape_(shape), refinement_ratio_(refinement_ratio)
@@ -52,7 +52,7 @@ MultilevelLevelSet::MultilevelLevelSet(
 }
 //=================================================================================================//
 void MultilevelLevelSet::initializeLevel(
-    Real data_spacing, BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data)
+    Real data_spacing, BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data)
 {
     MeshWithGridDataPackagesType *mesh_data =
         mesh_data_ptr_vector_keeper_

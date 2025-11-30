@@ -371,7 +371,7 @@ Vec3d ImageMHD<T, nDims>::findClosestPoint(const Vec3d &probe_point)
 }
 
 template <typename T, int nDims>
-BoundingBox ImageMHD<T, nDims>::findBounds()
+BoundingBoxd ImageMHD<T, nDims>::findBounds()
 {
     // initial reference values
     Vec3d lower_bound = MaxReal * Vec3d::Ones();
@@ -393,7 +393,7 @@ BoundingBox ImageMHD<T, nDims>::findBounds()
             }
         }
     }
-    return BoundingBox(lower_bound, upper_bound);
+    return BoundingBoxd(lower_bound, upper_bound);
 }
 
 template <typename T, int nDims>

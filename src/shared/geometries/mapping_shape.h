@@ -114,9 +114,9 @@ class ExtrudeShape : public Shape
         return closest_point;
     };
 
-    virtual BoundingBox findBounds() override
+    virtual BoundingBoxd findBounds() override
     {
-        BoundingBox bounds = base_shape_->findBounds();
+        BoundingBoxd bounds = base_shape_->findBounds();
         return bounds.expand(thickness_ * Vecd::Ones());
     };
 };

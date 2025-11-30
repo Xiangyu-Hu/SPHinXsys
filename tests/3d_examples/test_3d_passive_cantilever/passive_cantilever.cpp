@@ -19,7 +19,7 @@ Vecd translation_cantilever(0.5 * (PL - SL), 0.5 * PH, 0.5 * PW);
 Vecd halfsize_holder(0.5 * SL, 0.5 * PH, 0.5 * PW);
 Vecd translation_holder(-0.5 * SL, 0.5 * PH, 0.5 * PW);
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vecd(-SL - BW, -BW, -BW),
+BoundingBoxd system_domain_bounds(Vecd(-SL - BW, -BW, -BW),
                                  Vecd(PL + BW, PH + BW, PH + BW));
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(PL, PH, PW)};

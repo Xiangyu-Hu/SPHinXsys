@@ -35,7 +35,7 @@ PositionSolidBody::
       pos_end_center_(pos_end_center)
 
 {
-    BoundingBox bounds = sph_body.getSPHBodyBounds();
+    BoundingBoxd bounds = sph_body.getSPHBodyBounds();
     pos_0_center_ = (bounds.first_ + bounds.second_) * 0.5;
     translation_ = pos_end_center_ - pos_0_center_;
 }
@@ -63,7 +63,7 @@ PositionScaleSolidBody::
       start_time_(start_time), end_time_(end_time), end_scale_(end_scale),
       physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime"))
 {
-    BoundingBox bounds = sph_body.getSPHBodyBounds();
+    BoundingBoxd bounds = sph_body.getSPHBodyBounds();
     pos_0_center_ = (bounds.first_ + bounds.second_) * 0.5;
 }
 //=================================================================================================//

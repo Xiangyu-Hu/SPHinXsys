@@ -16,7 +16,7 @@ Real resolution_ref = 0.5;                          // Global reference resoluti
 Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
 Vec2d pipe_center(0.0, 0.0); /** Location of the pipe center. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-radius - thickness, -radius - thickness),
+BoundingBoxd system_domain_bounds(Vec2d(-radius - thickness, -radius - thickness),
                                  Vec2d(radius + thickness, radius + thickness));
 /**
  * @brief define geometry of SPH bodies

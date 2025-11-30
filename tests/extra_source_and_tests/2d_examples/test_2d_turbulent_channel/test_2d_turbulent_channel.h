@@ -37,7 +37,7 @@ Real BW = resolution_ref * 4;
 Real DL_sponge = resolution_ref * 20;
 Real half_channel_height = DH / 2.0;
 
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2.0 * BW, DH + 2.0 * BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge - 2.0 * BW, -BW), Vec2d(DL + 2.0 * BW, DH + 2.0 * BW));
 
 //----------------------------------------------------------------------
 //	Material properties of the fluid.

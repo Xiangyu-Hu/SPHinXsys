@@ -20,7 +20,7 @@ Vec3d domain_lower_bound(-9.0, -6.0, 0.0);
 Vec3d domain_upper_bound(9.0, 6.0, 9.0);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 12.5;
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 //----------------------------------------------------------------------
 //	define a body from the imported model.
 //----------------------------------------------------------------------

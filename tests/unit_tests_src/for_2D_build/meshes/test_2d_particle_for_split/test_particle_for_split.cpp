@@ -12,7 +12,7 @@ TEST(test_meshes, split_for)
     shape.addABox(Transform(0.5 * length * Vec2d::Ones()), 0.5 * length * Vec2d::Ones(), ShapeBooleanOps::add);
     auto polygon_shape = makeShared<MultiPolygonShape>(shape, "PolygonShape");
 
-    BoundingBox bb_system = polygon_shape->getBounds();
+    BoundingBoxd bb_system = polygon_shape->getBounds();
 
     SPHSystem system(bb_system, dp);
 

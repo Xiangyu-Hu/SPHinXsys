@@ -74,7 +74,7 @@ class SPHBody
     bool newly_updated_;                   /**< whether this body is in a newly updated state */
     BaseParticles *base_particles_;        /**< Base particles for dynamic cast DataDelegate  */
     bool is_bound_set_;                    /**< whether the bounding box is set */
-    BoundingBox bound_;                    /**< bounding box of the body */
+    BoundingBoxd bound_;                    /**< bounding box of the body */
     Shape *initial_shape_;                 /**< initial volumetric geometry enclosing the body */
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
     BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
@@ -104,9 +104,9 @@ class SPHBody
     void setNewlyUpdated() { newly_updated_ = true; };
     void setNotNewlyUpdated() { newly_updated_ = false; };
     bool checkNewlyUpdated() { return newly_updated_; };
-    void setSPHBodyBounds(const BoundingBox &bound);
-    BoundingBox getSPHBodyBounds();
-    BoundingBox getSPHSystemBounds();
+    void setSPHBodyBounds(const BoundingBoxd &bound);
+    BoundingBoxd getSPHBodyBounds();
+    BoundingBoxd getSPHSystemBounds();
 
     class SourceParticleMask
     {

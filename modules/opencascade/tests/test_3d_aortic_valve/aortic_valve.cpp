@@ -28,7 +28,7 @@ Vec3d domain_upper_bound(15.0, 15.0, 26.0);
 //----------------------------------------------------------------------
 //	Domain bounds of the system.
 //----------------------------------------------------------------------
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
 namespace SPH
 {

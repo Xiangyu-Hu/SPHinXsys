@@ -80,7 +80,7 @@ class ParticleGenerator<SurfaceParticles, ShellRoof> : public ParticleGenerator<
 } // namespace SPH
 
 template <typename VectorType>
-BoundingBox get_particles_bounding_box(const VectorType &pos_0)
+BoundingBoxd get_particles_bounding_box(const VectorType &pos_0)
 {
     Vec3d lower(pos_0[0]);
     Vec3d upper(pos_0[0]);
@@ -94,11 +94,11 @@ BoundingBox get_particles_bounding_box(const VectorType &pos_0)
                 upper[i] = pos[i];
         }
     }
-    return BoundingBox(lower, upper);
+    return BoundingBoxd(lower, upper);
 }
 
 template <typename VectorType>
-BoundingBox get_particles_bounding_box(VectorType *pos, size_t total_real_particles)
+BoundingBoxd get_particles_bounding_box(VectorType *pos, size_t total_real_particles)
 {
     Vec3d lower(pos[0]);
     Vec3d upper(pos[0]);
@@ -112,7 +112,7 @@ BoundingBox get_particles_bounding_box(VectorType *pos, size_t total_real_partic
                 upper[i] = pos[index_i][i];
         }
     }
-    return BoundingBox(lower, upper);
+    return BoundingBoxd(lower, upper);
 }
 
 StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
@@ -320,7 +320,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     // gravity
     Vec3d gravity = -9.8066 * radial_vec;
     // system bounding box
-    BoundingBox bb_system;
+    BoundingBoxd bb_system;
     StdVec<Vec3d> obj_vertices;
     Real particle_area = -1; // initialized when CVT-based mesh is used
 
@@ -329,7 +329,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
         // generating particles from predefined positions from obj file
         obj_vertices = read_obj_vertices("input/shell_50mm_80d_" + std::to_string(dp_cm) + "cm.txt");
         particle_area = total_area / obj_vertices.size();
-        // find out BoundingBox
+        // find out BoundingBoxd
         bb_system = get_particles_bounding_box(obj_vertices); // store this
     }
 

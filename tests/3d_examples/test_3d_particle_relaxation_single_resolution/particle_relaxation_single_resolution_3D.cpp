@@ -39,7 +39,7 @@ Real scaling = 2.5;
 //----------------------------------------------------------------------
 //	Below are common parts for the two test geometries.
 //----------------------------------------------------------------------
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 //--------------------------------------------------------------------
 class SolidBodyFromMesh : public ComplexShape
@@ -67,7 +67,7 @@ class SolidBodyFromMesh : public ComplexShape
 //----------------------------------------------------------------------
 //	Below are common parts for the two test geometries.
 //----------------------------------------------------------------------
-// BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+// BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 // Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 //----------------------------------------------------------------------
 //	define the imported model.

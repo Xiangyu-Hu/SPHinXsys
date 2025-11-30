@@ -35,7 +35,7 @@ Vec3d domain_lower_bound(-1.0, -1.0, -1.0);
 Vec3d domain_upper_bound(1.0, 1.0, 1.0);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 /** Network starting point. */
 Vecd starting_point(-1.0, 0.0, 0.0);
 /** Network second point. */

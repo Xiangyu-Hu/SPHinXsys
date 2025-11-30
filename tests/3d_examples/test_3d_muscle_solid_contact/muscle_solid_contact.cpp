@@ -19,7 +19,7 @@ Vecd halfsize_stationary_plate(0.5 * BW, 0.5 * L + BW, 0.5 * L + BW);
 Vecd translation_stationary_plate(-0.5 * BW, 0.0, 0.0);
 Vecd halfsize_moving_plate(0.5 * BW, 0.5 * PL, 0.5 * PL);
 Vecd translation_moving_plate(L + BW, 0.0, 0.0);
-BoundingBox system_domain_bounds(Vecd(-BW, -0.5 * PL, -0.5 * PL),
+BoundingBoxd system_domain_bounds(Vecd(-BW, -0.5 * PL, -0.5 * PL),
                                  Vecd(2.0 * L + BW, 0.5 * PL, 0.5 * PL));
 //----------------------------------------------------------------------
 //	Material parameters.

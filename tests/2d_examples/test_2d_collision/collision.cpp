@@ -14,7 +14,7 @@ Real DL = 8.0;                /**< box length. */
 Real DH = 4.0;                /**< box height. */
 Real resolution_ref = 0.025;  /**< reference resolution. */
 Real BW = resolution_ref * 4; /**< wall width for BCs. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Vec2d ball_center_1(2.0, 2.0);
 Vec2d ball_center_2(6.0, 2.0);
 Real ball_radius = 0.5;

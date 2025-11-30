@@ -16,7 +16,7 @@ BodyPartFromMesh::BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> t
     : BodyRegionByParticle(body, triangle_mesh_shape_ptr)
 {
     // set the body domain bounds because it is not set by default
-    BoundingBox bounds = triangle_mesh_shape_ptr->getBounds();
+    BoundingBoxd bounds = triangle_mesh_shape_ptr->getBounds();
     setBodyPartBounds(bounds);
 }
 
@@ -46,9 +46,9 @@ SolidBodyForSimulation::SolidBodyForSimulation(
     std::cout << "  normal initialization done" << std::endl;
 }
 
-BoundingBox expandBoundingBox(const BoundingBox &original, const BoundingBox &additional)
+BoundingBoxd expandBoundingBox(const BoundingBoxd &original, const BoundingBoxd &additional)
 {
-    BoundingBox expanded = original;
+    BoundingBoxd expanded = original;
     for (int i = 0; i < expanded.first_.size(); i++)
     {
         if (additional.first_[i] < expanded.first_[i])
@@ -108,7 +108,7 @@ void relaxParticlesSingleResolution(bool write_particle_relaxation_data,
 std::tuple<Vecd *, Real *> generateAndRelaxParticlesFromMesh(
     SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution, bool particle_relaxation, bool write_particle_relaxation_data)
 {
-    BoundingBox bb = triangle_mesh_shape->getBounds();
+    BoundingBoxd bb = triangle_mesh_shape->getBounds();
     SPHSystem system(bb, resolution);
     SolidBody model(system, triangle_mesh_shape);
     model.defineBodyLevelSetShape()->cleanLevelSet();
@@ -197,7 +197,7 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
       particle_relaxation_list_(input.particle_relaxation_list_),
       write_particle_relaxation_data_(input.write_particle_relaxation_data_),
       system_resolution_(0.0),
-      system_(SPHSystem(BoundingBox(Vec3d::Zero(), Vec3d::Zero()), system_resolution_)),
+      system_(SPHSystem(BoundingBoxd(Vec3d::Zero(), Vec3d::Zero()), system_resolution_)),
       scale_system_boundaries_(input.scale_system_boundaries_),
       physical_time_(*system_.getSystemVariableDataByName<Real>("PhysicalTime")),
 
@@ -284,7 +284,7 @@ void StructuralSimulation::calculateSystemBoundaries()
     // calculate system bounds from all bodies
     for (size_t i = 0; i < body_mesh_list_.size(); i++)
     {
-        BoundingBox additional = body_mesh_list_[i]->getBounds();
+        BoundingBoxd additional = body_mesh_list_[i]->getBounds();
         system_.setSystemDomainBounds(expandBoundingBox(system_.getSystemDomainBounds(), additional));
     }
     // scale the system bounds around the center point
@@ -430,7 +430,7 @@ void StructuralSimulation::initializeForceInBodyRegion()
     for (size_t i = 0; i < force_in_body_region_tuple_.size(); i++)
     {
         int body_index = std::get<0>(force_in_body_region_tuple_[i]);
-        BoundingBox bbox = std::get<1>(force_in_body_region_tuple_[i]);
+        BoundingBoxd bbox = std::get<1>(force_in_body_region_tuple_[i]);
         Vec3d force = std::get<2>(force_in_body_region_tuple_[i]);
         Real end_time = std::get<3>(force_in_body_region_tuple_[i]);
 
@@ -510,7 +510,7 @@ void StructuralSimulation::initializeConstrainSolidBodyRegion()
     for (size_t i = 0; i < body_indices_fixed_constraint_region_.size(); i++)
     {
         int body_index = body_indices_fixed_constraint_region_[i].first;
-        BoundingBox bbox = body_indices_fixed_constraint_region_[i].second;
+        BoundingBoxd bbox = body_indices_fixed_constraint_region_[i].second;
 
         // get the length of each side to create the box
         Real x_side = bbox.second_[0] - bbox.first_[0];

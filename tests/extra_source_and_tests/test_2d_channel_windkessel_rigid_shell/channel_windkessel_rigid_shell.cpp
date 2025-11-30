@@ -24,7 +24,7 @@ Real resolution_ref = DH / 30.0; /**< Initial reference particle spacing. */
 Real resolution_shell = resolution_ref;
 Real wall_thickness = resolution_ref * 4;                    /**< Extending width for BCs. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
-BoundingBox system_domain_bounds(Vecd(-wall_thickness, -wall_thickness), Vecd(DL + wall_thickness, DH + wall_thickness));
+BoundingBoxd system_domain_bounds(Vecd(-wall_thickness, -wall_thickness), Vecd(DL + wall_thickness, DH + wall_thickness));
 //----------------------------------------------------------------------
 //	Geometry parameters for boundary condition.
 //----------------------------------------------------------------------

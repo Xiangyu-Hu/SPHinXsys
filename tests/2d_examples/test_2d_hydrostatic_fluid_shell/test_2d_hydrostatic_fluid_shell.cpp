@@ -96,7 +96,7 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
     const Real Dam_H = 2.0;           /**< Water block height. */
     const Real Gate_thickness = 0.05; /**< Width of the gate. */
     const Real BW = particle_spacing_ref * 4.0;
-    const BoundingBox system_domain_bounds(Vec2d(-BW, -std::max(particle_spacing_gate, Gate_thickness)), Vec2d(DL + BW, DH + Gate_thickness));
+    const BoundingBoxd system_domain_bounds(Vec2d(-BW, -std::max(particle_spacing_gate, Gate_thickness)), Vec2d(DL + BW, DH + Gate_thickness));
     // observer location
     const StdVec<Vecd> observation_location = {Vecd(0.5 * Dam_L, -0.5 * particle_spacing_gate)};
     //----------------------------------------------------------------------

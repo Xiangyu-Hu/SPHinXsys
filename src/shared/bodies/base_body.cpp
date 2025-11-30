@@ -31,7 +31,7 @@ SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::s
 SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
     : SPHBody(sph_system, shape_ptr, shape_ptr->getName()) {}
 //=================================================================================================//
-BoundingBox SPHBody::getSPHSystemBounds()
+BoundingBoxd SPHBody::getSPHSystemBounds()
 {
     return sph_system_.getSystemDomainBounds();
 }
@@ -63,13 +63,13 @@ BaseMaterial &SPHBody::getBaseMaterial()
     return *base_material_;
 };
 //=================================================================================================//
-void SPHBody::setSPHBodyBounds(const BoundingBox &bound)
+void SPHBody::setSPHBodyBounds(const BoundingBoxd &bound)
 {
     bound_ = bound;
     is_bound_set_ = true;
 }
 //=================================================================================================//
-BoundingBox SPHBody::getSPHBodyBounds()
+BoundingBoxd SPHBody::getSPHBodyBounds()
 {
     return is_bound_set_ ? bound_ : initial_shape_->getBounds();
 }

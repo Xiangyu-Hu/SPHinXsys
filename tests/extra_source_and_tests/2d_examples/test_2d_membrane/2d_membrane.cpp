@@ -24,7 +24,7 @@ int num = 8;
 Real resolution_ref = PH / num;
 
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-PL, -PL),
+BoundingBoxd system_domain_bounds(Vec2d(-PL, -PL),
                                  Vec2d(2.0 * PL, PL));
 
 //----------------------------------------------------------------------

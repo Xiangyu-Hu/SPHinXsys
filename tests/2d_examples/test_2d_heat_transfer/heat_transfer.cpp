@@ -14,7 +14,7 @@ Real resolution_ref = DH / 25.0;        /**< Global reference resolution. */
 Real DL_sponge = resolution_ref * 20.0; /**< Sponge region to impose inflow condition. */
 /** Boundary width, determined by specific layer of boundary particles. */
 Real BW = resolution_ref * 4.0; /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
 // temperature observer location
 StdVec<Vecd> observation_location = {Vecd(0.0, DH * 0.5)};
 //----------------------------------------------------------------------

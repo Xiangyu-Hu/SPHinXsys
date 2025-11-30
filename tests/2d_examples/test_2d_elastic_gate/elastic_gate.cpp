@@ -22,7 +22,7 @@ Real BW = resolution_ref * 4.0;         /**< Extending width for BCs. */
 Real dp_s = 0.5 * resolution_ref;
 Vec2d offset = Vec2d(0.0, Base_bottom_position - floor(Base_bottom_position / dp_s) * dp_s);
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 /** Define the corner points of the water block geometry. */
 Vec2d DamP_lb(DL - Dam_L, 0.0);   /**< Left bottom. */
 Vec2d DamP_lt(DL - Dam_L, Dam_H); /**< Left top. */

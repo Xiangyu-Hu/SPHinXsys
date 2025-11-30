@@ -51,9 +51,9 @@ enum class UsageType
 class MultilevelLevelSet : public BaseMeshField
 {
   public:
-    MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, size_t total_levels,
+    MultilevelLevelSet(BoundingBoxd tentative_bounds, Real reference_data_spacing, size_t total_levels,
                        Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
-    MultilevelLevelSet(BoundingBox tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
+    MultilevelLevelSet(BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
                        Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
     ~MultilevelLevelSet() {};
 
@@ -95,7 +95,7 @@ class MultilevelLevelSet : public BaseMeshField
     inline size_t getProbeLevel(const Vecd &position);
     inline size_t getCoarseLevel(Real h_ratio);
 
-    void initializeLevel(Real reference_data_spacing, BoundingBox tentative_bounds,
+    void initializeLevel(Real reference_data_spacing, BoundingBoxd tentative_bounds,
                          MeshWithGridDataPackagesType *coarse_data = nullptr);
     template <class ExecutionPolicy>
     void initializeMeshVariables(const ExecutionPolicy &ex_policy);

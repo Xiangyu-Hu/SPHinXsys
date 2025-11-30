@@ -51,7 +51,7 @@ Vec3d domain_lower_bound(-90.0 * length_scale, -40.0 * length_scale, -80.0 * len
 Vec3d domain_upper_bound(40.0 * length_scale, 30.0 * length_scale, 50.0 * length_scale);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
 /** Material properties. */
 Real rho0_s = 1.06e-3;

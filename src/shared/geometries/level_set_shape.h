@@ -75,7 +75,7 @@ class LevelSetShape : public Shape
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
-    virtual BoundingBox findBounds() override;
+    virtual BoundingBoxd findBounds() override;
 
     template <class ExecutionPolicy>
     void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type)
@@ -109,9 +109,9 @@ class LevelSetShape : public Shape
     };
 
   protected:
-    LevelSetShape(BoundingBox bounding_box, Shape &shape,
+    LevelSetShape(BoundingBoxd bounding_box, Shape &shape,
                   SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio);
-    LevelSetShape(BoundingBox bounding_box, SPHBody &sph_body, Shape &shape, Real refinement_ratio);
+    LevelSetShape(BoundingBoxd bounding_box, SPHBody &sph_body, Shape &shape, Real refinement_ratio);
     MultilevelLevelSet &level_set_; /**< narrow bounded level set mesh. */
 };
 } // namespace SPH

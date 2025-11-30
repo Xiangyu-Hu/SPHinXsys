@@ -51,7 +51,7 @@ namespace SPH
 class Mesh
 {
   public:
-    Mesh(BoundingBox tentative_bounds, Real grid_spacing,
+    Mesh(BoundingBoxd tentative_bounds, Real grid_spacing,
          UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset = 0);
     Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
     ~Mesh() {};
@@ -128,7 +128,7 @@ class MultiLevelMeshField : public BaseMeshField
 
   public:
     MultiLevelMeshField(
-        const std::string &name, BoundingBox tentative_bounds,
+        const std::string &name, BoundingBoxd tentative_bounds,
         Real Reference_grid_spacing, UnsignedInt buffer_width, size_t total_levels = 1);
     virtual ~MultiLevelMeshField() {};
 

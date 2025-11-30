@@ -37,8 +37,8 @@
 using namespace SPH;
 
 using GravityPair = std::pair<int, Vec3d>;
-using AccelTuple = std::tuple<int, BoundingBox, Vec3d>;
-using ForceTuple = std::tuple<int, BoundingBox, Vec3d, Real>;
+using AccelTuple = std::tuple<int, BoundingBoxd, Vec3d>;
+using ForceTuple = std::tuple<int, BoundingBoxd, Vec3d, Real>;
 using PressureTuple = std::tuple<int, SharedPtr<TriangleMeshShape>, Vec3d, StdVec<std::array<Real, 2>>>;
 using SpringDamperTuple = std::tuple<int, Vec3d, Real>;
 /**
@@ -51,11 +51,11 @@ using SpringDamperTuple = std::tuple<int, Vec3d, Real>;
  * Real: damping coefficient
  */
 using SurfaceSpringTuple = std::tuple<int, SharedPtr<TriangleMeshShape>, bool, Vec3d, Real, Real>;
-using ConstrainedRegionPair = std::pair<int, BoundingBox>;
+using ConstrainedRegionPair = std::pair<int, BoundingBoxd>;
 using PositionSolidBodyTuple = std::tuple<int, Real, Real, Vec3d>;
 using PositionScaleSolidBodyTuple = std::tuple<int, Real, Real, Real>;
 using TranslateSolidBodyTuple = std::tuple<int, Real, Real, Vec3d>;
-using TranslateSolidBodyPartTuple = std::tuple<int, Real, Real, Vec3d, BoundingBox>;
+using TranslateSolidBodyPartTuple = std::tuple<int, Real, Real, Vec3d, BoundingBoxd>;
 
 #ifdef __EMSCRIPTEN__
 struct StlData
@@ -114,7 +114,7 @@ class SolidBodyForSimulation
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> *getDampingWithRandomChoice() { return &damping_random_; };
 };
 
-BoundingBox expandBoundingBox(const BoundingBox &original, const BoundingBox &additional);
+BoundingBoxd expandBoundingBox(const BoundingBoxd &original, const BoundingBoxd &additional);
 
 void relaxParticlesSingleResolution(bool write_particles_to_file,
                                     SolidBodyFromMesh &solid_body_from_mesh,

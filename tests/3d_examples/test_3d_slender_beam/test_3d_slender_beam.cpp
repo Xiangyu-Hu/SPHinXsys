@@ -22,7 +22,7 @@ Real resolution_ref = PL / (Real)particle_number; /** Initial reference particle
 int BWD = 1;                                      /** Width of the boundary layer measured by number of particles. */
 Real BW = resolution_ref * (Real)BWD;             /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec3d(-BW, -BW, -0.5 * resolution_ref),
+BoundingBoxd system_domain_bounds(Vec3d(-BW, -BW, -0.5 * resolution_ref),
                                  Vec3d(PL + BW, PH + BW, 0.5 * resolution_ref));
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(0.5 * PL, 0.0, 0.0)};

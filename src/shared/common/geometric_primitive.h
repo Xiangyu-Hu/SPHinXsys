@@ -38,21 +38,22 @@ using Rotation2d = Eigen::Rotation2D<Real>;
 using Rotation3d = Eigen::AngleAxis<Real>;
 
 /** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
-template <typename VecType>
-class BaseBoundingBox
+template <typename DataType, int N>
+class BoundingBox
 {
+    using VecType = Eigen::Matrix<DataType, N, 1>;
+
   public:
     VecType first_, second_;
-    int dimension_;
 
-    BaseBoundingBox() : first_(VecType::Zero()), second_(VecType::Zero()), dimension_(VecType::Zero().size()) {};
-    BaseBoundingBox(const VecType &lower_bound, const VecType &upper_bound)
-        : first_(lower_bound), second_(upper_bound), dimension_(lower_bound.size()) {};
+    BoundingBox() : first_(VecType::Zero()), second_(VecType::Zero()) {};
+    BoundingBox(const VecType &lower_bound, const VecType &upper_bound)
+        : first_(lower_bound), second_(upper_bound) {};
     /** Check the bounding box contain. */
     bool checkContain(const VecType &point)
     {
         bool is_contain = true;
-        for (int i = 0; i < dimension_; ++i)
+        for (int i = 0; i < N; ++i)
         {
             if (point[i] < first_[i] || point[i] > second_[i])
             {
@@ -63,21 +64,23 @@ class BaseBoundingBox
         return is_contain;
     };
 
+    static constexpr int DataSize() { return N; }
+
     VecType getBoundSize()
     {
         return second_ - first_;
     };
 
-    BaseBoundingBox expand(const VecType &expand_size)
+    BoundingBox expand(const VecType &expand_size)
     {
         VecType new_first = first_ - expand_size;
         VecType new_second = second_ + expand_size;
-        return BaseBoundingBox(new_first, new_second);
+        return BoundingBox(new_first, new_second);
     };
 };
 /** Operator define. */
-template <class T>
-bool operator==(const BaseBoundingBox<T> &bb1, const BaseBoundingBox<T> &bb2)
+template <typename DataType, int N>
+bool operator==(const BoundingBox<DataType, N> &bb1, const BoundingBox<DataType, N> &bb2)
 {
     return bb1.first_ == bb2.first_ && bb1.second_ == bb2.second_ ? true : false;
 };
@@ -86,7 +89,7 @@ template <class BoundingBoxType>
 BoundingBoxType getIntersectionOfBoundingBoxes(const BoundingBoxType &bb1, const BoundingBoxType &bb2)
 {
     /** Check that the inputs are correct. */
-    int dimension = bb1.dimension_;
+    constexpr int dimension = BoundingBoxType::DataSize();
     /** Get the Bounding Box of the intersection of the two meshes. */
     BoundingBoxType bb(bb1);
     /** #1 check that there is overlap, if not, exception. */

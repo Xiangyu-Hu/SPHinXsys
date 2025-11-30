@@ -139,7 +139,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     Real BW = resolution_ref * 4.0;         /**< Boundary width, determined by specific layer of boundary particles. */
 
     /** Domain bounds of the system. */
-    BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -wall_thickness), Vec2d(DL + BW, DH + wall_thickness));
+    BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge - BW, -wall_thickness), Vec2d(DL + BW, DH + wall_thickness));
     //----------------------------------------------------------------------
     //	define geometry of SPH bodies
     //----------------------------------------------------------------------

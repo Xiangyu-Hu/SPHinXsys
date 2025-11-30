@@ -12,7 +12,7 @@ using namespace SPH;
 Real DL = 5.0;                           /**< Tube length. */
 Real particle_spacing_ref = 1.0 / 200.0; /**< Initial reference particle spacing. */
 Real DH = particle_spacing_ref * 4;      /**< Tube height. */
-BoundingBox system_domain_bounds(Vec2d(-2.0 / 5.0 * DL, 0.0), Vec2d(3.0 / 5.0 * DL, DH));
+BoundingBoxd system_domain_bounds(Vec2d(-2.0 / 5.0 * DL, 0.0), Vec2d(3.0 / 5.0 * DL, DH));
 Real rho0_l = 1.0;              /**< initial density of left state. */
 Real rho0_r = 0.125;            /**< initial density of right state. */
 Vecd velocity_l = Vecd::Zero(); /**< initial velocity of left state. */

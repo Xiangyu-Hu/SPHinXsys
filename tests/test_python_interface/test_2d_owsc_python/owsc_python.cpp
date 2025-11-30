@@ -15,7 +15,7 @@ namespace py = pybind11;
 class SphBasicSystemSetting : public SphBasicGeometrySetting
 {
   protected:
-    BoundingBox system_domain_bounds;
+    BoundingBoxd system_domain_bounds;
     SPHSystem sph_system;
 
   public:

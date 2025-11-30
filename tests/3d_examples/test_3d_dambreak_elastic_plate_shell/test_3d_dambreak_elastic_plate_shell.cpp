@@ -30,7 +30,7 @@ const Real marker_h = 0.0875; // height of marker
 const std::vector<Vec3d> observer_position_1 = {Vec3d(plate_x_pos, marker_h, (DW - plate_width) * 0.5)};
 const std::vector<Vec3d> observer_position_2 = {Vec3d(plate_x_pos, marker_h, 0.5 * DW)};
 
-const BoundingBox system_domain_bounds(Vec3d(-BW, -BW, -BW), Vec3d(DL + BW, DH + BW, DW + BW));
+const BoundingBoxd system_domain_bounds(Vec3d(-BW, -BW, -BW), Vec3d(DL + BW, DH + BW, DW + BW));
 
 // for material properties of the fluid
 const Real rho0_f = 997.0;

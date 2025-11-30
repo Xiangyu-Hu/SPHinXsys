@@ -3,7 +3,7 @@
 namespace SPH
 {
 //=================================================================================================//
-Ghost<PeriodicAlongAxis>::Ghost(BoundingBox bounding_bounds, int axis)
+Ghost<PeriodicAlongAxis>::Ghost(BoundingBoxd bounding_bounds, int axis)
     : Ghost<Base>(), PeriodicAlongAxis(bounding_bounds, axis) {}
 //=================================================================================================//
 void Ghost<PeriodicAlongAxis>::reserveGhostParticles(BaseParticles &base_particles, Real particle_spacing)

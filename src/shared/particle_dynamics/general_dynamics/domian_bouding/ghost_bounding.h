@@ -38,7 +38,7 @@ template <>
 class Ghost<PeriodicAlongAxis> : public Ghost<Base>, public PeriodicAlongAxis
 {
   public:
-    Ghost(BoundingBox bounding_bounds, int axis);
+    Ghost(BoundingBoxd bounding_bounds, int axis);
     virtual ~Ghost() {};
     void reserveGhostParticles(BaseParticles &base_particles, Real particle_spacing);
     ParticlesBound &LowerGhostBound() { return lower_ghost_bound_; };

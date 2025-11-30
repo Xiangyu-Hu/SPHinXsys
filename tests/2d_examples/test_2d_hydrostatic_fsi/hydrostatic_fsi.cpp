@@ -18,7 +18,7 @@ Real Dam_H = 2.0;                             /**< Water block height. */
 Real Gate_width = 0.05;                       /**< Width of the gate. */
 Real particle_spacing_ref = Gate_width / 4.0; /**< Initial reference particle spacing. 8, 10, 12 */
 Real BW = 4.0 * particle_spacing_ref;         /**< Extending width for BCs. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 //	Define the corner point of water block geometry.
 //----------------------------------------------------------------------

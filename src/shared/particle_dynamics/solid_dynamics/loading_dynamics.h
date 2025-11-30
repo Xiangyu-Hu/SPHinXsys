@@ -142,11 +142,11 @@ class ExternalForceInBoundingBox : public LoadingForce
   protected:
     Vecd *pos_;
     Real *mass_;
-    BoundingBox bounding_box_;
+    BoundingBoxd bounding_box_;
     Vecd acceleration_;
 
   public:
-    ExternalForceInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration);
+    ExternalForceInBoundingBox(SPHBody &sph_body, BoundingBoxd &bounding_box, Vecd acceleration);
     virtual ~ExternalForceInBoundingBox() {};
 
     void update(size_t index_i, Real dt = 0.0);

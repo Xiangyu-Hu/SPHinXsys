@@ -185,7 +185,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     }();
 
     // System bounding box
-    BoundingBox bb_system = mesh->getBounds();
+    BoundingBoxd bb_system = mesh->getBounds();
 
     // System
     SPHSystem system(bb_system, dp);

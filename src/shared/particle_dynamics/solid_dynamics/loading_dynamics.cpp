@@ -163,7 +163,7 @@ void SpringOnSurfaceParticles::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ExternalForceInBoundingBox::
-    ExternalForceInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration)
+    ExternalForceInBoundingBox(SPHBody &sph_body, BoundingBoxd &bounding_box, Vecd acceleration)
     : LoadingForce(sph_body, "ExternalForceInBoundingBox"),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),

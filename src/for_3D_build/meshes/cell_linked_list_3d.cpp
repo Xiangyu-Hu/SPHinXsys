@@ -11,7 +11,7 @@ namespace SPH
 {
 //=================================================================================================//
 void BaseCellLinkedList::tagBoundingCellsByMesh(Mesh &mesh, StdVec<CellLists> &cell_data_lists,
-                                                const BoundingBox &bounding_bounds, int axis)
+                                                const BoundingBoxd &bounding_bounds, int axis)
 {
     int second_axis = NextAxis(axis);
     int third_axis = NextNextAxis(axis);

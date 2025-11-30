@@ -17,7 +17,7 @@ Real slop_h = 11.55;
 Real resolution_ref = L / 10.0; /**< reference particle spacing. */
 Real BW = resolution_ref * 4;   /**< wall width for BCs. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(25, 15));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(25, 15));
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(7.2, 9.8)};
 //----------------------------------------------------------------------

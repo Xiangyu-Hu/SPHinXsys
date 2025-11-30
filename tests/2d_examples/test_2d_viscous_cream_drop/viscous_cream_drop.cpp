@@ -15,7 +15,7 @@ Real DH = 2.0;                  /* height. */
 Real BW = resolution_ref * 5.0; /* width for boundary. */
 Real cream_radius = resolution_ref * 20.0;
 Vec2d cream_center(0.0, -cream_radius);
-BoundingBox system_domain_bounds(Vec2d(-DL, -DH), Vec2d(DL, BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL, -DH), Vec2d(DL, BW));
 Real sqrt_3 = sqrt(3);
 // observer location
 StdVec<Vecd> observation_location = {cream_center};

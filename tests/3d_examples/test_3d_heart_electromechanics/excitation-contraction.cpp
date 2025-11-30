@@ -23,7 +23,7 @@ Vec3d domain_lower_bound(-55.0 * length_scale, -75.0 * length_scale, -35.0 * len
 Vec3d domain_upper_bound(35.0 * length_scale, 5.0 * length_scale, 35.0 * length_scale);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 45.0; /**< Initial particle spacing. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
 /** Material properties. */
 Real rho0_s = 1.06e-3;

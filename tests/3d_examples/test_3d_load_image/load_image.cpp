@@ -22,7 +22,7 @@ Vec3d domain_lower_bound(-25.0, -25.0, -25.0);
 Vec3d domain_upper_bound(25.0, 25.0, 25.0);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 50.0;
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
 class SolidBodyFromMesh : public ComplexShape
 {

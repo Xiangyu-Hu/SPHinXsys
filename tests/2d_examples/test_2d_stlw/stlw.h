@@ -15,7 +15,7 @@ Real DH = 4.0;                   /**< Tank height. */
 Real WH = 2.0;                   /**< Water block height. */
 Real particle_spacing_ref = 0.05;
 Real BW = particle_spacing_ref * 4.0; /**< Extending width for BCs. */
-BoundingBox system_domain_bounds(Vec2d(-DL - BW, -DH - BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL - BW, -DH - BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------

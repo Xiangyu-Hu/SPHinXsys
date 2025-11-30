@@ -19,7 +19,7 @@ using namespace std;
 Real DL = 120.0;                 /**< Channel length. */
 Real DH = 2.0;                   /**< Channel height. */
 Real resolution_ref = 1.0 / 5.0; /**< Initial reference particle spacing. */
-BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
+BoundingBoxd system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------

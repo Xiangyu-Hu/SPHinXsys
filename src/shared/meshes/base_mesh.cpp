@@ -3,7 +3,7 @@
 namespace SPH
 {
 //=================================================================================================//
-Mesh::Mesh(BoundingBox tentative_bounds, Real grid_spacing,
+Mesh::Mesh(BoundingBoxd tentative_bounds, Real grid_spacing,
            UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset)
     : grid_spacing_(grid_spacing), buffer_width_(buffer_width),
       linear_cell_index_offset_(linear_cell_index_offset)
@@ -34,7 +34,7 @@ Vecd Mesh::GridPositionFromIndex(const Arrayi &grid_index) const
 }
 //=================================================================================================//
 MultiLevelMeshField::MultiLevelMeshField(
-    const std::string &name, BoundingBox tentative_bounds,
+    const std::string &name, BoundingBoxd tentative_bounds,
     Real Reference_grid_spacing, UnsignedInt buffer_width, size_t total_levels)
     : BaseMeshField(name), total_levels_(total_levels), total_number_of_cells_(0)
 {

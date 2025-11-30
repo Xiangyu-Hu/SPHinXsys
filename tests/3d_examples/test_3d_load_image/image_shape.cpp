@@ -29,7 +29,7 @@ Vecd ImageShape::findClosestPoint(const Vecd &probe_point)
     return image_->findClosestPoint(probe_point);
 }
 //=================================================================================================//
-BoundingBox ImageShape::findBounds()
+BoundingBoxd ImageShape::findBounds()
 {
     return image_->findBounds();
 }

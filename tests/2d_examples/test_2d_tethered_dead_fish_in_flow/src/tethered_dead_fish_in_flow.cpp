@@ -21,7 +21,7 @@ Real resolution_ref = 0.1;              /** Initial particle spacing. */
 Real DL_sponge = resolution_ref * 20.0; /**< Sponge region to impose inflow condition. */
 Real BW = resolution_ref * 4.0;         /**< Extending width for BCs. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
 Real cx = 2.0;            /**< Center of fish in x direction. */
 Real cy = 4.0;            /**< Center of fish in y direction. */
 Real fish_length = 3.738; /**< Length of fish. */

@@ -54,7 +54,7 @@ Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_s
     return shape_constant / 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
 }
 
-Vec3d get_central_position(const BoundingBox &bbox) { return 0.5 * (bbox.first_ + bbox.second_); };
+Vec3d get_central_position(const BoundingBoxd &bbox) { return 0.5 * (bbox.first_ + bbox.second_); };
 
 struct solid_algs
 {

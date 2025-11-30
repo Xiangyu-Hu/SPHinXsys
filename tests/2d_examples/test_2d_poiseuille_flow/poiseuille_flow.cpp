@@ -13,7 +13,7 @@ Real DL = 6.0;                   /**< Tank length. */
 Real DH = 1.0;                   /**< Tank height. */
 Real resolution_ref = DH / 20.0; /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;    /**< Extending width for BCs. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
