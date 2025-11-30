@@ -56,12 +56,12 @@ Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_s
 BoundingBoxd union_bounding_box(const BoundingBoxd &a, const BoundingBoxd &b)
 {
     BoundingBoxd out = a;
-    out.first_[0] = std::min(a.first_[0], b.first_[0]);
-    out.first_[1] = std::min(a.first_[1], b.first_[1]);
-    out.first_[2] = std::min(a.first_[2], b.first_[2]);
-    out.second_[0] = std::max(a.second_[0], b.second_[0]);
-    out.second_[1] = std::max(a.second_[1], b.second_[1]);
-    out.second_[2] = std::max(a.second_[2], b.second_[2]);
+    out.lower_[0] = std::min(a.lower_[0], b.lower_[0]);
+    out.lower_[1] = std::min(a.lower_[1], b.lower_[1]);
+    out.lower_[2] = std::min(a.lower_[2], b.lower_[2]);
+    out.upper_[0] = std::max(a.upper_[0], b.upper_[0]);
+    out.upper_[1] = std::max(a.upper_[1], b.upper_[1]);
+    out.upper_[2] = std::max(a.upper_[2], b.upper_[2]);
     return out;
 }
 

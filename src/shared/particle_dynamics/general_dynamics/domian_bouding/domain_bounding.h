@@ -46,7 +46,7 @@ struct PeriodicAlongAxis
           periodic_translation_(Vecd::Zero())
     {
         periodic_translation_[axis] =
-            bounding_bounds.second_[axis] - bounding_bounds.first_[axis];
+            bounding_bounds.upper_[axis] - bounding_bounds.lower_[axis];
     };
     virtual ~PeriodicAlongAxis() {};
     BoundingBoxd getBoundingBox() { return bounding_bounds_; };
@@ -95,13 +95,13 @@ class BasePeriodicCondition
 
         virtual void checkLowerBound(size_t index_i, Real dt = 0.0)
         {
-            if (pos_[index_i][axis_] < bounding_bounds_.first_[axis_])
+            if (pos_[index_i][axis_] < bounding_bounds_.lower_[axis_])
                 pos_[index_i][axis_] += periodic_translation_[axis_];
         };
 
         virtual void checkUpperBound(size_t index_i, Real dt = 0.0)
         {
-            if (pos_[index_i][axis_] > bounding_bounds_.second_[axis_])
+            if (pos_[index_i][axis_] > bounding_bounds_.upper_[axis_])
                 pos_[index_i][axis_] -= periodic_translation_[axis_];
         };
 

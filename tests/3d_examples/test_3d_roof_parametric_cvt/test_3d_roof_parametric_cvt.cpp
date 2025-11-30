@@ -353,8 +353,8 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
     bb_system = get_particles_bounding_box(shell_particles->ParticlePositions(), shell_particles->TotalRealParticles());
     system.setSystemDomainBounds(bb_system);
-    std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
-    std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
+    std::cout << "bb_system.lower_: " << bb_system.lower_ << std::endl;
+    std::cout << "bb_system.upper_: " << bb_system.upper_ << std::endl;
     { // recalculate the volume/area after knowing the particle positions
       // for (auto& vol: shell_particles->Vol_) vol = total_area / shell_particles->TotalRealParticles();
       // for (auto& mass: shell_particles->mass_) mass = total_area*rho / shell_particles->TotalRealParticles();
@@ -376,8 +376,8 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     auto constrained_edge_ids = [&]() { // brute force finding the edges
         IndexVector ids;
         for (size_t i = 0; i < base_particles.TotalRealParticles(); ++i)
-            if (base_particles.ParticlePositions()[i][length_axis] < bb_system.first_[length_axis] + dp / 2 ||
-                base_particles.ParticlePositions()[i][length_axis] > bb_system.second_[length_axis] - dp / 2)
+            if (base_particles.ParticlePositions()[i][length_axis] < bb_system.lower_[length_axis] + dp / 2 ||
+                base_particles.ParticlePositions()[i][length_axis] > bb_system.upper_[length_axis] - dp / 2)
                 ids.push_back(i);
         return ids;
     }();

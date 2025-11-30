@@ -133,8 +133,8 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     Real particle_area = total_area / obj_vertices.size();
     // find out BoundingBoxd
     bb_system = get_particles_bounding_box(obj_vertices);
-    std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
-    std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
+    std::cout << "bb_system.lower_: " << bb_system.lower_ << std::endl;
+    std::cout << "bb_system.upper_: " << bb_system.upper_ << std::endl;
 
     // shell
     auto shell_shape = makeShared<ComplexShape>("shell_shape" + std::to_string(dp_ratio)); // keep all data for parameter study

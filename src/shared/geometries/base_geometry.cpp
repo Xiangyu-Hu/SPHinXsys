@@ -15,7 +15,7 @@ BoundingBoxd Shape::getBounds()
         is_bounds_found_ = true;
     }
 
-    if (bounding_box_.getBoundSize().norm() < SqrtEps)
+    if (bounding_box_.BoundSize().norm() < SqrtEps)
     {
         std::cout << "\n Error: the Bounding box is unreasonably small! " << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -74,8 +74,8 @@ BoundingBoxd BinaryShapes::findBounds()
         BoundingBoxd shape_bounds = sub_shape_and_op.first->getBounds();
         for (int j = 0; j != Dimensions; ++j)
         {
-            lower_bound[j] = SMIN(lower_bound[j], shape_bounds.first_[j]);
-            upper_bound[j] = SMAX(upper_bound[j], shape_bounds.second_[j]);
+            lower_bound[j] = SMIN(lower_bound[j], shape_bounds.lower_[j]);
+            upper_bound[j] = SMAX(upper_bound[j], shape_bounds.upper_[j]);
         }
     }
     return BoundingBoxd(lower_bound, upper_bound);

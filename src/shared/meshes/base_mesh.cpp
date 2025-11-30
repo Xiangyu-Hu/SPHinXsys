@@ -9,8 +9,8 @@ Mesh::Mesh(BoundingBoxd tentative_bounds, Real grid_spacing,
       linear_cell_index_offset_(linear_cell_index_offset)
 {
     Vecd mesh_buffer = Real(buffer_width) * grid_spacing * Vecd::Ones();
-    mesh_lower_bound_ = tentative_bounds.first_ - mesh_buffer;
-    Vecd tentative_dimension = tentative_bounds.second_ + mesh_buffer - mesh_lower_bound_;
+    mesh_lower_bound_ = tentative_bounds.lower_ - mesh_buffer;
+    Vecd tentative_dimension = tentative_bounds.upper_ + mesh_buffer - mesh_lower_bound_;
     all_grid_points_ = ceil(tentative_dimension.array() / grid_spacing).cast<int>() + Arrayi::Ones();
     all_cells_ = all_grid_points_ - Arrayi::Ones();
 }

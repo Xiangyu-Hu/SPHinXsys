@@ -10,8 +10,8 @@ GeometricShapeBox::GeometricShapeBox(
 GeometricShapeBox::GeometricShapeBox(const BoundingBoxd &bounding_box, const std::string &name)
     : TransformShape<GeometricBox>(
           name,
-          Transform(0.5 * (bounding_box.first_ + bounding_box.second_)),
-          0.5 * (bounding_box.second_ - bounding_box.first_)) {}
+          Transform(0.5 * (bounding_box.lower_ + bounding_box.upper_)),
+          0.5 * (bounding_box.upper_ - bounding_box.lower_)) {}
 //=================================================================================================//
 GeometricShapeBox::GeometricShapeBox(
     const Vecd &lower_bound, const Vecd &upper_bound, const std::string &name)

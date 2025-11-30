@@ -220,8 +220,8 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
     // water_block_shape->subtract<TriangleMeshShapeSTL>(params.wall_file_path.c_str(), Vec3d::Zero(), scale);
     auto wall_boundary_shape = makeShared<TriangleMeshShapeSTL>(params.wall_file_path.c_str(), Vec3d::Zero(), scale, "WallBoundary");
     auto system_bounds = wall_boundary_shape->getBounds();
-    std::cout << "Domain lower bounds: " << system_bounds.first_.transpose() << std::endl;
-    std::cout << "Domain upper bounds: " << system_bounds.second_.transpose() << std::endl;
+    std::cout << "Domain lower bounds: " << system_bounds.lower_.transpose() << std::endl;
+    std::cout << "Domain upper bounds: " << system_bounds.upper_.transpose() << std::endl;
 
     SPHSystem sph_system(system_bounds, resolution_ref);
     sph_system.setRunParticleRelaxation(run_relaxation); // Tag for run particle relaxation for body-fitted distribution

@@ -15,8 +15,8 @@ void BaseCellLinkedList::tagBoundingCellsByMesh(Mesh &mesh, StdVec<CellLists> &c
 {
     int second_axis = NextAxis(axis);
     int third_axis = NextNextAxis(axis);
-    Array3i body_lower_bound_cell_ = mesh.CellIndexFromPosition(bounding_bounds.first_);
-    Array3i body_upper_bound_cell_ = mesh.CellIndexFromPosition(bounding_bounds.second_);
+    Array3i body_lower_bound_cell_ = mesh.CellIndexFromPosition(bounding_bounds.lower_);
+    Array3i body_upper_bound_cell_ = mesh.CellIndexFromPosition(bounding_bounds.upper_);
     Array3i all_cells = mesh.AllCells();
 
     // lower bound cells

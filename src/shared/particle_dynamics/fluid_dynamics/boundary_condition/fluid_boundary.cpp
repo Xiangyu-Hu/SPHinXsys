@@ -26,8 +26,8 @@ DampingBoundaryCondition::DampingBoundaryCondition(BodyRegionByCell &body_part)
 //=================================================================================================//
 void DampingBoundaryCondition::update(size_t index_i, Real dt)
 {
-    Real damping_factor = (pos_[index_i][0] - damping_zone_bounds_.first_[0]) /
-                          (damping_zone_bounds_.second_[0] - damping_zone_bounds_.first_[0]);
+    Real damping_factor = (pos_[index_i][0] - damping_zone_bounds_.lower_[0]) /
+                          (damping_zone_bounds_.upper_[0] - damping_zone_bounds_.lower_[0]);
     vel_[index_i] *= (1.0 - dt * strength_ * damping_factor * damping_factor);
 }
 //=================================================================================================//
