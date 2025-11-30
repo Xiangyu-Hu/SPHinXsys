@@ -90,7 +90,7 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
     DiscreteVariableArray<Real> dv_diffusion_species_array_;
     DiscreteVariableArray<Real> dv_gradient_species_array_;
     DiscreteVariableArray<Real> dv_diffusion_dt_array_;
-    ConstantArray<DiffusionType, InverseVolumetricCapacity> ca_inverse_volume_capacity_;
+    ConstantArray<InverseVolumetricCapacity> ca_inverse_volume_capacity_;
 };
 
 template <class DiffusionType, class KernelCorrectionType, class... Parameters>
@@ -122,7 +122,7 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrecti
 
   protected:
     KernelCorrectionType kernel_correction_method_;
-    ConstantArray<DiffusionType, InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
+    ConstantArray<InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
     Real smoothing_length_sq_;
 };
 
@@ -278,7 +278,7 @@ class Dirichlet<DiffusionType>
     Real smoothing_length_sq_;
     DiscreteVariableArray<Real> &dv_gradient_species_array_;
     DiscreteVariableArray<Real> contact_dv_gradient_species_array_;
-    ConstantArray<DiffusionType, InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
+    ConstantArray<InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
 };
 
 template <class DiffusionType>

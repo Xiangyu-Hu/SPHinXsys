@@ -135,10 +135,9 @@ class DiscreteVariable : public Entity
     template <class InitializationFunction>
     DiscreteVariable(const std::string &name, size_t data_size,
                      const InitializationFunction &initialization)
-        : Entity(name), data_size_(data_size), data_field_(nullptr),
+        : Entity(name), data_size_(data_size), data_field_(new DataType[data_size]),
           device_only_variable_(nullptr), device_data_field_(nullptr)
     {
-        data_field_ = new DataType[data_size];
         for (size_t i = 0; i < data_size; ++i)
         {
             data_field_[i] = initialization(i);
