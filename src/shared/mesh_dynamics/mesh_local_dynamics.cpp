@@ -149,7 +149,7 @@ UpdateLevelSetGradient::UpdateLevelSetGradient(MeshWithGridDataPackagesType &dat
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
 UpdateKernelIntegrals::UpdateKernelIntegrals(
-    MeshWithGridDataPackagesType &data_mesh, NeighborMethod<SingleValued> &neighbor_method)
+    MeshWithGridDataPackagesType &data_mesh, NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method)
     : BaseMeshLocalDynamics(data_mesh), neighbor_method_(neighbor_method),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.getMeshVariable<Vecd>("LevelSetGradient")),

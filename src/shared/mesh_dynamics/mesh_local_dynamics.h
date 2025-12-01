@@ -430,11 +430,11 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 
 class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 {
-    using SmoothingKernel = typename NeighborMethod<SingleValued>::SmoothingKernel;
+    using SmoothingKernel = typename NeighborMethod<SPHAdaptation, SPHAdaptation>::SmoothingKernel;
 
   public:
     explicit UpdateKernelIntegrals(
-        MeshWithGridDataPackagesType &data_mesh, NeighborMethod<SingleValued> &neighbor_method);
+        MeshWithGridDataPackagesType &data_mesh, NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method);
     virtual ~UpdateKernelIntegrals() {};
 
     class UpdateKernel
@@ -512,7 +512,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
     };
 
   private:
-    NeighborMethod<SingleValued> &neighbor_method_;
+    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method_;
     Real global_h_ratio_;
     MeshVariable<Real> &mv_phi_;
     MeshVariable<Vecd> &mv_phi_gradient_;

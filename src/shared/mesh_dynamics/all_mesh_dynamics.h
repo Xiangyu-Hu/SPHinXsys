@@ -84,7 +84,7 @@ class CleanInterface : public RepeatTimes, public BaseMeshDynamics, public BaseD
 {
   public:
     explicit CleanInterface(MeshWithGridDataPackagesType &mesh_data,
-                            NeighborMethod<SingleValued> &neighbor_method,
+                            NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method,
                             Real refinement_ratio)
         : RepeatTimes(), BaseMeshDynamics(mesh_data), BaseDynamics<void>(),
           neighbor_method_(neighbor_method), refinement_ratio_(refinement_ratio) {};
@@ -110,7 +110,7 @@ class CleanInterface : public RepeatTimes, public BaseMeshDynamics, public BaseD
     }
 
   private:
-    NeighborMethod<SingleValued> &neighbor_method_;
+    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method_;
     Real refinement_ratio_;
     MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, neighbor_method_};
@@ -123,7 +123,7 @@ template <class ExecutionPolicy>
 class CorrectTopology : public BaseMeshDynamics, public BaseDynamics<void>
 {
   public:
-    explicit CorrectTopology(MeshWithGridDataPackagesType &mesh_data, NeighborMethod<SingleValued> &neighbor_method)
+    explicit CorrectTopology(MeshWithGridDataPackagesType &mesh_data, NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method)
         : BaseMeshDynamics(mesh_data),
           BaseDynamics<void>(),
           neighbor_method_(neighbor_method) {};
@@ -142,7 +142,7 @@ class CorrectTopology : public BaseMeshDynamics, public BaseDynamics<void>
     }
 
   private:
-    NeighborMethod<SingleValued> &neighbor_method_;
+    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method_;
     SingularVariable<UnsignedInt> sv_count_modified_{"CountModifiedData", 1};
     MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient{mesh_data_};
     MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals{mesh_data_, neighbor_method_};
