@@ -240,30 +240,6 @@ void elbow_dynamic_test(int res_factor)
             bar_params.geometry_params.thickness_.emplace_back(radius);
             y += dp;
         }
-
-        // Real x = -dp;
-        // while (x > -length)
-        // {
-        //     Vec3d position = x * Vec3d::UnitX();
-        //     bar_params.geometry_params.pos_.emplace_back(position);
-        //     bar_params.geometry_params.n0_.emplace_back(g3);
-        //     bar_params.geometry_params.b_n0_.emplace_back(g2_1);
-        //     bar_params.geometry_params.width_.emplace_back(radius);
-        //     bar_params.geometry_params.thickness_.emplace_back(radius);
-        //     x -= dp;
-        // }
-
-        // x = 0;
-        // while (x < length)
-        // {
-        //     Vec3d position = x * Vec3d::UnitX();
-        //     bar_params.geometry_params.pos_.emplace_back(position);
-        //     bar_params.geometry_params.n0_.emplace_back(g3);
-        //     bar_params.geometry_params.b_n0_.emplace_back(g2_1);
-        //     bar_params.geometry_params.width_.emplace_back(radius);
-        //     bar_params.geometry_params.thickness_.emplace_back(radius);
-        //     x += dp;
-        // }
     }
 
     // material
@@ -273,7 +249,6 @@ void elbow_dynamic_test(int res_factor)
 
     // Material models
     bar_params.material = std::make_shared<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    Real c_s = bar_params.material->ReferenceSoundSpeed();
 
     // Material properties
     size_t particle_number = bar_params.geometry_params.pos_.size();
@@ -287,7 +262,6 @@ void elbow_dynamic_test(int res_factor)
     bar_params.physical_viscosity = get_physical_viscosity_general(rho0_s, Youngs_modulus, radius);
 
     // load
-    const Real t_ref = length / (c_s / 20.0);
     const Vec3d force_direction = Vec3d::UnitZ();
     auto force = [F_max = 50.0, t_ref = 1.0](Real time)
     {
@@ -314,28 +288,6 @@ void elbow_dynamic_test(int res_factor)
             mass[i] = rho_A * dp;
         }
     }
-
-    // reset normal direction
-    // {
-    //     // smooth the initial normal direction
-    //     bar_object.bar_body->updateCellLinkedList();
-    //     bar_object.inner_relation->updateConfiguration();
-    //     InteractionWithUpdate<ParticleSmoothing<Vec3d>> update_g2(*bar_object.inner_relation, "PseudoBinormal");
-    //     update_g2.exec();
-    //     // normalize and reset b0, b, Q0
-    //     auto *b_n0 = bar_particles.getVariableDataByName<Vec3d>("InitialBinormalDirection");
-    //     auto *b_n = bar_particles.getVariableDataByName<Vec3d>("BinormalDirection");
-    //     auto *pseudo_b_n = bar_particles.getVariableDataByName<Vec3d>("PseudoBinormal");
-    //     const auto *n = bar_particles.getVariableDataByName<Vec3d>("NormalDirection");
-    //     auto *Q0 = bar_particles.getVariableDataByName<Mat3d>("TransformationMatrix");
-    //     for (size_t i = 0; i < bar_particles.TotalRealParticles(); ++i)
-    //     {
-    //         pseudo_b_n[i] = pseudo_b_n[i].normalized();
-    //         b_n[i] = pseudo_b_n[i];
-    //         b_n0[i] = b_n[i];
-    //         Q0[i] = getTransformationMatrix(n[i], b_n[i]);
-    //     }
-    // }
 
     // System initialization
     simulation.initialize_system();
@@ -379,10 +331,11 @@ void elbow_dynamic_test(int res_factor)
     bar_particles.addVariableToWrite<Vec3d>("AngularVelocity");
     bar_particles.addVariableToWrite<Vec3d>("PseudoNormal");
     bar_particles.addVariableToWrite<Vec3d>("PseudoBinormal");
-    bar_particles.addVariableToWrite<Mat3d>("NablaR");
+    bar_particles.addVariableToWrite<Mat3d>("NablaDisplacement");
     bar_particles.addVariableToWrite<Vec3d>("DrDs");
     bar_particles.addVariableToWrite<Vec3d>("PositionHourglassForce");
     BodyStatesRecordingToVtp vtp_output(simulation.system);
+    vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(*bar_object.bar_body);
     vtp_output.writeToFile(0);
     simulation.output_function = [&](size_t ite)
     {

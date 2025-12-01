@@ -210,6 +210,7 @@ struct bar_simulation
                 if (dt < dt_ref / 1.1)
                 {
                     output_function(output_ite++);
+                    std::cout << "Time step size too small: " << dt << std::endl;
                     throw std::runtime_error("Time step size too small, simulation stopped.");
                 }
 
