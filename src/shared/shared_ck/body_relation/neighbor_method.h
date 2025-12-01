@@ -54,14 +54,12 @@ template <>
 class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
 {
   public:
-    typedef SPHAdaptation SourceAdaptation;
-    typedef SPHAdaptation TargetAdaptation;
-
-    NeighborMethod(SPHAdaptation &source_adaptation, SPHAdaptation &target_adaptation)
-        : NeighborMethod<Base>(*source_adaptation.getKernel())
+    template <typename SourceIdentifier, typename TargetIdentifier>
+    NeighborMethod(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier)
+        : NeighborMethod<Base>(*source_identifier.getSPHAdaptation().getKernel())
     {
-        Real source_h = source_adaptation.ReferenceSmoothingLength();
-        Real target_h = target_adaptation.ReferenceSmoothingLength();
+        Real source_h = source_identifier.getSPHAdaptation().ReferenceSmoothingLength();
+        Real target_h = target_identifier.getSPHAdaptation().ReferenceSmoothingLength();
         inv_h_ = 1.0 / SMAX(source_h, target_h);
         search_depth_ = static_cast<int>(std::ceil((source_h - Eps) / target_h));
     }

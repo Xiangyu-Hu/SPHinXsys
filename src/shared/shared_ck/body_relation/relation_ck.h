@@ -52,10 +52,10 @@ class RelationBase
     virtual ~RelationBase() {};
 };
 
-template <typename SourceAdaptation, typename TargetAdaptation>
-class Relation<NeighborMethod<SourceAdaptation, TargetAdaptation>> : public RelationBase
+template <typename... AdaptationParameters>
+class Relation<NeighborMethod<AdaptationParameters...>> : public RelationBase
 {
-    using NeighborMethodType = NeighborMethod<SourceAdaptation, TargetAdaptation>;
+    using NeighborMethodType = NeighborMethod<AdaptationParameters...>;
     SharedPtrsKeeper<Entity> relation_variable_ptrs_;
     SharedPtrsKeeper<Neighbor<NeighborMethodType>> neighborhood_ptrs_;
     DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
@@ -104,9 +104,9 @@ class Relation<NeighborMethod<SourceAdaptation, TargetAdaptation>> : public Rela
     StdVec<StdVec<execution::Implementation<Base> *>> registered_computing_kernels_;
 };
 
-template <typename DynamicsIdentifier, typename AdaptationType>
-class Inner<DynamicsIdentifier, NeighborMethod<AdaptationType, AdaptationType>>
-    : public Relation<NeighborMethod<AdaptationType, AdaptationType>>
+template <typename DynamicsIdentifier, typename... AdaptationParameters>
+class Inner<DynamicsIdentifier, NeighborMethod<AdaptationParameters...>>
+    : public Relation<NeighborMethod<AdaptationParameters...>>
 {
   public:
     typedef DynamicsIdentifier SourceType;
@@ -129,11 +129,11 @@ class Inner<> : public Inner<RealBody, NeighborMethod<SPHAdaptation, SPHAdaptati
     virtual ~Inner() {};
 };
 
-template <typename SourceIdentifier, class TargetIdentifier, typename SourceAdaptation, typename TargetAdaptation>
-class Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<SourceAdaptation, TargetAdaptation>>
-    : public Relation<NeighborMethod<SourceAdaptation, TargetAdaptation>>
+template <typename SourceIdentifier, class TargetIdentifier, typename... AdaptationParameters>
+class Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<AdaptationParameters...>>
+    : public Relation<NeighborMethod<AdaptationParameters...>>
 {
-    using NeighborMethodType = NeighborMethod<SourceAdaptation, TargetAdaptation>;
+    using NeighborMethodType = NeighborMethod<AdaptationParameters...>;
     using ContactRelationType = Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType>;
 
   public:

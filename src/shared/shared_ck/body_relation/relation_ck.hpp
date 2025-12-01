@@ -6,9 +6,9 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename SourceAdaptation, typename TargetAdaptation>
+template <typename... AdaptationParameters>
 template <class SourceIdentifier, class TargetIdentifier>
-Relation<NeighborMethod<SourceAdaptation, TargetAdaptation>>::Relation(
+Relation<NeighborMethod<AdaptationParameters...>>::Relation(
     SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, ConfigType config_type)
     : sph_body_(&source_identifier.getSPHBody()),
       particles_(&sph_body_->getBaseParticles()),
@@ -29,17 +29,15 @@ Relation<NeighborMethod<SourceAdaptation, TargetAdaptation>>::Relation(
             name + "NeighborIndex", offset_list_size_));
         dv_target_particle_offset_.push_back(addRelationVariable<UnsignedInt>(
             name + "ParticleOffset", offset_list_size_));
-        SourceAdaptation &source_adaptation = DynamicCast<SourceAdaptation>(this, source_identifier.getSPHAdaptation());
-        TargetAdaptation &target_adaptation = DynamicCast<TargetAdaptation>(this, contact_identifiers[k]->getSPHAdaptation());
         neighborhoods_.push_back(
             neighborhood_ptrs_.template createPtr<Neighbor<NeighborMethodType>>(
-                source_adaptation, target_adaptation, dv_source_pos_, dv_target_pos_.back()));
+                source_identifier, *contact_identifiers[k], dv_source_pos_, dv_target_pos_.back()));
     }
     registered_computing_kernels_.resize(contact_identifiers.size());
 }
 //=================================================================================================//
-template <typename SourceAdaptation, typename TargetAdaptation>
-DiscreteVariable<Vecd> *Relation<NeighborMethod<SourceAdaptation, TargetAdaptation>>::
+template <typename... AdaptationParameters>
+DiscreteVariable<Vecd> *Relation<NeighborMethod<AdaptationParameters...>>::
     assignConfigPosition(BaseParticles &particles, ConfigType config_type)
 {
     if (config_type == ConfigType::Eulerian)
@@ -53,23 +51,23 @@ DiscreteVariable<Vecd> *Relation<NeighborMethod<SourceAdaptation, TargetAdaptati
     }
 }
 //=================================================================================================//
-template <typename SourceAdaptation, typename TargetAdaptation>
+template <typename... AdaptationParameters>
 template <class DataType>
-DiscreteVariable<DataType> *Relation<NeighborMethod<SourceAdaptation, TargetAdaptation>>::
+DiscreteVariable<DataType> *Relation<NeighborMethod<AdaptationParameters...>>::
     addRelationVariable(const std::string &name, size_t data_size)
 {
     return relation_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(name, data_size);
 }
 //=================================================================================================//
-template <typename SourceAdaptation, typename TargetAdaptation>
-void Relation<NeighborMethod<SourceAdaptation, TargetAdaptation>>::registerComputingKernel(
+template <typename... AdaptationParameters>
+void Relation<NeighborMethod<AdaptationParameters...>>::registerComputingKernel(
     execution::Implementation<Base> *implementation, UnsignedInt target_index)
 {
     registered_computing_kernels_[target_index].push_back(implementation);
 }
 //=================================================================================================//
-template <typename SourceAdaptation, typename TargetAdaptation>
-void Relation<NeighborMethod<SourceAdaptation, TargetAdaptation>>::
+template <typename... AdaptationParameters>
+void Relation<NeighborMethod<AdaptationParameters...>>::
     resetComputingKernelUpdated(UnsignedInt target_index)
 {
     auto &computing_kernels = registered_computing_kernels_[target_index];
@@ -79,25 +77,25 @@ void Relation<NeighborMethod<SourceAdaptation, TargetAdaptation>>::
     }
 }
 //=================================================================================================//
-template <typename SourceAdaptation, typename TargetAdaptation>
+template <typename... AdaptationParameters>
 template <class ExecutionPolicy, class EncloserType>
-Relation<NeighborMethod<SourceAdaptation, TargetAdaptation>>::NeighborList::NeighborList(
+Relation<NeighborMethod<AdaptationParameters...>>::NeighborList::NeighborList(
     const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt target_index)
     : neighbor_index_(encloser.dv_target_neighbor_index_[target_index]->DelegatedData(ex_policy)),
       particle_offset_(encloser.dv_target_particle_offset_[target_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <typename DynamicsIdentifier, typename AdaptationType>
+template <typename DynamicsIdentifier, typename... AdaptationParameters>
 template <typename... Args>
-Inner<DynamicsIdentifier, NeighborMethod<AdaptationType, AdaptationType>>::
+Inner<DynamicsIdentifier, NeighborMethod<AdaptationParameters...>>::
     Inner(DynamicsIdentifier &identifier, Args &&...args)
-    : Relation<NeighborMethod<AdaptationType, AdaptationType>>(
+    : Relation<NeighborMethod<AdaptationParameters...>>(
           identifier, StdVec<DynamicsIdentifier *>{&identifier}, std::forward<Args>(args)...),
       identifier_(&identifier) {}
 //=================================================================================================//
-template <typename SourceIdentifier, class TargetIdentifier, typename SourceAdaptation, typename TargetAdaptation>
-Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<SourceAdaptation, TargetAdaptation>>::Contact(
+template <typename SourceIdentifier, class TargetIdentifier, typename... AdaptationParameters>
+Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<AdaptationParameters...>>::Contact(
     SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, ConfigType config_type)
-    : Relation<NeighborMethod<SourceAdaptation, TargetAdaptation>>(source_identifier, contact_identifiers, config_type),
+    : Relation<NeighborMethod<AdaptationParameters...>>(source_identifier, contact_identifiers, config_type),
       source_identifier_(&source_identifier), contact_identifiers_(contact_identifiers)
 {
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
