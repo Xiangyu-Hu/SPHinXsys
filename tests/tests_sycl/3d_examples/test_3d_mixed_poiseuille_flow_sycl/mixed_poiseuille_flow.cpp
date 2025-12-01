@@ -18,7 +18,7 @@ Real error_tolerance = 5 * 0.01; // Less than 3 percent when resolution is DH/20
 
 Real BW = resolution_ref * 4; /**< Extending width for BCs. */
 StdVec<Vec3d> observer_location;
-BoundingBox system_domain_bounds(
+BoundingBoxd system_domain_bounds(
     Vec3d(-2.0 * BW, -2.0 * BW, -2.0 * BW),
     Vec3d(DL + 2.0 * BW, DH + 2.0 * BW, DH + 2.0 * BW));
 //----------------------------------------------------------------------

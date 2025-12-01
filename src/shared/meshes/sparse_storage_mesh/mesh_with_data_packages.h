@@ -69,7 +69,7 @@ class MeshWithGridDataPackages
         Real data_spacing_;
 
       public:
-        IndexHandler(BoundingBox tentative_bounds, Real grid_spacing,
+        IndexHandler(BoundingBoxd tentative_bounds, Real grid_spacing,
                      UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset,
                      Real data_spacing);
         Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
@@ -101,7 +101,7 @@ class MeshWithGridDataPackages
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
 
   public:
-    MeshWithGridDataPackages(BoundingBox tentative_bounds, Real data_spacing,
+    MeshWithGridDataPackages(BoundingBoxd tentative_bounds, Real data_spacing,
                              UnsignedInt buffer_size, UnsignedInt num_singular_pkgs = 2);
     virtual ~MeshWithGridDataPackages() {};
 

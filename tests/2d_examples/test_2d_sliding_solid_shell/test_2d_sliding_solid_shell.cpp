@@ -21,7 +21,7 @@ const Real resolution_shell = resolution_ref;
 const Real thickness_shell = resolution_ref;
 const Real BW = resolution_ref * 4; /**< wall width for BCs. */
 /** Domain bounds of the system. */
-const BoundingBox system_domain_bounds(Vec2d(-BW *cos(angle), -Ly - BW * sin(angle)), Vec2d(Lx + BW * cos(angle), L));
+const BoundingBoxd system_domain_bounds(Vec2d(-BW *cos(angle), -Ly - BW * sin(angle)), Vec2d(Lx + BW * cos(angle), L));
 // Observer location at box center
 const StdVec<Vecd> observation_location = {0.5 * L * Vecd(1.0, 1.0)};
 //----------------------------------------------------------------------

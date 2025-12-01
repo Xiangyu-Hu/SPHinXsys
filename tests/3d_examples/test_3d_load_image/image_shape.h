@@ -51,7 +51,7 @@ class ImageShape : public Shape
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
-    virtual BoundingBox findBounds() override;
+    virtual BoundingBoxd findBounds() override;
     
   protected:
     Vecd translation_;

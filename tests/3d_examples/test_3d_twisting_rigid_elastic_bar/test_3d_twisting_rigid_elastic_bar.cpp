@@ -54,7 +54,7 @@ Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_s
     return shape_constant / 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
 }
 
-Vec3d get_central_position(const BoundingBox &bbox) { return 0.5 * (bbox.first_ + bbox.second_); };
+Vec3d get_central_position(const BoundingBoxd &bbox) { return 0.5 * (bbox.lower_ + bbox.upper_); };
 
 struct solid_algs
 {
@@ -251,7 +251,7 @@ void run_rigid_elastic_coupling(int res_factor)
 
     // System bounding box
     auto bbox = mesh->getBounds();
-    ASSERT_DOUBLE_EQ(bbox.first_.x(), min_x_pos);
+    ASSERT_DOUBLE_EQ(bbox.lower_.x(), min_x_pos);
 
     // System
     SPHSystem system(bbox, dp);

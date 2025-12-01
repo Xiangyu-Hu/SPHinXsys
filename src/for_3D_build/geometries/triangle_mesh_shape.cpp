@@ -144,7 +144,7 @@ Vecd TriangleMeshShape::findClosestPoint(const Vecd &probe_point)
     return Vecd(closest_pnt[0], closest_pnt[1], closest_pnt[2]);
 }
 //=================================================================================================//
-BoundingBox TriangleMeshShape::findBounds()
+BoundingBoxd TriangleMeshShape::findBounds()
 {
     // initial reference values
     Vec3d lower_bound = SimTKToEigen(SimTKVec3(MaxReal));
@@ -158,7 +158,7 @@ BoundingBox TriangleMeshShape::findBounds()
             upper_bound[j] = SMAX(upper_bound[j], vertex_position[j]);
         }
     }
-    return BoundingBox(lower_bound, upper_bound);
+    return BoundingBoxd(lower_bound, upper_bound);
 }
 //=================================================================================================//
 TriangleMeshShapeBrick::TriangleMeshShapeBrick(Vecd halfsize, int resolution, Vecd translation,

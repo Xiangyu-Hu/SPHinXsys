@@ -8,7 +8,7 @@ namespace SPH
 //=============================================================================================//
 template <int PKG_SIZE>
 MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
-    BoundingBox tentative_bounds, Real data_spacing, UnsignedInt buffer_size, UnsignedInt num_singular_pkgs)
+    BoundingBoxd tentative_bounds, Real data_spacing, UnsignedInt buffer_size, UnsignedInt num_singular_pkgs)
     : index_handler_(tentative_bounds, data_spacing * PKG_SIZE, buffer_size, 0, data_spacing),
       num_singular_pkgs_(num_singular_pkgs), sv_num_grid_pkgs_("NumGridPackages", num_singular_pkgs),
       dv_pkg_1d_cell_index_(nullptr), dv_pkg_type_(nullptr), cell_neighborhood_(nullptr),
@@ -60,7 +60,7 @@ T &MeshWithGridDataPackages<PKG_SIZE>::checkOrganized(std::string func_name, T &
 //=============================================================================================//
 template <int PKG_SIZE>
 MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
-    IndexHandler(BoundingBox tentative_bounds, Real grid_spacing,
+    IndexHandler(BoundingBoxd tentative_bounds, Real grid_spacing,
                  UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset, Real data_spacing)
     : Mesh(tentative_bounds, grid_spacing, buffer_width, linear_cell_index_offset),
       data_spacing_(data_spacing) {}

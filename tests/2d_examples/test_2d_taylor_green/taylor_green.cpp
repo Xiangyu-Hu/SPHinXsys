@@ -64,7 +64,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
+    BoundingBoxd system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(false);

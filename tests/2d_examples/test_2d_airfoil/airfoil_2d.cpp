@@ -20,7 +20,7 @@ Real DL = 1.25;             /**< airfoil length rear part. */
 Real DL1 = 0.25;            /**< airfoil length front part. */
 Real DH = 0.25;             /**< airfoil height. */
 Real resolution_ref = 0.02; /**< Reference resolution. */
-BoundingBox system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
+BoundingBoxd system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	import model as a complex shape
 //----------------------------------------------------------------------

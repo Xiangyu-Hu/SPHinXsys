@@ -42,7 +42,7 @@ using MatTend = Mat6d;           // matricized symmetric 3x3x3x3 tensor
 using VecMatGrad = VecMatGrad3d; // gradient of vectorized symmetric 3x3 matrix
 using AngularVecd = Vec3d;
 using Rotation = Rotation3d;
-using BoundingBox = BaseBoundingBox<Vec3d>;
+using BoundingBoxd = BoundingBox<Real, 3>;
 using Transform = BaseTransform<Rotation3d, Vec3d>;
 
 /** only works for smoothing length ratio less or equal than 1.3*/

@@ -86,13 +86,13 @@ void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_system_
 }
 //=================================================================================================//
 UniquePtr<BaseCellLinkedList> SPHAdaptation::
-    createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles)
+    createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
 {
     return makeUnique<CellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(), base_particles, *this);
 }
 //=================================================================================================//
 UniquePtr<BaseCellLinkedList> SPHAdaptation::createRefinedCellLinkedList(
-    int level, const BoundingBox &domain_bounds, BaseParticles &base_particles)
+    int level, const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
 {
     Real grid_spacing = kernel_ptr_->CutOffRadius() / pow(2.0, level);
     return makeUnique<CellLinkedList>(domain_bounds, grid_spacing, base_particles, *this);
@@ -101,7 +101,7 @@ UniquePtr<BaseCellLinkedList> SPHAdaptation::createRefinedCellLinkedList(
 UniquePtr<MultilevelLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
 {
     // estimate the required mesh levels
-    int total_levels = (int)log10(MinimumDimension(shape.getBounds()) / ReferenceSpacing()) + 2;
+    int total_levels = (int)log10(shape.getBounds().MinimumDimension() / ReferenceSpacing()) + 2;
     Real coarsest_spacing = ReferenceSpacing() * pow(2.0, total_levels - 1);
     MultilevelLevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
                                           total_levels - 1, shape, *this, refinement_ratio);
@@ -140,7 +140,7 @@ void AdaptiveSmoothingLength::initializeAdaptationVariables(BaseParticles &base_
 }
 //=================================================================================================//
 UniquePtr<BaseCellLinkedList> AdaptiveSmoothingLength::
-    createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles)
+    createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
 {
     return makeUnique<MultilevelCellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(),
                                                 local_refinement_level_, base_particles, *this);

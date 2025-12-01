@@ -18,7 +18,7 @@ Real DL = 1;            /**< Computation domain length. */
 Real DH = 0.6494805454; /**< Computation domain height. */
 Real DW = 0.038968832;  /**< Computation domain width. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec3d(-0.3, 0.0, 0.0), Vec3d(0.469846, 0.5, 0.03));
+BoundingBoxd system_domain_bounds(Vec3d(-0.3, 0.0, 0.0), Vec3d(0.469846, 0.5, 0.03));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------

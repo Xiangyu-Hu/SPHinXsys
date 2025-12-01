@@ -58,7 +58,7 @@ class BaseCellLinkedList : public MultiLevelMeshField
 
   public:
     BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation,
-                       BoundingBox tentative_bounds, Real Reference_grid_spacing, size_t total_levels);
+                       BoundingBoxd tentative_bounds, Real Reference_grid_spacing, size_t total_levels);
     virtual ~BaseCellLinkedList() {};
     BaseParticles &getBaseParticles() { return base_particles_; };
     void UpdateCellLists(BaseParticles &base_particles);
@@ -75,7 +75,7 @@ class BaseCellLinkedList : public MultiLevelMeshField
                            ConcurrentIndexVector &cell_indexes,
                            std::function<bool(Vecd, Real)> &check_included);
     /** Tag domain bounding cells in an axis direction, called by domain bounding classes */
-    void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis);
+    void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBoxd &bounding_bounds, int axis);
 
     /** split algorithm */;
     template <class ExecutionPolicy, class LocalDynamicsFunction>
@@ -105,7 +105,7 @@ class BaseCellLinkedList : public MultiLevelMeshField
                                  ConcurrentIndexVector &cell_indexes,
                                  std::function<bool(Vecd, Real)> &check_included);
     void tagBoundingCellsByMesh(Mesh &mesh, StdVec<CellLists> &cell_data_lists,
-                                const BoundingBox &bounding_bounds, int axis);
+                                const BoundingBoxd &bounding_bounds, int axis);
     void findNearestListDataEntryByMesh(Mesh &mesh, Real &min_distance_sqr, ListData &nearest_entry,
                                         const Vecd &position);
     /** split algorithm */;
@@ -140,7 +140,7 @@ class CellLinkedList : public BaseCellLinkedList
     Mesh *mesh_;
 
   public:
-    CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
+    CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
     ~CellLinkedList() {};
     Mesh &getMesh() { return *mesh_; };
@@ -167,7 +167,7 @@ class MultilevelCellLinkedList : public BaseCellLinkedList
     inline UnsignedInt getMeshLevel(Real particle_cutoff_radius);
 
   public:
-    MultilevelCellLinkedList(BoundingBox tentative_bounds,
+    MultilevelCellLinkedList(BoundingBoxd tentative_bounds,
                              Real reference_grid_spacing, UnsignedInt total_levels,
                              BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
     virtual ~MultilevelCellLinkedList() {};

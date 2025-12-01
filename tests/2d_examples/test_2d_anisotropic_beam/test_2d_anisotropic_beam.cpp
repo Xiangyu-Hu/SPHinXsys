@@ -23,7 +23,7 @@ Vec2d scaling_vector = Vec2d(1.0, 1.0 / ratio_); // scaling_vector for defining 
 Real scaling_factor = 1.0 / ratio_;              // scaling factor to calculate the time step
 Real BW = resolution_ref * 4;                    // boundary width, at least three particles
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
+BoundingBoxd system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
                                  Vec2d(PL + 3.0 * BW, PL / 2.0));
 //----------------------------------------------------------------------
 //	Material properties of the solid.

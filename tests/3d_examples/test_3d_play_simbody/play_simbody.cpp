@@ -9,7 +9,7 @@
 
 int main(int ac, char *av[])
 {
-    SPH::BoundingBox system_domain_bounds(SPH::Vec3d(0, 0, 0), SPH::Vec3d(1, 1, 1));
+    SPH::BoundingBoxd system_domain_bounds(SPH::Vec3d(0, 0, 0), SPH::Vec3d(1, 1, 1));
     SPH::SPHSystem sph_system(system_domain_bounds, 1.0);
     sph_system.handleCommandlineOptions(ac, av);
     double Pi = SPH::Pi;

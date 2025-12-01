@@ -19,7 +19,7 @@ Real BW = resolution_ref * 4;
 Vec3d domain_lower_bound(-half_width - BW, -half_width - 1.5 * BW, -BW);
 Vec3d domain_upper_bound(half_width + BW, half_width + BW, 2.0 * half_width + BW);
 // Domain bounds of the system.
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 //----------------------------------------------------------------------
 //	Global parameters for material properties.
 //----------------------------------------------------------------------

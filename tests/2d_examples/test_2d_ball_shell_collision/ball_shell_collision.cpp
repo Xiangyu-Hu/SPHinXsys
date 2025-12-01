@@ -45,7 +45,7 @@ int main(int ac, char *av[])
     Vec2d domain_lower_bound(-thickness, -thickness);
     Real domain_box_size = 2.0 * shell_shape_radius + thickness;
     Vec2d domain_upper_bound(domain_box_size, domain_box_size);
-    BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+    BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.setRunParticleRelaxation(true);
     sph_system.setReloadParticles(false);

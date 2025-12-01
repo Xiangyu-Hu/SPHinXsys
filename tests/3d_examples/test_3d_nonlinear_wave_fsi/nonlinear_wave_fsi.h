@@ -25,7 +25,7 @@ Real particle_spacing_structure = 0.1;         /**< Structure particle spacing. 
 Real BW = particle_spacing_ref * 4.0;          /**< Extending width for BCs. */
 Real Maker_width = particle_spacing_ref * 4.0; /**< Width of the wave_maker. */
 
-BoundingBox system_domain_bounds(Vecd(-BW, -EXS - BW, -BW), Vecd(EXS + BW, DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vecd(-BW, -EXS - BW, -BW), Vecd(EXS + BW, DL + BW, DH + BW));
 
 Vecd offset = Vecd::Zero();
 // water block parameters

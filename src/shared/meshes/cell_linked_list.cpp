@@ -10,7 +10,7 @@ namespace SPH
 //=================================================================================================//
 BaseCellLinkedList::BaseCellLinkedList(
     BaseParticles &base_particles, SPHAdaptation &sph_adaptation,
-    BoundingBox tentative_bounds, Real Reference_grid_spacing, size_t total_levels)
+    BoundingBoxd tentative_bounds, Real Reference_grid_spacing, size_t total_levels)
     : MultiLevelMeshField("CellLinkedList", tentative_bounds, Reference_grid_spacing, 2, total_levels),
       base_particles_(base_particles), coarsest_mesh_(meshes_.front()), finest_mesh_(meshes_.back()),
       kernel_(*sph_adaptation.getKernel()), cell_offset_list_size_(total_number_of_cells_ + 1),
@@ -155,7 +155,7 @@ void BaseCellLinkedList::tagBodyPartByCell(ConcurrentCellLists &cell_lists,
 }
 //=================================================================================================//
 void BaseCellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_data_lists,
-                                          const BoundingBox &bounding_bounds, int axis)
+                                          const BoundingBoxd &bounding_bounds, int axis)
 {
     for (UnsignedInt l = 0; l != meshes_.size(); ++l)
     {
@@ -163,7 +163,7 @@ void BaseCellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_data_lists,
     }
 }
 //=================================================================================================//
-CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
+CellLinkedList::CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
                                BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, grid_spacing, 1),
       mesh_(meshes_[0]) {}
@@ -181,7 +181,7 @@ void CellLinkedList ::InsertListDataEntry(UnsignedInt particle_index, const Vecd
 }
 //=================================================================================================//
 MultilevelCellLinkedList::MultilevelCellLinkedList(
-    BoundingBox tentative_bounds, Real reference_grid_spacing, UnsignedInt total_levels,
+    BoundingBoxd tentative_bounds, Real reference_grid_spacing, UnsignedInt total_levels,
     BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, reference_grid_spacing, total_levels),
       h_ratio_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->h_ratio_),

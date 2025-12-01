@@ -11,7 +11,7 @@ using namespace SPH;   // Namespace cite here
 Real L = 2.0;
 Real H = 0.4;
 Real resolution_ref = H / 40.0;
-BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
+BoundingBoxd system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------

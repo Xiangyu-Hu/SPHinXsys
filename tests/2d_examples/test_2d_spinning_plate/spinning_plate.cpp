@@ -15,7 +15,7 @@ Real PH = PL;
 Real resolution_ref = PH / 20;
 Real BW = resolution_ref * 4; // boundary width, at least three particles
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-PL, -PH), Vec2d(PL, PH));
+BoundingBoxd system_domain_bounds(Vec2d(-PL, -PH), Vec2d(PL, PH));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------

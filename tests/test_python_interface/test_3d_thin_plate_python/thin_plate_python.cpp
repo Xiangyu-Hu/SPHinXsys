@@ -106,7 +106,7 @@ class PreSettingCase : public Parameter
 {
   protected:
     /** Domain bounds of the system. */
-    BoundingBox system_domain_bounds;
+    BoundingBoxd system_domain_bounds;
     // Observer location
     StdVec<Vecd> observation_location = {Vecd(0.5 * PL, 0.5 * PH, 0.0)};
     /** Setup the system. */

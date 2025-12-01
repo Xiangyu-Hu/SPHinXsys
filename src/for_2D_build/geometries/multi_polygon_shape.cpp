@@ -250,7 +250,7 @@ Vecd MultiPolygon::findClosestPoint(const Vecd &probe_point)
     return p_find;
 }
 //=================================================================================================//
-BoundingBox MultiPolygon::findBounds()
+BoundingBoxd MultiPolygon::findBounds()
 {
     Vecd lower_bound = Vecd::Zero();
     Vecd upper_bound = Vecd::Zero();
@@ -259,7 +259,7 @@ BoundingBox MultiPolygon::findBounds()
     lower_bound[1] = bg::return_envelope<box>(multi_poly_).min_corner().get<1>();
     upper_bound[0] = bg::return_envelope<box>(multi_poly_).max_corner().get<0>();
     upper_bound[1] = bg::return_envelope<box>(multi_poly_).max_corner().get<1>();
-    return BoundingBox(lower_bound, upper_bound);
+    return BoundingBoxd(lower_bound, upper_bound);
 }
 //=================================================================================================//
 bool MultiPolygonShape::isValid()
@@ -277,7 +277,7 @@ Vecd MultiPolygonShape::findClosestPoint(const Vecd &probe_point)
     return multi_polygon_.findClosestPoint(probe_point);
 }
 //=================================================================================================//
-BoundingBox MultiPolygonShape::findBounds()
+BoundingBoxd MultiPolygonShape::findBounds()
 {
     return multi_polygon_.findBounds();
 }

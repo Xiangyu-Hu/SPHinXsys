@@ -21,8 +21,8 @@ void PeriodicConditionUsingCellLinkedList::
     for (size_t num = 0; num < cell_list_data.size(); ++num)
     {
         Vecd particle_position = std::get<1>(cell_list_data[num]);
-        if (particle_position[axis_] < bounding_bounds_.second_[axis_] &&
-            particle_position[axis_] > (bounding_bounds_.second_[axis_] - cut_off_radius_max_))
+        if (particle_position[axis_] < bounding_bounds_.upper_[axis_] &&
+            particle_position[axis_] > (bounding_bounds_.upper_[axis_] - cut_off_radius_max_))
         {
             Vecd translated_position = particle_position - periodic_translation_;
             /** insert ghost particle to cell linked list */
@@ -39,8 +39,8 @@ void PeriodicConditionUsingCellLinkedList::
     for (size_t num = 0; num < cell_list_data.size(); ++num)
     {
         Vecd particle_position = std::get<1>(cell_list_data[num]);
-        if (particle_position[axis_] > bounding_bounds_.first_[axis_] &&
-            particle_position[axis_] < (bounding_bounds_.first_[axis_] + cut_off_radius_max_))
+        if (particle_position[axis_] > bounding_bounds_.lower_[axis_] &&
+            particle_position[axis_] < (bounding_bounds_.lower_[axis_] + cut_off_radius_max_))
         {
             Vecd translated_position = particle_position + periodic_translation_;
             /** insert ghost particle to cell linked list */

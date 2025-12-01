@@ -63,7 +63,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vec3d(-radius - thickness, -half_height - thickness, -radius - thickness),
+    BoundingBoxd system_domain_bounds(Vec3d(-radius - thickness, -half_height - thickness, -radius - thickness),
                                      Vec3d(radius + thickness, half_height + thickness, radius + thickness));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     /** Tag for running particle relaxation for the initially body-fitted distribution */

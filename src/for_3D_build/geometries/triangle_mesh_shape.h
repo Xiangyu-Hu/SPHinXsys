@@ -57,7 +57,7 @@ class TriangleMeshShape : public Shape
      * when probe distance is far from the surface. */
     virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
-    virtual BoundingBox findBounds() override;
+    virtual BoundingBoxd findBounds() override;
     StdVec<std::array<Real, 3>> &getVertices() { return vertices_; }
     StdVec<std::array<int, 3>> &getFaces() { return faces_; }
     void writeMeshToFile(SPHSystem &sph_system, Transform transform = Transform());

@@ -28,7 +28,7 @@ Real Base_height = 0.1;
 Real particle_spacing_ref = Flap_width / 4.0; // particle spacing
 Real BW = particle_spacing_ref * 4.0;         // boundary width
 
-BoundingBox system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH + BW));
 
 // the offset that the rubber flap shifted above the tank
 // Real flap_off = Flap_x - 0.5 * Flap_width + DL_Extra + BW;

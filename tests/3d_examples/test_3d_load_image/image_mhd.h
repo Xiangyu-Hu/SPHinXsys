@@ -123,7 +123,7 @@ class ImageMHD
     Real get_max_value() { return max_value_; };
 
     Vec3d findClosestPoint(const Vec3d &probe_point);
-    BoundingBox findBounds();
+    BoundingBoxd findBounds();
     Real findValueAtPoint(const Vec3d &probe_point);
     Vec3d findNormalAtPoint(const Vec3d &probe_point);
 

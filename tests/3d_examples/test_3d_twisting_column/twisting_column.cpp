@@ -77,7 +77,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Vec3d domain_lower_bound(-SL - BW, -0.5 * (PH + BW), -0.5 * (PW + BW));
     Vec3d domain_upper_bound(PL, 0.5 * (PH + BW), 0.5 * (PW + BW));
-    BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+    BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------

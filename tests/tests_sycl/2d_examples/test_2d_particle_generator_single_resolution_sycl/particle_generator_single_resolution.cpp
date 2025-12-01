@@ -21,7 +21,7 @@ Real DL = 2.5;                          /**< InputBody length right part. */
 Real DL1 = 2.5;                         /**< InputBody length left part. */
 Real DH = 5.0;                          /**< InputBody height. */
 Real resolution_ref = (DL + DL1) / 120; /**< Reference resolution. */
-BoundingBox system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
+BoundingBoxd system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	The main program
 //----------------------------------------------------------------------

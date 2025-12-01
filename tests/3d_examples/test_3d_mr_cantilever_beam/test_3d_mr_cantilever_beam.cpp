@@ -176,7 +176,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     auto refinement_region = makeShared<GeometricShapeBox>(Transform(refinement_translation), refinement_halfsize);
 
     // System bounding box
-    BoundingBox bb_system = mesh->getBounds();
+    BoundingBoxd bb_system = mesh->getBounds();
 
     // System
     SPHSystem system(bb_system, dp);

@@ -11,7 +11,7 @@ using namespace SPH;
 /** Geometry parameters. */
 Real resolution_ref = 0.005;
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vecd(-0.026, -0.026, -0.021), Vecd(0.026, 0.026, 0.101));
+BoundingBoxd system_domain_bounds(Vecd(-0.026, -0.026, -0.021), Vecd(0.026, 0.026, 0.101));
 StdVec<Vecd> observation_location = {Vecd(0.0, 0.0, 0.04)};
 
 /** Physical parameters */

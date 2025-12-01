@@ -33,13 +33,13 @@ BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body)
     base_particles_.addEvolvingVariable<int>(dv_body_part_id_);
 }
 //=================================================================================================//
-void BodyPartByParticle::setBodyPartBounds(BoundingBox bbox)
+void BodyPartByParticle::setBodyPartBounds(BoundingBoxd bbox)
 {
     body_part_bounds_ = bbox;
     body_part_bounds_set_ = true;
 }
 //=================================================================================================//
-BoundingBox BodyPartByParticle::getBodyPartBounds()
+BoundingBoxd BodyPartByParticle::getBodyPartBounds()
 {
     if (!body_part_bounds_set_)
         std::cout << "WARNING: the body part bounds are not set for BodyPartByParticle." << std::endl;

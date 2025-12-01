@@ -86,8 +86,8 @@ class SPHAdaptation
     Real SmoothingLengthByLevel(int level) { return h_ref_ / pow(2.0, level); };
     DiscreteVariable<Real> *AdaptiveSmoothingLength(BaseParticles &base_particles);
 
-    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles);
-    UniquePtr<BaseCellLinkedList> createRefinedCellLinkedList(int level, const BoundingBox &domain_bounds, BaseParticles &base_particles);
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
+    UniquePtr<BaseCellLinkedList> createRefinedCellLinkedList(int level, const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
     virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
 
     template <class MeshType, typename... Args>
@@ -137,7 +137,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     };
 
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
-    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles) override;
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles) override;
     virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 
     class ContinuousSmoothingLengthRatio

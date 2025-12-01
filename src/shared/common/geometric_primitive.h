@@ -33,28 +33,30 @@
 
 namespace SPH
 {
-/** Rotation */
-using Rotation2d = Eigen::Rotation2D<Real>;
-using Rotation3d = Eigen::AngleAxis<Real>;
-
-/** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
-template <typename VecType>
-class BaseBoundingBox
+template <typename DataType, int N>
+class BoundingBox
 {
-  public:
-    VecType first_, second_;
-    int dimension_;
+    using VecType = Eigen::Matrix<DataType, N, 1>;
 
-    BaseBoundingBox() : first_(VecType::Zero()), second_(VecType::Zero()), dimension_(VecType::Zero().size()) {};
-    BaseBoundingBox(const VecType &lower_bound, const VecType &upper_bound)
-        : first_(lower_bound), second_(upper_bound), dimension_(lower_bound.size()) {};
-    /** Check the bounding box contain. */
-    bool checkContain(const VecType &point)
+  public:
+    VecType lower_, upper_;
+
+    BoundingBox() : lower_(VecType::Zero()), upper_(VecType::Zero()) {};
+    BoundingBox(const VecType &lower, const VecType &upper)
+        : lower_(lower), upper_(upper) {};
+    BoundingBox(VecType &hlfsize) : lower_(-hlfsize), upper_(hlfsize) {};
+
+    BoundingBox translate(const VecType &translate) const
+    {
+        return BoundingBox(translate + lower_, translate + upper_);
+    };
+
+    bool checkContain(const VecType &point) const
     {
         bool is_contain = true;
-        for (int i = 0; i < dimension_; ++i)
+        for (int i = 0; i < N; ++i)
         {
-            if (point[i] < first_[i] || point[i] > second_[i])
+            if (point[i] < lower_[i] || point[i] > upper_[i])
             {
                 is_contain = false;
                 break;
@@ -63,59 +65,68 @@ class BaseBoundingBox
         return is_contain;
     };
 
-    VecType getBoundSize()
+    bool checkIntersect(const BoundingBox &another) const
     {
-        return second_ - first_;
+        bool is_intersect = false;
+        for (int i = 0; i < N; ++i)
+        {
+            if (another.lower_[i] > upper_[i] || another.upper_[i] < lower_[i])
+            {
+                is_intersect = true;
+                break;
+            }
+        }
+        return is_intersect;
     };
 
-    BaseBoundingBox expand(const VecType &expand_size)
+    BoundingBox getIntersect(const BoundingBox &another) const
     {
-        VecType new_first = first_ - expand_size;
-        VecType new_second = second_ + expand_size;
-        return BaseBoundingBox(new_first, new_second);
+        if (!checkIntersect(another))
+        {
+            std::cerr << "BoundingBox::getIntersect: no overlap!" << std::endl;
+        }
+
+        BoundingBox output(*this);
+        for (int i = 0; i < N; ++i)
+        {
+            /** If the lower limit is inside change the lower limit. */
+            if (lower_[i] < another.lower_[i] && another.lower_[i] < upper_[i])
+                output.lower_[i] = another.lower_[i];
+            /**  If the upper limit is inside, change the upper limit. */
+            if (upper_[i] > another.upper_[i] && another.upper_[i] > lower_[i])
+                output.upper_[i] = another.upper_[i];
+        }
+        return output;
+    };
+
+    static constexpr int DataSize() { return N; }
+
+    VecType BoundSize() const
+    {
+        return upper_ - lower_;
+    };
+
+    BoundingBox expand(const VecType &expand_size) const
+    {
+        VecType new_lower = lower_ - expand_size;
+        VecType new_upper = upper_ + expand_size;
+        return BoundingBox(new_lower, new_upper);
+    };
+
+    DataType MinimumDimension() const
+    {
+        return BoundSize().cwiseAbs().minCoeff();
     };
 };
 /** Operator define. */
-template <class T>
-bool operator==(const BaseBoundingBox<T> &bb1, const BaseBoundingBox<T> &bb2)
+template <typename DataType, int N>
+bool operator==(const BoundingBox<DataType, N> &bb1, const BoundingBox<DataType, N> &bb2)
 {
-    return bb1.first_ == bb2.first_ && bb1.second_ == bb2.second_ ? true : false;
+    return bb1.lower_ == bb2.lower_ && bb1.upper_ == bb2.upper_ ? true : false;
 };
-/** Intersection fo bounding box.*/
-template <class BoundingBoxType>
-BoundingBoxType getIntersectionOfBoundingBoxes(const BoundingBoxType &bb1, const BoundingBoxType &bb2)
-{
-    /** Check that the inputs are correct. */
-    int dimension = bb1.dimension_;
-    /** Get the Bounding Box of the intersection of the two meshes. */
-    BoundingBoxType bb(bb1);
-    /** #1 check that there is overlap, if not, exception. */
-    for (int i = 0; i < dimension; ++i)
-    {
-        if (bb2.first_[i] > bb1.second_[i] || bb2.second_[i] < bb1.first_[i])
-        {
-            std::cerr << "getIntersectionOfBoundingBoxes: no overlap!" << std::endl;
-        }
-    }
-    /** #2 otherwise modify the first one to get the intersection. */
-    for (int i = 0; i < dimension; ++i)
-    {
-        /** If the lower limit is inside change the lower limit. */
-        if (bb1.first_[i] < bb2.first_[i] && bb2.first_[i] < bb1.second_[i])
-            bb.first_[i] = bb2.first_[i];
-        /**  If the upper limit is inside, change the upper limit. */
-        if (bb1.second_[i] > bb2.second_[i] && bb2.second_[i] > bb1.first_[i])
-            bb.second_[i] = bb2.second_[i];
-    }
-    return bb;
-}
 
-/** obtain minimum dimension of a bounding box */
-template <class BoundingBoxType>
-auto MinimumDimension(const BoundingBoxType &bbox)
-{
-    return (bbox.second_ - bbox.first_).cwiseAbs().minCoeff();
-};
+using Rotation2d = Eigen::Rotation2D<Real>;
+using Rotation3d = Eigen::AngleAxis<Real>;
 
 template <typename RotationType, typename VecType>
 class BaseTransform

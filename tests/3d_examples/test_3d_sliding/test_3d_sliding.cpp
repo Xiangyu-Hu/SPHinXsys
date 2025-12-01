@@ -53,15 +53,15 @@ Real get_physical_viscosity_general(Real rho, Real youngs_modulus, Real length_s
     return shape_constant / 4.0 * std::sqrt(rho * youngs_modulus) * length_scale;
 }
 
-BoundingBox union_bounding_box(const BoundingBox &a, const BoundingBox &b)
+BoundingBoxd union_bounding_box(const BoundingBoxd &a, const BoundingBoxd &b)
 {
-    BoundingBox out = a;
-    out.first_[0] = std::min(a.first_[0], b.first_[0]);
-    out.first_[1] = std::min(a.first_[1], b.first_[1]);
-    out.first_[2] = std::min(a.first_[2], b.first_[2]);
-    out.second_[0] = std::max(a.second_[0], b.second_[0]);
-    out.second_[1] = std::max(a.second_[1], b.second_[1]);
-    out.second_[2] = std::max(a.second_[2], b.second_[2]);
+    BoundingBoxd out = a;
+    out.lower_[0] = std::min(a.lower_[0], b.lower_[0]);
+    out.lower_[1] = std::min(a.lower_[1], b.lower_[1]);
+    out.lower_[2] = std::min(a.lower_[2], b.lower_[2]);
+    out.upper_[0] = std::max(a.upper_[0], b.upper_[0]);
+    out.upper_[1] = std::max(a.upper_[1], b.upper_[1]);
+    out.upper_[2] = std::max(a.upper_[2], b.upper_[2]);
     return out;
 }
 
@@ -102,7 +102,7 @@ void block_sliding(
     auto material_cube = makeShared<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
 
     // System bounding box
-    BoundingBox bb_system = union_bounding_box(mesh_cube->getBounds(), mesh_slope->getBounds());
+    BoundingBoxd bb_system = union_bounding_box(mesh_cube->getBounds(), mesh_slope->getBounds());
 
     // System
     SPHSystem system(bb_system, resolution_cube);

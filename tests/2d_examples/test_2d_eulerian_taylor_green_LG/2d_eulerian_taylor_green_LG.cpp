@@ -13,7 +13,7 @@ Real DL = 1.0;                    /**< box length. */
 Real DH = 1.0;                    /**< box height. */
 Real resolution_ref = 1.0 / 50.0; /**< Global reference resolution. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
+BoundingBoxd system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------

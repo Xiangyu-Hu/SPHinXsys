@@ -15,7 +15,7 @@ Real resolution_ref = 0.025;          /**< reference resolution. */
 Real BW = resolution_ref * 4.;        /**< wall width for BCs. */
 Real thickness = resolution_ref * 1.; /**< shell thickness. */
 Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Vec2d circle_center(2.0, 2.0);
 Real circle_radius = 0.5;
 //----------------------------------------------------------------------
