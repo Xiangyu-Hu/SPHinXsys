@@ -29,6 +29,7 @@
 #ifndef NEIGHBOR_METHOD_H
 #define NEIGHBOR_METHOD_H
 
+#include "adaptation.h"
 #include "kernel_tabulated_ck.h"
 #include "sphinxsys_containers.h"
 
@@ -47,36 +48,18 @@ class NeighborMethod<Base>
 
   protected:
     Kernel *base_kernel_;
-
-    template <class DynamicsIdentifier>
-    Real getSmoothingLength(const SingleValued &single_valued, DynamicsIdentifier &identifier)
-    {
-        return identifier.getSPHAdaptation().ReferenceSmoothingLength();
-    };
-    Real getSmoothingLength(const SingleValued &single_valued, BodyPartitionSpatial &body_partition_spatial);
-
-    template <class DynamicsIdentifier>
-    DiscreteVariable<Real> *getSmoothingLength(const Continuous &continuous, DynamicsIdentifier &identifier)
-    {
-        Real h_spacing_ratio = identifier.getSPHAdaptation().SmoothingLengthSpacingRatio();
-        return identifier.getBaseParticles()
-            .template registerStateVariable<Real>(
-                "SmoothingLength",
-                [&](size_t i)
-                { return 0.99 * h_spacing_ratio * identifier.getBaseParticles().ParticleSpacing(i); });
-    };
 };
 
 template <>
-class NeighborMethod<SingleValued> : public NeighborMethod<Base>
+class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
 {
   public:
-    template <class SourceIdentifier, class TargetIdentifier>
-    NeighborMethod(SourceIdentifier &source_identifier, TargetIdentifier &contact_identifier)
+    template <typename SourceIdentifier, typename TargetIdentifier>
+    NeighborMethod(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier)
         : NeighborMethod<Base>(*source_identifier.getSPHAdaptation().getKernel())
     {
-        Real source_h = getSmoothingLength(SingleValued{}, source_identifier);
-        Real target_h = getSmoothingLength(SingleValued{}, contact_identifier);
+        Real source_h = source_identifier.getSPHAdaptation().ReferenceSmoothingLength();
+        Real target_h = target_identifier.getSPHAdaptation().ReferenceSmoothingLength();
         inv_h_ = 1.0 / SMAX(source_h, target_h);
         search_depth_ = static_cast<int>(std::ceil((source_h - Eps) / target_h));
     }

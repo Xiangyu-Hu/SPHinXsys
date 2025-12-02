@@ -17,7 +17,7 @@ MultilevelLevelSet::MultilevelLevelSet(
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec_.push_back(global_h_ratio);
     neighbor_method_set_.push_back(
-        neighbor_method_keeper_.template createPtr<NeighborMethod<SingleValued>>(
+        neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
             *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
     initializeLevel(data_spacing, tentative_bounds, coarse_data);
@@ -33,7 +33,7 @@ MultilevelLevelSet::MultilevelLevelSet(
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec_.push_back(global_h_ratio);
     neighbor_method_set_.push_back(
-        neighbor_method_keeper_.template createPtr<NeighborMethod<SingleValued>>(
+        neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
             *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
     initializeLevel(data_spacing, tentative_bounds);
@@ -44,7 +44,7 @@ MultilevelLevelSet::MultilevelLevelSet(
         smoothing_length *= 0.5; // Halve the smoothing length
         global_h_ratio_vec_.push_back(global_h_ratio);
         neighbor_method_set_.push_back(
-            neighbor_method_keeper_.template createPtr<NeighborMethod<SingleValued>>(
+            neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
                 *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
         initializeLevel(data_spacing, tentative_bounds, mesh_data_set_[level - 1]);

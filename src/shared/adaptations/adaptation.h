@@ -90,9 +90,6 @@ class SPHAdaptation
     UniquePtr<BaseCellLinkedList> createRefinedCellLinkedList(int level, const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
     virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
 
-    template <class MeshType, typename... Args>
-    MeshType createBackGroundMesh(SPHBody &sph_body, Args &&...args);
-
     template <class KernelType, typename... Args>
     void resetKernel(Args &&...args)
     {

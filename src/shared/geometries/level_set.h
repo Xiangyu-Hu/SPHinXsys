@@ -112,7 +112,7 @@ class MultilevelLevelSet : public BaseMeshField
     StdVec<UnsignedInt *> cell_pkg_index_set_;
     StdVec<int *> pkg_type_set_;
     StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
-    StdVec<NeighborMethod<SingleValued> *> neighbor_method_set_;
+    StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
     StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;
     StdVec<MeshWithGridDataPackagesType::IndexHandler *> mesh_index_handler_set_;
     StdVec<ProbeSignedDistance *> probe_signed_distance_set_;
@@ -131,7 +131,7 @@ class MultilevelLevelSet : public BaseMeshField
 
     UniquePtr<BaseDynamics<void>> correct_topology_keeper_;
     UniquePtr<BaseDynamics<void>> clean_interface_keeper_;
-    UniquePtrsKeeper<NeighborMethod<SingleValued>> neighbor_method_keeper_;
+    UniquePtrsKeeper<NeighborMethod<SPHAdaptation, SPHAdaptation>> neighbor_method_keeper_;
     std::function<void()> sync_mesh_variables_to_write_, sync_bkg_mesh_variables_to_write_, sync_mesh_variables_to_probe_;
 
     template <class ExecutionPolicy>
