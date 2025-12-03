@@ -123,7 +123,7 @@ class NeighborSearch : public Mesh
     template <typename FunctionOnEach>
     void forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
                        const FunctionOnEach &function,
-                       BoundingBoxi search_bounds = BoundingBoxi(Arrayi::Ones())) const;
+                       BoundingBoxi search_box = BoundingBoxi(Arrayi::Ones())) const;
 
   protected:
     UnsignedInt *particle_index_;

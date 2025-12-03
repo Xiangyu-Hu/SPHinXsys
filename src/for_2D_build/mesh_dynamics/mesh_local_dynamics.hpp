@@ -113,7 +113,7 @@ void UpdateKernelIntegrals::UpdateKernel::assignByGrid(MeshVariableData<DataType
 inline Real UpdateKernelIntegrals::UpdateKernel::
     computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &grid_index)
 {
-    Real phi = phi_[package_index][grid_index[0]][grid_index[1]];
+    Real phi = phi_[package_index](grid_index);
 
     Real integral(0);
     if (fabs(phi) < cutoff_radius_)
@@ -124,10 +124,10 @@ inline Real UpdateKernelIntegrals::UpdateKernel::
             {
                 PackageGridPair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
                     package_index, cell_neighborhood_, grid_index + Arrayi(i, j));
-                Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
+                Real phi_neighbor = phi_[neighbor_meta.first](neighbor_meta.second);
                 if (phi_neighbor > -data_spacing_)
                 {
-                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
+                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first](neighbor_meta.second);
                     Vecd displacement = -Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius_)
@@ -142,7 +142,7 @@ inline Real UpdateKernelIntegrals::UpdateKernel::
 inline Vecd UpdateKernelIntegrals::UpdateKernel::
     computeKernelGradientIntegral(const UnsignedInt &package_index, const Arrayi &grid_index)
 {
-    Real phi = phi_[package_index][grid_index[0]][grid_index[1]];
+    Real phi = phi_[package_index](grid_index);
 
     Vecd integral = Vecd::Zero();
     if (fabs(phi) < cutoff_radius_)
@@ -153,10 +153,10 @@ inline Vecd UpdateKernelIntegrals::UpdateKernel::
             {
                 PackageGridPair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
                     package_index, cell_neighborhood_, grid_index + Arrayi(i, j));
-                Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
+                Real phi_neighbor = phi_[neighbor_meta.first](neighbor_meta.second);
                 if (phi_neighbor > -data_spacing_)
                 {
-                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
+                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first](neighbor_meta.second);
                     Vecd displacement = -Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius_)
@@ -173,7 +173,7 @@ inline Vecd UpdateKernelIntegrals::UpdateKernel::
 inline Matd UpdateKernelIntegrals::UpdateKernel::
     computeKernelSecondGradientIntegral(const UnsignedInt &package_index, const Arrayi &grid_index)
 {
-    Real phi = phi_[package_index][grid_index[0]][grid_index[1]];
+    Real phi = phi_[package_index](grid_index);
 
     Matd integral = Matd::Zero();
     if (fabs(phi) < cutoff_radius_)
@@ -184,10 +184,10 @@ inline Matd UpdateKernelIntegrals::UpdateKernel::
             {
                 PackageGridPair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
                     package_index, cell_neighborhood_, grid_index + Arrayi(i, j));
-                Real phi_neighbor = phi_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
+                Real phi_neighbor = phi_[neighbor_meta.first](neighbor_meta.second);
                 if (phi_neighbor > -data_spacing_)
                 {
-                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first][neighbor_meta.second[0]][neighbor_meta.second[1]];
+                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first](neighbor_meta.second);
                     Vecd displacement = -Arrayi(i, j).cast<Real>().matrix() * data_spacing_;
                     Real distance = displacement.norm();
                     if (distance < cutoff_radius_)

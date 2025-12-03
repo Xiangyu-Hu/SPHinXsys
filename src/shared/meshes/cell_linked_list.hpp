@@ -118,10 +118,10 @@ NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList 
 //=================================================================================================//
 template <typename FunctionOnEach>
 void NeighborSearch::forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
-                                   const FunctionOnEach &function, BoundingBoxi search_bounds) const
+                                   const FunctionOnEach &function, BoundingBoxi search_box) const
 {
     const BoundingBoxi search_range =
-        search_bounds.translate(CellIndexFromPosition(source_pos[source_index]));
+        search_box.translate(CellIndexFromPosition(source_pos[source_index]));
     mesh_for_each(
         Arrayi::Zero().max(search_range.lower_), all_cells_.min(search_range.upper_ + Arrayi::Ones()),
         [&](const Arrayi &cell_index)
