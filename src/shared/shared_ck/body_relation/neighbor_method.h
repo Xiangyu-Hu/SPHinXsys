@@ -62,11 +62,13 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
         Real target_h = target_identifier.getSPHAdaptation().ReferenceSmoothingLength();
         inv_h_ = 1.0 / SMAX(source_h, target_h);
         search_depth_ = static_cast<int>(std::ceil((source_h - Eps) / target_h));
+        search_bounding_box_ = BoundingBoxi(Arrayi::Constant(search_depth_));
     }
 
     NeighborMethod(Kernel &base_kernel, Real h, Real search_increment)
         : NeighborMethod<Base>(base_kernel), inv_h_(1.0 / h),
-          search_depth_(static_cast<int>(std::ceil((h - Eps) / search_increment))) {}
+          search_depth_(static_cast<int>(std::ceil((h - Eps) / search_increment))),
+          search_bounding_box_(BoundingBoxi(Arrayi::Constant(search_depth_))) {}
 
     Real CutOffRadius() const
     {
@@ -139,22 +141,23 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
         Real operator()(UnsignedInt i) const { return 1.0; };
     };
 
-    class SearchDepth
+    class SearchBoundingBox
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        SearchDepth(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : search_depth_(encloser.search_depth_){};
+        SearchBoundingBox(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : search_bounding_box_(encloser.search_bounding_box_){};
 
-        int operator()(UnsignedInt i) const { return search_depth_; };
+        BoundingBoxi operator()(UnsignedInt i) const { return search_bounding_box_; };
 
       private:
-        int search_depth_;
+        BoundingBoxi search_bounding_box_;
     };
 
   protected:
     Real inv_h_;
-    int search_depth_; /**< Search depth for neighbor search. */
+    int search_depth_;
+    BoundingBoxi search_bounding_box_; /**< Search depth for neighbor search. */
 };
 } // namespace SPH
 #endif // NEIGHBOR_METHOD_H
