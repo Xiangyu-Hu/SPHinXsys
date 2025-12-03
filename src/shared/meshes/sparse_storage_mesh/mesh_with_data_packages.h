@@ -32,7 +32,7 @@
 #include "base_mesh.hpp"
 
 #include "execution_policy.h"
-#include "grid_data_package_type.hpp"
+#include "data_package_type.hpp"
 
 #include "tbb/parallel_sort.h"
 

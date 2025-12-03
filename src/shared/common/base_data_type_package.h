@@ -21,12 +21,12 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	base_data_package.h
+ * @file 	base_data_type_package.h
  * @brief 	The collection of base data types for the library.
  * @author	Chi Zhang and Xiangyu Hu
  */
-#ifndef BASE_DATA_PACKAGE_H
-#define BASE_DATA_PACKAGE_H
+#ifndef BASE_DATA_TYPE_PACKAGE_H
+#define BASE_DATA_TYPE_PACKAGE_H
 
 #include "common_functors.h"
 #include "data_type.h"
@@ -126,4 +126,4 @@ class OperationBetweenDataAssembles
     }
 };
 } // namespace SPH
-#endif // BASE_DATA_PACKAGE_H
+#endif // BASE_DATA_TYPE_PACKAGE_H

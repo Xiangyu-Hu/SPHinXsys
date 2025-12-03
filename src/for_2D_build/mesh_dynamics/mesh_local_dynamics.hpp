@@ -1,7 +1,7 @@
 #ifndef MESH_LOCAL_DYNAMICS_2D_HPP
 #define MESH_LOCAL_DYNAMICS_2D_HPP
 
-#include "grid_data_package_function.hpp"
+#include "data_package_function.hpp"
 #include "mesh_local_dynamics.hxx"
 
 namespace SPH
@@ -66,13 +66,13 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const UnsignedInt &pack
     mesh_for_each2d<0, pkg_size>(
         [&](int i, int j)
         {
-            PackageGridPair x1 = NeighbourIndexShift<pkg_size>(
+            DataPackagePair x1 = NeighbourIndexShift<pkg_size>(
                 Arrayi(i + 1, j), neighborhood);
-            PackageGridPair x2 = NeighbourIndexShift<pkg_size>(
+            DataPackagePair x2 = NeighbourIndexShift<pkg_size>(
                 Arrayi(i - 1, j), neighborhood);
-            PackageGridPair y1 = NeighbourIndexShift<pkg_size>(
+            DataPackagePair y1 = NeighbourIndexShift<pkg_size>(
                 Arrayi(i, j + 1), neighborhood);
-            PackageGridPair y2 = NeighbourIndexShift<pkg_size>(
+            DataPackagePair y2 = NeighbourIndexShift<pkg_size>(
                 Arrayi(i, j - 1), neighborhood);
             Real dphidx = phi_[x1.first][x1.second[0]][x1.second[1]] - phi_[x2.first][x2.second[0]][x2.second[1]];
             Real dphidy = phi_[y1.first][y1.second[0]][y1.second[1]] - phi_[y2.first][y2.second[0]][y2.second[1]];
@@ -122,7 +122,7 @@ inline Real UpdateKernelIntegrals::UpdateKernel::
             depth_,
             [&](int i, int j)
             {
-                PackageGridPair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
+                DataPackagePair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
                     package_index, cell_neighborhood_, grid_index + Arrayi(i, j));
                 Real phi_neighbor = phi_[neighbor_meta.first](neighbor_meta.second);
                 if (phi_neighbor > -data_spacing_)
@@ -151,7 +151,7 @@ inline Vecd UpdateKernelIntegrals::UpdateKernel::
             depth_,
             [&](int i, int j)
             {
-                PackageGridPair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
+                DataPackagePair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
                     package_index, cell_neighborhood_, grid_index + Arrayi(i, j));
                 Real phi_neighbor = phi_[neighbor_meta.first](neighbor_meta.second);
                 if (phi_neighbor > -data_spacing_)
@@ -182,7 +182,7 @@ inline Matd UpdateKernelIntegrals::UpdateKernel::
             depth_,
             [&](int i, int j)
             {
-                PackageGridPair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
+                DataPackagePair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
                     package_index, cell_neighborhood_, grid_index + Arrayi(i, j));
                 Real phi_neighbor = phi_[neighbor_meta.first](neighbor_meta.second);
                 if (phi_neighbor > -data_spacing_)
@@ -214,13 +214,13 @@ inline void ReinitializeLevelSet::UpdateKernel::update(const UnsignedInt &packag
             {
                 Real phi_0 = phi_addrs[i][j];
                 Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
-                PackageGridPair x1 = NeighbourIndexShift<pkg_size>(
+                DataPackagePair x1 = NeighbourIndexShift<pkg_size>(
                     Arrayi(i + 1, j), neighborhood);
-                PackageGridPair x2 = NeighbourIndexShift<pkg_size>(
+                DataPackagePair x2 = NeighbourIndexShift<pkg_size>(
                     Arrayi(i - 1, j), neighborhood);
-                PackageGridPair y1 = NeighbourIndexShift<pkg_size>(
+                DataPackagePair y1 = NeighbourIndexShift<pkg_size>(
                     Arrayi(i, j + 1), neighborhood);
-                PackageGridPair y2 = NeighbourIndexShift<pkg_size>(
+                DataPackagePair y2 = NeighbourIndexShift<pkg_size>(
                     Arrayi(i, j - 1), neighborhood);
                 Real dv_x = upwindDifference(sign, phi_[x1.first][x1.second[0]][x1.second[1]] - phi_0,
                                              phi_0 - phi_[x2.first][x2.second[0]][x2.second[1]]);
@@ -291,7 +291,7 @@ inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_i
                 bool is_sign_changed = mesh_any_of2d<-1, 2>( // check in the 3x3x3 neighborhood
                     [&](int l, int m) -> bool
                     {
-                        PackageGridPair neighbour_index = NeighbourIndexShift<pkg_size>(
+                        DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
                             Arrayi(i + l, j + m), cell_neighborhood_[package_index]);
 
                         return phi0 * phi_[neighbour_index.first]
@@ -328,7 +328,7 @@ inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package
                 mesh_for_each2d<-1, 2>(
                     [&](int r, int s)
                     {
-                        PackageGridPair neighbour_index = NeighbourIndexShift<pkg_size>(
+                        DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
                             Arrayi(i + r, j + s), cell_neighborhood_[package_index]);
                         int neighbor_near_interface_id =
                             near_interface_id_[neighbour_index.first][neighbour_index.second[0]][neighbour_index.second[1]];
@@ -343,7 +343,7 @@ inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package
                     mesh_for_each2d<-4, 5>(
                         [&](int x, int y)
                         {
-                            PackageGridPair neighbour_index = NeighbourIndexShift<pkg_size>(
+                            DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
                                 Arrayi(i + x, j + y), cell_neighborhood_[package_index]);
                             auto &neighbor_phi = phi_[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
@@ -368,7 +368,7 @@ inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package
                     mesh_for_each2d<-4, 5>(
                         [&](int x, int y)
                         {
-                            PackageGridPair neighbour_index = NeighbourIndexShift<pkg_size>(
+                            DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
                                 Arrayi(i + x, j + y), cell_neighborhood_[package_index]);
                             auto &neighbor_phi = phi_[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
@@ -402,7 +402,7 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package
                 mesh_find_if2d<-1, 2>(
                     [&](int l, int m) -> bool
                     {
-                        PackageGridPair neighbour_index =
+                        DataPackagePair neighbour_index =
                             NeighbourIndexShift<pkg_size>(
                                 Arrayi(i + l, j + m), cell_neighborhood_[package_index]);
                         int near_interface_id =

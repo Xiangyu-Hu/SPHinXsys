@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file grid_data_package_function.h
+ * @file data_package_function.h
  * @brief This is for the base functions for mesh iterator.
  * There are two types of functions: one is for static ranged
  * which are defined by template parameters,
@@ -29,18 +29,18 @@
  * @author  Xiangyu Hu
  */
 
-#ifndef GRID_DATA_PACKAGE_FUNCTIONS_H
-#define GRID_DATA_PACKAGE_FUNCTIONS_H
+#ifndef DATA_PACKAGE_FUNCTIONS_H
+#define DATA_PACKAGE_FUNCTIONS_H
 
 #include "mesh_with_data_packages.h"
 
 namespace SPH
 {
 template <int PKG_SIZE>
-PackageGridPair NeighbourIndexShift(const Arrayi &shift_index, const CellNeighborhood &neighbour);
+DataPackagePair NeighbourIndexShift(const Arrayi &shift_index, const CellNeighborhood &neighbour);
 
 template <int PKG_SIZE>
-PackageGridPair GeneralNeighbourIndexShift(
+DataPackagePair GeneralNeighbourIndexShift(
     UnsignedInt package_index, CellNeighborhood *neighbour, const Arrayi &shift_index);
 
 template <typename DataType, int PKG_SIZE>
@@ -72,4 +72,4 @@ class ProbeMesh
     DataType probeDataPackage(UnsignedInt package_index, const Array3i &cell_index, const Vec3d &position);
 };
 } // namespace SPH
-#endif // GRID_DATA_PACKAGE_FUNCTIONS_H
+#endif // DATA_PACKAGE_FUNCTIONS_H

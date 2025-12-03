@@ -29,7 +29,7 @@
 #ifndef EULERIAN_RIEMANN_SOLVER_H
 #define EULERIAN_RIEMANN_SOLVER_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "compressible_fluid.h"
 #include "riemann_solver.h"
 namespace SPH

@@ -32,7 +32,7 @@
 #ifndef BASE_PARTICLES_H
 #define BASE_PARTICLES_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
 #include "sphinxsys_variable.h"
 #include "sphinxsys_variable_array.h"

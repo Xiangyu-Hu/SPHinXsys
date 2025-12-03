@@ -30,7 +30,7 @@
 #define EMITTER_BOUNDARY_CK_H
 
 #include "base_body_part.h"
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "base_fluid_dynamics.h"
 #include "fluid_boundary_state.hpp"
 #include "particle_operation.hpp"

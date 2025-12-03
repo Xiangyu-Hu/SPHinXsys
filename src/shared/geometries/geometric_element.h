@@ -29,7 +29,7 @@
 #ifndef GEOMETRIC_ELEMENT_H
 #define GEOMETRIC_ELEMENT_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 
 namespace SPH
 {

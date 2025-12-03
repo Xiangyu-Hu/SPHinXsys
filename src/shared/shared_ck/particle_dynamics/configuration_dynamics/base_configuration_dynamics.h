@@ -30,7 +30,7 @@
 #define BASE_CONFIGURATION_DYNAMICS_H
 
 #include "algorithm_primitive.h"
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "execution_policy.h"
 
 namespace SPH

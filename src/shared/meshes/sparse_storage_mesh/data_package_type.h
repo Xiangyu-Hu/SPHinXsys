@@ -21,15 +21,15 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file grid_data_package_type.h
+ * @file data_package_type.h
  * @brief TBD.
  * @author  Xiangyu Hu
  */
 
-#ifndef GRID_DATA_PACKAGE_TYPE_H
-#define GRID_DATA_PACKAGE_TYPE_H
+#ifndef DATA_PACKAGE_TYPE_H
+#define DATA_PACKAGE_TYPE_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 
 namespace SPH
 {
@@ -57,4 +57,4 @@ class PackageDataMatrix3d
 using CellNeighborhood2d = PackageDataMatrix2d<UnsignedInt, 3>;
 using CellNeighborhood3d = PackageDataMatrix3d<UnsignedInt, 3>;
 } // namespace SPH
-#endif // GRID_DATA_PACKAGE_TYPE_H
+#endif // DATA_PACKAGE_TYPE_H
