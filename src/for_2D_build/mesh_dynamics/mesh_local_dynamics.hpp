@@ -96,20 +96,6 @@ inline void UpdateKernelIntegrals::initializeSingularPackages(
         });
 }
 //=============================================================================================//
-template <typename DataType, typename FunctionByGrid>
-void UpdateKernelIntegrals::UpdateKernel::assignByGrid(MeshVariableData<DataType> *mesh_variable,
-                                                       const Arrayi &cell_index,
-                                                       const FunctionByGrid &function_by_grid)
-{
-    UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
-    auto &pkg_data = mesh_variable[package_index];
-    mesh_for_each2d<0, pkg_size>(
-        [&](int i, int j)
-        {
-            pkg_data[i][j] = function_by_grid(Array2i(i, j));
-        });
-}
-//=============================================================================================//
 inline Real UpdateKernelIntegrals::UpdateKernel::
     computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &data_index)
 {

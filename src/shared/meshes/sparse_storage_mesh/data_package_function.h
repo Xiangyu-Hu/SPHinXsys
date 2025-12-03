@@ -47,9 +47,8 @@ template <typename DataType, int PKG_SIZE>
 DataType CornerAverage(PackageData<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
                        Arrayi corner_direction, const CellNeighborhood &neighborhood, DataType zero);
 
-template <typename CellDataType, typename PackageDataType, UnsignedInt PKG_SIZE, typename FunctionByGrid>
-CellDataType assignByGrid(PackageData<PackageDataType, PKG_SIZE> &pkg_data,
-                          const FunctionByGrid &function_by_grid, CellDataType inital_value);
+template <typename DataType, int PKG_SIZE, typename FunctionByIndex>
+void assignByDataIndex(PackageData<DataType, PKG_SIZE> &pkg_data, const FunctionByIndex &function_by_index);
 
 template <typename DataType, int PKG_SIZE>
 class ProbeMesh

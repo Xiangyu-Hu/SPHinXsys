@@ -405,15 +405,14 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const UnsignedInt &package_index)
         {
-            Arrayi cell_index = index_handler_.DimensionalCellIndex(pkg_1d_cell_index_[package_index]);
-            assignByGrid(
-                kernel_weight_, cell_index, [&](const Arrayi &data_index) -> Real
+            assignByDataIndex(
+                kernel_weight_[package_index], [&](const Arrayi &data_index) -> Real
                 { return computeKernelIntegral(package_index, data_index); });
-            assignByGrid(
-                kernel_gradient_, cell_index, [&](const Arrayi &data_index) -> Vecd
+            assignByDataIndex(
+                kernel_gradient_[package_index], [&](const Arrayi &data_index) -> Vecd
                 { return computeKernelGradientIntegral(package_index, data_index); });
-            assignByGrid(
-                kernel_second_gradient_, cell_index, [&](const Arrayi &data_index) -> Matd
+            assignByDataIndex(
+                kernel_second_gradient_[package_index], [&](const Arrayi &data_index) -> Matd
                 { return computeKernelSecondGradientIntegral(package_index, data_index); });
         }
 
@@ -437,9 +436,6 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         Real computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
         Vecd computeKernelGradientIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
         Matd computeKernelSecondGradientIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
-        template <typename DataType, typename FunctionByGrid>
-        void assignByGrid(MeshVariableData<DataType> *mesh_variable, const Arrayi &cell_index,
-                          const FunctionByGrid &function_by_grid);
 
         /** a cut cell is a cut by the level set. */
         /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."
@@ -492,25 +488,7 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
         MeshVariableData<int> *near_interface_id_;
         CellNeighborhood *cell_neighborhood_;
 
-        Real upwindDifference(Real sign, Real df_p, Real df_n)
-        {
-            if (sign * df_p >= 0.0 && sign * df_n >= 0.0)
-                return df_n;
-            if (sign * df_p <= 0.0 && sign * df_n <= 0.0)
-                return df_p;
-            if (sign * df_p > 0.0 && sign * df_n < 0.0)
-                return 0.0;
-
-            Real df = df_p;
-            if (sign * df_p < 0.0 && sign * df_n > 0.0)
-            {
-                Real ss = sign * (fabs(df_p) - fabs(df_n)) / (df_p - df_n);
-                if (ss > 0.0)
-                    df = df_n;
-            }
-
-            return df;
-        }
+        Real upwindDifference(Real sign, Real df_p, Real df_n);
     };
 
   protected:
@@ -593,26 +571,6 @@ class RedistanceInterface : public BaseMeshLocalDynamics
         MeshVariableData<Vecd> *phi_gradient_;
         MeshVariableData<int> *near_interface_id_;
         CellNeighborhood *cell_neighborhood_;
-
-        Real upwindDifference(Real sign, Real df_p, Real df_n)
-        {
-            if (sign * df_p >= 0.0 && sign * df_n >= 0.0)
-                return df_n;
-            if (sign * df_p <= 0.0 && sign * df_n <= 0.0)
-                return df_p;
-            if (sign * df_p > 0.0 && sign * df_n < 0.0)
-                return 0.0;
-
-            Real df = df_p;
-            if (sign * df_p < 0.0 && sign * df_n > 0.0)
-            {
-                Real ss = sign * (fabs(df_p) - fabs(df_n)) / (df_p - df_n);
-                if (ss > 0.0)
-                    df = df_n;
-            }
-
-            return df;
-        }
     };
 
   protected:

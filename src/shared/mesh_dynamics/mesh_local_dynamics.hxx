@@ -104,6 +104,26 @@ ReinitializeLevelSet::UpdateKernel::
       near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
+inline Real ReinitializeLevelSet::UpdateKernel::upwindDifference(Real sign, Real df_p, Real df_n)
+{
+    if (sign * df_p >= 0.0 && sign * df_n >= 0.0)
+        return df_n;
+    if (sign * df_p <= 0.0 && sign * df_n <= 0.0)
+        return df_p;
+    if (sign * df_p > 0.0 && sign * df_n < 0.0)
+        return 0.0;
+
+    Real df = df_p;
+    if (sign * df_p < 0.0 && sign * df_n > 0.0)
+    {
+        Real ss = sign * (fabs(df_p) - fabs(df_n)) / (df_p - df_n);
+        if (ss > 0.0)
+            df = df_n;
+    }
+
+    return df;
+}
+//=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 MarkCutInterfaces::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
