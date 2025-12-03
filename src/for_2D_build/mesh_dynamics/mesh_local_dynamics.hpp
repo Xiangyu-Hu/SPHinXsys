@@ -2,7 +2,7 @@
 #define MESH_LOCAL_DYNAMICS_2D_HPP
 
 #include "grid_data_package_function.hpp"
-#include "mesh_local_dynamics.h"
+#include "mesh_local_dynamics.hxx"
 
 namespace SPH
 {

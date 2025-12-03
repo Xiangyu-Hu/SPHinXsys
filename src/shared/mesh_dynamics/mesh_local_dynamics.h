@@ -148,13 +148,7 @@ class InitialCellTagging : public BaseMeshLocalDynamics
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : occupied_data_pkgs_(&encloser.occupied_data_pkgs_),
-              cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
-              index_handler_(encloser.index_handler_),
-              grid_spacing_(index_handler_.GridSpacing()),
-              shape_(&encloser.shape_),
-              cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const Arrayi &cell_index);
 
       protected:
@@ -185,18 +179,7 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : shape_(&encloser.shape_),
-              occupied_data_pkgs_(&encloser.occupied_data_pkgs_),
-              cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
-              index_handler_(encloser.index_handler_),
-              coarse_index_handler_(encloser.coarse_mesh_.getIndexHandler()),
-              grid_spacing_(index_handler_.GridSpacing()),
-              far_field_distance_(grid_spacing_ * (Real)index_handler_.BufferWidth()),
-              probe_coarse_phi_(ex_policy, &encloser.coarse_mesh_),
-              cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
-              cell_pkg_index_coarse_(encloser.bmv_cell_pkg_index_coarse_.DelegatedData(ex_policy)),
-              pkg_type_coarse_(encloser.dv_pkg_type_coarse_.DelegatedData(ex_policy)){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const Arrayi &cell_index);
 
       protected:
@@ -237,10 +220,7 @@ class InnerCellTagging : public BaseMeshLocalDynamics
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : occupied_data_pkgs_(&encloser.occupied_data_pkgs_),
-              index_handler_(encloser.index_handler_),
-              cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const Arrayi &cell_index);
 
       protected:
@@ -274,12 +254,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : index_handler_(encloser.index_handler_),
-              pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_.DelegatedData(ex_policy)),
-              cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
-              cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
-              num_singular_pkgs_(encloser.data_mesh_.NumSingularPackages()){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const UnsignedInt &package_index);
 
       protected:
@@ -310,12 +285,7 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : index_handler_(encloser.index_handler_),
-              pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_.DelegatedData(ex_policy)),
-              shape_(&encloser.shape_),
-              phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-              near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const UnsignedInt &index);
 
       protected:
@@ -345,10 +315,7 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_.DelegatedData(ex_policy)),
-              cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
-              phi_(encloser.mv_phi_.DelegatedData(ex_policy)){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const UnsignedInt &index);
 
       protected:
@@ -374,11 +341,7 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : index_handler_(encloser.index_handler_),
-              cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
-              cell_package_index_(encloser.bmv_cell_package_index_.DelegatedData(ex_policy)),
-              count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const Arrayi &cell_index);
 
       protected:
@@ -408,11 +371,7 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_spacing_(encloser.index_handler_.DataSpacing()),
-              phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-              phi_gradient_(encloser.mv_phi_gradient_.DelegatedData(ex_policy)),
-              cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const UnsignedInt &index);
 
       protected:
@@ -430,32 +389,20 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 
 class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 {
-    using SmoothingKernel = typename NeighborMethod<SPHAdaptation, SPHAdaptation>::SmoothingKernel;
+    using SmoothingKernel =
+        typename NeighborMethod<SPHAdaptation, SPHAdaptation>::SmoothingKernel;
 
   public:
     explicit UpdateKernelIntegrals(
-        MeshWithGridDataPackagesType &data_mesh, NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method);
+        MeshWithGridDataPackagesType &data_mesh,
+        NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method);
     virtual ~UpdateKernelIntegrals() {};
 
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-              phi_gradient_(encloser.mv_phi_gradient_.DelegatedData(ex_policy)),
-              kernel_weight_(encloser.mv_kernel_weight_.DelegatedData(ex_policy)),
-              kernel_gradient_(encloser.mv_kernel_gradient_.DelegatedData(ex_policy)),
-              kernel_second_gradient_(encloser.mv_kernel_second_gradient_.DelegatedData(ex_policy)),
-              pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_.DelegatedData(ex_policy)),
-              kernel_(ex_policy, encloser.neighbor_method_),
-              index_handler_(encloser.index_handler_),
-              data_spacing_(index_handler_.DataSpacing()),
-              cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
-              cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
-              probe_signed_distance_(ex_policy, &encloser.data_mesh_),
-              cutoff_radius_(encloser.neighbor_method_.CutOffRadius()),
-              depth_(static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const UnsignedInt &package_index)
         {
             Arrayi cell_index = index_handler_.DimensionalCellIndex(pkg_1d_cell_index_[package_index]);
@@ -536,11 +483,7 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_spacing_(encloser.index_handler_.DataSpacing()),
-              phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-              near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
-              cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const UnsignedInt &index);
 
       protected:
@@ -586,13 +529,7 @@ class MarkCutInterfaces : public BaseMeshLocalDynamics
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : index_handler_(encloser.index_handler_),
-              threshold_(index_handler_.DataSpacing() * sqrt(Dimensions)),
-              perturbation_(threshold_ * encloser.perturbation_ratio_),
-              phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-              near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
-              cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const UnsignedInt &index, Real dt = 0.0);
 
       protected:
@@ -620,12 +557,7 @@ class MarkNearInterface : public BaseMeshLocalDynamics
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : index_handler_(encloser.index_handler_),
-              threshold_(index_handler_.GridSpacing() * sqrt(Dimensions)),
-              phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-              near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
-              cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const UnsignedInt &index, Real dt = 0.0);
 
       protected:
@@ -652,12 +584,7 @@ class RedistanceInterface : public BaseMeshLocalDynamics
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : data_spacing_(encloser.index_handler_.DataSpacing()),
-              phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-              phi_gradient_(encloser.mv_phi_gradient_.DelegatedData(ex_policy)),
-              near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
-              cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const UnsignedInt &index);
 
       protected:
@@ -706,11 +633,7 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-              near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
-              cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
-              count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)){};
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(const UnsignedInt &index);
 
       protected:
