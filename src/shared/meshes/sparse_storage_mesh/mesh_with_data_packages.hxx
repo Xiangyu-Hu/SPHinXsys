@@ -132,7 +132,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::syncMeshVariablesToProbe(ExecutionPolic
 //=============================================================================================//
 template <int PKG_SIZE>
 template <typename DataType>
-DiscreteVariable<PackageDataMatrix<DataType, PKG_SIZE>> *MeshWithGridDataPackages<PKG_SIZE>::
+DiscreteVariable<PackageData<DataType, PKG_SIZE>> *MeshWithGridDataPackages<PKG_SIZE>::
     registerMeshVariable(const std::string &variable_name)
 {
     if (!is_organized_)
@@ -172,7 +172,7 @@ DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::registerMetaVari
 //=============================================================================================//
 template <int PKG_SIZE>
 template <typename DataType>
-DiscreteVariable<PackageDataMatrix<DataType, PKG_SIZE>> *MeshWithGridDataPackages<PKG_SIZE>::
+DiscreteVariable<PackageData<DataType, PKG_SIZE>> *MeshWithGridDataPackages<PKG_SIZE>::
     getMeshVariable(const std::string &variable_name)
 {
     MeshVariable<DataType> *variable =
@@ -218,7 +218,7 @@ DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
 template <int PKG_SIZE>
 template <typename DataType>
 DataType MeshWithGridDataPackages<PKG_SIZE>::
-    DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data,
+    DataValueFromGlobalIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
                              const Arrayi &global_grid_index, UnsignedInt *cell_package_index)
 {
     Arrayi cell_index_on_mesh_ = global_grid_index / PKG_SIZE;

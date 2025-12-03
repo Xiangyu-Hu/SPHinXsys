@@ -407,14 +407,14 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         {
             Arrayi cell_index = index_handler_.DimensionalCellIndex(pkg_1d_cell_index_[package_index]);
             assignByGrid(
-                kernel_weight_, cell_index, [&](const Arrayi &grid_index) -> Real
-                { return computeKernelIntegral(package_index, grid_index); });
+                kernel_weight_, cell_index, [&](const Arrayi &data_index) -> Real
+                { return computeKernelIntegral(package_index, data_index); });
             assignByGrid(
-                kernel_gradient_, cell_index, [&](const Arrayi &grid_index) -> Vecd
-                { return computeKernelGradientIntegral(package_index, grid_index); });
+                kernel_gradient_, cell_index, [&](const Arrayi &data_index) -> Vecd
+                { return computeKernelGradientIntegral(package_index, data_index); });
             assignByGrid(
-                kernel_second_gradient_, cell_index, [&](const Arrayi &grid_index) -> Matd
-                { return computeKernelSecondGradientIntegral(package_index, grid_index); });
+                kernel_second_gradient_, cell_index, [&](const Arrayi &data_index) -> Matd
+                { return computeKernelSecondGradientIntegral(package_index, data_index); });
         }
 
       protected:
@@ -434,9 +434,9 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         ProbeSignedDistance probe_signed_distance_;
 
         Real cutoff_radius_, depth_;
-        Real computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &grid_index);
-        Vecd computeKernelGradientIntegral(const UnsignedInt &package_index, const Arrayi &grid_index);
-        Matd computeKernelSecondGradientIntegral(const UnsignedInt &package_index, const Arrayi &grid_index);
+        Real computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
+        Vecd computeKernelGradientIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
+        Matd computeKernelSecondGradientIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
         template <typename DataType, typename FunctionByGrid>
         void assignByGrid(MeshVariableData<DataType> *mesh_variable, const Arrayi &cell_index,
                           const FunctionByGrid &function_by_grid);

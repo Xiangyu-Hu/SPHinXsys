@@ -44,11 +44,11 @@ DataPackagePair GeneralNeighbourIndexShift(
     UnsignedInt package_index, CellNeighborhood *neighbour, const Arrayi &shift_index);
 
 template <typename DataType, int PKG_SIZE>
-DataType CornerAverage(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
+DataType CornerAverage(PackageData<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
                        Arrayi corner_direction, const CellNeighborhood &neighborhood, DataType zero);
 
 template <typename CellDataType, typename PackageDataType, UnsignedInt PKG_SIZE, typename FunctionByGrid>
-CellDataType assignByGrid(PackageDataMatrix<PackageDataType, PKG_SIZE> &pkg_data,
+CellDataType assignByGrid(PackageData<PackageDataType, PKG_SIZE> &pkg_data,
                           const FunctionByGrid &function_by_grid, CellDataType inital_value);
 
 template <typename DataType, int PKG_SIZE>
@@ -63,7 +63,7 @@ class ProbeMesh
     DataType operator()(const Vecd &position);
 
   protected:
-    PackageDataMatrix<DataType, PKG_SIZE> *pkg_data_;
+    PackageData<DataType, PKG_SIZE> *pkg_data_;
     IndexHandler index_handler_;
     UnsignedInt *cell_pkg_index_;
     CellNeighborhood *cell_neighborhood_;

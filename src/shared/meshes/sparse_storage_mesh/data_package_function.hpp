@@ -38,7 +38,7 @@ DataPackagePair GeneralNeighbourIndexShift(
 }
 //=============================================================================================//
 template <typename DataType, int PKG_SIZE>
-DataType CornerAverage(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
+DataType CornerAverage(PackageData<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
                        Arrayi corner_direction, const CellNeighborhood &neighborhood, DataType zero)
 {
     DataType average = zero;
@@ -75,7 +75,7 @@ DataType ProbeMesh<DataType, PKG_SIZE>::operator()(const Vecd &position)
 }
 //=============================================================================================//
 template <typename CellDataType, typename PackageDataType, UnsignedInt PKG_SIZE, typename FunctionByGrid>
-CellDataType assignByGrid(PackageDataMatrix<PackageDataType, PKG_SIZE> &pkg_data,
+CellDataType assignByGrid(PackageData<PackageDataType, PKG_SIZE> &pkg_data,
                           const FunctionByGrid &function_by_grid, CellDataType inital_value)
 {
     CellDataType value = inital_value;

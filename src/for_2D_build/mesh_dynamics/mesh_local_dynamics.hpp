@@ -111,9 +111,9 @@ void UpdateKernelIntegrals::UpdateKernel::assignByGrid(MeshVariableData<DataType
 }
 //=============================================================================================//
 inline Real UpdateKernelIntegrals::UpdateKernel::
-    computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &grid_index)
+    computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &data_index)
 {
-    Real phi = phi_[package_index](grid_index);
+    Real phi = phi_[package_index](data_index);
 
     Real integral(0);
     if (fabs(phi) < cutoff_radius_)
@@ -123,7 +123,7 @@ inline Real UpdateKernelIntegrals::UpdateKernel::
             [&](int i, int j)
             {
                 DataPackagePair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
-                    package_index, cell_neighborhood_, grid_index + Arrayi(i, j));
+                    package_index, cell_neighborhood_, data_index + Arrayi(i, j));
                 Real phi_neighbor = phi_[neighbor_meta.first](neighbor_meta.second);
                 if (phi_neighbor > -data_spacing_)
                 {
@@ -140,9 +140,9 @@ inline Real UpdateKernelIntegrals::UpdateKernel::
 }
 //=============================================================================================//
 inline Vecd UpdateKernelIntegrals::UpdateKernel::
-    computeKernelGradientIntegral(const UnsignedInt &package_index, const Arrayi &grid_index)
+    computeKernelGradientIntegral(const UnsignedInt &package_index, const Arrayi &data_index)
 {
-    Real phi = phi_[package_index](grid_index);
+    Real phi = phi_[package_index](data_index);
 
     Vecd integral = Vecd::Zero();
     if (fabs(phi) < cutoff_radius_)
@@ -152,7 +152,7 @@ inline Vecd UpdateKernelIntegrals::UpdateKernel::
             [&](int i, int j)
             {
                 DataPackagePair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
-                    package_index, cell_neighborhood_, grid_index + Arrayi(i, j));
+                    package_index, cell_neighborhood_, data_index + Arrayi(i, j));
                 Real phi_neighbor = phi_[neighbor_meta.first](neighbor_meta.second);
                 if (phi_neighbor > -data_spacing_)
                 {
@@ -171,9 +171,9 @@ inline Vecd UpdateKernelIntegrals::UpdateKernel::
 }
 //=============================================================================================//
 inline Matd UpdateKernelIntegrals::UpdateKernel::
-    computeKernelSecondGradientIntegral(const UnsignedInt &package_index, const Arrayi &grid_index)
+    computeKernelSecondGradientIntegral(const UnsignedInt &package_index, const Arrayi &data_index)
 {
-    Real phi = phi_[package_index](grid_index);
+    Real phi = phi_[package_index](data_index);
 
     Matd integral = Matd::Zero();
     if (fabs(phi) < cutoff_radius_)
@@ -183,7 +183,7 @@ inline Matd UpdateKernelIntegrals::UpdateKernel::
             [&](int i, int j)
             {
                 DataPackagePair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
-                    package_index, cell_neighborhood_, grid_index + Arrayi(i, j));
+                    package_index, cell_neighborhood_, data_index + Arrayi(i, j));
                 Real phi_neighbor = phi_[neighbor_meta.first](neighbor_meta.second);
                 if (phi_neighbor > -data_spacing_)
                 {
@@ -237,7 +237,7 @@ inline void MarkCutInterfaces::UpdateKernel::update(const UnsignedInt &package_i
     auto &near_interface_id_addrs = near_interface_id_[package_index];
 
     // corner averages, note that the first row and first column are not used
-    PackageDataMatrix<Real, 5> corner_averages;
+    PackageData<Real, 5> corner_averages;
     mesh_for_each2d<0, 5>(
         [&](int i, int j)
         {
