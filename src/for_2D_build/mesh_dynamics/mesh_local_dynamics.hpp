@@ -6,21 +6,6 @@
 
 namespace SPH
 {
-//=================================================================================================//
-inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &package_index)
-{
-    UnsignedInt index_1d = pkg_1d_cell_index_[package_index];
-    MeshVariableData<Real> &grid_phi = phi_[package_index];
-    Real phi0 = grid_phi[0][0];
-    cell_contain_id_[index_1d] = phi0 > 0.0 ? 1 : -1;
-    bool is_sign_changed = mesh_any_of2d<0, pkg_size>(
-        [&](int i, int j) -> bool
-        {
-            return grid_phi[i][j] * phi0 < 0.0;
-        });
-    if (is_sign_changed)
-        cell_contain_id_[index_1d] = 0;
-}
 //=============================================================================================//
 inline void UpdateKernelIntegrals::initializeSingularPackages(
     UnsignedInt package_index, Real far_field_level_set)

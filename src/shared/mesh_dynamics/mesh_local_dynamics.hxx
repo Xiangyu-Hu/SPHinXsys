@@ -62,6 +62,21 @@ NearInterfaceCellTagging::UpdateKernel::
       cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
       phi_(encloser.mv_phi_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
+inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &package_index)
+{
+    UnsignedInt index_1d = pkg_1d_cell_index_[package_index];
+    MeshVariableData<Real> &pkg_phi = phi_[package_index];
+    Real phi0 = pkg_phi(Arrayi::Zero());
+    cell_contain_id_[index_1d] = phi0 > 0.0 ? 1 : -1;
+    bool is_sign_changed = mesh_any_of(Arrayi::Zero(), Arrayi::Constant(pkg_size),
+                                       [&](const Arrayi &data_index) -> bool
+                                       {
+                                           return pkg_phi(data_index) * phi0 < 0.0;
+                                       });
+    if (is_sign_changed)
+        cell_contain_id_[index_1d] = 0;
+}
+//=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 CellContainDiffusion::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
