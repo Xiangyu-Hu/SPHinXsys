@@ -78,6 +78,22 @@ UpdateLevelSetGradient::UpdateKernel::
       phi_gradient_(encloser.mv_phi_gradient_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
+inline void UpdateLevelSetGradient::UpdateKernel::update(const UnsignedInt &package_index)
+{
+    mesh_for_each(Arrayi::Zero(), Arrayi::Constant(pkg_size),
+                  [&](const Arrayi &index)
+                  {
+                      phi_gradient_[package_index](index) =
+                          regularizedCentralDifference(
+                              phi_, cell_neighborhood_[package_index], index,
+                              [](Real dp, Real dm)
+                              {
+                                  return 0.5 * (dp + dm); // no upwinding
+                              }) /
+                          data_spacing_;
+                  });
+}
+//=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 UpdateKernelIntegrals::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)

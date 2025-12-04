@@ -58,36 +58,6 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
     }
 }
 //=============================================================================================//
-inline void UpdateLevelSetGradient::UpdateKernel::update(const UnsignedInt &package_index)
-{
-    auto &neighborhood = cell_neighborhood_[package_index];
-    auto &pkg_data = phi_gradient_[package_index];
-
-    mesh_for_each3d<0, pkg_size>(
-        [&](int i, int j, int k)
-        {
-            DataPackagePair x1 = NeighbourIndexShift<pkg_size>(
-                Arrayi(i + 1, j, k), neighborhood);
-            DataPackagePair x2 = NeighbourIndexShift<pkg_size>(
-                Arrayi(i - 1, j, k), neighborhood);
-            DataPackagePair y1 = NeighbourIndexShift<pkg_size>(
-                Arrayi(i, j + 1, k), neighborhood);
-            DataPackagePair y2 = NeighbourIndexShift<pkg_size>(
-                Arrayi(i, j - 1, k), neighborhood);
-            DataPackagePair z1 = NeighbourIndexShift<pkg_size>(
-                Arrayi(i, j, k + 1), neighborhood);
-            DataPackagePair z2 = NeighbourIndexShift<pkg_size>(
-                Arrayi(i, j, k - 1), neighborhood);
-            Real dphidx = phi_[x1.first][x1.second[0]][x1.second[1]][x1.second[2]] -
-                          phi_[x2.first][x2.second[0]][x2.second[1]][x2.second[2]];
-            Real dphidy = phi_[y1.first][y1.second[0]][y1.second[1]][y1.second[2]] -
-                          phi_[y2.first][y2.second[0]][y2.second[1]][y2.second[2]];
-            Real dphidz = phi_[z1.first][z1.second[0]][z1.second[1]][z1.second[2]] -
-                          phi_[z2.first][z2.second[0]][z2.second[1]][z2.second[2]];
-            pkg_data[i][j][k] = 0.5 * Vecd(dphidx, dphidy, dphidz) / data_spacing_;
-        });
-}
-//=============================================================================================//
 inline void UpdateKernelIntegrals::initializeSingularPackages(UnsignedInt package_index, Real far_field_level_set)
 {
     auto &kernel_weight = mv_kernel_weight_.Data()[package_index];
