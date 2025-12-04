@@ -38,6 +38,7 @@
 #include "mesh_iterators.hpp"
 #include "mesh_with_data_packages.hpp"
 #include "neighbor_method.h"
+#include "data_package_function.hpp"
 
 namespace SPH
 {

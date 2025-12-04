@@ -1,7 +1,7 @@
 #include "mesh_local_dynamics.h"
 
-#ifndef MESH_LOCAL_DYNAMICS_HXX
-#define MESH_LOCAL_DYNAMICS_HXX
+#ifndef MESH_LOCAL_DYNAMICS_HPP
+#define MESH_LOCAL_DYNAMICS_HPP
 
 namespace SPH
 {
@@ -502,7 +502,47 @@ DiffuseLevelSetSign::UpdateKernel::
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
       count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
+inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package_index)
+{
+    mesh_for_each(
+        Arrayi::Zero(), Arrayi::Constant(pkg_size),
+        [&](const Arrayi &index)
+        {
+            if (near_interface_id_[package_index](index) == 3) // check undetermined only
+            {
+                Real phi = phi_[package_index](index);
+                if (mesh_any_of(
+                        Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
+                        [&](const Arrayi &shift) -> bool
+                        {
+                            DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
+                                index + shift, cell_neighborhood_[package_index]);
+                            return near_interface_id_[neighbour_index.first](neighbour_index.second) == 1;
+                        }))
+                {
+                    phi_[package_index](index) = ABS(phi);
+                    near_interface_id_[package_index](index) = 1; // mark as positive band
+                    AtomicRef<UnsignedInt> count_modified_data(*count_modified_);
+                    ++count_modified_data;
+                }
+                else if (mesh_any_of(
+                             Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
+                             [&](const Arrayi &shift) -> bool
+                             {
+                                 DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
+                                     index + shift, cell_neighborhood_[package_index]);
+                                 return near_interface_id_[neighbour_index.first](neighbour_index.second) == -1;
+                             }))
+                {
+                    phi_[package_index](index) = -ABS(phi);
+                    near_interface_id_[package_index](index) = -1; // mark as negative band
+                    AtomicRef<UnsignedInt> count_modified_data(*count_modified_);
+                    ++count_modified_data;
+                }
+            }
+        });
+}
 //=================================================================================================//
 } // namespace SPH
 
-#endif // MESH_LOCAL_DYNAMICS_HXX
+#endif // MESH_LOCAL_DYNAMICS_HPP
