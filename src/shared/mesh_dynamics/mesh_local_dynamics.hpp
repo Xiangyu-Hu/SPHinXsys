@@ -161,8 +161,8 @@ UpdateKernelIntegrals::UpdateKernel::
       cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
       probe_signed_distance_(ex_policy, &encloser.data_mesh_),
       cutoff_radius_(encloser.neighbor_method_.CutOffRadius()),
-      depth_(static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))),
-      bounding_box_(BoundingBoxi(Arrayi::Constant(depth_))) {}
+      bounding_box_(BoundingBoxi(Arrayi::Constant(
+          static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))))) {}
 //=================================================================================================//
 inline void UpdateKernelIntegrals::UpdateKernel::update(const UnsignedInt &package_index)
 {
@@ -175,6 +175,19 @@ inline void UpdateKernelIntegrals::UpdateKernel::update(const UnsignedInt &packa
     assignByDataIndex(
         kernel_second_gradient_[package_index], [&](const Arrayi &data_index) -> Matd
         { return computeKernelSecondGradientIntegral(package_index, data_index); });
+}
+//=================================================================================================//
+inline Real UpdateKernelIntegrals::UpdateKernel::
+    CutCellVolumeFraction(Real phi, const Vecd &phi_gradient, Real data_spacing)
+{
+    Real squared_norm_inv = 1.0 / (phi_gradient.squaredNorm() + TinyReal);
+    Real volume_fraction(0);
+    for (UnsignedInt i = 0; i != Dimensions; ++i)
+    {
+        volume_fraction += phi_gradient[i] * phi_gradient[i] * squared_norm_inv *
+                           Heaviside(phi / (ABS(phi_gradient[i]) + TinyReal), 0.5 * data_spacing);
+    }
+    return volume_fraction;
 }
 //=================================================================================================//
 template <typename DataType, typename FunctionByDataIndex>
@@ -544,5 +557,4 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package
 }
 //=================================================================================================//
 } // namespace SPH
-
 #endif // MESH_LOCAL_DYNAMICS_HPP

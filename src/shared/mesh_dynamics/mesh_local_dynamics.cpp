@@ -84,6 +84,12 @@ void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
     }
 }
 //=============================================================================================//
+bool InnerCellTagging::UpdateKernel::isInitiallyTagged(const Arrayi &cell_index)
+{
+    UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
+    return cell_pkg_index_[index_1d] == 2;
+}
+//=============================================================================================//
 bool InnerCellTagging::UpdateKernel::isNearInitiallyTagged(const Arrayi &cell_index)
 {
     return mesh_any_of(

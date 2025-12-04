@@ -230,11 +230,7 @@ class InnerCellTagging : public BaseMeshLocalDynamics
         UnsignedInt *cell_pkg_index_;
 
         bool isNearInitiallyTagged(const Arrayi &cell_index);
-        bool isInitiallyTagged(const Arrayi &cell_index)
-        {
-            UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
-            return cell_pkg_index_[index_1d] == 2;
-        };
+        bool isInitiallyTagged(const Arrayi &cell_index);
     };
 
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
@@ -422,7 +418,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         UnsignedInt *cell_pkg_index_;
         ProbeSignedDistance probe_signed_distance_;
 
-        Real cutoff_radius_, depth_;
+        Real cutoff_radius_;
         BoundingBoxi bounding_box_;
         Real computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
         Vecd computeKernelGradientIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
@@ -432,17 +428,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."
          * Hu, X. Y., et al., Proceedings of the Summer Program. Vol. 301. Stanford, CA, USA:
          * Center for Turbulence Research, Stanford University, 2010.*/
-        Real CutCellVolumeFraction(Real phi, const Vecd &phi_gradient, Real data_spacing)
-        {
-            Real squared_norm_inv = 1.0 / (phi_gradient.squaredNorm() + TinyReal);
-            Real volume_fraction(0);
-            for (UnsignedInt i = 0; i != Dimensions; ++i)
-            {
-                volume_fraction += phi_gradient[i] * phi_gradient[i] * squared_norm_inv *
-                                   Heaviside(phi / (ABS(phi_gradient[i]) + TinyReal), 0.5 * data_spacing);
-            }
-            return volume_fraction;
-        }
+        Real CutCellVolumeFraction(Real phi, const Vecd &phi_gradient, Real data_spacing);
 
         template <typename DataType, typename FunctionByDataIndex>
         DataType computeIntegral(Real phi, const UnsignedInt &package_index, const Arrayi &grid_index,
