@@ -422,6 +422,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         ProbeSignedDistance probe_signed_distance_;
 
         Real cutoff_radius_, depth_;
+        BoundingBoxi bounding_box_;
         Real computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
         Vecd computeKernelGradientIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
         Matd computeKernelSecondGradientIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
@@ -441,6 +442,10 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
             }
             return volume_fraction;
         }
+
+        template <typename DataType, typename FunctionByDataIndex>
+        DataType computeIntegral(Real phi, const UnsignedInt &package_index, const Arrayi &grid_index,
+                                 const DataType &initial_value, const FunctionByDataIndex &function_by_index);
     };
 
   private:

@@ -161,7 +161,8 @@ UpdateKernelIntegrals::UpdateKernel::
       cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
       probe_signed_distance_(ex_policy, &encloser.data_mesh_),
       cutoff_radius_(encloser.neighbor_method_.CutOffRadius()),
-      depth_(static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))) {}
+      depth_(static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))),
+      bounding_box_(BoundingBoxi(Arrayi::Constant(depth_))) {}
 //=================================================================================================//
 inline void UpdateKernelIntegrals::UpdateKernel::update(const UnsignedInt &package_index)
 {
@@ -174,6 +175,69 @@ inline void UpdateKernelIntegrals::UpdateKernel::update(const UnsignedInt &packa
     assignByDataIndex(
         kernel_second_gradient_[package_index], [&](const Arrayi &data_index) -> Matd
         { return computeKernelSecondGradientIntegral(package_index, data_index); });
+}
+//=================================================================================================//
+template <typename DataType, typename FunctionByDataIndex>
+DataType UpdateKernelIntegrals::UpdateKernel::
+    computeIntegral(Real phi, const UnsignedInt &package_index, const Arrayi &grid_index,
+                    const DataType &initial_value, const FunctionByDataIndex &function_by_index)
+{
+    DataType integral = initial_value;
+    if (fabs(phi) < cutoff_radius_)
+    {
+        mesh_for_each(
+            bounding_box_.lower_, bounding_box_.upper_ + Arrayi::Ones(),
+            [&](const Arrayi &search_index)
+            {
+                DataPackagePair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
+                    package_index, cell_neighborhood_, grid_index + search_index);
+                Real phi_neighbor = phi_[neighbor_meta.first](neighbor_meta.second);
+                if (phi_neighbor > -data_spacing_)
+                {
+                    Vecd phi_gradient = phi_gradient_[neighbor_meta.first](neighbor_meta.second);
+                    Vecd displacement = -search_index.cast<Real>().matrix() * data_spacing_;
+                    if (displacement.norm() < cutoff_radius_)
+                        integral += function_by_index(displacement) *
+                                    CutCellVolumeFraction(phi_neighbor, phi_gradient, data_spacing_);
+                }
+            });
+    }
+    return integral;
+}
+//=============================================================================================//
+inline Real UpdateKernelIntegrals::UpdateKernel::
+    computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &data_index)
+{
+    Real phi = phi_[package_index](data_index);
+    Real integral = computeIntegral(phi, package_index, data_index, 0.0,
+                                    [&](const Vecd &displacement) -> Real
+                                    { return kernel_.W(displacement); });
+    return phi > cutoff_radius_ ? 1.0 : integral * data_spacing_ * data_spacing_;
+}
+//=============================================================================================//
+inline Vecd UpdateKernelIntegrals::UpdateKernel::
+    computeKernelGradientIntegral(const UnsignedInt &package_index, const Arrayi &data_index)
+{
+    Real phi = phi_[package_index](data_index);
+    Vecd integral = Vecd::Zero();
+    integral = computeIntegral(phi, package_index, data_index, integral,
+                               [&](const Vecd &displacement) -> Vecd
+                               { return kernel_.dW(displacement) * displacement /
+                                        (displacement.norm() + TinyReal); });
+    return integral * data_spacing_ * data_spacing_;
+}
+//=============================================================================================//
+inline Matd UpdateKernelIntegrals::UpdateKernel::
+    computeKernelSecondGradientIntegral(const UnsignedInt &package_index, const Arrayi &data_index)
+{
+    Real phi = phi_[package_index](data_index);
+    Matd integral = Matd::Zero();
+    integral = computeIntegral(phi, package_index, data_index, integral,
+                               [&](const Vecd &displacement) -> Matd
+                               { return kernel_.d2W(displacement) *
+                                        displacement * displacement.transpose() /
+                                        (displacement.squaredNorm() + TinyReal); });
+    return integral * data_spacing_ * data_spacing_;
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
