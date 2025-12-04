@@ -7,22 +7,6 @@
 namespace SPH
 {
 //=============================================================================================//
-inline void UpdateKernelIntegrals::initializeSingularPackages(
-    UnsignedInt package_index, Real far_field_level_set)
-{
-    auto &kernel_weight = mv_kernel_weight_.Data()[package_index];
-    auto &kernel_gradient = mv_kernel_gradient_.Data()[package_index];
-    auto &kernel_second_gradient = mv_kernel_second_gradient_.Data()[package_index];
-
-    mesh_for_each2d<0, pkg_size>(
-        [&](int i, int j)
-        {
-            kernel_weight[i][j] = far_field_level_set < 0.0 ? 0 : 1.0;
-            kernel_gradient[i][j] = Vec2d::Zero();
-            kernel_second_gradient[i][j] = Mat2d::Zero();
-        });
-}
-//=============================================================================================//
 inline Real UpdateKernelIntegrals::UpdateKernel::
     computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &data_index)
 {

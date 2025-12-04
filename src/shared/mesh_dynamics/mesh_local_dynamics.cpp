@@ -206,6 +206,22 @@ UpdateKernelIntegrals::UpdateKernelIntegrals(
     initializeSingularPackages(0, -far_field_distance);
     initializeSingularPackages(1, far_field_distance);
 }
+//=================================================================================================//
+void UpdateKernelIntegrals::initializeSingularPackages(
+    UnsignedInt package_index, Real far_field_level_set)
+{
+    auto &kernel_weight = mv_kernel_weight_.Data()[package_index];
+    auto &kernel_gradient = mv_kernel_gradient_.Data()[package_index];
+    auto &kernel_second_gradient = mv_kernel_second_gradient_.Data()[package_index];
+
+    mesh_for_each(Arrayi::Zero(), Arrayi::Constant(pkg_size),
+                  [&](const Arrayi &data_index)
+                  {
+                      kernel_weight(data_index) = far_field_level_set < 0.0 ? 0 : 1.0;
+                      kernel_gradient(data_index) = Vecd::Zero();
+                      kernel_second_gradient(data_index) = Matd::Zero();
+                  });
+}
 //=============================================================================================//
 MarkCutInterfaces::MarkCutInterfaces(MeshWithGridDataPackagesType &data_mesh, Real perturbation_ratio)
     : BaseMeshLocalDynamics(data_mesh),
