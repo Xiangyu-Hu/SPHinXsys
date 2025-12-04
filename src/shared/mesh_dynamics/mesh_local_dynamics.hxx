@@ -409,6 +409,90 @@ RedistanceInterface::UpdateKernel::
       phi_gradient_(encloser.mv_phi_gradient_.DelegatedData(ex_policy)),
       near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)) {}
+//=============================================================================================//
+inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package_index)
+{
+    mesh_for_each(
+        Arrayi::Zero(), Arrayi::Constant(pkg_size),
+        [&](const Arrayi &index)
+        {
+            int near_interface_id = near_interface_id_[package_index](index);
+            if (near_interface_id == 0)
+            {
+                bool positive_band = false;
+                bool negative_band = false;
+                mesh_for_each(
+                    Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
+                    [&](const Arrayi &shift)
+                    {
+                        DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
+                            index + shift, cell_neighborhood_[package_index]);
+                        int neighbor_near_interface_id =
+                            near_interface_id_[neighbour_index.first](neighbour_index.second);
+                        if (neighbor_near_interface_id >= 1)
+                            positive_band = true;
+                        if (neighbor_near_interface_id <= -1)
+                            negative_band = true;
+                    });
+                if (positive_band == false)
+                {
+                    Real min_distance_p = 5.0 * data_spacing_;
+                    mesh_for_each(
+                        Arrayi::Constant(-4), Arrayi::Constant(5), // check in the 4x4x4 neighborhood
+                        [&](const Arrayi &shift)
+                        {
+                            DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
+                                index + shift, cell_neighborhood_[package_index]);
+                            auto &neighbor_phi = phi_[neighbour_index.first];
+                            auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
+                            auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
+                            if (neighbor_near_interface_id(neighbour_index.second) >= 1)
+                            {
+                                Real phi_p_ = neighbor_phi(neighbour_index.second);
+                                Vecd norm_to_face = neighbor_phi_gradient(neighbour_index.second);
+                                norm_to_face /= norm_to_face.norm() + TinyReal;
+                                min_distance_p = SMIN(
+                                    min_distance_p,
+                                    (Vecd(shift.cast<Real>()) * data_spacing_ + phi_p_ * norm_to_face).norm());
+                            }
+                        });
+                    phi_[package_index](index) = -min_distance_p;
+                    // this immediate switch of near interface id
+                    // does not intervening with the identification of unresolved interface
+                    // based on the assumption that positive false_and negative bands are not close to each other
+                    near_interface_id_[package_index](index) = -1;
+                }
+                if (negative_band == false)
+                {
+                    Real min_distance_n = 5.0 * data_spacing_;
+                    mesh_for_each(
+                        Arrayi::Constant(-4), Arrayi::Constant(5), // check in the 4x4x4 neighborhood
+                        [&](const Arrayi &shift)
+                        {
+                            DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
+                                index + shift, cell_neighborhood_[package_index]);
+                            auto &neighbor_phi = phi_[neighbour_index.first];
+                            auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
+                            auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
+                            if (neighbor_near_interface_id(neighbour_index.second) <= -1)
+                            {
+                                Real phi_n_ = neighbor_phi(neighbour_index.second);
+                                Vecd norm_to_face = neighbor_phi_gradient(neighbour_index.second);
+                                norm_to_face /= norm_to_face.norm() + TinyReal;
+                                min_distance_n = SMIN(
+                                    min_distance_n,
+                                    (Vecd(shift.cast<Real>()) * data_spacing_ - phi_n_ * norm_to_face).norm());
+                            }
+                        });
+                    phi_[package_index](index) = min_distance_n;
+                    // this immediate switch of near interface id
+                    // does not intervening with the identification of unresolved interface
+                    // based on the assumption that positive false_and negative bands are not close to each other
+                    near_interface_id_[package_index](index) = 1;
+                }
+            }
+        });
+}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 DiffuseLevelSetSign::UpdateKernel::
