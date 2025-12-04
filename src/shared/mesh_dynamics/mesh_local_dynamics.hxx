@@ -70,6 +70,42 @@ CellContainDiffusion::UpdateKernel::
       cell_package_index_(encloser.bmv_cell_package_index_.DelegatedData(ex_policy)),
       count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
+inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
+{
+    UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
+    if (cell_contain_id_[index_1d] == 2)
+    {
+        if (mesh_any_of(
+                Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+                index_handler_.AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                [&](const Arrayi &index)
+                {
+                    UnsignedInt neighbor_1d = index_handler_.LinearCellIndex(index);
+                    return cell_contain_id_[neighbor_1d] == -1;
+                }))
+        {
+            cell_contain_id_[index_1d] = -1;
+            cell_package_index_[index_1d] = 0; // inside far field package updated
+            AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
+            ++count_modified_cells;
+        }
+        else if (mesh_any_of(
+                     Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+                     index_handler_.AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                     [&](const Arrayi &index)
+                     {
+                         UnsignedInt neighbor_1d = index_handler_.LinearCellIndex(index);
+                         return cell_contain_id_[neighbor_1d] == 1;
+                     }))
+        {
+            cell_contain_id_[index_1d] = 1;
+            cell_package_index_[index_1d] = 1; // outside far field package updated
+            AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
+            ++count_modified_cells;
+        }
+    }
+}
+//=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 UpdateLevelSetGradient::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
