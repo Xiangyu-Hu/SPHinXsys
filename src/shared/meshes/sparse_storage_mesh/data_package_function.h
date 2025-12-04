@@ -50,6 +50,13 @@ DataType CornerAverage(PackageData<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_i
 template <typename DataType, int PKG_SIZE, typename FunctionByIndex>
 void assignByDataIndex(PackageData<DataType, PKG_SIZE> &pkg_data, const FunctionByIndex &function_by_index);
 
+template <int PKG_SIZE, typename RegularizeFunction>
+Vec2d regularizedCentralDifference(PackageData<Real, PKG_SIZE> *input, const CellNeighborhood2d &neighborhood,
+                                   const Array2i &data_index, const RegularizeFunction &regularize_function);
+
+template <int PKG_SIZE, typename RegularizeFunction>
+Vec3d regularizedCentralDifference(PackageData<Real, PKG_SIZE> *input, const CellNeighborhood3d &neighborhood,
+                                   const Array3i &data_index, const RegularizeFunction &regularize_function);
 template <typename DataType, int PKG_SIZE>
 class ProbeMesh
 {

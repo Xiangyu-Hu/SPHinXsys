@@ -85,6 +85,49 @@ void assignByDataIndex(PackageData<DataType, PKG_SIZE> &pkg_data, const Function
         });
 }
 //=============================================================================================//
+template <int PKG_SIZE, typename RegularizeFunction>
+Vec2d regularizedCentralDifference(
+    PackageData<Real, PKG_SIZE> *input, const CellNeighborhood2d &neighborhood,
+    const Array2i &data_index, const RegularizeFunction &regularize_function)
+{
+    DataPackagePair center = NeighbourIndexShift<PKG_SIZE>(data_index, neighborhood);
+    DataPackagePair x1 = NeighbourIndexShift<PKG_SIZE>(data_index + Array2i(1, 0), neighborhood);
+    DataPackagePair x2 = NeighbourIndexShift<PKG_SIZE>(data_index + Array2i(-1, 0), neighborhood);
+    DataPackagePair y1 = NeighbourIndexShift<PKG_SIZE>(data_index + Array2i(0, 1), neighborhood);
+    DataPackagePair y2 = NeighbourIndexShift<PKG_SIZE>(data_index + Array2i(0, -1), neighborhood);
+    Real dphidx_p = input[x1.first](x1.second) - input[center.first](center.second);
+    Real dphidx_m = input[center.first](center.second) - input[x2.first](x2.second);
+    Real dphidx = regularize_function(dphidx_p, dphidx_m);
+    Real dphidy_p = input[y1.first](y1.second) - input[center.first](center.second);
+    Real dphidy_m = input[center.first](center.second) - input[y2.first](y2.second);
+    Real dphidy = regularize_function(dphidy_p, dphidy_m);
+    return Vec2d(dphidx, dphidy);
+}
+//=============================================================================================//
+template <int PKG_SIZE, typename RegularizeFunction>
+Vec3d regularizedCentralDifference(
+    PackageData<Real, PKG_SIZE> *input, const CellNeighborhood3d &neighborhood,
+    const Array3i &data_index, const RegularizeFunction &regularize_function)
+{
+    DataPackagePair center = NeighbourIndexShift<PKG_SIZE>(data_index, neighborhood);
+    DataPackagePair x1 = NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(1, 0, 0), neighborhood);
+    DataPackagePair x2 = NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(-1, 0, 0), neighborhood);
+    DataPackagePair y1 = NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 1, 0), neighborhood);
+    DataPackagePair y2 = NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, -1, 0), neighborhood);
+    DataPackagePair z1 = NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 0, 1), neighborhood);
+    DataPackagePair z2 = NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 0, -1), neighborhood);
+    Real dphidx_p = input[x1.first](x1.second) - input[center.first](center.second);
+    Real dphidx_m = input[center.first](center.second) - input[x2.first](x2.second);
+    Real dphidx = regularize_function(dphidx_p, dphidx_m);
+    Real dphidy_p = input[y1.first](y1.second) - input[center.first](center.second);
+    Real dphidy_m = input[center.first](center.second) - input[y2.first](y2.second);
+    Real dphidy = regularize_function(dphidy_p, dphidy_m);
+    Real dphidz_p = input[z1.first](z1.second) - input[center.first](center.second);
+    Real dphidz_m = input[center.first](center.second) - input[z2.first](z2.second);
+    Real dphidz = regularize_function(dphidz_p, dphidz_m);
+    return Vec3d(dphidx, dphidy, dphidz);
+}
+//=============================================================================================//
 template <typename DataType, int PKG_SIZE>
 DataType ProbeMesh<DataType, PKG_SIZE>::probeDataPackage(
     UnsignedInt package_index, const Array2i &cell_index, const Vec2d &position)
