@@ -181,49 +181,6 @@ inline Matd UpdateKernelIntegrals::UpdateKernel::
     return integral * data_spacing_ * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
-inline void ReinitializeLevelSet::UpdateKernel::update(const UnsignedInt &package_index)
-{
-    auto &phi_addrs = phi_[package_index];
-    auto &near_interface_id_addrs = near_interface_id_[package_index];
-    auto &neighborhood = cell_neighborhood_[package_index];
-
-    mesh_for_each3d<0, pkg_size>(
-        [&](int i, int j, int k)
-        {
-            // only reinitialize non cut cells
-            if (near_interface_id_addrs[i][j][k] != 0)
-            {
-                Real phi_0 = phi_addrs[i][j][k];
-                Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
-                DataPackagePair x1 = NeighbourIndexShift<pkg_size>(
-                    Arrayi(i + 1, j, k), neighborhood);
-                DataPackagePair x2 = NeighbourIndexShift<pkg_size>(
-                    Arrayi(i - 1, j, k), neighborhood);
-                DataPackagePair y1 = NeighbourIndexShift<pkg_size>(
-                    Arrayi(i, j + 1, k), neighborhood);
-                DataPackagePair y2 = NeighbourIndexShift<pkg_size>(
-                    Arrayi(i, j - 1, k), neighborhood);
-                DataPackagePair z1 = NeighbourIndexShift<pkg_size>(
-                    Arrayi(i, j, k + 1), neighborhood);
-                DataPackagePair z2 = NeighbourIndexShift<pkg_size>(
-                    Arrayi(i, j, k - 1), neighborhood);
-                Real dv_x = upwindDifference(
-                    sign,
-                    phi_[x1.first][x1.second[0]][x1.second[1]][x1.second[2]] - phi_0,
-                    phi_0 - phi_[x2.first][x2.second[0]][x2.second[1]][x2.second[2]]);
-                Real dv_y = upwindDifference(
-                    sign,
-                    phi_[y1.first][y1.second[0]][y1.second[1]][y1.second[2]] - phi_0,
-                    phi_0 - phi_[y2.first][y2.second[0]][y2.second[1]][y2.second[2]]);
-                Real dv_z = upwindDifference(
-                    sign,
-                    phi_[z1.first][z1.second[0]][z1.second[1]][z1.second[2]] - phi_0,
-                    phi_0 - phi_[z2.first][z2.second[0]][z2.second[1]][z2.second[2]]);
-                phi_addrs[i][j][k] -= 0.3 * sign * (Vec3d(dv_x, dv_y, dv_z).norm() - data_spacing_);
-            }
-        });
-}
-//=============================================================================================//
 inline void MarkCutInterfaces::UpdateKernel::update(const UnsignedInt &package_index, Real dt)
 {
     auto &phi_addrs = phi_[package_index];

@@ -152,6 +152,33 @@ inline Real ReinitializeLevelSet::UpdateKernel::upwindDifference(Real sign, Real
 
     return df;
 }
+//=============================================================================================//
+inline void ReinitializeLevelSet::UpdateKernel::update(const UnsignedInt &package_index)
+{
+    auto &phi_pkg = phi_[package_index];
+    auto &near_interface_id_pkg = near_interface_id_[package_index];
+    auto &neighborhood = cell_neighborhood_[package_index];
+
+    mesh_for_each(
+        Arrayi::Zero(), Arrayi::Constant(pkg_size),
+        [&](const Arrayi &index)
+        {
+            if (near_interface_id_pkg(index) != 0)
+            {
+                Real phi_0 = phi_pkg(index);
+                Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
+
+                Vecd difference = regularizedCentralDifference(
+                    phi_, neighborhood, index,
+                    [&](Real dp, Real dm)
+                    {
+                        return upwindDifference(sign, dp, dm);
+                    });
+
+                phi_pkg(index) -= sign * (difference.norm() - data_spacing_) / Real(Dimensions);
+            }
+        });
+}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 MarkCutInterfaces::UpdateKernel::

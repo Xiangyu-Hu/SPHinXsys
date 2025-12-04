@@ -164,37 +164,6 @@ inline Matd UpdateKernelIntegrals::UpdateKernel::
     return integral * data_spacing_ * data_spacing_;
 }
 //=============================================================================================//
-inline void ReinitializeLevelSet::UpdateKernel::update(const UnsignedInt &package_index)
-{
-    auto &phi_addrs = phi_[package_index];
-    auto &near_interface_id_addrs = near_interface_id_[package_index];
-    auto &neighborhood = cell_neighborhood_[package_index];
-
-    mesh_for_each2d<0, pkg_size>(
-        [&](int i, int j)
-        {
-            // only reinitialize non cut cells
-            if (near_interface_id_addrs[i][j] != 0)
-            {
-                Real phi_0 = phi_addrs[i][j];
-                Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
-                DataPackagePair x1 = NeighbourIndexShift<pkg_size>(
-                    Arrayi(i + 1, j), neighborhood);
-                DataPackagePair x2 = NeighbourIndexShift<pkg_size>(
-                    Arrayi(i - 1, j), neighborhood);
-                DataPackagePair y1 = NeighbourIndexShift<pkg_size>(
-                    Arrayi(i, j + 1), neighborhood);
-                DataPackagePair y2 = NeighbourIndexShift<pkg_size>(
-                    Arrayi(i, j - 1), neighborhood);
-                Real dv_x = upwindDifference(sign, phi_[x1.first][x1.second[0]][x1.second[1]] - phi_0,
-                                             phi_0 - phi_[x2.first][x2.second[0]][x2.second[1]]);
-                Real dv_y = upwindDifference(sign, phi_[y1.first][y1.second[0]][y1.second[1]] - phi_0,
-                                             phi_0 - phi_[y2.first][y2.second[0]][y2.second[1]]);
-                phi_addrs[i][j] -= 0.5 * sign * (Vec2d(dv_x, dv_y).norm() - data_spacing_);
-            }
-        });
-}
-//=============================================================================================//
 inline void MarkCutInterfaces::UpdateKernel::update(const UnsignedInt &package_index, Real dt)
 {
     auto &phi_addrs = phi_[package_index];
