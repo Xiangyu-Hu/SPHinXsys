@@ -30,9 +30,9 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
         if (mesh_any_of(
                 Arrayi::Zero().max(cell_index - Arrayi::Ones()),
                 index_handler_.AllCells().min(cell_index + 2 * Arrayi::Ones()),
-                [&](int l, int m)
+                [&](const Arrayi &index)
                 {
-                    UnsignedInt neighbor_1d = index_handler_.LinearCellIndex(Arrayi(l, m));
+                    UnsignedInt neighbor_1d = index_handler_.LinearCellIndex(index);
                     return cell_contain_id_[neighbor_1d] == -1;
                 }))
         {
@@ -44,9 +44,9 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
         else if (mesh_any_of(
                      Arrayi::Zero().max(cell_index - Arrayi::Ones()),
                      index_handler_.AllCells().min(cell_index + 2 * Arrayi::Ones()),
-                     [&](int l, int m)
+                     [&](const Arrayi &index)
                      {
-                         UnsignedInt neighbor_1d = index_handler_.LinearCellIndex(Arrayi(l, m));
+                         UnsignedInt neighbor_1d = index_handler_.LinearCellIndex(index);
                          return cell_contain_id_[neighbor_1d] == 1;
                      }))
         {

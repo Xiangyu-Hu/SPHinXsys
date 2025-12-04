@@ -79,7 +79,7 @@ Array3i mesh_find_if(const Array3i &lower, const Array3i &upper, const FunctionO
         for (int m = lower[1]; m != upper[1]; ++m)
             for (int n = lower[2]; n != upper[2]; ++n)
             {
-                if (function(l, m, n))
+                if (function(Array3i(l, m, n)))
                     return Array3i(l, m, n);
             }
     return upper;

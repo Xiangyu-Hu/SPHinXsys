@@ -83,6 +83,17 @@ void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
         occupied_data_pkgs_->push_back(std::make_pair(index_1d, 0)); // inner package
     }
 }
+//=============================================================================================//
+bool InnerCellTagging::UpdateKernel::isNearInitiallyTagged(const Arrayi &cell_index)
+{
+    return mesh_any_of(
+        Array2i::Zero().max(cell_index - Array2i::Ones()),
+        index_handler_.AllCells().min(cell_index + 2 * Array2i::Ones()),
+        [&](const Arrayi &index)
+        {
+            return isInitiallyTagged(index);
+        });
+}
 //=================================================================================================//
 InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh), dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
@@ -127,6 +138,36 @@ InitializeBasicPackageData::InitializeBasicPackageData(
     data_mesh.addMeshVariableToWrite<Real>("LevelSet");
     initializeSingularPackages(0, -far_field_distance);
     initializeSingularPackages(1, far_field_distance);
+}
+//=============================================================================================//
+void InitializeBasicPackageData::initializeSingularPackages(
+    const UnsignedInt package_index, Real far_field_level_set)
+{
+    auto &phi = mv_phi_.Data()[package_index];
+    auto &near_interface_id = mv_near_interface_id_.Data()[package_index];
+    auto &phi_gradient = mv_phi_gradient_.Data()[package_index];
+
+    mesh_for_each(Arrayi::Zero(), Arrayi::Constant(pkg_size),
+                  [&](const Arrayi &data_index)
+                  {
+                      phi(data_index) = far_field_level_set;
+                      near_interface_id(data_index) = far_field_level_set < 0.0 ? -2 : 2;
+                      phi_gradient(data_index) = Vecd::Ones();
+                  });
+}
+//=============================================================================================//
+void InitializeBasicPackageData::UpdateKernel::update(const UnsignedInt &package_index)
+{
+    auto &phi = phi_[package_index];
+    auto &near_interface_id = near_interface_id_[package_index];
+    Arrayi cell_index = index_handler_.DimensionalCellIndex(pkg_1d_cell_index_[package_index]);
+    mesh_for_each(Arrayi::Zero(), Arrayi::Constant(pkg_size),
+                  [&](const Arrayi &data_index)
+                  {
+                      Vec2d position = index_handler_.DataPositionFromIndex(cell_index, data_index);
+                      phi(data_index) = shape_->findSignedDistance(position);
+                      near_interface_id(data_index) = phi(data_index) < 0.0 ? -2 : 2;
+                  });
 }
 //=============================================================================================//
 NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh)

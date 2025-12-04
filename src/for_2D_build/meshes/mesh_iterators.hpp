@@ -71,7 +71,7 @@ Array2i mesh_find_if(const Array2i &lower, const Array2i &upper, const FunctionO
     for (int l = lower[0]; l != upper[0]; ++l)
         for (int m = lower[1]; m != upper[1]; ++m)
         {
-            if (function(l, m))
+            if (function(Array2i(l, m)))
                 return Array2i(l, m);
         }
     return upper;
