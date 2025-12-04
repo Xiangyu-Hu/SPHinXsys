@@ -33,7 +33,7 @@
 #include "all_mesh_dynamics.h"
 #include "base_geometry.h"
 #include "kernel_tabulated_ck.h"
-#include "mesh_dynamics.h"
+#include "mesh_dynamics_algorithm.h"
 #include "mesh_local_dynamics.hpp"
 #include "mesh_with_data_packages.hpp"
 #include "sphinxsys_variable.h"

@@ -31,7 +31,7 @@
 #ifndef ALL_MESH_DYNAMICS_H
 #define ALL_MESH_DYNAMICS_H
 
-#include "mesh_dynamics.h"
+#include "mesh_dynamics_algorithm.h"
 #include "mesh_local_dynamics.hpp"
 
 namespace SPH

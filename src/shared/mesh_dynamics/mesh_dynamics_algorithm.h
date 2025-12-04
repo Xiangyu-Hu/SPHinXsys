@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	mesh_dynamics.h
+ * @file 	mesh_dynamics_algorithm.h
  * @brief TBD
  * @author	Chi Zhang and Xiangyu Hu
  */

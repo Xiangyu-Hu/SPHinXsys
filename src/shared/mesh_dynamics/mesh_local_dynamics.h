@@ -403,18 +403,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(const UnsignedInt &package_index)
-        {
-            assignByDataIndex(
-                kernel_weight_[package_index], [&](const Arrayi &data_index) -> Real
-                { return computeKernelIntegral(package_index, data_index); });
-            assignByDataIndex(
-                kernel_gradient_[package_index], [&](const Arrayi &data_index) -> Vecd
-                { return computeKernelGradientIntegral(package_index, data_index); });
-            assignByDataIndex(
-                kernel_second_gradient_[package_index], [&](const Arrayi &data_index) -> Matd
-                { return computeKernelSecondGradientIntegral(package_index, data_index); });
-        }
+        void update(const UnsignedInt &package_index);
 
       protected:
         Real global_h_ratio_;

@@ -96,6 +96,19 @@ UpdateKernelIntegrals::UpdateKernel::
       cutoff_radius_(encloser.neighbor_method_.CutOffRadius()),
       depth_(static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))) {}
 //=================================================================================================//
+inline void UpdateKernelIntegrals::UpdateKernel::update(const UnsignedInt &package_index)
+{
+    assignByDataIndex(
+        kernel_weight_[package_index], [&](const Arrayi &data_index) -> Real
+        { return computeKernelIntegral(package_index, data_index); });
+    assignByDataIndex(
+        kernel_gradient_[package_index], [&](const Arrayi &data_index) -> Vecd
+        { return computeKernelGradientIntegral(package_index, data_index); });
+    assignByDataIndex(
+        kernel_second_gradient_[package_index], [&](const Arrayi &data_index) -> Matd
+        { return computeKernelSecondGradientIntegral(package_index, data_index); });
+}
+//=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 ReinitializeLevelSet::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
