@@ -93,8 +93,8 @@ bool InnerCellTagging::UpdateKernel::isInitiallyTagged(const Arrayi &cell_index)
 bool InnerCellTagging::UpdateKernel::isNearInitiallyTagged(const Arrayi &cell_index)
 {
     return mesh_any_of(
-        Array2i::Zero().max(cell_index - Array2i::Ones()),
-        index_handler_.AllCells().min(cell_index + 2 * Array2i::Ones()),
+        Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+        index_handler_.AllCells().min(cell_index + 2 * Arrayi::Ones()),
         [&](const Arrayi &index)
         {
             return isInitiallyTagged(index);
@@ -170,7 +170,7 @@ void InitializeBasicPackageData::UpdateKernel::update(const UnsignedInt &package
     mesh_for_each(Arrayi::Zero(), Arrayi::Constant(pkg_size),
                   [&](const Arrayi &data_index)
                   {
-                      Vec2d position = index_handler_.DataPositionFromIndex(cell_index, data_index);
+                      Vecd position = index_handler_.DataPositionFromIndex(cell_index, data_index);
                       phi(data_index) = shape_->findSignedDistance(position);
                       near_interface_id(data_index) = phi(data_index) < 0.0 ? -2 : 2;
                   });
