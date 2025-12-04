@@ -365,6 +365,41 @@ MarkNearInterface::UpdateKernel::
       phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
       near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)) {}
+//=============================================================================================//
+inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_index, Real dt)
+{
+    mesh_for_each(
+        Arrayi::Zero(), Arrayi::Constant(pkg_size),
+        [&](const Arrayi &index)
+        {
+            near_interface_id_[package_index](index) = 3; // undetermined
+            Real phi0 = phi_[package_index](index);
+            if (ABS(phi0) < 2.0 * threshold_) // only consider data close to the interface
+            {
+                bool is_sign_changed = mesh_any_of(
+                    Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
+                    [&](const Arrayi &shift) -> bool
+                    {
+                        DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
+                            index + shift, cell_neighborhood_[package_index]);
+
+                        return phi0 * phi_[neighbour_index.first](neighbour_index.second) < 0.0;
+                    });
+
+                if (is_sign_changed)
+                {
+                    if (ABS(phi0) < threshold_)
+                    {
+                        near_interface_id_[package_index](index) = 0; // cut cell
+                    }
+                }
+                else
+                {
+                    near_interface_id_[package_index](index) = phi0 > 0.0 ? 1 : -1; // in the band
+                }
+            }
+        });
+}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 RedistanceInterface::UpdateKernel::

@@ -7,42 +7,6 @@
 namespace SPH
 {
 //=============================================================================================//
-inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_index, Real dt)
-{
-    mesh_for_each2d<0, pkg_size>(
-        [&](int i, int j)
-        {
-            near_interface_id_[package_index][i][j] = 3; // undetermined
-            Real phi0 = phi_[package_index][i][j];
-            if (ABS(phi0) < 2.0 * threshold_) // only consider data close to the interface
-            {
-                bool is_sign_changed = mesh_any_of2d<-1, 2>( // check in the 3x3x3 neighborhood
-                    [&](int l, int m) -> bool
-                    {
-                        DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
-                            Arrayi(i + l, j + m), cell_neighborhood_[package_index]);
-
-                        return phi0 * phi_[neighbour_index.first]
-                                          [neighbour_index.second[0]]
-                                          [neighbour_index.second[1]] <
-                               0.0;
-                    });
-
-                if (is_sign_changed)
-                {
-                    if (ABS(phi0) < threshold_)
-                    {
-                        near_interface_id_[package_index][i][j] = 0; // cut cell
-                    }
-                }
-                else
-                {
-                    near_interface_id_[package_index][i][j] = phi0 > 0.0 ? 1 : -1; // in the band
-                }
-            }
-        });
-}
-//=============================================================================================//
 inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package_index)
 {
     mesh_for_each2d<0, pkg_size>(
