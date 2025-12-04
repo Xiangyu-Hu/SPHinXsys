@@ -66,7 +66,7 @@ class LevelsetBounding : public BaseLocalDynamics<BodyPartByCell>
 
   protected:
     DiscreteVariable<Vecd> *dv_pos_;
-    MultilevelLevelSet &level_set_;
+    LevelSet &level_set_;
     Real constrained_distance_;
 };
 
@@ -95,7 +95,7 @@ class LevelsetKernelGradientIntegral : public LocalDynamics
   protected:
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Vecd> *dv_residual_;
-    MultilevelLevelSet &level_set_;
+    LevelSet &level_set_;
 };
 
 } // namespace SPH

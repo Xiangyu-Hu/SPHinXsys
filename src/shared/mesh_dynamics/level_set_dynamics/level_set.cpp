@@ -6,7 +6,7 @@
 namespace SPH
 {
 //=================================================================================================//
-MultilevelLevelSet::MultilevelLevelSet(
+LevelSet::LevelSet(
     BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
     Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
     : BaseMeshField("LevelSet_" + shape.getName()), total_levels_(1),
@@ -23,7 +23,7 @@ MultilevelLevelSet::MultilevelLevelSet(
     initializeLevel(data_spacing, tentative_bounds, coarse_data);
 }
 //=================================================================================================//
-MultilevelLevelSet::MultilevelLevelSet(
+LevelSet::LevelSet(
     BoundingBoxd tentative_bounds, Real data_spacing,
     size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
     : BaseMeshField("LevelSet_" + shape.getName()), total_levels_(total_levels),
@@ -51,7 +51,7 @@ MultilevelLevelSet::MultilevelLevelSet(
     }
 }
 //=================================================================================================//
-void MultilevelLevelSet::initializeLevel(
+void LevelSet::initializeLevel(
     Real data_spacing, BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data)
 {
     MeshWithGridDataPackagesType *mesh_data =
@@ -83,7 +83,7 @@ void MultilevelLevelSet::initializeLevel(
     finish_data_packages.exec();
 }
 //=================================================================================================//
-size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
+size_t LevelSet::getCoarseLevel(Real h_ratio)
 {
     for (size_t level = total_levels_; level != 0; --level)
         if (h_ratio > global_h_ratio_vec_[level - 1])
@@ -95,35 +95,35 @@ size_t MultilevelLevelSet::getCoarseLevel(Real h_ratio)
     return 999; // means an error in level searching
 };
 //=================================================================================================//
-void MultilevelLevelSet::cleanInterface(UnsignedInt repeat_times)
+void LevelSet::cleanInterface(UnsignedInt repeat_times)
 {
     DynamicCast<RepeatTimes>(this, *clean_interface_keeper_.get())(repeat_times);
     clean_interface_keeper_->exec();
     sync_mesh_variables_to_probe_();
 }
 //=============================================================================================//
-void MultilevelLevelSet::correctTopology()
+void LevelSet::correctTopology()
 {
     correct_topology_keeper_->exec();
     sync_mesh_variables_to_probe_();
 }
 //=============================================================================================//
-Real MultilevelLevelSet::probeSignedDistance(const Vecd &position)
+Real LevelSet::probeSignedDistance(const Vecd &position)
 {
     return (*probe_signed_distance_set_[getProbeLevel(position)])(position);
 }
 //=============================================================================================//
-Vecd MultilevelLevelSet::probeNormalDirection(const Vecd &position)
+Vecd LevelSet::probeNormalDirection(const Vecd &position)
 {
     return (*probe_normal_direction_set_[getProbeLevel(position)])(position);
 }
 //=============================================================================================//
-Vecd MultilevelLevelSet::probeLevelSetGradient(const Vecd &position)
+Vecd LevelSet::probeLevelSetGradient(const Vecd &position)
 {
     return (*probe_level_set_gradient_set_[getProbeLevel(position)])(position);
 }
 //=============================================================================================//
-size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
+size_t LevelSet::getProbeLevel(const Vecd &position)
 {
     for (size_t level = total_levels_; level != 0; --level)
     {
@@ -134,7 +134,7 @@ size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
     return 0;
 }
 //=================================================================================================//
-Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
+Real LevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 {
     // std::cout << "probe kernel integral" << std::endl;
     if (mesh_data_set_.size() == 1)
@@ -150,7 +150,7 @@ Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }
 //=================================================================================================//
-Vecd MultilevelLevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
+Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 {
     // std::cout << "probe kernel gradient integral" << std::endl;
     if (mesh_data_set_.size() == 1)
@@ -166,7 +166,7 @@ Vecd MultilevelLevelSet::probeKernelGradientIntegral(const Vecd &position, Real 
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }
 //=================================================================================================//
-Matd MultilevelLevelSet::probeKernelSecondGradientIntegral(const Vecd &position, Real h_ratio)
+Matd LevelSet::probeKernelSecondGradientIntegral(const Vecd &position, Real h_ratio)
 {
     if (mesh_data_set_.size() == 1)
     {
@@ -181,7 +181,7 @@ Matd MultilevelLevelSet::probeKernelSecondGradientIntegral(const Vecd &position,
     return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
 }
 //=================================================================================================//
-void MultilevelLevelSet::writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence)
+void LevelSet::writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence)
 {
     sync_mesh_variables_to_write_();
     for (size_t l = 0; l != total_levels_; ++l)
@@ -193,7 +193,7 @@ void MultilevelLevelSet::writeMeshFieldToPlt(const std::string &partial_file_nam
     }
 }
 //=================================================================================================//
-void MultilevelLevelSet::writeBKGMeshToPlt(const std::string &partial_file_name)
+void LevelSet::writeBKGMeshToPlt(const std::string &partial_file_name)
 {
     sync_bkg_mesh_variables_to_write_();
     for (size_t l = 0; l != total_levels_; ++l)

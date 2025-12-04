@@ -45,17 +45,17 @@ enum class UsageType
     Surface,
 };
 /**
- * @class MultilevelLevelSet
+ * @class LevelSet
  * @brief Defining a multilevel level set for a complex region.
  */
-class MultilevelLevelSet : public BaseMeshField
+class LevelSet : public BaseMeshField
 {
   public:
-    MultilevelLevelSet(BoundingBoxd tentative_bounds, Real reference_data_spacing, size_t total_levels,
-                       Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
-    MultilevelLevelSet(BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
-                       Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
-    ~MultilevelLevelSet() {};
+    LevelSet(BoundingBoxd tentative_bounds, Real reference_data_spacing, size_t total_levels,
+             Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
+    LevelSet(BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
+             Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
+    ~LevelSet() {};
 
     template <class ExecutionPolicy>
     ProbeSignedDistance getProbeSignedDistance(const ExecutionPolicy &ex_policy);

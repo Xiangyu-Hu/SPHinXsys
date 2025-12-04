@@ -42,7 +42,7 @@ class SPHSystem;
 class Shape;
 class BaseParticles;
 class BodyRegionByCell;
-class MultilevelLevelSet;
+class LevelSet;
 class BaseCellLinkedList;
 
 /**
@@ -88,7 +88,7 @@ class SPHAdaptation
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
     UniquePtr<BaseCellLinkedList> createRefinedCellLinkedList(int level, const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
-    virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
+    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
 
     template <class KernelType, typename... Args>
     void resetKernel(Args &&...args)
@@ -135,7 +135,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles) override;
-    virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
+    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 
     class ContinuousSmoothingLengthRatio
     {

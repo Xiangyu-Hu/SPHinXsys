@@ -45,7 +45,7 @@ class SPHSystem;
 class LevelSetShape : public Shape
 {
   private:
-    UniquePtrKeeper<MultilevelLevelSet> level_set_keeper_;
+    UniquePtrKeeper<LevelSet> level_set_keeper_;
     SharedPtr<SPHAdaptation> sph_adaptation_;
 
   public:
@@ -92,7 +92,7 @@ class LevelSetShape : public Shape
     LevelSetShape *correctLevelSetSign();
     LevelSetShape *writeLevelSet(SPHSystem &sph_system);
     LevelSetShape *writeBKGMesh(SPHSystem &sph_system);
-    MultilevelLevelSet &getLevelSet() { return level_set_; }
+    LevelSet &getLevelSet() { return level_set_; }
 
     template <typename DataType>
     LevelSetShape *addMeshVariableToWrite(const std::string &variable_name)
@@ -112,7 +112,7 @@ class LevelSetShape : public Shape
     LevelSetShape(BoundingBoxd bounding_box, Shape &shape,
                   SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio);
     LevelSetShape(BoundingBoxd bounding_box, SPHBody &sph_body, Shape &shape, Real refinement_ratio);
-    MultilevelLevelSet &level_set_; /**< narrow bounded level set mesh. */
+    LevelSet &level_set_; /**< narrow bounded level set mesh. */
 };
 } // namespace SPH
 #endif // LEVEL_SET_SHAPE_H
