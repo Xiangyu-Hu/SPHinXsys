@@ -304,6 +304,58 @@ MarkCutInterfaces::UpdateKernel::
       phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
       near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)) {}
+//=============================================================================================//
+inline void MarkCutInterfaces::UpdateKernel::update(const UnsignedInt &package_index, Real dt)
+{
+    auto &phi_addrs = phi_[package_index];
+    auto &near_interface_id_addrs = near_interface_id_[package_index];
+
+    // corner averages, note that the first row and first column are not used
+    PackageData<Real, 5> corner_averages;
+    mesh_for_each(
+        Arrayi::Zero(), Arrayi::Constant(5),
+        [&](const Arrayi &index)
+        {
+            corner_averages(index) =
+                CornerAverage(phi_, index, Arrayi::Constant(-1),
+                              cell_neighborhood_[package_index], (Real)0);
+        });
+
+    mesh_for_each(Arrayi::Zero(), Arrayi::Constant(pkg_size),
+                  [&](const Arrayi &index)
+                  {
+                      // first assume far cells
+                      Real phi_0 = phi_addrs(index);
+                      int near_interface_id = phi_0 > 0.0 ? 2 : -2;
+                      if (fabs(phi_0) < perturbation_)
+                      {
+                          near_interface_id = 0;
+                          Real phi_average_0 = corner_averages(index);
+                          // find inner and outer cut cells
+                          mesh_for_each(
+                              Arrayi::Zero(), Arrayi::Constant(2),
+                              [&](const Arrayi &shift)
+                              {
+                                  Real phi_average = corner_averages(index + shift);
+                                  if ((phi_average_0 - perturbation_) * (phi_average - perturbation_) < 0.0)
+                                      near_interface_id = 1;
+                                  if ((phi_average_0 + perturbation_) * (phi_average + perturbation_) < 0.0)
+                                      near_interface_id = -1;
+                              });
+                          // find zero cut cells
+                          mesh_for_each(
+                              Arrayi::Zero(), Arrayi::Constant(2),
+                              [&](const Arrayi &shift)
+                              {
+                                  Real phi_average = corner_averages(index + shift);
+                                  if (phi_average_0 * phi_average < 0.0)
+                                      near_interface_id = 0;
+                              });
+                      }
+                      // assign this is to package
+                      near_interface_id_addrs(index) = near_interface_id;
+                  });
+}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 MarkNearInterface::UpdateKernel::

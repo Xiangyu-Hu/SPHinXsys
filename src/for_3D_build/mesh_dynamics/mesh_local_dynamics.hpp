@@ -7,54 +7,6 @@
 namespace SPH
 {
 //=============================================================================================//
-inline void MarkCutInterfaces::UpdateKernel::update(const UnsignedInt &package_index, Real dt)
-{
-    auto &phi_addrs = phi_[package_index];
-    auto &near_interface_id_addrs = near_interface_id_[package_index];
-
-    // corner averages, note that the first row and first column are not used
-    PackageData<Real, 5> corner_averages;
-    mesh_for_each3d<0, 5>(
-        [&](int i, int j, int k)
-        {
-            corner_averages[i][j][k] = CornerAverage(phi_, Arrayi(i, j, k), Arrayi(-1, -1, -1),
-                                                     cell_neighborhood_[package_index], (Real)0);
-        });
-
-    mesh_for_each3d<0, pkg_size>(
-        [&](int i, int j, int k)
-        {
-            // first assume far cells
-            Real phi_0 = phi_addrs[i][j][k];
-            int near_interface_id = phi_0 > 0.0 ? 2 : -2;
-            if (fabs(phi_0) < perturbation_)
-            {
-                near_interface_id = 0;
-                Real phi_average_0 = corner_averages[i][j][k];
-                // find inner and outer cut cells
-                mesh_for_each3d<0, 2>(
-                    [&](int l, int m, int n)
-                    {
-                        Real phi_average = corner_averages[i + l][j + m][k + n];
-                        if ((phi_average_0 - perturbation_) * (phi_average - perturbation_) < 0.0)
-                            near_interface_id = 1;
-                        if ((phi_average_0 + perturbation_) * (phi_average + perturbation_) < 0.0)
-                            near_interface_id = -1;
-                    });
-                // find zero cut cells
-                mesh_for_each3d<0, 2>(
-                    [&](int l, int m, int n)
-                    {
-                        Real phi_average = corner_averages[i + l][j + m][k + n];
-                        if (phi_average_0 * phi_average < 0.0)
-                            near_interface_id = 0;
-                    });
-            }
-            // assign this is to package
-            near_interface_id_addrs[i][j][k] = near_interface_id;
-        });
-}
-//=============================================================================================//
 inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_index, Real dt)
 {
     mesh_for_each3d<0, pkg_size>(
