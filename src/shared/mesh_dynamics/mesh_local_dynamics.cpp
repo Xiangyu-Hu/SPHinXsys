@@ -200,9 +200,7 @@ UpdateKernelIntegrals::UpdateKernelIntegrals(
     : BaseMeshLocalDynamics(data_mesh), neighbor_method_(neighbor_method),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.getMeshVariable<Vecd>("LevelSetGradient")),
-      dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
-      bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
       mv_kernel_weight_(*data_mesh.registerMeshVariable<Real>("KernelWeight")),
       mv_kernel_gradient_(*data_mesh.registerMeshVariable<Vecd>("KernelGradient")),
       mv_kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient"))

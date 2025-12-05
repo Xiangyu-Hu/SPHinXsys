@@ -409,21 +409,15 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
         MeshVariableData<Real> *kernel_weight_;
         MeshVariableData<Vecd> *kernel_gradient_;
         MeshVariableData<Matd> *kernel_second_gradient_;
-        UnsignedInt *pkg_1d_cell_index_;
-
         SmoothingKernel kernel_;
-        IndexHandler index_handler_;
         Real data_spacing_, data_cell_volume_;
         CellNeighborhood *cell_neighborhood_;
-        UnsignedInt *cell_pkg_index_;
-        ProbeSignedDistance probe_signed_distance_;
-
         Real cutoff_radius_;
         BoundingBoxi bounding_box_;
+
         Real computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
         Vecd computeKernelGradientIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
         Matd computeKernelSecondGradientIntegral(const UnsignedInt &package_index, const Arrayi &data_index);
-
         /** a cut cell is a cut by the level set. */
         /** "Multi-scale modeling of compressible multi-fluid flows with conservative interface method."
          * Hu, X. Y., et al., Proceedings of the Summer Program. Vol. 301. Stanford, CA, USA:
@@ -440,9 +434,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
     Real global_h_ratio_;
     MeshVariable<Real> &mv_phi_;
     MeshVariable<Vecd> &mv_phi_gradient_;
-    MetaVariable<UnsignedInt> &dv_pkg_1d_cell_index_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
-    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;
     MeshVariable<Real> &mv_kernel_weight_;
     MeshVariable<Vecd> &mv_kernel_gradient_;
     MeshVariable<Matd> &mv_kernel_second_gradient_;

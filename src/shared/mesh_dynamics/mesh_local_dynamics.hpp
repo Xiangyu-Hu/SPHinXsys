@@ -153,14 +153,10 @@ UpdateKernelIntegrals::UpdateKernel::
       kernel_weight_(encloser.mv_kernel_weight_.DelegatedData(ex_policy)),
       kernel_gradient_(encloser.mv_kernel_gradient_.DelegatedData(ex_policy)),
       kernel_second_gradient_(encloser.mv_kernel_second_gradient_.DelegatedData(ex_policy)),
-      pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_.DelegatedData(ex_policy)),
       kernel_(ex_policy, encloser.neighbor_method_),
-      index_handler_(encloser.index_handler_),
-      data_spacing_(index_handler_.DataSpacing()),
+      data_spacing_(encloser.index_handler_.DataSpacing()),
       data_cell_volume_(math::pow(data_spacing_, Dimensions)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
-      cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
-      probe_signed_distance_(ex_policy, &encloser.data_mesh_),
       cutoff_radius_(encloser.neighbor_method_.CutOffRadius()),
       bounding_box_(BoundingBoxi(Arrayi::Constant(
           static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))))) {}
