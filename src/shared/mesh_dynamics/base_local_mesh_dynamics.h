@@ -21,17 +21,55 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_relax_dynamics_ck.h
- * @brief   This is the header file that user code should include to pick up all
- *          relax dynamics used in SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file    base_local_mesh_dynamics.h
+ * @brief   TBD.
+ * @author  Xiangyu Hu
  */
 
-#ifndef ALL_RELAX_DYNAMICS_CK_H
-#define ALL_RELAX_DYNAMICS_CK_H
+#ifndef BASE_LOCAL_MESH_DYNAMICS_H
+#define BASE_LOCAL_MESH_DYNAMICS_H
 
-#include "relaxation_residual_ck.hpp"
-#include "relaxation_stepping_ck.h"
-#include "surface_correction.hpp"
+#include "base_dynamics.h"
+#include "base_implementation.h"
+#include "data_package_function.hpp"
+#include "mesh_with_data_packages.hpp"
 
-#endif // ALL_RELAX_DYNAMICS_CK_H
+namespace SPH
+{
+using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
+
+template <typename DataType>
+using MeshVariableData = MeshWithGridDataPackagesType::MeshVariableData<DataType>;
+
+template <typename DataType>
+using MeshVariable = MeshWithGridDataPackagesType::MeshVariable<DataType>;
+
+template <typename DataType>
+using BKGMeshVariable = MeshWithGridDataPackagesType::BKGMeshVariable<DataType>;
+
+template <typename DataType>
+using MetaVariable = MeshWithGridDataPackagesType::MetaVariable<DataType>;
+
+using MeshVariableAssemble = MeshWithGridDataPackagesType::MeshVariableAssemble;
+using BKGMeshVariableAssemble = MeshWithGridDataPackagesType::BKGMeshVariableAssemble;
+using MetaVariableAssemble = MeshWithGridDataPackagesType::MetaVariableAssemble;
+using IndexHandler = MeshWithGridDataPackagesType::IndexHandler;
+
+/**
+ * @class BaseMeshLocalDynamics
+ * @brief The base class for all mesh local particle dynamics.
+ */
+class BaseMeshLocalDynamics
+{
+  public:
+    explicit BaseMeshLocalDynamics(MeshWithGridDataPackagesType &data_mesh)
+        : data_mesh_(data_mesh), index_handler_(data_mesh.getIndexHandler()) {};
+    virtual ~BaseMeshLocalDynamics() {};
+
+    MeshWithGridDataPackagesType &data_mesh_;
+    IndexHandler &index_handler_;
+    static constexpr int pkg_size = MeshWithGridDataPackagesType::DataPackageSize();
+    static constexpr int pkg_size_minus1 = pkg_size - 1;
+};
+} // namespace SPH
+#endif // BASE_LOCAL_MESH_DYNAMICS_H

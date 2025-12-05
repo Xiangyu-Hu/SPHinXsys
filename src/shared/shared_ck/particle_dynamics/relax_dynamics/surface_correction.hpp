@@ -1,7 +1,7 @@
-#ifndef LEVEL_SET_CORRECTION_HPP
-#define LEVEL_SET_CORRECTION_HPP
+#ifndef SURFACE_CORRECTION_HPP
+#define SURFACE_CORRECTION_HPP
 
-#include "level_set_correction.h"
+#include "surface_correction.h"
 
 #include "level_set.hpp"
 
@@ -24,4 +24,4 @@ LevelsetKernelGradientIntegral::UpdateKernel::
       kernel_gradient_integral_(encloser.level_set_.getProbeKernelGradientIntegral(ex_policy)) {}
 //=================================================================================================//
 } // namespace SPH
-#endif // LEVEL_SET_CORRECTION_HPP
+#endif // SURFACE_CORRECTION_HPP

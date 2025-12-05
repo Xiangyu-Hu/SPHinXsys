@@ -21,13 +21,13 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file level_set_correction.h
+ * @file surface_correction.h
  * @brief TBD.
  * @author Xiangyu Hu
  */
 
-#ifndef LEVEL_SET_CORRECTION_H
-#define LEVEL_SET_CORRECTION_H
+#ifndef SURFACE_CORRECTION_H
+#define SURFACE_CORRECTION_H
 
 #include "base_body_part.h"
 #include "base_general_dynamics.h"
