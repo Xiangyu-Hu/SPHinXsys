@@ -157,6 +157,7 @@ UpdateKernelIntegrals::UpdateKernel::
       kernel_(ex_policy, encloser.neighbor_method_),
       index_handler_(encloser.index_handler_),
       data_spacing_(index_handler_.DataSpacing()),
+      data_cell_volume_(math::pow(data_spacing_, Dimensions)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
       cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
       probe_signed_distance_(ex_policy, &encloser.data_mesh_),
@@ -225,7 +226,7 @@ inline Real UpdateKernelIntegrals::UpdateKernel::
     Real integral = computeIntegral(phi, package_index, data_index, 0.0,
                                     [&](const Vecd &displacement) -> Real
                                     { return kernel_.W(displacement); });
-    return phi > cutoff_radius_ ? 1.0 : integral * data_spacing_ * data_spacing_;
+    return phi > cutoff_radius_ ? 1.0 : integral * data_cell_volume_;
 }
 //=============================================================================================//
 inline Vecd UpdateKernelIntegrals::UpdateKernel::
@@ -237,7 +238,7 @@ inline Vecd UpdateKernelIntegrals::UpdateKernel::
                                [&](const Vecd &displacement) -> Vecd
                                { return kernel_.dW(displacement) * displacement /
                                         (displacement.norm() + TinyReal); });
-    return integral * data_spacing_ * data_spacing_;
+    return integral * data_cell_volume_;
 }
 //=============================================================================================//
 inline Matd UpdateKernelIntegrals::UpdateKernel::
@@ -250,7 +251,7 @@ inline Matd UpdateKernelIntegrals::UpdateKernel::
                                { return kernel_.d2W(displacement) *
                                         displacement * displacement.transpose() /
                                         (displacement.squaredNorm() + TinyReal); });
-    return integral * data_spacing_ * data_spacing_;
+    return integral * data_cell_volume_;
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>

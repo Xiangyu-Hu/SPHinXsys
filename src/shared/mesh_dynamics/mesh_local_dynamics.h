@@ -33,12 +33,12 @@
 #include "base_dynamics.h"
 #include "base_geometry.h"
 #include "base_implementation.h"
+#include "data_package_function.hpp"
 #include "execution_policy.h"
 #include "kernel_tabulated_ck.h"
 #include "mesh_iterators.hpp"
 #include "mesh_with_data_packages.hpp"
 #include "neighbor_method.h"
-#include "data_package_function.hpp"
 
 namespace SPH
 {
@@ -413,7 +413,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 
         SmoothingKernel kernel_;
         IndexHandler index_handler_;
-        Real data_spacing_;
+        Real data_spacing_, data_cell_volume_;
         CellNeighborhood *cell_neighborhood_;
         UnsignedInt *cell_pkg_index_;
         ProbeSignedDistance probe_signed_distance_;
