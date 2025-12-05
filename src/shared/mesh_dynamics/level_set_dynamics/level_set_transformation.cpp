@@ -1,7 +1,5 @@
 #include "level_set_transformation.hpp"
 
-#include "mesh_iterators.hpp"
-
 namespace SPH
 {
 //=============================================================================================//
