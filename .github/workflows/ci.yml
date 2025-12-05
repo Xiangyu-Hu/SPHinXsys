@@ -386,7 +386,8 @@ jobs:
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure --timeout 1000
-
+        continue-on-error: true
+        
       - name: Test with the sixth try for failed cases
         id: sixth-try
         if: ${{ steps.fifth-try.outcome == 'failure' }}
