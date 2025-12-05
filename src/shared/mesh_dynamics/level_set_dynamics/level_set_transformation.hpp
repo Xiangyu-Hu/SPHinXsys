@@ -99,17 +99,18 @@ DataType UpdateKernelIntegrals::UpdateKernel::
                 }
             });
     }
-    return integral;
+    return integral * data_cell_volume_;
 }
 //=============================================================================================//
 inline Real UpdateKernelIntegrals::UpdateKernel::
     computeKernelIntegral(const UnsignedInt &package_index, const Arrayi &data_index)
 {
     Real phi = phi_[package_index](data_index);
-    Real integral = computeIntegral(phi, package_index, data_index, 0.0,
-                                    [&](const Vecd &displacement) -> Real
-                                    { return kernel_.W(displacement); });
-    return phi > cutoff_radius_ ? 1.0 : integral * data_cell_volume_;
+    return phi > cutoff_radius_
+               ? 1.0
+               : computeIntegral(phi, package_index, data_index, 0.0,
+                                 [&](const Vecd &displacement) -> Real
+                                 { return kernel_.W(displacement); });
 }
 //=============================================================================================//
 inline Vecd UpdateKernelIntegrals::UpdateKernel::
@@ -117,11 +118,10 @@ inline Vecd UpdateKernelIntegrals::UpdateKernel::
 {
     Real phi = phi_[package_index](data_index);
     Vecd integral = Vecd::Zero();
-    integral = computeIntegral(phi, package_index, data_index, integral,
-                               [&](const Vecd &displacement) -> Vecd
-                               { return kernel_.dW(displacement) * displacement /
-                                        (displacement.norm() + TinyReal); });
-    return integral * data_cell_volume_;
+    return computeIntegral(phi, package_index, data_index, integral,
+                           [&](const Vecd &displacement) -> Vecd
+                           { return kernel_.dW(displacement) * displacement /
+                                    (displacement.norm() + TinyReal); });
 }
 //=============================================================================================//
 inline Matd UpdateKernelIntegrals::UpdateKernel::
@@ -129,12 +129,11 @@ inline Matd UpdateKernelIntegrals::UpdateKernel::
 {
     Real phi = phi_[package_index](data_index);
     Matd integral = Matd::Zero();
-    integral = computeIntegral(phi, package_index, data_index, integral,
-                               [&](const Vecd &displacement) -> Matd
-                               { return kernel_.d2W(displacement) *
-                                        displacement * displacement.transpose() /
-                                        (displacement.squaredNorm() + TinyReal); });
-    return integral * data_cell_volume_;
+    return computeIntegral(phi, package_index, data_index, integral,
+                           [&](const Vecd &displacement) -> Matd
+                           { return kernel_.d2W(displacement) *
+                                    displacement * displacement.transpose() /
+                                    (displacement.squaredNorm() + TinyReal); });
 }
 //=================================================================================================//
 } // namespace SPH
