@@ -132,13 +132,22 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
         };
     };
 
+    class ReverseNeighborCriterion
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReverseNeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser){};
+
+        inline bool operator()(UnsignedInt i, UnsignedInt j) const { return true; };
+    };
+
     class SmoothingRatio
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         SmoothingRatio(const ExecutionPolicy &ex_policy, EncloserType &encloser){};
 
-        Real operator()(UnsignedInt i) const { return 1.0; };
+        inline Real operator()(UnsignedInt i) const { return 1.0; };
     };
 
     class SearchBox
@@ -148,7 +157,7 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
         SearchBox(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : search_box_(encloser.search_box_){};
 
-        BoundingBoxi operator()(UnsignedInt i) const { return search_box_; };
+        inline BoundingBoxi operator()(UnsignedInt i) const { return search_box_; };
 
       private:
         BoundingBoxi search_box_;

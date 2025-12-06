@@ -70,10 +70,11 @@ class Relation<NeighborMethod<AdaptationParameters...>> : public RelationBase
              ConfigType config_type = ConfigType::Eulerian);
     virtual ~Relation() {};
     SPHBody &getSPHBody() { return *sph_body_; };
-    DiscreteVariable<Vecd> *getSourcePosition() { return dv_source_pos_; };
-    DiscreteVariable<Vecd> *getTargetPosition(UnsignedInt target_index = 0) { return dv_target_pos_[target_index]; };
-    DiscreteVariable<UnsignedInt> *getNeighborIndex(UnsignedInt target_index = 0) { return dv_target_neighbor_index_[target_index]; };
-    DiscreteVariable<UnsignedInt> *getParticleOffset(UnsignedInt target_index = 0) { return dv_target_particle_offset_[target_index]; };
+    DiscreteVariable<Vecd> *dvSourcePosition() { return dv_source_pos_; };
+    DiscreteVariable<UnsignedInt> *dvNeighborSize() { return dv_neighbor_size_; };
+    DiscreteVariable<Vecd> *dvTargetPosition(UnsignedInt target_index = 0) { return dv_target_pos_[target_index]; };
+    DiscreteVariable<UnsignedInt> *dvNeighborIndex(UnsignedInt target_index = 0) { return dv_target_neighbor_index_[target_index]; };
+    DiscreteVariable<UnsignedInt> *dvParticleOffset(UnsignedInt target_index = 0) { return dv_target_particle_offset_[target_index]; };
     Neighbor<NeighborMethodType> &getNeighborhood(UnsignedInt target_index = 0) { return *neighborhoods_[target_index]; }
     void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index = 0);
     void resetComputingKernelUpdated(UnsignedInt target_index = 0);
@@ -96,6 +97,7 @@ class Relation<NeighborMethod<AdaptationParameters...>> : public RelationBase
     SPHBody *sph_body_;
     BaseParticles *particles_;
     DiscreteVariable<Vecd> *dv_source_pos_;
+    DiscreteVariable<UnsignedInt> *dv_neighbor_size_;
     StdVec<DiscreteVariable<Vecd> *> dv_target_pos_;
     UnsignedInt offset_list_size_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_neighbor_index_;
