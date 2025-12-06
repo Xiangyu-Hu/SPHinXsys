@@ -67,7 +67,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
             : reverse_criterion_(ex_policy, encloser){};
         bool operator()(UnsignedInt i, UnsignedInt j) const
         {
-            return i < j && reverse_criterion_(i, j);
+            return i < j || !reverse_criterion_(i, j);
         }
     };
 
