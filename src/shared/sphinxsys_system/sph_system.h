@@ -37,7 +37,7 @@
 namespace po = boost::program_options;
 #endif
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "io_environment.h"
 #include "sphinxsys_containers.h"
 

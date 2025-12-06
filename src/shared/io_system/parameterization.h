@@ -30,7 +30,7 @@
 #ifndef SPHINXSYS_PARAMETERIZATION_H
 #define SPHINXSYS_PARAMETERIZATION_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "xml_engine.h"
 
 #include <string>

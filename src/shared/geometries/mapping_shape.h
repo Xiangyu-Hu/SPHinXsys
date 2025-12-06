@@ -29,7 +29,7 @@
 #ifndef MAPPING_SHAPE_H
 #define MAPPING_SHAPE_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "base_geometry.h"
 
 namespace SPH

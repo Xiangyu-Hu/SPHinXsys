@@ -21,13 +21,13 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file level_set_correction.h
+ * @file surface_correction.h
  * @brief TBD.
  * @author Xiangyu Hu
  */
 
-#ifndef LEVEL_SET_CORRECTION_H
-#define LEVEL_SET_CORRECTION_H
+#ifndef SURFACE_CORRECTION_H
+#define SURFACE_CORRECTION_H
 
 #include "base_body_part.h"
 #include "base_general_dynamics.h"
@@ -66,7 +66,7 @@ class LevelsetBounding : public BaseLocalDynamics<BodyPartByCell>
 
   protected:
     DiscreteVariable<Vecd> *dv_pos_;
-    MultilevelLevelSet &level_set_;
+    LevelSet &level_set_;
     Real constrained_distance_;
 };
 
@@ -95,7 +95,7 @@ class LevelsetKernelGradientIntegral : public LocalDynamics
   protected:
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Vecd> *dv_residual_;
-    MultilevelLevelSet &level_set_;
+    LevelSet &level_set_;
 };
 
 } // namespace SPH

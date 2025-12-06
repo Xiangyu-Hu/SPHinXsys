@@ -29,7 +29,7 @@
 #ifndef EXCEPTION_SIMBODY_H
 #define EXCEPTION_SIMBODY_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 
 #include <cassert>
 #include <cstdio>

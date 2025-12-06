@@ -30,12 +30,13 @@
 #define LEVEL_SET_H
 
 #include "adaptation.h"
-#include "all_mesh_dynamics.h"
 #include "base_geometry.h"
 #include "kernel_tabulated_ck.h"
-#include "mesh_dynamics.h"
-#include "mesh_local_dynamics.hpp"
-#include "mesh_with_data_packages.hpp"
+#include "level_set_correction.hpp"
+#include "level_set_initialization.hpp"
+#include "level_set_transformation.hpp"
+#include "mesh_data_package_sort.h"
+#include "mesh_dynamics_algorithm.h"
 #include "sphinxsys_variable.h"
 namespace SPH
 {
@@ -45,17 +46,17 @@ enum class UsageType
     Surface,
 };
 /**
- * @class MultilevelLevelSet
+ * @class LevelSet
  * @brief Defining a multilevel level set for a complex region.
  */
-class MultilevelLevelSet : public BaseMeshField
+class LevelSet : public BaseMeshField
 {
   public:
-    MultilevelLevelSet(BoundingBoxd tentative_bounds, Real reference_data_spacing, size_t total_levels,
-                       Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
-    MultilevelLevelSet(BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
-                       Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
-    ~MultilevelLevelSet() {};
+    LevelSet(BoundingBoxd tentative_bounds, Real reference_data_spacing, size_t total_levels,
+             Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
+    LevelSet(BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
+             Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
+    ~LevelSet() {};
 
     template <class ExecutionPolicy>
     ProbeSignedDistance getProbeSignedDistance(const ExecutionPolicy &ex_policy);

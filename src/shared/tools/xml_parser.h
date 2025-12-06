@@ -29,7 +29,7 @@
 
 #include "tinyxml2.h"
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
 
 #include <cassert>

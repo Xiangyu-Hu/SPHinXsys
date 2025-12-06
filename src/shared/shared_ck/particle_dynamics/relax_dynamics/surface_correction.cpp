@@ -1,4 +1,4 @@
-#include "level_set_correction.h"
+#include "surface_correction.h"
 
 namespace SPH
 {

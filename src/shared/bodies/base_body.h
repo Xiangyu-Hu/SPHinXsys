@@ -37,7 +37,7 @@
 
 #include "adaptation.h"
 #include "all_geometries.h"
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "base_implementation.h"
 #include "base_material.h"
 #include "base_particle_generator.h"

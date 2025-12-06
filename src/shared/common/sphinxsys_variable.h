@@ -30,7 +30,7 @@
 #ifndef SPHINXSYS_VARIABLE_H
 #define SPHINXSYS_VARIABLE_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "execution_policy.h"
 #include "ownership.h"
 

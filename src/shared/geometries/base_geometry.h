@@ -30,7 +30,7 @@
 #ifndef BASE_GEOMETRY_H
 #define BASE_GEOMETRY_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
 
 #include <spdlog/spdlog.h>

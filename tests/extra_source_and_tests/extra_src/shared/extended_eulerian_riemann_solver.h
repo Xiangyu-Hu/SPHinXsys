@@ -29,7 +29,7 @@
 #ifndef EXTENDED_EULERIAN_RIEMANN_SOLVER_H
 #define EXTENDED_EULERIAN_RIEMANN_SOLVER_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "fluid_integration.hpp"
 #include "riemann_solver.h"
 

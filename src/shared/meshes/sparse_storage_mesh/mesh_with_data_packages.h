@@ -32,7 +32,7 @@
 #include "base_mesh.hpp"
 
 #include "execution_policy.h"
-#include "grid_data_package_type.hpp"
+#include "data_package_type.hpp"
 
 #include "tbb/parallel_sort.h"
 
@@ -55,7 +55,7 @@ class MeshWithGridDataPackages
 {
   public:
     template <class DataType>
-    using MeshVariableData = PackageDataMatrix<DataType, PKG_SIZE>;
+    using MeshVariableData = PackageData<DataType, PKG_SIZE>;
     template <typename DataType>
     using MeshVariable = DiscreteVariable<MeshVariableData<DataType>>;
     template <typename DataType>
@@ -137,7 +137,7 @@ class MeshWithGridDataPackages
     OperationOnDataAssemble<BKGMeshVariableAssemble, PrepareVariablesToWrite<BKGMeshVariable>> sync_bkg_mesh_variable_data_{};
 
     template <typename DataType>
-    DataType DataValueFromGlobalIndex(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data,
+    DataType DataValueFromGlobalIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
                                       const Arrayi &global_grid_index, UnsignedInt *cell_package_index);
 
   public:

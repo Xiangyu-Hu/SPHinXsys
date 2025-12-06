@@ -29,7 +29,7 @@
 #ifndef RIEMANN_SOLVER_CK_H
 #define RIEMANN_SOLVER_CK_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "weakly_compressible_fluid.h"
 
 namespace SPH

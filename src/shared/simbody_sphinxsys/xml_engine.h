@@ -30,7 +30,7 @@
 #define XML_ENGINE_SIMBODY_H
 
 #include "SimTKcommon/internal/Xml.h"
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "simbody_middle.h"
 #include "simtk_wrapper.h"
 #include "sphinxsys_containers.h"

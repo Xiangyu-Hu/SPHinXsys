@@ -33,25 +33,31 @@
 
 namespace SPH
 {
-template <typename DataType, int N>
+template <int N>
+using VecdBound = Eigen::Matrix<Real, N, 1>;
+
+template <int N>
+using ArrayiBound = Eigen::Array<int, N, 1>;
+
+template <template <int> typename BoundType, int N>
 class BoundingBox
 {
-    using VecType = Eigen::Matrix<DataType, N, 1>;
+    using Vectype = BoundType<N>;
 
   public:
-    VecType lower_, upper_;
+    Vectype lower_, upper_;
 
-    BoundingBox() : lower_(VecType::Zero()), upper_(VecType::Zero()) {};
-    BoundingBox(const VecType &lower, const VecType &upper)
+    BoundingBox() : lower_(Vectype::Zero()), upper_(Vectype::Zero()) {};
+    BoundingBox(const Vectype &lower, const Vectype &upper)
         : lower_(lower), upper_(upper) {};
-    BoundingBox(VecType &hlfsize) : lower_(-hlfsize), upper_(hlfsize) {};
+    BoundingBox(const Vectype &hlfsize) : lower_(-hlfsize), upper_(hlfsize) {};
 
-    BoundingBox translate(const VecType &translate) const
+    BoundingBox translate(const Vectype &translate) const
     {
         return BoundingBox(translate + lower_, translate + upper_);
     };
 
-    bool checkContain(const VecType &point) const
+    bool checkContain(const Vectype &point) const
     {
         bool is_contain = true;
         for (int i = 0; i < N; ++i)
@@ -101,26 +107,26 @@ class BoundingBox
 
     static constexpr int DataSize() { return N; }
 
-    VecType BoundSize() const
+    Vectype BoundSize() const
     {
         return upper_ - lower_;
     };
 
-    BoundingBox expand(const VecType &expand_size) const
+    BoundingBox expand(const Vectype &expand_size) const
     {
-        VecType new_lower = lower_ - expand_size;
-        VecType new_upper = upper_ + expand_size;
+        Vectype new_lower = lower_ - expand_size;
+        Vectype new_upper = upper_ + expand_size;
         return BoundingBox(new_lower, new_upper);
     };
 
-    DataType MinimumDimension() const
+    auto MinimumDimension() const
     {
         return BoundSize().cwiseAbs().minCoeff();
     };
 };
 /** Operator define. */
-template <typename DataType, int N>
-bool operator==(const BoundingBox<DataType, N> &bb1, const BoundingBox<DataType, N> &bb2)
+template <template <int> typename BoundType, int N>
+bool operator==(const BoundingBox<BoundType, N> &bb1, const BoundingBox<BoundType, N> &bb2)
 {
     return bb1.lower_ == bb2.lower_ && bb1.upper_ == bb2.upper_ ? true : false;
 };

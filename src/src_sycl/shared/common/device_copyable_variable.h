@@ -28,7 +28,7 @@
 #ifndef DEVICE_COPYABLE_VARIABLE_H
 #define DEVICE_COPYABLE_VARIABLE_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "simtk_wrapper.h"
 
 namespace sycl

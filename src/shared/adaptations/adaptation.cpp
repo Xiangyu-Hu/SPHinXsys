@@ -98,16 +98,16 @@ UniquePtr<BaseCellLinkedList> SPHAdaptation::createRefinedCellLinkedList(
     return makeUnique<CellLinkedList>(domain_bounds, grid_spacing, base_particles, *this);
 }
 //=================================================================================================//
-UniquePtr<MultilevelLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
+UniquePtr<LevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
 {
     // estimate the required mesh levels
     int total_levels = (int)log10(shape.getBounds().MinimumDimension() / ReferenceSpacing()) + 2;
     Real coarsest_spacing = ReferenceSpacing() * pow(2.0, total_levels - 1);
-    MultilevelLevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
-                                          total_levels - 1, shape, *this, refinement_ratio);
+    LevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
+                                total_levels - 1, shape, *this, refinement_ratio);
     // return the finest level set only
-    return makeUnique<MultilevelLevelSet>(shape.getBounds(), coarser_level_sets.getMeshLevels().back(),
-                                          shape, *this, refinement_ratio);
+    return makeUnique<LevelSet>(shape.getBounds(), coarser_level_sets.getMeshLevels().back(),
+                                shape, *this, refinement_ratio);
 }
 //=================================================================================================//
 AdaptiveSmoothingLength::
@@ -146,11 +146,11 @@ UniquePtr<BaseCellLinkedList> AdaptiveSmoothingLength::
                                                 local_refinement_level_, base_particles, *this);
 }
 //=================================================================================================//
-UniquePtr<MultilevelLevelSet> AdaptiveSmoothingLength::createLevelSet(Shape &shape, Real refinement_ratio)
+UniquePtr<LevelSet> AdaptiveSmoothingLength::createLevelSet(Shape &shape, Real refinement_ratio)
 {
     // one more level for interpolation
-    return makeUnique<MultilevelLevelSet>(shape.getBounds(), ReferenceSpacing() / refinement_ratio,
-                                          local_refinement_level_ + 1, shape, *this, refinement_ratio);
+    return makeUnique<LevelSet>(shape.getBounds(), ReferenceSpacing() / refinement_ratio,
+                                local_refinement_level_ + 1, shape, *this, refinement_ratio);
 }
 //=================================================================================================//
 Real AdaptiveByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)

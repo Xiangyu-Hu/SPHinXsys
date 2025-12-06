@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file grid_data_package_function.h
+ * @file data_package_function.h
  * @brief This is for the base functions for mesh iterator.
  * There are two types of functions: one is for static ranged
  * which are defined by template parameters,
@@ -29,28 +29,34 @@
  * @author  Xiangyu Hu
  */
 
-#ifndef GRID_DATA_PACKAGE_FUNCTIONS_H
-#define GRID_DATA_PACKAGE_FUNCTIONS_H
+#ifndef DATA_PACKAGE_FUNCTIONS_H
+#define DATA_PACKAGE_FUNCTIONS_H
 
 #include "mesh_with_data_packages.h"
 
 namespace SPH
 {
 template <int PKG_SIZE>
-PackageGridPair NeighbourIndexShift(const Arrayi &shift_index, const CellNeighborhood &neighbour);
+DataPackagePair NeighbourIndexShift(const Arrayi &shift_index, const CellNeighborhood &neighbour);
 
 template <int PKG_SIZE>
-PackageGridPair GeneralNeighbourIndexShift(
+DataPackagePair GeneralNeighbourIndexShift(
     UnsignedInt package_index, CellNeighborhood *neighbour, const Arrayi &shift_index);
 
 template <typename DataType, int PKG_SIZE>
-DataType CornerAverage(PackageDataMatrix<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
+DataType CornerAverage(PackageData<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
                        Arrayi corner_direction, const CellNeighborhood &neighborhood, DataType zero);
 
-template <typename CellDataType, typename PackageDataType, UnsignedInt PKG_SIZE, typename FunctionByGrid>
-CellDataType assignByGrid(PackageDataMatrix<PackageDataType, PKG_SIZE> &pkg_data,
-                          const FunctionByGrid &function_by_grid, CellDataType inital_value);
+template <typename DataType, int PKG_SIZE, typename FunctionByIndex>
+void assignByDataIndex(PackageData<DataType, PKG_SIZE> &pkg_data, const FunctionByIndex &function_by_index);
 
+template <int PKG_SIZE, typename RegularizeFunction>
+Vec2d regularizedCentralDifference(PackageData<Real, PKG_SIZE> *input, const CellNeighborhood2d &neighborhood,
+                                   const Array2i &data_index, const RegularizeFunction &regularize_function);
+
+template <int PKG_SIZE, typename RegularizeFunction>
+Vec3d regularizedCentralDifference(PackageData<Real, PKG_SIZE> *input, const CellNeighborhood3d &neighborhood,
+                                   const Array3i &data_index, const RegularizeFunction &regularize_function);
 template <typename DataType, int PKG_SIZE>
 class ProbeMesh
 {
@@ -63,7 +69,7 @@ class ProbeMesh
     DataType operator()(const Vecd &position);
 
   protected:
-    PackageDataMatrix<DataType, PKG_SIZE> *pkg_data_;
+    PackageData<DataType, PKG_SIZE> *pkg_data_;
     IndexHandler index_handler_;
     UnsignedInt *cell_pkg_index_;
     CellNeighborhood *cell_neighborhood_;
@@ -72,4 +78,4 @@ class ProbeMesh
     DataType probeDataPackage(UnsignedInt package_index, const Array3i &cell_index, const Vec3d &position);
 };
 } // namespace SPH
-#endif // GRID_DATA_PACKAGE_FUNCTIONS_H
+#endif // DATA_PACKAGE_FUNCTIONS_H

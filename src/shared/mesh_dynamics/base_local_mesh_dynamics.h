@@ -21,40 +21,55 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file grid_data_package_type.h
- * @brief TBD.
+ * @file    base_local_mesh_dynamics.h
+ * @brief   TBD.
  * @author  Xiangyu Hu
  */
 
-#ifndef GRID_DATA_PACKAGE_TYPE_H
-#define GRID_DATA_PACKAGE_TYPE_H
+#ifndef BASE_LOCAL_MESH_DYNAMICS_H
+#define BASE_LOCAL_MESH_DYNAMICS_H
 
-#include "base_data_package.h"
+#include "base_dynamics.h"
+#include "base_implementation.h"
+#include "data_package_function.hpp"
+#include "mesh_with_data_packages.hpp"
 
 namespace SPH
 {
-template <int PKG_SIZE>
-inline constexpr std::size_t as_size_t_v = static_cast<std::size_t>(PKG_SIZE);
+using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
 
-template <class DataType, int PKG_SIZE>
-class PackageDataMatrix2d
-    : public std::array<std::array<DataType, as_size_t_v<PKG_SIZE>>, as_size_t_v<PKG_SIZE>>
+template <typename DataType>
+using MeshVariableData = MeshWithGridDataPackagesType::MeshVariableData<DataType>;
+
+template <typename DataType>
+using MeshVariable = MeshWithGridDataPackagesType::MeshVariable<DataType>;
+
+template <typename DataType>
+using BKGMeshVariable = MeshWithGridDataPackagesType::BKGMeshVariable<DataType>;
+
+template <typename DataType>
+using MetaVariable = MeshWithGridDataPackagesType::MetaVariable<DataType>;
+
+using MeshVariableAssemble = MeshWithGridDataPackagesType::MeshVariableAssemble;
+using BKGMeshVariableAssemble = MeshWithGridDataPackagesType::BKGMeshVariableAssemble;
+using MetaVariableAssemble = MeshWithGridDataPackagesType::MetaVariableAssemble;
+using IndexHandler = MeshWithGridDataPackagesType::IndexHandler;
+
+/**
+ * @class BaseMeshLocalDynamics
+ * @brief The base class for all mesh local particle dynamics.
+ */
+class BaseMeshLocalDynamics
 {
   public:
-    DataType operator()(const Array2i &index) const { return (*this)[index[0]][index[1]]; }
-    DataType &operator()(const Array2i &index) { return (*this)[index[0]][index[1]]; }
-};
+    explicit BaseMeshLocalDynamics(MeshWithGridDataPackagesType &data_mesh)
+        : data_mesh_(data_mesh), index_handler_(data_mesh.getIndexHandler()) {};
+    virtual ~BaseMeshLocalDynamics() {};
 
-template <class DataType, int PKG_SIZE>
-class PackageDataMatrix3d
-    : public std::array<std::array<std::array<DataType, as_size_t_v<PKG_SIZE>>, as_size_t_v<PKG_SIZE>>, as_size_t_v<PKG_SIZE>>
-{
-  public:
-    DataType operator()(const Array3i &index) const { return (*this)[index[0]][index[1]][index[2]]; }
-    DataType &operator()(const Array3i &index) { return (*this)[index[0]][index[1]][index[2]]; }
+    MeshWithGridDataPackagesType &data_mesh_;
+    IndexHandler &index_handler_;
+    static constexpr int pkg_size = MeshWithGridDataPackagesType::DataPackageSize();
+    static constexpr int pkg_size_minus1 = pkg_size - 1;
 };
-
-using CellNeighborhood2d = PackageDataMatrix2d<UnsignedInt, 3>;
-using CellNeighborhood3d = PackageDataMatrix3d<UnsignedInt, 3>;
 } // namespace SPH
-#endif // GRID_DATA_PACKAGE_TYPE_H
+#endif // BASE_LOCAL_MESH_DYNAMICS_H

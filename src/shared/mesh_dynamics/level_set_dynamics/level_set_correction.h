@@ -21,51 +21,158 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	all_mesh_dynamics.h
- * @brief 	This is for the base classes of particle dynamics, which describe the
- * 			interaction between particles. These interactions are used to define
- *			differential operators for surface forces or fluxes in continuum mechanics
- * @author	Chi Zhang and Xiangyu Hu
+ * @file    level_set_correction.h
+ * @brief   This class encapsulates functions related to mesh dynamics,
+ *          including initialization and manipulation of level set data.
+ * @author  Chi Zhang and Xiangyu Hu
  */
 
-#ifndef ALL_MESH_DYNAMICS_H
-#define ALL_MESH_DYNAMICS_H
+#ifndef LEVEL_SET_CORRECTION_H
+#define LEVEL_SET_CORRECTION_H
 
-#include "mesh_dynamics.h"
-#include "mesh_local_dynamics.hpp"
+#include "base_local_mesh_dynamics.h"
+#include "level_set_transformation.h"
+#include "mesh_dynamics_algorithm.h"
 
 namespace SPH
 {
-class FinishDataPackages
+class ReinitializeLevelSet : public BaseMeshLocalDynamics
 {
   public:
-    explicit FinishDataPackages(MeshWithGridDataPackagesType &mesh_data, Shape &shape)
-        : mesh_data_(mesh_data), shape_(shape) {};
-    virtual ~FinishDataPackages() {};
+    explicit ReinitializeLevelSet(MeshWithGridDataPackagesType &data_mesh);
+    virtual ~ReinitializeLevelSet() {};
 
-    void exec()
+    class UpdateKernel
     {
-        initialize_basic_data_for_a_package.exec();
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(const UnsignedInt &index);
 
-        near_interface_cell_tagging.exec();
-        while (sv_count_modified_.getValue() > 0)
-        {
-            sv_count_modified_.setValue(0);
-            cell_contain_diffusion.exec();
-        }
+      protected:
+        Real data_spacing_;
+        MeshVariableData<Real> *phi_;
+        MeshVariableData<int> *near_interface_id_;
+        CellNeighborhood *cell_neighborhood_;
 
-        initialize_cell_neighborhood.exec();
+        Real upwindDifference(Real sign, Real df_p, Real df_n);
     };
 
-  private:
-    MeshWithGridDataPackagesType &mesh_data_;
-    Shape &shape_;
-    SingularVariable<UnsignedInt> sv_count_modified_{"CountModifiedCell", 1};
+  protected:
+    MeshVariable<Real> &mv_phi_;
+    MeshVariable<int> &mv_near_interface_id_;
+    DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
+};
 
-    MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
-    MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package{mesh_data_, shape_};
-    MeshInnerDynamics<execution::ParallelPolicy, NearInterfaceCellTagging> near_interface_cell_tagging{mesh_data_};
-    MeshAllDynamics<execution::ParallelPolicy, CellContainDiffusion> cell_contain_diffusion{mesh_data_, sv_count_modified_};
+class MarkCutInterfaces : public BaseMeshLocalDynamics
+{
+  public:
+    explicit MarkCutInterfaces(MeshWithGridDataPackagesType &data_mesh, Real perturbation_ratio);
+    virtual ~MarkCutInterfaces() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(const UnsignedInt &index, Real dt = 0.0);
+
+      protected:
+        IndexHandler index_handler_;
+        Real threshold_, perturbation_;
+        MeshVariableData<Real> *phi_;
+        MeshVariableData<int> *near_interface_id_;
+        CellNeighborhood *cell_neighborhood_;
+    };
+
+  protected:
+    Real perturbation_ratio_;
+    MeshVariable<Real> &mv_phi_;
+    MeshVariable<int> &mv_near_interface_id_;
+    DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
+};
+
+class MarkNearInterface : public BaseMeshLocalDynamics
+{
+  public:
+    explicit MarkNearInterface(MeshWithGridDataPackagesType &data_mesh);
+    virtual ~MarkNearInterface() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(const UnsignedInt &index, Real dt = 0.0);
+
+      protected:
+        IndexHandler index_handler_;
+        Real threshold_;
+        MeshVariableData<Real> *phi_;
+        MeshVariableData<int> *near_interface_id_;
+        CellNeighborhood *cell_neighborhood_;
+    };
+
+  protected:
+    MeshVariable<Real> &mv_phi_;
+    MeshVariable<int> &mv_near_interface_id_;
+    DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
+};
+
+class RedistanceInterface : public BaseMeshLocalDynamics
+{
+  public:
+    explicit RedistanceInterface(MeshWithGridDataPackagesType &data_mesh);
+    virtual ~RedistanceInterface() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(const UnsignedInt &index);
+
+      protected:
+        Real data_spacing_;
+        MeshVariableData<Real> *phi_;
+        MeshVariableData<Vecd> *phi_gradient_;
+        MeshVariableData<int> *near_interface_id_;
+        CellNeighborhood *cell_neighborhood_;
+    };
+
+  protected:
+    MeshVariable<Real> &mv_phi_;
+    MeshVariable<Vecd> &mv_phi_gradient_;
+    MeshVariable<int> &mv_near_interface_id_;
+    DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
+};
+
+class DiffuseLevelSetSign : public BaseMeshLocalDynamics
+{
+  public:
+    explicit DiffuseLevelSetSign(MeshWithGridDataPackagesType &data_mesh,
+                                 SingularVariable<UnsignedInt> &sv_count_modified);
+    virtual ~DiffuseLevelSetSign() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(const UnsignedInt &index);
+
+      protected:
+        MeshVariableData<Real> *phi_;
+        MeshVariableData<int> *near_interface_id_;
+        CellNeighborhood *cell_neighborhood_;
+        UnsignedInt *count_modified_;
+    };
+
+  protected:
+    MeshVariable<Real> &mv_phi_;
+    MeshVariable<int> &mv_near_interface_id_;
+    DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
+    SingularVariable<UnsignedInt> &sv_count_modified_;
 };
 
 class RepeatTimes
@@ -150,4 +257,4 @@ class CorrectTopology : public BaseMeshDynamics, public BaseDynamics<void>
     MeshInnerDynamics<ExecutionPolicy, DiffuseLevelSetSign> diffuse_level_set_sign{mesh_data_, sv_count_modified_};
 };
 } // namespace SPH
-#endif // ALL_MESH_DYNAMICS_H
+#endif // LEVEL_SET_CORRECTION_H

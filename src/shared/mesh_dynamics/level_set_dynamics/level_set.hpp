@@ -7,7 +7,7 @@ namespace SPH
 {
 //=================================================================================================//
 template <class ExecutionPolicy>
-void MultilevelLevelSet::configLevelSetPostProcesses(const ExecutionPolicy &ex_policy)
+void LevelSet::configLevelSetPostProcesses(const ExecutionPolicy &ex_policy)
 {
     clean_interface_keeper_ = makeUnique<CleanInterface<ExecutionPolicy>>(
         *mesh_data_set_.back(), *neighbor_method_set_.back(), refinement_ratio_);
@@ -16,7 +16,7 @@ void MultilevelLevelSet::configLevelSetPostProcesses(const ExecutionPolicy &ex_p
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void MultilevelLevelSet::initializeMeshVariables(const ExecutionPolicy &ex_policy)
+void LevelSet::initializeMeshVariables(const ExecutionPolicy &ex_policy)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
@@ -27,28 +27,28 @@ void MultilevelLevelSet::initializeMeshVariables(const ExecutionPolicy &ex_polic
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void MultilevelLevelSet::syncMeshVariablesToWrite(ExecutionPolicy &ex_policy)
+void LevelSet::syncMeshVariablesToWrite(ExecutionPolicy &ex_policy)
 {
     for (size_t l = 0; l != total_levels_; l++)
         mesh_data_set_[l]->syncMeshVariablesToWrite(ex_policy);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void MultilevelLevelSet::syncBKGMeshVariablesToWrite(ExecutionPolicy &ex_policy)
+void LevelSet::syncBKGMeshVariablesToWrite(ExecutionPolicy &ex_policy)
 {
     for (size_t l = 0; l != total_levels_; l++)
         mesh_data_set_[l]->syncBKGMeshVariablesToWrite(ex_policy);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void MultilevelLevelSet::syncMeshVariablesToProbe(ExecutionPolicy &ex_policy)
+void LevelSet::syncMeshVariablesToProbe(ExecutionPolicy &ex_policy)
 {
     for (size_t l = 0; l != total_levels_; l++)
         mesh_data_set_[l]->syncMeshVariablesToProbe(ex_policy);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void MultilevelLevelSet::finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type)
+void LevelSet::finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type)
 {
     initializeMeshVariables(ex_policy);
     registerProbes(execution::par_host); // register probes on host
@@ -73,7 +73,7 @@ void MultilevelLevelSet::finishInitialization(const ExecutionPolicy &ex_policy, 
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void MultilevelLevelSet::initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy)
+void LevelSet::initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
@@ -84,25 +84,25 @@ void MultilevelLevelSet::initializeKernelIntegralVariables(const ExecutionPolicy
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-ProbeSignedDistance MultilevelLevelSet::getProbeSignedDistance(const ExecutionPolicy &ex_policy)
+ProbeSignedDistance LevelSet::getProbeSignedDistance(const ExecutionPolicy &ex_policy)
 {
     return ProbeSignedDistance(ex_policy, mesh_data_set_[total_levels_ - 1]);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-ProbeNormalDirection MultilevelLevelSet::getProbeNormalDirection(const ExecutionPolicy &ex_policy)
+ProbeNormalDirection LevelSet::getProbeNormalDirection(const ExecutionPolicy &ex_policy)
 {
     return ProbeNormalDirection(ex_policy, mesh_data_set_[total_levels_ - 1]);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-ProbeKernelGradientIntegral MultilevelLevelSet::getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy)
+ProbeKernelGradientIntegral LevelSet::getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy)
 {
     return ProbeKernelGradientIntegral(ex_policy, mesh_data_set_[total_levels_ - 1]);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void MultilevelLevelSet::registerProbes(const ExecutionPolicy &ex_policy)
+void LevelSet::registerProbes(const ExecutionPolicy &ex_policy)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
@@ -126,7 +126,7 @@ void MultilevelLevelSet::registerProbes(const ExecutionPolicy &ex_policy)
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void MultilevelLevelSet::registerKernelIntegralProbes(const ExecutionPolicy &ex_policy)
+void LevelSet::registerKernelIntegralProbes(const ExecutionPolicy &ex_policy)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
@@ -146,7 +146,7 @@ void MultilevelLevelSet::registerKernelIntegralProbes(const ExecutionPolicy &ex_
 }
 //=================================================================================================//
 template <typename DataType>
-void MultilevelLevelSet::addMeshVariableToWrite(const std::string &variable_name)
+void LevelSet::addMeshVariableToWrite(const std::string &variable_name)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
@@ -155,7 +155,7 @@ void MultilevelLevelSet::addMeshVariableToWrite(const std::string &variable_name
 }
 //=================================================================================================//
 template <typename DataType>
-void MultilevelLevelSet::addBKGMeshVariableToWrite(const std::string &variable_name)
+void LevelSet::addBKGMeshVariableToWrite(const std::string &variable_name)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {

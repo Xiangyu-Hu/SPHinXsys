@@ -1,10 +1,7 @@
-#include "mesh_local_dynamics.hpp"
+#include "level_set_initialization.hpp"
 
 namespace SPH
 {
-//=================================================================================================//
-BaseMeshLocalDynamics::BaseMeshLocalDynamics(MeshWithGridDataPackagesType &data_mesh)
-    : data_mesh_(data_mesh), index_handler_(data_mesh.getIndexHandler()) {}
 //=================================================================================================//
 InitialCellTagging::InitialCellTagging(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh), shape_(shape),
@@ -83,6 +80,23 @@ void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
         occupied_data_pkgs_->push_back(std::make_pair(index_1d, 0)); // inner package
     }
 }
+//=============================================================================================//
+bool InnerCellTagging::UpdateKernel::isInitiallyTagged(const Arrayi &cell_index)
+{
+    UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
+    return cell_pkg_index_[index_1d] == 2;
+}
+//=============================================================================================//
+bool InnerCellTagging::UpdateKernel::isNearInitiallyTagged(const Arrayi &cell_index)
+{
+    return mesh_any_of(
+        Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+        index_handler_.AllCells().min(cell_index + 2 * Arrayi::Ones()),
+        [&](const Arrayi &index)
+        {
+            return isInitiallyTagged(index);
+        });
+}
 //=================================================================================================//
 InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh), dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
@@ -129,6 +143,36 @@ InitializeBasicPackageData::InitializeBasicPackageData(
     initializeSingularPackages(1, far_field_distance);
 }
 //=============================================================================================//
+void InitializeBasicPackageData::initializeSingularPackages(
+    const UnsignedInt package_index, Real far_field_level_set)
+{
+    auto &phi = mv_phi_.Data()[package_index];
+    auto &near_interface_id = mv_near_interface_id_.Data()[package_index];
+    auto &phi_gradient = mv_phi_gradient_.Data()[package_index];
+
+    mesh_for_each(Arrayi::Zero(), Arrayi::Constant(pkg_size),
+                  [&](const Arrayi &data_index)
+                  {
+                      phi(data_index) = far_field_level_set;
+                      near_interface_id(data_index) = far_field_level_set < 0.0 ? -2 : 2;
+                      phi_gradient(data_index) = Vecd::Ones();
+                  });
+}
+//=============================================================================================//
+void InitializeBasicPackageData::UpdateKernel::update(const UnsignedInt &package_index)
+{
+    auto &phi = phi_[package_index];
+    auto &near_interface_id = near_interface_id_[package_index];
+    Arrayi cell_index = index_handler_.DimensionalCellIndex(pkg_1d_cell_index_[package_index]);
+    mesh_for_each(Arrayi::Zero(), Arrayi::Constant(pkg_size),
+                  [&](const Arrayi &data_index)
+                  {
+                      Vecd position = index_handler_.DataPositionFromIndex(cell_index, data_index);
+                      phi(data_index) = shape_->findSignedDistance(position);
+                      near_interface_id(data_index) = phi(data_index) < 0.0 ? -2 : 2;
+                  });
+}
+//=============================================================================================//
 NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
       dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
@@ -140,64 +184,6 @@ CellContainDiffusion::CellContainDiffusion(
     : BaseMeshLocalDynamics(data_mesh),
       bmv_cell_contain_id_(*data_mesh.getBKGMeshVariable<int>("CellContainID")),
       bmv_cell_package_index_(data_mesh.getCellPackageIndex()),
-      sv_count_modified_(sv_count_modified) {}
-//=============================================================================================//
-UpdateLevelSetGradient::UpdateLevelSetGradient(MeshWithGridDataPackagesType &data_mesh)
-    : BaseMeshLocalDynamics(data_mesh),
-      mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
-      mv_phi_gradient_(*data_mesh.registerMeshVariable<Vecd>("LevelSetGradient")),
-      dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
-//=============================================================================================//
-UpdateKernelIntegrals::UpdateKernelIntegrals(
-    MeshWithGridDataPackagesType &data_mesh, NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method)
-    : BaseMeshLocalDynamics(data_mesh), neighbor_method_(neighbor_method),
-      mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
-      mv_phi_gradient_(*data_mesh.getMeshVariable<Vecd>("LevelSetGradient")),
-      dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
-      dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
-      bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
-      mv_kernel_weight_(*data_mesh.registerMeshVariable<Real>("KernelWeight")),
-      mv_kernel_gradient_(*data_mesh.registerMeshVariable<Vecd>("KernelGradient")),
-      mv_kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient"))
-{
-    IndexHandler &index_handler = data_mesh.getIndexHandler();
-    Real far_field_distance = index_handler.GridSpacing() * (Real)index_handler.BufferWidth();
-    initializeSingularPackages(0, -far_field_distance);
-    initializeSingularPackages(1, far_field_distance);
-}
-//=============================================================================================//
-MarkCutInterfaces::MarkCutInterfaces(MeshWithGridDataPackagesType &data_mesh, Real perturbation_ratio)
-    : BaseMeshLocalDynamics(data_mesh),
-      perturbation_ratio_(perturbation_ratio),
-      mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
-      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
-      dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
-//=============================================================================================//
-MarkNearInterface::MarkNearInterface(MeshWithGridDataPackagesType &data_mesh)
-    : BaseMeshLocalDynamics(data_mesh),
-      mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
-      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
-      dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
-//=============================================================================================//
-ReinitializeLevelSet::ReinitializeLevelSet(MeshWithGridDataPackagesType &data_mesh)
-    : BaseMeshLocalDynamics(data_mesh),
-      mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
-      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
-      dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
-//=============================================================================================//
-RedistanceInterface::RedistanceInterface(MeshWithGridDataPackagesType &data_mesh)
-    : BaseMeshLocalDynamics(data_mesh),
-      mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
-      mv_phi_gradient_(*data_mesh.getMeshVariable<Vecd>("LevelSetGradient")),
-      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
-      dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
-//=============================================================================================//
-DiffuseLevelSetSign::DiffuseLevelSetSign(
-    MeshWithGridDataPackagesType &data_mesh, SingularVariable<UnsignedInt> &sv_count_modified)
-    : BaseMeshLocalDynamics(data_mesh),
-      mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
-      mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
-      dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
       sv_count_modified_(sv_count_modified) {}
 //=================================================================================================//
 } // namespace SPH
