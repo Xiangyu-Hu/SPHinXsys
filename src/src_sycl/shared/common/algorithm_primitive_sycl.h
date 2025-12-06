@@ -35,22 +35,6 @@
 namespace SPH
 {
 using namespace execution;
-
-class RadixSort
-{
-  public:
-    template <class ExecutionPolicy>
-    explicit RadixSort(const ExecutionPolicy &ex_policy,
-                       DiscreteVariable<UnsignedInt> *dv_sequence,
-                       DiscreteVariable<UnsignedInt> *dv_index_permutation)
-        : dv_sequence_(dv_sequence), dv_index_permutation_(dv_index_permutation){};
-    void sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size, UnsignedInt start_index = 0);
-
-  protected:
-    DiscreteVariable<UnsignedInt> *dv_sequence_;
-    DiscreteVariable<UnsignedInt> *dv_index_permutation_;
-};
-
 template <class DataType>
 class DeviceRadixSort
 {
@@ -79,12 +63,28 @@ class DeviceRadixSort
 
   private:
     bool uniform_case_masking_;
-    UnsignedInt data_size_ = 0, radix_bits_, workgroup_size_,
-                uniform_global_size_, workgroups_, radix_;
+    UnsignedInt data_size_ = 0;
+    UnsignedInt radix_bits_, workgroup_size_, uniform_global_size_, workgroups_, radix_;
     sycl::nd_range<1> kernel_range_{0, 0};
     std::unique_ptr<sycl::buffer<UnsignedInt, 2>> global_buckets_, global_buckets_offsets_;
     std::unique_ptr<sycl::buffer<UnsignedInt, 1>> local_buckets_offsets_buffer_;
     std::unique_ptr<sycl::buffer<SortablePair>> data_swap_buffer_, uniform_extra_swap_buffer_;
+};
+
+class RadixSort
+{
+  public:
+    template <class ExecutionPolicy>
+    explicit RadixSort(const ExecutionPolicy &ex_policy,
+                       DiscreteVariable<UnsignedInt> *dv_sequence,
+                       DiscreteVariable<UnsignedInt> *dv_index_permutation)
+        : dv_sequence_(dv_sequence), dv_index_permutation_(dv_index_permutation){};
+    void sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size, UnsignedInt start_index = 0);
+
+  protected:
+    DiscreteVariable<UnsignedInt> *dv_sequence_;
+    DiscreteVariable<UnsignedInt> *dv_index_permutation_;
+    DeviceRadixSort<UnsignedInt> device_radix_sorting;
 };
 
 template <typename T, typename Op>

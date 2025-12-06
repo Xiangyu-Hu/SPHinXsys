@@ -16,17 +16,9 @@ void RadixSort::sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size, Un
     UnsignedInt *begin = dv_sequence_->DelegatedData(ex_policy) + start_index;
 
 #ifndef SPHINXSYS_USE_ONEDPL_SORTING
-    device_radix_sorting.sort_by_key(begin, index_sorting_device_variables_, size, execution::executionQueue.getQueue(), 512, 4).wait();
+    auto &sycl_queue = execution_instance.getQueue();
+    device_radix_sorting.sort_by_key(begin, index_permutation, size, sycl_queue, sycl_queue.getWorkGroupSize(), 4).wait();
 #else
-    execution::executionQueue.getQueue().parallel_for(execution::executionQueue.getUniformNdRange(size),
-                                                      [=, index_sorting = index_sorting_device_variables_](sycl::nd_item<1> it)
-                                                      {
-                                                          DeviceInt i = it.get_global_id(0);
-                                                          if (i < size)
-                                                              index_sorting[i] = i;
-                                                      })
-        .wait();
-
     oneapi::dpl::sort_by_key(oneapi::dpl::execution::make_device_policy(execution_instance.getQueue()),
                              begin, begin + size, index_permutation);
 #endif

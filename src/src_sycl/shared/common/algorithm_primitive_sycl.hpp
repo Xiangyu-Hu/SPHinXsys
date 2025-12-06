@@ -113,8 +113,7 @@ sycl::event DeviceRadixSort<DataType>::sort_by_key(
                 auto local_buckets = sycl::local_accessor<UnsignedInt>(radix_, cgh);
                 auto local_output = sycl::local_accessor<SortablePair>(kernel_range_.get_local_range(), cgh);
                 auto global_buckets_accessor = global_buckets_->get_access(cgh, sycl::read_write, sycl::no_init);
-                auto local_buckets_offsets_accessor = local_buckets_offsets_buffer_->get_access(cgh, sycl::write_only,
-                                                                                                                              sycl::no_init);
+                auto local_buckets_offsets_accessor = local_buckets_offsets_buffer_->get_access(cgh, sycl::write_only, sycl::no_init);
 
                 cgh.parallel_for(
                     kernel_range_, 
