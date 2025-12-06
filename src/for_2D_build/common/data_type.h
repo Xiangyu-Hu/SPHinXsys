@@ -43,7 +43,8 @@ using MatTend = Mat3d;           // matricized symmetric 2x2x2x2 tensor
 using VecMatGrad = VecMatGrad2d; // gradient of vectorized symmetric 2x2 matrix
 using AngularVecd = Real;
 using Rotation = Rotation2d;
-using BoundingBox = BaseBoundingBox<Vec2d>;
+using BoundingBoxd = BoundingBox<VecdBound, 2>;
+using BoundingBoxi = BoundingBox<ArrayiBound, 2>;
 using Transform = BaseTransform<Rotation2d, Vec2d>;
 
 /** only works for smoothing length ratio less or equal than 1.3*/

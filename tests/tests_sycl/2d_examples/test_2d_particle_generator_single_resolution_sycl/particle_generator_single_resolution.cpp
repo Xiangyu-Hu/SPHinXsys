@@ -21,7 +21,7 @@ Real DL = 2.5;                          /**< InputBody length right part. */
 Real DL1 = 2.5;                         /**< InputBody length left part. */
 Real DH = 5.0;                          /**< InputBody height. */
 Real resolution_ref = (DL + DL1) / 120; /**< Reference resolution. */
-BoundingBox system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
+BoundingBoxd system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	The main program
 //----------------------------------------------------------------------
@@ -109,6 +109,9 @@ int main(int ac, char *av[])
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    BaseCellLinkedList &input_body_cell_linked_list = input_body.getCellLinkedList();
+    input_body_cell_linked_list.addCellVariableToWrite<UnsignedInt>("CurrentListSize");
+    MeshRecordingToPlt cell_linked_list_recording(sph_system, input_body_cell_linked_list);
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------
@@ -129,6 +132,7 @@ int main(int ac, char *av[])
         {
             std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
             body_state_recorder.writeToFile(ite_p);
+            cell_linked_list_recording.writeToFile(ite_p);
         }
     }
     std::cout << "The physics relaxation process finish !" << std::endl;

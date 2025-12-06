@@ -67,9 +67,9 @@ Real BodyStatesRecordingToMeshVtu::FileNodeCoordinates(std::ofstream &out_file)
     out_file << "<CellData>\n";
     out_file << "</CellData>\n";
     out_file << "<Points>\n";
-    BoundingBox bounds = bounds_.getSPHSystemBounds();
-    Real first_max = bounds.first_.cwiseAbs().maxCoeff();
-    Real second_max = bounds.second_.cwiseAbs().maxCoeff();
+    BoundingBoxd bounds = bounds_.getSPHSystemBounds();
+    Real first_max = bounds.lower_.cwiseAbs().maxCoeff();
+    Real second_max = bounds.upper_.cwiseAbs().maxCoeff();
     Real rangemax = 1.03075 * (std::max(first_max, second_max));
     out_file << "<DataArray type=\"Float64\" Name=\"Points\" NumberOfComponents=\"3\""
              << " format=\"ascii\" RangeMin=\"0\" RangeMax=\"" << rangemax << "\">\n";

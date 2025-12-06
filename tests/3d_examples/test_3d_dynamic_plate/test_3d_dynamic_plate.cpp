@@ -22,7 +22,7 @@ Real particle_spacing_ref = PL / (Real)particle_number; /** Initial reference pa
 int BWD = 1;
 Real BW = particle_spacing_ref * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec3d(-BW, -BW, -0.5 * particle_spacing_ref),
+BoundingBoxd system_domain_bounds(Vec3d(-BW, -BW, -0.5 * particle_spacing_ref),
                                  Vec3d(PL + BW, PH + BW, 0.5 * particle_spacing_ref));
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(0.5 * PL, 0.5 * PH, 0.0), Vecd(-BW, -BW, 0.0)};

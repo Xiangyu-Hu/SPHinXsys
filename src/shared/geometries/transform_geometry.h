@@ -22,14 +22,14 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	transform_geometry.h
- * @brief 	transformation related class for geometries.
+ * @brief 	Linear transformation related class for geometries.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef TRANSFORM_SHAPE_H
 #define TRANSFORM_SHAPE_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "base_geometry.h"
 
 namespace SPH
@@ -96,18 +96,18 @@ class TransformShape : public TransformGeometry<GeometryType>, public Shape
     // Returns the AABB of the rotated underlying shape's AABB
     // It is not the tight fit AABB of the underlying shape
     // But at least it encloses the underlying shape fully
-    virtual BoundingBox findBounds() override
+    virtual BoundingBoxd findBounds() override
     {
-        BoundingBox original_bound = TransformGeometry<GeometryType>::findBounds();
+        BoundingBoxd original_bound = TransformGeometry<GeometryType>::findBounds();
         Vecd bb_min = Vecd::Constant(MaxReal);
         Vecd bb_max = Vecd::Constant(-MaxReal);
-        for (auto x : {original_bound.first_.x(), original_bound.second_.x()})
+        for (auto x : {original_bound.lower_.x(), original_bound.upper_.x()})
         {
-            for (auto y : {original_bound.first_.y(), original_bound.second_.y()})
+            for (auto y : {original_bound.lower_.y(), original_bound.upper_.y()})
             {
                 if constexpr (Dimensions == 3)
                 {
-                    for (auto z : {original_bound.first_.z(), original_bound.second_.z()})
+                    for (auto z : {original_bound.lower_.z(), original_bound.upper_.z()})
                     {
                         bb_min = bb_min.cwiseMin(this->transform_.shiftFrameStationToBase(Vecd(x, y, z)));
                         bb_max = bb_max.cwiseMax(this->transform_.shiftFrameStationToBase(Vecd(x, y, z)));
@@ -120,7 +120,7 @@ class TransformShape : public TransformGeometry<GeometryType>, public Shape
                 }
             }
         }
-        return BoundingBox(bb_min, bb_max);
+        return BoundingBoxd(bb_min, bb_max);
     };
 };
 } // namespace SPH

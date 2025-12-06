@@ -42,7 +42,7 @@ Vec2d outlet_halfsize = Vec2d(BW + 0.01, 0.5 * DO);
 Vec2d outlet_translation = Vec2d(0, -RM + 0.01);
 Transform outlet_transform(Rotation2d(-(Pi / 2)), outlet_translation);
 Transform inlet_transform(Rotation2d(-(Pi / 2)), inlet_translation);
-BoundingBox system_domain_bounds(Vec2d(-BW - RM, -BW - RM), Vec2d(RM + BW, RM + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW - RM, -BW - RM), Vec2d(RM + BW, RM + BW));
 Vecd center(0.0, 0.0);
 // observer location
 StdVec<Vecd> slot_locations = {

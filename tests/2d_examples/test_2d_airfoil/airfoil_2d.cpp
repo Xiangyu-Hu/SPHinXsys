@@ -20,7 +20,7 @@ Real DL = 1.25;             /**< airfoil length rear part. */
 Real DL1 = 0.25;            /**< airfoil length front part. */
 Real DH = 0.25;             /**< airfoil height. */
 Real resolution_ref = 0.02; /**< Reference resolution. */
-BoundingBox system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
+BoundingBoxd system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	import model as a complex shape
 //----------------------------------------------------------------------
@@ -49,16 +49,15 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody airfoil(sph_system, makeShared<ImportModel>("AirFoil"));
-    airfoil.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
+    airfoil.defineAdaptation<AdaptiveNearSurface>(1.15, 1.0, 3);
     airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(sph_system);
-    airfoil.generateParticles<BaseParticles, Lattice, Adaptive>();
+    airfoil.generateParticles<BaseParticles, Lattice, AdaptiveByShape>();
     //----------------------------------------------------------------------
     //	Define outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp airfoil_recording_to_vtp(airfoil);
     airfoil_recording_to_vtp.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
-    MeshRecordingToPlt cell_linked_list_recording(sph_system, airfoil.getCellLinkedList());
-    //----------------------------------------------------------------------
+      //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies,
     //	basically, in the the range of bodies to build neighbor particle lists.
@@ -82,7 +81,6 @@ int main(int ac, char *av[])
     //	First output before the simulation.
     //----------------------------------------------------------------------
     airfoil_recording_to_vtp.writeToFile();
-    cell_linked_list_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------

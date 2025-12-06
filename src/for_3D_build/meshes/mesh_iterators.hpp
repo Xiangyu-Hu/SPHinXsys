@@ -11,45 +11,6 @@
 namespace SPH
 {
 //=================================================================================================//
-template <int lower0, int upper0,
-          int lower1, int upper1,
-          int lower2, int upper2, typename FunctionOnEach>
-inline void mesh_for_each3d(const FunctionOnEach &function)
-{
-    for (int l = lower0; l != upper0; ++l)
-        for (int m = lower1; m != upper1; ++m)
-            for (int n = lower2; n != upper2; ++n)
-            {
-                function(l, m, n);
-            }
-}
-//=================================================================================================//
-template <typename FunctionOnEach>
-inline void mesh_for_each_neighbor3d(int depth, const FunctionOnEach &function)
-{
-    for (int i = -depth; i <= depth; ++i)
-        for (int j = -depth; j <= depth; ++j)
-            for (int k = -depth; k <= depth; ++k)
-            {
-                function(i, j, k);
-            }
-}
-//=================================================================================================//
-template <int lower0, int upper0,
-          int lower1, int upper1,
-          int lower2, int upper2, typename CheckOnEach>
-inline Array3i mesh_find_if3d(const CheckOnEach &function)
-{
-    for (int l = lower0; l != upper0; ++l)
-        for (int m = lower1; m != upper1; ++m)
-            for (int n = lower2; n != upper2; ++n)
-            {
-                if (function(l, m, n))
-                    return Array3i(l, m, n);
-            }
-    return Array3i(upper0, upper1, upper2);
-}
-//=================================================================================================//
 template <typename FunctionOnEach>
 void mesh_for_each(const Array3i &lower, const Array3i &upper, const FunctionOnEach &function)
 {
@@ -62,7 +23,7 @@ void mesh_for_each(const Array3i &lower, const Array3i &upper, const FunctionOnE
 }
 //=================================================================================================//
 template <typename FunctionOnEach>
-void mesh_for_column_major(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function)
+void mesh_for_column_major(const Array3i &lower, const Array3i &upper, const FunctionOnEach &function)
 {
     for (int l = lower[2]; l != upper[2]; ++l)
         for (int m = lower[1]; m != upper[1]; ++m)
@@ -79,12 +40,11 @@ Array3i mesh_find_if(const Array3i &lower, const Array3i &upper, const FunctionO
         for (int m = lower[1]; m != upper[1]; ++m)
             for (int n = lower[2]; n != upper[2]; ++n)
             {
-                if (function(l, m, n))
+                if (function(Array3i(l, m, n)))
                     return Array3i(l, m, n);
             }
     return upper;
 }
-//=================================================================================================//
 //=================================================================================================//
 template <typename LocalFunction, typename... Args>
 void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args)

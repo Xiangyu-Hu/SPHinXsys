@@ -58,9 +58,9 @@ Vecd GeometricBox::findClosestPoint(const Vecd &probe_point)
     return c;
 }
 //=================================================================================================//
-BoundingBox GeometricBox::findBounds()
+BoundingBoxd GeometricBox::findBounds()
 {
-    return BoundingBox(-halfsize_, halfsize_);
+    return BoundingBoxd(-halfsize_, halfsize_);
 }
 //=================================================================================================//
 GeometricBall::GeometricBall(Real radius) : radius_(radius)
@@ -83,10 +83,10 @@ Vecd GeometricBall::findClosestPoint(const Vecd &probe_point)
     return radius_ * probe_point.normalized();
 }
 //=================================================================================================//
-BoundingBox GeometricBall::findBounds()
+BoundingBoxd GeometricBall::findBounds()
 {
     Vecd shift = radius_ * Vecd::Ones();
-    return BoundingBox(-shift, shift);
+    return BoundingBoxd(-shift, shift);
 }
 //=================================================================================================//
 } // namespace SPH

@@ -29,7 +29,7 @@
 #ifndef SPHINXSYS_CONTAINERS_H
 #define SPHINXSYS_CONTAINERS_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "base_data_type.h"
 #include "sphinxsys_constant.h"
 #include "sphinxsys_variable.h"
@@ -37,18 +37,6 @@
 namespace SPH
 {
 class Base;  // Indicating base class
-struct Fixed // Indicating with fixed adaptation
-{
-    static inline const bool is_adaptive = false;
-    static inline const bool is_fixed = true;
-    static inline const bool is_dynamic = false;
-};
-struct Adaptive // Indicating with adaptive resolution
-{
-    static inline const bool is_adaptive = true;
-    static inline const bool is_fixed = false;
-    static inline const bool is_dynamic = true;
-};
 class SingleValued
 {
 };

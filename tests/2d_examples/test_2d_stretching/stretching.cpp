@@ -18,7 +18,7 @@ Real resolution_ref = PH / 30;
 Real BW = resolution_ref * 4.0; // boundary width, at least three particles
 
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-PL / 2.0, -PL / 2.0),
+BoundingBoxd system_domain_bounds(Vec2d(-PL / 2.0, -PL / 2.0),
                                  Vec2d(2.0 * PL, PL / 2.0));
 // two dimensional should be circle smooth between two parts.
 //----------------------------------------------------------------------

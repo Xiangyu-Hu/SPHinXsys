@@ -159,7 +159,7 @@ TEST(test_xml, test_vector_attributer)
 		 child; 
 		 child = child->NextSiblingElement())
 	{
-		Vecd postion(-3.8, 1.6);
+		Vec2d postion(-3.8, 1.6);
 		xml_parser.setAttributeToElement( child, "Position", postion );
 	}
 
@@ -229,13 +229,13 @@ TEST(test_xml, test_vector_query)
 	std::string root_name = xml_parser.getFirstElementTag();
 
 
-	Vecd postion(-3.8, 1.6);
+	Vec2d postion(-3.8, 1.6);
 
 	for( tinyxml2::XMLElement *child = xml_parser.first_element_->FirstChildElement(); 
 		 child; 
 		 child = child->NextSiblingElement())
 	{
-		Vecd pos_query = Vecd::Zero();
+		Vec2d pos_query = Vec2d::Zero();
 		xml_parser.queryAttributeValue( child, "Position", pos_query );
 		EXPECT_EQ( postion, pos_query );
 	}

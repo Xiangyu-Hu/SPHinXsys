@@ -11,40 +11,6 @@
 namespace SPH
 {
 //=================================================================================================//
-template <int lower0, int upper0,
-          int lower1, int upper1, typename FunctionOnEach>
-inline void mesh_for_each2d(const FunctionOnEach &function)
-{
-    for (int l = lower0; l != upper0; ++l)
-        for (int m = lower1; m != upper1; ++m)
-        {
-            function(l, m);
-        }
-}
-//=================================================================================================//
-template <typename FunctionOnEach>
-inline void mesh_for_each_neighbor2d(int depth, const FunctionOnEach &function)
-{
-    for (int l = -depth; l <= depth; ++l)
-        for (int m = -depth; m <= depth; ++m)
-        {
-            function(l, m);
-        }
-}
-//=================================================================================================//
-template <int lower0, int upper0,
-          int lower1, int upper1, typename CheckOnEach>
-inline Array2i mesh_find_if2d(const CheckOnEach &function)
-{
-    for (int l = lower0; l != upper0; ++l)
-        for (int m = lower1; m != upper1; ++m)
-        {
-            if (function(l, m))
-                return Array2i(l, m);
-        }
-    return Array2i(upper0, upper1);
-}
-//=================================================================================================//
 template <typename FunctionOnEach>
 void mesh_for_each(const Array2i &lower, const Array2i &upper, const FunctionOnEach &function)
 {
@@ -56,7 +22,7 @@ void mesh_for_each(const Array2i &lower, const Array2i &upper, const FunctionOnE
 }
 //=================================================================================================//
 template <typename FunctionOnEach>
-void mesh_for_column_major(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function)
+void mesh_for_column_major(const Array2i &lower, const Array2i &upper, const FunctionOnEach &function)
 {
     for (int l = lower[1]; l != upper[1]; ++l)
         for (int m = lower[0]; m != upper[0]; ++m)
@@ -71,7 +37,7 @@ Array2i mesh_find_if(const Array2i &lower, const Array2i &upper, const FunctionO
     for (int l = lower[0]; l != upper[0]; ++l)
         for (int m = lower[1]; m != upper[1]; ++m)
         {
-            if (function(l, m))
+            if (function(Array2i(l, m)))
                 return Array2i(l, m);
         }
     return upper;

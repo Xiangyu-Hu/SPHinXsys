@@ -20,7 +20,7 @@ Real inlet_height = 1.0;      /**< Inflow location height */
 Real inlet_distance = -BW;    /**< Inflow location distance */
 Vec2d inlet_halfsize = Vec2d(0.5 * LL, 0.5 * LH);
 Vec2d inlet_translation = Vec2d(inlet_distance, inlet_height) + inlet_halfsize;
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 // observer location
 StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 Real rho0_f = 1.0;                                      /**< Reference density of fluid. */

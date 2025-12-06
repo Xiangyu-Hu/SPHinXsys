@@ -38,7 +38,9 @@
 
 namespace SPH
 {
-class LevelSetCorrection;
+class LevelSetCorrection
+{
+};
 
 namespace relax_dynamics
 {

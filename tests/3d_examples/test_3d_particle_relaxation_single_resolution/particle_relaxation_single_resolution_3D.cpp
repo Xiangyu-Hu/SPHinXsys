@@ -39,7 +39,7 @@ Real scaling = 2.5;
 //----------------------------------------------------------------------
 //	Below are common parts for the two test geometries.
 //----------------------------------------------------------------------
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 //--------------------------------------------------------------------
 class SolidBodyFromMesh : public ComplexShape
@@ -67,7 +67,7 @@ class SolidBodyFromMesh : public ComplexShape
 //----------------------------------------------------------------------
 //	Below are common parts for the two test geometries.
 //----------------------------------------------------------------------
-// BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+// BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 // Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 //----------------------------------------------------------------------
 //	define the imported model.
@@ -101,7 +101,6 @@ int main(int ac, char *av[])
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_imported_model_to_vtp({imported_model});
-    MeshRecordingToPlt write_cell_linked_list(sph_system, imported_model.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -125,8 +124,7 @@ int main(int ac, char *av[])
     relaxation_step_inner.SurfaceBounding().exec();
     write_imported_model_to_vtp.writeToFile(0.0);
     imported_model.updateCellLinkedList();
-    write_cell_linked_list.writeToFile(0.0);
-    //----------------------------------------------------------------------
+     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
     int ite_p = 0;

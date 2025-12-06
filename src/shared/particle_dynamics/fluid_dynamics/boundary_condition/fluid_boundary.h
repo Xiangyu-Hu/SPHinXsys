@@ -180,7 +180,7 @@ class DampingBoundaryCondition : public BaseFlowBoundaryCondition
   protected:
     /** default value is 0.1 suggests reaching  target inflow velocity in about 10 time steps */
     Real strength_;
-    BoundingBox damping_zone_bounds_;
+    BoundingBoxd damping_zone_bounds_;
 };
 
 /**

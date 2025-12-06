@@ -26,7 +26,7 @@ Vecd SurfaceShape::findClosestPoint(const Vecd &input_pnt)
 
 ////=================================================================================================//
 bool SurfaceShape::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED) { return 0; }
-BoundingBox SurfaceShape::findBounds() { return BoundingBox(); }
+BoundingBoxd SurfaceShape::findBounds() { return BoundingBoxd(); }
 //=================================================================================================//
 
 Vecd SurfaceShape::getCartesianPoint(Standard_Real u, Standard_Real v)

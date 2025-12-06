@@ -49,7 +49,7 @@ class SurfaceShape : public Shape
     Handle_Geom_Surface surface_;
 
   protected:
-    virtual BoundingBox findBounds() override;
+    virtual BoundingBoxd findBounds() override;
 };
 
 class SurfaceShapeSTEP : public SurfaceShape

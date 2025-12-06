@@ -15,7 +15,7 @@ Real L = 0.238; // Unit in m.
 Real H = 0.109;
 Real resolution_ref = 0.001;
 Real BW = resolution_ref * 2.0;
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------

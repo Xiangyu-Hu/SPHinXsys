@@ -28,24 +28,39 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Enable for all targets, needed for p
 # ------ Declare core library
 add_library(sphinxsys_core INTERFACE)
 
-# ------ Local properties
-target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
-
-if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
-    set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
-    target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES NOMINMAX)
-    target_compile_options(sphinxsys_core INTERFACE /MP)
-    target_compile_options(sphinxsys_core INTERFACE /permissive-)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
-    target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
-endif()
-
+# ------ Constrain compilesr if SYCL is used
 if(SPHINXSYS_USE_SYCL)
     if(NOT SPHINXSYS_USE_FLOAT)
     set(SPHINXSYS_USE_FLOAT ON)
     message("-- Float is used as required by SPHinXsysSYCL.")
     endif()
+    
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    # Force CMake to use icx-cl rather than the default C++ compiler/linker 
+    # (needed on Windows only)
+    include (CMakeForceCompiler)
+    include (Platform/Windows-Clang)
+    else()
+        if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+            message(FATAL_ERROR "-- SPHinXsysSYCL is only supported with IntelLLVM compiler.")
+        endif()
+    endif()
+endif()
+
+# ------ Local properties
+target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
+
+if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
+    set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
+    target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES)
+    if(NOT SPHINXSYS_USE_SYCL)
+        target_compile_definitions(sphinxsys_core INTERFACE NOMINMAX)
+        target_compile_options(sphinxsys_core INTERFACE /MP)
+    endif()
+    target_compile_options(sphinxsys_core INTERFACE /permissive-)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
+    target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
 endif()
 
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_SYCL=$<BOOL:${SPHINXSYS_USE_SYCL}>)
@@ -103,9 +118,13 @@ target_link_libraries(sphinxsys_core INTERFACE spdlog::spdlog_header_only)
 
 if(SPHINXSYS_USE_SYCL)
     set(SPHINXSYS_USE_SYCL ON)
-    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-        message(FATAL_ERROR "-- SPHinXsysSYCL is only supported with IntelLLVM compiler.")
+    
+    if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
+        target_compile_options(sphinxsys_core INTERFACE -Wno-ignored-attributes)
+        target_compile_options(sphinxsys_core INTERFACE -Wno-null-dereference)
+        target_compile_options(sphinxsys_core INTERFACE -Wno-unused-value)
     endif()
+    
 
     if(NOT SPHINXSYS_SYCL_TARGETS)
         set(SPHINXSYS_SYCL_TARGETS spir64_x86_64)

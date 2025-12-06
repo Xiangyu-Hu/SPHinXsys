@@ -12,7 +12,7 @@ using namespace SPH;   // Namespace cite here.
 Real L = 1.0;
 Real H = 1.0;
 Real resolution_ref = H / 50.0;
-BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
+BoundingBoxd system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
 // observer location
 StdVec<Vecd> observation_location = {Vecd(0.3, 0.7)};
 //----------------------------------------------------------------------

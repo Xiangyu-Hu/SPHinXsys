@@ -52,9 +52,10 @@ class RelationBase
     virtual ~RelationBase() {};
 };
 
-template <typename NeighborMethodType>
-class Relation<NeighborMethodType> : public RelationBase
+template <typename... AdaptationParameters>
+class Relation<NeighborMethod<AdaptationParameters...>> : public RelationBase
 {
+    using NeighborMethodType = NeighborMethod<AdaptationParameters...>;
     SharedPtrsKeeper<Entity> relation_variable_ptrs_;
     SharedPtrsKeeper<Neighbor<NeighborMethodType>> neighborhood_ptrs_;
     DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
@@ -103,8 +104,9 @@ class Relation<NeighborMethodType> : public RelationBase
     StdVec<StdVec<execution::Implementation<Base> *>> registered_computing_kernels_;
 };
 
-template <typename DynamicsIdentifier, typename NeighborMethodType>
-class Inner<DynamicsIdentifier, NeighborMethodType> : public Relation<NeighborMethodType>
+template <typename DynamicsIdentifier, typename... AdaptationParameters>
+class Inner<DynamicsIdentifier, NeighborMethod<AdaptationParameters...>>
+    : public Relation<NeighborMethod<AdaptationParameters...>>
 {
   public:
     typedef DynamicsIdentifier SourceType;
@@ -118,18 +120,20 @@ class Inner<DynamicsIdentifier, NeighborMethodType> : public Relation<NeighborMe
 };
 
 template <>
-class Inner<> : public Inner<RealBody, NeighborMethod<SingleValued>>
+class Inner<> : public Inner<RealBody, NeighborMethod<SPHAdaptation, SPHAdaptation>>
 {
   public:
     template <typename... Args>
     Inner(RealBody &real_body, Args &&...args)
-        : Inner<RealBody, NeighborMethod<SingleValued>>(real_body, std::forward<Args>(args)...) {}
+        : Inner<RealBody, NeighborMethod<SPHAdaptation, SPHAdaptation>>(real_body, std::forward<Args>(args)...) {}
     virtual ~Inner() {};
 };
 
-template <typename SourceIdentifier, class TargetIdentifier, typename NeighborMethodType>
-class Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType> : public Relation<NeighborMethodType>
+template <typename SourceIdentifier, class TargetIdentifier, typename... AdaptationParameters>
+class Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<AdaptationParameters...>>
+    : public Relation<NeighborMethod<AdaptationParameters...>>
 {
+    using NeighborMethodType = NeighborMethod<AdaptationParameters...>;
     using ContactRelationType = Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType>;
 
   public:
@@ -137,8 +141,6 @@ class Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType> : public R
     typedef TargetIdentifier TargetType;
     Contact(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers,
             ConfigType config_type = ConfigType::Eulerian);
-    Contact(const Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType> &original,
-            StdVec<UnsignedInt> target_indexes); // delegate constructor
     virtual ~Contact() {};
     SourceIdentifier &getSourceIdentifier() { return *source_identifier_; };
     StdVec<SPHBody *> getContactBodies() { return contact_bodies_; };
@@ -160,23 +162,23 @@ class Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType> : public R
 
 template <class SourceIdentifier, class TargetIdentifier>
 class Contact<SourceIdentifier, TargetIdentifier>
-    : public Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<SingleValued>>
+    : public Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<SPHAdaptation, SPHAdaptation>>
 {
   public:
     template <typename... Args>
     Contact(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, Args &&...args)
-        : Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<SingleValued>>(
+        : Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<SPHAdaptation, SPHAdaptation>>(
               source_identifier, contact_identifiers, std::forward<Args>(args)...) {}
     virtual ~Contact() {};
 };
 
 template <>
-class Contact<> : public Contact<SPHBody, RealBody, NeighborMethod<SingleValued>>
+class Contact<> : public Contact<SPHBody, RealBody, NeighborMethod<SPHAdaptation, SPHAdaptation>>
 {
   public:
     template <typename... Args>
     Contact(SPHBody &sph_body, StdVec<RealBody *> contact_bodies, Args &&...args)
-        : Contact<SPHBody, RealBody, NeighborMethod<SingleValued>>(
+        : Contact<SPHBody, RealBody, NeighborMethod<SPHAdaptation, SPHAdaptation>>(
               sph_body, contact_bodies, std::forward<Args>(args)...) {}
     virtual ~Contact() {};
 };

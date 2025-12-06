@@ -37,7 +37,7 @@
 namespace po = boost::program_options;
 #endif
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "io_environment.h"
 #include "sphinxsys_containers.h"
 
@@ -54,7 +54,7 @@ class SPHSystem
     UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
 
   public:
-    SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref,
+    SPHSystem(BoundingBoxd system_domain_bounds, Real resolution_ref,
               size_t number_of_threads = std::thread::hardware_concurrency());
     virtual ~SPHSystem() {};
 
@@ -87,8 +87,8 @@ class SPHSystem
     void addRealBody(RealBody *real_body);
     void addObservationBody(SPHBody *sph_body) { observation_bodies_.push_back(sph_body); };
     void addSolidBody(SolidBody *solid_body);
-    BoundingBox getSystemDomainBounds() { return system_domain_bounds_; };
-    void setSystemDomainBounds(const BoundingBox &domain_bounds) { system_domain_bounds_ = domain_bounds; };
+    BoundingBoxd getSystemDomainBounds() { return system_domain_bounds_; };
+    void setSystemDomainBounds(const BoundingBoxd &domain_bounds) { system_domain_bounds_ = domain_bounds; };
 
     template <typename DataType>
     SingularVariable<DataType> *registerSystemVariable(
@@ -105,7 +105,7 @@ class SPHSystem
 
   protected:
     friend class IOEnvironment;
-    BoundingBox system_domain_bounds_;       /**< Lower and Upper domain bounds. */
+    BoundingBoxd system_domain_bounds_;       /**< Lower and Upper domain bounds. */
     Real resolution_ref_;                    /**< reference resolution of the SPH system */
     tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
     SPHBodyVector sph_bodies_;               /**< All sph bodies. */

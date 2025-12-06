@@ -20,7 +20,7 @@ Real inner_circle_radius = PL;
 
 Vec3d domain_lower_bound(-4.0 * PL, -4.0 * PL, -SL);
 Vec3d domain_upper_bound(4.0 * PL, 4.0 * PL, 2.0 * PW);
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 int resolution(20);
 //----------------------------------------------------------------------
 //	Material properties and global parameters

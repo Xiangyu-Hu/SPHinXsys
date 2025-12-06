@@ -30,8 +30,8 @@
 #ifndef ALL_RELAX_DYNAMICS_CK_H
 #define ALL_RELAX_DYNAMICS_CK_H
 
-#include "level_set_correction.hpp"
 #include "relaxation_residual_ck.hpp"
 #include "relaxation_stepping_ck.h"
+#include "surface_correction.hpp"
 
 #endif // ALL_RELAX_DYNAMICS_CK_H

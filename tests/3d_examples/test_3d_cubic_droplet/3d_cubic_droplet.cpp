@@ -82,7 +82,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vecd(-DL / 2 - BW, -DL / 2 - BW, -DL / 2 - BW), Vecd(DL / 2 + BW, DH / 2 + BW, DW / 2 + BW));
+    BoundingBoxd system_domain_bounds(Vecd(-DL / 2 - BW, -DL / 2 - BW, -DL / 2 - BW), Vecd(DL / 2 + BW, DH / 2 + BW, DW / 2 + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------

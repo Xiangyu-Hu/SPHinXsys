@@ -112,8 +112,8 @@ class ParticleScopeTypeCK<BulkParticles> : public WithinScope
 //-------------------------------------------------------------------------------------------------
 // 3) Specialization for NotIndicatedParticles (which is typically "indicator != 0")
 //-------------------------------------------------------------------------------------------------
-template <>
-class ParticleScopeTypeCK<NotIndicatedParticles<0>> : public WithinScope
+template <int INDICATOR>
+class ParticleScopeTypeCK<NotIndicatedParticles<INDICATOR>> : public WithinScope
 {
   public:
     explicit ParticleScopeTypeCK(BaseParticles *particles)
@@ -127,7 +127,7 @@ class ParticleScopeTypeCK<NotIndicatedParticles<0>> : public WithinScope
       public:
         template <class ExecutionPolicy, class ComputingKernelType>
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        ParticleScopeTypeCK<NotIndicatedParticles<0>> &encloser,
+                        ParticleScopeTypeCK<NotIndicatedParticles<INDICATOR>> &encloser,
                         ComputingKernelType &computing_kernel)
             : indicator_(encloser.dv_indicator_->DelegatedData(ex_policy))
         {
@@ -135,7 +135,7 @@ class ParticleScopeTypeCK<NotIndicatedParticles<0>> : public WithinScope
 
         bool operator()(size_t index_i) const
         {
-            return (indicator_[index_i] != 0);
+            return (indicator_[index_i] != INDICATOR);
         }
 
       protected:

@@ -18,7 +18,7 @@ Real error_tolerance = 5 * 0.01; // Less than 3 percent when resolution is DH/20
 
 Real BW = resolution_ref * 4; /**< Extending width for BCs. */
 StdVec<Vec3d> observer_location;
-BoundingBox system_domain_bounds(
+BoundingBoxd system_domain_bounds(
     Vec3d(-2.0 * BW, -2.0 * BW, -2.0 * BW),
     Vec3d(DL + 2.0 * BW, DH + 2.0 * BW, DH + 2.0 * BW));
 //----------------------------------------------------------------------
@@ -292,9 +292,9 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_body_inner, water_wall_contact);
     fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, InflowVelocityPrescribed>
-        bidirectional_velocity_condition_left(left_emitter_by_cell, particle_buffer, DH, U_f, mu_f);
+        bidirectional_velocity_condition_left(left_emitter_by_cell, DH, U_f, mu_f);
     fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, PressurePrescribed<>>
-        bidirectional_pressure_condition_right(right_emitter_by_cell, particle_buffer, Outlet_pressure);
+        bidirectional_pressure_condition_right(right_emitter_by_cell, Outlet_pressure);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> out_flow_particle_deletion(water_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations

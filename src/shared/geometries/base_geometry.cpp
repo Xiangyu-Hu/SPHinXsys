@@ -7,7 +7,7 @@ namespace SPH
 Shape::Shape(const std::string &shape_name)
     : name_(shape_name), is_bounds_found_(false), logger_(Log::init()) {}
 //=================================================================================================//
-BoundingBox Shape::getBounds()
+BoundingBoxd Shape::getBounds()
 {
     if (!is_bounds_found_)
     {
@@ -15,7 +15,7 @@ BoundingBox Shape::getBounds()
         is_bounds_found_ = true;
     }
 
-    if (bounding_box_.getBoundSize().norm() < SqrtEps)
+    if (bounding_box_.BoundSize().norm() < SqrtEps)
     {
         std::cout << "\n Error: the Bounding box is unreasonably small! " << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -63,7 +63,7 @@ bool BinaryShapes::isValid()
     return sub_shapes_and_ops_.size() == 0 ? false : true;
 }
 //=================================================================================================//
-BoundingBox BinaryShapes::findBounds()
+BoundingBoxd BinaryShapes::findBounds()
 {
     // initial reference values
     Vecd lower_bound = MaxReal * Vecd::Ones();
@@ -71,14 +71,14 @@ BoundingBox BinaryShapes::findBounds()
 
     for (auto &sub_shape_and_op : sub_shapes_and_ops_)
     {
-        BoundingBox shape_bounds = sub_shape_and_op.first->getBounds();
+        BoundingBoxd shape_bounds = sub_shape_and_op.first->getBounds();
         for (int j = 0; j != Dimensions; ++j)
         {
-            lower_bound[j] = SMIN(lower_bound[j], shape_bounds.first_[j]);
-            upper_bound[j] = SMAX(upper_bound[j], shape_bounds.second_[j]);
+            lower_bound[j] = SMIN(lower_bound[j], shape_bounds.lower_[j]);
+            upper_bound[j] = SMAX(upper_bound[j], shape_bounds.upper_[j]);
         }
     }
-    return BoundingBox(lower_bound, upper_bound);
+    return BoundingBoxd(lower_bound, upper_bound);
 }
 //=================================================================================================//
 bool BinaryShapes::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED)

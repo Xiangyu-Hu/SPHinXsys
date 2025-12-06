@@ -22,15 +22,15 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file sphinxsys_variable.h
- * @brief Here gives classes for the constants and variables used in simulation.
- * @details These variables are those discretized in spaces and time.
+ * @brief Here gives classes for the singular and discrete variables used in simulation.
+ * @details These discrete variables are those discretized in spaces and time.
  * @author Xiangyu Hu
  */
 
 #ifndef SPHINXSYS_VARIABLE_H
 #define SPHINXSYS_VARIABLE_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "execution_policy.h"
 #include "ownership.h"
 
@@ -84,7 +84,7 @@ class SingularVariable : public Entity
 
     DataType *Data() { return delegated_; };
     void setValue(const DataType &value) { *delegated_ = value; };
-    DataType getValue() { return *delegated_; };
+    DataType getValue() const { return *delegated_; };
     void incrementValue(const DataType &value) { *delegated_ += value; };
 
     template <class ExecutionPolicy>
@@ -131,23 +131,30 @@ class DiscreteVariable : public Entity
     UniquePtrKeeper<Entity> device_only_variable_keeper_;
 
   public:
-    DiscreteVariable(const std::string &name, size_t data_size)
-        : Entity(name), data_size_(data_size),
-          data_field_(nullptr), device_only_variable_(nullptr),
-          device_data_field_(nullptr)
-    {
-        data_field_ = new DataType[data_size];
-    };
+    typedef DataType ContainedDataType;
     template <class InitializationFunction>
     DiscreteVariable(const std::string &name, size_t data_size,
                      const InitializationFunction &initialization)
-        : DiscreteVariable(name, data_size)
+        : Entity(name), data_size_(data_size), data_field_(new DataType[data_size]),
+          device_only_variable_(nullptr), device_data_field_(nullptr)
     {
         for (size_t i = 0; i < data_size; ++i)
         {
             data_field_[i] = initialization(i);
         }
     };
+
+    DiscreteVariable(const std::string &name, size_t data_size,
+                     DataType initial_value = ZeroData<DataType>::value)
+        : DiscreteVariable(name, data_size, [&](UnsignedInt index)
+                           { return initial_value; }) {};
+
+    DiscreteVariable(const std::string &name, size_t data_size,
+                     DiscreteVariable<DataType> *origin_variable)
+        : DiscreteVariable(name, SMAX(origin_variable->getDataSize(), data_size),
+                           [&](UnsignedInt index)
+                           { return origin_variable->getValue(index); }) {};
+
     ~DiscreteVariable() { delete[] data_field_; };
     DataType *Data() { return data_field_; };
     void setValue(size_t index, const DataType &value) { data_field_[index] = value; };
@@ -217,6 +224,7 @@ VariableType<DataType> *findVariableByName(DataContainerAddressAssemble<Variable
 
     return result != variables.end() ? *result : nullptr;
 };
+
 template <typename DataType, template <typename VariableDataType> class VariableType, typename... Args>
 VariableType<DataType> *addVariableToAssemble(DataContainerAddressAssemble<VariableType> &assemble,
                                               DataContainerUniquePtrAssemble<VariableType> &ptr_assemble, Args &&...args)
@@ -227,6 +235,62 @@ VariableType<DataType> *addVariableToAssemble(DataContainerAddressAssemble<Varia
         variable_ptrs.template createPtr<VariableType<DataType>>(std::forward<Args>(args)...);
     std::get<type_index>(assemble).push_back(new_variable);
     return new_variable;
+};
+
+template <template <typename> typename ContainerType, typename DataType, typename... Args>
+ContainerType<DataType> *registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
+                                          DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
+                                          const std::string &name, Args &&...args)
+{
+    ContainerType<DataType> *variable = findVariableByName<DataType, ContainerType>(all_variable_set, name);
+    if (variable == nullptr)
+    {
+        return addVariableToAssemble<DataType, ContainerType>(
+            all_variable_set, all_variable_ptrs_, name, std::forward<Args>(args)...);
+    }
+    return variable;
+};
+
+template <template <typename> typename ContainerType, typename DataType>
+ContainerType<DataType> *addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
+                                           ContainerType<DataType> *variable)
+{
+    ContainerType<DataType> *listed_variable = findVariableByName<DataType, ContainerType>(variable_set, variable->Name());
+    if (listed_variable == nullptr)
+    {
+        constexpr int type_index = DataTypeIndex<DataType>::value;
+        std::get<type_index>(variable_set).push_back(variable);
+        return variable;
+    }
+    return nullptr; // no need to add
+};
+
+template <template <typename> class ContainerType>
+struct PrepareVariablesToWrite
+{
+    template <class ExecutionPolicy, typename DataType>
+    void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables,
+                    const ExecutionPolicy &ex_policy)
+    {
+        for (size_t i = 0; i != variables.size(); ++i)
+        {
+            variables[i]->prepareForOutput(ex_policy);
+        }
+    };
+};
+
+template <template <typename> class ContainerType>
+struct FinalizeVariablesAfterRead
+{
+    template <class ExecutionPolicy, typename DataType>
+    void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables,
+                    const ExecutionPolicy &ex_policy)
+    {
+        for (size_t i = 0; i != variables.size(); ++i)
+        {
+            variables[i]->finalizeLoadIn(ex_policy);
+        }
+    };
 };
 } // namespace SPH
 #endif // SPHINXSYS_VARIABLE_H

@@ -77,20 +77,18 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxByCell>
 
   public:
     template <typename... Args>
-    BufferInflowInjectionCK(AlignedBoxByCell &aligned_box_part,
-                            ParticleBuffer<Base> &buffer, Args &&...args);
+    BufferInflowInjectionCK(AlignedBoxByCell &aligned_box_part, Args &&...args);
     virtual ~BufferInflowInjectionCK() {};
 
     class FinishDynamics
     {
       public:
         FinishDynamics(BufferInflowInjectionCK &encloser)
-            : particles_(encloser.particles_), buffer_(encloser.buffer_) {}
-        void operator()() { buffer_.checkEnoughBuffer(*particles_); }
+            : particles_(encloser.particles_) {}
+        void operator()() { particles_->checkEnoughReserve(); }
 
       private:
         BaseParticles *particles_;
-        ParticleBuffer<Base> &buffer_;
     };
 
     class UpdateKernel
@@ -116,7 +114,6 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxByCell>
 
   protected:
     int part_id_;
-    ParticleBuffer<Base> &buffer_;
     FluidType &fluid_;
     ConditionType condition_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
@@ -234,7 +231,7 @@ class PressureVelocityCondition : public BaseLocalDynamics<AlignedBoxByCell>,
 };
 
 template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>
-class BidirectionalBoundaryCK
+class BidirectionalBoundaryCK : public AbstractDynamics
 {
     StateDynamics<ExecutionPolicy, BufferIndicationCK> tag_buffer_particles_;
     StateDynamics<ExecutionPolicy, PressureVelocityCondition<KernelCorrectionType, ConditionType>> boundary_condition_;
@@ -243,8 +240,7 @@ class BidirectionalBoundaryCK
 
   public:
     template <typename... Args>
-    BidirectionalBoundaryCK(AlignedBoxByCell &aligned_box_part,
-                            ParticleBuffer<Base> &particle_buffer, Args &&...args);
+    BidirectionalBoundaryCK(AlignedBoxByCell &aligned_box_part, Args &&...args);
     void tagBufferParticles() { tag_buffer_particles_.exec(); }
     void applyBoundaryCondition(Real dt) { boundary_condition_.exec(dt); }
     void injectParticles() { inflow_injection_.exec(); }

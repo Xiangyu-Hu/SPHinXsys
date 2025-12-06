@@ -176,7 +176,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     auto refinement_region = makeShared<GeometricShapeBox>(Transform(refinement_translation), refinement_halfsize);
 
     // System bounding box
-    BoundingBox bb_system = mesh->getBounds();
+    BoundingBoxd bb_system = mesh->getBounds();
 
     // System
     SPHSystem system(bb_system, dp);
@@ -184,11 +184,11 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     // Create objects
     SolidBody beam_body(system, mesh);
     if (refinement_level > 0)
-        beam_body.defineAdaptation<ParticleRefinementWithinShape>(1.15, 1.0, refinement_level);
+        beam_body.defineAdaptation<AdaptiveWithinShape>(1.15, 1.0, refinement_level);
     beam_body.defineBodyLevelSetShape();
     beam_body.defineMaterial<NeoHookeanSolid>(*material.get());
     if (refinement_level > 0)
-        beam_body.generateParticles<BaseParticles, Lattice, Adaptive>(*refinement_region);
+        beam_body.generateParticles<BaseParticles, Lattice, AdaptiveByShape>(*refinement_region);
     else
         beam_body.generateParticles<BaseParticles, Lattice>();
 

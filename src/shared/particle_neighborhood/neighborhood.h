@@ -32,7 +32,7 @@
 #define NEIGHBORHOOD_H
 
 #include "all_kernels.h"
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH

@@ -6,6 +6,7 @@
  * @author 	Yijin Mao, Yongchuan Yu and Xiangyu Hu
  */
 
+#include "image_shape.h"
 #include "sphinxsys.h"
 
 using namespace SPH;
@@ -21,7 +22,7 @@ Vec3d domain_lower_bound(-25.0, -25.0, -25.0);
 Vec3d domain_upper_bound(25.0, 25.0, 25.0);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 50.0;
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
 class SolidBodyFromMesh : public ComplexShape
 {
@@ -45,15 +46,14 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
-    imported_model.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 2);
+    imported_model.defineAdaptation<AdaptiveNearSurface>(1.15, 1.0, 2);
     imported_model.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    imported_model.generateParticles<BaseParticles, Lattice, Adaptive>();
+    imported_model.generateParticles<BaseParticles, Lattice, AdaptiveByShape>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_imported_model_to_vtp({imported_model});
     write_imported_model_to_vtp.addToWrite<Real>(imported_model, "SmoothingLengthRatio");
-    MeshRecordingToPlt cell_linked_list_recording(sph_system, imported_model.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -80,7 +80,6 @@ int main(int ac, char *av[])
     update_smoothing_length_ratio.exec();
     write_imported_model_to_vtp.writeToFile();
     imported_model.updateCellLinkedList();
-    cell_linked_list_recording.writeToFile(0);
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------

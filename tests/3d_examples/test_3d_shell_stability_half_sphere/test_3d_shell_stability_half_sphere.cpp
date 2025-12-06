@@ -47,7 +47,7 @@ class ParticleGenerator<SurfaceParticles, ShellSphere> : public ParticleGenerato
 } // namespace SPH
 
 template <typename VectorType>
-BoundingBox get_particles_bounding_box(const VectorType &pos_0)
+BoundingBoxd get_particles_bounding_box(const VectorType &pos_0)
 {
     Vec3d lower(pos_0[0]);
     Vec3d upper(pos_0[0]);
@@ -61,7 +61,7 @@ BoundingBox get_particles_bounding_box(const VectorType &pos_0)
                 upper[i] = pos[i];
         }
     }
-    return BoundingBox(lower, upper);
+    return BoundingBoxd(lower, upper);
 }
 
 StdVec<Vec3d> read_obj_vertices(const std::string &file_name)
@@ -124,17 +124,17 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     // pressure
     Vec3d gravity = gravity_z * Vec3d(1, 0, 0) / unit_mm;
     // system bounding box
-    BoundingBox bb_system;
+    BoundingBoxd bb_system;
 
     // generating particles from predefined positions from obj file
     StdVec<Vec3d> obj_vertices = read_obj_vertices("input/shell_sphere_half_" + std::to_string(dp_ratio) + ".txt");
     std::for_each(obj_vertices.begin(), obj_vertices.end(), [&](Vec3d &vec)
                   { vec *= scale; });
     Real particle_area = total_area / obj_vertices.size();
-    // find out BoundingBox
+    // find out BoundingBoxd
     bb_system = get_particles_bounding_box(obj_vertices);
-    std::cout << "bb_system.first_: " << bb_system.first_ << std::endl;
-    std::cout << "bb_system.second_: " << bb_system.second_ << std::endl;
+    std::cout << "bb_system.lower_: " << bb_system.lower_ << std::endl;
+    std::cout << "bb_system.upper_: " << bb_system.upper_ << std::endl;
 
     // shell
     auto shell_shape = makeShared<ComplexShape>("shell_shape" + std::to_string(dp_ratio)); // keep all data for parameter study

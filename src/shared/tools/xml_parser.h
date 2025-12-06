@@ -29,7 +29,7 @@
 
 #include "tinyxml2.h"
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
 
 #include <cassert>
@@ -53,7 +53,7 @@ namespace SPH
 // Eigen::IOFormat HeavyFmt(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]");
 
 template <typename DataType>
-inline std::string DataToString(const DataType &value)
+std::string DataToString(const DataType &value)
 {
     std::ostringstream out;
     out.precision(15);
@@ -63,7 +63,7 @@ inline std::string DataToString(const DataType &value)
 }
 
 template <int DIMENSION, auto... Rest>
-inline std::string DataToString(const Eigen::Matrix<Real, DIMENSION, Rest...> &value)
+std::string DataToString(const Eigen::Matrix<Real, DIMENSION, Rest...> &value)
 {
     std::stringstream ss;
     ss << value.format(Eigen::IOFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "", ""));
@@ -71,7 +71,7 @@ inline std::string DataToString(const Eigen::Matrix<Real, DIMENSION, Rest...> &v
 }
 
 template <int DIMENSION, auto... Rest>
-inline std::string DataToString(const Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
+std::string DataToString(const Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
 {
     std::stringstream ss;
     ss << value.format(Eigen::IOFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "", ""));
@@ -79,13 +79,13 @@ inline std::string DataToString(const Eigen::Matrix<Real, DIMENSION, DIMENSION, 
 }
 
 template <typename DataType>
-inline void StringToData(std::string &value_str, DataType &value)
+void StringToData(std::string &value_str, DataType &value)
 {
     std::istringstream(value_str) >> value;
 }
 
 template <int DIMENSION, auto... Rest>
-inline void StringToData(std::string &value_str, Eigen::Matrix<Real, DIMENSION, 1, Rest...> &value)
+void StringToData(std::string &value_str, Eigen::Matrix<Real, DIMENSION, 1, Rest...> &value)
 {
     std::vector<Real> temp;
     temp.resize(DIMENSION);
@@ -104,7 +104,7 @@ inline void StringToData(std::string &value_str, Eigen::Matrix<Real, DIMENSION, 
 }
 
 template <int DIMENSION1, int DIMENSION2, auto... Rest>
-inline void StringToData(std::string &value_str, Eigen::Matrix<Real, DIMENSION1, DIMENSION2, Rest...> &value)
+void StringToData(std::string &value_str, Eigen::Matrix<Real, DIMENSION1, DIMENSION2, Rest...> &value)
 {
     std::vector<Real> temp;
     temp.resize(DIMENSION1 * DIMENSION2);
@@ -213,28 +213,28 @@ class XmlParser
     };
 
     /**Add new element to Xml Doc. */
-    inline void addNewElement(const std::string &element_name);
+    void addNewElement(const std::string &element_name);
 
     /**Add child element to a given element. */
-    inline void addNewElement(tinyxml2::XMLElement *father_element, const std::string &child_name);
+    void addNewElement(tinyxml2::XMLElement *father_element, const std::string &child_name);
 
     /** Get the size of Xml doc */
-    inline size_t Size();
+    size_t Size();
 
     /** Get the size of Xml Element */
-    inline size_t Size(tinyxml2::XMLElement *base);
+    size_t Size(tinyxml2::XMLElement *base);
 
     /** Find optional element in root element */
-    inline tinyxml2::XMLElement *findElement(const std::string &element_tag);
+    tinyxml2::XMLElement *findElement(const std::string &element_tag);
 
     /** Find optional element in optional element */
-    inline tinyxml2::XMLElement *findElement(tinyxml2::XMLElement *base, const std::string &element_tag);
+    tinyxml2::XMLElement *findElement(tinyxml2::XMLElement *base, const std::string &element_tag);
 
     /** resize of Xml doc */
-    inline void resize(const size_t input_size, const std::string name);
+    void resize(const size_t input_size, const std::string name);
 
     /** resize of an element */
-    inline void resize(tinyxml2::XMLElement *element, const size_t input_size, const std::string name);
+    void resize(tinyxml2::XMLElement *element, const size_t input_size, const std::string name);
 
     //----------------------------------------------------------------------
     //	Add an attribute of type string to an xml element.
@@ -294,90 +294,4 @@ class XmlParser
         StringToData(value_str, value);
     };
 };
-
-/**Add new element to Xml Doc. */
-inline void XmlParser::addNewElement(const std::string &element_name)
-{
-    xml_doc_->InsertEndChild(xml_doc_->NewElement(element_name.c_str()));
-}
-
-/**Add child element to a given element. */
-inline void XmlParser::addNewElement(tinyxml2::XMLElement *element, const std::string &child_name)
-{
-    element->InsertNewChildElement(child_name.c_str());
-}
-
-/** Get the size of Xml doc */
-inline size_t XmlParser::Size()
-{
-    size_t num = 0;
-    for (const tinyxml2::XMLElement *child = xml_doc_->FirstChildElement();
-         child;
-         child = child->NextSiblingElement())
-        ++num;
-
-    return num;
-}
-
-/** Get the size of element child */
-inline size_t XmlParser::Size(tinyxml2::XMLElement *base)
-{
-    size_t num = 0;
-    for (const tinyxml2::XMLElement *child = base->FirstChildElement();
-         child;
-         child = child->NextSiblingElement())
-        ++num;
-
-    return num;
-}
-
-/** Find optional element in root element */
-inline tinyxml2::XMLElement *XmlParser::findElement(const std::string &element_tag)
-{
-    tinyxml2::XMLElement *child_element = xml_doc_->FirstChildElement(element_tag.c_str());
-    return child_element;
-}
-
-/** Find optional element in optional element */
-inline tinyxml2::XMLElement *XmlParser::findElement(tinyxml2::XMLElement *base, const std::string &element_tag)
-{
-    tinyxml2::XMLElement *child_element = base->FirstChildElement(element_tag.c_str());
-    return child_element;
-}
-
-/** resize of Xml doc */
-inline void XmlParser::resize(const size_t input_size, const std::string name)
-{
-    size_t total_elements = XmlParser::Size();
-
-    if (total_elements <= input_size)
-    {
-        for (size_t i = total_elements; i != input_size; ++i)
-            XmlParser::addNewElement(name);
-    }
-    else
-    {
-        std::cout << "\n Error: XML Parser allows increase date size only!" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
-}
-
-/** resize of an element */
-inline void XmlParser::resize(tinyxml2::XMLElement *element, const size_t input_size, const std::string name)
-{
-    size_t total_elements = XmlParser::Size(element);
-
-    if (total_elements <= input_size)
-    {
-        for (size_t i = total_elements; i != input_size; ++i)
-            XmlParser::addNewElement(element, name);
-    }
-    else
-    {
-        std::cout << "\n Error: XML Parser allows increase date size only!" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
-}
 } // namespace SPH

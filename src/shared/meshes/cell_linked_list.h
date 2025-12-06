@@ -32,7 +32,7 @@
 #ifndef MESH_CELL_LINKED_LIST_H
 #define MESH_CELL_LINKED_LIST_H
 
-#include "base_mesh.h"
+#include "base_mesh.hpp"
 #include "execution_policy.h"
 #include "neighborhood.h"
 
@@ -48,23 +48,19 @@ class CellLinkedList;
  * @class BaseCellLinkedList
  * @brief The Abstract class for mesh cell linked list derived from BaseMeshField.
  */
-class BaseCellLinkedList : public BaseMeshField
+class BaseCellLinkedList : public MultiLevelMeshField
 {
   protected:
     BaseParticles &base_particles_;
-    DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
-    UniquePtrsKeeper<SingularVariable<Mesh>> mesh_ptrs_keeper_;
-    StdVec<Mesh *> meshes_;
     Mesh *coarsest_mesh_;
     Mesh *finest_mesh_;
 
   public:
-    BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    virtual ~BaseCellLinkedList();
-    StdVec<Mesh *> &getMeshes() { return meshes_; };
+    BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation,
+                       BoundingBoxd tentative_bounds, Real Reference_grid_spacing, size_t total_levels);
+    virtual ~BaseCellLinkedList() {};
     BaseParticles &getBaseParticles() { return base_particles_; };
-    void writeMeshFieldToPlt(const std::string &partial_file_name);
     void UpdateCellLists(BaseParticles &base_particles);
     /** Insert a cell-linked_list entry to the concurrent index list. */
     virtual void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) = 0;
@@ -79,13 +75,11 @@ class BaseCellLinkedList : public BaseMeshField
                            ConcurrentIndexVector &cell_indexes,
                            std::function<bool(Vecd, Real)> &check_included);
     /** Tag domain bounding cells in an axis direction, called by domain bounding classes */
-    void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBox &bounding_bounds, int axis);
+    void tagBoundingCells(StdVec<CellLists> &cell_data_lists, const BoundingBoxd &bounding_bounds, int axis);
 
     /** split algorithm */;
-    template <class LocalDynamicsFunction>
-    void particle_for_split(const execution::SequencedPolicy &, const LocalDynamicsFunction &local_dynamics_function);
-    template <class LocalDynamicsFunction>
-    void particle_for_split(const execution::ParallelPolicy &, const LocalDynamicsFunction &local_dynamics_function);
+    template <class ExecutionPolicy, class LocalDynamicsFunction>
+    void particle_for_split(const ExecutionPolicy &ex_policy, const LocalDynamicsFunction &local_dynamics_function);
 
     /** generalized particle search algorithm */
     template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
@@ -94,42 +88,29 @@ class BaseCellLinkedList : public BaseMeshField
     DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
 
-    UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
-    template <typename DataType>
-    DataType *initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
-    template <typename DataType, typename... Args>
-    DiscreteVariable<DataType> *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
-
   protected:
     Kernel &kernel_;
-    UnsignedInt total_number_of_cells_;
     UnsignedInt cell_offset_list_size_;
     UnsignedInt index_list_size_; // at least number_of_cells_pluse_one_
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
     DiscreteVariable<UnsignedInt> *dv_cell_offset_;
     /** using concurrent vectors due to writing conflicts when building the list */
-    ConcurrentIndexVector *cell_index_lists_;
+    StdVec<ConcurrentIndexVector> cell_index_lists_;
     /** non-concurrent list data rewritten for building neighbor list */
-    ListDataVector *cell_data_lists_;
-    ParticleVariables all_discrete_variables_;
+    StdVec<ListDataVector> cell_data_lists_;
 
-    void initialize(BaseParticles &base_particles);
     void clearCellLists();
     void UpdateCellListData(BaseParticles &base_particles);
     void tagBodyPartByCellByMesh(Mesh &mesh, ConcurrentCellLists &cell_lists,
                                  ConcurrentIndexVector &cell_indexes,
                                  std::function<bool(Vecd, Real)> &check_included);
-    void writeMeshFieldToPltByMesh(Mesh &mesh, std::ofstream &output_file);
     void tagBoundingCellsByMesh(Mesh &mesh, StdVec<CellLists> &cell_data_lists,
-                                const BoundingBox &bounding_bounds, int axis);
+                                const BoundingBoxd &bounding_bounds, int axis);
     void findNearestListDataEntryByMesh(Mesh &mesh, Real &min_distance_sqr, ListData &nearest_entry,
                                         const Vecd &position);
     /** split algorithm */;
-    template <class LocalDynamicsFunction>
-    void particle_for_split_by_mesh(const execution::SequencedPolicy &, Mesh &mesh,
-                                    const LocalDynamicsFunction &local_dynamics_function);
-    template <class LocalDynamicsFunction>
-    void particle_for_split_by_mesh(const execution::ParallelPolicy &, Mesh &mesh,
+    template <class ExecutionPolicy, class LocalDynamicsFunction>
+    void particle_for_split_by_mesh(const ExecutionPolicy &ex_policy, Mesh &mesh,
                                     const LocalDynamicsFunction &local_dynamics_function);
 };
 
@@ -141,7 +122,8 @@ class NeighborSearch : public Mesh
 
     template <typename FunctionOnEach>
     void forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
-                       const FunctionOnEach &function, int depth = 1) const;
+                       const FunctionOnEach &function,
+                       BoundingBoxi search_box = BoundingBoxi(Arrayi::Ones())) const;
 
   protected:
     UnsignedInt *particle_index_;
@@ -157,14 +139,12 @@ class CellLinkedList : public BaseCellLinkedList
 {
   protected:
     Mesh *mesh_;
-    SingularVariable<Mesh> *sv_mesh_;
 
   public:
-    CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
+    CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
     ~CellLinkedList() {};
     Mesh &getMesh() { return *mesh_; };
-    SingularVariable<Mesh> *svMesh() { return sv_mesh_; };
     void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
 
@@ -188,7 +168,7 @@ class MultilevelCellLinkedList : public BaseCellLinkedList
     inline UnsignedInt getMeshLevel(Real particle_cutoff_radius);
 
   public:
-    MultilevelCellLinkedList(BoundingBox tentative_bounds,
+    MultilevelCellLinkedList(BoundingBoxd tentative_bounds,
                              Real reference_grid_spacing, UnsignedInt total_levels,
                              BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
     virtual ~MultilevelCellLinkedList() {};

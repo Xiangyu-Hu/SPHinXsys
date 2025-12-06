@@ -29,7 +29,7 @@
 #ifndef RIEMANN_SOLVER_H
 #define RIEMANN_SOLVER_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "weakly_compressible_fluid.h"
 
 namespace SPH
@@ -86,7 +86,7 @@ class BaseAcousticRiemannSolver : public NoRiemannSolver
     template <class FluidI, class FluidJ>
     BaseAcousticRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j, Real limiter_coeff = 3.0)
         : NoRiemannSolver(fluid_i, fluid_j),
-          inv_rho0c0_ave_(2.0 * inv_rho0c0_sum_),
+          inv_rho0c0_ave_((rho0c0_i_ + rho0c0_j_) / (math::pow(rho0c0_i_, 2) + math::pow(rho0c0_j_, 2))),
           rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
           limiter_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_, limiter_coeff){};
     Real DissipativePJump(const Real &u_jump)

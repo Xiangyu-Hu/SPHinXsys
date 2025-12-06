@@ -36,7 +36,7 @@ namespace SPH
 {
 
 class Shape;
-class ParticleRefinementByShape;
+class AdaptiveByShape;
 class SurfaceParticles;
 
 template <> // Base class for generating particles from lattice positions
@@ -48,7 +48,7 @@ class GeneratingMethod<Lattice>
 
   protected:
     Real lattice_spacing_;      /**< Initial particle spacing. */
-    BoundingBox domain_bounds_; /**< Domain bounds. */
+    BoundingBoxd domain_bounds_; /**< Domain bounds. */
     Shape &initial_shape_;      /**< Geometry shape for body. */
 };
 
@@ -63,7 +63,7 @@ class ParticleGenerator<BaseParticles, Lattice>
 };
 
 template <> // For generating particles with adaptive resolution from lattice positions
-class ParticleGenerator<BaseParticles, Lattice, Adaptive> : public ParticleGenerator<BaseParticles, Lattice>
+class ParticleGenerator<BaseParticles, Lattice, AdaptiveByShape> : public ParticleGenerator<BaseParticles, Lattice>
 {
   public:
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape);
@@ -72,7 +72,7 @@ class ParticleGenerator<BaseParticles, Lattice, Adaptive> : public ParticleGener
 
   protected:
     Shape &target_shape_;
-    ParticleRefinementByShape *particle_adaptation_;
+    AdaptiveByShape *particle_adaptation_;
     virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
 };
 

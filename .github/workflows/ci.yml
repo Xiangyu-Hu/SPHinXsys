@@ -20,13 +20,18 @@ on:
         description: "Run the windows build with VS Code Sever debugging enabled"
         required: false
         default: false
+      windows_sycl_build_debug_enabled:
+        type: boolean
+        description: "Run the windows SYCL build with VS Code Sever debugging enabled"
+        required: false
+        default: false
       macos_build_debug_enabled:
         type: boolean
         description: "Run the macOS build with VS Code Sever debugging enabled"
         required: false
         default: false
 env:
-  VCPKG_VERSION: "2024.02.14"
+  VCPKG_VERSION: "2024.11.16"
   CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
@@ -45,7 +50,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Install system dependencies
         run: |
@@ -56,15 +61,11 @@ jobs:
             curl zip unzip tar `# when starting fresh on a WSL image for bootstrapping vcpkg`\
             pkg-config `# for installing libraries with vcpkg`\
             git \
-            ninja-build \
-            libfontconfig1-dev `# From here required for vcpkg opencascade`\
-            libx11-dev \
-            libgl-dev
+            ninja-build
           wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
           echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt update
-          sudo apt install intel-basekit \
-            intel-oneapi-runtime-opencl
+          sudo apt install intel-cpp-essentials
           sudo apt-get install autoconf automake autoconf-archive
 
       - uses: hendrikmuhs/ccache-action@v1.2
@@ -88,8 +89,7 @@ jobs:
             boost-geometry \
             simbody \
             spdlog \
-            gtest \
-            pybind11
+            gtest
 
       - name: Generate buildsystem
         run: |
@@ -100,7 +100,10 @@ jobs:
             -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -D SPHINXSYS_CI=ON \
+            -D SPHINXSYS_2D=OFF \
+            -D SPHINXSYS_BUILD_2D_EXAMPLES=OFF \
+            -D SPHINXSYS_BUILD_OPTIMIZATION_EXAMPLES=OFF \
+            -D SPHINXSYS_BUILD_PYTHON_INTERFACE=OFF \
             -D SPHINXSYS_USE_SYCL=ON \
             -D TEST_STATE_RECORDING=OFF \
             -S ${{github.workspace}} \
@@ -147,8 +150,53 @@ jobs:
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
-      - name: Test with the last try for failed cases
+      - name: Test with the fifth try for failed cases
+        id: fifth-try
         if: ${{ steps.fourth-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the sixth try for failed cases
+        id: sixth-try
+        if: ${{ steps.fifth-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the seventh try for failed cases
+        id: seventh-try
+        if: ${{ steps.sixth-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the eighth try for failed cases
+        id: eighth-try
+        if: ${{ steps.seventh-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the ninth try for failed cases
+        id: ninth-try
+        if: ${{ steps.eighth-try.outcome == 'failure' }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+          cd build/tests/tests_sycl
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.ninth-try.outcome == 'failure' }}
         run: |
           source /opt/intel/oneapi/setvars.sh --include-intel-llvm
           cd build/tests/tests_sycl
@@ -168,7 +216,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Install system dependencies
         run: |
@@ -255,7 +303,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Install system dependencies
         run: |
@@ -332,18 +380,61 @@ jobs:
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
-      - name: Test with the last try for failed cases
+      - name: Test with the fifth try for failed cases
+        id: fifth-try
         if: ${{ steps.fourth-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+        
+      - name: Test with the sixth try for failed cases
+        id: sixth-try
+        if: ${{ steps.fifth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
 
-      - name: 🐛 If failed in dispatch work flow, initialize VS Code Server for debug
-        uses: stateful/vscode-server-action@v1
+      - name: Test with the seventh try for failed cases
+        id: seventh-try
+        if: ${{ steps.sixth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the eighth try for failed cases
+        id: eighth-try
+        if: ${{ steps.seventh-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the ninth try for failed cases
+        id: ninth-try
+        if: ${{ steps.eighth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.ninth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+
+      - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
+        shell: pwsh
+        run: |
+          wget https://update.code.visualstudio.com/1.105.0/win32-x64-user/stable
+          7z.exe x stable
+          .\bin\code tunnel
         if: ${{ failure() && github.event_name != 'workflow_dispatch' || inputs.linux_test_debug_enabled }}
 
   ###############################################################################
-
   Windows-build:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build_debug_enabled }}
     runs-on: windows-latest
@@ -361,7 +452,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
@@ -441,7 +532,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Update ccache and ninja # For correct caching with ccache on Windows
         shell: bash
@@ -510,8 +601,48 @@ jobs:
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
-      - name: Test with the last try for failed cases
+      - name: Test with the fifth try for failed cases
+        id: fifth-try
         if: ${{ steps.fourth-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the sixth try for failed cases
+        id: sixth-try
+        if: ${{ steps.fifth-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+        
+      - name: Test with the seventh try for failed cases
+        id: seventh-try
+        if: ${{ steps.sixth-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+        
+      - name: Test with the eighth try for failed cases
+        id: eighth-try
+        if: ${{ steps.seventh-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+      
+      - name: Test with the ninth try for failed cases
+        id: ninth-try
+        if: ${{ steps.eighth-try.outcome == 'failure' }}
+        run: |
+          cd C:\build 
+          ctest.exe --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.ninth-try.outcome == 'failure' }}
         run: |
           cd C:\build 
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
@@ -531,7 +662,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
+          cmake-version: "3.x"
 
       - name: Install system dependencies
         run: |
@@ -564,7 +695,6 @@ jobs:
             gtest \
             simbody \
             spdlog \
-            xsimd \
             pybind11
 
       - name: Generate buildsystem
@@ -597,7 +727,6 @@ jobs:
     runs-on: macos-13
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
-      VCPKG_VERSION: "2024.02.14"
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -606,8 +735,8 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '3.x'
-          
+          cmake-version: "3.x"
+
       - name: Install system dependencies
         run: |
           brew reinstall gfortran # to force having gfortran on PATH because github runners don't have it, just the versioned aliases, i.e. gfortran-11
@@ -635,7 +764,6 @@ jobs:
             gtest \
             simbody \
             spdlog \
-            xsimd \
             pybind11
 
       - uses: actions/download-artifact@v4
@@ -676,8 +804,109 @@ jobs:
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
 
-      - name: Test with the last try for failed cases
+      - name: Test with the fifth try for failed cases
+        id: fifth-try
         if: ${{ steps.fourth-try.outcome == 'failure' }}
         run: |
           cd build 
           ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the sixth try for failed cases
+        id: sixth-try
+        if: ${{ steps.fifth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the seventh try for failed cases
+        id: seventh-try
+        if: ${{ steps.sixth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the eighth try for failed cases
+        id: eighth-try
+        if: ${{ steps.seventh-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the ninth try for failed cases
+        id: ninth-try
+        if: ${{ steps.eighth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+        continue-on-error: true
+
+      - name: Test with the last try for failed cases
+        if: ${{ steps.ninth-try.outcome == 'failure' }}
+        run: |
+          cd build 
+          ctest --rerun-failed --output-on-failure --timeout 1000
+
+  ###############################################################################
+  Windows-dispatch-for-sycl-build:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_sycl_build_debug_enabled }}
+    runs-on: windows-latest
+    # make sure these permissions are set so that
+    # VS Code can connect to the machine
+    permissions:
+      actions: read
+      contents: read
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-windows
+
+    steps:
+      - uses: actions/checkout@v4 # Checks-out the repository under ${{github.workspace}}
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
+
+      - name: Install ccache, ninja, wget and oneAPI
+        shell: cmd
+        run: |
+          choco install ccache
+          choco install ninja
+          choco install 7zip
+          choco install wget
+          wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/f5881e61-dcdc-40f1-9bd9-717081ac623c/intel-oneapi-base-toolkit-2025.2.1.46_offline.exe
+          intel-oneapi-base-toolkit-2025.2.1.46_offline.exe -s -a --silent --eula accept
+
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}
+
+      - uses: friendlyanon/setup-vcpkg@v1 # Setup vcpkg into ${{github.workspace}}
+        with:
+          committish: ${{ env.VCPKG_VERSION }}
+          cache-version: ${{env.VCPKG_VERSION}}
+
+      - name: Install dependencies
+        run: |
+          ${{github.workspace}}\vcpkg\vcpkg.exe install --clean-after-build `
+            eigen3 `
+            tbb `
+            boost-program-options `
+            boost-geometry `
+            simbody `
+            gtest `
+            spdlog `
+            xsimd `
+            pybind11
+
+      # Enable debugging of manually-triggered workflows if the input option was provided
+      - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
+        shell: cmd
+        run: |
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          wget https://update.code.visualstudio.com/1.90.0/win32-x64-archive/stable
+          7z.exe x stable
+          .\bin\code tunnel

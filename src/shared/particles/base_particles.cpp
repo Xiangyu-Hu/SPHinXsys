@@ -24,10 +24,10 @@ SPHAdaptation &BaseParticles::getSPHAdaptation()
     return sph_body_.getSPHAdaptation();
 }
 //=================================================================================================//
-void BaseParticles::printBodyName()
+std::string BaseParticles::getBodyName()
 {
-    std::cout << "\nBodyName: " << sph_body_.getName() << std::endl;
-}
+    return sph_body_.getName();
+};
 //=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {
@@ -75,6 +75,16 @@ void BaseParticles::initializeAllParticlesBoundsFromReloadXml()
 void BaseParticles::increaseParticlesBounds(size_t extra_size)
 {
     particles_bound_ += extra_size;
+}
+//=================================================================================================//
+void BaseParticles::checkEnoughReserve()
+{
+    if (TotalRealParticles() >= particles_bound_)
+    {
+        std::cout << "\n Error: Not enough particle reserve! \n"
+                  << " Please ensure the particle reserve size when generating particles. \n";
+        exit(EXIT_FAILURE);
+    }
 }
 //=================================================================================================//
 void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)
@@ -131,15 +141,22 @@ void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
     size_t total_elements = xml_parser.Size(xml_parser.first_element_);
 
     UnsignedInt total_real_particles = TotalRealParticles();
-    if (total_elements <= total_real_particles)
+    if (total_elements != total_real_particles)
     {
         xml_parser.resize(xml_parser.first_element_, total_real_particles, "particle");
     }
 }
 //=================================================================================================//
+void BaseParticles::resetTotalRealParticlesFromXmlDoc(XmlParser &xml_parser)
+{
+    sv_total_real_particles_->setValue(xml_parser.Size(xml_parser.first_element_));
+}
+//=================================================================================================//
 void BaseParticles::writeParticlesToXmlForRestart(const std::string &filefullpath)
 {
     resizeXmlDocForParticles(restart_xml_parser_);
+    std::cout << "\n Total real particles of body" << sph_body_.getName()
+              << "write to restart is " << TotalRealParticles() << "\n";
     write_restart_variable_to_xml_(evolving_variables_, restart_xml_parser_);
     restart_xml_parser_.writeToXmlFile(filefullpath);
 }
@@ -147,6 +164,9 @@ void BaseParticles::writeParticlesToXmlForRestart(const std::string &filefullpat
 void BaseParticles::readParticlesFromXmlForRestart(const std::string &filefullpath)
 {
     restart_xml_parser_.loadXmlFile(filefullpath);
+    resetTotalRealParticlesFromXmlDoc(restart_xml_parser_);
+    std::cout << "\n Total real particles of body" << sph_body_.getName()
+              << "from restart is " << TotalRealParticles() << "\n";
     read_restart_variable_from_xml_(evolving_variables_, this, restart_xml_parser_);
 }
 //=================================================================================================//

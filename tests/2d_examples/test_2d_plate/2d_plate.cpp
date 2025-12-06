@@ -19,7 +19,7 @@ int particle_number = 40;                         /** Particle number in the dir
 Real resolution_ref = PL / (Real)particle_number; /** Initial reference particle spacing. */
 int BWD = 1;                                      /** number of boundary particles layers . */
 Real BW = resolution_ref * (Real)BWD;             /** Boundary width, determined by specific layer of boundary particles. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -0.5 * resolution_ref), Vec2d(PL + BW, 0.5 * resolution_ref));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -0.5 * resolution_ref), Vec2d(PL + BW, 0.5 * resolution_ref));
 StdVec<Vecd> observation_location = {Vecd(0.5 * PL, 0.0)};
 //----------------------------------------------------------------------
 //	Material properties of the fluid.

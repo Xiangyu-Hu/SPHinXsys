@@ -23,7 +23,7 @@
 /**
  * @file 	base_body_part.h
  * @brief 	This is the base classes of body parts.
- * @details	There two main type of body parts. One is part by particle.
+ * @details	There two main type of body parts. One is part by particle, the other is part by cell.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
@@ -114,12 +114,12 @@ class BodyPartByParticle : public BodyPart
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
     BodyPartByParticle(SPHBody &sph_body);
     virtual ~BodyPartByParticle() {};
-    void setBodyPartBounds(BoundingBox bbox);
-    BoundingBox getBodyPartBounds();
+    void setBodyPartBounds(BoundingBoxd bbox);
+    BoundingBoxd getBodyPartBounds();
 
   protected:
     DiscreteVariable<UnsignedInt> *dv_particle_list_;
-    BoundingBox body_part_bounds_;
+    BoundingBoxd body_part_bounds_;
     bool body_part_bounds_set_;
     typedef std::function<bool(size_t)> TaggingParticleMethod;
     void tagParticles(TaggingParticleMethod &tagging_particle_method);

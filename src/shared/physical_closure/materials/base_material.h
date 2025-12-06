@@ -35,7 +35,7 @@
 #ifndef BASE_MATERIAL_H
 #define BASE_MATERIAL_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH

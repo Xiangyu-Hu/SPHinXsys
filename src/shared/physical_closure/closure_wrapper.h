@@ -29,7 +29,7 @@
 #ifndef CLOSURE_WRAPPER_H
 #define CLOSURE_WRAPPER_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH

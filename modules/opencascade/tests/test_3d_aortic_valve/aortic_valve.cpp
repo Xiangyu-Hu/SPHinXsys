@@ -28,7 +28,7 @@ Vec3d domain_upper_bound(15.0, 15.0, 26.0);
 //----------------------------------------------------------------------
 //	Domain bounds of the system.
 //----------------------------------------------------------------------
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
 namespace SPH
 {
@@ -136,7 +136,6 @@ int main(int ac, char *av[])
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_relaxed_particles(sph_system);
-    MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, leaflet.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -160,7 +159,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     write_relaxed_particles.writeToFile(0);
     leaflet.updateCellLinkedList();
-    write_mesh_cell_linked_list.writeToFile(0.0);
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------

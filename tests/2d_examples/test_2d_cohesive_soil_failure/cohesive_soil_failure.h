@@ -16,7 +16,7 @@ Real DL = 5.0;                        /**< Tank length. */
 Real DH = 2.5;                        /**< Tank height. */
 Real particle_spacing_ref = LL / 100; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;   /**< Extending width for boundary conditions. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 //	Material properties of the soil.
 //----------------------------------------------------------------------
@@ -86,10 +86,12 @@ class SoilInitialCondition : public continuum_dynamics::ContinuumInitialConditio
 template <typename... T>
 class TransportVelocityCorrection;
 
-template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
-class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTypes...>
+template <class AdaptationType, class LimiterType, typename... CommonControlTypes>
+class TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonControlTypes...>
     : public fluid_dynamics::TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>
 {
+    using SmoothingRatioType = typename AdaptationType::SmoothingRatioType;
+
   public:
     explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2)
         : fluid_dynamics::TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>(inner_relation),
@@ -98,7 +100,7 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
           Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
           pos_div_(this->particles_->template registerStateVariableData<Real>("PositionDivergence")),
           pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
-          h_ratio_(this->particles_), limiter_(h_ref_ * h_ref_),
+          h_ratio_(DynamicCast<AdaptationType>(this, this->getSPHAdaptation())), limiter_(h_ref_ * h_ref_),
           indicator_(this->particles_->template registerStateVariableData<int>("Indicator")),
           corner_indicator_(this->particles_->template registerStateVariableData<int>("CornerIndicator")),
           surface_normal_(this->particles_->template registerStateVariableData<Vecd>("SurfaceNormal"))
@@ -145,14 +147,14 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
     const Real h_ref_, correction_scaling_;
     Real *Vol_, *pos_div_;
     Vecd *pos_;
-    ResolutionType h_ratio_;
+    SmoothingRatioType h_ratio_;
     LimiterType limiter_;
     int *indicator_, *corner_indicator_;
     Vecd *surface_normal_;
 };
 template <class LimiterType, class ParticleScope>
 using TransportVelocityCorrectionInner =
-    TransportVelocityCorrection<Inner<SingleResolution, LimiterType>, NoKernelCorrection, ParticleScope>;
+    TransportVelocityCorrection<Inner<SPHAdaptation, LimiterType>, NoKernelCorrection, ParticleScope>;
 
 template <typename... CommonControlTypes>
 class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
@@ -192,13 +194,13 @@ class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
   protected:
     StdVec<Real *> wall_Vol_;
 };
-template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
+template <class AdaptationType, class LimiterType, typename... CommonControlTypes>
 using BaseTransportVelocityCorrectionComplex =
-    ComplexInteraction<TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, Contact<Boundary>>, CommonControlTypes...>;
+    ComplexInteraction<TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, Contact<Boundary>>, CommonControlTypes...>;
 
 template <class ParticleScope>
 using TransportVelocityCorrectionComplex =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, NoKernelCorrection, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, NoLimiter, NoKernelCorrection, ParticleScope>;
 
 //----------------------------------------------------------------------
 //	Free surface normal direction

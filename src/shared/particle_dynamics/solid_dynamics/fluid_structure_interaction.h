@@ -148,7 +148,7 @@ class AverageVelocityAndAcceleration
     SimpleDynamics<InitializeDisplacement> initialize_displacement_;
     SimpleDynamics<UpdateAverageVelocityAndAcceleration> update_averages_;
 
-    explicit AverageVelocityAndAcceleration(SolidBody &solid_body);
+    explicit AverageVelocityAndAcceleration(SPHBody &sph_body);
     ~AverageVelocityAndAcceleration() {};
 };
 } // namespace solid_dynamics

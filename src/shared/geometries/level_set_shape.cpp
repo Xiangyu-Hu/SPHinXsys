@@ -22,7 +22,7 @@ LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape,
     finishInitialization(execution::par_host, usage_type);
 }
 //=================================================================================================//
-LevelSetShape::LevelSetShape(BoundingBox bounding_box, Shape &shape,
+LevelSetShape::LevelSetShape(BoundingBoxd bounding_box, Shape &shape,
                              SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio)
     : Shape(shape.getName()), sph_adaptation_(sph_adaptation),
       level_set_(*level_set_keeper_.movePtr(sph_adaptation->createLevelSet(shape, refinement_ratio)))
@@ -31,7 +31,7 @@ LevelSetShape::LevelSetShape(BoundingBox bounding_box, Shape &shape,
     is_bounds_found_ = true;
 }
 //=================================================================================================//
-LevelSetShape::LevelSetShape(BoundingBox bounding_box, SPHBody &sph_body,
+LevelSetShape::LevelSetShape(BoundingBoxd bounding_box, SPHBody &sph_body,
                              Shape &shape, Real refinement_ratio)
     : Shape(shape.getName()),
       level_set_(*level_set_keeper_.movePtr(
@@ -79,7 +79,7 @@ Vecd LevelSetShape::findClosestPoint(const Vecd &probe_point)
     return probe_point - phi * normal;
 }
 //=================================================================================================//
-BoundingBox LevelSetShape::findBounds()
+BoundingBoxd LevelSetShape::findBounds()
 {
     if (!is_bounds_found_)
     {

@@ -16,7 +16,7 @@ Real WH = 2.0;                   /**< Water block height. */
 Real L = 1.0;                    /**< Base of the floating body. */
 Real particle_spacing_ref = L / 20;
 Real BW = particle_spacing_ref * 4.0; /**< Extending width for BCs. */
-BoundingBox system_domain_bounds(Vec2d(-DL - BW, -DH - BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL - BW, -DH - BW), Vec2d(DL + BW, DH + BW));
 Vec2d offset = Vec2d::Zero();
 //----------------------------------------------------------------------
 //	Material properties of the fluid.

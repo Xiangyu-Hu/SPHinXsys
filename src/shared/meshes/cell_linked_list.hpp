@@ -45,16 +45,15 @@ void BaseCellLinkedList::searchNeighborsByMesh(
                  });
 }
 //=================================================================================================//
-template <class LocalDynamicsFunction>
+template <class ExecutionPolicy, class LocalDynamicsFunction>
 void BaseCellLinkedList::particle_for_split_by_mesh(
-    const execution::SequencedPolicy &, Mesh &mesh, const LocalDynamicsFunction &local_dynamics_function)
+    const ExecutionPolicy &ex_policy, Mesh &mesh, const LocalDynamicsFunction &local_dynamics_function)
 {
     const Arrayi array3s = 3 * Arrayi::Ones();
 
     // forward sweeping
     for (int k = 0; k < array3s.prod(); k++)
     {
-
         // get the corresponding 2D/3D split cell index (m, n)
         // e.g., for k = 0, split_cell_index = (0,0), for k = 3, split_cell_index = (1,0), etc.
         const Arrayi split_cell_index = Mesh::transfer1DtoMeshIndex(array3s, k);
@@ -62,25 +61,25 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
         // i_max = (M - m - 1) / 3 + 1, j_max = (N - n - 1) / 3 + 1
         // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), then i_max = 2, j_max = 3
         const Arrayi all_cells_k = (mesh.AllCells() - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
-        const UnsignedInt number_of_cells = all_cells_k.prod(); // i_max * j_max
 
         // looping over all cells in the split cell k
-        for (UnsignedInt l = 0; l < number_of_cells; l++)
-        {
-            // get the 2D/3D cell index of the l-th cell in the split cell k
-            // (i , j) = (m + 3 * (l / j_max), n + 3 * l % i_max)
-            // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), l = 0, then (i, j) = (1, 1)
-            // l = 1, then (i, j) = (1, 4), l = 3, then (i, j) = (4, 1), etc.
-            const Arrayi cell_index = split_cell_index + 3 * Mesh::transfer1DtoMeshIndex(all_cells_k, l);
-            UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
-            // get the list of particles in the cell (i, j)
-            const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
-            // looping over all particles in the cell (i, j)
-            for (const UnsignedInt index_i : cell_list)
-            {
-                local_dynamics_function(index_i);
-            }
-        }
+        particle_for(ex_policy, IndexRange(0, all_cells_k.prod()),
+                     [&](UnsignedInt l)
+                     {
+                         // get the 2D/3D cell index of the l-th cell in the split cell k
+                         // (i , j) = (m + 3 * (l / j_max), n + 3 * l % i_max)
+                         // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), l = 0, then (i, j) = (1, 1)
+                         // l = 1, then (i, j) = (1, 4), l = 3, then (i, j) = (4, 1), etc.
+                         const Arrayi cell_index = split_cell_index + 3 * Mesh::transfer1DtoMeshIndex(all_cells_k, l);
+                         UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
+                         // get the list of particles in the cell (i, j)
+                         const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
+                         // looping over all particles in the cell (i, j)
+                         for (const UnsignedInt index_i : cell_list)
+                         {
+                             local_dynamics_function(index_i);
+                         }
+                     });
     }
 
     // backward sweeping
@@ -88,119 +87,27 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
     {
         const Arrayi split_cell_index = Mesh::transfer1DtoMeshIndex(array3s, k - 1);
         const Arrayi all_cells_k = (mesh.AllCells() - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
-        const UnsignedInt number_of_cells = all_cells_k.prod();
 
-        for (UnsignedInt l = 0; l < number_of_cells; l++)
-        {
-            const Arrayi cell_index = split_cell_index + 3 * Mesh::transfer1DtoMeshIndex(all_cells_k, l);
-            UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
-            const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
-            for (UnsignedInt i = cell_list.size(); i != 0; --i)
-            {
-                local_dynamics_function(cell_list[i - 1]);
-            }
-        }
+        particle_for(ex_policy, IndexRange(0, all_cells_k.prod()),
+                     [&](UnsignedInt l)
+                     {
+                         const Arrayi cell_index = split_cell_index + 3 * Mesh::transfer1DtoMeshIndex(all_cells_k, l);
+                         UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
+                         const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
+                         for (UnsignedInt i = cell_list.size(); i != 0; --i)
+                         {
+                             local_dynamics_function(cell_list[i - 1]);
+                         }
+                     });
     }
 }
 //=================================================================================================//
-template <class LocalDynamicsFunction>
-void BaseCellLinkedList::particle_for_split_by_mesh(
-    const execution::ParallelPolicy &, Mesh &mesh, const LocalDynamicsFunction &local_dynamics_function)
-{
-    const Arrayi array3s = 3 * Arrayi::Ones();
-
-    // forward sweeping
-    for (int k = 0; k < array3s.prod(); k++)
-    {
-        const Arrayi split_cell_index = Mesh::transfer1DtoMeshIndex(array3s, k);
-        const Arrayi all_cells_k = (mesh.AllCells() - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
-        const UnsignedInt number_of_cells = all_cells_k.prod();
-
-        parallel_for(
-            IndexRange(0, number_of_cells),
-            [&](const IndexRange &r)
-            {
-                for (UnsignedInt l = r.begin(); l < r.end(); ++l)
-                {
-                    const Arrayi cell_index = split_cell_index + 3 * Mesh::transfer1DtoMeshIndex(all_cells_k, l);
-                    UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
-                    const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
-                    for (const UnsignedInt index_i : cell_list)
-                    {
-                        local_dynamics_function(index_i);
-                    }
-                }
-            },
-            ap);
-    }
-
-    // backward sweeping
-    for (int k = array3s.prod(); k != 0; --k)
-    {
-        const Arrayi split_cell_index = Mesh::transfer1DtoMeshIndex(array3s, k - 1);
-        const Arrayi all_cells_k = (mesh.AllCells() - split_cell_index - Arrayi::Ones()) / 3 + Arrayi::Ones();
-        const UnsignedInt number_of_cells = all_cells_k.prod();
-
-        parallel_for(
-            IndexRange(0, number_of_cells),
-            [&](const IndexRange &r)
-            {
-                for (UnsignedInt l = r.begin(); l < r.end(); ++l)
-                {
-                    const Arrayi cell_index = split_cell_index + 3 * Mesh::transfer1DtoMeshIndex(all_cells_k, l);
-                    UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
-                    const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
-                    for (UnsignedInt i = cell_list.size(); i != 0; --i)
-                    {
-                        local_dynamics_function(cell_list[i - 1]);
-                    }
-                }
-            },
-            ap);
-    }
-}
-//=================================================================================================//
-template <typename DataType>
-DataType *BaseCellLinkedList::initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value)
-{
-    DataType *data_field = variable->Data();
-    for (size_t i = 0; i != variable->getDataSize(); ++i)
-    {
-        data_field[i] = initial_value;
-    }
-    return data_field;
-}
-//=================================================================================================//
-template <typename DataType, typename... Args>
-DiscreteVariable<DataType> *BaseCellLinkedList::registerDiscreteVariable(
-    const std::string &name, size_t data_size, Args &&...args)
-{
-    DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);
-    if (variable == nullptr)
-    {
-        variable = addVariableToAssemble<DataType>(all_discrete_variables_, all_discrete_variable_ptrs_,
-                                                   name, data_size);
-        initializeVariable(variable, std::forward<Args>(args)...);
-    }
-    return variable;
-}
-//=================================================================================================//
-template <class LocalDynamicsFunction>
-void BaseCellLinkedList::particle_for_split(const execution::SequencedPolicy &seq,
+template <class ExecutionPolicy, class LocalDynamicsFunction>
+void BaseCellLinkedList::particle_for_split(const ExecutionPolicy &ex_policy,
                                             const LocalDynamicsFunction &local_dynamics_function)
 {
     for (UnsignedInt level = 0; level != meshes_.size(); ++level)
-        particle_for_split_by_mesh(execution::SequencedPolicy(),
-                                   *meshes_[level], local_dynamics_function);
-}
-//=================================================================================================//
-template <class LocalDynamicsFunction>
-void BaseCellLinkedList::particle_for_split(const execution::ParallelPolicy &par_host,
-                                            const LocalDynamicsFunction &local_dynamics_function)
-{
-    for (UnsignedInt level = 0; level != meshes_.size(); ++level)
-        particle_for_split_by_mesh(execution::ParallelPolicy(),
-                                   *meshes_[level], local_dynamics_function);
+        particle_for_split_by_mesh(ex_policy, *meshes_[level], local_dynamics_function);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -211,12 +118,12 @@ NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList 
 //=================================================================================================//
 template <typename FunctionOnEach>
 void NeighborSearch::forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
-                                   const FunctionOnEach &function, int depth) const
+                                   const FunctionOnEach &function, BoundingBoxi search_box) const
 {
-    const Arrayi target_cell_index = CellIndexFromPosition(source_pos[source_index]);
+    const BoundingBoxi search_range =
+        search_box.translate(CellIndexFromPosition(source_pos[source_index]));
     mesh_for_each(
-        Arrayi::Zero().max(target_cell_index - depth * Arrayi::Ones()),
-        all_cells_.min(target_cell_index + (depth + 1) * Arrayi::Ones()),
+        Arrayi::Zero().max(search_range.lower_), all_cells_.min(search_range.upper_ + Arrayi::Ones()),
         [&](const Arrayi &cell_index)
         {
             const UnsignedInt linear_index = LinearCellIndex(cell_index);

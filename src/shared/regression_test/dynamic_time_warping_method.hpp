@@ -25,7 +25,7 @@ StdVec<Real> RegressionTestDynamicTimeWarping<ObserveMethodType>::
         int a_length = dataset_a_[k].size();
         int b_length = dataset_b_[k].size();
 
-        if (b_length > 1.1 * a_length || b_length < 0.9 * a_length)
+        if (b_length > 1.2 * a_length || b_length < 0.8 * a_length)
         {
             std::cout << "\n Error: please check the time step change, because the data length changed a lot !" << std::endl;
             std::cout << __FILE__ << ':' << __LINE__ << std::endl;

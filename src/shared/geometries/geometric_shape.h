@@ -40,7 +40,7 @@ class GeometricShapeBox : public TransformShape<GeometricBox>
   public:
     GeometricShapeBox(const Transform &transform, const Vecd &halfsize,
                       const std::string &name = "GeometricShapeBox");
-    explicit GeometricShapeBox(const BoundingBox &bounding_box,
+    explicit GeometricShapeBox(const BoundingBoxd &bounding_box,
                                const std::string &name = "GeometricShapeBox");
     GeometricShapeBox(const Vecd &lower_bound, const Vecd &upper_bound,
                       const std::string &name = "GeometricShapeBox");
@@ -60,7 +60,7 @@ class GeometricShapeBall : public GeometricBall, public Shape
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
 
   protected:
-    virtual BoundingBox findBounds() override;
+    virtual BoundingBoxd findBounds() override;
 };
 } // namespace SPH
 

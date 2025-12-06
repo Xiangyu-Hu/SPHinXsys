@@ -151,7 +151,7 @@ void poiseuille_flow(const Real resolution_ref, const Real resolution_shell, con
     //----------------------------------------------------------------------
     //	Domain bounds of the system.
     //----------------------------------------------------------------------
-    const BoundingBox system_domain_bounds(Vec3d(-0.5 * diameter, 0, -0.5 * diameter) -
+    const BoundingBoxd system_domain_bounds(Vec3d(-0.5 * diameter, 0, -0.5 * diameter) -
                                                Vec3d(shell_thickness, wall_thickness,
                                                      shell_thickness),
                                            Vec3d(0.5 * diameter, full_length, 0.5 * diameter) +

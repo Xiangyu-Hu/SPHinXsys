@@ -179,7 +179,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     auto material_s = makeShared<NeoHookeanSolid>(rho_s, youngs_modulus_s, possion_ratio);
 
     // Bounding box
-    BoundingBox bb_system(center_l - 0.5 * diameter_outer_l * Vec2d::Ones(),
+    BoundingBoxd bb_system(center_l - 0.5 * diameter_outer_l * Vec2d::Ones(),
                           center_l + 0.5 * diameter_outer_l * Vec2d::Ones());
 
     // System

@@ -53,7 +53,7 @@
 #pragma GCC diagnostic pop
 #endif
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "base_geometry.h"
 
 #include <fstream>
@@ -85,7 +85,7 @@ class MultiPolygon
     explicit MultiPolygon(const Vecd &center, Real radius, int resolution);
     boost_multi_poly &getBoostMultiPoly() { return multi_poly_; };
 
-    BoundingBox findBounds();
+    BoundingBoxd findBounds();
     bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true);
     Vecd findClosestPoint(const Vecd &probe_point);
 
@@ -120,7 +120,7 @@ class MultiPolygonShape : public Shape
     virtual bool isValid() override;
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
-    virtual BoundingBox findBounds() override;
+    virtual BoundingBoxd findBounds() override;
 
   protected:
     MultiPolygon multi_polygon_;

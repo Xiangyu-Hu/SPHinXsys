@@ -28,7 +28,7 @@ Real particle_spacing_ref = StructureBasePlateH / 4;
 Real BW = particle_spacing_ref * 4.0;          /**< Extending width for BCs. */
 Real Maker_width = particle_spacing_ref * 4.0; /**< Width of the wavemaker. */
 
-BoundingBox system_domain_bounds(Vec2d(-EXS - BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-EXS - BW, -BW), Vec2d(DL + BW, DH + BW));
 
 Vec2d offset = Vec2d::Zero();
 

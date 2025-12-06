@@ -57,7 +57,7 @@ class WallBoundary : public ComplexShape, public Parameter
 class PreSettingCase : public Parameter
 {
   protected:
-    BoundingBox system_domain_bounds;
+    BoundingBoxd system_domain_bounds;
     SPHSystem sph_system;
     FluidBody water_block;
     SolidBody wall_boundary;

@@ -49,11 +49,12 @@ class UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>
   protected:
     CellLinkedList &cell_linked_list_;
     Mesh mesh_;
+    UnsignedInt total_number_of_cells_;
     UnsignedInt cell_offset_list_size_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
     DiscreteVariable<UnsignedInt> *dv_cell_offset_;
-    DiscreteVariable<UnsignedInt> dv_current_cell_size_;
+    DiscreteVariable<UnsignedInt> *cell_dv_current_list_size_;
 
   public:
     UpdateCellLinkedList(DynamicsIdentifier &identifier);
@@ -70,12 +71,11 @@ class UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>
       protected:
         Mesh mesh_;
         ParticleMask particle_mask_;
-        UnsignedInt cell_offset_list_size_;
 
         Vecd *pos_;
         UnsignedInt *particle_index_;
         UnsignedInt *cell_offset_;
-        UnsignedInt *current_cell_size_;
+        UnsignedInt *current_list_size_;
     };
 
     virtual void exec(Real dt = 0.0) override;

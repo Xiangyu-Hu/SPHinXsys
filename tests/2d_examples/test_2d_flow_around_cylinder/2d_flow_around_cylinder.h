@@ -18,7 +18,7 @@ Real DH_sponge = resolution_ref * 2.0;  /**< Sponge region to impose freestream 
 Vec2d insert_circle_center(4.0, 5.0);   /**< Location of the cylinder center. */
 Real insert_circle_radius = 0.75;       /**< Radius of the cylinder. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
+BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
 // Observation locations
 Vec2d point_coordinate_1(3.0, 5.0);
 Vec2d point_coordinate_2(4.0, 5.0);

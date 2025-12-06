@@ -87,8 +87,8 @@ class AlignedBox : public TransformGeometry<GeometricBox>
     template <typename... Args>
     explicit AlignedBox(int upper_bound_axis, const Shape &shape, Args &&...args)
         : TransformGeometry<GeometricBox>(
-              Transform(Vecd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_))),
-              0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...),
+              Transform(Vecd(0.5 * (shape.bounding_box_.upper_ + shape.bounding_box_.lower_))),
+              0.5 * (shape.bounding_box_.upper_ - shape.bounding_box_.lower_), std::forward<Args>(args)...),
           alignment_axis_(upper_bound_axis){};
     ~AlignedBox() {};
 

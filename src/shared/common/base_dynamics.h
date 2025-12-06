@@ -28,13 +28,22 @@
 #ifndef BASE_DYNAMICS_H
 #define BASE_DYNAMICS_H
 
+#include "base_data_type_package.h"
+
 namespace SPH
 {
-template <class ReturnType = void>
-class BaseDynamics
+class AbstractDynamics
 {
   public:
-    BaseDynamics() : is_newly_updated_(false) {};
+    AbstractDynamics() {};
+    virtual ~AbstractDynamics() {};
+};
+
+template <class ReturnType = void>
+class BaseDynamics : public AbstractDynamics
+{
+  public:
+    BaseDynamics() : AbstractDynamics(), is_newly_updated_(false) {};
     virtual ~BaseDynamics() {};
     bool checkNewlyUpdated() { return is_newly_updated_; };
     void setNotNewlyUpdated() { is_newly_updated_ = false; };
@@ -51,13 +60,6 @@ class BaseDynamics
 
   private:
     bool is_newly_updated_;
-};
-
-class BaseReturnDynamics
-{
-  public:
-    BaseReturnDynamics() {};
-    virtual ~BaseReturnDynamics() {};
 };
 } // namespace SPH
 #endif // BASE_DYNAMICS_H

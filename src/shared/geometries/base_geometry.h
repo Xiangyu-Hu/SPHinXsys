@@ -30,7 +30,7 @@
 #ifndef BASE_GEOMETRY_H
 #define BASE_GEOMETRY_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
 
 #include <spdlog/spdlog.h>
@@ -65,14 +65,14 @@ enum class ShapeBooleanOps
 class Shape
 {
   public:
-    BoundingBox bounding_box_;
+    BoundingBoxd bounding_box_;
 
     explicit Shape(const std::string &shape_name);
     virtual ~Shape() {};
 
     std::string getName() { return name_; };
     void setName(const std::string &name) { name_ = name; };
-    BoundingBox getBounds();
+    BoundingBoxd getBounds();
     virtual bool isValid() { return true; };
     virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) = 0;
     virtual Vecd findClosestPoint(const Vecd &probe_point) = 0;
@@ -83,7 +83,7 @@ class Shape
     Real findSignedDistance(const Vecd &probe_point);
     /** Normal direction point toward outside of the shape. */
     Vecd findNormalDirection(const Vecd &probe_point);
-    virtual BoundingBox findBounds() = 0;
+    virtual BoundingBoxd findBounds() = 0;
 
   protected:
     std::string name_;
@@ -135,7 +135,7 @@ class BinaryShapes : public Shape
     virtual bool isValid() override;
     virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
-    virtual BoundingBox findBounds() override;
+    virtual BoundingBoxd findBounds() override;
     Shape *getSubShapeByName(const std::string &name);
     SubShapeAndOp *getSubShapeAndOpByName(const std::string &name);
     size_t getSubShapeIndexByName(const std::string &name);

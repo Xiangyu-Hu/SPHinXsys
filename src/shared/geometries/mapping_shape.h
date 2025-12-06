@@ -29,7 +29,7 @@
 #ifndef MAPPING_SHAPE_H
 #define MAPPING_SHAPE_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "base_geometry.h"
 
 namespace SPH
@@ -114,9 +114,9 @@ class ExtrudeShape : public Shape
         return closest_point;
     };
 
-    virtual BoundingBox findBounds() override
+    virtual BoundingBoxd findBounds() override
     {
-        BoundingBox bounds = base_shape_->findBounds();
+        BoundingBoxd bounds = base_shape_->findBounds();
         return bounds.expand(thickness_ * Vecd::Ones());
     };
 };

@@ -1,14 +1,14 @@
 #include "sph_system.hpp"
 
 #include "all_body_relations.h"
-#include "base_body.h"
 #include "elastic_dynamics.h"
 #include "io_log.h"
+#include "predefined_bodies.h"
 
 namespace SPH
 {
 //=================================================================================================//
-SPHSystem::SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref, size_t number_of_threads)
+SPHSystem::SPHSystem(BoundingBoxd system_domain_bounds, Real resolution_ref, size_t number_of_threads)
     : system_domain_bounds_(system_domain_bounds),
       resolution_ref_(resolution_ref),
       tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),

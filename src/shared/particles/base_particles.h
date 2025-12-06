@@ -32,7 +32,7 @@
 #ifndef BASE_PARTICLES_H
 #define BASE_PARTICLES_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
 #include "sphinxsys_variable.h"
 #include "sphinxsys_variable_array.h"
@@ -84,7 +84,7 @@ class BaseParticles
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
     SPHAdaptation &getSPHAdaptation();
-    void printBodyName();
+    std::string getBodyName();
     //----------------------------------------------------------------------
     // Global information for defining particle groups
     // total_real_particles_ gives the run-time total number of real particles.
@@ -106,24 +106,15 @@ class BaseParticles
     void initializeAllParticlesBounds(size_t total_real_particles);
     void initializeAllParticlesBoundsFromReloadXml();
     void increaseParticlesBounds(size_t extra_size);
+    void checkEnoughReserve();
     //----------------------------------------------------------------------
     // Parameterized management on particle variables and data
     //----------------------------------------------------------------------
-  private:
-    template <typename DataType>
-    DataType *initializeVariable(DiscreteVariable<DataType> *variable, DataType initial_value = ZeroData<DataType>::value);
-    template <typename DataType, class InitializationFunction>
-    DataType *initializeVariable(DiscreteVariable<DataType> *variable, const InitializationFunction &initialization);
-    template <typename DataType>
-    DataType *initializeVariable(DiscreteVariable<DataType> *variable, DiscreteVariable<DataType> *old_variable);
-
   public:
     template <typename DataType>
     DiscreteVariable<DataType> *getVariableByName(const std::string &name);
     template <class DataType, typename... Args>
     DiscreteVariable<DataType> *addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
-    template <class DataType>
-    DiscreteVariable<DataType> *addUniqueDiscreteVariableFrom(const std::string &name, DiscreteVariable<DataType> *old_variable);
     template <typename DataType, typename... Args>
     DiscreteVariable<DataType> *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
     template <typename DataType, typename... Args>
@@ -149,9 +140,9 @@ class BaseParticles
     // Manage subsets of particle variables
     //----------------------------------------------------------------------
     template <typename DataType>
-    DiscreteVariable<DataType> *addVariableToList(ParticleVariables &variable_set, const std::string &name);
+    DiscreteVariable<DataType> *addDiscreteVariableToList(ParticleVariables &variable_set, const std::string &name);
     template <typename DataType>
-    DiscreteVariable<DataType> *addVariableToList(ParticleVariables &variable_set, DiscreteVariable<DataType> *variable);
+    DiscreteVariable<DataType> *addDiscreteVariableToList(ParticleVariables &variable_set, DiscreteVariable<DataType> *variable);
 
     template <typename DataType, typename... Args>
     void addVariableToWrite(Args &&...args);
@@ -176,6 +167,7 @@ class BaseParticles
     // Particle data ouput functions
     //----------------------------------------------------------------------
     void resizeXmlDocForParticles(XmlParser &xml_parser);
+    void resetTotalRealParticlesFromXmlDoc(XmlParser &xml_parser);
     void writeParticlesToXmlForRestart(const std::string &filefullpath);
     void readParticlesFromXmlForRestart(const std::string &filefullpath);
     void writeParticlesToXmlForReload(const std::string &filefullpath);
@@ -255,14 +247,10 @@ class BaseParticles
     DataType *addUniqueDiscreteVariableData(const std::string &name, size_t data_size, Args &&...args);
     template <typename DataType, typename... Args>
     DataType *registerDiscreteVariableData(const std::string &name, size_t data_size, Args &&...args);
-    template <class DataType, typename... Args>
-    DataType *addUniqueStateVariableData(const std::string &name, Args &&...args);
     template <typename DataType, typename... Args>
     DataType *registerStateVariableData(const std::string &name, Args &&...args);
-    template <typename DataType>
-    DataType *registerStateVariableDataFrom(const std::string &new_name, const std::string &old_name);
-    template <typename DataType>
-    DataType *registerStateVariableDataFrom(const std::string &name, const StdVec<DataType> &geometric_data);
+    template <typename DataType, typename... Args>
+    DataType *registerStateVariableDataFrom(const std::string &new_name, Args &&...args);
     template <typename DataType>
     DataType *registerStateVariableDataFromReload(const std::string &name);
 

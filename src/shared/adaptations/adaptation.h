@@ -29,9 +29,9 @@
 #ifndef ADAPTATION_H
 #define ADAPTATION_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "base_kernel.h"
-#include "base_mesh.h"
+#include "base_mesh.hpp"
 #include "execution_policy.h"
 #include "sphinxsys_containers.h"
 
@@ -42,7 +42,7 @@ class SPHSystem;
 class Shape;
 class BaseParticles;
 class BodyRegionByCell;
-class MultilevelLevelSet;
+class LevelSet;
 class BaseCellLinkedList;
 
 /**
@@ -86,12 +86,9 @@ class SPHAdaptation
     Real SmoothingLengthByLevel(int level) { return h_ref_ / pow(2.0, level); };
     DiscreteVariable<Real> *AdaptiveSmoothingLength(BaseParticles &base_particles);
 
-    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles);
-    UniquePtr<BaseCellLinkedList> createRefinedCellLinkedList(int level, const BoundingBox &domain_bounds, BaseParticles &base_particles);
-    virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
-
-    template <class MeshType, typename... Args>
-    MeshType createBackGroundMesh(SPHBody &sph_body, Args &&...args);
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
+    UniquePtr<BaseCellLinkedList> createRefinedCellLinkedList(int level, const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
+    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
 
     template <class KernelType, typename... Args>
     void resetKernel(Args &&...args)
@@ -99,6 +96,15 @@ class SPHAdaptation
         kernel_ptr_.reset(new KernelType(h_ref_, std::forward<Args>(args)...));
         sigma0_ref_ = computeLatticeNumberDensity(Vecd());
     };
+
+    class UnitSmoothingLengthRatio
+    {
+      public:
+        explicit UnitSmoothingLengthRatio(SPHAdaptation &adaptation) {};
+        Real operator()(size_t /*particle_index_i*/) { return 1.0; };
+    };
+
+    typedef UnitSmoothingLengthRatio SmoothingRatioType;
 
   protected:
     Real computeLatticeNumberDensity(Vec2d zero);
@@ -108,30 +114,40 @@ class SPHAdaptation
 };
 
 /**
- * @class ParticleWithLocalRefinement
+ * @class AdaptiveSmoothingLength
  * @brief Base class for particle with local refinement.
  * @details Different refinement strategies will be used in derived classes.
  */
-class ParticleWithLocalRefinement : public SPHAdaptation
+class AdaptiveSmoothingLength : public SPHAdaptation
 {
   public:
     Real *h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
     int *level_;    /**< the mesh level of the particle */
 
-    ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
-    ParticleWithLocalRefinement(SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
-    virtual ~ParticleWithLocalRefinement() {};
+    AdaptiveSmoothingLength(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
+    AdaptiveSmoothingLength(SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
+    virtual ~AdaptiveSmoothingLength() {};
 
-    virtual size_t getCellLinkedListTotalLevel();
-    size_t getLevelSetTotalLevel();
     virtual Real SmoothingLengthRatio(size_t particle_index_i) override
     {
         return h_ratio_[particle_index_i];
     };
 
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
-    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles) override;
-    virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles) override;
+    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
+
+    class ContinuousSmoothingLengthRatio
+    {
+        Real *h_ratio_;
+
+      public:
+        explicit ContinuousSmoothingLengthRatio(AdaptiveSmoothingLength &adaptation)
+            : h_ratio_(adaptation.h_ratio_) {};
+        Real operator()(size_t index_i) { return h_ratio_[index_i]; };
+    };
+
+    typedef ContinuousSmoothingLengthRatio SmoothingRatioType;
 
   protected:
     Real finest_spacing_bound_;   /**< the adaptation bound for finest particles */
@@ -139,17 +155,17 @@ class ParticleWithLocalRefinement : public SPHAdaptation
 };
 
 /**
- * @class ParticleRefinementByShape
+ * @class AdaptiveByShape
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
  */
-class ParticleRefinementByShape : public ParticleWithLocalRefinement
+class AdaptiveByShape : public AdaptiveSmoothingLength
 {
   public:
     template <typename... Args>
-    ParticleRefinementByShape(Args &&...args)
-        : ParticleWithLocalRefinement(std::forward<Args>(args)...){};
+    AdaptiveByShape(Args &&...args)
+        : AdaptiveSmoothingLength(std::forward<Args>(args)...){};
 
-    virtual ~ParticleRefinementByShape() {};
+    virtual ~AdaptiveByShape() {};
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) = 0;
 
   protected:
@@ -157,31 +173,31 @@ class ParticleRefinementByShape : public ParticleWithLocalRefinement
 };
 
 /**
- * @class ParticleRefinementNearSurface
+ * @class AdaptiveNearSurface
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
  */
-class ParticleRefinementNearSurface : public ParticleRefinementByShape
+class AdaptiveNearSurface : public AdaptiveByShape
 {
   public:
     template <typename... Args>
-    ParticleRefinementNearSurface(Args &&...args)
-        : ParticleRefinementByShape(std::forward<Args>(args)...){};
-    virtual ~ParticleRefinementNearSurface() {};
+    AdaptiveNearSurface(Args &&...args)
+        : AdaptiveByShape(std::forward<Args>(args)...){};
+    virtual ~AdaptiveNearSurface() {};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
 };
 
 /**
- * @class ParticleRefinementWithinShape
+ * @class AdaptiveWithinShape
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
  */
-class ParticleRefinementWithinShape : public ParticleRefinementByShape
+class AdaptiveWithinShape : public AdaptiveByShape
 {
   public:
     template <typename... Args>
-    ParticleRefinementWithinShape(Args &&...args)
-        : ParticleRefinementByShape(std::forward<Args>(args)...){};
-    virtual ~ParticleRefinementWithinShape() {};
+    AdaptiveWithinShape(Args &&...args)
+        : AdaptiveByShape(std::forward<Args>(args)...){};
+    virtual ~AdaptiveWithinShape() {};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
 };
