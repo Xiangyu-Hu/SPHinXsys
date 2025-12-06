@@ -40,7 +40,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
     if (masked_source_(source_index))
     {
         neighbor_search_.forEachSearch(
-            source_index, source_pos_,
+            source_pos_[source_index],
             [&](size_t target_index)
             {
                 if (source_index != target_index)
@@ -61,7 +61,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
     if (masked_source_(source_index))
     {
         neighbor_search_.forEachSearch(
-            source_index, source_pos_,
+            source_pos_[source_index],
             [&](size_t target_index)
             {
                 if (source_index != target_index)
@@ -160,7 +160,7 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     if (masked_source_(source_index))
     {
         neighbor_search_.forEachSearch(
-            source_index, source_pos_,
+            source_pos_[source_index],
             [&](size_t target_index)
             {
                 if (masked_criterion_(target_index, source_index))
@@ -179,7 +179,7 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     if (masked_source_(source_index))
     {
         neighbor_search_.forEachSearch(
-            source_index, source_pos_,
+            source_pos_[source_index],
             [&](size_t target_index)
             {
                 if (masked_criterion_(target_index, source_index))

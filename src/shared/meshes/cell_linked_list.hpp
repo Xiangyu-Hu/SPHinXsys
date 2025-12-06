@@ -117,11 +117,11 @@ NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList 
       cell_offset_(cell_linked_list.dvCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename FunctionOnEach>
-void NeighborSearch::forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
-                                   const FunctionOnEach &function, BoundingBoxi search_box) const
+void NeighborSearch::forEachSearch(const Vecd &source_pos, const FunctionOnEach &function,
+                                   const BoundingBoxi &search_box) const
 {
     const BoundingBoxi search_range =
-        search_box.translate(CellIndexFromPosition(source_pos[source_index]));
+        search_box.translate(CellIndexFromPosition(source_pos));
     mesh_for_each(
         Arrayi::Zero().max(search_range.lower_), all_cells_.min(search_range.upper_ + Arrayi::Ones()),
         [&](const Arrayi &cell_index)

@@ -121,9 +121,8 @@ class NeighborSearch : public Mesh
     NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list);
 
     template <typename FunctionOnEach>
-    void forEachSearch(UnsignedInt source_index, const Vecd *source_pos,
-                       const FunctionOnEach &function,
-                       BoundingBoxi search_box = BoundingBoxi(Arrayi::Ones())) const;
+    void forEachSearch(const Vecd &source_pos, const FunctionOnEach &function,
+                       const BoundingBoxi &search_box = BoundingBoxi(Arrayi::Ones())) const;
 
   protected:
     UnsignedInt *particle_index_;
