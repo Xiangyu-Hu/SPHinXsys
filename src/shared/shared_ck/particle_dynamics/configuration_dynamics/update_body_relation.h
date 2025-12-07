@@ -53,8 +53,23 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     using NeighborList = typename InnerRelationType::NeighborList;
     using Identifier = typename BaseLocalDynamicsType::Identifier;
     using MaskedSource = typename Identifier::SourceParticleMask;
-    using NeighborCriterion = typename InnerRelationType::NeighborhoodType::NeighborCriterion;
+    using NeighborMethodType = typename InnerRelationType::NeighborhoodType;
+    using NeighborCriterion = typename NeighborMethodType::NeighborCriterion;
     using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion>;
+
+    class OneSidedCheck
+    {
+        typename NeighborMethodType::ReverseNeighborCriterion reverse_criterion_;
+
+      public:
+        template <class EncloserType>
+        OneSidedCheck(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : reverse_criterion_(ex_policy, encloser){};
+        bool operator()(UnsignedInt i, UnsignedInt j) const
+        {
+            return i < j || !reverse_criterion_(i, j);
+        }
+    };
 
   public:
     UpdateRelation(Inner<Parameters...> &inner_relation);
@@ -67,12 +82,15 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
       public:
         template <class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void clearNeighborSize(UnsignedInt source_index);
         void incrementNeighborSize(UnsignedInt source_index);
         void updateNeighborList(UnsignedInt source_index);
 
       protected:
-        Vecd *source_pos_;
-        MaskedSource masked_source_;
+        Vecd *src_pos_;
+        UnsignedInt *neighbor_size_;
+        MaskedSource masked_src_;
+        OneSidedCheck is_one_sided_;
         MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
     };
@@ -116,8 +134,8 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
         void updateNeighborList(UnsignedInt source_index);
 
       protected:
-        Vecd *source_pos_;
-        MaskedSource masked_source_;
+        Vecd *src_pos_;
+        MaskedSource masked_src_;
         MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
         SearchBox search_box_;
