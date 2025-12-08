@@ -14,7 +14,7 @@
 
 int main(int argc, char* argv[])
 {
-    // 1) 整个程序只在这里 Init 一次 MPI
+   
     palace::Mpi::Init(argc, argv);
 
     std::string json_path = PALACE_JSON_PATH;
@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     std::cout << "[SphinxSys-Palace] Magnetostatic rings test\n";
     std::cout << "  Using config file: " << json_path << std::endl;
 
-    // 2) 调用接口（接口内部不再 Init MPI）
+
     int status = sphinxsys_palace::RunMagnetostaticCase(json_path, /*verbose=*/true);
 
     if (status != 0)
@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
                   << std::endl;
     }
 
-    // 3) 先保持不 Finalize，确认没有 MPI 问题后再放开也行
+
     // palace::Mpi::Finalize();
 
     return status;

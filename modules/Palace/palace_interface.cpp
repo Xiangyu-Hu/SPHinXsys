@@ -34,13 +34,13 @@ namespace sphinxsys_palace
 // Helper functions derived from Palace main.cpp
 // -----------------------------------------------------------------------------
 
-// 给 SphinxSys 内嵌版本用的一个固定 git tag 字符串
+
 static const char *GetPalaceGitTag()
 {
   return "sphinxsys-embedded-palace";
 }
 
-// 把 Palace 的 Device 枚举转成 MFEM 的 device 字符串
+
 static std::string ConfigureDevice(Device device)
 {
   std::string device_str;
@@ -73,7 +73,7 @@ static std::string ConfigureDevice(Device device)
   return device_str;
 }
 
-// 配置 libCEED backend（简化版，不用 JIT source dir）
+
 static void ConfigureCeedBackend(const std::string &ceed_backend)
 {
   std::string default_ceed_backend;
@@ -90,10 +90,10 @@ static void ConfigureCeedBackend(const std::string &ceed_backend)
   const std::string &backend =
       (!ceed_backend.empty() ? ceed_backend : default_ceed_backend);
 
-  // 不使用 CEED JIT 目录
+
   ceed::Initialize(backend.c_str(), "");
 
-  // 如果 CEED 实际选的 backend 和请求的不一致，打一条 warning
+
   std::string actual = ceed::Print();
   if (backend.compare(0, backend.length(), actual, 0, backend.length()))
   {
@@ -102,7 +102,7 @@ static void ConfigureCeedBackend(const std::string &ceed_backend)
   }
 }
 
-// 打印 Palace 的 ASCII banner
+
 static void PrintPalaceBanner(MPI_Comm comm)
 {
   Mpi::Print(comm,
@@ -113,7 +113,7 @@ static void PrintPalaceBanner(MPI_Comm comm)
              "  /__/     \\___,__/__/\\___,__/\\_____\\_____/\n\n");
 }
 
-// 打印 Palace 关于 MPI/OMP/GPU/backend 的信息
+
 static void PrintPalaceInfo(MPI_Comm comm, int np, int nt,
                             int ngpu, mfem::Device &device)
 {
@@ -148,7 +148,7 @@ static void PrintPalaceInfo(MPI_Comm comm, int np, int nt,
 // -----------------------------------------------------------------------------
 int RunMagnetostaticCase(const std::string &config_file, bool verbose)
 {
-  // ---- 1. 不在这里 Init / Finalize MPI，只是用 MPI_COMM_WORLD ----
+ 
   MPI_Comm comm = MPI_COMM_WORLD;
   int rank = 0, size = 1;
   MPI_Comm_rank(comm, &rank);
@@ -167,11 +167,11 @@ int RunMagnetostaticCase(const std::string &config_file, bool verbose)
     std::cout << "Palace Git tag: " << GetPalaceGitTag() << "\n";
   }
 
-  // ---- 2. IoData / 输出目录 ----
+
   IoData iodata(config_file.c_str(), /*print=*/false);
   MakeOutputFolder(iodata, comm);
 
-  // ---- 3. 设备 & CEED ----
+
   int nt   = utils::ConfigureOmp();
   int ngpu = utils::GetDeviceCount();
 
@@ -183,9 +183,9 @@ int RunMagnetostaticCase(const std::string &config_file, bool verbose)
   device.SetGPUAwareMPI(true);
 #endif
 
-  // 只初始化，不在这里 finalize
+
   hypre::Initialize();
-  // slepc::Initialize(...) 先不要在接口里调用
+
 
   if (verbose && root)
     PrintPalaceInfo(comm, size, nt, ngpu, device);
@@ -212,7 +212,7 @@ int RunMagnetostaticCase(const std::string &config_file, bool verbose)
   BlockTimer::Print(comm);
   solver->SaveMetadata(BlockTimer::GlobalTimer());
 
-  // ---- 5. 这里先不做任何 Finalize（由外层控制全局生命周期）----
+
   // ceed::Finalize();
   // hypre::Finalize();
   // slepc::Finalize();
