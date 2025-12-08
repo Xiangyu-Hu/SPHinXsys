@@ -1,7 +1,10 @@
 # modules/Palace/tests/test_palace_external_call/CMakeLists.txt
 
-# 1. 确认 PALACE_ROOT 已经由 FindPalace.cmake 设置好
-#    （来源可以是 -DPALACE_ROOT=... 或环境变量 PALACE_ROOT）
+# 1. Ensure PALACE_ROOT is defined.
+#    This should be provided either via:
+#       - cmake -DPALACE_ROOT=/path/to/palace
+#       - or the environment variable PALACE_ROOT.
+#    The test cannot proceed without this information.
 if (NOT PALACE_ROOT)
     message(FATAL_ERROR
         "PALACE_ROOT is not set.\n"
@@ -11,7 +14,9 @@ if (NOT PALACE_ROOT)
     )
 endif()
 
-# 2. 如果用户没有显式指定 PALACE_EXECUTABLE，就从 PALACE_ROOT 推一个默认值
+
+# 2. If user did not supply PALACE_EXECUTABLE, construct a default one
+#    based on the typical build output path inside Palace.
 if (NOT PALACE_EXECUTABLE)
     set(PALACE_EXECUTABLE
         "${PALACE_ROOT}/build/bin/palace"
@@ -19,24 +24,27 @@ if (NOT PALACE_EXECUTABLE)
     )
 endif()
 
-# 3. 定义测试可执行文件
+# 3. Define the test executable that directly calls the external palace binary.
 add_executable(test_palace_external_call
     test_palace_external_call.cpp
 )
 
-# 4. 链接 sphinxsys_palace（它会把 Palace::palace 的所有库带上）
+# 4. Link Palace interface layer so the executable has access to
+#    the Palace static libs and header interfaces.
 target_link_libraries(test_palace_external_call
     PRIVATE
         sphinxsys_palace
 )
 
-# 5. 把 PALACE_EXECUTABLE 路径以宏的形式传进 C++
+# 5. Embed the path to the Palace executable as a macro into C++,
+#    so the code can reference the runtime binary.
 target_compile_definitions(test_palace_external_call
     PRIVATE
         PALACE_EXECUTABLE=\"${PALACE_EXECUTABLE}\"
 )
 
-# 6. 拷贝 data 目录到构建目录，保证运行时有 rings.json 和 mesh/
+# 6. Copy input data directory (e.g., rings.json, mesh/) to the build dir
+#    so the executable can run without needing absolute paths.
 add_custom_command(TARGET test_palace_external_call POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/data
