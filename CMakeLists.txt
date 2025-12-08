@@ -14,8 +14,10 @@ option(SPHINXSYS_DEVELOPER_MODE "Developer mode has more flags active for code q
 option(SPHINXSYS_USE_FLOAT "Build using float (single-precision floating-point format) as primary type" OFF)
 option(SPHINXSYS_USE_SIMD "Build using SIMD instructions" OFF)
 option(SPHINXSYS_MODULE_OPENCASCADE "Build extension relying on OpenCASCADE" OFF)
+option(SPHINXSYS_WITH_PALACE "Build coupling with Palace EM solver" OFF)
 option(SPHINXSYS_USE_SYCL "Build using SYCL acceleration or not" OFF)
 
+set(PALACE_INSTALL_FOLDER "" CACHE PATH "Path to Palace installation folder")
 # ------ Global properties (Some cannot be set on INTERFACE targets)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Generate `compile_commands.json` file which is necessary for code completioner, static analyzer, etc
@@ -89,6 +91,11 @@ target_link_libraries(sphinxsys_core INTERFACE Eigen3::Eigen)
 # ## TBB
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc $<$<PLATFORM_ID:Windows>:TBB::tbbmalloc_proxy>)
+
+# ## Palace
+if (SPHINXSYS_WITH_PALACE)
+    find_package(Palace REQUIRED)   # 会调用你刚写的 FindPalace.cmake
+endif()
 
 # ## Threads
 find_package(Threads REQUIRED)
