@@ -233,6 +233,9 @@ we need to install the corresponding plug-ins so that NVIDIA or AMD graphics car
 There is a detailed official document explaining how to install this plugin:
 "https://developer.codeplay.com/products/oneapi/nvidia/2024.0.0/guides/get-started-guide-nvidia"
 
+For old version of the plug, you can obtain it from a public file repository for SPHinXsys:
+"https://github.com/Xiangyu-Hu/SPHinXsys-public-files/tree/master/file-exchange"
+
 The sign of successful installation is to open the terminal and enter "sycl-ls". 
 If it can detect your graphics card information, the installation is successful.
 (You need to activate the oneAPI environment first.)
@@ -240,11 +243,11 @@ If it can detect your graphics card information, the installation is successful.
 Final Step: Building SPHinXsys-SYCL
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Clone the sycl branch of SPHinXsys:
+Clone the latest branch of SPHinXsys:
 
 ..  code-block:: pwsh
 
-    git clone -b sycl https://github.com/Xiangyu-Hu/SPHinXsys.git SPHinXsysSYCL
+    git clone https://github.com/Xiangyu-Hu/SPHinXsys.git SPHinXsysSYCL
     cd SPHinXsysSYCL
     cmake   -G "Unix Makefiles"                                                     \
         -D CMAKE_BUILD_TYPE=Release                                                 \
@@ -264,6 +267,12 @@ Then, you can run it:
     cd build/tests/2d_examples/test_2d_dambreak_sycl/bin/
     ./test_2d_dambreak_sycl
 
+Using SYCL and GPU computing the performance of SPHinXsys increases greatly.
+You can check a performance test from SPHinXsys Blog site:
+"https://xiangyu-hu.github.io/SPHinXsys/high/performance/computing/2025/02/01/heterogeneous-parallelism-p3.html"
+
+Please check all the SYCL enabled methods in /src/shared_ck/ and tests in /tests/test_sycl.
+Currently, SPHinXsys's development is focused on SYCL enabled methods. 
 
 
 Installing on Windows
