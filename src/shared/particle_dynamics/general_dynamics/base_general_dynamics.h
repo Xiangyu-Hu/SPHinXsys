@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -38,9 +38,26 @@
 
 namespace SPH
 {
-typedef DataDelegateSimple<BaseParticles> GeneralDataDelegateSimple;
-typedef DataDelegateInner<BaseParticles> GeneralDataDelegateInner;
-typedef DataDelegateContact<BaseParticles, BaseParticles> GeneralDataDelegateContact;
-typedef DataDelegateContact<BaseParticles, BaseParticles, DataDelegateEmptyBase> GeneralDataDelegateContactOnly;
+/**
+ * @class BaseDerivedVariable
+ * @brief Used to define derived variable
+ * which will only be computed for visualization.
+ */
+template <typename DataType>
+class BaseDerivedVariable : public LocalDynamics
+{
+  public:
+    template <class DynamicsIdentifier>
+    BaseDerivedVariable(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : LocalDynamics(identifier),
+          derived_variable_(this->particles_->template registerStateVariableData<DataType>(variable_name))
+    {
+        this->particles_->template addVariableToWrite<DataType>(variable_name);
+    };
+    virtual ~BaseDerivedVariable() {};
+
+  protected:
+    DataType *derived_variable_;
+};
 } // namespace SPH
 #endif // BASE_GENERAL_DYNAMICS_H

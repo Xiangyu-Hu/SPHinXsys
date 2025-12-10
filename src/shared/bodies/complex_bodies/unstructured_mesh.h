@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -28,12 +28,8 @@
 #ifndef UNSTRUCTURED_MESH_H
 #define UNSTRUCTURED_MESH_H
 
-#include "base_fluid_dynamics.h"
-#include "base_particle_generator.h"
-#include "compressible_fluid.h"
-#include "fluid_body.h"
-#include "io_vtk.h"
-using namespace std;
+#include "base_body_relation.h"
+
 namespace SPH
 {
 /**
@@ -44,22 +40,22 @@ class ANSYSMesh
 {
   public:
     ANSYSMesh(const std::string &full_path);
-    virtual ~ANSYSMesh(){};
+    virtual ~ANSYSMesh() {};
 
     StdVec<size_t> types_of_boundary_condition_;
-    StdLargeVec<Vecd> node_coordinates_;
-    StdLargeVec<Vecd> elements_centroids_;
-    StdLargeVec<Real> elements_volumes_;
-    StdLargeVec<StdVec<size_t>> elements_nodes_connection_;
-    vector<vector<vector<size_t>>> mesh_topology_;
-    double min_distance_between_nodes_;
+    StdVec<Vecd> node_coordinates_;
+    StdVec<Vecd> elements_centroids_;
+    StdVec<Real> elements_volumes_;
+    StdVec<StdVec<size_t>> elements_nodes_connection_;
+    StdVec<StdVec<StdVec<size_t>>> mesh_topology_;
+    Real MinMeshEdge() { return min_distance_between_nodes_; }
 
   protected:
-    void readNodeCoordinate(const std::string &text_line, StdLargeVec<Vec2d> &node_coordinates);
-    void readNodeCoordinate(const std::string &text_line, StdLargeVec<Vec3d> &node_coordinates);
+    Real min_distance_between_nodes_;
+
     void getDataFromMeshFile(const std::string &full_path);
     void getElementCenterCoordinates();
-    void gerMinimumDistanceBetweenNodes();
+    void getMinimumDistanceBetweenNodes();
 };
 
 /**
@@ -68,35 +64,18 @@ class ANSYSMesh
  */
 class BaseInnerRelationInFVM : public BaseInnerRelation
 {
-  protected:
-    virtual void resetNeighborhoodCurrentSize() override;
-
   public:
     RealBody *real_body_;
-    StdLargeVec<Vecd> &node_coordinates_;
-    vector<vector<vector<size_t>>> &mesh_topology_;
+    StdVec<Vecd> &node_coordinates_;
+    StdVec<StdVec<StdVec<size_t>>> &mesh_topology_;
 
     explicit BaseInnerRelationInFVM(RealBody &real_body, ANSYSMesh &ansys_mesh);
-    virtual ~BaseInnerRelationInFVM(){};
-
-    virtual void resizeConfiguration() override;
-};
-
-/**
- * @class ParticleGeneratorInFVM
- * @brief Generate particle directly from position-and-volume data.
- */
-class ParticleGeneratorInFVM : public ParticleGenerator
-{
-  public:
-    ParticleGeneratorInFVM(SPHBody &sph_body, ANSYSMesh &ansys_mesh);
-    virtual ~ParticleGeneratorInFVM(){};
-    /** Initialize geometrical variable for observe particles. */
-    virtual void initializeGeometricVariables() override;
+    virtual ~BaseInnerRelationInFVM() {};
 
   protected:
-    StdLargeVec<Vecd> &elements_centroids_;
-    StdLargeVec<Real> &elements_volumes_;
+    Vecd *pos_;
+    Real *Vol_;
+    virtual void resetNeighborhoodCurrentSize() override;
 };
 
 /**
@@ -106,17 +85,16 @@ class ParticleGeneratorInFVM : public ParticleGenerator
 class NeighborBuilderInFVM
 {
   protected:
-    Kernel *kernel_;
     //----------------------------------------------------------------------
     //	Below are for constant smoothing length.
     //----------------------------------------------------------------------
-    void createRelation(Neighborhood &neighborhood, Real &distance, Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const;
-    void initializeRelation(Neighborhood &neighborhood, Real &distance, Real &dW_ijV_j,
+    void createRelation(Neighborhood &neighborhood, Real &distance, Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const;
+    void initializeRelation(Neighborhood &neighborhood, Real &distance, Real &dW_ij,
                             Vecd &interface_normal_direction, size_t j_index) const;
 
   public:
-    NeighborBuilderInFVM() : kernel_(nullptr){};
-    virtual ~NeighborBuilderInFVM(){};
+    NeighborBuilderInFVM() {};
+    virtual ~NeighborBuilderInFVM() {};
 };
 
 /**
@@ -126,13 +104,13 @@ class NeighborBuilderInFVM
 class NeighborBuilderInnerInFVM : public NeighborBuilderInFVM
 {
   public:
-    explicit NeighborBuilderInnerInFVM(SPHBody *body) : NeighborBuilderInFVM(){};
+    explicit NeighborBuilderInnerInFVM(SPHBody *body) : NeighborBuilderInFVM() {};
     void operator()(Neighborhood &neighborhood, Real &distance,
-                    Real &dW_ijV_j, Vecd &interface_normal_direction, size_t j_index) const
+                    Real &dW_ij, Vecd &interface_normal_direction, size_t j_index) const
     {
         neighborhood.current_size_ >= neighborhood.allocated_size_
-            ? createRelation(neighborhood, distance, dW_ijV_j, interface_normal_direction, j_index)
-            : initializeRelation(neighborhood, distance, dW_ijV_j, interface_normal_direction, j_index);
+            ? createRelation(neighborhood, distance, dW_ij, interface_normal_direction, j_index)
+            : initializeRelation(neighborhood, distance, dW_ij, interface_normal_direction, j_index);
         neighborhood.current_size_++;
     };
 };
@@ -155,84 +133,16 @@ class InnerRelationInFVM : public BaseInnerRelationInFVM
 
   public:
     explicit InnerRelationInFVM(RealBody &real_body, ANSYSMesh &ansys_mesh);
-    virtual ~InnerRelationInFVM(){};
+    virtual ~InnerRelationInFVM() {};
 
     /** generalized particle search algorithm */
     template <typename GetParticleIndex, typename GetNeighborRelation>
     void searchNeighborsByParticles(size_t total_real_particles, BaseParticles &source_particles,
-                                    ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index, GetNeighborRelation &get_neighbor_relation);
+                                    ParticleConfiguration &particle_configuration,
+                                    GetParticleIndex &get_particle_index,
+                                    GetNeighborRelation &get_neighbor_relation);
     virtual void updateConfiguration() override;
 };
 
-/**
- * @class BaseGhostCreation
- * @brief Base class for the ghost particle
- */
-class GhostCreationFromMesh : public GeneralDataDelegateSimple
-{
-  public:
-    GhostCreationFromMesh(RealBody &real_body, ANSYSMesh &ansys_mesh);
-    virtual ~GhostCreationFromMesh(){};
-    vector<vector<size_t>> each_boundary_type_with_all_ghosts_index_;
-    vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_;
-    vector<vector<size_t>> each_boundary_type_contact_real_index_;
-
-  protected:
-    std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
-    StdLargeVec<Vecd> &node_coordinates_;
-    vector<vector<vector<size_t>>> &mesh_topology_;
-    StdLargeVec<Vecd> &pos_;
-    StdVec<IndexVector> ghost_particles_;
-    StdLargeVec<Real> &Vol_;
-    size_t &total_ghost_particles_;
-    size_t &real_particles_bound_;
-    void addGhostParticleAndSetInConfiguration();
-};
-
-/**
- * @class BodyStatesRecordingInMeshToVtp
- * @brief  Write files for bodies
- * the output file is VTK XML format in FVMcan visualized by ParaView the data type vtkPolyData
- */
-class BodyStatesRecordingInMeshToVtp : public BodyStatesRecording
-{
-  public:
-    BodyStatesRecordingInMeshToVtp(IOEnvironment &io_environment, SPHBody &body, ANSYSMesh &ansys_mesh);
-    virtual ~BodyStatesRecordingInMeshToVtp(){};
-
-  protected:
-    virtual void writeWithFileName(const std::string &sequence) override;
-    StdLargeVec<Vecd> &node_coordinates_;
-    StdLargeVec<StdVec<size_t>> &elements_nodes_connection_;
-};
-
-//----------------------------------------------------------------------
-//	BoundaryConditionSetupInFVM
-//----------------------------------------------------------------------
-class BoundaryConditionSetupInFVM : public fluid_dynamics::FluidDataInner
-{
-  public:
-    BoundaryConditionSetupInFVM(BaseInnerRelationInFVM &inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
-                                vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index);
-    virtual ~BoundaryConditionSetupInFVM(){};
-
-    virtual void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij){};
-    virtual void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i){};
-    virtual void applyGivenValueInletFlow(size_t ghost_index){};
-    virtual void applyOutletBoundary(size_t ghost_index, size_t index_i){};
-    virtual void applyTopBoundary(size_t ghost_index, size_t index_i){};
-    virtual void applyFarFieldBoundary(size_t ghost_index){};
-    // Common functionality for resetting boundary conditions
-    void resetBoundaryConditions();
-
-  protected:
-    StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_;
-    StdLargeVec<Vecd> &vel_, &pos_, &mom_;
-    size_t &total_ghost_particles_;
-    size_t &real_particles_bound_;
-    vector<vector<size_t>> each_boundary_type_with_all_ghosts_index_;
-    vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_;
-    vector<vector<size_t>> each_boundary_type_contact_real_index_;
-};
 } // namespace SPH
 #endif // UNSTRUCTURED_MESH_H

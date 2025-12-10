@@ -13,7 +13,7 @@ case name: test_2d_taylor_green
 
 case_name = "test_2d_taylor_green"
 body_name = "WaterBody"
-parameter_name = "TotalMechanicalEnergy"
+parameter_name = "TotalKineticEnergy"
 body_name_1 = "WaterBody"
 parameter_name_1 = "MaximumSpeed"
 
@@ -21,6 +21,7 @@ number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
 sphinxsys_1 = SphinxsysRegressionTest(case_name, body_name_1, parameter_name_1)
+clean_input_folder(sphinxsys.input_file_path)
 
 
 while True:

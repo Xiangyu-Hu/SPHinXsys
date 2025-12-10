@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -37,6 +37,11 @@
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
+#ifdef __linux__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/adapted/boost_tuple.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
@@ -44,7 +49,11 @@
 #include <boost/geometry/strategies/transform.hpp>
 #include <boost/geometry/strategies/transform/matrix_transformers.hpp>
 
-#include "base_data_package.h"
+#ifdef __linux__
+#pragma GCC diagnostic pop
+#endif
+
+#include "base_data_type_package.h"
 #include "base_geometry.h"
 
 #include <fstream>
@@ -53,14 +62,16 @@
 
 BOOST_GEOMETRY_REGISTER_BOOST_TUPLE_CS(cs::cartesian)
 
-using namespace boost::geometry;
+namespace bg = boost::geometry;
 
 namespace SPH
 {
 class Kernel;
 
-typedef model::polygon<model::d2::point_xy<Real>> boost_poly;
-typedef model::multi_polygon<boost_poly> boost_multi_poly;
+typedef bg::model::d2::point_xy<Real> boost_point;
+typedef bg::model::polygon<boost_point> boost_poly;
+typedef bg::model::multi_polygon<boost_poly> boost_multi_poly;
+typedef bg::model::referring_segment<boost_point> boost_seg;
 
 /**
  * @class MultiPolygon
@@ -69,12 +80,12 @@ typedef model::multi_polygon<boost_poly> boost_multi_poly;
 class MultiPolygon
 {
   public:
-    MultiPolygon(){};
+    MultiPolygon() {};
     explicit MultiPolygon(const std::vector<Vecd> &points);
     explicit MultiPolygon(const Vecd &center, Real radius, int resolution);
     boost_multi_poly &getBoostMultiPoly() { return multi_poly_; };
 
-    BoundingBox findBounds();
+    BoundingBoxd findBounds();
     bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true);
     Vecd findClosestPoint(const Vecd &probe_point);
 
@@ -101,19 +112,18 @@ class MultiPolygonShape : public Shape
 
   public:
     /** Default constructor. */
-    explicit MultiPolygonShape(const std::string &shape_name) : Shape(shape_name){};
+    explicit MultiPolygonShape(const std::string &shape_name) : Shape(shape_name) {};
     explicit MultiPolygonShape(const MultiPolygon &multi_polygon, const std::string &shape_name = "MultiPolygonShape")
-        : Shape(shape_name), multi_polygon_(multi_polygon){};
-    virtual ~MultiPolygonShape(){};
+        : Shape(shape_name), multi_polygon_(multi_polygon) {};
+    virtual ~MultiPolygonShape() {};
 
     virtual bool isValid() override;
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
+    virtual BoundingBoxd findBounds() override;
 
   protected:
     MultiPolygon multi_polygon_;
-
-    virtual BoundingBox findBounds() override;
 };
 } // namespace SPH
 

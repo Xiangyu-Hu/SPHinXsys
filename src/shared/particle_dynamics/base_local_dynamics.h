@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -30,217 +30,60 @@
 #ifndef BASE_LOCAL_DYNAMICS_H
 #define BASE_LOCAL_DYNAMICS_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "base_particle_dynamics.h"
-#include "sph_data_containers.h"
+#include "execution_policy.h"
+#include "io_log.h"
+#include "reduce_functors.h"
+#include "sphinxsys_containers.h"
+
+#include <type_traits>
 
 namespace SPH
 {
-//----------------------------------------------------------------------
-// Interaction type identifies
-//----------------------------------------------------------------------
-class Base; /**< Indicating base class for a method */
-
-template <typename... InnerParameters>
-class Inner; /**< Inner interaction: interaction within a body*/
-
-template <typename... ContactParameters>
-class Contact; /**< Contact interaction: interaction between a body with one or several another bodies */
-
-class Boundary;        /**< Interaction with boundary */
-class Wall;            /**< Interaction with wall boundary */
-class Adaptive;        /**< Interaction with adaptive resolution */
-class Extended;        /**< An extened method of an interaction type */
-class SpatialTemporal; /**< A interaction considering spatial temporal correlations */
-//----------------------------------------------------------------------
-// Particle group scope functors
-//----------------------------------------------------------------------
-class AllParticles
-{
-  public:
-    explicit AllParticles(BaseParticles *base_particles){};
-    bool operator()(size_t index_i)
-    {
-        return true;
-    };
-};
-
-template <int INDICATOR>
-class IndicatedParticles
-{
-    StdLargeVec<int> &indicator_;
-
-  public:
-    explicit IndicatedParticles(BaseParticles *base_particles)
-        : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
-    bool operator()(size_t index_i)
-    {
-        return indicator_[index_i] == INDICATOR;
-    };
-};
-
-using BulkParticles = IndicatedParticles<0>;
-
-template <int INDICATOR>
-class NotIndicatedParticles
-{
-    StdLargeVec<int> &indicator_;
-
-  public:
-    explicit NotIndicatedParticles(BaseParticles *base_particles)
-        : indicator_(*base_particles->getVariableByName<int>("Indicator")){};
-    bool operator()(size_t index_i)
-    {
-        return indicator_[index_i] != INDICATOR;
-    };
-};
-
-template <typename DataType>
-class PairAverageInner
-{
-    StdLargeVec<DataType> &variable_;
-
-  public:
-    explicit PairAverageInner(StdLargeVec<DataType> &variable)
-        : variable_(variable){};
-    DataType operator()(size_t index_i, size_t index_j)
-    {
-        return 0.5 * (variable_[index_i] + variable_[index_j]);
-    };
-};
-
-template <typename DataType>
-class PairAverageContact
-{
-    StdLargeVec<DataType> &inner_variable_;
-    StdLargeVec<DataType> &contact_variable_;
-
-  public:
-    PairAverageContact(StdLargeVec<DataType> &inner_variable,
-                       StdLargeVec<DataType> &contact_variable)
-        : inner_variable_(inner_variable), contact_variable_(contact_variable){};
-    DataType operator()(size_t index_i, size_t index_j)
-    {
-        return 0.5 * (inner_variable_[index_i] + contact_variable_[index_j]);
-    };
-};
-
-class NoKernelCorrection
-{
-  public:
-    NoKernelCorrection(BaseParticles *particles){};
-    Real operator()(size_t index_i)
-    {
-        return 1.0;
-    };
-};
-
-class KernelCorrection
-{
-  public:
-    KernelCorrection(BaseParticles *particles)
-        : B_(*particles->getVariableByName<Matd>("KernelCorrectionMatrix")){};
-
-    Matd operator()(size_t index_i)
-    {
-        return B_[index_i];
-    };
-
-  protected:
-    StdLargeVec<Matd> &B_;
-};
-
-class SingleResolution
-{
-  public:
-    SingleResolution(BaseParticles *particles){};
-    Real operator()(size_t index_i)
-    {
-        return 1.0;
-    };
-};
-
-class AdaptiveResolution
-{
-  public:
-    AdaptiveResolution(BaseParticles *particles)
-        : h_ratio_(*particles->getVariableByName<Real>("SmoothingLengthRatio")){};
-
-    Real operator()(size_t index_i)
-    {
-        return h_ratio_[index_i];
-    };
-
-  protected:
-    StdLargeVec<Real> &h_ratio_;
-};
-//----------------------------------------------------------------------
-// Particle reduce functors
-//----------------------------------------------------------------------
-template <class ReturnType>
-struct ReduceSum
-{
-    ReturnType operator()(const ReturnType &x, const ReturnType &y) const { return x + y; };
-};
-
-struct ReduceMax
-{
-    Real operator()(Real x, Real y) const { return SMAX(x, y); };
-};
-
-struct ReduceMin
-{
-    Real operator()(Real x, Real y) const { return SMIN(x, y); };
-};
-
-struct ReduceOR
-{
-    bool operator()(bool x, bool y) const { return x || y; };
-};
-
-struct ReduceAND
-{
-    bool operator()(bool x, bool y) const { return x && y; };
-};
-
-struct ReduceLowerBound
-{
-    Vecd operator()(const Vecd &x, const Vecd &y) const
-    {
-        Vecd lower_bound;
-        for (int i = 0; i < lower_bound.size(); ++i)
-            lower_bound[i] = SMIN(x[i], y[i]);
-        return lower_bound;
-    };
-};
-struct ReduceUpperBound
-{
-    Vecd operator()(const Vecd &x, const Vecd &y) const
-    {
-        Vecd upper_bound;
-        for (int i = 0; i < upper_bound.size(); ++i)
-            upper_bound[i] = SMAX(x[i], y[i]);
-        return upper_bound;
-    };
-};
-
 /**
  * @class BaseLocalDynamics
  * @brief The base class for all local particle dynamics.
+ * @details The basic design idea is define local dynamics for local particle operations.
+ * We split a general local dynamics into two parts in respect of functionality:
+ * one is the action on singular data, which is carried within the function setupDynamics,
+ * the other is the action on discrete variables, which will be carried out
+ * by the computing kernel. In the scenarios of offloading computing,
+ * the first function is generally carried on the host and the other on computing device.
+ * We also split the local dynamics into two part in respect of memory management.
  */
 template <class DynamicsIdentifier>
 class BaseLocalDynamics
 {
   public:
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
-        : identifier_(identifier), sph_body_(identifier.getSPHBody()){};
-    virtual ~BaseLocalDynamics(){};
-    SPHBody &getSPHBody() { return sph_body_; };
-    DynamicsIdentifier &getDynamicsIdentifier() { return identifier_; };
-    virtual void setupDynamics(Real dt = 0.0){}; // setup global parameters
+        : identifier_(&identifier), sph_system_(&identifier.getSPHSystem()),
+          sph_body_(&identifier.getSPHBody()),
+          sph_adaptation_(&sph_body_->getSPHAdaptation()),
+          particles_(&sph_body_->getBaseParticles()),
+          logger_(Log::get()) {};
+    virtual ~BaseLocalDynamics() {};
+    using Identifier = typename DynamicsIdentifier::BaseIdentifier;
+    SPHBody &getSPHBody() { return *sph_body_; };
+    BaseParticles &getBaseParticles() { return *particles_; };
+    SPHAdaptation &getSPHAdaptation() { return *sph_adaptation_; };
+    virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
+
+    class FinishDynamics
+    {
+      public:
+        template <class EncloserType>
+        FinishDynamics(EncloserType &encloser){};
+        void operator()() {};
+    };
+
   protected:
-    DynamicsIdentifier &identifier_;
-    SPHBody &sph_body_;
+    DynamicsIdentifier *identifier_;
+    SPHSystem *sph_system_;
+    SPHBody *sph_body_;
+    SPHAdaptation *sph_adaptation_;
+    BaseParticles *particles_;
+    std::shared_ptr<spdlog::logger> logger_;
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 
@@ -248,28 +91,42 @@ using LocalDynamics = BaseLocalDynamics<SPHBody>;
  * @class BaseLocalDynamicsReduce
  * @brief The base class for all local particle dynamics for reducing.
  */
-template <typename ReturnType, typename Operation, class DynamicsIdentifier>
+template <typename Operation, class DynamicsIdentifier>
 class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
-    BaseLocalDynamicsReduce(DynamicsIdentifier &identifier, ReturnType reference)
-        : BaseLocalDynamics<DynamicsIdentifier>(identifier), reference_(reference),
-          quantity_name_("ReducedQuantity"){};
-    virtual ~BaseLocalDynamicsReduce(){};
+    typedef Operation OperationType;
+    using ReturnType = typename Operation::ReturnType;
+    explicit BaseLocalDynamicsReduce(DynamicsIdentifier &identifier)
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
+          reference_(ReduceReference<Operation>::value),
+          quantity_name_("ReducedQuantity") {};
+    virtual ~BaseLocalDynamicsReduce() {};
 
-    using ReduceReturnType = ReturnType;
     ReturnType Reference() { return reference_; };
     std::string QuantityName() { return quantity_name_; };
     Operation &getOperation() { return operation_; };
     virtual ReturnType outputResult(ReturnType reduced_value) { return reduced_value; }
 
+    class FinishDynamics
+    {
+      public:
+        using OutputType = ReturnType;
+        template <class EncloserType>
+        FinishDynamics(EncloserType &encloser){};
+        ReturnType Result(ReturnType reduced_value)
+        {
+            return reduced_value;
+        }
+    };
+
   protected:
-    ReturnType reference_;
     Operation operation_;
+    ReturnType reference_;
     std::string quantity_name_;
 };
-template <typename ReturnType, typename Operation>
-using LocalDynamicsReduce = BaseLocalDynamicsReduce<ReturnType, Operation, SPHBody>;
+template <typename Operation>
+using LocalDynamicsReduce = BaseLocalDynamicsReduce<Operation, SPHBody>;
 
 /**
  * @class Average
@@ -282,29 +139,33 @@ class Average : public ReduceSumType
     template <class DynamicsIdentifier, typename... Args>
     Average(DynamicsIdentifier &identifier, Args &&...args)
         : ReduceSumType(identifier, std::forward<Args>(args)...){};
-    virtual ~Average(){};
-    using ReturnType = typename ReduceSumType::ReduceReturnType;
+    virtual ~Average() {};
+    using ReturnType = typename ReduceSumType::ReturnType;
 
     virtual ReturnType outputResult(ReturnType reduced_value)
     {
         ReturnType sum = ReduceSumType::outputResult(reduced_value);
-        return sum / Real(this->getDynamicsIdentifier().SizeOfLoopRange());
+        return sum / Real(this->identifier_->SizeOfLoopRange());
     }
 };
 
 /**
- * @class ConstructorArgs
- * @brief Class template argument deduction (CTAD) for constructor arguments.
+ * @class DynamicsArgs
+ * @brief Class template argument deduction (CTAD) for constructing interaction dynamics.
+ * @details Note that the form "XXX" is not std::string type, so we need to use
+ * std::string("XXX") to convert it to std::string type.
+ * Only the DynamicsIdentifier parameter is reference,
+ * the other parameters should not use it, use pointer
+ * instead.
  */
-template <typename BodyRelationType, typename... OtherArgs>
-struct ConstructorArgs
+template <typename DynamicsIdentifier, typename... OtherArgs>
+struct DynamicsArgs
 {
-    BodyRelationType &body_relation_;
+    DynamicsIdentifier &identifier_;
     std::tuple<OtherArgs...> others_;
-    SPHBody &getSPHBody() { return body_relation_.getSPHBody(); };
-    ConstructorArgs(BodyRelationType &body_relation, OtherArgs... other_args)
-        : body_relation_(body_relation),
-          others_(other_args...){};
+    SPHBody &getSPHBody() { return identifier_.getSPHBody(); };
+    DynamicsArgs(DynamicsIdentifier &identifier, OtherArgs... other_args)
+        : identifier_(identifier), others_(other_args...) {};
 };
 
 /**
@@ -320,9 +181,9 @@ template <typename... CommonParameters, template <typename... InteractionTypes> 
 class ComplexInteraction<LocalDynamicsName<>, CommonParameters...>
 {
   public:
-    ComplexInteraction(){};
+    ComplexInteraction() {};
 
-    void interaction(size_t index_i, Real dt = 0.0){};
+    void interaction(size_t index_i, Real dt = 0.0) {};
 };
 
 template <typename... CommonParameters, template <typename... InteractionTypes> class LocalDynamicsName,

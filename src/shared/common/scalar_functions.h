@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -147,13 +147,27 @@ inline bool Not_a_number(T a)
     return (std::isnan(a) || !(std::isfinite(a))) ? true : false;
 }
 
-inline Real rand_norm(Real u, Real std)
+inline Real harmonic_average(const Real &a, const Real &b)
+{
+    return 2.0 * a * b / (a + b);
+}
+
+inline Real rand_normal(Real u, Real std)
 {
     unsigned seed = (unsigned)std::chrono::system_clock::now().time_since_epoch().count();
     std::default_random_engine generator(seed);
     std::normal_distribution<Real> distribution(u, std);
     return distribution(generator);
 }
+
+inline Real rand_uniform(Real lower, Real upper)
+{
+    unsigned seed = (unsigned)std::chrono::system_clock::now().time_since_epoch().count();
+    std::default_random_engine generator(seed);
+    std::uniform_real_distribution<Real> distribution(lower, upper);
+    return distribution(generator);
+}
+
 /** rotating axis once according to right hand rule.
  * The first_axis must be 0, 1 for 2d and 0, 1, 2 for 3d
  */
@@ -167,6 +181,10 @@ Real getLeftStateInWeno(Real v1, Real v2, Real v3, Real v4);
 Real getRightStateInWeno(Real v1, Real v2, Real v3, Real v4);
 
 /** linear heaviside function.*/
-Real Heaviside(Real phi, Real half_width);
+inline Real Heaviside(Real phi, Real half_width)
+{
+    Real normalized_phi = phi / half_width;
+    return std::clamp(0.5 + 0.5 * normalized_phi, 0.0, 1.0);
+}
 } // namespace SPH
 #endif // SCALAR_FUNCTIONS_H

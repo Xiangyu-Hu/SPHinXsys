@@ -49,6 +49,7 @@ function (test_sse_availability)
 		__m128i va = _mm_loadu_si128((__m128i*)a);
 		__m128i vb = _mm_loadu_si128((__m128i*)b);
 		__m128i vc = _mm_cmpgt_epi64(va, vb);
+
 		_mm_storeu_si128((__m128i*)c, vc);
 		if (c[0] == -1LL && c[1] == 0LL)
 		  return 0;
@@ -74,6 +75,7 @@ function (test_sse_availability)
 		__m128i va = _mm_loadu_si128((__m128i*)a);
 		__m128i vb = _mm_loadu_si128((__m128i*)b);
 		__m128i vc = _mm_cmpeq_epi64(va, vb);
+
 		_mm_storeu_si128((__m128i*)c, vc);
 		if (c[0] == 0LL && c[1] == -1LL)
 		  return 0;
@@ -94,14 +96,17 @@ function (test_sse_availability)
 	  #else
 		#include <x86intrin.h>
 	  #endif
+
 	  int main()
 	  {
 		float a[4] = { 1.0f, 2.0f, 3.0f, 4.0f };
 		float b[4] = { 3.0f, 5.0f, 7.0f, 9.0f };
 		float c[4];
+
 		__m128 va = _mm_loadu_ps(a);
 		__m128 vb = _mm_loadu_ps(b);
 		__m128 vc = _mm_hadd_ps(va, vb);
+
 		_mm_storeu_ps(c, vc);
 		if (c[0] == 3.0f && c[1] == 7.0f && c[2] == 8.0f && c[3] == 16.0f)
 		  return 0;
@@ -204,6 +209,7 @@ function (test_fma_availability)
 		__m256d a = _mm256_set_pd (-1, 2, -3, 4);
 		__m256d b = _mm256_set_pd (-2, 3, -4, 1);
 		__m256d c = _mm256_set_pd (-11, 6, 4, -1);
+
 		__m256d result =  _mm256_fmsub_pd (a, b, c);
 		return 0;
 		}" DETECTED_FMA)
@@ -371,10 +377,12 @@ function(test_neon_availability)
 	  float64_t a[2] = {  1., 2. };
 	  float64_t b[2] = { -1., 3. };
 	  float64_t c[2];
+
 	  float64x2_t va = vld1q_f64(&a[0]);
 	  float64x2_t vb = vld1q_f64(&b[0]);
 	  float64x2_t vc = vaddq_f64(va, vb);
 	  vst1q_f64(&c[0], vc);
+
 	  if (c[0] == 0. && c[1] == 5.)
 		return 0;
 	  else

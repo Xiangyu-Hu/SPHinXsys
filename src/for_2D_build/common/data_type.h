@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -30,6 +30,7 @@
 #define DATA_TYPE_2D_H
 
 #include "base_data_type.h"
+#include "geometric_primitive.h"
 #include "scalar_functions.h"
 
 namespace SPH
@@ -37,16 +38,14 @@ namespace SPH
 using Arrayi = Array2i;
 using Vecd = Vec2d;
 using Matd = Mat2d;
-using AlignedBox = AlignedBox2d;
+using VecMatd = Vec3d;           // vectorized symmetric 2x2 matrix
+using MatTend = Mat3d;           // matricized symmetric 2x2x2x2 tensor
+using VecMatGrad = VecMatGrad2d; // gradient of vectorized symmetric 2x2 matrix
 using AngularVecd = Real;
 using Rotation = Rotation2d;
-using BoundingBox = BaseBoundingBox<Vec2d>;
-
-template <class DataType, int array_size>
-using PackageDataMatrix = std::array<std::array<DataType, array_size>, array_size>;
-
-template <class DataType>
-using MeshDataMatrix = DataType **;
+using BoundingBoxd = BoundingBox<VecdBound, 2>;
+using BoundingBoxi = BoundingBox<ArrayiBound, 2>;
+using Transform = BaseTransform<Rotation2d, Vec2d>;
 
 /** only works for smoothing length ratio less or equal than 1.3*/
 constexpr int MaximumNeighborhoodSize = int(M_PI * 9);
@@ -59,8 +58,11 @@ const Matd reduced_unit_matrix{
 
 /** initial local normal, only works for thin structure dynamics. */
 const Vecd local_pseudo_n_0 = Vecd(0.0, 1.0);
-
 const Vecd ZeroVecd = Vec2d::Zero();
+
+inline Vecd degradeToVecd(const Vec3d &input) { return Vecd(input[0], input[1]); };
+inline Matd degradeToMatd(const Mat3d &input) { return input.block<2, 2>(0, 0); };
+
 } // namespace SPH
 
 #endif // DATA_TYPE_2D_H

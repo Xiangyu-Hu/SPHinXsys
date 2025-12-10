@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -31,23 +31,24 @@
 #define PARTICLE_GENERATOR_NETWORK_H
 
 #include "base_particle_generator.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
 #include "tree_body.h"
 
 namespace SPH
 {
-/**
- * @class ParticleGeneratorNetwork
- * @brief Generate a tree-shape network for the conduction system of a heart with particles.
- */
-class ParticleGeneratorNetwork : public ParticleGenerator
+class Network;
+
+template <> // Generate a tree-shape network using particles
+class ParticleGenerator<BaseParticles, Network> : public ParticleGenerator<BaseParticles>
 {
   public:
-    ParticleGeneratorNetwork(SPHBody &sph_body, const Vecd &starting_pnt, const Vecd &second_pnt, int iterator, Real grad_factor);
-    virtual ~ParticleGeneratorNetwork(){};
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
+                      const Vecd &starting_pnt,
+                      const Vecd &second_pnt, int iterator, Real grad_factor);
+    virtual ~ParticleGenerator() {};
 
     /** Created base particles based on edges in branch */
-    virtual void initializeGeometricVariables() override;
+    virtual void prepareGeometricData() override;
 
   protected:
     Vecd starting_pnt_;                                 /**< Starting point for net work. */
@@ -62,7 +63,7 @@ class ParticleGeneratorNetwork : public ParticleGenerator
     std::vector<Real> fascicle_angles_ = {-1.25, 0.75}; /**< angles with respect to the initial edge of the fascicles.*/
     Real fascicle_ratio_ = 15.0;                        /**< ratio of length  of the fascicles. Include one per fascicle to include.*/
     SPHBody &sph_body_;
-    Shape &body_shape_;
+    Shape &initial_shape_;
     BaseCellLinkedList &cell_linked_list_;
     TreeBody *tree_;
     /**
@@ -103,5 +104,6 @@ class ParticleGeneratorNetwork : public ParticleGenerator
 
     void growAParticleOnBranch(TreeBody::Branch *branch, const Vecd &new_point, const Vecd &end_direction);
 };
+
 } // namespace SPH
 #endif // PARTICLE_GENERATOR_NETWORK_H

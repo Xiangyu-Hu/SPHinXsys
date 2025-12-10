@@ -18,7 +18,7 @@ Real resolution_ref = PH / 30;
 Real BW = resolution_ref * 4.0; // boundary width, at least three particles
 
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-PL / 2.0, -PL / 2.0),
+BoundingBoxd system_domain_bounds(Vec2d(-PL / 2.0, -PL / 2.0),
                                  Vec2d(2.0 * PL, PL / 2.0));
 // two dimensional should be circle smooth between two parts.
 //----------------------------------------------------------------------
@@ -82,38 +82,40 @@ class Beam : public MultiPolygonShape
     }
 };
 
-class LeftStretchSolidBodyRegion : public solid_dynamics::BaseMotionConstraint<BodyPartByParticle>
+class LeftStretchSolidBodyRegion : public BodyPartMotionConstraint
 {
   public:
     // TODO: use only body part as argment since body can be referred from it already
     LeftStretchSolidBodyRegion(BodyPartByParticle &body_part)
-        : solid_dynamics::BaseMotionConstraint<BodyPartByParticle>(body_part),
-          vel_(particles_->vel_), pos_(particles_->pos_){};
+        : BodyPartMotionConstraint(body_part),
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")) {};
 
-    virtual ~LeftStretchSolidBodyRegion(){};
+    virtual ~LeftStretchSolidBodyRegion() {};
 
   protected:
-    StdLargeVec<Vecd> &vel_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *vel_;
+    Vecd *pos_;
     virtual void update(size_t index_i, Real Dt = 0.0)
     {
         pos_[index_i][0] -= 0.5e-4 * Dt;
     };
 };
 
-class RightStretchSolidBodyRegion : public solid_dynamics::BaseMotionConstraint<BodyPartByParticle>
+class RightStretchSolidBodyRegion : public BodyPartMotionConstraint
 {
   public:
     // TODO: use only body part as argment since body can be referred from it already
     RightStretchSolidBodyRegion(BodyPartByParticle &body_part)
-        : solid_dynamics::BaseMotionConstraint<BodyPartByParticle>(body_part),
-          vel_(particles_->vel_), pos_(particles_->pos_){};
+        : BodyPartMotionConstraint(body_part),
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")) {};
 
-    virtual ~RightStretchSolidBodyRegion(){};
+    virtual ~RightStretchSolidBodyRegion() {};
 
   protected:
-    StdLargeVec<Vecd> &vel_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *vel_;
+    Vecd *pos_;
     virtual void update(size_t index_i, Real Dt = 0.0)
     {
         pos_[index_i][0] += 0.5e-4 * Dt;
@@ -143,19 +145,19 @@ MultiPolygon createConstrainBeamShape()
     return multi_polygon;
 };
 
-class ConstrainXVelocity : public solid_dynamics::BaseMotionConstraint<BodyPartByParticle>
+class ConstrainXVelocity : public BodyPartMotionConstraint
 {
   public:
     // TODO: use only body part as argment since body can be referred from it already
     ConstrainXVelocity(BodyPartByParticle &body_part)
-        : solid_dynamics::BaseMotionConstraint<BodyPartByParticle>(body_part),
-          vel_(particles_->vel_), pos_(particles_->pos_){};
+        : BodyPartMotionConstraint(body_part),
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")), pos_(particles_->getVariableDataByName<Vecd>("Position")) {};
 
-    virtual ~ConstrainXVelocity(){};
+    virtual ~ConstrainXVelocity() {};
 
   protected:
-    StdLargeVec<Vecd> &vel_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *vel_;
+    Vecd *pos_;
     virtual void update(size_t index_i, Real dt = 0.0)
     {
         vel_[index_i] = Vecd(0.0, vel_[index_i][1]);
@@ -177,22 +179,20 @@ int main(int ac, char *av[])
     system.setReloadParticles(true);
     system.setGenerateRegressionData(false);
     system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(system);
-
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody beam_body(system, makeShared<Beam>("StretchingBody"));
     beam_body.defineBodyLevelSetShape();
-    beam_body.defineParticlesAndMaterial<ElasticSolidParticles, NonLinearHardeningPlasticSolid>(
+    beam_body.defineMaterial<NonLinearHardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus, saturation_flow_stress, saturation_exponent);
 
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? beam_body.generateParticles<ParticleGeneratorReload>(io_environment, beam_body.getName())
-        : beam_body.generateParticles<ParticleGeneratorLattice>();
+        ? beam_body.generateParticles<BaseParticles, Reload>(beam_body.getName())
+        : beam_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(system, "BeamObserver");
-    beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    beam_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -210,13 +210,14 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Define the methods for particle relaxation.
         //----------------------------------------------------------------------
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> beam_body_random_particles(beam_body);
-        relax_dynamics::RelaxationStepInner beam_body_relaxation_step_inner(beam_body_inner);
+        RelaxationStepInner beam_body_relaxation_step_inner(beam_body_inner);
         //----------------------------------------------------------------------
         //	Output for particle relaxation.
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_ball_state(io_environment, system.real_bodies_);
-        ReloadParticleIO write_particle_reload_files(io_environment, {&beam_body});
+        BodyStatesRecordingToVtp write_ball_state(system);
+        ReloadParticleIO write_particle_reload_files(beam_body);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -247,37 +248,28 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
 
-    // corrected strong configuration
-    InteractionWithUpdate<KernelCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
-
-    // time step size calculation
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
     // stress relaxation for the beam
     Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
-    ReduceDynamics<TotalMechanicalEnergy> get_kinetic_energy(beam_body);
+    ReduceDynamics<TotalKineticEnergy> get_kinetic_energy(beam_body);
 
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
     BodyRegionByParticle beam_left_stretch(beam_body, makeShared<MultiPolygonShape>(createBeamLeftStretchShape()));
     SimpleDynamics<LeftStretchSolidBodyRegion> stretch_beam_left_end(beam_left_stretch);
     BodyRegionByParticle beam_right_stretch(beam_body, makeShared<MultiPolygonShape>(createBeamRightStretchShape()));
     SimpleDynamics<RightStretchSolidBodyRegion> stretch_beam_right_end(beam_right_stretch);
     BodyRegionByParticle beam_constrain(beam_body, makeShared<MultiPolygonShape>(createConstrainBeamShape()));
     SimpleDynamics<ConstrainXVelocity> constrain_beam_end(beam_constrain);
-
     InteractionDynamics<solid_dynamics::DeformationGradientBySummation> beam_deformation_gradient_tensor(beam_body_inner);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        damping(0.5, beam_body_inner, "Velocity", physical_viscosity);
-
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping(0.5, beam_body_inner, "Velocity", physical_viscosity);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-
-    BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
-    ReducedQuantityRecording<TotalMechanicalEnergy>
-        write_total_mechanical_energy(io_environment, beam_body);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_displacement("Position", io_environment, beam_observer_contact);
+    BodyStatesRecordingToVtp write_beam_states(system);
+    ReducedQuantityRecording<TotalKineticEnergy> write_kinetic_mechanical_energy(beam_body);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
@@ -288,6 +280,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
     //----------------------------------------------------------------------
+    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     int Dt_ite = 0;
     Real End_Time = 100.0;
@@ -304,11 +297,11 @@ int main(int ac, char *av[])
     // from here the time stepping begins
     //-----------------------------------------------------------------------------
     write_beam_states.writeToFile(0);
-    write_total_mechanical_energy.writeToFile(0);
+    write_kinetic_mechanical_energy.writeToFile(0);
     write_displacement.writeToFile(0);
 
     // computation loop starts
-    while (GlobalStaticVariables::physical_time_ < End_Time)
+    while (physical_time < End_Time)
     {
         Real integration_time = 0.0;
         // integrate time (loop) until the next output time
@@ -341,24 +334,21 @@ int main(int ac, char *av[])
                     if (ite % 500 == 0)
                     {
                         std::cout << "N=" << ite << " Time: "
-                                  << GlobalStaticVariables::physical_time_
+                                  << physical_time
                                   << "	Dt: " << Dt << "	dt: " << dt
                                   << "	Dt:dt = " << Dt / dt << "\n";
                     }
 
                     if (ite != 0 && ite % observation_sample_interval == 0)
                     {
-                        write_total_mechanical_energy.writeToFile(ite);
+                        write_kinetic_mechanical_energy.writeToFile(ite);
                         write_displacement.writeToFile(ite);
                     }
                 }
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
-
-            std::cout << "refer_total_kinetic_energy  " << refer_total_kinetic_energy
-                      << "    stress_ite  " << stress_ite << std::endl;
         }
 
         TickCount t2 = TickCount::now();
@@ -372,7 +362,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds."
               << "  Iterations:  " << ite << std::endl;
-    std::cout << "Total iterations computation:  " << GlobalStaticVariables::physical_time_ / dt
+    std::cout << "Total iterations computation:  " << physical_time / dt
               << std::endl;
 
     if (system.GenerateRegressionData())

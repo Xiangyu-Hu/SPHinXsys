@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -32,7 +32,7 @@
 #ifndef BASE_KERNELS_H
 #define BASE_KERNELS_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 
 #include <functional>
 #include <string>
@@ -74,7 +74,7 @@ class Kernel
   public:
     /** empty initialization in constructor, initialization will be carried out later. */
     explicit Kernel(Real h, Real kernel_size, Real rc_ref, const std::string &name);
-    virtual ~Kernel(){};
+    virtual ~Kernel() {};
 
     std::string Name() const { return kernel_name_; };
     void resetSmoothingLength(Real h);
@@ -87,14 +87,18 @@ class Kernel
     Real FactorW1D() const { return factor_W_1D_; };
     Real FactorW2D() const { return factor_W_2D_; };
     Real FactorW3D() const { return factor_W_3D_; };
-    
+
+    Real DimensionFactor1D() const { return factor_W_1D_ * h_; };
+    Real DimensionFactor2D() const { return factor_W_2D_ * h_ * h_; };
+    Real DimensionFactor3D() const { return factor_W_3D_ * h_ * h_ * h_; };
+
     /**
      * unit vector pointing from j to i or inter-particle surface direction
      */
-    
+
     virtual Vec2d e(const Real &distance, const Vec2d &displacement) const { return displacement / (distance + TinyReal); };
     virtual Vec3d e(const Real &distance, const Vec3d &displacement) const { return displacement / (distance + TinyReal); };
-    
+
     /**
      * check if particles are within cutoff radius
      */
@@ -114,7 +118,6 @@ class Kernel
         else
             return false;
     };
-
 
     /**
      * Calculates the kernel value for the given displacement of two particles

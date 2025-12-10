@@ -12,7 +12,7 @@ using namespace SPH;
 Real DL = 5.0;                           /**< Tube length. */
 Real particle_spacing_ref = 1.0 / 200.0; /**< Initial reference particle spacing. */
 Real DH = particle_spacing_ref * 4;      /**< Tube height. */
-BoundingBox system_domain_bounds(Vec2d(-2.0 / 5.0 * DL, 0.0), Vec2d(3.0 / 5.0 * DL, DH));
+BoundingBoxd system_domain_bounds(Vec2d(-2.0 / 5.0 * DL, 0.0), Vec2d(3.0 / 5.0 * DL, DH));
 Real rho0_l = 1.0;              /**< initial density of left state. */
 Real rho0_r = 0.125;            /**< initial density of right state. */
 Vecd velocity_l = Vecd::Zero(); /**< initial velocity of left state. */
@@ -41,23 +41,11 @@ class WaveBlock : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Case-dependent initial condition.
 //----------------------------------------------------------------------
-class ShockTubeInitialCondition
-    : public fluid_dynamics::FluidInitialCondition
+class ShockTubeInitialCondition : public fluid_dynamics::CompressibleFluidInitialCondition
 {
   public:
     explicit ShockTubeInitialCondition(SPHBody &sph_body)
-        : FluidInitialCondition(sph_body), pos_(particles_->pos_), vel_(particles_->vel_),
-          rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_), 
-          p_(*particles_->getVariableByName<Real>("Pressure"))
-    {
-        particles_->registerVariable(mom_, "Momentum");
-        particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
-        particles_->registerVariable(dmom_dt_prior_, "OtherMomentumChangeRate");
-        particles_->registerVariable(E_, "TotalEnergy");
-        particles_->registerVariable(dE_dt_, "TotalEnergyChangeRate");
-        particles_->registerVariable(dE_dt_prior_, "OtherEnergyChangeRate");
-        gamma_ = heat_capacity_ratio;
-    };
+        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body) {};
     void update(size_t index_i, Real dt)
     {
         if (pos_[index_i][0] < DL / 10.0)
@@ -85,11 +73,7 @@ class ShockTubeInitialCondition
     }
 
   protected:
-    StdLargeVec<Vecd> &pos_, &vel_;
-    StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_;
-    StdLargeVec<Vecd> mom_, dmom_dt_, dmom_dt_prior_;
-    StdLargeVec<Real> E_, dE_dt_, dE_dt_prior_;
-    Real gamma_;
+    Real gamma_ = heat_capacity_ratio;
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -101,13 +85,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody wave_body(sph_system, makeShared<WaveBlock>("WaveBody"));
-    wave_body.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_l, heat_capacity_ratio);
-    wave_body.generateParticles<ParticleGeneratorLattice>();
+    wave_body.defineMaterial<CompressibleFluid>(rho0_l, heat_capacity_ratio);
+    wave_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The inner relation defines the particle configuration for particles within a body.
@@ -118,23 +101,24 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    SimpleDynamics<ShockTubeInitialCondition> waves_initial_condition(wave_body);
-    wave_body.addBodyStateForRecording<Real>("TotalEnergy");
-    wave_body.addBodyStateForRecording<Real>("Density");
-    SimpleDynamics<fluid_dynamics::EulerianCompressibleTimeStepInitialization> initialize_wave_step(wave_body);
-    PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, wave_body.getBodyShapeBounds(), yAxis);
-    ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCRiemann> pressure_relaxation(wave_body_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCRiemann> density_and_energy_relaxation(wave_body_inner);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> kernel_correction_matrix(wave_body_inner);
+
+    SimpleDynamics<ShockTubeInitialCondition> waves_initial_condition(wave_body);
+    PeriodicAlongAxis periodic_along_y(wave_body.getSPHBodyBounds(), yAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, periodic_along_y);
+    ReduceDynamics<fluid_dynamics::EulerianCompressibleAcousticTimeStepSize> get_wave_time_step_size(wave_body);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> kernel_correction_matrix(wave_body_inner);
     InteractionDynamics<KernelGradientCorrectionInner> kernel_gradient_update(wave_body_inner);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations of the simulation.
     //	Regression tests are also defined here.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToPlt body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToPlt body_states_recording(sph_system);
+    body_states_recording.addToWrite<Real>(wave_body, "TotalEnergy");
+    body_states_recording.addToWrite<Real>(wave_body, "Density");
     RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
-        write_maximum_speed(io_environment, wave_body);
+        write_maximum_speed(wave_body);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -148,6 +132,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     Real end_time = 0.2;
@@ -164,25 +149,24 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         //	Integrate time (loop) until the next output time.
         while (integration_time < output_interval)
         {
-            initialize_wave_step.exec();
             Real dt = get_wave_time_step_size.exec();
             // Dynamics including pressure and density and energy relaxation.
             integration_time += dt;
             pressure_relaxation.exec(dt);
             density_and_energy_relaxation.exec(dt);
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
 
             if (number_of_iterations % screen_output_interval == 0)
             {
                 write_maximum_speed.writeToFile(number_of_iterations);
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	dt = " << dt << "\n";
             }
             number_of_iterations++;

@@ -11,14 +11,21 @@ using namespace SPH;   // Namespace cite here
 Real L = 2.0;
 Real H = 0.4;
 Real resolution_ref = H / 40.0;
-BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
+BoundingBoxd system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
+std::string diffusion_species_name = "Phi";
 Real diffusion_coeff = 1.0e-4;
 Real bias_coeff = 0.0;
 Real alpha = Pi / 6.0;
 Vec2d bias_direction(cos(alpha), sin(alpha));
+//----------------------------------------------------------------------
+// Define extra classes which are used in the main program.
+// These classes are defined under the namespace of SPH.
+//----------------------------------------------------------------------
+namespace SPH
+{
 //----------------------------------------------------------------------
 //	Geometric shapes used in the case.
 //----------------------------------------------------------------------
@@ -37,78 +44,53 @@ class DiffusionBlock : public MultiPolygonShape
     }
 };
 //----------------------------------------------------------------------
-//	Setup diffusion material properties.
-//----------------------------------------------------------------------
-class DiffusionMaterial : public DiffusionReaction<Solid>
-{
-  public:
-    DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coeff, bias_coeff, bias_direction);
-    };
-};
-using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
-//----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionParticles>
+class DiffusionInitialCondition : public LocalDynamics
 {
-  protected:
-    size_t phi_;
-
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
-
         if (pos_[index_i][0] >= 0.45 && pos_[index_i][0] <= 0.55)
         {
-            all_species_[phi_][index_i] = 1.0;
+            phi_[index_i] = 1.0;
         }
         if (pos_[index_i][0] >= 1.0)
         {
-            all_species_[phi_][index_i] = exp(-2500.0 * ((pos_[index_i][0] - 1.5) * (pos_[index_i][0] - 1.5)));
+            phi_[index_i] = exp(-2500.0 * ((pos_[index_i][0] - 1.5) * (pos_[index_i][0] - 1.5)));
         }
     };
+
+  protected:
+    Vecd *pos_;
+    Real *phi_;
 };
 //----------------------------------------------------------------------
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
-class DiffusionBodyRelaxation
-    : public DiffusionRelaxationRK2<
-          DiffusionRelaxation<Inner<DiffusionParticles, CorrectedKernelGradientInner>>>
-{
-  public:
-    explicit DiffusionBodyRelaxation(BaseInnerRelation &inner_relation)
-        : DiffusionRelaxationRK2(inner_relation){};
-    virtual ~DiffusionBodyRelaxation(){};
-};
-//----------------------------------------------------------------------
-//	An observer particle generator.
-//----------------------------------------------------------------------
-class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
-{
-  public:
-    explicit TemperatureObserverParticleGenerator(SPHBody &sph_body)
-        : ObserverParticleGenerator(sph_body)
-    {
-        size_t number_of_observation_points = 11;
-        Real range_of_measure = 0.9 * L;
-        Real start_of_measure = 0.05 * L;
+using DiffusionBodyRelaxation =
+    DiffusionRelaxationRK2<DiffusionRelaxation<Inner<CorrectedKernelGradientInner>, BaseDiffusion>>;
 
-        for (size_t i = 0; i < number_of_observation_points; ++i)
-        {
-            Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_of_observation_points - 1) + start_of_measure, 0.5 * H);
-            positions_.push_back(point_coordinate);
-        }
+StdVec<Vecd> createObservationPoints()
+{
+    StdVec<Vecd> observation_points;
+    size_t number_of_observation_points = 11;
+    Real range_of_measure = 0.9 * L;
+    Real start_of_measure = 0.05 * L;
+
+    for (size_t i = 0; i < number_of_observation_points; ++i)
+    {
+        Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_of_observation_points - 1) + start_of_measure, 0.5 * H);
+        observation_points.push_back(point_coordinate);
     }
+    return observation_points;
 };
+} // namespace SPH
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -119,18 +101,18 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
-    diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
-    diffusion_body.generateParticles<ParticleGeneratorLattice>();
+    diffusion_body.defineClosure<Solid, DirectionalDiffusion>(
+        Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff, bias_coeff, bias_direction));
+    diffusion_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
     //----------------------------------------------------------------------
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles<TemperatureObserverParticleGenerator>();
+    temperature_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -145,17 +127,20 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
+
     DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
     SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration(diffusion_body_inner_relation);
-    GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
-    PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, diffusion_body.getBodyShapeBounds(), yAxis);
+
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
+    PeriodicAlongAxis periodic_along_x(diffusion_body.getSPHBodyBounds(), xAxis);
+    PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, periodic_along_x);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_solid_temperature("Phi", io_environment, temperature_observer_contact);
+        write_solid_temperature(diffusion_species_name, temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -168,6 +153,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 1.0;
     Real end_time = T0;
@@ -187,7 +173,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < Output_Time)
@@ -198,7 +184,7 @@ int main(int ac, char *av[])
                 if (ite % 1 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: "
+                              << physical_time << "	dt: "
                               << dt << "\n";
                 }
 
@@ -208,7 +194,7 @@ int main(int ac, char *av[])
                 dt = get_time_step_size.exec();
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
         }
 

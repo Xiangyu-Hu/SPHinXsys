@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -41,16 +41,15 @@ class SurfaceShape;
 
 namespace relax_dynamics
 {
-class ShapeSurfaceBounding2 : public LocalDynamics,
-                              public RelaxDataDelegateSimple
+class ShapeSurfaceBounding2 : public LocalDynamics
 {
   public:
     ShapeSurfaceBounding2(RealBody &real_body_);
-    virtual ~ShapeSurfaceBounding2(){};
+    virtual ~ShapeSurfaceBounding2() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     Shape *shape_;
 };
 
@@ -58,20 +57,20 @@ class RelaxationStepInnerFirstHalf : public BaseDynamics<void>
 {
   public:
     explicit RelaxationStepInnerFirstHalf(BaseInnerRelation &inner_relation);
-    virtual ~RelaxationStepInnerFirstHalf(){};
+    virtual ~RelaxationStepInnerFirstHalf() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
     RealBody *real_body_;
     BaseInnerRelation &inner_relation_;
-    InteractionDynamics<RelaxationResidue<Inner<>>> relaxation_acceleration_inner_;
+    InteractionDynamics<RelaxationResidual<Inner<>>> relaxation_acceleration_inner_;
 };
 
 class RelaxationStepInnerSecondHalf : public BaseDynamics<void>
 {
   public:
     explicit RelaxationStepInnerSecondHalf(BaseInnerRelation &inner_relation);
-    virtual ~RelaxationStepInnerSecondHalf(){};
+    virtual ~RelaxationStepInnerSecondHalf() {};
     SimpleDynamics<ShapeSurfaceBounding2> &SurfaceBounding() { return surface_bounding_; };
     virtual void exec(Real dt = 0.0) override;
 
@@ -86,30 +85,16 @@ class RelaxationStepInnerSecondHalf : public BaseDynamics<void>
  * @class SurfaceNormalDirection
  * @brief get the normal direction of surface particles.
  */
-class SurfaceNormalDirection : public RelaxDataDelegateSimple, public LocalDynamics
+class SurfaceNormalDirection : public LocalDynamics
 {
   public:
     explicit SurfaceNormalDirection(SPHBody &sph_body);
-    virtual ~SurfaceNormalDirection(){};
+    virtual ~SurfaceNormalDirection() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     SurfaceShape *surface_shape_;
-    StdLargeVec<Vecd> &pos_, &n_;
-};
-
-/**@class ConstrainSuefaceBodyRegion
- * @brief Fix the position surafce body part.
- */
-class ConstrainSurfaceBodyRegion : public BaseLocalDynamics<BodyPartByParticle>, public RelaxDataDelegateSimple
-{
-  public:
-    ConstrainSurfaceBodyRegion(BodyPartByParticle &body_part);
-    virtual ~ConstrainSurfaceBodyRegion(){};
-    void update(size_t index_i, Real dt = 0.0);
-
-  protected:
-    StdLargeVec<Vecd> &force_;
+    Vecd *pos_, *n_;
 };
 
 } // namespace relax_dynamics

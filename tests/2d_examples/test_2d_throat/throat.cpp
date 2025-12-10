@@ -123,25 +123,26 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
+    BoundingBoxd system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
                                      Vec2d(0.5 * DL + BW, 0.5 * DH + BW));
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBody"));
-    fluid_block.defineParticlesAndMaterial<BaseParticles, Oldroyd_B_Fluid>(rho0_f, c_f, mu_f, lambda_f, mu_p_f);
-    fluid_block.generateParticles<ParticleGeneratorLattice>();
+    fluid_block.defineClosure<WeaklyCompressibleFluid, OldroydBViscosity>(
+        ConstructArgs(rho0_f, c_f), ConstructArgs(mu_f, lambda_f, mu_p_f));
+    Ghost<PeriodicAlongAxis> ghost_along_x(fluid_block.getSPHBodyBounds(), xAxis);
+    fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_along_x);
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vecd> observation_location = {Vecd::Zero()};
-    fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    fluid_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -151,6 +152,7 @@ int main(int ac, char *av[])
     //  inner and contact relations.
     //----------------------------------------------------------------------
     InnerRelation fluid_block_inner(fluid_block);
+    InnerRelation wall_boundary_inner(wall_boundary);
     ContactRelation fluid_block_contact(fluid_block, {&wall_boundary});
     ContactRelation fluid_observer_contact(fluid_observer, {&fluid_block});
     //----------------------------------------------------------------------
@@ -161,40 +163,38 @@ int main(int ac, char *av[])
     //-------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-------------------------------------------------------------------
-    /** Periodic BCs in x direction. */
-    PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, fluid_block.getBodyShapeBounds(), xAxis);
-    // evaluation of density by summation approach
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_inner, fluid_block_contact);
-    // time step size without considering sound wave speed and viscosity
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSizeForImplicitViscosity> get_fluid_advection_time_step_size(fluid_block, U_f);
-    // time step size with considering sound wave speed
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(fluid_block);
-    // pressure relaxation using verlet time stepping
+    Gravity gravity(Vecd(gravity_g, 0.0));
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(fluid_block, gravity);
+    InteractionDynamics<NormalDirectionFromParticles> wall_boundary_normal_direction(wall_boundary_inner);
+    InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(fluid_block_contact);
+
     Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration1stHalfWithWall> pressure_relaxation(fluid_block_inner, fluid_block_contact);
-    pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
+    InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<NoKernelCorrection>> update_velocity_gradient(fluid_block_inner, fluid_block_contact);
     Dynamics1Level<fluid_dynamics::Oldroyd_BIntegration2ndHalfWithWall> density_relaxation(fluid_block_inner, fluid_block_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_inner, fluid_block_contact);
+    InteractionSplit<DampingPairwiseWithWall<Vec2d, FixedDampingRate>> implicit_viscous_damping(
+        DynamicsArgs(fluid_block_inner, "Velocity", mu_f), DynamicsArgs(fluid_block_contact, "Velocity", mu_f));
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityLimitedCorrectionComplex<AllParticles>> transport_velocity_correction(fluid_block_inner, fluid_block_contact);
+
+    ReduceDynamics<fluid_dynamics::AdvectionTimeStep> get_fluid_advection_time_step_size(fluid_block, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(fluid_block);
+    PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, ghost_along_x);
+    pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
     density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
-    // define external force
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(fluid_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_block_inner, fluid_block_contact);
-    // computing viscous effect implicitly and with update velocity directly other than viscous acceleration
-    InteractionSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
-        implicit_viscous_damping(fluid_block_inner, fluid_block_contact, "Velocity", mu_f);
-    // impose transport velocity
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<AllParticles>>
-        transport_velocity_correction(fluid_block_inner, fluid_block_contact);
-    // computing vorticity in the flow
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_block_inner);
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(fluid_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
-        write_fluid_mechanical_energy(io_environment, fluid_block);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>>
+        write_fluid_kinetic_energy(fluid_block);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_fluid_pressure("Pressure", io_environment, fluid_observer_contact);
+        write_recorded_fluid_pressure("Pressure", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -205,15 +205,18 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     // prepare quantities will be used once only
     wall_boundary_normal_direction.exec();
+    distance_to_wall.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 10;
     int observation_sample_interval = screen_output_interval * 2;
-    Real end_time = 20.0;
+    Real end_time = 40.0;
     // time step size for ouput file
-    Real output_interval = end_time / 20.0;
+    Real output_interval = end_time / 40.0;
     Real dt = 0.0; // default acoustic time step sizes
     // statistics for computing time
     TickCount t1 = TickCount::now();
@@ -225,17 +228,17 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         // integrate time (loop) until the next output time
         while (integration_time < output_interval)
         {
 
-            initialize_a_fluid_step.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             transport_velocity_correction.exec();
+            distance_to_wall.exec();
 
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
@@ -243,21 +246,22 @@ int main(int ac, char *av[])
                 dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                 implicit_viscous_damping.exec(dt);
                 pressure_relaxation.exec(dt);
+                update_velocity_gradient.exec();
                 density_relaxation.exec(dt);
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
 
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
-                    write_fluid_mechanical_energy.writeToFile(number_of_iterations);
+                    write_fluid_kinetic_energy.writeToFile(number_of_iterations);
                     write_recorded_fluid_pressure.writeToFile(number_of_iterations);
                 }
             }
@@ -265,7 +269,11 @@ int main(int ac, char *av[])
 
             // water block configuration and periodic condition
             periodic_condition.bounding_.exec();
-            fluid_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            fluid_block.updateCellLinkedList();
             periodic_condition.ghost_creation_.exec();
             fluid_block_complex.updateConfiguration();
         }
@@ -284,12 +292,12 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_fluid_mechanical_energy.generateDataBase(1.0e-2);
+        write_fluid_kinetic_energy.generateDataBase(1.0e-2);
         write_recorded_fluid_pressure.generateDataBase(1.0e-2);
     }
     else
     {
-        write_fluid_mechanical_energy.testResult();
+        write_fluid_kinetic_energy.testResult();
         write_recorded_fluid_pressure.testResult();
     }
 

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -26,12 +26,14 @@
  * @author	Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
  */
 
-#pragma once
+#ifndef IO_BASE_H
+#define IO_BASE_H
 
-#include "all_physical_dynamics.h"
-#include "base_data_package.h"
+#include "base_body.h"
+#include "base_data_type_package.h"
+#include "base_particle_dynamics.h"
 #include "parameterization.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
 #include "xml_engine.h"
 
 #include <filesystem>
@@ -42,29 +44,8 @@ namespace fs = std::filesystem;
 
 namespace SPH
 {
-class BaseIO;
-
-/**
- * @class IOEnvironment
- * @brief The base class which defines folders for output,
- * restart and particle reload folders.
- */
-class IOEnvironment
-{
-  private:
-    UniquePtrKeeper<ParameterizationIO> parameterization_io_ptr_keeper_;
-
-  public:
-    SPHSystem &sph_system_;
-    std::string input_folder_;
-    std::string output_folder_;
-    std::string restart_folder_;
-    std::string reload_folder_;
-
-    explicit IOEnvironment(SPHSystem &sph_system, bool delete_output = true);
-    virtual ~IOEnvironment(){};
-    ParameterizationIO &defineParameterizationIO();
-};
+class SPHSystem;
+class IOEnvironment;
 
 /**
  * @class BaseIO
@@ -73,15 +54,16 @@ class IOEnvironment
 class BaseIO
 {
   public:
-    explicit BaseIO(IOEnvironment &io_environment)
-        : io_environment_(io_environment){};
-    virtual ~BaseIO(){};
+    explicit BaseIO(SPHSystem &sph_system);
+    virtual ~BaseIO() {};
 
     /** write with filename indicated by iteration step */
     virtual void writeToFile(size_t iteration_step) = 0;
 
   protected:
+    SPHSystem &sph_system_;
     IOEnvironment &io_environment_;
+    SingularVariable<Real> *sv_physical_time_;
 
     std::string convertPhysicalTimeToString(Real physical_time);
 
@@ -92,6 +74,8 @@ class BaseIO
         s_time << std::setw(max_string_width) << std::setfill('0') << value;
         return s_time.str();
     }
+
+    bool isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body);
 };
 
 /**
@@ -100,22 +84,61 @@ class BaseIO
  */
 class BodyStatesRecording : public BaseIO
 {
+
   public:
-    BodyStatesRecording(IOEnvironment &io_environment, SPHBodyVector bodies)
-        : BaseIO(io_environment), bodies_(bodies),
-          state_recording_(io_environment.sph_system_.StateRecording()){};
-    BodyStatesRecording(IOEnvironment &io_environment, SPHBody &body)
-        : BodyStatesRecording(io_environment, {&body}){};
-    virtual ~BodyStatesRecording(){};
+    BodyStatesRecording(SPHSystem &sph_system);
+    BodyStatesRecording(SPHBody &body);
+    virtual ~BodyStatesRecording() {};
     /** write with filename indicated by physical time */
-    void writeToFile();
+    virtual void writeToFile();
     virtual void writeToFile(size_t iteration_step) override;
+
+    template <typename DataType>
+    BodyStatesRecording &addToWrite(SPHBody &sph_body, const std::string &name)
+    {
+        if (isBodyIncluded(bodies_, &sph_body))
+        {
+            sph_body.getBaseParticles().addVariableToWrite<DataType>(name);
+        }
+        else
+        {
+            std::cout << "\n Error: the body:" << sph_body.getName()
+                      << " is not in the recording list" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+        return *this;
+    };
+
+    template <typename DerivedVariableMethod,
+              typename DynamicsIdentifier, typename... Args>
+    BodyStatesRecording &addDerivedVariableRecording(DynamicsIdentifier &identifier, Args &&...args)
+    {
+        SPHBody &sph_body = identifier.getSPHBody();
+        if (isBodyIncluded(bodies_, &sph_body))
+        {
+            derived_variables_.push_back(
+                derived_variables_keeper_.createPtr<DerivedVariableMethod>(
+                    identifier, std::forward<Args>(args)...));
+        }
+        else
+        {
+            std::cout << "\n Error: the body:" << sph_body.getName()
+                      << " is not in the recording body list" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+        return *this;
+    };
 
   protected:
     SPHBodyVector bodies_;
+    StdVec<BaseDynamics<void> *> derived_variables_;
     bool state_recording_;
-
     virtual void writeWithFileName(const std::string &sequence) = 0;
+
+  private:
+    UniquePtrsKeeper<BaseDynamics<void>> derived_variables_keeper_;
 };
 
 /**
@@ -132,8 +155,8 @@ class RestartIO : public BaseIO
     Real readRestartTime(size_t restart_step);
 
   public:
-    RestartIO(IOEnvironment &io_environment, SPHBodyVector bodies);
-    virtual ~RestartIO(){};
+    RestartIO(SPHSystem &sph_system);
+    virtual ~RestartIO() {};
 
     virtual void writeToFile(size_t iteration_step = 0) override;
     virtual void readFromFile(size_t iteration_step = 0);
@@ -156,12 +179,42 @@ class ReloadParticleIO : public BaseIO
     StdVec<std::string> file_names_;
 
   public:
-    ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies);
-    ReloadParticleIO(IOEnvironment &io_environment, SPHBody &sph_body);
-    ReloadParticleIO(IOEnvironment &io_environment, SPHBody &sph_body, const std::string &given_body_name);
-    virtual ~ReloadParticleIO(){};
+    ReloadParticleIO(SPHSystem &sph_system);
+    ReloadParticleIO(SPHBodyVector bodies);
+    ReloadParticleIO(SPHBody &sph_body);
+    ReloadParticleIO(SPHBody &sph_body, const std::string &given_body_name);
+    virtual ~ReloadParticleIO() {};
+
+    template <typename DataType>
+    void addToReload(SPHBody &sph_body, const std::string &name)
+    {
+        if (isBodyIncluded(bodies_, &sph_body))
+        {
+            sph_body.getBaseParticles().addEvolvingVariable<DataType>(name);
+        }
+        else
+        {
+            std::cout << "\n Error: the body:" << sph_body.getName()
+                      << " is not in the recording list" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+    };
 
     virtual void writeToFile(size_t iteration_step = 0) override;
-    virtual void readFromFile(size_t iteration_step = 0);
+};
+
+class ParticleGenerationRecording : public BaseIO
+{
+
+  public:
+    ParticleGenerationRecording(SPHBody &body);
+    virtual void writeToFile(size_t iteration_step) override;
+
+  protected:
+    SPHBody &sph_body_;
+    bool state_recording_;
+    virtual void writeWithFileName(const std::string &sequence) = 0;
 };
 } // namespace SPH
+#endif // IO_BASE_H

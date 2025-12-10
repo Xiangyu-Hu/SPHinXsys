@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -24,10 +24,11 @@
  * @file 	dynamic_time_warping_method.h
  * @brief 	Classes for the comparison between validated and tested results
                         with dynamic time warping method.
- * @author	Bo Zhang , Chi Zhang and Xiangyu Hu
+ * @author	Bo Zhang, Chi Zhang and Xiangyu Hu
  */
 
-#pragma once
+#ifndef DYNAMIC_TIME_WARPING_H
+#define DYNAMIC_TIME_WARPING_H
 
 #include "time_average_method.hpp"
 
@@ -66,13 +67,15 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
 
   public:
     template <typename... Args>
-    explicit RegressionTestDynamicTimeWarping(Args &&...args) : RegressionTestTimeAverage<ObserveMethodType>(std::forward<Args>(args)...),
-                                                                           dtw_distance_xml_engine_in_("dtw_distance_xml_engine_in", "dtw_distance"),
-                                                                           dtw_distance_xml_engine_out_("dtw_distance_xml_engine_out", "dtw_distance")
+    explicit RegressionTestDynamicTimeWarping(Args &&...args)
+        : RegressionTestTimeAverage<ObserveMethodType>(std::forward<Args>(args)...),
+          dtw_distance_xml_engine_in_("dtw_distance_xml_engine_in", "dtw_distance"),
+          dtw_distance_xml_engine_out_("dtw_distance_xml_engine_out", "dtw_distance")
     {
-        dtw_distance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_dtwdistance.xml";
+        dtw_distance_filefullpath_ = this->input_folder_path_ + "/" +
+                                     this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_dtwdistance.xml";
     };
-    virtual ~RegressionTestDynamicTimeWarping(){};
+    virtual ~RegressionTestDynamicTimeWarping() {};
 
     void setupTheTest();                           /** setup the test and defined basic variables. */
     void readDTWDistanceFromXml();                 /** read the old DTW distance from the .xml file. */
@@ -82,12 +85,10 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
     void resultTest();                             /** test the new result if it is converged within the range. */
 
     /** the interface for generating the priori converged result with DTW */
-    void generateDataBase(Real threshold_value, std::string filter = "false")
+    void generateDataBase(Real threshold_value, const std::string &filter = "false")
     {
-        this->writeXmlToXmlFile();
-        this->readXmlFromXmlFile();
         this->transposeTheIndex();
-        if (this->converged == "false")
+        if (this->converged_ == "false")
         {
             setupTheTest();
             if (filter == "true")
@@ -101,17 +102,15 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
             }
             this->writeResultToXml(this->number_of_run_ - 1);
             writeDTWDistanceToXml();
-            compareDTWDistance(threshold_value);
+            compareDTWDistance(threshold_value); // wether the distance is convergence.
         }
         else
             std::cout << "The results have been converged." << std::endl;
     };
 
     /** the interface for generating the priori converged result with DTW. */
-    void testResult(std::string filter = "false")
+    void testResult(const std::string &filter = "false")
     {
-        this->writeXmlToXmlFile();
-        this->readXmlFromXmlFile();
         this->transposeTheIndex();
         setupTheTest();
         if (filter == "true")
@@ -119,7 +118,8 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
         readDTWDistanceFromXml();
         for (int n = 0; n != this->number_of_run_; ++n)
         {
-            this->result_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_Run_" + std::to_string(n) + "_result.xml";
+            this->result_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" +
+                                         this->quantity_name_ + "_Run_" + std::to_string(n) + "_result.xml";
             if (!fs::exists(this->result_filefullpath_))
             {
                 std::cout << "This result has not been preserved and will not be compared." << std::endl;
@@ -133,3 +133,4 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
     };
 };
 } // namespace SPH
+#endif // DYNAMIC_TIME_WARPING_H

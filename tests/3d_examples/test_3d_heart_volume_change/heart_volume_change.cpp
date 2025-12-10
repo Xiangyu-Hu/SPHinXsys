@@ -1,4 +1,7 @@
 #include "heart_volume_change.h"
+
+#include <numeric>
+
 using namespace SPH;
 
 void write_csv_files(
@@ -57,7 +60,7 @@ void MeshData::translate(const Vec3d &translation)
     }
 }
 
-IndexVector MeshData::get_ids_close_to_surface(const StdLargeVec<Vec3d> &pos_0, const IndexVector &all_surface_ids, Real distance) const
+IndexVector MeshData::get_ids_close_to_surface(Vec3d *pos_0, const IndexVector &all_surface_ids, Real distance) const
 {
     // the ids are returned in ascending order naturally
     // very important for later algorithms
@@ -71,12 +74,12 @@ IndexVector MeshData::get_ids_close_to_surface(const StdLargeVec<Vec3d> &pos_0, 
     return ids;
 }
 
-IndexVector MeshData::get_ids_close_to_surface(const StdLargeVec<Vec3d> &pos_0, Real distance) const
+IndexVector MeshData::get_ids_close_to_surface(Vec3d *pos_0, size_t total_real_particles, Real distance) const
 {
     // the ids are returned in ascending order naturally
     // very important for later algorithms
     IndexVector ids;
-    for (size_t i = 0; i < pos_0.size(); ++i)
+    for (size_t i = 0; i < total_real_particles; ++i)
     {
         tmd::Result result = mesh_sdf.unsigned_distance(pos_0[i]);
         if (result.distance <= distance)
@@ -94,21 +97,21 @@ void MyocardiumSurfaces::init_surfaces(
     // using 0.7 multiplier to smoothing length - surface particles should be 0.5*dp away from the surface
     // myo_surface_ids_ will be sorted by default
     // the particles were generated based on this mesh so no offset needed
-    myo_surface_ids_ = myocardium_mesh.get_ids_close_to_surface(particles_.pos0_, smoothing_length * 0.7);
+    myo_surface_ids_ = myocardium_mesh.get_ids_close_to_surface(pos0_, particles_.TotalRealParticles(), smoothing_length * 0.7);
 
     // step 1.
     // first layer of particles are dp/2 away from the surface
     // mesh_offset accounts for potential surface mismatch between ventricle and myocardium mesh
-    lv_ids_ = lv_mesh.get_ids_close_to_surface(particles_.pos0_, myo_surface_ids_, lv_mesh_offset + smoothing_length * 0.5);
-    rv_ids_ = rv_mesh.get_ids_close_to_surface(particles_.pos0_, myo_surface_ids_, rv_mesh_offset + smoothing_length * 0.5);
-    StdLargeVec<Vec3d> lv_pos; // lv particles positions
-    StdLargeVec<Vec3d> rv_pos; // rv particles positions
+    lv_ids_ = lv_mesh.get_ids_close_to_surface(pos0_, myo_surface_ids_, lv_mesh_offset + smoothing_length * 0.5);
+    rv_ids_ = rv_mesh.get_ids_close_to_surface(pos0_, myo_surface_ids_, rv_mesh_offset + smoothing_length * 0.5);
+    StdVec<Vec3d> lv_pos; // lv particles positions
+    StdVec<Vec3d> rv_pos; // rv particles positions
     lv_pos.reserve(lv_ids_.size());
     rv_pos.reserve(rv_ids_.size());
     for (auto index : lv_ids_)
-        lv_pos.push_back(particles_.pos0_[index]);
+        lv_pos.push_back(pos0_[index]);
     for (auto index : rv_ids_)
-        rv_pos.push_back(particles_.pos0_[index]);
+        rv_pos.push_back(pos0_[index]);
 
     // step 2
     // first combine the lv and rv ids using std::merge to keep the ids sorted in the merged vector
@@ -129,19 +132,19 @@ void MyocardiumSurfaces::init_surfaces(
 
 void MyocardiumSurfaces::write_all_surfaces_as_obj(const std::string &output_path) const
 {
-    write_particles_as_obj(particles_.pos0_, lv_ids_, output_path + "lv_particles.obj");
-    write_particles_as_obj(particles_.pos0_, rv_ids_, output_path + "rv_particles.obj");
-    write_particles_as_obj(particles_.pos0_, pericardium_ids_, output_path + "pericardium_particles.obj");
-    write_particles_as_obj(particles_.pos0_, myo_surface_ids_, output_path + "all_surface_particles.obj");
+    write_particles_as_obj(pos0_, lv_ids_, output_path + "lv_particles.obj");
+    write_particles_as_obj(pos0_, rv_ids_, output_path + "rv_particles.obj");
+    write_particles_as_obj(pos0_, pericardium_ids_, output_path + "pericardium_particles.obj");
+    write_particles_as_obj(pos0_, myo_surface_ids_, output_path + "all_surface_particles.obj");
 }
 
 void SurfaceOperationsVentricle::init_srf_area(InnerRelation &inner_relation)
 {
     // kernel_ptr
-    Kernel *kernel_ptr = particles_.getSPHBody().sph_adaptation_->getKernel();
+    Kernel *kernel_ptr = particles_.getSPHBody().getSPHAdaptation().getKernel();
     // assuming uniform surface particles here
     // calculation based on integrating the area over the kernel
-    Real smoothing_length = particles_.getSPHBody().sph_adaptation_->ReferenceSmoothingLength();
+    Real smoothing_length = particles_.getSPHBody().getSPHAdaptation().ReferenceSmoothingLength();
     std::cout << "smoothing_length: " << smoothing_length << std::endl;
 
     Real area_integral = 0.0;
@@ -190,7 +193,7 @@ void SurfaceOperationsVentricle::update_srf_area()
     for (size_t i = 0; i < ids_.size(); ++i)
     {
         size_t index_i = ids_[i];
-        srf_area_n_[i] = srf_area_0_[i] * (particles_.F_[index_i]).determinant() * ((particles_.F_[index_i]).inverse().transpose() * particles_.n0_[index_i]).norm();
+        srf_area_n_[i] = srf_area_0_[i] * (F_[index_i]).determinant() * ((F_[index_i]).inverse().transpose() * n0_[index_i]).norm();
     }
 }
 
@@ -205,7 +208,7 @@ void SurfaceOperationsVentricle::update_flow_rate(Real dt)
         size_t index_i = ids_[i];
         // flow rate towards the normal is positive by definition
         // this will mean positive change in case of ventricular contraction
-        Q_current_ += srf_area_n_[i] * (particles_.vel_[index_i]).dot(particles_.n_[index_i]);
+        Q_current_ += srf_area_n_[i] * (vel_[index_i]).dot(n_[index_i]);
     };
 }
 

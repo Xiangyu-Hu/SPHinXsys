@@ -11,34 +11,6 @@
 namespace SPH
 {
 //=================================================================================================//
-template <int lower0, int upper0,
-          int lower1, int upper1,
-          int lower2, int upper2, typename FunctionOnEach>
-inline void mesh_for_each3d(const FunctionOnEach &function)
-{
-    for (int l = lower0; l != upper0; ++l)
-        for (int m = lower1; m != upper1; ++m)
-            for (int n = lower2; n != upper2; ++n)
-            {
-                function(l, m, n);
-            }
-}
-//=================================================================================================//
-template <int lower0, int upper0,
-          int lower1, int upper1,
-          int lower2, int upper2, typename CheckOnEach>
-inline Array3i mesh_find_if3d(const CheckOnEach &function)
-{
-    for (int l = lower0; l != upper0; ++l)
-        for (int m = lower1; m != upper1; ++m)
-            for (int n = lower2; n != upper2; ++n)
-            {
-                if (function(l, m, n))
-                    return Array3i(l, m, n);
-            }
-    return Array3i(upper0, upper1, upper2);
-}
-//=================================================================================================//
 template <typename FunctionOnEach>
 void mesh_for_each(const Array3i &lower, const Array3i &upper, const FunctionOnEach &function)
 {
@@ -46,7 +18,18 @@ void mesh_for_each(const Array3i &lower, const Array3i &upper, const FunctionOnE
         for (int m = lower[1]; m != upper[1]; ++m)
             for (int n = lower[2]; n != upper[2]; ++n)
             {
-                function(l, m, n);
+                function(Array3i(l, m, n));
+            }
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void mesh_for_column_major(const Array3i &lower, const Array3i &upper, const FunctionOnEach &function)
+{
+    for (int l = lower[2]; l != upper[2]; ++l)
+        for (int m = lower[1]; m != upper[1]; ++m)
+            for (int n = lower[0]; n != upper[0]; ++n)
+            {
+                function(Array3i(n, m, l));
             }
 }
 //=================================================================================================//
@@ -57,12 +40,11 @@ Array3i mesh_find_if(const Array3i &lower, const Array3i &upper, const FunctionO
         for (int m = lower[1]; m != upper[1]; ++m)
             for (int n = lower[2]; n != upper[2]; ++n)
             {
-                if (function(l, m, n))
+                if (function(Array3i(l, m, n)))
                     return Array3i(l, m, n);
             }
     return upper;
 }
-//=================================================================================================//
 //=================================================================================================//
 template <typename LocalFunction, typename... Args>
 void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args)
@@ -71,7 +53,7 @@ void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, 
         for (int j = (mesh_range.first)[1]; j != (mesh_range.second)[1]; ++j)
             for (int k = (mesh_range.first)[2]; k != (mesh_range.second)[2]; ++k)
             {
-                local_function(i, j, k);
+                local_function(Array3i(i, j, k));
             }
 }
 //=================================================================================================//
@@ -88,7 +70,7 @@ void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_f
                 for (size_t j = r.rows().begin(); j != r.rows().end(); ++j)
                     for (size_t k = r.cols().begin(); k != r.cols().end(); ++k)
                     {
-                        local_function(i, j, k);
+                        local_function(Array3i(i, j, k));
                     }
         },
         ap);

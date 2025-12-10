@@ -13,12 +13,12 @@ Real L = 1.0;
 Real H = 1.0;
 Real resolution_ref = H / 50.0;
 Real BW = resolution_ref * 4.0;
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
+std::string diffusion_species_name = "Phi";
 Real diffusion_coeff = 1;
-std::array<std::string, 1> species_name_list{"Phi"};
 //----------------------------------------------------------------------
 //	Initial and boundary conditions.
 //----------------------------------------------------------------------
@@ -75,110 +75,105 @@ class WallBoundary : public MultiPolygonShape
 };
 
 //----------------------------------------------------------------------
-//	Setup diffusion material properties.
-//----------------------------------------------------------------------
-class DiffusionMaterial : public DiffusionReaction<Solid>
-{
-  public:
-    DiffusionMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        initializeAnDiffusion<LocalIsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
-    }
-};
-
-using DiffusionParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
-using WallParticles = DiffusionReactionParticles<SolidParticles, DiffusionMaterial>;
-//----------------------------------------------------------------------
 //	Application dependent initial condition.
 //----------------------------------------------------------------------
-class DiffusionBodyInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionParticles>
+class DiffusionBodyInitialCondition : public LocalDynamics
 {
-  protected:
-    size_t phi_;
-    StdLargeVec<Real> &heat_source_;
-
   public:
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionParticles>(sph_body),
-          heat_source_(*(particles_->getVariableByName<Real>("HeatSource")))
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)),
+          heat_source_(particles_->registerStateVariableData<Real>("HeatSource")) {};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = 650;
+        phi_[index_i] = 650;
         heat_source_[index_i] = heat_source;
     };
+
+  protected:
+    Vecd *pos_;
+    Real *phi_, *heat_source_;
 };
 
-class ThermalConductivityRandomInitialization
-    : public DiffusionReactionInitialCondition<DiffusionParticles>
+class ThermalConductivityRandomInitialization : public LocalDynamics
 {
-  protected:
-    StdLargeVec<Real> &thermal_conductivity;
-
   public:
     explicit ThermalConductivityRandomInitialization(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionParticles>(sph_body),
-          thermal_conductivity(*(particles_->getVariableByName<Real>("ThermalConductivity"))){};
+        : LocalDynamics(sph_body),
+          thermal_conductivity(particles_->getVariableDataByName<Real>("ThermalConductivity")) {};
     void update(size_t index_i, Real dt)
     {
-        thermal_conductivity[index_i] = 0.5 + (double)rand() / RAND_MAX;
-    }
+        thermal_conductivity[index_i] = 0.5 + rand_uniform(0.0, 1.0);
+    };
+
+  protected:
+    Real *thermal_conductivity;
 };
 
-class WallBoundaryInitialCondition
-    : public DiffusionReactionInitialCondition<WallParticles>
+class WallBoundaryInitialCondition : public LocalDynamics
 {
-  protected:
-    size_t phi_;
-
   public:
-    explicit WallBoundaryInitialCondition(SolidBody &diffusion_body)
-        : DiffusionReactionInitialCondition<WallParticles>(diffusion_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    }
+    explicit WallBoundaryInitialCondition(SPHBody &sph_body)
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = -0.0;
-        if (pos_[index_i][1] < 0 && pos_[index_i][00] > 0.4 * L && pos_[index_i][0] < 0.6 * L)
+        phi_[index_i] = -0.0;
+        if (pos_[index_i][1] < 0.0 && pos_[index_i][00] > 0.4 * L && pos_[index_i][0] < 0.6 * L)
         {
-            all_species_[phi_][index_i] = low_temperature;
+            phi_[index_i] = low_temperature;
         }
-        if (pos_[index_i][1] > 1 && pos_[index_i][0] > 0.4 * L && pos_[index_i][0] < 0.6 * L)
+        if (pos_[index_i][1] > 1.0 && pos_[index_i][0] > 0.4 * L && pos_[index_i][0] < 0.6 * L)
         {
-            all_species_[phi_][index_i] = high_temperature;
+            phi_[index_i] = high_temperature;
         }
     };
+
+  protected:
+    Vecd *pos_;
+    Real *phi_;
 };
 //----------------------------------------------------------------------
 //  Impose constraints on the objective function
 //----------------------------------------------------------------------
-class ImposeObjectiveFunction
-    : public DiffusionBasedMapping<DiffusionParticles>
+class ImposeObjectiveFunction : public LocalDynamics
 {
-  protected:
-    size_t phi_;
-    StdLargeVec<Real> &species_modified_;
-    StdLargeVec<Real> &species_recovery_;
-
   public:
-    ImposeObjectiveFunction(SPHBody &sph_body) : DiffusionBasedMapping<DiffusionParticles>(sph_body),
-                                                 species_modified_((*particles_->getVariableByName<Real>("SpeciesModified"))),
-                                                 species_recovery_((*particles_->getVariableByName<Real>("SpeciesRecovery")))
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    }
+    explicit ImposeObjectiveFunction(SPHBody &sph_body)
+        : LocalDynamics(sph_body),
+          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)),
+          species_modified_(particles_->getVariableDataByName<Real>("SpeciesModified")),
+          species_recovery_(particles_->getVariableDataByName<Real>("SpeciesRecovery")) {};
 
     void update(size_t index_i, Real learning_rate)
     {
-        species_recovery_[index_i] = all_species_[phi_][index_i];
-        species_modified_[index_i] = all_species_[phi_][index_i] - learning_rate;
-    }
+        species_recovery_[index_i] = phi_[index_i];
+        species_modified_[index_i] = phi_[index_i] - learning_rate;
+    };
+
+  protected:
+    Real *phi_, *species_modified_, *species_recovery_;
+};
+
+class StoreGlobalPDEResidual : public LocalDynamics
+{
+  public:
+    explicit StoreGlobalPDEResidual(SPHBody &sph_body)
+        : LocalDynamics(sph_body),
+          residual_T_local_(particles_->getVariableDataByName<Real>("ResidualTLocal")),
+          residual_T_global_(particles_->getVariableDataByName<Real>("ResidualTGlobal")) {};
+
+    void update(size_t index_i, Real learning_rate)
+    {
+        residual_T_local_[index_i] = residual_T_global_[index_i];
+    };
+
+  protected:
+    Real *residual_T_local_, *residual_T_global_;
 };
 
 //----------------------------------------------------------------------
@@ -192,24 +187,23 @@ TEST(test_optimization, test_problem1_optimized)
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    diffusion_body.defineParticlesAndMaterial<DiffusionParticles, DiffusionMaterial>();
-    diffusion_body.generateParticles<ParticleGeneratorLattice>();
+    diffusion_body.defineClosure<Solid, LocalIsotropicDiffusion>(
+        Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff, diffusion_coeff));
+    diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<WallParticles, DiffusionMaterial>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     InnerRelation diffusion_body_inner(diffusion_body);
-    ContactRelation diffusion_body_contact(diffusion_body, { &wall_boundary });
+    ContactRelation diffusion_body_contact(diffusion_body, {&wall_boundary});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -217,16 +211,17 @@ TEST(test_optimization, test_problem1_optimized)
     ComplexRelation diffusion_body_complex(diffusion_body_inner, diffusion_body_contact);
     //----------------------------------------------------------------------
     // Obtain the time step size.
-    //---------------------------------------------------------------------- 
-    GetDiffusionTimeStepSize<DiffusionParticles> get_time_step_size(diffusion_body);
+    //----------------------------------------------------------------------
+    GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    RestartIO restart_io(sph_system);
     //----------------------------------------------------------------------
     //	Setup parameter for optimization control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;                  /* define the loop of all operations for optimization. */
     int ite_T = 0;                /* define loop index for temperature splitting iteration. */
     int ite_k = 0;                /* define loop index for parameter splitting iteration. */
@@ -247,7 +242,7 @@ TEST(test_optimization, test_problem1_optimized)
     Real averaged_variation_current_global(0.0);
     Real maximum_variation_current_global(10.0);
     Real opt_averaged_temperature = 0.0;
-    Real nonopt_averaged_temperature = Infinity;
+    Real nonopt_averaged_temperature = MaxReal;
     Real averaged_k_parameter = 0.0;
     Real initial_eta_regularization = 0.4;
     Real current_eta_regularization = initial_eta_regularization;
@@ -263,31 +258,35 @@ TEST(test_optimization, test_problem1_optimized)
     //	Define the main numerical methods used for optimization
     //  Note that there may be data dependence on the constructors of tested methods.
     //----------------------------------------------------------------------
-    InteractionSplit<TemperatureSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>
-        temperature_splitting_pde_complex(diffusion_body_inner, diffusion_body_contact, "Phi");
-    InteractionSplit<UpdateTemperaturePDEResidual<
-        TemperatureSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>>
-        update_temperature_pde_residual(diffusion_body_inner, diffusion_body_contact, "Phi");
+    SimpleDynamics<NormalDirectionFromBodyShape> diffusion_body_normal_direction(diffusion_body);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+
+    InteractionSplit<TemperatureSplittingByPDEWithBoundary<Real>>
+        temperature_splitting_pde_complex(diffusion_body_inner, diffusion_body_contact, diffusion_species_name);
+    InteractionSplit<UpdateTemperaturePDEResidual<TemperatureSplittingByPDEWithBoundary<Real>>>
+        update_temperature_pde_residual(diffusion_body_inner, diffusion_body_contact, diffusion_species_name);
+
+    SimpleDynamics<StoreGlobalPDEResidual> store_global_PDE_residual(diffusion_body);
     SimpleDynamics<ImposeObjectiveFunction> impose_objective_function(diffusion_body);
-    InteractionSplit<ParameterSplittingByPDEWithBoundary<DiffusionParticles, WallParticles, Real>>
+    InteractionSplit<ParameterSplittingByPDEWithBoundary<Real>>
         parameter_splitting_pde_complex(diffusion_body_inner, diffusion_body_contact, "ThermalConductivity");
-    InteractionSplit<RegularizationByDiffusionAnalogy<DiffusionParticles, Real>>
+    InteractionSplit<RegularizationByDiffusionAnalogy<Real>>
         thermal_diffusivity_regularization(diffusion_body_inner, "ThermalConductivity",
                                            initial_eta_regularization, maximum_variation_current_global);
-    InteractionSplit<UpdateRegularizationVariation<DiffusionParticles, Real>>
+    InteractionSplit<UpdateRegularizationVariation<Real>>
         update_regularization_global_variation(diffusion_body_inner, "ThermalConductivity");
-    ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody, DiffusionParticles>>>
+    ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody>>>
         total_averaged_thermal_diffusivity(diffusion_body, "ThermalConductivity");
-    SimpleDynamics<ThermalConductivityConstrain<DiffusionParticles>>
+    SimpleDynamics<ThermalConductivityConstraint<SPHBody>>
         thermal_diffusivity_constrain(diffusion_body, "ThermalConductivity");
-    ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody, DiffusionParticles>>>
+    ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody>>>
         calculate_temperature_global_residual(diffusion_body, "ResidualTGlobal");
-    ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody, DiffusionParticles>>>
+    ReduceDynamics<Average<ComputeTotalErrorOrPositiveParameter<SPHBody>>>
         calculate_regularization_global_variation(diffusion_body, "VariationGlobal");
-    ReduceDynamics<ComputeMaximumError<SPHBody, DiffusionParticles>>
+    ReduceDynamics<ComputeMaximumError<SPHBody>>
         calculate_maximum_variation(diffusion_body, "VariationGlobal");
-    ReduceDynamics<Average<SpeciesSummation<SPHBody, DiffusionParticles>>>
-        calculate_averaged_opt_temperature(diffusion_body, "Phi");
+    ReduceDynamics<Average<QuantitySummation<Real, SPHBody>>>
+        calculate_averaged_opt_temperature(diffusion_body, diffusion_species_name);
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
@@ -301,6 +300,8 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
+    diffusion_body_normal_direction.exec();
+    wall_boundary_normal_direction.exec();
     setup_diffusion_initial_condition.exec();
     setup_diffusion_boundary_condition.exec();
     thermal_diffusivity_random_initialization.exec();
@@ -309,7 +310,7 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
+        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
         diffusion_body.updateCellLinkedList();
         diffusion_body_complex.updateConfiguration();
     }
@@ -321,17 +322,19 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    //record the temperature with modified design variable.
-    std::string filefullpath_opt_temperature = io_environment.output_folder_ + "/" + "opt_temperature.dat";
+    // record the temperature with modified design variable.
+    std::string filefullpath_opt_temperature =
+        sph_system.getIOEnvironment().OutputFolder() + "/" + "opt_temperature.dat";
     std::ofstream out_file_opt_temperature(filefullpath_opt_temperature.c_str(), std::ios::app);
 
-    //record the temperature without modified design variable.
-    std::string filefullpath_nonopt_temperature = io_environment.output_folder_ + "/" + "nonopt_temperature.dat";
+    // record the temperature without modified design variable.
+    std::string filefullpath_nonopt_temperature =
+        sph_system.getIOEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app);
     //----------------------------------------------------------------------
     //	Initial States update.
     //----------------------------------------------------------------------
-    write_states.writeToFile(ite); //output the initial states.
+    write_states.writeToFile(ite); // output the initial states.
 
     update_regularization_global_variation.exec(dt_ratio_rg * dt);
     averaged_variation_current_global = calculate_regularization_global_variation.exec(dt);
@@ -347,7 +350,8 @@ TEST(test_optimization, test_problem1_optimized)
 
     /** the converged criterion contains three parts respect to target function, PDE constrain, and maximum step. */
     while ((relative_temperature_difference > 0.00001 || averaged_residual_T_current_global > 0.000005 ||
-        relative_average_variation_difference > 0.0001) && ite_loop < 10000)
+            relative_average_variation_difference > 0.0001) &&
+           ite_loop < 10000)
     {
         std::cout << "This is the beginning of the " << ite_loop << " iteration loop." << std::endl;
 
@@ -357,13 +361,14 @@ TEST(test_optimization, test_problem1_optimized)
         ite++;
 
         /* Store the global PDE residual to provide the reference for design variable splitting based on PDE. */
-        temperature_splitting_pde_complex.residual_T_local_ = temperature_splitting_pde_complex.residual_T_global_;
+        store_global_PDE_residual.exec();
 
         /* Impose objective function and PDE residual may increase. */
         impose_objective_function.exec(learning_rate_alpha);
 
-        //if (ite_loop % ite_output == 0) { write_states.writeToFile(ite); }
-        std::cout << "N=" << ite << " and the objective function has been imposed. " << "\n";
+        // if (ite_loop % ite_output == 0) { write_states.writeToFile(ite); }
+        std::cout << "N=" << ite << " and the objective function has been imposed. "
+                  << "\n";
 
         //----------------------------------------------------------------------
         //	Parameter (design variable) splitting.
@@ -374,7 +379,8 @@ TEST(test_optimization, test_problem1_optimized)
             //----------------------------------------------------------------------
             //	Parameter splitting by PDE.
             //----------------------------------------------------------------------
-            ite++; ite_k++;
+            ite++;
+            ite_k++;
             parameter_splitting_pde_complex.exec(dt_ratio_k * dt);
             //----------------------------------------------------------------------
             //	Constraint of the summation of parameter.
@@ -392,7 +398,8 @@ TEST(test_optimization, test_problem1_optimized)
             //----------------------------------------------------------------------
             if (ite_k % 1 == 0 || ite_k == ite_k_total)
             {
-                ite++; ite_rg++;
+                ite++;
+                ite_rg++;
                 thermal_diffusivity_regularization.UpdateCurrentEta(current_eta_regularization);
                 thermal_diffusivity_regularization.UpdateMaximumVariation(maximum_variation_current_global);
                 thermal_diffusivity_regularization.UpdateAverageVariation(averaged_variation_current_global);
@@ -406,18 +413,26 @@ TEST(test_optimization, test_problem1_optimized)
                 maximum_variation_current_global = calculate_maximum_variation.exec(dt);
             }
         }
-        ite_k = 0; ite_rg = 0;
-        if (ite_loop % ite_output == 0) { write_states.writeToFile(ite); }
-        std::cout << "N=" << ite << " and the k splitting is finished." << "\n";
+        ite_k = 0;
+        ite_rg = 0;
+        if (ite_loop % ite_output == 0)
+        {
+            write_states.writeToFile(ite);
+        }
+        std::cout << "N=" << ite << " and the k splitting is finished."
+                  << "\n";
 
         //----------------------------------------------------------------------
         //	Temperature splitting.
         //----------------------------------------------------------------------
         std::cout << "averaged_residual_T_last_global is " << averaged_residual_T_last_global << std::endl;
         while (((averaged_residual_T_current_global > 0.9 * averaged_residual_T_last_global) &&
-            averaged_residual_T_current_global > 0.000005) || ite_T < ite_T_total)
+                averaged_residual_T_current_global > 0.000005) ||
+               ite_T < ite_T_total)
         {
-            ite++; ite_T++; ite_T_comparison_opt++;
+            ite++;
+            ite_T++;
+            ite_T_comparison_opt++;
             temperature_splitting_pde_complex.exec(dt);
 
             update_temperature_pde_residual.exec(dt);
@@ -448,7 +463,8 @@ TEST(test_optimization, test_problem1_optimized)
         std::cout << "averaged_residual_T_current_global is " << averaged_residual_T_current_global << std::endl;
         ite_T = 0;
         write_states.writeToFile(ite);
-        std::cout << "N=" << ite << " and the temperature splitting is finished." << "\n";
+        std::cout << "N=" << ite << " and the temperature splitting is finished."
+                  << "\n";
 
         //----------------------------------------------------------------------
         //	Decision Making.
@@ -456,13 +472,17 @@ TEST(test_optimization, test_problem1_optimized)
         last_averaged_temperature = current_averaged_temperature;
         current_averaged_temperature = calculate_averaged_opt_temperature.exec();
 
-        ite_loop++; std::cout << "This is the " << ite_loop << " iteration loop and the averaged temperature is " << opt_averaged_temperature
-            << " and the learning rate is " << learning_rate_alpha
-            << " and the regularization is " << current_eta_regularization << endl;
+        ite_loop++;
+        std::cout << "This is the " << ite_loop << " iteration loop and the averaged temperature is " << opt_averaged_temperature
+                  << " and the learning rate is " << learning_rate_alpha
+                  << " and the regularization is " << current_eta_regularization << std::endl;
         relative_temperature_difference = abs(current_averaged_temperature - last_averaged_temperature) / last_averaged_temperature;
         relative_average_variation_difference = abs(averaged_variation_current_global - averaged_variation_last_global) / abs(averaged_variation_last_global);
         averaged_variation_last_global = averaged_variation_current_global;
-        if (ite_loop % ite_restart == 0) { restart_io.writeToFile(ite_loop); }
+        if (ite_loop % ite_restart == 0)
+        {
+            restart_io.writeToFile(ite_loop);
+        }
     }
     out_file_opt_temperature.close();
     out_file_nonopt_temperature.close();
@@ -472,7 +492,7 @@ TEST(test_optimization, test_problem1_optimized)
     tt = t2 - t1;
     std::cout << "Total time for optimization: " << tt.seconds() << " seconds." << std::endl;
 
-    EXPECT_GT(500.0, calculate_averaged_opt_temperature.exec());
+    EXPECT_GT(502.0, calculate_averaged_opt_temperature.exec());
 };
 
 int main(int argc, char *argv[])

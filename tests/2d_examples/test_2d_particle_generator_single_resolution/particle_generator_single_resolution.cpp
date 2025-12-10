@@ -22,7 +22,7 @@ Real DL = 2.5;                          /**< InputBody length right part. */
 Real DL1 = 2.5;                         /**< InputBody length left part. */
 Real DH = 5.0;                          /**< InputBody height. */
 Real resolution_ref = (DL + DL1) / 120; /**< Reference resolution. */
-BoundingBox system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
+BoundingBoxd system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Shape of the InputBody
 //----------------------------------------------------------------------
@@ -47,14 +47,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, resolution_ref);
     sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody input_body(sph_system, makeShared<InputBody>("SPHInXsysLogo"));
-    input_body.defineBodyLevelSetShape()->writeLevelSet(io_environment);
-    input_body.defineParticlesAndMaterial();
-    input_body.generateParticles<ParticleGeneratorLattice>();
+    input_body.defineBodyLevelSetShape(2.0)->writeLevelSet(sph_system);
+    input_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -67,13 +65,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
+    using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_input_body_particles(input_body);
-    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(input_body_inner);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(input_body_inner);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp input_body_recording_to_vtp(io_environment, input_body);
-    MeshRecordingToPlt cell_linked_list_recording(io_environment, input_body.getCellLinkedList());
+    BodyStatesRecordingToVtp input_body_recording_to_vtp(input_body);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -85,7 +83,6 @@ int main(int ac, char *av[])
     //	First output before the simulation.
     //----------------------------------------------------------------------
     input_body_recording_to_vtp.writeToFile();
-    cell_linked_list_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------

@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <dtw_distance>
-    <DTWDistance Voltage_0="0.000209517" Voltage_1="0.000149017" Voltage_2="0.000309643" Voltage_3="0.001009876" Voltage_4="0.001018119" />
+    <DTWDistance Voltage_0="0.0003" Voltage_1="2e-04" Voltage_2="0.0002" Voltage_3="0.0004" Voltage_4="0.0015" />
 </dtw_distance>

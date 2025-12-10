@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -42,17 +42,17 @@ namespace fluid_dynamics
  * @class StaticConfinementDensity
  * @brief static confinement condition for density summation
  */
-class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     StaticConfinementDensity(NearShapeSurface &near_surface);
-    virtual ~StaticConfinementDensity(){};
+    virtual ~StaticConfinementDensity() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     Real rho0_, inv_sigma0_;
-    StdLargeVec<Real> &mass_, &rho_sum_;
-    StdLargeVec<Vecd> &pos_;
+    Real *mass_, *rho_sum_;
+    Vecd *pos_;
     LevelSetShape *level_set_shape_;
 };
 
@@ -60,17 +60,17 @@ class StaticConfinementDensity : public BaseLocalDynamics<BodyPartByCell>, publi
  * @class StaticConfinementIntegration1stHalf
  * @brief static confinement condition for pressure relaxation
  */
-class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     StaticConfinementIntegration1stHalf(NearShapeSurface &near_surface);
-    virtual ~StaticConfinementIntegration1stHalf(){};
+    virtual ~StaticConfinementIntegration1stHalf() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     Fluid &fluid_;
-    StdLargeVec<Real> &rho_, &p_, &mass_;
-    StdLargeVec<Vecd> &pos_, &vel_, &force_;
+    Real *rho_, *p_, *mass_;
+    Vecd *pos_, *vel_, *force_;
     LevelSetShape *level_set_shape_;
     AcousticRiemannSolver riemann_solver_;
 };
@@ -79,17 +79,17 @@ class StaticConfinementIntegration1stHalf : public BaseLocalDynamics<BodyPartByC
  * @class StaticConfinementIntegration2ndHalf
  * @brief static confinement condition for density relaxation
  */
-class StaticConfinementIntegration2ndHalf : public BaseLocalDynamics<BodyPartByCell>, public FluidDataSimple
+class StaticConfinementIntegration2ndHalf : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     StaticConfinementIntegration2ndHalf(NearShapeSurface &near_surface);
-    virtual ~StaticConfinementIntegration2ndHalf(){};
+    virtual ~StaticConfinementIntegration2ndHalf() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     Fluid &fluid_;
-    StdLargeVec<Real> &rho_, &p_, &drho_dt_;
-    StdLargeVec<Vecd> &pos_, &vel_;
+    Real *rho_, *p_, *drho_dt_;
+    Vecd *pos_, *vel_;
     LevelSetShape *level_set_shape_;
     AcousticRiemannSolver riemann_solver_;
 };
@@ -107,7 +107,7 @@ class StaticConfinement
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 
     StaticConfinement(NearShapeSurface &near_surface);
-    virtual ~StaticConfinement(){};
+    virtual ~StaticConfinement() {};
 };
 
 } // namespace fluid_dynamics

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -22,11 +22,12 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	io_plt.h
- * @brief 	Classes for save data in tecplot file format.
- * @author	Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
+ * @brief 	Classes for save data in Tecplot file format.
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
-#pragma once
+#ifndef IO_PLT_H
+#define IO_PLT_H
 
 #include "io_base.h"
 
@@ -39,13 +40,21 @@ namespace SPH
 class PltEngine
 {
   public:
-    PltEngine(){};
-    virtual ~PltEngine(){};
+    PltEngine() {};
+    virtual ~PltEngine() {};
 
     void writeAQuantityHeader(std::ofstream &out_file, const Real &quantity, const std::string &quantity_name);
-    void writeAQuantityHeader(std::ofstream &out_file, const Vecd &quantity, const std::string &quantity_name);
+    template <int N>
+    void writeAQuantityHeader(std::ofstream &out_file, const Eigen::Matrix<Real, N, 1> &quantity, const std::string &quantity_name);
+    template <int N, int M>
+    void writeAQuantityHeader(std::ofstream &out_file, const Eigen::Matrix<Real, N, M> &quantity, const std::string &quantity_name);
+    void writeAQuantityHeader(std::ofstream &out_file, const SimTK::SpatialVec &quantity, const std::string &quantity_name);
     void writeAQuantity(std::ofstream &out_file, const Real &quantity);
-    void writeAQuantity(std::ofstream &out_file, const Vecd &quantity);
+    template <int N>
+    void writeAQuantity(std::ofstream &out_file, const Eigen::Matrix<Real, N, 1> &quantity);
+    template <int N, int M>
+    void writeAQuantity(std::ofstream &out_file, const Eigen::Matrix<Real, N, M> &quantity);
+    void writeAQuantity(std::ofstream &out_file, const SimTK::SpatialVec &quantity);
 };
 
 /**
@@ -56,13 +65,13 @@ class PltEngine
 class BodyStatesRecordingToPlt : public BodyStatesRecording
 {
   public:
-    BodyStatesRecordingToPlt(IOEnvironment &io_environment, SPHBody &body)
-        : BodyStatesRecording(io_environment, body){};
-    BodyStatesRecordingToPlt(IOEnvironment &io_environment, SPHBodyVector bodies)
-        : BodyStatesRecording(io_environment, bodies){};
-    virtual ~BodyStatesRecordingToPlt(){};
+    BodyStatesRecordingToPlt(SPHBody &body) : BodyStatesRecording(body) {};
+    BodyStatesRecordingToPlt(SPHSystem &sph_system) : BodyStatesRecording(sph_system) {};
+    virtual ~BodyStatesRecordingToPlt() {};
 
   protected:
+    void writePltFileHeader(std::ofstream &output_file, ParticleVariables &variables_to_write);
+    void writePltFileParticleData(std::ofstream &output_file, ParticleVariables &variables_to_write, Vecd *position, size_t index);
     virtual void writeWithFileName(const std::string &sequence) override;
 };
 
@@ -74,11 +83,13 @@ class MeshRecordingToPlt : public BaseIO
 {
   protected:
     BaseMeshField &mesh_field_;
-    std::string filefullpath_;
+    std::string partial_file_name_;
 
   public:
-    MeshRecordingToPlt(IOEnvironment &io_environment, BaseMeshField &mesh_field);
-    virtual ~MeshRecordingToPlt(){};
+    MeshRecordingToPlt(SPHSystem &sph_system, BaseMeshField &mesh_field);
+    virtual ~MeshRecordingToPlt() {};
     virtual void writeToFile(size_t iteration_step = 0) override;
+    virtual void writeBKGMeshVariableToFile(size_t iteration_step = 0);
 };
 } // namespace SPH
+#endif // IO_PLT_H

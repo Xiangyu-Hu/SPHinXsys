@@ -193,23 +193,21 @@ Mat3d getCorrectionMatrix(const Mat3d &local_deformation_part_one)
     return correction_matrix;
 }
 //=================================================================================================//
-Real get_mean_curvature(const Matd &dn)
+std::tuple<Real, Real> get_principle_curvatures(const Mat2d &dn)
 {
-    return dn.trace();
+    return {dn.trace(), 0};
 }
 //=================================================================================================//
-Real get_Gaussian_curvature(Real H, const Matd &dn)
+std::tuple<Real, Real> get_principle_curvatures(const Mat3d &dn)
 {
-    Real sum = 0;
-    for (int i = 0; i < Dimensions; i++)
-        for (int j = 0; j < Dimensions; j++)
-            sum += dn(i, j) * dn(i, j);
-    return 0.5 * (H * H - sum);
-}
-//=================================================================================================//
-Real get_Gaussian_curvature(const Matd &dn)
-{
-    return get_Gaussian_curvature(get_mean_curvature(dn), dn);
+    Real H = 0.5 * dn.trace();
+    Real K = dn(0, 0) * dn(1, 1) + dn(0, 0) * dn(2, 2) + dn(1, 1) * dn(2, 2) -
+             dn(0, 1) * dn(1, 0) - dn(0, 2) * dn(2, 0) - dn(1, 2) * dn(2, 1);
+    Real root = H * H - K;
+    if (root <= 0)
+        return {H, H};
+    Real sqrt_root = sqrt(root);
+    return {H + sqrt_root, H - sqrt_root};
 }
 //=================================================================================================//
 } // namespace thin_structure_dynamics

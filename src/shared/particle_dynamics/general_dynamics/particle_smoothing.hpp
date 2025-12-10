@@ -9,12 +9,10 @@ namespace SPH
 template <typename VariableType>
 ParticleSmoothing<VariableType>::
     ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name)
-    : LocalDynamics(inner_relation.getSPHBody()), GeneralDataDelegateInner(inner_relation),
-      W0_(sph_body_.sph_adaptation_->getKernel()->W0(ZeroVecd)),
-      smoothed_(*particles_->template getVariableByName<VariableType>(variable_name))
-{
-    particles_->registerVariable(temp_, variable_name + "_temp");
-}
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
+      W0_(getSPHAdaptation().getKernel()->W0(ZeroVecd)),
+      smoothed_(particles_->template getVariableDataByName<VariableType>(variable_name)),
+      temp_(particles_->registerStateVariableData<VariableType>(variable_name + "_temp")) {}
 //=================================================================================================//
 template <typename VariableType>
 void ParticleSmoothing<VariableType>::interaction(size_t index_i, Real dt)
@@ -35,6 +33,28 @@ template <typename VariableType>
 void ParticleSmoothing<VariableType>::update(size_t index_i, Real dt)
 {
     smoothed_[index_i] = temp_[index_i];
+}
+//=================================================================================================//
+template <typename VariableType>
+ParticleSnapshotAverage<VariableType>::
+    ParticleSnapshotAverage(SPHBody &sph_body, const std::string &variable_name)
+    : LocalDynamics(sph_body),
+      target_variable_(particles_->template getVariableDataByName<VariableType>(variable_name)),
+      averaged_variable_(particles_->template registerStateVariableData<VariableType>("Averaged" + variable_name))
+{
+    particles_->addVariableToWrite<VariableType>("Averaged" + variable_name);
+}
+//=================================================================================================//
+template <typename VariableType>
+void ParticleSnapshotAverage<VariableType>::setupDynamics(Real dt)
+{
+    number_of_snapshot_++;
+}
+//=================================================================================================//
+template <typename VariableType>
+void ParticleSnapshotAverage<VariableType>::update(size_t index_i, Real dt)
+{
+    averaged_variable_[index_i] += (target_variable_[index_i] - averaged_variable_[index_i]) / Real(number_of_snapshot_);
 }
 //=================================================================================================//
 } // namespace SPH

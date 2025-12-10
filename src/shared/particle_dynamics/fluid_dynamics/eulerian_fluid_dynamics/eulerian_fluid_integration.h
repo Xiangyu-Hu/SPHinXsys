@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -29,7 +29,7 @@
 #define EULERIAN_FLUID_INTEGRATION_H
 
 #include "fluid_integration.hpp"
-#include "eulerian_riemann_solver.h"
+#include "riemann_solver.h"
 
 namespace SPH
 {
@@ -41,11 +41,11 @@ class EulerianIntegration : public BaseIntegration<DataDelegationType>
   public:
     template <class BaseRelationType>
     explicit EulerianIntegration(BaseRelationType &base_relation);
-    virtual ~EulerianIntegration(){};
+    virtual ~EulerianIntegration() {};
 
   protected:
-    StdLargeVec<Vecd> &mom_, &dmom_dt_;
-    StdLargeVec<Real> &dmass_dt_, &Vol_;
+    Vecd *mom_, *dmom_dt_;
+    Real *dmass_dt_, *Vol_;
 };
 
 template <typename... InteractionTypes>
@@ -53,21 +53,21 @@ class EulerianIntegration1stHalf;
 
 template <class RiemannSolverType>
 class EulerianIntegration1stHalf<Inner<>, RiemannSolverType>
-    : public EulerianIntegration<FluidDataInner>
+    : public EulerianIntegration<DataDelegateInner>
 {
   public:
     explicit EulerianIntegration1stHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
     template <typename BodyRelationType, typename FirstArg>
-    explicit EulerianIntegration1stHalf(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : EulerianIntegration1stHalf(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~EulerianIntegration1stHalf(){};
+    explicit EulerianIntegration1stHalf(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : EulerianIntegration1stHalf(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~EulerianIntegration1stHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     RiemannSolverType riemann_solver_;
 };
-using EulerianIntegration1stHalfInnerRiemann = EulerianIntegration1stHalf<Inner<>, EulerianAcousticRiemannSolver>;
+using EulerianIntegration1stHalfInnerRiemann = EulerianIntegration1stHalf<Inner<>, AcousticRiemannSolver>;
 
 using BaseEulerianIntegrationWithWall = InteractionWithWall<EulerianIntegration>;
 template <class RiemannSolverType>
@@ -77,37 +77,39 @@ class EulerianIntegration1stHalf<Contact<Wall>, RiemannSolverType>
   public:
     EulerianIntegration1stHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter = 15.0);
     template <typename BodyRelationType, typename FirstArg>
-    explicit EulerianIntegration1stHalf(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : EulerianIntegration1stHalf(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~EulerianIntegration1stHalf(){};
+    explicit EulerianIntegration1stHalf(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : EulerianIntegration1stHalf(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~EulerianIntegration1stHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     RiemannSolverType riemann_solver_;
 };
 using EulerianIntegration1stHalfWithWallRiemann =
-    ComplexInteraction<EulerianIntegration1stHalf<Inner<>, Contact<Wall>>, EulerianAcousticRiemannSolver>;
+    ComplexInteraction<EulerianIntegration1stHalf<Inner<>, Contact<Wall>>, AcousticRiemannSolver>;
 
 template <typename... InteractionTypes>
 class EulerianIntegration2ndHalf;
 
 template <class RiemannSolverType>
 class EulerianIntegration2ndHalf<Inner<>, RiemannSolverType>
-    : public EulerianIntegration<FluidDataInner>
+    : public EulerianIntegration<DataDelegateInner>
 {
   public:
+    typedef RiemannSolverType RiemannSolver;
+
     explicit EulerianIntegration2ndHalf(BaseInnerRelation &inner_relation, Real limiter_parameter = 15.0);
     template <typename BodyRelationType, typename FirstArg>
-    explicit EulerianIntegration2ndHalf(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : EulerianIntegration2ndHalf(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~EulerianIntegration2ndHalf(){};
+    explicit EulerianIntegration2ndHalf(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : EulerianIntegration2ndHalf(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~EulerianIntegration2ndHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
     RiemannSolverType riemann_solver_;
 };
-using EulerianIntegration2ndHalfInnerRiemann = EulerianIntegration2ndHalf<Inner<>, EulerianAcousticRiemannSolver>;
+using EulerianIntegration2ndHalfInnerRiemann = EulerianIntegration2ndHalf<Inner<>, AcousticRiemannSolver>;
 
 /**
  * @class EulerianIntegration2ndHalfWithWall
@@ -120,16 +122,16 @@ class EulerianIntegration2ndHalf<Contact<Wall>, RiemannSolverType>
   public:
     EulerianIntegration2ndHalf(BaseContactRelation &wall_contact_relation, Real limiter_parameter = 15.0);
     template <typename BodyRelationType, typename FirstArg>
-    explicit EulerianIntegration2ndHalf(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : EulerianIntegration2ndHalf(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~EulerianIntegration2ndHalf(){};
+    explicit EulerianIntegration2ndHalf(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : EulerianIntegration2ndHalf(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~EulerianIntegration2ndHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     RiemannSolverType riemann_solver_;
 };
 using EulerianIntegration2ndHalfWithWallRiemann =
-    ComplexInteraction<EulerianIntegration2ndHalf<Inner<>, Contact<Wall>>, EulerianAcousticRiemannSolver>;
+    ComplexInteraction<EulerianIntegration2ndHalf<Inner<>, Contact<Wall>>, AcousticRiemannSolver>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // EULERIAN_FLUID_INTEGRATION_H

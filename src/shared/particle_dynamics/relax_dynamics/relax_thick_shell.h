@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -48,16 +48,15 @@ namespace relax_dynamics
  * because if level_set_refinement_ratio > particle_spacing_ref_ / (0.05 * thickness_),
  * there will be no level set field.
  */
-class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>,
-                                public RelaxDataDelegateSimple
+class ShellMidSurfaceBounding : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
     explicit ShellMidSurfaceBounding(NearShapeSurface &body_part);
-    virtual ~ShellMidSurfaceBounding(){};
+    virtual ~ShellMidSurfaceBounding() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     Real constrained_distance_;
     Real particle_spacing_ref_;
     LevelSetShape *level_set_shape_;
@@ -78,60 +77,58 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
   public:
     explicit ShellNormalDirectionPrediction(BaseInnerRelation &inner_relation,
                                             Real thickness, Real consistency_criterion = cos(Pi / 20.0));
-    virtual ~ShellNormalDirectionPrediction(){};
+    virtual ~ShellNormalDirectionPrediction() {};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
-    class NormalPrediction : public RelaxDataDelegateSimple, public LocalDynamics
+    class NormalPrediction : public LocalDynamics
     {
         Real thickness_;
         LevelSetShape *level_set_shape_;
-        StdLargeVec<Vecd> &pos_, &n_, n_temp_;
+        Vecd *pos_, *n_, *n_temp_;
 
       public:
         NormalPrediction(SPHBody &sph_body, Real thickness);
-        virtual ~NormalPrediction(){};
+        virtual ~NormalPrediction() {};
         void update(size_t index_i, Real dt = 0.0);
     };
 
-    class PredictionConvergenceCheck : public LocalDynamicsReduce<bool, ReduceAND>,
-                                       public RelaxDataDelegateSimple
+    class PredictionConvergenceCheck : public LocalDynamicsReduce<ReduceAND>
     {
       protected:
         const Real convergence_criterion_;
-        StdLargeVec<Vecd> &n_, &n_temp_;
+        Vecd *n_, *n_temp_;
 
       public:
         PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion);
-        virtual ~PredictionConvergenceCheck(){};
+        virtual ~PredictionConvergenceCheck() {};
 
         bool reduce(size_t index_i, Real dt = 0.0);
     };
 
-    class ConsistencyCorrection : public LocalDynamics, public RelaxDataDelegateInner
+    class ConsistencyCorrection : public LocalDynamics, public DataDelegateInner
     {
       public:
         explicit ConsistencyCorrection(BaseInnerRelation &inner_relation, Real consistency_criterion);
-        virtual ~ConsistencyCorrection(){};
+        virtual ~ConsistencyCorrection() {};
 
         void interaction(size_t index_i, Real dt = 0.0);
 
       protected:
         std::mutex mutex_modify_neighbor_; /**< mutex exclusion for memory conflict */
         const Real consistency_criterion_;
-        StdLargeVec<int> updated_indicator_; /**> 0 not updated, 1 updated with reliable prediction, 2 updated from a reliable neighbor */
-        StdLargeVec<Vecd> &n_;
+        Vecd *n_;
+        int *updated_indicator_; /**> 0 not updated, 1 updated with reliable prediction, 2 updated from a reliable neighbor */
     };
 
-    class ConsistencyUpdatedCheck : public LocalDynamicsReduce<bool, ReduceAND>,
-                                    public RelaxDataDelegateSimple
+    class ConsistencyUpdatedCheck : public LocalDynamicsReduce<ReduceAND>
     {
       protected:
-        StdLargeVec<int> &updated_indicator_;
+        int *updated_indicator_;
 
       public:
         explicit ConsistencyUpdatedCheck(SPHBody &sph_body);
-        virtual ~ConsistencyUpdatedCheck(){};
+        virtual ~ConsistencyUpdatedCheck() {};
 
         bool reduce(size_t index_i, Real dt = 0.0);
     };
@@ -140,7 +137,7 @@ class ShellNormalDirectionPrediction : public BaseDynamics<void>
     {
       public:
         explicit SmoothingNormal(BaseInnerRelation &inner_relation);
-        virtual ~SmoothingNormal(){};
+        virtual ~SmoothingNormal() {};
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -161,7 +158,7 @@ class ShellRelaxationStep : public BaseDynamics<void>
 {
   public:
     explicit ShellRelaxationStep(BaseInnerRelation &inner_relation);
-    virtual ~ShellRelaxationStep(){};
+    virtual ~ShellRelaxationStep() {};
     virtual void exec(Real dt = 0.0) override;
     SimpleDynamics<ShellMidSurfaceBounding> &MidSurfaceBounding() { return mid_surface_bounding_; };
 
@@ -169,7 +166,7 @@ class ShellRelaxationStep : public BaseDynamics<void>
     RealBody &real_body_;
     BaseInnerRelation &inner_relation_;
     NearShapeSurface near_shape_surface_;
-    InteractionDynamics<RelaxationResidue<Inner<>>> relaxation_residue_;
+    InteractionDynamics<RelaxationResidual<Inner<>>> relaxation_residual_;
     ReduceDynamics<RelaxationScaling> relaxation_scaling_;
     SimpleDynamics<PositionRelaxation> position_relaxation_;
     SimpleDynamics<ShellMidSurfaceBounding> mid_surface_bounding_;

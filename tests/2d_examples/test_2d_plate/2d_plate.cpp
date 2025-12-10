@@ -19,7 +19,7 @@ int particle_number = 40;                         /** Particle number in the dir
 Real resolution_ref = PL / (Real)particle_number; /** Initial reference particle spacing. */
 int BWD = 1;                                      /** number of boundary particles layers . */
 Real BW = resolution_ref * (Real)BWD;             /** Boundary width, determined by specific layer of boundary particles. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -0.5 * resolution_ref), Vec2d(PL + BW, 0.5 * resolution_ref));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -0.5 * resolution_ref), Vec2d(PL + BW, 0.5 * resolution_ref));
 StdVec<Vecd> observation_location = {Vecd(0.5 * PL, 0.0)};
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
@@ -38,18 +38,23 @@ Real time_to_full_external_force = 0.05;
 //----------------------------------------------------------------------
 //	Derived classes used in the case
 //----------------------------------------------------------------------
-class PlateParticleGenerator : public SurfaceParticleGenerator
+namespace SPH
+{
+class Plate;
+template <>
+class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles) {};
+    virtual void prepareGeometricData() override
     {
         // the plate and boundary
         for (int i = 0; i < (particle_number + 2 * BWD); i++)
         {
             Real x = resolution_ref * i - BW + resolution_ref * 0.5;
-            initializePositionAndVolumetricMeasure(Vecd(x, 0.0), resolution_ref);
-            initializeSurfaceProperties(n_0, thickness);
+            addPositionAndVolumetricMeasure(Vecd(x, 0.0), resolution_ref);
+            addSurfaceProperties(n_0, thickness);
         }
     };
 };
@@ -57,23 +62,21 @@ class PlateParticleGenerator : public SurfaceParticleGenerator
 class BoundaryGeometry : public BodyPartByParticle
 {
   public:
-    BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometry(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometry(){};
+    virtual ~BoundaryGeometry() {};
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][0] < 0.0 || base_particles_.pos_[index_i][0] > PL)
-        {
-            body_part_particles_.push_back(index_i);
-        }
+        return base_particles_.ParticlePositions()[index_i][0] < 0.0 ||
+               base_particles_.ParticlePositions()[index_i][0] > PL;
     };
 };
+} // namespace SPH
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -88,12 +91,11 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
-    plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    plate_body.generateParticles<PlateParticleGenerator>();
-    plate_body.addBodyStateForRecording<Vecd>("PriorForce");
+    plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    plate_body.generateParticles<SurfaceParticles, Plate>();
 
     ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    plate_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -107,29 +109,27 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
-    /** Corrected configuration. */
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(plate_body_inner);
-    /** Time step size. */
-    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
-    /** stress relaxation. */
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(plate_body_inner, 3, true);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(plate_body_inner);
-    SimpleDynamics<thin_structure_dynamics::DistributingPointForcesToShell>
+
+    ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
+    SimpleDynamics<solid_dynamics::DistributingPointForces>
         apply_point_force(plate_body, point_force, reference_position, time_to_full_external_force, resolution_ref);
     /** Constrain the Boundary. */
-    BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
+    BoundaryGeometry boundary_geometry(plate_body);
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(boundary_geometry);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         plate_position_damping(0.2, plate_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         plate_rotation_damping(0.2, plate_body_inner, "AngularVelocity", physical_viscosity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    write_states.addToWrite<Vecd>(plate_body, "ForcePrior");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_plate_max_displacement("Position", io_environment, plate_observer_contact); // TODO: using ensemble better
+        write_plate_max_displacement("Position", plate_observer_contact); // TODO: using ensemble better
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -145,6 +145,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 0.8;
     Real output_period = end_time / 100.0;
@@ -155,7 +156,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_period)
@@ -163,7 +164,7 @@ int main(int ac, char *av[])
             if (ite % 1000 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
             apply_point_force.exec(dt);
@@ -177,7 +178,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integral_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         write_plate_max_displacement.writeToFile(ite);
         TickCount t2 = TickCount::now();
@@ -199,7 +200,6 @@ int main(int ac, char *av[])
     {
         write_plate_max_displacement.testResult();
     }
-
 
     return 0;
 }

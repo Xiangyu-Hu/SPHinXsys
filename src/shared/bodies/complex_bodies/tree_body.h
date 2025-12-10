@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -58,13 +58,13 @@ class TreeBody : public SecondaryStructure, public RealBody
     {
         root_ = branches_ptr_keeper_.createPtr<Branch>(this);
     };
-    virtual ~TreeBody(){};
+    virtual ~TreeBody() {};
 
     Branch *createANewBranch(size_t parent_id)
     {
         return branches_ptr_keeper_.createPtr<Branch>(parent_id, this);
     };
-    size_t BranchLocation(size_t particle_idx);
+    size_t BranchLocation(size_t total_particles, size_t particle_idx);
     Branch *LastBranch() { return branches_[last_branch_id_]; };
 
     virtual void buildParticleConfiguration(ParticleConfiguration &particle_configuration) override;
@@ -85,7 +85,7 @@ class TreeBody::Branch : public Edge<size_t, IndexVector>
     explicit Branch(TreeBody *tree);
     /** construct an branch connecting with its parent */
     Branch(size_t parent_id, TreeBody *tree);
-    virtual ~Branch(){};
+    virtual ~Branch() {};
 
     Vecd end_direction_; /**< the direction pointing to the last particle */
     /** The indexes of particle within this branch.
@@ -105,7 +105,7 @@ class TreeTerminates : public BodyPartByParticle
     TreeBody &tree_;
 
     explicit TreeTerminates(SPHBody &sph_body);
-    virtual ~TreeTerminates(){};
+    virtual ~TreeTerminates() {};
 };
 } // namespace SPH
 #endif // TREE_BODY_H

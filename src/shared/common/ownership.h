@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -42,7 +42,30 @@
 
 #include "base_data_type.h"
 
-#include <typeinfo>
+#include <string_view>
+
+template <typename T>
+constexpr std::string_view type_name()
+{
+#if defined(__clang__)
+    constexpr std::string_view p = __PRETTY_FUNCTION__;
+    constexpr std::string_view prefix = "std::string_view type_name() [T = ";
+    constexpr std::string_view suffix = "]";
+#elif defined(__GNUC__)
+    constexpr std::string_view p = __PRETTY_FUNCTION__;
+    constexpr std::string_view prefix = "constexpr std::string_view type_name() [with T = ";
+    constexpr std::string_view suffix = "; std::string_view = std::basic_string_view<char>]";
+#elif defined(_MSC_VER)
+    constexpr std::string_view p = __FUNCSIG__;
+    constexpr std::string_view prefix = "class std::basic_string_view<char,struct std::char_traits<char> > __cdecl type_name<";
+    constexpr std::string_view suffix = ">(void)";
+#else
+#error "Unsupported compiler"
+#endif
+    const std::size_t start = p.find(prefix) + prefix.size();
+    const std::size_t end = p.rfind(suffix);
+    return p.substr(start, end - start);
+}
 
 namespace SPH
 {
@@ -52,8 +75,8 @@ CastingType *DynamicCast(OwnerType *owner, CastedType *casted)
     CastingType *tmp = dynamic_cast<CastingType *>(casted);
     if (tmp == nullptr)
     {
-        std::cout << "\n Error: pointer DynamicCasting " << typeid(*casted).name() << " leads to nullptr! \n";
-        std::cout << "\n This error locates in " << typeid(*owner).name() << '\n';
+        std::cout << "\n Error: pointer DynamicCasting " << type_name<CastedType>() << " leads to nullptr! \n";
+        std::cout << "\n This error locates in " << type_name<OwnerType>() << '\n';
         exit(1);
     }
     return tmp;
@@ -65,8 +88,8 @@ CastingType &DynamicCast(OwnerType *owner, CastedType &casted)
     CastingType *tmp = dynamic_cast<CastingType *>(&casted);
     if (tmp == nullptr)
     {
-        std::cout << "\n Error: reference DynamicCasting " << typeid(casted).name() << " leads to nullptr! \n";
-        std::cout << "\n This error locates in " << typeid(*owner).name() << '\n';
+        std::cout << "\n Error: reference DynamicCasting " << type_name<CastedType>() << " leads to nullptr! \n";
+        std::cout << "\n This error locates in " << type_name<OwnerType>() << '\n';
         exit(1);
     }
     return *tmp;
@@ -113,6 +136,11 @@ class UniquePtrKeeper
         return ptr_member_.get();
     };
 
+    BaseType *getPtr()
+    {
+        return ptr_member_.get();
+    };
+
   private:
     UniquePtr<BaseType> ptr_member_;
 };
@@ -133,8 +161,8 @@ class UniquePtrsKeeper
     DerivedType *createPtr(Args &&...args)
     {
         ptr_keepers_.push_back(UniquePtrKeeper<BaseType>());
-        BaseType *observer = ptr_keepers_.back()
-                                 .template createPtr<DerivedType>(std::forward<Args>(args)...);
+        BaseType *observer =
+            ptr_keepers_.back().template createPtr<DerivedType>(std::forward<Args>(args)...);
         return static_cast<DerivedType *>(observer);
     };
 
@@ -146,6 +174,11 @@ class UniquePtrsKeeper
         }
         std::cout << "\n Error in UniquePtrsKeeper : UniquePtr index is out of bound! \n";
         exit(1);
+    }
+
+    size_t size() const
+    {
+        return ptr_keepers_.size();
     }
 
   private:
@@ -202,5 +235,46 @@ class SharedPtrKeeper
   private:
     SharedPtr<BaseType> ptr_member_;
 };
+
+/**
+ * @class SharedPtrsKeeper
+ * @brief A wrapper to provide an ownership for
+ * a vector of base class shared pointers which point to derived objects.
+ * This is designed to be a private member of class whose objects are copyable.
+ */
+template <class BaseType>
+class SharedPtrsKeeper
+{
+  public:
+    /** used to create a new derived object in the vector
+     * and output its pointer as observer */
+    template <class DerivedType, typename... Args>
+    DerivedType *createPtr(Args &&...args)
+    {
+        ptr_keepers_.push_back(SharedPtrKeeper<BaseType>());
+        BaseType *observer =
+            ptr_keepers_.back().template resetPtr<DerivedType>(std::forward<Args>(args)...);
+        return static_cast<DerivedType *>(observer);
+    };
+
+    SharedPtrKeeper<BaseType> &operator[](size_t index)
+    {
+        if (index < ptr_keepers_.size())
+        {
+            return ptr_keepers_[index];
+        }
+        std::cout << "\n Error in UniquePtrsKeeper : UniquePtr index is out of bound! \n";
+        exit(1);
+    }
+
+    size_t size() const
+    {
+        return ptr_keepers_.size();
+    }
+
+  private:
+    std::vector<SharedPtrKeeper<BaseType>> ptr_keepers_;
+};
+
 } // namespace SPH
 #endif // OWNERSHIP_H

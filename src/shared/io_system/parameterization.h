@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -30,7 +30,7 @@
 #ifndef SPHINXSYS_PARAMETERIZATION_H
 #define SPHINXSYS_PARAMETERIZATION_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "xml_engine.h"
 
 #include <string>
@@ -48,7 +48,7 @@ class ParameterizationIO
     std::string filefullpath_;
 
     explicit ParameterizationIO(const std::string &input_path);
-    ~ParameterizationIO(){};
+    ~ParameterizationIO() {};
 
     void writeProjectParameters();
 };
@@ -61,9 +61,11 @@ class BaseParameterization : public BaseClassType
 {
   public:
     template <typename... Args>
-    explicit BaseParameterization(ParameterizationIO &parameterization_io, Args... args) : BaseClassType(std::forward<Args>(args)...), xml_parameters_(parameterization_io.xml_parameters_),
-                                                                                                      filefullpath_(parameterization_io.filefullpath_){};
-    ~BaseParameterization(){};
+    explicit BaseParameterization(ParameterizationIO *parameterization_io, Args... args)
+        : BaseClassType(std::forward<Args>(args)...),
+          xml_parameters_(parameterization_io->xml_parameters_),
+          filefullpath_(parameterization_io->filefullpath_){};
+    ~BaseParameterization() {};
 
   protected:
     XmlEngine &xml_parameters_;

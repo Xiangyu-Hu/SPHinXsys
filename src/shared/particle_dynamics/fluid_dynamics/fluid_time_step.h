@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -39,59 +39,68 @@ namespace SPH
 namespace fluid_dynamics
 {
 /**
- * @class AcousticTimeStepSize
+ * @class AcousticTimeStep
  * @brief Computing the acoustic time step size
  */
-class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
+class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax>
 {
   public:
-    explicit AcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.6);
-    virtual ~AcousticTimeStepSize(){};
+    explicit AcousticTimeStep(SPHBody &sph_body, Real acousticCFL = 0.6);
+    virtual ~AcousticTimeStep() {};
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
 
   protected:
     Fluid &fluid_;
-    StdLargeVec<Real> &rho_, &p_;
-    StdLargeVec<Vecd> &vel_;
-    Real smoothing_length_min_;
+    Real *rho_, *p_;
+    Vecd *vel_;
+    Real h_min_;
     Real acousticCFL_;
 };
-
 /**
- * @class AdvectionTimeStepSizeForImplicitViscosity
- * @brief Computing the advection time step size when viscosity is handled implicitly
+ * @class SurfaceTensionTimeStep
+ * @brief Computing the acoustic time step size considering surface tension
  */
-class AdvectionTimeStepSizeForImplicitViscosity
-    : public LocalDynamicsReduce<Real, ReduceMax>,
-      public FluidDataSimple
+class SurfaceTensionTimeStep : public AcousticTimeStep
 {
   public:
-    explicit AdvectionTimeStepSizeForImplicitViscosity(
-        SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
-    virtual ~AdvectionTimeStepSizeForImplicitViscosity(){};
-    Real reduce(size_t index_i, Real dt = 0.0);
+    explicit SurfaceTensionTimeStep(SPHBody &sph_body, Real acousticCFL = 0.6);
+    virtual ~SurfaceTensionTimeStep() {};
     virtual Real outputResult(Real reduced_value) override;
 
   protected:
-    StdLargeVec<Vecd> &vel_;
-    Real smoothing_length_min_;
+    Real rho0_, &surface_tension_coeff_;
+};
+/**
+ * @class AdvectionTimeStep
+ * @brief Computing the advection time step size when viscosity is handled implicitly
+ */
+class AdvectionTimeStep
+    : public LocalDynamicsReduce<ReduceMax>
+{
+  protected:
+    Real *mass_;
+    Vecd *vel_, *force_, *force_prior_;
+    Real h_min_;
     Real speed_ref_, advectionCFL_;
+
+  public:
+    AdvectionTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
+    virtual ~AdvectionTimeStep() {};
+    Real reduce(size_t index_i, Real dt = 0.0);
+    virtual Real outputResult(Real reduced_value) override;
 };
 
 /**
- * @class AdvectionTimeStepSize
+ * @class AdvectionViscousTimeStep
  * @brief Computing the advection time step size
  */
-class AdvectionTimeStepSize : public AdvectionTimeStepSizeForImplicitViscosity
+class AdvectionViscousTimeStep : public AdvectionTimeStep
 {
   public:
-    explicit AdvectionTimeStepSize(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
-    virtual ~AdvectionTimeStepSize(){};
+    AdvectionViscousTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
+    virtual ~AdvectionViscousTimeStep() {};
     Real reduce(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Fluid &fluid_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

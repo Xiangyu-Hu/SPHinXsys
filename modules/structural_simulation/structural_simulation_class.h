@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -37,8 +37,8 @@
 using namespace SPH;
 
 using GravityPair = std::pair<int, Vec3d>;
-using AccelTuple = std::tuple<int, BoundingBox, Vec3d>;
-using ForceTuple = std::tuple<int, BoundingBox, Vec3d, Real>;
+using AccelTuple = std::tuple<int, BoundingBoxd, Vec3d>;
+using ForceTuple = std::tuple<int, BoundingBoxd, Vec3d, Real>;
 using PressureTuple = std::tuple<int, SharedPtr<TriangleMeshShape>, Vec3d, StdVec<std::array<Real, 2>>>;
 using SpringDamperTuple = std::tuple<int, Vec3d, Real>;
 /**
@@ -51,11 +51,11 @@ using SpringDamperTuple = std::tuple<int, Vec3d, Real>;
  * Real: damping coefficient
  */
 using SurfaceSpringTuple = std::tuple<int, SharedPtr<TriangleMeshShape>, bool, Vec3d, Real, Real>;
-using ConstrainedRegionPair = std::pair<int, BoundingBox>;
+using ConstrainedRegionPair = std::pair<int, BoundingBoxd>;
 using PositionSolidBodyTuple = std::tuple<int, Real, Real, Vec3d>;
 using PositionScaleSolidBodyTuple = std::tuple<int, Real, Real, Real>;
 using TranslateSolidBodyTuple = std::tuple<int, Real, Real, Vec3d>;
-using TranslateSolidBodyPartTuple = std::tuple<int, Real, Real, Vec3d, BoundingBox>;
+using TranslateSolidBodyPartTuple = std::tuple<int, Real, Real, Vec3d, BoundingBoxd>;
 
 #ifdef __EMSCRIPTEN__
 struct StlData
@@ -73,15 +73,15 @@ class BodyPartFromMesh : public BodyRegionByParticle
 {
   public:
     BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> triangle_mesh_shape_ptr);
-    ~BodyPartFromMesh(){};
+    ~BodyPartFromMesh() {};
 };
 
 class SolidBodyFromMesh : public SolidBody
 {
   public:
     SolidBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-                      SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vec3d> &pos_0, StdLargeVec<Real> &volume);
-    ~SolidBodyFromMesh(){};
+                      SharedPtr<SaintVenantKirchhoffSolid> material_model, Vec3d *pos_0, Real *volume);
+    ~SolidBodyFromMesh() {};
 };
 
 class SolidBodyForSimulation
@@ -91,35 +91,34 @@ class SolidBodyForSimulation
     InnerRelation inner_body_relation_;
 
     SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction_;
-    InteractionWithUpdate<KernelCorrectionMatrixInner> correct_configuration_;
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> correct_configuration_;
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half_;
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_;
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> damping_random_;
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> damping_random_;
 
   public:
     // no particle reload --> direct generator
     SolidBodyForSimulation(
         SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
-        Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, StdLargeVec<Vec3d> &pos_0, StdLargeVec<Real> &volume);
-    ~SolidBodyForSimulation(){};
+        Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, Vec3d *pos_0, Real *volume);
+    ~SolidBodyForSimulation() {};
 
     SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
-    ElasticSolidParticles *getElasticSolidParticles() { return DynamicCast<ElasticSolidParticles>(this, &solid_body_from_mesh_.getBaseParticles()); };
+    BaseParticles *getElasticSolidParticles() { return DynamicCast<BaseParticles>(this, &solid_body_from_mesh_.getBaseParticles()); };
     InnerRelation *getInnerBodyRelation() { return &inner_body_relation_; };
 
     SimpleDynamics<NormalDirectionFromBodyShape> *getInitialNormalDirection() { return &initial_normal_direction_; };
-    InteractionWithUpdate<KernelCorrectionMatrixInner> *getCorrectConfiguration() { return &correct_configuration_; };
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> *getCorrectConfiguration() { return &correct_configuration_; };
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
     Dynamics1Level<solid_dynamics::Integration2ndHalf> *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>> *getDampingWithRandomChoice() { return &damping_random_; };
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> *getDampingWithRandomChoice() { return &damping_random_; };
 };
 
-void expandBoundingBox(BoundingBox *original, BoundingBox *additional);
+BoundingBoxd expandBoundingBox(const BoundingBoxd &original, const BoundingBoxd &additional);
 
-void relaxParticlesSingleResolution(IOEnvironment &io_environment,
-                                    bool write_particles_to_file,
+void relaxParticlesSingleResolution(bool write_particles_to_file,
                                     SolidBodyFromMesh &solid_body_from_mesh,
-                                    ElasticSolidParticles &solid_body_from_mesh_particles,
+                                    BaseParticles &solid_body_from_mesh_particles,
                                     InnerRelation &solid_body_from_mesh_inner);
 
 static inline Real getPhysicalViscosityGeneral(Real rho, Real youngs_modulus, Real length_scale, Real shape_constant = 1.0)
@@ -151,7 +150,7 @@ class StructuralSimulationInput
     bool write_particle_relaxation_data_;
     // boundary conditions
     StdVec<GravityPair> non_zero_gravity_;
-    StdVec<AccelTuple> acceleration_bounding_box_tuple_;
+    StdVec<AccelTuple> force_bounding_box_tuple_;
     StdVec<ForceTuple> force_in_body_region_tuple_;
     StdVec<PressureTuple> surface_pressure_tuple_;
     StdVec<SpringDamperTuple> spring_damper_tuple_;
@@ -200,21 +199,22 @@ class StructuralSimulation
     Real system_resolution_;
     SPHSystem system_;
     Real scale_system_boundaries_;
-    IOEnvironment io_environment_;
+    Real &physical_time_;
 
     StdVec<SharedPtr<SolidBodyForSimulation>> solid_body_list_;
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>>> particle_normal_update_;
 
     StdVec<SharedPtr<SurfaceContactRelation>> contact_list_;
-    StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactDensitySummation>>> contact_density_list_;
+    StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactFactorSummation>>> contact_density_list_;
     StdVec<SharedPtr<InteractionDynamics<solid_dynamics::ContactForce>>> contact_force_list_;
 
     // for initializeATimeStep
-    StdVec<SharedPtr<SimpleDynamics<TimeStepInitialization>>> initialize_time_step_;
+    StdVec<Gravity> gravity_list_;
+    StdVec<SharedPtr<SimpleDynamics<GravityForce<Gravity>>>> initialize_gravity_;
     StdVec<GravityPair> non_zero_gravity_;
-    // for AccelerationForBodyPartInBoundingBox
-    StdVec<SharedPtr<SimpleDynamics<solid_dynamics::AccelerationForBodyPartInBoundingBox>>> acceleration_bounding_box_;
-    StdVec<AccelTuple> acceleration_bounding_box_tuple_;
+    // for ExternalForceInBoundingBox
+    StdVec<SharedPtr<SimpleDynamics<solid_dynamics::ExternalForceInBoundingBox>>> force_bounding_box_;
+    StdVec<AccelTuple> force_bounding_box_tuple_;
     // for ForceInBodyRegion
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::ForceInBodyRegion>>> force_in_body_region_;
     StdVec<ForceTuple> force_in_body_region_tuple_;
@@ -228,10 +228,10 @@ class StructuralSimulation
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::SpringNormalOnSurfaceParticles>>> surface_spring_;
     StdVec<SurfaceSpringTuple> surface_spring_tuple_;
     // for ConstrainSolidBody
-    StdVec<SharedPtr<SimpleDynamics<solid_dynamics::FixBodyConstraint>>> fixed_constraint_body_;
+    StdVec<SharedPtr<SimpleDynamics<FixBodyConstraint>>> fixed_constraint_body_;
     StdVec<int> body_indices_fixed_constraint_;
     // for ConstrainSolidBodyRegion
-    StdVec<SharedPtr<SimpleDynamics<solid_dynamics::FixBodyPartConstraint>>> fixed_constraint_region_;
+    StdVec<SharedPtr<SimpleDynamics<FixBodyPartConstraint>>> fixed_constraint_region_;
     StdVec<ConstrainedRegionPair> body_indices_fixed_constraint_region_;
     // for PositionSolidBody
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::PositionSolidBody>>> position_solid_body_;
@@ -249,13 +249,6 @@ class StructuralSimulation
     // iterators
     int iteration_;
 
-    // data storage
-    StdVec<Real> von_mises_stress_max_;
-    StdLargeVec<StdLargeVec<Real>> von_mises_stress_particles_;
-
-    StdVec<Real> von_mises_strain_max_;
-    StdLargeVec<StdLargeVec<Real>> von_mises_strain_particles_;
-
     // for constructor, the order is important
     void scaleTranslationAndResolution();
     void setSystemResolutionMax();
@@ -267,7 +260,7 @@ class StructuralSimulation
 
     // for initializeBoundaryConditions
     void initializeGravity();
-    void initializeAccelerationForBodyPartInBoundingBox();
+    void initializeExternalForceInBoundingBox();
     void initializeForceInBodyRegion();
     void initializeSurfacePressure();
     void initializeSpringDamperConstraintParticleWise();
@@ -283,13 +276,13 @@ class StructuralSimulation
     void executeInitialNormalDirection();
     void executeCorrectConfiguration();
     void executeUpdateElasticNormalDirection();
-    void executeInitializeATimeStep();
-    void executeAccelerationForBodyPartInBoundingBox();
+    void executeInitializeGravity();
+    void executeExternalForceInBoundingBox();
     void executeForceInBodyRegion();
     void executeSurfacePressure();
     void executeSpringDamperConstraintParticleWise();
     void executeSpringNormalOnSurfaceParticles();
-    void executeContactDensitySummation();
+    void executeContactFactorSummation();
     void executeContactForce();
     void executeStressRelaxationFirstHalf(Real dt);
     void executeConstrainSolidBody();

@@ -28,36 +28,38 @@ Vec3d domain_upper_bound(15.0, 15.0, 26.0);
 //----------------------------------------------------------------------
 //	Domain bounds of the system.
 //----------------------------------------------------------------------
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
+
+namespace SPH
+{
 /** Define the boundary geometry. */
 class BoundaryGeometry : public BodyPartByParticle
 {
   public:
-    BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometry(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometry(){};
+    virtual ~BoundaryGeometry() {};
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (index_i >= 0 && index_i <= (2 / DELTA1 + 2 / DELTA2 - 1))
-        {
-            body_part_particles_.push_back(index_i);
-        }
+        return index_i >= 0 && index_i <= (2 / DELTA1 + 2 / DELTA2 - 1);
     };
 };
 
-class CylinderParticleGenerator : public SurfaceParticleGenerator
+class Leaflet;
+template <>
+class ParticleGenerator<SurfaceParticles, Leaflet> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body), sph_body_(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles), sph_body_(sph_body) {};
+    virtual void prepareGeometricData() override
     {
-        SurfaceShape *a = dynamic_cast<SurfaceShape *>(sph_body_.body_shape_);
+        SurfaceShape *a = DynamicCast<SurfaceShape>(this, &sph_body_.getInitialShape());
 
         Standard_Real u1 = 0;
         Standard_Real v1 = DELTA1;
@@ -104,13 +106,14 @@ class CylinderParticleGenerator : public SurfaceParticleGenerator
 
         for (int i = 0; i != (int)points.size(); i++)
         {
-            initializePositionAndVolumetricMeasure(points[i], particle_spacing_ref * particle_spacing_ref);
+            addPositionAndVolumetricMeasure(points[i], particle_spacing_ref * particle_spacing_ref);
             Vecd n_0 = Vec3d(1.0, 1.0, 1.0);
-            initializeSurfaceProperties(n_0, thickness);
+            addSurfaceProperties(n_0, thickness);
         }
     }
     SPHBody &sph_body_;
 };
+} // namespace SPH
 
 //--------------------------------------------------------------------------
 //	Main program starts here.
@@ -121,20 +124,18 @@ int main(int ac, char *av[])
     //	Build up a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
-    IOEnvironment io_environment(sph_system);
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody leaflet(sph_system, makeShared<SurfaceShapeSTEP>(full_path_to_geometry, "Leaflet"));
     // here dummy linear elastic solid is use because no solid dynamics in particle relaxation
-    leaflet.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(1.0, 1.0, 0.0);
-    leaflet.generateParticles<CylinderParticleGenerator>();
+    leaflet.defineMaterial<Solid>();
+    leaflet.generateParticles<SurfaceParticles, Leaflet>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
-    MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, leaflet.getCellLinkedList());
+    BodyStatesRecordingToVtp write_relaxed_particles(sph_system);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -147,19 +148,17 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
-    /** A  Physics relaxation step. */
-    relax_dynamics::RelaxationStepInnerFirstHalf leaflet_relaxation_first_half(leaflet_inner);
-    relax_dynamics::RelaxationStepInnerSecondHalf leaflet_relaxation_second_half(leaflet_inner);
+    using namespace relax_dynamics;
+    RelaxationStepInnerFirstHalf leaflet_relaxation_first_half(leaflet_inner);
+    RelaxationStepInnerSecondHalf leaflet_relaxation_second_half(leaflet_inner);
     /** Constrain the boundary. */
-    BoundaryGeometry boundary_geometry(leaflet, "BoundaryGeometry");
-    SimpleDynamics<relax_dynamics::ConstrainSurfaceBodyRegion> constrain_holder(boundary_geometry);
-    SimpleDynamics<relax_dynamics::SurfaceNormalDirection> surface_normal_direction(leaflet);
+    BoundaryGeometry boundary_geometry(leaflet);
+    SimpleDynamics<SurfaceNormalDirection> surface_normal_direction(leaflet);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
     write_relaxed_particles.writeToFile(0);
     leaflet.updateCellLinkedList();
-    write_mesh_cell_linked_list.writeToFile(0.0);
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
@@ -168,7 +167,6 @@ int main(int ac, char *av[])
     while (ite < relax_step)
     {
         leaflet_relaxation_first_half.exec();
-        constrain_holder.exec();
         leaflet_relaxation_second_half.exec();
         ite += 1;
         if (ite % 100 == 0)

@@ -5,7 +5,6 @@
  * @author 	Zhentong Wang and Xiangyu Hu
  */
 #include "2d_FVM_double_mach_reflection.h"
-#include "sphinxsys.h"
 
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -18,21 +17,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
+    SPHSystem sph_system(system_domain_bounds, ansys_mesh.MinMeshEdge());
     // Handle command line arguments and override the tags for particle relaxation and reload.
     sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody wave_block(sph_system, makeShared<WaveBody>("WaveBody"));
-    wave_block.defineParticlesAndMaterial<BaseParticles, CompressibleFluid>(rho0_another, heat_capacity_ratio);
-    wave_block.generateParticles<ParticleGeneratorInFVM>(ansys_mesh);
-    wave_block.addBodyStateForRecording<Real>("Density");
-    wave_block.addBodyStateForRecording<Real>("Pressure");
-    /** Initial condition and register variables*/
-    SimpleDynamics<DMFInitialCondition> initial_condition(wave_block);
-    GhostCreationFromMesh ghost_creation(wave_block, ansys_mesh);
+    wave_block.defineMaterial<CompressibleFluid>(rho0_another, heat_capacity_ratio);
+    Ghost<ReserveSizeFactor> ghost_boundary(0.5);
+    wave_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, ansys_mesh);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //----------------------------------------------------------------------
@@ -41,20 +35,21 @@ int main(int ac, char *av[])
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
-    /** Boundary conditions set up */
-    DMFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation.each_boundary_type_with_all_ghosts_index_,
-                                                       ghost_creation.each_boundary_type_with_all_ghosts_eij_, ghost_creation.each_boundary_type_contact_real_index_);
-    SimpleDynamics<fluid_dynamics::EulerianCompressibleTimeStepInitialization> initialize_a_fluid_step(wave_block);
-    /** Time step size with considering sound wave speed. */
-    ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block, ansys_mesh.min_distance_between_nodes_, 0.2);
-    /** Here we introduce the limiter in the Riemann solver and 0 means the no extra numerical dissipation.
-    the value is larger, the numerical dissipation larger*/
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration1stHalfHLLCRiemann> pressure_relaxation(water_block_inner);
     InteractionWithUpdate<fluid_dynamics::EulerianCompressibleIntegration2ndHalfHLLCRiemann> density_relaxation(water_block_inner);
-    // Visualization in FVM with date in cell.
-    BodyStatesRecordingInMeshToVtp write_real_body_states(io_environment, wave_block, ansys_mesh);
-    RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>>
-        write_maximum_speed(io_environment, wave_block);
+
+    SimpleDynamics<DMFInitialCondition> initial_condition(wave_block);
+    GhostCreationFromMesh ghost_creation(wave_block, ansys_mesh, ghost_boundary);
+    DMFBoundaryConditionSetup boundary_condition_setup(water_block_inner, ghost_creation);
+    ReduceDynamics<CompressibleAcousticTimeStepSizeInFVM> get_fluid_time_step_size(wave_block, ansys_mesh.MinMeshEdge(), 0.2);
+    //----------------------------------------------------------------------
+    //	Define the methods for I/O operations, observations
+    //	and regression tests of the simulation.
+    //----------------------------------------------------------------------
+    BodyStatesRecordingToMeshVtu write_real_body_states(wave_block, ansys_mesh);
+    write_real_body_states.addToWrite<Real>(wave_block, "Density");
+    write_real_body_states.addToWrite<Real>(wave_block, "Pressure");
+    RegressionTestEnsembleAverage<ReducedQuantityRecording<MaximumSpeed>> write_maximum_speed(wave_block);
     //----------------------------------------------------------------------
     //	Prepare the simulation with case specified initial condition if necessary.
     //----------------------------------------------------------------------
@@ -63,6 +58,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 1000;
     Real end_time = 0.2;
@@ -79,12 +75,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
         {
-            initialize_a_fluid_step.exec();
             Real dt = get_fluid_time_step_size.exec();
             boundary_condition_setup.resetBoundaryConditions();
             pressure_relaxation.exec(dt);
@@ -92,13 +87,13 @@ int main(int ac, char *av[])
             density_relaxation.exec(dt);
 
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
             if (number_of_iterations % screen_output_interval == 0)
             {
                 write_maximum_speed.writeToFile(number_of_iterations);
-                cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                     << GlobalStaticVariables::physical_time_
-                     << "	dt = " << dt << "\n";
+                std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
+                          << physical_time
+                          << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
         }
@@ -110,7 +105,7 @@ int main(int ac, char *av[])
     TickCount t4 = TickCount::now();
     TimeInterval tt;
     tt = t4 - t1 - interval;
-    cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
     if (sph_system.GenerateRegressionData())
     {

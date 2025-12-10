@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -81,9 +81,8 @@ Mat2d getCorrectionMatrix(const Mat2d &local_deformation_part_one);
 Mat3d getCorrectionMatrix(const Mat3d &local_deformation_part_one);
 
 /** get curvature. */
-Real get_mean_curvature(const Matd &dn);
-Real get_Gaussian_curvature(Real H, const Matd &dn);
-Real get_Gaussian_curvature(const Matd &dn);
+std::tuple<Real, Real> get_principle_curvatures(const Mat2d &dn);
+std::tuple<Real, Real> get_principle_curvatures(const Mat3d &dn);
 } // namespace thin_structure_dynamics
 } // namespace SPH
 #endif // THIN_STRUCTURE_MATH_H

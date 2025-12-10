@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,14 +21,18 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	vtk_io.h
- * @brief 	Classes for input and output with vtk (Paraview) files.
- * @author	Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
+ * @file 	io_vtk.h
+ * @brief Classes for input and output with vtk (Paraview) files.
+ * @author Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
  */
 
-#pragma once
+#ifndef IO_VTK_H
+#define IO_VTK_H
 
 #include "io_base.h"
+
+#include "dynamics_algorithms.h"
+#include "general_reduce.h"
 
 using VtuStringData = std::map<std::string, std::string>;
 
@@ -42,14 +46,14 @@ namespace SPH
 class BodyStatesRecordingToVtp : public BodyStatesRecording
 {
   public:
-    BodyStatesRecordingToVtp(IOEnvironment &io_environment, SPHBody &body)
-        : BodyStatesRecording(io_environment, body){};
-    BodyStatesRecordingToVtp(IOEnvironment &io_environment, SPHBodyVector bodies)
-        : BodyStatesRecording(io_environment, bodies){};
-    virtual ~BodyStatesRecordingToVtp(){};
+    BodyStatesRecordingToVtp(SPHBody &body) : BodyStatesRecording(body) {};
+    BodyStatesRecordingToVtp(SPHSystem &sph_system) : BodyStatesRecording(sph_system) {};
+    virtual ~BodyStatesRecordingToVtp() {};
 
   protected:
     virtual void writeWithFileName(const std::string &sequence) override;
+    template <typename OutStreamType>
+    void writeParticlesToVtk(OutStreamType &output_stream, BaseParticles &particles);
 };
 
 /**
@@ -58,11 +62,11 @@ class BodyStatesRecordingToVtp : public BodyStatesRecording
  * the output is map of strings with VTK XML format can visualized by ParaView
  * the data type vtkUnstructedGrid
  */
-class BodyStatesRecordingToVtpString : public BodyStatesRecording
+class BodyStatesRecordingToVtpString : public BodyStatesRecordingToVtp
 {
   public:
-    BodyStatesRecordingToVtpString(IOEnvironment &io_environment, SPHBodyVector bodies)
-        : BodyStatesRecording(io_environment, bodies){};
+    BodyStatesRecordingToVtpString(SPHSystem &sph_system)
+        : BodyStatesRecordingToVtp(sph_system) {};
     virtual ~BodyStatesRecordingToVtpString() = default;
 
     const VtuStringData &GetVtuData() const;
@@ -73,7 +77,7 @@ class BodyStatesRecordingToVtpString : public BodyStatesRecording
 
   protected:
     virtual void writeWithFileName(const std::string &sequence) override;
-    virtual void writeVtu(std::ostream &stream, SPHBody *body) const;
+    virtual void writeVtu(std::ostream &stream, SPHBody *body);
 
   private:
     VtuStringData _vtuData;
@@ -96,8 +100,20 @@ class WriteToVtpIfVelocityOutOfBound
     virtual void writeWithFileName(const std::string &sequence) override;
 
   public:
-    WriteToVtpIfVelocityOutOfBound(IOEnvironment &io_environment,
-                                   SPHBodyVector bodies, Real velocity_bound);
-    virtual ~WriteToVtpIfVelocityOutOfBound(){};
+    WriteToVtpIfVelocityOutOfBound(SPHSystem &sph_system, Real velocity_bound);
+    virtual ~WriteToVtpIfVelocityOutOfBound() {};
+};
+
+class ParticleGenerationRecordingToVtp : public ParticleGenerationRecording
+{
+  public:
+    ParticleGenerationRecordingToVtp(SPHBody &body, StdVec<Vecd> &position)
+        : ParticleGenerationRecording(body), position_(position) {};
+    virtual ~ParticleGenerationRecordingToVtp() {};
+
+  protected:
+    StdVec<Vecd> &position_;
+    virtual void writeWithFileName(const std::string &sequence) override;
 };
 } // namespace SPH
+#endif // IO_VTK_H

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,117 +21,100 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	base_particle_generator.h
- * @brief 	This is the base class of particle generator, which generates particles
- * 			with given positions and volumes. The direct generator simply generate
- * 			particle with given position and volume.
+ * @file base_particle_generator.h
+ * @brief This is the base class of particle generator, which generates particles
+ * with given positions and volumes. The direct generator simply generate
+ * particle with given position and volume.
+ * The particle generators naming are using template partial specialization,
+ * with three keywords. The first indicates volume (default), surface and line particles,
+ * the second generating methods, and the third the control parameters,
+ * such as adaptive for adaptive resolution.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef BASE_PARTICLE_GENERATOR_H
 #define BASE_PARTICLE_GENERATOR_H
 
-#include "base_data_package.h"
+#include "all_particles.h"
+#include "base_data_type_package.h"
 #include "large_data_containers.h"
-#include "sph_data_containers.h"
+#include "sphinxsys_containers.h"
 
 namespace SPH
 {
-
 class SPHBody;
-class BaseParticles;
-class IOEnvironment;
 
-/**
- * @class BaseParticleGenerator
- * @brief Abstract base particle generator.
- */
-class BaseParticleGenerator
+template <typename... Parameters>
+class ParticleGenerator;
+
+template <typename... Parameters>
+class GeneratingMethod;
+
+template <> // default volume metric particle generator
+class ParticleGenerator<BaseParticles>
 {
   public:
-    explicit BaseParticleGenerator(SPHBody &sph_body);
-    virtual ~BaseParticleGenerator(){};
-    /** Initialize geometric parameters. */
-    virtual void initializeGeometricVariables() = 0;
-    virtual void generateParticlesWithBasicVariables();
+    explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles);
+    virtual ~ParticleGenerator() {};
+    void generateParticlesWithGeometricVariables();
 
   protected:
     BaseParticles &base_particles_;
-    BaseMaterial &base_material_;
-    StdLargeVec<Vecd> &pos_;           /**< current position */
-    StdLargeVec<size_t> &unsorted_id_; /**< original particle ids */
-    /** Initialize particle position. */
-    virtual void initializePosition(const Vecd &position);
+    Real particle_spacing_ref_;
+    StdVec<Vecd> position_;           // prepared geometric data: particle position
+    StdVec<Real> volumetric_measure_; // prepared geometric data: volumetric measure
+
+    virtual void addParticlePosition(const Vecd &position);
+    virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
+    virtual void prepareGeometricData() = 0;    // first step of particle generation
+    virtual void setAllParticleBounds();        // second step of particle generation
+    virtual void initializeParticleVariables(); // third step of particle generation
+    virtual void initializeParticleVariablesFromReload();
 };
 
-/**
- * @class ParticleGenerator
- * @brief Generate volumetric particles by initialize position and volume.
- */
-class ParticleGenerator : public BaseParticleGenerator
+template <> // generate surface particles
+class ParticleGenerator<SurfaceParticles> : public ParticleGenerator<BaseParticles>
 {
+    StdVec<Vecd> surface_normal_;
+    StdVec<Real> surface_thickness_;
+
   public:
-    explicit ParticleGenerator(SPHBody &sph_body);
-    virtual ~ParticleGenerator(){};
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles);
+    virtual ~ParticleGenerator() {};
 
   protected:
-    StdLargeVec<Real> &Vol_; /**< particle volume */
-    /** Initialize particle position and measured volume. */
-    virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
+    SurfaceParticles &surface_particles_;
+    virtual void addSurfaceProperties(const Vecd &surface_normal, Real thickness);
+    virtual void initializeParticleVariables() override;
+    virtual void initializeParticleVariablesFromReload() override;
 };
 
-/**
- * @class SurfaceParticleGenerator
- * @brief Generate volumetric particles by initialize extra surface variables.
- */
-class SurfaceParticleGenerator : public ParticleGenerator
+class TriangleMeshShape;
+template <> // generate observer particles
+class ParticleGenerator<ObserverParticles> : public ParticleGenerator<BaseParticles>
 {
   public:
-    explicit SurfaceParticleGenerator(SPHBody &sph_body);
-    virtual ~SurfaceParticleGenerator(){};
-
-  protected:
-    StdLargeVec<Vecd> &n_;         /**< surface normal */
-    StdLargeVec<Real> &thickness_; /**< surface thickness */
-    /** Initialize surface particle. */
-    virtual void initializeSurfaceProperties(const Vecd &surface_normal, Real thickness);
-};
-
-
-/**
- * @class ObserverParticleGenerator
- * @brief Generate particle directly from position-and-volume data.
- * @details The values of positions will be given in the derived class.
- */
-class ObserverParticleGenerator : public ParticleGenerator
-{
-  public:
-    explicit ObserverParticleGenerator(SPHBody &sph_body)
-        : ParticleGenerator(sph_body){};
-    ObserverParticleGenerator(SPHBody &sph_body, const StdVec<Vecd> &positions)
-        : ParticleGenerator(sph_body), positions_(positions){};
-    virtual ~ObserverParticleGenerator(){};
-    /** Initialize geometrical variable for observe particles. */
-    virtual void initializeGeometricVariables() override;
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, const StdVec<Vecd> &positions);
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, TriangleMeshShape &triangle_mesh_shape);
+    virtual ~ParticleGenerator() {};
+    virtual void prepareGeometricData() override;
 
   protected:
     StdVec<Vecd> positions_;
 };
 
-/**
- * @class ParticleGeneratorReload
- * @brief Generate particle by reloading particle position and volume.
- */
-class ParticleGeneratorReload : public ParticleGenerator
+class Reload;
+template <typename ParticlesType> // generate particles by reloading dynamically relaxed particles
+class ParticleGenerator<ParticlesType, Reload> : public ParticleGenerator<ParticlesType>
 {
     std::string file_path_;
 
   public:
-    ParticleGeneratorReload(SPHBody &sph_body, IOEnvironment &io_environment, const std::string &reload_body_name);
-    virtual ~ParticleGeneratorReload(){};
-    /** Initialize geometrical variable for reload particles. */
-    virtual void initializeGeometricVariables() override;
-    virtual void generateParticlesWithBasicVariables() override;
+    ParticleGenerator(SPHBody &sph_body, ParticlesType &particles, const std::string &reload_body_name);
+    virtual ~ParticleGenerator() {};
+    virtual void prepareGeometricData() override;
+    virtual void setAllParticleBounds() override;
+    virtual void initializeParticleVariables() override;
 };
 } // namespace SPH
 #endif // BASE_PARTICLE_GENERATOR_H

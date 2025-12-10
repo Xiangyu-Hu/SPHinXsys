@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -37,14 +37,12 @@ namespace SPH
  * @class GetDiffusionTimeStepSize
  * @brief Computing the time step size based on diffusion coefficient and particle smoothing length
  */
-template <class ParticlesType>
-class GetDiffusionTimeStepSize
-    : public BaseDynamics<Real>,
-      public DiffusionReactionSimpleData<ParticlesType>
+class GetDiffusionTimeStepSize : public BaseDynamics<Real>
 {
   public:
+    GetDiffusionTimeStepSize(SPHBody &sph_body, AbstractDiffusion *abstract_diffusion);
     explicit GetDiffusionTimeStepSize(SPHBody &sph_body);
-    virtual ~GetDiffusionTimeStepSize(){};
+    virtual ~GetDiffusionTimeStepSize() {};
 
     virtual Real exec(Real dt = 0.0) override { return diff_time_step_; };
 
@@ -55,35 +53,32 @@ class GetDiffusionTimeStepSize
 template <typename... InteractionTypes>
 class DiffusionRelaxation;
 
-template <template <typename...> class DataDelegationType, class ParticlesType, class... ContactParticlesType>
-class DiffusionRelaxation<Base, DataDelegationType<ParticlesType, ContactParticlesType...>>
+template <class DataDelegationType, class DiffusionType>
+class DiffusionRelaxation<DataDelegationType, DiffusionType>
     : public LocalDynamics,
-      public DataDelegationType<ParticlesType, ContactParticlesType...>
+      public DataDelegationType
 {
   protected:
-    typedef typename ParticlesType::DiffusionReactionMaterial Material;
-    Material &material_;
-    StdVec<BaseDiffusion *> &all_diffusions_;
-    StdVec<StdLargeVec<Real> *> &diffusion_species_;
-    StdVec<StdLargeVec<Real> *> &gradient_species_;
-    StdVec<StdLargeVec<Real> *> diffusion_dt_;
+    Real *Vol_;
+    StdVec<DiffusionType *> diffusions_;
+    StdVec<Real *> diffusion_species_;
+    StdVec<Real *> gradient_species_;
+    StdVec<Real *> diffusion_dt_;
 
   public:
-    typedef ParticlesType InnerParticlesType;
-
-    template <class DynamicsIdentifier>
-    explicit DiffusionRelaxation(DynamicsIdentifier &identifier);
-    virtual ~DiffusionRelaxation(){};
-    StdVec<BaseDiffusion *> &AllDiffusions() { return material_.AllDiffusions(); };
-    /** So that contact diffusion can be integrated independently without inner interaction. */
-    void initialization(size_t index_i, Real dt = 0.0);
+    template <class BodyRelationType>
+    explicit DiffusionRelaxation(BodyRelationType &body_relation);
+    void initialization(size_t index_i, Real dt = 0.0); // for contact diffusion integrated independently.
     void update(size_t index_i, Real dt = 0.0);
+
+  private:
+    void getDiffusions();
 };
 
 class KernelGradientInner
 {
   public:
-    explicit KernelGradientInner(BaseParticles *inner_particles){};
+    explicit KernelGradientInner(BaseParticles *inner_particles) {};
     Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
     {
         return dW_ijV_j * e_ij;
@@ -92,11 +87,11 @@ class KernelGradientInner
 
 class CorrectedKernelGradientInner
 {
-    StdLargeVec<Matd> &B_;
+    Matd *B_;
 
   public:
     explicit CorrectedKernelGradientInner(BaseParticles *inner_particles)
-        : B_(*inner_particles->getVariableByName<Matd>("KernelCorrectionMatrix")){};
+        : B_(inner_particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")) {};
     Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
     {
         return 0.5 * dW_ijV_j * (B_[index_i] + B_[index_j]) * e_ij;
@@ -107,24 +102,25 @@ class CorrectedKernelGradientInner
  * @class DiffusionRelaxationInner
  * @brief Compute the diffusion relaxation process of all species
  */
-template <class ParticlesType, class KernelGradientType>
-class DiffusionRelaxation<Inner<ParticlesType, KernelGradientType>>
-    : public DiffusionRelaxation<Base, DiffusionReactionInnerData<ParticlesType>>
+template <class KernelGradientType, class DiffusionType>
+class DiffusionRelaxation<Inner<KernelGradientType>, DiffusionType>
+    : public DiffusionRelaxation<DataDelegateInner, DiffusionType>
 {
   protected:
     KernelGradientType kernel_gradient_;
 
   public:
-    typedef BaseInnerRelation BodyRelationType;
-    explicit DiffusionRelaxation(BaseInnerRelation &inner_relation);
-    virtual ~DiffusionRelaxation(){};
+    template <typename... Args>
+    explicit DiffusionRelaxation(Args &&...args);
+
+    virtual ~DiffusionRelaxation() {};
     inline void interaction(size_t index_i, Real dt = 0.0);
 };
 
 class KernelGradientContact
 {
   public:
-    KernelGradientContact(BaseParticles *inner_particles, BaseParticles *contact_particles){};
+    KernelGradientContact(BaseParticles *inner_particles, BaseParticles *contact_particles) {};
     Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
     {
         return dW_ijV_j * e_ij;
@@ -133,174 +129,194 @@ class KernelGradientContact
 
 class CorrectedKernelGradientContact
 {
-    StdLargeVec<Matd> &B_;
-    StdLargeVec<Matd> &contact_B_;
+    Matd *B_;
+    Matd *contact_B_;
 
   public:
     CorrectedKernelGradientContact(BaseParticles *inner_particles, BaseParticles *contact_particles)
-        : B_(*inner_particles->getVariableByName<Matd>("KernelCorrectionMatrix")),
-          contact_B_(*contact_particles->getVariableByName<Matd>("KernelCorrectionMatrix")){};
+        : B_(inner_particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
+          contact_B_(contact_particles->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")) {};
     Vecd operator()(size_t index_i, size_t index_j, Real dW_ijV_j, const Vecd &e_ij)
     {
         return 0.5 * dW_ijV_j * (B_[index_i] + contact_B_[index_j]) * e_ij;
     };
 };
 
-template <class ParticlesType, class ContactParticlesType, class ContactKernelGradientType>
-class DiffusionRelaxation<Contact<Base>, ParticlesType, ContactParticlesType, ContactKernelGradientType>
-    : public DiffusionRelaxation<Base, DiffusionReactionContactData<ParticlesType, ContactParticlesType>>
+template <class ContactKernelGradientType, class DiffusionType>
+class DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>
+    : public DiffusionRelaxation<DataDelegateContact, DiffusionType>
 {
   protected:
-    StdVec<StdVec<std::string>> contact_gradient_species_names_;
     StdVec<ContactKernelGradientType> contact_kernel_gradients_;
+    StdVec<Real *> contact_Vol_;
+    StdVec<StdVec<Real *>> contact_transfer_;
+
+    void resetContactTransfer(size_t index_i);
+    void accumulateDiffusionRate(size_t index_i);
 
   public:
-    typedef BaseContactRelation BodyRelationType;
-
-    explicit DiffusionRelaxation(BaseContactRelation &contact_relation);
-    virtual ~DiffusionRelaxation(){};
+    template <typename... Args>
+    explicit DiffusionRelaxation(Args &&...args);
+    virtual ~DiffusionRelaxation() {};
 };
 
 template <typename... ControlTypes>
 class Dirichlet; /**< Contact interaction with Dirichlet boundary condition */
 
-template <typename... ContactParameters>
-class DiffusionRelaxation<Dirichlet<ContactParameters...>>
-    : public DiffusionRelaxation<Contact<Base>, ContactParameters...>
+template <class ContactKernelGradientType, class DiffusionType>
+class DiffusionRelaxation<Dirichlet<ContactKernelGradientType>, DiffusionType>
+    : public DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>
 {
+
   protected:
-    StdVec<StdVec<StdLargeVec<Real> *>> contact_gradient_species_;
+    StdVec<StdVec<Real *>> contact_gradient_species_;
     void getDiffusionChangeRateDirichlet(
         size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij,
-        const StdVec<StdLargeVec<Real> *> &gradient_species_k);
+        const StdVec<Real *> &gradient_species_k);
 
   public:
-    explicit DiffusionRelaxation(BaseContactRelation &contact_relation);
-    virtual ~DiffusionRelaxation(){};
+    template <typename... Args>
+    explicit DiffusionRelaxation(Args &&...args);
+    virtual ~DiffusionRelaxation() {};
     inline void interaction(size_t index_i, Real dt = 0.0);
 };
 
 template <typename... ControlTypes>
 class Neumann; /**< Contact interaction with Neumann boundary condition */
 
-template <typename... ContactParameters>
-class DiffusionRelaxation<Neumann<ContactParameters...>>
-    : public DiffusionRelaxation<Contact<Base>, ContactParameters...>
+template <class ContactKernelGradientType, class DiffusionType>
+class DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>
+    : public DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>
 {
-    StdLargeVec<Vecd> &n_;
-    StdVec<StdLargeVec<Real> *> contact_heat_flux_;
-    StdVec<StdLargeVec<Vecd> *> contact_n_;
+    Vecd *n_;
+    StdVec<StdVec<Real *>> contact_diffusive_flux_;
+    StdVec<Vecd *> contact_n_;
 
   protected:
     void getDiffusionChangeRateNeumann(size_t particle_i, size_t particle_j,
-                                       Real surface_area_ij_Neumann, StdLargeVec<Real> &heat_flux_k);
+                                       Real surface_area_ij_Neumann,
+                                       const StdVec<Real *> &diffusive_flux_k);
 
   public:
-    explicit DiffusionRelaxation(BaseContactRelation &contact_relation);
-    virtual ~DiffusionRelaxation(){};
+    template <typename... Args>
+    explicit DiffusionRelaxation(Args &&...args);
+    virtual ~DiffusionRelaxation() {};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
 template <typename... ControlTypes>
 class Robin; /**< Contact interaction with Robin boundary condition */
 
-template <typename... ContactParameters>
-class DiffusionRelaxation<Robin<ContactParameters...>>
-    : public DiffusionRelaxation<Contact<Base>, ContactParameters...>
+template <class ContactKernelGradientType, class DiffusionType>
+class DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>
+    : public DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>
 {
-    StdLargeVec<Vecd> &n_;
-    StdVec<StdLargeVec<Real> *> contact_convection_;
-    StdVec<Real *> contact_T_infinity_;
-    StdVec<StdLargeVec<Vecd> *> contact_n_;
+    Vecd *n_;
+    StdVec<StdVec<Real *>> contact_convection_;
+    StdVec<StdVec<Real *>> contact_species_infinity_;
+    StdVec<Vecd *> contact_n_;
 
   protected:
-    void getDiffusionChangeRateRobin(
+    void getTransferRateRobin(
         size_t particle_i, size_t particle_j, Real surface_area_ij_Robin,
-        StdLargeVec<Real> &convection_k, Real &T_infinity_k);
+        StdVec<Real *> &transfer_k,
+        StdVec<Real *> &convection_k,
+        StdVec<Real *> &species_infinity_k);
 
   public:
-    explicit DiffusionRelaxation(BaseContactRelation &contact_relation);
-    virtual ~DiffusionRelaxation(){};
+    template <typename... Args>
+    explicit DiffusionRelaxation(Args &&...args);
+
+    virtual ~DiffusionRelaxation() {};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
 /**
- * @class InitializationRK
- * @brief Initialization of a runge-kutta integration scheme.
+ * @class RungeKuttaStep
+ * @brief A general step for runge-kutta integration scheme.
+ * @details Am intermediate state for species is introduced here
+ * to achieve multi-step integration.
  */
-template <class ParticlesType>
-class InitializationRK : public DiffusionRelaxation<Base, DiffusionReactionSimpleData<ParticlesType>>
+template <class DiffusionRelaxationType>
+class RungeKuttaStep : public DiffusionRelaxationType
 {
   protected:
-    StdVec<StdLargeVec<Real>> &diffusion_species_s_;
+    StdVec<Real *> diffusion_species_s_;
 
   public:
-    InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &diffusion_species_s);
-    virtual ~InitializationRK(){};
-    void update(size_t index_i, Real dt = 0.0);
+    template <typename... Args>
+    RungeKuttaStep(Args &&...args);
+
+    virtual ~RungeKuttaStep() {};
+};
+
+/**
+ * @class FirstStageRK2
+ * @brief The first stage of a 2nd-order runge-kutta integration scheme.
+ * A intermediate state for species is introduced here to achieve multi-step integration.
+ */
+template <class DiffusionRelaxationType>
+class FirstStageRK2 : public RungeKuttaStep<DiffusionRelaxationType>
+{
+  public:
+    template <typename... Args>
+    FirstStageRK2(Args &&...args);
+
+    virtual ~FirstStageRK2() {};
+    void initialization(size_t index_i, Real dt = 0.0);
 };
 
 /**
  * @class SecondStageRK2
  * @brief The second stage of the 2nd-order Runge-Kutta scheme.
  */
-template <class FirstStageType>
-class SecondStageRK2 : public FirstStageType
+template <class DiffusionRelaxationType>
+class SecondStageRK2 : public RungeKuttaStep<DiffusionRelaxationType>
 {
-  protected:
-    StdVec<StdLargeVec<Real>> &diffusion_species_s_;
-
   public:
-    template <typename... ContactArgsType>
-    SecondStageRK2(typename FirstStageType::BodyRelationType &body_relation,
-                   StdVec<StdLargeVec<Real>> &diffusion_species_s, ContactArgsType &&...contact_args)
-        : FirstStageType(body_relation, std::forward<ContactArgsType>(contact_args)...),
-          diffusion_species_s_(diffusion_species_s){};
-    virtual ~SecondStageRK2(){};
+    template <typename... Args>
+    SecondStageRK2(Args &&...args);
 
+    virtual ~SecondStageRK2() {};
     void update(size_t index_i, Real dt = 0.0);
 };
 
 /**
  * @class DiffusionRelaxationRK2
  * @brief The 2nd-order runge-kutta integration scheme.
- * A intermediate state for species is introduced here to achieve multi-step integration.
  */
-template <class FirstStageType>
+template <class DiffusionRelaxationType>
 class DiffusionRelaxationRK2 : public BaseDynamics<void>
 {
   protected:
-    StdVec<StdLargeVec<Real>> diffusion_species_s_; /**< Intermediate state */
-    SimpleDynamics<InitializationRK<typename FirstStageType::InnerParticlesType>> rk2_initialization_;
-    Dynamics1Level<FirstStageType> rk2_1st_stage_;
-    Dynamics1Level<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
-    StdVec<BaseDiffusion *> all_diffusions_;
+    Dynamics1Level<FirstStageRK2<DiffusionRelaxationType>> rk2_1st_stage_;
+    Dynamics1Level<SecondStageRK2<DiffusionRelaxationType>> rk2_2nd_stage_;
 
   public:
-    template <typename... ContactArgsType>
-    explicit DiffusionRelaxationRK2(typename FirstStageType::BodyRelationType &body_relation,
-                                    ContactArgsType &&...contact_args);
-    virtual ~DiffusionRelaxationRK2(){};
+    template <typename FirstArg, typename... OtherArgs>
+    explicit DiffusionRelaxationRK2(FirstArg &first_arg, OtherArgs &&...other_args);
+
+    virtual ~DiffusionRelaxationRK2() {};
 
     virtual void exec(Real dt = 0.0) override;
 };
 
-template <class ParticlesType, class ContactParticlesType,
-          class KernelGradientType, class ContactKernelGradientType,
+template <class DiffusionType, class KernelGradientType, class ContactKernelGradientType,
           template <typename... Parameters> typename... ContactInteractionTypes>
 class DiffusionBodyRelaxationComplex
-    : public DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxation<
-          Inner<ParticlesType, KernelGradientType>,
-          ContactInteractionTypes<ParticlesType, ContactParticlesType, ContactKernelGradientType>...>>>
+    : public DiffusionRelaxationRK2<
+          ComplexInteraction<DiffusionRelaxation<
+                                 Inner<KernelGradientType>, ContactInteractionTypes<ContactKernelGradientType>...>,
+                             DiffusionType>>
 {
   public:
-    template <typename... OtherArgs>
-    explicit DiffusionBodyRelaxationComplex(InnerRelation &inner_relation, OtherArgs &&...args)
-        : DiffusionRelaxationRK2<ComplexInteraction<DiffusionRelaxation<
-              Inner<ParticlesType, KernelGradientType>,
-              ContactInteractionTypes<ParticlesType, ContactParticlesType, ContactKernelGradientType>...>>>(
-              inner_relation, std::forward<OtherArgs>(args)...){};
-    virtual ~DiffusionBodyRelaxationComplex(){};
+    template <typename FirstArg, typename... OtherArgs>
+    explicit DiffusionBodyRelaxationComplex(FirstArg &&first_arg, OtherArgs &&...other_args)
+        : DiffusionRelaxationRK2<
+              ComplexInteraction<DiffusionRelaxation<
+                                     Inner<KernelGradientType>, ContactInteractionTypes<ContactKernelGradientType>...>,
+                                 DiffusionType>>(first_arg, std::forward<OtherArgs>(other_args)...){};
+    virtual ~DiffusionBodyRelaxationComplex() {};
 };
 } // namespace SPH
 #endif // DIFFUSION_DYNAMICS_H

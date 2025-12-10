@@ -6,7 +6,8 @@
 
 #ifndef COMMON_COMPRESSIBLE_FVM_CLASSES_H
 #define COMMON_COMPRESSIBLE_FVM_CLASSES_H
-#include "unstructured_mesh.h"
+
+#include "sphinxsys.h"
 
 namespace SPH
 {
@@ -14,11 +15,11 @@ namespace SPH
  * @class CompressibleAcousticTimeStepSizeInFVM
  * @brief Computing the acoustic time step size
  */
-class CompressibleAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTimeStepSize
+class CompressibleAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTimeStep
 {
   protected:
-    StdLargeVec<Real> &rho_, &p_;
-    StdLargeVec<Vecd> &vel_;
+    Real *rho_, *p_;
+    Vecd *vel_;
     Real min_distance_between_nodes_;
 
   public:
@@ -26,7 +27,7 @@ class CompressibleAcousticTimeStepSizeInFVM : public fluid_dynamics::AcousticTim
     virtual ~CompressibleAcousticTimeStepSizeInFVM(){};
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
-    CompressibleFluid compressible_fluid_;
+    Fluid &compressible_fluid_;
     Real acousticCFL_;
 };
 } // namespace SPH

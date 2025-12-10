@@ -1,6 +1,6 @@
 ﻿/**
  * @file	water entry and exit.cpp
- * @brief	2D water entry and exit example with surface wettability considered.
+ * @brief	2D water entry and exit example with surface wetting considered.
  * @details	This is the one of FSI test cases, also one case for
  * 			understanding spatial temporal identification approach,
  *          especially when coupled with the wetting.
@@ -35,6 +35,7 @@ Real mu_f = 8.9e-7;                      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
+std::string diffusion_species_name = "Phi";
 Real diffusion_coeff = 100.0 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
 Real fluid_moisture = 1.0;                                   /**< fluid moisture. */
 Real cylinder_moisture = 0.0;                                /**< cylinder moisture. */
@@ -61,33 +62,23 @@ class WettingFluidBody : public MultiPolygonShape
         multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
     }
 };
-class WettingFluidBodyMaterial : public DiffusionReaction<WeaklyCompressibleFluid>
-{
-  public:
-    WettingFluidBodyMaterial()
-        : DiffusionReaction<WeaklyCompressibleFluid>({"Phi"}, SharedPtr<NoReaction>(), rho0_f, c_f, mu_f)
-    {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
-    };
-};
-using DiffusionFluidParticles = DiffusionReactionParticles<BaseParticles, WettingFluidBodyMaterial>;
-class WettingFluidBodyInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionFluidParticles>
-{
-  protected:
-    size_t phi_;
 
+class WettingFluidBodyInitialCondition : public LocalDynamics
+{
   public:
     explicit WettingFluidBodyInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionFluidParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = fluid_moisture;
+        phi_[index_i] = fluid_moisture;
     };
+
+  protected:
+    Vecd *pos_;
+    Real *phi_;
 };
 //----------------------------------------------------------------------
 //	Definition for wall body
@@ -123,32 +114,22 @@ class WettingWallBody : public MultiPolygonShape
         multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
     }
 };
-class WettingWallBodyMaterial : public DiffusionReaction<Solid>
+class WettingWallBodyInitialCondition : public LocalDynamics
 {
-  public:
-    WettingWallBodyMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>())
-    {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
-    };
-};
-using DiffusionWallParticles = DiffusionReactionParticles<SolidParticles, WettingWallBodyMaterial>;
-class WettingWallBodyInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionWallParticles>
-{
-  protected:
-    size_t phi_;
-
   public:
     explicit WettingWallBodyInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionWallParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = wall_moisture;
+        phi_[index_i] = wall_moisture;
     };
+
+  protected:
+    Vecd *pos_;
+    Real *phi_;
 };
 //----------------------------------------------------------------------
 //	Definition for cylinder body
@@ -161,39 +142,29 @@ class WettingCylinderBody : public MultiPolygonShape
         multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
     }
 };
-class WettingCylinderBodyMaterial : public DiffusionReaction<Solid>
+class WettingCylinderBodyInitialCondition : public LocalDynamics
 {
-  public:
-    WettingCylinderBodyMaterial() : DiffusionReaction<Solid>({"Phi"}, SharedPtr<NoReaction>(), rho0_s)
-    {
-        initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coeff);
-    };
-};
-using DiffusionCylinderParticles = DiffusionReactionParticles<SolidParticles, WettingCylinderBodyMaterial>;
-class WettingCylinderBodyInitialCondition
-    : public DiffusionReactionInitialCondition<DiffusionCylinderParticles>
-{
-  protected:
-    size_t phi_;
-
   public:
     explicit WettingCylinderBodyInitialCondition(SPHBody &sph_body)
-        : DiffusionReactionInitialCondition<DiffusionCylinderParticles>(sph_body)
-    {
-        phi_ = particles_->diffusion_reaction_material_.AllSpeciesIndexMap()["Phi"];
-    };
+        : LocalDynamics(sph_body),
+          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
-        all_species_[phi_][index_i] = cylinder_moisture;
+        phi_[index_i] = cylinder_moisture;
     };
+
+  protected:
+    Vecd *pos_;
+    Real *phi_;
 };
 
 //----------------------------------------------------------------------
 //	The diffusion model of wetting
 //----------------------------------------------------------------------
 using CylinderFluidDiffusionDirichlet =
-    DiffusionRelaxationRK2<DiffusionRelaxation<Dirichlet<DiffusionCylinderParticles, DiffusionFluidParticles, KernelGradientContact>>>;
+    DiffusionRelaxationRK2<DiffusionRelaxation<Dirichlet<KernelGradientContact>, IsotropicDiffusion>>;
 //------------------------------------------------------------------------------
 // Constrained part for Simbody
 //------------------------------------------------------------------------------
@@ -211,38 +182,36 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+    BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.setRunParticleRelaxation(false);
     sph_system.setReloadParticles(true);
     sph_system.handleCommandlineOptions(ac, av);
-    GlobalStaticVariables::physical_time_ = 0.0;
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WettingFluidBody>("WaterBody"));
-    water_block.defineParticlesAndMaterial<DiffusionFluidParticles, WettingFluidBodyMaterial>();
-    water_block.generateParticles<ParticleGeneratorLattice>();
+    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WettingWallBody>("WallBoundary"));
-    wall_boundary.defineParticlesAndMaterial<DiffusionWallParticles, WettingWallBodyMaterial>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
-    wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
+    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody cylinder(sph_system, makeShared<WettingCylinderBody>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 1.0);
     cylinder.defineBodyLevelSetShape();
-    cylinder.defineParticlesAndMaterial<DiffusionCylinderParticles, WettingCylinderBodyMaterial>();
+    cylinder.defineClosure<Solid, IsotropicDiffusion>(
+        rho0_s, ConstructArgs(diffusion_species_name, diffusion_coeff));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
-        : cylinder.generateParticles<ParticleGeneratorLattice>();
+        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
+        : cylinder.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<ObserverParticleGenerator>(observer_location);
+    cylinder_observer.generateParticles<ObserverParticles>(observer_location);
 
     ObserverBody wetting_observer(sph_system, "WettingObserver");
-    wetting_observer.generateParticles<ObserverParticleGenerator>(wetting_observer_location);
+    wetting_observer.generateParticles<ObserverParticles>(wetting_observer_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -272,14 +241,14 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
-        /** Random reset the insert body particle position. */
+        using namespace relax_dynamics;
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         /** Write the body state to Vtp file. */
-        BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, {&cylinder});
+        BodyStatesRecordingToVtp write_inserted_body_to_vtp(cylinder);
         /** Write the particle reload files. */
-        ReloadParticleIO write_particle_reload_files(io_environment, {&cylinder});
+        ReloadParticleIO write_particle_reload_files(cylinder);
         /** A  Physics relaxation step. */
-        relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
+        RelaxationStepInner relaxation_step_inner(cylinder_inner);
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -309,37 +278,35 @@ int main(int ac, char *av[])
     //	Define the fluid dynamics used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
-    SimpleDynamics<TimeStepInitialization> fluid_step_initialization(water_block, gravity_ptr);
-    InteractionWithUpdate<WettingCoupledSpatialTemporalFreeSurfaceIndicationComplex>
-        free_stream_surface_indicator(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_block_contact);
-    water_block.addBodyStateForRecording<Real>("Pressure");
-    water_block.addBodyStateForRecording<Real>("Density");
-    water_block.addBodyStateForRecording<int>("Indicator");
-    cylinder.addBodyStateForRecording<Real>("Density");
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_block_contact);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> fluid_advection_time_step(water_block, U_max);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> fluid_acoustic_time_step(water_block);
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
-    //----------------------------------------------------------------------
-    //	Define the wetting diffusion dynamics used in the simulation.
-    //----------------------------------------------------------------------
+    GetDiffusionTimeStepSize get_thermal_time_step(cylinder);
+    CylinderFluidDiffusionDirichlet cylinder_wetting(cylinder_contact);
     SimpleDynamics<WettingFluidBodyInitialCondition> wetting_water_initial_condition(water_block);
     SimpleDynamics<WettingWallBodyInitialCondition> wetting_wall_initial_condition(wall_boundary);
     SimpleDynamics<WettingCylinderBodyInitialCondition> wetting_cylinder_initial_condition(cylinder);
-    GetDiffusionTimeStepSize<DiffusionCylinderParticles> get_thermal_time_step(cylinder);
-    CylinderFluidDiffusionDirichlet cylinder_wetting(cylinder_contact);
+
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
+    InteractionWithUpdate<WettingCoupledSpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_block_contact);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
+
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
+
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> fluid_advection_time_step(water_block, U_max);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(water_block);
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-    SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> fluid_viscous_force_on_inserted_body(cylinder_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid>
-        fluid_pressure_force_on_inserted_body(cylinder_contact, fluid_viscous_force_on_inserted_body);
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_from_fluid(cylinder_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(fluid_density_relaxation)>> pressure_force_from_fluid(cylinder_contact);
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
     //----------------------------------------------------------------------
     //	Building Simbody.
     //----------------------------------------------------------------------
@@ -361,8 +328,9 @@ int main(int ac, char *av[])
      */
     Vecd displacement0 = cylinder_constraint_area.initial_mass_center_ - tethering_point;
     SimTK::MobilizedBody::Planar tethered_spot(fixed_spot,
-                                               SimTK::Transform(SimTKVec3(displacement0[0], displacement0[1], 0.0)), tethered_spot_info, SimTK::Transform(SimTKVec3(0)));
-    // discreted forces acting on the bodies
+                                               SimTK::Transform(SimTKVec3(displacement0[0], displacement0[1], 0.0)),
+                                               tethered_spot_info, SimTK::Transform(SimTKVec3(0)));
+    // discrete forces acting on the bodies
     SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(0.0, Real(-9.81), 0.0), 0.0);
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
     fixed_spot_info.addDecoration(SimTK::Transform(), SimTK::DecorativeSphere(0.02));
@@ -385,12 +353,14 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_cylinder_displacement("Position", io_environment, cylinder_observer_contact);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_cylinder_wetting("Phi", io_environment, wetting_observer_contact);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    body_states_recording.addToWrite<Real>(water_block, "Pressure");          // output for debug
+    body_states_recording.addToWrite<Real>(water_block, "Density");           // output for debug
+    body_states_recording.addToWrite<int>(water_block, "Indicator");          // output for debug
+    body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection"); // output for debug
+    RestartIO restart_io(sph_system);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_cylinder_displacement("Position", cylinder_observer_contact);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_cylinder_wetting("Phi", wetting_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -404,23 +374,12 @@ int main(int ac, char *av[])
     wetting_cylinder_initial_condition.exec();
     Real dt_thermal = get_thermal_time_step.exec();
     free_stream_surface_indicator.exec();
-    //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
-        water_block.updateCellLinkedList();
-        water_block_complex.updateConfiguration();
-        cylinder.updateCellLinkedList();
-        water_block_inner.updateConfiguration();
-        cylinder_inner.updateConfiguration();
-        cylinder_contact.updateConfiguration();
-    }
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
     int restart_output_interval = screen_output_interval * 10;
@@ -444,7 +403,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         /** Integrate time (loop) until the next output time. */
@@ -452,24 +411,23 @@ int main(int ac, char *av[])
         {
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
-            fluid_step_initialization.exec();
             Real Dt = fluid_advection_time_step.exec();
 
             fluid_density_by_summation.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
             time_instance = TickCount::now();
             Real relaxation_time = 0.0;
             Real dt = 0.0;
-            fluid_viscous_force_on_inserted_body.exec();
+            viscous_force_from_fluid.exec();
             while (relaxation_time < Dt)
             {
                 /** inner loop for dual-time criteria time-stepping.  */
                 dt = SMIN(SMIN(dt_thermal, fluid_acoustic_time_step.exec()), Dt);
                 fluid_pressure_relaxation.exec(dt);
-                fluid_pressure_force_on_inserted_body.exec();
+                pressure_force_from_fluid.exec();
                 fluid_density_relaxation.exec(dt);
                 cylinder_wetting.exec(dt);
 
@@ -481,7 +439,7 @@ int main(int ac, char *av[])
 
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
@@ -489,7 +447,7 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                          << GlobalStaticVariables::physical_time_
+                          << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
 
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
@@ -504,7 +462,11 @@ int main(int ac, char *av[])
 
             /** Update cell linked list and configuration. */
             time_instance = TickCount::now();
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             cylinder.updateCellLinkedList();
             water_block_inner.updateConfiguration();
             cylinder_inner.updateConfiguration();

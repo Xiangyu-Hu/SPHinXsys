@@ -25,7 +25,7 @@ Real particle_spacing_structure = 0.1;         /**< Structure particle spacing. 
 Real BW = particle_spacing_ref * 4.0;          /**< Extending width for BCs. */
 Real Maker_width = particle_spacing_ref * 4.0; /**< Width of the wave_maker. */
 
-BoundingBox system_domain_bounds(Vecd(-BW, -EXS - BW, -BW), Vecd(EXS + BW, DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vecd(-BW, -EXS - BW, -BW), Vecd(EXS + BW, DL + BW, DH + BW));
 
 Vecd offset = Vecd::Zero();
 // water block parameters
@@ -298,7 +298,7 @@ class WaterBlock : public ComplexShape
         Vecd halfsize_water(0.5 * DW, 0.5 * (DL - EXS), 0.5 * WH);
         Vecd water_pos(0.5 * DW, 0.5 * (DL - EXS), 0.5 * WH);
         Transform translation_water(water_pos);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_water), halfsize_water);
+        add<GeometricShapeBox>(Transform(translation_water), halfsize_water);
         subtract<TriangleMeshShapeSTL>(stl_structure_path, translation_str, StructureScale);
     }
 };
@@ -321,21 +321,21 @@ class WallBoundary : public ComplexShape
         Vecd halfsize_wall_outer(0.5 * DW + BW, 0.5 * DL + BW, 0.5 * DH + BW);
         Vecd wall_outer_pos(0.5 * DW, 0.5 * DL - EXS, 0.5 * DH);
         Transform translation_wall_outer(wall_outer_pos);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_wall_outer), halfsize_wall_outer);
+        add<GeometricShapeBox>(Transform(translation_wall_outer), halfsize_wall_outer);
 
         Vecd halfsize_wall_inner(0.5 * DW, 0.5 * DL, 0.5 * DH + BW);
         Vecd wall_inner_pos(0.5 * DW, 0.5 * DL - EXS, BW + 0.5 * DH);
         Transform translation_wall_inner(wall_inner_pos);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(translation_wall_inner), halfsize_wall_inner);
+        subtract<GeometricShapeBox>(Transform(translation_wall_inner), halfsize_wall_inner);
 
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_wave_maker), wave_maker_shape);
+        add<GeometricShapeBox>(Transform(translation_wave_maker), wave_maker_shape);
     }
 };
 
 //----------------------------------------------------------------------
 //	Boundary condition for wave_maker
 //----------------------------------------------------------------------
-class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticle>
+class WaveMaking : public BodyPartMotionConstraint
 {
     Real h;
     Real tf;
@@ -454,19 +454,26 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticl
 
   public:
     WaveMaking(BodyPartByParticle &body_part)
-        : solid_dynamics::BaseMotionConstraint<BodyPartByParticle>(body_part),
-          h(WH), tf(5), xf(4.5), fmn(0.32), fmx(0.96), a(0.0078), N(32), g(gravity_g)
+        : BodyPartMotionConstraint(body_part),
+          h(WH), tf(5), xf(4.5), fmn(0.32), fmx(0.96), a(0.0078), N(32), g(gravity_g),
+          acc_(particles_->registerStateVariableData<Vecd>("Acceleration")),
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime"))
+
     {
         ComputeWaveChar();
     }
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Real time = GlobalStaticVariables::physical_time_;
+        Real time = *physical_time_;
         pos_[index_i] = pos0_[index_i] + getDisplacement(time);
         vel_[index_i] = getVelocity(time);
-        force_[index_i] = mass_[index_i] * getAcceleration(time);
+        acc_[index_i] = getAcceleration(time);
     };
+
+  protected:
+    Vecd *acc_;
+    Real *physical_time_;
 };
 
 //----------------------------------------------------------------------

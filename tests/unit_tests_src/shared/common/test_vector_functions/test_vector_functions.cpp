@@ -87,8 +87,8 @@ TEST(TransformationMatrix, getTransformationMatrix)
     {
         // Generate 3D unit vectors with a spherically symmetric probability distribution
         // according to the link: https://mathworld.wolfram.com/SpherePointPicking.html
-        Real u = (Real)rand() / (RAND_MAX);
-        Real v = (Real)rand() / (RAND_MAX);
+        Real u = rand_uniform(0.0, 1.0);
+        Real v = rand_uniform(0.0, 1.0);
         Real theta = 2.0 * Pi * u;
         Real cos_phi = 2.0 * v - 1.0;
         Real sin_phi = sqrt(1.0 - cos_phi * cos_phi);

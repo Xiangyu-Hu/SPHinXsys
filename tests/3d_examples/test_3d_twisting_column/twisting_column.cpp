@@ -36,8 +36,8 @@ class Column : public ComplexShape
   public:
     explicit Column(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_column), halfsize_column);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder);
+        add<GeometricShapeBox>(Transform(translation_column), halfsize_column);
+        add<GeometricShapeBox>(Transform(translation_holder), halfsize_holder);
     }
 };
 //----------------------------------------------------------------------
@@ -48,7 +48,7 @@ class InitialCondition
 {
   public:
     explicit InitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
+        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -77,20 +77,19 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Vec3d domain_lower_bound(-SL - BW, -0.5 * (PH + BW), -0.5 * (PW + BW));
     Vec3d domain_upper_bound(PL, 0.5 * (PH + BW), 0.5 * (PW + BW));
-    BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+    BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     // Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     SolidBody column(sph_system, makeShared<Column>("Column"));
-    column.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-    column.generateParticles<ParticleGeneratorLattice>();
+    column.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    column.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody my_observer(sph_system, "MyObserver");
     StdVec<Vecd> observation_location = {Vecd(PL, 0.0, 0.0)};
-    my_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    my_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -103,23 +102,26 @@ int main(int ac, char *av[])
     //	Define the numerical methods used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    SimpleDynamics<InitialCondition> initial_condition(column);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> corrected_configuration(column_inner);
-    /** Time step size calculation. We use CFL = 0.5 due to the very large twisting speed. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.5);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(column_inner);
     Dynamics1Level<solid_dynamics::DecomposedIntegration1stHalf> stress_relaxation_first_half(column_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
-    BodyRegionByParticle holder(column, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder, "Holder"));
-    SimpleDynamics<solid_dynamics::FixBodyPartConstraint> constraint_holder(holder);
+
+    /** Time step size calculation. We use CFL = 0.5 due to the very large twisting speed. */
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(column, 0.5);
+    SimpleDynamics<InitialCondition> initial_condition(column);
+
+    GeometricShapeBox holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
+    BodyRegionByParticle holder(column, holder_shape);
+    SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_velocity("Velocity", io_environment, my_observer_contact);
+        write_velocity("Velocity", my_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_displacement("Position", io_environment, my_observer_contact);
+        write_displacement("Position", my_observer_contact);
     //----------------------------------------------------------------------
     // From here the time stepping begins.
     //----------------------------------------------------------------------
@@ -130,6 +132,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Setup time-stepping related simulation parameters.
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     Real end_time = 0.5;
     Real output_period = end_time / 250.0;
@@ -148,7 +151,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // Main time-stepping loop.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_period)
@@ -156,7 +159,7 @@ int main(int ac, char *av[])
             if (number_of_iterations % 100 == 0)
             {
                 std::cout << "N=" << number_of_iterations << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
             stress_relaxation_first_half.exec(dt);
@@ -166,7 +169,7 @@ int main(int ac, char *av[])
             number_of_iterations++;
             dt = computing_time_step_size.exec();
             integration_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
             write_displacement.writeToFile(number_of_iterations);
             write_velocity.writeToFile(number_of_iterations);
         }

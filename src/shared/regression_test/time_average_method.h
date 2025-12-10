@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -55,39 +55,30 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     StdVec<VariableType> local_meanvalue_;             /* the container of meanvalue for current result. */
 
     /** the method used for filtering local extreme values. */
-    void filterLocalResult(BiVector<Real> &current_result);
-    void filterLocalResult(BiVector<Vecd> &current_result);
-    void filterLocalResult(BiVector<Matd> &current_result);
-
+    void filterLocalResult(BiVector<VariableType> &current_result);
     /** the method used for searching steady starting point. */
-    void searchSteadyStart(BiVector<Real> &current_result);
-    void searchSteadyStart(BiVector<Vecd> &current_result);
-    void searchSteadyStart(BiVector<Matd> &current_result);
-
+    void searchSteadyStart();
     /** the method used for calculating the new variance. */
-    void calculateNewVariance(BiVector<Real> &current_result, StdVec<Real> &local_meanvalue, StdVec<Real> &variance, StdVec<Real> &variance_new);
-    void calculateNewVariance(BiVector<Vecd> &current_result, StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance, StdVec<Vecd> &variance_new);
-    void calculateNewVariance(BiVector<Matd> &current_result, StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance, StdVec<Matd> &variance_new);
-
+    void calculateNewVariance(BiVector<VariableType> &current_result_trans);
     /** the method used for comparing the meanvalue and variance. */
-    int compareParameter(std::string par_name, StdVec<Real> &parameter, StdVec<Real> &parameter_new, Real &threshold);
-    int compareParameter(std::string par_name, StdVec<Vecd> &parameter, StdVec<Vecd> &parameter_new, Vecd &threshold);
-    int compareParameter(std::string par_name, StdVec<Matd> &parameter, StdVec<Matd> &parameter_new, Matd &threshold);
-
+    int compareParameter(std::string par_name, StdVec<VariableType> &parameter,
+                         StdVec<VariableType> &parameter_new, VariableType &threshold);
     /** the method used for testing the new result with meanvalue and variance. */
-    int testNewResult(BiVector<Real> &current_result, StdVec<Real> &meanvalue, StdVec<Real> &local_meanvalue, StdVec<Real> &variance);
-    int testNewResult(BiVector<Vecd> &current_result, StdVec<Vecd> &meanvalue, StdVec<Vecd> &local_meanvalue, StdVec<Vecd> &variance);
-    int testNewResult(BiVector<Matd> &current_result, StdVec<Matd> &meanvalue, StdVec<Matd> &local_meanvalue, StdVec<Matd> &variance);
+    int testNewResult(BiVector<VariableType> &current_result, StdVec<VariableType> &meanvalue,
+                      StdVec<VariableType> &local_meanvalue, StdVec<VariableType> &variance);
 
   public:
     template <typename... Args>
-    explicit RegressionTestTimeAverage(Args &&...args) : RegressionTestBase<ObserveMethodType>(std::forward<Args>(args)...),
-                                                                     mean_variance_xml_engine_in_("mean_variance_xml_engine_in_", "meanvariance"),
-                                                                     mean_variance_xml_engine_out_("mean_variance_xml_engine_out_", "meanvariance")
+    explicit RegressionTestTimeAverage(Args &&...args)
+        : RegressionTestBase<ObserveMethodType>(std::forward<Args>(args)...),
+          mean_variance_xml_engine_in_("mean_variance_xml_engine_in_", "meanvariance"),
+          mean_variance_xml_engine_out_("mean_variance_xml_engine_out_", "meanvariance")
     {
-        mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->dynamics_identifier_name_ + "_" + this->quantity_name_ + "_time_averaged_mean_variance.xml";
+        mean_variance_filefullpath_ = this->input_folder_path_ + "/" +
+                                      this->dynamics_identifier_name_ + "_" + this->quantity_name_ +
+                                      "_time_averaged_mean_variance.xml";
     };
-    virtual ~RegressionTestTimeAverage(){};
+    virtual ~RegressionTestTimeAverage() {};
 
     /** initialize the threshold of meanvalue and variance. */
     void initializeThreshold(VariableType &threshold_mean, VariableType &threshold_variance);
@@ -101,12 +92,10 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     void resultTest();              /** test the new result if it is converged within the range. */
 
     /* the interface for generating the priori converged result with time-averaged meanvalue and variance. */
-    void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, std::string filter = "false")
+    void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, const std::string &filter = "false")
     {
-        this->writeXmlToXmlFile();  /* currently defined in in_output. */
-        this->readXmlFromXmlFile(); /* currently defined in in_output. */
         initializeThreshold(threshold_mean, threshold_variance);
-        if (this->converged == "false")
+        if (this->converged_ == "false")
         {
             setupTheTest();
             if (filter == "true")
@@ -124,10 +113,8 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
     };
 
     /** the interface for testing new result. */
-    void testResult(std::string filter = "false")
+    void testResult(const std::string &filter = "false")
     {
-        this->writeXmlToXmlFile();  /* currently defined in in_output. */
-        this->readXmlFromXmlFile(); /* currently defined in in_output. */
         setupTheTest();
         if (filter == "true")
             filterExtremeValues();

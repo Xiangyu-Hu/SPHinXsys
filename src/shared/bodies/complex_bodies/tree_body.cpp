@@ -3,7 +3,7 @@
 #include "adaptation.h"
 #include "base_material.h"
 #include "base_particle_dynamics.h"
-#include "base_particles.h"
+#include "base_particles.hpp"
 #include "neighborhood.h"
 
 namespace SPH
@@ -20,13 +20,12 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
     neighboring_ids.push_back(branches_[1]->inner_particles_[0]);
     neighboring_ids.push_back(branches_[1]->inner_particles_[1]);
     /** Build configuration. */
-    const StdLargeVec<Vecd> &pos = base_particles_->pos_;
-    const StdLargeVec<Real> &Vol = base_particles_->Vol_;
+    Vecd *pos = base_particles_->ParticlePositions();
     NeighborBuilderInner neighbor_relation_inner(*this);
     for (size_t n = 0; n != neighboring_ids.size(); ++n)
     {
         size_t index_j = neighboring_ids[n];
-        ListData list_data_j = std::make_tuple(index_j, pos[index_j], Vol[index_j]);
+        ListData list_data_j = std::make_pair(index_j, pos[index_j]);
         Neighborhood &neighborhood = particle_configuration[particle_id];
         neighbor_relation_inner(neighborhood, pos[particle_id], particle_id, list_data_j);
     }
@@ -93,7 +92,7 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
         for (size_t n = 0; n != neighboring_ids.size(); ++n)
         {
             size_t index_j = neighboring_ids[n];
-            ListData list_data_j = std::make_tuple(index_j, pos[index_j], Vol[index_j]);
+            ListData list_data_j = std::make_pair(index_j, pos[index_j]);
             Neighborhood &neighborhood = particle_configuration[particle_id];
             neighbor_relation_inner(neighborhood, pos[particle_id], particle_id, list_data_j);
         }
@@ -165,7 +164,7 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
                 for (size_t n = 0; n != neighboring_ids.size(); ++n)
                 {
                     size_t index_j = neighboring_ids[n];
-                    ListData list_data_j = std::make_tuple(index_j, pos[index_j], Vol[index_j]);
+                    ListData list_data_j = std::make_pair(index_j, pos[index_j]);
                     Neighborhood &neighborhood = particle_configuration[particle_id];
                     neighbor_relation_inner(neighborhood, pos[particle_id], particle_id, list_data_j);
                 }
@@ -203,7 +202,7 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
                 for (size_t n = 0; n != neighboring_ids.size(); ++n)
                 {
                     size_t index_j = neighboring_ids[n];
-                    ListData list_data_j = std::make_tuple(index_j, pos[index_j], Vol[index_j]);
+                    ListData list_data_j = std::make_pair(index_j, pos[index_j]);
                     Neighborhood &neighborhood = particle_configuration[particle_id];
                     neighbor_relation_inner(neighborhood, pos[particle_id], particle_id, list_data_j);
                 }
@@ -212,9 +211,9 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
     }
 }
 //=================================================================================================//
-size_t TreeBody::BranchLocation(size_t particle_idx)
+size_t TreeBody::BranchLocation(size_t total_particles, size_t particle_idx)
 {
-    return particle_idx < base_particles_->total_real_particles_ ? branch_locations_[particle_idx] : MaxSize_t;
+    return particle_idx < total_particles ? branch_locations_[particle_idx] : MaxSize_t;
 }
 //=================================================================================================//
 TreeBody::Branch::Branch(TreeBody *tree)
@@ -233,7 +232,7 @@ TreeBody::Branch::Branch(size_t parent_id, TreeBody *tree)
 }
 //=================================================================================================//
 TreeTerminates::TreeTerminates(SPHBody &sph_body)
-    : BodyPartByParticle(sph_body, "Leaves"),
+    : BodyPartByParticle(sph_body),
       tree_(DynamicCast<TreeBody>(this, sph_body))
 {
     for (const auto *branch : tree_.branches_)

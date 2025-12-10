@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -30,14 +30,14 @@
 #define LEVEL_SET_SHAPE_H
 
 #include "base_geometry.h"
-#include "level_set.h"
+#include "level_set.hpp"
 
 #include <string>
 
 namespace SPH
 {
-class IOEnvironment;
 class SPHBody;
+class SPHSystem;
 /**
  * @class LevelSetShape
  * @brief A shape using level set to define geometry
@@ -45,32 +45,74 @@ class SPHBody;
 class LevelSetShape : public Shape
 {
   private:
-    UniquePtrKeeper<BaseLevelSet> level_set_keeper_;
+    UniquePtrKeeper<LevelSet> level_set_keeper_;
     SharedPtr<SPHAdaptation> sph_adaptation_;
 
   public:
     /** refinement_ratio is between body reference resolution and level set resolution */
-    LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio = 1.0);
-    LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
+    LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation,
+                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric);
+    LevelSetShape(SPHBody &sph_body, Shape &shape,
+                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric);
 
-    virtual ~LevelSetShape(){};
+    template <class ExecutionPolicy>
+    LevelSetShape(const ExecutionPolicy &ex_policy, Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation,
+                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric)
+        : LevelSetShape(shape.getBounds(), shape, sph_adaptation, refinement_ratio)
+    {
+        finishInitialization(ex_policy, usage_type);
+    };
+
+    template <class ExecutionPolicy>
+    LevelSetShape(const ExecutionPolicy &ex_policy, SPHBody &sph_body, Shape &shape,
+                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric)
+        : LevelSetShape(shape.getBounds(), sph_body, shape, refinement_ratio)
+    {
+        finishInitialization(ex_policy, usage_type);
+    };
+
+    virtual ~LevelSetShape() {};
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
+    virtual BoundingBoxd findBounds() override;
 
+    template <class ExecutionPolicy>
+    void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type)
+    {
+        level_set_.finishInitialization(ex_policy, usage_type);
+    };
     Vecd findLevelSetGradient(const Vecd &probe_point);
     Real computeKernelIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
     Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
+    Matd computeKernelSecondGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
     /** small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing */
-    LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
+    LevelSetShape *cleanLevelSet(UnsignedInt repeat_times = 1);
     /** required to build level set from triangular mesh in stl file format. */
-    LevelSetShape *correctLevelSetSign(Real small_shift_factor = 1.0);
-    void writeLevelSet(IOEnvironment &io_environment);
+    LevelSetShape *correctLevelSetSign();
+    LevelSetShape *writeLevelSet(SPHSystem &sph_system);
+    LevelSetShape *writeBKGMesh(SPHSystem &sph_system);
+    LevelSet &getLevelSet() { return level_set_; }
+
+    template <typename DataType>
+    LevelSetShape *addMeshVariableToWrite(const std::string &variable_name)
+    {
+        level_set_.addMeshVariableToWrite<DataType>(variable_name);
+        return this;
+    };
+
+    template <typename DataType>
+    LevelSetShape *addBKGMeshVariableToWrite(const std::string &variable_name)
+    {
+        level_set_.addBKGMeshVariableToWrite<DataType>(variable_name);
+        return this;
+    };
 
   protected:
-    BaseLevelSet &level_set_; /**< narrow bounded level set mesh. */
-
-    virtual BoundingBox findBounds() override;
+    LevelSetShape(BoundingBoxd bounding_box, Shape &shape,
+                  SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio);
+    LevelSetShape(BoundingBoxd bounding_box, SPHBody &sph_body, Shape &shape, Real refinement_ratio);
+    LevelSet &level_set_; /**< narrow bounded level set mesh. */
 };
 } // namespace SPH
 #endif // LEVEL_SET_SHAPE_H

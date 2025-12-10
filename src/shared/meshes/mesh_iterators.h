@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -32,66 +32,16 @@
 #ifndef MESH_ITERATORS_H
 #define MESH_ITERATORS_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
+
+#include "execution_policy.h"
 
 namespace SPH
 {
-/** iteration with void (non_value_returning) function. 2D case. */
-template <int lower0, int upper0,
-          int lower1, int upper1, typename FunctionOnEach>
-inline void mesh_for_each2d(const FunctionOnEach &function);
-template <int lower, int upper, typename FunctionOnEach>
-inline void mesh_for_each2d(const FunctionOnEach &function)
-{
-    mesh_for_each2d<lower, upper, lower, upper, FunctionOnEach>(function);
-};
-
-/** iteration with boolean return function. 2D case. */
-template <int lower0, int upper0,
-          int lower1, int upper1, typename CheckOnEach>
-inline Array2i mesh_find_if2d(const CheckOnEach &function);
-template <int lower, int upper, typename CheckOnEach>
-inline Array2i mesh_find_if2d(const CheckOnEach &function)
-{
-    return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(function);
-};
-template <int lower, int upper, typename CheckOnEach>
-inline bool mesh_any_of2d(const CheckOnEach &function)
-{
-    return mesh_find_if2d<lower, upper, lower, upper, CheckOnEach>(
-               function) != Array2i(upper, upper);
-};
-
-/** iteration with void (non_value_returning) function. 3D case. */
-template <int lower0, int upper0,
-          int lower1, int upper1,
-          int lower2, int upper2, typename FunctionOnEach>
-inline void mesh_for_each3d(const FunctionOnEach &function);
-template <int lower, int upper, typename FunctionOnEach>
-inline void mesh_for_each3d(const FunctionOnEach &function)
-{
-    mesh_for_each3d<lower, upper, lower, upper, lower, upper, FunctionOnEach>(function);
-};
-
-/** iteration with boolean return function.  3D case. */
-template <int lower0, int upper0,
-          int lower1, int upper1,
-          int lower2, int upper2, typename CheckOnEach>
-inline Array3i mesh_find_if3d(const CheckOnEach &function);
-template <int lower, int upper, typename CheckOnEach>
-inline Array3i mesh_find_if3d(const CheckOnEach &function)
-{
-    return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(function);
-};
-template <int lower, int upper, typename CheckOnEach>
-inline bool mesh_any_of3d(const CheckOnEach &function)
-{
-    return mesh_find_if3d<lower, upper, lower, upper, lower, upper, CheckOnEach>(
-               function) != Array3i(upper, upper, upper);
-};
-
 template <typename FunctionOnEach>
 void mesh_for_each(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function);
+template <typename FunctionOnEach>
+void mesh_for_column_major(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function);
 template <typename FunctionOnEach>
 Arrayi mesh_find_if(const Arrayi &lower, const Arrayi &upper, const FunctionOnEach &function);
 template <typename FunctionOnEach>
@@ -107,5 +57,45 @@ void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, 
 /** Iterator on the mesh by looping index. parallel computing. */
 template <typename LocalFunction, typename... Args>
 void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args);
+
+/** Iterator on the mesh by looping index. parallel computing. */
+template <typename LocalFunction, typename... Args>
+void mesh_for(const execution::SequencedPolicy &seq, const MeshRange &mesh_range,
+              const LocalFunction &local_function, Args &&...args)
+{
+    mesh_for(mesh_range, local_function, std::forward<Args>(args)...);
+};
+
+template <typename LocalFunction, typename... Args>
+void mesh_for(const execution::ParallelPolicy &par_host, const MeshRange &mesh_range,
+              const LocalFunction &local_function, Args &&...args)
+{
+    mesh_parallel_for(mesh_range, local_function, std::forward<Args>(args)...);
+};
+
+template <typename FunctionOnData>
+void package_for(const execution::SequencedPolicy &seq, UnsignedInt start_index,
+                 UnsignedInt num_grid_pkgs, const FunctionOnData &function)
+{
+    for (size_t i = start_index; i != num_grid_pkgs; ++i)
+        function(i);
+}
+
+template <typename FunctionOnData>
+void package_for(const execution::ParallelPolicy &par_host, UnsignedInt start_index,
+                 UnsignedInt num_grid_pkgs, const FunctionOnData &function)
+{
+    parallel_for(IndexRange(start_index, num_grid_pkgs), [&](const IndexRange &r)
+                 {
+                    for (size_t i = r.begin(); i != r.end(); ++i)
+                    {
+                        function(i);
+                    } }, ap);
+}
+
+template <typename FunctionOnData>
+void package_for(const execution::ParallelDevicePolicy &par_device,
+                 UnsignedInt start_index, UnsignedInt num_grid_pkgs,
+                 const FunctionOnData &function);
 } // namespace SPH
 #endif // MESH_ITERATORS_H

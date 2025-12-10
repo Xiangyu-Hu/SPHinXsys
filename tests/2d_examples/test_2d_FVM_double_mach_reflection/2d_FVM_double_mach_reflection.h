@@ -9,15 +9,14 @@
 #define FVM_DOUBLE_MACH_REFLECTION_H
 #include "common_compressible_FVM_classes.h" // classes for compressible fluid only in FVM.
 using namespace SPH;
-using namespace std;
+
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 4.0;                           /**< Computation domain length. */
-Real DH = 1.0;                           /**< Computation domain height. */
-Real particle_spacing_ref = 1.0 / 240.0; /**< Initial reference particle spacing. */
+Real DL = 4.0; /**< Computation domain length. */
+Real DH = 1.0; /**< Computation domain height. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
+BoundingBoxd system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -62,23 +61,13 @@ class WaveBody : public ComplexShape
 //----------------------------------------------------------------------
 //	Case-dependent initial condition.
 //----------------------------------------------------------------------
-class DMFInitialCondition
-    : public fluid_dynamics::FluidInitialCondition
+class DMFInitialCondition : public fluid_dynamics::CompressibleFluidInitialCondition
 {
   public:
     explicit DMFInitialCondition(SPHBody &sph_body)
-        : FluidInitialCondition(sph_body), pos_(particles_->pos_), vel_(particles_->vel_),
-          rho_(particles_->rho_), Vol_(particles_->Vol_), mass_(particles_->mass_), 
-          p_(*particles_->getVariableByName<Real>("Pressure"))
-    {
-        particles_->registerVariable(mom_, "Momentum");
-        particles_->registerVariable(dmom_dt_, "MomentumChangeRate");
-        particles_->registerVariable(dmom_dt_prior_, "OtherMomentumChangeRate");
-        particles_->registerVariable(E_, "TotalEnergy");
-        particles_->registerVariable(dE_dt_, "TotalEnergyChangeRate");
-        particles_->registerVariable(dE_dt_prior_, "OtherEnergyChangeRate");
-        gamma_ = heat_capacity_ratio;
-    };
+        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
+    virtual ~DMFInitialCondition(){};
+
     void update(size_t index_i, Real dt)
     {
         if (pos_[index_i][1] > tan(3.14159 / 3.0) * (pos_[index_i][0] - 1.0 / 6.0))
@@ -107,11 +96,7 @@ class DMFInitialCondition
     }
 
   protected:
-    StdLargeVec<Vecd> &pos_, &vel_;
-    StdLargeVec<Real> &rho_, &Vol_, &mass_, &p_;
-    StdLargeVec<Vecd> mom_, dmom_dt_, dmom_dt_prior_;
-    StdLargeVec<Real> E_, dE_dt_, dE_dt_prior_;
-    Real gamma_;
+    Real gamma_ = heat_capacity_ratio;
 };
 
 //----------------------------------------------------------------------
@@ -120,11 +105,10 @@ class DMFInitialCondition
 class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
 {
   public:
-    DMFBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, vector<vector<size_t>> each_boundary_type_with_all_ghosts_index,
-                              vector<vector<Vecd>> each_boundary_type_with_all_ghosts_eij_, vector<vector<size_t>> each_boundary_type_contact_real_index)
-        : BoundaryConditionSetupInFVM(inner_relation, each_boundary_type_with_all_ghosts_index, 
-            each_boundary_type_with_all_ghosts_eij_, each_boundary_type_contact_real_index),
-            E_(*particles_->getVariableByName<Real>("TotalEnergy")){};
+    DMFBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
+        : BoundaryConditionSetupInFVM(inner_relation, ghost_creation),
+          E_(particles_->getVariableDataByName<Real>("TotalEnergy")),
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~DMFBoundaryConditionSetup(){};
 
     // Override these methods to define the specific boundary conditions
@@ -169,8 +153,7 @@ class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
 
     void applyTopBoundary(size_t ghost_index, size_t index_i) override
     {
-        Real run_time = GlobalStaticVariables::physical_time_;
-        Real x_1 = 1.0 / 6.0 + run_time * 10.0 / sin(3.14159 / 3.0);
+        Real x_1 = 1.0 / 6.0 + *physical_time_ * 10.0 / sin(3.14159 / 3.0);
         if (pos_[index_i][1] > tan(3.14159 / 3.0) * (pos_[index_i][0] - x_1))
         {
             rho_[ghost_index] = rho0_another;
@@ -200,6 +183,7 @@ class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
     }
 
   protected:
-    StdLargeVec<Real> &E_;
+    Real *E_;
+    Real *physical_time_;
 };
 #endif // FVM_DOUBLE_MACH_REFLECTION_H

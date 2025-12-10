@@ -11,45 +11,48 @@
 namespace SPH
 {
 //=================================================================================================//
-template <class ParticlesType>
-BaseReactionRelaxation<ParticlesType>::
-    BaseReactionRelaxation(SPHBody &sph_body)
-    : LocalDynamics(sph_body),
-      DiffusionReactionSimpleData<ParticlesType>(sph_body),
-      reactive_species_(this->particles_->ReactiveSpecies()),
-      reaction_model_(this->particles_->diffusion_reaction_material_.ReactionModel()) {}
+template <class ReactionModelType>
+BaseReactionRelaxation<ReactionModelType>::
+    BaseReactionRelaxation(SPHBody &sph_body, ReactionModelType &reaction_model)
+    : LocalDynamics(sph_body), reaction_model_(reaction_model)
+{
+    ReactiveSpeciesNames &species_names = reaction_model.getSpeciesNames();
+    for (size_t k = 0; k != NumReactiveSpecies; ++k)
+    {
+        reactive_species_.push_back(this->particles_->template registerStateVariableData<Real>(species_names[k]));
+    }
+}
 //=================================================================================================//
-template <class ParticlesType>
-void BaseReactionRelaxation<ParticlesType>::
+template <class ReactionModelType>
+void BaseReactionRelaxation<ReactionModelType>::
     loadLocalSpecies(LocalSpecies &local_species, size_t index_i)
 {
     for (size_t k = 0; k != NumReactiveSpecies; ++k)
     {
-        local_species[k] = (*reactive_species_[k])[index_i];
+        local_species[k] = reactive_species_[k][index_i];
     }
 }
 //=================================================================================================//
-template <class ParticlesType>
-void BaseReactionRelaxation<ParticlesType>::
+template <class ReactionModelType>
+void BaseReactionRelaxation<ReactionModelType>::
     applyGlobalSpecies(LocalSpecies &local_species, size_t index_i)
 {
     for (size_t k = 0; k != NumReactiveSpecies; ++k)
     {
-        (*reactive_species_[k])[index_i] = local_species[k];
+        reactive_species_[k][index_i] = local_species[k];
     }
 }
 //=================================================================================================//
-template <class ParticlesType>
-Real BaseReactionRelaxation<ParticlesType>::UpdateAReactionSpecies::
+template <class ReactionModelType>
+Real BaseReactionRelaxation<ReactionModelType>::UpdateReactionSpecies::
 operator()(Real input, Real production_rate, Real loss_rate, Real dt) const
 {
-    return input * exp(-loss_rate * dt) +
-           production_rate * (1.0 - exp(-loss_rate * dt)) / (loss_rate + TinyReal);
+    Real alpha = exp(-loss_rate * dt);
+    return input * alpha + production_rate * (1.0 - alpha) / (loss_rate + TinyReal);
 }
 //=================================================================================================//
-template <class ParticlesType>
-void BaseReactionRelaxation<ParticlesType>::
-    advanceForwardStep(size_t index_i, Real dt)
+template <class ReactionModelType>
+void BaseReactionRelaxation<ReactionModelType>::advanceForwardStep(size_t index_i, Real dt)
 {
     LocalSpecies local_species;
     loadLocalSpecies(local_species, index_i);
@@ -57,14 +60,13 @@ void BaseReactionRelaxation<ParticlesType>::
     {
         Real production_rate = reaction_model_.get_production_rates_[k](local_species);
         Real loss_rate = reaction_model_.get_loss_rates_[k](local_species);
-        local_species[k] = updateAReactionSpecies(local_species[k], production_rate, loss_rate, dt);
+        local_species[k] = update_reaction_species_(local_species[k], production_rate, loss_rate, dt);
     }
     applyGlobalSpecies(local_species, index_i);
 }
 //=================================================================================================//
-template <class ParticlesType>
-void BaseReactionRelaxation<ParticlesType>::
-    advanceBackwardStep(size_t index_i, Real dt)
+template <class ReactionModelType>
+void BaseReactionRelaxation<ReactionModelType>::advanceBackwardStep(size_t index_i, Real dt)
 {
     LocalSpecies local_species;
     loadLocalSpecies(local_species, index_i);
@@ -73,7 +75,7 @@ void BaseReactionRelaxation<ParticlesType>::
         size_t m = k - 1;
         Real production_rate = reaction_model_.get_production_rates_[m](local_species);
         Real loss_rate = reaction_model_.get_loss_rates_[m](local_species);
-        local_species[m] = updateAReactionSpecies(local_species[m], production_rate, loss_rate, dt);
+        local_species[m] = update_reaction_species_(local_species[m], production_rate, loss_rate, dt);
     }
     applyGlobalSpecies(local_species, index_i);
 }

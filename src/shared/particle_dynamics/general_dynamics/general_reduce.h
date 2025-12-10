@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -35,45 +35,37 @@
 namespace SPH
 {
 /**
- * @class MaximumNorm
+ * @class VariableNorm
  * @brief  obtained the maximum norm of a variable
  */
-template <typename DataType>
-class MaximumNorm : public LocalDynamicsReduce<Real, ReduceMax>,
-                    public GeneralDataDelegateSimple
+template <typename DataType, typename NormType, class DynamicsIdentifier = SPHBody>
+class VariableNorm : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>
 {
   public:
-    MaximumNorm(SPHBody &sph_body, const std::string &variable_name)
-        : LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
-          GeneralDataDelegateSimple(sph_body),
-          variable_(*particles_->getVariableByName<DataType>(variable_name)){};
-    virtual ~MaximumNorm(){};
+    VariableNorm(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>(identifier),
+          variable_(this->particles_->template getVariableDataByName<DataType>(variable_name)) {};
+    virtual ~VariableNorm() {};
     virtual Real outputResult(Real reduced_value) override { return std::sqrt(reduced_value); }
     Real reduce(size_t index_i, Real dt = 0.0) { return getSquaredNorm(variable_[index_i]); };
 
   protected:
-    StdLargeVec<DataType> &variable_;
-
-    template <typename Datatype>
-    Real getSquaredNorm(const Datatype &variable) { return variable.squaredNorm(); };
-
-    Real getSquaredNorm(const Real &variable) { return variable * variable; };
+    DataType *variable_;
 };
 
 /**
  * @class VelocityBoundCheck
  * @brief  check whether particle velocity within a given bound
  */
-class VelocityBoundCheck : public LocalDynamicsReduce<bool, ReduceOR>,
-                           public GeneralDataDelegateSimple
+class VelocityBoundCheck : public LocalDynamicsReduce<ReduceOR>
 {
   protected:
-    StdLargeVec<Vecd> &vel_;
+    Vecd *vel_;
     Real velocity_bound_;
 
   public:
     VelocityBoundCheck(SPHBody &sph_body, Real velocity_bound);
-    virtual ~VelocityBoundCheck(){};
+    virtual ~VelocityBoundCheck() {};
 
     bool reduce(size_t index_i, Real dt = 0.0);
 };
@@ -83,21 +75,21 @@ class VelocityBoundCheck : public LocalDynamicsReduce<bool, ReduceOR>,
  * @brief 	Get the upper front in an axis direction for a body or body part
  */
 template <class DynamicsIdentifier>
-class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<Real, ReduceMax, DynamicsIdentifier>,
-                                  public GeneralDataDelegateSimple
+class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>
 {
   protected:
     int axis_;
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
 
   public:
-    explicit UpperFrontInAxisDirection(DynamicsIdentifier &identifier, std::string name, int axis = lastAxis)
-        : BaseLocalDynamicsReduce<Real, ReduceMax, BodyPartByCell>(identifier, Real(MinRealNumber)),
-          GeneralDataDelegateSimple(identifier.getSPHBody()), axis_(axis), pos_(particles_->pos_)
+    explicit UpperFrontInAxisDirection(DynamicsIdentifier &identifier, const std::string &name, int axis = lastAxis)
+        : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
+          axis_(axis),
+          pos_(this->particles_->template getVariableDataByName<Vecd>("Position"))
     {
         this->quantity_name_ = name;
     }
-    virtual ~UpperFrontInAxisDirection(){};
+    virtual ~UpperFrontInAxisDirection() {};
 
     Real reduce(size_t index_i, Real dt = 0.0) { return pos_[index_i][axis_]; };
 };
@@ -106,15 +98,14 @@ class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<Real, ReduceMax
  * @class MaximumSpeed
  * @brief Get the maximum particle speed in a SPH body
  */
-class MaximumSpeed : public LocalDynamicsReduce<Real, ReduceMax>,
-                     public GeneralDataDelegateSimple
+class MaximumSpeed : public LocalDynamicsReduce<ReduceMax>
 {
   protected:
-    StdLargeVec<Vecd> &vel_;
+    Vecd *vel_;
 
   public:
     explicit MaximumSpeed(SPHBody &sph_body);
-    virtual ~MaximumSpeed(){};
+    virtual ~MaximumSpeed() {};
 
     Real reduce(size_t index_i, Real dt = 0.0);
 };
@@ -124,15 +115,14 @@ class MaximumSpeed : public LocalDynamicsReduce<Real, ReduceMax>,
  * @brief	the lower bound of a body by reduced particle positions.
  * 			TODO: a test using this method
  */
-class PositionLowerBound : public LocalDynamicsReduce<Vecd, ReduceLowerBound>,
-                           public GeneralDataDelegateSimple
+class PositionLowerBound : public LocalDynamicsReduce<ReduceLowerBound>
 {
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
 
   public:
     explicit PositionLowerBound(SPHBody &sph_body);
-    virtual ~PositionLowerBound(){};
+    virtual ~PositionLowerBound() {};
 
     Vecd reduce(size_t index_i, Real dt = 0.0);
 };
@@ -142,15 +132,14 @@ class PositionLowerBound : public LocalDynamicsReduce<Vecd, ReduceLowerBound>,
  * @brief	the upper bound of a body by reduced particle positions.
  * 			TODO: a test using this method
  */
-class PositionUpperBound : public LocalDynamicsReduce<Vecd, ReduceUpperBound>,
-                           public GeneralDataDelegateSimple
+class PositionUpperBound : public LocalDynamicsReduce<ReduceUpperBound>
 {
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
 
   public:
     explicit PositionUpperBound(SPHBody &sph_body);
-    virtual ~PositionUpperBound(){};
+    virtual ~PositionUpperBound() {};
 
     Vecd reduce(size_t index_i, Real dt = 0.0);
 };
@@ -159,75 +148,77 @@ class PositionUpperBound : public LocalDynamicsReduce<Vecd, ReduceUpperBound>,
  * @class QuantitySummation
  * @brief Compute the summation of  a particle variable in a body
  */
-template <typename VariableType>
-class QuantitySummation : public LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>,
-                          public GeneralDataDelegateSimple
+template <typename DataType, class DynamicsIdentifier = SPHBody>
+class QuantitySummation : public BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>
 {
-  protected:
-    StdLargeVec<VariableType> &variable_;
-
   public:
-    explicit QuantitySummation(SPHBody &sph_body, const std::string &variable_name)
-        : LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body, ZeroData<VariableType>::value),
-          GeneralDataDelegateSimple(sph_body),
-          variable_(*this->particles_->template getVariableByName<VariableType>(variable_name))
-    {
-        this->quantity_name_ = variable_name + "Summation";
-    };
-    virtual ~QuantitySummation(){};
+    explicit QuantitySummation(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : BaseLocalDynamicsReduce<ReduceSum<DataType>, DynamicsIdentifier>(identifier),
 
-    VariableType reduce(size_t index_i, Real dt = 0.0)
+          variable_(this->particles_->template getVariableDataByName<DataType>(variable_name))
+    {
+        this->quantity_name_ = "Total" + variable_name;
+    };
+    virtual ~QuantitySummation() {};
+
+    DataType reduce(size_t index_i, Real dt = 0.0)
     {
         return variable_[index_i];
     };
+
+  protected:
+    DataType *variable_;
 };
 
 /**
  * @class QuantityMoment
  * @brief Compute the moment of a body
  */
-template <typename VariableType>
-class QuantityMoment : public QuantitySummation<VariableType>
+template <typename DataType, class DynamicsIdentifier>
+class QuantityMoment : public QuantitySummation<DataType, DynamicsIdentifier>
 {
   protected:
-    StdLargeVec<Real> &mass_;
+    Real *mass_;
 
   public:
-    explicit QuantityMoment(SPHBody &sph_body, const std::string &variable_name)
-        : QuantitySummation<VariableType>(sph_body, variable_name),
-          mass_(this->particles_->mass_)
+    explicit QuantityMoment(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : QuantitySummation<DataType, DynamicsIdentifier>(identifier, variable_name),
+          mass_(this->particles_->template getVariableDataByName<Real>("Mass"))
     {
         this->quantity_name_ = variable_name + "Moment";
     };
-    virtual ~QuantityMoment(){};
+    virtual ~QuantityMoment() {};
 
-    VariableType reduce(size_t index_i, Real dt = 0.0)
+    DataType reduce(size_t index_i, Real dt = 0.0)
     {
         return mass_[index_i] * this->variable_[index_i];
     };
 };
 
-/**
- * @class TotalMechanicalEnergy
- * @brief Compute the total mechanical (kinematic and potential) energy
- */
-class TotalMechanicalEnergy
-    : public LocalDynamicsReduce<Real, ReduceSum<Real>>,
-      public GeneralDataDelegateSimple
+class TotalKineticEnergy
+    : public LocalDynamicsReduce<ReduceSum<Real>>
 {
-  private:
-    SharedPtrKeeper<Gravity> gravity_ptr_keeper_;
-
   protected:
-    StdLargeVec<Real> &mass_;
-    StdLargeVec<Vecd> &vel_, &pos_;
-    Gravity *gravity_;
+    Real *mass_;
+    Vecd *vel_;
 
   public:
-    explicit TotalMechanicalEnergy(SPHBody &sph_body, SharedPtr<Gravity> = makeShared<Gravity>(Vecd::Zero()));
-    virtual ~TotalMechanicalEnergy(){};
-
+    explicit TotalKineticEnergy(SPHBody &sph_body);
+    virtual ~TotalKineticEnergy() {};
     Real reduce(size_t index_i, Real dt = 0.0);
 };
+
+class TotalMechanicalEnergy : public TotalKineticEnergy
+{
+  protected:
+    Gravity &gravity_;
+    Vecd *pos_;
+
+  public:
+    explicit TotalMechanicalEnergy(SPHBody &sph_body, Gravity &gravity);
+    virtual ~TotalMechanicalEnergy() {};
+    Real reduce(size_t index_i, Real dt = 0.0);
+};
+
 } // namespace SPH
 #endif // GENERAL_REDUCE_H

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -32,15 +32,17 @@
 #define ALL_SHARED_PHYSICAL_DYNAMICS_H
 
 #include "active_muscle_dynamics.h"
+#include "all_configuration_dynamics.h"
+#include "all_continuum_dynamics.h"
 #include "all_diffusion_reaction_dynamics.h"
 #include "all_fluid_dynamics.h"
 #include "all_general_dynamics.h"
+#include "all_relax_dynamics.h"
 #include "all_solid_dynamics.h"
+#include "diffusion_optimization.h"
 #include "electro_physiology.h"
 #include "external_force.h"
 #include "particle_dynamics_dissipation.h"
 #include "particle_dynamics_dissipation.hpp"
-#include "all_relax_dynamics.h"
-#include "diffusion_optimization.h"
 
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_H

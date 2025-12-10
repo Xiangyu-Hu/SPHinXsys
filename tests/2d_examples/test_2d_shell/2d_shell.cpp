@@ -21,7 +21,7 @@ int particle_number_mid_surface = 2 * radius_mid_surface * Pi * 80.0 / 360.0 / p
 int BWD = 1;                                /** number of boundary particles layers . */
 Real BW = particle_spacing_ref * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-radius - thickness, 0.0),
+BoundingBoxd system_domain_bounds(Vec2d(-radius - thickness, 0.0),
                                  Vec2d(radius + thickness, radius + thickness));
 // Shell observer location
 StdVec<Vecd> observation_location = {Vecd(0.0, radius_mid_surface)};
@@ -33,12 +33,18 @@ Real physical_viscosity = 2000.0; /** physical damping, here we choose the same 
 
 Real time_to_full_external_force = 0.1;
 Real gravitational_acceleration = -10000.0;
+
+namespace SPH
+{
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public SurfaceParticleGenerator
+class Cylinder;
+template <>
+class ParticleGenerator<SurfaceParticles, Cylinder> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles) {};
+    virtual void prepareGeometricData() override
     {
         // the cylinder and boundary
         for (int i = 0; i < particle_number_mid_surface + 2 * BWD; i++)
@@ -47,9 +53,9 @@ class CylinderParticleGenerator : public SurfaceParticleGenerator
                      cos(50.0 / 180.0 * Pi + (i + 0.5 - BWD) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
             Real y = radius_mid_surface *
                      sin(50.0 / 180.0 * Pi + (i + 0.5 - BWD) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-            initializePositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_ref);
+            addPositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_ref);
             Vec2d normal_direction = Vec2d(x / radius_mid_surface, y / radius_mid_surface);
-            initializeSurfaceProperties(normal_direction, thickness);
+            addSurfaceProperties(normal_direction, thickness);
         }
     }
 };
@@ -57,37 +63,21 @@ class CylinderParticleGenerator : public SurfaceParticleGenerator
 class BoundaryGeometry : public BodyPartByParticle
 {
   public:
-    BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometry(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometry(){};
+    virtual ~BoundaryGeometry() {};
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][0] < -radius_mid_surface * cos(50.0 / 180.0 * Pi) || base_particles_.pos_[index_i][0] > radius_mid_surface * cos(50.0 / 180.0 * Pi))
-        {
-            body_part_particles_.push_back(index_i);
-        }
+        return base_particles_.ParticlePositions()[index_i][0] < -radius_mid_surface * cos(50.0 / 180.0 * Pi) ||
+               base_particles_.ParticlePositions()[index_i][0] > radius_mid_surface * cos(50.0 / 180.0 * Pi);
     };
 };
-/**
- * define time dependent external force
- */
-class TimeDependentExternalForce : public Gravity
-{
-  public:
-    explicit TimeDependentExternalForce(Vecd external_force)
-        : Gravity(external_force) {}
-    virtual Vecd InducedAcceleration(const Vecd &position) override
-    {
-        Real current_time = GlobalStaticVariables::physical_time_;
-        return current_time < time_to_full_external_force ? current_time * global_acceleration_ / time_to_full_external_force : global_acceleration_;
-    }
-};
+} // namespace SPH
 /**
  *  The main program
  */
@@ -96,16 +86,15 @@ int main(int ac, char *av[])
     /** Setup the system. */
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av);
-    
+
     /** Create a Cylinder body. */
     SolidBody cylinder_body(sph_system, makeShared<DefaultShape>("CylinderBody"));
-    cylinder_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    cylinder_body.generateParticles<CylinderParticleGenerator>();
-    cylinder_body.addBodyStateForRecording<Vecd>("PseudoNormal");
+    cylinder_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    cylinder_body.generateParticles<SurfaceParticles, Cylinder>();
 
     /** Define Observer. */
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
-    cylinder_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    cylinder_observer.generateParticles<ObserverParticles>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -113,51 +102,39 @@ int main(int ac, char *av[])
      */
     InnerRelation cylinder_body_inner(cylinder_body);
     ContactRelation cylinder_observer_contact(cylinder_observer, {&cylinder_body});
-
-    /** Common particle dynamics. */
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(
-        cylinder_body, makeShared<TimeDependentExternalForce>(Vec2d(0.0, gravitational_acceleration)));
-
     /**
      * This section define all numerical methods will be used in this case.
      */
-    /** Corrected configuration. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
-        corrected_configuration(cylinder_body_inner);
-    /** Time step size calculation. */
+    IncreaseToFullGravity time_dependent_external_force(Vec2d(0.0, gravitational_acceleration), time_to_full_external_force);
+    SimpleDynamics<GravityForce<IncreaseToFullGravity>> apply_time_dependent_external_force(cylinder_body, time_dependent_external_force);
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(cylinder_body_inner);
+    /** The main shell dynamics model: stress relaxation. */
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(cylinder_body_inner, 3, true);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
+
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
-    /** stress relaxation. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
-        stress_relaxation_first_half(cylinder_body_inner, 3, true);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
-        stress_relaxation_second_half(cylinder_body_inner);
-    /** Constrain the Boundary. */
-    BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
+    BoundaryGeometry boundary_geometry(cylinder_body);
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> fixed_free_rotate_shell_boundary(boundary_geometry);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         cylinder_position_damping(0.2, cylinder_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    write_states.addToWrite<Vecd>(cylinder_body, "PseudoNormal");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_cylinder_max_displacement("Position", io_environment, cylinder_observer_contact);
+        write_cylinder_max_displacement("Position", cylinder_observer_contact);
 
     /** Apply initial condition. */
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
 
-    /**
-     * From here the time stepping begins.
-     * Set the starting time.
-     */
-    GlobalStaticVariables::physical_time_ = 0.0;
     write_states.writeToFile(0);
     write_cylinder_max_displacement.writeToFile(0);
 
     /** Setup physical parameters. */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 1.0;
     Real output_period = end_time / 100.0;
@@ -168,7 +145,7 @@ int main(int ac, char *av[])
     /**
      * Main loop
      */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_period)
@@ -176,10 +153,10 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
-            initialize_external_force.exec(dt);
+            apply_time_dependent_external_force.exec();
             stress_relaxation_first_half.exec(dt);
             fixed_free_rotate_shell_boundary.exec(dt);
             cylinder_position_damping.exec(dt);
@@ -190,7 +167,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integral_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         write_cylinder_max_displacement.writeToFile(ite);
         TickCount t2 = TickCount::now();
@@ -212,7 +189,6 @@ int main(int ac, char *av[])
     {
         write_cylinder_max_displacement.testResult();
     }
-
 
     return 0;
 }

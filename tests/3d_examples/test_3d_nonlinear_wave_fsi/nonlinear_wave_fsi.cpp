@@ -3,11 +3,9 @@
  * @brief 	This is the 3d case file for wave impact with tension leg moored floating structure.
  * @author   Nicolò Salis
  */
-#include "sphinxsys.h" //SPHinXsys Library.
-using namespace SPH;
-#include "io_simbody_cable.h"   //output for cable data
-#include "io_simbody_free.h"    //output for free body data
 #include "nonlinear_wave_fsi.h" //header for this case
+#include "sphinxsys.h"          //SPHinXsys Library.
+using namespace SPH;
 
 int main(int ac, char *av[])
 {
@@ -18,13 +16,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem system_fit(system_domain_bounds, particle_spacing_structure);
     system_fit.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment_fit(system_fit);
     SolidBody structure_fit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
-    structure_fit.defineAdaptation<ParticleRefinementNearSurface>(1.3, 0.7, 3);
-    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment_fit);
-    structure_fit.defineParticlesAndMaterial<SolidParticles, Solid>(StructureDensity);
-    structure_fit.generateParticles<ParticleGeneratorMultiResolution>();
-    structure_fit.addBodyStateForRecording<Real>("SmoothingLengthRatio");
+    structure_fit.defineAdaptation<AdaptiveNearSurface>(1.3, 0.7, 3);
+    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(system_fit);
+    structure_fit.defineMaterial<Solid>(StructureDensity);
+    structure_fit.generateParticles<BaseParticles, Lattice, AdaptiveByShape>();
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -34,12 +30,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
+    using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(structure_fit);
     /** A  Physics relaxation step. */
-    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(structure_adaptive_inner);
-    SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structure_fit);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(structure_adaptive_inner);
+    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(structure_fit);
     /** Write the particle reload files. */
-    ReloadParticleIO write_particle_reload_files(io_environment_fit, structure_fit);
+    ReloadParticleIO write_particle_reload_files(structure_fit);
 
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
@@ -72,34 +69,31 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
 
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineParticlesAndMaterial<BaseParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-    water_block.generateParticles<ParticleGeneratorLattice>();
-    water_block.addBodyStateForRecording<Vecd>("Position");
-    water_block.addBodyStateForRecording<Real>("Pressure");
+    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
-    structure.defineParticlesAndMaterial<SolidParticles, Solid>(StructureDensity);
-    structure.generateParticles<ParticleGeneratorReload>(io_environment, "Structure_Fit");
+    structure.defineMaterial<Solid>(StructureDensity);
+    structure.generateParticles<BaseParticles, Reload>("Structure_Fit");
 
     ObserverBody observer(sph_system, "Observer");
     observer.defineAdaptationRatios(h, 2.0);
-    observer.generateParticles<ObserverParticleGenerator>(
+    observer.generateParticles<ObserverParticles>(
         StdVec<Vecd>{obs});
 
     ObserverBody WMobserver(sph_system, "WMObserver");
     WMobserver.defineAdaptationRatios(h, 2.0);
     Vecd WMpos0 = Vecd(0.0, -Maker_width / 2, HWM / 2);
-    WMobserver.generateParticles<ObserverParticleGenerator>(
+    WMobserver.generateParticles<ObserverParticles>(
         StdVec<Vecd>{WMpos0});
 
     //---------------------------------------------------------
@@ -111,14 +105,14 @@ int main(int ac, char *av[])
     Real fp1y = Stry;
     Real fp1z = 1.013;
     StdVec<Vecd> fp1l = {Vecd(fp1x, fp1y, fp1z)};
-    fp1.generateParticles<ObserverParticleGenerator>(fp1l);
+    fp1.generateParticles<ObserverParticles>(fp1l);
 
     ObserverBody bp1(sph_system, "BP1");
     Real bp1x = Strx - 0.295;
     Real bp1y = Stry + .035;
     Real bp1z = 0.933;
     StdVec<Vecd> bp1l = {Vecd(bp1x, bp1y, bp1z)};
-    bp1.generateParticles<ObserverParticleGenerator>(bp1l);
+    bp1.generateParticles<ObserverParticles>(bp1l);
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -148,37 +142,38 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define all numerical methods which are used in this case.
     //----------------------------------------------------------------------
+    Gravity gravity(Vecd(0.0, 0.0, -gravity_g));
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity_to_fluid(water_block, gravity);
     SimpleDynamics<OffsetInitialPosition> structure_offset_position(structure, offset);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> structure_normal_direction(structure);
-    /** Time step initialization, add gravity. */
-    SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, 0.0, -gravity_g)));
-    /** Evaluation of density by summation approach. */
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
-    /** time step size without considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
-    /** time step size with considering sound wave speed. */
-    ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
-    /** corrected strong configuration. */
-    InteractionWithUpdate<KernelCorrectionMatrixComplex> corrected_configuration_fluid(ConstructorArgs(water_block_inner, 0.1), water_block_contact);
-    InteractionWithUpdate<KernelCorrectionMatrixInner> structure_corrected_configuration(structure_inner);
-    /** pressure relaxation using Verlet time stepping. */
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> structure_corrected_configuration(structure_inner);
+
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(DynamicsArgs(water_block_inner, 0.1), water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(water_block_inner, water_block_contact);
-    /** Computing viscous acceleration. */
-    InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
     /** Damp waves */
     Vecd translation_damping(0.5 * DW, 9.5, 0.5 * HWM);
     Vecd damping(0.5 * DW, 0.5, 0.5 * HWM);
-    BodyRegionByCell damping_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_damping), damping));
+    GeometricShapeBox damping_buffer_shape(Transform(translation_damping), damping);
+    BodyRegionByCell damping_buffer(water_block, damping_buffer_shape);
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
-    /** Fluid force on structure. */
-    InteractionDynamics<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
-    InteractionDynamics<solid_dynamics::AllForceAccelerationFromFluid> fluid_force_on_structure(structure_contact, viscous_force_on_solid);
-    /** constrain region of the part of wall boundary. */
-    BodyRegionByParticle wave_maker(wall_boundary, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_wave_maker), wave_maker_shape));
-    SimpleDynamics<WaveMaking> wave_making(wave_maker);
 
+    /** Fluid force on structure. */
+    InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_on_structure(structure_contact);
+    /** constrain region of the part of wall boundary. */
+    GeometricShapeBox transform_wave_maker_shape(Transform(translation_wave_maker), wave_maker_shape);
+    BodyRegionByParticle wave_maker(wall_boundary, transform_wave_maker_shape);
+    SimpleDynamics<WaveMaking> wave_making(wave_maker);
+    //----------------------------------------------------------------------
+    //	Define the configuration related particles dynamics.
+    //----------------------------------------------------------------------
+    ParticleSorting particle_sorting(water_block);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
@@ -250,40 +245,39 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Coupling between SimBody and SPH
     //----------------------------------------------------------------------
-    ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
-        force_on_structure(structure_multibody, MBsystem, tethered_struct, integ);
-    SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
-        constraint_on_structure(structure_multibody, MBsystem, tethered_struct, integ);
+    ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody> force_on_structure(structure_multibody, MBsystem, tethered_struct, integ);
+    SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody> constraint_on_structure(structure_multibody, MBsystem, tethered_struct, integ);
 
     //----------------------------------------------------------------------
     //	Cable SimBody Output
     //----------------------------------------------------------------------
-    WriteSimBodyCableData write_cable_AR(io_environment, integ, tethering_springAR, "AR");
-    WriteSimBodyCableData write_cable_AL(io_environment, integ, tethering_springAL, "AL");
-    WriteSimBodyCableData write_cable_BR(io_environment, integ, tethering_springBR, "BR");
-    WriteSimBodyCableData write_cable_BL(io_environment, integ, tethering_springBL, "BL");
-    WriteSimBodyFreeRotationMatrix write_free_body_rotation(io_environment, integ, tethered_struct);
-    WriteSimBodyVelocity write_free_body_velocity(io_environment, integ, tethered_struct);
+    WriteSimBodyCableData write_cable_AR(sph_system, integ, tethering_springAR, "AR");
+    WriteSimBodyCableData write_cable_AL(sph_system, integ, tethering_springAL, "AL");
+    WriteSimBodyCableData write_cable_BR(sph_system, integ, tethering_springBR, "BR");
+    WriteSimBodyCableData write_cable_BL(sph_system, integ, tethering_springBL, "BL");
+    WriteSimBodyFreeRotationMatrix write_free_body_rotation(sph_system, integ, tethered_struct);
+    WriteSimBodyVelocity write_free_body_velocity(sph_system, integ, tethered_struct);
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp write_real_body_states(sph_system);
+    write_real_body_states.addToWrite<Real>(water_block, "Pressure");
     /** WaveProbes. */
-    BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_WGauge), WGaugeDim));
+    BodyRegionByCell wave_probe_buffer(water_block, makeShared<GeometricShapeBox>(Transform(translation_WGauge), WGaugeDim));
     ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
-        wave_gauge(io_environment, wave_probe_buffer, "FreeSurfaceHeight");
+        wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
 
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_observer_position(observer_contact_with_structure, "Position", "Position");
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_str_displacement("Position", io_environment, observer_contact_with_structure);
+        write_str_displacement("Position", observer_contact_with_structure);
 
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_WMobserver_position(WMobserver_contact_with_wall, "Position", "Position");
     ObservedQuantityRecording<Vecd>
-        write_WM_displacement("Position", io_environment, WMobserver_contact_with_wall);
+        write_WM_displacement("Position", WMobserver_contact_with_wall);
 
     InteractionDynamics<InterpolatingAQuantity<Vecd>>
         interpolation_fp1_position(fp1_contact_s, "Position", "Position");
@@ -291,16 +285,16 @@ int main(int ac, char *av[])
         interpolation_bp1_position(bp1_contact_s, "Position", "Position");
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-        write_recorded_pressure_fp1("Pressure", io_environment, fp1_contact_w);
+        write_recorded_pressure_fp1("Pressure", fp1_contact_w);
     ObservedQuantityRecording<Real>
-        write_recorded_pressure_bp1("Pressure", io_environment, bp1_contact_w);
+        write_recorded_pressure_bp1("Pressure", bp1_contact_w);
 
-    RestartIO restart_io(io_environment, sph_system.real_bodies_);
+    RestartIO restart_io(sph_system);
 
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
-    GlobalStaticVariables::physical_time_ = 0.0;
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     int screen_output_interval = 100;
     int restart_output_interval = screen_output_interval * 10;
@@ -312,7 +306,6 @@ int main(int ac, char *av[])
     /** statistics for computing time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;
-
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -323,14 +316,14 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec();
     structure_normal_direction.exec();
     structure_corrected_configuration.exec();
-
+    constant_gravity_to_fluid.exec();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
-        GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.RestartStep());
-        water_block.updateCellLinkedListWithParticleSort(100);
+        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
+        water_block.updateCellLinkedList();
         wall_boundary.updateCellLinkedList();
         structure.updateCellLinkedList();
         water_block_complex.updateConfiguration();
@@ -364,17 +357,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_interval)
         {
-            initialize_time_step_to_fluid.exec();
-
             Real Dt = get_fluid_advection_time_step_size.exec();
             update_density_by_summation.exec();
             corrected_configuration_fluid.exec();
-            viscous_acceleration.exec();
+            viscous_force.exec();
             /** Viscous force exerting on structure. */
             viscous_force_on_solid.exec();
 
@@ -384,7 +375,7 @@ int main(int ac, char *av[])
                 dt = get_fluid_time_step_size.exec();
 
                 pressure_relaxation.exec(dt);
-                fluid_force_on_structure.exec();
+                pressure_force_on_structure.exec();
                 density_relaxation.exec(dt);
                 /** coupled rigid body dynamics. */
                 if (total_time >= relax_time)
@@ -404,21 +395,25 @@ int main(int ac, char *av[])
                 integral_time += dt;
                 total_time += dt;
                 if (total_time >= relax_time)
-                    GlobalStaticVariables::physical_time_ += dt;
+                    physical_time += dt;
             }
 
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations
                           << "	Total Time = " << total_time
-                          << "	Physical Time = " << GlobalStaticVariables::physical_time_
+                          << "	Physical Time = " << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
                 if (number_of_iterations % restart_output_interval == 0)
                     restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
             damping_wave.exec(Dt);
-            water_block.updateCellLinkedListWithParticleSort(100);
+            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+            {
+                particle_sorting.exec();
+            }
+            water_block.updateCellLinkedList();
             wall_boundary.updateCellLinkedList();
             structure.updateCellLinkedList();
             water_block_complex.updateConfiguration();

@@ -12,11 +12,11 @@ namespace SPH
 CorrectInterpolationKernelWeights::
     CorrectInterpolationKernelWeights(BaseContactRelation &contact_relation)
     : LocalDynamics(contact_relation.getSPHBody()),
-      InterpolationContactData(contact_relation)
+      DataDelegateContact(contact_relation)
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+        contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
     }
 }
 //=================================================================================================//

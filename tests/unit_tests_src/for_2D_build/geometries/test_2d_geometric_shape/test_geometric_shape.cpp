@@ -1,7 +1,7 @@
 #include "base_data_type.h"
-#include "complex_shape.h"
+#include "complex_geometry.h"
 #include "geometric_shape.h"
-#include "transform_shape.h"
+#include "transform_geometry.h"
 #include <gtest/gtest.h>
 
 using namespace SPH;
@@ -20,8 +20,8 @@ class WallBoundary : public ComplexShape
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
+        add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
+        subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
 Vec2d test_point(0.1, -0.025);
@@ -30,7 +30,7 @@ auto tolerance = []()
 
 TEST(test_GeometricShapeBox, test_closest_point)
 {
-    TransformShape<GeometricShapeBox> inner_wall_box(Transform(inner_wall_translation), inner_wall_halfsize);
+    GeometricShapeBox inner_wall_box(Transform(inner_wall_translation), inner_wall_halfsize);
 
     EXPECT_LE((inner_wall_box.findClosestPoint(test_point) - Vec2d(0.1, 0.0)).cwiseAbs().maxCoeff(), tolerance());
 }

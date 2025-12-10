@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -32,6 +32,7 @@
 #include "base_body.h"
 #include "base_body_part.h"
 #include "base_geometry.h"
+#include "base_implementation.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
 #include "neighborhood.h"
@@ -50,11 +51,11 @@ struct SearchDepthSingleResolution
 struct SearchDepthContact
 {
     int search_depth_;
-    SearchDepthContact(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
+    SearchDepthContact(SPHBody &sph_body, Mesh &target_mesh)
         : search_depth_(1)
     {
-        Real inv_grid_spacing_ = 1.0 / target_cell_linked_list->GridSpacing();
-        Kernel *kernel_ = sph_body.sph_adaptation_->getKernel();
+        Real inv_grid_spacing_ = 1.0 / target_mesh.GridSpacing();
+        Kernel *kernel_ = sph_body.getSPHAdaptation().getKernel();
         search_depth_ = 1 + (int)floor(kernel_->CutOffRadius() * inv_grid_spacing_);
     };
     int operator()(size_t particle_index) const { return search_depth_; };
@@ -67,11 +68,11 @@ struct SearchDepthAdaptive
 {
     Real inv_grid_spacing_;
     Kernel *kernel_;
-    StdLargeVec<Real> &h_ratio_;
-    SearchDepthAdaptive(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
-        : inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
-          kernel_(sph_body.sph_adaptation_->getKernel()),
-          h_ratio_(*sph_body.getBaseParticles().getVariableByName<Real>("SmoothingLengthRatio")){};
+    Real *h_ratio_;
+    SearchDepthAdaptive(SPHBody &sph_body, Mesh &target_mesh)
+        : inv_grid_spacing_(1.0 / target_mesh.GridSpacing()),
+          kernel_(sph_body.getSPHAdaptation().getKernel()),
+          h_ratio_(sph_body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")) {};
     int operator()(size_t particle_index) const
     {
         return 1 + (int)floor(kernel_->CutOffRadius(h_ratio_[particle_index]) * inv_grid_spacing_);
@@ -86,10 +87,10 @@ struct SearchDepthAdaptiveContact
     Real inv_grid_spacing_;
     SPHAdaptation &sph_adaptation_;
     Kernel &kernel_;
-    SearchDepthAdaptiveContact(SPHBody &sph_body, CellLinkedList *target_cell_linked_list)
-        : inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()),
-          sph_adaptation_(*sph_body.sph_adaptation_),
-          kernel_(*sph_body.sph_adaptation_->getKernel()){};
+    SearchDepthAdaptiveContact(SPHBody &sph_body, Mesh &target_mesh)
+        : inv_grid_spacing_(1.0 / target_mesh.GridSpacing()),
+          sph_adaptation_(sph_body.getSPHAdaptation()),
+          kernel_(*sph_adaptation_.getKernel()) {};
     int operator()(size_t particle_index) const
     {
         return 1 + (int)floor(kernel_.CutOffRadius(sph_adaptation_.SmoothingLengthRatio(particle_index)) * inv_grid_spacing_);
@@ -105,18 +106,17 @@ RealBodyVector BodyPartsToRealBodies(BodyPartVector body_parts);
  */
 class SPHRelation
 {
-  protected:
-    SPHBody &sph_body_;
-
   public:
-    BaseParticles &base_particles_;
     SPHBody &getSPHBody() { return sph_body_; };
     explicit SPHRelation(SPHBody &sph_body);
-    virtual ~SPHRelation(){};
+    virtual ~SPHRelation() {};
 
-    void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
-    virtual void resizeConfiguration() = 0;
+    void subscribeToBody() { sph_body_.getBodyRelations().push_back(this); };
     virtual void updateConfiguration() = 0;
+
+  protected:
+    SPHBody &sph_body_;
+    BaseParticles &base_particles_;
 };
 
 /**
@@ -125,16 +125,15 @@ class SPHRelation
  */
 class BaseInnerRelation : public SPHRelation
 {
-  protected:
-    virtual void resetNeighborhoodCurrentSize();
-
   public:
     RealBody *real_body_;
     ParticleConfiguration inner_configuration_; /**< inner configuration for the neighbor relations. */
     explicit BaseInnerRelation(RealBody &real_body);
-    virtual ~BaseInnerRelation(){};
+    virtual ~BaseInnerRelation() {};
     BaseInnerRelation &getRelation() { return *this; };
-    virtual void resizeConfiguration() override;
+
+  protected:
+    virtual void resetNeighborhoodCurrentSize();
 };
 
 /**
@@ -148,15 +147,18 @@ class BaseContactRelation : public SPHRelation
 
   public:
     RealBodyVector contact_bodies_;
+    StdVec<BaseParticles *> contact_particles_;
+    StdVec<SPHAdaptation *> contact_adaptations_;
     StdVec<ParticleConfiguration> contact_configuration_; /**< Configurations for particle interaction between bodies. */
 
     BaseContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
     BaseContactRelation(SPHBody &sph_body, BodyPartVector contact_body_parts)
-        : BaseContactRelation(sph_body, BodyPartsToRealBodies(contact_body_parts)){};
-    virtual ~BaseContactRelation(){};
+        : BaseContactRelation(sph_body, BodyPartsToRealBodies(contact_body_parts)) {};
+    virtual ~BaseContactRelation() {};
     BaseContactRelation &getRelation() { return *this; };
-
-    virtual void resizeConfiguration() override;
+    RealBodyVector getContactBodies() { return contact_bodies_; };
+    StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
+    StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
 };
 } // namespace SPH
 #endif // BASE_BODY_RELATION_H

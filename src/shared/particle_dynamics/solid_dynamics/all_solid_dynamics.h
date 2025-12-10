@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -29,13 +29,13 @@
 
 #pragma once
 
-#include "constraint_dynamics.h"
-#include "contact_dynamics.h"
+#include "all_contact_dynamics.h"
+#include "constraint_dynamics.hpp"
 #include "elastic_dynamics.h"
-#include "fluid_structure_interaction.h"
+#include "fluid_structure_interaction.hpp"
 #include "general_solid_dynamics.h"
 #include "inelastic_dynamics.h"
 #include "loading_dynamics.h"
+#include "solid_dynamics_variable.h"
 #include "thin_structure_dynamics.h"
 #include "thin_structure_math.h"
-#include "shell_fluid_interaction.h"

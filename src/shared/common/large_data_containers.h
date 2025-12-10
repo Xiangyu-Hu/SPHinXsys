@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,12 +21,12 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	large_data-container.h
+ * @file 	large_data_containers.h
  * @brief 	Data container for large vector, e.g. particle data.
  * @author	Chi Zhang and Xiangyu Hu
  */
-#ifndef LARGE_DATA_CONTAINER_H
-#define LARGE_DATA_CONTAINER_H
+#ifndef LARGE_DATA_CONTAINERS_H
+#define LARGE_DATA_CONTAINERS_H
 
 #include "tbb/blocked_range.h"
 #include "tbb/blocked_range2d.h"
@@ -36,10 +36,9 @@
 #include "tbb/concurrent_vector.h"
 #include "tbb/parallel_for.h"
 #include "tbb/parallel_reduce.h"
+#include "tbb/parallel_scan.h"
 #include "tbb/scalable_allocator.h"
 #include "tbb/tick_count.h"
-
-#include <array>
 
 namespace SPH
 {
@@ -56,9 +55,6 @@ template <typename T>
 using ConcurrentVec = tbb::concurrent_vector<T>;
 
 template <typename T>
-using StdLargeVec = std::vector<T, tbb::cache_aligned_allocator<T>>;
-
-template <typename T>
 using StdVec = std::vector<T>;
 
 template <typename T>
@@ -68,4 +64,4 @@ template <typename T>
 using TriVector = std::vector<std::vector<std::vector<T>>>;
 } // namespace SPH
 
-#endif // LARGE_DATA_CONTAINER_H
+#endif // LARGE_DATA_CONTAINERS_H

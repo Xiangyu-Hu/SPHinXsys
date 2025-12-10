@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -38,13 +38,30 @@
 
 namespace SPH
 {
-class LevelSetCorrection;
+class LevelSetCorrection
+{
+};
 
 namespace relax_dynamics
 {
-typedef DataDelegateSimple<BaseParticles> RelaxDataDelegateSimple;
-typedef DataDelegateInner<BaseParticles> RelaxDataDelegateInner;
-typedef DataDelegateContact<BaseParticles, BaseParticles> RelaxDataDelegateContact;
+/**
+ * @class RandomizeParticlePosition
+ * @brief Randomize the initial particle position
+ */
+class RandomizeParticlePosition
+    : public LocalDynamics
+{
+  protected:
+    Vecd *pos_;
+    Real randomize_scale_;
+
+  public:
+    explicit RandomizeParticlePosition(SPHBody &sph_body);
+    virtual ~RandomizeParticlePosition() {};
+
+    void update(size_t index_i, Real dt = 0.0);
+};
+
 } // namespace relax_dynamics
 } // namespace SPH
 #endif // BASE_RELAX_DYNAMICS_H

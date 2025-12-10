@@ -1,14 +1,29 @@
 #include "level_set_shape.h"
 
+#include "all_io.h"
 #include "base_body.h"
-#include "io_all.h"
 #include "sph_system.h"
 
 namespace SPH
 {
 //=================================================================================================//
 LevelSetShape::
-    LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio)
+    LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation,
+                  Real refinement_ratio, UsageType usage_type)
+    : LevelSetShape(shape.getBounds(), shape, sph_adaptation, refinement_ratio)
+{
+    finishInitialization(execution::par_host, usage_type);
+}
+//=================================================================================================//
+LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape,
+                             Real refinement_ratio, UsageType usage_type)
+    : LevelSetShape(shape.getBounds(), sph_body, shape, refinement_ratio)
+{
+    finishInitialization(execution::par_host, usage_type);
+}
+//=================================================================================================//
+LevelSetShape::LevelSetShape(BoundingBoxd bounding_box, Shape &shape,
+                             SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio)
     : Shape(shape.getName()), sph_adaptation_(sph_adaptation),
       level_set_(*level_set_keeper_.movePtr(sph_adaptation->createLevelSet(shape, refinement_ratio)))
 {
@@ -16,30 +31,39 @@ LevelSetShape::
     is_bounds_found_ = true;
 }
 //=================================================================================================//
-LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio)
+LevelSetShape::LevelSetShape(BoundingBoxd bounding_box, SPHBody &sph_body,
+                             Shape &shape, Real refinement_ratio)
     : Shape(shape.getName()),
       level_set_(*level_set_keeper_.movePtr(
-          sph_body.sph_adaptation_->createLevelSet(shape, refinement_ratio)))
+          sph_body.getSPHAdaptation().createLevelSet(shape, refinement_ratio)))
 {
     bounding_box_ = shape.getBounds();
     is_bounds_found_ = true;
 }
 //=================================================================================================//
-void LevelSetShape::writeLevelSet(IOEnvironment &io_environment)
+LevelSetShape *LevelSetShape::writeLevelSet(SPHSystem &sph_system)
 {
-    MeshRecordingToPlt write_level_set_to_plt(io_environment, level_set_);
+    MeshRecordingToPlt write_level_set_to_plt(sph_system, level_set_);
     write_level_set_to_plt.writeToFile(0);
-}
-//=================================================================================================//
-LevelSetShape *LevelSetShape::cleanLevelSet(Real small_shift_factor)
-{
-    level_set_.cleanInterface(small_shift_factor);
     return this;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::correctLevelSetSign(Real small_shift_factor)
+LevelSetShape *LevelSetShape::writeBKGMesh(SPHSystem &sph_system)
 {
-    level_set_.correctTopology(small_shift_factor);
+    MeshRecordingToPlt write_background_mesh_to_plt(sph_system, level_set_);
+    write_background_mesh_to_plt.writeBKGMeshVariableToFile(0);
+    return this;
+}
+//=================================================================================================//
+LevelSetShape *LevelSetShape::cleanLevelSet(UnsignedInt repeat_times)
+{
+    level_set_.cleanInterface(repeat_times);
+    return this;
+}
+//=================================================================================================//
+LevelSetShape *LevelSetShape::correctLevelSetSign()
+{
+    level_set_.correctTopology();
     return this;
 }
 //=================================================================================================//
@@ -55,7 +79,7 @@ Vecd LevelSetShape::findClosestPoint(const Vecd &probe_point)
     return probe_point - phi * normal;
 }
 //=================================================================================================//
-BoundingBox LevelSetShape::findBounds()
+BoundingBoxd LevelSetShape::findBounds()
 {
     if (!is_bounds_found_)
     {
@@ -79,6 +103,11 @@ Real LevelSetShape::computeKernelIntegral(const Vecd &probe_point, Real h_ratio)
 Vecd LevelSetShape::computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio)
 {
     return level_set_.probeKernelGradientIntegral(probe_point, h_ratio);
+}
+//=================================================================================================//
+Matd LevelSetShape::computeKernelSecondGradientIntegral(const Vecd &probe_point, Real h_ratio)
+{
+    return level_set_.probeKernelSecondGradientIntegral(probe_point, h_ratio);
 }
 //=================================================================================================//
 } // namespace SPH

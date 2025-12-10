@@ -1,5 +1,5 @@
 #include "constraint_dynamics.h"
-#include <numeric>
+#include "sph_system.hpp"
 
 namespace SPH
 {
@@ -7,8 +7,9 @@ namespace solid_dynamics
 {
 //=================================================================================================//
 SpringConstrain::SpringConstrain(BodyPartByParticle &body_part, Real stiffness)
-    : BaseMotionConstraint<BodyPartByParticle>(body_part),
-      mass_(particles_->mass_), stiffness_(stiffness * Vecd::Ones()) {}
+    : MotionConstraint<BodyPartByParticle>(body_part),
+      stiffness_(stiffness * Vecd::Ones()),
+      mass_(particles_->getVariableDataByName<Real>("Mass")) {}
 //=================================================================================================//
 Vecd SpringConstrain::getAcceleration(Vecd &disp, Real mass)
 {
@@ -28,11 +29,14 @@ void SpringConstrain::update(size_t index_i, Real dt)
 //=================================================================================================//
 PositionSolidBody::
     PositionSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Vecd pos_end_center)
-    : BaseMotionConstraint<SPHBody>(sph_body),
-      start_time_(start_time), end_time_(end_time), pos_end_center_(pos_end_center)
+    : MotionConstraint<SPHBody>(sph_body),
+      start_time_(start_time), end_time_(end_time),
+      physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")),
+      pos_end_center_(pos_end_center)
+
 {
-    BoundingBox bounds = sph_body.getBodyShapeBounds();
-    pos_0_center_ = (bounds.first_ + bounds.second_) * 0.5;
+    BoundingBoxd bounds = sph_body.getSPHBodyBounds();
+    pos_0_center_ = (bounds.lower_ + bounds.upper_) * 0.5;
     translation_ = pos_end_center_ - pos_0_center_;
 }
 //=================================================================================================//
@@ -40,14 +44,13 @@ Vecd PositionSolidBody::getDisplacement(size_t index_i, Real dt)
 {
     // displacement from the initial position
     Vecd pos_final = pos0_[index_i] + translation_;
-    return (pos_final - pos_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+    return (pos_final - pos_[index_i]) * dt / (end_time_ - *physical_time_);
 }
 //=================================================================================================//
 void PositionSolidBody::update(size_t index_i, Real dt)
 {
     // only apply in the defined time period
-    if (GlobalStaticVariables::physical_time_ >= start_time_ &&
-        GlobalStaticVariables::physical_time_ <= end_time_)
+    if (*physical_time_ >= start_time_ && *physical_time_ <= end_time_)
     {
         pos_[index_i] = pos_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
         vel_[index_i] = Vecd::Zero();
@@ -56,52 +59,39 @@ void PositionSolidBody::update(size_t index_i, Real dt)
 //=================================================================================================//
 PositionScaleSolidBody::
     PositionScaleSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Real end_scale)
-    : BaseMotionConstraint<SPHBody>(sph_body),
-      start_time_(start_time), end_time_(end_time), end_scale_(end_scale)
+    : MotionConstraint<SPHBody>(sph_body),
+      start_time_(start_time), end_time_(end_time), end_scale_(end_scale),
+      physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime"))
 {
-    BoundingBox bounds = sph_body.getBodyShapeBounds();
-    pos_0_center_ = (bounds.first_ + bounds.second_) * 0.5;
+    BoundingBoxd bounds = sph_body.getSPHBodyBounds();
+    pos_0_center_ = (bounds.lower_ + bounds.upper_) * 0.5;
 }
 //=================================================================================================//
 Vecd PositionScaleSolidBody::getDisplacement(size_t index_i, Real dt)
 {
     // displacement from the initial position
     Vecd pos_final = pos_0_center_ + end_scale_ * (pos0_[index_i] - pos_0_center_);
-    return (pos_final - pos_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+    return (pos_final - pos_[index_i]) * dt / (end_time_ - *physical_time_);
 }
 //=================================================================================================//
 void PositionScaleSolidBody::update(size_t index_i, Real dt)
 {
     // only apply in the defined time period
-    if (GlobalStaticVariables::physical_time_ >= start_time_ &&
-        GlobalStaticVariables::physical_time_ <= end_time_)
+    if (*physical_time_ >= start_time_ &&
+        *physical_time_ <= end_time_)
     {
         pos_[index_i] = pos_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
         vel_[index_i] = Vecd::Zero();
     }
 }
 //=================================================================================================//
-FixedInAxisDirection::FixedInAxisDirection(BodyPartByParticle &body_part, Vecd constrained_axises)
-    : BaseMotionConstraint<BodyPartByParticle>(body_part), constrain_matrix_(Matd::Identity())
-{
-    for (int k = 0; k != Dimensions; ++k)
-        constrain_matrix_(k, k) = constrained_axises[k];
-};
-//=================================================================================================//
-void FixedInAxisDirection::update(size_t index_i, Real dt)
-{
-    vel_[index_i] = constrain_matrix_ * vel_[index_i];
-};
-//=================================================================================================//
-ConstrainSolidBodyMassCenter::
-    ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction)
-    : LocalDynamics(sph_body), SolidDataSimple(sph_body),
-      correction_matrix_(Matd::Identity()), vel_(particles_->vel_),
+ConstrainSolidBodyMassCenter::ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction)
+    : MotionConstraint<SPHBody>(sph_body), correction_matrix_(Matd::Identity()),
       compute_total_momentum_(sph_body, "Velocity")
 {
     for (int i = 0; i != Dimensions; ++i)
         correction_matrix_(i, i) = constrain_direction[i];
-    ReduceDynamics<QuantitySummation<Real>> compute_total_mass_(sph_body, "MassiveMeasure");
+    ReduceDynamics<QuantitySummation<Real, SPHBody>> compute_total_mass_(sph_body, "Mass");
     total_mass_ = compute_total_mass_.exec();
 }
 //=================================================================================================//

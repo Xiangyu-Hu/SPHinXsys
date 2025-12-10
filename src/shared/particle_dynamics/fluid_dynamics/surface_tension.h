@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -24,7 +24,9 @@
  * @file surface_tension.h
  * @brief A momentum-conservative formulation for surface tension is used here
  * to reach a long-term stable simulation.
- * @details TBD.
+ * @details The zero-surface-energy modes in surface tension are identified and
+ * sovlved by introducting a penalty force. The method can be used to simulate
+ * surface tension in multiphase flows with extra high Reynolds numbers and Weber numbers.
  * @author	Shuaihao Zhang and Xiangyu Hu
  */
 
@@ -32,61 +34,83 @@
 #define SURFACE_TENSION_H
 
 #include "base_fluid_dynamics.h"
+#include "force_prior.h"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
-class SurfaceTensionStress : public LocalDynamics, public FluidContactData
+class SurfaceTensionStress : public LocalDynamics, public DataDelegateContact
 {
   public:
-    explicit SurfaceTensionStress(BaseContactRelation &contact_relation, StdVec<Real> contact_surface_tension);
-    virtual ~SurfaceTensionStress(){};
+    explicit SurfaceTensionStress(BaseContactRelation &contact_relation, Real surface_tension_coeff);
+    virtual ~SurfaceTensionStress() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> color_gradient_;
-    StdLargeVec<Matd> surface_tension_stress_;
-    StdVec<Real> contact_surface_tension_, contact_fraction_;
+    Vecd *color_gradient_, *norm_direction_;
+    Matd *surface_tension_stress_;
+    StdVec<Real> contact_fraction_;
+    StdVec<Real *> contact_Vol_;
+    Real &surface_tension_coeff_;
 };
 
 template <typename... T>
-class SurfaceStressAcceleration;
+class SurfaceStressForce;
 
-template <>
-class SurfaceStressAcceleration<Inner<>> : public LocalDynamics, public FluidDataInner
+template <class DataDelegationType>
+class SurfaceStressForce<DataDelegationType>
+    : public ForcePrior, public DataDelegationType
 {
   public:
-    SurfaceStressAcceleration(BaseInnerRelation &inner_relation);
-    virtual ~SurfaceStressAcceleration(){};
-    void interaction(size_t index_i, Real dt = 0.0);
+    template <class BaseRelationType>
+    explicit SurfaceStressForce(BaseRelationType &base_relation);
+    virtual ~SurfaceStressForce() {};
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Vecd> &force_prior_;
-    StdLargeVec<Vecd> &color_gradient_;
-    StdLargeVec<Matd> &surface_tension_stress_;
+    Real *rho_, *mass_, *Vol_;
+    Vecd *color_gradient_, *surface_tension_force_, *norm_direction_;
+    Matd *surface_tension_stress_;
+    Real &surface_tension_coeff_;
 };
 
 template <>
-class SurfaceStressAcceleration<Contact<>> : public LocalDynamics, public FluidContactData
+class SurfaceStressForce<Inner<>> : public SurfaceStressForce<DataDelegateInner>
 {
   public:
-    explicit SurfaceStressAcceleration(BaseContactRelation &contact_relation);
-    virtual ~SurfaceStressAcceleration(){};
+    explicit SurfaceStressForce(BaseInnerRelation &inner_relation, Real hourglass_control_coeff = 4.5);
+    template <typename BodyRelationType, typename FirstArg>
+    explicit SurfaceStressForce(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : SurfaceStressForce(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~SurfaceStressForce() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Vecd> &force_prior_;
-    StdLargeVec<Vecd> &color_gradient_;
-    StdLargeVec<Matd> &surface_tension_stress_;
-    StdVec<StdLargeVec<Vecd> *> contact_color_gradient_;
-    StdVec<StdLargeVec<Matd> *> contact_surface_tension_stress_;
+    Real hourglass_control_coeff_;
+};
+
+template <>
+class SurfaceStressForce<Contact<>> : public SurfaceStressForce<DataDelegateContact>
+{
+  public:
+    explicit SurfaceStressForce(BaseContactRelation &contact_relation, Real hourglass_control_coeff = 4.5);
+    template <typename BodyRelationType, typename FirstArg>
+    explicit SurfaceStressForce(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : SurfaceStressForce(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~SurfaceStressForce() {};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdVec<Real *> contact_Vol_;
+    StdVec<Vecd *> contact_color_gradient_, contact_norm_direction_;
+    StdVec<Matd *> contact_surface_tension_stress_;
     StdVec<Real> contact_surface_tension_, contact_fraction_;
+
+  protected:
+    Real hourglass_control_coeff_;
 };
 
-using SurfaceStressAccelerationComplex = ComplexInteraction<SurfaceStressAcceleration<Inner<>, Contact<>>>;
+using SurfaceStressForceComplex = ComplexInteraction<SurfaceStressForce<Inner<>, Contact<>>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // SURFACE_TENSION_H

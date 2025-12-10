@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -22,11 +22,9 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file non_newtonian_dynamics.h
- * @brief Here, we define the algorithm classes for fluid dynamics within the body.
+ * @brief Here, we define the time integration algorithm classes for non-newtonian fluids.
  * @details We consider here weakly compressible fluids.
- * Note that, as these are local dynamics which are combined with particle dynamics
- * algorithms as template, the name-hiding is used for functions in the derived classes.
- * @author	Xiangyu Hu
+ * @author	Theodor Hennings and Xiangyu Hu
  */
 
 #ifndef NON_NEWTONIAN_DYNAMICS_H
@@ -34,6 +32,7 @@
 
 #include "base_fluid_dynamics.h"
 #include "fluid_integration.hpp"
+#include "viscosity.h"
 
 namespace SPH
 {
@@ -42,79 +41,99 @@ namespace fluid_dynamics
 template <typename... InteractionTypes>
 class Oldroyd_BIntegration1stHalf;
 
-using Integration1stHalfInnerDissipative =
-    Integration1stHalf<Inner<>, DissipativeRiemannSolver, NoKernelCorrection>;
-
 template <>
-class Oldroyd_BIntegration1stHalf<Inner<>>
-    : public Integration1stHalfInnerDissipative
+class Oldroyd_BIntegration1stHalf<Inner<>> : public Integration1stHalfInnerRiemann
 {
   public:
     explicit Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~Oldroyd_BIntegration1stHalf(){};
+    virtual ~Oldroyd_BIntegration1stHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> tau_, dtau_dt_;
+    Matd *tau_, *dtau_dt_;
 };
 
-using Integration1stHalfContactWallDissipative =
-    Integration1stHalf<Contact<Wall>, DissipativeRiemannSolver, NoKernelCorrection>;
+using Integration1stHalfContactWallRiemann =
+    Integration1stHalf<Contact<Wall>, AcousticRiemannSolver, NoKernelCorrection>;
 
 template <>
-class Oldroyd_BIntegration1stHalf<Contact<Wall>>
-    : public Integration1stHalfContactWallDissipative
+class Oldroyd_BIntegration1stHalf<Contact<Wall>> : public Integration1stHalfContactWallRiemann
 {
   public:
     explicit Oldroyd_BIntegration1stHalf(BaseContactRelation &wall_contact_relation);
-    virtual ~Oldroyd_BIntegration1stHalf(){};
+    virtual ~Oldroyd_BIntegration1stHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Matd> &tau_;
+    Matd *tau_;
 };
 
 template <typename... InteractionTypes>
 class Oldroyd_BIntegration2ndHalf;
 
-using Integration2ndHalfInnerDissipative =
-    Integration2ndHalf<Inner<>, DissipativeRiemannSolver>;
 template <>
-class Oldroyd_BIntegration2ndHalf<Inner<>>
-    : public Integration2ndHalfInnerDissipative
+class Oldroyd_BIntegration2ndHalf<Inner<>> : public Integration2ndHalfInnerRiemann
 {
   public:
     explicit Oldroyd_BIntegration2ndHalf(BaseInnerRelation &inner_relation);
-    virtual ~Oldroyd_BIntegration2ndHalf(){};
-    void interaction(size_t index_i, Real dt = 0.0);
+    virtual ~Oldroyd_BIntegration2ndHalf() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    Oldroyd_B_Fluid &oldroyd_b_fluid_;
-    StdLargeVec<Matd> &tau_, &dtau_dt_;
+    Matd *vel_grad_, *tau_, *dtau_dt_;
     Real mu_p_, lambda_;
 };
 
-using Integration2ndHalfWithWallDissipative =
-    Integration2ndHalf<Contact<Wall>, DissipativeRiemannSolver>;
+using Integration2ndHalfContactWallRiemann =
+    Integration2ndHalf<Contact<Wall>, AcousticRiemannSolver>;
+
 template <>
-class Oldroyd_BIntegration2ndHalf<Contact<Wall>>
-    : public Integration2ndHalfWithWallDissipative
+class Oldroyd_BIntegration2ndHalf<Contact<Wall>> : public Integration2ndHalfContactWallRiemann
 {
   public:
-    explicit Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation);
-    virtual ~Oldroyd_BIntegration2ndHalf(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-
-  protected:
-    Oldroyd_B_Fluid &oldroyd_b_fluid_;
-    StdLargeVec<Matd> &tau_, &dtau_dt_;
-    Real mu_p_, lambda_;
+    explicit Oldroyd_BIntegration2ndHalf(BaseContactRelation &wall_contact_relation)
+        : Integration2ndHalfContactWallRiemann(wall_contact_relation) {};
+    virtual ~Oldroyd_BIntegration2ndHalf() {};
 };
 
 using Oldroyd_BIntegration1stHalfWithWall = ComplexInteraction<Oldroyd_BIntegration1stHalf<Inner<>, Contact<Wall>>>;
 using Oldroyd_BIntegration2ndHalfWithWall = ComplexInteraction<Oldroyd_BIntegration2ndHalf<Inner<>, Contact<Wall>>>;
+
+/**
+ * @class SRDViscousTimeStepSize
+ * @brief Computing the viscous time step size using the SRD viscosity
+ */
+class SRDViscousTimeStepSize : public LocalDynamicsReduce<ReduceMax>
+{
+  public:
+    explicit SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusionCFL = 0.125);
+    virtual ~SRDViscousTimeStepSize() {};
+    Real reduce(size_t index_i, Real dt = 0.0);
+    virtual Real outputResult(Real reduced_value) override;
+
+  protected:
+    Real smoothing_length_;
+    Real *rho_;
+    Real *mu_srd_;
+    Real diffusionCFL;
+    Real max_viscosity = 1e-12;
+};
+
+class ShearRateDependentViscosity : public LocalDynamics
+{
+  public:
+    explicit ShearRateDependentViscosity(SPHBody &sph_body);
+    virtual ~ShearRateDependentViscosity() {};
+
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Matd *vel_grad_;
+    GeneralizedNewtonianViscosity &generalized_viscosity_;
+    Real *mu_srd_;
+};
+
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // NON_NEWTONIAN_DYNAMICS_H

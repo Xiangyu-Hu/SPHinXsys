@@ -1,19 +1,61 @@
-#include "sph_system.h"
+#include "sph_system.hpp"
 
 #include "all_body_relations.h"
-#include "base_body.h"
 #include "elastic_dynamics.h"
+#include "io_log.h"
+#include "predefined_bodies.h"
 
 namespace SPH
 {
 //=================================================================================================//
-SPHSystem::SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref, size_t number_of_threads)
+SPHSystem::SPHSystem(BoundingBoxd system_domain_bounds, Real resolution_ref, size_t number_of_threads)
     : system_domain_bounds_(system_domain_bounds),
       resolution_ref_(resolution_ref),
       tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
-      io_environment_(nullptr), run_particle_relaxation_(false), reload_particles_(false),
-      restart_step_(0), generate_regression_data_(false), state_recording_(true) {}
+      io_environment_(io_ptr_keeper_.createPtr<IOEnvironment>(*this)),
+      run_particle_relaxation_(false), reload_particles_(false),
+      restart_step_(0), generate_regression_data_(false), state_recording_(true)
+{
+    Log::init();
+    spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
+    registerSystemVariable<Real>("PhysicalTime", 0.0);
+    Log::get()->info("The reference resolution of the SPHSystem is {}.", resolution_ref_);
+}
 //=================================================================================================//
+void SPHSystem::setLogLevel(size_t log_level)
+{
+    if (log_level < 0 || log_level > 6)
+    {
+        std::cerr << "Log level must be between 0 and 6.\n";
+        exit(1);
+    }
+
+    log_level_ = log_level;
+    spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
+}
+//=================================================================================================//
+IOEnvironment &SPHSystem::getIOEnvironment()
+{
+    if (io_environment_ == nullptr)
+    {
+        std::cout << "\n Error: IO Environment not setup yet! \n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+    return *io_environment_;
+}
+//=================================================================================================//
+void SPHSystem::addRealBody(RealBody *real_body)
+{
+    real_bodies_.push_back(real_body);
+}
+//=================================================================================================//
+void SPHSystem::addSolidBody(SolidBody *solid_body)
+{
+    solid_bodies_.push_back(solid_body);
+}
+//=================================================================================================//
+
 void SPHSystem::initializeSystemCellLinkedLists()
 {
     for (auto &body : real_bodies_)
@@ -26,19 +68,20 @@ void SPHSystem::initializeSystemConfigurations()
 {
     for (auto &body : sph_bodies_)
     {
-        for (size_t i = 0; i < body->body_relations_.size(); i++)
+        StdVec<SPHRelation *> &body_relations = body->getBodyRelations();
+        for (size_t i = 0; i < body_relations.size(); i++)
         {
-            body->body_relations_[i]->updateConfiguration();
+            body_relations[i]->updateConfiguration();
         }
     }
 }
 //=================================================================================================//
 Real SPHSystem::getSmallestTimeStepAmongSolidBodies(Real CFL)
 {
-    Real dt = Infinity;
+    Real dt = MaxReal;
     for (size_t i = 0; i < solid_bodies_.size(); i++)
     {
-        ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(*solid_bodies_[i], CFL);
+        ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(*solid_bodies_[i], CFL);
         Real dt_temp = computing_time_step_size.exec();
         if (dt_temp < dt)
             dt = dt_temp;
@@ -47,7 +90,7 @@ Real SPHSystem::getSmallestTimeStepAmongSolidBodies(Real CFL)
 }
 //=================================================================================================//
 #ifdef BOOST_AVAILABLE
-void SPHSystem::handleCommandlineOptions(int ac, char *av[])
+SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
 {
     try
     {
@@ -59,6 +102,8 @@ void SPHSystem::handleCommandlineOptions(int ac, char *av[])
         desc.add_options()("regression", po::value<bool>(), "Regression test.");
         desc.add_options()("state_recording", po::value<bool>(), "State recording in output folder.");
         desc.add_options()("restart_step", po::value<int>(), "Run form a restart file.");
+        desc.add_options()("log_level", po::value<int>(), "Output log level (0-6). "
+                                                          "0: trace, 1: debug, 2: info, 3: warning, 4: error, 5: critical, 6: off");
 
         po::variables_map vm;
         po::store(po::parse_command_line(ac, av, desc), vm);
@@ -80,6 +125,11 @@ void SPHSystem::handleCommandlineOptions(int ac, char *av[])
         {
             std::cout << "Particle relaxation was set to default ("
                       << run_particle_relaxation_ << ").\n";
+        }
+
+        if (run_particle_relaxation_)
+        {
+            io_environment_->reinitializeReloadFolder();
         }
 
         if (vm.count("reload"))
@@ -129,6 +179,22 @@ void SPHSystem::handleCommandlineOptions(int ac, char *av[])
             std::cout << "Restart inactivated, i.e. restart_step ("
                       << restart_step_ << ").\n";
         }
+
+        if (vm.count("log_level"))
+        {
+            log_level_ = vm["log_level"].as<int>();
+            if (log_level_ < 0 || log_level_ > 6)
+            {
+                std::cerr << "Log level must be between 0 and 6.\n";
+                exit(1);
+            }
+            std::cout << "Log level was set to " << log_level_ << ".\n";
+            spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
+        }
+        else
+        {
+            std::cout << "Log level was set to default (info).\n";
+        }
     }
     catch (std::exception &e)
     {
@@ -139,6 +205,8 @@ void SPHSystem::handleCommandlineOptions(int ac, char *av[])
     {
         std::cerr << "Exception of unknown type!\n";
     }
+
+    return this;
 }
 #endif
 //=================================================================================================//

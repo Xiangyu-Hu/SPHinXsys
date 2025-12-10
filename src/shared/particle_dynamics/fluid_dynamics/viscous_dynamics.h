@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -31,93 +31,156 @@
 #define VISCOUS_DYNAMICS_H
 
 #include "base_fluid_dynamics.h"
+#include "force_prior.h"
+#include "viscosity.h"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
+
+class FixedViscosity : public PairGeomAverageFixed<Real>
+{
+  public:
+    FixedViscosity(BaseParticles *particles1, BaseParticles *particles2)
+        : PairGeomAverageFixed<Real>(
+              DynamicCast<Viscosity>(this, particles1->getBaseMaterial()).ReferenceViscosity(),
+              DynamicCast<Viscosity>(this, particles2->getBaseMaterial()).ReferenceViscosity()) {};
+    explicit FixedViscosity(BaseParticles *particles)
+        : FixedViscosity(particles, particles) {};
+    virtual ~FixedViscosity() {};
+};
+
+class VariableViscosity : public PairGeomAverageVariable<Real>
+{
+  public:
+    VariableViscosity(BaseParticles *particles1, BaseParticles *particles2)
+        : PairGeomAverageVariable<Real>(
+              particles1->getVariableDataByName<Real>("VariableViscosity"),
+              particles2->getVariableDataByName<Real>("VariableViscosity")) {};
+    explicit VariableViscosity(BaseParticles *particles)
+        : VariableViscosity(particles, particles) {};
+    virtual ~VariableViscosity() {};
+};
+
 template <typename... InteractionTypes>
-class ViscousAcceleration;
+class ViscousForce;
 
 template <class DataDelegationType>
-class ViscousAcceleration<DataDelegationType>
-    : public LocalDynamics, public DataDelegationType
+class ViscousForce<DataDelegationType>
+    : public ForcePrior, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    explicit ViscousAcceleration(BaseRelationType &base_relation);
-    virtual ~ViscousAcceleration(){};
+    explicit ViscousForce(BaseRelationType &base_relation);
+    virtual ~ViscousForce() {};
 
   protected:
-    StdLargeVec<Real> &rho_, &mass_;
-    StdLargeVec<Vecd> &vel_, &force_prior_;
-    Real mu_;
+    Real *rho_, *mass_, *Vol_;
+    Vecd *vel_, *viscous_force_;
     Real smoothing_length_;
 };
 
-template <>
-class ViscousAcceleration<Inner<>> : public ViscousAcceleration<FluidDataInner>
+template <typename ViscosityType, class KernelCorrectionType>
+class ViscousForce<Inner<>, ViscosityType, KernelCorrectionType>
+    : public ViscousForce<DataDelegateInner>
 {
   public:
-    explicit ViscousAcceleration(BaseInnerRelation &inner_relation)
-        : ViscousAcceleration<FluidDataInner>(inner_relation){};
-    virtual ~ViscousAcceleration(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-};
-using ViscousAccelerationInner = ViscousAcceleration<Inner<>>;
-
-template <>
-class ViscousAcceleration<AngularConservative<Inner<>>>
-    : public ViscousAcceleration<FluidDataInner>
-{
-  public:
-    explicit ViscousAcceleration(BaseInnerRelation &inner_relation)
-        : ViscousAcceleration<FluidDataInner>(inner_relation){};
-    virtual ~ViscousAcceleration(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-};
-
-using BaseViscousAccelerationWithWall = InteractionWithWall<ViscousAcceleration>;
-template <>
-class ViscousAcceleration<Contact<Wall>> : public BaseViscousAccelerationWithWall
-{
-  public:
-    explicit ViscousAcceleration(BaseContactRelation &wall_contact_relation)
-        : BaseViscousAccelerationWithWall(wall_contact_relation){};
-    virtual ~ViscousAcceleration(){};
-    void interaction(size_t index_i, Real dt = 0.0);
-};
-
-template <>
-class ViscousAcceleration<Contact<>> : public ViscousAcceleration<FluidContactData>
-{
-  public:
-    explicit ViscousAcceleration(BaseContactRelation &contact_relation);
-    virtual ~ViscousAcceleration(){};
+    explicit ViscousForce(BaseInnerRelation &inner_relation);
+    virtual ~ViscousForce() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdVec<Real> contact_mu_;
-    StdVec<StdLargeVec<Vecd> *> contact_vel_;
+    ViscosityType mu_;
+    KernelCorrectionType kernel_correction_;
+};
+using ViscousForceInner = ViscousForce<Inner<>, FixedViscosity, NoKernelCorrection>;
+
+template <typename ViscosityType, class KernelCorrectionType>
+class ViscousForce<Inner<AngularConservative>, ViscosityType, KernelCorrectionType>
+    : public ViscousForce<DataDelegateInner>
+{
+  public:
+    explicit ViscousForce(BaseInnerRelation &inner_relation);
+    virtual ~ViscousForce() {};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    ViscosityType mu_;
+    KernelCorrectionType kernel_correction_;
 };
 
-using ViscousAccelerationWithWall = ComplexInteraction<ViscousAcceleration<Inner<>, Contact<Wall>>>;
+using BaseViscousForceWithWall = InteractionWithWall<ViscousForce>;
+
+template <typename ViscosityType, class KernelCorrectionType>
+class ViscousForce<Contact<Wall>, ViscosityType, KernelCorrectionType>
+    : public BaseViscousForceWithWall
+{
+  public:
+    explicit ViscousForce(BaseContactRelation &wall_contact_relation);
+    virtual ~ViscousForce() {};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    ViscosityType mu_;
+    KernelCorrectionType kernel_correction_;
+};
+
+template <typename ViscosityType, class KernelCorrectionType>
+class ViscousForce<Contact<Wall, AngularConservative>, ViscosityType, KernelCorrectionType>
+    : public BaseViscousForceWithWall
+{
+  public:
+    explicit ViscousForce(BaseContactRelation &wall_contact_relation);
+    virtual ~ViscousForce() {};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    ViscosityType mu_;
+    KernelCorrectionType kernel_correction_;
+};
+
+template <typename ViscosityType, class KernelCorrectionType>
+class ViscousForce<Contact<>, ViscosityType, KernelCorrectionType>
+    : public ViscousForce<DataDelegateContact>
+{
+  public:
+    explicit ViscousForce(BaseContactRelation &contact_relation);
+    virtual ~ViscousForce() {};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdVec<ViscosityType> contact_mu_;
+    KernelCorrectionType kernel_correction_;
+    StdVec<KernelCorrectionType> contact_kernel_corrections_;
+    StdVec<Vecd *> contact_vel_;
+    StdVec<Real *> wall_Vol_;
+};
+
+using ViscousForceWithWall = ComplexInteraction<ViscousForce<Inner<>, Contact<Wall>>, FixedViscosity, NoKernelCorrection>;
+using ViscousForceWithWallCorrection = ComplexInteraction<ViscousForce<Inner<>, Contact<Wall>>, FixedViscosity, LinearGradientCorrection>;
+using MultiPhaseViscousForceWithWall = ComplexInteraction<ViscousForce<Inner<>, Contact<>, Contact<Wall>>, FixedViscosity, NoKernelCorrection>;
+
+template <typename... FormulationType>
+using NonNewtonianViscousForceWithWall =
+    ComplexInteraction<ViscousForce<Inner<FormulationType...>, Contact<Wall, FormulationType...>>, VariableViscosity, NoKernelCorrection>;
 
 /**
  * @class VorticityInner
  * @brief  compute vorticity in the fluid field
  */
-class VorticityInner : public LocalDynamics, public FluidDataInner
+class VorticityInner : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit VorticityInner(BaseInnerRelation &inner_relation);
-    virtual ~VorticityInner(){};
+    virtual ~VorticityInner() {};
 
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &vel_;
-    StdLargeVec<AngularVecd> vorticity_;
+    Real *Vol_;
+    Vecd *vel_;
+    AngularVecd *vorticity_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

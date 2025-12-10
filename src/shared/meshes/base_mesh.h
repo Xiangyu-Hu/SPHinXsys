@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -34,97 +34,70 @@
 #ifndef BASE_MESH_H
 #define BASE_MESH_H
 
-#include "base_data_package.h"
-#include "my_memory_pool.h"
-#include "sph_data_containers.h"
+#include "base_data_type_package.h"
+#include "sphinxsys_variable.h"
 
-#include <algorithm>
 #include <fstream>
-#include <functional>
-#include <mutex>
-using namespace std::placeholders;
 
 namespace SPH
 {
 /**
- * @class BaseMesh
+ * @class Mesh
  * @brief Base class for all structured meshes which may be grid or cell based.
  * The basic properties of the mesh, such as lower bound, grid spacing
  * and number of grid points may be determined by the derived class.
  * Note that there is no mesh-based data defined here.
  */
-class BaseMesh
+class Mesh
 {
-  protected:
-    Vecd mesh_lower_bound_{Vecd::Zero()};    /**< mesh lower bound as reference coordinate */
-    Real grid_spacing_{1.0};                 /**< grid_spacing */
-    Arrayi all_grid_points_{Arrayi::Zero()}; /**< number of grid points by dimension */
   public:
-    BaseMesh() = default;
-    explicit BaseMesh(Arrayi all_grid_points);
-    BaseMesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
-    BaseMesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
-    virtual ~BaseMesh(){};
+    Mesh(BoundingBoxd tentative_bounds, Real grid_spacing,
+         UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset = 0);
+    Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
+    ~Mesh() {};
 
-    /** Return the lower bound of the mesh domain. */
-    Vecd MeshLowerBound() { return mesh_lower_bound_; };
-    /** Return the grid spacing. */
-    Real GridSpacing() { return grid_spacing_; };
-    /** Return the number of mesh in each direction, i.e., x-, y- and z-axis. */
-    Arrayi AllGridPoints() { return all_grid_points_; };
-    /** Given the cell number, return the mesh number. */
-    Arrayi AllGridPointsFromAllCells(const Arrayi &all_cells) { return all_cells + Arrayi::Ones(); };
-    /** Given the grid point number, return the cell number. */
-    Arrayi AllCellsFromAllGridPoints(const Arrayi &all_grid_points) { return all_grid_points - Arrayi::Ones(); };
-    /** Given the cell position, return the grid position. */
-    Vecd GridPositionFromCellPosition(const Vecd &cell_position) { return cell_position - 0.5 * grid_spacing_ * Vecd::Ones(); };
-    /** Given the position, return the cell index. */
-    Arrayi CellIndexFromPosition(const Vecd &position);
-    /** Given the cell index, return the cell position. */
-    Vecd CellPositionFromIndex(const Arrayi &cell_index);
-    /** Given the index, return the grid position. */
-    Vecd GridPositionFromIndex(const Arrayi &grid_index);
-    /** Transfer 1D int to mesh index.  */
-    Arrayi transfer1DtoMeshIndex(const Arrayi &mesh_size, size_t i);
-    /** Transfer mesh index to 1D int.  */
-    size_t transferMeshIndexTo1D(const Arrayi &mesh_size, const Arrayi &mesh_index);
+    Vecd MeshLowerBound() const { return mesh_lower_bound_; };
+    Real GridSpacing() const { return grid_spacing_; };
+    UnsignedInt BufferWidth() { return buffer_width_; };
+    Arrayi AllGridPoints() const { return all_grid_points_; };
+    Arrayi AllCells() const { return all_cells_; };
+    UnsignedInt NumberOfGridPoints() const { return all_grid_points_.prod(); };
+    UnsignedInt NumberOfCells() const { return all_cells_.prod(); };
+
+    Arrayi CellIndexFromPosition(const Vecd &position) const;
+    UnsignedInt LinearCellIndexFromPosition(const Vecd &position) const;
+    UnsignedInt LinearCellIndex(const Arrayi &cell_index) const;
+    Arrayi DimensionalCellIndex(UnsignedInt linear_index) const;
+    Vecd CellPositionFromIndex(const Arrayi &cell_index) const;
+    Vecd GridPositionFromIndex(const Arrayi &grid_index) const;
+    Vecd CellLowerCornerPosition(const Arrayi &cell_index) const;
+    Arrayi boundCellIndex(const Arrayi &input) const;
+    //----------------------------------------------------------------------
+    // Transferring between 1D mesh indexes.
+    // Here, mesh size can be either AllGridPoints or AllCells.
+    //----------------------------------------------------------------------
+    static Array2i transfer1DtoMeshIndex(const Array2i &mesh_size, UnsignedInt i);
+    static Array3i transfer1DtoMeshIndex(const Array3i &mesh_size, UnsignedInt i);
+    static UnsignedInt transferMeshIndexTo1D(const Array2i &mesh_size, const Array2i &mesh_index);
+    static UnsignedInt transferMeshIndexTo1D(const Array3i &mesh_size, const Array3i &mesh_index);
+
     /** converts mesh index into a Morton order.
      * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
      * https://stackoverflow.com/questions/18529057/
      * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
      */
-    size_t MortonCode(const size_t &i);
-    /** Converts mesh index into a Morton order. */
-    size_t transferMeshIndexToMortonOrder(const Arrayi &mesh_index);
-};
+    static UnsignedInt transferMeshIndexToMortonOrder(const Array2i &mesh_index);
+    static UnsignedInt transferMeshIndexToMortonOrder(const Array3i &mesh_index);
 
-/**
- * @class Mesh
- * @brief Abstract base class for cell-based mesh
- * by introducing number of cells, buffer width and mesh-based data in its derived classes.
- * Note that we identify the difference between grid spacing and data spacing.
- * The latter is different from grid spacing when MeshWithDataPackage is considered.
- */
-class Mesh : public BaseMesh
-{
   protected:
-    Arrayi all_cells_{Arrayi::Zero()}; /**< number of cells by dimension */
-    size_t buffer_width_{0};           /**< buffer width to avoid bound check.*/
+    Vecd mesh_lower_bound_;                /**< mesh lower bound as reference coordinate */
+    Real grid_spacing_;                    /**< grid_spacing */
+    UnsignedInt buffer_width_;             /**< buffer width to avoid bound check.*/
+    Arrayi all_grid_points_;               /**< number of grid points by dimension */
+    Arrayi all_cells_;                     /**< number of cells by dimension */
+    UnsignedInt linear_cell_index_offset_; /**< offset for linear cell index, used for sub-mesh */
 
-    /** Copy mesh properties to another mesh. */
-    void copyMeshProperties(Mesh *another_mesh);
-
-  public:
-    Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
-    Mesh(Vecd mesh_lower_bound, Arrayi all_cells, Real grid_spacing);
-    virtual ~Mesh(){};
-
-    /** Return number of cell in each direction, i.e., x-, y- and z-axis.*/
-    Arrayi AllCells() { return all_cells_; };
-    /** Return the buffer size. */
-    size_t MeshBufferSize() { return buffer_width_; };
-    /** Return the spacing for storing data. */
-    virtual Real DataSpacing() { return grid_spacing_; };
+    static UnsignedInt MortonCode(const UnsignedInt &i);
 };
 
 /**
@@ -137,79 +110,63 @@ class BaseMeshField
     std::string name_{};
 
   public:
-    explicit BaseMeshField(const std::string &name) : name_(name){};
-    virtual ~BaseMeshField(){};
+    explicit BaseMeshField(const std::string &name) : name_(name) {};
+    virtual ~BaseMeshField() {};
     /** Return the mesh field name. */
     std::string Name() { return name_; };
+    void setName(const std::string &new_name) { name_ = new_name; };
     /** output mesh data for Tecplot visualization */
-    virtual void writeMeshFieldToPlt(std::ofstream &output_file) = 0;
+    virtual void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) = 0;
+    /** output mesh data for Tecplot visualization */
+    virtual void writeBKGMeshToPlt(const std::string &partial_file_name) {};
 };
 
-/**
- * @class 	RefinedMesh
- * @brief 	Abstract base class derived from the coarse mesh but has double resolution.
- * 			Currently, the design is simple but can be extending for more inter-mesh operations.
- */
-template <class CoarseMeshType>
-class RefinedMesh : public CoarseMeshType
+class MultiLevelMeshField : public BaseMeshField
 {
+    typedef DataContainerAddressAssemble<DiscreteVariable> CellVariableAssemble;
+    DataContainerUniquePtrAssemble<DiscreteVariable> cell_variable_ptrs_;
+
   public:
-    template <typename... Args>
-    RefinedMesh(BoundingBox tentative_bounds, CoarseMeshType &coarse_mesh, Args &&...args)
-        : CoarseMeshType(tentative_bounds, 0.5 * coarse_mesh.DataSpacing(), std::forward<Args>(args)...),
-          coarse_mesh_(coarse_mesh){};
-    virtual ~RefinedMesh(){};
+    MultiLevelMeshField(
+        const std::string &name, BoundingBoxd tentative_bounds,
+        Real Reference_grid_spacing, UnsignedInt buffer_width, size_t total_levels = 1);
+    virtual ~MultiLevelMeshField() {};
+
+    UniquePtrsKeeper<Mesh> mesh_ptrs_keeper_;
+    StdVec<Mesh *> &getMeshes() { return meshes_; };
+    UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
+
+    template <typename DataType, typename... Args>
+    DiscreteVariable<DataType> *registerCellVariable(const std::string &variable_name, Args &&...args);
+    template <typename DataType>
+    DiscreteVariable<DataType> *getCellVariable(const std::string &variable_name);
+
+    template <typename DataType>
+    void addCellVariableToWrite(const std::string &variable_name);
+    void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
+
+    template <class ExecutionPolicy>
+    void syncCellVariablesToWrite(ExecutionPolicy &ex_policy);
 
   protected:
-    CoarseMeshType &coarse_mesh_;
-};
+    size_t total_levels_; /**< level 0 is the coarsest */
+    StdVec<Mesh *> meshes_;
+    UnsignedInt total_number_of_cells_;
+    CellVariableAssemble all_cell_variables_;
+    CellVariableAssemble cell_variables_to_write_;
 
-/**
- * @class 	MultilevelMesh
- * @brief 	Multi-level Meshes with successively double the resolution
- */
-template <class MeshFieldType, class CoarsestMeshType, class RefinedMeshType>
-class MultilevelMesh : public MeshFieldType
-{
-  public:
-    /**template parameter pack is used with rvalue reference and perfect forwarding to keep
-     * the type of arguments when called by another function with template parameter pack too. */
-    template <typename... Args>
-    MultilevelMesh(BoundingBox tentative_bounds, Real reference_spacing, size_t total_levels, Args &&...args)
-        : MeshFieldType(std::forward<Args>(args)...), total_levels_(total_levels)
+    void writeCellVariableToPltByMesh(const Mesh &mesh, std::ofstream &output_file);
+
+  protected:
+    template <template <typename> class MeshVariableType>
+    struct SyncMeshVariableData
     {
-        mesh_levels_.push_back(
-            mesh_level_ptr_vector_keeper_
-                .template createPtr<CoarsestMeshType>(tentative_bounds, reference_spacing, std::forward<Args>(args)...));
-
-        for (size_t level = 1; level != total_levels_; ++level)
-        {
-            /** all mesh levels aligned at the lower bound of tentative_bounds */
-            mesh_levels_.push_back(
-                mesh_level_ptr_vector_keeper_
-                    .template createPtr<RefinedMeshType>(tentative_bounds, *mesh_levels_.back(), std::forward<Args>(args)...));
-        }
+        template <typename DataType, class ExecutionPolicy>
+        void operator()(DataContainerAddressKeeper<MeshVariableType<DataType>> &mesh_variables,
+                        ExecutionPolicy &ex_policy);
     };
-    virtual ~MultilevelMesh(){};
 
-  private:
-    UniquePtrsKeeper<CoarsestMeshType> mesh_level_ptr_vector_keeper_;
-
-  protected:
-    size_t total_levels_;                    /**< level 0 is the coarsest */
-    StdVec<CoarsestMeshType *> mesh_levels_; /**< Mesh in different coarse level. */
-
-  public:
-    /** Return the mesh at different level. */
-    StdVec<CoarsestMeshType *> getMeshLevels() { return mesh_levels_; };
-    /** Write mesh data to file. */
-    void writeMeshFieldToPlt(std::ofstream &output_file) override
-    {
-        for (size_t l = 0; l != total_levels_; ++l)
-        {
-            mesh_levels_[l]->writeMeshFieldToPlt(output_file);
-        }
-    }
+    OperationOnDataAssemble<CellVariableAssemble, SyncMeshVariableData<DiscreteVariable>> sync_cell_variable_data_{};
 };
 } // namespace SPH
 #endif // BASE_MESH_H

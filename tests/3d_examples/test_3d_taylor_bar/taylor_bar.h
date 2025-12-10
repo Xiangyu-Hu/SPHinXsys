@@ -20,7 +20,7 @@ Real inner_circle_radius = PL;
 
 Vec3d domain_lower_bound(-4.0 * PL, -4.0 * PL, -SL);
 Vec3d domain_upper_bound(4.0 * PL, 4.0 * PL, 2.0 * PW);
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 int resolution(20);
 //----------------------------------------------------------------------
 //	Material properties and global parameters
@@ -63,7 +63,7 @@ class InitialCondition
 {
   public:
     explicit InitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
+        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -71,12 +71,76 @@ class InitialCondition
     }
 };
 
-// define an observer body
-class ColumnObserverParticleGenerator : public ObserverParticleGenerator
+/**
+ * @class DynamicContactForceWithWall
+ * @brief Computing the contact force with a rigid wall.
+ *  Note that the body surface of the wall should be
+ *  updated before computing the contact force.
+ */
+class DynamicContactForceWithWall : public LocalDynamics,
+                                    public DataDelegateContact
 {
   public:
-    explicit ColumnObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
+    explicit DynamicContactForceWithWall(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength = 1.0)
+        : LocalDynamics(solid_body_contact_relation.getSPHBody()),
+          DataDelegateContact(solid_body_contact_relation),
+          solid_(DynamicCast<Solid>(this, sph_body_->getBaseMaterial())),
+          Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+          force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
+          penalty_strength_(penalty_strength)
     {
-        positions_.push_back(Vecd(0.0, 0.0, PW));
-    }
+        impedance_ = sqrt(solid_.ReferenceDensity() * solid_.ContactStiffness());
+        reference_pressure_ = solid_.ContactStiffness();
+        for (size_t k = 0; k != contact_particles_.size(); ++k)
+        {
+            contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
+            contact_vel_.push_back(contact_particles_[k]->registerStateVariableData<Vecd>("Velocity"));
+            contact_n_.push_back(contact_particles_[k]->template getVariableDataByName<Vecd>("NormalDirection"));
+        }
+    };
+    virtual ~DynamicContactForceWithWall() {};
+    void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Vecd force = Vecd::Zero();
+        for (size_t k = 0; k < contact_configuration_.size(); ++k)
+        {
+            Real particle_spacing_j1 = 1.0 / contact_bodies_[k]->getSPHAdaptation().ReferenceSpacing();
+            Real particle_spacing_ratio2 =
+                1.0 / (getSPHAdaptation().ReferenceSpacing() * particle_spacing_j1);
+            particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
+
+            Vecd *n_k = contact_n_[k];
+            Vecd *vel_n_k = contact_vel_[k];
+            Real *Vol_k = contact_Vol_[k];
+            Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = contact_neighborhood.j_[n];
+                Vecd e_ij = contact_neighborhood.e_ij_[n];
+                Vecd n_k_j = n_k[index_j];
+
+                Real impedance_p = 0.5 * impedance_ * (vel_[index_i] - vel_n_k[index_j]).dot(-n_k_j);
+                Real overlap = contact_neighborhood.r_ij_[n] * n_k_j.dot(e_ij);
+                Real delta = 2.0 * overlap * particle_spacing_j1;
+                Real beta = delta < 1.0 ? (1.0 - delta) * (1.0 - delta) * particle_spacing_ratio2 : 0.0;
+                Real penalty_p = penalty_strength_ * beta * fabs(overlap) * reference_pressure_;
+
+                // force due to pressure
+                force -= 2.0 * (impedance_p + penalty_p) * e_ij.dot(n_k_j) *
+                         n_k_j * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
+            }
+        }
+
+        force_prior_[index_i] += force * Vol_[index_i];
+    };
+
+  protected:
+    Solid &solid_;
+    Real *Vol_;
+    Vecd *vel_, *force_prior_; // note that prior force directly used here
+    StdVec<Real *> contact_Vol_;
+    StdVec<Vecd *> contact_vel_, contact_n_;
+    Real penalty_strength_;
+    Real impedance_, reference_pressure_;
 };

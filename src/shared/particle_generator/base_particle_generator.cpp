@@ -1,86 +1,84 @@
 #include "base_particle_generator.h"
 
+#include "all_io.h"
 #include "base_body.h"
 #include "base_particles.h"
-#include "io_all.h"
 
 namespace SPH
 {
 //=================================================================================================//
-BaseParticleGenerator::BaseParticleGenerator(SPHBody &sph_body)
-    : base_particles_(sph_body.getBaseParticles()),
-      base_material_(base_particles_.getBaseMaterial()),
-      pos_(base_particles_.pos_), unsorted_id_(base_particles_.unsorted_id_) {}
+ParticleGenerator<BaseParticles>::
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
+    : base_particles_(base_particles),
+      particle_spacing_ref_(sph_body.getSPHAdaptation().ReferenceSpacing()) {}
 //=================================================================================================//
-void BaseParticleGenerator::initializePosition(const Vecd &position)
+void ParticleGenerator<BaseParticles>::addParticlePosition(const Vecd &position)
 {
-    pos_.push_back(position);
-    unsorted_id_.push_back(base_particles_.total_real_particles_);
-    base_particles_.total_real_particles_++;
+    position_.push_back(position);
 }
 //=================================================================================================//
-void BaseParticleGenerator::generateParticlesWithBasicVariables()
+void ParticleGenerator<BaseParticles>::generateParticlesWithGeometricVariables()
 {
-    initializeGeometricVariables();
-    // should be determined first before register other variables
-    base_particles_.real_particles_bound_ = base_particles_.total_real_particles_;
-    base_material_.registerReloadLocalParameters(&base_particles_);
+    prepareGeometricData();
+    setAllParticleBounds();
+    initializeParticleVariables();
 }
 //=================================================================================================//
-ParticleGenerator::ParticleGenerator(SPHBody &sph_body)
-    : BaseParticleGenerator(sph_body), Vol_(base_particles_.Vol_) {}
-//=================================================================================================//
-void ParticleGenerator::initializePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure)
+void ParticleGenerator<BaseParticles>::setAllParticleBounds()
 {
-    initializePosition(position);
-    Vol_.push_back(volumetric_measure);
+    base_particles_.initializeAllParticlesBounds(position_.size());
 }
 //=================================================================================================//
-SurfaceParticleGenerator::SurfaceParticleGenerator(SPHBody &sph_body)
-    : ParticleGenerator(sph_body),
-      n_(*base_particles_.getVariableByName<Vecd>("NormalDirection")),
-      thickness_(*base_particles_.getVariableByName<Real>("Thickness")) {}
-//=================================================================================================//
-void SurfaceParticleGenerator::initializeSurfaceProperties(const Vecd &surface_normal, Real thickness)
+void ParticleGenerator<BaseParticles>::addPositionAndVolumetricMeasure(
+    const Vecd &position, Real volumetric_measure)
 {
-    n_.push_back(surface_normal);
-    thickness_.push_back(thickness);
+    addParticlePosition(position);
+    volumetric_measure_.push_back(volumetric_measure);
 }
 //=================================================================================================//
-
-
-void ObserverParticleGenerator::initializeGeometricVariables()
+void ParticleGenerator<BaseParticles>::initializeParticleVariables()
+{
+    base_particles_.registerPositionAndVolumetricMeasure(position_, volumetric_measure_);
+}
+//=================================================================================================//
+void ParticleGenerator<BaseParticles>::initializeParticleVariablesFromReload()
+{
+    base_particles_.registerPositionAndVolumetricMeasureFromReload();
+}
+//=================================================================================================//
+ParticleGenerator<SurfaceParticles>::
+    ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
+    : ParticleGenerator<BaseParticles>(sph_body, surface_particles),
+      surface_particles_(surface_particles) {}
+//=================================================================================================//
+void ParticleGenerator<SurfaceParticles>::addSurfaceProperties(const Vecd &surface_normal, Real thickness)
+{
+    surface_normal_.push_back(surface_normal);
+    surface_thickness_.push_back(thickness);
+}
+//=================================================================================================//
+void ParticleGenerator<SurfaceParticles>::initializeParticleVariables()
+{
+    ParticleGenerator<BaseParticles>::initializeParticleVariables();
+    surface_particles_.registerSurfaceProperties(surface_normal_, surface_thickness_);
+}
+//=================================================================================================//
+void ParticleGenerator<SurfaceParticles>::initializeParticleVariablesFromReload()
+{
+    ParticleGenerator<BaseParticles>::initializeParticleVariablesFromReload();
+    surface_particles_.registerSurfacePropertiesFromReload();
+}
+//=================================================================================================//
+ParticleGenerator<ObserverParticles>::ParticleGenerator(
+    SPHBody &sph_body, BaseParticles &base_particles, const StdVec<Vecd> &positions)
+    : ParticleGenerator<BaseParticles>(sph_body, base_particles), positions_(positions) {}
+//=================================================================================================//
+void ParticleGenerator<ObserverParticles>::prepareGeometricData()
 {
     for (size_t i = 0; i < positions_.size(); ++i)
     {
-        initializePositionAndVolumetricMeasure(positions_[i], 0.0); 
+        addPositionAndVolumetricMeasure(positions_[i], 0.0);
     }
-}
-//=================================================================================================//
-ParticleGeneratorReload::ParticleGeneratorReload(SPHBody &sph_body, IOEnvironment &io_environment, const std::string &reload_body_name)
-    : ParticleGenerator(sph_body)
-{
-    if (!fs::exists(io_environment.reload_folder_))
-    {
-        std::cout << "\n Error: the particle reload folder:" << io_environment.reload_folder_ << " is not exists" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
-
-    file_path_ = io_environment.reload_folder_ + "/" + reload_body_name + "_rld.xml";
-}
-//=================================================================================================//
-void ParticleGeneratorReload::initializeGeometricVariables()
-{
-    base_particles_.readFromXmlForReloadParticle(file_path_);
-}
-//=================================================================================================//
-void ParticleGeneratorReload::generateParticlesWithBasicVariables()
-{
-    base_material_.registerReloadLocalParameters(&base_particles_);
-    initializeGeometricVariables();
-    // should be determined first before register other variables
-    base_particles_.real_particles_bound_ = base_particles_.total_real_particles_;
 }
 //=================================================================================================//
 } // namespace SPH

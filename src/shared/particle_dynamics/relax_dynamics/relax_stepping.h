@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -40,31 +40,53 @@ class LevelSetShape;
 
 namespace relax_dynamics
 {
+class Explicit
+{
+};
+class Implicit
+{
+};
+
+template <typename ErrorDataType, typename ParameterADataType, typename ParameterCDataType>
+struct ErrorAndParameters
+{
+    ErrorDataType error_;
+    ParameterADataType a_;
+    ParameterCDataType c_;
+
+    ErrorAndParameters()
+        : error_(ZeroData<ErrorDataType>::value),
+          a_(ZeroData<ParameterADataType>::value),
+          c_(ZeroData<ParameterCDataType>::value) {};
+};
+
 template <typename... InteractionTypes>
-class RelaxationResidue;
+class RelaxationResidual;
 
 template <class DataDelegationType>
-class RelaxationResidue<Base, DataDelegationType>
+class RelaxationResidual<Base, DataDelegationType>
     : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    explicit RelaxationResidue(BaseRelationType &base_relation);
-    virtual ~RelaxationResidue(){};
+    explicit RelaxationResidual(BaseRelationType &base_relation);
+    virtual ~RelaxationResidual() {};
 
   protected:
     SPHAdaptation *sph_adaptation_;
-    StdLargeVec<Vecd> &residue_;
+    Kernel *kernel_;
+    Real *Vol_, *kinetic_energy_;
+    Vecd *pos_, *residual_;
 };
 
 template <>
-class RelaxationResidue<Inner<>>
-    : public RelaxationResidue<Base, RelaxDataDelegateInner>
+class RelaxationResidual<Inner<>>
+    : public RelaxationResidual<Base, DataDelegateInner>
 {
   public:
-    explicit RelaxationResidue(BaseInnerRelation &inner_relation);
-    RelaxationResidue(BaseInnerRelation &inner_relation, std::string shape_name);
-    virtual ~RelaxationResidue(){};
+    explicit RelaxationResidual(BaseInnerRelation &inner_relation);
+    RelaxationResidual(BaseInnerRelation &inner_relation, const std::string &sub_shape_name);
+    virtual ~RelaxationResidual() {};
     Shape &getRelaxShape() { return relax_shape_; };
     void interaction(size_t index_i, Real dt = 0.0);
 
@@ -73,48 +95,91 @@ class RelaxationResidue<Inner<>>
 };
 
 template <>
-class RelaxationResidue<Inner<LevelSetCorrection>> : public RelaxationResidue<Inner<>>
+class RelaxationResidual<Inner<LevelSetCorrection>> : public RelaxationResidual<Inner<>>
 {
   public:
     template <typename... Args>
-    RelaxationResidue(Args &&...args);
+    RelaxationResidual(Args &&...args);
     template <typename BodyRelationType, typename FirstArg>
-    explicit RelaxationResidue(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : RelaxationResidue(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~RelaxationResidue(){};
+    explicit RelaxationResidual(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : RelaxationResidual(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~RelaxationResidual() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdLargeVec<Vecd> &pos_;
+    Vecd *pos_;
     LevelSetShape &level_set_shape_;
 };
 
 template <>
-class RelaxationResidue<Contact<>>
-    : public RelaxationResidue<Base, RelaxDataDelegateContact>
+class RelaxationResidual<Inner<Implicit>> : public RelaxationResidual<Inner<>>
 {
   public:
-    explicit RelaxationResidue(BaseContactRelation &contact_relation)
-        : RelaxationResidue<Base, RelaxDataDelegateContact>(contact_relation){};
-    virtual ~RelaxationResidue(){};
+    template <typename... Args>
+    RelaxationResidual(Args &&...args);
+    template <typename BodyRelationType, typename FirstArg>
+    explicit RelaxationResidual(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : RelaxationResidual(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~RelaxationResidual() {};
     void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
+    void updateStates(size_t index_i, Real dt, const ErrorAndParameters<Vecd, Matd, Matd> &error_and_parameters);
+};
+
+template <>
+class RelaxationResidual<Inner<LevelSetCorrection, Implicit>> : public RelaxationResidual<Inner<Implicit>>
+{
+  public:
+    template <typename... Args>
+    RelaxationResidual(Args &&...args);
+    template <typename BodyRelationType, typename FirstArg>
+    explicit RelaxationResidual(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : RelaxationResidual(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~RelaxationResidual() {};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Vecd *pos_;
+    LevelSetShape &level_set_shape_;
+    ErrorAndParameters<Vecd, Matd, Matd> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
+};
+
+template <>
+class RelaxationResidual<Contact<>>
+    : public RelaxationResidual<Base, DataDelegateContact>
+{
+  public:
+    explicit RelaxationResidual(BaseContactRelation &contact_relation)
+        : RelaxationResidual<Base, DataDelegateContact>(contact_relation)
+    {
+        for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
+        {
+            contact_Vol_.push_back(this->contact_particles_[k]->template registerStateVariableData<Real>("VolumetricMeasure"));
+        }
+    };
+    virtual ~RelaxationResidual() {};
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdVec<Real *> contact_Vol_;
 };
 
 /**
  * @class RelaxationScaling
  * @brief Obtain the scale for a particle relaxation step
  */
-class RelaxationScaling : public LocalDynamicsReduce<Real, ReduceMax>,
-                          public RelaxDataDelegateSimple
+class RelaxationScaling : public LocalDynamicsReduce<ReduceMax>
 {
   public:
     explicit RelaxationScaling(SPHBody &sph_body);
-    virtual ~RelaxationScaling(){};
+    virtual ~RelaxationScaling() {};
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value);
 
   protected:
-    StdLargeVec<Vecd> &residue_;
+    Vecd *residual_;
     Real h_ref_;
 };
 
@@ -122,60 +187,80 @@ class RelaxationScaling : public LocalDynamicsReduce<Real, ReduceMax>,
  * @class PositionRelaxation
  * @brief update the particle position for a relaxation step
  */
-class PositionRelaxation : public LocalDynamics,
-                           public RelaxDataDelegateSimple
+class PositionRelaxation : public LocalDynamics
 {
   protected:
     SPHAdaptation *sph_adaptation_;
-    StdLargeVec<Vecd> &pos_, &residue_;
+    Vecd *pos_, *residual_;
 
   public:
     explicit PositionRelaxation(SPHBody &sph_body);
-    virtual ~PositionRelaxation(){};
+    virtual ~PositionRelaxation() {};
     void update(size_t index_i, Real scaling);
 };
 
-class UpdateSmoothingLengthRatioByShape : public LocalDynamics,
-                                          public RelaxDataDelegateSimple
+class UpdateSmoothingLengthRatioByShape : public LocalDynamics
 {
   protected:
-    StdLargeVec<Real> &h_ratio_, &Vol_;
-    StdLargeVec<Vecd> &pos_;
+    Real *h_ratio_, *Vol_;
+    Vecd *pos_;
     Shape &target_shape_;
-    ParticleRefinementByShape *particle_adaptation_;
+    AdaptiveByShape *particle_adaptation_;
     Real reference_spacing_;
 
   public:
     UpdateSmoothingLengthRatioByShape(SPHBody &sph_body, Shape &target_shape);
     explicit UpdateSmoothingLengthRatioByShape(SPHBody &sph_body);
-    virtual ~UpdateSmoothingLengthRatioByShape(){};
+    virtual ~UpdateSmoothingLengthRatioByShape() {};
     void update(size_t index_i, Real dt = 0.0);
 };
 
-template <class RelaxationResidueType>
+template <class RelaxationResidualType>
 class RelaxationStep : public BaseDynamics<void>
 {
   public:
     template <typename FirstArg, typename... OtherArgs>
     explicit RelaxationStep(FirstArg &&first_arg, OtherArgs &&...other_args);
-    virtual ~RelaxationStep(){};
+    virtual ~RelaxationStep() {};
     SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
     virtual void exec(Real dt = 0.0) override;
 
   protected:
     RealBody &real_body_;
     StdVec<SPHRelation *> &body_relations_;
-    InteractionDynamics<RelaxationResidueType> relaxation_residue_;
+    InteractionDynamics<RelaxationResidualType> relaxation_residual_;
     ReduceDynamics<RelaxationScaling> relaxation_scaling_;
     SimpleDynamics<PositionRelaxation> position_relaxation_;
     NearShapeSurface near_shape_surface_;
     SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
 };
 
-using RelaxationStepInner = RelaxationStep<RelaxationResidue<Inner<>>>;
-using RelaxationStepLevelSetCorrectionInner = RelaxationStep<RelaxationResidue<Inner<LevelSetCorrection>>>;
-using RelaxationStepComplex = RelaxationStep<ComplexInteraction<RelaxationResidue<Inner<>, Contact<>>>>;
-using RelaxationStepLevelSetCorrectionComplex = RelaxationStep<ComplexInteraction<RelaxationResidue<Inner<LevelSetCorrection>, Contact<>>>>;
+template <class RelaxationResidualType>
+class RelaxationStepImplicit : public BaseDynamics<void>
+{
+  public:
+    template <typename FirstArg, typename... OtherArgs>
+    explicit RelaxationStepImplicit(FirstArg &&first_arg, OtherArgs &&...other_args);
+    virtual ~RelaxationStepImplicit() {};
+    SimpleDynamics<ShapeSurfaceBounding> &SurfaceBounding() { return surface_bounding_; };
+    virtual void exec(Real dt = 0.0) override;
+
+  protected:
+    RealBody &real_body_;
+    StdVec<SPHRelation *> &body_relations_;
+    InteractionSplit<RelaxationResidualType> relaxation_residual_;
+    ReduceDynamics<RelaxationScaling> relaxation_scaling_;
+    SimpleDynamics<PositionRelaxation> position_relaxation_;
+    NearShapeSurface near_shape_surface_;
+    SimpleDynamics<ShapeSurfaceBounding> surface_bounding_;
+};
+
+using RelaxationStepInner = RelaxationStep<RelaxationResidual<Inner<>>>;
+using RelaxationStepLevelSetCorrectionInner = RelaxationStep<RelaxationResidual<Inner<LevelSetCorrection>>>;
+using RelaxationStepComplex = RelaxationStep<ComplexInteraction<RelaxationResidual<Inner<>, Contact<>>>>;
+using RelaxationStepLevelSetCorrectionComplex = RelaxationStep<ComplexInteraction<RelaxationResidual<Inner<LevelSetCorrection>, Contact<>>>>;
+using RelaxationStepInnerImplicit = RelaxationStepImplicit<RelaxationResidual<Inner<Implicit>>>;
+using RelaxationStepLevelSetCorrectionInnerImplicit = RelaxationStepImplicit<RelaxationResidual<Inner<LevelSetCorrection, Implicit>>>;
 } // namespace relax_dynamics
 } // namespace SPH
 #endif // RELAX_STEPPING_H

@@ -22,7 +22,7 @@ Real resolution_ref = PL / (Real)particle_number; /** Initial reference particle
 int BWD = 1;                                      /** Width of the boundary layer measured by number of particles. */
 Real BW = resolution_ref * (Real)BWD;             /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec3d(-BW, -BW, -0.5 * resolution_ref),
+BoundingBoxd system_domain_bounds(Vec3d(-BW, -BW, -0.5 * resolution_ref),
                                  Vec3d(PL + BW, PH + BW, 0.5 * resolution_ref));
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(0.5 * PL, 0.5 * PH, 0.0)};
@@ -48,12 +48,16 @@ TEST(Plate, MaxDisplacement)
     std::cout << "displ_max: " << displ_max << std::endl;
 }
 
+namespace SPH
+{
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public SurfaceParticleGenerator
+class Plate;
+template <>
+class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<SurfaceParticles>
 {
   public:
-    explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
-    virtual void initializeGeometricVariables() override
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles) : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles) {};
+    virtual void prepareGeometricData() override
     {
         // the plate and boundary
         for (int i = 0; i < (particle_number + 2 * BWD); i++)
@@ -62,8 +66,8 @@ class PlateParticleGenerator : public SurfaceParticleGenerator
             {
                 Real x = resolution_ref * i - BW + resolution_ref * 0.5;
                 Real y = resolution_ref * j - BW + resolution_ref * 0.5;
-                initializePositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
-                initializeSurfaceProperties(n_0, PT);
+                addPositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
+                addSurfaceProperties(n_0, PT);
             }
         }
     }
@@ -72,59 +76,41 @@ class PlateParticleGenerator : public SurfaceParticleGenerator
 class BoundaryGeometryParallelToXAxis : public BodyPartByParticle
 {
   public:
-    BoundaryGeometryParallelToXAxis(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometryParallelToXAxis(SPHBody &body)
+        : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometryParallelToXAxis::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometryParallelToXAxis(){};
+    virtual ~BoundaryGeometryParallelToXAxis() {};
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][1] < 0.0 || base_particles_.pos_[index_i][1] > PH)
-        {
-            body_part_particles_.push_back(index_i);
-        }
+        return base_particles_.ParticlePositions()[index_i][1] < 0.0 ||
+               base_particles_.ParticlePositions()[index_i][1] > PH;
     };
 };
 class BoundaryGeometryParallelToYAxis : public BodyPartByParticle
 {
   public:
-    BoundaryGeometryParallelToYAxis(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometryParallelToYAxis(SPHBody &body)
+        : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometryParallelToYAxis::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometryParallelToYAxis(){};
+    virtual ~BoundaryGeometryParallelToYAxis() {};
 
   private:
-    void tagManually(size_t index_i)
+    bool tagManually(size_t index_i)
     {
-        if (base_particles_.pos_[index_i][0] < 0.0 || base_particles_.pos_[index_i][0] > PL)
-        {
-            body_part_particles_.push_back(index_i);
-        }
+        return base_particles_.ParticlePositions()[index_i][0] < 0.0 ||
+               base_particles_.ParticlePositions()[index_i][0] > PL;
     };
 };
-/**
- * define time dependent external force
- */
-class TimeDependentExternalForce : public Gravity
-{
-  public:
-    explicit TimeDependentExternalForce(Vecd external_force)
-        : Gravity(external_force) {}
-    virtual Vecd InducedAcceleration(const Vecd &position) override
-    {
-        Real current_time = GlobalStaticVariables::physical_time_;
-        return current_time < time_to_full_external_force
-                   ? current_time * global_acceleration_ / time_to_full_external_force
-                   : global_acceleration_;
-    }
-};
+} // namespace SPH
+
 /**
  *  The main program
  */
@@ -135,13 +121,12 @@ int main(int ac, char *av[])
 
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
-    plate_body.defineParticlesAndMaterial<ShellParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    plate_body.generateParticles<PlateParticleGenerator>();
+    plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    plate_body.generateParticles<SurfaceParticles, Plate>();
 
     /** Define Observer. */
     ObserverBody plate_observer(sph_system, "PlateObserver");
-    plate_observer.defineParticlesAndMaterial();
-    plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    plate_observer.generateParticles<ObserverParticles>(observation_location);
 
     /** Set body contact map
      *  The contact map gives the data connections between the bodies
@@ -150,38 +135,32 @@ int main(int ac, char *av[])
     InnerRelation plate_body_inner(plate_body);
     ContactRelation plate_observer_contact(plate_observer, {&plate_body});
 
-    /** Common particle dynamics. */
-    SimpleDynamics<TimeStepInitialization> initialize_external_force(
-        plate_body, makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
+    IncreaseToFullGravity time_dependent_external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration), time_to_full_external_force);
+    SimpleDynamics<GravityForce<IncreaseToFullGravity>> apply_time_dependent_external_force(plate_body, time_dependent_external_force);
 
     /**
      * This section define all numerical methods will be used in this case.
      */
-    /** Corrected configuration. */
-    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
-        corrected_configuration(plate_body_inner);
+    InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(plate_body_inner);
+    /** active-passive stress relaxation. */
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half(plate_body_inner);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(plate_body_inner);
     /** Time step size calculation. */
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
-    /** active-passive stress relaxation. */
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf>
-        stress_relaxation_first_half(plate_body_inner);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf>
-        stress_relaxation_second_half(plate_body_inner);
     /** Constrain the Boundary. */
-    BoundaryGeometryParallelToXAxis boundary_geometry_x(plate_body, "BoundaryGeometryParallelToXAxis");
+    BoundaryGeometryParallelToXAxis boundary_geometry_x(plate_body);
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis>
         constrain_holder_x(boundary_geometry_x, 0);
-    BoundaryGeometryParallelToYAxis boundary_geometry_y(plate_body, "BoundaryGeometryParallelToYAxis");
+    BoundaryGeometryParallelToYAxis boundary_geometry_y(plate_body);
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis>
         constrain_holder_y(boundary_geometry_y, 1);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity);
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d>>>
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>>
         plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(sph_system);
-    BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
-    ObservedQuantityRecording<Vecd> write_plate_max_displacement("Position", io_environment, plate_observer_contact);
+    BodyStatesRecordingToVtp write_states(sph_system);
+    ObservedQuantityRecording<Vecd> write_plate_max_displacement("Position", plate_observer_contact);
 
     /** Apply initial condition. */
     sph_system.initializeSystemCellLinkedLists();
@@ -192,12 +171,12 @@ int main(int ac, char *av[])
      * From here the time stepping begins.
      * Set the starting time.
      */
-    GlobalStaticVariables::physical_time_ = 0.0;
     write_states.writeToFile(0);
     write_plate_max_displacement.writeToFile(0);
-    observed_quantity_0 = (*write_plate_max_displacement.getObservedQuantity())[0][2];
+    observed_quantity_0 = write_plate_max_displacement.getObservedQuantity()[0][2];
 
     /** Setup physical parameters. */
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real end_time = 0.8;
     Real output_period = end_time / 100.0;
@@ -208,7 +187,7 @@ int main(int ac, char *av[])
     /**
      * Main loop
      */
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integral_time = 0.0;
         while (integral_time < output_period)
@@ -216,10 +195,10 @@ int main(int ac, char *av[])
             if (ite % 100 == 0)
             {
                 std::cout << "N=" << ite << " Time: "
-                          << GlobalStaticVariables::physical_time_ << "	dt: "
+                          << physical_time << "	dt: "
                           << dt << "\n";
             }
-            initialize_external_force.exec(dt);
+            apply_time_dependent_external_force.exec();
             stress_relaxation_first_half.exec(dt);
             constrain_holder_x.exec(dt);
             constrain_holder_y.exec(dt);
@@ -232,7 +211,7 @@ int main(int ac, char *av[])
             ite++;
             dt = computing_time_step_size.exec();
             integral_time += dt;
-            GlobalStaticVariables::physical_time_ += dt;
+            physical_time += dt;
         }
         write_plate_max_displacement.writeToFile(ite);
         TickCount t2 = TickCount::now();
@@ -246,8 +225,7 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    observed_quantity_n = (*write_plate_max_displacement.getObservedQuantity())[0][2];
-
+    observed_quantity_n = write_plate_max_displacement.getObservedQuantity()[0][2];
 
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -30,10 +30,10 @@
 #define XML_ENGINE_SIMBODY_H
 
 #include "SimTKcommon/internal/Xml.h"
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "simbody_middle.h"
-#include "sph_data_containers.h"
-#include "type_wrapper.h"
+#include "simtk_wrapper.h"
+#include "sphinxsys_containers.h"
 
 #include <filesystem>
 #include <fstream>
@@ -51,7 +51,7 @@ class XmlEngine
     /** Constructor for XML output.  */
     XmlEngine(const std::string &xml_name, const std::string &root_tag);
     /** Default destructor. */
-    virtual ~XmlEngine(){};
+    virtual ~XmlEngine() {};
 
     SimTK::Xml::Element root_element_; /**< Root element of document. */
 
@@ -126,68 +126,6 @@ class XmlEngine
     size_t SizeOfXmlDoc();
     /** Get a reference to a child element */
     SimTK::Xml::Element getChildElement(const std::string &tag);
-};
-
-/**
- * @class XMLMemoryIO
- * @brief The base class defines xml memory data operation.
- */
-class XmlMemoryIO
-{
-  public:
-    XmlMemoryIO(){};
-    virtual ~XmlMemoryIO(){};
-
-    template <typename T>
-    void writeDataToXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element, const BiVector<T> &quantity,
-                              int snapshot_, int observation_, const std::string &quantity_name, StdVec<std::string> &element_tag)
-    {
-        for (int snapshot_index = 0; snapshot_index != snapshot_; ++snapshot_index)
-        {
-            std::string element_name = element_tag[snapshot_index];
-            xml_engine.addChildToElement(element, element_name);
-            for (int observation_index = 0; observation_index != observation_; ++observation_index)
-            {
-                SimTK::Xml::element_iterator ele_ite = element.element_begin(element_name);
-                std::string attribute_name_ = quantity_name + "_" + std::to_string(observation_index);
-                xml_engine.setAttributeToElement(ele_ite, attribute_name_, quantity[snapshot_index][observation_index]);
-            }
-        }
-    };
-
-    template <typename T>
-    void writeDataToXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element,
-                              std::string element_name, int observation_index, const T &quantity, const std::string &quantity_name)
-    {
-        SimTK::Xml::element_iterator ele_ite = element.element_begin(element_name);
-        std::string attribute_name_ = quantity_name + "_" + std::to_string(observation_index);
-        xml_engine.setAttributeToElement(ele_ite, attribute_name_, quantity);
-    };
-
-    template <typename T>
-    void readDataFromXmlMemory(XmlEngine &xml_engine, SimTK::Xml::Element &element,
-                               int observation_index, BiVector<T> &result_container, const std::string &quantity_name)
-    {
-        int snapshot_index = 0;
-        SimTK::Xml::element_iterator ele_ite = element.element_begin();
-        for (; ele_ite != element.element_end(); ++ele_ite)
-        {
-            std::string attribute_name_ = quantity_name + "_" + std::to_string(observation_index);
-            xml_engine.getRequiredAttributeValue(ele_ite, attribute_name_, result_container[snapshot_index][observation_index]);
-            snapshot_index++;
-        }
-    };
-
-    void readTagFromXmlMemory(SimTK::Xml::Element &element, StdVec<std::string> &element_tag)
-    {
-        size_t snapshot_index = 0;
-        SimTK::Xml::element_iterator ele_ite = element.element_begin();
-        for (; ele_ite != element.element_end(); ++ele_ite)
-        {
-            element_tag[snapshot_index] = ele_ite->getElementTag();
-            snapshot_index++;
-        }
-    };
 };
 } // namespace SPH
 

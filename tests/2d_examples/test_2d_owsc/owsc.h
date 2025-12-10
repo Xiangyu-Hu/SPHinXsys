@@ -28,7 +28,7 @@ Real Base_height = 0.1;
 Real particle_spacing_ref = Flap_width / 4.0; // particle spacing
 Real BW = particle_spacing_ref * 4.0;         // boundary width
 
-BoundingBox system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH + BW));
 
 // the offset that the rubber flap shifted above the tank
 // Real flap_off = Flap_x - 0.5 * Flap_width + DL_Extra + BW;
@@ -258,7 +258,7 @@ class FlapSystemForSimbody : public SolidBodyPartForSimbody
     }
 };
 
-class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticle>
+class WaveMaking : public BodyPartMotionConstraint
 {
     Real model_scale_;
     Real gravity_;
@@ -325,20 +325,26 @@ class WaveMaking : public solid_dynamics::BaseMotionConstraint<BodyPartByParticl
 
   public:
     WaveMaking(BodyPartByParticle &body_part)
-        : solid_dynamics::BaseMotionConstraint<BodyPartByParticle>(body_part),
+        : BodyPartMotionConstraint(body_part),
           model_scale_(25.0), gravity_(gravity_g), water_depth_(Water_H), wave_height_(5.0),
-          wave_period_(10.0)
+          wave_period_(10.0),
+          acc_(particles_->registerStateVariableData<Vecd>("Acceleration")),
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime"))
     {
         computeWaveStrokeAndFrequency();
     }
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Real time = GlobalStaticVariables::physical_time_;
+        Real time = *physical_time_;
         pos_[index_i] = pos0_[index_i] + getDisplacement(time);
         vel_[index_i] = getVelocity(time);
-        force_[index_i] = mass_[index_i] * getAcceleration(time);
+        acc_[index_i] = getAcceleration(time);
     };
+
+  protected:
+    Vecd *acc_;
+    Real *physical_time_;
 };
 
 Real h = 1.3 * particle_spacing_ref;
@@ -382,21 +388,17 @@ MultiPolygon createWaveProbeShape12()
     multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
     return multi_polygon;
 }
-//------------------------------------------------------------------------------
-// Case-dependent observer particle generator
-//------------------------------------------------------------------------------
-class FlapObserverParticleGenerator : public ObserverParticleGenerator
+
+StdVec<Vecd> creatObserverPositions()
 {
-  public:
-    explicit FlapObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
-    {
-        /** the measuring particle with zero volume */
-        positions_.push_back(Vecd(7.862, 0.645));
-        positions_.push_back(Vecd(7.862, 0.741));
-        positions_.push_back(Vecd(7.862, 0.391));
-        positions_.push_back(Vecd(7.862, 0.574));
-        positions_.push_back(Vecd(7.862, 0.716));
-        positions_.push_back(Vecd(7.862, 0.452));
-    }
-};
+    StdVec<Vecd> observer_positions;
+    observer_positions.push_back(Vecd(7.862, 0.645));
+    observer_positions.push_back(Vecd(7.862, 0.741));
+    observer_positions.push_back(Vecd(7.862, 0.391));
+    observer_positions.push_back(Vecd(7.862, 0.574));
+    observer_positions.push_back(Vecd(7.862, 0.716));
+    observer_positions.push_back(Vecd(7.862, 0.452));
+    return observer_positions;
+}
+
 #endif // TEST_2D_OWSC_CASE_H

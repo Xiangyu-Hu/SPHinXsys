@@ -39,12 +39,12 @@ TEST(StructuralSimulation, MassSpringDamperResponse)
     StructuralSimulation sim(input);
     sim.runSimulation(end_time);
     //=================================================================================================//
-
-    StdLargeVec<Vecd> &pos_0 = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos0_;
-    StdLargeVec<Vecd> &pos_n = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_;
+    BaseParticles *base_particles = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles();
+    Vecd *pos_n = base_particles->ParticlePositions();
+    Vecd *pos_0 = base_particles->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position");
     Real end_displ = 0.05;
 
-    for (size_t index = 0; index < pos_0.size(); index++)
+    for (size_t index = 0; index < base_particles->TotalRealParticles(); index++)
     {
         Real end_pos = pos_0[index][2] + end_displ;
         EXPECT_NEAR(pos_n[index][2], end_pos, end_displ * 1e-2);

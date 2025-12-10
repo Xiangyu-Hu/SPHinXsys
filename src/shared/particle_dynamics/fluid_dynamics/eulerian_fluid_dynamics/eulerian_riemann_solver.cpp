@@ -3,31 +3,6 @@
 namespace SPH
 {
 //=================================================================================================//
-FluidStarState EulerianAcousticRiemannSolver::
-    getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &e_ij)
-{
-    Real ul = -e_ij.dot(state_i.vel_);
-    Real ur = -e_ij.dot(state_j.vel_);
-    Real rhol_cl = fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_;
-    Real rhor_cr = fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_;
-    Real clr = (rhol_cl + rhor_cr) / (state_i.rho_ + state_j.rho_);
-
-    Real p_star = (rhol_cl * state_j.p_ + rhor_cr * state_i.p_ +
-                   rhol_cl * rhor_cr * (ul - ur) * SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1))) /
-                  (rhol_cl + rhor_cr);
-    Real u_star = (rhol_cl * ul + rhor_cr * ur +
-                   (state_i.p_ - state_j.p_) * pow(SMIN(limiter_parameter_ * SMAX((ul - ur) / clr, Real(0)), Real(1)), 2)) /
-                  (rhol_cl + rhor_cr);
-    Vecd vel_star = (state_i.vel_ * state_i.rho_ + state_j.vel_ * state_j.rho_) / (state_i.rho_ + state_j.rho_) -
-                    e_ij * (u_star - (ul * state_i.rho_ + ur * state_j.rho_) / (state_i.rho_ + state_j.rho_));
-
-    FluidStarState interface_state(vel_star, p_star);
-    interface_state.vel_ = vel_star;
-    interface_state.p_ = p_star;
-
-    return interface_state;
-}
-//=================================================================================================//
 NoRiemannSolverInCompressibleEulerianMethod::
     NoRiemannSolverInCompressibleEulerianMethod(CompressibleFluid &compressible_fluid_i,
                                                 CompressibleFluid &compressible_fluid_j)
@@ -105,8 +80,26 @@ CompressibleFluidStarState HLLCWithLimiterRiemannSolver::
 {
     Real ul = -e_ij.dot(state_i.vel_);
     Real ur = -e_ij.dot(state_j.vel_);
-    Real s_l = ul - compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
-    Real s_r = ur + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
+
+    //one approach to obtain the smallest and largest wave velocity
+    //Real s_l = ul - compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_);
+    //Real s_r = ur + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_);
+
+    //another approach to obtain the smallest and largest wave velocity
+    Vecd vl = state_i.vel_ - ul * (-e_ij);
+    Vecd vr = state_j.vel_ - ur * (-e_ij);
+    Real R_lf = state_j.rho_ / state_i.rho_;
+    Real u_tilde = (ul + ur * R_lf) / (1.0 + R_lf);
+    Real v_tilde = (vl.norm() + vr.norm() * R_lf) / (1.0 + R_lf);
+    Real q_tilde = u_tilde;
+    Real hl = (state_i.E_ + state_i.p_) / state_i.rho_;
+    Real hr = (state_j.E_ + state_j.p_) / state_j.rho_;
+    Real h_tilde = (hl + hr * R_lf) / (1.0 + R_lf);
+    Real sound_tilde = sqrt((1.4 - 1.0) * (h_tilde - 0.5 * (u_tilde * u_tilde + v_tilde * v_tilde)));
+    Real s_l = SMIN(ul - compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_), q_tilde - sound_tilde);
+    Real s_r = SMAX(ur + compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_), q_tilde + sound_tilde);
+
+    //obtain the middle wave velocity
     Real rhol_cl = compressible_fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_;
     Real rhor_cr = compressible_fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_;
     Real clr = (rhol_cl + rhor_cr) / (state_i.rho_ + state_j.rho_);

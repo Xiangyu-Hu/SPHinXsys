@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -52,78 +52,106 @@ class TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType
   public:
     template <class BaseRelationType>
     explicit TransportVelocityCorrection(BaseRelationType &base_relation);
-    virtual ~TransportVelocityCorrection(){};
+    virtual ~TransportVelocityCorrection() {};
 
   protected:
-    StdLargeVec<Vecd> &transport_acc_;
+    Vecd *kernel_gradient_integral_;
     KernelCorrectionType kernel_correction_;
-    ParticleScope checkWithinScope;
+    ParticleScope within_scope_;
 };
 
-template <class ResolutionType, typename... CommonControlTypes>
-class TransportVelocityCorrection<Inner<ResolutionType>, CommonControlTypes...>
-    : public TransportVelocityCorrection<Base, FluidDataInner, CommonControlTypes...>
+template <class AdaptationType, class LimiterType, typename... CommonControlTypes>
+class TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonControlTypes...>
+    : public TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>
 {
+    using SmoothingRatioType = typename AdaptationType::SmoothingRatioType;
+
   public:
     explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
     template <typename BodyRelationType, typename FirstArg>
-    explicit TransportVelocityCorrection(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : TransportVelocityCorrection(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~TransportVelocityCorrection(){};
+    explicit TransportVelocityCorrection(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : TransportVelocityCorrection(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~TransportVelocityCorrection() {};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    const Real correction_scaling_;
-    StdLargeVec<Vecd> &pos_;
-    ResolutionType h_ratio_;
+    const Real h_ref_, correction_scaling_;
+    Real *Vol_;
+    Vecd *pos_;
+    SmoothingRatioType h_ratio_;
+    LimiterType limiter_;
 };
-template <class ParticleScope>
+template <class LimiterType, class ParticleScope>
 using TransportVelocityCorrectionInner =
-    TransportVelocityCorrection<Inner<SingleResolution>, NoKernelCorrection, ParticleScope>;
+    TransportVelocityCorrection<Inner<SPHAdaptation, LimiterType>, NoKernelCorrection, ParticleScope>;
 
 template <typename... CommonControlTypes>
 class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
-    : public TransportVelocityCorrection<Base, FluidContactData, CommonControlTypes...>
+    : public TransportVelocityCorrection<Base, DataDelegateContact, CommonControlTypes...>
 {
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation);
-    virtual ~TransportVelocityCorrection(){};
+    virtual ~TransportVelocityCorrection() {};
     void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    StdVec<Real *> wall_Vol_;
 };
 
 template <class KernelCorrectionType, typename... CommonControlTypes>
 class TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControlTypes...>
-    : public TransportVelocityCorrection<Base, FluidContactData, KernelCorrectionType, CommonControlTypes...>
+    : public TransportVelocityCorrection<Base, DataDelegateContact, KernelCorrectionType, CommonControlTypes...>
 {
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation);
-    virtual ~TransportVelocityCorrection(){};
+    virtual ~TransportVelocityCorrection() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
     StdVec<KernelCorrectionType> contact_kernel_corrections_;
+    StdVec<Real *> contact_Vol_;
 };
 
-template <class ResolutionType, typename... CommonControlTypes>
+template <class AdaptationType, class LimiterType, typename... CommonControlTypes>
 using BaseTransportVelocityCorrectionComplex =
-    ComplexInteraction<TransportVelocityCorrection<Inner<ResolutionType>, Contact<Boundary>>, CommonControlTypes...>;
+    ComplexInteraction<TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, Contact<Boundary>>, CommonControlTypes...>;
 
 template <class ParticleScope>
 using TransportVelocityCorrectionComplex =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, NoKernelCorrection, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, NoLimiter, NoKernelCorrection, ParticleScope>;
+
+template <class ParticleScope>
+using TransportVelocityCorrectionCorrectedComplex =
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, NoLimiter, LinearGradientCorrection, ParticleScope>;
+
+template <class ParticleScope>
+using TransportVelocityCorrectionCorrectedForOpenBoundaryFlowComplex =
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, NoLimiter, LinearGradientCorrectionWithBulkScope, ParticleScope>;
+
+template <class ParticleScope>
+using TransportVelocityLimitedCorrectionCorrectedForOpenBoundaryFlowComplex =
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, TruncatedLinear, LinearGradientCorrectionWithBulkScope, ParticleScope>;
+
+template <class ParticleScope>
+using TransportVelocityLimitedCorrectionComplex =
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, TruncatedLinear, NoKernelCorrection, ParticleScope>;
+
+template <class ParticleScope>
+using TransportVelocityLimitedCorrectionCorrectedComplex =
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, TruncatedLinear, LinearGradientCorrection, ParticleScope>;
 
 template <class ParticleScope>
 using TransportVelocityCorrectionComplexAdaptive =
-    BaseTransportVelocityCorrectionComplex<AdaptiveResolution, NoKernelCorrection, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<AdaptiveSmoothingLength, NoLimiter, NoKernelCorrection, ParticleScope>;
 
-template <class ResolutionType, typename... CommonControlTypes>
+template <class AdaptationType, typename... CommonControlTypes>
 using BaseMultiPhaseTransportVelocityCorrectionComplex =
-    ComplexInteraction<TransportVelocityCorrection<Inner<ResolutionType>, Contact<>, Contact<Boundary>>, CommonControlTypes...>;
+    ComplexInteraction<TransportVelocityCorrection<Inner<AdaptationType, NoLimiter>, Contact<>, Contact<Boundary>>, CommonControlTypes...>;
 
 template <class ParticleScope>
 using MultiPhaseTransportVelocityCorrectionComplex =
-    BaseMultiPhaseTransportVelocityCorrectionComplex<SingleResolution, NoKernelCorrection, ParticleScope>;
+    BaseMultiPhaseTransportVelocityCorrectionComplex<SPHAdaptation, NoKernelCorrection, ParticleScope>;
 
 } // namespace fluid_dynamics
 } // namespace SPH

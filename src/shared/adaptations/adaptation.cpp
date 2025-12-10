@@ -1,10 +1,10 @@
 #include "adaptation.h"
 
-#include "all_kernels.h"
-#include "base_body.h"
 #include "base_particle_dynamics.h"
 #include "base_particles.hpp"
-#include "mesh_with_data_packages.hpp"
+#include "cell_linked_list.h"
+#include "level_set.h"
+#include "mesh_with_data_packages.h"
 #include "sph_system.h"
 #include "vector_functions.h"
 
@@ -17,10 +17,10 @@ SPHAdaptation::SPHAdaptation(Real resolution_ref, Real h_spacing_ratio, Real sys
       h_ref_(h_spacing_ratio_ * spacing_ref_), kernel_ptr_(makeUnique<KernelWendlandC2>(h_ref_)),
       sigma0_ref_(computeLatticeNumberDensity(Vecd())),
       spacing_min_(this->MostRefinedSpacingRegular(spacing_ref_, local_refinement_level_)),
-      Vol_min_(pow(spacing_min_, Dimensions)), h_ratio_max_(spacing_ref_ / spacing_min_){};
+      Vol_min_(pow(spacing_min_, Dimensions)), h_ratio_max_(spacing_ref_ / spacing_min_) {};
 //=================================================================================================//
-SPHAdaptation::SPHAdaptation(SPHBody &sph_body, Real h_spacing_ratio, Real system_refinement_ratio)
-    : SPHAdaptation(sph_body.getSPHSystem().resolution_ref_, h_spacing_ratio, system_refinement_ratio){};
+SPHAdaptation::SPHAdaptation(SPHSystem &sph_system, Real h_spacing_ratio, Real system_refinement_ratio)
+    : SPHAdaptation(sph_system.ReferenceResolution(), h_spacing_ratio, system_refinement_ratio) {}
 //=================================================================================================//
 Real SPHAdaptation::MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level)
 {
@@ -86,26 +86,34 @@ void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_system_
 }
 //=================================================================================================//
 UniquePtr<BaseCellLinkedList> SPHAdaptation::
-    createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body)
+    createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
 {
-    return makeUnique<CellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(), real_body, *this);
+    return makeUnique<CellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(), base_particles, *this);
 }
 //=================================================================================================//
-UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
+UniquePtr<BaseCellLinkedList> SPHAdaptation::createRefinedCellLinkedList(
+    int level, const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
+{
+    Real grid_spacing = kernel_ptr_->CutOffRadius() / pow(2.0, level);
+    return makeUnique<CellLinkedList>(domain_bounds, grid_spacing, base_particles, *this);
+}
+//=================================================================================================//
+UniquePtr<LevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
 {
     // estimate the required mesh levels
-    int total_levels = (int)log10(MinimumDimension(shape.getBounds()) / ReferenceSpacing()) + 2;
+    int total_levels = (int)log10(shape.getBounds().MinimumDimension() / ReferenceSpacing()) + 2;
     Real coarsest_spacing = ReferenceSpacing() * pow(2.0, total_levels - 1);
-    MultilevelLevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
-                                          total_levels - 1, shape, *this);
+    LevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
+                                total_levels - 1, shape, *this, refinement_ratio);
     // return the finest level set only
-    return makeUnique<RefinedLevelSet>(shape.getBounds(), *coarser_level_sets.getMeshLevels().back(), shape, *this);
+    return makeUnique<LevelSet>(shape.getBounds(), coarser_level_sets.getMeshLevels().back(),
+                                shape, *this, refinement_ratio);
 }
 //=================================================================================================//
-ParticleWithLocalRefinement::
-    ParticleWithLocalRefinement(SPHBody &sph_body, Real h_spacing_ratio,
-                                Real system_refinement_ratio, int local_refinement_level)
-    : SPHAdaptation(sph_body, h_spacing_ratio, system_refinement_ratio)
+AdaptiveSmoothingLength::
+    AdaptiveSmoothingLength(Real resolution_ref, Real h_spacing_ratio, Real system_refinement_ratio,
+                            int local_refinement_level)
+    : SPHAdaptation(resolution_ref, h_spacing_ratio, system_refinement_ratio), h_ratio_(nullptr), level_(nullptr)
 {
     local_refinement_level_ = local_refinement_level;
     spacing_min_ = MostRefinedSpacingRegular(spacing_ref_, local_refinement_level_);
@@ -116,39 +124,36 @@ ParticleWithLocalRefinement::
     coarsest_spacing_bound_ = spacing_ref_ - Eps;
 }
 //=================================================================================================//
-size_t ParticleWithLocalRefinement::getCellLinkedListTotalLevel()
+AdaptiveSmoothingLength::AdaptiveSmoothingLength(
+    SPHSystem &sph_system, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level)
+    : AdaptiveSmoothingLength(sph_system.ReferenceResolution(), h_spacing_ratio_, system_refinement_ratio,
+                              local_refinement_level) {}
+//=================================================================================================//
+void AdaptiveSmoothingLength::initializeAdaptationVariables(BaseParticles &base_particles)
 {
-    return size_t(local_refinement_level_);
+    SPHAdaptation::initializeAdaptationVariables(base_particles);
+    h_ratio_ = base_particles.registerStateVariableData<Real>(
+        "SmoothingLengthRatio", [&](size_t i) -> Real
+        { return ReferenceSpacing() / base_particles.ParticleSpacing(i); });
+    level_ = base_particles.registerStateVariableData<int>("ParticleMeshLevel");
+    base_particles.addEvolvingVariable<Real>("SmoothingLengthRatio");
 }
 //=================================================================================================//
-size_t ParticleWithLocalRefinement::getLevelSetTotalLevel()
-{
-    return getCellLinkedListTotalLevel() + 1;
-}
-//=================================================================================================//
-void ParticleWithLocalRefinement::registerAdaptationVariables(BaseParticles &base_particles)
-{
-    SPHAdaptation::registerAdaptationVariables(base_particles);
-
-    base_particles.registerVariable(h_ratio_, "SmoothingLengthRatio", Real(1.0));
-    base_particles.registerSortableVariable<Real>("SmoothingLengthRatio");
-    base_particles.addVariableToReload<Real>("SmoothingLengthRatio");
-}
-//=================================================================================================//
-UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::
-    createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body)
+UniquePtr<BaseCellLinkedList> AdaptiveSmoothingLength::
+    createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
 {
     return makeUnique<MultilevelCellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(),
-                                                getCellLinkedListTotalLevel(), real_body, *this);
+                                                local_refinement_level_, base_particles, *this);
 }
 //=================================================================================================//
-UniquePtr<BaseLevelSet> ParticleWithLocalRefinement::createLevelSet(Shape &shape, Real refinement_ratio)
+UniquePtr<LevelSet> AdaptiveSmoothingLength::createLevelSet(Shape &shape, Real refinement_ratio)
 {
-    return makeUnique<MultilevelLevelSet>(shape.getBounds(), ReferenceSpacing() / refinement_ratio,
-                                          getLevelSetTotalLevel(), shape, *this);
+    // one more level for interpolation
+    return makeUnique<LevelSet>(shape.getBounds(), ReferenceSpacing() / refinement_ratio,
+                                local_refinement_level_ + 1, shape, *this, refinement_ratio);
 }
 //=================================================================================================//
-Real ParticleRefinementByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)
+Real AdaptiveByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)
 {
     Real ratio_ref = measure / (2.0 * transition_thickness);
     Real target_spacing = coarsest_spacing_bound_;
@@ -160,62 +165,16 @@ Real ParticleRefinementByShape::smoothedSpacing(const Real &measure, const Real 
     return target_spacing;
 }
 //=================================================================================================//
-Real ParticleRefinementNearSurface::getLocalSpacing(Shape &shape, const Vecd &position)
+Real AdaptiveNearSurface::getLocalSpacing(Shape &shape, const Vecd &position)
 {
     Real phi = fabs(shape.findSignedDistance(position));
     return smoothedSpacing(phi, spacing_ref_);
 }
 //=================================================================================================//
-Real ParticleRefinementWithinShape::getLocalSpacing(Shape &shape, const Vecd &position)
+Real AdaptiveWithinShape::getLocalSpacing(Shape &shape, const Vecd &position)
 {
     Real phi = shape.findSignedDistance(position);
     return phi < 0.0 ? finest_spacing_bound_ : smoothedSpacing(phi, 2.0 * spacing_ref_);
-}
-//=================================================================================================//
-ParticleSplitAndMerge::ParticleSplitAndMerge(SPHBody &sph_body, Real h_spacing_ratio,
-                                             Real system_resolution_ratio, int local_refinement_level)
-    : ParticleWithLocalRefinement(sph_body, h_spacing_ratio,
-                                  system_resolution_ratio, local_refinement_level)
-{
-    spacing_min_ = MostRefinedSpacingSplitting(spacing_ref_, local_refinement_level_);
-    Vol_min_ = pow(spacing_min_, Dimensions);
-    h_ratio_max_ = spacing_ref_ / spacing_min_;
-};
-//=================================================================================================//
-bool ParticleSplitAndMerge::isSplitAllowed(Real current_volume)
-{
-    return current_volume - 2.0 * Vol_min_ > -Eps ? true : false;
-}
-//=================================================================================================//
-bool ParticleSplitAndMerge::mergeResolutionCheck(Real volume)
-{
-    return volume - 1.2 * pow(spacing_min_, Dimensions) < Eps ? true : false;
-}
-//=================================================================================================//
-Real ParticleSplitAndMerge::MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level)
-{
-    return MostRefinedSpacingSplitting(coarse_particle_spacing, local_refinement_level);
-}
-Real ParticleSplitAndMerge::MostRefinedSpacingSplitting(Real coarse_particle_spacing, int local_refinement_level)
-{
-    Real minimum_spacing_particles = pow(2.0, local_refinement_level);
-    Real spacing_ratio = pow(minimum_spacing_particles, 1.0 / (Real)Dimensions);
-    return coarse_particle_spacing / spacing_ratio;
-}
-//=================================================================================================//
-size_t ParticleSplitAndMerge::getCellLinkedListTotalLevel()
-{
-    return 1 + (int)floor(log2(spacing_ref_ / spacing_min_));
-}
-//=================================================================================================//
-Vec2d ParticleSplitAndMerge::splittingPattern(Vec2d pos, Real particle_spacing, Real delta)
-{
-    return Vec2d(pos[0] + 0.5 * particle_spacing * cos(delta), pos[1] + Real(0.5) * particle_spacing * sin(delta));
-}
-//=================================================================================================//
-Vec3d ParticleSplitAndMerge::splittingPattern(Vec3d pos, Real particle_spacing, Real delta)
-{
-    return Vec3d(pos[0] + 0.5 * particle_spacing * cos(delta), pos[1] + 0.5 * particle_spacing * sin(delta), pos[2]);
 }
 //=================================================================================================//
 } // namespace SPH

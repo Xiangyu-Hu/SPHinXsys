@@ -17,7 +17,7 @@ Real slop_h = 11.55;
 Real resolution_ref = L / 10.0; /**< reference particle spacing. */
 Real BW = resolution_ref * 4;   /**< wall width for BCs. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(25, 15));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(25, 15));
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(7.2, 9.8)};
 //----------------------------------------------------------------------
@@ -70,20 +70,19 @@ int main(int ac, char *av[])
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);
 #endif
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles
     //----------------------------------------------------------------------
     SolidBody free_cube(sph_system, makeShared<Cube>("FreeCube"));
-    free_cube.defineParticlesAndMaterial<ElasticSolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    free_cube.generateParticles<ParticleGeneratorLattice>();
+    free_cube.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    free_cube.generateParticles<BaseParticles, Lattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineParticlesAndMaterial<SolidParticles, SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    wall_boundary.generateParticles<ParticleGeneratorLattice>();
+    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cube_observer(sph_system, "CubeObserver");
-    cube_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+    cube_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -102,38 +101,34 @@ int main(int ac, char *av[])
     Transform transform2d(Rotation2d(-0.5235));
     SimpleDynamics<TranslationAndRotation> wall_boundary_rotation(wall_boundary, transform2d);
     SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform2d);
-    SimpleDynamics<TimeStepInitialization> free_cube_initialize_timestep(free_cube, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
-    /** Kernel correction. */
-    InteractionWithUpdate<KernelCorrectionMatrixInner> free_cube_corrected_configuration(free_cube_inner);
-    /** Time step size. */
-    ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
-    /** stress relaxation for the solid body. */
+    Gravity gravity(Vecd(0.0, -gravity_g));
+    SimpleDynamics<GravityForce<Gravity>> constant_gravity(free_cube, gravity);
+    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> free_cube_corrected_configuration(free_cube_inner);
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> free_cube_stress_relaxation_first_half(free_cube_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> free_cube_stress_relaxation_second_half(free_cube_inner);
-    /** Algorithms for solid-solid contact. */
-    InteractionDynamics<solid_dynamics::ContactDensitySummation> free_cube_update_contact_density(free_cube_contact);
-    InteractionDynamics<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact);
-    /** Damping*/
-    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d>>>
-        damping(0.5, free_cube_inner, "Velocity", physical_viscosity);
+    InteractionDynamics<solid_dynamics::ContactFactorSummation> free_cube_update_contact_density(free_cube_contact);
+    InteractionWithUpdate<solid_dynamics::ContactForceFromWall> free_cube_compute_solid_contact_forces(free_cube_contact);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> damping(0.5, free_cube_inner, "Velocity", physical_viscosity);
+
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> free_cube_get_time_step_size(free_cube);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+    BodyStatesRecordingToVtp body_states_recording(sph_system);
     /** Observer and output. */
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_free_cube_displacement("Position", io_environment, cube_observer_contact);
+        write_free_cube_displacement("Position", cube_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    GlobalStaticVariables::physical_time_ = 0.0;
     wall_boundary_rotation.exec();
     free_cube_rotation.exec();
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     free_cube_corrected_configuration.exec();
+    constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Initial states output.
     //----------------------------------------------------------------------
@@ -142,6 +137,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 2.5;
     Real end_time = T0;
@@ -156,7 +152,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (GlobalStaticVariables::physical_time_ < end_time)
+    while (physical_time < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < output_interval)
@@ -164,11 +160,10 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-                free_cube_initialize_timestep.exec();
                 if (ite % 100 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << GlobalStaticVariables::physical_time_ << "	dt: " << dt
+                              << physical_time << "	dt: " << dt
                               << "\n";
                 }
                 free_cube_update_contact_density.exec();
@@ -183,7 +178,7 @@ int main(int ac, char *av[])
                 dt = free_cube_get_time_step_size.exec();
                 relaxation_time += dt;
                 integration_time += dt;
-                GlobalStaticVariables::physical_time_ += dt;
+                physical_time += dt;
             }
             write_free_cube_displacement.writeToFile(ite);
         }
@@ -207,7 +202,6 @@ int main(int ac, char *av[])
     {
         write_free_cube_displacement.testResult();
     }
-
 
     return 0;
 }

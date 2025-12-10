@@ -20,6 +20,7 @@ using namespace SPH;
 Vec3d domain_upper_bound(2.3, 4.5, 0.3);
 Vecd translation(0.0, 0.0, 0.0);
 Real scaling = 1.0; */
+
 //----------------------------------------------------------------------
 //	Setting for the second geometry.
 //	To use this, please commenting the setting for the first geometry.
@@ -38,11 +39,9 @@ Real scaling = 2.5;
 //----------------------------------------------------------------------
 //	Below are common parts for the two test geometries.
 //----------------------------------------------------------------------
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
-//----------------------------------------------------------------------
-//	define the imported model.
-//----------------------------------------------------------------------
+//--------------------------------------------------------------------
 class SolidBodyFromMesh : public ComplexShape
 {
   public:
@@ -52,6 +51,35 @@ class SolidBodyFromMesh : public ComplexShape
         subtract<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
     }
 };
+//----------------------------------------------------------------------
+//	Setting for the second geometry.
+//	To use this, please commenting the setting for the first geometry.
+//----------------------------------------------------------------------
+// std::string full_path_to_file = "./input/fluid.stl";
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
+// Vec3d domain_lower_bound(-0.036, -0.046, -0.011);
+// Vec3d domain_upper_bound(0.036, 0.093, 0.072);
+// Vecd translation(0.0, 0.0, 0.0);
+// Real scaling = 1.0;
+
+//----------------------------------------------------------------------
+//	Below are common parts for the two test geometries.
+//----------------------------------------------------------------------
+// BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
+// Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
+//----------------------------------------------------------------------
+//	define the imported model.
+//----------------------------------------------------------------------
+// class SolidBodyFromMesh : public ComplexShape
+//{
+//  public:
+//    explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
+//    {
+//        add<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
+//    }
+//};
 //-----------------------------------------------------------------------------------------------------------
 //	Main program starts here.
 //-----------------------------------------------------------------------------------------------------------
@@ -62,20 +90,17 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, dp_0);
     sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     // level set shape is used for particle relaxation
-    imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
-    imported_model.defineParticlesAndMaterial();
-    imported_model.generateParticles<ParticleGeneratorLattice>();
+    imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
+    imported_model.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_imported_model_to_vtp(io_environment, {imported_model});
-    MeshRecordingToPlt write_cell_linked_list(io_environment, imported_model.getCellLinkedList());
+    BodyStatesRecordingToVtp write_imported_model_to_vtp({imported_model});
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -88,9 +113,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
+    using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(imported_model);
     /** A  Physics relaxation step. */
-    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(imported_model_inner);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(imported_model_inner);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
@@ -98,8 +124,7 @@ int main(int ac, char *av[])
     relaxation_step_inner.SurfaceBounding().exec();
     write_imported_model_to_vtp.writeToFile(0.0);
     imported_model.updateCellLinkedList();
-    write_cell_linked_list.writeToFile(0.0);
-    //----------------------------------------------------------------------
+     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
     int ite_p = 0;

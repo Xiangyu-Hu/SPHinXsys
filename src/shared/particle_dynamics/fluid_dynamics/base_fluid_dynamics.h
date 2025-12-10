@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -32,50 +32,45 @@
 #include "all_body_relations.h"
 #include "all_particle_dynamics.h"
 #include "base_particles.hpp"
-#include "solid_particles.h"
 
 namespace SPH
 {
 //----------------------------------------------------------------------
 // Interaction types specifically for fluid dynamics
 //----------------------------------------------------------------------
-class FreeSurface; /**< A interaction considering the effect of free surface */
-class FreeStream; /**< A interaction considering the effect of free stream */
-template <typename InteractionType>
+class Internal;            /**< A interaction considering the internal flows */
+class FreeSurface;         /**< A interaction considering the effect of free surface */
+class FreeStream;          /**< A interaction considering the effect of free stream */
 class AngularConservative; /**< A interaction considering the conservation of angular momentum */
 
 namespace fluid_dynamics
 {
-typedef DataDelegateSimple<BaseParticles> FluidDataSimple;
-typedef DataDelegateInner<BaseParticles> FluidDataInner;
-typedef DataDelegateContact<BaseParticles, BaseParticles> FluidContactData;
-typedef DataDelegateContact<BaseParticles, SolidParticles, DataDelegateEmptyBase> FluidWallData;
-typedef DataDelegateContact<BaseParticles, SolidParticles> FSIContactData;
 /**
  * @class InteractionWithWall
  * @brief Base class adding interaction with wall to general relaxation process
  */
 
 template <template <typename...> class BaseInteractionType>
-class InteractionWithWall : public BaseInteractionType<FSIContactData>
+class InteractionWithWall : public BaseInteractionType<DataDelegateContact>
 {
   public:
     explicit InteractionWithWall(BaseContactRelation &wall_contact_relation)
-        : BaseInteractionType<FSIContactData>(wall_contact_relation)
+        : BaseInteractionType<DataDelegateContact>(wall_contact_relation)
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
-            wall_vel_ave_.push_back(this->contact_particles_[k]->AverageVelocity());
-            wall_force_ave_.push_back(this->contact_particles_[k]->AverageForce());
-            wall_n_.push_back(&(this->contact_particles_[k]->n_));
-            wall_mass_.push_back(&(this->contact_particles_[k]->mass_));
+            Solid &solid_material = DynamicCast<Solid>(this, this->contact_particles_[k]->getBaseMaterial());
+            wall_vel_ave_.push_back(solid_material.AverageVelocity(this->contact_particles_[k]));
+            wall_acc_ave_.push_back(solid_material.AverageAcceleration(this->contact_particles_[k]));
+            wall_n_.push_back(this->contact_particles_[k]->template getVariableDataByName<Vecd>("NormalDirection"));
+            wall_Vol_.push_back(this->contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
         }
     };
-    virtual ~InteractionWithWall(){};
+    virtual ~InteractionWithWall() {};
 
   protected:
-    StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_force_ave_, wall_n_;
-    StdVec<StdLargeVec<Real> *> wall_mass_;
+    StdVec<Vecd *> wall_vel_ave_, wall_acc_ave_, wall_n_;
+    StdVec<Real *> wall_Vol_;
 };
 
 } // namespace fluid_dynamics

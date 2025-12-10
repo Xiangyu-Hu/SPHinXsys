@@ -36,54 +36,58 @@
 namespace SPH
 {
 template <typename... InteractionTypes>
-class KernelCorrectionMatrix;
+class LinearGradientCorrectionMatrix;
+
+// WKGC1 will be used for calculate the KGC matrix.
+// The difference between WKGC1 and WKGC2 can refer to https://doi.org/10.1016/j.cma.2023.116460
 
 template <class DataDelegationType>
-class KernelCorrectionMatrix<DataDelegationType>
+class LinearGradientCorrectionMatrix<DataDelegationType>
     : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType>
-    explicit KernelCorrectionMatrix(BaseRelationType &base_relation);
-    virtual ~KernelCorrectionMatrix(){};
+    explicit LinearGradientCorrectionMatrix(BaseRelationType &base_relation);
+    virtual ~LinearGradientCorrectionMatrix() {};
 
   protected:
-    StdLargeVec<Matd> &B_;
+    Real *Vol_;
+    Matd *B_;
 };
 
 template <>
-class KernelCorrectionMatrix<Inner<>>
-    : public KernelCorrectionMatrix<GeneralDataDelegateInner>
+class LinearGradientCorrectionMatrix<Inner<>>
+    : public LinearGradientCorrectionMatrix<DataDelegateInner>
 {
     Real alpha_;
 
   public:
-    explicit KernelCorrectionMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
-        : KernelCorrectionMatrix<GeneralDataDelegateInner>(inner_relation), alpha_(alpha){};
+    explicit LinearGradientCorrectionMatrix(BaseInnerRelation &inner_relation, Real alpha = Real(0))
+        : LinearGradientCorrectionMatrix<DataDelegateInner>(inner_relation), alpha_(alpha) {};
     template <typename BodyRelationType, typename FirstArg>
-    explicit KernelCorrectionMatrix(ConstructorArgs<BodyRelationType, FirstArg> parameters)
-        : KernelCorrectionMatrix(parameters.body_relation_, std::get<0>(parameters.others_)){};
-    virtual ~KernelCorrectionMatrix(){};
+    explicit LinearGradientCorrectionMatrix(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : LinearGradientCorrectionMatrix(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~LinearGradientCorrectionMatrix() {};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
-using KernelCorrectionMatrixInner = KernelCorrectionMatrix<Inner<>>;
+using LinearGradientCorrectionMatrixInner = LinearGradientCorrectionMatrix<Inner<>>;
 
 template <>
-class KernelCorrectionMatrix<Contact<>>
-    : public KernelCorrectionMatrix<GeneralDataDelegateContact>
+class LinearGradientCorrectionMatrix<Contact<>>
+    : public LinearGradientCorrectionMatrix<DataDelegateContact>
 {
   public:
-    explicit KernelCorrectionMatrix(BaseContactRelation &contact_relation);
-    virtual ~KernelCorrectionMatrix(){};
+    explicit LinearGradientCorrectionMatrix(BaseContactRelation &contact_relation);
+    virtual ~LinearGradientCorrectionMatrix() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    StdVec<StdLargeVec<Real> *> contact_Vol_;
-    StdVec<StdLargeVec<Real> *> contact_mass_;
+    StdVec<Real *> contact_Vol_;
+    StdVec<Real *> contact_mass_;
 };
 
-using KernelCorrectionMatrixComplex = ComplexInteraction<KernelCorrectionMatrix<Inner<>, Contact<>>>;
+using LinearGradientCorrectionMatrixComplex = ComplexInteraction<LinearGradientCorrectionMatrix<Inner<>, Contact<>>>;
 
 template <typename... InteractionTypes>
 class KernelGradientCorrection;
@@ -95,7 +99,7 @@ class KernelGradientCorrection<DataDelegationType>
   public:
     template <class BaseRelationType>
     explicit KernelGradientCorrection(BaseRelationType &base_relation);
-    virtual ~KernelGradientCorrection(){};
+    virtual ~KernelGradientCorrection() {};
 
   protected:
     template <class PairAverageType>
@@ -104,26 +108,26 @@ class KernelGradientCorrection<DataDelegationType>
 
 template <>
 class KernelGradientCorrection<Inner<>>
-    : public KernelGradientCorrection<GeneralDataDelegateInner>
+    : public KernelGradientCorrection<DataDelegateInner>
 {
-    PairAverageInner<Matd> average_correction_matrix_;
+    PairAverageVariable<Matd> average_correction_matrix_;
 
   public:
     explicit KernelGradientCorrection(BaseInnerRelation &inner_relation);
-    virtual ~KernelGradientCorrection(){};
+    virtual ~KernelGradientCorrection() {};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 using KernelGradientCorrectionInner = KernelGradientCorrection<Inner<>>;
 
 template <>
 class KernelGradientCorrection<Contact<>>
-    : public KernelGradientCorrection<GeneralDataDelegateContact>
+    : public KernelGradientCorrection<DataDelegateContact>
 {
-    StdVec<PairAverageContact<Matd>> contact_average_correction_matrix_;
+    StdVec<PairAverageVariable<Matd>> contact_average_correction_matrix_;
 
   public:
     KernelGradientCorrection(BaseContactRelation &contact_relation);
-    virtual ~KernelGradientCorrection(){};
+    virtual ~KernelGradientCorrection() {};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 

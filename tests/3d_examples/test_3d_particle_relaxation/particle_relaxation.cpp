@@ -20,7 +20,7 @@ Vec3d domain_lower_bound(-9.0, -6.0, 0.0);
 Vec3d domain_upper_bound(9.0, 6.0, 9.0);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 12.5;
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 //----------------------------------------------------------------------
 //	define a body from the imported model.
 //----------------------------------------------------------------------
@@ -43,21 +43,18 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, dp_0);
     sph_system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
-    imported_model.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
-    imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(io_environment);
-    imported_model.defineParticlesAndMaterial();
-    imported_model.generateParticles<ParticleGeneratorMultiResolution>();
-    imported_model.addBodyStateForRecording<Real>("SmoothingLengthRatio");
+    imported_model.defineAdaptation<AdaptiveNearSurface>(1.15, 1.0, 3);
+    imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
+    imported_model.generateParticles<BaseParticles, Lattice, AdaptiveByShape>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_imported_model_to_vtp(io_environment, {imported_model});
-    MeshRecordingToPlt cell_linked_list_recording(io_environment, imported_model.getCellLinkedList());
+    BodyStatesRecordingToVtp write_imported_model_to_vtp({imported_model});
+    write_imported_model_to_vtp.addToWrite<Real>(imported_model, "SmoothingLengthRatio");
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -70,10 +67,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
+    using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_imported_model_particles(imported_model);
     /** A  Physics relaxation step. */
-    relax_dynamics::RelaxationStepLevelSetCorrectionInner relaxation_step_inner(imported_model_inner);
-    SimpleDynamics<relax_dynamics::UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(imported_model);
+    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(imported_model_inner);
+    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(imported_model);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
@@ -82,7 +80,6 @@ int main(int ac, char *av[])
     update_smoothing_length_ratio.exec();
     write_imported_model_to_vtp.writeToFile();
     imported_model.updateCellLinkedList();
-    cell_linked_list_recording.writeToFile(0);
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
