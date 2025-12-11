@@ -651,7 +651,7 @@ jobs:
 
   macOS-build:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.macos_build_debug_enabled  }}
-    runs-on: macos-intel-15
+    runs-on: macos-15-intel
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
@@ -724,7 +724,7 @@ jobs:
   macOS-test:
     if: ${{ github.event_name != 'workflow_dispatch' }}
     needs: macOS-build
-    runs-on: macos-intel-15
+    runs-on: macos-15-intel
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
