@@ -188,7 +188,7 @@ TEST_F(BridgeFixture, LinearReproduction_SmoothProfile) {
     auto lr = reconstruct_primitives_muscl(
         Pr_i, Pr_j,
         gr_rho_i, gr_rho_j, gr_u_i, gr_u_j, gr_v_i, gr_v_j, gr_p_i, gr_p_j,
-        xi, xj, xf, n, cfg_ref
+        xi, xj, xf, cfg_ref
     );
 
     auto within = [](Real x, Real a, Real b){ Real lo=std::min(a,b)-1e-10, hi=std::max(a,b)+1e-10; return x>=lo && x<=hi; };

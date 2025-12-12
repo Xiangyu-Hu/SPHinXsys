@@ -53,7 +53,7 @@ CompressibleFluidStarState MUSCL_HLLC_Bridge::getInterfaceState(
         grad_u_i,   grad_u_j,
         grad_v_i,   grad_v_j,
         grad_p_i,   grad_p_j,
-        xi, xj, xf, e_ij,
+        xi, xj, xf,
         cfg_.muscl_cfg
     );
     
@@ -134,7 +134,7 @@ CompressibleFluidStarState MUSCL_HLLC_Bridge::getInterfaceState(
         grad_v_i,   grad_v_j,
         grad_w_i,   grad_w_j,
         grad_p_i,   grad_p_j,
-        xi, xj, xf, e_ij,
+        xi, xj, xf,
         cfg_.muscl_cfg
     );
     

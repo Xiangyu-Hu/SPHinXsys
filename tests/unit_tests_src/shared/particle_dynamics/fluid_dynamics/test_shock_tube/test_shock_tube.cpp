@@ -236,7 +236,7 @@ TEST(ShockTubeMUSCL, Sod_Limiter_Comparison)
                     Pi, Pj,
                     gi, gj, gui, guj, Vecd(0.0,0.0), Vecd(0.0,0.0), 
                     gpi, gpj,
-                    Vecd(xi,0.0), Vecd(xj,0.0), Vecd(xf,0.0), Vecd(nh,0.0),
+                    Vecd(xi,0.0), Vecd(xj,0.0), Vecd(xf,0.0),
                     cfg
                 );
 

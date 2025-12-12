@@ -28,7 +28,7 @@ TEST(MUSCL, LinearReproductionScalar)
 
     // In a linear field, grad is constant: ∇U = b
     auto lr = reconstruct_scalar_muscl(
-        Ui, b, Uj, b, xi, xj, x_iface, nhat, cfg
+        Ui, b, Uj, b, xi, xj, x_iface, cfg
     );
 
     const Real Uface = U(x_iface);
@@ -44,7 +44,6 @@ TEST(MUSCL, LinearReproductionPrimitives)
 
     // rho(x,y), u(x,y), v(x,y), p(x,y) are linear
     const Vecd xi(0.1, -0.2), xj(1.1, 0.7), x_iface(0.4, 0.1);
-    Vecd nhat = (xj - xi); nhat /= nhat.norm();
 
     auto Lf = [&](const Real a, const Vecd& b, const Vecd& x){ return a + b.dot(x); };
 
@@ -66,7 +65,7 @@ TEST(MUSCL, LinearReproductionPrimitives)
 
     auto lr = reconstruct_primitives_muscl(
         Pi, Pj, gr_i, gr_j, gu_i, gu_j, gv_i, gv_j, gp_i, gp_j,
-        xi, xj, x_iface, nhat, cfg
+        xi, xj, x_iface, cfg
     );
 
     const Real rho_face = Lf(ar, br, x_iface);

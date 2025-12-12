@@ -52,7 +52,7 @@ TEST(MUSCL_LimiterSuite, LinearReproductionScalar_Unlimited)
     const Real Ui = U_lin(a, b, xi);
     const Real Uj = U_lin(a, b, xj);
 
-    auto lr = reconstruct_scalar_muscl(Ui, b, Uj, b, xi, xj, xf, nh, cfg);
+    auto lr = reconstruct_scalar_muscl(Ui, b, Uj, b, xi, xj, xf, cfg);
     const Real Uface = U_lin(a, b, xf);
 
     EXPECT_NEAR(lr.first,  Uface, 1e-12);
@@ -77,7 +77,7 @@ TEST(MUSCL_LimiterSuite, LinearReproductionScalar_Minmod)
     const Real Ui = U_lin(a, b, xi);
     const Real Uj = U_lin(a, b, xj);
 
-    auto lr = reconstruct_scalar_muscl(Ui, b, Uj, b, xi, xj, xf, nh, cfg);
+    auto lr = reconstruct_scalar_muscl(Ui, b, Uj, b, xi, xj, xf, cfg);
     const Real Uface = U_lin(a, b, xf);
 
     EXPECT_NEAR(lr.first,  Uface, 1e-12);
@@ -101,7 +101,7 @@ TEST(MUSCL_LimiterSuite, LinearReproductionScalar_MC)
     const Real Ui = U_lin(a, b, xi);
     const Real Uj = U_lin(a, b, xj);
 
-    auto lr = reconstruct_scalar_muscl(Ui, b, Uj, b, xi, xj, xf, nh, cfg);
+    auto lr = reconstruct_scalar_muscl(Ui, b, Uj, b, xi, xj, xf, cfg);
     const Real Uface = U_lin(a, b, xf);
 
     EXPECT_NEAR(lr.first,  Uface, 1e-12);
@@ -125,7 +125,7 @@ TEST(MUSCL_LimiterSuite, LinearReproductionScalar_VanLeer)
     const Real Ui = U_lin(a, b, xi);
     const Real Uj = U_lin(a, b, xj);
 
-    auto lr = reconstruct_scalar_muscl(Ui, b, Uj, b, xi, xj, xf, nh, cfg);
+    auto lr = reconstruct_scalar_muscl(Ui, b, Uj, b, xi, xj, xf, cfg);
     const Real Uface = U_lin(a, b, xf);
 
     EXPECT_NEAR(lr.first,  Uface, 1e-12);
@@ -150,11 +150,11 @@ TEST(MUSCL_LimiterSuite, DiscontinuityScalar_OvershootControl_Minmod)
 
     // Unlimited (reference)
     SecondOrderConfig cfg_unlim; cfg_unlim.limiter = SlopeLimiter::None; cfg_unlim.positivity = false;
-    auto lr_unlim = reconstruct_scalar_muscl(Ui, gi, Uj, gj, xi, xj, xf, nh, cfg_unlim);
+    auto lr_unlim = reconstruct_scalar_muscl(Ui, gi, Uj, gj, xi, xj, xf, cfg_unlim);
 
     // Minmod
     SecondOrderConfig cfg_mm; cfg_mm.limiter = SlopeLimiter::Minmod; cfg_mm.positivity = false;
-    auto lr_mm = reconstruct_scalar_muscl(Ui, gi, Uj, gj, xi, xj, xf, nh, cfg_mm);
+    auto lr_mm = reconstruct_scalar_muscl(Ui, gi, Uj, gj, xi, xj, xf, cfg_mm);
 
     // TVD/monotonicity: limited results must stay within [Ui, Uj]
     Real Umin = std::min(Ui, Uj), Umax = std::max(Ui, Uj);
@@ -179,12 +179,12 @@ TEST(MUSCL_LimiterSuite, DiscontinuityScalar_OvershootControl_MC_VanLeer)
     const Vecd gi = V(6.0, 0.0), gj = V(-6.0, 0.0);
 
     SecondOrderConfig cfg_unlim; cfg_unlim.limiter = SlopeLimiter::None; cfg_unlim.positivity = false;
-    auto lr_unlim = reconstruct_scalar_muscl(Ui, gi, Uj, gj, xi, xj, xf, nh, cfg_unlim);
+    auto lr_unlim = reconstruct_scalar_muscl(Ui, gi, Uj, gj, xi, xj, xf, cfg_unlim);
 
     // MC
     {
         SecondOrderConfig cfg; cfg.limiter = SlopeLimiter::MC; cfg.positivity = false;
-        auto lr = reconstruct_scalar_muscl(Ui, gi, Uj, gj, xi, xj, xf, nh, cfg);
+        auto lr = reconstruct_scalar_muscl(Ui, gi, Uj, gj, xi, xj, xf, cfg);
         Real Umin = std::min(Ui, Uj), Umax = std::max(Ui, Uj);
         EXPECT_GE(lr.first,  Umin); EXPECT_LE(lr.first,  Umax);
         EXPECT_GE(lr.second, Umin); EXPECT_LE(lr.second, Umax);
@@ -194,7 +194,7 @@ TEST(MUSCL_LimiterSuite, DiscontinuityScalar_OvershootControl_MC_VanLeer)
     // VanLeer
     {
         SecondOrderConfig cfg; cfg.limiter = SlopeLimiter::VanLeer; cfg.positivity = false;
-        auto lr = reconstruct_scalar_muscl(Ui, gi, Uj, gj, xi, xj, xf, nh, cfg);
+        auto lr = reconstruct_scalar_muscl(Ui, gi, Uj, gj, xi, xj, xf, cfg);
         Real Umin = std::min(Ui, Uj), Umax = std::max(Ui, Uj);
         EXPECT_GE(lr.first,  Umin); EXPECT_LE(lr.first,  Umax);
         EXPECT_GE(lr.second, Umin); EXPECT_LE(lr.second, Umax);
@@ -224,13 +224,13 @@ TEST(MUSCL_LimiterSuite, MonotoneSmooth_Profile_NoExcessCut)
 
     // Unlimited referans
     SecondOrderConfig cfg_ref; cfg_ref.limiter = SlopeLimiter::None; cfg_ref.positivity = false;
-    auto lr_ref = reconstruct_scalar_muscl(Ui, b, Uj, b, xi, xj, xf, nh, cfg_ref);
+    auto lr_ref = reconstruct_scalar_muscl(Ui, b, Uj, b, xi, xj, xf, cfg_ref);
 
   
     for (auto lim : {SlopeLimiter::Minmod, SlopeLimiter::MC, SlopeLimiter::VanLeer})
     {
         SecondOrderConfig cfg; cfg.limiter = lim; cfg.positivity = false;
-        auto lr = reconstruct_scalar_muscl(Ui, b, Uj, b, xi, xj, xf, nh, cfg);
+        auto lr = reconstruct_scalar_muscl(Ui, b, Uj, b, xi, xj, xf, cfg);
         EXPECT_NEAR(lr.first,  Uface, 1e-12);
         EXPECT_NEAR(lr.second, Uface, 1e-12);
         EXPECT_NEAR(lr.first,  lr_ref.first,  1e-12);
@@ -269,7 +269,7 @@ TEST(MUSCL_LimiterSuite, PrimitivesLinear_WithLimiter)
 
     auto lr = reconstruct_primitives_muscl(
         Pi, Pj, gr_i, gr_j, gu_i, gu_j, gv_i, gv_j, gp_i, gp_j,
-        xi, xj, xf, nh, cfg
+        xi, xj, xf, cfg
     );
 
     const Real rho_f = Lf(ar, br, xf);
@@ -308,7 +308,7 @@ TEST(MUSCL_LimiterSuite, PositivityClipping_RhoAndP)
     const Vecd nh = unit(xj - xi);
 
     LR lr = reconstruct_primitives_muscl(
-        Pi, Pj, g0, g0, g0, g0, g0, g0, g0, g0, xi, xj, xf, nh, cfg
+        Pi, Pj, g0, g0, g0, g0, g0, g0, g0, g0, xi, xj, xf, cfg
     );
 
     EXPECT_GE(lr.L.rho, cfg.small);
@@ -337,7 +337,7 @@ TEST(MUSCL_LimiterSuite, DiscontinuityScalar_ZeroGrad_DropsToFirstOrder)
     const Vecd xf = V(0.5, 0.0);
     const Vecd nh = unit(xj - xi);
 
-    auto lr = reconstruct_scalar_muscl(Ui, gi, Uj, gj, xi, xj, xf, nh, cfg);
+    auto lr = reconstruct_scalar_muscl(Ui, gi, Uj, gj, xi, xj, xf, cfg);
 
     EXPECT_NEAR(lr.first,  Ui, 1e-12);
     EXPECT_NEAR(lr.second, Uj, 1e-12);

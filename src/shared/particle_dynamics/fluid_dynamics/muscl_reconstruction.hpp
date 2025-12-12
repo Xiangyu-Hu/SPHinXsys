@@ -36,9 +36,9 @@ enum class SlopeLimiter : int {
 struct SecondOrderConfig
 {
     SlopeLimiter limiter      = SlopeLimiter::Minmod;
-    Real         theta        = 2.0;     
     bool         positivity   = true;    
     Real         small        = 1e-12;   
+    Real         gamma        = 1.4;     // ideal-gas gamma for EOS-based energy
 };
 
 /// Scalar limiters (standalone, inlined)
@@ -79,7 +79,7 @@ inline std::pair<Real, Real>
 reconstruct_scalar_muscl(Real Ui, const Vec& gradUi,
                          Real Uj, const Vec& gradUj,
                          const Vec& xi, const Vec& xj,
-                         const Vec& x_iface, const Vec& nhat,
+                         const Vec& x_iface,
                          const SecondOrderConfig& cfg)
 {
     const Vec di_vec = x_iface - xi;
@@ -95,12 +95,12 @@ reconstruct_scalar_muscl(Real Ui, const Vec& gradUi,
     const Real du    = Uj - Ui;
 
     const Real si = gradUi.dot(dx_vec);
-    const Real sj = gradUj.dot(-dx_vec);
+    const Real sj = gradUj.dot(dx_vec);
 
     auto safe_div = [&](Real num, Real den){ return (std::abs(den) > 1e-14) ? (num/den) : 0.0; };
 
     const Real phi_i_raw = apply_limiter(cfg.limiter, si, du);
-    const Real phi_j_raw = apply_limiter(cfg.limiter, sj, Ui - Uj);
+    const Real phi_j_raw = apply_limiter(cfg.limiter, sj, du);
  
     const Real phi_i = safe_div(phi_i_raw, (std::abs(si) > 1e-14 ? si : (Real)1)); // ∈[0,1] civarı
     const Real phi_j = safe_div(phi_j_raw, (std::abs(sj) > 1e-14 ? sj : (Real)1));
@@ -120,7 +120,7 @@ inline LR reconstruct_primitives_muscl(const Primitives& Pi, const Primitives& P
                                        const Vec& grad_v_i,   const Vec& grad_v_j,
                                        const Vec& grad_p_i,   const Vec& grad_p_j,
                                        const Vec& xi, const Vec& xj,
-                                       const Vec& x_iface, const Vec& nhat,
+                                       const Vec& x_iface,
                                        const SecondOrderConfig& cfg)
 #elif SPH_NDIM == 3
 template <typename Vec>
@@ -131,7 +131,7 @@ inline LR reconstruct_primitives_muscl(const Primitives& Pi, const Primitives& P
                                        const Vec& grad_w_i,   const Vec& grad_w_j,
                                        const Vec& grad_p_i,   const Vec& grad_p_j,
                                        const Vec& xi, const Vec& xj,
-                                       const Vec& x_iface, const Vec& nhat,
+                                       const Vec& x_iface,
                                        const SecondOrderConfig& cfg)
 #endif
 {
@@ -141,7 +141,7 @@ inline LR reconstruct_primitives_muscl(const Primitives& Pi, const Primitives& P
     {
         auto lr = reconstruct_scalar_muscl(Pi.rho, grad_rho_i,
                                            Pj.rho, grad_rho_j,
-                                           xi, xj, x_iface, nhat, cfg);
+                                           xi, xj, x_iface, cfg);
         out.L.rho = lr.first;  out.R.rho = lr.second;
     }
 
@@ -150,11 +150,11 @@ inline LR reconstruct_primitives_muscl(const Primitives& Pi, const Primitives& P
         // u
         auto lr_u = reconstruct_scalar_muscl(Pi.vel[0], grad_u_i,
                                              Pj.vel[0], grad_u_j,
-                                             xi, xj, x_iface, nhat, cfg);
+                                             xi, xj, x_iface, cfg);
         // v
         auto lr_v = reconstruct_scalar_muscl(Pi.vel[1], grad_v_i,
                                              Pj.vel[1], grad_v_j,
-                                             xi, xj, x_iface, nhat, cfg);
+                                             xi, xj, x_iface, cfg);
 
 #if SPH_NDIM == 2
         out.L.vel = Vecd(lr_u.first,  lr_v.first);
@@ -162,7 +162,7 @@ inline LR reconstruct_primitives_muscl(const Primitives& Pi, const Primitives& P
 #elif SPH_NDIM == 3
         auto lr_w = reconstruct_scalar_muscl(Pi.vel[2], grad_w_i,
                                              Pj.vel[2], grad_w_j,
-                                             xi, xj, x_iface, nhat, cfg);
+                                             xi, xj, x_iface, cfg);
         out.L.vel = Vecd(lr_u.first,  lr_v.first,  lr_w.first);
         out.R.vel = Vecd(lr_u.second, lr_v.second, lr_w.second);
 #endif
@@ -172,13 +172,9 @@ inline LR reconstruct_primitives_muscl(const Primitives& Pi, const Primitives& P
     {
         auto lr = reconstruct_scalar_muscl(Pi.p, grad_p_i,
                                            Pj.p, grad_p_j,
-                                           xi, xj, x_iface, nhat, cfg);
+                                           xi, xj, x_iface, cfg);
         out.L.p = lr.first;  out.R.p = lr.second;
     }
-
-    // total energy 
-    out.L.E = Pi.E;
-    out.R.E = Pj.E;
 
     // positivity safeguard
     if (cfg.positivity) {
@@ -186,6 +182,17 @@ inline LR reconstruct_primitives_muscl(const Primitives& Pi, const Primitives& P
         out.R.rho = std::max(out.R.rho, cfg.small);
         out.L.p   = std::max(out.L.p,   cfg.small);
         out.R.p   = std::max(out.R.p,   cfg.small);
+    }
+
+    // total energy reconstructed from (rho, v, p) via EOS
+    {
+        const Real inv_gamma_minus_one = 1.0 / (cfg.gamma - 1.0);
+        const Real kinL = (Real)0.5 * out.L.vel.dot(out.L.vel);
+        const Real kinR = (Real)0.5 * out.R.vel.dot(out.R.vel);
+        const Real eL   = out.L.p * inv_gamma_minus_one / out.L.rho;
+        const Real eR   = out.R.p * inv_gamma_minus_one / out.R.rho;
+        out.L.E = eL + kinL;
+        out.R.E = eR + kinR;
     }
 
     return out;
