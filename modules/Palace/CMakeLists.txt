@@ -4,6 +4,7 @@ endif()
 
 add_library(sphinxsys_palace
     sphinxsys_palace_interface.cpp
+    palace_magnetostatic_interface.cpp
 )
 
 target_link_libraries(sphinxsys_palace

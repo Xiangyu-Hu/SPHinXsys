@@ -1,21 +1,26 @@
-#include <iostream>
-#include "sphinxsys_palace_interface.hpp"
+#include "palace_magnetostatic_interface.hpp"
+#include "palace/utils/communication.hpp"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    std::string json = "data/rings.json";
-    if (argc > 1)
-        json = argv[1];
+    palace::Mpi::Init(argc, argv);
 
-    std::cout << "[SPHinXsys-Palace] Running rings test …\n";
-    std::cout << "  Using config: " << json << "\n";
+    std::string json_path = (argc > 1) ? argv[1] : "data/rings.json";
 
-    int status = sphinxsys_palace::RunPalaceFromJson(json);
+    sphinxsys_palace::MagnetostaticCase problem(
+        json_path, palace::Mpi::World(), /*verbose=*/true);
 
-    if (status == 0)
-        std::cout << "[OK] Palace simulation completed.\n";
-    else
-        std::cout << "[ERROR] Palace simulation failed, status = " << status << "\n";
+    problem.Run();
 
-    return status;
+    // Example 1: export B field for the first source to CSV
+    problem.ExportBFieldToCsv("rings_B_source0.csv", /*source_index=*/0);
+
+    // Example 2: access B as a ParGridFunction and sample at custom coordinates
+    const mfem::ParGridFunction &B = problem.GetBField(0);
+
+    // Suppose you have particle positions from SPHinXsys:
+    // std::vector<std::array<double,3>> particle_pos = ...;
+    // for each position, use B.GetVectorValue(...) to interpolate.
+
+    return 0;
 }
