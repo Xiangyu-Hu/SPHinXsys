@@ -45,7 +45,7 @@ which presents a steep learning curve for end-users.
 In our prior implementations in the open-source SPH (Smoothed Particle Hydrodynamics) 
 multi-physics library SPHinXsys
 [(Han et al. 2014,]( https://doi.org/10.1016/j.jcp.2013.12.061)
-[(Zhnag et al. 2021)]( https://doi.org/10.1016/j.cpc.2021.108066), 
+[Zhang et al. 2021)]( https://doi.org/10.1016/j.cpc.2021.108066), 
 memory allocation for activated grid regions was managed via dynamic memory pools. 
 While this approach yields efficient memory usage, 
 the resulting data structures are not inherently compatible with GPU execution. 
