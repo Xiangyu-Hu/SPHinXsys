@@ -13,7 +13,6 @@ EnergyGradient<DataDelegationType>::EnergyGradient(BaseRelationType &base_relati
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       energy_(this->particles_->template getVariableDataByName<Real>("Energy")),
-      rho_(this->particles_->template getVariableDataByName<Real>("Density")),
       energy_grad_(this->particles_->template registerStateVariable<Vecd>("EnergyGradient")) {}
 template <class KernelCorrectionType>
 EnergyGradient<Inner<KernelCorrectionType>>::EnergyGradient(BaseInnerRelation &inner_relation)
@@ -41,7 +40,7 @@ void EnergyGradient<Inner<KernelCorrectionType>>::interaction(size_t index_i, Re
 template <class KernelCorrectionType>
 void EnergyGradient<Inner<KernelCorrectionType>>::update(size_t index_i, Real dt)
 {
-    energy_grad_[index_i] = kernel_correction_(index_i)* energy_grad_[index_i];
+    energy_grad_[index_i] = kernel_correction_(index_i) * energy_grad_[index_i];
 }
 
 } // namespace fluid_dynamics

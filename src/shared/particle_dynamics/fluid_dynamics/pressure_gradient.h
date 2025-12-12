@@ -24,7 +24,6 @@ protected:
     Real *Vol_;
     Real *p_;
     Vecd *p_grad_;
-    Real *rho_;
 };
 
 template <class KernelCorrectionType>
@@ -40,7 +39,7 @@ protected:
     KernelCorrectionType kernel_correction_;
 };
 
-using PressureGradientInner = PressureGradient<Inner<NoKernelCorrection>>;
+using PressureGradientInner = PressureGradient<Inner<LinearGradientCorrection>>;
 
 template <>
 class PressureGradient<Contact<Wall>> : public InteractionWithWall<PressureGradient>
@@ -53,7 +52,6 @@ public:
 protected:
     Vecd *distance_from_wall_;
     Real *p_;
-    Real *rho_;
     Vecd *p_grad_;
     StdVec<Real *> wall_p_;
 };

@@ -23,7 +23,6 @@ protected:
     Real *Vol_;
     Real *energy_;
     Vecd *energy_grad_;
-    Real *rho_;
 
 };
 
@@ -40,7 +39,7 @@ protected:
     KernelCorrectionType kernel_correction_;
 };
 
-using EnergyGradientInner = EnergyGradient<Inner<NoKernelCorrection>>;
+using EnergyGradientInner = EnergyGradient<Inner<LinearGradientCorrection>>;
 
 template <>
 class EnergyGradient<Contact<Wall>> : public InteractionWithWall<EnergyGradient>
@@ -54,7 +53,6 @@ protected:
     Vecd *distance_from_wall_;
     Real *energy_;
     Vecd *energy_grad_;
-    Real *rho_;
     StdVec<Real *> wall_E_;
 
 
