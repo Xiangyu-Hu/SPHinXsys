@@ -6,7 +6,7 @@ categories: high performance computing
 ---
 Xiangyu Hu and Fan Gu
 
-<p align="center"><img src="{{site.baseurl}}/assets/img/core-packages.png" alt="Heading Figure" height="350"/>
+<p align="center"><img src="{{site.baseurl}}/assets/img/core-packages.png" alt="Heading Figure" height="350" style="width:auto;">
 <center>Fig. 1. Particle generation from an extruded prism.
   The gray surface indicates the clipped zero level set, the framed boxes indicate the core data package blocks used to describe the surface and the small spheres indicate the SPH particles generated and physically relaxed for later numerical simulation.</center> </p>
 
