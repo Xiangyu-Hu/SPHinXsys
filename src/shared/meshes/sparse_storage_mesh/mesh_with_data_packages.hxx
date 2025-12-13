@@ -12,9 +12,7 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     : index_handler_(tentative_bounds, data_spacing * PKG_SIZE, buffer_size, 0, data_spacing),
       num_singular_pkgs_(num_singular_pkgs), sv_num_grid_pkgs_("NumGridPackages", num_singular_pkgs),
       dv_pkg_1d_cell_index_(nullptr), dv_pkg_type_(nullptr), cell_neighborhood_(nullptr),
-      bmv_cell_pkg_index_(registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
-      global_mesh_(index_handler_.MeshLowerBound() + 0.5 * data_spacing * Vecd::Ones(),
-                   data_spacing, index_handler_.AllCells() * PKG_SIZE)
+      bmv_cell_pkg_index_(registerBKGMeshVariable<UnsignedInt>("CellPackageIndex"))
 {
     for (UnsignedInt i = 0; i != num_singular_pkgs_; i++)
     {
@@ -104,6 +102,13 @@ bool MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
     Arrayi cell_index = CellIndexFromPosition(position);
     UnsignedInt pkg_index = PackageIndexFromCellIndex(cell_package_index, cell_index);
     return pkg_type[pkg_index] == 1;
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+Mesh MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::getGlobalMesh() const
+{
+    return Mesh(MeshLowerBound() + 0.5 * Vecd::Constant(data_spacing_),
+                data_spacing_, AllCells() * PKG_SIZE);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
