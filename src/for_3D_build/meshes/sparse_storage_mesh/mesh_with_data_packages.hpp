@@ -25,6 +25,8 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
                 });
     StdVec<Block3D> clustered_blocks = clusterActiveCells3D(active_cells);
 
+    Mesh global_mesh = index_handler_.getGlobalMesh();
+
     output_file << "\n"
                 << "title='View'" << "\n";
     output_file << " VARIABLES = " << "x, " << "y, " << "z";
@@ -72,7 +74,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
             global_lower_bound, global_upper_bound,
             [&](const Array3i &global_index)
             {
-                Vec3d data_position = global_mesh_.GridPositionFromIndex(global_index);
+                Vec3d data_position = global_mesh.GridPositionFromIndex(global_index);
                 output_file << data_position[0] << " " << data_position[1] << " " << data_position[2] << " ";
 
                 constexpr int type_index_int = DataTypeIndex<int>::value;
