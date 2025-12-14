@@ -83,12 +83,11 @@ class LevelSet : public BaseMeshField
     void addMeshVariableToWrite(const std::string &variable_name);
     void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
     template <typename DataType>
-    void addBKGMeshVariableToWrite(const std::string &variable_name);
-    void writeBKGMeshToPlt(const std::string &partial_file_name) override;
+    void addMeshCellVariableToWrite(const std::string &variable_name);
     template <class ExecutionPolicy>
     void syncMeshVariablesToWrite(ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
-    void syncBKGMeshVariablesToWrite(ExecutionPolicy &ex_policy);
+    void syncMeshCellVariablesToWrite(ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
     void syncMeshVariablesToProbe(ExecutionPolicy &ex_policy);
 
@@ -133,7 +132,7 @@ class LevelSet : public BaseMeshField
     UniquePtr<BaseDynamics<void>> correct_topology_keeper_;
     UniquePtr<BaseDynamics<void>> clean_interface_keeper_;
     UniquePtrsKeeper<NeighborMethod<SPHAdaptation, SPHAdaptation>> neighbor_method_keeper_;
-    std::function<void()> sync_mesh_variables_to_write_, sync_bkg_mesh_variables_to_write_, sync_mesh_variables_to_probe_;
+    std::function<void()> sync_mesh_variables_to_write_, sync_mesh_cell_variables_to_write_, sync_mesh_variables_to_probe_;
 
     template <class ExecutionPolicy>
     void configLevelSetPostProcesses(const ExecutionPolicy &ex_policy);

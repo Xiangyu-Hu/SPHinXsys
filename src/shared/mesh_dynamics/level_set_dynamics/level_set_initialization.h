@@ -61,8 +61,8 @@ class InitialCellTagging : public BaseMeshLocalDynamics
   private:
     Shape &shape_;
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
-    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;
-    BKGMeshVariable<int> &bmv_cell_contain_id_;
+    MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_;
+    MeshCellVariable<int> &mcv_cell_contain_id_;
 };
 
 class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
@@ -98,9 +98,9 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
     MeshWithGridDataPackagesType &coarse_mesh_;
     Shape &shape_;
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
-    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;
-    BKGMeshVariable<int> &bmv_cell_contain_id_;
-    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_coarse_;
+    MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_;
+    MeshCellVariable<int> &mcv_cell_contain_id_;
+    MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_coarse_;
     MetaVariable<int> &dv_pkg_type_coarse_;
 };
 
@@ -131,7 +131,7 @@ class InnerCellTagging : public BaseMeshLocalDynamics
     };
 
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
-    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;
+    MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_;
 };
 
 /**
@@ -162,7 +162,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
   protected:
     MetaVariable<UnsignedInt> &dv_pkg_1d_cell_index_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
-    BKGMeshVariable<UnsignedInt> &bmv_cell_pkg_index_;
+    MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_;
 };
 
 /**
@@ -220,7 +220,7 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
 
   protected:
     MetaVariable<UnsignedInt> &dv_pkg_1d_cell_index_;
-    BKGMeshVariable<int> &bmv_cell_contain_id_;
+    MeshCellVariable<int> &mcv_cell_contain_id_;
     MeshVariable<Real> &mv_phi_;
 };
 
@@ -246,8 +246,8 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
     };
 
   protected:
-    BKGMeshVariable<int> &bmv_cell_contain_id_;
-    BKGMeshVariable<UnsignedInt> &bmv_cell_package_index_;
+    MeshCellVariable<int> &mcv_cell_contain_id_;
+    MeshCellVariable<UnsignedInt> &mcv_cell_package_index_;
     SingularVariable<UnsignedInt> &sv_count_modified_;
 };
 

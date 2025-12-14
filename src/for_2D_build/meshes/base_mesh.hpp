@@ -9,7 +9,7 @@ namespace SPH
 {
 //=================================================================================================//
 template <class MeshType>
-void MultiResolutionMeshField<MeshType>::writeCellVariableToPltByMesh(
+void MultiResolutionMeshField<MeshType>::writeMeshCellVariableToPltByMesh(
     const MeshType &mesh, std::ofstream &output_file)
 {
     output_file << "\n"
@@ -17,19 +17,19 @@ void MultiResolutionMeshField<MeshType>::writeCellVariableToPltByMesh(
     output_file << " VARIABLES = " << "x, " << "y";
 
     constexpr int type_index_unsigned = DataTypeIndex<UnsignedInt>::value;
-    for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(cell_variables_to_write_))
+    for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(mesh_cell_variables_to_write_))
     {
         output_file << ",\"" << variable->Name() << "\"";
     };
 
     constexpr int type_index_int = DataTypeIndex<int>::value;
-    for (DiscreteVariable<int> *variable : std::get<type_index_int>(cell_variables_to_write_))
+    for (DiscreteVariable<int> *variable : std::get<type_index_int>(mesh_cell_variables_to_write_))
     {
         output_file << ",\"" << variable->Name() << "\"";
     };
 
     constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
-    for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(cell_variables_to_write_))
+    for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(mesh_cell_variables_to_write_))
     {
         std::string variable_name = variable->Name();
         output_file << ",\"" << variable_name << "_x\""
@@ -37,7 +37,7 @@ void MultiResolutionMeshField<MeshType>::writeCellVariableToPltByMesh(
     };
 
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
-    for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(cell_variables_to_write_))
+    for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(mesh_cell_variables_to_write_))
     {
         output_file << ",\"" << variable->Name() << "\"";
     };
@@ -56,25 +56,25 @@ void MultiResolutionMeshField<MeshType>::writeCellVariableToPltByMesh(
             Vecd data_position = mesh.CellPositionFromIndex(cell_index);
             output_file << data_position[0] << " " << data_position[1] << " ";
 
-            for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(cell_variables_to_write_))
+            for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(mesh_cell_variables_to_write_))
             {
                 UnsignedInt value = variable->Data()[linear_index];
                 output_file << value << " ";
             };
 
-            for (DiscreteVariable<int> *variable : std::get<type_index_int>(cell_variables_to_write_))
+            for (DiscreteVariable<int> *variable : std::get<type_index_int>(mesh_cell_variables_to_write_))
             {
                 int value = variable->Data()[linear_index];
                 output_file << value << " ";
             };
 
-            for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(cell_variables_to_write_))
+            for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(mesh_cell_variables_to_write_))
             {
                 Vecd value = variable->Data()[linear_index];
                 output_file << value[0] << " " << value[1] << " ";
             };
 
-            for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(cell_variables_to_write_))
+            for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(mesh_cell_variables_to_write_))
             {
                 Real value = variable->Data()[linear_index];
                 output_file << value << " ";

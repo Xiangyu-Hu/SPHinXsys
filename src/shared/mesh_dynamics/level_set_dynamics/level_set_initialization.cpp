@@ -6,13 +6,13 @@ namespace SPH
 InitialCellTagging::InitialCellTagging(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh), shape_(shape),
       occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
-      bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
-      bmv_cell_contain_id_(*data_mesh.registerBKGMeshVariable<int>(
+      mcv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
+      mcv_cell_contain_id_(*data_mesh.registerMeshCellVariable<int>(
           "CellContainID", // default value is 2, indicating not near interface
           [&](UnsignedInt index)
           { return 2; })) // the value is not touched in this class
 {
-    data_mesh.addBKGMeshVariableToWrite<int>("CellContainID");
+    data_mesh.addMeshCellVariableToWrite<int>("CellContainID");
 }
 //=================================================================================================//
 void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
@@ -34,15 +34,15 @@ InitialCellTaggingFromCoarse::InitialCellTaggingFromCoarse(
     : BaseMeshLocalDynamics(data_mesh),
       coarse_mesh_(coarse_mesh), shape_(shape),
       occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
-      bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
-      bmv_cell_contain_id_(*data_mesh.registerBKGMeshVariable<int>(
+      mcv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
+      mcv_cell_contain_id_(*data_mesh.registerMeshCellVariable<int>(
           "CellContainID", // default value is 2, indicating not near interface
           [&](UnsignedInt index)
           { return 2; })),
-      bmv_cell_pkg_index_coarse_(coarse_mesh.getCellPackageIndex()),
+      mcv_cell_pkg_index_coarse_(coarse_mesh.getCellPackageIndex()),
       dv_pkg_type_coarse_(coarse_mesh.getPackageType())
 {
-    data_mesh.addBKGMeshVariableToWrite<int>("CellContainID");
+    data_mesh.addMeshCellVariableToWrite<int>("CellContainID");
 }
 //=================================================================================================//
 void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index)
@@ -70,7 +70,7 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
 InnerCellTagging::InnerCellTagging(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
       occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
-      bmv_cell_pkg_index_(data_mesh.getCellPackageIndex()) {}
+      mcv_cell_pkg_index_(data_mesh.getCellPackageIndex()) {}
 //=================================================================================================//
 void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 {
@@ -101,7 +101,7 @@ bool InnerCellTagging::UpdateKernel::isNearInitiallyTagged(const Arrayi &cell_in
 InitializeCellNeighborhood::InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh), dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
-      bmv_cell_pkg_index_(data_mesh.getCellPackageIndex())
+      mcv_cell_pkg_index_(data_mesh.getCellPackageIndex())
 {
     CellNeighborhood *neighbor = dv_cell_neighborhood_.Data();
     for (UnsignedInt i = 0; i != data_mesh.NumSingularPackages(); i++)
@@ -176,14 +176,14 @@ void InitializeBasicPackageData::UpdateKernel::update(const UnsignedInt &package
 NearInterfaceCellTagging::NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh)
     : BaseMeshLocalDynamics(data_mesh),
       dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
-      bmv_cell_contain_id_(*data_mesh.getBKGMeshVariable<int>("CellContainID")),
+      mcv_cell_contain_id_(*data_mesh.getMeshCellVariable<int>("CellContainID")),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")) {}
 //=============================================================================================//
 CellContainDiffusion::CellContainDiffusion(
     MeshWithGridDataPackagesType &data_mesh, SingularVariable<UnsignedInt> &sv_count_modified)
     : BaseMeshLocalDynamics(data_mesh),
-      bmv_cell_contain_id_(*data_mesh.getBKGMeshVariable<int>("CellContainID")),
-      bmv_cell_package_index_(data_mesh.getCellPackageIndex()),
+      mcv_cell_contain_id_(*data_mesh.getMeshCellVariable<int>("CellContainID")),
+      mcv_cell_package_index_(data_mesh.getCellPackageIndex()),
       sv_count_modified_(sv_count_modified) {}
 //=================================================================================================//
 } // namespace SPH

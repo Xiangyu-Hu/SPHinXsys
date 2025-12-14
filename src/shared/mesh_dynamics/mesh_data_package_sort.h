@@ -48,7 +48,7 @@ class PackageSort : public BaseMeshDynamics
           dv_sequence_(data_mesh.registerMetaVariable<UnsignedInt>("Sequence")),
           dv_index_permutation_(data_mesh.registerMetaVariable<UnsignedInt>("IndexPermutation")),
           dv_pkg_1d_cell_index_(&data_mesh.getPackage1DCellIndex()),
-          bmv_cell_pkg_index_(&data_mesh.getCellPackageIndex()),
+          mcv_cell_pkg_index_(&data_mesh.getCellPackageIndex()),
           update_meta_variables_to_sort_(data_mesh.PackageBound()),
           update_mesh_variables_to_sort_(data_mesh.PackageBound()),
           sort_method_(ExecutionPolicy{}, dv_sequence_, dv_index_permutation_) {};
@@ -92,7 +92,7 @@ class PackageSort : public BaseMeshDynamics
             ex_policy_, num_grid_pkgs, dv_index_permutation_);
 
         UnsignedInt *pkg_1d_cell_index = dv_pkg_1d_cell_index_->DelegatedData(ex_policy_);
-        UnsignedInt *cell_pkg_index = bmv_cell_pkg_index_->DelegatedData(ex_policy_);
+        UnsignedInt *cell_pkg_index = mcv_cell_pkg_index_->DelegatedData(ex_policy_);
         package_for(ex_policy_, num_singular_pkgs_, num_grid_pkgs,
                     [=](UnsignedInt package_index)
                     {
@@ -109,7 +109,7 @@ class PackageSort : public BaseMeshDynamics
     DiscreteVariable<UnsignedInt> *dv_sequence_;
     DiscreteVariable<UnsignedInt> *dv_index_permutation_;
     MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;
-    BKGMeshVariable<UnsignedInt> *bmv_cell_pkg_index_;
+    MeshCellVariable<UnsignedInt> *mcv_cell_pkg_index_;
     OperationOnDataAssemble<MetaVariableAssemble, UpdateSortableVariables<MetaVariable>> update_meta_variables_to_sort_;
     OperationOnDataAssemble<MeshVariableAssemble, UpdateSortableVariables<MeshVariable>> update_mesh_variables_to_sort_;
     SortMethodType sort_method_;

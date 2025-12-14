@@ -43,10 +43,9 @@ int main(int ac, char *av[])
     RealBody input_body(sph_system, input_shape);
     LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(par_ck, 2.0)
                                          ->addMeshVariableToWrite<Real>("KernelWeight")
-                                         ->writeLevelSet(sph_system)
-                                         ->addBKGMeshVariableToWrite<UnsignedInt>("CellPackageIndex")
-                                         ->addBKGMeshVariableToWrite<int>("CellContainID")
-                                         ->writeBKGMesh(sph_system);
+                                         ->addMeshCellVariableToWrite<UnsignedInt>("CellPackageIndex")
+                                         ->addMeshCellVariableToWrite<int>("CellContainID")
+                                         ->writeLevelSet(sph_system);
     input_body.generateParticles<BaseParticles, Lattice>();
 
     MultiPolygonShape filler_shape(original_logo, "Filler");
@@ -110,7 +109,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     BaseCellLinkedList &input_body_cell_linked_list = input_body.getCellLinkedList();
-    input_body_cell_linked_list.addCellVariableToWrite<UnsignedInt>("CurrentListSize");
+    input_body_cell_linked_list.addMeshCellVariableToWrite<UnsignedInt>("CurrentListSize");
     MeshRecordingToPlt cell_linked_list_recording(sph_system, input_body_cell_linked_list);
     //----------------------------------------------------------------------
     //	First output before the simulation.

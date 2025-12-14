@@ -45,13 +45,12 @@ template <typename DataType>
 using MeshVariable = MeshWithGridDataPackagesType::MeshVariable<DataType>;
 
 template <typename DataType>
-using BKGMeshVariable = MeshWithGridDataPackagesType::BKGMeshVariable<DataType>;
+using MeshCellVariable = DiscreteVariable<DataType>;
 
 template <typename DataType>
 using MetaVariable = MeshWithGridDataPackagesType::MetaVariable<DataType>;
 
 using MeshVariableAssemble = MeshWithGridDataPackagesType::MeshVariableAssemble;
-using BKGMeshVariableAssemble = MeshWithGridDataPackagesType::BKGMeshVariableAssemble;
 using MetaVariableAssemble = MeshWithGridDataPackagesType::MetaVariableAssemble;
 using IndexHandler = PackageMesh<4>;
 

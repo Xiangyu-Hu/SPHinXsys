@@ -117,14 +117,15 @@ class BaseMeshField
     void setName(const std::string &new_name) { name_ = new_name; };
     /** output mesh data for Tecplot visualization */
     virtual void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) = 0;
-    /** output mesh data for Tecplot visualization */
-    virtual void writeBKGMeshToPlt(const std::string &partial_file_name) {};
 };
+
+template <typename DataType>
+using MeshCellVariable = DiscreteVariable<DataType>;
+typedef DataContainerAddressAssemble<MeshCellVariable> MeshCellVariableAssemble;
 
 template <class MeshType>
 class MultiResolutionMeshField : public BaseMeshField
 {
-    typedef DataContainerAddressAssemble<DiscreteVariable> CellVariableAssemble;
     DataContainerUniquePtrAssemble<DiscreteVariable> cell_variable_ptrs_;
 
   public:
@@ -138,16 +139,16 @@ class MultiResolutionMeshField : public BaseMeshField
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
 
     template <typename DataType, typename... Args>
-    DiscreteVariable<DataType> *registerCellVariable(const std::string &variable_name, Args &&...args);
+    MeshCellVariable<DataType> *registerMeshCellVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>
-    DiscreteVariable<DataType> *getCellVariable(const std::string &variable_name);
+    MeshCellVariable<DataType> *getMeshCellVariable(const std::string &variable_name);
 
     template <typename DataType>
-    void addCellVariableToWrite(const std::string &variable_name);
+    void addMeshCellVariableToWrite(const std::string &variable_name);
     void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
 
     template <class ExecutionPolicy>
-    void syncCellVariablesToWrite(ExecutionPolicy &ex_policy);
+    void syncMeshCellVariablesToWrite(ExecutionPolicy &ex_policy);
 
   protected:
     size_t resolution_levels_; /**< level 0 is the coarsest */
@@ -155,21 +156,11 @@ class MultiResolutionMeshField : public BaseMeshField
     Mesh *coarsest_mesh_;
     Mesh *finest_mesh_;
     UnsignedInt total_number_of_cells_;
-    CellVariableAssemble all_cell_variables_;
-    CellVariableAssemble cell_variables_to_write_;
+    MeshCellVariableAssemble all_mesh_cell_variables_;
+    MeshCellVariableAssemble mesh_cell_variables_to_write_;
 
-    void writeCellVariableToPltByMesh(const MeshType &mesh, std::ofstream &output_file);
-
-  protected:
-    template <template <typename> class MeshVariableType>
-    struct SyncMeshVariableData
-    {
-        template <typename DataType, class ExecutionPolicy>
-        void operator()(DataContainerAddressKeeper<MeshVariableType<DataType>> &mesh_variables,
-                        ExecutionPolicy &ex_policy);
-    };
-
-    OperationOnDataAssemble<CellVariableAssemble, SyncMeshVariableData<DiscreteVariable>> sync_cell_variable_data_{};
+    OperationOnDataAssemble<MeshCellVariableAssemble, PrepareVariablesToWrite<MeshCellVariable>> sync_cell_variable_data_{};
+    void writeMeshCellVariableToPltByMesh(const MeshType &mesh, std::ofstream &output_file);
 };
 } // namespace SPH
 #endif // BASE_MESH_H

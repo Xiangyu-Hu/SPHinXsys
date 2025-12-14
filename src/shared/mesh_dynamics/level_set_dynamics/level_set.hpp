@@ -34,10 +34,10 @@ void LevelSet::syncMeshVariablesToWrite(ExecutionPolicy &ex_policy)
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void LevelSet::syncBKGMeshVariablesToWrite(ExecutionPolicy &ex_policy)
+void LevelSet::syncMeshCellVariablesToWrite(ExecutionPolicy &ex_policy)
 {
     for (size_t l = 0; l != total_levels_; l++)
-        mesh_data_set_[l]->syncBKGMeshVariablesToWrite(ex_policy);
+        mesh_data_set_[l]->syncMeshCellVariablesToWrite(ex_policy);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -63,8 +63,8 @@ void LevelSet::finishInitialization(const ExecutionPolicy &ex_policy, UsageType 
     sync_mesh_variables_to_write_ = [&]() // for latter usage
     { this->syncMeshVariablesToWrite(ex_policy); };
 
-    sync_bkg_mesh_variables_to_write_ = [&]() // for latter usage
-    { this->syncBKGMeshVariablesToWrite(ex_policy); };
+    sync_mesh_cell_variables_to_write_ = [&]() // for latter usage
+    { this->syncMeshCellVariablesToWrite(ex_policy); };
 
     sync_mesh_variables_to_probe_ = [&]() // for latter usage
     { this->syncMeshVariablesToProbe(ex_policy); };
@@ -155,11 +155,11 @@ void LevelSet::addMeshVariableToWrite(const std::string &variable_name)
 }
 //=================================================================================================//
 template <typename DataType>
-void LevelSet::addBKGMeshVariableToWrite(const std::string &variable_name)
+void LevelSet::addMeshCellVariableToWrite(const std::string &variable_name)
 {
     for (size_t level = 0; level < total_levels_; level++)
     {
-        mesh_data_set_[level]->addBKGMeshVariableToWrite<DataType>(variable_name);
+        mesh_data_set_[level]->addMeshCellVariableToWrite<DataType>(variable_name);
     }
 }
 //=================================================================================================//

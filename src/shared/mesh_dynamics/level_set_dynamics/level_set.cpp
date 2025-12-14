@@ -191,17 +191,11 @@ void LevelSet::writeMeshFieldToPlt(const std::string &partial_file_name, size_t 
         mesh_data_set_[l]->writeMeshVariableToPlt(out_file);
         out_file.close();
     }
-}
-//=================================================================================================//
-void LevelSet::writeBKGMeshToPlt(const std::string &partial_file_name)
-{
-    sync_bkg_mesh_variables_to_write_();
+
+    sync_mesh_cell_variables_to_write_();
     for (size_t l = 0; l != total_levels_; ++l)
     {
-        std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
-        std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-        mesh_data_set_[l]->writeBKGMeshVariableToPlt(out_file);
-        out_file.close();
+        mesh_data_set_[l]->writeMeshFieldToPlt(partial_file_name, sequence);
     }
 }
 //=============================================================================================//
