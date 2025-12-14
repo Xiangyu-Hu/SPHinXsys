@@ -38,6 +38,23 @@
 
 namespace SPH
 {
+template <int PKG_SIZE>
+class PackageMesh : public Mesh
+{
+    Real data_spacing_;
+
+  public:
+    PackageMesh(BoundingBoxd tentative_bounds, Real grid_spacing,
+                UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset,
+                Real data_spacing);
+    Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
+    Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
+    Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
+    UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_pkg_index, const Arrayi &cell_index) const;
+    bool isWithinCorePackage(UnsignedInt *cell_pkg_index, int *pkg_type, const Vecd &position);
+    Real DataSpacing() const { return data_spacing_; };
+    Mesh getGlobalMesh() const;
+};
 /**
  * @class MeshWithGridDataPackages
  * @brief Abstract class for mesh with grid-based data packages.
@@ -62,25 +79,9 @@ class MeshWithGridDataPackages
     using BKGMeshVariable = DiscreteVariable<DataType>;
     template <typename DataType>
     using MetaVariable = DiscreteVariable<DataType>;
-
-    /** wrapper for all index exchange related functions. */
-    class IndexHandler : public Mesh
-    {
-        Real data_spacing_;
-
-      public:
-        IndexHandler(BoundingBoxd tentative_bounds, Real grid_spacing,
-                     UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset,
-                     Real data_spacing);
-        Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
-        Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
-        Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
-        UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index) const;
-        bool isWithinCorePackage(UnsignedInt *cell_package_index, int *pkg_type, const Vecd &position);
-        Real DataSpacing() const { return data_spacing_; };
-        Mesh getGlobalMesh() const;
-    };
-    typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
+    using IndexHandler = PackageMesh<PKG_SIZE>;
+    typedef DataContainerAddressAssemble<MeshVariable>
+        MeshVariableAssemble;
     typedef DataContainerAddressAssemble<BKGMeshVariable> BKGMeshVariableAssemble;
     typedef DataContainerAddressAssemble<MetaVariable> MetaVariableAssemble;
 
@@ -138,7 +139,7 @@ class MeshWithGridDataPackages
 
     template <typename DataType>
     DataType DataValueFromGlobalIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
-                                      const Arrayi &global_grid_index, UnsignedInt *cell_package_index);
+                                      const Arrayi &global_grid_index, UnsignedInt *cell_pkg_index);
 
   public:
     IndexHandler &getIndexHandler() { return index_handler_; };
