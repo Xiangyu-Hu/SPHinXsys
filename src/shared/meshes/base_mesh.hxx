@@ -150,7 +150,7 @@ template <typename DataType>
 void MultiResolutionMeshField<MeshType>::addMeshCellVariableToWrite(const std::string &variable_name)
 {
     DiscreteVariable<DataType> *variable = getMeshCellVariable<DataType>(variable_name);
-    addVariableToList<DiscreteVariable, DataType>(all_mesh_cell_variables_, variable);
+    addVariableToList<DiscreteVariable, DataType>(mesh_cell_variables_to_write_, variable);
 }
 //=============================================================================================//
 template <class MeshType>
