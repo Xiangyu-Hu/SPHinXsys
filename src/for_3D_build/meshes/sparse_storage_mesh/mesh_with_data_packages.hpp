@@ -80,21 +80,21 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
                 constexpr int type_index_int = DataTypeIndex<int>::value;
                 for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variables_to_write_))
                 {
-                    int value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
+                    int value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                     output_file << value << " ";
                 };
 
                 constexpr int type_index_Vecd = DataTypeIndex<Vec3d>::value;
                 for (MeshVariable<Vec3d> *variable : std::get<type_index_Vecd>(mesh_variables_to_write_))
                 {
-                    Vec3d value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
+                    Vec3d value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                     output_file << value[0] << " " << value[1] << " " << value[2] << " ";
                 };
 
                 constexpr int type_index_Real = DataTypeIndex<Real>::value;
                 for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variables_to_write_))
                 {
-                    Real value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
+                    Real value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                     output_file << value << " ";
                 };
                 output_file << " \n";

@@ -127,10 +127,6 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
 
     OperationOnDataAssemble<MeshVariableAssemble, PrepareVariablesToWrite<MeshVariable>> sync_mesh_variable_data_{};
 
-    template <typename DataType>
-    DataType DataValueFromGlobalIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
-                                      const Arrayi &global_grid_index, UnsignedInt *cell_pkg_index);
-
   public:
     template <class ExecutionPolicy>
     void syncMeshVariablesToWrite(ExecutionPolicy &ex_policy);
