@@ -121,19 +121,20 @@ class BaseMeshField
     virtual void writeBKGMeshToPlt(const std::string &partial_file_name) {};
 };
 
-class MultiLevelMeshField : public BaseMeshField
+template<class MeshType>
+class MultiResolutionMeshField : public BaseMeshField
 {
     typedef DataContainerAddressAssemble<DiscreteVariable> CellVariableAssemble;
     DataContainerUniquePtrAssemble<DiscreteVariable> cell_variable_ptrs_;
 
   public:
-    MultiLevelMeshField(
+    MultiResolutionMeshField(
         const std::string &name, BoundingBoxd tentative_bounds,
         Real Reference_grid_spacing, UnsignedInt buffer_width, size_t total_levels = 1);
-    virtual ~MultiLevelMeshField() {};
+    virtual ~MultiResolutionMeshField() {};
 
-    UniquePtrsKeeper<Mesh> mesh_ptrs_keeper_;
-    StdVec<Mesh *> &getMeshes() { return meshes_; };
+    UniquePtrsKeeper<MeshType> mesh_ptrs_keeper_;
+    StdVec<MeshType *> &getMeshes() { return meshes_; };
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
 
     template <typename DataType, typename... Args>
@@ -150,12 +151,12 @@ class MultiLevelMeshField : public BaseMeshField
 
   protected:
     size_t total_levels_; /**< level 0 is the coarsest */
-    StdVec<Mesh *> meshes_;
+    StdVec<MeshType *> meshes_;
     UnsignedInt total_number_of_cells_;
     CellVariableAssemble all_cell_variables_;
     CellVariableAssemble cell_variables_to_write_;
 
-    void writeCellVariableToPltByMesh(const Mesh &mesh, std::ofstream &output_file);
+    void writeCellVariableToPltByMesh(const MeshType &mesh, std::ofstream &output_file);
 
   protected:
     template <template <typename> class MeshVariableType>

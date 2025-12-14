@@ -11,7 +11,7 @@ namespace SPH
 BaseCellLinkedList::BaseCellLinkedList(
     BaseParticles &base_particles, SPHAdaptation &sph_adaptation,
     BoundingBoxd tentative_bounds, Real Reference_grid_spacing, size_t total_levels)
-    : MultiLevelMeshField("CellLinkedList", tentative_bounds, Reference_grid_spacing, 2, total_levels),
+    : MultiResolutionMeshField<Mesh>("CellLinkedList", tentative_bounds, Reference_grid_spacing, 2, total_levels),
       base_particles_(base_particles), coarsest_mesh_(meshes_.front()), finest_mesh_(meshes_.back()),
       kernel_(*sph_adaptation.getKernel()), cell_offset_list_size_(total_number_of_cells_ + 1),
       index_list_size_(SMAX(base_particles.ParticlesBound(), cell_offset_list_size_)),
