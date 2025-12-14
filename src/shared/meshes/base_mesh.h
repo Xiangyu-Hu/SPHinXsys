@@ -121,7 +121,7 @@ class BaseMeshField
     virtual void writeBKGMeshToPlt(const std::string &partial_file_name) {};
 };
 
-template<class MeshType>
+template <class MeshType>
 class MultiResolutionMeshField : public BaseMeshField
 {
     typedef DataContainerAddressAssemble<DiscreteVariable> CellVariableAssemble;
@@ -129,8 +129,8 @@ class MultiResolutionMeshField : public BaseMeshField
 
   public:
     MultiResolutionMeshField(
-        const std::string &name, BoundingBoxd tentative_bounds,
-        Real Reference_grid_spacing, UnsignedInt buffer_width, size_t total_levels = 1);
+        const std::string &name, size_t resolution_levels,
+        BoundingBoxd tentative_bounds, Real Reference_grid_spacing, UnsignedInt buffer_width);
     virtual ~MultiResolutionMeshField() {};
 
     UniquePtrsKeeper<MeshType> mesh_ptrs_keeper_;
@@ -150,7 +150,7 @@ class MultiResolutionMeshField : public BaseMeshField
     void syncCellVariablesToWrite(ExecutionPolicy &ex_policy);
 
   protected:
-    size_t total_levels_; /**< level 0 is the coarsest */
+    size_t resolution_levels_; /**< level 0 is the coarsest */
     StdVec<MeshType *> meshes_;
     UnsignedInt total_number_of_cells_;
     CellVariableAssemble all_cell_variables_;

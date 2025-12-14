@@ -100,13 +100,13 @@ inline UnsignedInt Mesh::MortonCode(const UnsignedInt &i)
 //=================================================================================================//
 template <class MeshType>
 MultiResolutionMeshField<MeshType>::MultiResolutionMeshField(
-    const std::string &name, BoundingBoxd tentative_bounds,
-    Real Reference_grid_spacing, UnsignedInt buffer_width, size_t total_levels)
-    : BaseMeshField(name), total_levels_(total_levels), total_number_of_cells_(0)
+    const std::string &name, size_t resolution_levels, BoundingBoxd tentative_bounds,
+    Real Reference_grid_spacing, UnsignedInt buffer_width)
+    : BaseMeshField(name), resolution_levels_(resolution_levels), total_number_of_cells_(0)
 {
-    for (size_t level = 0; level < total_levels; ++level)
+    for (size_t level = 0; level < resolution_levels_; ++level)
     {
-        meshes_.push_back(mesh_ptrs_keeper_.template createPtr<Mesh>(
+        meshes_.push_back(mesh_ptrs_keeper_.template createPtr<MeshType>(
             tentative_bounds, Reference_grid_spacing / math::pow(2.0, level),
             buffer_width, total_number_of_cells_));
         total_number_of_cells_ += meshes_.back()->NumberOfCells();
