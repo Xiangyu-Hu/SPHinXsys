@@ -63,7 +63,6 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     BoundingBoxd tentative_bounds, Real data_spacing, UnsignedInt buffer_size, UnsignedInt num_singular_pkgs)
     : MultiResolutionMeshField<PackageMesh<PKG_SIZE>>(
           "SparseStorageMesh", 1, tentative_bounds, data_spacing * Real(4), buffer_size),
-      index_handler_(tentative_bounds, data_spacing * PKG_SIZE, buffer_size, 0),
       num_singular_pkgs_(num_singular_pkgs), sv_num_grid_pkgs_("NumGridPackages", num_singular_pkgs),
       dv_pkg_1d_cell_index_(nullptr), dv_pkg_type_(nullptr), cell_neighborhood_(nullptr),
       mcv_cell_pkg_index_(this->template registerMeshCellVariable<UnsignedInt>("CellPackageIndex"))

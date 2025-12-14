@@ -112,7 +112,6 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     MeshVariableAssemble &getEvolvingMeshVariables() { return evolving_mesh_variables_; };
 
   protected:
-    IndexHandler index_handler_;
     UnsignedInt num_singular_pkgs_;                  /**< the number of all packages, initially only singular packages. */
     SingularVariable<UnsignedInt> sv_num_grid_pkgs_; /**< the number of all packages, initially only with singular packages. */
     UnsignedInt pkgs_bound_;
@@ -133,7 +132,6 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
                                       const Arrayi &global_grid_index, UnsignedInt *cell_pkg_index);
 
   public:
-    IndexHandler &getIndexHandler() { return index_handler_; };
     template <class ExecutionPolicy>
     void syncMeshVariablesToWrite(ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>

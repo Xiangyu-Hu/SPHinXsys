@@ -136,6 +136,7 @@ class MultiResolutionMeshField : public BaseMeshField
 
     UniquePtrsKeeper<MeshType> mesh_ptrs_keeper_;
     StdVec<MeshType *> &getMeshes() { return meshes_; };
+    MeshType &getResoultionLevel(UnsignedInt level) { return *meshes_[level]; };
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
 
     template <typename DataType, typename... Args>
