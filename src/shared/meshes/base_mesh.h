@@ -152,6 +152,8 @@ class MultiResolutionMeshField : public BaseMeshField
   protected:
     size_t resolution_levels_; /**< level 0 is the coarsest */
     StdVec<MeshType *> meshes_;
+    Mesh *coarsest_mesh_;
+    Mesh *finest_mesh_;
     UnsignedInt total_number_of_cells_;
     CellVariableAssemble all_cell_variables_;
     CellVariableAssemble cell_variables_to_write_;

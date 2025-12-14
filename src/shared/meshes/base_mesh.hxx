@@ -102,7 +102,8 @@ template <class MeshType>
 MultiResolutionMeshField<MeshType>::MultiResolutionMeshField(
     const std::string &name, size_t resolution_levels, BoundingBoxd tentative_bounds,
     Real Reference_grid_spacing, UnsignedInt buffer_width)
-    : BaseMeshField(name), resolution_levels_(resolution_levels), total_number_of_cells_(0)
+    : BaseMeshField(name), resolution_levels_(resolution_levels),
+      coarsest_mesh_(nullptr), finest_mesh_(nullptr), total_number_of_cells_(0)
 {
     for (size_t level = 0; level < resolution_levels_; ++level)
     {
@@ -111,6 +112,8 @@ MultiResolutionMeshField<MeshType>::MultiResolutionMeshField(
             buffer_width, total_number_of_cells_));
         total_number_of_cells_ += meshes_.back()->NumberOfCells();
     };
+    coarsest_mesh_ = meshes_.front();
+    finest_mesh_ = meshes_.back();
 }
 //=================================================================================================//
 template <class MeshType>
