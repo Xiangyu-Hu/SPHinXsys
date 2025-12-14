@@ -122,10 +122,10 @@ void MultiResolutionMeshField<MeshType>::writeMeshFieldToPlt(
 {
     for (UnsignedInt l = 0; l != meshes_.size(); ++l)
     {
-        std::string full_file_name = partial_file_name + "_" + std::to_string(l) +
+        std::string full_file_name = partial_file_name + "_CellVariables_" + std::to_string(l) +
                                      std::to_string(sequence) + ".dat"; //level and sequnce
         std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-        writeMeshCellVariableToPltByMesh(*meshes_[l], out_file);
+        writeMeshCellVariablesToPltByMesh(l, out_file);
         out_file.close();
     }
 }

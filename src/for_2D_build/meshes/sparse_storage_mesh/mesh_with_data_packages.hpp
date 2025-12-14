@@ -6,10 +6,13 @@
 namespace SPH
 {
 //=================================================================================================//
+//=================================================================================================//
 template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &output_file)
+void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVaraiblesToPltByMesh(
+    UnsignedInt resolution_level, std::ofstream &output_file)
 {
-    Mesh global_mesh = index_handler_.getGlobalMesh();
+    IndexHandler &index_handler = this->getResolutionLevel(resolution_level);
+    Mesh global_mesh = index_handler.getGlobalMesh();
 
     output_file << "\n"
                 << "title='View'" << "\n";
@@ -57,25 +60,25 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
 
             for (MeshVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(mesh_variables_to_write_))
             {
-                UnsignedInt value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
+                UnsignedInt value = index_handler.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                 output_file << value << " ";
             };
 
             for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variables_to_write_))
             {
-                int value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
+                int value = index_handler.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                 output_file << value << " ";
             };
 
             for (MeshVariable<Vecd> *variable : std::get<type_index_Vecd>(mesh_variables_to_write_))
             {
-                Vecd value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
+                Vecd value = index_handler.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                 output_file << value[0] << " " << value[1] << " ";
             };
 
             for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variables_to_write_))
             {
-                Real value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
+                Real value = index_handler.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                 output_file << value << " ";
             };
             output_file << " \n";

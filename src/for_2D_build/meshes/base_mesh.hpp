@@ -9,9 +9,11 @@ namespace SPH
 {
 //=================================================================================================//
 template <class MeshType>
-void MultiResolutionMeshField<MeshType>::writeMeshCellVariableToPltByMesh(
-    const MeshType &mesh, std::ofstream &output_file)
+void MultiResolutionMeshField<MeshType>::writeMeshCellVariablesToPltByMesh(
+    UnsignedInt resolution_level, std::ofstream &output_file)
 {
+    MeshType &mesh = getResolutionLevel(resolution_level);
+
     output_file << "\n"
                 << "title='View'" << "\n";
     output_file << " VARIABLES = " << "x, " << "y";

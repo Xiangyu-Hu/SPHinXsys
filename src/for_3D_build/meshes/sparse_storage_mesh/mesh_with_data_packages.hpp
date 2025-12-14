@@ -9,8 +9,11 @@ namespace SPH
 {
 //=================================================================================================//
 template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &output_file)
+void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVaraiblesToPltByMesh(
+    UnsignedInt resolution_level, std::ofstream &output_file)
 {
+    IndexHandler &index_handler = this->getResolutionLevel(resolution_level);
+    
     StdVec<Coord3D> active_cells;
     auto pkg_1d_cell_index = dv_pkg_1d_cell_index_->Data();
     auto pkg_type = dv_pkg_type_->Data();
@@ -19,13 +22,13 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
                 {
                     if (pkg_type[package_index] == 1)
                     {
-                        auto cell_index = index_handler_.DimensionalCellIndex(pkg_1d_cell_index[package_index]);
+                        auto cell_index = index_handler.DimensionalCellIndex(pkg_1d_cell_index[package_index]);
                         active_cells.push_back({cell_index[0], cell_index[1], cell_index[2]});
                     }
                 });
     StdVec<Block3D> clustered_blocks = clusterActiveCells3D(active_cells);
 
-    Mesh global_mesh = index_handler_.getGlobalMesh();
+    Mesh global_mesh = index_handler.getGlobalMesh();
 
     output_file << "\n"
                 << "title='View'" << "\n";
@@ -80,21 +83,21 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
                 constexpr int type_index_int = DataTypeIndex<int>::value;
                 for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variables_to_write_))
                 {
-                    int value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
+                    int value = index_handler.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                     output_file << value << " ";
                 };
 
                 constexpr int type_index_Vecd = DataTypeIndex<Vec3d>::value;
                 for (MeshVariable<Vec3d> *variable : std::get<type_index_Vecd>(mesh_variables_to_write_))
                 {
-                    Vec3d value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
+                    Vec3d value = index_handler.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                     output_file << value[0] << " " << value[1] << " " << value[2] << " ";
                 };
 
                 constexpr int type_index_Real = DataTypeIndex<Real>::value;
                 for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variables_to_write_))
                 {
-                    Real value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
+                    Real value = index_handler.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                     output_file << value << " ";
                 };
                 output_file << " \n";

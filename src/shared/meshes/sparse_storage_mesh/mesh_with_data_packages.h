@@ -53,6 +53,9 @@ class PackageMesh : public Mesh
     bool isWithinCorePackage(UnsignedInt *cell_pkg_index, int *pkg_type, const Vecd &position);
     Real DataSpacing() const { return data_spacing_; };
     Mesh getGlobalMesh() const;
+    template <typename DataType>
+    DataType DataValueFromGlobalIndex(PackageData<DataType, PKG_SIZE> *pkg_data, const Arrayi &global_grid_index,
+                                      UnsignedInt *cell_package_index) const;
 };
 
 /**
@@ -110,6 +113,7 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     MetaVariable<int> &getPackageType();
     MetaVariableAssemble &getEvolvingMetaVariables() { return evolving_meta_variables_; };
     MeshVariableAssemble &getEvolvingMeshVariables() { return evolving_mesh_variables_; };
+    void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
 
   protected:
     UnsignedInt num_singular_pkgs_;                  /**< the number of all packages, initially only singular packages. */
@@ -126,6 +130,7 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     T &checkOrganized(std::string func_name, T &value);
 
     OperationOnDataAssemble<MeshVariableAssemble, PrepareVariablesToWrite<MeshVariable>> sync_mesh_variable_data_{};
+    void writeMeshVaraiblesToPltByMesh(UnsignedInt resolution_level, std::ofstream &output_file);
 
   public:
     template <class ExecutionPolicy>
@@ -146,7 +151,6 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     void addMeshVariableToProbe(const std::string &variable_name);
     template <typename DataType>
     void addEvolvingMetaVariable(const std::string &variable_name);
-    void writeMeshVariableToPlt(std::ofstream &output_file);
 
     void organizeOccupiedPackages();
 };

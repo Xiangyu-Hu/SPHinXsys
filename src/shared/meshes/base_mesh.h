@@ -136,7 +136,7 @@ class MultiResolutionMeshField : public BaseMeshField
 
     UniquePtrsKeeper<MeshType> mesh_ptrs_keeper_;
     StdVec<MeshType *> &getMeshes() { return meshes_; };
-    MeshType &getResoultionLevel(UnsignedInt level) { return *meshes_[level]; };
+    MeshType &getResolutionLevel(UnsignedInt level) { return *meshes_[level]; };
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
 
     template <typename DataType, typename... Args>
@@ -161,7 +161,7 @@ class MultiResolutionMeshField : public BaseMeshField
     MeshCellVariableAssemble mesh_cell_variables_to_write_;
 
     OperationOnDataAssemble<MeshCellVariableAssemble, PrepareVariablesToWrite<MeshCellVariable>> sync_cell_variable_data_{};
-    void writeMeshCellVariableToPltByMesh(const MeshType &mesh, std::ofstream &output_file);
+    void writeMeshCellVariablesToPltByMesh(UnsignedInt resolution_level, std::ofstream &output_file);
 };
 } // namespace SPH
 #endif // BASE_MESH_H

@@ -22,7 +22,7 @@ InitialCellTaggingFromCoarse::UpdateKernel::
       occupied_data_pkgs_(&encloser.occupied_data_pkgs_),
       cell_pkg_index_(encloser.mcv_cell_pkg_index_.DelegatedData(ex_policy)),
       index_handler_(encloser.index_handler_),
-      coarse_index_handler_(encloser.coarse_mesh_.getIndexHandler()),
+      coarse_index_handler_(encloser.coarse_mesh_.getResolutionLevel(0)),
       grid_spacing_(index_handler_.GridSpacing()),
       far_field_distance_(grid_spacing_ * (Real)index_handler_.BufferWidth()),
       probe_coarse_phi_(ex_policy, &encloser.coarse_mesh_),

@@ -12,7 +12,7 @@ LevelSet::LevelSet(
     : BaseMeshField("LevelSet_" + shape.getName()), total_levels_(1),
       shape_(shape), refinement_ratio_(refinement_ratio)
 {
-    Real data_spacing = coarse_data->getIndexHandler().DataSpacing() * 0.5;
+    Real data_spacing = coarse_data->getResolutionLevel(0).DataSpacing() * 0.5;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec_.push_back(global_h_ratio);
@@ -186,11 +186,7 @@ void LevelSet::writeMeshFieldToPlt(const std::string &partial_file_name, size_t 
     sync_mesh_variables_to_write_();
     for (size_t l = 0; l != total_levels_; ++l)
     {
-        std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
-        std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-        mesh_data_set_[l]->writeMeshVariableToPlt(out_file);
-        mesh_data_set_[l]->writeMeshFieldToPlt(partial_file_name, sequence);
-        out_file.close();
+        mesh_data_set_[l]->writeMeshFieldToPlt(partial_file_name, l);
     }
 }
 //=============================================================================================//

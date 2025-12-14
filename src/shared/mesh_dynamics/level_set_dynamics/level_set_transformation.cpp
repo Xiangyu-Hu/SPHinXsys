@@ -19,8 +19,7 @@ UpdateKernelIntegrals::UpdateKernelIntegrals(
       mv_kernel_gradient_(*data_mesh.registerMeshVariable<Vecd>("KernelGradient")),
       mv_kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient"))
 {
-    IndexHandler &index_handler = data_mesh.getIndexHandler();
-    Real far_field_distance = index_handler.GridSpacing() * (Real)index_handler.BufferWidth();
+    Real far_field_distance = index_handler_.GridSpacing() * (Real)index_handler_.BufferWidth();
     initializeSingularPackages(0, -far_field_distance);
     initializeSingularPackages(1, far_field_distance);
 }

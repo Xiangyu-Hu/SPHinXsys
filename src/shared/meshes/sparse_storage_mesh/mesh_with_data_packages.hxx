@@ -59,6 +59,18 @@ Mesh PackageMesh<PKG_SIZE>::getGlobalMesh() const
 }
 //=============================================================================================//
 template <int PKG_SIZE>
+template <typename DataType>
+DataType PackageMesh<PKG_SIZE>::DataValueFromGlobalIndex(
+    PackageData<DataType, PKG_SIZE> *pkg_data, const Arrayi &global_grid_index,
+    UnsignedInt *cell_package_index) const
+{
+    Arrayi cell_index_on_mesh = global_grid_index / PKG_SIZE;
+    Arrayi local_index = global_grid_index - cell_index_on_mesh * PKG_SIZE;
+    UnsignedInt package_index = PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh);
+    return pkg_data[package_index](local_index);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
 MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     BoundingBoxd tentative_bounds, Real data_spacing, UnsignedInt buffer_size, UnsignedInt num_singular_pkgs)
     : MultiResolutionMeshField<PackageMesh<PKG_SIZE>>(
@@ -107,18 +119,6 @@ T &MeshWithGridDataPackages<PKG_SIZE>::checkOrganized(std::string func_name, T &
         exit(1);
     }
     return value;
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-template <typename DataType>
-DataType MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::DataValueFromGlobalIndex(
-    PackageData<DataType, PKG_SIZE> *pkg_data, const Arrayi &global_grid_index,
-    UnsignedInt *cell_package_index) const
-{
-    Arrayi cell_index_on_mesh = global_grid_index / PKG_SIZE;
-    Arrayi local_index = global_grid_index - cell_index_on_mesh * PKG_SIZE;
-    UnsignedInt package_index = PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh);
-    return pkg_data[package_index](local_index);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
@@ -200,18 +200,6 @@ DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
 //=============================================================================================//
 template <int PKG_SIZE>
 template <typename DataType>
-DataType MeshWithGridDataPackages<PKG_SIZE>::
-    DataValueFromGlobalIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
-                             const Arrayi &global_grid_index, UnsignedInt *cell_pkg_index)
-{
-    Arrayi cell_index_on_mesh_ = global_grid_index / PKG_SIZE;
-    Arrayi local_index = global_grid_index - cell_index_on_mesh_ * PKG_SIZE;
-    UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_pkg_index, cell_index_on_mesh_);
-    return pkg_data[package_index](local_index);
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-template <typename DataType>
 void MeshWithGridDataPackages<PKG_SIZE>::addMeshVariableToWrite(const std::string &variable_name)
 {
     addVariableToList<MeshVariable, DataType>(
@@ -232,6 +220,21 @@ void MeshWithGridDataPackages<PKG_SIZE>::addEvolvingMetaVariable(const std::stri
 {
     addVariableToList<MetaVariable, DataType>(
         evolving_meta_variables_, getMetaVariable<DataType>(variable_name));
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+void MeshWithGridDataPackages<PKG_SIZE>::writeMeshFieldToPlt(
+    const std::string &partial_file_name, size_t sequence)
+{
+    MultiResolutionMeshField<PackageMesh<PKG_SIZE>>::writeMeshFieldToPlt(partial_file_name, sequence);
+    for (UnsignedInt l = 0; l != this->meshes_.size(); ++l)
+    {
+        std::string full_file_name = partial_file_name + "_MeshVariables_" + std::to_string(l) +
+                                     std::to_string(sequence) + ".dat"; // level and sequnce
+        std::ofstream out_file(full_file_name.c_str(), std::ios::app);
+        writeMeshVaraiblesToPltByMesh(l, out_file);
+        out_file.close();
+    }
 }
 //=============================================================================================//
 template <int PKG_SIZE>
