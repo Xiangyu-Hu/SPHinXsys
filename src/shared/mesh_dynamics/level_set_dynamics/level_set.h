@@ -132,7 +132,7 @@ class LevelSet : public BaseMeshField
     UniquePtr<BaseDynamics<void>> correct_topology_keeper_;
     UniquePtr<BaseDynamics<void>> clean_interface_keeper_;
     UniquePtrsKeeper<NeighborMethod<SPHAdaptation, SPHAdaptation>> neighbor_method_keeper_;
-    std::function<void()> sync_mesh_variables_to_write_, sync_mesh_cell_variables_to_write_, sync_mesh_variables_to_probe_;
+    std::function<void()> sync_mesh_variables_to_write_, sync_mesh_variables_to_probe_;
 
     template <class ExecutionPolicy>
     void configLevelSetPostProcesses(const ExecutionPolicy &ex_policy);

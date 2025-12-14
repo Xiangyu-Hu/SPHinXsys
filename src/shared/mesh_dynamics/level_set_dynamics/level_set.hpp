@@ -61,10 +61,8 @@ void LevelSet::finishInitialization(const ExecutionPolicy &ex_policy, UsageType 
     }
 
     sync_mesh_variables_to_write_ = [&]() // for latter usage
-    { this->syncMeshVariablesToWrite(ex_policy); };
-
-    sync_mesh_cell_variables_to_write_ = [&]() // for latter usage
-    { this->syncMeshCellVariablesToWrite(ex_policy); };
+    { this->syncMeshVariablesToWrite(ex_policy); 
+    this->syncMeshCellVariablesToWrite(ex_policy); };
 
     sync_mesh_variables_to_probe_ = [&]() // for latter usage
     { this->syncMeshVariablesToProbe(ex_policy); };
