@@ -9,9 +9,9 @@ namespace SPH
 template <int PKG_SIZE>
 PackageMesh<PKG_SIZE>::PackageMesh(
     BoundingBoxd tentative_bounds, Real grid_spacing,
-    UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset, Real data_spacing)
+    UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset)
     : Mesh(tentative_bounds, grid_spacing, buffer_width, linear_cell_index_offset),
-      data_spacing_(data_spacing) {}
+      data_spacing_(grid_spacing / Real(PKG_SIZE)) {}
 //=============================================================================================//
 template <int PKG_SIZE>
 Vecd PackageMesh<PKG_SIZE>::DataLowerBoundInCell(const Arrayi &cell_index) const
@@ -61,7 +61,9 @@ Mesh PackageMesh<PKG_SIZE>::getGlobalMesh() const
 template <int PKG_SIZE>
 MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     BoundingBoxd tentative_bounds, Real data_spacing, UnsignedInt buffer_size, UnsignedInt num_singular_pkgs)
-    : index_handler_(tentative_bounds, data_spacing * PKG_SIZE, buffer_size, 0, data_spacing),
+    : MultiResolutionMeshField<PackageMesh<PKG_SIZE>>(
+          "SparseStorageMesh", 1, tentative_bounds, data_spacing * Real(4), buffer_size),
+      index_handler_(tentative_bounds, data_spacing * PKG_SIZE, buffer_size, 0),
       num_singular_pkgs_(num_singular_pkgs), sv_num_grid_pkgs_("NumGridPackages", num_singular_pkgs),
       dv_pkg_1d_cell_index_(nullptr), dv_pkg_type_(nullptr), cell_neighborhood_(nullptr),
       bmv_cell_pkg_index_(registerBKGMeshVariable<UnsignedInt>("CellPackageIndex"))

@@ -53,7 +53,7 @@ using MetaVariable = MeshWithGridDataPackagesType::MetaVariable<DataType>;
 using MeshVariableAssemble = MeshWithGridDataPackagesType::MeshVariableAssemble;
 using BKGMeshVariableAssemble = MeshWithGridDataPackagesType::BKGMeshVariableAssemble;
 using MetaVariableAssemble = MeshWithGridDataPackagesType::MetaVariableAssemble;
-using IndexHandler = MeshWithGridDataPackagesType::IndexHandler;
+using IndexHandler = PackageMesh<4>;
 
 /**
  * @class BaseMeshLocalDynamics

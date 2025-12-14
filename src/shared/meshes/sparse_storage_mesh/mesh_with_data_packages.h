@@ -45,8 +45,7 @@ class PackageMesh : public Mesh
 
   public:
     PackageMesh(BoundingBoxd tentative_bounds, Real grid_spacing,
-                UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset,
-                Real data_spacing);
+                UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset);
     Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
     Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
     Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
@@ -55,6 +54,7 @@ class PackageMesh : public Mesh
     Real DataSpacing() const { return data_spacing_; };
     Mesh getGlobalMesh() const;
 };
+
 /**
  * @class MeshWithGridDataPackages
  * @brief Abstract class for mesh with grid-based data packages.
@@ -68,7 +68,7 @@ class PackageMesh : public Mesh
  * Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
  */
 template <int PKG_SIZE>
-class MeshWithGridDataPackages
+class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
 {
   public:
     template <class DataType>

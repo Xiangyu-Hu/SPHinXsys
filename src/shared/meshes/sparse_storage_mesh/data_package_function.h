@@ -60,7 +60,7 @@ Vec3d regularizedCentralDifference(PackageData<Real, PKG_SIZE> *input, const Cel
 template <typename DataType, int PKG_SIZE>
 class ProbeMesh
 {
-    using IndexHandler = typename MeshWithGridDataPackages<PKG_SIZE>::IndexHandler;
+    using IndexHandler = PackageMesh<PKG_SIZE>;
 
   public:
     template <class ExecutionPolicy>
