@@ -57,25 +57,25 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
 
             for (MeshVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(mesh_variables_to_write_))
             {
-                UnsignedInt value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
+                UnsignedInt value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
                 output_file << value << " ";
             };
 
             for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variables_to_write_))
             {
-                int value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
+                int value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
                 output_file << value << " ";
             };
 
             for (MeshVariable<Vecd> *variable : std::get<type_index_Vecd>(mesh_variables_to_write_))
             {
-                Vecd value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
+                Vecd value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
                 output_file << value[0] << " " << value[1] << " ";
             };
 
             for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variables_to_write_))
             {
-                Real value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
+                Real value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_package_index);
                 output_file << value << " ";
             };
             output_file << " \n";

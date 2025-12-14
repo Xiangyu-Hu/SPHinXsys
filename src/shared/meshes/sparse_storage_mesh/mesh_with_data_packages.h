@@ -79,6 +79,9 @@ class MeshWithGridDataPackages
         bool isWithinCorePackage(UnsignedInt *cell_package_index, int *pkg_type, const Vecd &position);
         Real DataSpacing() const { return data_spacing_; };
         Mesh getGlobalMesh() const;
+        template <typename DataType>
+        DataType DataValueFromGlobalIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
+                                          const Arrayi &global_grid_index, UnsignedInt *cell_package_index) const;
     };
     typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
     typedef DataContainerAddressAssemble<BKGMeshVariable> BKGMeshVariableAssemble;
@@ -135,10 +138,6 @@ class MeshWithGridDataPackages
 
     OperationOnDataAssemble<MeshVariableAssemble, PrepareVariablesToWrite<MeshVariable>> sync_mesh_variable_data_{};
     OperationOnDataAssemble<BKGMeshVariableAssemble, PrepareVariablesToWrite<BKGMeshVariable>> sync_bkg_mesh_variable_data_{};
-
-    template <typename DataType>
-    DataType DataValueFromGlobalIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
-                                      const Arrayi &global_grid_index, UnsignedInt *cell_package_index);
 
   public:
     IndexHandler &getIndexHandler() { return index_handler_; };

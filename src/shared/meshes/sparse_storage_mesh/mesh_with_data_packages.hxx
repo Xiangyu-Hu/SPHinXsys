@@ -112,6 +112,18 @@ Mesh MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::getGlobalMesh() const
 }
 //=============================================================================================//
 template <int PKG_SIZE>
+template <typename DataType>
+DataType MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::DataValueFromGlobalIndex(
+    PackageData<DataType, PKG_SIZE> *pkg_data, const Arrayi &global_grid_index,
+    UnsignedInt *cell_package_index) const
+{
+    Arrayi cell_index_on_mesh = global_grid_index / PKG_SIZE;
+    Arrayi local_index = global_grid_index - cell_index_on_mesh * PKG_SIZE;
+    UnsignedInt package_index = PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh);
+    return pkg_data[package_index](local_index);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
 template <class ExecutionPolicy>
 void MeshWithGridDataPackages<PKG_SIZE>::syncMeshVariablesToWrite(ExecutionPolicy &ex_policy)
 {
@@ -218,18 +230,6 @@ DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
         exit(1);
     }
     return variable;
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-template <typename DataType>
-DataType MeshWithGridDataPackages<PKG_SIZE>::
-    DataValueFromGlobalIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
-                             const Arrayi &global_grid_index, UnsignedInt *cell_package_index)
-{
-    Arrayi cell_index_on_mesh_ = global_grid_index / PKG_SIZE;
-    Arrayi local_index = global_grid_index - cell_index_on_mesh_ * PKG_SIZE;
-    UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh_);
-    return pkg_data[package_index](local_index);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
