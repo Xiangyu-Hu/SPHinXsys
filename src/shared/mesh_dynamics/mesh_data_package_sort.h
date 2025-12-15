@@ -43,8 +43,7 @@ class PackageSort : public BaseDynamics<void>
     explicit PackageSort(MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level)
         : BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
           mesh_data_(mesh_data), resolution_level_(resolution_level),
-          num_singular_pkgs_(mesh_data.NumSingularPackages()),
-          sv_num_grid_pkgs_(mesh_data.svNumGridPackages()),
+          num_pkgs_offsets_(mesh_data.getNumPackageOffsets()),
           kernel_implementation_(*this),
           dv_sequence_(mesh_data.registerMetaVariable<UnsignedInt>("Sequence")),
           dv_index_permutation_(mesh_data.registerMetaVariable<UnsignedInt>("IndexPermutation")),
@@ -75,16 +74,17 @@ class PackageSort : public BaseDynamics<void>
 
     void exec(Real dt = 0.0)
     {
-        UnsignedInt num_grid_pkgs = sv_num_grid_pkgs_.getValue();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        package_for(ex_policy_, 0, num_grid_pkgs,
+        UnsignedInt start_pkg_index = num_pkgs_offsets_[this->resolution_level_];
+        UnsignedInt end_pkg_index = num_pkgs_offsets_[this->resolution_level_ + 1];
+        package_for(ex_policy_, start_pkg_index, end_pkg_index,
                     [=](UnsignedInt package_index)
                     {
                         update_kernel->update(package_index);
                     });
 
-        UnsignedInt sortable_size = num_grid_pkgs - num_singular_pkgs_;
-        sort_method_.sort(ex_policy_, sortable_size, num_singular_pkgs_);
+        UnsignedInt sortable_size = end_pkg_index - start_pkg_index;
+        sort_method_.sort(ex_policy_, sortable_size, start_pkg_index);
         update_meta_variables_to_sort_(
             mesh_data_.getEvolvingMetaVariables(),
             ex_policy_, num_grid_pkgs, dv_index_permutation_);
@@ -94,7 +94,7 @@ class PackageSort : public BaseDynamics<void>
 
         UnsignedInt *pkg_1d_cell_index = dv_pkg_1d_cell_index_->DelegatedData(ex_policy_);
         UnsignedInt *cell_pkg_index = mcv_cell_pkg_index_->DelegatedData(ex_policy_);
-        package_for(ex_policy_, num_singular_pkgs_, num_grid_pkgs,
+        package_for(ex_policy_, start_pkg_index, end_pkg_index,
                     [=](UnsignedInt package_index)
                     {
                         UnsignedInt sort_index = pkg_1d_cell_index[package_index];
@@ -106,8 +106,7 @@ class PackageSort : public BaseDynamics<void>
     ExecutionPolicy ex_policy_;
     MeshWithGridDataPackagesType &mesh_data_;
     UnsignedInt resolution_level_;
-    UnsignedInt num_singular_pkgs_;
-    SingularVariable<UnsignedInt> &sv_num_grid_pkgs_;
+    StdVec<UnsignedInt> &num_pkgs_offsets_;
     using KernelImplementation = Implementation<ExecutionPolicy, PackageSort<ExecutionPolicy>, UpdateKernel>;
     KernelImplementation kernel_implementation_;
     DiscreteVariable<UnsignedInt> *dv_sequence_;

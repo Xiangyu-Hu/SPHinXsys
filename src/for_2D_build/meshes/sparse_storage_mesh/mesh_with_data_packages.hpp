@@ -8,7 +8,7 @@ namespace SPH
 //=================================================================================================//
 //=================================================================================================//
 template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVaraiblesToPltByMesh(
+void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariablesToPltByMesh(
     UnsignedInt resolution_level, std::ofstream &output_file)
 {
     IndexHandler &index_handler = this->getResolutionLevel(resolution_level);

@@ -100,12 +100,15 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
   public:
     MeshWithGridDataPackages(BoundingBoxd tentative_bounds, Real data_spacing,
                              UnsignedInt buffer_size, UnsignedInt num_singular_pkgs = 2);
+    MeshWithGridDataPackages(const std::string &name, UnsignedInt resolution_levels,
+                             BoundingBoxd tentative_bounds, Real Reference_grid_spacing,
+                             UnsignedInt buffer_width, UnsignedInt num_singular_pkgs);
     virtual ~MeshWithGridDataPackages() {};
 
     static constexpr int DataPackageSize() { return PKG_SIZE; };
     UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
     UnsignedInt PackageBound() const { return pkgs_bound_; };
-    SingularVariable<UnsignedInt> &svNumGridPackages();
+    StdVec<UnsignedInt> &getNumPackageOffsets();
     MeshCellVariable<UnsignedInt> &getCellPackageIndex() { return *mcv_cell_pkg_index_; };
     ConcurrentVec<std::pair<UnsignedInt, int>> &getOccupiedDataPackages() { return occupied_data_pkgs_; };
     MetaVariable<CellNeighborhood> &getCellNeighborhood();
@@ -116,11 +119,11 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
 
   protected:
-    UnsignedInt num_singular_pkgs_;                  /**< the number of all packages, initially only singular packages. */
-    SingularVariable<UnsignedInt> sv_num_grid_pkgs_; /**< the number of all packages, initially only with singular packages. */
+    UnsignedInt num_singular_pkgs_;        /**< the number singular packages for each resolution level. */
+    StdVec<UnsignedInt> num_pkgs_offsets_; /**< save stating and ending indexes of packages. */
     UnsignedInt pkgs_bound_;
-    MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;               /**< metadata for data pckages: cell index. */
-    MetaVariable<int> *dv_pkg_type_;                                /**< metadata for data pckages: (int)core1/inner0. */
+    MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;               /**< metadata for data packages: cell index. */
+    MetaVariable<int> *dv_pkg_type_;                                /**< metadata for data packages: (int)core1/inner0. */
     MetaVariable<CellNeighborhood> *cell_neighborhood_;             /**< 3*3(*3) array to store indicies of neighborhood cells. */
     MeshCellVariable<UnsignedInt> *mcv_cell_pkg_index_;             /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_; /**< (UnsignedInt)sort_index, (int)core1/inner0. */
@@ -130,7 +133,7 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     T &checkOrganized(std::string func_name, T &value);
 
     OperationOnDataAssemble<MeshVariableAssemble, PrepareVariablesToWrite<MeshVariable>> sync_mesh_variable_data_{};
-    void writeMeshVaraiblesToPltByMesh(UnsignedInt resolution_level, std::ofstream &output_file);
+    void writeMeshVariablesToPltByMesh(UnsignedInt resolution_level, std::ofstream &output_file);
 
   public:
     template <class ExecutionPolicy>

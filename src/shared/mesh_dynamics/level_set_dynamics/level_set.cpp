@@ -9,8 +9,10 @@ namespace SPH
 LevelSet::LevelSet(
     BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
     Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
-    : BaseMeshField("LevelSet_" + shape.getName()), total_levels_(1),
-      shape_(shape), refinement_ratio_(refinement_ratio)
+    : MeshWithGridDataPackages<4>(
+          "LevelSet_" + shape.getName(), 1, tentative_bounds,
+          coarse_data->getResolutionLevel(0).GridSpacing() * 0.5, 4, 2),
+      total_levels_(1), shape_(shape), refinement_ratio_(refinement_ratio)
 {
     Real data_spacing = coarse_data->getResolutionLevel(0).DataSpacing() * 0.5;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
@@ -20,14 +22,16 @@ LevelSet::LevelSet(
         neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
             *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-    initializeLevel(data_spacing, tentative_bounds, coarse_data);
+    initializeLevel(0, data_spacing, tentative_bounds, coarse_data);
 }
 //=================================================================================================//
 LevelSet::LevelSet(
     BoundingBoxd tentative_bounds, Real data_spacing,
     size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
-    : BaseMeshField("LevelSet_" + shape.getName()), total_levels_(total_levels),
-      shape_(shape), refinement_ratio_(refinement_ratio)
+    : MeshWithGridDataPackages<4>(
+          "LevelSet_" + shape.getName(), total_levels, tentative_bounds,
+          data_spacing * Real(4), 4, 2),
+      total_levels_(total_levels), shape_(shape), refinement_ratio_(refinement_ratio)
 {
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
@@ -36,7 +40,7 @@ LevelSet::LevelSet(
         neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
             *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-    initializeLevel(data_spacing, tentative_bounds);
+    initializeLevel(0, data_spacing, tentative_bounds);
     for (size_t level = 1; level < total_levels_; ++level)
     {
         data_spacing *= 0.5;     // Halve the data spacing
@@ -47,12 +51,13 @@ LevelSet::LevelSet(
             neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
                 *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-        initializeLevel(data_spacing, tentative_bounds, mesh_data_set_[level - 1]);
+        initializeLevel(0, data_spacing, tentative_bounds, mesh_data_set_[level - 1]);
     }
 }
 //=================================================================================================//
 void LevelSet::initializeLevel(
-    Real data_spacing, BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data)
+    UnsignedInt level, Real data_spacing, BoundingBoxd tentative_bounds,
+    MeshWithGridDataPackagesType *coarse_data)
 {
     MeshWithGridDataPackagesType *mesh_data =
         mesh_data_ptr_vector_keeper_
@@ -72,9 +77,14 @@ void LevelSet::initializeLevel(
             initial_cell_tagging_from_coarse(*mesh_data, 0, *coarse_data, 0, shape_);
         initial_cell_tagging_from_coarse.exec();
     }
+
     MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package(*mesh_data, 0);
     tag_a_cell_is_inner_package.exec();
-    mesh_data->organizeOccupiedPackages();
+    if (level == 0)
+    {
+        mesh_data->organizeOccupiedPackages();
+    }
+
     PackageSort<execution::ParallelPolicy> pkg_sort(*mesh_data, 0);
     pkg_sort.exec();
 

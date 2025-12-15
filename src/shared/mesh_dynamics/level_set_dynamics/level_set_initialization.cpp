@@ -70,7 +70,13 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
 InnerCellTagging::InnerCellTagging(MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
-      mcv_cell_pkg_index_(data_mesh.getCellPackageIndex()) {}
+      mcv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
+      num_pkgs_offsets_(data_mesh.getNumPackageOffsets()) {}
+//=================================================================================================//
+void InnerCellTagging::finishDynamics(Real dt)
+{
+    num_pkgs_offsets_[this->resolution_level_ + 1] = occupied_data_pkgs_.size();
+}
 //=================================================================================================//
 void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 {

@@ -117,6 +117,7 @@ class InnerCellTagging : public BaseMeshLocalDynamics
         MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level);
     virtual ~InnerCellTagging() {};
 
+    virtual void finishDynamics(Real dt = 0.0) override;
     class UpdateKernel
     {
       public:
@@ -135,6 +136,7 @@ class InnerCellTagging : public BaseMeshLocalDynamics
 
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
     MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_;
+    StdVec<UnsignedInt> &num_pkgs_offsets_;
 };
 
 /**

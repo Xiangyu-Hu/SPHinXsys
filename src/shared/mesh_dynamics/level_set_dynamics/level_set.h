@@ -49,7 +49,7 @@ enum class UsageType
  * @class LevelSet
  * @brief Defining a multilevel level set for a complex region.
  */
-class LevelSet : public BaseMeshField
+class LevelSet : public MeshWithGridDataPackages<4>
 {
   public:
     LevelSet(BoundingBoxd tentative_bounds, Real reference_data_spacing, size_t total_levels,
@@ -95,8 +95,9 @@ class LevelSet : public BaseMeshField
     inline size_t getProbeLevel(const Vecd &position);
     inline size_t getCoarseLevel(Real h_ratio);
 
-    void initializeLevel(Real reference_data_spacing, BoundingBoxd tentative_bounds,
-                         MeshWithGridDataPackagesType *coarse_data = nullptr);
+    void initializeLevel(
+        UnsignedInt level, Real reference_data_spacing,
+        BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data = nullptr);
     template <class ExecutionPolicy>
     void initializeMeshVariables(const ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>

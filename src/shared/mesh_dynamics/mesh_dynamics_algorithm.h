@@ -78,8 +78,7 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseDynamics<void>
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
-    UnsignedInt num_singular_pkgs_;
-    SingularVariable<UnsignedInt> &sv_num_grid_pkgs_;
+    StdVec<UnsignedInt> &num_pkgs_offsets_;
 
   public:
     template <typename... Args>
@@ -87,18 +86,21 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseDynamics<void>
         MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseDynamics<void>(), kernel_implementation_(*this),
-          num_singular_pkgs_(mesh_data.NumSingularPackages()),
-          sv_num_grid_pkgs_(mesh_data.svNumGridPackages()){};
+          num_pkgs_offsets_(mesh_data.getNumPackageOffsets()){};
     virtual ~MeshInnerDynamics() {};
 
     void exec(Real dt = 0.0) override
     {
+        LocalDynamicsType::setupDynamics(dt);
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        package_for(ExecutionPolicy(), num_singular_pkgs_, sv_num_grid_pkgs_.getValue(),
+        UnsignedInt start_pkg_index = num_pkgs_offsets_[this->resolution_level_];
+        UnsignedInt end_pkg_index = num_pkgs_offsets_[this->resolution_level_ + 1];
+        package_for(ExecutionPolicy(), start_pkg_index, end_pkg_index,
                     [=](UnsignedInt package_index)
                     {
                         update_kernel->update(package_index);
                     });
+        LocalDynamicsType::finishDynamics(dt);
     };
 };
 
@@ -113,8 +115,7 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseDynamics<void>
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
-    UnsignedInt num_singular_pkgs_;
-    SingularVariable<UnsignedInt> &sv_num_grid_pkgs_;
+    StdVec<UnsignedInt> &num_pkgs_offsets_;
 
   public:
     template <typename... Args>
@@ -123,20 +124,23 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseDynamics<void>
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseDynamics<void>(), dv_pkg_type_(mesh_data.getPackageType()),
           kernel_implementation_(*this),
-          num_singular_pkgs_(mesh_data.NumSingularPackages()),
-          sv_num_grid_pkgs_(mesh_data.svNumGridPackages()){};
+          num_pkgs_offsets_(mesh_data.getNumPackageOffsets()){};
     virtual ~MeshCoreDynamics() {};
 
     void exec(Real dt = 0.0) override
     {
+        LocalDynamicsType::setupDynamics(dt);
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         int *pkg_type = dv_pkg_type_.DelegatedData(ExecutionPolicy());
-        package_for(ExecutionPolicy(), num_singular_pkgs_, sv_num_grid_pkgs_.getValue(),
+        UnsignedInt start_pkg_index = num_pkgs_offsets_[this->resolution_level_];
+        UnsignedInt end_pkg_index = num_pkgs_offsets_[this->resolution_level_ + 1];
+        package_for(ExecutionPolicy(), start_pkg_index, end_pkg_index,
                     [=](UnsignedInt package_index)
                     {
                         if (pkg_type[package_index] == 1)
                             update_kernel->update(package_index);
                     });
+        LocalDynamicsType::finishDynamics(dt);
     };
 };
 } // namespace SPH

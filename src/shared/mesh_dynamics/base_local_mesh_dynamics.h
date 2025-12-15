@@ -62,13 +62,19 @@ class BaseMeshLocalDynamics
 {
   public:
     explicit BaseMeshLocalDynamics(MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level)
-        : data_mesh_(data_mesh), index_handler_(data_mesh.getResolutionLevel(resolution_level)) {};
+        : data_mesh_(data_mesh), index_handler_(data_mesh.getResolutionLevel(resolution_level)),
+          resolution_level_(resolution_level) {};
     virtual ~BaseMeshLocalDynamics() {};
 
-    MeshWithGridDataPackagesType &data_mesh_;
-    IndexHandler &index_handler_;
     static constexpr int pkg_size = MeshWithGridDataPackagesType::DataPackageSize();
     static constexpr int pkg_size_minus1 = pkg_size - 1;
+    virtual void setupDynamics(Real dt = 0.0) {};  // setup global parameters
+    virtual void finishDynamics(Real dt = 0.0) {}; // update global parameters
+
+  protected:
+    MeshWithGridDataPackagesType &data_mesh_;
+    IndexHandler &index_handler_;
+    UnsignedInt resolution_level_;
 };
 } // namespace SPH
 #endif // BASE_LOCAL_MESH_DYNAMICS_H
