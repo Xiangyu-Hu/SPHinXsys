@@ -308,6 +308,28 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package
             }
         });
 }
+//=============================================================================================//
+template <class ExecutionPolicy>
+CleanInterface<ExecutionPolicy>::CleanInterface(
+    MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level,
+    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method, Real refinement_ratio)
+    : RepeatTimes(), BaseDynamics<void>(),
+      neighbor_method_(neighbor_method),
+      update_level_set_gradient{mesh_data, resolution_level},
+      update_kernel_integrals{mesh_data, resolution_level, neighbor_method_},
+      mark_cut_interfaces{mesh_data, resolution_level, 0.5 * refinement_ratio},
+      redistance_interface{mesh_data, resolution_level},
+      reinitialize_level_set{mesh_data, resolution_level} {}
+//=============================================================================================//
+template <class ExecutionPolicy>
+CorrectTopology<ExecutionPolicy>::CorrectTopology(
+    MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level,
+    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method)
+    : BaseDynamics<void>(), neighbor_method_(neighbor_method),
+      update_level_set_gradient(mesh_data, resolution_level),
+      update_kernel_integrals(mesh_data, resolution_level, neighbor_method),
+      mark_near_interface(mesh_data, resolution_level),
+      diffuse_level_set_sign(mesh_data, resolution_level, sv_count_modified_) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // LEVEL_SET_CORRECTION_HPP

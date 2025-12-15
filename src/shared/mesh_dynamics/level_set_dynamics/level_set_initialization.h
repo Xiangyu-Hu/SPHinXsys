@@ -68,9 +68,10 @@ class InitialCellTagging : public BaseMeshLocalDynamics
 class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitialCellTaggingFromCoarse(
-        MeshWithGridDataPackagesType &data_mesh,
-        MeshWithGridDataPackagesType &coarse_mesh, Shape &shape);
+    InitialCellTaggingFromCoarse(
+        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level,
+        MeshWithGridDataPackagesType &coarse_mesh, UnsignedInt coarse_resolution_level,
+        Shape &shape);
     virtual ~InitialCellTaggingFromCoarse() {};
 
     class UpdateKernel
@@ -96,6 +97,7 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
 
   private:
     MeshWithGridDataPackagesType &coarse_mesh_;
+    UnsignedInt coarse_resolution_level_;
     Shape &shape_;
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
     MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_;
@@ -111,7 +113,8 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
 class InnerCellTagging : public BaseMeshLocalDynamics
 {
   public:
-    explicit InnerCellTagging(MeshWithGridDataPackagesType &data_mesh);
+    explicit InnerCellTagging(
+        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level);
     virtual ~InnerCellTagging() {};
 
     class UpdateKernel
@@ -141,7 +144,8 @@ class InnerCellTagging : public BaseMeshLocalDynamics
 class InitializeCellNeighborhood : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitializeCellNeighborhood(MeshWithGridDataPackagesType &data_mesh);
+    explicit InitializeCellNeighborhood(
+        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level);
     virtual ~InitializeCellNeighborhood() {};
 
     class UpdateKernel
@@ -172,7 +176,8 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
 class InitializeBasicPackageData : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitializeBasicPackageData(MeshWithGridDataPackagesType &data_mesh, Shape &shape);
+    explicit InitializeBasicPackageData(
+        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level, Shape &shape);
     virtual ~InitializeBasicPackageData() {};
 
     class UpdateKernel
@@ -202,7 +207,8 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
 class NearInterfaceCellTagging : public BaseMeshLocalDynamics
 {
   public:
-    explicit NearInterfaceCellTagging(MeshWithGridDataPackagesType &data_mesh);
+    explicit NearInterfaceCellTagging(
+        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level);
     virtual ~NearInterfaceCellTagging() {};
 
     class UpdateKernel
@@ -227,8 +233,9 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
 class CellContainDiffusion : public BaseMeshLocalDynamics
 {
   public:
-    explicit CellContainDiffusion(MeshWithGridDataPackagesType &data_mesh,
-                                  SingularVariable<UnsignedInt> &sv_count_modified);
+    explicit CellContainDiffusion(
+        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level,
+        SingularVariable<UnsignedInt> &sv_count_modified);
     virtual ~CellContainDiffusion() {};
 
     class UpdateKernel
@@ -251,14 +258,14 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
     SingularVariable<UnsignedInt> &sv_count_modified_;
 };
 
-class FinishDataPackages
+class FinishDataPackages : public BaseDynamics<void>
 {
   public:
-    explicit FinishDataPackages(MeshWithGridDataPackagesType &mesh_data, Shape &shape)
-        : mesh_data_(mesh_data), shape_(shape) {};
+    FinishDataPackages(
+        MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level, Shape &shape);
     virtual ~FinishDataPackages() {};
 
-    void exec()
+    void exec(Real dt = 0.0) override
     {
         initialize_basic_data_for_a_package.exec();
 
@@ -274,13 +281,14 @@ class FinishDataPackages
 
   private:
     MeshWithGridDataPackagesType &mesh_data_;
+    UnsignedInt resolution_level_;
     Shape &shape_;
     SingularVariable<UnsignedInt> sv_count_modified_{"CountModifiedCell", 1};
 
-    MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood{mesh_data_};
-    MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package{mesh_data_, shape_};
-    MeshInnerDynamics<execution::ParallelPolicy, NearInterfaceCellTagging> near_interface_cell_tagging{mesh_data_};
-    MeshAllDynamics<execution::ParallelPolicy, CellContainDiffusion> cell_contain_diffusion{mesh_data_, sv_count_modified_};
+    MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood;
+    MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package;
+    MeshInnerDynamics<execution::ParallelPolicy, NearInterfaceCellTagging> near_interface_cell_tagging;
+    MeshAllDynamics<execution::ParallelPolicy, CellContainDiffusion> cell_contain_diffusion;
 };
 } // namespace SPH
 #endif // LEVEL_SET_INITIALIZATION_H

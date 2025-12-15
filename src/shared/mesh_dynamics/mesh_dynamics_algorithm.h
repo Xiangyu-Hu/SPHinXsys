@@ -39,32 +39,11 @@
 namespace SPH
 {
 /**
- * @class BaseMeshDynamics
- * @brief The base class for all mesh dynamics
- * This class contains only the interface functions available
- * for all dynamics. An specific implementation should be realized.
- */
-class BaseMeshDynamics
-{
-  public:
-    BaseMeshDynamics(MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level = 0)
-        : mesh_data_(mesh_data),
-          index_handler_(mesh_data_.getResolutionLevel(resolution_level)),
-          num_singular_pkgs_(mesh_data.NumSingularPackages()) {};
-    virtual ~BaseMeshDynamics() {};
-
-  protected:
-    MeshWithGridDataPackagesType &mesh_data_;
-    IndexHandler &index_handler_;
-    UnsignedInt num_singular_pkgs_;
-};
-
-/**
  * @class MeshAllDynamics
  * @brief Mesh dynamics for all cell on the mesh
  */
 template <class ExecutionPolicy, class LocalDynamicsType>
-class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics
+class MeshAllDynamics : public LocalDynamicsType, public BaseDynamics<void>
 {
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
@@ -72,15 +51,16 @@ class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics
 
   public:
     template <typename... Args>
-    MeshAllDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
+    MeshAllDynamics(
+        MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
-          BaseMeshDynamics(mesh_data), kernel_implementation_(*this){};
+          BaseDynamics<void>(), kernel_implementation_(*this){};
     virtual ~MeshAllDynamics() {};
 
-    void exec()
+    void exec(Real dt = 0.0) override
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        mesh_for(ExecutionPolicy(), MeshRange(Arrayi::Zero(), index_handler_.AllCells()),
+        mesh_for(ExecutionPolicy(), MeshRange(Arrayi::Zero(), this->index_handler_.AllCells()),
                  [&](Arrayi cell_index)
                  {
                      update_kernel->update(cell_index);
@@ -93,29 +73,31 @@ class MeshAllDynamics : public LocalDynamicsType, public BaseMeshDynamics
  * @brief Mesh dynamics for only inner cells on the mesh
  */
 template <class ExecutionPolicy, class LocalDynamicsType>
-class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
+class MeshInnerDynamics : public LocalDynamicsType, public BaseDynamics<void>
 {
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
+    UnsignedInt num_singular_pkgs_;
     SingularVariable<UnsignedInt> &sv_num_grid_pkgs_;
 
   public:
     template <typename... Args>
-    MeshInnerDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
+    MeshInnerDynamics(
+        MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
-          BaseMeshDynamics(mesh_data), kernel_implementation_(*this),
+          BaseDynamics<void>(), kernel_implementation_(*this),
+          num_singular_pkgs_(mesh_data.NumSingularPackages()),
           sv_num_grid_pkgs_(mesh_data.svNumGridPackages()){};
     virtual ~MeshInnerDynamics() {};
 
-    template <typename... Args>
-    void exec(Args &&...args)
+    void exec(Real dt = 0.0) override
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         package_for(ExecutionPolicy(), num_singular_pkgs_, sv_num_grid_pkgs_.getValue(),
                     [=](UnsignedInt package_index)
                     {
-                        update_kernel->update(package_index, args...);
+                        update_kernel->update(package_index);
                     });
     };
 };
@@ -125,24 +107,27 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseMeshDynamics
  * @brief Mesh dynamics for only core cells on the mesh
  */
 template <class ExecutionPolicy, class LocalDynamicsType>
-class MeshCoreDynamics : public LocalDynamicsType, public BaseMeshDynamics
+class MeshCoreDynamics : public LocalDynamicsType, public BaseDynamics<void>
 {
     MetaVariable<int> &dv_pkg_type_;
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
     KernelImplementation kernel_implementation_;
+    UnsignedInt num_singular_pkgs_;
     SingularVariable<UnsignedInt> &sv_num_grid_pkgs_;
 
   public:
     template <typename... Args>
-    MeshCoreDynamics(MeshWithGridDataPackagesType &mesh_data, Args &&...args)
+    MeshCoreDynamics(
+        MeshWithGridDataPackagesType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
-          BaseMeshDynamics(mesh_data), dv_pkg_type_(mesh_data.getPackageType()),
+          BaseDynamics<void>(), dv_pkg_type_(mesh_data.getPackageType()),
           kernel_implementation_(*this),
+          num_singular_pkgs_(mesh_data.NumSingularPackages()),
           sv_num_grid_pkgs_(mesh_data.svNumGridPackages()){};
     virtual ~MeshCoreDynamics() {};
 
-    void exec()
+    void exec(Real dt = 0.0) override
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         int *pkg_type = dv_pkg_type_.DelegatedData(ExecutionPolicy());

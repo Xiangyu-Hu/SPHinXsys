@@ -35,22 +35,23 @@
 namespace SPH
 {
 template <class ExecutionPolicy>
-class PackageSort : public BaseMeshDynamics
+class PackageSort : public BaseDynamics<void>
 {
     using SortMethodType = typename SortMethod<ExecutionPolicy>::type;
 
   public:
-    explicit PackageSort(MeshWithGridDataPackagesType &data_mesh)
-        : BaseMeshDynamics(data_mesh),
-          ex_policy_(ExecutionPolicy{}),
-          sv_num_grid_pkgs_(data_mesh.svNumGridPackages()),
+    explicit PackageSort(MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level)
+        : BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
+          mesh_data_(mesh_data), resolution_level_(resolution_level),
+          num_singular_pkgs_(mesh_data.NumSingularPackages()),
+          sv_num_grid_pkgs_(mesh_data.svNumGridPackages()),
           kernel_implementation_(*this),
-          dv_sequence_(data_mesh.registerMetaVariable<UnsignedInt>("Sequence")),
-          dv_index_permutation_(data_mesh.registerMetaVariable<UnsignedInt>("IndexPermutation")),
-          dv_pkg_1d_cell_index_(&data_mesh.getPackage1DCellIndex()),
-          mcv_cell_pkg_index_(&data_mesh.getCellPackageIndex()),
-          update_meta_variables_to_sort_(data_mesh.PackageBound()),
-          update_mesh_variables_to_sort_(data_mesh.PackageBound()),
+          dv_sequence_(mesh_data.registerMetaVariable<UnsignedInt>("Sequence")),
+          dv_index_permutation_(mesh_data.registerMetaVariable<UnsignedInt>("IndexPermutation")),
+          dv_pkg_1d_cell_index_(&mesh_data.getPackage1DCellIndex()),
+          mcv_cell_pkg_index_(&mesh_data.getCellPackageIndex()),
+          update_meta_variables_to_sort_(mesh_data.PackageBound()),
+          update_mesh_variables_to_sort_(mesh_data.PackageBound()),
           sort_method_(ExecutionPolicy{}, dv_sequence_, dv_index_permutation_) {};
     virtual ~PackageSort() {};
 
@@ -103,6 +104,9 @@ class PackageSort : public BaseMeshDynamics
 
   private:
     ExecutionPolicy ex_policy_;
+    MeshWithGridDataPackagesType &mesh_data_;
+    UnsignedInt resolution_level_;
+    UnsignedInt num_singular_pkgs_;
     SingularVariable<UnsignedInt> &sv_num_grid_pkgs_;
     using KernelImplementation = Implementation<ExecutionPolicy, PackageSort<ExecutionPolicy>, UpdateKernel>;
     KernelImplementation kernel_implementation_;

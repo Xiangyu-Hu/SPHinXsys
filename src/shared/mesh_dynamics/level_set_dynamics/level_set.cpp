@@ -69,17 +69,17 @@ void LevelSet::initializeLevel(
     else
     {
         MeshAllDynamics<execution::ParallelPolicy, InitialCellTaggingFromCoarse>
-            initial_cell_tagging_from_coarse(*mesh_data, *coarse_data, shape_);
+            initial_cell_tagging_from_coarse(*mesh_data, 0, *coarse_data, 0, shape_);
         initial_cell_tagging_from_coarse.exec();
     }
-    MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package(*mesh_data);
+    MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package(*mesh_data, 0);
     tag_a_cell_is_inner_package.exec();
     mesh_data->organizeOccupiedPackages();
-    PackageSort<execution::ParallelPolicy> pkg_sort(*mesh_data);
+    PackageSort<execution::ParallelPolicy> pkg_sort(*mesh_data, 0);
     pkg_sort.exec();
 
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
-    FinishDataPackages finish_data_packages(*mesh_data, shape_);
+    FinishDataPackages finish_data_packages(*mesh_data, 0, shape_);
     finish_data_packages.exec();
 }
 //=================================================================================================//

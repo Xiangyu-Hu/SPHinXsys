@@ -42,7 +42,8 @@ namespace SPH
 class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 {
   public:
-    explicit UpdateLevelSetGradient(MeshWithGridDataPackagesType &data_mesh);
+    explicit UpdateLevelSetGradient(
+        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level);
     virtual ~UpdateLevelSetGradient() {};
 
     class UpdateKernel
@@ -72,7 +73,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 
   public:
     explicit UpdateKernelIntegrals(
-        MeshWithGridDataPackagesType &data_mesh,
+        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level,
         NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method);
     virtual ~UpdateKernelIntegrals() {};
 

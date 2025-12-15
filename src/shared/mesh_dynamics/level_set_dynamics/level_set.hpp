@@ -10,9 +10,9 @@ template <class ExecutionPolicy>
 void LevelSet::configLevelSetPostProcesses(const ExecutionPolicy &ex_policy)
 {
     clean_interface_keeper_ = makeUnique<CleanInterface<ExecutionPolicy>>(
-        *mesh_data_set_.back(), *neighbor_method_set_.back(), refinement_ratio_);
+        *mesh_data_set_.back(), 0, *neighbor_method_set_.back(), refinement_ratio_);
     correct_topology_keeper_ = makeUnique<CorrectTopology<ExecutionPolicy>>(
-        *mesh_data_set_.back(), *neighbor_method_set_.back());
+        *mesh_data_set_.back(), 0, *neighbor_method_set_.back());
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -21,7 +21,7 @@ void LevelSet::initializeMeshVariables(const ExecutionPolicy &ex_policy)
     for (size_t level = 0; level < total_levels_; level++)
     {
         MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient>
-            update_level_set_gradient{*mesh_data_set_[level]};
+            update_level_set_gradient{*mesh_data_set_[level], 0};
         update_level_set_gradient.exec();
     }
 }
@@ -76,7 +76,7 @@ void LevelSet::initializeKernelIntegralVariables(const ExecutionPolicy &ex_polic
     for (size_t level = 0; level < total_levels_; level++)
     {
         MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals>
-            update_kernel_integrals{*mesh_data_set_[level], *neighbor_method_set_[level]};
+            update_kernel_integrals{*mesh_data_set_[level], 0, *neighbor_method_set_[level]};
         update_kernel_integrals.exec();
     }
 }
