@@ -3,6 +3,7 @@
 #include "density_correciton.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
+#include "polar_decomposition_3x3.h"
 #include "pressure_boundary.h"
 #include "sphinxsys.h"
 
@@ -18,8 +19,8 @@ struct parameters
     const Real stent_diameter = 25.0 * scale;
     const Real leaflet_thickness = 1.0 * scale;
 
-    const Real fluid_upstream_length = 5.0 * stent_diameter;
-    const Real fluid_downstream_length = 5.0 * stent_diameter;
+    const Real fluid_upstream_length = 1.5 * stent_diameter;
+    const Real fluid_downstream_length = 1.5 * stent_diameter;
 
     // FLUID MATERIAL PARAMETERS
     Real rho0_f = 1100.0; /**< Density. */
@@ -171,7 +172,7 @@ struct solid_object_input
     // mandatory input for construction
     std::string name;
     SPH::SharedPtr<SPH::Shape> mesh;
-    SPH::LinearElasticSolid *material;
+    SPH::NeoHookeanSolid *material;
     double resolution;
     double length_scale;
 };
@@ -184,7 +185,7 @@ void relax_solid(RealBody &body, BaseInnerRelation &inner)
     //----------------------------------------------------------------------
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_particles(body);
-    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(inner);
+    RelaxationStepInner relaxation_step_inner(inner);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
@@ -215,14 +216,14 @@ class SolidObject
 
   public:
     SolidObject(SPHSystem &system, const solid_object_input &input)
-        : body_(system, input.mesh)
+        : body_(system, input.mesh, input.name)
     {
-        body_.defineBodyLevelSetShape();
+        body_.defineBodyLevelSetShape()->correctLevelSetSign();
         body_.defineAdaptationRatios(1.15, system.ReferenceResolution() / input.resolution);
         body_.defineMaterial<NeoHookeanSolid>(*input.material);
         body_.generateParticles<BaseParticles, Lattice>();
         inner_relation_ = std::make_unique<InnerRelation>(body_);
-        relax_solid(body_, *inner_relation_);
+        // relax_solid(body_, *inner_relation_);
 
         SimpleDynamics<NormalDirectionFromBodyShape> normal_direction(body_);
         normal_direction.exec();
@@ -248,24 +249,28 @@ class ElasticSolidObject : public SolidObject
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration_;
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half_;
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half_;
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> time_step_size_;
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> damping;
+    SPH::SimpleDynamics<SPH::solid_dynamics::UpdateElasticNormalDirection> update_elastic_normal;
 
   public:
     ElasticSolidObject(SPHSystem &system, const solid_object_input &input)
-        : SolidObject(system, input.mesh),
+        : SolidObject(system, input),
           corrected_configuration_(get_inner_relation()),
           stress_relaxation_first_half_(get_inner_relation()),
           stress_relaxation_second_half_(get_inner_relation()),
-          damping(0.2, get_inner_relation(), "Velocity", get_physical_viscosity_general(input.material->getDensity(), input.material->getYoungsModulus(), input.length_scale)) {
+          time_step_size_(get_body()),
+          damping(0.2, get_inner_relation(), "Velocity", get_physical_viscosity_general(input.material->getDensity(), input.material->getYoungsModulus(), input.length_scale)),
+          update_elastic_normal(get_body()) {
           };
-
-    void corrected_config() { corrected_configuration_.exec(); }
-    void stress_relaxation_first(Real dt) { stress_relaxation_first_half_.exec(dt); }
-    void stress_relaxation_second(Real dt) { stress_relaxation_second_half_.exec(dt); }
-    void normal_update() { normal_direction.exec(); }
+    Real get_time_step_size() { return time_step_size_.exec(); }
+    void init_corrected_config() { corrected_configuration_.exec(); }
+    void exec_stress_first(Real dt) { stress_relaxation_first_half_.exec(dt); }
+    void exec_stress_second(Real dt) { stress_relaxation_second_half_.exec(dt); }
+    void exec_damping(Real dt) { damping.exec(dt); }
+    void normal_update() { update_elastic_normal.exec(); }
 };
 
-template <class FluidIntegration2ndHalfType>
 class FSIDynamics
 {
   private:
@@ -273,7 +278,7 @@ class FSIDynamics
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration;
     SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> insert_body_update_normal;
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_from_fluid;
-    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<FluidIntegration2ndHalfType>> pressure_force_from_fluid;
+    InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<fluid_dynamics::Integration2ndHalfWithWallNoRiemann>> pressure_force_from_fluid;
 
   public:
     FSIDynamics(SPHBody &solid_body, RealBodyVector contact_bodies)
@@ -301,10 +306,9 @@ struct solid_solid_contact
         : contact_relation_(body, contact_bodies),
           contact_density_(contact_relation_),
           contact_force_(contact_relation_) {}
-}
+};
 
-void
-aortic_valve_pulsatile_fsi(size_t res_factor)
+void aortic_valve_pulsatile_fsi(size_t res_factor)
 {
     const parameters params;
     const Real resolution_leaflet = params.leaflet_thickness / 4.0;
@@ -324,10 +328,10 @@ aortic_valve_pulsatile_fsi(size_t res_factor)
 
     // load fluid
     BoundingBox bbox_leaflet_1 = leaflet_shape_vec[0]->getBounds();
-    const Real leaflet_length = bbox_leaflet_1.second_.y() - bbox_leaflet_1.first_.y();
+    const Real leaflet_length = bbox_leaflet_1.upper_.y() - bbox_leaflet_1.lower_.y();
     const Real fluid_fulllength = leaflet_length + params.fluid_upstream_length + params.fluid_downstream_length;
     Vec3d fluid_translation =
-        (bbox_leaflet_1.second_.y() + params.fluid_downstream_length - 0.5 * fluid_fulllength) * Vec3d::UnitY();
+        (bbox_leaflet_1.upper_.y() + params.fluid_downstream_length - 0.5 * fluid_fulllength) * Vec3d::UnitY();
     auto axis_y = SimTK::UnitVec3(0, 1, 0);
 
     std::cout << "fluid loading" << std::endl;
@@ -349,7 +353,7 @@ aortic_valve_pulsatile_fsi(size_t res_factor)
     std::cout << "wall loaded" << std::endl;
 
     std::cout << "base loading" << std::endl;
-    Vec3d base_translation = 0.5 * (bbox_leaflet_1.second_.y() + bbox_leaflet_1.first_.y()) * Vec3d::UnitY();
+    Vec3d base_translation = 0.5 * (bbox_leaflet_1.upper_.y() + bbox_leaflet_1.lower_.y()) * Vec3d::UnitY();
     auto base_shape = makeShared<ComplexShape>("base");
     base_shape->add<TriangleMeshShapeCylinder>(
         axis_y, 0.5 * params.stent_diameter, 0.5 * leaflet_length, 10, base_translation);
@@ -374,117 +378,140 @@ aortic_valve_pulsatile_fsi(size_t res_factor)
             .mesh = leaflet_shape_vec[i],
             .material = &material,
             .resolution = resolution_leaflet,
-            .length_scale = params.leaflet_thickness,
-            .level_set_cleaning_ratio = 1.0};
-        leaflet_vec.emplace_back(std::make_unique<virtonomy::ElasticSolidObject>(system, leaflet_input));
+            .length_scale = params.leaflet_thickness};
+        leaflet_vec.emplace_back(std::make_unique<ElasticSolidObject>(system, leaflet_input));
         std::cout << "the following leaflet is generated: " << params.leaflet_names[i] << std::endl;
     }
     std::cout << "leaflet generation done";
 
     // LEAFLET FIXATION
-    std::vector<std::unique_ptr<SimpleDynamics<solid_dynamics::FixBodyPartConstraint>>> fixed_constraint_vec;
-    auto fixed_particle_ids = [&](virtonomy::ElasticSolidObject &object)
+    std::vector<std::unique_ptr<SimpleDynamics<FixBodyPartConstraint>>> fixed_constraint_vec;
+    auto fixed_particle_ids = [&](ElasticSolidObject &object)
     {
         IndexVector ids;
-        for (size_t i = 0; i < object.get_particles().pos0_.size(); ++i)
-            if (base_shape->checkContain(object.get_particles().pos0_[i]))
+        auto *pos = object.get_particles().getVariableDataByName<Vecd>("Position");
+        for (size_t i = 0; i < object.get_particles().TotalRealParticles(); ++i)
+            if (base_shape->checkContain(pos[i]))
                 ids.push_back(i);
         return ids;
     };
     std::vector<std::unique_ptr<BodyPartByParticle>> base_body_parts;
     for (const auto &leaflet : leaflet_vec)
     {
-        base_body_parts.emplace_back(std::make_unique<BodyPartByParticle>(leaflet->get_body(), "base_shape"));
+        base_body_parts.emplace_back(std::make_unique<BodyPartByParticle>(leaflet->get_body()));
         auto fixed_ids = fixed_particle_ids(*leaflet);
         base_body_parts.back()->body_part_particles_ = fixed_ids;
         fixed_constraint_vec.emplace_back(
-            std::make_unique<SimpleDynamics<solid_dynamics::FixBodyPartConstraint>>(*base_body_parts.back()));
+            std::make_unique<SimpleDynamics<FixBodyPartConstraint>>(*base_body_parts.back()));
     }
 
     // FLUID
     std::cout << "fluid generation starting" << std::endl;
-    FluidBody fluid_block(sph_system, fluid_shape);
+    FluidBody fluid_block(system, fluid_shape);
     fluid_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(params.rho0_f, params.c_f), params.mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
     fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
     auto fluid_bounding_box = fluid_shape->getBounds();
-    const Real fluid_y_min = fluid_bounding_box.first_.y();
-    const Real fluid_y_max = fluid_bounding_box.second_.y();
+    const Real fluid_y_min = fluid_bounding_box.lower_.y();
+    const Real fluid_y_max = fluid_bounding_box.upper_.y();
     std::cout << "fluid generation done" << std::endl;
 
     // WALL - fixed part
     std::cout << "wall generation starting" << std::endl;
-    SolidBody wall_object(sph_system, wall_shape);
+    solid_object_input wall_input{
+        .name = "wall",
+        .mesh = wall_shape,
+        .material = &material,
+        .resolution = resolution_wall};
+    SolidObject wall_object(system, wall_input);
     std::cout << "wall generation done" << std::endl;
 
     //---------------------------------------------------------------------------//
     // ALGORITHMS
     //---------------------------------------------------------------------------//
     // FLUID
-    ComplexRelation fluid_body_complex(fluid_body.get_inner_relation(), {&wall_body, &leaflet_vec[0]->get_body(),
-                                                                         &leaflet_vec[1]->get_body(),
-                                                                         &leaflet_vec[2]->get_body()});
-    InteractionDynamics<NablaWVComplex> kernel_summation(water_block_inner, water_block_contact);
-    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> boundary_indicator(water_block_inner, water_block_contact);
+    InnerRelation fluid_inner(fluid_block);
+    ContactRelation fluid_contact(fluid_block, {&wall_object.get_body(), &leaflet_vec[0]->get_body(),
+                                                &leaflet_vec[1]->get_body(),
+                                                &leaflet_vec[2]->get_body()});
+    ComplexRelation fluid_block_complex(fluid_inner, fluid_contact);
+    InteractionDynamics<NablaWVComplex> kernel_summation(fluid_inner, fluid_contact);
+    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> boundary_indicator(fluid_inner, fluid_contact);
 
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_block_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWall> density_relaxation(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(fluid_inner, fluid_contact);
+    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(fluid_inner, fluid_contact);
+    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_acceleration(fluid_inner, fluid_contact);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(fluid_inner, fluid_contact);
 
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(fluid_block, params.U_max);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(fluid_block);
 
     //-----------------------------------Inlet and outlet
     const Real buffer_length = 3.0 * resolution_fluid;
     const Vec3d bidirectional_buffer_halfsize(buffer_length * 0.5,
                                               params.stent_diameter * 0.505,
                                               params.stent_diameter * 0.505);
+
+    auto compute_rotation = [](const Vec3d &normal) -> Rotation3d
+    {
+        Vec3d source = Vec3d::UnitX();
+        Vec3d target = normal.normalized();
+        Eigen::Quaternion<Real> quaternion =
+            Eigen::Quaternion<Real>::FromTwoVectors(source, target);
+        return Rotation3d(quaternion);
+    };
+
     const Vec3d inlet_normal = Vec3d::UnitY();
     const Vec3d inlet_pos = fluid_y_min * Vec3d::UnitY();
     const Vec3d inlet_center = inlet_pos + 0.5 * buffer_length * inlet_normal;
-    AlignedBoxByCell left_emitter(water_block, AlignedBox(xAxis, Transform(Rotation3d(inlet_normal), inlet_center), bidirectional_buffer_halfsize));
+    AlignedBoxByCell left_emitter(fluid_block, AlignedBox(xAxis, Transform(compute_rotation(inlet_normal), inlet_center), bidirectional_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_bidirection_buffer(left_emitter, in_outlet_particle_buffer);
 
     const Vec3d outlet_normal = -Vec3d::UnitY();
     const Vec3d outlet_pos = fluid_y_max * Vec3d::UnitY();
     const Vec3d outlet_center = outlet_pos + 0.5 * buffer_length * outlet_normal;
-    AlignedBoxByCell right_emitter(water_block, AlignedBox(xAxis, Transform(Rotation3d(outlet_normal), outlet_center), bidirectional_buffer_halfsize));
+    AlignedBoxByCell right_emitter(fluid_block, AlignedBox(xAxis, Transform(compute_rotation(outlet_normal), outlet_center), bidirectional_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<RightInflowPressure> right_bidirection_buffer(right_emitter, in_outlet_particle_buffer);
 
-    InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(fluid_inner, fluid_contact);
 
     SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
     SimpleDynamics<fluid_dynamics::PressureCondition<RightInflowPressure>> right_inflow_pressure_condition(right_emitter);
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_velocity_condition(left_emitter);
     //---------------------------------------------------------------------------//
     // FSI
-    std::vector<std::unique_ptr<FSIDynamics<decltype(density_relaxation)>>> fsi_algorithm_vec;
+    std::vector<std::unique_ptr<FSIDynamics>> fsi_algorithm_vec;
     fsi_algorithm_vec.reserve(leaflet_vec.size());
     for (auto &leaflet : leaflet_vec)
         fsi_algorithm_vec.emplace_back(
-            std::make_unique<FSIDynamics<decltype(density_relaxation)>>(leaflet->get_body(), {&fluid_block}));
+            std::make_unique<FSIDynamics>(leaflet->get_body(), RealBodyVector{&fluid_block}));
     //-------------------Contact between leaflets-----------------------------//
     std::vector<std::unique_ptr<solid_solid_contact>> leaflet_contact_vec;
     leaflet_contact_vec.emplace_back(std::make_unique<solid_solid_contact>(
-        leaflet_vec[0]->get_body(), {&leaflet_vec[1]->get_body(), &leaflet_vec[2]->get_body()}));
+        leaflet_vec[0]->get_body(), RealBodyVector{&leaflet_vec[1]->get_body(), &leaflet_vec[2]->get_body()}));
     leaflet_contact_vec.emplace_back(std::make_unique<solid_solid_contact>(
-        leaflet_vec[1]->get_body(), {&leaflet_vec[0]->get_body(), &leaflet_vec[2]->get_body()}));
+        leaflet_vec[1]->get_body(), RealBodyVector{&leaflet_vec[0]->get_body(), &leaflet_vec[2]->get_body()}));
     leaflet_contact_vec.emplace_back(std::make_unique<solid_solid_contact>(
-        leaflet_vec[2]->get_body(), {&leaflet_vec[0]->get_body(), &leaflet_vec[1]->get_body()}));
+        leaflet_vec[2]->get_body(), RealBodyVector{&leaflet_vec[0]->get_body(), &leaflet_vec[1]->get_body()}));
     //---------------------------------------------------------------------------//
     // OUTPUT
-    fluid_body.get_body().addBodyStateForRecording<Real>("Pressure");
-    fluid_body.get_body().addBodyStateForRecording<Vecd>("Velocity");
-    fluid_body.get_body().addBodyStateForRecording<Real>("Density");
-    fluid_body.get_body().addBodyStateForRecording<int>("Indicator");
-    fluid_body.get_body().addBodyStateForRecording<Vec3d>("KernelSummation");
-    fluid_body.get_body().addBodyStateForRecording<int>("BufferIndicator");
-    BodyStatesRecordingToVtp vtp_binary_output(in_output, system.real_bodies_);
+    BodyStatesRecordingToVtp vtp_binary_output(system);
+    vtp_binary_output.addToWrite<Real>(fluid_block, "Pressure");
+    vtp_binary_output.addToWrite<Vecd>(fluid_block, "Velocity");
+    vtp_binary_output.addToWrite<Real>(fluid_block, "Density");
+    vtp_binary_output.addToWrite<int>(fluid_block, "Indicator");
+    vtp_binary_output.addToWrite<Vec3d>(fluid_block, "KernelSummation");
+    vtp_binary_output.addToWrite<int>(fluid_block, "BufferIndicator");
+    for (const auto &leaflet : leaflet_vec)
+    {
+        vtp_binary_output.addToWrite<Vecd>(leaflet->get_body(), "Velocity");
+        vtp_binary_output.addToWrite<Vecd>(leaflet->get_body(), "NormalDirection");
+    }
+
     //----------------------------------------------------------------------
     // INITIALIZATION
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    system.initializeSystemCellLinkedLists();
+    system.initializeSystemConfigurations();
     boundary_indicator.exec();
     left_bidirection_buffer.tag_buffer_particles.exec();
     right_bidirection_buffer.tag_buffer_particles.exec();
@@ -501,44 +528,61 @@ aortic_valve_pulsatile_fsi(size_t res_factor)
             left_bidirection_buffer.tag_buffer_particles.exec();
             right_bidirection_buffer.tag_buffer_particles.exec();
 
-            Real Dt = fluid_body.advection_time_step();
+            Real Dt = get_fluid_advection_time_step_size.exec();
             transport_velocity_correction.exec(Dt);
 
             relaxation_fluid_itr++;
 
-            fluid_body.get_body().updateCellLinkedList();
-            fluid_body_complex.updateConfiguration();
+            fluid_block.updateCellLinkedList();
+            fluid_block_complex.updateConfiguration();
         }
         std::cout << "Fluid relaxation finished." << std::endl;
     };
     run_fluid_relaxation();
     vtp_binary_output.writeToFile(0);
-    exit(0);
+
     //----------------------------------------------------------------------
     //	Main loop of FSI starts here.
     //----------------------------------------------------------------------
-    const Real Dt_ref = fluid_body.advection_time_step();
-    const Real dt_ref = fluid_body.acoustic_time_step();
+    const Real Dt_ref = get_fluid_advection_time_step_size.exec();
+    const Real dt_ref = get_fluid_time_step_size.exec();
+    const Real dt_s_ref = leaflet_vec[0]->get_time_step_size();
+    std::cout << "Reference time steps: "
+              << "Dt_ref = " << Dt_ref
+              << ", dt_ref = " << dt_ref
+              << ", dt_s_ref = " << dt_s_ref
+              << std::endl;
+
+    auto *F = leaflet_vec[0]->get_particles().getVariableDataByName<Matd>("DeformationGradient");
+    auto &F0 = F[0];
+    Real Q[9], H[9], A[9];
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            A[i * 3 + j] = F0(i, j);
+    polar::polar_decomposition(Q, H, A);
+    std::cout << "Q: " << Q << std::endl;
+    exit(0);
 
     auto run_fsi = [&]()
     {
         std::cout << "-----------FSI-----------" << std::endl;
         // Time stepping
         size_t number_of_iterations = 0;
-        int screen_output_interval = 10;
+        int screen_output_interval = 1;
         const int max_num_outputs = 200;
         const Real D_Time = params.end_time / max_num_outputs; /**< time stamps for output. */
         Real Dt = 0.0;
         Real dt = 0.0;
         Real dt_s = 0.0;
-        while (GlobalStaticVariables::physical_time_ < params.end_time)
+        Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
+        while (physical_time < params.end_time)
         {
             Real integration_time = 0.0;
             /** Integrate time (loop) until the next output time. */
             while (integration_time < D_Time)
             {
-                fluid_body.time_step_init();
-                Dt = fluid_body.advection_time_step();
+                Dt = get_fluid_advection_time_step_size.exec();
+                std::cout << "Dt: " << Dt << std::endl;
                 if (std::isnan(Dt))
                 {
                     throw std::runtime_error("Dt is NaN!");
@@ -546,23 +590,30 @@ aortic_valve_pulsatile_fsi(size_t res_factor)
                 if (Dt < Dt_ref / 20.0)
                     throw std::runtime_error("Dt is too small!");
 
-                inlet_outlet_surface_indicator.exec();
+                boundary_indicator.exec();
                 update_fluid_density.exec();
                 viscous_acceleration.exec();
                 transport_velocity_correction.exec(Dt);
 
+                std::cout << "line 587" << std::endl;
+
                 // FSI
                 for (auto &alg : fsi_algorithm_vec)
-                    alg->viscous_force_on_solid.exec();
+                    alg->exec_viscous_force();
+
+                std::cout << "line 593" << std::endl;
 
                 for (auto &leaflet : leaflet_vec)
-                    leaflet->update_normals();
+                    leaflet->normal_update();
+
+                std::cout << "line 598" << std::endl;
+
                 size_t inner_ite_dt = 0;
                 size_t inner_ite_dt_s = 0;
                 Real relaxation_time = 0.0;
                 while (relaxation_time < Dt)
                 {
-                    dt = fluid_body.acoustic_time_step();
+                    dt = get_fluid_time_step_size.exec();
                     if (std::isnan(dt))
                     {
                         throw std::runtime_error("dt is NaN!");
@@ -570,6 +621,7 @@ aortic_valve_pulsatile_fsi(size_t res_factor)
                     if (dt < dt_ref / 20.0)
                         throw std::runtime_error("dt is too small!");
                     dt = SMIN(dt, Dt - relaxation_time);
+                    std::cout << "dt: " << dt << std::endl;
 
                     // fluid
                     pressure_relaxation.exec(dt);
@@ -579,7 +631,7 @@ aortic_valve_pulsatile_fsi(size_t res_factor)
                     inflow_velocity_condition.exec();
                     // fsi
                     for (auto &alg : fsi_algorithm_vec)
-                        alg->fluid_force_update.exec();
+                        alg->exec_pressure_force();
                     // fluid
                     density_relaxation.exec(dt);
 
@@ -587,20 +639,21 @@ aortic_valve_pulsatile_fsi(size_t res_factor)
                     inner_ite_dt_s = 0;
                     Real dt_s_sum = 0.0;
                     for (auto &alg : fsi_algorithm_vec)
-                        alg->solid_average_vel_and_acc.initialize_displacement_.exec();
+                        alg->initialize_displacement();
                     while (dt_s_sum < dt)
                     {
                         { // time step
                             StdVec<Real> dt_vec;
                             dt_vec.reserve(leaflet_vec.size());
                             for (auto &leaflet : leaflet_vec)
-                                dt_vec.push_back(leaflet->exec_acoustic_time_step());
+                                dt_vec.push_back(leaflet->get_time_step_size());
                             dt_vec.push_back(dt - dt_s_sum);
-                            dt_s = std::ranges::min(dt_vec);
+                            dt_s = *std::min_element(dt_vec.begin(), dt_vec.end());
                         }
+                        std::cout << "dt_s: " << dt_s << std::endl;
                         // normal update
                         for (auto &leaflet : leaflet_vec)
-                            leaflet->update_normals();
+                            leaflet->normal_update();
                         // exec solid-solid contacts
                         for (auto &contact : leaflet_contact_vec)
                             contact->contact_density_.exec();
@@ -629,18 +682,18 @@ aortic_valve_pulsatile_fsi(size_t res_factor)
                         ++inner_ite_dt_s;
                     }
                     for (auto &alg : fsi_algorithm_vec)
-                        alg->solid_average_vel_and_acc.update_averages_.exec(dt);
+                        alg->update_averages(dt);
 
                     relaxation_time += dt;
                     integration_time += dt;
-                    GlobalStaticVariables::physical_time_ += dt;
+                    physical_time += dt;
                     ++inner_ite_dt;
                 }
 
                 if (number_of_iterations % screen_output_interval == 0)
                 {
                     std::cout << "N=" << number_of_iterations
-                              << "\tTime = " << GlobalStaticVariables::physical_time_
+                              << "\tTime = " << physical_time
                               << "\tDt = " << Dt
                               << "\tdt = " << dt
                               << "\tdt_s = " << dt_s
@@ -655,10 +708,10 @@ aortic_valve_pulsatile_fsi(size_t res_factor)
                 left_bidirection_buffer.deletion.exec();
                 right_bidirection_buffer.deletion.exec();
 
-                fluid_body.get_body().updateCellLinkedList();
-                fluid_body_complex.updateConfiguration();
+                fluid_block.updateCellLinkedList();
+                fluid_block_complex.updateConfiguration();
                 for (const auto &alg : fsi_algorithm_vec)
-                    alg->to_solid_from_fluid_contact.updateConfiguration();
+                    alg->get_contact_relation().updateConfiguration();
                 boundary_indicator.exec();
                 left_bidirection_buffer.tag_buffer_particles.exec();
                 right_bidirection_buffer.tag_buffer_particles.exec();
@@ -680,7 +733,7 @@ aortic_valve_pulsatile_fsi(size_t res_factor)
         std::cerr << e.what() << std::endl;
         for (const auto &leaflet : leaflet_vec)
             leaflet->get_body().setNewlyUpdated();
-        fluid_body.get_body().setNewlyUpdated();
+        fluid_block.setNewlyUpdated();
         vtp_binary_output.writeToFile();
     }
     TickCount t2 = TickCount::now();
