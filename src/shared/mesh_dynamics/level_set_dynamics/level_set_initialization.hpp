@@ -83,7 +83,7 @@ CellContainDiffusion::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : index_handler_(encloser.index_handler_),
       cell_contain_id_(encloser.mcv_cell_contain_id_.DelegatedData(ex_policy)),
-      cell_package_index_(encloser.mcv_cell_package_index_.DelegatedData(ex_policy)),
+      cell_pkg_index_(encloser.mcv_cell_package_index_.DelegatedData(ex_policy)),
       count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
@@ -101,7 +101,7 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
                 }))
         {
             cell_contain_id_[index_1d] = -1;
-            cell_package_index_[index_1d] = 0; // inside far field package updated
+            cell_pkg_index_[index_1d] = 0; // inside far field package updated
             AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
             ++count_modified_cells;
         }
@@ -115,7 +115,7 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
                      }))
         {
             cell_contain_id_[index_1d] = 1;
-            cell_package_index_[index_1d] = 1; // outside far field package updated
+            cell_pkg_index_[index_1d] = 1; // outside far field package updated
             AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
             ++count_modified_cells;
         }

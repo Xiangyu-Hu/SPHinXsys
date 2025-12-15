@@ -76,14 +76,17 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     Real reference_grid_spacing, UnsignedInt buffer_width, UnsignedInt num_singular_pkgs)
     : MultiResolutionMeshField<PackageMesh<PKG_SIZE>>(
           name, resolution_levels, tentative_bounds, reference_grid_spacing, buffer_width),
-      num_singular_pkgs_(num_singular_pkgs), sv_num_grid_pkgs_("NumGridPackages", num_singular_pkgs),
+      num_singular_pkgs_(num_singular_pkgs),
       dv_pkg_1d_cell_index_(nullptr), dv_pkg_type_(nullptr), cell_neighborhood_(nullptr),
       mcv_cell_pkg_index_(this->template registerMeshCellVariable<UnsignedInt>("CellPackageIndex"))
 {
-    for (UnsignedInt i = 0; i != num_singular_pkgs_; i++)
+    for (UnsignedInt i = 0; i != this->resolution_levels_ * num_singular_pkgs_; i++)
     {
-        occupied_data_pkgs_.push_back(std::make_pair(0, 0)); // for data alignment
+        occupied_data_pkgs_.push_back(std::make_pair(0, -1)); // for data alignment
     }
+    num_pkgs_offsets_.resize(this->resolution_levels_ + 1);
+    num_pkgs_offsets_[0] = occupied_data_pkgs_.size();
+    pkgs_bound_ = occupied_data_pkgs_.size();
 }
 //=============================================================================================//
 template <int PKG_SIZE>
@@ -91,15 +94,15 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     BoundingBoxd tentative_bounds, Real data_spacing, UnsignedInt buffer_size, UnsignedInt num_singular_pkgs)
     : MultiResolutionMeshField<PackageMesh<PKG_SIZE>>(
           "SparseStorageMesh", 1, tentative_bounds, data_spacing * Real(4), buffer_size),
-      num_singular_pkgs_(num_singular_pkgs), sv_num_grid_pkgs_("NumGridPackages", num_singular_pkgs),
+      num_singular_pkgs_(num_singular_pkgs),
       dv_pkg_1d_cell_index_(nullptr), dv_pkg_type_(nullptr), cell_neighborhood_(nullptr),
       mcv_cell_pkg_index_(this->template registerMeshCellVariable<UnsignedInt>("CellPackageIndex"))
 {
-    for (UnsignedInt i = 0; i != this->total_levels_ * num_singular_pkgs_; i++)
+    for (UnsignedInt i = 0; i != this->resolution_levels_ * num_singular_pkgs_; i++)
     {
         occupied_data_pkgs_.push_back(std::make_pair(0, -1)); // for data alignment
     }
-    num_pkgs_offsets_.resize(this->total_levels_ + 1);
+    num_pkgs_offsets_.resize(this->resolution_levels_ + 1);
     num_pkgs_offsets_[0] = occupied_data_pkgs_.size();
     pkgs_bound_ = occupied_data_pkgs_.size();
 };
@@ -259,10 +262,10 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshFieldToPlt(
 template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
 {
-    UnsignedInt coarsest_pkgs = occupied_data_pkgs_.size() - num_packages_offset_[0];
+    UnsignedInt coarsest_pkgs = occupied_data_pkgs_.size() - num_pkgs_offsets_[0];
     /* prodict the allocation size*/
     UnsignedInt scale = math::pow(2, Dimensions - 1);
-    for (UnsignedInt i = 0; i != this->total_levels_; i++)
+    for (UnsignedInt i = 0; i != this->resolution_levels_; i++)
     {
         pkgs_bound_ += coarsest_pkgs * math::pow(scale, i);
     }

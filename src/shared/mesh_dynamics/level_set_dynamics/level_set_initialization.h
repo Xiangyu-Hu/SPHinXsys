@@ -250,7 +250,7 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
       protected:
         IndexHandler index_handler_;
         int *cell_contain_id_;
-        UnsignedInt *cell_package_index_;
+        UnsignedInt *cell_pkg_index_;
         UnsignedInt *count_modified_;
     };
 
@@ -263,23 +263,10 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
 class FinishDataPackages : public BaseDynamics<void>
 {
   public:
-    FinishDataPackages(
-        MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level, Shape &shape);
+    FinishDataPackages(MeshWithGridDataPackagesType &mesh_data,
+                       UnsignedInt resolution_level, Shape &shape);
     virtual ~FinishDataPackages() {};
-
-    void exec(Real dt = 0.0) override
-    {
-        initialize_basic_data_for_a_package.exec();
-
-        near_interface_cell_tagging.exec();
-        while (sv_count_modified_.getValue() > 0)
-        {
-            sv_count_modified_.setValue(0);
-            cell_contain_diffusion.exec();
-        }
-
-        initialize_cell_neighborhood.exec();
-    };
+    void exec(Real dt = 0.0) override;
 
   private:
     MeshWithGridDataPackagesType &mesh_data_;

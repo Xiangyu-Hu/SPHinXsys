@@ -202,5 +202,19 @@ FinishDataPackages::FinishDataPackages(
       initialize_basic_data_for_a_package{mesh_data_, resolution_level_, shape_},
       near_interface_cell_tagging{mesh_data_, resolution_level_},
       cell_contain_diffusion{mesh_data_, resolution_level_, sv_count_modified_} {}
+//=============================================================================================//
+void FinishDataPackages::exec(Real dt)
+{
+    initialize_basic_data_for_a_package.exec();
+
+    near_interface_cell_tagging.exec();
+    while (sv_count_modified_.getValue() > 0)
+    {
+        sv_count_modified_.setValue(0);
+        cell_contain_diffusion.exec();
+    }
+
+    initialize_cell_neighborhood.exec();
+}
 //=================================================================================================//
 } // namespace SPH

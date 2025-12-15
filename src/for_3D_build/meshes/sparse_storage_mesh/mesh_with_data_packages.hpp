@@ -17,7 +17,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariablesToPltByMesh(
     StdVec<Coord3D> active_cells;
     auto pkg_1d_cell_index = dv_pkg_1d_cell_index_->Data();
     auto pkg_type = dv_pkg_type_->Data();
-    package_for(execution::seq, num_singular_pkgs_, sv_num_grid_pkgs_.getValue(),
+    package_for(execution::seq, num_pkgs_offsets_[resolution_level], num_pkgs_offsets_[resolution_level + 1],
                 [&](UnsignedInt package_index)
                 {
                     if (pkg_type[package_index] == 1)

@@ -87,10 +87,10 @@ class PackageSort : public BaseDynamics<void>
         sort_method_.sort(ex_policy_, sortable_size, start_pkg_index);
         update_meta_variables_to_sort_(
             mesh_data_.getEvolvingMetaVariables(), ex_policy_,
-            num_singular_pkgs_, num_grid_pkgs, dv_index_permutation_);
+            start_pkg_index, end_pkg_index, dv_index_permutation_);
         update_mesh_variables_to_sort_(
             mesh_data_.getEvolvingMeshVariables(), ex_policy_,
-            num_singular_pkgs_, num_grid_pkgs, dv_index_permutation_);
+            start_pkg_index, end_pkg_index, dv_index_permutation_);
 
         UnsignedInt *pkg_1d_cell_index = dv_pkg_1d_cell_index_->DelegatedData(ex_policy_);
         UnsignedInt *cell_pkg_index = mcv_cell_pkg_index_->DelegatedData(ex_policy_);
