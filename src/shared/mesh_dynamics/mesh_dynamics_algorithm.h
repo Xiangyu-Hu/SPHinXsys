@@ -47,9 +47,9 @@ namespace SPH
 class BaseMeshDynamics
 {
   public:
-    BaseMeshDynamics(MeshWithGridDataPackagesType &mesh_data, UnsignedInt resoultion_level = 0)
+    BaseMeshDynamics(MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level = 0)
         : mesh_data_(mesh_data),
-          index_handler_(mesh_data_.getResolutionLevel(resoultion_level)),
+          index_handler_(mesh_data_.getResolutionLevel(resolution_level)),
           num_singular_pkgs_(mesh_data.NumSingularPackages()) {};
     virtual ~BaseMeshDynamics() {};
 
