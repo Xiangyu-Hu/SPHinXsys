@@ -6,12 +6,12 @@ categories: high performance computing
 ---
 Xiangyu Hu and Fan Gu
 
-<p align="center"><img src="{{site.baseurl}}/assets/img/mesh-data-package.jpg" alt="Heading Figure" style="width:350px; height:auto;">
+<p align="center"><img src="{{site.baseurl}}/assets/img/mesh-data-package.jpg" alt="Heading Figure" style="width:300px; height:auto;">
 <center>Fig. 2. Level-set field with narrow band data-package storage: ‘inner packages’ (light blue cells) and ‘core packages’ (dark blue cells) around the surface. <i>l<sub>c</sub></i> indicates the coarse cell size of the background mesh. The far field negative and positive represent the far regions within and outside the body surface.</center> </p>
 
-## `MeshWithGridDataPackages` Class
+## Sparse Grid Storage Class
 
-This class defines a coarse (background) mesh,
+This class `MeshWithGridDataPackages` defines a coarse (background) mesh,
 as shown from the simplified structure
 
 ```cpp
