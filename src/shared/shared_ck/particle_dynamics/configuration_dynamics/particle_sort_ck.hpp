@@ -82,7 +82,8 @@ void ParticleSortCK<ExecutionPolicy>::exec(Real dt)
                  { computing_kernel->prepareSequence(i); });
 
     sort_method_.sort(ex_policy_, total_real_particles);
-    update_variables_to_sort_(particles_->EvolvingVariables(), ex_policy_, total_real_particles, dv_index_permutation_);
+    update_variables_to_sort_(particles_->EvolvingVariables(), ex_policy_,
+                              0, total_real_particles, dv_index_permutation_);
 
     particle_for(ex_policy_, IndexRange(0, total_real_particles),
                  [=](size_t i)
