@@ -85,11 +85,11 @@ class PackageSort : public BaseMeshDynamics
         UnsignedInt sortable_size = num_grid_pkgs - num_singular_pkgs_;
         sort_method_.sort(ex_policy_, sortable_size, num_singular_pkgs_);
         update_meta_variables_to_sort_(
-            mesh_data_.getEvolvingMetaVariables(),
-            ex_policy_, num_grid_pkgs, dv_index_permutation_);
+            mesh_data_.getEvolvingMetaVariables(), ex_policy_,
+            num_singular_pkgs_, num_grid_pkgs, dv_index_permutation_);
         update_mesh_variables_to_sort_(
-            mesh_data_.getEvolvingMeshVariables(),
-            ex_policy_, num_grid_pkgs, dv_index_permutation_);
+            mesh_data_.getEvolvingMeshVariables(), ex_policy_,
+            num_singular_pkgs_, num_grid_pkgs, dv_index_permutation_);
 
         UnsignedInt *pkg_1d_cell_index = dv_pkg_1d_cell_index_->DelegatedData(ex_policy_);
         UnsignedInt *cell_pkg_index = bmv_cell_pkg_index_->DelegatedData(ex_policy_);
