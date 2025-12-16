@@ -111,16 +111,12 @@ InitializeCellNeighborhood::InitializeCellNeighborhood(
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
       mcv_cell_pkg_index_(data_mesh.getCellPackageIndex())
 {
-    CellNeighborhood *neighbor = dv_cell_neighborhood_.Data();
-    for (UnsignedInt i = 0; i != data_mesh.NumSingularPackages(); i++)
-    {
-        mesh_for_each(
-            -Arrayi::Ones(), Arrayi::Ones() * 2,
-            [&](const Arrayi &index)
-            {
-                neighbor[i](index + Arrayi::Ones()) = i;
-            });
-    }
+    data_mesh.setSingularPackages(
+        &dv_cell_neighborhood_, resolution_level,
+        [&](UnsignedInt l, UnsignedInt k)
+        {
+            return CellNeighborhood::Constant(data_mesh.NumSingularPackages() * l + k);
+        });
 }
 //=============================================================================================//
 void InitializeCellNeighborhood::UpdateKernel::update(const UnsignedInt &package_index)

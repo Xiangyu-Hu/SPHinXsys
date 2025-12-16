@@ -141,19 +141,23 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     template <class ExecutionPolicy>
     void syncMeshVariablesToProbe(ExecutionPolicy &ex_policy);
     template <typename DataType>
-    MeshVariable<DataType> *registerMeshVariable(const std::string &variable_name);
+    MeshVariable<DataType> *registerMeshVariable(const std::string &name);
     template <typename DataType, typename... Args>
-    MetaVariable<DataType> *registerMetaVariable(const std::string &variable_name, Args &&...args);
+    MetaVariable<DataType> *registerMetaVariable(const std::string &name, Args &&...args);
     template <typename DataType>
-    MeshVariable<DataType> *getMeshVariable(const std::string &variable_name);
+    MeshVariable<DataType> *getMeshVariable(const std::string &name);
     template <typename DataType>
-    MetaVariable<DataType> *getMetaVariable(const std::string &variable_name);
+    MetaVariable<DataType> *getMetaVariable(const std::string &name);
     template <typename DataType>
-    void addMeshVariableToWrite(const std::string &variable_name);
+    void addMeshVariableToWrite(const std::string &name);
     template <typename DataType>
-    void addMeshVariableToProbe(const std::string &variable_name);
+    void addMeshVariableToProbe(const std::string &name);
     template <typename DataType>
-    void addEvolvingMetaVariable(const std::string &variable_name);
+    void addEvolvingMetaVariable(const std::string &name);
+
+    template <class DiscreteVariableType, class SingularPackageFunction>
+    void setSingularPackages(DiscreteVariableType *variable, UnsignedInt resolution_level,
+                             const SingularPackageFunction &singular_pkg_function);
 
     void organizeOccupiedPackages();
 };

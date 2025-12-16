@@ -260,6 +260,20 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshFieldToPlt(
 }
 //=============================================================================================//
 template <int PKG_SIZE>
+template <class DiscreteVariableType, class SingularPackageFunction>
+void MeshWithGridDataPackages<PKG_SIZE>::setSingularPackages(
+    DiscreteVariableType *variable, UnsignedInt resolution_level,
+    const SingularPackageFunction &singular_pkg_function)
+{
+    using ContainedDataType = typename DiscreteVariableType::ContainedDataType;
+
+    for (UnsignedInt k = 0; k != num_singular_pkgs_; k++)
+        variable->setValue(
+            resolution_level * num_singular_pkgs_ + k,
+            ContainedDataType(singular_pkg_function(resolution_level, k)));
+}
+//=============================================================================================//
+template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
 {
     UnsignedInt coarsest_pkgs = occupied_data_pkgs_.size() - num_pkgs_offsets_[0];
