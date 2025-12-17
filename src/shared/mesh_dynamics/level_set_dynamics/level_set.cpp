@@ -146,7 +146,6 @@ size_t LevelSet::getProbeLevel(const Vecd &position)
 //=================================================================================================//
 Real LevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 {
-    // std::cout << "probe kernel integral" << std::endl;
     if (mesh_data_set_.size() == 1)
     {
         return (*probe_kernel_integral_set_[0])(position);

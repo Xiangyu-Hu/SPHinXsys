@@ -176,6 +176,7 @@ CellContainDiffusion::CellContainDiffusion(
     MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level,
     SingularVariable<UnsignedInt> &sv_count_modified)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
+      boundary_pkg_index_offset_(data_mesh.NumBoundaryPackages() * resolution_level),
       mcv_cell_contain_id_(*data_mesh.getMeshCellVariable<int>("CellContainID")),
       mcv_cell_package_index_(data_mesh.getCellPackageIndex()),
       sv_count_modified_(sv_count_modified) {}

@@ -250,12 +250,14 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
 
       protected:
         IndexHandler index_handler_;
+        UnsignedInt boundary_pkg_index_offset_;
         int *cell_contain_id_;
         UnsignedInt *cell_pkg_index_;
         UnsignedInt *count_modified_;
     };
 
   protected:
+    UnsignedInt boundary_pkg_index_offset_;
     MeshCellVariable<int> &mcv_cell_contain_id_;
     MeshCellVariable<UnsignedInt> &mcv_cell_package_index_;
     SingularVariable<UnsignedInt> &sv_count_modified_;
