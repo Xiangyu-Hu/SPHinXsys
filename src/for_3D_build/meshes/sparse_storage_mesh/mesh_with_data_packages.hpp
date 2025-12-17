@@ -25,6 +25,8 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
                 });
     StdVec<Block3D> clustered_blocks = clusterActiveCells3D(active_cells);
 
+    Mesh global_mesh = index_handler_.getGlobalMesh();
+
     output_file << "\n"
                 << "title='View'" << "\n";
     output_file << " VARIABLES = " << "x, " << "y, " << "z";
@@ -72,27 +74,27 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariableToPlt(std::ofstream &o
             global_lower_bound, global_upper_bound,
             [&](const Array3i &global_index)
             {
-                Vec3d data_position = global_mesh_.GridPositionFromIndex(global_index);
+                Vec3d data_position = global_mesh.GridPositionFromIndex(global_index);
                 output_file << data_position[0] << " " << data_position[1] << " " << data_position[2] << " ";
 
                 constexpr int type_index_int = DataTypeIndex<int>::value;
                 for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variables_to_write_))
                 {
-                    int value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
+                    int value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                     output_file << value << " ";
                 };
 
                 constexpr int type_index_Vecd = DataTypeIndex<Vec3d>::value;
                 for (MeshVariable<Vec3d> *variable : std::get<type_index_Vecd>(mesh_variables_to_write_))
                 {
-                    Vec3d value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
+                    Vec3d value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                     output_file << value[0] << " " << value[1] << " " << value[2] << " ";
                 };
 
                 constexpr int type_index_Real = DataTypeIndex<Real>::value;
                 for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variables_to_write_))
                 {
-                    Real value = DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
+                    Real value = index_handler_.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
                     output_file << value << " ";
                 };
                 output_file << " \n";

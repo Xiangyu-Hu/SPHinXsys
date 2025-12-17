@@ -31,8 +31,8 @@
 
 #include "base_mesh.hpp"
 
-#include "execution_policy.h"
 #include "data_package_type.hpp"
+#include "execution_policy.h"
 
 #include "tbb/parallel_sort.h"
 
@@ -78,6 +78,10 @@ class MeshWithGridDataPackages
         UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_package_index, const Arrayi &cell_index) const;
         bool isWithinCorePackage(UnsignedInt *cell_package_index, int *pkg_type, const Vecd &position);
         Real DataSpacing() const { return data_spacing_; };
+        Mesh getGlobalMesh() const;
+        template <typename DataType>
+        DataType DataValueFromGlobalIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
+                                          const Arrayi &global_grid_index, UnsignedInt *cell_package_index) const;
     };
     typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
     typedef DataContainerAddressAssemble<BKGMeshVariable> BKGMeshVariableAssemble;
@@ -128,17 +132,12 @@ class MeshWithGridDataPackages
     BKGMeshVariable<UnsignedInt> *bmv_cell_pkg_index_;              /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_; /**< (UnsignedInt)sort_index, (int)core1/inner0. */
     bool is_organized_ = false;                                     /**< whether the data packages are organized. */
-    Mesh global_mesh_;                                              /**< the global mesh with the size of data spacing. */
 
     template <typename T>
     T &checkOrganized(std::string func_name, T &value);
 
     OperationOnDataAssemble<MeshVariableAssemble, PrepareVariablesToWrite<MeshVariable>> sync_mesh_variable_data_{};
     OperationOnDataAssemble<BKGMeshVariableAssemble, PrepareVariablesToWrite<BKGMeshVariable>> sync_bkg_mesh_variable_data_{};
-
-    template <typename DataType>
-    DataType DataValueFromGlobalIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
-                                      const Arrayi &global_grid_index, UnsignedInt *cell_package_index);
 
   public:
     IndexHandler &getIndexHandler() { return index_handler_; };

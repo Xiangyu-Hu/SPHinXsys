@@ -12,9 +12,7 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     : index_handler_(tentative_bounds, data_spacing * PKG_SIZE, buffer_size, 0, data_spacing),
       num_singular_pkgs_(num_singular_pkgs), sv_num_grid_pkgs_("NumGridPackages", num_singular_pkgs),
       dv_pkg_1d_cell_index_(nullptr), dv_pkg_type_(nullptr), cell_neighborhood_(nullptr),
-      bmv_cell_pkg_index_(registerBKGMeshVariable<UnsignedInt>("CellPackageIndex")),
-      global_mesh_(index_handler_.MeshLowerBound() + 0.5 * data_spacing * Vecd::Ones(),
-                   data_spacing, index_handler_.AllCells() * PKG_SIZE)
+      bmv_cell_pkg_index_(registerBKGMeshVariable<UnsignedInt>("CellPackageIndex"))
 {
     for (UnsignedInt i = 0; i != num_singular_pkgs_; i++)
     {
@@ -104,6 +102,25 @@ bool MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::
     Arrayi cell_index = CellIndexFromPosition(position);
     UnsignedInt pkg_index = PackageIndexFromCellIndex(cell_package_index, cell_index);
     return pkg_type[pkg_index] == 1;
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+Mesh MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::getGlobalMesh() const
+{
+    return Mesh(MeshLowerBound() + 0.5 * Vecd::Constant(data_spacing_),
+                data_spacing_, AllCells() * PKG_SIZE);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+DataType MeshWithGridDataPackages<PKG_SIZE>::IndexHandler::DataValueFromGlobalIndex(
+    PackageData<DataType, PKG_SIZE> *pkg_data, const Arrayi &global_grid_index,
+    UnsignedInt *cell_package_index) const
+{
+    Arrayi cell_index_on_mesh = global_grid_index / PKG_SIZE;
+    Arrayi local_index = global_grid_index - cell_index_on_mesh * PKG_SIZE;
+    UnsignedInt package_index = PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh);
+    return pkg_data[package_index](local_index);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
@@ -213,18 +230,6 @@ DiscreteVariable<DataType> *MeshWithGridDataPackages<PKG_SIZE>::
         exit(1);
     }
     return variable;
-}
-//=============================================================================================//
-template <int PKG_SIZE>
-template <typename DataType>
-DataType MeshWithGridDataPackages<PKG_SIZE>::
-    DataValueFromGlobalIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
-                             const Arrayi &global_grid_index, UnsignedInt *cell_package_index)
-{
-    Arrayi cell_index_on_mesh_ = global_grid_index / PKG_SIZE;
-    Arrayi local_index = global_grid_index - cell_index_on_mesh_ * PKG_SIZE;
-    UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_package_index, cell_index_on_mesh_);
-    return pkg_data[package_index](local_index);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
