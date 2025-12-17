@@ -108,7 +108,7 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     static constexpr int DataPackageSize() { return PKG_SIZE; };
     UnsignedInt NumBoundaryPackages() const { return num_boundary_pkgs_; };
     UnsignedInt PackageBound() const { return pkgs_bound_; };
-    StdVec<UnsignedInt> &getNumPackageOffsets();
+    StdVec<UnsignedInt> &getNumPackageOffsets() { return num_pkgs_offsets_; };
     MeshCellVariable<UnsignedInt> &getCellPackageIndex() { return *mcv_cell_pkg_index_; };
     ConcurrentVec<std::pair<UnsignedInt, int>> &getOccupiedDataPackages() { return occupied_data_pkgs_; };
     MetaVariable<CellNeighborhood> &getCellNeighborhood();

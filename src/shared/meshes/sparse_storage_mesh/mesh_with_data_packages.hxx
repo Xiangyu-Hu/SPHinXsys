@@ -108,12 +108,6 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
 };
 //=============================================================================================//
 template <int PKG_SIZE>
-StdVec<UnsignedInt> &MeshWithGridDataPackages<PKG_SIZE>::getNumPackageOffsets()
-{
-    return checkOrganized("getNumPackageOffsets", num_pkgs_offsets_);
-}
-//=============================================================================================//
-template <int PKG_SIZE>
 DiscreteVariable<CellNeighborhood> &MeshWithGridDataPackages<PKG_SIZE>::getCellNeighborhood()
 {
     return checkOrganized("getCellNeighborhood", *cell_neighborhood_);
@@ -289,11 +283,11 @@ void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages()
     dv_pkg_1d_cell_index_ = registerMetaVariable<UnsignedInt>(
         "Package1DCellIndex",
         [&](UnsignedInt i)
-        { return occupied_data_pkgs_[i].first; });
+        { return i < occupied_data_pkgs_.size() ? occupied_data_pkgs_[i].first : 0; });
     dv_pkg_type_ = registerMetaVariable<int>(
         "PackageType",
         [&](UnsignedInt i)
-        { return occupied_data_pkgs_[i].second; });
+        { return i < occupied_data_pkgs_.size() ? occupied_data_pkgs_[i].second : 0; });
     addEvolvingMetaVariable<UnsignedInt>("Package1DCellIndex");
     addEvolvingMetaVariable<int>("PackageType");
     cell_neighborhood_ = unique_variable_ptrs_.createPtr<
