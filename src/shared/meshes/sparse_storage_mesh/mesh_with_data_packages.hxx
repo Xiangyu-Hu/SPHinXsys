@@ -266,11 +266,10 @@ void MeshWithGridDataPackages<PKG_SIZE>::setBoundaryData(
     const BoundaryDataFunction &boundary_data_function)
 {
     using ContainedDataType = typename DiscreteVariableType::ContainedDataType;
-
     for (UnsignedInt k = 0; k != num_boundary_pkgs_; k++)
         variable->setValue(
             resolution_level * num_boundary_pkgs_ + k,
-            ContainedDataType(boundary_data_function(resolution_level, k)));
+            ContainedDataType(boundary_data_function(k)));
 }
 //=============================================================================================//
 template <int PKG_SIZE>

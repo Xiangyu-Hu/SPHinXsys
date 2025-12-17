@@ -12,7 +12,7 @@ BaseCellLinkedList::BaseCellLinkedList(
     BaseParticles &base_particles, SPHAdaptation &sph_adaptation,
     BoundingBoxd tentative_bounds, Real Reference_grid_spacing, size_t total_levels)
     : MultiResolutionMeshField<Mesh>("CellLinkedList", total_levels, tentative_bounds, Reference_grid_spacing, 2),
-      base_particles_(base_particles),      kernel_(*sph_adaptation.getKernel()), 
+      base_particles_(base_particles), kernel_(*sph_adaptation.getKernel()),
       cell_offset_list_size_(total_number_of_cells_ + 1),
       index_list_size_(SMAX(base_particles.ParticlesBound(), cell_offset_list_size_)),
       dv_particle_index_(
@@ -138,7 +138,7 @@ UnsignedInt BaseCellLinkedList::computingSequence(Vecd &position, UnsignedInt in
 ListData BaseCellLinkedList::findNearestListDataEntry(const Vecd &position)
 {
     Real min_distance_sqr = MaxReal;
-    ListData nearest_entry = std::make_pair(MaxSize_t, MaxReal * Vecd::Ones());
+    ListData nearest_entry = std::make_pair(MaxUnsignedInt, MaxReal * Vecd::Ones());
     for (UnsignedInt level = 0; level != meshes_.size(); ++level)
         findNearestListDataEntryByMesh(*meshes_[level], min_distance_sqr, nearest_entry, position);
     return nearest_entry;

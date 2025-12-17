@@ -22,25 +22,12 @@ UpdateKernelIntegrals::UpdateKernelIntegrals(
       mv_kernel_gradient_(*data_mesh.registerMeshVariable<Vecd>("KernelGradient")),
       mv_kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient"))
 {
-    Real far_field_distance = index_handler_.GridSpacing() * (Real)index_handler_.BufferWidth();
-    initializeSingularPackages(0, -far_field_distance);
-    initializeSingularPackages(1, far_field_distance);
-}
-//=================================================================================================//
-void UpdateKernelIntegrals::initializeSingularPackages(
-    UnsignedInt package_index, Real far_field_level_set)
-{
-    auto &kernel_weight = mv_kernel_weight_.Data()[package_index];
-    auto &kernel_gradient = mv_kernel_gradient_.Data()[package_index];
-    auto &kernel_second_gradient = mv_kernel_second_gradient_.Data()[package_index];
-
-    mesh_for_each(Arrayi::Zero(), Arrayi::Constant(pkg_size),
-                  [&](const Arrayi &data_index)
-                  {
-                      kernel_weight(data_index) = far_field_level_set < 0.0 ? 0 : 1.0;
-                      kernel_gradient(data_index) = Vecd::Zero();
-                      kernel_second_gradient(data_index) = Matd::Zero();
-                  });
+    data_mesh.setBoundaryData(&mv_kernel_weight_, resolution_level, [&](UnsignedInt k)
+                              { return MeshVariableData<Real>::Constant(k == 0 ? 0.0 : 1.0); });
+    data_mesh.setBoundaryData(&mv_kernel_gradient_, resolution_level, [&](UnsignedInt k)
+                              { return MeshVariableData<Vecd>::Constant(Vecd::Zero()); });
+    data_mesh.setBoundaryData(&mv_kernel_second_gradient_, resolution_level, [&](UnsignedInt k)
+                              { return MeshVariableData<Matd>::Constant(Matd::Zero()); });
 }
 //=================================================================================================//
 } // namespace SPH

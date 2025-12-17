@@ -159,7 +159,7 @@ class Edge
     /** constructor without specifying a leading-in edge */
     template <class EdgeStructureType>
     explicit Edge(EdgeStructureType *structure)
-        : id_(structure->ContainerSize()), in_edge_(MaxSize_t){};
+        : id_(structure->ContainerSize()), in_edge_(MaxUnsignedInt){};
     /** constructor with specifying a leading-in edge */
     template <class EdgeStructureType>
     Edge(InEdgeType in_edge, EdgeStructureType *structure)

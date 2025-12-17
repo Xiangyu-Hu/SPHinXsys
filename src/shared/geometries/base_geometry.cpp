@@ -170,7 +170,7 @@ size_t BinaryShapes::getSubShapeIndexByName(const std::string &name)
     std::cout << "\n FAILURE: the shape " << name << " has not been created!" << std::endl;
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 
-    return MaxSize_t;
+    return MaxUnsignedInt;
 }
 //=================================================================================================//
 } // namespace SPH

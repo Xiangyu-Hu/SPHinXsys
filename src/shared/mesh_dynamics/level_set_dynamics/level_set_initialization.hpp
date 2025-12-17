@@ -20,6 +20,7 @@ InitialCellTaggingFromCoarse::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : shape_(&encloser.shape_),
       occupied_data_pkgs_(&encloser.occupied_data_pkgs_),
+      boundary_pkg_index_offset_(encloser.boundary_pkg_index_offset_),
       cell_pkg_index_(encloser.mcv_cell_pkg_index_.DelegatedData(ex_policy)),
       index_handler_(encloser.index_handler_),
       coarse_index_handler_(

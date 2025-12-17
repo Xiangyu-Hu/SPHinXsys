@@ -120,8 +120,6 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
     MeshVariable<Real> &mv_kernel_weight_;
     MeshVariable<Vecd> &mv_kernel_gradient_;
     MeshVariable<Matd> &mv_kernel_second_gradient_;
-
-    void initializeSingularPackages(UnsignedInt package_index, Real far_field_level_set);
 };
 } // namespace SPH
 #endif // LEVEL_SET_TRANSFORMATION_H

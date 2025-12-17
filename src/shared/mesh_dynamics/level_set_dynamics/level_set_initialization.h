@@ -84,6 +84,7 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
       protected:
         Shape *shape_;
         ConcurrentVec<std::pair<UnsignedInt, int>> *occupied_data_pkgs_;
+        UnsignedInt boundary_pkg_index_offset_;
         UnsignedInt *cell_pkg_index_;
         IndexHandler index_handler_;
         IndexHandler coarse_index_handler_;
@@ -100,6 +101,7 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
     UnsignedInt coarse_resolution_level_;
     Shape &shape_;
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
+    UnsignedInt boundary_pkg_index_offset_;
     MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_;
     MeshCellVariable<int> &mcv_cell_contain_id_;
     MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_coarse_;
@@ -203,7 +205,6 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
     MeshVariable<Real> &mv_phi_;
     MeshVariable<Vecd> &mv_phi_gradient_;
     MeshVariable<int> &mv_near_interface_id_;
-    void initializeSingularPackages(UnsignedInt package_index, Real far_field_level_set);
 };
 
 class NearInterfaceCellTagging : public BaseMeshLocalDynamics

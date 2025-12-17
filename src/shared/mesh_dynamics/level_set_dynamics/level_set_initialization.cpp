@@ -23,7 +23,7 @@ void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
     Vecd cell_position = index_handler_.CellPositionFromIndex(cell_index);
     if (ABS(shape_->findSignedDistance(cell_position)) < grid_spacing_)
     {
-        cell_pkg_index_[index_1d] = 2;                               // indicate initially tagged temporarily
+        cell_pkg_index_[index_1d] = MaxUnsignedInt;                  // indicate initially tagged temporarily
         occupied_data_pkgs_->push_back(std::make_pair(index_1d, 1)); // core package
     }
 }
@@ -34,6 +34,7 @@ InitialCellTaggingFromCoarse::InitialCellTaggingFromCoarse(
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       coarse_mesh_(coarse_mesh), coarse_resolution_level_(coarse_resolution_level), shape_(shape),
       occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
+      boundary_pkg_index_offset_(data_mesh.NumBoundaryPackages() * resolution_level),
       mcv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
       mcv_cell_contain_id_(*data_mesh.registerMeshCellVariable<int>(
           "CellContainID", // default value is 2, indicating not near interface
@@ -50,7 +51,7 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
     Vecd cell_position = index_handler_.CellPositionFromIndex(cell_index);
     Real phi = probe_coarse_phi_(cell_position);
     UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
-    cell_pkg_index_[index_1d] = phi < 0.0 ? 0 : 1;
+    cell_pkg_index_[index_1d] = phi < 0.0 ? boundary_pkg_index_offset_ : boundary_pkg_index_offset_ + 1;
     cell_contain_id_[index_1d] = 2;
     if (ABS(phi) > far_field_distance_)
     {
@@ -61,7 +62,7 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
     {
         if (ABS(shape_->findSignedDistance(cell_position)) < grid_spacing_)
         {
-            cell_pkg_index_[index_1d] = 2;                               // indicate initially tagged temporarily
+            cell_pkg_index_[index_1d] = MaxUnsignedInt;                  // indicate initially tagged temporarily
             occupied_data_pkgs_->push_back(std::make_pair(index_1d, 1)); // core package
         }
     }
@@ -90,7 +91,7 @@ void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 bool InnerCellTagging::UpdateKernel::isInitiallyTagged(const Arrayi &cell_index)
 {
     UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
-    return cell_pkg_index_[index_1d] == 2;
+    return cell_pkg_index_[index_1d] == MaxUnsignedInt;
 }
 //=============================================================================================//
 bool InnerCellTagging::UpdateKernel::isNearInitiallyTagged(const Arrayi &cell_index)
@@ -111,12 +112,11 @@ InitializeCellNeighborhood::InitializeCellNeighborhood(
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
       mcv_cell_pkg_index_(data_mesh.getCellPackageIndex())
 {
+    UnsignedInt boundary_pkg_index_offset = data_mesh.NumBoundaryPackages() * resolution_level;
     data_mesh.setBoundaryData(
         &dv_cell_neighborhood_, resolution_level,
-        [&](UnsignedInt l, UnsignedInt k)
-        {
-            return CellNeighborhood::Constant(data_mesh.NumBoundaryPackages() * l + k);
-        });
+        [&](UnsignedInt k)
+        { return CellNeighborhood::Constant(boundary_pkg_index_offset + k); });
 }
 //=============================================================================================//
 void InitializeCellNeighborhood::UpdateKernel::update(const UnsignedInt &package_index)
@@ -142,24 +142,13 @@ InitializeBasicPackageData::InitializeBasicPackageData(
 {
     Real far_field_distance = index_handler_.GridSpacing() * (Real)index_handler_.BufferWidth();
     data_mesh.addMeshVariableToWrite<Real>("LevelSet");
-    initializeSingularPackages(0, -far_field_distance);
-    initializeSingularPackages(1, far_field_distance);
-}
-//=============================================================================================//
-void InitializeBasicPackageData::initializeSingularPackages(
-    const UnsignedInt package_index, Real far_field_level_set)
-{
-    auto &phi = mv_phi_.Data()[package_index];
-    auto &near_interface_id = mv_near_interface_id_.Data()[package_index];
-    auto &phi_gradient = mv_phi_gradient_.Data()[package_index];
-
-    mesh_for_each(Arrayi::Zero(), Arrayi::Constant(pkg_size),
-                  [&](const Arrayi &data_index)
-                  {
-                      phi(data_index) = far_field_level_set;
-                      near_interface_id(data_index) = far_field_level_set < 0.0 ? -2 : 2;
-                      phi_gradient(data_index) = Vecd::Ones();
-                  });
+    data_mesh.setBoundaryData(&mv_phi_, resolution_level, [&](UnsignedInt k)
+                              { Real phi = k == 0 ? -far_field_distance : far_field_distance; 
+                                return MeshVariableData<Real>::Constant(phi); });
+    data_mesh.setBoundaryData(&mv_near_interface_id_, resolution_level, [&](UnsignedInt k)
+                              { return MeshVariableData<int>::Constant(k == 0 ? -2 : 2); });
+    data_mesh.setBoundaryData(&mv_phi_gradient_, resolution_level, [&](UnsignedInt k)
+                              { return MeshVariableData<Vecd>::Constant(Vecd::Ones()); });
 }
 //=============================================================================================//
 void InitializeBasicPackageData::UpdateKernel::update(const UnsignedInt &package_index)
