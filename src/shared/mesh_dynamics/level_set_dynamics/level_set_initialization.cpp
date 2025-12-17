@@ -111,11 +111,11 @@ InitializeCellNeighborhood::InitializeCellNeighborhood(
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
       mcv_cell_pkg_index_(data_mesh.getCellPackageIndex())
 {
-    data_mesh.setSingularPackages(
+    data_mesh.setBoundaryData(
         &dv_cell_neighborhood_, resolution_level,
         [&](UnsignedInt l, UnsignedInt k)
         {
-            return CellNeighborhood::Constant(data_mesh.NumSingularPackages() * l + k);
+            return CellNeighborhood::Constant(data_mesh.NumBoundaryPackages() * l + k);
         });
 }
 //=============================================================================================//

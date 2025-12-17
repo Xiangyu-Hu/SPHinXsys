@@ -162,7 +162,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
         UnsignedInt *pkg_1d_cell_index_;
         CellNeighborhood *cell_neighborhood_;
         UnsignedInt *cell_pkg_index_;
-        UnsignedInt num_singular_pkgs_;
+        UnsignedInt num_boundary_pkgs_;
     };
 
   protected:

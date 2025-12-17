@@ -106,7 +106,7 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     virtual ~MeshWithGridDataPackages() {};
 
     static constexpr int DataPackageSize() { return PKG_SIZE; };
-    UnsignedInt NumSingularPackages() const { return num_singular_pkgs_; };
+    UnsignedInt NumBoundaryPackages() const { return num_boundary_pkgs_; };
     UnsignedInt PackageBound() const { return pkgs_bound_; };
     StdVec<UnsignedInt> &getNumPackageOffsets();
     MeshCellVariable<UnsignedInt> &getCellPackageIndex() { return *mcv_cell_pkg_index_; };
@@ -119,7 +119,7 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
 
   protected:
-    UnsignedInt num_singular_pkgs_;        /**< the number singular packages for each resolution level. */
+    UnsignedInt num_boundary_pkgs_;        /**< the number boundary packages for each resolution level. */
     StdVec<UnsignedInt> num_pkgs_offsets_; /**< save stating and ending indexes of packages. */
     UnsignedInt pkgs_bound_;
     MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;               /**< metadata for data packages: cell index. */
@@ -155,9 +155,9 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     template <typename DataType>
     void addEvolvingMetaVariable(const std::string &name);
 
-    template <class DiscreteVariableType, class SingularPackageFunction>
-    void setSingularPackages(DiscreteVariableType *variable, UnsignedInt resolution_level,
-                             const SingularPackageFunction &singular_pkg_function);
+    template <class DiscreteVariableType, class BoundaryDataFunction>
+    void setBoundaryData(DiscreteVariableType *variable, UnsignedInt resolution_level,
+                         const BoundaryDataFunction &boundary_data_function);
 
     void organizeOccupiedPackages();
 };

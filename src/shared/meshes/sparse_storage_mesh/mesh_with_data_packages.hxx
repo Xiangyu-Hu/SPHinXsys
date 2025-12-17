@@ -76,11 +76,11 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     Real reference_grid_spacing, UnsignedInt buffer_width, UnsignedInt num_singular_pkgs)
     : MultiResolutionMeshField<PackageMesh<PKG_SIZE>>(
           name, resolution_levels, tentative_bounds, reference_grid_spacing, buffer_width),
-      num_singular_pkgs_(num_singular_pkgs),
+      num_boundary_pkgs_(num_singular_pkgs),
       dv_pkg_1d_cell_index_(nullptr), dv_pkg_type_(nullptr), cell_neighborhood_(nullptr),
       mcv_cell_pkg_index_(this->template registerMeshCellVariable<UnsignedInt>("CellPackageIndex"))
 {
-    for (UnsignedInt i = 0; i != this->resolution_levels_ * num_singular_pkgs_; i++)
+    for (UnsignedInt i = 0; i != this->resolution_levels_ * num_boundary_pkgs_; i++)
     {
         occupied_data_pkgs_.push_back(std::make_pair(0, -1)); // for data alignment
     }
@@ -94,11 +94,11 @@ MeshWithGridDataPackages<PKG_SIZE>::MeshWithGridDataPackages(
     BoundingBoxd tentative_bounds, Real data_spacing, UnsignedInt buffer_size, UnsignedInt num_singular_pkgs)
     : MultiResolutionMeshField<PackageMesh<PKG_SIZE>>(
           "SparseStorageMesh", 1, tentative_bounds, data_spacing * Real(4), buffer_size),
-      num_singular_pkgs_(num_singular_pkgs),
+      num_boundary_pkgs_(num_singular_pkgs),
       dv_pkg_1d_cell_index_(nullptr), dv_pkg_type_(nullptr), cell_neighborhood_(nullptr),
       mcv_cell_pkg_index_(this->template registerMeshCellVariable<UnsignedInt>("CellPackageIndex"))
 {
-    for (UnsignedInt i = 0; i != this->resolution_levels_ * num_singular_pkgs_; i++)
+    for (UnsignedInt i = 0; i != this->resolution_levels_ * num_boundary_pkgs_; i++)
     {
         occupied_data_pkgs_.push_back(std::make_pair(0, -1)); // for data alignment
     }
@@ -260,17 +260,17 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshFieldToPlt(
 }
 //=============================================================================================//
 template <int PKG_SIZE>
-template <class DiscreteVariableType, class SingularPackageFunction>
-void MeshWithGridDataPackages<PKG_SIZE>::setSingularPackages(
+template <class DiscreteVariableType, class BoundaryDataFunction>
+void MeshWithGridDataPackages<PKG_SIZE>::setBoundaryData(
     DiscreteVariableType *variable, UnsignedInt resolution_level,
-    const SingularPackageFunction &singular_pkg_function)
+    const BoundaryDataFunction &boundary_data_function)
 {
     using ContainedDataType = typename DiscreteVariableType::ContainedDataType;
 
-    for (UnsignedInt k = 0; k != num_singular_pkgs_; k++)
+    for (UnsignedInt k = 0; k != num_boundary_pkgs_; k++)
         variable->setValue(
-            resolution_level * num_singular_pkgs_ + k,
-            ContainedDataType(singular_pkg_function(resolution_level, k)));
+            resolution_level * num_boundary_pkgs_ + k,
+            ContainedDataType(boundary_data_function(resolution_level, k)));
 }
 //=============================================================================================//
 template <int PKG_SIZE>

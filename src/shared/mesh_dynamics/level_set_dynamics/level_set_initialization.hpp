@@ -45,7 +45,7 @@ InitializeCellNeighborhood::UpdateKernel::
       pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
       cell_pkg_index_(encloser.mcv_cell_pkg_index_.DelegatedData(ex_policy)),
-      num_singular_pkgs_(encloser.data_mesh_.NumSingularPackages()) {}
+      num_boundary_pkgs_(encloser.data_mesh_.NumBoundaryPackages()) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 InitializeBasicPackageData::UpdateKernel::
