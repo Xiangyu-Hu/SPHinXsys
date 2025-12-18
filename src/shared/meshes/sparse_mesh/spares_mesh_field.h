@@ -34,8 +34,6 @@
 #include "data_package_type.hpp"
 #include "execution_policy.h"
 
-#include "tbb/parallel_sort.h"
-
 namespace SPH
 {
 template <int PKG_SIZE>
@@ -60,15 +58,16 @@ class PackageMesh : public Mesh
 
 /**
  * @class SparseMeshField
- * @brief Abstract class for mesh with grid-based data packages.
+ * @brief Class for mesh field using grid-based data packages.
  * @details The idea is to save sparse data on a cell-based mesh.
  * We say sparse data, it means that only in some inner mesh cells there are no trivial data.
  * A typical example is a level-set field which only has meaningful values near the interface,
  * while the latter is in the inner region of a mesh.
  * In this class, only some inner mesh cells are filled with data packages.
- * Each data package is again a mesh, but grid based with PKG_SIZE grids on each dimension.
+ * Each data package is again grid based with PKG_SIZE grids on each dimension.
  * The operation on field data is achieved by mesh dynamics.
- * Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
+ * Note that a data package should be not near the mesh bound,
+ * otherwise one will encounter the error "out of range".
  */
 template <int PKG_SIZE>
 class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
