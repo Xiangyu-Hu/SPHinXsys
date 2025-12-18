@@ -273,11 +273,11 @@ void MeshWithGridDataPackages<PKG_SIZE>::organizeOccupiedPackages(UnsignedInt le
     if (level == 0)
     {
         UnsignedInt scale = math::pow(2, Dimensions - 1);
-        for (UnsignedInt i = 0; i != this->resolution_levels_; i++)
+        pkgs_bound_ = num_pkgs_offsets_[1];
+        for (UnsignedInt i = 1; i != this->resolution_levels_; i++)
         {
-            pkgs_bound_ += num_pkgs_offsets_[1] * math::pow(scale, i);
+            pkgs_bound_ += pkgs_bound_ * scale + pkgs_bound_ / 4;
         }
-        pkgs_bound_ += pkgs_bound_ / 4; // add extra space for packages
         is_organized_ = true;
 
         dv_pkg_1d_cell_index_ = registerMetaVariable<UnsignedInt>("Package1DCellIndex");

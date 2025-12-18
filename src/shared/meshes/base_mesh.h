@@ -136,7 +136,10 @@ class MultiResolutionMeshField : public BaseMeshField
 
     UniquePtrsKeeper<MeshType> mesh_ptrs_keeper_;
     StdVec<MeshType *> &getMeshes() { return meshes_; };
-    MeshType &getResolutionLevel(UnsignedInt level) { return *meshes_[level]; };
+    MeshType &getMeshLevel(UnsignedInt level) { return *meshes_[level]; };
+    MeshType &getCoarsestMesh() { return *meshes_[0]; };
+    MeshType &getFinestMesh() { return *meshes_[resolution_levels_ - 1]; };
+    UnsignedInt getResolutionLevels() { return resolution_levels_; };
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
 
     template <typename DataType, typename... Args>
@@ -154,8 +157,8 @@ class MultiResolutionMeshField : public BaseMeshField
   protected:
     size_t resolution_levels_; /**< level 0 is the coarsest */
     StdVec<MeshType *> meshes_;
-    Mesh *coarsest_mesh_;
-    Mesh *finest_mesh_;
+    MeshType *coarsest_mesh_;
+    MeshType *finest_mesh_;
     UnsignedInt total_number_of_cells_;
     MeshCellVariableAssemble all_mesh_cell_variables_;
     MeshCellVariableAssemble mesh_cell_variables_to_write_;

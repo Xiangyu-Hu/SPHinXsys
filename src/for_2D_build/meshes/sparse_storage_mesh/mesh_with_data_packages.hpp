@@ -11,7 +11,7 @@ template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariablesToPltByMesh(
     UnsignedInt resolution_level, std::ofstream &output_file)
 {
-    IndexHandler &index_handler = this->getResolutionLevel(resolution_level);
+    IndexHandler &index_handler = this->getMeshLevel(resolution_level);
     Mesh global_mesh = index_handler.getGlobalMesh();
 
     output_file << "\n"

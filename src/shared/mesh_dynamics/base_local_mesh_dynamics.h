@@ -62,7 +62,7 @@ class BaseMeshLocalDynamics
 {
   public:
     explicit BaseMeshLocalDynamics(MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level)
-        : data_mesh_(data_mesh), index_handler_(data_mesh.getResolutionLevel(resolution_level)),
+        : data_mesh_(data_mesh), index_handler_(data_mesh.getMeshLevel(resolution_level)),
           resolution_level_(resolution_level) {};
     virtual ~BaseMeshLocalDynamics() {};
 

@@ -11,10 +11,10 @@ LevelSet::LevelSet(
     Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
     : MeshWithGridDataPackages<4>(
           "LevelSet_" + shape.getName(), 1, tentative_bounds,
-          coarse_data->getResolutionLevel(0).GridSpacing() * 0.5, 4, 2),
+          coarse_data->getFinestMesh().GridSpacing() * 0.5, 4, 2),
       shape_(shape), refinement_ratio_(refinement_ratio)
 {
-    Real data_spacing = coarse_data->getResolutionLevel(0).DataSpacing() * 0.5;
+    Real data_spacing = coarse_data->getFinestMesh().DataSpacing() * 0.5;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec_.push_back(global_h_ratio);
@@ -22,7 +22,7 @@ LevelSet::LevelSet(
         neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
             *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-    initializeLevel(0, coarse_data, coarse_data->getMeshes().size() - 1);
+    initializeLevel(0, coarse_data, coarse_data->getResolutionLevels() - 1);
 }
 //=================================================================================================//
 LevelSet::LevelSet(

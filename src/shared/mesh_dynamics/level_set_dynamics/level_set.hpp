@@ -96,7 +96,7 @@ void LevelSet::registerProbes(const ExecutionPolicy &ex_policy)
         addMeshVariableToProbe<Real>("LevelSet");
         addMeshVariableToProbe<Vecd>("LevelSetGradient"); // shared with normal direction
 
-        mesh_index_handler_set_.push_back(&getResolutionLevel(level));
+        mesh_index_handler_set_.push_back(&getMeshLevel(level));
         cell_pkg_index_ = mcv_cell_pkg_index_->DelegatedData(ex_policy);
         pkg_type_ = dv_pkg_type_->DelegatedData(ex_policy);
     }

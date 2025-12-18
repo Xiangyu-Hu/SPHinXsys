@@ -12,7 +12,7 @@ template <int PKG_SIZE>
 void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariablesToPltByMesh(
     UnsignedInt resolution_level, std::ofstream &output_file)
 {
-    IndexHandler &index_handler = this->getResolutionLevel(resolution_level);
+    IndexHandler &index_handler = this->getMeshLevel(resolution_level);
 
     StdVec<Coord3D> active_cells;
     auto pkg_1d_cell_index = dv_pkg_1d_cell_index_->Data();

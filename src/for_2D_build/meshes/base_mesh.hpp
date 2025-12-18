@@ -12,7 +12,7 @@ template <class MeshType>
 void MultiResolutionMeshField<MeshType>::writeMeshCellVariablesToPltByMesh(
     UnsignedInt resolution_level, std::ofstream &output_file)
 {
-    MeshType &mesh = getResolutionLevel(resolution_level);
+    MeshType &mesh = getMeshLevel(resolution_level);
 
     output_file << "\n"
                 << "title='View'" << "\n";
