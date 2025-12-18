@@ -16,7 +16,7 @@ void LevelSet::configLevelSetPostProcesses(const ExecutionPolicy &ex_policy)
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void LevelSet::initializeMeshVariables(const ExecutionPolicy &ex_policy)
+void LevelSet::initializePackageVariables(const ExecutionPolicy &ex_policy)
 {
     for (size_t level = 0; level < resolution_levels_; level++)
     {
@@ -29,7 +29,7 @@ void LevelSet::initializeMeshVariables(const ExecutionPolicy &ex_policy)
 template <class ExecutionPolicy>
 void LevelSet::finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type)
 {
-    initializeMeshVariables(ex_policy);
+    initializePackageVariables(ex_policy);
     registerProbes(execution::par_host); // register probes on host
 
     if (usage_type == UsageType::Volumetric)
@@ -40,13 +40,13 @@ void LevelSet::finishInitialization(const ExecutionPolicy &ex_policy, UsageType 
     }
 
     sync_mesh_variables_to_write_ = [&]() // for latter usage
-    { this->syncMeshVariablesToWrite(ex_policy); 
-    this->syncMeshCellVariablesToWrite(ex_policy); };
+    { this->syncPackageVariablesToWrite(ex_policy); 
+    this->syncCellVariablesToWrite(ex_policy); };
 
     sync_mesh_variables_to_probe_ = [&]() // for latter usage
-    { this->syncMeshVariablesToProbe(ex_policy); };
+    { this->syncPackageVariablesToProbe(ex_policy); };
 
-    this->syncMeshVariablesToProbe(ex_policy);
+    this->syncPackageVariablesToProbe(ex_policy);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>

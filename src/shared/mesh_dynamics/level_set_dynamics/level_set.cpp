@@ -7,9 +7,9 @@ namespace SPH
 {
 //=================================================================================================//
 LevelSet::LevelSet(
-    BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
+    BoundingBoxd tentative_bounds, MeshWithGridPackageDatasType *coarse_data,
     Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
-    : MeshWithGridDataPackages<4>(
+    : SparseMeshField<4>(
           "LevelSet_" + shape.getName(), 1, tentative_bounds,
           coarse_data->getFinestMesh().GridSpacing() * 0.5, 4, 2),
       shape_(shape), refinement_ratio_(refinement_ratio)
@@ -28,7 +28,7 @@ LevelSet::LevelSet(
 LevelSet::LevelSet(
     BoundingBoxd tentative_bounds, Real data_spacing,
     size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
-    : MeshWithGridDataPackages<4>(
+    : SparseMeshField<4>(
           "LevelSet_" + shape.getName(), total_levels, tentative_bounds,
           data_spacing * Real(4), 4, 2),
       shape_(shape), refinement_ratio_(refinement_ratio)
@@ -56,7 +56,7 @@ LevelSet::LevelSet(
 }
 //=================================================================================================//
 void LevelSet::initializeLevel(
-    UnsignedInt level, MeshWithGridDataPackagesType *coarse_data, UnsignedInt coarse_level)
+    UnsignedInt level, MeshWithGridPackageDatasType *coarse_data, UnsignedInt coarse_level)
 {
     if (level == 0)
     {
@@ -77,8 +77,8 @@ void LevelSet::initializeLevel(
     PackageSort<execution::ParallelPolicy> pkg_sort(*this, level);
     pkg_sort.exec();
 
-    /* All initializations in `FinishDataPackages` are achieved on CPU. */
-    FinishDataPackages finish_data_packages(*this, level, shape_);
+    /* All initializations in `FinishPackageDatas` are achieved on CPU. */
+    FinishPackageDatas finish_data_packages(*this, level, shape_);
     finish_data_packages.exec();
 }
 //=================================================================================================//
@@ -181,7 +181,7 @@ Matd LevelSet::probeKernelSecondGradientIntegral(const Vecd &position, Real h_ra
 void LevelSet::writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence)
 {
     sync_mesh_variables_to_write_();
-    MeshWithGridDataPackages<4>::writeMeshFieldToPlt(partial_file_name, sequence);
+    SparseMeshField<4>::writeMeshFieldToPlt(partial_file_name, sequence);
 }
 //=============================================================================================//
 } // namespace SPH

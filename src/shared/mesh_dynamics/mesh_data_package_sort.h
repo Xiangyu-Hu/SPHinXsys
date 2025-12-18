@@ -40,7 +40,7 @@ class PackageSort : public BaseDynamics<void>
     using SortMethodType = typename SortMethod<ExecutionPolicy>::type;
 
   public:
-    explicit PackageSort(MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level)
+    explicit PackageSort(MeshWithGridPackageDatasType &mesh_data, UnsignedInt resolution_level)
         : BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
           mesh_data_(mesh_data), resolution_level_(resolution_level),
           num_pkgs_offsets_(mesh_data.getNumPackageOffsets()),
@@ -89,7 +89,7 @@ class PackageSort : public BaseDynamics<void>
             mesh_data_.getEvolvingMetaVariables(), ex_policy_,
             start_pkg_index, end_pkg_index, dv_index_permutation_);
         update_mesh_variables_to_sort_(
-            mesh_data_.getEvolvingMeshVariables(), ex_policy_,
+            mesh_data_.getEvolvingPackageVariables(), ex_policy_,
             start_pkg_index, end_pkg_index, dv_index_permutation_);
 
         UnsignedInt *pkg_1d_cell_index = dv_pkg_1d_cell_index_->DelegatedData(ex_policy_);
@@ -104,7 +104,7 @@ class PackageSort : public BaseDynamics<void>
 
   private:
     ExecutionPolicy ex_policy_;
-    MeshWithGridDataPackagesType &mesh_data_;
+    MeshWithGridPackageDatasType &mesh_data_;
     UnsignedInt resolution_level_;
     StdVec<UnsignedInt> &num_pkgs_offsets_;
     using KernelImplementation = Implementation<ExecutionPolicy, PackageSort<ExecutionPolicy>, UpdateKernel>;
@@ -112,9 +112,9 @@ class PackageSort : public BaseDynamics<void>
     DiscreteVariable<UnsignedInt> *dv_sequence_;
     DiscreteVariable<UnsignedInt> *dv_index_permutation_;
     MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;
-    MeshCellVariable<UnsignedInt> *mcv_cell_pkg_index_;
+    CellVariable<UnsignedInt> *mcv_cell_pkg_index_;
     OperationOnDataAssemble<MetaVariableAssemble, UpdateSortableVariables<MetaVariable>> update_meta_variables_to_sort_;
-    OperationOnDataAssemble<MeshVariableAssemble, UpdateSortableVariables<MeshVariable>> update_mesh_variables_to_sort_;
+    OperationOnDataAssemble<PackageVariableAssemble, UpdateSortableVariables<PackageVariable>> update_mesh_variables_to_sort_;
     SortMethodType sort_method_;
 };
 } // namespace SPH

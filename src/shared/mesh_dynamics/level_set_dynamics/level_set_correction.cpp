@@ -4,7 +4,7 @@ namespace SPH
 {
 //=============================================================================================//
 MarkCutInterfaces::MarkCutInterfaces(
-    MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level, Real perturbation_ratio)
+    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level, Real perturbation_ratio)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       perturbation_ratio_(perturbation_ratio),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
@@ -12,21 +12,21 @@ MarkCutInterfaces::MarkCutInterfaces(
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
 MarkNearInterface::MarkNearInterface(
-    MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level)
+    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
 ReinitializeLevelSet::ReinitializeLevelSet(
-    MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level)
+    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_near_interface_id_(*data_mesh.getMeshVariable<int>("NearInterfaceID")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
 RedistanceInterface::RedistanceInterface(
-    MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level)
+    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.getMeshVariable<Vecd>("LevelSetGradient")),
@@ -34,7 +34,7 @@ RedistanceInterface::RedistanceInterface(
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
 DiffuseLevelSetSign::DiffuseLevelSetSign(
-    MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level,
+    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level,
     SingularVariable<UnsignedInt> &sv_count_modified)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),

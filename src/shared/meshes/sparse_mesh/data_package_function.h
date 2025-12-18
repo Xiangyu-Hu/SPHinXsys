@@ -32,15 +32,15 @@
 #ifndef DATA_PACKAGE_FUNCTIONS_H
 #define DATA_PACKAGE_FUNCTIONS_H
 
-#include "mesh_with_data_packages.h"
+#include "spares_mesh_field.h"
 
 namespace SPH
 {
 template <int PKG_SIZE>
-DataPackagePair NeighbourIndexShift(const Arrayi &shift_index, const CellNeighborhood &neighbour);
+PackageDataPair NeighbourIndexShift(const Arrayi &shift_index, const CellNeighborhood &neighbour);
 
 template <int PKG_SIZE>
-DataPackagePair GeneralNeighbourIndexShift(
+PackageDataPair GeneralNeighbourIndexShift(
     UnsignedInt package_index, CellNeighborhood *neighbour, const Arrayi &shift_index);
 
 template <typename DataType, int PKG_SIZE>
@@ -64,7 +64,7 @@ class ProbeMesh
 
   public:
     template <class ExecutionPolicy>
-    ProbeMesh(const ExecutionPolicy &ex_policy, MeshWithGridDataPackages<PKG_SIZE> *data_mesh,
+    ProbeMesh(const ExecutionPolicy &ex_policy, SparseMeshField<PKG_SIZE> *data_mesh,
               UnsignedInt resolution_level, const std::string &variable_name);
     DataType operator()(const Vecd &position);
 
@@ -74,8 +74,8 @@ class ProbeMesh
     UnsignedInt *cell_pkg_index_;
     CellNeighborhood *cell_neighborhood_;
     /** probe by applying bi and tri-linear interpolation within the package. */
-    DataType probeDataPackage(UnsignedInt package_index, const Array2i &cell_index, const Vec2d &position);
-    DataType probeDataPackage(UnsignedInt package_index, const Array3i &cell_index, const Vec3d &position);
+    DataType probePackageData(UnsignedInt package_index, const Array2i &cell_index, const Vec2d &position);
+    DataType probePackageData(UnsignedInt package_index, const Array3i &cell_index, const Vec3d &position);
 };
 } // namespace SPH
 #endif // DATA_PACKAGE_FUNCTIONS_H

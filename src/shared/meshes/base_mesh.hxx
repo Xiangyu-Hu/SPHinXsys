@@ -125,18 +125,18 @@ void MultiResolutionMeshField<MeshType>::writeMeshFieldToPlt(
         std::string full_file_name = partial_file_name + "_CellVariables_" + std::to_string(l) +
                                      std::to_string(sequence) + ".dat"; // level and sequence
         std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-        writeMeshCellVariablesToPltByMesh(l, out_file);
+        writeCellVariablesToPltByMesh(l, out_file);
         out_file.close();
     }
 }
 //=============================================================================================//
 template <class MeshType>
 template <typename DataType>
-DiscreteVariable<DataType> *MultiResolutionMeshField<MeshType>::getMeshCellVariable(
+DiscreteVariable<DataType> *MultiResolutionMeshField<MeshType>::getCellVariable(
     const std::string &variable_name)
 {
     DiscreteVariable<DataType> *variable =
-        findVariableByName<DataType, DiscreteVariable>(all_mesh_cell_variables_, variable_name);
+        findVariableByName<DataType, DiscreteVariable>(all_cell_variables_, variable_name);
     if (variable == nullptr)
     {
         std::cout << "\n Error: the cell variable '" << variable_name << "' is not exist!" << std::endl;
@@ -147,27 +147,27 @@ DiscreteVariable<DataType> *MultiResolutionMeshField<MeshType>::getMeshCellVaria
 //=============================================================================================//
 template <class MeshType>
 template <typename DataType>
-void MultiResolutionMeshField<MeshType>::addMeshCellVariableToWrite(const std::string &variable_name)
+void MultiResolutionMeshField<MeshType>::addCellVariableToWrite(const std::string &variable_name)
 {
-    DiscreteVariable<DataType> *variable = getMeshCellVariable<DataType>(variable_name);
-    addVariableToList<DiscreteVariable, DataType>(mesh_cell_variables_to_write_, variable);
+    DiscreteVariable<DataType> *variable = getCellVariable<DataType>(variable_name);
+    addVariableToList<DiscreteVariable, DataType>(cell_variables_to_write_, variable);
 }
 //=============================================================================================//
 template <class MeshType>
 template <typename DataType, typename... Args>
-DiscreteVariable<DataType> *MultiResolutionMeshField<MeshType>::registerMeshCellVariable(
+DiscreteVariable<DataType> *MultiResolutionMeshField<MeshType>::registerCellVariable(
     const std::string &variable_name, Args &&...args)
 {
     return registerVariable<DiscreteVariable, DataType>(
-        all_mesh_cell_variables_, cell_variable_ptrs_, variable_name, total_number_of_cells_,
+        all_cell_variables_, cell_variable_ptrs_, variable_name, total_number_of_cells_,
         std::forward<Args>(args)...);
 }
 //=============================================================================================//
 template <class MeshType>
 template <class ExecutionPolicy>
-void MultiResolutionMeshField<MeshType>::syncMeshCellVariablesToWrite(ExecutionPolicy &ex_policy)
+void MultiResolutionMeshField<MeshType>::syncCellVariablesToWrite(ExecutionPolicy &ex_policy)
 {
-    sync_cell_variable_data_(mesh_cell_variables_to_write_, ex_policy);
+    sync_cell_variable_data_(cell_variables_to_write_, ex_policy);
 }
 //=================================================================================================//
 } // namespace SPH

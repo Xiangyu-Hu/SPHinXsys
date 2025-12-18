@@ -67,7 +67,7 @@ NearInterfaceCellTagging::UpdateKernel::
 inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &package_index)
 {
     UnsignedInt index_1d = pkg_1d_cell_index_[package_index];
-    MeshVariableData<Real> &pkg_phi = phi_[package_index];
+    PackageVariableData<Real> &pkg_phi = phi_[package_index];
     Real phi0 = pkg_phi(Arrayi::Zero());
     cell_contain_id_[index_1d] = phi0 > 0.0 ? 1 : -1;
     bool is_sign_changed = mesh_any_of(Arrayi::Zero(), Arrayi::Constant(pkg_size),

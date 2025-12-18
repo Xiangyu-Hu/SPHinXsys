@@ -146,7 +146,7 @@ inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_i
                     Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
                     [&](const Arrayi &shift) -> bool
                     {
-                        DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
+                        PackageDataPair neighbour_index = NeighbourIndexShift<pkg_size>(
                             index + shift, cell_neighborhood_[package_index]);
 
                         return phi0 * phi_[neighbour_index.first](neighbour_index.second) < 0.0;
@@ -191,7 +191,7 @@ inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package
                     Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
                     [&](const Arrayi &shift)
                     {
-                        DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
+                        PackageDataPair neighbour_index = NeighbourIndexShift<pkg_size>(
                             index + shift, cell_neighborhood_[package_index]);
                         int neighbor_near_interface_id =
                             near_interface_id_[neighbour_index.first](neighbour_index.second);
@@ -207,7 +207,7 @@ inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package
                         Arrayi::Constant(-4), Arrayi::Constant(5), // check in the 4x4x4 neighborhood
                         [&](const Arrayi &shift)
                         {
-                            DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
+                            PackageDataPair neighbour_index = NeighbourIndexShift<pkg_size>(
                                 index + shift, cell_neighborhood_[package_index]);
                             auto &neighbor_phi = phi_[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
@@ -235,7 +235,7 @@ inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package
                         Arrayi::Constant(-4), Arrayi::Constant(5), // check in the 4x4x4 neighborhood
                         [&](const Arrayi &shift)
                         {
-                            DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
+                            PackageDataPair neighbour_index = NeighbourIndexShift<pkg_size>(
                                 index + shift, cell_neighborhood_[package_index]);
                             auto &neighbor_phi = phi_[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
@@ -281,7 +281,7 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package
                         Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
                         [&](const Arrayi &shift) -> bool
                         {
-                            DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
+                            PackageDataPair neighbour_index = NeighbourIndexShift<pkg_size>(
                                 index + shift, cell_neighborhood_[package_index]);
                             return near_interface_id_[neighbour_index.first](neighbour_index.second) == 1;
                         }))
@@ -295,7 +295,7 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package
                              Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
                              [&](const Arrayi &shift) -> bool
                              {
-                                 DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
+                                 PackageDataPair neighbour_index = NeighbourIndexShift<pkg_size>(
                                      index + shift, cell_neighborhood_[package_index]);
                                  return near_interface_id_[neighbour_index.first](neighbour_index.second) == -1;
                              }))
@@ -311,7 +311,7 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package
 //=============================================================================================//
 template <class ExecutionPolicy>
 CleanInterface<ExecutionPolicy>::CleanInterface(
-    MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level,
+    MeshWithGridPackageDatasType &mesh_data, UnsignedInt resolution_level,
     NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method, Real refinement_ratio)
     : RepeatTimes(), BaseDynamics<void>(),
       neighbor_method_(neighbor_method),
@@ -323,7 +323,7 @@ CleanInterface<ExecutionPolicy>::CleanInterface(
 //=============================================================================================//
 template <class ExecutionPolicy>
 CorrectTopology<ExecutionPolicy>::CorrectTopology(
-    MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level,
+    MeshWithGridPackageDatasType &mesh_data, UnsignedInt resolution_level,
     NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method)
     : BaseDynamics<void>(), neighbor_method_(neighbor_method),
       update_level_set_gradient(mesh_data, resolution_level),

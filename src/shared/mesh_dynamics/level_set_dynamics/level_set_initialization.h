@@ -40,7 +40,7 @@ namespace SPH
 class InitialCellTagging : public BaseMeshLocalDynamics
 {
   public:
-    explicit InitialCellTagging(MeshWithGridDataPackagesType &data_mesh, Shape &shape);
+    explicit InitialCellTagging(MeshWithGridPackageDatasType &data_mesh, Shape &shape);
     virtual ~InitialCellTagging() {};
     class UpdateKernel
     {
@@ -61,16 +61,16 @@ class InitialCellTagging : public BaseMeshLocalDynamics
   private:
     Shape &shape_;
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
-    MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_;
-    MeshCellVariable<int> &mcv_cell_contain_id_;
+    CellVariable<UnsignedInt> &mcv_cell_pkg_index_;
+    CellVariable<int> &mcv_cell_contain_id_;
 };
 
 class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
 {
   public:
     InitialCellTaggingFromCoarse(
-        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level,
-        MeshWithGridDataPackagesType &coarse_mesh, UnsignedInt coarse_resolution_level,
+        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level,
+        MeshWithGridPackageDatasType &coarse_mesh, UnsignedInt coarse_resolution_level,
         Shape &shape);
     virtual ~InitialCellTaggingFromCoarse() {};
 
@@ -97,14 +97,14 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
     };
 
   private:
-    MeshWithGridDataPackagesType &coarse_mesh_;
+    MeshWithGridPackageDatasType &coarse_mesh_;
     UnsignedInt coarse_resolution_level_;
     Shape &shape_;
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
     UnsignedInt boundary_pkg_index_offset_;
-    MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_;
-    MeshCellVariable<int> &mcv_cell_contain_id_;
-    MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_coarse_;
+    CellVariable<UnsignedInt> &mcv_cell_pkg_index_;
+    CellVariable<int> &mcv_cell_contain_id_;
+    CellVariable<UnsignedInt> &mcv_cell_pkg_index_coarse_;
     MetaVariable<int> &dv_pkg_type_coarse_;
 };
 
@@ -116,7 +116,7 @@ class InnerCellTagging : public BaseMeshLocalDynamics
 {
   public:
     explicit InnerCellTagging(
-        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level);
+        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level);
     virtual ~InnerCellTagging() {};
 
     virtual void finishDynamics(Real dt = 0.0) override;
@@ -137,7 +137,7 @@ class InnerCellTagging : public BaseMeshLocalDynamics
     };
 
     ConcurrentVec<std::pair<UnsignedInt, int>> &occupied_data_pkgs_;
-    MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_;
+    CellVariable<UnsignedInt> &mcv_cell_pkg_index_;
     StdVec<UnsignedInt> &num_pkgs_offsets_;
 };
 
@@ -149,7 +149,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
 {
   public:
     explicit InitializeCellNeighborhood(
-        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level);
+        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level);
     virtual ~InitializeCellNeighborhood() {};
 
     class UpdateKernel
@@ -170,7 +170,7 @@ class InitializeCellNeighborhood : public BaseMeshLocalDynamics
   protected:
     MetaVariable<UnsignedInt> &dv_pkg_1d_cell_index_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
-    MeshCellVariable<UnsignedInt> &mcv_cell_pkg_index_;
+    CellVariable<UnsignedInt> &mcv_cell_pkg_index_;
 };
 
 /**
@@ -181,7 +181,7 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
 {
   public:
     explicit InitializeBasicPackageData(
-        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level, Shape &shape);
+        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level, Shape &shape);
     virtual ~InitializeBasicPackageData() {};
 
     class UpdateKernel
@@ -195,23 +195,23 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
         IndexHandler index_handler_;
         UnsignedInt *pkg_1d_cell_index_;
         Shape *shape_;
-        MeshVariableData<Real> *phi_;
-        MeshVariableData<int> *near_interface_id_;
+        PackageVariableData<Real> *phi_;
+        PackageVariableData<int> *near_interface_id_;
     };
 
   private:
     Shape &shape_;
     MetaVariable<UnsignedInt> &dv_pkg_1d_cell_index_;
-    MeshVariable<Real> &mv_phi_;
-    MeshVariable<Vecd> &mv_phi_gradient_;
-    MeshVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &mv_phi_;
+    PackageVariable<Vecd> &mv_phi_gradient_;
+    PackageVariable<int> &mv_near_interface_id_;
 };
 
 class NearInterfaceCellTagging : public BaseMeshLocalDynamics
 {
   public:
     explicit NearInterfaceCellTagging(
-        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level);
+        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level);
     virtual ~NearInterfaceCellTagging() {};
 
     class UpdateKernel
@@ -224,20 +224,20 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
       protected:
         UnsignedInt *pkg_1d_cell_index_;
         int *cell_contain_id_;
-        MeshVariableData<Real> *phi_;
+        PackageVariableData<Real> *phi_;
     };
 
   protected:
     MetaVariable<UnsignedInt> &dv_pkg_1d_cell_index_;
-    MeshCellVariable<int> &mcv_cell_contain_id_;
-    MeshVariable<Real> &mv_phi_;
+    CellVariable<int> &mcv_cell_contain_id_;
+    PackageVariable<Real> &mv_phi_;
 };
 
 class CellContainDiffusion : public BaseMeshLocalDynamics
 {
   public:
     explicit CellContainDiffusion(
-        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level,
+        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level,
         SingularVariable<UnsignedInt> &sv_count_modified);
     virtual ~CellContainDiffusion() {};
 
@@ -258,21 +258,21 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
 
   protected:
     UnsignedInt boundary_pkg_index_offset_;
-    MeshCellVariable<int> &mcv_cell_contain_id_;
-    MeshCellVariable<UnsignedInt> &mcv_cell_package_index_;
+    CellVariable<int> &mcv_cell_contain_id_;
+    CellVariable<UnsignedInt> &mcv_cell_package_index_;
     SingularVariable<UnsignedInt> &sv_count_modified_;
 };
 
-class FinishDataPackages : public BaseDynamics<void>
+class FinishPackageDatas : public BaseDynamics<void>
 {
   public:
-    FinishDataPackages(MeshWithGridDataPackagesType &mesh_data,
+    FinishPackageDatas(MeshWithGridPackageDatasType &mesh_data,
                        UnsignedInt resolution_level, Shape &shape);
-    virtual ~FinishDataPackages() {};
+    virtual ~FinishPackageDatas() {};
     void exec(Real dt = 0.0) override;
 
   private:
-    MeshWithGridDataPackagesType &mesh_data_;
+    MeshWithGridPackageDatasType &mesh_data_;
     UnsignedInt resolution_level_;
     Shape &shape_;
     SingularVariable<UnsignedInt> sv_count_modified_{"CountModifiedCell", 1};

@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    mesh_with_data_packages.h
+ * @file    spares_mesh_field.h
  * @brief   This class is designed to save memory and increase computational efficiency on mesh.
  * @author  Chi Zhang and Xiangyu Hu
  */
@@ -54,12 +54,12 @@ class PackageMesh : public Mesh
     Real DataSpacing() const { return data_spacing_; };
     Mesh getGlobalMesh() const;
     template <typename DataType>
-    DataType DataValueFromGlobalIndex(PackageData<DataType, PKG_SIZE> *pkg_data, const Arrayi &global_grid_index,
-                                      UnsignedInt *cell_package_index) const;
+    DataType ValueByGlobalMesh(PackageData<DataType, PKG_SIZE> *pkg_data, const Arrayi &global_grid_index,
+                               UnsignedInt *cell_package_index) const;
 };
 
 /**
- * @class MeshWithGridDataPackages
+ * @class SparseMeshField
  * @brief Abstract class for mesh with grid-based data packages.
  * @details The idea is to save sparse data on a cell-based mesh.
  * We say sparse data, it means that only in some inner mesh cells there are no trivial data.
@@ -71,25 +71,25 @@ class PackageMesh : public Mesh
  * Note that a data package should be not near the mesh bound, otherwise one will encounter the error "out of range".
  */
 template <int PKG_SIZE>
-class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
+class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
 {
   public:
     template <class DataType>
-    using MeshVariableData = PackageData<DataType, PKG_SIZE>;
+    using PackageVariableData = PackageData<DataType, PKG_SIZE>;
     template <typename DataType>
-    using MeshVariable = DiscreteVariable<MeshVariableData<DataType>>;
+    using PackageVariable = DiscreteVariable<PackageVariableData<DataType>>;
     template <typename DataType>
     using MetaVariable = DiscreteVariable<DataType>;
     using IndexHandler = PackageMesh<PKG_SIZE>;
-    typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
+    typedef DataContainerAddressAssemble<PackageVariable> PackageVariableAssemble;
     typedef DataContainerAddressAssemble<MetaVariable> MetaVariableAssemble;
 
   protected:
-    DataContainerUniquePtrAssemble<MeshVariable> mesh_variable_ptrs_;
-    MeshVariableAssemble all_mesh_variables_;      /**< all mesh variables on this mesh. */
-    MeshVariableAssemble mesh_variables_to_write_; /**< mesh variables to write, which are not empty. */
-    MeshVariableAssemble mesh_variables_to_probe_; /**< mesh variables to probe. */
-    MeshVariableAssemble evolving_mesh_variables_;
+    DataContainerUniquePtrAssemble<PackageVariable> pkg_variable_ptrs_;
+    PackageVariableAssemble all_pkg_variables_;      /**< all mesh variables on this mesh. */
+    PackageVariableAssemble pkg_variables_to_write_; /**< mesh variables to write, which are not empty. */
+    PackageVariableAssemble pkh_variables_to_probe_; /**< mesh variables to probe. */
+    PackageVariableAssemble evolving_pkg_variables_;
 
     DataContainerUniquePtrAssemble<MetaVariable> meta_variable_ptrs_;
     MetaVariableAssemble all_meta_variables_;
@@ -98,24 +98,24 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
 
   public:
-    MeshWithGridDataPackages(BoundingBoxd tentative_bounds, Real data_spacing,
-                             UnsignedInt buffer_size, UnsignedInt num_singular_pkgs = 2);
-    MeshWithGridDataPackages(const std::string &name, UnsignedInt resolution_levels,
-                             BoundingBoxd tentative_bounds, Real Reference_grid_spacing,
-                             UnsignedInt buffer_width, UnsignedInt num_singular_pkgs);
-    virtual ~MeshWithGridDataPackages() {};
+    SparseMeshField(BoundingBoxd tentative_bounds, Real data_spacing,
+                    UnsignedInt buffer_size, UnsignedInt num_singular_pkgs = 2);
+    SparseMeshField(const std::string &name, UnsignedInt resolution_levels,
+                    BoundingBoxd tentative_bounds, Real Reference_grid_spacing,
+                    UnsignedInt buffer_width, UnsignedInt num_singular_pkgs);
+    virtual ~SparseMeshField() {};
 
-    static constexpr int DataPackageSize() { return PKG_SIZE; };
+    static constexpr int PackageDataSize() { return PKG_SIZE; };
     UnsignedInt NumBoundaryPackages() const { return num_boundary_pkgs_; };
     UnsignedInt PackageBound() const { return pkgs_bound_; };
     StdVec<UnsignedInt> &getNumPackageOffsets() { return num_pkgs_offsets_; };
-    MeshCellVariable<UnsignedInt> &getCellPackageIndex() { return *mcv_cell_pkg_index_; };
-    ConcurrentVec<std::pair<UnsignedInt, int>> &getOccupiedDataPackages() { return occupied_data_pkgs_; };
+    CellVariable<UnsignedInt> &getCellPackageIndex() { return *mcv_cell_pkg_index_; };
+    ConcurrentVec<std::pair<UnsignedInt, int>> &getOccupiedPackageDatas() { return occupied_data_pkgs_; };
     MetaVariable<CellNeighborhood> &getCellNeighborhood();
     MetaVariable<UnsignedInt> &getPackage1DCellIndex();
     MetaVariable<int> &getPackageType();
     MetaVariableAssemble &getEvolvingMetaVariables() { return evolving_meta_variables_; };
-    MeshVariableAssemble &getEvolvingMeshVariables() { return evolving_mesh_variables_; };
+    PackageVariableAssemble &getEvolvingPackageVariables() { return evolving_pkg_variables_; };
     void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
 
   protected:
@@ -125,27 +125,27 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;               /**< metadata for data packages: cell index. */
     MetaVariable<int> *dv_pkg_type_;                                /**< metadata for data packages: (int)core1/inner0. */
     MetaVariable<CellNeighborhood> *cell_neighborhood_;             /**< 3*3(*3) array to store indicies of neighborhood cells. */
-    MeshCellVariable<UnsignedInt> *mcv_cell_pkg_index_;             /**< the package index for each cell in a 1-d array. */
+    CellVariable<UnsignedInt> *mcv_cell_pkg_index_;                 /**< the package index for each cell in a 1-d array. */
     ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_; /**< (UnsignedInt)sort_index, (int)core1/inner0. */
     bool is_organized_ = false;                                     /**< whether the data packages are organized. */
 
     template <typename T>
     T &checkOrganized(std::string func_name, T &value);
 
-    OperationOnDataAssemble<MeshVariableAssemble, PrepareVariablesToWrite<MeshVariable>> sync_mesh_variable_data_{};
-    void writeMeshVariablesToPltByMesh(UnsignedInt resolution_level, std::ofstream &output_file);
+    OperationOnDataAssemble<PackageVariableAssemble, PrepareVariablesToWrite<PackageVariable>> sync_mesh_variable_data_{};
+    void writePackageVariablesToPltByMesh(UnsignedInt resolution_level, std::ofstream &output_file);
 
   public:
     template <class ExecutionPolicy>
-    void syncMeshVariablesToWrite(ExecutionPolicy &ex_policy);
+    void syncPackageVariablesToWrite(ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
-    void syncMeshVariablesToProbe(ExecutionPolicy &ex_policy);
+    void syncPackageVariablesToProbe(ExecutionPolicy &ex_policy);
     template <typename DataType>
-    MeshVariable<DataType> *registerMeshVariable(const std::string &name);
+    PackageVariable<DataType> *registerMeshVariable(const std::string &name);
     template <typename DataType, typename... Args>
     MetaVariable<DataType> *registerMetaVariable(const std::string &name, Args &&...args);
     template <typename DataType>
-    MeshVariable<DataType> *getMeshVariable(const std::string &name);
+    PackageVariable<DataType> *getMeshVariable(const std::string &name);
     template <typename DataType>
     MetaVariable<DataType> *getMetaVariable(const std::string &name);
     template <typename DataType>

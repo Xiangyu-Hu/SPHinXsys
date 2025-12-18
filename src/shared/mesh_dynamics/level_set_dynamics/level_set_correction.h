@@ -40,7 +40,7 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
 {
   public:
     explicit ReinitializeLevelSet(
-        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level);
+        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level);
     virtual ~ReinitializeLevelSet() {};
 
     class UpdateKernel
@@ -52,16 +52,16 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
 
       protected:
         Real data_spacing_;
-        MeshVariableData<Real> *phi_;
-        MeshVariableData<int> *near_interface_id_;
+        PackageVariableData<Real> *phi_;
+        PackageVariableData<int> *near_interface_id_;
         CellNeighborhood *cell_neighborhood_;
 
         Real upwindDifference(Real sign, Real df_p, Real df_n);
     };
 
   protected:
-    MeshVariable<Real> &mv_phi_;
-    MeshVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &mv_phi_;
+    PackageVariable<int> &mv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
@@ -69,7 +69,7 @@ class MarkCutInterfaces : public BaseMeshLocalDynamics
 {
   public:
     explicit MarkCutInterfaces(
-        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level,
+        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level,
         Real perturbation_ratio);
     virtual ~MarkCutInterfaces() {};
 
@@ -83,15 +83,15 @@ class MarkCutInterfaces : public BaseMeshLocalDynamics
       protected:
         IndexHandler index_handler_;
         Real threshold_, perturbation_;
-        MeshVariableData<Real> *phi_;
-        MeshVariableData<int> *near_interface_id_;
+        PackageVariableData<Real> *phi_;
+        PackageVariableData<int> *near_interface_id_;
         CellNeighborhood *cell_neighborhood_;
     };
 
   protected:
     Real perturbation_ratio_;
-    MeshVariable<Real> &mv_phi_;
-    MeshVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &mv_phi_;
+    PackageVariable<int> &mv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
@@ -99,7 +99,7 @@ class MarkNearInterface : public BaseMeshLocalDynamics
 {
   public:
     explicit MarkNearInterface(
-        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level);
+        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level);
     virtual ~MarkNearInterface() {};
 
     class UpdateKernel
@@ -112,14 +112,14 @@ class MarkNearInterface : public BaseMeshLocalDynamics
       protected:
         IndexHandler index_handler_;
         Real threshold_;
-        MeshVariableData<Real> *phi_;
-        MeshVariableData<int> *near_interface_id_;
+        PackageVariableData<Real> *phi_;
+        PackageVariableData<int> *near_interface_id_;
         CellNeighborhood *cell_neighborhood_;
     };
 
   protected:
-    MeshVariable<Real> &mv_phi_;
-    MeshVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &mv_phi_;
+    PackageVariable<int> &mv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
@@ -127,7 +127,7 @@ class RedistanceInterface : public BaseMeshLocalDynamics
 {
   public:
     RedistanceInterface(
-        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level);
+        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level);
     virtual ~RedistanceInterface() {};
 
     class UpdateKernel
@@ -139,16 +139,16 @@ class RedistanceInterface : public BaseMeshLocalDynamics
 
       protected:
         Real data_spacing_;
-        MeshVariableData<Real> *phi_;
-        MeshVariableData<Vecd> *phi_gradient_;
-        MeshVariableData<int> *near_interface_id_;
+        PackageVariableData<Real> *phi_;
+        PackageVariableData<Vecd> *phi_gradient_;
+        PackageVariableData<int> *near_interface_id_;
         CellNeighborhood *cell_neighborhood_;
     };
 
   protected:
-    MeshVariable<Real> &mv_phi_;
-    MeshVariable<Vecd> &mv_phi_gradient_;
-    MeshVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &mv_phi_;
+    PackageVariable<Vecd> &mv_phi_gradient_;
+    PackageVariable<int> &mv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
@@ -156,7 +156,7 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
 {
   public:
     explicit DiffuseLevelSetSign(
-        MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level,
+        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level,
         SingularVariable<UnsignedInt> &sv_count_modified);
     virtual ~DiffuseLevelSetSign() {};
 
@@ -168,15 +168,15 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
         void update(const UnsignedInt &index);
 
       protected:
-        MeshVariableData<Real> *phi_;
-        MeshVariableData<int> *near_interface_id_;
+        PackageVariableData<Real> *phi_;
+        PackageVariableData<int> *near_interface_id_;
         CellNeighborhood *cell_neighborhood_;
         UnsignedInt *count_modified_;
     };
 
   protected:
-    MeshVariable<Real> &mv_phi_;
-    MeshVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &mv_phi_;
+    PackageVariable<int> &mv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
     SingularVariable<UnsignedInt> &sv_count_modified_;
 };
@@ -196,7 +196,7 @@ template <class ExecutionPolicy>
 class CleanInterface : public RepeatTimes, public BaseDynamics<void>
 {
   public:
-    CleanInterface(MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level,
+    CleanInterface(MeshWithGridPackageDatasType &mesh_data, UnsignedInt resolution_level,
                    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method,
                    Real refinement_ratio);
     virtual ~CleanInterface() {};
@@ -234,7 +234,7 @@ class CorrectTopology : public BaseDynamics<void>
 {
   public:
     CorrectTopology(
-        MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level,
+        MeshWithGridPackageDatasType &mesh_data, UnsignedInt resolution_level,
         NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method);
     virtual ~CorrectTopology() {};
 

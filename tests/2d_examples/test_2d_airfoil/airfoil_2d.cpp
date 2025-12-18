@@ -52,7 +52,7 @@ int main(int ac, char *av[])
     airfoil.defineAdaptation<AdaptiveNearSurface>(1.15, 1.0, 3);
     airfoil.defineBodyLevelSetShape()
         ->cleanLevelSet()
-        ->addMeshCellVariableToWrite<UnsignedInt>("CellPackageIndex")
+        ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
         ->writeLevelSet(sph_system);
     airfoil.generateParticles<BaseParticles, Lattice, AdaptiveByShape>();
     //----------------------------------------------------------------------

@@ -34,7 +34,7 @@
 #include "base_local_mesh_dynamics.h"
 #include "implementation.h"
 #include "mesh_iterators.hpp"
-#include "mesh_with_data_packages.h"
+#include "spares_mesh_field.h"
 
 namespace SPH
 {
@@ -52,7 +52,7 @@ class MeshAllDynamics : public LocalDynamicsType, public BaseDynamics<void>
   public:
     template <typename... Args>
     MeshAllDynamics(
-        MeshWithGridDataPackagesType &mesh_data, Args &&...args)
+        MeshWithGridPackageDatasType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseDynamics<void>(), kernel_implementation_(*this){};
     virtual ~MeshAllDynamics() {};
@@ -83,7 +83,7 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseDynamics<void>
   public:
     template <typename... Args>
     MeshInnerDynamics(
-        MeshWithGridDataPackagesType &mesh_data, Args &&...args)
+        MeshWithGridPackageDatasType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseDynamics<void>(), kernel_implementation_(*this),
           num_pkgs_offsets_(mesh_data.getNumPackageOffsets()){};
@@ -120,7 +120,7 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseDynamics<void>
   public:
     template <typename... Args>
     MeshCoreDynamics(
-        MeshWithGridDataPackagesType &mesh_data, Args &&...args)
+        MeshWithGridPackageDatasType &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseDynamics<void>(), dv_pkg_type_(mesh_data.getPackageType()),
           kernel_implementation_(*this),

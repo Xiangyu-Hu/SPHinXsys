@@ -3,16 +3,16 @@
 namespace SPH
 {
 //=================================================================================================//
-InitialCellTagging::InitialCellTagging(MeshWithGridDataPackagesType &data_mesh, Shape &shape)
+InitialCellTagging::InitialCellTagging(MeshWithGridPackageDatasType &data_mesh, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh, 0), shape_(shape),
-      occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
+      occupied_data_pkgs_(data_mesh.getOccupiedPackageDatas()),
       mcv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
-      mcv_cell_contain_id_(*data_mesh.registerMeshCellVariable<int>(
+      mcv_cell_contain_id_(*data_mesh.registerCellVariable<int>(
           "CellContainID", // default value is 2, indicating not near interface
           [&](UnsignedInt index)
           { return 2; })) // the value is not touched in this class
 {
-    data_mesh.addMeshCellVariableToWrite<int>("CellContainID");
+    data_mesh.addCellVariableToWrite<int>("CellContainID");
 }
 //=================================================================================================//
 void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
@@ -29,21 +29,21 @@ void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 }
 //=================================================================================================//
 InitialCellTaggingFromCoarse::InitialCellTaggingFromCoarse(
-    MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level,
-    MeshWithGridDataPackagesType &coarse_mesh, UnsignedInt coarse_resolution_level, Shape &shape)
+    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level,
+    MeshWithGridPackageDatasType &coarse_mesh, UnsignedInt coarse_resolution_level, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       coarse_mesh_(coarse_mesh), coarse_resolution_level_(coarse_resolution_level), shape_(shape),
-      occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
+      occupied_data_pkgs_(data_mesh.getOccupiedPackageDatas()),
       boundary_pkg_index_offset_(data_mesh.NumBoundaryPackages() * resolution_level),
       mcv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
-      mcv_cell_contain_id_(*data_mesh.registerMeshCellVariable<int>(
+      mcv_cell_contain_id_(*data_mesh.registerCellVariable<int>(
           "CellContainID", // default value is 2, indicating not near interface
           [&](UnsignedInt index)
           { return 2; })),
       mcv_cell_pkg_index_coarse_(coarse_mesh.getCellPackageIndex()),
       dv_pkg_type_coarse_(coarse_mesh.getPackageType())
 {
-    data_mesh.addMeshCellVariableToWrite<int>("CellContainID");
+    data_mesh.addCellVariableToWrite<int>("CellContainID");
 }
 //=================================================================================================//
 void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index)
@@ -68,9 +68,9 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
     }
 }
 //=================================================================================================//
-InnerCellTagging::InnerCellTagging(MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level)
+InnerCellTagging::InnerCellTagging(MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
-      occupied_data_pkgs_(data_mesh.getOccupiedDataPackages()),
+      occupied_data_pkgs_(data_mesh.getOccupiedPackageDatas()),
       mcv_cell_pkg_index_(data_mesh.getCellPackageIndex()),
       num_pkgs_offsets_(data_mesh.getNumPackageOffsets()) {}
 //=================================================================================================//
@@ -106,7 +106,7 @@ bool InnerCellTagging::UpdateKernel::isNearInitiallyTagged(const Arrayi &cell_in
 }
 //=================================================================================================//
 InitializeCellNeighborhood::InitializeCellNeighborhood(
-    MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level)
+    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
@@ -133,7 +133,7 @@ void InitializeCellNeighborhood::UpdateKernel::update(const UnsignedInt &package
 }
 //=============================================================================================//
 InitializeBasicPackageData::InitializeBasicPackageData(
-    MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level, Shape &shape)
+    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh, resolution_level), shape_(shape),
       dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       mv_phi_(*data_mesh.registerMeshVariable<Real>("LevelSet")),
@@ -144,11 +144,11 @@ InitializeBasicPackageData::InitializeBasicPackageData(
     data_mesh.addMeshVariableToWrite<Real>("LevelSet");
     data_mesh.setBoundaryData(&mv_phi_, resolution_level, [&](UnsignedInt k)
                               { Real phi = k == 0 ? -far_field_distance : far_field_distance; 
-                                return MeshVariableData<Real>::Constant(phi); });
+                                return PackageVariableData<Real>::Constant(phi); });
     data_mesh.setBoundaryData(&mv_near_interface_id_, resolution_level, [&](UnsignedInt k)
-                              { return MeshVariableData<int>::Constant(k == 0 ? -2 : 2); });
+                              { return PackageVariableData<int>::Constant(k == 0 ? -2 : 2); });
     data_mesh.setBoundaryData(&mv_phi_gradient_, resolution_level, [&](UnsignedInt k)
-                              { return MeshVariableData<Vecd>::Constant(Vecd::Ones()); });
+                              { return PackageVariableData<Vecd>::Constant(Vecd::Ones()); });
 }
 //=============================================================================================//
 void InitializeBasicPackageData::UpdateKernel::update(const UnsignedInt &package_index)
@@ -166,30 +166,30 @@ void InitializeBasicPackageData::UpdateKernel::update(const UnsignedInt &package
 }
 //=============================================================================================//
 NearInterfaceCellTagging::NearInterfaceCellTagging(
-    MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level)
+    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
-      mcv_cell_contain_id_(*data_mesh.getMeshCellVariable<int>("CellContainID")),
+      mcv_cell_contain_id_(*data_mesh.getCellVariable<int>("CellContainID")),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")) {}
 //=============================================================================================//
 CellContainDiffusion::CellContainDiffusion(
-    MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level,
+    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level,
     SingularVariable<UnsignedInt> &sv_count_modified)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       boundary_pkg_index_offset_(data_mesh.NumBoundaryPackages() * resolution_level),
-      mcv_cell_contain_id_(*data_mesh.getMeshCellVariable<int>("CellContainID")),
+      mcv_cell_contain_id_(*data_mesh.getCellVariable<int>("CellContainID")),
       mcv_cell_package_index_(data_mesh.getCellPackageIndex()),
       sv_count_modified_(sv_count_modified) {}
 //=============================================================================================//
-FinishDataPackages::FinishDataPackages(
-    MeshWithGridDataPackagesType &mesh_data, UnsignedInt resolution_level, Shape &shape)
+FinishPackageDatas::FinishPackageDatas(
+    MeshWithGridPackageDatasType &mesh_data, UnsignedInt resolution_level, Shape &shape)
     : BaseDynamics<void>(), mesh_data_(mesh_data), resolution_level_(resolution_level), shape_(shape),
       initialize_cell_neighborhood{mesh_data_, resolution_level_},
       initialize_basic_data_for_a_package{mesh_data_, resolution_level_, shape_},
       near_interface_cell_tagging{mesh_data_, resolution_level_},
       cell_contain_diffusion{mesh_data_, resolution_level_, sv_count_modified_} {}
 //=============================================================================================//
-void FinishDataPackages::exec(Real dt)
+void FinishPackageDatas::exec(Real dt)
 {
     initialize_basic_data_for_a_package.exec();
 

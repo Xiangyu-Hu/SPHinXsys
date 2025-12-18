@@ -120,8 +120,8 @@ class BaseMeshField
 };
 
 template <typename DataType>
-using MeshCellVariable = DiscreteVariable<DataType>;
-typedef DataContainerAddressAssemble<MeshCellVariable> MeshCellVariableAssemble;
+using CellVariable = DiscreteVariable<DataType>;
+typedef DataContainerAddressAssemble<CellVariable> CellVariableAssemble;
 
 template <class MeshType>
 class MultiResolutionMeshField : public BaseMeshField
@@ -143,16 +143,16 @@ class MultiResolutionMeshField : public BaseMeshField
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
 
     template <typename DataType, typename... Args>
-    MeshCellVariable<DataType> *registerMeshCellVariable(const std::string &variable_name, Args &&...args);
+    CellVariable<DataType> *registerCellVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>
-    MeshCellVariable<DataType> *getMeshCellVariable(const std::string &variable_name);
+    CellVariable<DataType> *getCellVariable(const std::string &variable_name);
 
     template <typename DataType>
-    void addMeshCellVariableToWrite(const std::string &variable_name);
+    void addCellVariableToWrite(const std::string &variable_name);
     void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
 
     template <class ExecutionPolicy>
-    void syncMeshCellVariablesToWrite(ExecutionPolicy &ex_policy);
+    void syncCellVariablesToWrite(ExecutionPolicy &ex_policy);
 
   protected:
     size_t resolution_levels_; /**< level 0 is the coarsest */
@@ -160,11 +160,11 @@ class MultiResolutionMeshField : public BaseMeshField
     MeshType *coarsest_mesh_;
     MeshType *finest_mesh_;
     UnsignedInt total_number_of_cells_;
-    MeshCellVariableAssemble all_mesh_cell_variables_;
-    MeshCellVariableAssemble mesh_cell_variables_to_write_;
+    CellVariableAssemble all_cell_variables_;
+    CellVariableAssemble cell_variables_to_write_;
 
-    OperationOnDataAssemble<MeshCellVariableAssemble, PrepareVariablesToWrite<MeshCellVariable>> sync_cell_variable_data_{};
-    void writeMeshCellVariablesToPltByMesh(UnsignedInt resolution_level, std::ofstream &output_file);
+    OperationOnDataAssemble<CellVariableAssemble, PrepareVariablesToWrite<CellVariable>> sync_cell_variable_data_{};
+    void writeCellVariablesToPltByMesh(UnsignedInt resolution_level, std::ofstream &output_file);
 };
 } // namespace SPH
 #endif // BASE_MESH_H

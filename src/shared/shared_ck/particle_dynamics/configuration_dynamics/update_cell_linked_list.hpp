@@ -23,7 +23,7 @@ UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::
       dv_particle_index_(cell_linked_list_.dvParticleIndex()),
       dv_cell_offset_(cell_linked_list_.dvCellOffset()),
       cell_dv_current_list_size_(
-          cell_linked_list_.registerMeshCellVariable<UnsignedInt>("CurrentListSize")),
+          cell_linked_list_.registerCellVariable<UnsignedInt>("CurrentListSize")),
       identifier_(identifier), kernel_implementation_(*this) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename DynamicsIdentifier>

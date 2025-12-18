@@ -32,26 +32,26 @@
 #include "base_dynamics.h"
 #include "base_implementation.h"
 #include "data_package_function.hpp"
-#include "mesh_with_data_packages.hpp"
+#include "spares_mesh_field.hpp"
 
 namespace SPH
 {
-using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
+using MeshWithGridPackageDatasType = SparseMeshField<4>;
 
 template <typename DataType>
-using MeshVariableData = MeshWithGridDataPackagesType::MeshVariableData<DataType>;
+using PackageVariableData = MeshWithGridPackageDatasType::PackageVariableData<DataType>;
 
 template <typename DataType>
-using MeshVariable = MeshWithGridDataPackagesType::MeshVariable<DataType>;
+using PackageVariable = MeshWithGridPackageDatasType::PackageVariable<DataType>;
 
 template <typename DataType>
-using MeshCellVariable = DiscreteVariable<DataType>;
+using CellVariable = DiscreteVariable<DataType>;
 
 template <typename DataType>
-using MetaVariable = MeshWithGridDataPackagesType::MetaVariable<DataType>;
+using MetaVariable = MeshWithGridPackageDatasType::MetaVariable<DataType>;
 
-using MeshVariableAssemble = MeshWithGridDataPackagesType::MeshVariableAssemble;
-using MetaVariableAssemble = MeshWithGridDataPackagesType::MetaVariableAssemble;
+using PackageVariableAssemble = MeshWithGridPackageDatasType::PackageVariableAssemble;
+using MetaVariableAssemble = MeshWithGridPackageDatasType::MetaVariableAssemble;
 using IndexHandler = PackageMesh<4>;
 
 /**
@@ -61,18 +61,18 @@ using IndexHandler = PackageMesh<4>;
 class BaseMeshLocalDynamics
 {
   public:
-    explicit BaseMeshLocalDynamics(MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level)
+    explicit BaseMeshLocalDynamics(MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level)
         : data_mesh_(data_mesh), index_handler_(data_mesh.getMeshLevel(resolution_level)),
           resolution_level_(resolution_level) {};
     virtual ~BaseMeshLocalDynamics() {};
 
-    static constexpr int pkg_size = MeshWithGridDataPackagesType::DataPackageSize();
+    static constexpr int pkg_size = MeshWithGridPackageDatasType::PackageDataSize();
     static constexpr int pkg_size_minus1 = pkg_size - 1;
     virtual void setupDynamics(Real dt = 0.0) {};  // setup global parameters
     virtual void finishDynamics(Real dt = 0.0) {}; // update global parameters
 
   protected:
-    MeshWithGridDataPackagesType &data_mesh_;
+    MeshWithGridPackageDatasType &data_mesh_;
     IndexHandler &index_handler_;
     UnsignedInt resolution_level_;
 };

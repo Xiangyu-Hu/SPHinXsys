@@ -4,14 +4,14 @@ namespace SPH
 {
 //=============================================================================================//
 UpdateLevelSetGradient::UpdateLevelSetGradient(
-    MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level)
+    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.registerMeshVariable<Vecd>("LevelSetGradient")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
 UpdateKernelIntegrals::UpdateKernelIntegrals(
-    MeshWithGridDataPackagesType &data_mesh, UnsignedInt resolution_level,
+    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level,
     NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       neighbor_method_(neighbor_method),
@@ -23,11 +23,11 @@ UpdateKernelIntegrals::UpdateKernelIntegrals(
       mv_kernel_second_gradient_(*data_mesh.registerMeshVariable<Matd>("KernelSecondGradient"))
 {
     data_mesh.setBoundaryData(&mv_kernel_weight_, resolution_level, [&](UnsignedInt k)
-                              { return MeshVariableData<Real>::Constant(k == 0 ? 0.0 : 1.0); });
+                              { return PackageVariableData<Real>::Constant(k == 0 ? 0.0 : 1.0); });
     data_mesh.setBoundaryData(&mv_kernel_gradient_, resolution_level, [&](UnsignedInt k)
-                              { return MeshVariableData<Vecd>::Constant(Vecd::Zero()); });
+                              { return PackageVariableData<Vecd>::Constant(Vecd::Zero()); });
     data_mesh.setBoundaryData(&mv_kernel_second_gradient_, resolution_level, [&](UnsignedInt k)
-                              { return MeshVariableData<Matd>::Constant(Matd::Zero()); });
+                              { return PackageVariableData<Matd>::Constant(Matd::Zero()); });
 }
 //=================================================================================================//
 } // namespace SPH

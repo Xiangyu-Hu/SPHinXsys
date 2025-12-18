@@ -1,7 +1,7 @@
-#ifndef MESH_WITH_DATA_PACKAGES_3D_HPP
-#define MESH_WITH_DATA_PACKAGES_3D_HPP
+#ifndef SPARSE_MESH_FIELD_3D_HPP
+#define SPARSE_MESH_FIELD_3D_HPP
 
-#include "mesh_with_data_packages.hxx"
+#include "spares_mesh_field.hxx"
 
 #include "block_cluster_3d.h"
 
@@ -9,7 +9,7 @@ namespace SPH
 {
 //=================================================================================================//
 template <int PKG_SIZE>
-void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariablesToPltByMesh(
+void SparseMeshField<PKG_SIZE>::writePackageVariablesToPltByMesh(
     UnsignedInt resolution_level, std::ofstream &output_file)
 {
     IndexHandler &index_handler = this->getMeshLevel(resolution_level);
@@ -35,13 +35,13 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariablesToPltByMesh(
     output_file << " VARIABLES = " << "x, " << "y, " << "z";
 
     constexpr int type_index_int = DataTypeIndex<int>::value;
-    for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variables_to_write_))
+    for (PackageVariable<int> *variable : std::get<type_index_int>(pkg_variables_to_write_))
     {
         output_file << ",\"" << variable->Name() << "\"";
     };
 
     constexpr int type_index_Vecd = DataTypeIndex<Vec3d>::value;
-    for (MeshVariable<Vec3d> *variable : std::get<type_index_Vecd>(mesh_variables_to_write_))
+    for (PackageVariable<Vec3d> *variable : std::get<type_index_Vecd>(pkg_variables_to_write_))
     {
         std::string variable_name = variable->Name();
         output_file << ",\"" << variable_name << "_x\""
@@ -50,7 +50,7 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariablesToPltByMesh(
     };
 
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
-    for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variables_to_write_))
+    for (PackageVariable<Real> *variable : std::get<type_index_Real>(pkg_variables_to_write_))
     {
         output_file << ",\"" << variable->Name() << "\"";
     };
@@ -65,11 +65,11 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariablesToPltByMesh(
         Array3i block_size = Array3i(block.second[0] - block.first[0] + 1,
                                      block.second[1] - block.first[1] + 1,
                                      block.second[2] - block.first[2] + 1);
-        Array3i global_lower_bound = DataPackageSize() * lower_bound_cell_index - Array3i::Ones();
-        Array3i global_upper_bound = DataPackageSize() * (lower_bound_cell_index + block_size) + Array3i::Ones();
-        output_file << "zone i=" << block_size[0] * DataPackageSize() + 2 << "  j="
-                    << block_size[1] * DataPackageSize() + 2 << "  k="
-                    << block_size[2] * DataPackageSize() + 2
+        Array3i global_lower_bound = PackageDataSize() * lower_bound_cell_index - Array3i::Ones();
+        Array3i global_upper_bound = PackageDataSize() * (lower_bound_cell_index + block_size) + Array3i::Ones();
+        output_file << "zone i=" << block_size[0] * PackageDataSize() + 2 << "  j="
+                    << block_size[1] * PackageDataSize() + 2 << "  k="
+                    << block_size[2] * PackageDataSize() + 2
                     << "  DATAPACKING=POINT \n";
 
         auto cell_pkg_index = mcv_cell_pkg_index_->Data();
@@ -81,23 +81,23 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariablesToPltByMesh(
                 output_file << data_position[0] << " " << data_position[1] << " " << data_position[2] << " ";
 
                 constexpr int type_index_int = DataTypeIndex<int>::value;
-                for (MeshVariable<int> *variable : std::get<type_index_int>(mesh_variables_to_write_))
+                for (PackageVariable<int> *variable : std::get<type_index_int>(pkg_variables_to_write_))
                 {
-                    int value = index_handler.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
+                    int value = index_handler.ValueByGlobalMesh(variable->Data(), global_index, cell_pkg_index);
                     output_file << value << " ";
                 };
 
                 constexpr int type_index_Vecd = DataTypeIndex<Vec3d>::value;
-                for (MeshVariable<Vec3d> *variable : std::get<type_index_Vecd>(mesh_variables_to_write_))
+                for (PackageVariable<Vec3d> *variable : std::get<type_index_Vecd>(pkg_variables_to_write_))
                 {
-                    Vec3d value = index_handler.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
+                    Vec3d value = index_handler.ValueByGlobalMesh(variable->Data(), global_index, cell_pkg_index);
                     output_file << value[0] << " " << value[1] << " " << value[2] << " ";
                 };
 
                 constexpr int type_index_Real = DataTypeIndex<Real>::value;
-                for (MeshVariable<Real> *variable : std::get<type_index_Real>(mesh_variables_to_write_))
+                for (PackageVariable<Real> *variable : std::get<type_index_Real>(pkg_variables_to_write_))
                 {
-                    Real value = index_handler.DataValueFromGlobalIndex(variable->Data(), global_index, cell_pkg_index);
+                    Real value = index_handler.ValueByGlobalMesh(variable->Data(), global_index, cell_pkg_index);
                     output_file << value << " ";
                 };
                 output_file << " \n";
@@ -107,4 +107,4 @@ void MeshWithGridDataPackages<PKG_SIZE>::writeMeshVariablesToPltByMesh(
 }
 //=================================================================================================//
 } // namespace SPH
-#endif // MESH_WITH_DATA_PACKAGES_3D_HPP
+#endif // SPARSE_MESH_FIELD_3D_HPP
