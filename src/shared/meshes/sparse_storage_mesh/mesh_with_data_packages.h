@@ -159,7 +159,7 @@ class MeshWithGridDataPackages : public MultiResolutionMeshField<PackageMesh<PKG
     void setBoundaryData(DiscreteVariableType *variable, UnsignedInt resolution_level,
                          const BoundaryDataFunction &boundary_data_function);
 
-    void organizeOccupiedPackages();
+    void organizeOccupiedPackages(UnsignedInt resolution_level);
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H

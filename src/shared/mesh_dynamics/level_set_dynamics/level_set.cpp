@@ -80,11 +80,7 @@ void LevelSet::initializeLevel(
 
     MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package(*mesh_data, 0);
     tag_a_cell_is_inner_package.exec();
-    if (level == 0)
-    {
-        mesh_data->organizeOccupiedPackages();
-    }
-
+    mesh_data->organizeOccupiedPackages(0);
     PackageSort<execution::ParallelPolicy> pkg_sort(*mesh_data, 0);
     pkg_sort.exec();
 
