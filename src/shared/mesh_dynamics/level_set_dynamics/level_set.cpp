@@ -40,7 +40,7 @@ LevelSet::LevelSet(
         neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
             *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-    initializeLevel(0, this, 0);
+    initializeLevel(0);
     for (size_t level = 1; level < resolution_levels_; ++level)
     {
         data_spacing *= 0.5;     // Halve the data spacing
@@ -51,7 +51,7 @@ LevelSet::LevelSet(
             neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
                 *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-        initializeLevel(0, this, level - 1);
+        initializeLevel(level, this, level - 1);
     }
 }
 //=================================================================================================//
@@ -181,7 +181,7 @@ Matd LevelSet::probeKernelSecondGradientIntegral(const Vecd &position, Real h_ra
 void LevelSet::writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence)
 {
     sync_mesh_variables_to_write_();
-    writeMeshFieldToPlt(partial_file_name, sequence);
+    MeshWithGridDataPackages<4>::writeMeshFieldToPlt(partial_file_name, sequence);
 }
 //=============================================================================================//
 } // namespace SPH

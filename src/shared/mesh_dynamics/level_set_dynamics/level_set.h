@@ -83,7 +83,7 @@ class LevelSet : public MeshWithGridDataPackages<4>
     inline size_t getProbeLevel(const Vecd &position);
     inline size_t getCoarseLevel(Real h_ratio);
 
-    void initializeLevel(UnsignedInt level, MeshWithGridDataPackagesType *coarse_data, UnsignedInt coarse_level);
+    void initializeLevel(UnsignedInt level, MeshWithGridDataPackagesType *coarse_data = nullptr, UnsignedInt coarse_level = 0);
     template <class ExecutionPolicy>
     void initializeMeshVariables(const ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
