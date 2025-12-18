@@ -94,9 +94,9 @@ class LevelSetShape : public Shape
     LevelSet &getLevelSet() { return level_set_; }
 
     template <typename DataType>
-    LevelSetShape *addMeshVariableToWrite(const std::string &variable_name)
+    LevelSetShape *addPackageVariableToWrite(const std::string &variable_name)
     {
-        level_set_.addMeshVariableToWrite<DataType>(variable_name);
+        level_set_.addPackageVariableToWrite<DataType>(variable_name);
         return this;
     };
 

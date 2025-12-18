@@ -139,7 +139,7 @@ void SparseMeshField<PKG_SIZE>::syncPackageVariablesToProbe(ExecutionPolicy &ex_
 template <int PKG_SIZE>
 template <typename DataType>
 DiscreteVariable<PackageData<DataType, PKG_SIZE>> *SparseMeshField<PKG_SIZE>::
-    registerMeshVariable(const std::string &variable_name)
+    registerPackageVariable(const std::string &variable_name)
 {
     if (!is_organized_)
     {
@@ -169,7 +169,7 @@ DiscreteVariable<DataType> *SparseMeshField<PKG_SIZE>::registerMetaVariable(
 template <int PKG_SIZE>
 template <typename DataType>
 DiscreteVariable<PackageData<DataType, PKG_SIZE>> *SparseMeshField<PKG_SIZE>::
-    getMeshVariable(const std::string &variable_name)
+    getPackageVariable(const std::string &variable_name)
 {
     PackageVariable<DataType> *variable =
         findVariableByName<DataType, PackageVariable>(all_pkg_variables_, variable_name);
@@ -198,18 +198,18 @@ DiscreteVariable<DataType> *SparseMeshField<PKG_SIZE>::
 //=============================================================================================//
 template <int PKG_SIZE>
 template <typename DataType>
-void SparseMeshField<PKG_SIZE>::addMeshVariableToWrite(const std::string &variable_name)
+void SparseMeshField<PKG_SIZE>::addPackageVariableToWrite(const std::string &variable_name)
 {
     addVariableToList<PackageVariable, DataType>(
-        pkg_variables_to_write_, getMeshVariable<DataType>(variable_name));
+        pkg_variables_to_write_, getPackageVariable<DataType>(variable_name));
 }
 //=============================================================================================//
 template <int PKG_SIZE>
 template <typename DataType>
-void SparseMeshField<PKG_SIZE>::addMeshVariableToProbe(const std::string &variable_name)
+void SparseMeshField<PKG_SIZE>::addPackageVariableToProbe(const std::string &variable_name)
 {
     addVariableToList<PackageVariable, DataType>(
-        pkh_variables_to_probe_, getMeshVariable<DataType>(variable_name));
+        pkh_variables_to_probe_, getPackageVariable<DataType>(variable_name));
 }
 //=============================================================================================//
 template <int PKG_SIZE>

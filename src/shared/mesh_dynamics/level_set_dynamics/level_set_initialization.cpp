@@ -130,12 +130,12 @@ InitializeBasicPackageData::InitializeBasicPackageData(
     SparseMeshField<4> &data_mesh, UnsignedInt resolution_level, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh, resolution_level), shape_(shape),
       dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
-      mv_phi_(*data_mesh.registerMeshVariable<Real>("LevelSet")),
-      mv_phi_gradient_(*data_mesh.registerMeshVariable<Vecd>("LevelSetGradient")),
-      mv_near_interface_id_(*data_mesh.registerMeshVariable<int>("NearInterfaceID"))
+      mv_phi_(*data_mesh.registerPackageVariable<Real>("LevelSet")),
+      mv_phi_gradient_(*data_mesh.registerPackageVariable<Vecd>("LevelSetGradient")),
+      mv_near_interface_id_(*data_mesh.registerPackageVariable<int>("NearInterfaceID"))
 {
     Real far_field_distance = index_handler_.GridSpacing() * (Real)index_handler_.BufferWidth();
-    data_mesh.addMeshVariableToWrite<Real>("LevelSet");
+    data_mesh.addPackageVariableToWrite<Real>("LevelSet");
     data_mesh.setBoundaryData(&mv_phi_, resolution_level, [&](UnsignedInt k)
                               { Real phi = k == 0 ? -far_field_distance : far_field_distance; 
                                 return PackageVariableData<Real>::Constant(phi); });
@@ -164,7 +164,7 @@ NearInterfaceCellTagging::NearInterfaceCellTagging(
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       mcv_cell_contain_id_(*data_mesh.getCellVariable<int>("CellContainID")),
-      mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")) {}
+      mv_phi_(*data_mesh.getPackageVariable<Real>("LevelSet")) {}
 //=============================================================================================//
 CellContainDiffusion::CellContainDiffusion(
     SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,

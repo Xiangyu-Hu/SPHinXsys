@@ -42,7 +42,7 @@ int main(int ac, char *av[])
     input_shape.subtract<MultiPolygonShape>(original_logo);
     RealBody input_body(sph_system, input_shape);
     LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(par_ck, 2.0)
-                                         ->addMeshVariableToWrite<Real>("KernelWeight")
+                                         ->addPackageVariableToWrite<Real>("KernelWeight")
                                          ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
                                          ->addCellVariableToWrite<int>("CellContainID")
                                          ->writeLevelSet(sph_system);

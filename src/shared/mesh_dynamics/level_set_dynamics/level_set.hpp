@@ -93,8 +93,8 @@ void LevelSet::registerProbes(const ExecutionPolicy &ex_policy)
             probe_level_set_gradient_vector_keeper_
                 .template createPtr<ProbeLevelSetGradient>(ex_policy, this, level));
 
-        addMeshVariableToProbe<Real>("LevelSet");
-        addMeshVariableToProbe<Vecd>("LevelSetGradient"); // shared with normal direction
+        addPackageVariableToProbe<Real>("LevelSet");
+        addPackageVariableToProbe<Vecd>("LevelSetGradient"); // shared with normal direction
 
         mesh_index_handler_set_.push_back(&getMeshLevel(level));
         cell_pkg_index_ = mcv_cell_pkg_index_->DelegatedData(ex_policy);
@@ -116,9 +116,9 @@ void LevelSet::registerKernelIntegralProbes(const ExecutionPolicy &ex_policy)
         probe_kernel_second_gradient_integral_set_.push_back(
             probe_kernel_second_gradient_integral_vector_keeper_
                 .template createPtr<ProbeKernelSecondGradientIntegral>(ex_policy, this, level));
-        addMeshVariableToProbe<Real>("KernelWeight");
-        addMeshVariableToProbe<Vecd>("KernelGradient");
-        addMeshVariableToProbe<Matd>("KernelSecondGradient");
+        addPackageVariableToProbe<Real>("KernelWeight");
+        addPackageVariableToProbe<Vecd>("KernelGradient");
+        addPackageVariableToProbe<Matd>("KernelSecondGradient");
     }
 }
 //=================================================================================================//

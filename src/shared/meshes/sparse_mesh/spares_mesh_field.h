@@ -118,12 +118,12 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
 
   protected:
     UnsignedInt num_boundary_pkgs_;        /**< the number boundary packages for each resolution level. */
-    StdVec<UnsignedInt> num_pkgs_offsets_; /**< save stating and ending indexes of packages. */
+    StdVec<UnsignedInt> num_pkgs_offsets_; /**< save stating and ending indexes of non-boundary packages. */
     UnsignedInt pkgs_bound_;
     MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;               /**< metadata for data packages: cell index. */
     MetaVariable<int> *dv_pkg_type_;                                /**< metadata for data packages: (int)core1/inner0. */
     MetaVariable<CellNeighborhood> *cell_neighborhood_;             /**< 3*3(*3) array to store indicies of neighborhood cells. */
-    CellVariable<UnsignedInt> *mcv_cell_pkg_index_;                 /**< the package index for each cell in a 1-d array. */
+    CellVariable<UnsignedInt> *mcv_cell_pkg_index_;                 /**< the package index for each cell in as 1-d array. */
     ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_; /**< (UnsignedInt)sort_index, (int)core1/inner0. */
     bool is_organized_ = false;                                     /**< whether the data packages are organized. */
 
@@ -139,17 +139,17 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
     template <class ExecutionPolicy>
     void syncPackageVariablesToProbe(ExecutionPolicy &ex_policy);
     template <typename DataType>
-    PackageVariable<DataType> *registerMeshVariable(const std::string &name);
+    PackageVariable<DataType> *registerPackageVariable(const std::string &name);
     template <typename DataType, typename... Args>
     MetaVariable<DataType> *registerMetaVariable(const std::string &name, Args &&...args);
     template <typename DataType>
-    PackageVariable<DataType> *getMeshVariable(const std::string &name);
+    PackageVariable<DataType> *getPackageVariable(const std::string &name);
     template <typename DataType>
     MetaVariable<DataType> *getMetaVariable(const std::string &name);
     template <typename DataType>
-    void addMeshVariableToWrite(const std::string &name);
+    void addPackageVariableToWrite(const std::string &name);
     template <typename DataType>
-    void addMeshVariableToProbe(const std::string &name);
+    void addPackageVariableToProbe(const std::string &name);
     template <typename DataType>
     void addEvolvingMetaVariable(const std::string &name);
 
