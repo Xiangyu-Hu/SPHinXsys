@@ -10,41 +10,20 @@ template <class ExecutionPolicy>
 void LevelSet::configLevelSetPostProcesses(const ExecutionPolicy &ex_policy)
 {
     clean_interface_keeper_ = makeUnique<CleanInterface<ExecutionPolicy>>(
-        *mesh_data_set_.back(), 0, *neighbor_method_set_.back(), refinement_ratio_);
+        *this, resolution_levels_ - 1, *neighbor_method_set_.back(), refinement_ratio_);
     correct_topology_keeper_ = makeUnique<CorrectTopology<ExecutionPolicy>>(
-        *mesh_data_set_.back(), 0, *neighbor_method_set_.back());
+        *this, resolution_levels_ - 1, *neighbor_method_set_.back());
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
 void LevelSet::initializeMeshVariables(const ExecutionPolicy &ex_policy)
 {
-    for (size_t level = 0; level < total_levels_; level++)
+    for (size_t level = 0; level < resolution_levels_; level++)
     {
         MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient>
-            update_level_set_gradient{*mesh_data_set_[level], 0};
+            update_level_set_gradient(*this, level);
         update_level_set_gradient.exec();
     }
-}
-//=================================================================================================//
-template <class ExecutionPolicy>
-void LevelSet::syncMeshVariablesToWrite(ExecutionPolicy &ex_policy)
-{
-    for (size_t l = 0; l != total_levels_; l++)
-        mesh_data_set_[l]->syncMeshVariablesToWrite(ex_policy);
-}
-//=================================================================================================//
-template <class ExecutionPolicy>
-void LevelSet::syncMeshCellVariablesToWrite(ExecutionPolicy &ex_policy)
-{
-    for (size_t l = 0; l != total_levels_; l++)
-        mesh_data_set_[l]->syncMeshCellVariablesToWrite(ex_policy);
-}
-//=================================================================================================//
-template <class ExecutionPolicy>
-void LevelSet::syncMeshVariablesToProbe(ExecutionPolicy &ex_policy)
-{
-    for (size_t l = 0; l != total_levels_; l++)
-        mesh_data_set_[l]->syncMeshVariablesToProbe(ex_policy);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -73,10 +52,10 @@ void LevelSet::finishInitialization(const ExecutionPolicy &ex_policy, UsageType 
 template <class ExecutionPolicy>
 void LevelSet::initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy)
 {
-    for (size_t level = 0; level < total_levels_; level++)
+    for (size_t level = 0; level < resolution_levels_; level++)
     {
         MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals>
-            update_kernel_integrals{*mesh_data_set_[level], 0, *neighbor_method_set_[level]};
+            update_kernel_integrals(*this, level, *neighbor_method_set_[level]);
         update_kernel_integrals.exec();
     }
 }
@@ -84,80 +63,62 @@ void LevelSet::initializeKernelIntegralVariables(const ExecutionPolicy &ex_polic
 template <class ExecutionPolicy>
 ProbeSignedDistance LevelSet::getProbeSignedDistance(const ExecutionPolicy &ex_policy)
 {
-    return ProbeSignedDistance(ex_policy, mesh_data_set_[total_levels_ - 1]);
+    return ProbeSignedDistance(ex_policy, this, resolution_levels_ - 1);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
 ProbeNormalDirection LevelSet::getProbeNormalDirection(const ExecutionPolicy &ex_policy)
 {
-    return ProbeNormalDirection(ex_policy, mesh_data_set_[total_levels_ - 1]);
+    return ProbeNormalDirection(ex_policy, this, resolution_levels_ - 1);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
 ProbeKernelGradientIntegral LevelSet::getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy)
 {
-    return ProbeKernelGradientIntegral(ex_policy, mesh_data_set_[total_levels_ - 1]);
+    return ProbeKernelGradientIntegral(ex_policy, this, resolution_levels_ - 1);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
 void LevelSet::registerProbes(const ExecutionPolicy &ex_policy)
 {
-    for (size_t level = 0; level < total_levels_; level++)
+    for (size_t level = 0; level < resolution_levels_; level++)
     {
         probe_signed_distance_set_.push_back(
             probe_signed_distance_vector_keeper_
-                .template createPtr<ProbeSignedDistance>(ex_policy, mesh_data_set_[level]));
+                .template createPtr<ProbeSignedDistance>(ex_policy, this, level));
         probe_normal_direction_set_.push_back(
             probe_normal_direction_vector_keeper_
-                .template createPtr<ProbeNormalDirection>(ex_policy, mesh_data_set_[level]));
+                .template createPtr<ProbeNormalDirection>(ex_policy, this, level));
         probe_level_set_gradient_set_.push_back(
             probe_level_set_gradient_vector_keeper_
-                .template createPtr<ProbeLevelSetGradient>(ex_policy, mesh_data_set_[level]));
+                .template createPtr<ProbeLevelSetGradient>(ex_policy, this, level));
 
-        mesh_data_set_[level]->addMeshVariableToProbe<Real>("LevelSet");
-        mesh_data_set_[level]->addMeshVariableToProbe<Vecd>("LevelSetGradient"); // shared with normal direction
+        addMeshVariableToProbe<Real>("LevelSet");
+        addMeshVariableToProbe<Vecd>("LevelSetGradient"); // shared with normal direction
 
-        mesh_index_handler_set_.push_back(&mesh_data_set_[level]->getResolutionLevel(0));
-        cell_pkg_index_set_.push_back(mesh_data_set_[level]->getCellPackageIndex().DelegatedData(ex_policy));
-        pkg_type_set_.push_back(mesh_data_set_[level]->getPackageType().DelegatedData(ex_policy));
+        mesh_index_handler_set_.push_back(&getResolutionLevel(level));
+        cell_pkg_index_ = mcv_cell_pkg_index_->DelegatedData(ex_policy);
+        pkg_type_ = dv_pkg_type_->DelegatedData(ex_policy);
     }
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
 void LevelSet::registerKernelIntegralProbes(const ExecutionPolicy &ex_policy)
 {
-    for (size_t level = 0; level < total_levels_; level++)
+    for (size_t level = 0; level < resolution_levels_; level++)
     {
         probe_kernel_integral_set_.push_back(
             probe_kernel_integral_vector_keeper_
-                .template createPtr<ProbeKernelIntegral>(ex_policy, mesh_data_set_[level]));
+                .template createPtr<ProbeKernelIntegral>(ex_policy, this, level));
         probe_kernel_gradient_integral_set_.push_back(
             probe_kernel_gradient_integral_vector_keeper_
-                .template createPtr<ProbeKernelGradientIntegral>(ex_policy, mesh_data_set_[level]));
+                .template createPtr<ProbeKernelGradientIntegral>(ex_policy, this, level));
         probe_kernel_second_gradient_integral_set_.push_back(
             probe_kernel_second_gradient_integral_vector_keeper_
-                .template createPtr<ProbeKernelSecondGradientIntegral>(ex_policy, mesh_data_set_[level]));
-        mesh_data_set_[level]->addMeshVariableToProbe<Real>("KernelWeight");
-        mesh_data_set_[level]->addMeshVariableToProbe<Vecd>("KernelGradient");
-        mesh_data_set_[level]->addMeshVariableToProbe<Matd>("KernelSecondGradient");
-    }
-}
-//=================================================================================================//
-template <typename DataType>
-void LevelSet::addMeshVariableToWrite(const std::string &variable_name)
-{
-    for (size_t level = 0; level < total_levels_; level++)
-    {
-        mesh_data_set_[level]->addMeshVariableToWrite<DataType>(variable_name);
-    }
-}
-//=================================================================================================//
-template <typename DataType>
-void LevelSet::addMeshCellVariableToWrite(const std::string &variable_name)
-{
-    for (size_t level = 0; level < total_levels_; level++)
-    {
-        mesh_data_set_[level]->addMeshCellVariableToWrite<DataType>(variable_name);
+                .template createPtr<ProbeKernelSecondGradientIntegral>(ex_policy, this, level));
+        addMeshVariableToProbe<Real>("KernelWeight");
+        addMeshVariableToProbe<Vecd>("KernelGradient");
+        addMeshVariableToProbe<Matd>("KernelSecondGradient");
     }
 }
 //=================================================================================================//

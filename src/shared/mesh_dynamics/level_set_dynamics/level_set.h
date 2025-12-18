@@ -77,27 +77,13 @@ class LevelSet : public MeshWithGridDataPackages<4>
     Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0);
     Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0);
     Matd probeKernelSecondGradientIntegral(const Vecd &position, Real h_ratio = 1.0);
-    StdVec<MeshWithGridDataPackagesType *> getMeshLevels() { return mesh_data_set_; };
-
-    template <typename DataType>
-    void addMeshVariableToWrite(const std::string &variable_name);
     void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
-    template <typename DataType>
-    void addMeshCellVariableToWrite(const std::string &variable_name);
-    template <class ExecutionPolicy>
-    void syncMeshVariablesToWrite(ExecutionPolicy &ex_policy);
-    template <class ExecutionPolicy>
-    void syncMeshCellVariablesToWrite(ExecutionPolicy &ex_policy);
-    template <class ExecutionPolicy>
-    void syncMeshVariablesToProbe(ExecutionPolicy &ex_policy);
 
   protected:
     inline size_t getProbeLevel(const Vecd &position);
     inline size_t getCoarseLevel(Real h_ratio);
 
-    void initializeLevel(
-        UnsignedInt level, Real reference_data_spacing,
-        BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data = nullptr);
+    void initializeLevel(UnsignedInt level, MeshWithGridDataPackagesType *coarse_data, UnsignedInt coarse_level);
     template <class ExecutionPolicy>
     void initializeMeshVariables(const ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
@@ -107,14 +93,12 @@ class LevelSet : public MeshWithGridDataPackages<4>
     template <class ExecutionPolicy>
     void registerKernelIntegralProbes(const ExecutionPolicy &ex_policy);
 
-    size_t total_levels_; /**< level 0 is the coarsest */
-    Shape &shape_;        /**< the geometry is described by the level set. */
+    Shape &shape_; /**< the geometry is described by the level set. */
     Real refinement_ratio_;
-    StdVec<UnsignedInt *> cell_pkg_index_set_;
-    StdVec<int *> pkg_type_set_;
+    UnsignedInt *cell_pkg_index_;
+    int *pkg_type_;
     StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
     StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
-    StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;
     StdVec<MeshWithGridDataPackagesType::IndexHandler *> mesh_index_handler_set_;
     StdVec<ProbeSignedDistance *> probe_signed_distance_set_;
     StdVec<ProbeNormalDirection *> probe_normal_direction_set_;

@@ -12,7 +12,7 @@ LevelSet::LevelSet(
     : MeshWithGridDataPackages<4>(
           "LevelSet_" + shape.getName(), 1, tentative_bounds,
           coarse_data->getResolutionLevel(0).GridSpacing() * 0.5, 4, 2),
-      total_levels_(1), shape_(shape), refinement_ratio_(refinement_ratio)
+      shape_(shape), refinement_ratio_(refinement_ratio)
 {
     Real data_spacing = coarse_data->getResolutionLevel(0).DataSpacing() * 0.5;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
@@ -22,7 +22,7 @@ LevelSet::LevelSet(
         neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
             *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-    initializeLevel(0, data_spacing, tentative_bounds, coarse_data);
+    initializeLevel(0, coarse_data, coarse_data->getMeshes().size() - 1);
 }
 //=================================================================================================//
 LevelSet::LevelSet(
@@ -31,7 +31,7 @@ LevelSet::LevelSet(
     : MeshWithGridDataPackages<4>(
           "LevelSet_" + shape.getName(), total_levels, tentative_bounds,
           data_spacing * Real(4), 4, 2),
-      total_levels_(total_levels), shape_(shape), refinement_ratio_(refinement_ratio)
+      shape_(shape), refinement_ratio_(refinement_ratio)
 {
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
@@ -40,8 +40,8 @@ LevelSet::LevelSet(
         neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
             *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-    initializeLevel(0, data_spacing, tentative_bounds);
-    for (size_t level = 1; level < total_levels_; ++level)
+    initializeLevel(0, this, 0);
+    for (size_t level = 1; level < resolution_levels_; ++level)
     {
         data_spacing *= 0.5;     // Halve the data spacing
         global_h_ratio *= 2;     // Double the ratio
@@ -51,47 +51,40 @@ LevelSet::LevelSet(
             neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
                 *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-        initializeLevel(0, data_spacing, tentative_bounds, mesh_data_set_[level - 1]);
+        initializeLevel(0, this, level - 1);
     }
 }
 //=================================================================================================//
 void LevelSet::initializeLevel(
-    UnsignedInt level, Real data_spacing, BoundingBoxd tentative_bounds,
-    MeshWithGridDataPackagesType *coarse_data)
+    UnsignedInt level, MeshWithGridDataPackagesType *coarse_data, UnsignedInt coarse_level)
 {
-    MeshWithGridDataPackagesType *mesh_data =
-        mesh_data_ptr_vector_keeper_
-            .template createPtr<MeshWithGridDataPackagesType>(
-                tentative_bounds, data_spacing, 4);
-    mesh_data_set_.push_back(mesh_data);
-
-    if (coarse_data == nullptr)
+    if (level == 0)
     {
         MeshAllDynamics<execution::ParallelPolicy, InitialCellTagging>
-            initial_cell_tagging(*mesh_data, shape_);
+            initial_cell_tagging(*this, shape_);
         initial_cell_tagging.exec();
     }
     else
     {
         MeshAllDynamics<execution::ParallelPolicy, InitialCellTaggingFromCoarse>
-            initial_cell_tagging_from_coarse(*mesh_data, 0, *coarse_data, 0, shape_);
+            initial_cell_tagging_from_coarse(*this, level, *coarse_data, coarse_level, shape_);
         initial_cell_tagging_from_coarse.exec();
     }
 
-    MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package(*mesh_data, 0);
+    MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package(*this, level);
     tag_a_cell_is_inner_package.exec();
-    mesh_data->organizeOccupiedPackages(0);
-    PackageSort<execution::ParallelPolicy> pkg_sort(*mesh_data, 0);
+    organizeOccupiedPackages(level);
+    PackageSort<execution::ParallelPolicy> pkg_sort(*this, level);
     pkg_sort.exec();
 
     /* All initializations in `FinishDataPackages` are achieved on CPU. */
-    FinishDataPackages finish_data_packages(*mesh_data, 0, shape_);
+    FinishDataPackages finish_data_packages(*this, level, shape_);
     finish_data_packages.exec();
 }
 //=================================================================================================//
 size_t LevelSet::getCoarseLevel(Real h_ratio)
 {
-    for (size_t level = total_levels_; level != 0; --level)
+    for (size_t level = resolution_levels_; level != 0; --level)
         if (h_ratio > global_h_ratio_vec_[level - 1])
             return level - 1; // jump out the loop!
 
@@ -131,10 +124,9 @@ Vecd LevelSet::probeLevelSetGradient(const Vecd &position)
 //=============================================================================================//
 size_t LevelSet::getProbeLevel(const Vecd &position)
 {
-    for (size_t level = total_levels_; level != 0; --level)
+    for (size_t level = resolution_levels_; level != 0; --level)
     {
-        if (mesh_index_handler_set_[level - 1]->isWithinCorePackage(
-                cell_pkg_index_set_[level - 1], pkg_type_set_[level - 1], position))
+        if (mesh_index_handler_set_[level - 1]->isWithinCorePackage(cell_pkg_index_, pkg_type_, position))
             return level - 1; // jump out of the loop!
     }
     return 0;
@@ -142,7 +134,7 @@ size_t LevelSet::getProbeLevel(const Vecd &position)
 //=================================================================================================//
 Real LevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 {
-    if (mesh_data_set_.size() == 1)
+    if (resolution_levels_ == 1)
     {
         return (*probe_kernel_integral_set_[0])(position);
     }
@@ -158,7 +150,7 @@ Real LevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 {
     // std::cout << "probe kernel gradient integral" << std::endl;
-    if (mesh_data_set_.size() == 1)
+    if (resolution_levels_ == 1)
     {
         return (*probe_kernel_gradient_integral_set_[0])(position);
     }
@@ -173,7 +165,7 @@ Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 //=================================================================================================//
 Matd LevelSet::probeKernelSecondGradientIntegral(const Vecd &position, Real h_ratio)
 {
-    if (mesh_data_set_.size() == 1)
+    if (resolution_levels_ == 1)
     {
         return (*probe_kernel_second_gradient_integral_set_[0])(position);
     }
@@ -189,10 +181,7 @@ Matd LevelSet::probeKernelSecondGradientIntegral(const Vecd &position, Real h_ra
 void LevelSet::writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence)
 {
     sync_mesh_variables_to_write_();
-    for (size_t l = 0; l != total_levels_; ++l)
-    {
-        mesh_data_set_[l]->writeMeshFieldToPlt(partial_file_name, l);
-    }
+    writeMeshFieldToPlt(partial_file_name, sequence);
 }
 //=============================================================================================//
 } // namespace SPH

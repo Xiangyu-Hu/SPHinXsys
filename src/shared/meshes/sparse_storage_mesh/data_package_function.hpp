@@ -59,9 +59,9 @@ template <typename DataType, int PKG_SIZE>
 template <class ExecutionPolicy>
 ProbeMesh<DataType, PKG_SIZE>::ProbeMesh(
     const ExecutionPolicy &ex_policy, MeshWithGridDataPackages<PKG_SIZE> *data_mesh,
-    const std::string variable_name)
+    UnsignedInt resolution_level, const std::string &variable_name)
     : pkg_data_(data_mesh->template getMeshVariable<DataType>(variable_name)->DelegatedData(ex_policy)),
-      index_handler_(data_mesh->getResolutionLevel(0)),
+      index_handler_(data_mesh->getResolutionLevel(resolution_level)),
       cell_pkg_index_(data_mesh->getCellPackageIndex().DelegatedData(ex_policy)),
       cell_neighborhood_(data_mesh->getCellNeighborhood().DelegatedData(ex_policy)) {}
 //=============================================================================================//

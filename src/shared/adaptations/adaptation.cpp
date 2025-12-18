@@ -106,8 +106,7 @@ UniquePtr<LevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_
     LevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
                                 total_levels - 1, shape, *this, refinement_ratio);
     // return the finest level set only
-    return makeUnique<LevelSet>(shape.getBounds(), coarser_level_sets.getMeshLevels().back(),
-                                shape, *this, refinement_ratio);
+    return makeUnique<LevelSet>(shape.getBounds(), &coarser_level_sets, shape, *this, refinement_ratio);
 }
 //=================================================================================================//
 AdaptiveSmoothingLength::

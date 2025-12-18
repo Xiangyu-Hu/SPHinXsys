@@ -65,7 +65,7 @@ class ProbeMesh
   public:
     template <class ExecutionPolicy>
     ProbeMesh(const ExecutionPolicy &ex_policy, MeshWithGridDataPackages<PKG_SIZE> *data_mesh,
-              const std::string variable_name);
+              UnsignedInt resolution_level, const std::string &variable_name);
     DataType operator()(const Vecd &position);
 
   protected:
