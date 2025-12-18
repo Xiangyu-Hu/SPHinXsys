@@ -36,22 +36,20 @@
 
 namespace SPH
 {
-using MeshWithGridPackageDatasType = SparseMeshField<4>;
+template <typename DataType>
+using PackageVariableData = SparseMeshField<4>::PackageVariableData<DataType>;
 
 template <typename DataType>
-using PackageVariableData = MeshWithGridPackageDatasType::PackageVariableData<DataType>;
-
-template <typename DataType>
-using PackageVariable = MeshWithGridPackageDatasType::PackageVariable<DataType>;
+using PackageVariable = SparseMeshField<4>::PackageVariable<DataType>;
 
 template <typename DataType>
 using CellVariable = DiscreteVariable<DataType>;
 
 template <typename DataType>
-using MetaVariable = MeshWithGridPackageDatasType::MetaVariable<DataType>;
+using MetaVariable = SparseMeshField<4>::MetaVariable<DataType>;
 
-using PackageVariableAssemble = MeshWithGridPackageDatasType::PackageVariableAssemble;
-using MetaVariableAssemble = MeshWithGridPackageDatasType::MetaVariableAssemble;
+using PackageVariableAssemble = SparseMeshField<4>::PackageVariableAssemble;
+using MetaVariableAssemble = SparseMeshField<4>::MetaVariableAssemble;
 using IndexHandler = PackageMesh<4>;
 
 /**
@@ -61,18 +59,18 @@ using IndexHandler = PackageMesh<4>;
 class BaseMeshLocalDynamics
 {
   public:
-    explicit BaseMeshLocalDynamics(MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level)
+    explicit BaseMeshLocalDynamics(SparseMeshField<4> &data_mesh, UnsignedInt resolution_level)
         : data_mesh_(data_mesh), index_handler_(data_mesh.getMeshLevel(resolution_level)),
           resolution_level_(resolution_level) {};
     virtual ~BaseMeshLocalDynamics() {};
 
-    static constexpr int pkg_size = MeshWithGridPackageDatasType::PackageDataSize();
+    static constexpr int pkg_size = SparseMeshField<4>::PackageDataSize();
     static constexpr int pkg_size_minus1 = pkg_size - 1;
     virtual void setupDynamics(Real dt = 0.0) {};  // setup global parameters
     virtual void finishDynamics(Real dt = 0.0) {}; // update global parameters
 
   protected:
-    MeshWithGridPackageDatasType &data_mesh_;
+    SparseMeshField<4> &data_mesh_;
     IndexHandler &index_handler_;
     UnsignedInt resolution_level_;
 };

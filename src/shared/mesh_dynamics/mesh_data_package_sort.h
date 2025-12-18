@@ -40,7 +40,7 @@ class PackageSort : public BaseDynamics<void>
     using SortMethodType = typename SortMethod<ExecutionPolicy>::type;
 
   public:
-    explicit PackageSort(MeshWithGridPackageDatasType &mesh_data, UnsignedInt resolution_level)
+    explicit PackageSort(SparseMeshField<4> &mesh_data, UnsignedInt resolution_level)
         : BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
           mesh_data_(mesh_data), resolution_level_(resolution_level),
           num_pkgs_offsets_(mesh_data.getNumPackageOffsets()),
@@ -104,7 +104,7 @@ class PackageSort : public BaseDynamics<void>
 
   private:
     ExecutionPolicy ex_policy_;
-    MeshWithGridPackageDatasType &mesh_data_;
+    SparseMeshField<4> &mesh_data_;
     UnsignedInt resolution_level_;
     StdVec<UnsignedInt> &num_pkgs_offsets_;
     using KernelImplementation = Implementation<ExecutionPolicy, PackageSort<ExecutionPolicy>, UpdateKernel>;

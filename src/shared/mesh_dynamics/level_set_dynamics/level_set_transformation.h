@@ -43,7 +43,7 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 {
   public:
     explicit UpdateLevelSetGradient(
-        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level);
+        SparseMeshField<4> &data_mesh, UnsignedInt resolution_level);
     virtual ~UpdateLevelSetGradient() {};
 
     class UpdateKernel
@@ -73,7 +73,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 
   public:
     explicit UpdateKernelIntegrals(
-        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level,
+        SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
         NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method);
     virtual ~UpdateKernelIntegrals() {};
 

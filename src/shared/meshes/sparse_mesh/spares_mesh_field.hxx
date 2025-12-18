@@ -272,7 +272,7 @@ void SparseMeshField<PKG_SIZE>::organizeOccupiedPackages(UnsignedInt level)
     num_pkgs_offsets_[level + 1] = occupied_data_pkgs_.size();
     if (level == 0)
     {
-        UnsignedInt scale = math::pow(2, Dimensions - 1);
+        UnsignedInt scale = math::pow(2UL, Dimensions - 1);
         pkgs_bound_ = num_pkgs_offsets_[1];
         for (UnsignedInt i = 1; i != this->resolution_levels_; i++)
         {

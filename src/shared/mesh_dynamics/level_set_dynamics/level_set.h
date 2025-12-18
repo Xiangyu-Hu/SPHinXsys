@@ -54,7 +54,7 @@ class LevelSet : public SparseMeshField<4>
   public:
     LevelSet(BoundingBoxd tentative_bounds, Real reference_data_spacing, size_t total_levels,
              Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
-    LevelSet(BoundingBoxd tentative_bounds, MeshWithGridPackageDatasType *coarse_data,
+    LevelSet(BoundingBoxd tentative_bounds, SparseMeshField<4> *coarse_data,
              Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
     ~LevelSet() {};
 
@@ -83,7 +83,7 @@ class LevelSet : public SparseMeshField<4>
     inline size_t getProbeLevel(const Vecd &position);
     inline size_t getCoarseLevel(Real h_ratio);
 
-    void initializeLevel(UnsignedInt level, MeshWithGridPackageDatasType *coarse_data = nullptr, UnsignedInt coarse_level = 0);
+    void initializeLevel(UnsignedInt level, SparseMeshField<4> *coarse_data = nullptr, UnsignedInt coarse_level = 0);
     template <class ExecutionPolicy>
     void initializePackageVariables(const ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
@@ -99,14 +99,14 @@ class LevelSet : public SparseMeshField<4>
     int *pkg_type_;
     StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
     StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
-    StdVec<MeshWithGridPackageDatasType::IndexHandler *> mesh_index_handler_set_;
+    StdVec<SparseMeshField<4>::IndexHandler *> mesh_index_handler_set_;
     StdVec<ProbeSignedDistance *> probe_signed_distance_set_;
     StdVec<ProbeNormalDirection *> probe_normal_direction_set_;
     StdVec<ProbeLevelSetGradient *> probe_level_set_gradient_set_;
     StdVec<ProbeKernelIntegral *> probe_kernel_integral_set_;
     StdVec<ProbeKernelGradientIntegral *> probe_kernel_gradient_integral_set_;
     StdVec<ProbeKernelSecondGradientIntegral *> probe_kernel_second_gradient_integral_set_;
-    UniquePtrsKeeper<MeshWithGridPackageDatasType> mesh_data_ptr_vector_keeper_;
+    UniquePtrsKeeper<SparseMeshField<4>> mesh_data_ptr_vector_keeper_;
     UniquePtrsKeeper<ProbeSignedDistance> probe_signed_distance_vector_keeper_;
     UniquePtrsKeeper<ProbeNormalDirection> probe_normal_direction_vector_keeper_;
     UniquePtrsKeeper<ProbeLevelSetGradient> probe_level_set_gradient_vector_keeper_;

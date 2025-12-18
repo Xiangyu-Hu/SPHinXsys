@@ -4,14 +4,14 @@ namespace SPH
 {
 //=============================================================================================//
 UpdateLevelSetGradient::UpdateLevelSetGradient(
-    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level)
+    SparseMeshField<4> &data_mesh, UnsignedInt resolution_level)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       mv_phi_(*data_mesh.getMeshVariable<Real>("LevelSet")),
       mv_phi_gradient_(*data_mesh.registerMeshVariable<Vecd>("LevelSetGradient")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()) {}
 //=============================================================================================//
 UpdateKernelIntegrals::UpdateKernelIntegrals(
-    MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level,
+    SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
     NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       neighbor_method_(neighbor_method),

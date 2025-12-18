@@ -37,7 +37,7 @@ class ProbeSignedDistance : public ProbeMesh<Real, 4>
 {
   public:
     template <class ExecutionPolicy>
-    ProbeSignedDistance(const ExecutionPolicy &ex_policy, MeshWithGridPackageDatasType *data_mesh, UnsignedInt resolution_level)
+    ProbeSignedDistance(const ExecutionPolicy &ex_policy, SparseMeshField<4> *data_mesh, UnsignedInt resolution_level)
         : ProbeMesh(ex_policy, data_mesh, resolution_level, "LevelSet"){};
     ~ProbeSignedDistance() {};
 };
@@ -46,7 +46,7 @@ class ProbeLevelSetGradient : public ProbeMesh<Vecd, 4>
 {
   public:
     template <class ExecutionPolicy>
-    explicit ProbeLevelSetGradient(const ExecutionPolicy &ex_policy, MeshWithGridPackageDatasType *data_mesh, UnsignedInt resolution_level)
+    explicit ProbeLevelSetGradient(const ExecutionPolicy &ex_policy, SparseMeshField<4> *data_mesh, UnsignedInt resolution_level)
         : ProbeMesh(ex_policy, data_mesh, resolution_level, "LevelSetGradient"){};
     ~ProbeLevelSetGradient() {};
 };
@@ -55,7 +55,7 @@ class ProbeNormalDirection : public ProbeMesh<Vecd, 4>
 {
   public:
     template <class ExecutionPolicy>
-    explicit ProbeNormalDirection(const ExecutionPolicy &ex_policy, MeshWithGridPackageDatasType *mesh_data, UnsignedInt resolution_level)
+    explicit ProbeNormalDirection(const ExecutionPolicy &ex_policy, SparseMeshField<4> *mesh_data, UnsignedInt resolution_level)
         : ProbeMesh<Vecd, 4>(ex_policy, mesh_data, resolution_level, "LevelSetGradient"){};
     virtual ~ProbeNormalDirection() {};
 
@@ -69,7 +69,7 @@ class ProbeKernelIntegral : public ProbeMesh<Real, 4>
 {
   public:
     template <class ExecutionPolicy>
-    explicit ProbeKernelIntegral(const ExecutionPolicy &ex_policy, MeshWithGridPackageDatasType *data_mesh, UnsignedInt resolution_level)
+    explicit ProbeKernelIntegral(const ExecutionPolicy &ex_policy, SparseMeshField<4> *data_mesh, UnsignedInt resolution_level)
         : ProbeMesh(ex_policy, data_mesh, resolution_level, "KernelWeight"){};
     ~ProbeKernelIntegral() {};
 };
@@ -78,7 +78,7 @@ class ProbeKernelGradientIntegral : public ProbeMesh<Vecd, 4>
 {
   public:
     template <class ExecutionPolicy>
-    explicit ProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy, MeshWithGridPackageDatasType *data_mesh, UnsignedInt resolution_level)
+    explicit ProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy, SparseMeshField<4> *data_mesh, UnsignedInt resolution_level)
         : ProbeMesh(ex_policy, data_mesh, resolution_level, "KernelGradient"){};
     ~ProbeKernelGradientIntegral() {};
 };
@@ -87,7 +87,7 @@ class ProbeKernelSecondGradientIntegral : public ProbeMesh<Matd, 4>
 {
   public:
     template <class ExecutionPolicy>
-    explicit ProbeKernelSecondGradientIntegral(const ExecutionPolicy &ex_policy, MeshWithGridPackageDatasType *data_mesh, UnsignedInt resolution_level)
+    explicit ProbeKernelSecondGradientIntegral(const ExecutionPolicy &ex_policy, SparseMeshField<4> *data_mesh, UnsignedInt resolution_level)
         : ProbeMesh(ex_policy, data_mesh, resolution_level, "KernelSecondGradient"){};
     ~ProbeKernelSecondGradientIntegral() {};
 };

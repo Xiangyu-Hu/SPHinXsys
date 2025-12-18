@@ -40,7 +40,7 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
 {
   public:
     explicit ReinitializeLevelSet(
-        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level);
+        SparseMeshField<4> &data_mesh, UnsignedInt resolution_level);
     virtual ~ReinitializeLevelSet() {};
 
     class UpdateKernel
@@ -69,7 +69,7 @@ class MarkCutInterfaces : public BaseMeshLocalDynamics
 {
   public:
     explicit MarkCutInterfaces(
-        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level,
+        SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
         Real perturbation_ratio);
     virtual ~MarkCutInterfaces() {};
 
@@ -99,7 +99,7 @@ class MarkNearInterface : public BaseMeshLocalDynamics
 {
   public:
     explicit MarkNearInterface(
-        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level);
+        SparseMeshField<4> &data_mesh, UnsignedInt resolution_level);
     virtual ~MarkNearInterface() {};
 
     class UpdateKernel
@@ -127,7 +127,7 @@ class RedistanceInterface : public BaseMeshLocalDynamics
 {
   public:
     RedistanceInterface(
-        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level);
+        SparseMeshField<4> &data_mesh, UnsignedInt resolution_level);
     virtual ~RedistanceInterface() {};
 
     class UpdateKernel
@@ -156,7 +156,7 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
 {
   public:
     explicit DiffuseLevelSetSign(
-        MeshWithGridPackageDatasType &data_mesh, UnsignedInt resolution_level,
+        SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
         SingularVariable<UnsignedInt> &sv_count_modified);
     virtual ~DiffuseLevelSetSign() {};
 
@@ -196,7 +196,7 @@ template <class ExecutionPolicy>
 class CleanInterface : public RepeatTimes, public BaseDynamics<void>
 {
   public:
-    CleanInterface(MeshWithGridPackageDatasType &mesh_data, UnsignedInt resolution_level,
+    CleanInterface(SparseMeshField<4> &mesh_data, UnsignedInt resolution_level,
                    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method,
                    Real refinement_ratio);
     virtual ~CleanInterface() {};
@@ -234,7 +234,7 @@ class CorrectTopology : public BaseDynamics<void>
 {
   public:
     CorrectTopology(
-        MeshWithGridPackageDatasType &mesh_data, UnsignedInt resolution_level,
+        SparseMeshField<4> &mesh_data, UnsignedInt resolution_level,
         NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method);
     virtual ~CorrectTopology() {};
 

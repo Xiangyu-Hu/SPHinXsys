@@ -7,7 +7,7 @@ namespace SPH
 {
 //=================================================================================================//
 LevelSet::LevelSet(
-    BoundingBoxd tentative_bounds, MeshWithGridPackageDatasType *coarse_data,
+    BoundingBoxd tentative_bounds, SparseMeshField<4> *coarse_data,
     Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
     : SparseMeshField<4>(
           "LevelSet_" + shape.getName(), 1, tentative_bounds,
@@ -56,7 +56,7 @@ LevelSet::LevelSet(
 }
 //=================================================================================================//
 void LevelSet::initializeLevel(
-    UnsignedInt level, MeshWithGridPackageDatasType *coarse_data, UnsignedInt coarse_level)
+    UnsignedInt level, SparseMeshField<4> *coarse_data, UnsignedInt coarse_level)
 {
     if (level == 0)
     {
