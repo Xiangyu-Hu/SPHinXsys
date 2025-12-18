@@ -98,11 +98,9 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
 
   public:
-    SparseMeshField(BoundingBoxd tentative_bounds, Real data_spacing,
-                    UnsignedInt buffer_size, UnsignedInt num_singular_pkgs = 2);
     SparseMeshField(const std::string &name, UnsignedInt resolution_levels,
                     BoundingBoxd tentative_bounds, Real Reference_grid_spacing,
-                    UnsignedInt buffer_width, UnsignedInt num_singular_pkgs);
+                    UnsignedInt buffer_width, UnsignedInt num_boundary_pkgs);
     virtual ~SparseMeshField() {};
 
     static constexpr int PackageDataSize() { return PKG_SIZE; };
