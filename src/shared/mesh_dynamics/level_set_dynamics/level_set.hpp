@@ -83,11 +83,11 @@ void LevelSet::registerProbes(const ExecutionPolicy &ex_policy)
 {
     probe_signed_distance_ =
         probe_signed_distance_keeper_.template createPtr<
-            probeLevelSet<Real>>(ex_policy, *this, "LevelSet");
+            ProbeLevelSet<Real>>(ex_policy, *this, "LevelSet");
 
     probe_level_set_gradient_ =
         probe_level_set_gradient_keeper_.template createPtr<
-            probeLevelSet<Vecd>>(ex_policy, *this, "LevelSetGradient");
+            ProbeLevelSet<Vecd>>(ex_policy, *this, "LevelSetGradient");
 
     addPackageVariableToProbe<Real>("LevelSet");
     addPackageVariableToProbe<Vecd>("LevelSetGradient"); // shared with normal direction
@@ -98,15 +98,15 @@ void LevelSet::registerKernelIntegralProbes(const ExecutionPolicy &ex_policy)
 {
     probe_kernel_integral_ =
         probe_kernel_integral_keeper_.template createPtr<
-            probeLevelSet<Real>>(ex_policy, *this, "KernelWeight");
+            ProbeLevelSet<Real>>(ex_policy, *this, "KernelWeight");
 
     probe_kernel_gradient_integral_ =
         probe_kernel_gradient_integral_keeper_.template createPtr<
-            probeLevelSet<Vecd>>(ex_policy, *this, "KernelGradient");
+            ProbeLevelSet<Vecd>>(ex_policy, *this, "KernelGradient");
 
     probe_kernel_second_gradient_integral_ =
         probe_kernel_second_gradient_integral_keeper_.template createPtr<
-            probeLevelSet<Matd>>(ex_policy, *this, "KernelSecondGradient");
+            ProbeLevelSet<Matd>>(ex_policy, *this, "KernelSecondGradient");
 
     addPackageVariableToProbe<Real>("KernelWeight");
     addPackageVariableToProbe<Vecd>("KernelGradient");
@@ -115,20 +115,20 @@ void LevelSet::registerKernelIntegralProbes(const ExecutionPolicy &ex_policy)
 //=================================================================================================//
 template <typename DataType>
 template <class ExecutionPolicy>
-LevelSet::probeLevelSet<DataType>::probeLevelSet(
+LevelSet::ProbeLevelSet<DataType>::ProbeLevelSet(
     const ExecutionPolicy &ex_policy, LevelSet &encloser, const std::string &variable_name)
     : BaseProbe(ex_policy, encloser, variable_name),
       global_h_ratio_(encloser.ca_global_h_ratio_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType>
-DataType LevelSet::probeLevelSet<DataType>::operator()(const Vecd &position)
+DataType LevelSet::ProbeLevelSet<DataType>::operator()(const Vecd &position)
 {
     UnsignedInt proble_level = BaseProbe::locateResolutionLevelByPackageType(1, position);
     return BaseProbe::probeInResolutionLevel(proble_level, position);
 }
 //=================================================================================================//
 template <typename DataType>
-DataType LevelSet::probeLevelSet<DataType>::operator()(const Vecd &position, Real h_ratio)
+DataType LevelSet::ProbeLevelSet<DataType>::operator()(const Vecd &position, Real h_ratio)
 {
     if (this->resolution_levels_ == 1)
     {
