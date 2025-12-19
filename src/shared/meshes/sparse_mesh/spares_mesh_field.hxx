@@ -259,6 +259,7 @@ void SparseMeshField<PKG_SIZE>::organizeOccupiedPackages(UnsignedInt level)
         {
             pkgs_bound_ += pkgs_bound_ * pow(2, Dimensions - 1) + pkgs_bound_ / 4;
         }
+        pkgs_bound_ += pkgs_bound_ / 4; // add extra for safety
         is_organized_ = true;
 
         dv_pkg_1d_cell_index_ = registerMetaVariable<UnsignedInt>("Package1DCellIndex");
