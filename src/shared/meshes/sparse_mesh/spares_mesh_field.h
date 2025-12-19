@@ -42,6 +42,7 @@ class PackageMesh : public Mesh
     Real data_spacing_;
 
   public:
+    PackageMesh() {};
     PackageMesh(BoundingBoxd tentative_bounds, Real grid_spacing,
                 UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset);
     Vecd DataLowerBoundInCell(const Arrayi &cell_index) const;
@@ -50,7 +51,7 @@ class PackageMesh : public Mesh
     UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_pkg_index, const Arrayi &cell_index) const;
     bool isWithinCorePackage(UnsignedInt *cell_pkg_index, int *pkg_type, const Vecd &position);
     Real DataSpacing() const { return data_spacing_; };
-    Mesh getGlobalMesh() const;
+    Mesh GlobalMesh() const;
     template <typename DataType>
     DataType ValueByGlobalMesh(PackageData<DataType, PKG_SIZE> *pkg_data, const Arrayi &global_grid_index,
                                UnsignedInt *cell_package_index) const;

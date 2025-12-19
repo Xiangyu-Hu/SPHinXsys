@@ -35,6 +35,7 @@
 #define BASE_MESH_H
 
 #include "base_data_type_package.h"
+#include "sphinxsys_constant.h"
 #include "sphinxsys_variable.h"
 
 #include <fstream>
@@ -51,6 +52,7 @@ namespace SPH
 class Mesh
 {
   public:
+    Mesh() {};
     Mesh(BoundingBoxd tentative_bounds, Real grid_spacing,
          UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset = 0);
     Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
@@ -135,10 +137,10 @@ class MultiResolutionMeshField : public BaseMeshField
     virtual ~MultiResolutionMeshField() {};
 
     UniquePtrsKeeper<MeshType> mesh_ptrs_keeper_;
-    StdVec<MeshType *> &getMeshes() { return meshes_; };
-    MeshType &getMeshLevel(UnsignedInt level) { return *meshes_[level]; };
-    MeshType &getCoarsestMesh() { return *meshes_[0]; };
-    MeshType &getFinestMesh() { return *meshes_[resolution_levels_ - 1]; };
+    MeshType *getMeshes() { return ca_meshes_.Data(); };
+    MeshType &getMesh(UnsignedInt level) { return ca_meshes_.Data()[level]; };
+    MeshType &getCoarsestMesh() { return ca_meshes_.Data()[0]; };
+    MeshType &getFinestMesh() { return ca_meshes_.Data()[resolution_levels_ - 1]; };
     UnsignedInt getResolutionLevels() { return resolution_levels_; };
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
 
@@ -156,10 +158,8 @@ class MultiResolutionMeshField : public BaseMeshField
 
   protected:
     size_t resolution_levels_; /**< level 0 is the coarsest */
-    StdVec<MeshType *> meshes_;
-    MeshType *coarsest_mesh_;
-    MeshType *finest_mesh_;
     UnsignedInt total_number_of_cells_;
+    ConstantArray<MeshType> ca_meshes_;
     CellVariableAssemble all_cell_variables_;
     CellVariableAssemble cell_variables_to_write_;
 

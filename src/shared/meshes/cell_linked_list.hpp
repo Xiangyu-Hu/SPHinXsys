@@ -106,8 +106,8 @@ template <class ExecutionPolicy, class LocalDynamicsFunction>
 void BaseCellLinkedList::particle_for_split(const ExecutionPolicy &ex_policy,
                                             const LocalDynamicsFunction &local_dynamics_function)
 {
-    for (UnsignedInt level = 0; level != meshes_.size(); ++level)
-        particle_for_split_by_mesh(ex_policy, *meshes_[level], local_dynamics_function);
+    for (UnsignedInt level = 0; level != resolution_levels_; ++level)
+        particle_for_split_by_mesh(ex_policy, getMesh(level), local_dynamics_function);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>

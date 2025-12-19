@@ -103,24 +103,21 @@ MultiResolutionMeshField<MeshType>::MultiResolutionMeshField(
     const std::string &name, size_t resolution_levels, BoundingBoxd tentative_bounds,
     Real Reference_grid_spacing, UnsignedInt buffer_width)
     : BaseMeshField(name), resolution_levels_(resolution_levels),
-      coarsest_mesh_(nullptr), finest_mesh_(nullptr), total_number_of_cells_(0)
-{
-    for (size_t level = 0; level < resolution_levels_; ++level)
-    {
-        meshes_.push_back(mesh_ptrs_keeper_.template createPtr<MeshType>(
-            tentative_bounds, Reference_grid_spacing / math::pow(2.0, level),
-            buffer_width, total_number_of_cells_));
-        total_number_of_cells_ += meshes_.back()->NumberOfCells();
-    };
-    coarsest_mesh_ = meshes_.front();
-    finest_mesh_ = meshes_.back();
-}
+      total_number_of_cells_(0),
+      ca_meshes_(resolution_levels,
+                 [&](size_t level)
+                 {
+                     MeshType mesh(tentative_bounds, Reference_grid_spacing / pow(2.0, level),
+                                   buffer_width, total_number_of_cells_);
+                     total_number_of_cells_ += mesh.NumberOfCells();
+                     return mesh;
+                 }) {}
 //=================================================================================================//
 template <class MeshType>
 void MultiResolutionMeshField<MeshType>::writeMeshFieldToPlt(
     const std::string &partial_file_name, size_t sequence)
 {
-    for (UnsignedInt l = 0; l != meshes_.size(); ++l)
+    for (UnsignedInt l = 0; l != resolution_levels_; ++l)
     {
         std::string full_file_name = partial_file_name + "_CellVariables_" + std::to_string(l) +
                                      std::to_string(sequence) + ".dat"; // level and sequence

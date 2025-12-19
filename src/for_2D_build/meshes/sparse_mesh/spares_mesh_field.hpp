@@ -11,8 +11,8 @@ template <int PKG_SIZE>
 void SparseMeshField<PKG_SIZE>::writePackageVariablesToPltByMesh(
     UnsignedInt resolution_level, std::ofstream &output_file)
 {
-    IndexHandler &index_handler = this->getMeshLevel(resolution_level);
-    Mesh global_mesh = index_handler.getGlobalMesh();
+    IndexHandler &index_handler = this->getMesh(resolution_level);
+    Mesh global_mesh = index_handler.GlobalMesh();
 
     output_file << "\n"
                 << "title='View'" << "\n";

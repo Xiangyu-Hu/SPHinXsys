@@ -60,7 +60,7 @@ class BaseMeshLocalDynamics
 {
   public:
     explicit BaseMeshLocalDynamics(SparseMeshField<4> &data_mesh, UnsignedInt resolution_level)
-        : data_mesh_(data_mesh), index_handler_(data_mesh.getMeshLevel(resolution_level)),
+        : data_mesh_(data_mesh), index_handler_(data_mesh.getMesh(resolution_level)),
           resolution_level_(resolution_level) {};
     virtual ~BaseMeshLocalDynamics() {};
 

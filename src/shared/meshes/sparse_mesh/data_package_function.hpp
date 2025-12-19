@@ -61,7 +61,7 @@ ProbeMesh<DataType, PKG_SIZE>::ProbeMesh(
     const ExecutionPolicy &ex_policy, SparseMeshField<PKG_SIZE> *data_mesh,
     UnsignedInt resolution_level, const std::string &variable_name)
     : pkg_data_(data_mesh->template getPackageVariable<DataType>(variable_name)->DelegatedData(ex_policy)),
-      index_handler_(data_mesh->getMeshLevel(resolution_level)),
+      index_handler_(data_mesh->getMesh(resolution_level)),
       cell_pkg_index_(data_mesh->getCellPackageIndex().DelegatedData(ex_policy)),
       cell_neighborhood_(data_mesh->getCellNeighborhood().DelegatedData(ex_policy)) {}
 //=============================================================================================//

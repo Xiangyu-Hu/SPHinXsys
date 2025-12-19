@@ -52,7 +52,7 @@ bool PackageMesh<PKG_SIZE>::isWithinCorePackage(
 }
 //=============================================================================================//
 template <int PKG_SIZE>
-Mesh PackageMesh<PKG_SIZE>::getGlobalMesh() const
+Mesh PackageMesh<PKG_SIZE>::GlobalMesh() const
 {
     return Mesh(MeshLowerBound() + 0.5 * Vecd::Constant(data_spacing_),
                 data_spacing_, AllCells() * PKG_SIZE);
@@ -225,7 +225,7 @@ void SparseMeshField<PKG_SIZE>::writeMeshFieldToPlt(
     const std::string &partial_file_name, size_t sequence)
 {
     MultiResolutionMeshField<PackageMesh<PKG_SIZE>>::writeMeshFieldToPlt(partial_file_name, sequence);
-    for (UnsignedInt l = 0; l != this->meshes_.size(); ++l)
+    for (UnsignedInt l = 0; l != this->resolution_levels_; ++l)
     {
         std::string full_file_name = partial_file_name + "_PackageVariables_" + std::to_string(l) +
                                      std::to_string(sequence) + ".dat"; // level and sequence
