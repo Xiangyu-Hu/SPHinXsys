@@ -96,34 +96,58 @@ void LevelSet::registerProbes(const ExecutionPolicy &ex_policy)
 template <class ExecutionPolicy>
 void LevelSet::registerKernelIntegralProbes(const ExecutionPolicy &ex_policy)
 {
-    for (size_t level = 0; level < resolution_levels_; level++)
-    {
-        probe_kernel_integral_set_.push_back(
-            probe_kernel_integral_vector_keeper_
-                .template createPtr<ProbeKernelIntegral>(ex_policy, this, level));
-        probe_kernel_gradient_integral_set_.push_back(
-            probe_kernel_gradient_integral_vector_keeper_
-                .template createPtr<ProbeKernelGradientIntegral>(ex_policy, this, level));
-        probe_kernel_second_gradient_integral_set_.push_back(
-            probe_kernel_second_gradient_integral_vector_keeper_
-                .template createPtr<ProbeKernelSecondGradientIntegral>(ex_policy, this, level));
-        addPackageVariableToProbe<Real>("KernelWeight");
-        addPackageVariableToProbe<Vecd>("KernelGradient");
-        addPackageVariableToProbe<Matd>("KernelSecondGradient");
-    }
+    probe_kernel_integral_ =
+        probe_kernel_integral_keeper_.template createPtr<
+            probeLevelSet<Real>>(ex_policy, *this, "KernelWeight");
+
+    probe_kernel_gradient_integral_ =
+        probe_kernel_gradient_integral_keeper_.template createPtr<
+            probeLevelSet<Vecd>>(ex_policy, *this, "KernelGradient");
+
+    probe_kernel_second_gradient_integral_ =
+        probe_kernel_second_gradient_integral_keeper_.template createPtr<
+            probeLevelSet<Matd>>(ex_policy, *this, "KernelSecondGradient");
+
+    addPackageVariableToProbe<Real>("KernelWeight");
+    addPackageVariableToProbe<Vecd>("KernelGradient");
+    addPackageVariableToProbe<Matd>("KernelSecondGradient");
 }
 //=================================================================================================//
 template <typename DataType>
 template <class ExecutionPolicy>
 LevelSet::probeLevelSet<DataType>::probeLevelSet(
     const ExecutionPolicy &ex_policy, LevelSet &encloser, const std::string &variable_name)
-    : BaseProbe(ex_policy, encloser, variable_name) {}
+    : BaseProbe(ex_policy, encloser, variable_name),
+      global_h_ratio_(encloser.ca_global_h_ratio_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType>
 DataType LevelSet::probeLevelSet<DataType>::operator()(const Vecd &position)
 {
     UnsignedInt proble_level = BaseProbe::locateResolutionLevelByPackageType(1, position);
     return BaseProbe::probeInResolutionLevel(proble_level, position);
+}
+//=================================================================================================//
+template <typename DataType>
+DataType LevelSet::probeLevelSet<DataType>::operator()(const Vecd &position, Real h_ratio)
+{
+    if (this->resolution_levels_ == 1)
+    {
+        return BaseProbe::probeInResolutionLevel(0, position);
+    }
+
+    UnsignedInt coarse_level = 0;
+    for (size_t level = this->resolution_levels_ - 1; level != 0; --level)
+    {
+        if (h_ratio > global_h_ratio_[level])
+        {
+            coarse_level = level; // jump out the loop!
+            break;
+        }
+    }
+
+    Real alpha = (global_h_ratio_[coarse_level + 1] - h_ratio) /
+                 (global_h_ratio_[coarse_level + 1] - global_h_ratio_[coarse_level]);
+    return BaseProbe::probeBetweenResolutionLevels(coarse_level, alpha, position);
 }
 //=================================================================================================//
 } // namespace SPH

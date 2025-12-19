@@ -83,16 +83,16 @@ class LevelSet : public SparseMeshField<4>
     class probeLevelSet : public SparseMeshField<4>::ProbeMesh<DataType>
     {
         using BaseProbe = SparseMeshField<4>::ProbeMesh<DataType>;
+        Real *global_h_ratio_;
 
       public:
         template <class ExecutionPolicy>
         probeLevelSet(const ExecutionPolicy &ex_policy, LevelSet &encloser, const std::string &variable_name);
         DataType operator()(const Vecd &position);
+        DataType operator()(const Vecd &position, Real h_ratio);
     };
 
   protected:
-    inline size_t getCoarseLevel(Real h_ratio);
-
     void initializeLevel(UnsignedInt level, SparseMeshField<4> *coarse_data = nullptr, UnsignedInt coarse_level = 0);
     template <class ExecutionPolicy>
     void initializePackageVariables(const ExecutionPolicy &ex_policy);
@@ -105,21 +105,19 @@ class LevelSet : public SparseMeshField<4>
 
     Shape &shape_; /**< the geometry is described by the level set. */
     Real refinement_ratio_;
-    UnsignedInt *cell_pkg_index_;
-    int *pkg_type_;
-    StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
+    ConstantArray<Real> *ca_global_h_ratio_; /**< the ratio of the reference spacing to the data spacing */
     StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
     StdVec<SparseMeshField<4>::IndexHandler *> mesh_index_handler_set_;
     probeLevelSet<Real> *probe_signed_distance_;
     probeLevelSet<Vecd> *probe_level_set_gradient_;
-    StdVec<ProbeKernelIntegral *> probe_kernel_integral_set_;
-    StdVec<ProbeKernelGradientIntegral *> probe_kernel_gradient_integral_set_;
-    StdVec<ProbeKernelSecondGradientIntegral *> probe_kernel_second_gradient_integral_set_;
+    probeLevelSet<Real> *probe_kernel_integral_;
+    probeLevelSet<Vecd> *probe_kernel_gradient_integral_;
+    probeLevelSet<Matd> *probe_kernel_second_gradient_integral_;
     UniquePtrKeeper<probeLevelSet<Real>> probe_signed_distance_keeper_;
     UniquePtrKeeper<probeLevelSet<Vecd>> probe_level_set_gradient_keeper_;
-    UniquePtrsKeeper<ProbeKernelIntegral> probe_kernel_integral_vector_keeper_;
-    UniquePtrsKeeper<ProbeKernelGradientIntegral> probe_kernel_gradient_integral_vector_keeper_;
-    UniquePtrsKeeper<ProbeKernelSecondGradientIntegral> probe_kernel_second_gradient_integral_vector_keeper_;
+    UniquePtrKeeper<probeLevelSet<Real>> probe_kernel_integral_keeper_;
+    UniquePtrKeeper<probeLevelSet<Vecd>> probe_kernel_gradient_integral_keeper_;
+    UniquePtrKeeper<probeLevelSet<Matd>> probe_kernel_second_gradient_integral_keeper_;
 
     UniquePtr<BaseDynamics<void>> correct_topology_keeper_;
     UniquePtr<BaseDynamics<void>> clean_interface_keeper_;

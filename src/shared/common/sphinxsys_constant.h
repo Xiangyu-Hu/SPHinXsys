@@ -51,6 +51,16 @@ class ConstantArray : public Entity
         }
     };
 
+    ConstantArray(const std::string &name, StdVec<DataType> constants)
+        : Entity(name), data_size_(constants.size()),
+          data_(new DataType[data_size_]), delegated_(data_)
+    {
+        for (size_t i = 0; i != data_size_; ++i)
+        {
+            data_[i] = DataType(constants[i]);
+        }
+    };
+
     template <class InitializationFunction>
     ConstantArray(size_t data_size, const InitializationFunction &initialization)
         : Entity("ConstantArray"), data_size_(data_size),

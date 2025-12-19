@@ -151,7 +151,7 @@ class MultiResolutionMeshField : public BaseMeshField
     template <typename DataType>
     CellVariable<DataType> *getCellVariable(const std::string &variable_name);
     template <typename DataType, template <typename> class EntityType, typename... Args>
-    EntityType<DataType> *createUniqueEnity(const std::string &entity_name, Args &&...args);
+    EntityType<DataType> *createUniqueEnity(Args &&...args);
 
     template <typename DataType>
     void addCellVariableToWrite(const std::string &variable_name);
