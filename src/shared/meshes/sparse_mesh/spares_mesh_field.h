@@ -49,7 +49,7 @@ class PackageMesh : public Mesh
     Arrayi DataIndexFromPosition(const Arrayi &cell_index, const Vecd &position) const;
     Vecd DataPositionFromIndex(const Arrayi &cell_index, const Arrayi &data_index) const;
     UnsignedInt PackageIndexFromCellIndex(UnsignedInt *cell_pkg_index, const Arrayi &cell_index) const;
-    bool isWithinCorePackage(UnsignedInt *cell_pkg_index, int *pkg_type, const Vecd &position);
+    bool isWithinPackageType(int target_type, UnsignedInt *cell_pkg_index, int *pkg_type, const Vecd &position);
     Real DataSpacing() const { return data_spacing_; };
     Mesh GlobalMesh() const;
     template <typename DataType>
@@ -167,7 +167,6 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
         template <class ExecutionPolicy>
         ProbeMesh(const ExecutionPolicy &ex_policy, SparseMeshField<PKG_SIZE> &encloser,
                   const std::string &variable_name);
-        DataType operator()(const Vecd &position);
 
       protected:
         PackageData<DataType, PKG_SIZE> *pkg_data_;
@@ -177,6 +176,9 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
         int *pkg_type_;
         CellNeighborhood *cell_neighborhood_;
 
+        UnsignedInt locateResolutionLevelByPackageType(int target_type, const Vecd &position);
+        DataType probeInResolutionLevel(UnsignedInt level, const Vecd &position);
+        DataType probeBetweenResolutionLevels(UnsignedInt coarser_level, Real coarser_weight, const Vecd &position);
         DataType probePackageData(const IndexHandler &index_handler, UnsignedInt package_index,
                                   const Arrayi &cell_index, const Vecd &position);
     };

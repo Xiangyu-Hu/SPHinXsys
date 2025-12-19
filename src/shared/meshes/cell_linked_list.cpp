@@ -15,10 +15,8 @@ BaseCellLinkedList::BaseCellLinkedList(
       base_particles_(base_particles), kernel_(*sph_adaptation.getKernel()),
       cell_offset_list_size_(total_number_of_cells_ + 1),
       index_list_size_(SMAX(base_particles.ParticlesBound(), cell_offset_list_size_)),
-      dv_particle_index_(
-          unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>("ParticleIndex", index_list_size_)),
-      dv_cell_offset_(
-          unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>("CellOffset", cell_offset_list_size_))
+      dv_particle_index_(createUniqueEnity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size_)),
+      dv_cell_offset_(createUniqueEnity<UnsignedInt, DiscreteVariable>("CellOffset", cell_offset_list_size_))
 {
     cell_index_lists_.resize(total_number_of_cells_);
     cell_data_lists_.resize(total_number_of_cells_);

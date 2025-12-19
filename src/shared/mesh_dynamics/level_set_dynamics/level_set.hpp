@@ -83,11 +83,11 @@ void LevelSet::registerProbes(const ExecutionPolicy &ex_policy)
 {
     probe_signed_distance_ =
         probe_signed_distance_keeper_.template createPtr<
-            SparseMeshField<4>::ProbeMesh<Real>>(ex_policy, *this, "LevelSet");
+            probeLevelSet<Real>>(ex_policy, *this, "LevelSet");
 
     probe_level_set_gradient_ =
         probe_level_set_gradient_keeper_.template createPtr<
-            SparseMeshField<4>::ProbeMesh<Vecd>>(ex_policy, *this, "LevelSetGradient");
+            probeLevelSet<Vecd>>(ex_policy, *this, "LevelSetGradient");
 
     addPackageVariableToProbe<Real>("LevelSet");
     addPackageVariableToProbe<Vecd>("LevelSetGradient"); // shared with normal direction
@@ -111,6 +111,19 @@ void LevelSet::registerKernelIntegralProbes(const ExecutionPolicy &ex_policy)
         addPackageVariableToProbe<Vecd>("KernelGradient");
         addPackageVariableToProbe<Matd>("KernelSecondGradient");
     }
+}
+//=================================================================================================//
+template <typename DataType>
+template <class ExecutionPolicy>
+LevelSet::probeLevelSet<DataType>::probeLevelSet(
+    const ExecutionPolicy &ex_policy, LevelSet &encloser, const std::string &variable_name)
+    : BaseProbe(ex_policy, encloser, variable_name) {}
+//=================================================================================================//
+template <typename DataType>
+DataType LevelSet::probeLevelSet<DataType>::operator()(const Vecd &position)
+{
+    UnsignedInt proble_level = BaseProbe::locateResolutionLevelByPackageType(1, position);
+    return BaseProbe::probeInResolutionLevel(proble_level, position);
 }
 //=================================================================================================//
 } // namespace SPH

@@ -129,6 +129,7 @@ template <class MeshType>
 class MultiResolutionMeshField : public BaseMeshField
 {
     DataContainerUniquePtrAssemble<DiscreteVariable> cell_variable_ptrs_;
+    UniquePtrsKeeper<Entity> unique_entity_ptrs_;
 
   public:
     MultiResolutionMeshField(
@@ -149,6 +150,8 @@ class MultiResolutionMeshField : public BaseMeshField
     CellVariable<DataType> *registerCellVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>
     CellVariable<DataType> *getCellVariable(const std::string &variable_name);
+    template <typename DataType, template <typename> class EntityType, typename... Args>
+    EntityType<DataType> *createUniqueEnity(const std::string &entity_name, Args &&...args);
 
     template <typename DataType>
     void addCellVariableToWrite(const std::string &variable_name);

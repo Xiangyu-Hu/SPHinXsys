@@ -43,12 +43,12 @@ UnsignedInt PackageMesh<PKG_SIZE>::PackageIndexFromCellIndex(
 }
 //=============================================================================================//
 template <int PKG_SIZE>
-bool PackageMesh<PKG_SIZE>::isWithinCorePackage(
-    UnsignedInt *cell_pkg_index, int *pkg_type, const Vecd &position)
+bool PackageMesh<PKG_SIZE>::isWithinPackageType(
+    int target_type, UnsignedInt *cell_pkg_index, int *pkg_type, const Vecd &position)
 {
     Arrayi cell_index = CellIndexFromPosition(position);
     UnsignedInt pkg_index = PackageIndexFromCellIndex(cell_pkg_index, cell_index);
-    return pkg_type[pkg_index] == 1;
+    return pkg_type[pkg_index] == target_type;
 }
 //=============================================================================================//
 template <int PKG_SIZE>
@@ -291,24 +291,40 @@ SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::ProbeMesh(
 //=============================================================================================//
 template <int PKG_SIZE>
 template <typename DataType>
-DataType SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::operator()(const Vecd &position)
+DataType SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::probeInResolutionLevel(
+    UnsignedInt level, const Vecd &position)
+{
+    Arrayi cell_index = index_handler_[level].CellIndexFromPosition(position);
+    UnsignedInt package_index =
+        index_handler_[level].PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
+    return pkg_type_[package_index] != -1
+               ? probePackageData(index_handler_[level], package_index, cell_index, position)
+               : pkg_data_[package_index](Arrayi::Zero());
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+DataType SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::probeBetweenResolutionLevels(
+    UnsignedInt coarser_level, Real coarser_weight, const Vecd &position)
+{
+    return probeInResolutionLevel(coarser_level, position) * coarser_weight +
+           probeInResolutionLevel(coarser_level + 1, position) * (1.0 - coarser_weight);
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+UnsignedInt SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::locateResolutionLevelByPackageType(
+    int target_type, const Vecd &position)
 {
     UnsignedInt proble_level = 0;
     for (size_t level = resolution_levels_ - 1; level != 0; --level)
     {
-        if (index_handler_[level].isWithinCorePackage(cell_pkg_index_, pkg_type_, position))
+        if (index_handler_[level].isWithinPackageType(target_type, cell_pkg_index_, pkg_type_, position))
         {
-            proble_level = level; // jump out of the loop!
-            break;
+            return level; // jump out of the loop!
         }
     }
-
-    Arrayi cell_index = index_handler_[proble_level].CellIndexFromPosition(position);
-    UnsignedInt package_index =
-        index_handler_[proble_level].PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
-    return pkg_type_[package_index] != -1
-               ? probePackageData(index_handler_[proble_level], package_index, cell_index, position)
-               : pkg_data_[package_index](Arrayi::Zero());
+    return proble_level;
 }
 //=============================================================================================//
 } // namespace SPH

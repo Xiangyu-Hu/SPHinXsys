@@ -58,7 +58,7 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
         cell_contain_id_[index_1d] = phi < 0.0 ? -1 : 1;
     }
 
-    if (coarse_index_handler_.isWithinCorePackage(cell_pkg_index_coarse_, pkg_type_coarse_, cell_position))
+    if (coarse_index_handler_.isWithinPackageType(1, cell_pkg_index_coarse_, pkg_type_coarse_, cell_position))
     {
         if (ABS(shape_->findSignedDistance(cell_position)) < grid_spacing_)
         {

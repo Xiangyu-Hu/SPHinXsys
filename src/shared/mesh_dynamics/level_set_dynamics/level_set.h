@@ -79,6 +79,17 @@ class LevelSet : public SparseMeshField<4>
     Matd probeKernelSecondGradientIntegral(const Vecd &position, Real h_ratio = 1.0);
     void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
 
+    template <typename DataType>
+    class probeLevelSet : public SparseMeshField<4>::ProbeMesh<DataType>
+    {
+        using BaseProbe = SparseMeshField<4>::ProbeMesh<DataType>;
+
+      public:
+        template <class ExecutionPolicy>
+        probeLevelSet(const ExecutionPolicy &ex_policy, LevelSet &encloser, const std::string &variable_name);
+        DataType operator()(const Vecd &position);
+    };
+
   protected:
     inline size_t getCoarseLevel(Real h_ratio);
 
@@ -99,13 +110,13 @@ class LevelSet : public SparseMeshField<4>
     StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
     StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
     StdVec<SparseMeshField<4>::IndexHandler *> mesh_index_handler_set_;
-    SparseMeshField<4>::ProbeMesh<Real> *probe_signed_distance_;
-    SparseMeshField<4>::ProbeMesh<Vecd> *probe_level_set_gradient_;
+    probeLevelSet<Real> *probe_signed_distance_;
+    probeLevelSet<Vecd> *probe_level_set_gradient_;
     StdVec<ProbeKernelIntegral *> probe_kernel_integral_set_;
     StdVec<ProbeKernelGradientIntegral *> probe_kernel_gradient_integral_set_;
     StdVec<ProbeKernelSecondGradientIntegral *> probe_kernel_second_gradient_integral_set_;
-    UniquePtrKeeper<SparseMeshField<4>::ProbeMesh<Real>> probe_signed_distance_keeper_;
-    UniquePtrKeeper<SparseMeshField<4>::ProbeMesh<Vecd>> probe_level_set_gradient_keeper_;
+    UniquePtrKeeper<probeLevelSet<Real>> probe_signed_distance_keeper_;
+    UniquePtrKeeper<probeLevelSet<Vecd>> probe_level_set_gradient_keeper_;
     UniquePtrsKeeper<ProbeKernelIntegral> probe_kernel_integral_vector_keeper_;
     UniquePtrsKeeper<ProbeKernelGradientIntegral> probe_kernel_gradient_integral_vector_keeper_;
     UniquePtrsKeeper<ProbeKernelSecondGradientIntegral> probe_kernel_second_gradient_integral_vector_keeper_;

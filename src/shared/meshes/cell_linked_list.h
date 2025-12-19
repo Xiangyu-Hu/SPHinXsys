@@ -52,7 +52,6 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
 {
   protected:
     BaseParticles &base_particles_;
-    UniquePtrsKeeper<Entity> unique_variable_ptrs_;
 
   public:
     BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation,
