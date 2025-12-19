@@ -59,15 +59,6 @@ class LevelSet : public SparseMeshField<4>
     ~LevelSet() {};
 
     template <class ExecutionPolicy>
-    ProbeSignedDistance getProbeSignedDistance(const ExecutionPolicy &ex_policy);
-
-    template <class ExecutionPolicy>
-    ProbeNormalDirection getProbeNormalDirection(const ExecutionPolicy &ex_policy);
-
-    template <class ExecutionPolicy>
-    ProbeKernelGradientIntegral getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy);
-
-    template <class ExecutionPolicy>
     void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type);
     void cleanInterface(UnsignedInt repeat_times);
     void correctTopology();
@@ -92,6 +83,15 @@ class LevelSet : public SparseMeshField<4>
         DataType operator()(const Vecd &position, Real h_ratio);
     };
 
+    template <class ExecutionPolicy>
+    ProbeSignedDistance getProbeSignedDistance(const ExecutionPolicy &ex_policy);
+
+    template <class ExecutionPolicy>
+    ProbeNormalDirection getProbeNormalDirection(const ExecutionPolicy &ex_policy);
+
+    template <class ExecutionPolicy>
+    ProbeKernelGradientIntegral getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy);
+
   protected:
     void initializeLevel(UnsignedInt level, SparseMeshField<4> *coarse_data = nullptr, UnsignedInt coarse_level = 0);
     template <class ExecutionPolicy>
@@ -107,7 +107,6 @@ class LevelSet : public SparseMeshField<4>
     Real refinement_ratio_;
     ConstantArray<Real> *ca_global_h_ratio_; /**< the ratio of the reference spacing to the data spacing */
     StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
-    StdVec<SparseMeshField<4>::IndexHandler *> mesh_index_handler_set_;
     ProbeLevelSet<Real> *probe_signed_distance_;
     ProbeLevelSet<Vecd> *probe_level_set_gradient_;
     ProbeLevelSet<Real> *probe_kernel_integral_;

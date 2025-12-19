@@ -67,6 +67,8 @@ class InitialCellTagging : public BaseMeshLocalDynamics
 
 class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
 {
+  using ProbeCoarsePhi = SparseMeshField<4>::ProbeMesh<Real>;
+
   public:
     InitialCellTaggingFromCoarse(
         SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
@@ -90,7 +92,7 @@ class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
         IndexHandler coarse_index_handler_;
         Real grid_spacing_;
         Real far_field_distance_;
-        ProbeSignedDistance probe_coarse_phi_;
+        ProbeCoarsePhi probe_coarse_phi_;
         int *cell_contain_id_;
         UnsignedInt *cell_pkg_index_coarse_;
         int *pkg_type_coarse_;

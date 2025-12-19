@@ -27,7 +27,7 @@ InitialCellTaggingFromCoarse::UpdateKernel::
           encloser.coarse_mesh_.getMesh(encloser.coarse_resolution_level_)),
       grid_spacing_(index_handler_.GridSpacing()),
       far_field_distance_(grid_spacing_ * (Real)index_handler_.BufferWidth()),
-      probe_coarse_phi_(ex_policy, &encloser.coarse_mesh_, encloser.coarse_resolution_level_),
+      probe_coarse_phi_(ex_policy, encloser.coarse_mesh_, "LevelSet"),
       cell_contain_id_(encloser.mcv_cell_contain_id_.DelegatedData(ex_policy)),
       cell_pkg_index_coarse_(encloser.mcv_cell_pkg_index_coarse_.DelegatedData(ex_policy)),
       pkg_type_coarse_(encloser.dv_pkg_type_coarse_.DelegatedData(ex_policy)) {}

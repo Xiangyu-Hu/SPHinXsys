@@ -24,7 +24,7 @@ LevelSet::LevelSet(
             *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
     initializeLevel(0, coarse_data, coarse_data->ResolutionLevels() - 1);
-    ca_global_h_ratio_ = createUniqueEnity<Real, ConstantArray>("GlobalHRatioi", global_h_ratio_vec);
+    ca_global_h_ratio_ = createUniqueEnity<Real, ConstantArray>("GlobalHRatio", global_h_ratio_vec);
 }
 //=================================================================================================//
 LevelSet::LevelSet(

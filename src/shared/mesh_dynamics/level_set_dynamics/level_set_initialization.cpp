@@ -49,7 +49,7 @@ InitialCellTaggingFromCoarse::InitialCellTaggingFromCoarse(
 void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index)
 {
     Vecd cell_position = index_handler_.CellPositionFromIndex(cell_index);
-    Real phi = probe_coarse_phi_(cell_position);
+    Real phi = probe_coarse_phi_(coarse_index_handler_, cell_position);
     UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
     cell_pkg_index_[index_1d] = phi < 0.0 ? boundary_pkg_index_offset_ : boundary_pkg_index_offset_ + 1;
     cell_contain_id_[index_1d] = 2;

@@ -167,6 +167,7 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
         template <class ExecutionPolicy>
         ProbeMesh(const ExecutionPolicy &ex_policy, SparseMeshField<PKG_SIZE> &encloser,
                   const std::string &variable_name);
+        DataType operator()(IndexHandler &index_handler, const Vecd &position);
 
       protected:
         PackageData<DataType, PKG_SIZE> *pkg_data_;

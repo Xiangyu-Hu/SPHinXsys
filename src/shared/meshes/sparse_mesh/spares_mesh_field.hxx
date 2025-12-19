@@ -288,18 +288,26 @@ SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::ProbeMesh(
       cell_pkg_index_(encloser.getCellPackageIndex().DelegatedData(ex_policy)),
       pkg_type_(encloser.getPackageType().DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.getCellNeighborhood().DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+DataType SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::operator()(
+    IndexHandler &index_handler, const Vecd &position)
+{
+    Arrayi cell_index = index_handler.CellIndexFromPosition(position);
+    UnsignedInt package_index =
+        index_handler.PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
+    return pkg_type_[package_index] != -1
+               ? probePackageData(index_handler, package_index, cell_index, position)
+               : pkg_data_[package_index](Arrayi::Zero());
+}
 //=============================================================================================//
 template <int PKG_SIZE>
 template <typename DataType>
 DataType SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::probeInResolutionLevel(
     UnsignedInt level, const Vecd &position)
 {
-    Arrayi cell_index = index_handler_[level].CellIndexFromPosition(position);
-    UnsignedInt package_index =
-        index_handler_[level].PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
-    return pkg_type_[package_index] != -1
-               ? probePackageData(index_handler_[level], package_index, cell_index, position)
-               : pkg_data_[package_index](Arrayi::Zero());
+    return operator()(index_handler_[level], position);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
@@ -307,8 +315,8 @@ template <typename DataType>
 DataType SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::probeBetweenResolutionLevels(
     UnsignedInt coarser_level, Real coarser_weight, const Vecd &position)
 {
-    return probeInResolutionLevel(coarser_level, position) * coarser_weight +
-           probeInResolutionLevel(coarser_level + 1, position) * (1.0 - coarser_weight);
+    return operator()(index_handler_[coarser_level], position) * coarser_weight +
+           operator()(index_handler_[coarser_level + 1], position) * (1.0 - coarser_weight);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
