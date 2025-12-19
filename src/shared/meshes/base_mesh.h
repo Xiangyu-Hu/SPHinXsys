@@ -141,7 +141,8 @@ class MultiResolutionMeshField : public BaseMeshField
     MeshType &getMesh(UnsignedInt level) { return ca_meshes_.Data()[level]; };
     MeshType &getCoarsestMesh() { return ca_meshes_.Data()[0]; };
     MeshType &getFinestMesh() { return ca_meshes_.Data()[resolution_levels_ - 1]; };
-    UnsignedInt getResolutionLevels() { return resolution_levels_; };
+    ConstantArray<MeshType> &caMeshes() { return ca_meshes_; };
+    UnsignedInt ResolutionLevels() { return resolution_levels_; };
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
 
     template <typename DataType, typename... Args>

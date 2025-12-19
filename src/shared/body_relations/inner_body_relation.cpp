@@ -27,7 +27,7 @@ AdaptiveInnerRelation::
           DynamicCast<MultilevelCellLinkedList>(this, real_body.getCellLinkedList()))
 {
     Mesh *meshes = multi_level_cell_linked_list_.getMeshes();
-    for (size_t l = 0; l != multi_level_cell_linked_list_.getResolutionLevels(); ++l)
+    for (size_t l = 0; l != multi_level_cell_linked_list_.ResolutionLevels(); ++l)
     {
         get_multi_level_search_depth_.push_back(
             adaptive_search_depth_ptr_vector_keeper_
@@ -39,7 +39,7 @@ void AdaptiveInnerRelation::updateConfiguration()
 {
     resetNeighborhoodCurrentSize();
     Mesh *meshes = multi_level_cell_linked_list_.getMeshes();
-    for (size_t l = 0; l != multi_level_cell_linked_list_.getResolutionLevels(); ++l)
+    for (size_t l = 0; l != multi_level_cell_linked_list_.ResolutionLevels(); ++l)
     {
         multi_level_cell_linked_list_.searchNeighborsByMesh(
             meshes[l], sph_body_, inner_configuration_,
@@ -116,7 +116,7 @@ void AdaptiveSplittingInnerRelation::updateConfiguration()
 {
     resetNeighborhoodCurrentSize();
     Mesh *meshes = multi_level_cell_linked_list_.getMeshes();
-    for (size_t l = 0; l != multi_level_cell_linked_list_.getResolutionLevels(); ++l)
+    for (size_t l = 0; l != multi_level_cell_linked_list_.ResolutionLevels(); ++l)
     {
         multi_level_cell_linked_list_.searchNeighborsByMesh(
             meshes[l], sph_body_, inner_configuration_,

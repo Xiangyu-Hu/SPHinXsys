@@ -158,6 +158,28 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
                          const BoundaryDataFunction &boundary_data_function);
 
     void organizeOccupiedPackages(UnsignedInt resolution_level);
+
+  public: // for computing kernels
+    template <typename DataType>
+    class ProbeMesh
+    {
+      public:
+        template <class ExecutionPolicy>
+        ProbeMesh(const ExecutionPolicy &ex_policy, SparseMeshField<PKG_SIZE> &encloser,
+                  const std::string &variable_name);
+        DataType operator()(const Vecd &position);
+
+      protected:
+        PackageData<DataType, PKG_SIZE> *pkg_data_;
+        IndexHandler *index_handler_;
+        UnsignedInt resolution_levels_;
+        UnsignedInt *cell_pkg_index_;
+        int *pkg_type_;
+        CellNeighborhood *cell_neighborhood_;
+
+        DataType probePackageData(const IndexHandler &index_handler, UnsignedInt package_index,
+                                  const Arrayi &cell_index, const Vecd &position);
+    };
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H

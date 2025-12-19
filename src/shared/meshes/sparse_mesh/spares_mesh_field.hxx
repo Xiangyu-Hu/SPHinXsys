@@ -277,5 +277,39 @@ void SparseMeshField<PKG_SIZE>::organizeOccupiedPackages(UnsignedInt level)
                        { return occupied_data_pkgs_[i].second; });
 }
 //=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+template <class ExecutionPolicy>
+SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::ProbeMesh(
+    const ExecutionPolicy &ex_policy, SparseMeshField<PKG_SIZE> &encloser, const std::string &name)
+    : pkg_data_(encloser.getPackageVariable<DataType>(name)->DelegatedData(ex_policy)),
+      index_handler_(encloser.caMeshes().DelegatedData(ex_policy)),
+      resolution_levels_(encloser.ResolutionLevels()),
+      cell_pkg_index_(encloser.getCellPackageIndex().DelegatedData(ex_policy)),
+      pkg_type_(encloser.getPackageType().DelegatedData(ex_policy)),
+      cell_neighborhood_(encloser.getCellNeighborhood().DelegatedData(ex_policy)) {}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+DataType SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::operator()(const Vecd &position)
+{
+    UnsignedInt proble_level = 0;
+    for (size_t level = resolution_levels_ - 1; level != 0; --level)
+    {
+        if (index_handler_[level].isWithinCorePackage(cell_pkg_index_, pkg_type_, position))
+        {
+            proble_level = level; // jump out of the loop!
+            break;
+        }
+    }
+
+    Arrayi cell_index = index_handler_[proble_level].CellIndexFromPosition(position);
+    UnsignedInt package_index =
+        index_handler_[proble_level].PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
+    return pkg_type_[package_index] != -1
+               ? probePackageData(index_handler_[proble_level], package_index, cell_index, position)
+               : pkg_data_[package_index](Arrayi::Zero());
+}
+//=============================================================================================//
 } // namespace SPH
 #endif // SPARSE_MESH_FIELD_HXX

@@ -80,7 +80,6 @@ class LevelSet : public SparseMeshField<4>
     void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
 
   protected:
-    inline size_t getProbeLevel(const Vecd &position);
     inline size_t getCoarseLevel(Real h_ratio);
 
     void initializeLevel(UnsignedInt level, SparseMeshField<4> *coarse_data = nullptr, UnsignedInt coarse_level = 0);
@@ -100,16 +99,13 @@ class LevelSet : public SparseMeshField<4>
     StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
     StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
     StdVec<SparseMeshField<4>::IndexHandler *> mesh_index_handler_set_;
-    StdVec<ProbeSignedDistance *> probe_signed_distance_set_;
-    StdVec<ProbeNormalDirection *> probe_normal_direction_set_;
-    StdVec<ProbeLevelSetGradient *> probe_level_set_gradient_set_;
+    SparseMeshField<4>::ProbeMesh<Real> *probe_signed_distance_;
+    SparseMeshField<4>::ProbeMesh<Vecd> *probe_level_set_gradient_;
     StdVec<ProbeKernelIntegral *> probe_kernel_integral_set_;
     StdVec<ProbeKernelGradientIntegral *> probe_kernel_gradient_integral_set_;
     StdVec<ProbeKernelSecondGradientIntegral *> probe_kernel_second_gradient_integral_set_;
-    UniquePtrsKeeper<SparseMeshField<4>> mesh_data_ptr_vector_keeper_;
-    UniquePtrsKeeper<ProbeSignedDistance> probe_signed_distance_vector_keeper_;
-    UniquePtrsKeeper<ProbeNormalDirection> probe_normal_direction_vector_keeper_;
-    UniquePtrsKeeper<ProbeLevelSetGradient> probe_level_set_gradient_vector_keeper_;
+    UniquePtrKeeper<SparseMeshField<4>::ProbeMesh<Real>> probe_signed_distance_keeper_;
+    UniquePtrKeeper<SparseMeshField<4>::ProbeMesh<Vecd>> probe_level_set_gradient_keeper_;
     UniquePtrsKeeper<ProbeKernelIntegral> probe_kernel_integral_vector_keeper_;
     UniquePtrsKeeper<ProbeKernelGradientIntegral> probe_kernel_gradient_integral_vector_keeper_;
     UniquePtrsKeeper<ProbeKernelSecondGradientIntegral> probe_kernel_second_gradient_integral_vector_keeper_;

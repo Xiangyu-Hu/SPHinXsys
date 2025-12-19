@@ -22,7 +22,7 @@ LevelSet::LevelSet(
         neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
             *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-    initializeLevel(0, coarse_data, coarse_data->getResolutionLevels() - 1);
+    initializeLevel(0, coarse_data, coarse_data->ResolutionLevels() - 1);
 }
 //=================================================================================================//
 LevelSet::LevelSet(
@@ -109,27 +109,17 @@ void LevelSet::correctTopology()
 //=============================================================================================//
 Real LevelSet::probeSignedDistance(const Vecd &position)
 {
-    return (*probe_signed_distance_set_[getProbeLevel(position)])(position);
+    return (*probe_signed_distance_)(position);
 }
 //=============================================================================================//
 Vecd LevelSet::probeNormalDirection(const Vecd &position)
 {
-    return (*probe_normal_direction_set_[getProbeLevel(position)])(position);
+    return (*probe_level_set_gradient_)(position).normalized();
 }
 //=============================================================================================//
 Vecd LevelSet::probeLevelSetGradient(const Vecd &position)
 {
-    return (*probe_level_set_gradient_set_[getProbeLevel(position)])(position);
-}
-//=============================================================================================//
-size_t LevelSet::getProbeLevel(const Vecd &position)
-{
-    for (size_t level = resolution_levels_; level != 0; --level)
-    {
-        if (mesh_index_handler_set_[level - 1]->isWithinCorePackage(cell_pkg_index_, pkg_type_, position))
-            return level - 1; // jump out of the loop!
-    }
-    return 0;
+    return (*probe_level_set_gradient_)(position);
 }
 //=================================================================================================//
 Real LevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)

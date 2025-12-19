@@ -81,25 +81,16 @@ ProbeKernelGradientIntegral LevelSet::getProbeKernelGradientIntegral(const Execu
 template <class ExecutionPolicy>
 void LevelSet::registerProbes(const ExecutionPolicy &ex_policy)
 {
-    for (size_t level = 0; level < resolution_levels_; level++)
-    {
-        probe_signed_distance_set_.push_back(
-            probe_signed_distance_vector_keeper_
-                .template createPtr<ProbeSignedDistance>(ex_policy, this, level));
-        probe_normal_direction_set_.push_back(
-            probe_normal_direction_vector_keeper_
-                .template createPtr<ProbeNormalDirection>(ex_policy, this, level));
-        probe_level_set_gradient_set_.push_back(
-            probe_level_set_gradient_vector_keeper_
-                .template createPtr<ProbeLevelSetGradient>(ex_policy, this, level));
+    probe_signed_distance_ =
+        probe_signed_distance_keeper_.template createPtr<
+            SparseMeshField<4>::ProbeMesh<Real>>(ex_policy, *this, "LevelSet");
 
-        addPackageVariableToProbe<Real>("LevelSet");
-        addPackageVariableToProbe<Vecd>("LevelSetGradient"); // shared with normal direction
+    probe_level_set_gradient_ =
+        probe_level_set_gradient_keeper_.template createPtr<
+            SparseMeshField<4>::ProbeMesh<Vecd>>(ex_policy, *this, "LevelSetGradient");
 
-        mesh_index_handler_set_.push_back(&getMesh(level));
-        cell_pkg_index_ = mcv_cell_pkg_index_->DelegatedData(ex_policy);
-        pkg_type_ = dv_pkg_type_->DelegatedData(ex_policy);
-    }
+    addPackageVariableToProbe<Real>("LevelSet");
+    addPackageVariableToProbe<Vecd>("LevelSetGradient"); // shared with normal direction
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
