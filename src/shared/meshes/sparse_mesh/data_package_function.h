@@ -57,25 +57,5 @@ Vec2d regularizedCentralDifference(PackageData<Real, PKG_SIZE> *input, const Cel
 template <int PKG_SIZE, typename RegularizeFunction>
 Vec3d regularizedCentralDifference(PackageData<Real, PKG_SIZE> *input, const CellNeighborhood3d &neighborhood,
                                    const Array3i &data_index, const RegularizeFunction &regularize_function);
-template <typename DataType, int PKG_SIZE>
-class ProbeMesh
-{
-    using IndexHandler = PackageMesh<PKG_SIZE>;
-
-  public:
-    template <class ExecutionPolicy>
-    ProbeMesh(const ExecutionPolicy &ex_policy, SparseMeshField<PKG_SIZE> *data_mesh,
-              UnsignedInt resolution_level, const std::string &variable_name);
-    DataType operator()(const Vecd &position);
-
-  protected:
-    PackageData<DataType, PKG_SIZE> *pkg_data_;
-    IndexHandler index_handler_;
-    UnsignedInt *cell_pkg_index_;
-    CellNeighborhood *cell_neighborhood_;
-    /** probe by applying bi and tri-linear interpolation within the package. */
-    DataType probePackageData(UnsignedInt package_index, const Array2i &cell_index, const Vec2d &position);
-    DataType probePackageData(UnsignedInt package_index, const Array3i &cell_index, const Vec3d &position);
-};
 } // namespace SPH
 #endif // DATA_PACKAGE_FUNCTIONS_H

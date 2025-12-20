@@ -55,25 +55,6 @@ DataType CornerAverage(PackageData<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_i
     return average / count;
 }
 //=============================================================================================//
-template <typename DataType, int PKG_SIZE>
-template <class ExecutionPolicy>
-ProbeMesh<DataType, PKG_SIZE>::ProbeMesh(
-    const ExecutionPolicy &ex_policy, SparseMeshField<PKG_SIZE> *data_mesh,
-    UnsignedInt resolution_level, const std::string &variable_name)
-    : pkg_data_(data_mesh->template getPackageVariable<DataType>(variable_name)->DelegatedData(ex_policy)),
-      index_handler_(data_mesh->getMesh(resolution_level)),
-      cell_pkg_index_(data_mesh->getCellPackageIndex().DelegatedData(ex_policy)),
-      cell_neighborhood_(data_mesh->getCellNeighborhood().DelegatedData(ex_policy)) {}
-//=============================================================================================//
-template <typename DataType, int PKG_SIZE>
-DataType ProbeMesh<DataType, PKG_SIZE>::operator()(const Vecd &position)
-{
-    Arrayi cell_index = index_handler_.CellIndexFromPosition(position);
-    UnsignedInt package_index = index_handler_.PackageIndexFromCellIndex(cell_pkg_index_, cell_index);
-    return package_index > 1 ? probePackageData(package_index, cell_index, position)
-                             : pkg_data_[package_index](Arrayi::Zero());
-}
-//=============================================================================================//
 template <typename DataType, int PKG_SIZE, typename FunctionByIndex>
 void assignByDataIndex(PackageData<DataType, PKG_SIZE> &pkg_data, const FunctionByIndex &function_by_index)
 {
@@ -126,74 +107,6 @@ Vec3d regularizedCentralDifference(
     Real dphidz_m = input[center.first](center.second) - input[z2.first](z2.second);
     Real dphidz = regularize_function(dphidz_p, dphidz_m);
     return Vec3d(dphidx, dphidy, dphidz);
-}
-//=============================================================================================//
-template <typename DataType, int PKG_SIZE>
-DataType ProbeMesh<DataType, PKG_SIZE>::probePackageData(
-    UnsignedInt package_index, const Array2i &cell_index, const Vec2d &position)
-{
-    Array2i data_index = index_handler_.DataIndexFromPosition(cell_index, position);
-    Vec2d data_position = index_handler_.DataPositionFromIndex(cell_index, data_index);
-    Vec2d alpha = (position - data_position) / index_handler_.DataSpacing();
-    Vec2d beta = Vec2d::Ones() - alpha;
-
-    auto &neighborhood = cell_neighborhood_[package_index];
-    PackageDataPair neighbour_index_1 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array2i(0, 0), neighborhood);
-    PackageDataPair neighbour_index_2 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array2i(1, 0), neighborhood);
-    PackageDataPair neighbour_index_3 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array2i(0, 1), neighborhood);
-    PackageDataPair neighbour_index_4 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array2i(1, 1), neighborhood);
-
-    return pkg_data_[neighbour_index_1.first](neighbour_index_1.second) * beta[0] * beta[1] +
-           pkg_data_[neighbour_index_2.first](neighbour_index_2.second) * alpha[0] * beta[1] +
-           pkg_data_[neighbour_index_3.first](neighbour_index_3.second) * beta[0] * alpha[1] +
-           pkg_data_[neighbour_index_4.first](neighbour_index_4.second) * alpha[0] * alpha[1];
-}
-//=============================================================================================//
-template <typename DataType, int PKG_SIZE>
-DataType ProbeMesh<DataType, PKG_SIZE>::probePackageData(
-    UnsignedInt package_index, const Array3i &cell_index, const Vec3d &position)
-{
-    Array3i data_index = index_handler_.DataIndexFromPosition(cell_index, position);
-    Vec3d data_position = index_handler_.DataPositionFromIndex(cell_index, data_index);
-    Vec3d alpha = (position - data_position) / index_handler_.DataSpacing();
-    Vec3d beta = Vec3d::Ones() - alpha;
-
-    auto &neighborhood = cell_neighborhood_[package_index];
-    PackageDataPair neighbour_index_1 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 0, 0), neighborhood);
-    PackageDataPair neighbour_index_2 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(1, 0, 0), neighborhood);
-    PackageDataPair neighbour_index_3 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 1, 0), neighborhood);
-    PackageDataPair neighbour_index_4 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(1, 1, 0), neighborhood);
-
-    DataType bilinear_1 =
-        pkg_data_[neighbour_index_1.first](neighbour_index_1.second) * beta[0] * beta[1] +
-        pkg_data_[neighbour_index_2.first](neighbour_index_2.second) * alpha[0] * beta[1] +
-        pkg_data_[neighbour_index_3.first](neighbour_index_3.second) * beta[0] * alpha[1] +
-        pkg_data_[neighbour_index_4.first](neighbour_index_4.second) * alpha[0] * alpha[1];
-
-    neighbour_index_1 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 0, 1), neighborhood);
-    neighbour_index_2 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(1, 0, 1), neighborhood);
-    neighbour_index_3 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 1, 1), neighborhood);
-    neighbour_index_4 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(1, 1, 1), neighborhood);
-
-    DataType bilinear_2 =
-        pkg_data_[neighbour_index_1.first](neighbour_index_1.second) * beta[0] * beta[1] +
-        pkg_data_[neighbour_index_2.first](neighbour_index_2.second) * alpha[0] * beta[1] +
-        pkg_data_[neighbour_index_3.first](neighbour_index_3.second) * beta[0] * alpha[1] +
-        pkg_data_[neighbour_index_4.first](neighbour_index_4.second) * alpha[0] * alpha[1];
-
-    return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
 }
 //=============================================================================================//
 } // namespace SPH
