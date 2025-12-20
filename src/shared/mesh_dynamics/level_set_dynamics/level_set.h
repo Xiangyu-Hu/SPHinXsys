@@ -83,9 +83,6 @@ class LevelSet : public SparseMeshField<4>
         DataType operator()(const Vecd &position, Real h_ratio);
     };
 
-    template <class ExecutionPolicy>
-    ProbeKernelGradientIntegral getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy);
-
   protected:
     void initializeLevel(UnsignedInt level, SparseMeshField<4> *coarse_data = nullptr, UnsignedInt coarse_level = 0);
     template <class ExecutionPolicy>

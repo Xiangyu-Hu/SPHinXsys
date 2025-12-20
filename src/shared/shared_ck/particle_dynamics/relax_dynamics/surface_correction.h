@@ -75,6 +75,8 @@ class LevelsetBounding : public BaseLocalDynamics<BodyPartByCell>
 
 class LevelsetKernelGradientIntegral : public LocalDynamics
 {
+    using ProbeKernelGradientIntegral = LevelSet::ProbeLevelSet<Vecd>;
+
   public:
     LevelsetKernelGradientIntegral(SPHBody &sph_body, LevelSetShape &level_set_shape);
     virtual ~LevelsetKernelGradientIntegral() {};
@@ -87,7 +89,7 @@ class LevelsetKernelGradientIntegral : public LocalDynamics
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            residual_[index_i] -= 2.0 * kernel_gradient_integral_(pos_[index_i]);
+            residual_[index_i] -= 2.0 * kernel_gradient_integral_(pos_[index_i], 1.0);
         };
 
       protected:

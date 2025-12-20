@@ -32,7 +32,6 @@
 
 #include "base_geometry.h"
 #include "base_local_mesh_dynamics.h"
-#include "level_set_probe.h"
 #include "mesh_dynamics_algorithm.h"
 
 namespace SPH

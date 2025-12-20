@@ -61,12 +61,6 @@ void LevelSet::initializeKernelIntegralVariables(const ExecutionPolicy &ex_polic
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-ProbeKernelGradientIntegral LevelSet::getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy)
-{
-    return ProbeKernelGradientIntegral(ex_policy, this, resolution_levels_ - 1);
-}
-//=================================================================================================//
-template <class ExecutionPolicy>
 void LevelSet::registerProbes(const ExecutionPolicy &ex_policy)
 {
     probe_signed_distance_ =
@@ -111,6 +105,11 @@ LevelSet::ProbeLevelSet<DataType>::ProbeLevelSet(
 template <typename DataType>
 DataType LevelSet::ProbeLevelSet<DataType>::operator()(const Vecd &position)
 {
+    if (this->resolution_levels_ == 1)
+    {
+        return BaseProbe::probeInResolutionLevel(0, position);
+    }
+
     UnsignedInt proble_level = BaseProbe::locateResolutionLevelByPackageType(1, position);
     return BaseProbe::probeInResolutionLevel(proble_level, position);
 }

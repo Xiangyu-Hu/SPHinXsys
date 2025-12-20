@@ -84,25 +84,11 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
     typedef DataContainerAddressAssemble<PackageVariable> PackageVariableAssemble;
     typedef DataContainerAddressAssemble<MetaVariable> MetaVariableAssemble;
 
-  protected:
-    DataContainerUniquePtrAssemble<PackageVariable> pkg_variable_ptrs_;
-    PackageVariableAssemble all_pkg_variables_;      /**< all mesh variables on this mesh. */
-    PackageVariableAssemble pkg_variables_to_write_; /**< mesh variables to write, which are not empty. */
-    PackageVariableAssemble pkh_variables_to_probe_; /**< mesh variables to probe. */
-    PackageVariableAssemble evolving_pkg_variables_;
-
-    DataContainerUniquePtrAssemble<MetaVariable> meta_variable_ptrs_;
-    MetaVariableAssemble all_meta_variables_;
-    MetaVariableAssemble evolving_meta_variables_;
-
-    UniquePtrsKeeper<Entity> unique_variable_ptrs_;
-
   public:
     SparseMeshField(const std::string &name, UnsignedInt resolution_levels,
                     BoundingBoxd tentative_bounds, Real Reference_grid_spacing,
                     UnsignedInt buffer_width, UnsignedInt num_boundary_pkgs);
     virtual ~SparseMeshField() {};
-
     static constexpr int PackageDataSize() { return PKG_SIZE; };
     UnsignedInt NumBoundaryPackages() const { return num_boundary_pkgs_; };
     UnsignedInt PackageBound() const { return pkgs_bound_; };
@@ -115,25 +101,6 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
     MetaVariableAssemble &getEvolvingMetaVariables() { return evolving_meta_variables_; };
     PackageVariableAssemble &getEvolvingPackageVariables() { return evolving_pkg_variables_; };
     void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
-
-  protected:
-    UnsignedInt num_boundary_pkgs_;        /**< the number boundary packages for each resolution level. */
-    StdVec<UnsignedInt> num_pkgs_offsets_; /**< save stating and ending indexes of non-boundary packages. */
-    UnsignedInt pkgs_bound_;
-    MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;               /**< metadata for data packages: cell index. */
-    MetaVariable<int> *dv_pkg_type_;                                /**< metadata for data packages: (int)core1/inner0. */
-    MetaVariable<CellNeighborhood> *cell_neighborhood_;             /**< 3*3(*3) array to store indicies of neighborhood cells. */
-    CellVariable<UnsignedInt> *mcv_cell_pkg_index_;                 /**< the package index for each cell in as 1-d array. */
-    ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_; /**< (UnsignedInt)sort_index, (int)core1/inner0. */
-    bool is_organized_ = false;                                     /**< whether the data packages are organized. */
-
-    template <typename T>
-    T &checkOrganized(std::string func_name, T &value);
-
-    OperationOnDataAssemble<PackageVariableAssemble, PrepareVariablesToWrite<PackageVariable>> sync_mesh_variable_data_{};
-    void writePackageVariablesToPltByMesh(UnsignedInt resolution_level, std::ofstream &output_file);
-
-  public:
     template <class ExecutionPolicy>
     void syncPackageVariablesToWrite(ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
@@ -152,14 +119,11 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
     void addPackageVariableToProbe(const std::string &name);
     template <typename DataType>
     void addEvolvingMetaVariable(const std::string &name);
-
     template <class DiscreteVariableType, class BoundaryDataFunction>
     void setBoundaryData(DiscreteVariableType *variable, UnsignedInt resolution_level,
                          const BoundaryDataFunction &boundary_data_function);
-
     void organizeOccupiedPackages(UnsignedInt resolution_level);
 
-  public: // for computing kernels
     template <typename DataType>
     class ProbeMesh
     {
@@ -183,6 +147,31 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
         DataType probePackageData(const IndexHandler &index_handler, UnsignedInt package_index,
                                   const Arrayi &cell_index, const Vecd &position);
     };
+
+  protected:
+    DataContainerUniquePtrAssemble<PackageVariable> pkg_variable_ptrs_;
+    PackageVariableAssemble all_pkg_variables_;      /**< all mesh variables on this mesh. */
+    PackageVariableAssemble pkg_variables_to_write_; /**< mesh variables to write, which are not empty. */
+    PackageVariableAssemble pkh_variables_to_probe_; /**< mesh variables to probe. */
+    PackageVariableAssemble evolving_pkg_variables_;
+    DataContainerUniquePtrAssemble<MetaVariable> meta_variable_ptrs_;
+    MetaVariableAssemble all_meta_variables_;
+    MetaVariableAssemble evolving_meta_variables_;
+    UniquePtrsKeeper<Entity> unique_variable_ptrs_;
+    UnsignedInt num_boundary_pkgs_;        /**< the number boundary packages for each resolution level. */
+    StdVec<UnsignedInt> num_pkgs_offsets_; /**< save stating and ending indexes of non-boundary packages. */
+    UnsignedInt pkgs_bound_;
+    MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;               /**< metadata for data packages: cell index. */
+    MetaVariable<int> *dv_pkg_type_;                                /**< metadata for data packages: (int)core1/inner0. */
+    MetaVariable<CellNeighborhood> *cell_neighborhood_;             /**< 3*3(*3) array to store indicies of neighborhood cells. */
+    CellVariable<UnsignedInt> *mcv_cell_pkg_index_;                 /**< the package index for each cell in as 1-d array. */
+    ConcurrentVec<std::pair<UnsignedInt, int>> occupied_data_pkgs_; /**< (UnsignedInt)sort_index, (int)core1/inner0. */
+    bool is_organized_ = false;                                     /**< whether the data packages are organized. */
+
+    template <typename T>
+    T &checkOrganized(std::string func_name, T &value);
+    OperationOnDataAssemble<PackageVariableAssemble, PrepareVariablesToWrite<PackageVariable>> sync_mesh_variable_data_{};
+    void writePackageVariablesToPltByMesh(UnsignedInt resolution_level, std::ofstream &output_file);
 };
 } // namespace SPH
 #endif // MESH_WITH_DATA_PACKAGES_H
