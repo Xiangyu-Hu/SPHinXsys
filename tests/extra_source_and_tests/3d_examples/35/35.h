@@ -13,7 +13,7 @@
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"
 #include "sphinxsys.h"
-#include "zeroth-order_residue.h"
+//#include "zeroth-order_residue.h"
 using namespace SPH;
 
 //----------------------------------------------------------------------

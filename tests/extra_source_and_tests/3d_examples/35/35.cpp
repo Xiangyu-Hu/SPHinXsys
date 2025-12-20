@@ -117,7 +117,7 @@ int main(int ac, char *av[])
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(wall_boundary_inner);
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner_water(water_block_inner);
 
-        SimpleDynamics<DisposerInBufferDeletion> inlet_1_particles_deletion(inlet_1_detection_box);
+        //SimpleDynamics<DisposerInBufferDeletion> inlet_1_particles_deletion(inlet_1_detection_box);
         //SimpleDynamics<DisposerInBufferDeletion> inlet_2_particles_deletion(inlet_2_detection_box);
         //SimpleDynamics<DisposerInBufferDeletion> inlet_3_particles_deletion(inlet_3_detection_box);
         //SimpleDynamics<DisposerInBufferDeletion> inlet_4_particles_deletion(inlet_4_detection_box);
@@ -125,7 +125,7 @@ int main(int ac, char *av[])
         //SimpleDynamics<DisposerInBufferDeletion> inlet_6_particles_deletion(inlet_6_detection_box);
         //SimpleDynamics<DisposerInBufferDeletion> inlet_7_particles_deletion(inlet_7_detection_box);
         //SimpleDynamics<DisposerInBufferDeletion> inlet_8_particles_deletion(inlet_8_detection_box);
-        SimpleDynamics<DisposerInBufferDeletion> outlet_particles_deletion(outlet_detection_box);
+        //SimpleDynamics<DisposerInBufferDeletion> outlet_particles_deletion(outlet_detection_box);
 
         ParticleSorting particle_sorting_wall(wall_boundary);
         //----------------------------------------------------------------------
@@ -155,7 +155,7 @@ int main(int ac, char *av[])
             }
         }
 
-        inlet_1_particles_deletion.exec();
+        //inlet_1_particles_deletion.exec();
         particle_sorting_wall.exec();
         wall_boundary.updateCellLinkedList();
 
@@ -187,7 +187,7 @@ int main(int ac, char *av[])
         particle_sorting_wall.exec();
         wall_boundary.updateCellLinkedList();*/
 
-        outlet_particles_deletion.exec();
+        //outlet_particles_deletion.exec();
         particle_sorting_wall.exec();
         wall_boundary.updateCellLinkedList();
 
@@ -221,7 +221,7 @@ int main(int ac, char *av[])
 
     /** Pressure relaxation algorithm with Riemann solver for viscous flows. */
     //Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann_RKGC_OBC> pressure_relaxation(water_block_inner, water_wall_contact);
+    Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionForOpenBoundaryFlowWithWallRiemann> pressure_relaxation(water_block_inner, water_wall_contact);
 
     /** Density relaxation algorithm by using position verlet time stepping. */
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_wall_contact);
@@ -245,9 +245,9 @@ int main(int ac, char *av[])
     // StartupAcceleration time_dependent_acceleration(Vecd(0.0, 0.0, U_f), t_ref);
     // SimpleDynamics<GravityForce<StartupAcceleration>> apply_gravity_force(water_block, time_dependent_acceleration);
 
-    SimpleDynamics<InitialiseColorIndicator> initialise_color_indicator(water_block);
-    getInitialBoundingBox();
-    SimpleDynamics<InitialiseColorIndicator2> initialise_color_indicator2(water_block, box_initial_bounding);
+    //SimpleDynamics<InitialiseColorIndicator> initialise_color_indicator(water_block);
+    //getInitialBoundingBox();
+    //SimpleDynamics<InitialiseColorIndicator2> initialise_color_indicator2(water_block, box_initial_bounding);
     //----------------------------------------------------------------------
     // Inlet buffers
     //----------------------------------------------------------------------
@@ -332,9 +332,9 @@ int main(int ac, char *av[])
     SimpleDynamics<ParticleSnapshotAverage<Real>> average_pressure(observer_body, "Pressure"); //% Average pressure
     //ObservingAQuantity<int> observing_buffer_particle_indicator(fluid_observer_contact2, "BufferIndicator");          //% Average
 
-    InteractionDynamics<TagMixedParticle> tag_mixed_particle(water_block_inner, mixing_rate_interactive_radius);
-    ReduceDynamics<CalculateFluidParticleNumberInOutletChannel> calculate_fluid_particle_number_in_outlet_channel(water_block, Radius_chamber, H_inlet);
-    ReduceDynamics<CalculateMixedFluidParticleNumberInOutletChannel> calculate_mixed_fluid_particle_number_in_outlet_channel(water_block, Radius_chamber, H_inlet);
+    //InteractionDynamics<TagMixedParticle> tag_mixed_particle(water_block_inner, mixing_rate_interactive_radius);
+    //ReduceDynamics<CalculateFluidParticleNumberInOutletChannel> calculate_fluid_particle_number_in_outlet_channel(water_block, Radius_chamber, H_inlet);
+    //ReduceDynamics<CalculateMixedFluidParticleNumberInOutletChannel> calculate_mixed_fluid_particle_number_in_outlet_channel(water_block, Radius_chamber, H_inlet);
 
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
@@ -360,13 +360,13 @@ int main(int ac, char *av[])
     WriteToVtpIfVelocityOutOfBound abnormal_velocity_recording(sph_system, 1.0e6 * U_max);
 
     //% Temporary Treat Note that this should be in front of TAG particle include inlet outlet and buffer
-    SimpleDynamics<DisposerForInitialParticleDeletion> delete_initial_particle(water_block);
-    delete_initial_particle.exec();
-    particle_sorting.exec();
-    water_block.updateCellLinkedList();
+    //SimpleDynamics<DisposerForInitialParticleDeletion> delete_initial_particle(water_block);
+    //delete_initial_particle.exec();
+    //particle_sorting.exec();
+    //water_block.updateCellLinkedList();
 
-    initialise_color_indicator.exec();
-    initialise_color_indicator2.exec();
+    //initialise_color_indicator.exec();
+    //initialise_color_indicator2.exec();
 
     BodyStatesRecordingToVtp write_observation_states(observer_body);     //% Average
     write_observation_states.addToWrite<Real>(observer_body, "Pressure"); //% Average pressure
@@ -555,21 +555,21 @@ int main(int ac, char *av[])
             outlet_bidirection_buffer.tag_buffer_particles.exec();
 
             /** Tag mixed particles*/
-            tag_mixed_particle.exec();
-            /** Calculate mixing rate */
-            if (physical_time > time_output_average_data)
-            {
-                int number_fluid_particle_in_outlet_channel = calculate_fluid_particle_number_in_outlet_channel.exec();
-                int number_mixed_fluid_particle_in_outlet_channel = calculate_mixed_fluid_particle_number_in_outlet_channel.exec();
-                Real mixing_rate_outlet_channel = number_fluid_particle_in_outlet_channel == 0 ? 0.0 : Real(number_mixed_fluid_particle_in_outlet_channel) / Real(number_fluid_particle_in_outlet_channel);
-                // std::cout << "number_fluid_particle_in_outlet_channel= " << number_fluid_particle_in_outlet_channel << std::endl;
-                // std::cout << "number_mixed_fluid_particle_in_outlet_channel= " << number_mixed_fluid_particle_in_outlet_channel << std::endl;
-                // std::cout << "mixing_rate_outlet_channel= " << mixing_rate_outlet_channel << std::endl;
-                mixing_file
-                    << std::fixed << std::setprecision(6)
-                    << physical_time << " "
-                    << mixing_rate_outlet_channel << "\n";
-            }
+            //tag_mixed_particle.exec();
+            ///** Calculate mixing rate */
+            //if (physical_time > time_output_average_data)
+            //{
+            //    int number_fluid_particle_in_outlet_channel = calculate_fluid_particle_number_in_outlet_channel.exec();
+            //    int number_mixed_fluid_particle_in_outlet_channel = calculate_mixed_fluid_particle_number_in_outlet_channel.exec();
+            //    Real mixing_rate_outlet_channel = number_fluid_particle_in_outlet_channel == 0 ? 0.0 : Real(number_mixed_fluid_particle_in_outlet_channel) / Real(number_fluid_particle_in_outlet_channel);
+            //    // std::cout << "number_fluid_particle_in_outlet_channel= " << number_fluid_particle_in_outlet_channel << std::endl;
+            //    // std::cout << "number_mixed_fluid_particle_in_outlet_channel= " << number_mixed_fluid_particle_in_outlet_channel << std::endl;
+            //    // std::cout << "mixing_rate_outlet_channel= " << mixing_rate_outlet_channel << std::endl;
+            //    mixing_file
+            //        << std::fixed << std::setprecision(6)
+            //        << physical_time << " "
+            //        << mixing_rate_outlet_channel << "\n";
+            //}
 
             if (physical_time > time_output_average_data * 100.0)
             {
