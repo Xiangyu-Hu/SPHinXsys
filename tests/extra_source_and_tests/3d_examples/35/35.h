@@ -30,7 +30,7 @@ Real H_total = 100.0;
 
 Real D_hydraulic = 2.0 * L_inlet * H_inlet / (L_inlet + H_inlet);
 
-Real num_fluid_cross_H_inlet = 5.0;
+Real num_fluid_cross_H_inlet = 10.0;
 Real resolution_ref = H_inlet / num_fluid_cross_H_inlet; /**< Initial reference particle spacing. */
 
 Real BW = resolution_ref * 4; /**< Reference size of the emitter. */
