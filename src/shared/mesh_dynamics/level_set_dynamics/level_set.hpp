@@ -61,18 +61,6 @@ void LevelSet::initializeKernelIntegralVariables(const ExecutionPolicy &ex_polic
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-ProbeSignedDistance LevelSet::getProbeSignedDistance(const ExecutionPolicy &ex_policy)
-{
-    return ProbeSignedDistance(ex_policy, this, resolution_levels_ - 1);
-}
-//=================================================================================================//
-template <class ExecutionPolicy>
-ProbeNormalDirection LevelSet::getProbeNormalDirection(const ExecutionPolicy &ex_policy)
-{
-    return ProbeNormalDirection(ex_policy, this, resolution_levels_ - 1);
-}
-//=================================================================================================//
-template <class ExecutionPolicy>
 ProbeKernelGradientIntegral LevelSet::getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy)
 {
     return ProbeKernelGradientIntegral(ex_policy, this, resolution_levels_ - 1);

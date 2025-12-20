@@ -36,6 +36,9 @@ namespace SPH
 {
 class LevelsetBounding : public BaseLocalDynamics<BodyPartByCell>
 {
+    using ProbeSignedDistance = LevelSet::ProbeLevelSet<Real>;
+    using ProbeLevelsetGradient = LevelSet::ProbeLevelSet<Vecd>;
+
   public:
     LevelsetBounding(NearShapeSurface &body_part);
     virtual ~LevelsetBounding() {};
@@ -53,14 +56,14 @@ class LevelsetBounding : public BaseLocalDynamics<BodyPartByCell>
             if (phi > -constrained_distance_)
             {
                 pos_[index_i] -= (phi + constrained_distance_) *
-                                 normal_direction_(pos_[index_i]);
+                                 level_set_gradient_(pos_[index_i]).normalized();
             }
         };
 
       protected:
         Vecd *pos_;
         ProbeSignedDistance signed_distance_;
-        ProbeNormalDirection normal_direction_;
+        ProbeLevelsetGradient level_set_gradient_;
         Real constrained_distance_;
     };
 

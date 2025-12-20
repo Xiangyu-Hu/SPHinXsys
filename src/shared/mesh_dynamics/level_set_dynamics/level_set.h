@@ -84,12 +84,6 @@ class LevelSet : public SparseMeshField<4>
     };
 
     template <class ExecutionPolicy>
-    ProbeSignedDistance getProbeSignedDistance(const ExecutionPolicy &ex_policy);
-
-    template <class ExecutionPolicy>
-    ProbeNormalDirection getProbeNormalDirection(const ExecutionPolicy &ex_policy);
-
-    template <class ExecutionPolicy>
     ProbeKernelGradientIntegral getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy);
 
   protected:

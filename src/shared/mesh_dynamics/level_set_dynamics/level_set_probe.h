@@ -33,24 +33,6 @@
 
 namespace SPH
 {
-class ProbeSignedDistance : public ProbeMesh<Real, 4>
-{
-  public:
-    template <class ExecutionPolicy>
-    ProbeSignedDistance(const ExecutionPolicy &ex_policy, SparseMeshField<4> *data_mesh, UnsignedInt resolution_level)
-        : ProbeMesh(ex_policy, data_mesh, resolution_level, "LevelSet"){};
-    ~ProbeSignedDistance() {};
-};
-
-class ProbeLevelSetGradient : public ProbeMesh<Vecd, 4>
-{
-  public:
-    template <class ExecutionPolicy>
-    explicit ProbeLevelSetGradient(const ExecutionPolicy &ex_policy, SparseMeshField<4> *data_mesh, UnsignedInt resolution_level)
-        : ProbeMesh(ex_policy, data_mesh, resolution_level, "LevelSetGradient"){};
-    ~ProbeLevelSetGradient() {};
-};
-
 class ProbeNormalDirection : public ProbeMesh<Vecd, 4>
 {
   public:
