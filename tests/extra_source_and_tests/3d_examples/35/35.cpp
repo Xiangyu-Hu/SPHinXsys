@@ -48,23 +48,9 @@ int main(int ac, char *av[])
         ? observer_body.generateParticles<BaseParticles, Reload>(water_block.getName())
         : observer_body.generateParticles<BaseParticles, Lattice>();
 
-    // observe_centerline::get_observation_locations();
-    // observe_centerline::output_observer_theoretical_pos_on_line();
-    // ObserverBody fluid_observer_centerline(sph_system, "FluidObserverCenterline");
-    // fluid_observer_centerline.generateParticles<ObserverParticles>(observe_centerline::observation_location);
-
-    // observe_cross_sections::getPositionsOfMultipleObserveLines();
-    // observe_cross_sections::output_observe_positions();
-    // observe_cross_sections::output_observer_theoretical_pos_on_line();
-    // observe_cross_sections::output_number_observe_points_on_lines();
-    // ObserverBody fluid_observer_cross_section(sph_system, "FluidObserverCrossSections");
-    // fluid_observer_cross_section.generateParticles<ObserverParticles>(observe_cross_sections::observation_locations);
-
     /** topology */
     InnerRelation water_block_inner(water_block);
     ContactRelation water_wall_contact(water_block, {&wall_boundary});
-    // ContactRelation fluid_observer_centerline_contact(fluid_observer_centerline, {&water_block});
-    // ContactRelation fluid_observer_cross_section_contact(fluid_observer_cross_section, {&water_block});
     ContactRelation observer_centerpoint_contact(observer_center_point, {&water_block});
 
     ContactRelation fluid_observer_contact2(observer_body, {&water_block}); //% Average
@@ -85,20 +71,6 @@ int main(int ac, char *av[])
 
         AlignedBoxByCell inlet_1_detection_box(wall_boundary,
                                                    AlignedBox(yAxis, Transform(Rotation3d(inlet_1_rotation), Vec3d(inlet_1_sub_buffer_translation)), inlet_buffer_halfsize));
-        //AlignedBoxByCell inlet_2_detection_box(wall_boundary,
-        //                                           AlignedBox(yAxis, Transform(Rotation3d(inlet_2_rotation), Vec3d(inlet_2_sub_buffer_translation)), inlet_buffer_halfsize));
-        //AlignedBoxByCell inlet_3_detection_box(wall_boundary,
-        //                                           AlignedBox(yAxis, Transform(Rotation3d(inlet_3_rotation), Vec3d(inlet_3_sub_buffer_translation)), inlet_buffer_halfsize));
-        //AlignedBoxByCell inlet_4_detection_box(wall_boundary,
-        //                                           AlignedBox(yAxis, Transform(Rotation3d(inlet_4_rotation), Vec3d(inlet_4_sub_buffer_translation)), inlet_buffer_halfsize));
-        //AlignedBoxByCell inlet_5_detection_box(wall_boundary,
-        //                                           AlignedBox(yAxis, Transform(Rotation3d(inlet_5_rotation), Vec3d(inlet_5_sub_buffer_translation)), inlet_buffer_halfsize));
-        //AlignedBoxByCell inlet_6_detection_box(wall_boundary,
-        //                                           AlignedBox(yAxis, Transform(Rotation3d(inlet_6_rotation), Vec3d(inlet_6_sub_buffer_translation)), inlet_buffer_halfsize));
-        //AlignedBoxByCell inlet_7_detection_box(wall_boundary,
-        //                                           AlignedBox(yAxis, Transform(Rotation3d(inlet_7_rotation), Vec3d(inlet_7_sub_buffer_translation)), inlet_buffer_halfsize));
-        //AlignedBoxByCell inlet_8_detection_box(wall_boundary,
-        //                                           AlignedBox(yAxis, Transform(Rotation3d(inlet_8_rotation), Vec3d(inlet_8_sub_buffer_translation)), inlet_buffer_halfsize));
         AlignedBoxByCell outlet_detection_box(wall_boundary,
                                                   AlignedBox(yAxis, Transform(Rotation3d(outlet_rotation), Vec3d(outlet_sub_buffer_translation)), outlet_buffer_halfsize));
         //----------------------------------------------------------------------
@@ -116,16 +88,6 @@ int main(int ac, char *av[])
         /** A  Physics relaxation step. */
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(wall_boundary_inner);
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner_water(water_block_inner);
-
-        //SimpleDynamics<DisposerInBufferDeletion> inlet_1_particles_deletion(inlet_1_detection_box);
-        //SimpleDynamics<DisposerInBufferDeletion> inlet_2_particles_deletion(inlet_2_detection_box);
-        //SimpleDynamics<DisposerInBufferDeletion> inlet_3_particles_deletion(inlet_3_detection_box);
-        //SimpleDynamics<DisposerInBufferDeletion> inlet_4_particles_deletion(inlet_4_detection_box);
-        //SimpleDynamics<DisposerInBufferDeletion> inlet_5_particles_deletion(inlet_5_detection_box);
-        //SimpleDynamics<DisposerInBufferDeletion> inlet_6_particles_deletion(inlet_6_detection_box);
-        //SimpleDynamics<DisposerInBufferDeletion> inlet_7_particles_deletion(inlet_7_detection_box);
-        //SimpleDynamics<DisposerInBufferDeletion> inlet_8_particles_deletion(inlet_8_detection_box);
-        //SimpleDynamics<DisposerInBufferDeletion> outlet_particles_deletion(outlet_detection_box);
 
         ParticleSorting particle_sorting_wall(wall_boundary);
         //----------------------------------------------------------------------
@@ -159,34 +121,6 @@ int main(int ac, char *av[])
         particle_sorting_wall.exec();
         wall_boundary.updateCellLinkedList();
 
-        /*inlet_2_particles_deletion.exec();
-        particle_sorting_wall.exec();
-        wall_boundary.updateCellLinkedList();
-
-        inlet_3_particles_deletion.exec();
-        particle_sorting_wall.exec();
-        wall_boundary.updateCellLinkedList();
-
-        inlet_4_particles_deletion.exec();
-        particle_sorting_wall.exec();
-        wall_boundary.updateCellLinkedList();
-
-        inlet_5_particles_deletion.exec();
-        particle_sorting_wall.exec();
-        wall_boundary.updateCellLinkedList();
-
-        inlet_6_particles_deletion.exec();
-        particle_sorting_wall.exec();
-        wall_boundary.updateCellLinkedList();
-
-        inlet_7_particles_deletion.exec();
-        particle_sorting_wall.exec();
-        wall_boundary.updateCellLinkedList();
-
-        inlet_8_particles_deletion.exec();
-        particle_sorting_wall.exec();
-        wall_boundary.updateCellLinkedList();*/
-
         //outlet_particles_deletion.exec();
         particle_sorting_wall.exec();
         wall_boundary.updateCellLinkedList();
@@ -196,11 +130,6 @@ int main(int ac, char *av[])
 
         std::cout << "The physics relaxation process of the wall_boundary finish !" << std::endl;
         std::cout << "The physics relaxation process of the water_block finish !" << std::endl;
-
-        //particle_sorting_wall.exec();
-        //wall_boundary.updateCellLinkedList();
-        //write_inserted_body_to_vtp.writeToFile((ite_max_step + 400));
-        //write_inserted_body_to_vtp_water.writeToFile((ite_max_step + 400));
 
         /** Output results. */
         write_particle_reload_files.writeToFile(0);
@@ -257,55 +186,6 @@ int main(int ac, char *av[])
     //SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> buffer_1_inflow_pressure_condition(buffer_1);
     SimpleDynamics<fluid_dynamics::PressureConditionCorrection<LeftInflowPressure>> buffer_1_inflow_pressure_condition(buffer_1);
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> buffer_1_inflow_velocity_condition(buffer_1);
-
-    //AlignedBox buffer_2_shape(yAxis, Transform(Rotation3d(inlet_2_rotation), Vec3d(inlet_2_buffer_translation)), inlet_buffer_halfsize);
-    //AlignedBoxByCell buffer_2(water_block, buffer_2_shape);
-    //fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> bidirection_buffer_2(buffer_2, inlet_particle_buffer);
-    ////SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> buffer_2_inflow_pressure_condition(buffer_2);
-    //SimpleDynamics<fluid_dynamics::PressureConditionCorrection<LeftInflowPressure>> buffer_2_inflow_pressure_condition(buffer_2);
-    //SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> buffer_2_inflow_velocity_condition(buffer_2);
-
-    //AlignedBox buffer_3_shape(yAxis, Transform(Rotation3d(inlet_3_rotation), Vec3d(inlet_3_buffer_translation)), inlet_buffer_halfsize);
-    //AlignedBoxByCell buffer_3(water_block, buffer_3_shape);
-    //fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> bidirection_buffer_3(buffer_3, inlet_particle_buffer);
-    ////SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> buffer_3_inflow_pressure_condition(buffer_3);
-    //SimpleDynamics<fluid_dynamics::PressureConditionCorrection<LeftInflowPressure>> buffer_3_inflow_pressure_condition(buffer_3);
-    //SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> buffer_3_inflow_velocity_condition(buffer_3);
-
-    //AlignedBox buffer_4_shape(yAxis, Transform(Rotation3d(inlet_4_rotation), Vec3d(inlet_4_buffer_translation)), inlet_buffer_halfsize);
-    //AlignedBoxByCell buffer_4(water_block, buffer_4_shape);
-    //fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> bidirection_buffer_4(buffer_4, inlet_particle_buffer);
-    ////SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> buffer_4_inflow_pressure_condition(buffer_4);
-    //SimpleDynamics<fluid_dynamics::PressureConditionCorrection<LeftInflowPressure>> buffer_4_inflow_pressure_condition(buffer_4);
-    //SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> buffer_4_inflow_velocity_condition(buffer_4);
-
-    //AlignedBox buffer_5_shape(yAxis, Transform(Rotation3d(inlet_5_rotation), Vec3d(inlet_5_buffer_translation)), inlet_buffer_halfsize);
-    //AlignedBoxByCell buffer_5(water_block, buffer_5_shape);
-    //fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> bidirection_buffer_5(buffer_5, inlet_particle_buffer);
-    ////SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> buffer_5_inflow_pressure_condition(buffer_5);
-    //SimpleDynamics<fluid_dynamics::PressureConditionCorrection<LeftInflowPressure>> buffer_5_inflow_pressure_condition(buffer_5);
-    //SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> buffer_5_inflow_velocity_condition(buffer_5);
-
-    //AlignedBox buffer_6_shape(yAxis, Transform(Rotation3d(inlet_6_rotation), Vec3d(inlet_6_buffer_translation)), inlet_buffer_halfsize);
-    //AlignedBoxByCell buffer_6(water_block, buffer_6_shape);
-    //fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> bidirection_buffer_6(buffer_6, inlet_particle_buffer);
-    ////SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> buffer_6_inflow_pressure_condition(buffer_6);
-    //SimpleDynamics<fluid_dynamics::PressureConditionCorrection<LeftInflowPressure>> buffer_6_inflow_pressure_condition(buffer_6);
-    //SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> buffer_6_inflow_velocity_condition(buffer_6);
-
-    //AlignedBox buffer_7_shape(yAxis, Transform(Rotation3d(inlet_7_rotation), Vec3d(inlet_7_buffer_translation)), inlet_buffer_halfsize);
-    //AlignedBoxByCell buffer_7(water_block, buffer_7_shape);
-    //fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> bidirection_buffer_7(buffer_7, inlet_particle_buffer);
-    ////SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> buffer_7_inflow_pressure_condition(buffer_7);
-    //SimpleDynamics<fluid_dynamics::PressureConditionCorrection<LeftInflowPressure>> buffer_7_inflow_pressure_condition(buffer_7);
-    //SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> buffer_7_inflow_velocity_condition(buffer_7);
-
-    //AlignedBox buffer_8_shape(yAxis, Transform(Rotation3d(inlet_8_rotation), Vec3d(inlet_8_buffer_translation)), inlet_buffer_halfsize);
-    //AlignedBoxByCell buffer_8(water_block, buffer_8_shape);
-    //fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> bidirection_buffer_8(buffer_8, inlet_particle_buffer);
-    ////SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> buffer_8_inflow_pressure_condition(buffer_8);
-    //SimpleDynamics<fluid_dynamics::PressureConditionCorrection<LeftInflowPressure>> buffer_8_inflow_pressure_condition(buffer_8);
-    //SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> buffer_8_inflow_velocity_condition(buffer_8);
     //----------------------------------------------------------------------
     // Outlet buffer
     //----------------------------------------------------------------------
@@ -331,10 +211,6 @@ int main(int ac, char *av[])
     ObservingAQuantity<Real> observing_pressure(fluid_observer_contact2, "Pressure");          //% Average pressure
     SimpleDynamics<ParticleSnapshotAverage<Real>> average_pressure(observer_body, "Pressure"); //% Average pressure
     //ObservingAQuantity<int> observing_buffer_particle_indicator(fluid_observer_contact2, "BufferIndicator");          //% Average
-
-    //InteractionDynamics<TagMixedParticle> tag_mixed_particle(water_block_inner, mixing_rate_interactive_radius);
-    //ReduceDynamics<CalculateFluidParticleNumberInOutletChannel> calculate_fluid_particle_number_in_outlet_channel(water_block, Radius_chamber, H_inlet);
-    //ReduceDynamics<CalculateMixedFluidParticleNumberInOutletChannel> calculate_mixed_fluid_particle_number_in_outlet_channel(water_block, Radius_chamber, H_inlet);
 
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.
@@ -385,13 +261,6 @@ int main(int ac, char *av[])
     inlet_outlet_surface_particle_indicator.exec();
     /** Tag in/outlet buffer particles */
     bidirection_buffer_1.tag_buffer_particles.exec();
- /*   bidirection_buffer_2.tag_buffer_particles.exec();
-    bidirection_buffer_3.tag_buffer_particles.exec();
-    bidirection_buffer_4.tag_buffer_particles.exec();
-    bidirection_buffer_5.tag_buffer_particles.exec();
-    bidirection_buffer_6.tag_buffer_particles.exec();
-    bidirection_buffer_7.tag_buffer_particles.exec();
-    bidirection_buffer_8.tag_buffer_particles.exec();*/
 
     outlet_bidirection_buffer.tag_buffer_particles.exec();
 
@@ -463,24 +332,10 @@ int main(int ac, char *av[])
                 pressure_relaxation.exec(dt);
 
                 buffer_1_inflow_pressure_condition.exec(dt);
-                /*buffer_2_inflow_pressure_condition.exec(dt);
-                buffer_3_inflow_pressure_condition.exec(dt);
-                buffer_4_inflow_pressure_condition.exec(dt);
-                buffer_5_inflow_pressure_condition.exec(dt);
-                buffer_6_inflow_pressure_condition.exec(dt);
-                buffer_7_inflow_pressure_condition.exec(dt);
-                buffer_8_inflow_pressure_condition.exec(dt);*/
 
                 outflow_pressure_condition.exec(dt);
 
                 buffer_1_inflow_velocity_condition.exec();
-                /*buffer_2_inflow_velocity_condition.exec();
-                buffer_3_inflow_velocity_condition.exec();
-                buffer_4_inflow_velocity_condition.exec();
-                buffer_5_inflow_velocity_condition.exec();
-                buffer_6_inflow_velocity_condition.exec();
-                buffer_7_inflow_velocity_condition.exec();
-                buffer_8_inflow_velocity_condition.exec();*/
 
                 density_relaxation.exec(dt);
 
@@ -508,23 +363,9 @@ int main(int ac, char *av[])
 
             // ** First do injection for all buffers *
             bidirection_buffer_1.injection.exec();
-            /*bidirection_buffer_2.injection.exec();
-            bidirection_buffer_3.injection.exec();
-            bidirection_buffer_4.injection.exec();
-            bidirection_buffer_5.injection.exec();
-            bidirection_buffer_6.injection.exec();
-            bidirection_buffer_7.injection.exec();
-            bidirection_buffer_8.injection.exec();*/
             outlet_bidirection_buffer.injection.exec();
             // ** Then do deletion for all buffers *
             bidirection_buffer_1.deletion.exec();
-            /*bidirection_buffer_2.deletion.exec();
-            bidirection_buffer_3.deletion.exec();
-            bidirection_buffer_4.deletion.exec();
-            bidirection_buffer_5.deletion.exec();
-            bidirection_buffer_6.deletion.exec();
-            bidirection_buffer_7.deletion.exec();
-            bidirection_buffer_8.deletion.exec();*/
             outlet_bidirection_buffer.deletion.exec();
 
             /** Update cell linked list and configuration. */
@@ -545,31 +386,7 @@ int main(int ac, char *av[])
 
             /** Tag in/outlet buffer particles that suffer pressure condition*/
             bidirection_buffer_1.tag_buffer_particles.exec();
-            /*bidirection_buffer_2.tag_buffer_particles.exec();
-            bidirection_buffer_3.tag_buffer_particles.exec();
-            bidirection_buffer_4.tag_buffer_particles.exec();
-            bidirection_buffer_5.tag_buffer_particles.exec();
-            bidirection_buffer_6.tag_buffer_particles.exec();
-            bidirection_buffer_7.tag_buffer_particles.exec();
-            bidirection_buffer_8.tag_buffer_particles.exec();*/
             outlet_bidirection_buffer.tag_buffer_particles.exec();
-
-            /** Tag mixed particles*/
-            //tag_mixed_particle.exec();
-            ///** Calculate mixing rate */
-            //if (physical_time > time_output_average_data)
-            //{
-            //    int number_fluid_particle_in_outlet_channel = calculate_fluid_particle_number_in_outlet_channel.exec();
-            //    int number_mixed_fluid_particle_in_outlet_channel = calculate_mixed_fluid_particle_number_in_outlet_channel.exec();
-            //    Real mixing_rate_outlet_channel = number_fluid_particle_in_outlet_channel == 0 ? 0.0 : Real(number_mixed_fluid_particle_in_outlet_channel) / Real(number_fluid_particle_in_outlet_channel);
-            //    // std::cout << "number_fluid_particle_in_outlet_channel= " << number_fluid_particle_in_outlet_channel << std::endl;
-            //    // std::cout << "number_mixed_fluid_particle_in_outlet_channel= " << number_mixed_fluid_particle_in_outlet_channel << std::endl;
-            //    // std::cout << "mixing_rate_outlet_channel= " << mixing_rate_outlet_channel << std::endl;
-            //    mixing_file
-            //        << std::fixed << std::setprecision(6)
-            //        << physical_time << " "
-            //        << mixing_rate_outlet_channel << "\n";
-            //}
 
             if (physical_time > time_output_average_data * 100.0)
             {
