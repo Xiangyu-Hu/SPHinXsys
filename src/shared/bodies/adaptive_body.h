@@ -21,18 +21,36 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	all_bodies.h
- * @brief 	This is the header file that user code should include to pick up all
- *          bodies used in SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file    adaptive_body.h
+ * @brief 	This is the class for templated bodies.
+ * @author	Xiangyu Hu
  */
-#ifndef ALL_BODIES_H
-#define ALL_BODIES_H
 
-#include "all_complex_bodies.h"
-#include "base_body_part.h"
-#include "body_partition.h"
-#include "predefined_bodies.h"
-#include "adaptive_body.h"
+#ifndef ADAPTIVE_BODY_H
+#define ADAPTIVE_BODY_H
 
-#endif // ALL_BODIES_H
+#include "base_body.h"
+
+namespace SPH
+{
+template <typename...>
+class AdaptiveBody;
+
+template <class BaseBodyType, class AdaptationType>
+class AdaptiveBody<BaseBodyType, AdaptationType> : public BaseBodyType
+{
+    AdaptationType adaptation_;
+
+  public:
+    using BaseAdaptation = typename AdaptationType::BaseAdaptation;
+
+    template <typename... Args>
+    AdaptiveBody(AdaptationType adaptation, SPHSystem &sph_system, Args &&...args)
+        : BaseBodyType(sph_system, std::forward<Args>(args)...), adaptation_(adaptation)
+    {
+        this->sph_adaptation_ = &adaptation_;
+    };
+    virtual ~AdaptiveBody() {};
+};
+} // namespace SPH
+#endif // ADAPTIVE_BODY_H

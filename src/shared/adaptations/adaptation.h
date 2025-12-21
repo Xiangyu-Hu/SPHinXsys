@@ -108,8 +108,7 @@ class SPHAdaptation
   protected:
     Real computeLatticeNumberDensity(Vec2d zero);
     Real computeLatticeNumberDensity(Vec3d zero);
-    virtual Real MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level);
-    Real MostRefinedSpacingRegular(Real coarse_particle_spacing, int local_refinement_level);
+    Real MostRefinedSpacing(Real spacing_ref, int local_refinement_level);
 };
 
 /**
@@ -122,6 +121,8 @@ class AdaptiveSmoothingLength : public SPHAdaptation
   public:
     Real *h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
     int *level_;    /**< the mesh level of the particle */
+
+    typedef AdaptiveSmoothingLength BaseAdaptation;
 
     AdaptiveSmoothingLength(Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level);
     virtual ~AdaptiveSmoothingLength() {};

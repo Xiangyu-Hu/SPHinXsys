@@ -13,17 +13,13 @@ SPHAdaptation::SPHAdaptation(Real global_resolution, Real h_spacing_ratio, Real 
       spacing_ref_(global_resolution / refinement_to_global_),
       h_ref_(h_spacing_ratio_ * spacing_ref_), kernel_ptr_(makeUnique<KernelWendlandC2>(h_ref_)),
       sigma0_ref_(computeLatticeNumberDensity(Vecd())),
-      spacing_min_(this->MostRefinedSpacingRegular(spacing_ref_, local_refinement_level_)),
+      spacing_min_(MostRefinedSpacing(spacing_ref_, local_refinement_level_)),
       Vol_min_(pow(spacing_min_, Dimensions)), h_ratio_max_(spacing_ref_ / spacing_min_) {};
 //=================================================================================================//
-Real SPHAdaptation::MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level)
+Real SPHAdaptation::MostRefinedSpacing(Real spacing_ref, int local_refinement_level)
 {
-    return MostRefinedSpacingRegular(coarse_particle_spacing, local_refinement_level);
-}
-Real SPHAdaptation::MostRefinedSpacingRegular(Real coarse_particle_spacing, int local_refinement_level)
-{
-    return coarse_particle_spacing / pow(2.0, local_refinement_level);
-}
+    return spacing_ref / pow(2.0, local_refinement_level);
+} 
 //=================================================================================================//
 Real SPHAdaptation::computeLatticeNumberDensity(Vec2d zero)
 {
@@ -109,7 +105,7 @@ AdaptiveSmoothingLength::
     : SPHAdaptation(global_resolution, h_spacing_ratio, refinement_to_global), h_ratio_(nullptr), level_(nullptr)
 {
     local_refinement_level_ = local_refinement_level;
-    spacing_min_ = MostRefinedSpacingRegular(spacing_ref_, local_refinement_level_);
+    spacing_min_ = MostRefinedSpacing(spacing_ref_, local_refinement_level_);
     Vol_min_ = pow(spacing_min_, Dimensions);
     h_ratio_max_ = spacing_ref_ / spacing_min_;
     // To ensure that the adaptation strictly within all level set and mesh cell linked list levels
