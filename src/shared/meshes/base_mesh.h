@@ -35,6 +35,7 @@
 #define BASE_MESH_H
 
 #include "base_data_type_package.h"
+#include "sphinxsys_constant.h"
 #include "sphinxsys_variable.h"
 
 #include <fstream>
@@ -51,6 +52,7 @@ namespace SPH
 class Mesh
 {
   public:
+    Mesh() {};
     Mesh(BoundingBoxd tentative_bounds, Real grid_spacing,
          UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset = 0);
     Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
@@ -117,29 +119,39 @@ class BaseMeshField
     void setName(const std::string &new_name) { name_ = new_name; };
     /** output mesh data for Tecplot visualization */
     virtual void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) = 0;
-    /** output mesh data for Tecplot visualization */
-    virtual void writeBKGMeshToPlt(const std::string &partial_file_name) {};
 };
 
-class MultiLevelMeshField : public BaseMeshField
+template <typename DataType>
+using CellVariable = DiscreteVariable<DataType>;
+typedef DataContainerAddressAssemble<CellVariable> CellVariableAssemble;
+
+template <class MeshType>
+class MultiResolutionMeshField : public BaseMeshField
 {
-    typedef DataContainerAddressAssemble<DiscreteVariable> CellVariableAssemble;
     DataContainerUniquePtrAssemble<DiscreteVariable> cell_variable_ptrs_;
+    UniquePtrsKeeper<Entity> unique_entity_ptrs_;
 
   public:
-    MultiLevelMeshField(
-        const std::string &name, BoundingBoxd tentative_bounds,
-        Real Reference_grid_spacing, UnsignedInt buffer_width, size_t total_levels = 1);
-    virtual ~MultiLevelMeshField() {};
+    MultiResolutionMeshField(
+        const std::string &name, size_t resolution_levels,
+        BoundingBoxd tentative_bounds, Real Reference_grid_spacing, UnsignedInt buffer_width);
+    virtual ~MultiResolutionMeshField() {};
 
-    UniquePtrsKeeper<Mesh> mesh_ptrs_keeper_;
-    StdVec<Mesh *> &getMeshes() { return meshes_; };
+    UniquePtrsKeeper<MeshType> mesh_ptrs_keeper_;
+    MeshType *getMeshes() { return ca_meshes_.Data(); };
+    MeshType &getMesh(UnsignedInt level) { return ca_meshes_.Data()[level]; };
+    MeshType &getCoarsestMesh() { return ca_meshes_.Data()[0]; };
+    MeshType &getFinestMesh() { return ca_meshes_.Data()[resolution_levels_ - 1]; };
+    ConstantArray<MeshType> &caMeshes() { return ca_meshes_; };
+    UnsignedInt ResolutionLevels() { return resolution_levels_; };
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
 
     template <typename DataType, typename... Args>
-    DiscreteVariable<DataType> *registerCellVariable(const std::string &variable_name, Args &&...args);
+    CellVariable<DataType> *registerCellVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>
-    DiscreteVariable<DataType> *getCellVariable(const std::string &variable_name);
+    CellVariable<DataType> *getCellVariable(const std::string &variable_name);
+    template <typename DataType, template <typename> class EntityType, typename... Args>
+    EntityType<DataType> *createUniqueEnity(Args &&...args);
 
     template <typename DataType>
     void addCellVariableToWrite(const std::string &variable_name);
@@ -149,24 +161,14 @@ class MultiLevelMeshField : public BaseMeshField
     void syncCellVariablesToWrite(ExecutionPolicy &ex_policy);
 
   protected:
-    size_t total_levels_; /**< level 0 is the coarsest */
-    StdVec<Mesh *> meshes_;
+    size_t resolution_levels_; /**< level 0 is the coarsest */
     UnsignedInt total_number_of_cells_;
+    ConstantArray<MeshType> ca_meshes_;
     CellVariableAssemble all_cell_variables_;
     CellVariableAssemble cell_variables_to_write_;
 
-    void writeCellVariableToPltByMesh(const Mesh &mesh, std::ofstream &output_file);
-
-  protected:
-    template <template <typename> class MeshVariableType>
-    struct SyncMeshVariableData
-    {
-        template <typename DataType, class ExecutionPolicy>
-        void operator()(DataContainerAddressKeeper<MeshVariableType<DataType>> &mesh_variables,
-                        ExecutionPolicy &ex_policy);
-    };
-
-    OperationOnDataAssemble<CellVariableAssemble, SyncMeshVariableData<DiscreteVariable>> sync_cell_variable_data_{};
+    OperationOnDataAssemble<CellVariableAssemble, PrepareVariablesToWrite<CellVariable>> sync_cell_variable_data_{};
+    void writeCellVariablesToPltByMesh(UnsignedInt resolution_level, std::ofstream &output_file);
 };
 } // namespace SPH
 #endif // BASE_MESH_H

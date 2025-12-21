@@ -9,25 +9,27 @@ namespace SPH
 template <class ExecutionPolicy, class EncloserType>
 InitialCellTagging::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : occupied_data_pkgs_(&encloser.occupied_data_pkgs_),
-      cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
+      cell_pkg_index_(encloser.mcv_cell_pkg_index_.DelegatedData(ex_policy)),
       index_handler_(encloser.index_handler_),
       grid_spacing_(index_handler_.GridSpacing()),
       shape_(&encloser.shape_),
-      cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)) {}
+      cell_contain_id_(encloser.mcv_cell_contain_id_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 InitialCellTaggingFromCoarse::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : shape_(&encloser.shape_),
       occupied_data_pkgs_(&encloser.occupied_data_pkgs_),
-      cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
+      boundary_pkg_index_offset_(encloser.boundary_pkg_index_offset_),
+      cell_pkg_index_(encloser.mcv_cell_pkg_index_.DelegatedData(ex_policy)),
       index_handler_(encloser.index_handler_),
-      coarse_index_handler_(encloser.coarse_mesh_.getIndexHandler()),
+      coarse_index_handler_(
+          encloser.coarse_mesh_.getMesh(encloser.coarse_resolution_level_)),
       grid_spacing_(index_handler_.GridSpacing()),
       far_field_distance_(grid_spacing_ * (Real)index_handler_.BufferWidth()),
-      probe_coarse_phi_(ex_policy, &encloser.coarse_mesh_),
-      cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
-      cell_pkg_index_coarse_(encloser.bmv_cell_pkg_index_coarse_.DelegatedData(ex_policy)),
+      probe_coarse_phi_(ex_policy, encloser.coarse_mesh_, "LevelSet"),
+      cell_contain_id_(encloser.mcv_cell_contain_id_.DelegatedData(ex_policy)),
+      cell_pkg_index_coarse_(encloser.mcv_cell_pkg_index_coarse_.DelegatedData(ex_policy)),
       pkg_type_coarse_(encloser.dv_pkg_type_coarse_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
@@ -35,7 +37,7 @@ InnerCellTagging::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : occupied_data_pkgs_(&encloser.occupied_data_pkgs_),
       index_handler_(encloser.index_handler_),
-      cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)) {}
+      cell_pkg_index_(encloser.mcv_cell_pkg_index_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 InitializeCellNeighborhood::UpdateKernel::
@@ -43,8 +45,8 @@ InitializeCellNeighborhood::UpdateKernel::
     : index_handler_(encloser.index_handler_),
       pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
-      cell_pkg_index_(encloser.bmv_cell_pkg_index_.DelegatedData(ex_policy)),
-      num_singular_pkgs_(encloser.data_mesh_.NumSingularPackages()) {}
+      cell_pkg_index_(encloser.mcv_cell_pkg_index_.DelegatedData(ex_policy)),
+      num_boundary_pkgs_(encloser.data_mesh_.NumBoundaryPackages()) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 InitializeBasicPackageData::UpdateKernel::
@@ -59,13 +61,13 @@ template <class ExecutionPolicy, class EncloserType>
 NearInterfaceCellTagging::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_.DelegatedData(ex_policy)),
-      cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
+      cell_contain_id_(encloser.mcv_cell_contain_id_.DelegatedData(ex_policy)),
       phi_(encloser.mv_phi_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &package_index)
 {
     UnsignedInt index_1d = pkg_1d_cell_index_[package_index];
-    MeshVariableData<Real> &pkg_phi = phi_[package_index];
+    PackageVariableData<Real> &pkg_phi = phi_[package_index];
     Real phi0 = pkg_phi(Arrayi::Zero());
     cell_contain_id_[index_1d] = phi0 > 0.0 ? 1 : -1;
     bool is_sign_changed = mesh_any_of(Arrayi::Zero(), Arrayi::Constant(pkg_size),
@@ -81,8 +83,9 @@ template <class ExecutionPolicy, class EncloserType>
 CellContainDiffusion::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : index_handler_(encloser.index_handler_),
-      cell_contain_id_(encloser.bmv_cell_contain_id_.DelegatedData(ex_policy)),
-      cell_package_index_(encloser.bmv_cell_package_index_.DelegatedData(ex_policy)),
+      boundary_pkg_index_offset_(encloser.boundary_pkg_index_offset_),
+      cell_contain_id_(encloser.mcv_cell_contain_id_.DelegatedData(ex_policy)),
+      cell_pkg_index_(encloser.mcv_cell_package_index_.DelegatedData(ex_policy)),
       count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
@@ -100,7 +103,7 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
                 }))
         {
             cell_contain_id_[index_1d] = -1;
-            cell_package_index_[index_1d] = 0; // inside far field package updated
+            cell_pkg_index_[index_1d] = boundary_pkg_index_offset_; // inside far field package updated
             AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
             ++count_modified_cells;
         }
@@ -114,7 +117,7 @@ inline void CellContainDiffusion::UpdateKernel::update(const Arrayi &cell_index)
                      }))
         {
             cell_contain_id_[index_1d] = 1;
-            cell_package_index_[index_1d] = 1; // outside far field package updated
+            cell_pkg_index_[index_1d] = boundary_pkg_index_offset_ + 1; // outside far field package updated
             AtomicRef<UnsignedInt> count_modified_cells(*count_modified_);
             ++count_modified_cells;
         }

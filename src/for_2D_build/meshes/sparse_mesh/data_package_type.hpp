@@ -6,7 +6,7 @@
 namespace SPH
 {
 using CellNeighborhood = CellNeighborhood2d;
-using DataPackagePair = std::pair<UnsignedInt, Array2i>; /**< stores shifted neighbour info: (UnsignedInt)package index, (arrayi)local grid index. */
+using PackageDataPair = std::pair<UnsignedInt, Array2i>; /**< stores shifted neighbour info: (UnsignedInt)package index, (arrayi)local grid index. */
 
 template <class DataType, int PKG_SIZE>
 using PackageData = PackageData2d<DataType, PKG_SIZE>;

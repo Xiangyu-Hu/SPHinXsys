@@ -32,28 +32,25 @@
 #include "base_dynamics.h"
 #include "base_implementation.h"
 #include "data_package_function.hpp"
-#include "mesh_with_data_packages.hpp"
+#include "spares_mesh_field.hpp"
 
 namespace SPH
 {
-using MeshWithGridDataPackagesType = MeshWithGridDataPackages<4>;
+template <typename DataType>
+using PackageVariableData = SparseMeshField<4>::PackageVariableData<DataType>;
 
 template <typename DataType>
-using MeshVariableData = MeshWithGridDataPackagesType::MeshVariableData<DataType>;
+using PackageVariable = SparseMeshField<4>::PackageVariable<DataType>;
 
 template <typename DataType>
-using MeshVariable = MeshWithGridDataPackagesType::MeshVariable<DataType>;
+using CellVariable = DiscreteVariable<DataType>;
 
 template <typename DataType>
-using BKGMeshVariable = MeshWithGridDataPackagesType::BKGMeshVariable<DataType>;
+using MetaVariable = SparseMeshField<4>::MetaVariable<DataType>;
 
-template <typename DataType>
-using MetaVariable = MeshWithGridDataPackagesType::MetaVariable<DataType>;
-
-using MeshVariableAssemble = MeshWithGridDataPackagesType::MeshVariableAssemble;
-using BKGMeshVariableAssemble = MeshWithGridDataPackagesType::BKGMeshVariableAssemble;
-using MetaVariableAssemble = MeshWithGridDataPackagesType::MetaVariableAssemble;
-using IndexHandler = MeshWithGridDataPackagesType::IndexHandler;
+using PackageVariableAssemble = SparseMeshField<4>::PackageVariableAssemble;
+using MetaVariableAssemble = SparseMeshField<4>::MetaVariableAssemble;
+using IndexHandler = PackageMesh<4>;
 
 /**
  * @class BaseMeshLocalDynamics
@@ -62,14 +59,20 @@ using IndexHandler = MeshWithGridDataPackagesType::IndexHandler;
 class BaseMeshLocalDynamics
 {
   public:
-    explicit BaseMeshLocalDynamics(MeshWithGridDataPackagesType &data_mesh)
-        : data_mesh_(data_mesh), index_handler_(data_mesh.getIndexHandler()) {};
+    explicit BaseMeshLocalDynamics(SparseMeshField<4> &data_mesh, UnsignedInt resolution_level)
+        : data_mesh_(data_mesh), index_handler_(data_mesh.getMesh(resolution_level)),
+          resolution_level_(resolution_level) {};
     virtual ~BaseMeshLocalDynamics() {};
 
-    MeshWithGridDataPackagesType &data_mesh_;
-    IndexHandler &index_handler_;
-    static constexpr int pkg_size = MeshWithGridDataPackagesType::DataPackageSize();
+    static constexpr int pkg_size = SparseMeshField<4>::PackageDataSize();
     static constexpr int pkg_size_minus1 = pkg_size - 1;
+    virtual void setupDynamics(Real dt = 0.0) {};  // setup global parameters
+    virtual void finishDynamics(Real dt = 0.0) {}; // update global parameters
+
+  protected:
+    SparseMeshField<4> &data_mesh_;
+    IndexHandler &index_handler_;
+    UnsignedInt resolution_level_;
 };
 } // namespace SPH
 #endif // BASE_LOCAL_MESH_DYNAMICS_H

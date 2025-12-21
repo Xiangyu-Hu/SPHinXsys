@@ -49,23 +49,14 @@ enum class UsageType
  * @class LevelSet
  * @brief Defining a multilevel level set for a complex region.
  */
-class LevelSet : public BaseMeshField
+class LevelSet : public SparseMeshField<4>
 {
   public:
     LevelSet(BoundingBoxd tentative_bounds, Real reference_data_spacing, size_t total_levels,
              Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
-    LevelSet(BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
+    LevelSet(BoundingBoxd tentative_bounds, SparseMeshField<4> *coarse_data,
              Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
     ~LevelSet() {};
-
-    template <class ExecutionPolicy>
-    ProbeSignedDistance getProbeSignedDistance(const ExecutionPolicy &ex_policy);
-
-    template <class ExecutionPolicy>
-    ProbeNormalDirection getProbeNormalDirection(const ExecutionPolicy &ex_policy);
-
-    template <class ExecutionPolicy>
-    ProbeKernelGradientIntegral getProbeKernelGradientIntegral(const ExecutionPolicy &ex_policy);
 
     template <class ExecutionPolicy>
     void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type);
@@ -77,29 +68,25 @@ class LevelSet : public BaseMeshField
     Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0);
     Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0);
     Matd probeKernelSecondGradientIntegral(const Vecd &position, Real h_ratio = 1.0);
-    StdVec<MeshWithGridDataPackagesType *> getMeshLevels() { return mesh_data_set_; };
+    void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
 
     template <typename DataType>
-    void addMeshVariableToWrite(const std::string &variable_name);
-    void writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence = 0) override;
-    template <typename DataType>
-    void addBKGMeshVariableToWrite(const std::string &variable_name);
-    void writeBKGMeshToPlt(const std::string &partial_file_name) override;
-    template <class ExecutionPolicy>
-    void syncMeshVariablesToWrite(ExecutionPolicy &ex_policy);
-    template <class ExecutionPolicy>
-    void syncBKGMeshVariablesToWrite(ExecutionPolicy &ex_policy);
-    template <class ExecutionPolicy>
-    void syncMeshVariablesToProbe(ExecutionPolicy &ex_policy);
+    class ProbeLevelSet : public SparseMeshField<4>::ProbeMesh<DataType>
+    {
+        using BaseProbe = SparseMeshField<4>::ProbeMesh<DataType>;
+        Real *global_h_ratio_;
+
+      public:
+        template <class ExecutionPolicy>
+        ProbeLevelSet(const ExecutionPolicy &ex_policy, LevelSet &encloser, const std::string &variable_name);
+        DataType operator()(const Vecd &position);
+        DataType operator()(const Vecd &position, Real h_ratio);
+    };
 
   protected:
-    inline size_t getProbeLevel(const Vecd &position);
-    inline size_t getCoarseLevel(Real h_ratio);
-
-    void initializeLevel(Real reference_data_spacing, BoundingBoxd tentative_bounds,
-                         MeshWithGridDataPackagesType *coarse_data = nullptr);
+    void initializeLevel(UnsignedInt level, SparseMeshField<4> *coarse_data = nullptr, UnsignedInt coarse_level = 0);
     template <class ExecutionPolicy>
-    void initializeMeshVariables(const ExecutionPolicy &ex_policy);
+    void initializePackageVariables(const ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
     void initializeKernelIntegralVariables(const ExecutionPolicy &ex_policy);
     template <class ExecutionPolicy>
@@ -107,33 +94,25 @@ class LevelSet : public BaseMeshField
     template <class ExecutionPolicy>
     void registerKernelIntegralProbes(const ExecutionPolicy &ex_policy);
 
-    size_t total_levels_; /**< level 0 is the coarsest */
-    Shape &shape_;        /**< the geometry is described by the level set. */
+    Shape &shape_; /**< the geometry is described by the level set. */
     Real refinement_ratio_;
-    StdVec<UnsignedInt *> cell_pkg_index_set_;
-    StdVec<int *> pkg_type_set_;
-    StdVec<Real> global_h_ratio_vec_; /**< the ratio of the reference spacing to the data spacing */
+    ConstantArray<Real> *ca_global_h_ratio_; /**< the ratio of the reference spacing to the data spacing */
     StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
-    StdVec<MeshWithGridDataPackagesType *> mesh_data_set_;
-    StdVec<MeshWithGridDataPackagesType::IndexHandler *> mesh_index_handler_set_;
-    StdVec<ProbeSignedDistance *> probe_signed_distance_set_;
-    StdVec<ProbeNormalDirection *> probe_normal_direction_set_;
-    StdVec<ProbeLevelSetGradient *> probe_level_set_gradient_set_;
-    StdVec<ProbeKernelIntegral *> probe_kernel_integral_set_;
-    StdVec<ProbeKernelGradientIntegral *> probe_kernel_gradient_integral_set_;
-    StdVec<ProbeKernelSecondGradientIntegral *> probe_kernel_second_gradient_integral_set_;
-    UniquePtrsKeeper<MeshWithGridDataPackagesType> mesh_data_ptr_vector_keeper_;
-    UniquePtrsKeeper<ProbeSignedDistance> probe_signed_distance_vector_keeper_;
-    UniquePtrsKeeper<ProbeNormalDirection> probe_normal_direction_vector_keeper_;
-    UniquePtrsKeeper<ProbeLevelSetGradient> probe_level_set_gradient_vector_keeper_;
-    UniquePtrsKeeper<ProbeKernelIntegral> probe_kernel_integral_vector_keeper_;
-    UniquePtrsKeeper<ProbeKernelGradientIntegral> probe_kernel_gradient_integral_vector_keeper_;
-    UniquePtrsKeeper<ProbeKernelSecondGradientIntegral> probe_kernel_second_gradient_integral_vector_keeper_;
+    ProbeLevelSet<Real> *probe_signed_distance_;
+    ProbeLevelSet<Vecd> *probe_level_set_gradient_;
+    ProbeLevelSet<Real> *probe_kernel_integral_;
+    ProbeLevelSet<Vecd> *probe_kernel_gradient_integral_;
+    ProbeLevelSet<Matd> *probe_kernel_second_gradient_integral_;
+    UniquePtrKeeper<ProbeLevelSet<Real>> probe_signed_distance_keeper_;
+    UniquePtrKeeper<ProbeLevelSet<Vecd>> probe_level_set_gradient_keeper_;
+    UniquePtrKeeper<ProbeLevelSet<Real>> probe_kernel_integral_keeper_;
+    UniquePtrKeeper<ProbeLevelSet<Vecd>> probe_kernel_gradient_integral_keeper_;
+    UniquePtrKeeper<ProbeLevelSet<Matd>> probe_kernel_second_gradient_integral_keeper_;
 
     UniquePtr<BaseDynamics<void>> correct_topology_keeper_;
     UniquePtr<BaseDynamics<void>> clean_interface_keeper_;
     UniquePtrsKeeper<NeighborMethod<SPHAdaptation, SPHAdaptation>> neighbor_method_keeper_;
-    std::function<void()> sync_mesh_variables_to_write_, sync_bkg_mesh_variables_to_write_, sync_mesh_variables_to_probe_;
+    std::function<void()> sync_mesh_variables_to_write_, sync_mesh_variables_to_probe_;
 
     template <class ExecutionPolicy>
     void configLevelSetPostProcesses(const ExecutionPolicy &ex_policy);

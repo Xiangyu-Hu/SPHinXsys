@@ -48,13 +48,10 @@ class CellLinkedList;
  * @class BaseCellLinkedList
  * @brief The Abstract class for mesh cell linked list derived from BaseMeshField.
  */
-class BaseCellLinkedList : public MultiLevelMeshField
+class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
 {
   protected:
     BaseParticles &base_particles_;
-    UniquePtrsKeeper<Entity> unique_variable_ptrs_;
-    Mesh *coarsest_mesh_;
-    Mesh *finest_mesh_;
 
   public:
     BaseCellLinkedList(BaseParticles &base_particles, SPHAdaptation &sph_adaptation,

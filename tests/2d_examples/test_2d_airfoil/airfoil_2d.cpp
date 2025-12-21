@@ -50,14 +50,17 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody airfoil(sph_system, makeShared<ImportModel>("AirFoil"));
     airfoil.defineAdaptation<AdaptiveNearSurface>(1.15, 1.0, 3);
-    airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(sph_system);
+    airfoil.defineBodyLevelSetShape()
+        ->cleanLevelSet()
+        ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
+        ->writeLevelSet(sph_system);
     airfoil.generateParticles<BaseParticles, Lattice, AdaptiveByShape>();
     //----------------------------------------------------------------------
     //	Define outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp airfoil_recording_to_vtp(airfoil);
     airfoil_recording_to_vtp.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
-      //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies,
     //	basically, in the the range of bodies to build neighbor particle lists.

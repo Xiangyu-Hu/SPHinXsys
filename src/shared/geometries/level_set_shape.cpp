@@ -48,13 +48,6 @@ LevelSetShape *LevelSetShape::writeLevelSet(SPHSystem &sph_system)
     return this;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::writeBKGMesh(SPHSystem &sph_system)
-{
-    MeshRecordingToPlt write_background_mesh_to_plt(sph_system, level_set_);
-    write_background_mesh_to_plt.writeBKGMeshVariableToFile(0);
-    return this;
-}
-//=================================================================================================//
 LevelSetShape *LevelSetShape::cleanLevelSet(UnsignedInt repeat_times)
 {
     level_set_.cleanInterface(repeat_times);

@@ -42,7 +42,8 @@ namespace SPH
 class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 {
   public:
-    explicit UpdateLevelSetGradient(MeshWithGridDataPackagesType &data_mesh);
+    explicit UpdateLevelSetGradient(
+        SparseMeshField<4> &data_mesh, UnsignedInt resolution_level);
     virtual ~UpdateLevelSetGradient() {};
 
     class UpdateKernel
@@ -54,14 +55,14 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
 
       protected:
         Real data_spacing_;
-        MeshVariableData<Real> *phi_;
-        MeshVariableData<Vecd> *phi_gradient_;
+        PackageVariableData<Real> *phi_;
+        PackageVariableData<Vecd> *phi_gradient_;
         CellNeighborhood *cell_neighborhood_;
     };
 
   protected:
-    MeshVariable<Real> &mv_phi_;
-    MeshVariable<Vecd> &mv_phi_gradient_;
+    PackageVariable<Real> &mv_phi_;
+    PackageVariable<Vecd> &mv_phi_gradient_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
@@ -72,7 +73,7 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 
   public:
     explicit UpdateKernelIntegrals(
-        MeshWithGridDataPackagesType &data_mesh,
+        SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
         NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method);
     virtual ~UpdateKernelIntegrals() {};
 
@@ -85,11 +86,11 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 
       protected:
         Real global_h_ratio_;
-        MeshVariableData<Real> *phi_;
-        MeshVariableData<Vecd> *phi_gradient_;
-        MeshVariableData<Real> *kernel_weight_;
-        MeshVariableData<Vecd> *kernel_gradient_;
-        MeshVariableData<Matd> *kernel_second_gradient_;
+        PackageVariableData<Real> *phi_;
+        PackageVariableData<Vecd> *phi_gradient_;
+        PackageVariableData<Real> *kernel_weight_;
+        PackageVariableData<Vecd> *kernel_gradient_;
+        PackageVariableData<Matd> *kernel_second_gradient_;
         SmoothingKernel kernel_;
         Real data_spacing_, data_cell_volume_;
         CellNeighborhood *cell_neighborhood_;
@@ -113,14 +114,12 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
   private:
     NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method_;
     Real global_h_ratio_;
-    MeshVariable<Real> &mv_phi_;
-    MeshVariable<Vecd> &mv_phi_gradient_;
+    PackageVariable<Real> &mv_phi_;
+    PackageVariable<Vecd> &mv_phi_gradient_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
-    MeshVariable<Real> &mv_kernel_weight_;
-    MeshVariable<Vecd> &mv_kernel_gradient_;
-    MeshVariable<Matd> &mv_kernel_second_gradient_;
-
-    void initializeSingularPackages(UnsignedInt package_index, Real far_field_level_set);
+    PackageVariable<Real> &mv_kernel_weight_;
+    PackageVariable<Vecd> &mv_kernel_gradient_;
+    PackageVariable<Matd> &mv_kernel_second_gradient_;
 };
 } // namespace SPH
 #endif // LEVEL_SET_TRANSFORMATION_H

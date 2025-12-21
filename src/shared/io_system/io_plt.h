@@ -89,7 +89,6 @@ class MeshRecordingToPlt : public BaseIO
     MeshRecordingToPlt(SPHSystem &sph_system, BaseMeshField &mesh_field);
     virtual ~MeshRecordingToPlt() {};
     virtual void writeToFile(size_t iteration_step = 0) override;
-    virtual void writeBKGMeshVariableToFile(size_t iteration_step = 0);
 };
 } // namespace SPH
 #endif // IO_PLT_H

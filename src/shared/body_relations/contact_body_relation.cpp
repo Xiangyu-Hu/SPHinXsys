@@ -102,12 +102,12 @@ AdaptiveContactRelation::AdaptiveContactRelation(SPHBody &sph_body, RealBodyVect
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         cell_linked_lists_[k] = &contact_bodies_[k]->getCellLinkedList();
-        StdVec<Mesh *> &meshes = cell_linked_lists_[k]->getMeshes();
-        for (size_t l = 0; l != meshes.size(); ++l)
+        Mesh *meshes = cell_linked_lists_[k]->getMeshes();
+        for (size_t l = 0; l != cell_linked_lists_[k]->ResolutionLevels(); ++l)
         {
             get_multi_level_search_range_[k].push_back(
                 adaptive_search_depth_ptr_vector_keeper_
-                    .createPtr<SearchDepthAdaptiveContact>(sph_body_, *meshes[l]));
+                    .createPtr<SearchDepthAdaptiveContact>(sph_body_, meshes[l]));
 
             get_contact_neighbors_adaptive_[k].push_back(
                 neighbor_builder_contact_adaptive_ptr_vector_keeper_
@@ -121,11 +121,11 @@ void AdaptiveContactRelation::updateConfiguration()
     resetNeighborhoodCurrentSize();
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
-        StdVec<Mesh *> &meshes = cell_linked_lists_[k]->getMeshes();
-        for (size_t l = 0; l != meshes.size(); ++l)
+        Mesh *meshes = cell_linked_lists_[k]->getMeshes();
+        for (size_t l = 0; l != cell_linked_lists_[k]->ResolutionLevels(); ++l)
         {
             cell_linked_lists_[k]->searchNeighborsByMesh(
-                *meshes[l], sph_body_, contact_configuration_[k],
+                meshes[l], sph_body_, contact_configuration_[k],
                 *get_multi_level_search_range_[k][l], *get_contact_neighbors_adaptive_[k][l]);
         }
     }

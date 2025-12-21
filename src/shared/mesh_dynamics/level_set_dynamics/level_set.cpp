@@ -7,93 +7,84 @@ namespace SPH
 {
 //=================================================================================================//
 LevelSet::LevelSet(
-    BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data,
+    BoundingBoxd tentative_bounds, SparseMeshField<4> *coarse_data,
     Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
-    : BaseMeshField("LevelSet_" + shape.getName()), total_levels_(1),
-      shape_(shape), refinement_ratio_(refinement_ratio)
+    : SparseMeshField<4>(
+          "LevelSet_" + shape.getName(), 1, tentative_bounds,
+          coarse_data->getFinestMesh().GridSpacing() * 0.5, 4, 2),
+      shape_(shape), refinement_ratio_(refinement_ratio), ca_global_h_ratio_(nullptr)
 {
-    Real data_spacing = coarse_data->getIndexHandler().DataSpacing() * 0.5;
+    StdVec<Real> global_h_ratio_vec;
+    Real data_spacing = coarse_data->getFinestMesh().DataSpacing() * 0.5;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
-    global_h_ratio_vec_.push_back(global_h_ratio);
+    global_h_ratio_vec.push_back(global_h_ratio);
     neighbor_method_set_.push_back(
         neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
             *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-    initializeLevel(data_spacing, tentative_bounds, coarse_data);
+    initializeLevel(0, coarse_data, coarse_data->ResolutionLevels() - 1);
+    ca_global_h_ratio_ = createUniqueEnity<Real, ConstantArray>("GlobalHRatio", global_h_ratio_vec);
 }
 //=================================================================================================//
 LevelSet::LevelSet(
     BoundingBoxd tentative_bounds, Real data_spacing,
     size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
-    : BaseMeshField("LevelSet_" + shape.getName()), total_levels_(total_levels),
-      shape_(shape), refinement_ratio_(refinement_ratio)
+    : SparseMeshField<4>(
+          "LevelSet_" + shape.getName(), total_levels, tentative_bounds,
+          data_spacing * Real(4), 4, 2),
+      shape_(shape), refinement_ratio_(refinement_ratio), ca_global_h_ratio_(nullptr)
 {
+    StdVec<Real> global_h_ratio_vec;
     Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
-    global_h_ratio_vec_.push_back(global_h_ratio);
+    global_h_ratio_vec.push_back(global_h_ratio);
     neighbor_method_set_.push_back(
         neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
             *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-    initializeLevel(data_spacing, tentative_bounds);
-    for (size_t level = 1; level < total_levels_; ++level)
+    initializeLevel(0);
+    for (size_t level = 1; level < resolution_levels_; ++level)
     {
         data_spacing *= 0.5;     // Halve the data spacing
         global_h_ratio *= 2;     // Double the ratio
         smoothing_length *= 0.5; // Halve the smoothing length
-        global_h_ratio_vec_.push_back(global_h_ratio);
+        global_h_ratio_vec.push_back(global_h_ratio);
         neighbor_method_set_.push_back(
             neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
                 *sph_adaptation.getKernel(), smoothing_length, data_spacing));
 
-        initializeLevel(data_spacing, tentative_bounds, mesh_data_set_[level - 1]);
+        initializeLevel(level, this, level - 1);
     }
+    ca_global_h_ratio_ = createUniqueEnity<Real, ConstantArray>("GlobalHRatioi", global_h_ratio_vec);
 }
 //=================================================================================================//
 void LevelSet::initializeLevel(
-    Real data_spacing, BoundingBoxd tentative_bounds, MeshWithGridDataPackagesType *coarse_data)
+    UnsignedInt level, SparseMeshField<4> *coarse_data, UnsignedInt coarse_level)
 {
-    MeshWithGridDataPackagesType *mesh_data =
-        mesh_data_ptr_vector_keeper_
-            .template createPtr<MeshWithGridDataPackagesType>(
-                tentative_bounds, data_spacing, 4);
-    mesh_data_set_.push_back(mesh_data);
-
-    if (coarse_data == nullptr)
+    if (level == 0)
     {
         MeshAllDynamics<execution::ParallelPolicy, InitialCellTagging>
-            initial_cell_tagging(*mesh_data, shape_);
+            initial_cell_tagging(*this, shape_);
         initial_cell_tagging.exec();
     }
     else
     {
         MeshAllDynamics<execution::ParallelPolicy, InitialCellTaggingFromCoarse>
-            initial_cell_tagging_from_coarse(*mesh_data, *coarse_data, shape_);
+            initial_cell_tagging_from_coarse(*this, level, *coarse_data, coarse_level, shape_);
         initial_cell_tagging_from_coarse.exec();
     }
-    MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package(*mesh_data);
+
+    MeshAllDynamics<execution::ParallelPolicy, InnerCellTagging> tag_a_cell_is_inner_package(*this, level);
     tag_a_cell_is_inner_package.exec();
-    mesh_data->organizeOccupiedPackages();
-    PackageSort<execution::ParallelPolicy> pkg_sort(*mesh_data);
+    organizeOccupiedPackages(level);
+    PackageSort<execution::ParallelPolicy> pkg_sort(*this, level);
     pkg_sort.exec();
 
-    /* All initializations in `FinishDataPackages` are achieved on CPU. */
-    FinishDataPackages finish_data_packages(*mesh_data, shape_);
+    /* All initializations in `FinishPackageDatas` are achieved on CPU. */
+    FinishPackageDatas finish_data_packages(*this, level, shape_);
     finish_data_packages.exec();
 }
-//=================================================================================================//
-size_t LevelSet::getCoarseLevel(Real h_ratio)
-{
-    for (size_t level = total_levels_; level != 0; --level)
-        if (h_ratio > global_h_ratio_vec_[level - 1])
-            return level - 1; // jump out the loop!
-
-    std::cout << "\n Error: LevelSet level searching out of bound!" << std::endl;
-    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    exit(1);
-    return 999; // means an error in level searching
-};
 //=================================================================================================//
 void LevelSet::cleanInterface(UnsignedInt repeat_times)
 {
@@ -110,99 +101,38 @@ void LevelSet::correctTopology()
 //=============================================================================================//
 Real LevelSet::probeSignedDistance(const Vecd &position)
 {
-    return (*probe_signed_distance_set_[getProbeLevel(position)])(position);
+    return (*probe_signed_distance_)(position);
 }
 //=============================================================================================//
 Vecd LevelSet::probeNormalDirection(const Vecd &position)
 {
-    return (*probe_normal_direction_set_[getProbeLevel(position)])(position);
+    return (*probe_level_set_gradient_)(position).normalized();
 }
 //=============================================================================================//
 Vecd LevelSet::probeLevelSetGradient(const Vecd &position)
 {
-    return (*probe_level_set_gradient_set_[getProbeLevel(position)])(position);
-}
-//=============================================================================================//
-size_t LevelSet::getProbeLevel(const Vecd &position)
-{
-    for (size_t level = total_levels_; level != 0; --level)
-    {
-        if (mesh_index_handler_set_[level - 1]->isWithinCorePackage(
-                cell_pkg_index_set_[level - 1], pkg_type_set_[level - 1], position))
-            return level - 1; // jump out of the loop!
-    }
-    return 0;
+    return (*probe_level_set_gradient_)(position);
 }
 //=================================================================================================//
 Real LevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)
 {
-    // std::cout << "probe kernel integral" << std::endl;
-    if (mesh_data_set_.size() == 1)
-    {
-        return (*probe_kernel_integral_set_[0])(position);
-    }
-    size_t coarse_level = getCoarseLevel(h_ratio);
-    Real alpha = (global_h_ratio_vec_[coarse_level + 1] - h_ratio) /
-                 (global_h_ratio_vec_[coarse_level + 1] - global_h_ratio_vec_[coarse_level]);
-    Real coarse_level_value = (*probe_kernel_integral_set_[coarse_level])(position);
-    Real fine_level_value = (*probe_kernel_integral_set_[coarse_level + 1])(position);
-
-    return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
+    return (*probe_kernel_integral_)(position, h_ratio);
 }
 //=================================================================================================//
 Vecd LevelSet::probeKernelGradientIntegral(const Vecd &position, Real h_ratio)
 {
-    // std::cout << "probe kernel gradient integral" << std::endl;
-    if (mesh_data_set_.size() == 1)
-    {
-        return (*probe_kernel_gradient_integral_set_[0])(position);
-    }
-    size_t coarse_level = getCoarseLevel(h_ratio);
-    Real alpha = (global_h_ratio_vec_[coarse_level + 1] - h_ratio) /
-                 (global_h_ratio_vec_[coarse_level + 1] - global_h_ratio_vec_[coarse_level]);
-    Vecd coarse_level_value = (*probe_kernel_gradient_integral_set_[coarse_level])(position);
-    Vecd fine_level_value = (*probe_kernel_gradient_integral_set_[coarse_level + 1])(position);
-
-    return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
+    return (*probe_kernel_gradient_integral_)(position, h_ratio);
 }
 //=================================================================================================//
 Matd LevelSet::probeKernelSecondGradientIntegral(const Vecd &position, Real h_ratio)
 {
-    if (mesh_data_set_.size() == 1)
-    {
-        return (*probe_kernel_second_gradient_integral_set_[0])(position);
-    }
-    size_t coarse_level = getCoarseLevel(h_ratio);
-    Real alpha = (global_h_ratio_vec_[coarse_level + 1] - h_ratio) /
-                 (global_h_ratio_vec_[coarse_level + 1] - global_h_ratio_vec_[coarse_level]);
-    Matd coarse_level_value = (*probe_kernel_second_gradient_integral_set_[coarse_level])(position);
-    Matd fine_level_value = (*probe_kernel_second_gradient_integral_set_[coarse_level + 1])(position);
-
-    return alpha * coarse_level_value + (1.0 - alpha) * fine_level_value;
+    return (*probe_kernel_second_gradient_integral_)(position, h_ratio);
 }
 //=================================================================================================//
 void LevelSet::writeMeshFieldToPlt(const std::string &partial_file_name, size_t sequence)
 {
     sync_mesh_variables_to_write_();
-    for (size_t l = 0; l != total_levels_; ++l)
-    {
-        std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
-        std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-        mesh_data_set_[l]->writeMeshVariableToPlt(out_file);
-        out_file.close();
-    }
-}
-//=================================================================================================//
-void LevelSet::writeBKGMeshToPlt(const std::string &partial_file_name)
-{
-    sync_bkg_mesh_variables_to_write_();
-    for (size_t l = 0; l != total_levels_; ++l)
-    {
-        std::string full_file_name = partial_file_name + "_" + std::to_string(l) + ".dat";
-        std::ofstream out_file(full_file_name.c_str(), std::ios::app);
-        mesh_data_set_[l]->writeBKGMeshVariableToPlt(out_file);
-        out_file.close();
-    }
+    SparseMeshField<4>::writeMeshFieldToPlt(partial_file_name, sequence);
 }
 //=============================================================================================//
 } // namespace SPH

@@ -1,15 +1,22 @@
-#include "base_mesh.hpp"
+#ifndef BASE_MESH_3D_HPP
+#define BASE_MESH_3D_HPP
+
+#include "base_mesh.hxx"
 
 #include "mesh_iterators.hpp"
 
 namespace SPH
 {
 //=================================================================================================//
-void MultiLevelMeshField::writeCellVariableToPltByMesh(const Mesh &mesh, std::ofstream &output_file)
+template <class MeshType>
+void MultiResolutionMeshField<MeshType>::writeCellVariablesToPltByMesh(
+    UnsignedInt resolution_level, std::ofstream &output_file)
 {
+    MeshType &mesh = getMesh(resolution_level);
+
     output_file << "\n"
                 << "title='View'" << "\n";
-    output_file << " VARIABLES = " << "x, " << "y";
+    output_file << " VARIABLES = " << "x, " << "y, " << "z";
 
     constexpr int type_index_unsigned = DataTypeIndex<UnsignedInt>::value;
     for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(cell_variables_to_write_))
@@ -28,7 +35,8 @@ void MultiLevelMeshField::writeCellVariableToPltByMesh(const Mesh &mesh, std::of
     {
         std::string variable_name = variable->Name();
         output_file << ",\"" << variable_name << "_x\""
-                    << ",\"" << variable_name << "_y\"";
+                    << ",\"" << variable_name << "_y\""
+                    << ",\"" << variable_name << "_z\"";
     };
 
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
@@ -40,16 +48,16 @@ void MultiLevelMeshField::writeCellVariableToPltByMesh(const Mesh &mesh, std::of
     output_file << " \n";
 
     Arrayi number_of_operation = mesh.AllCells();
-    output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << 1
-                << "  DATAPACKING=POINT \n";
+    output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1]
+                << "  k=" << number_of_operation[2] << "  DATAPACKING=POINT \n";
 
     mesh_for_column_major(
         Arrayi::Zero(), number_of_operation,
-        [&](const Array2i &cell_index)
+        [&](const Arrayi &cell_index)
         {
             UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
             Vecd data_position = mesh.CellPositionFromIndex(cell_index);
-            output_file << data_position[0] << " " << data_position[1] << " ";
+            output_file << data_position[0] << " " << data_position[1] << " " << data_position[2] << " ";
 
             for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(cell_variables_to_write_))
             {
@@ -66,7 +74,7 @@ void MultiLevelMeshField::writeCellVariableToPltByMesh(const Mesh &mesh, std::of
             for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(cell_variables_to_write_))
             {
                 Vecd value = variable->Data()[linear_index];
-                output_file << value[0] << " " << value[1] << " ";
+                output_file << value[0] << " " << value[1] << " " << value[2] << " ";
             };
 
             for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(cell_variables_to_write_))
@@ -80,3 +88,4 @@ void MultiLevelMeshField::writeCellVariableToPltByMesh(const Mesh &mesh, std::of
 }
 //=================================================================================================//
 } // namespace SPH
+#endif // BASE_MESH_3D_HPP

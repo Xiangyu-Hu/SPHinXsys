@@ -1,5 +1,5 @@
-#ifndef BASE_MESH_HPP
-#define BASE_MESH_HPP
+#ifndef BASE_MESH_HXX
+#define BASE_MESH_HXX
 
 #include "base_mesh.h"
 
@@ -97,9 +97,39 @@ inline UnsignedInt Mesh::MortonCode(const UnsignedInt &i)
     x = (x | x << 2) & 0x9249249;
     return x;
 }
+//=================================================================================================//
+template <class MeshType>
+MultiResolutionMeshField<MeshType>::MultiResolutionMeshField(
+    const std::string &name, size_t resolution_levels, BoundingBoxd tentative_bounds,
+    Real Reference_grid_spacing, UnsignedInt buffer_width)
+    : BaseMeshField(name), resolution_levels_(resolution_levels),
+      total_number_of_cells_(0),
+      ca_meshes_(resolution_levels,
+                 [&](size_t level)
+                 {
+                     MeshType mesh(tentative_bounds, Reference_grid_spacing / pow(2.0, level),
+                                   buffer_width, total_number_of_cells_);
+                     total_number_of_cells_ += mesh.NumberOfCells();
+                     return mesh;
+                 }) {}
+//=================================================================================================//
+template <class MeshType>
+void MultiResolutionMeshField<MeshType>::writeMeshFieldToPlt(
+    const std::string &partial_file_name, size_t sequence)
+{
+    for (UnsignedInt l = 0; l != resolution_levels_; ++l)
+    {
+        std::string full_file_name = partial_file_name + "_CellVariables_" + std::to_string(l) +
+                                     std::to_string(sequence) + ".dat"; // level and sequence
+        std::ofstream out_file(full_file_name.c_str(), std::ios::app);
+        writeCellVariablesToPltByMesh(l, out_file);
+        out_file.close();
+    }
+}
 //=============================================================================================//
+template <class MeshType>
 template <typename DataType>
-DiscreteVariable<DataType> *MultiLevelMeshField::getCellVariable(
+DiscreteVariable<DataType> *MultiResolutionMeshField<MeshType>::getCellVariable(
     const std::string &variable_name)
 {
     DiscreteVariable<DataType> *variable =
@@ -112,15 +142,24 @@ DiscreteVariable<DataType> *MultiLevelMeshField::getCellVariable(
     return variable;
 }
 //=============================================================================================//
-template <typename DataType>
-void MultiLevelMeshField::addCellVariableToWrite(const std::string &variable_name)
+template <class MeshType>
+template <typename DataType, template <typename> class EntityType, typename... Args>
+EntityType<DataType> *MultiResolutionMeshField<MeshType>::createUniqueEnity(Args &&...args)
 {
-    DiscreteVariable<DataType> *variable = getCellVariable<DataType>(variable_name);
-    addVariableToList<DiscreteVariable, DataType>(all_cell_variables_, variable);
+    return unique_entity_ptrs_.template createPtr<EntityType<DataType>>(std::forward<Args>(args)...);
 }
 //=============================================================================================//
+template <class MeshType>
+template <typename DataType>
+void MultiResolutionMeshField<MeshType>::addCellVariableToWrite(const std::string &variable_name)
+{
+    DiscreteVariable<DataType> *variable = getCellVariable<DataType>(variable_name);
+    addVariableToList<DiscreteVariable, DataType>(cell_variables_to_write_, variable);
+}
+//=============================================================================================//
+template <class MeshType>
 template <typename DataType, typename... Args>
-DiscreteVariable<DataType> *MultiLevelMeshField::registerCellVariable(
+DiscreteVariable<DataType> *MultiResolutionMeshField<MeshType>::registerCellVariable(
     const std::string &variable_name, Args &&...args)
 {
     return registerVariable<DiscreteVariable, DataType>(
@@ -128,11 +167,12 @@ DiscreteVariable<DataType> *MultiLevelMeshField::registerCellVariable(
         std::forward<Args>(args)...);
 }
 //=============================================================================================//
+template <class MeshType>
 template <class ExecutionPolicy>
-void MultiLevelMeshField::syncCellVariablesToWrite(ExecutionPolicy &ex_policy)
+void MultiResolutionMeshField<MeshType>::syncCellVariablesToWrite(ExecutionPolicy &ex_policy)
 {
     sync_cell_variable_data_(cell_variables_to_write_, ex_policy);
 }
 //=================================================================================================//
 } // namespace SPH
-#endif // BASE_MESH_HPP
+#endif // BASE_MESH_HXX

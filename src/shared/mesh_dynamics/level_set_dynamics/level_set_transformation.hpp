@@ -86,7 +86,7 @@ DataType UpdateKernelIntegrals::UpdateKernel::
             bounding_box_.lower_, bounding_box_.upper_ + Arrayi::Ones(),
             [&](const Arrayi &search_index)
             {
-                DataPackagePair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
+                PackageDataPair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
                     package_index, cell_neighborhood_, grid_index + search_index);
                 Real phi_neighbor = phi_[neighbor_meta.first](neighbor_meta.second);
                 if (phi_neighbor > -data_spacing_)

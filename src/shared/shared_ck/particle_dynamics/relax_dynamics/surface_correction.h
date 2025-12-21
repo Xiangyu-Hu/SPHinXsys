@@ -36,6 +36,9 @@ namespace SPH
 {
 class LevelsetBounding : public BaseLocalDynamics<BodyPartByCell>
 {
+    using ProbeSignedDistance = LevelSet::ProbeLevelSet<Real>;
+    using ProbeLevelsetGradient = LevelSet::ProbeLevelSet<Vecd>;
+
   public:
     LevelsetBounding(NearShapeSurface &body_part);
     virtual ~LevelsetBounding() {};
@@ -53,14 +56,14 @@ class LevelsetBounding : public BaseLocalDynamics<BodyPartByCell>
             if (phi > -constrained_distance_)
             {
                 pos_[index_i] -= (phi + constrained_distance_) *
-                                 normal_direction_(pos_[index_i]);
+                                 level_set_gradient_(pos_[index_i]).normalized();
             }
         };
 
       protected:
         Vecd *pos_;
         ProbeSignedDistance signed_distance_;
-        ProbeNormalDirection normal_direction_;
+        ProbeLevelsetGradient level_set_gradient_;
         Real constrained_distance_;
     };
 
@@ -72,6 +75,8 @@ class LevelsetBounding : public BaseLocalDynamics<BodyPartByCell>
 
 class LevelsetKernelGradientIntegral : public LocalDynamics
 {
+    using ProbeKernelGradientIntegral = LevelSet::ProbeLevelSet<Vecd>;
+
   public:
     LevelsetKernelGradientIntegral(SPHBody &sph_body, LevelSetShape &level_set_shape);
     virtual ~LevelsetKernelGradientIntegral() {};
@@ -84,7 +89,7 @@ class LevelsetKernelGradientIntegral : public LocalDynamics
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            residual_[index_i] -= 2.0 * kernel_gradient_integral_(pos_[index_i]);
+            residual_[index_i] -= 2.0 * kernel_gradient_integral_(pos_[index_i], 1.0);
         };
 
       protected:
