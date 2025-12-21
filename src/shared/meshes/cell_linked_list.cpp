@@ -182,8 +182,8 @@ MultilevelCellLinkedList::MultilevelCellLinkedList(
     BoundingBoxd tentative_bounds, Real reference_grid_spacing, UnsignedInt total_levels,
     BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, reference_grid_spacing, total_levels),
-      h_ratio_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->h_ratio_),
-      level_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->level_) {}
+      h_ratio_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->dvSmoothingLengthRatio()->Data()),
+      h_level_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->dvSmoothingLengthLevel()->Data()) {}
 //=================================================================================================//
 UnsignedInt MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 {
@@ -202,7 +202,7 @@ UnsignedInt MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 void MultilevelCellLinkedList::insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position)
 {
     UnsignedInt level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
-    level_[particle_index] = level;
+    h_level_[particle_index] = level;
     UnsignedInt linear_index = getMesh(level).LinearCellIndexFromPosition(particle_position);
     cell_index_lists_[linear_index].emplace_back(particle_index);
 }

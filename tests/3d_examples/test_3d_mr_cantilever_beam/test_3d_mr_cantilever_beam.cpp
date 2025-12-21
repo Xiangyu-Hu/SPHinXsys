@@ -242,7 +242,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     if (refinement_level > 0)
     {
         beam_body.getBaseParticles().addVariableToWrite<Real>("SmoothingLengthRatio");
-        beam_body.getBaseParticles().addVariableToWrite<int>("ParticleMeshLevel");
+        beam_body.getBaseParticles().addVariableToWrite<int>("SmoothingLengthLevel");
     }
     BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(beam_body);
