@@ -49,24 +49,24 @@ class LevelSetShape : public Shape
     SharedPtr<SPHAdaptation> sph_adaptation_;
 
   public:
-    /** refinement_ratio is between body reference resolution and level set resolution */
+    /** refinement is between body reference resolution and level set resolution */
     LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation,
-                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric);
+                  Real refinement = 1.0, UsageType usage_type = UsageType::Volumetric);
     LevelSetShape(SPHBody &sph_body, Shape &shape,
-                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric);
+                  Real refinement = 1.0, UsageType usage_type = UsageType::Volumetric);
 
     template <class ExecutionPolicy>
     LevelSetShape(const ExecutionPolicy &ex_policy, Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation,
-                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric)
-        : LevelSetShape(shape.getBounds(), shape, sph_adaptation, refinement_ratio)
+                  Real refinement = 1.0, UsageType usage_type = UsageType::Volumetric)
+        : LevelSetShape(shape.getBounds(), shape, sph_adaptation, refinement)
     {
         finishInitialization(ex_policy, usage_type);
     };
 
     template <class ExecutionPolicy>
     LevelSetShape(const ExecutionPolicy &ex_policy, SPHBody &sph_body, Shape &shape,
-                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric)
-        : LevelSetShape(shape.getBounds(), sph_body, shape, refinement_ratio)
+                  Real refinement = 1.0, UsageType usage_type = UsageType::Volumetric)
+        : LevelSetShape(shape.getBounds(), sph_body, shape, refinement)
     {
         finishInitialization(ex_policy, usage_type);
     };
@@ -109,8 +109,8 @@ class LevelSetShape : public Shape
 
   protected:
     LevelSetShape(BoundingBoxd bounding_box, Shape &shape,
-                  SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio);
-    LevelSetShape(BoundingBoxd bounding_box, SPHBody &sph_body, Shape &shape, Real refinement_ratio);
+                  SharedPtr<SPHAdaptation> sph_adaptation, Real refinement);
+    LevelSetShape(BoundingBoxd bounding_box, SPHBody &sph_body, Shape &shape, Real refinement);
     LevelSet &level_set_; /**< narrow bounded level set mesh. */
 };
 } // namespace SPH

@@ -14,8 +14,8 @@ Real PL = 0.05334;  // beam length
 Real PH = 0.012826; // for thick plate;
 
 // reference particle spacing
-Real resolution_ref = PH / 30;
-Real BW = resolution_ref * 4.0; // boundary width, at least three particles
+Real global_resolution = PH / 30;
+Real BW = global_resolution * 4.0; // boundary width, at least three particles
 
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d(-PL / 2.0, -PL / 2.0),
@@ -38,11 +38,11 @@ Real physical_viscosity = 1.0e4;
 Real refer_energy = 0.5 * 8000 * 0.01; // 40
 
 Vecd norm_(1.0, 0.0);
-Vecd upper_face_point_(0.02 + 3.0 * resolution_ref, 0.0);
+Vecd upper_face_point_(0.02 + 3.0 * global_resolution, 0.0);
 Vecd lower_face_point_(0.02, 0.0);
 
 Vecd norm_4(1.0, 0.0);
-Vecd upper_face_point_4(0.04 + 3.0 * resolution_ref, 0.0);
+Vecd upper_face_point_4(0.04 + 3.0 * global_resolution, 0.0);
 Vecd lower_face_point_4(0.04, 0.0);
 
 // Beam observer location
@@ -172,7 +172,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem system(system_domain_bounds, global_resolution);
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */

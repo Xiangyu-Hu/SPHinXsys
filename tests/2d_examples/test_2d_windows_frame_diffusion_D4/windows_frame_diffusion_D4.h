@@ -13,8 +13,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real L = 0.3; // Unit in m.
 Real H = 0.093;
-Real resolution_ref = 0.001;
-Real BW = resolution_ref * 2.0;
+Real global_resolution = 0.001;
+Real BW = global_resolution * 2.0;
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.

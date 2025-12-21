@@ -10,7 +10,7 @@ using namespace SPH;   // Namespace cite here
 //----------------------------------------------------------------------
 Real L = 2.0;
 Real H = 0.4;
-Real resolution_ref = H / 40.0;
+Real global_resolution = H / 40.0;
 BoundingBoxd system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
@@ -99,7 +99,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.

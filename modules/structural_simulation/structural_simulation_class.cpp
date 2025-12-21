@@ -25,7 +25,7 @@ SolidBodyFromMesh::SolidBodyFromMesh(
     SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, Real *volume)
     : SolidBody(system, triangle_mesh_shape)
 {
-    defineAdaptationRatios(1.15, system.ReferenceResolution() / resolution);
+    defineAdaptationRatios(1.15, system.GlobalResolution() / resolution);
     defineBodyLevelSetShape()->cleanLevelSet();
     defineMaterial<SaintVenantKirchhoffSolid>(*material_model.get());
     generateParticles<BaseParticles, Lattice>();
@@ -276,7 +276,7 @@ void StructuralSimulation::setSystemResolutionMax()
             system_resolution_ = resolution_list_[i];
         }
     }
-    system_.setReferenceResolution(system_resolution_);
+    system_.setGlobalResolution(system_resolution_);
 }
 
 void StructuralSimulation::calculateSystemBoundaries()

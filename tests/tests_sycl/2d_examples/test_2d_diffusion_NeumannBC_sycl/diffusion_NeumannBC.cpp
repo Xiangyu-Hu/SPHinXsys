@@ -12,8 +12,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real L = 1.0;
 Real H = 1.0;
-Real resolution_ref = H / 100.0;
-Real BW = resolution_ref * 2.0;
+Real global_resolution = H / 100.0;
+Real BW = global_resolution * 2.0;
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for diffusion properties.
@@ -101,7 +101,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.

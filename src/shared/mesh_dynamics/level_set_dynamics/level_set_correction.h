@@ -198,7 +198,7 @@ class CleanInterface : public RepeatTimes, public BaseDynamics<void>
   public:
     CleanInterface(SparseMeshField<4> &mesh_data, UnsignedInt resolution_level,
                    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method,
-                   Real refinement_ratio);
+                   Real refinement);
     virtual ~CleanInterface() {};
 
     void exec(Real dt = 0.0) override

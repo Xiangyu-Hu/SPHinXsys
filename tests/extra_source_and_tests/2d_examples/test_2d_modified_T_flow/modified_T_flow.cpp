@@ -20,9 +20,9 @@ using namespace SPH;
 Real DL = 0.2;                                               /**< Reference length. */
 Real DH = 0.1;                                               /**< Reference and the height of main channel. */
 Real DL1 = 0.75 * DL;                                        /**< The length of the main channel. */
-Real resolution_ref = 0.005;                                 /**< Initial reference particle spacing. */
-Real BW = resolution_ref * 4;                                /**< Reference size of the emitter. */
-Real DL_sponge = resolution_ref * 20;                        /**< Reference size of the emitter buffer to impose inflow condition. */
+Real global_resolution = 0.005;                                 /**< Initial reference particle spacing. */
+Real BW = global_resolution * 4;                                /**< Reference size of the emitter. */
+Real DL_sponge = global_resolution * 20;                        /**< Reference size of the emitter buffer to impose inflow condition. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
 
 //----------------------------------------------------------------------
@@ -144,7 +144,7 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.setGenerateRegressionData(false);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------

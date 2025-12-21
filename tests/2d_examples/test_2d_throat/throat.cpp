@@ -20,8 +20,8 @@ using namespace SPH;
 Real DH = 4.0;                  // channel height
 Real DT = 1.0;                  // throat height
 Real DL = 24.0;                 // channel length
-Real resolution_ref = 0.1;      // particle spacing
-Real BW = resolution_ref * 4.0; // boundary width
+Real global_resolution = 0.1;      // particle spacing
+Real BW = global_resolution * 4.0; // boundary width
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -125,7 +125,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
                                      Vec2d(0.5 * DL + BW, 0.5 * DH + BW));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.

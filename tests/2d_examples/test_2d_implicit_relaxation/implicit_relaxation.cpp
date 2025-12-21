@@ -14,8 +14,8 @@ std::string input_body = "./input/TurbineBlade.dat";
 //----------------------------------------------------------------------
 Real DL = 10.0;
 Real DH = 10.0;
-Real resolution_ref = 1 / 25.0;
-Real BW = resolution_ref * 4;
+Real global_resolution = 1 / 25.0;
+Real BW = global_resolution * 4;
 BoundingBoxd system_domain_bounds(Vec2d(-BW - DL, -BW - DH), Vec2d(BW + DL, BW + DH));
 //----------------------------------------------------------------------
 //	Define geometries
@@ -36,7 +36,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.

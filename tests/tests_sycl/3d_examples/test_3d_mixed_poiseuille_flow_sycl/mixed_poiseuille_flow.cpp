@@ -13,10 +13,10 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 0.0075;                /**< Channel length. */
 Real DH = 0.001;                 /**< Channel height. */
-Real resolution_ref = DH / 15.0; /**< Reference particle spacing. */
+Real global_resolution = DH / 15.0; /**< Reference particle spacing. */
 Real error_tolerance = 5 * 0.01; // Less than 3 percent when resolution is DH/20 and DL/DH = 20
 
-Real BW = resolution_ref * 4; /**< Extending width for BCs. */
+Real BW = global_resolution * 4; /**< Extending width for BCs. */
 StdVec<Vec3d> observer_location;
 BoundingBoxd system_domain_bounds(
     Vec3d(-2.0 * BW, -2.0 * BW, -2.0 * BW),
@@ -51,7 +51,7 @@ Real c_f = std::max(10.0 * U_f, sqrt(2 * (Inlet_pressure - Outlet_pressure) / (r
 //----------------------------------------------------------------------
 //  Geometric shapes for the channel and boundaries.
 //----------------------------------------------------------------------
-Real bidirectional_buffer_length = 3.0 * resolution_ref;
+Real bidirectional_buffer_length = 3.0 * global_resolution;
 Vec3d bidirectional_buffer_halfsize(
     0.5 * bidirectional_buffer_length, 0.5 * DH, 0.5 * DH);
 Vec3d left_bidirectional_translation = bidirectional_buffer_halfsize;
@@ -186,7 +186,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
@@ -217,8 +217,8 @@ int main(int ac, char *av[])
     {
         int num_points = 15;
         // Avoid deploy observer too close to wall
-        Real y_start = 2.0 * resolution_ref;
-        Real y_end = DH - 2.0 * resolution_ref;
+        Real y_start = 2.0 * global_resolution;
+        Real y_end = DH - 2.0 * global_resolution;
         Real z = 0.5 * DH;
         Real total_range = y_end - y_start;
         Real dy = total_range / (num_points - 1);

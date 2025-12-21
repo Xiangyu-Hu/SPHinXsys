@@ -20,17 +20,17 @@ using namespace SPH;
 Real scale = 0.001;
 Real DH = 6.35 * scale;          /**< Channel height. */
 Real DL = 10 * DH/2;               /**< Channel length. */
-Real resolution_ref = DH / 30.0; /**< Initial reference particle spacing. */
-Real resolution_shell = resolution_ref;
-Real wall_thickness = resolution_ref * 4;                    /**< Extending width for BCs. */
+Real global_resolution = DH / 30.0; /**< Initial reference particle spacing. */
+Real resolution_shell = global_resolution;
+Real wall_thickness = global_resolution * 4;                    /**< Extending width for BCs. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
 BoundingBoxd system_domain_bounds(Vecd(-wall_thickness, -wall_thickness), Vecd(DL + wall_thickness, DH + wall_thickness));
 //----------------------------------------------------------------------
 //	Geometry parameters for boundary condition.
 //----------------------------------------------------------------------
-Vecd bidirectional_buffer_halfsize(resolution_ref * 2, 0.5 * DH);
+Vecd bidirectional_buffer_halfsize(global_resolution * 2, 0.5 * DH);
 Vecd emitter_translation = bidirectional_buffer_halfsize;
-Vecd disposer_translation(DL - 2.0 * resolution_ref, 0.5 * DH);
+Vecd disposer_translation(DL - 2.0 * global_resolution, 0.5 * DH);
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
@@ -151,7 +151,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     sph_system.setGenerateRegressionData(false);
     //----------------------------------------------------------------------
@@ -163,7 +163,7 @@ int main(int ac, char *av[])
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
     SolidBody shell_boundary(sph_system, makeShared<DefaultShape>("Shell"));
-    shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, resolution_ref / resolution_shell);
+    shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, global_resolution / resolution_shell);
     shell_boundary.defineMaterial<Solid>();
     shell_boundary.generateParticles<SurfaceParticles, ShellBoundary>(resolution_shell, wall_thickness);
 

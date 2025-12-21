@@ -53,9 +53,9 @@ class LevelSet : public SparseMeshField<4>
 {
   public:
     LevelSet(BoundingBoxd tentative_bounds, Real reference_data_spacing, size_t total_levels,
-             Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
+             Shape &shape, SPHAdaptation &sph_adaptation, Real refinement = 1.0);
     LevelSet(BoundingBoxd tentative_bounds, SparseMeshField<4> *coarse_data,
-             Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio = 1.0);
+             Shape &shape, SPHAdaptation &sph_adaptation, Real refinement = 1.0);
     ~LevelSet() {};
 
     template <class ExecutionPolicy>
@@ -95,7 +95,7 @@ class LevelSet : public SparseMeshField<4>
     void registerKernelIntegralProbes(const ExecutionPolicy &ex_policy);
 
     Shape &shape_; /**< the geometry is described by the level set. */
-    Real refinement_ratio_;
+    Real refinement_;
     ConstantArray<Real> *ca_global_h_ratio_; /**< the ratio of the reference spacing to the data spacing */
     StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
     ProbeLevelSet<Real> *probe_signed_distance_;

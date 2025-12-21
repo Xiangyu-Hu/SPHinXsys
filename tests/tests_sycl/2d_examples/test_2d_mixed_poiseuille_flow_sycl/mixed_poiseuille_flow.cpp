@@ -13,8 +13,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 0.004;                 /**< Channel length. */
 Real DH = 0.001;                 /**< Channel height. */
-Real resolution_ref = DH / 20.0; /**< Reference particle spacing. */
-Real BW = resolution_ref * 4;    /**< Extending width for BCs. */
+Real global_resolution = DH / 20.0; /**< Reference particle spacing. */
+Real BW = global_resolution * 4;    /**< Extending width for BCs. */
 StdVec<Vecd> observer_location;
 BoundingBoxd system_domain_bounds(
     Vec2d(-2.0 * BW, -2.0 * BW),
@@ -50,7 +50,7 @@ Real c_f = std::max(10.0 * U_f, sqrt(4 * (Inlet_pressure - Outlet_pressure) / (r
 //----------------------------------------------------------------------
 //  Geometric shapes for the channel and boundaries.
 //----------------------------------------------------------------------
-Real bidirectional_buffer_length = 3.0 * resolution_ref;
+Real bidirectional_buffer_length = 3.0 * global_resolution;
 Vec2d bidirectional_buffer_halfsize(
     0.5 * bidirectional_buffer_length, 0.5 * DH);
 Vec2d left_bidirectional_translation = bidirectional_buffer_halfsize;
@@ -226,7 +226,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
@@ -243,8 +243,8 @@ int main(int ac, char *av[])
     {
         int num_points = 15;
         // Avoid deploy observer too close to wall
-        Real y_start = 2.0 * resolution_ref;
-        Real y_end = DH - 2.0 * resolution_ref;
+        Real y_start = 2.0 * global_resolution;
+        Real y_end = DH - 2.0 * global_resolution;
         Real total_range = y_end - y_start;
         Real dy = total_range / (num_points - 1);
 

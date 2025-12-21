@@ -133,14 +133,14 @@ class SPHBody
     //----------------------------------------------------------------------
     //		Object factory template functions
     //----------------------------------------------------------------------
-    virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
+    virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_refinement_to_global = 1.0);
 
     template <class AdaptationType, typename... Args>
     void defineAdaptation(Args &&...args)
     {
         sph_adaptation_ =
             sph_adaptation_ptr_keeper_.createPtr<AdaptationType>(
-                sph_system_, std::forward<Args>(args)...);
+                sph_adaptation_->GlobalResolution(), std::forward<Args>(args)...);
     };
 
     template <typename... Args>

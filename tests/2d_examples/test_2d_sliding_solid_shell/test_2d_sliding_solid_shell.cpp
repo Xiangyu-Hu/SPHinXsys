@@ -16,10 +16,10 @@ const Real DL = 15.0;                   /**< slope length. */
 const Real angle = 10.0 * M_PI / 180.0; /**< angle of the slope. */
 const Real Lx = DL * cos(angle);
 const Real Ly = DL * sin(angle);
-const Real resolution_ref = L / 20.0; /**< reference particle spacing. */
-const Real resolution_shell = resolution_ref;
-const Real thickness_shell = resolution_ref;
-const Real BW = resolution_ref * 4; /**< wall width for BCs. */
+const Real global_resolution = L / 20.0; /**< reference particle spacing. */
+const Real resolution_shell = global_resolution;
+const Real thickness_shell = global_resolution;
+const Real BW = global_resolution * 4; /**< wall width for BCs. */
 /** Domain bounds of the system. */
 const BoundingBoxd system_domain_bounds(Vec2d(-BW *cos(angle), -Ly - BW * sin(angle)), Vec2d(Lx + BW * cos(angle), L));
 // Observer location at box center
@@ -41,7 +41,7 @@ class Cube : public MultiPolygonShape
     explicit Cube(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         Vec2d halfsize_cube(0.5 * L, 0.5 * L);
-        Transform translation_cube(halfsize_cube + 0.65 * (resolution_ref + resolution_shell) * Vec2d::UnitY());
+        Transform translation_cube(halfsize_cube + 0.65 * (global_resolution + resolution_shell) * Vec2d::UnitY());
         multi_polygon_.addABox(translation_cube, halfsize_cube, ShapeBooleanOps::add);
     }
 };
@@ -78,7 +78,7 @@ void run_simulation()
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles
     //----------------------------------------------------------------------
@@ -88,7 +88,7 @@ void run_simulation()
     free_cube.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
-    wall_boundary.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
+    wall_boundary.defineAdaptation<SPHAdaptation>(1.15, global_resolution / resolution_shell);
     wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<SurfaceParticles, WallBoundary>();
 

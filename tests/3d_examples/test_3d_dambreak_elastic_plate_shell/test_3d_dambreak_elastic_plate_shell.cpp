@@ -22,8 +22,8 @@ const Real DH = 0.4;                                        // tank height
 const Real DL = 0.8;                                        // tank length
 const Real DW = 0.2;                                        // tank width
 const Real resolution_shell = t;                            // shell particle spacing
-const Real resolution_ref = 2 * resolution_shell;           // system particle spacing
-const Real BW = resolution_ref * 4;                         // boundary width
+const Real global_resolution = 2 * resolution_shell;           // system particle spacing
+const Real BW = global_resolution * 4;                         // boundary width
 const Real plate_x_pos = DL - 0.2 + 0.5 * resolution_shell; // center x coordinate of plate
 
 const Real marker_h = 0.0875; // height of marker
@@ -67,7 +67,7 @@ class WallBoundary : public ComplexShape
         add<GeometricShapeBox>(Transform(translation_wall), halfsize_outer);
         subtract<GeometricShapeBox>(Transform(translation_wall), halfsize_inner);
 
-        Vec3d halfsize_plate(0.5 * resolution_ref, 0.5 * plate_width, 0.5 * (plate_height + BW));
+        Vec3d halfsize_plate(0.5 * global_resolution, 0.5 * plate_width, 0.5 * (plate_height + BW));
         Transform translation_plate(halfsize_plate + Vec3d(plate_x_pos, -BW, (DW - plate_width) * 0.5));
         subtract<GeometricShapeBox>(Transform(translation_plate), halfsize_plate);
     }
@@ -153,7 +153,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     sph_system.setGenerateRegressionData(false);
     //----------------------------------------------------------------------
@@ -172,14 +172,14 @@ int main(int ac, char *av[])
     gate.generateParticles<BaseParticles, Lattice>();
 
     SolidBody plate(sph_system, makeShared<DefaultShape>("Plate"));
-    plate.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
+    plate.defineAdaptation<SPHAdaptation>(1.15, global_resolution / resolution_shell);
     plate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, youngs_modulus, poisson_ratio);
     plate.generateParticles<SurfaceParticles, Plate>();
 
     ObserverBody disp_observer_1(sph_system, "Observer1");
-    disp_observer_1.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
+    disp_observer_1.defineAdaptation<SPHAdaptation>(1.15, global_resolution / resolution_shell);
     ObserverBody disp_observer_2(sph_system, "Observer2");
-    disp_observer_2.defineAdaptation<SPHAdaptation>(1.15, resolution_ref / resolution_shell);
+    disp_observer_2.defineAdaptation<SPHAdaptation>(1.15, global_resolution / resolution_shell);
     disp_observer_1.generateParticles<ObserverParticles>(observer_position_1);
     disp_observer_2.generateParticles<ObserverParticles>(observer_position_2);
     //----------------------------------------------------------------------

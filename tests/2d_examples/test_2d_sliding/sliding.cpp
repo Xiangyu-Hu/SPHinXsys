@@ -14,8 +14,8 @@ Real DL = 20.0; /**< box length. */
 Real DH = 13.0; /**< box height. */
 Real L = 1.0;
 Real slop_h = 11.55;
-Real resolution_ref = L / 10.0; /**< reference particle spacing. */
-Real BW = resolution_ref * 4;   /**< wall width for BCs. */
+Real global_resolution = L / 10.0; /**< reference particle spacing. */
+Real BW = global_resolution * 4;   /**< wall width for BCs. */
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(25, 15));
 // Observer location
@@ -49,11 +49,11 @@ class Cube : public MultiPolygonShape
     {
         /** Geometry definition. */
         std::vector<Vecd> cubic_shape;
-        cubic_shape.push_back(Vecd(BW, slop_h + resolution_ref));
-        cubic_shape.push_back(Vecd(BW, slop_h + L + resolution_ref));
-        cubic_shape.push_back(Vecd(BW + L, slop_h + L + resolution_ref));
-        cubic_shape.push_back(Vecd(BW + L, slop_h + resolution_ref));
-        cubic_shape.push_back(Vecd(BW, slop_h + resolution_ref));
+        cubic_shape.push_back(Vecd(BW, slop_h + global_resolution));
+        cubic_shape.push_back(Vecd(BW, slop_h + L + global_resolution));
+        cubic_shape.push_back(Vecd(BW + L, slop_h + L + global_resolution));
+        cubic_shape.push_back(Vecd(BW + L, slop_h + global_resolution));
+        cubic_shape.push_back(Vecd(BW, slop_h + global_resolution));
         multi_polygon_.addAPolygon(cubic_shape, ShapeBooleanOps::add);
     }
 };
@@ -65,7 +65,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);

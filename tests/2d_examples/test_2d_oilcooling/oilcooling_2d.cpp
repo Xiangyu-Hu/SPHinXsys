@@ -28,7 +28,7 @@ Real angle_increment = 2 * Pi / Wnum;
 Real WD = 0.5 * DRO + AG + 0.5 * WH;     /**< Distance from center point to the center of a winding. */
 Real ZW = 0.5 * DRO + AG;                /**< Distance from center point to the site of a winding. */
 int resolution_circle = 60;              /**<Approximate the circle as the number of sides of the polygon. */
-Real resolution_ref = 0.00075;           /**< Initial reference particle spacing. */
+Real global_resolution = 0.00075;           /**< Initial reference particle spacing. */
 Real BW = 0.5 * (DMO - DM);              /**< Extending width for wall boundary. */
 Real OH = LH;                            /**< Outflows region height. */
 Real Lnum = 5;                           /**< Inflows number. */
@@ -282,7 +282,7 @@ using ThermalRelaxationComplex = DiffusionBodyRelaxationComplex<
 int main(int ac, char *av[])
 {
     /** Build up a SPHSystem */
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
     sph_system.setReloadParticles(true);        // Tag for computation with save particles distribution
     sph_system.handleCommandlineOptions(ac, av);

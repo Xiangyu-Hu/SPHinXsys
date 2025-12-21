@@ -8,15 +8,15 @@ namespace SPH
 //=================================================================================================//
 LevelSet::LevelSet(
     BoundingBoxd tentative_bounds, SparseMeshField<4> *coarse_data,
-    Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
+    Shape &shape, SPHAdaptation &sph_adaptation, Real refinement)
     : SparseMeshField<4>(
           "LevelSet_" + shape.getName(), 1, tentative_bounds,
           coarse_data->getFinestMesh().GridSpacing() * 0.5, 4, 2),
-      shape_(shape), refinement_ratio_(refinement_ratio), ca_global_h_ratio_(nullptr)
+      shape_(shape), refinement_(refinement), ca_global_h_ratio_(nullptr)
 {
     StdVec<Real> global_h_ratio_vec;
     Real data_spacing = coarse_data->getFinestMesh().DataSpacing() * 0.5;
-    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
+    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement;
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec.push_back(global_h_ratio);
     neighbor_method_set_.push_back(
@@ -29,14 +29,14 @@ LevelSet::LevelSet(
 //=================================================================================================//
 LevelSet::LevelSet(
     BoundingBoxd tentative_bounds, Real data_spacing,
-    size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation, Real refinement_ratio)
+    size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation, Real refinement)
     : SparseMeshField<4>(
           "LevelSet_" + shape.getName(), total_levels, tentative_bounds,
           data_spacing * Real(4), 4, 2),
-      shape_(shape), refinement_ratio_(refinement_ratio), ca_global_h_ratio_(nullptr)
+      shape_(shape), refinement_(refinement), ca_global_h_ratio_(nullptr)
 {
     StdVec<Real> global_h_ratio_vec;
-    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement_ratio;
+    Real global_h_ratio = sph_adaptation.ReferenceSpacing() / data_spacing / refinement;
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec.push_back(global_h_ratio);
     neighbor_method_set_.push_back(

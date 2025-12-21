@@ -9,8 +9,8 @@ using namespace SPH;
 // general parameters for geometry
 Real radius = 0.1;                                         // Soil column length
 Real height = 0.1;                                         // Soil column height
-Real resolution_ref = radius / 10;                         // particle spacing
-Real BW = resolution_ref * 4;                              // boundary width
+Real global_resolution = radius / 10;                         // particle spacing
+Real BW = global_resolution * 4;                              // boundary width
 Real DL = 2 * radius * (1 + 1.24 * height / radius) + 0.1; // tank length
 Real DH = height + 0.02;                                   // tank height
 Real DW = DL;                                              // tank width
@@ -83,7 +83,7 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vecd(-BW, -BW, -BW), Vecd(DL + BW, DH + BW, DW + BW));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
