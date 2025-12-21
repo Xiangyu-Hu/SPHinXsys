@@ -43,7 +43,7 @@ namespace SPH
 class ContactRelationCrossResolution : public BaseContactRelation
 {
   protected:
-    UniquePtrsKeeper<SearchDepthContact> search_depth_ptrs_keeper_;
+    UniquePtrsKeeper<SearchDepthContact> search_depths_keeper_;
 
   public:
     template <typename... Args>
@@ -56,7 +56,7 @@ class ContactRelationCrossResolution : public BaseContactRelation
                 DynamicCast<CellLinkedList>(this, &contact_bodies_[k]->getCellLinkedList());
             target_cell_linked_lists_.push_back(target_cell_linked_list);
             get_search_depths_.push_back(
-                search_depth_ptrs_keeper_.createPtr<SearchDepthContact>(
+                search_depths_keeper_.createPtr<SearchDepthContact>(
                     sph_body_, target_cell_linked_list->getMesh()));
         }
     };
@@ -75,7 +75,7 @@ class ContactRelationCrossResolution : public BaseContactRelation
 class ContactRelation : public ContactRelationCrossResolution
 {
   protected:
-    UniquePtrsKeeper<NeighborBuilderContact> neighbor_builder_contact_ptrs_keeper_;
+    UniquePtrsKeeper<NeighborBuilderContact> neighbor_builder_contacts_keeper_;
 
   public:
     ContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies);
@@ -94,8 +94,8 @@ class ContactRelation : public ContactRelationCrossResolution
 class ShellSurfaceContactRelation : public ContactRelationCrossResolution
 {
   protected:
-    UniquePtrsKeeper<NeighborBuilderSurfaceContact> neighbor_builder_contact_ptrs_keeper_;
-    UniquePtrKeeper<BodySurfaceLayer> shape_surface_ptr_keeper_;
+    UniquePtrsKeeper<NeighborBuilderSurfaceContact> neighbor_builder_contacts_keeper_;
+    UniquePtrKeeper<BodySurfaceLayer> shape_surface_keeper_;
 
   public:
     BodySurfaceLayer *body_surface_layer_;
@@ -121,7 +121,7 @@ class ShellSurfaceContactRelation : public ContactRelationCrossResolution
 class ContactRelationToBodyPart : public ContactRelationCrossResolution
 {
   protected:
-    UniquePtrsKeeper<NeighborBuilderContactBodyPart> neighbor_builder_contact_ptrs_keeper_;
+    UniquePtrsKeeper<NeighborBuilderContactBodyPart> neighbor_builder_contacts_keeper_;
 
   public:
     StdVec<NeighborBuilderContactBodyPart *> get_part_contact_neighbors_;
@@ -161,7 +161,7 @@ class AdaptiveContactRelation : public BaseContactRelation
 class ContactRelationFromShellToFluid : public ContactRelationCrossResolution
 {
   private:
-    UniquePtrsKeeper<NeighborBuilderContactFromShellToFluid> neighbor_builder_contact_from_shell_ptrs_keeper_;
+    UniquePtrsKeeper<NeighborBuilderContactFromShellToFluid> neighbor_builder_contact_from_shells_keeper_;
 
   public:
     ContactRelationFromShellToFluid(SPHBody &sph_body, RealBodyVector contact_bodies, const StdVec<bool> &normal_corrections);
@@ -179,7 +179,7 @@ class ContactRelationFromShellToFluid : public ContactRelationCrossResolution
 class ContactRelationFromFluidToShell : public ContactRelationCrossResolution
 {
   private:
-    UniquePtrsKeeper<NeighborBuilderContactFromFluidToShell> neighbor_builder_contact_to_shell_ptrs_keeper_;
+    UniquePtrsKeeper<NeighborBuilderContactFromFluidToShell> neighbor_builder_contact_to_shells_keeper_;
 
   public:
     ContactRelationFromFluidToShell(SPHBody &sph_body, RealBodyVector contact_bodies, const StdVec<bool> &normal_corrections);
@@ -200,9 +200,9 @@ class ContactRelationFromFluidToShell : public ContactRelationCrossResolution
 class SurfaceContactRelation : public ContactRelationCrossResolution
 {
   private:
-    UniquePtrsKeeper<NeighborBuilderSurfaceContactFromSolid> solid_neighbor_builder_contact_ptrs_keeper_;
-    UniquePtrsKeeper<NeighborBuilderSurfaceContactFromShell> shell_neighbor_builder_contact_ptrs_keeper_;
-    UniquePtrKeeper<BodySurfaceLayer> shape_surface_ptr_keeper_;
+    UniquePtrsKeeper<NeighborBuilderSurfaceContactFromSolid> solid_neighbor_builder_contacts_keeper_;
+    UniquePtrsKeeper<NeighborBuilderSurfaceContactFromShell> shell_neighbor_builder_contacts_keeper_;
+    UniquePtrKeeper<BodySurfaceLayer> shape_surface_keeper_;
 
   public:
     SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies, StdVec<bool> normal_corrections = {});

@@ -140,7 +140,7 @@ WriteToVtpIfVelocityOutOfBound::
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         check_bodies_.push_back(
-            check_bodies_ptr_keeper_.createPtr<ReduceDynamics<VelocityBoundCheck>>(*bodies_[i], velocity_bound));
+            check_bodies_keeper_.createPtr<ReduceDynamics<VelocityBoundCheck>>(*bodies_[i], velocity_bound));
     }
 }
 //=============================================================================================//

@@ -12,7 +12,7 @@ SPHSystem::SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution, 
     : system_domain_bounds_(system_domain_bounds),
       global_resolution_(global_resolution),
       tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
-      io_environment_(io_ptr_keeper_.createPtr<IOEnvironment>(*this)),
+      io_environment_(io_keeper_.createPtr<IOEnvironment>(*this)),
       run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true)
 {

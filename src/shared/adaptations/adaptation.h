@@ -96,14 +96,14 @@ class SPHAdaptation
         sigma0_ref_ = computeLatticeNumberDensity(Vecd());
     };
 
-    class UnitSmoothingLengthRatio
+    class UnitHRatio
     {
       public:
-        explicit UnitSmoothingLengthRatio(SPHAdaptation &adaptation) {};
+        explicit UnitHRatio(SPHAdaptation &adaptation) {};
         Real operator()(size_t /*particle_index_i*/) { return 1.0; };
     };
 
-    typedef UnitSmoothingLengthRatio SmoothingRatioType;
+    typedef UnitHRatio HRatioType;
 
   protected:
     Real computeLatticeNumberDensity(Vec2d zero);
@@ -135,17 +135,17 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles) override;
     virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) override;
 
-    class ContinuousSmoothingLengthRatio
+    class ContinuousHRatio
     {
         Real *h_ratio_;
 
       public:
-        explicit ContinuousSmoothingLengthRatio(AdaptiveSmoothingLength &adaptation)
+        explicit ContinuousHRatio(AdaptiveSmoothingLength &adaptation)
             : h_ratio_(adaptation.h_ratio_) {};
         Real operator()(size_t index_i) { return h_ratio_[index_i]; };
     };
 
-    typedef ContinuousSmoothingLengthRatio SmoothingRatioType;
+    typedef ContinuousHRatio HRatioType;
 
   protected:
     Real finest_spacing_bound_;   /**< the adaptation bound for finest particles */

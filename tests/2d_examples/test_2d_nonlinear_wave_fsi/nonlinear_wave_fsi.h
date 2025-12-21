@@ -295,7 +295,7 @@ class StructureSystemForSimbody : public SolidBodyPartForSimbody
         : SolidBodyPartForSimbody(sph_body, shape_ptr)
     {
         body_part_mass_properties_ =
-            mass_properties_ptr_keeper_
+            mass_properties_keeper_
                 .createPtr<SimTK::MassProperties>(StructureMass, SimTK::Vec3(0.0), SimTK::UnitInertia(0, 0, Iz));
     }
 };

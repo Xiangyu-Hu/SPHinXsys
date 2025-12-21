@@ -63,7 +63,7 @@ class CompositeSolid : public ElasticSolid
     int *material_id_;
 
   protected:
-    UniquePtrsKeeper<ElasticSolid> composite_ptrs_keeper_;
+    UniquePtrsKeeper<ElasticSolid> composites_keeper_;
     StdVec<ElasticSolid *> composite_materials_;
 
   public:
@@ -83,7 +83,7 @@ class CompositeSolid : public ElasticSolid
     void add(Args &&...args)
     {
         ElasticSolid *added_material =
-            composite_ptrs_keeper_.createPtr<ElasticSolidType>(std::forward<Args>(args)...);
+            composites_keeper_.createPtr<ElasticSolidType>(std::forward<Args>(args)...);
         composite_materials_.push_back(added_material);
         c0_ = SMAX(c0_, added_material->ReferenceSoundSpeed());
         setContactStiffness(c0_);

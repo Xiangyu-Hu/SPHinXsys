@@ -41,7 +41,7 @@ void SolidBodyPartForSimbody::setMassProperties()
     inertia_moments /= body_part_volume;
     inertia_products /= body_part_volume;
 
-    body_part_mass_properties_ = mass_properties_ptr_keeper_.createPtr<SimTK::MassProperties>(
+    body_part_mass_properties_ = mass_properties_keeper_.createPtr<SimTK::MassProperties>(
         body_part_volume * rho0_, SimTKVec3(0),
         SimTK::UnitInertia(SimTKVec3(inertia_moments[0], inertia_moments[1], inertia_moments[2]),
                            SimTKVec3(inertia_products[0], inertia_products[1], inertia_products[2])));

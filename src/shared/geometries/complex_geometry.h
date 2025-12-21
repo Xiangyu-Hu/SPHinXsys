@@ -59,7 +59,7 @@ class ComplexShape : public BinaryShapes
     LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
     {
         size_t index = getSubShapeIndexByName(shape_name);
-        LevelSetShape *level_set_shape = sub_shape_ptrs_keeper_[index].createPtr<LevelSetShape>(
+        LevelSetShape *level_set_shape = sub_shapes_keeper_[index].createPtr<LevelSetShape>(
             sph_body, *sub_shapes_and_ops_[index].first, std::forward<Args>(args)...);
         sub_shapes_and_ops_[index].first = DynamicCast<Shape>(this, level_set_shape);
         return level_set_shape;

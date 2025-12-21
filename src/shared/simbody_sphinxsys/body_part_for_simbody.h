@@ -43,7 +43,7 @@ namespace SPH
 class SolidBodyPartForSimbody : public BodyRegionByParticle
 {
   protected:
-    UniquePtrKeeper<SimTK::MassProperties> mass_properties_ptr_keeper_;
+    UniquePtrKeeper<SimTK::MassProperties> mass_properties_keeper_;
 
   public:
     Vecd initial_mass_center_;

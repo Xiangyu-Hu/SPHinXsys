@@ -112,7 +112,7 @@ BodyRegionByParticle::
 BodyRegionByParticle::BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr)
     : BodyRegionByParticle(sph_body, *shape_ptr.get())
 {
-    shape_ptr_keeper_.assignRef(shape_ptr);
+    shape_keeper_.assignRef(shape_ptr);
 }
 //=================================================================================================//
 bool BodyRegionByParticle::tagByContain(size_t particle_index)
@@ -163,7 +163,7 @@ BodyRegionByCell::BodyRegionByCell(RealBody &real_body, Shape &body_part_shape)
 BodyRegionByCell::BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr)
     : BodyRegionByCell(real_body, *shape_ptr.get())
 {
-    shape_ptr_keeper_.assignRef(shape_ptr);
+    shape_keeper_.assignRef(shape_ptr);
 }
 //=================================================================================================//
 bool BodyRegionByCell::checkNotFar(Vecd cell_position, Real threshold)

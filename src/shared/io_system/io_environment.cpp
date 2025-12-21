@@ -89,7 +89,7 @@ void IOEnvironment::resetOutputFolder(const std::string &new_name)
 //=============================================================================================//
 ParameterizationIO *IOEnvironment::defineParameterizationIO()
 {
-    return parameterization_io_ptr_keeper_.createPtr<ParameterizationIO>(input_folder_);
+    return parameterization_io_keeper_.createPtr<ParameterizationIO>(input_folder_);
 }
 //=================================================================================================//
 } // namespace SPH

@@ -49,7 +49,7 @@ namespace SPH
  */
 class SPHSystem
 {
-    UniquePtrKeeper<IOEnvironment> io_ptr_keeper_;
+    UniquePtrKeeper<IOEnvironment> io_keeper_;
     DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
 
