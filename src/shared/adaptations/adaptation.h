@@ -119,9 +119,6 @@ class SPHAdaptation
 class AdaptiveSmoothingLength : public SPHAdaptation
 {
   public:
-    Real *h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
-    int *level_;    /**< the mesh level of the particle */
-
     typedef AdaptiveSmoothingLength BaseAdaptation;
 
     AdaptiveSmoothingLength(Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level);
