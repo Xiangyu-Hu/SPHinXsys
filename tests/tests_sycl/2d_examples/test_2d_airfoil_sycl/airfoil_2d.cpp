@@ -57,50 +57,42 @@ int main(int ac, char *av[])
         ->writeLevelSet(sph_system);
     airfoil.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
-    //	Define outputs functions.
+    //	Creating body parts.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp airfoil_recording_to_vtp(airfoil);
-    airfoil_recording_to_vtp.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
+    NearShapeSurface near_body_surface(airfoil);
     //----------------------------------------------------------------------
-    //	Define body relation map.
-    //	The contact map gives the topological connections between the bodies,
-    //	basically, in the the range of bodies to build neighbor particle lists.
+    // Define SPH solver with particle methods and execution policies.
+    // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
-    AdaptiveInnerRelation airfoil_inner(airfoil);
+    SPHSolver sph_solver(sph_system);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
     //----------------------------------------------------------------------
-    //	Methods used for particle relaxation.
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the configuration dynamics, such as update cell linked list,
+    // update body relations, are defiend first.
+    // Then the geometric models or simple objects without data dependencies,
+    // such as gravity, initialized normal direction.
+    // After that, the major physical particle dynamics model should be introduced.
+    // Finally, the auxiliary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    using namespace relax_dynamics;
-    SimpleDynamics<RandomizeParticlePosition> random_airfoil_particles(airfoil);
-    RelaxationStepLevelSetCorrectionInner relaxation_step(airfoil_inner);
-    SimpleDynamics<UpdateSmoothingLengthRatioByShape> update_smoothing_length_ratio(airfoil);
+    host_methods.addStateDynamics<RandomizeParticlePositionCK>(airfoil).exec();
+    auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(airfoil);
+    input_body_cell_linked_list.exec();
     //----------------------------------------------------------------------
-    //	Prepare the simulation with cell linked list, configuration
-    //	and case specified initial condition if necessary.
+    //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
-    random_airfoil_particles.exec(0.25);
-    relaxation_step.SurfaceBounding().exec();
-    update_smoothing_length_ratio.exec();
+    auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    body_state_recorder.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
+    BaseCellLinkedList &airfoil_cell_linked_list = airfoil.getCellLinkedList();
+    airfoil_cell_linked_list.addCellVariableToWrite<UnsignedInt>("CurrentListSize");
+    MeshRecordingToPlt cell_linked_list_recording(sph_system, airfoil_cell_linked_list);
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------
-    airfoil_recording_to_vtp.writeToFile();
-    //----------------------------------------------------------------------
-    //	Particle relaxation time stepping start here.
-    //----------------------------------------------------------------------
-    int ite_p = 0;
-    while (ite_p < 2000)
-    {
-        update_smoothing_length_ratio.exec();
-        relaxation_step.exec();
-        ite_p += 1;
-        if (ite_p % 100 == 0)
-        {
-            std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
-            airfoil_recording_to_vtp.writeToFile(ite_p);
-        }
-    }
-    std::cout << "The physics relaxation process finished !" << std::endl;
-
+    body_state_recorder.writeToFile();
+    cell_linked_list_recording.writeToFile();
     return 0;
 }
