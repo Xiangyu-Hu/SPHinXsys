@@ -531,7 +531,7 @@ NeighborBuilderSplitInnerAdaptive::
     NeighborBuilderSplitInnerAdaptive(SPHBody &body)
     : NeighborBuilder(body.getSPHAdaptation().getKernel()),
       h_ratio_(body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")),
-      level_(body.getBaseParticles().getVariableDataByName<int>("ParticleMeshLevel")) {}
+      level_(body.getBaseParticles().getVariableDataByName<int>("SmoothingLengthLevel")) {}
 //=================================================================================================//
 void NeighborBuilderSplitInnerAdaptive::
 operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const ListData &list_data_j)

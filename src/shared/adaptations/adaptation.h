@@ -96,14 +96,14 @@ class SPHAdaptation
         sigma0_ref_ = computeLatticeNumberDensity(Vecd());
     };
 
-    class UnitHRatio
+    class UnitSmoothingLengthRatioRatio
     {
       public:
-        explicit UnitHRatio(SPHAdaptation &adaptation) {};
+        explicit UnitSmoothingLengthRatioRatio(SPHAdaptation &adaptation) {};
         Real operator()(size_t /*particle_index_i*/) { return 1.0; };
     };
 
-    typedef UnitHRatio HRatioType;
+    typedef UnitSmoothingLengthRatioRatio SmoothingLengthRatioType;
 
   protected:
     Real computeLatticeNumberDensity(Vec2d zero);
@@ -135,20 +135,26 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles) override;
     virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) override;
+    DiscreteVariable<Real> *dvSmoothingLengthRatio() { return dv_h_ratio_; };
+    DiscreteVariable<int> *dvSmoothingLengthLevel() { return dv_h_level_; };
 
-    class ContinuousHRatio
+    class ContinuousSmoothingLengthRatio
     {
         Real *h_ratio_;
 
       public:
-        explicit ContinuousHRatio(AdaptiveSmoothingLength &adaptation)
+        explicit ContinuousSmoothingLengthRatio(AdaptiveSmoothingLength &adaptation)
             : h_ratio_(adaptation.h_ratio_) {};
         Real operator()(size_t index_i) { return h_ratio_[index_i]; };
     };
 
-    typedef ContinuousHRatio HRatioType;
+    typedef ContinuousSmoothingLengthRatio SmoothingLengthRatioType;
 
   protected:
+    DiscreteVariable<Real> *dv_h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
+    DiscreteVariable<int> *dv_h_level_;  /**< the resolution level of particle */
+    Real *h_ratio_;
+    int *h_level_;
     Real finest_spacing_bound_;   /**< the adaptation bound for finest particles */
     Real coarsest_spacing_bound_; /**< the adaptation bound for coarsest particles */
 };

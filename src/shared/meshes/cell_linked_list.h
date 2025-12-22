@@ -158,7 +158,7 @@ class MultilevelCellLinkedList : public BaseCellLinkedList
 {
   protected:
     Real *h_ratio_; /**< Smoothing length for each level. */
-    int *level_;    /**< Mesh level for each particle. */
+    int *h_level_;  /**< Smoothing length level for each particle. */
 
     /** determine mesh level from particle cutoff radius */
     inline UnsignedInt getMeshLevel(Real particle_cutoff_radius);
