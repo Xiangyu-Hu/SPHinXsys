@@ -19,7 +19,7 @@ SPHAdaptation::SPHAdaptation(Real global_resolution, Real h_spacing_ratio, Real 
 Real SPHAdaptation::MostRefinedSpacing(Real spacing_ref, int local_refinement_level)
 {
     return spacing_ref / pow(2.0, local_refinement_level);
-} 
+}
 //=================================================================================================//
 Real SPHAdaptation::computeLatticeNumberDensity(Vec2d zero)
 {
@@ -81,10 +81,10 @@ UniquePtr<BaseCellLinkedList> SPHAdaptation::
     return makeUnique<CellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(), base_particles, *this);
 }
 //=================================================================================================//
-UniquePtr<BaseCellLinkedList> SPHAdaptation::createRefinedCellLinkedList(
-    int level, const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
+UniquePtr<BaseCellLinkedList> SPHAdaptation::createFinestCellLinkedList(
+    const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
 {
-    Real grid_spacing = kernel_ptr_->CutOffRadius() / pow(2.0, level);
+    Real grid_spacing = kernel_ptr_->CutOffRadius() / pow(2.0, local_refinement_level_ - 1);
     return makeUnique<CellLinkedList>(domain_bounds, grid_spacing, base_particles, *this);
 }
 //=================================================================================================//

@@ -59,6 +59,12 @@ class AdaptiveBody<AdaptationType, BaseBodyType> : public BaseBodyType
         return BaseBodyType::template generateParticles<
             ParticleType, GeneratorType, SpacingAdaptation>(std::forward<Args>(args)...);
     };
+
+    virtual void createCellLinkedListPtr() override
+    {
+        this->cell_linked_list_ptr_ = adaptation_.createFinestCellLinkedList(
+            this->getSPHSystemBounds(), *this->base_particles_);
+    };
 };
 } // namespace SPH
 #endif // ADAPTIVE_BODY_H

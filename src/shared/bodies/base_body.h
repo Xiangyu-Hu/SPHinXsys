@@ -74,7 +74,7 @@ class SPHBody
     bool newly_updated_;                   /**< whether this body is in a newly updated state */
     BaseParticles *base_particles_;        /**< Base particles for dynamic cast DataDelegate  */
     bool is_bound_set_;                    /**< whether the bounding box is set */
-    BoundingBoxd bound_;                    /**< bounding box of the body */
+    BoundingBoxd bound_;                   /**< bounding box of the body */
     Shape *initial_shape_;                 /**< initial volumetric geometry enclosing the body */
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
     BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
@@ -217,11 +217,6 @@ class SPHBody
  */
 class RealBody : public SPHBody
 {
-  private:
-    UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
-    bool cell_linked_list_created_;
-    void addRealBodyToSPHSystem();
-
   public:
     template <typename... Args>
     RealBody(Args &&...args)
@@ -234,6 +229,14 @@ class RealBody : public SPHBody
     BaseCellLinkedList &getCellLinkedList();
     void updateCellLinkedList();
     using ListedParticleMask = typename SPHBody::SourceParticleMask;
+
+  protected:
+    UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
+    bool cell_linked_list_created_;
+    virtual void createCellLinkedListPtr(); 
+
+  private:
+    void addRealBodyToSPHSystem();
 };
 } // namespace SPH
 #endif // BASE_BODY_H

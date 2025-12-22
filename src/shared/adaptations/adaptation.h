@@ -86,7 +86,7 @@ class SPHAdaptation
     DiscreteVariable<Real> *AdaptiveSmoothingLength(BaseParticles &base_particles);
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
-    UniquePtr<BaseCellLinkedList> createRefinedCellLinkedList(int level, const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
+    UniquePtr<BaseCellLinkedList> createFinestCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
     virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement);
 
     template <class KernelType, typename... Args>
