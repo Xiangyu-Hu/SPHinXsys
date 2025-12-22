@@ -31,7 +31,7 @@
 #define LEVEL_SET_TRANSFORMATION_H
 
 #include "base_local_mesh_dynamics.h"
-#include "neighbor_method.h"
+#include "neighbor_method.hpp"
 
 namespace SPH
 {

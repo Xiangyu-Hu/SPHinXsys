@@ -31,7 +31,7 @@
 #ifndef NEIGHBORHOOD_CK_H
 #define NEIGHBORHOOD_CK_H
 
-#include "neighbor_method.h"
+#include "neighbor_method.hpp"
 
 namespace SPH
 {
