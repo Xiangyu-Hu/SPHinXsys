@@ -50,6 +50,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
 {
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::SourceType>;
     using InnerRelationType = Inner<Parameters...>;
+    using NeighborSearch = typename CellLinkedList::NeighborSearch;
     using NeighborList = typename InnerRelationType::NeighborList;
     using Identifier = typename BaseLocalDynamicsType::Identifier;
     using MaskedSource = typename Identifier::SourceParticleMask;
@@ -109,6 +110,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
 {
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
     using ContactRelationType = Contact<Parameters...>;
+    using NeighborSearch = typename CellLinkedList::NeighborSearch;
     using NeighborList = typename ContactRelationType::NeighborList;
     using Neighborhood = typename ContactRelationType::NeighborhoodType;
     using SearchBox = typename Neighborhood::SearchBox;

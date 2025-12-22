@@ -31,7 +31,7 @@ UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::InteractKernel::InteractK
       masked_criterion_(
           ex_policy, encloser.inner_relation_.getDynamicsIdentifier(),
           ex_policy, encloser.inner_relation_.getNeighborhood()),
-      neighbor_search_(encloser.cell_linked_list_.createNeighborSearch(ex_policy)) {}
+      neighbor_search_(ex_policy, encloser.cell_linked_list_) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
@@ -163,8 +163,7 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
       masked_criterion_(
           ex_policy, encloser.contact_relation_.getContactIdentifier(contact_index),
           ex_policy, encloser.contact_relation_.getNeighborhood(contact_index)),
-      neighbor_search_(
-          encloser.contact_cell_linked_list_[contact_index]->createNeighborSearch(ex_policy)),
+      neighbor_search_(ex_policy, encloser.contact_cell_linked_list_[contact_index]),
       search_box_(ex_policy, encloser.contact_relation_.getNeighborhood(contact_index)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>

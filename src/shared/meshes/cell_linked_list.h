@@ -87,8 +87,6 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
 
   protected:
     Kernel &kernel_;
-    UnsignedInt cell_offset_list_size_;
-    UnsignedInt index_list_size_; // at least number_of_cells_pluse_one_
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
     DiscreteVariable<UnsignedInt> *dv_cell_offset_;
     /** using concurrent vectors due to writing conflicts when building the list */
@@ -111,21 +109,6 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
                                     const LocalDynamicsFunction &local_dynamics_function);
 };
 
-class NeighborSearch : public Mesh
-{
-  public:
-    template <class ExecutionPolicy>
-    NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list);
-
-    template <typename FunctionOnEach>
-    void forEachSearch(const Vecd &source_pos, const FunctionOnEach &function,
-                       const BoundingBoxi &search_box = BoundingBoxi(Arrayi::Ones())) const;
-
-  protected:
-    UnsignedInt *particle_index_;
-    UnsignedInt *cell_offset_;
-};
-
 /**
  * @class CellLinkedList
  * @brief Defining a mesh cell linked list for a body.
@@ -144,9 +127,25 @@ class CellLinkedList : public BaseCellLinkedList
     void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
 
-    template <class ExecutionPolicy>
-    NeighborSearch createNeighborSearch(const ExecutionPolicy &ex_policy);
+    class NeighborSearch : public Mesh
+    {
+      public:
+        template <class ExecutionPolicy>
+        NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list);
+
+        template <typename FunctionOnEach>
+        void forEachSearch(const Vecd &source_pos, const FunctionOnEach &function,
+                           const BoundingBoxi &search_box = BoundingBoxi(Arrayi::Ones())) const;
+
+      protected:
+        UnsignedInt *particle_index_;
+        UnsignedInt *cell_offset_;
+    };
+
     UnsignedInt getCellOffsetListSize() { return cell_offset_list_size_; };
+
+  protected:
+    UnsignedInt cell_offset_list_size_;
 };
 
 /**
