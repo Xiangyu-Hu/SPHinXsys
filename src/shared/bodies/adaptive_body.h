@@ -36,13 +36,14 @@ namespace SPH
 template <typename...>
 class AdaptiveBody;
 
-template <class BaseBodyType, class AdaptationType>
-class AdaptiveBody<BaseBodyType, AdaptationType> : public BaseBodyType
+template <class AdaptationType, class BaseBodyType>
+class AdaptiveBody<AdaptationType, BaseBodyType> : public BaseBodyType
 {
     AdaptationType adaptation_;
 
   public:
     using BaseAdaptation = typename AdaptationType::BaseAdaptation;
+    using SpacingAdaptation = typename AdaptationType::SpacingAdaptation;
 
     template <typename... Args>
     AdaptiveBody(AdaptationType adaptation, SPHSystem &sph_system, Args &&...args)
@@ -51,6 +52,13 @@ class AdaptiveBody<BaseBodyType, AdaptationType> : public BaseBodyType
         this->sph_adaptation_ = &adaptation_;
     };
     virtual ~AdaptiveBody() {};
+
+    template <class ParticleType, class GeneratorType, typename... Args>
+    ParticleType *generateParticles(Args &&...args)
+    {
+        return BaseBodyType::template generateParticles<
+            ParticleType, GeneratorType, SpacingAdaptation>(std::forward<Args>(args)...);
+    };
 };
 } // namespace SPH
 #endif // ADAPTIVE_BODY_H

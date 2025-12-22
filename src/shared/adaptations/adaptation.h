@@ -59,7 +59,7 @@ class SPHAdaptation
     int local_refinement_level_;   /**< refinement level respect to reference particle spacing */
     Real spacing_ref_;             /**< reference particle spacing used to determine local particle spacing */
     Real h_ref_;                   /**< reference smoothing length */
-    UniquePtr<Kernel> kernel_ptr_; /**< unique pointer of kernel function owned by this class */
+    SharedPtr<Kernel> kernel_ptr_; /**< shared pointer of kernel function so the class is copyable */
     Real sigma0_ref_;              /**< Reference number density dependent on h_spacing_ratio_ and kernel function */
     Real spacing_min_;             /**< minimum particle spacing determined by local refinement level */
     Real Vol_min_;                 /**< minimum particle volume measure determined by local refinement level */
@@ -163,6 +163,8 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 class AdaptiveByShape : public AdaptiveSmoothingLength
 {
   public:
+    typedef AdaptiveByShape SpacingAdaptation;
+
     template <typename... Args>
     AdaptiveByShape(Args &&...args)
         : AdaptiveSmoothingLength(std::forward<Args>(args)...){};

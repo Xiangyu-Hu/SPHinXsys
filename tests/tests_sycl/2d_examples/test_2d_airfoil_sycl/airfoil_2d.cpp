@@ -48,13 +48,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    RealBody airfoil(sph_system, makeShared<ImportModel>("AirFoil"));
-    airfoil.defineAdaptation<AdaptiveNearSurface>(1.15, 1.0, 3);
+    AdaptiveBody<AdaptiveNearSurface, RealBody>
+        airfoil(AdaptiveNearSurface(global_resolution, 1.15, 1.0, 3),
+                sph_system, makeShared<ImportModel>("AirFoil"));
     airfoil.defineBodyLevelSetShape()
         ->cleanLevelSet()
         ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
         ->writeLevelSet(sph_system);
-    airfoil.generateParticles<BaseParticles, Lattice, AdaptiveByShape>();
+    airfoil.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define outputs functions.
     //----------------------------------------------------------------------
