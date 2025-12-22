@@ -31,7 +31,6 @@
 
 #include "all_complex_bodies.h"
 #include "base_body_part.h"
-#include "body_partition.h"
 #include "predefined_bodies.h"
 
 #endif // ALL_BODIES_H
