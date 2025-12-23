@@ -37,6 +37,7 @@
 namespace po = boost::program_options;
 #endif
 
+#include "all_bodies.h"
 #include "base_data_type_package.h"
 #include "io_environment.h"
 #include "sphinxsys_containers.h"
@@ -52,6 +53,7 @@ class SPHSystem
     UniquePtrKeeper<IOEnvironment> io_keeper_;
     DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
+    UniquePtrsKeeper<SPHBody> sph_bodies_keeper_;
 
   public:
     SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution,
@@ -100,13 +102,16 @@ class SPHSystem
     template <typename DataType>
     DataType *getSystemVariableDataByName(const std::string &name);
 
-    template <typename BodyType, typename... Args>
+    template <class BodyType, typename... Args>
     BodyType &addBody(Args &&...args);
+
+    template <class BaseBodyType, class AdaptationType, typename... Args>
+    auto &addAdaptiveBody(const AdaptationType &adaptation, Args &&...args);
 
   protected:
     friend class IOEnvironment;
-    BoundingBoxd system_domain_bounds_;       /**< Lower and Upper domain bounds. */
-    Real global_resolution_;                    /**< reference resolution of the SPH system */
+    BoundingBoxd system_domain_bounds_;      /**< Lower and Upper domain bounds. */
+    Real global_resolution_;                 /**< reference resolution of the SPH system */
     tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
     SPHBodyVector sph_bodies_;               /**< All sph bodies. */
     SPHBodyVector observation_bodies_;       /**< The bodies without inner particle configuration. */

@@ -16,9 +16,9 @@ std::string airfoil_flap_rear = "./input/airfoil_flap_rear.dat";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 1.25;             /**< airfoil length rear part. */
-Real DL1 = 0.25;            /**< airfoil length front part. */
-Real DH = 0.25;             /**< airfoil height. */
+Real DL = 1.25;                /**< airfoil length rear part. */
+Real DL1 = 0.25;               /**< airfoil length front part. */
+Real DH = 0.25;                /**< airfoil height. */
 Real global_resolution = 0.02; /**< Reference resolution. */
 BoundingBoxd system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
 //----------------------------------------------------------------------
@@ -48,9 +48,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    AdaptiveBody<AdaptiveNearSurface, RealBody>
-        airfoil(AdaptiveNearSurface(global_resolution, 1.15, 1.0, 3),
-                sph_system, makeShared<ImportModel>("AirFoil"));
+    auto &airfoil = sph_system.addAdaptiveBody<RealBody>(
+        AdaptiveNearSurface(global_resolution, 1.15, 1.0, 3), makeShared<ImportModel>("AirFoil"));
     airfoil.defineBodyLevelSetShape()
         ->cleanLevelSet()
         ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
