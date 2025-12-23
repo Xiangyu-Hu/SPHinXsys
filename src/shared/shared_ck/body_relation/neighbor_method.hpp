@@ -63,37 +63,37 @@ NeighborMethod<SPHAdaptation, SPHAdaptation>::SmoothingKernel::SmoothingKernel(
       inv_h_fifth_(inv_h_fourth_ * inv_h_) {}
 //=================================================================================================//
 inline Real NeighborMethod<SPHAdaptation, SPHAdaptation>::SmoothingKernel::W(
-    const Vec2d &displacement) const
+    const Vec2d &displacement, UnsignedInt, UnsignedInt) const
 {
     return BaseKernel::W(inv_h_squared_, displacement, inv_h_);
 };
 //=================================================================================================//
 inline Real NeighborMethod<SPHAdaptation, SPHAdaptation>::SmoothingKernel::W(
-    const Vec3d &displacement) const
+    const Vec3d &displacement, UnsignedInt, UnsignedInt) const
 {
     return BaseKernel::W(inv_h_cubed_, displacement, inv_h_);
 };
 //=================================================================================================//
 inline Real NeighborMethod<SPHAdaptation, SPHAdaptation>::SmoothingKernel::dW(
-    const Vec2d &displacement) const
+    const Vec2d &displacement, UnsignedInt, UnsignedInt) const
 {
     return BaseKernel::dW(inv_h_cubed_, displacement, inv_h_);
 };
 //=================================================================================================//
 inline Real NeighborMethod<SPHAdaptation, SPHAdaptation>::SmoothingKernel::dW(
-    const Vec3d &displacement) const
+    const Vec3d &displacement, UnsignedInt, UnsignedInt) const
 {
     return BaseKernel::dW(inv_h_fourth_, displacement, inv_h_);
 };
 //=================================================================================================//
 inline Real NeighborMethod<SPHAdaptation, SPHAdaptation>::SmoothingKernel::d2W(
-    const Vec2d &displacement) const
+    const Vec2d &displacement, UnsignedInt, UnsignedInt) const
 {
     return BaseKernel::d2W(inv_h_fourth_, displacement, inv_h_);
 }
 //=================================================================================================//
 inline Real NeighborMethod<SPHAdaptation, SPHAdaptation>::SmoothingKernel::d2W(
-    const Vec3d &displacement) const
+    const Vec3d &displacement, UnsignedInt, UnsignedInt) const
 {
     return BaseKernel::d2W(inv_h_fifth_, displacement, inv_h_);
 }
@@ -117,6 +117,61 @@ template <class ExecutionPolicy, class EncloserType>
 NeighborMethod<SPHAdaptation, SPHAdaptation>::SearchBox::SearchBox(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : search_box_(encloser.search_box_) {}
+//=================================================================================================//
+template <typename SourceIdentifier, typename TargetIdentifier>
+NeighborMethod<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::NeighborMethod(
+    SourceIdentifier &source_identifier, TargetIdentifier &target_identifier)
+    : NeighborMethod<Base>(*source_identifier.getSPHAdaptation().getKernel())
+{
+}
+//=================================================================================================//
+inline Real NeighborMethod<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::W(
+    const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const
+{
+    Real inv_h = invH(i, j);
+    return BaseKernel::W(math::pow(inv_h, 2), displacement, inv_h);
+};
+//=================================================================================================//
+inline Real NeighborMethod<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::W(
+    const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const
+{
+    Real inv_h_i = src_h_ratio_[i] * src_inv_h_ref_;
+    return BaseKernel::W(math::pow(inv_h_i, 3), displacement, inv_h_i);
+};
+//=================================================================================================//
+inline Real NeighborMethod<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::dW(
+    const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const
+{
+    Real inv_h_i = src_h_ratio_[i] * src_inv_h_ref_;
+    return BaseKernel::dW(math::pow(inv_h_i, 3), displacement, inv_h_i);
+};
+//=================================================================================================//
+inline Real NeighborMethod<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::dW(
+    const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const
+{
+    Real inv_h = invH(i, j);
+    return BaseKernel::dW(math::pow(inv_h, 4), displacement, inv_h);
+};
+//=================================================================================================//
+inline Real NeighborMethod<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::d2W(
+    const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const
+{
+    Real inv_h = invH(i, j);
+    return BaseKernel::d2W(math::pow(inv_h, 4), displacement, inv_h);
+}
+//=================================================================================================//
+inline Real NeighborMethod<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::d2W(
+    const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const
+{
+    Real inv_h = invH(i, j);
+    return BaseKernel::d2W(math::pow(inv_h, 5), displacement, inv_h);
+}
+//=================================================================================================//
+inline Real NeighborMethod<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::invH(
+    UnsignedInt i, UnsignedInt j) const
+{
+    return SMIN(src_h_ratio_[i] * src_inv_h_ref_, src_h_ratio_[j] * tar_inv_h_ref_);
+}
 //=================================================================================================//
 } // namespace SPH
 #endif // NEIGHBOR_METHOD_HPP

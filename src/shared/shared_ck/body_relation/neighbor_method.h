@@ -81,12 +81,12 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
       public:
         template <class ExecutionPolicy, class EncloserType>
         SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        inline Real W(const Vec2d &displacement) const;
-        inline Real W(const Vec3d &displacement) const;
-        inline Real dW(const Vec2d &displacement) const;
-        inline Real dW(const Vec3d &displacement) const;
-        inline Real d2W(const Vec2d &displacement) const;
-        inline Real d2W(const Vec3d &displacement) const;
+        inline Real W(const Vec2d &displacement, UnsignedInt, UnsignedInt) const;
+        inline Real W(const Vec3d &displacement, UnsignedInt, UnsignedInt) const;
+        inline Real dW(const Vec2d &displacement, UnsignedInt, UnsignedInt) const;
+        inline Real dW(const Vec3d &displacement, UnsignedInt, UnsignedInt) const;
+        inline Real d2W(const Vec2d &displacement, UnsignedInt, UnsignedInt) const;
+        inline Real d2W(const Vec3d &displacement, UnsignedInt, UnsignedInt) const;
     };
 
     class NeighborCriterion
@@ -135,6 +135,39 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
     Real inv_h_;
     int search_depth_;
     BoundingBoxi search_box_; /**< Search depth for neighbor search. */
+};
+
+template <>
+class NeighborMethod<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public NeighborMethod<Base>
+{
+  public:
+    template <typename SourceIdentifier, typename TargetIdentifier>
+    NeighborMethod(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier);
+
+    class SmoothingKernel : public NeighborMethod<Base>::SmoothingKernel
+    {
+        using BaseKernel = NeighborMethod<Base>::SmoothingKernel;
+
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        inline Real W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
+        inline Real W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
+        inline Real dW(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
+        inline Real dW(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
+        inline Real d2W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
+        inline Real d2W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
+
+      protected:
+        Real src_inv_h_ref_, tar_inv_h_ref_;
+        Real *src_h_ratio_, *tar_h_ratio_;
+
+        inline Real invH(UnsignedInt i, UnsignedInt j) const;
+    };
+
+  protected:
+    Real h_ref_;
+    DiscreteVariable<Vecd> *dv_src_h_ratio_, *dv_tar_h_ratio_;
 };
 } // namespace SPH
 #endif // NEIGHBOR_METHOD_H

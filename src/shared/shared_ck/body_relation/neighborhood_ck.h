@@ -58,8 +58,8 @@ class Neighbor : public NeighborMethodType
 
         inline Vecd vec_r_ij(UnsignedInt i, UnsignedInt j) const { return source_pos_[i] - target_pos_[j]; };
         inline Vecd e_ij(UnsignedInt i, UnsignedInt j) const { return vec_r_ij(i, j).normalized(); };
-        inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return BaseKernel::W(vec_r_ij(i, j)); };
-        inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return BaseKernel::dW(vec_r_ij(i, j)); };
+        inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return BaseKernel::W(vec_r_ij(i, j), i, j); };
+        inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return BaseKernel::dW(vec_r_ij(i, j), i, j); };
 
       protected:
         Vecd *source_pos_;
