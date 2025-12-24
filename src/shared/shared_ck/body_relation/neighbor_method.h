@@ -67,24 +67,14 @@ class NeighborMethod<Base>
 template <>
 class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
 {
+    using BaseKernel = NeighborMethod<Base>::SmoothingKernel;
+
   public:
     template <typename SourceIdentifier, typename TargetIdentifier>
-    NeighborMethod(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier)
-        : NeighborMethod<Base>(source_identifier.getSPHAdaptation().getKernelPtr())
-    {
-        Real source_h = source_identifier.getSPHAdaptation().ReferenceSmoothingLength();
-        Real target_h = target_identifier.getSPHAdaptation().ReferenceSmoothingLength();
-        inv_h_ = 1.0 / SMAX(source_h, target_h);
-        search_depth_ = static_cast<int>(std::ceil((source_h - Eps) / target_h));
-        search_box_ = BoundingBoxi(Arrayi::Constant(search_depth_));
-    }
+    NeighborMethod(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier);
+    NeighborMethod(SharedPtr<Kernel> base_kernel, Real h, Real search_increment);
 
-    NeighborMethod(SharedPtr<Kernel> base_kernel, Real h, Real search_increment)
-        : NeighborMethod<Base>(base_kernel), inv_h_(1.0 / h),
-          search_depth_(static_cast<int>(std::ceil((h - Eps) / search_increment))),
-          search_box_(BoundingBoxi(Arrayi::Constant(search_depth_))) {}
-
-    class SmoothingKernel : public KernelTabulatedCK
+    class SmoothingKernel : public BaseKernel
     {
         Real inv_h_, inv_h_squared_, inv_h_cubed_, inv_h_fourth_, inv_h_fifth_;
 
@@ -97,6 +87,8 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
         inline Real dW(const Vec3d &displacement, UnsignedInt, UnsignedInt) const;
         inline Real d2W(const Vec2d &displacement, UnsignedInt, UnsignedInt) const;
         inline Real d2W(const Vec3d &displacement, UnsignedInt, UnsignedInt) const;
+       
+        Real CutOffRadius() const { return kernel_size_ / inv_h_; }
     };
 
     class NeighborCriterion

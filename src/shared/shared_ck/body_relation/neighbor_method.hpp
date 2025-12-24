@@ -45,7 +45,7 @@ inline Real NeighborMethod<Base>::SmoothingKernel::d2W(
 template <typename SourceIdentifier, typename TargetIdentifier>
 NeighborMethod<SPHAdaptation, SPHAdaptation>::NeighborMethod(
     SourceIdentifier &source_identifier, TargetIdentifier &target_identifier)
-    : NeighborMethod<Base>(*source_identifier.getSPHAdaptation().getKernel())
+    : NeighborMethod<Base>(source_identifier.getSPHAdaptation().getKernelPtr())
 {
     Real source_h = source_identifier.getSPHAdaptation().ReferenceSmoothingLength();
     Real target_h = target_identifier.getSPHAdaptation().ReferenceSmoothingLength();
@@ -57,7 +57,7 @@ NeighborMethod<SPHAdaptation, SPHAdaptation>::NeighborMethod(
 template <class ExecutionPolicy, class EncloserType>
 NeighborMethod<SPHAdaptation, SPHAdaptation>::SmoothingKernel::SmoothingKernel(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : NeighborMethod<Base>::SmoothingKernel(encloser),
+    : BaseKernel(encloser),
       inv_h_(encloser.inv_h_), inv_h_squared_(inv_h_ * inv_h_),
       inv_h_cubed_(inv_h_squared_ * inv_h_), inv_h_fourth_(inv_h_cubed_ * inv_h_),
       inv_h_fifth_(inv_h_fourth_ * inv_h_) {}

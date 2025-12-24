@@ -110,7 +110,7 @@ inline Real UpdateKernelIntegrals::UpdateKernel::
                ? 1.0
                : computeIntegral(phi, package_index, data_index, 0.0,
                                  [&](const Vecd &displacement) -> Real
-                                 { return kernel_.W(displacement); });
+                                 { return kernel_.W(displacement, 0, 0); });
 }
 //=============================================================================================//
 inline Vecd UpdateKernelIntegrals::UpdateKernel::
@@ -120,7 +120,7 @@ inline Vecd UpdateKernelIntegrals::UpdateKernel::
     Vecd integral = Vecd::Zero();
     return computeIntegral(phi, package_index, data_index, integral,
                            [&](const Vecd &displacement) -> Vecd
-                           { return kernel_.dW(displacement) * displacement /
+                           { return kernel_.dW(displacement, 0, 0) * displacement /
                                     (displacement.norm() + TinyReal); });
 }
 //=============================================================================================//
@@ -131,7 +131,7 @@ inline Matd UpdateKernelIntegrals::UpdateKernel::
     Matd integral = Matd::Zero();
     return computeIntegral(phi, package_index, data_index, integral,
                            [&](const Vecd &displacement) -> Matd
-                           { return kernel_.d2W(displacement) *
+                           { return kernel_.d2W(displacement, 0, 0) *
                                     displacement * displacement.transpose() /
                                     (displacement.squaredNorm() + TinyReal); });
 }
