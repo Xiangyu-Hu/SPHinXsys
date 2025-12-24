@@ -37,8 +37,11 @@
 namespace po = boost::program_options;
 #endif
 
+#include "all_bodies.h"
 #include "base_data_type_package.h"
+#include "base_geometry.h"
 #include "io_environment.h"
+#include "relation_ck.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH
@@ -52,6 +55,9 @@ class SPHSystem
     UniquePtrKeeper<IOEnvironment> io_keeper_;
     DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
+    UniquePtrsKeeper<SPHBody> sph_bodies_keeper_;
+    UniquePtrsKeeper<Shape> shapes_keeper_;
+    UniquePtrsKeeper<RelationBase> relations_keeper_;
 
   public:
     SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution,
@@ -100,13 +106,28 @@ class SPHSystem
     template <typename DataType>
     DataType *getSystemVariableDataByName(const std::string &name);
 
-    template <typename BodyType, typename... Args>
+    template <class BodyType, typename... Args>
     BodyType &addBody(Args &&...args);
+
+    template <class BaseBodyType, class AdaptationType, typename... Args>
+    auto &addAdaptiveBody(const AdaptationType &adaptation, Args &&...args);
+
+    template <class ShapeType, typename... Args>
+    auto &addShape(Args &&...args);
+
+    template <class DynamicIdentifier, typename... Args>
+    auto &addInnerRelation(DynamicIdentifier &identifier, Args &&...args);
+
+    template <class SourceIdentifier, class TargetIdentifier, typename... Args>
+    auto &addContactRelation(SourceIdentifier &src_identifier, StdVec<TargetIdentifier *> tar_identifiers, Args &&...args);
+
+    template <class SourceIdentifier, class TargetIdentifier, typename... Args>
+    auto &addContactRelation(SourceIdentifier &src_identifier, TargetIdentifier &tar_identifiers, Args &&...args);
 
   protected:
     friend class IOEnvironment;
-    BoundingBoxd system_domain_bounds_;       /**< Lower and Upper domain bounds. */
-    Real global_resolution_;                    /**< reference resolution of the SPH system */
+    BoundingBoxd system_domain_bounds_;      /**< Lower and Upper domain bounds. */
+    Real global_resolution_;                 /**< reference resolution of the SPH system */
     tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
     SPHBodyVector sph_bodies_;               /**< All sph bodies. */
     SPHBodyVector observation_bodies_;       /**< The bodies without inner particle configuration. */

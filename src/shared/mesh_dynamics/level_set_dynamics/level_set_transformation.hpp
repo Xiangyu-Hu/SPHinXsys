@@ -44,7 +44,7 @@ UpdateKernelIntegrals::UpdateKernel::
       data_spacing_(encloser.index_handler_.DataSpacing()),
       data_cell_volume_(math::pow(data_spacing_, Dimensions)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
-      cutoff_radius_(encloser.neighbor_method_.CutOffRadius()),
+      cutoff_radius_(kernel_.CutOffRadius()),
       bounding_box_(BoundingBoxi(Arrayi::Constant(
           static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))))) {}
 //=================================================================================================//

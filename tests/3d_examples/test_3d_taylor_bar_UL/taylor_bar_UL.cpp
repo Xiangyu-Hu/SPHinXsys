@@ -13,7 +13,7 @@ int main(int ac, char *av[])
     system.handleCommandlineOptions(ac, av);
 
     RealBody column(system, makeShared<Column>("Column"));
-    column.defineBodyLevelSetShape()->writeLevelSet(system);
+    column.defineBodyLevelSetShape()->writeLevelSet();
     column.defineMaterial<J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? column.generateParticles<BaseParticles, Reload>(column.getName())

@@ -44,7 +44,7 @@ template <>
 class NeighborMethod<Base>
 {
   public:
-    NeighborMethod(Kernel &base_kernel) : base_kernel_(&base_kernel) {};
+    NeighborMethod(SharedPtr<Kernel> base_kernel) : base_kernel_(base_kernel) {};
 
     class SmoothingKernel : public KernelTabulatedCK
     {
@@ -61,7 +61,7 @@ class NeighborMethod<Base>
     };
 
   protected:
-    Kernel *base_kernel_;
+    SharedPtr<Kernel> base_kernel_;
 };
 
 template <>
@@ -69,13 +69,23 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
 {
   public:
     template <typename SourceIdentifier, typename TargetIdentifier>
-    NeighborMethod(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier);
-    NeighborMethod(Kernel &base_kernel, Real h, Real search_increment);
-    Real CutOffRadius() const { return base_kernel_->KernelSize() / inv_h_; }
-
-    class SmoothingKernel : public NeighborMethod<Base>::SmoothingKernel
+    NeighborMethod(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier)
+        : NeighborMethod<Base>(source_identifier.getSPHAdaptation().getKernelPtr())
     {
-        using BaseKernel = NeighborMethod<Base>::SmoothingKernel;
+        Real source_h = source_identifier.getSPHAdaptation().ReferenceSmoothingLength();
+        Real target_h = target_identifier.getSPHAdaptation().ReferenceSmoothingLength();
+        inv_h_ = 1.0 / SMAX(source_h, target_h);
+        search_depth_ = static_cast<int>(std::ceil((source_h - Eps) / target_h));
+        search_box_ = BoundingBoxi(Arrayi::Constant(search_depth_));
+    }
+
+    NeighborMethod(SharedPtr<Kernel> base_kernel, Real h, Real search_increment)
+        : NeighborMethod<Base>(base_kernel), inv_h_(1.0 / h),
+          search_depth_(static_cast<int>(std::ceil((h - Eps) / search_increment))),
+          search_box_(BoundingBoxi(Arrayi::Constant(search_depth_))) {}
+
+    class SmoothingKernel : public KernelTabulatedCK
+    {
         Real inv_h_, inv_h_squared_, inv_h_cubed_, inv_h_fourth_, inv_h_fifth_;
 
       public:

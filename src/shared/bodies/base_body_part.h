@@ -30,7 +30,9 @@
 #ifndef BASE_BODY_PART_H
 #define BASE_BODY_PART_H
 
-#include "base_body.h"
+#include "all_geometries.h"
+#include "base_data_type_package.h"
+#include "sphinxsys_containers.h"
 
 #include <optional>
 
@@ -50,7 +52,7 @@ class BodyPart
     BodyPart(SPHBody &sph_body);
     virtual ~BodyPart() {};
     SPHBody &getSPHBody() { return sph_body_; };
-    SPHSystem &getSPHSystem() { return sph_body_.getSPHSystem(); };
+    SPHSystem &getSPHSystem();
     std::string getName() const { return alias_.value_or(part_name_); };
     int getPartID() { return part_id_; };
     SingularVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };

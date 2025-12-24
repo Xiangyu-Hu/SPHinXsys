@@ -1,7 +1,9 @@
 #include "base_body_part.h"
 
+#include "base_body.h"
 #include "base_particles.hpp"
 #include "cell_linked_list.hpp"
+
 namespace SPH
 {
 //=================================================================================================//
@@ -19,6 +21,8 @@ BaseCellLinkedList &BodyPart::getCellLinkedList()
     RealBody &real_body = DynamicCast<RealBody>(this, sph_body_);
     return real_body.getCellLinkedList();
 }
+//=================================================================================================//
+SPHSystem &BodyPart::getSPHSystem() { return sph_body_.getSPHSystem(); }
 //=================================================================================================//
 BodyPartByID::BodyPartByID(SPHBody &sph_body) : BodyPart(sph_body)
 {

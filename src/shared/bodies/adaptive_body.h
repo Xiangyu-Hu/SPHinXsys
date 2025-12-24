@@ -46,7 +46,7 @@ class AdaptiveBody<AdaptationType, BaseBodyType> : public BaseBodyType
     using SpacingAdaptation = typename AdaptationType::SpacingAdaptation;
 
     template <typename... Args>
-    AdaptiveBody(AdaptationType adaptation, SPHSystem &sph_system, Args &&...args)
+    AdaptiveBody(SPHSystem &sph_system, AdaptationType adaptation, Args &&...args)
         : BaseBodyType(sph_system, std::forward<Args>(args)...), adaptation_(adaptation)
     {
         this->sph_adaptation_ = &adaptation_;

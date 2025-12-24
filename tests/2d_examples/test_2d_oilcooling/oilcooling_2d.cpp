@@ -297,21 +297,21 @@ int main(int ac, char *av[])
     oil_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
-    wall.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    wall.defineBodyLevelSetShape()->writeLevelSet();
     wall.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? wall.generateParticles<BaseParticles, Reload>(wall.getName())
         : wall.generateParticles<BaseParticles, Lattice>();
 
     SolidBody rotor(sph_system, makeShared<RotorBoundary>("Rotor"));
-    rotor.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    rotor.defineBodyLevelSetShape()->writeLevelSet();
     rotor.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? rotor.generateParticles<BaseParticles, Reload>(rotor.getName())
         : rotor.generateParticles<BaseParticles, Lattice>();
 
     SolidBody winding(sph_system, makeShared<WindingBoundary>("Winding"));
-    winding.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    winding.defineBodyLevelSetShape()->writeLevelSet();
     winding.defineClosure<Solid, IsotropicDiffusion>(
         Solid(), ConstructArgs(temperature_species_name, k_winding));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())

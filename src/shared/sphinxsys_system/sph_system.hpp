@@ -50,5 +50,52 @@ DataType *SPHSystem::getSystemVariableDataByName(const std::string &name)
     return variable->Data();
 }
 //=================================================================================================//
+template <class BodyType, typename... Args>
+BodyType &SPHSystem::addBody(Args &&...args)
+{
+    return *sph_bodies_keeper_.createPtr<BodyType>(*this, std::forward<Args>(args)...);
+}
+//=================================================================================================//
+template <class BaseBodyType, class AdaptationType, typename... Args>
+auto &SPHSystem::addAdaptiveBody(const AdaptationType &adaptation, Args &&...args)
+{
+    return *sph_bodies_keeper_.createPtr<AdaptiveBody<AdaptationType, BaseBodyType>>(
+        *this, adaptation, std::forward<Args>(args)...);
+}
+//=================================================================================================//
+template <class ShapeType, typename... Args>
+auto &SPHSystem::addShape(Args &&...args)
+{
+    return *shapes_keeper_.createPtr<ShapeType>(std::forward<Args>(args)...);
+}
+//=================================================================================================//
+template <class DynamicIdentifier, typename... Args>
+auto &SPHSystem::addInnerRelation(DynamicIdentifier &identifier, Args &&...args)
+{
+    using BaseAdaptation = typename DynamicIdentifier::BaseAdaptation;
+    return *relations_keeper_.createPtr<
+        Inner<DynamicIdentifier, NeighborMethod<BaseAdaptation, BaseAdaptation>>>(
+        identifier, std::forward<Args>(args)...);
+}
+//=================================================================================================//
+template <class SourceIdentifier, class TargetIdentifier, typename... Args>
+auto &SPHSystem::addContactRelation(
+    SourceIdentifier &src_identifier, StdVec<TargetIdentifier *> tar_identifiers, Args &&...args)
+{
+    using SourceAdaptation = typename SourceIdentifier::BaseAdaptation;
+    using TargetAdaptation = typename TargetIdentifier::BaseAdaptation;
+    return *relations_keeper_.createPtr<
+        Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<SourceAdaptation, TargetAdaptation>>>(
+        src_identifier, tar_identifiers, std::forward<Args>(args)...);
+}
+//=================================================================================================//
+template <class SourceIdentifier, class TargetIdentifier, typename... Args>
+auto &SPHSystem::addContactRelation(
+    SourceIdentifier &src_identifier, TargetIdentifier &tar_identifiers, Args &&...args)
+{
+    return addContactRelation(src_identifier, StdVec<TargetIdentifier *>{&tar_identifiers},
+                              std::forward<Args>(args)...);
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // SPH_SYSTEM_HPP

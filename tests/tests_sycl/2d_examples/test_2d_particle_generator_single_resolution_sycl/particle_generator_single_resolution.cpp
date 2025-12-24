@@ -17,9 +17,9 @@ std::string input_body = "./input/SPHinXsys-2d.dat";
 //----------------------------------------------------------------------
 //	Basic geometry parameters
 //----------------------------------------------------------------------
-Real DL = 2.5;                          /**< InputBody length right part. */
-Real DL1 = 2.5;                         /**< InputBody length left part. */
-Real DH = 5.0;                          /**< InputBody height. */
+Real DL = 2.5;                             /**< InputBody length right part. */
+Real DL1 = 2.5;                            /**< InputBody length left part. */
+Real DH = 5.0;                             /**< InputBody height. */
 Real global_resolution = (DL + DL1) / 120; /**< Reference resolution. */
 BoundingBoxd system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
 //----------------------------------------------------------------------
@@ -33,28 +33,25 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
-    //	Creating body, materials and particles.
+    //	Creating body, materials, particles and body parts.
     //----------------------------------------------------------------------
+    auto &input_shape = sph_system.addShape<ComplexShape>("SPHInXsysLogo");
     MultiPolygon original_logo;
     original_logo.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
-    ComplexShape input_shape("SPHInXsysLogo");
     input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * global_resolution, original_logo);
     input_shape.subtract<MultiPolygonShape>(original_logo);
-    RealBody input_body(sph_system, input_shape);
+    auto &input_body = sph_system.addBody<RealBody>(input_shape);
     LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(par_ck, 2.0)
                                          ->addPackageVariableToWrite<Real>("KernelWeight")
                                          ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
                                          ->addCellVariableToWrite<int>("CellContainID")
-                                         ->writeLevelSet(sph_system);
+                                         ->writeLevelSet();
     input_body.generateParticles<BaseParticles, Lattice>();
+    auto &near_body_surface = input_body.addBodyPart<NearShapeSurface>();
 
-    MultiPolygonShape filler_shape(original_logo, "Filler");
-    RealBody filler(sph_system, filler_shape);
+    auto &filler_shape = sph_system.addShape<MultiPolygonShape>(original_logo, "Filler");
+    auto &filler = sph_system.addBody<RealBody>(filler_shape);
     filler.generateParticles<BaseParticles, Lattice>();
-    //----------------------------------------------------------------------
-    //	Creating body parts.
-    //----------------------------------------------------------------------
-    NearShapeSurface near_body_surface(input_body);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -63,9 +60,9 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    Inner<> input_body_inner(input_body);
-    Inner<> filler_inner(filler);
-    Contact<> filler_contact(filler, {&input_body});
+    auto &input_body_inner = sph_system.addInnerRelation(input_body);
+    auto &filler_inner = sph_system.addInnerRelation(filler);
+    auto &filler_contact = sph_system.addContactRelation(filler, input_body);
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.

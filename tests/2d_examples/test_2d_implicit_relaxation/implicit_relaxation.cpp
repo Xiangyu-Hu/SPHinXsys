@@ -42,7 +42,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody insert_body(sph_system, makeShared<InputBody>("Body"));
-    insert_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    insert_body.defineBodyLevelSetShape()->writeLevelSet();
     insert_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map used for particle relaxation.

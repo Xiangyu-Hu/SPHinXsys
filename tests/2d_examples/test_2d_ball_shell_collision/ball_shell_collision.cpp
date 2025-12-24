@@ -61,7 +61,7 @@ int main(int ac, char *av[])
     }
     else
     {
-        ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+        ball.defineBodyLevelSetShape()->writeLevelSet();
         ball.generateParticles<BaseParticles, Lattice>();
     }
 
@@ -81,7 +81,7 @@ int main(int ac, char *av[])
     {
         Real level_set_refinement = global_resolution / (0.1 * thickness);
         rigid_shell.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
-            ->writeLevelSet(sph_system);
+            ->writeLevelSet();
         rigid_shell.generateParticles<SurfaceParticles, Lattice>(thickness);
     }
 

@@ -31,7 +31,7 @@ int main(int ac, char *av[])
 
     if (sph_system.RunParticleRelaxation())
     {
-        LevelSetShape *level_set_shape = column.defineBodyLevelSetShape(par_ck, 2.0)->writeLevelSet(sph_system);
+        LevelSetShape *level_set_shape = column.defineBodyLevelSetShape(par_ck, 2.0)->writeLevelSet();
         column.generateParticles<BaseParticles, Lattice>();
         wall.generateParticles<BaseParticles, Lattice>();
         NearShapeSurface near_body_surface(column);
