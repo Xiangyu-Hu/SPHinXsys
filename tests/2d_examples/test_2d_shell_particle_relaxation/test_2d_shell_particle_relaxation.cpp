@@ -43,7 +43,7 @@ int main(int ac, char *av[])
     SolidBody pipe_body(sph_system, makeShared<Pipe>("PipeBody"));
     pipe_body.defineAdaptation<SPHAdaptation>(1.15, 1.0);
     pipe_body.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
-        ->writeLevelSet(sph_system);
+        ->writeLevelSet();
     pipe_body.generateParticles<SurfaceParticles, Lattice>(thickness);
 
     InnerRelation pipe_body_inner(pipe_body);

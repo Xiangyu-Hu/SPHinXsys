@@ -164,7 +164,8 @@ class SPHBody
     LevelSetShape *defineBodyLevelSetShape(const ExecutionPolicy &ex_policy, Args &&...args)
     {
         LevelSetShape *level_set_shape =
-            shape_keeper_.resetPtr<LevelSetShape>(ex_policy, *this, *initial_shape_, std::forward<Args>(args)...);
+            shape_keeper_.resetPtr<LevelSetShape>(
+                ex_policy, sph_system_, *sph_adaptation_, *initial_shape_, std::forward<Args>(args)...);
         initial_shape_ = level_set_shape;
         return level_set_shape;
     };

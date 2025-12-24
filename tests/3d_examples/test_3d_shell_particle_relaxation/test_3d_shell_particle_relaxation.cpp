@@ -50,7 +50,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody imported_model(sph_system, makeShared<ImportedShellModel>("ImportedShellModel"));
     imported_model.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
-        ->writeLevelSet(sph_system);
+        ->writeLevelSet();
     imported_model.generateParticles<SurfaceParticles, Lattice>(thickness);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.

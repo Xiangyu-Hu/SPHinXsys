@@ -69,20 +69,21 @@ class SPHAdaptation
     explicit SPHAdaptation(Real global_resolution, Real h_spacing_ratio = 1.3, Real refinement_to_global = 1.0);
     virtual ~SPHAdaptation() {};
 
-    Real GlobalResolution() { return global_resolution_; }
-    int LocalRefinementLevel() { return local_refinement_level_; };
+    Real GlobalResolution() const { return global_resolution_; }
+    int LocalRefinementLevel()const  { return local_refinement_level_; };
     Real SmoothingLengthSpacingRatio() { return h_spacing_ratio_; };
-    Real ReferenceSpacing() { return spacing_ref_; };
-    Real MinimumSpacing() { return spacing_min_; };
-    Real ReferenceSmoothingLength() { return h_ref_; };
-    Real MinimumSmoothingLength() { return h_ref_ / h_ratio_max_; };
-    Kernel *getKernel() { return kernel_ptr_.get(); };
-    Real LatticeNumberDensity() { return sigma0_ref_; };
+    Real ReferenceSpacing() const { return spacing_ref_; };
+    Real MinimumSpacing() const { return spacing_min_; };
+    Real ReferenceSmoothingLength() const{ return h_ref_; };
+    Real MinimumSmoothingLength() const{ return h_ref_ / h_ratio_max_; };
+    Kernel *getKernel() const { return kernel_ptr_.get(); };
+    SharedPtr<Kernel> getKernelPtr() const { return kernel_ptr_; };
+    Real LatticeNumberDensity() const{ return sigma0_ref_; };
     Real NumberDensityScaleFactor(Real smoothing_length_ratio);
     virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
     void resetAdaptationRatios(Real h_spacing_ratio, Real new_refinement_to_global = 1.0);
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) {};
-    Real SmoothingLengthByLevel(int level) { return h_ref_ / pow(2.0, level); };
+    Real SmoothingLengthByLevel(int level)const { return h_ref_ / pow(2.0, level); };
     DiscreteVariable<Real> *AdaptiveSmoothingLength(BaseParticles &base_particles);
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
@@ -96,14 +97,14 @@ class SPHAdaptation
         sigma0_ref_ = computeLatticeNumberDensity(Vecd());
     };
 
-    class UnitSmoothingLengthRatioRatio
+    class UnitSmoothingLengthRatio
     {
       public:
-        explicit UnitSmoothingLengthRatioRatio(SPHAdaptation &adaptation) {};
+        explicit UnitSmoothingLengthRatio(SPHAdaptation &adaptation) {};
         Real operator()(size_t /*particle_index_i*/) { return 1.0; };
     };
 
-    typedef UnitSmoothingLengthRatioRatio SmoothingLengthRatioType;
+    typedef UnitSmoothingLengthRatio SmoothingLengthRatioType;
 
   protected:
     Real computeLatticeNumberDensity(Vec2d zero);
@@ -131,7 +132,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles) override;
-    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) override;
+    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const override;
     DiscreteVariable<Real> *dvSmoothingLengthRatio() { return dv_h_ratio_; };
     DiscreteVariable<int> *dvSmoothingLengthLevel() { return dv_h_level_; };
 
