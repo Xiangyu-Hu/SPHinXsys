@@ -7,43 +7,26 @@
 namespace SPH
 {
 //=================================================================================================//
-LevelSetShape::
-    LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation,
-                  Real refinement, UsageType usage_type)
-    : LevelSetShape(shape.getBounds(), shape, sph_adaptation, refinement)
-{
-    finishInitialization(execution::par_host, usage_type);
-}
-//=================================================================================================//
-LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape,
-                             Real refinement, UsageType usage_type)
+LevelSetShape::LevelSetShape(
+    SPHBody &sph_body, Shape &shape, Real refinement, UsageType usage_type)
     : LevelSetShape(shape.getBounds(), sph_body, shape, refinement)
 {
     finishInitialization(execution::par_host, usage_type);
 }
 //=================================================================================================//
-LevelSetShape::LevelSetShape(BoundingBoxd bounding_box, Shape &shape,
-                             SharedPtr<SPHAdaptation> sph_adaptation, Real refinement)
-    : Shape(shape.getName()), sph_adaptation_(sph_adaptation),
-      level_set_(*level_set_keeper_.movePtr(sph_adaptation->createLevelSet(shape, refinement)))
-{
-    bounding_box_ = shape.getBounds();
-    is_bounds_found_ = true;
-}
-//=================================================================================================//
-LevelSetShape::LevelSetShape(BoundingBoxd bounding_box, SPHBody &sph_body,
-                             Shape &shape, Real refinement)
-    : Shape(shape.getName()),
+LevelSetShape::LevelSetShape(
+    const BoundingBoxd &bounding_box, SPHBody &sph_body, Shape &shape, Real refinement)
+    : Shape(shape.getName()), sph_system_(sph_body.getSPHSystem()),
       level_set_(*level_set_keeper_.movePtr(
           sph_body.getSPHAdaptation().createLevelSet(shape, refinement)))
 {
-    bounding_box_ = shape.getBounds();
+    bounding_box_ = bounding_box;
     is_bounds_found_ = true;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::writeLevelSet(SPHSystem &sph_system)
+LevelSetShape *LevelSetShape::writeLevelSet()
 {
-    MeshRecordingToPlt write_level_set_to_plt(sph_system, level_set_);
+    MeshRecordingToPlt write_level_set_to_plt(sph_system_, level_set_);
     write_level_set_to_plt.writeToFile(0);
     return this;
 }

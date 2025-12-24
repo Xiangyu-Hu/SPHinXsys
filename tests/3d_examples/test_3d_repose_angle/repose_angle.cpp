@@ -85,7 +85,7 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     RealBody soil_block(sph_system, makeShared<SoilBlock>("GranularBody"));
-    soil_block.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    soil_block.defineBodyLevelSetShape()->writeLevelSet();
     soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? soil_block.generateParticles<BaseParticles, Reload>(soil_block.getName())

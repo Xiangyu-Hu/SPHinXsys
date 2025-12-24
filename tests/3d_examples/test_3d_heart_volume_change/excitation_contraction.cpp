@@ -35,7 +35,7 @@ int main(int ac, char *av[])
     if (sph_system.RunParticleRelaxation())
     {
         SolidBody herat_model(sph_system, makeShared<Heart>("HeartModel"));
-        herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
+        herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet();
         herat_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
             ConstructArgs(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0),
             ConstructArgs(diffusion_species_name, diffusion_coeff));

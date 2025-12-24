@@ -33,16 +33,15 @@ int main(int ac, char *av[])
 #endif
 
     Heart triangle_mesh_heart_model("HeartModel");
-    SharedPtr<LevelSetShape> level_set_heart_model =
-        makeShared<LevelSetShape>(triangle_mesh_heart_model, makeShared<SPHAdaptation>(dp_0));
-    level_set_heart_model->correctLevelSetSign()->writeLevelSet(sph_system);
+    SolidBody herat_model(sph_system, triangle_mesh_heart_model);
+    LevelSetShape *level_set_shape =
+        herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet();
     //----------------------------------------------------------------------
     //	SPH Particle relaxation section
     //----------------------------------------------------------------------
     /** check whether run particle relaxation for body fitted particle distribution. */
     if (sph_system.RunParticleRelaxation())
     {
-        SolidBody herat_model(sph_system, level_set_heart_model);
         herat_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
             ConstructArgs(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0),
             ConstructArgs(diffusion_species_name, diffusion_coeff));
@@ -114,7 +113,7 @@ int main(int ac, char *av[])
     //	SPH simulation section
     //----------------------------------------------------------------------
     /** create a SPH body, material and particles */
-    SolidBody physiology_heart(sph_system, level_set_heart_model, "PhysiologyHeart");
+    SolidBody physiology_heart(sph_system, *level_set_shape, "PhysiologyHeart");
     AlievPanfilowModel aliev_panfilow_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
     physiology_heart.defineClosure<Solid, MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
         Solid(), ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
@@ -123,14 +122,14 @@ int main(int ac, char *av[])
         : physiology_heart.generateParticles<BaseParticles, Lattice>();
 
     /** create a SPH body, material and particles */
-    SolidBody mechanics_heart(sph_system, level_set_heart_model, "MechanicalHeart");
+    SolidBody mechanics_heart(sph_system, *level_set_shape, "MechanicalHeart");
     mechanics_heart.defineMaterial<ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? mechanics_heart.generateParticles<BaseParticles, Reload>("HeartModel")
         : mechanics_heart.generateParticles<BaseParticles, Lattice>();
 
     /** Creat a Purkinje network for fast diffusion, material and particles */
-    TreeBody pkj_body(sph_system, level_set_heart_model, "Purkinje");
+    TreeBody pkj_body(sph_system, *level_set_shape, "Purkinje");
     pkj_body.defineClosure<Solid, MonoFieldElectroPhysiology<IsotropicDiffusion>>(
         Solid(), ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff * acceleration_factor)));
     pkj_body.generateParticles<BaseParticles, NetworkWithExtraCheck>(starting_point, second_point, 50, 1.0);

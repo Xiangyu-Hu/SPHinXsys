@@ -52,7 +52,7 @@ int main(int ac, char *av[])
     sph_system.handleCommandlineOptions(ac, av);
     /** Creat a body, corresponding material and particles. */
     TreeBody tree_on_sphere(sph_system, makeShared<GeometricShapeBall>(Vec3d::Zero(), 1.0, "Sphere"));
-    tree_on_sphere.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    tree_on_sphere.defineBodyLevelSetShape()->writeLevelSet();
     tree_on_sphere.generateParticles<BaseParticles, Network>(starting_point, second_point, iteration_levels, grad_factor);
     /** Write particle data. */
     BodyStatesRecordingToVtp write_states(sph_system);

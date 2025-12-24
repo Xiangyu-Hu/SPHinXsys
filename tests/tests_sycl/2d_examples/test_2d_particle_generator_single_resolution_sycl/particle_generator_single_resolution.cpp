@@ -45,7 +45,7 @@ int main(int ac, char *av[])
                                          ->addPackageVariableToWrite<Real>("KernelWeight")
                                          ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
                                          ->addCellVariableToWrite<int>("CellContainID")
-                                         ->writeLevelSet(sph_system);
+                                         ->writeLevelSet();
     input_body.generateParticles<BaseParticles, Lattice>();
 
     MultiPolygonShape filler_shape(original_logo, "Filler");

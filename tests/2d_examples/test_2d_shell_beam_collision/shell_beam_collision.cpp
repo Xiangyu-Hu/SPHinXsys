@@ -100,7 +100,7 @@ int main(int ac, char *av[])
     else
     {
         shell.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
-            ->writeLevelSet(sph_system);
+            ->writeLevelSet();
         shell.generateParticles<SurfaceParticles, Lattice>(thickness);
     }
 

@@ -74,12 +74,12 @@ int main(int ac, char *av[])
     if (sph_system.RunParticleRelaxation())
     {
         LevelSetShape *outer_level_set_shape = water_block.defineComponentLevelSetShape("OuterBoundary", 2.0)
-                                                   ->writeLevelSet(sph_system);
+                                                   ->writeLevelSet();
         water_block.generateParticles<BaseParticles, Lattice>();
         NearShapeSurface near_water_block_outer_surface(water_block, "OuterBoundary");
 
         LevelSetShape *cylinder_level_set_shape = cylinder.defineBodyLevelSetShape(2.0)
-                                                      ->writeLevelSet(sph_system);
+                                                      ->writeLevelSet();
         cylinder.generateParticles<BaseParticles, Lattice>();
         NearShapeSurface near_cylinder_surface(cylinder);
 

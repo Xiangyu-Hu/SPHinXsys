@@ -97,7 +97,7 @@ int main(int ac, char *av[])
     // level set shape is used for particle relaxation
     LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(par_ck)
                                          ->correctLevelSetSign()
-                                         ->writeLevelSet(sph_system);
+                                         ->writeLevelSet();
     input_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Creating body parts.
