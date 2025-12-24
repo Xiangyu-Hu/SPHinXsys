@@ -97,14 +97,14 @@ class SPHAdaptation
         sigma0_ref_ = computeLatticeNumberDensity(Vecd());
     };
 
-    class UnitSmoothingLengthRatioRatio
+    class UnitSmoothingLengthRatio
     {
       public:
-        explicit UnitSmoothingLengthRatioRatio(SPHAdaptation &adaptation) {};
+        explicit UnitSmoothingLengthRatio(SPHAdaptation &adaptation) {};
         Real operator()(size_t /*particle_index_i*/) { return 1.0; };
     };
 
-    typedef UnitSmoothingLengthRatioRatio SmoothingLengthRatioType;
+    typedef UnitSmoothingLengthRatio SmoothingLengthRatioType;
 
   protected:
     Real computeLatticeNumberDensity(Vec2d zero);
