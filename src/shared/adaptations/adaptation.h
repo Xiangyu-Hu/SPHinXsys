@@ -88,7 +88,7 @@ class SPHAdaptation
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
     UniquePtr<BaseCellLinkedList> createFinestCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
-    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement);
+    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const;
 
     template <class KernelType, typename... Args>
     void resetKernel(Args &&...args)

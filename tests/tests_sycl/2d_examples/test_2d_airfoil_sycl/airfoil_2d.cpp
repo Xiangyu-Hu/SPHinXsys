@@ -53,7 +53,7 @@ int main(int ac, char *av[])
     airfoil.defineBodyLevelSetShape()
         ->cleanLevelSet()
         ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
-        ->writeLevelSet(sph_system);
+        ->writeLevelSet();
     airfoil.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Creating body parts.
