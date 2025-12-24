@@ -39,6 +39,7 @@ namespace po = boost::program_options;
 
 #include "all_bodies.h"
 #include "base_data_type_package.h"
+#include "base_geometry.h"
 #include "io_environment.h"
 #include "sphinxsys_containers.h"
 
@@ -54,6 +55,7 @@ class SPHSystem
     DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
     UniquePtrsKeeper<SPHBody> sph_bodies_keeper_;
+    UniquePtrsKeeper<Shape> shapes_keeper_;
 
   public:
     SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution,
@@ -107,6 +109,9 @@ class SPHSystem
 
     template <class BaseBodyType, class AdaptationType, typename... Args>
     auto &addAdaptiveBody(const AdaptationType &adaptation, Args &&...args);
+
+    template <class ShapeType, typename... Args>
+    auto &addShape(Args &&...args);
 
   protected:
     friend class IOEnvironment;

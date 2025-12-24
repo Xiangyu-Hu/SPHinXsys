@@ -58,7 +58,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
-    NearShapeSurface near_body_surface(airfoil);
+    auto &near_body_surface = airfoil.addBodyPart<NearShapeSurface>();
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.

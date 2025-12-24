@@ -63,5 +63,11 @@ auto &SPHSystem::addAdaptiveBody(const AdaptationType &adaptation, Args &&...arg
         *this, adaptation, std::forward<Args>(args)...);
 }
 //=================================================================================================//
+template <class ShapeType, typename... Args>
+auto &SPHSystem::addShape(Args &&...args)
+{
+    return *shapes_keeper_.createPtr<ShapeType>(std::forward<Args>(args)...);
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // SPH_SYSTEM_HPP

@@ -30,8 +30,8 @@
 #define BODY_PART_FOR_SIMBODY_H
 
 #include "base_body_part.h"
-
 #include "simtk_wrapper.h"
+
 namespace SPH
 {
 /**

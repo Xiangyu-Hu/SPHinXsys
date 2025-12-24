@@ -37,6 +37,7 @@
 
 #include "adaptation.h"
 #include "all_geometries.h"
+#include "base_body_part.h"
 #include "base_data_type_package.h"
 #include "base_implementation.h"
 #include "base_material.h"
@@ -45,8 +46,6 @@
 #include "cell_linked_list.h"
 #include "closure_wrapper.h"
 #include "sphinxsys_containers.h"
-
-#include <string>
 
 namespace SPH
 {
@@ -221,8 +220,7 @@ class RealBody : public SPHBody
   public:
     template <typename... Args>
     RealBody(Args &&...args)
-        : SPHBody(std::forward<Args>(args)...),
-          cell_linked_list_created_(false)
+        : SPHBody(std::forward<Args>(args)...), cell_linked_list_created_(false)
     {
         addRealBodyToSPHSystem();
     };
@@ -231,10 +229,17 @@ class RealBody : public SPHBody
     void updateCellLinkedList();
     using ListedParticleMask = typename SPHBody::SourceParticleMask;
 
+    template <class BodyPartType, typename... Args>
+    BodyPartType &addBodyPart(Args &&...args)
+    {
+        return *body_parts_keeper_.createPtr<BodyPartType>(*this, std::forward<Args>(args)...);
+    };
+
   protected:
     UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
+    UniquePtrsKeeper<BodyPart> body_parts_keeper_;
     bool cell_linked_list_created_;
-    virtual void createCellLinkedListPtr(); 
+    virtual void createCellLinkedListPtr();
 
   private:
     void addRealBodyToSPHSystem();
