@@ -41,6 +41,7 @@ namespace po = boost::program_options;
 #include "base_data_type_package.h"
 #include "base_geometry.h"
 #include "io_environment.h"
+#include "relation_ck.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH
@@ -56,6 +57,7 @@ class SPHSystem
     UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
     UniquePtrsKeeper<SPHBody> sph_bodies_keeper_;
     UniquePtrsKeeper<Shape> shapes_keeper_;
+    UniquePtrsKeeper<RelationBase> relations_keeper_;
 
   public:
     SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution,
@@ -112,6 +114,15 @@ class SPHSystem
 
     template <class ShapeType, typename... Args>
     auto &addShape(Args &&...args);
+
+    template <class DynamicIdentifier, typename... Args>
+    auto &addInnerRelation(DynamicIdentifier &identifier, Args &&...args);
+
+    template <class SourceIdentifier, class TargetIdentifier, typename... Args>
+    auto &addContactRelation(SourceIdentifier &src_identifier, StdVec<TargetIdentifier *> tar_identifiers, Args &&...args);
+
+    template <class SourceIdentifier, class TargetIdentifier, typename... Args>
+    auto &addContactRelation(SourceIdentifier &src_identifier, TargetIdentifier &tar_identifiers, Args &&...args);
 
   protected:
     friend class IOEnvironment;

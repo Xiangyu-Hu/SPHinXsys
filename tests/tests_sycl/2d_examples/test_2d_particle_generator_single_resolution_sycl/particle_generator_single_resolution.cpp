@@ -60,9 +60,9 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    Inner<> input_body_inner(input_body);
-    Inner<> filler_inner(filler);
-    Contact<> filler_contact(filler, {&input_body});
+    auto &input_body_inner = sph_system.addInnerRelation(input_body);
+    auto &filler_inner = sph_system.addInnerRelation(filler);
+    auto &filler_contact = sph_system.addContactRelation(filler, input_body);
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.
