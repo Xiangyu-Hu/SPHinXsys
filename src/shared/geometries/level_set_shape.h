@@ -32,8 +32,6 @@
 #include "base_geometry.h"
 #include "level_set.hpp"
 
-#include <string>
-
 namespace SPH
 {
 class SPHBody;
@@ -54,9 +52,9 @@ class LevelSetShape : public Shape
                   UsageType usage_type = UsageType::Volumetric);
 
     template <class ExecutionPolicy>
-    LevelSetShape(const ExecutionPolicy &ex_policy, SPHBody &sph_body, Shape &shape,
-                  Real refinement = 1.0, UsageType usage_type = UsageType::Volumetric)
-        : LevelSetShape(shape.getBounds(), sph_body, shape, refinement)
+    LevelSetShape(const ExecutionPolicy &ex_policy, SPHSystem &sph_system, const SPHAdaptation &sph_adaptation,
+                  Shape &shape, Real refinement = 1.0, UsageType usage_type = UsageType::Volumetric)
+        : LevelSetShape(sph_system, sph_adaptation, shape, refinement)
     {
         finishInitialization(ex_policy, usage_type);
     };
@@ -98,7 +96,7 @@ class LevelSetShape : public Shape
     };
 
   protected:
-    LevelSetShape(const BoundingBoxd &bounding_box, SPHBody &sph_body, Shape &shape, Real refinement);
+    LevelSetShape(SPHSystem &sph_system, const SPHAdaptation &sph_adaptation, Shape &shape, Real refinement);
     SPHSystem &sph_system_; /**< for write level to file. */
     LevelSet &level_set_;   /**< narrow bounded level set mesh. */
 };

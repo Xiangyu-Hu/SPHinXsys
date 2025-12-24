@@ -59,7 +59,7 @@ class SPHAdaptation
     int local_refinement_level_;   /**< refinement level respect to reference particle spacing */
     Real spacing_ref_;             /**< reference particle spacing used to determine local particle spacing */
     Real h_ref_;                   /**< reference smoothing length */
-    UniquePtr<Kernel> kernel_ptr_; /**< unique pointer of kernel function owned by this class */
+    SharedPtr<Kernel> kernel_ptr_; /**< unique pointer of kernel function owned by this class */
     Real sigma0_ref_;              /**< Reference number density dependent on h_spacing_ratio_ and kernel function */
     Real spacing_min_;             /**< minimum particle spacing determined by local refinement level */
     Real Vol_min_;                 /**< minimum particle volume measure determined by local refinement level */
@@ -69,25 +69,26 @@ class SPHAdaptation
     explicit SPHAdaptation(Real global_resolution, Real h_spacing_ratio = 1.3, Real refinement_to_global = 1.0);
     virtual ~SPHAdaptation() {};
 
-    Real GlobalResolution() { return global_resolution_; }
-    int LocalRefinementLevel() { return local_refinement_level_; };
+    Real GlobalResolution() const { return global_resolution_; }
+    int LocalRefinementLevel()const  { return local_refinement_level_; };
     Real SmoothingLengthSpacingRatio() { return h_spacing_ratio_; };
-    Real ReferenceSpacing() { return spacing_ref_; };
-    Real MinimumSpacing() { return spacing_min_; };
-    Real ReferenceSmoothingLength() { return h_ref_; };
-    Real MinimumSmoothingLength() { return h_ref_ / h_ratio_max_; };
-    Kernel *getKernel() { return kernel_ptr_.get(); };
-    Real LatticeNumberDensity() { return sigma0_ref_; };
+    Real ReferenceSpacing() const { return spacing_ref_; };
+    Real MinimumSpacing() const { return spacing_min_; };
+    Real ReferenceSmoothingLength() const{ return h_ref_; };
+    Real MinimumSmoothingLength() const{ return h_ref_ / h_ratio_max_; };
+    Kernel *getKernel() const { return kernel_ptr_.get(); };
+    SharedPtr<Kernel> getKernelPtr() const { return kernel_ptr_; };
+    Real LatticeNumberDensity() const{ return sigma0_ref_; };
     Real NumberDensityScaleFactor(Real smoothing_length_ratio);
     virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
     void resetAdaptationRatios(Real h_spacing_ratio, Real new_refinement_to_global = 1.0);
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) {};
-    Real SmoothingLengthByLevel(int level) { return h_ref_ / pow(2.0, level); };
+    Real SmoothingLengthByLevel(int level)const { return h_ref_ / pow(2.0, level); };
     DiscreteVariable<Real> *AdaptiveSmoothingLength(BaseParticles &base_particles);
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
     UniquePtr<BaseCellLinkedList> createRefinedCellLinkedList(int level, const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
-    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement);
+    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const;
 
     template <class KernelType, typename... Args>
     void resetKernel(Args &&...args)
@@ -130,7 +131,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles) override;
-    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) override;
+    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const override;
     DiscreteVariable<Real> *dvSmoothingLengthRatio() { return dv_h_ratio_; };
     DiscreteVariable<int> *dvSmoothingLengthLevel() { return dv_h_level_; };
 

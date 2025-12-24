@@ -92,7 +92,7 @@ UniquePtr<BaseCellLinkedList> SPHAdaptation::createRefinedCellLinkedList(
     return makeUnique<CellLinkedList>(domain_bounds, grid_spacing, base_particles, *this);
 }
 //=================================================================================================//
-UniquePtr<LevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement)
+UniquePtr<LevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement) const
 {
     // estimate the required mesh levels
     int total_levels = (int)log10(shape.getBounds().MinimumDimension() / ReferenceSpacing()) + 2;
@@ -136,7 +136,7 @@ UniquePtr<BaseCellLinkedList> AdaptiveSmoothingLength::
                                                 local_refinement_level_, base_particles, *this);
 }
 //=================================================================================================//
-UniquePtr<LevelSet> AdaptiveSmoothingLength::createLevelSet(Shape &shape, Real refinement)
+UniquePtr<LevelSet> AdaptiveSmoothingLength::createLevelSet(Shape &shape, Real refinement) const
 {
     // one more level for interpolation
     return makeUnique<LevelSet>(shape.getBounds(), ReferenceSpacing() / refinement,

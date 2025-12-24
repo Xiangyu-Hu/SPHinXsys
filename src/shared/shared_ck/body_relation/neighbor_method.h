@@ -44,10 +44,10 @@ template <>
 class NeighborMethod<Base>
 {
   public:
-    NeighborMethod(Kernel &base_kernel) : base_kernel_(&base_kernel) {};
+    NeighborMethod(SharedPtr<Kernel> base_kernel) : base_kernel_(base_kernel) {};
 
   protected:
-    Kernel *base_kernel_;
+    SharedPtr<Kernel> base_kernel_;
 };
 
 template <>
@@ -56,7 +56,7 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
   public:
     template <typename SourceIdentifier, typename TargetIdentifier>
     NeighborMethod(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier)
-        : NeighborMethod<Base>(*source_identifier.getSPHAdaptation().getKernel())
+        : NeighborMethod<Base>(source_identifier.getSPHAdaptation().getKernelPtr())
     {
         Real source_h = source_identifier.getSPHAdaptation().ReferenceSmoothingLength();
         Real target_h = target_identifier.getSPHAdaptation().ReferenceSmoothingLength();
@@ -65,15 +65,10 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
         search_box_ = BoundingBoxi(Arrayi::Constant(search_depth_));
     }
 
-    NeighborMethod(Kernel &base_kernel, Real h, Real search_increment)
+    NeighborMethod(SharedPtr<Kernel> base_kernel, Real h, Real search_increment)
         : NeighborMethod<Base>(base_kernel), inv_h_(1.0 / h),
           search_depth_(static_cast<int>(std::ceil((h - Eps) / search_increment))),
           search_box_(BoundingBoxi(Arrayi::Constant(search_depth_))) {}
-
-    Real CutOffRadius() const
-    {
-        return base_kernel_->KernelSize() / inv_h_;
-    }
 
     class SmoothingKernel : public KernelTabulatedCK
     {
@@ -101,6 +96,8 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
         {
             return Gradient2Factor(displacement) * normalized_d2W((displacement * inv_h_).norm());
         };
+
+        Real CutOffRadius() const { return kernel_size_ / inv_h_; }
 
       protected:
         inline Real Factor(const Vec2d &) const { return inv_h_squared_ * dimension_factor_2D_; };

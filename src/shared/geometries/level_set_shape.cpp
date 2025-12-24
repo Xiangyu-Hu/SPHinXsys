@@ -1,26 +1,25 @@
 #include "level_set_shape.h"
 
 #include "all_io.h"
-#include "base_body.h"
 #include "sph_system.h"
+#include "base_body.h"
 
 namespace SPH
 {
 //=================================================================================================//
 LevelSetShape::LevelSetShape(
     SPHBody &sph_body, Shape &shape, Real refinement, UsageType usage_type)
-    : LevelSetShape(shape.getBounds(), sph_body, shape, refinement)
+    : LevelSetShape(sph_body.getSPHSystem(), sph_body.getSPHAdaptation(), shape, refinement)
 {
     finishInitialization(execution::par_host, usage_type);
 }
 //=================================================================================================//
 LevelSetShape::LevelSetShape(
-    const BoundingBoxd &bounding_box, SPHBody &sph_body, Shape &shape, Real refinement)
-    : Shape(shape.getName()), sph_system_(sph_body.getSPHSystem()),
-      level_set_(*level_set_keeper_.movePtr(
-          sph_body.getSPHAdaptation().createLevelSet(shape, refinement)))
+    SPHSystem &sph_system, const SPHAdaptation &sph_adaptation, Shape &shape, Real refinement)
+    : Shape(shape.getName()), sph_system_(sph_system),
+      level_set_(*level_set_keeper_.movePtr(sph_adaptation.createLevelSet(shape, refinement)))
 {
-    bounding_box_ = bounding_box;
+    bounding_box_ = shape.getBounds();
     is_bounds_found_ = true;
 }
 //=================================================================================================//
