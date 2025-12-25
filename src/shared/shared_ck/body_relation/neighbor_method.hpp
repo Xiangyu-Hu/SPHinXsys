@@ -203,7 +203,7 @@ inline Real NeighborMethod<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::Sm
 template <class ExecutionPolicy, class EncloserType>
 NeighborMethod<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::NeighborCriterion::
     NeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : src_pos_(encloser.dv_sre_pos_->DelegatedData(ex_policy)),
+    : src_pos_(encloser.dv_src_pos_->DelegatedData(ex_policy)),
       tar_pos_(encloser.dv_tar_pos_->DelegatedData(ex_policy)),
       kernel_size_squared_(math::pow(encloser.base_kernel_->KernelSize(), 2)),
       src_inv_h_ref_(encloser.src_inv_h_ref_),
@@ -219,7 +219,7 @@ operator()(UnsignedInt i, UnsignedInt j) const
 template <class ExecutionPolicy, class EncloserType>
 NeighborMethod<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::ReverseNeighborCriterion::
     ReverseNeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : src_pos_(encloser.dv_sre_pos_->DelegatedData(ex_policy)),
+    : src_pos_(encloser.dv_src_pos_->DelegatedData(ex_policy)),
       tar_pos_(encloser.dv_tar_pos_->DelegatedData(ex_policy)),
       kernel_size_squared_(math::pow(encloser.base_kernel_->KernelSize(), 2)),
       tar_inv_h_ref_(encloser.tar_inv_h_ref_),
