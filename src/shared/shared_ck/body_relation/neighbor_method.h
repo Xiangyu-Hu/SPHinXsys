@@ -47,6 +47,7 @@ class NeighborMethod<Base>
     NeighborMethod(SharedPtr<Kernel> base_kernel,
                    DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos);
     NeighborMethod(SharedPtr<Kernel> base_kernel);
+    ~NeighborMethod() {};
 
     class SmoothingKernel : public KernelTabulatedCK
     {
@@ -105,7 +106,7 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
         Real CutOffRadius() const { return kernel_size_ / inv_h_; }
     };
     typedef SmoothingKernel NeighborKernel;
-    
+
     class NeighborCriterion
     {
         Vecd *src_pos_, *tar_pos_;
