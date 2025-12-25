@@ -55,10 +55,16 @@ int main(int ac, char *av[])
         ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
         ->writeLevelSet();
     airfoil.generateParticles<BaseParticles, Lattice>();
-    //----------------------------------------------------------------------
-    //	Creating body parts.
-    //----------------------------------------------------------------------
     auto &near_body_surface = airfoil.addBodyPart<NearShapeSurface>();
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
+    //----------------------------------------------------------------------
+    auto &airfoil_inner = sph_system.addInnerRelation(airfoil);
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.
@@ -78,8 +84,15 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     host_methods.addStateDynamics<RandomizeParticlePositionCK>(airfoil).exec();
-    auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(airfoil);
-    input_body_cell_linked_list.exec();
+    auto &airfoil_update_cell_linked_list = main_methods.addCellLinkedListDynamics(airfoil);
+    auto &airfoil_update_inner_relation = main_methods.addRelationDynamics(airfoil_inner);
+
+    airfoil_update_cell_linked_list.exec();
+    airfoil_update_inner_relation.exec();
+
+    ParticleDynamicsGroup update_particle_position;
+    update_particle_position.add(&main_methods.addStateDynamics<PositionRelaxationCK>(airfoil));
+    update_particle_position.add(&main_methods.addStateDynamics<LevelsetBounding>(near_body_surface));
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------

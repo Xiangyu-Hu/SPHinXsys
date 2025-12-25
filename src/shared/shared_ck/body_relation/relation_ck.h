@@ -32,7 +32,7 @@
 #include "base_body.h"
 #include "base_particles.h"
 #include "implementation.h"
-#include "neighborhood_ck.h"
+#include "neighbor_method.hpp"
 
 namespace SPH
 {
@@ -54,16 +54,16 @@ class RelationBase
 template <typename... AdaptationParameters>
 class Relation<NeighborMethod<AdaptationParameters...>> : public RelationBase
 {
-    using NeighborMethodType = NeighborMethod<AdaptationParameters...>;
+
     SharedPtrsKeeper<Entity> relation_variable_ptrs_;
-    SharedPtrsKeeper<Neighbor<NeighborMethodType>> neighborhood_ptrs_;
+    SharedPtrsKeeper<NeighborMethod<AdaptationParameters...>> neighborhood_ptrs_;
     DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
 
     template <class DataType>
     DiscreteVariable<DataType> *addRelationVariable(const std::string &name, size_t data_size);
 
   public:
-    typedef Neighbor<NeighborMethodType> NeighborhoodType;
+    using NeighborhoodType = NeighborMethod<AdaptationParameters...>;
     template <typename SourceIdentifier, typename TargetIdentifier>
     Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers,
              ConfigType config_type = ConfigType::Eulerian);
@@ -74,7 +74,7 @@ class Relation<NeighborMethod<AdaptationParameters...>> : public RelationBase
     DiscreteVariable<Vecd> *dvTargetPosition(UnsignedInt target_index = 0) { return dv_target_pos_[target_index]; };
     DiscreteVariable<UnsignedInt> *dvNeighborIndex(UnsignedInt target_index = 0) { return dv_target_neighbor_index_[target_index]; };
     DiscreteVariable<UnsignedInt> *dvParticleOffset(UnsignedInt target_index = 0) { return dv_target_particle_offset_[target_index]; };
-    Neighbor<NeighborMethodType> &getNeighborhood(UnsignedInt target_index = 0) { return *neighborhoods_[target_index]; }
+    NeighborhoodType &getNeighborhood(UnsignedInt target_index = 0) { return *neighborhoods_[target_index]; }
     void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index = 0);
     void resetComputingKernelUpdated(UnsignedInt target_index = 0);
 
@@ -101,7 +101,7 @@ class Relation<NeighborMethod<AdaptationParameters...>> : public RelationBase
     UnsignedInt offset_list_size_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_neighbor_index_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_particle_offset_;
-    StdVec<Neighbor<NeighborMethodType> *> neighborhoods_;
+    StdVec<NeighborhoodType *> neighborhoods_;
     StdVec<StdVec<execution::Implementation<Base> *>> registered_computing_kernels_;
 };
 

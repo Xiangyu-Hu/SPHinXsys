@@ -51,7 +51,9 @@ class AdaptiveBody<AdaptationType, BaseBodyType> : public BaseBodyType
     {
         this->sph_adaptation_ = &adaptation_;
     };
+
     virtual ~AdaptiveBody() {};
+    AdaptationType &getAdaptation() { return adaptation_; };
 
     template <class ParticleType, class GeneratorType, typename... Args>
     ParticleType *generateParticles(Args &&...args)

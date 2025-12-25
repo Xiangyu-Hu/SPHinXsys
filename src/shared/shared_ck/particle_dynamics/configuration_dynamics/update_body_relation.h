@@ -35,7 +35,6 @@
 #include "base_configuration_dynamics.h"
 #include "base_local_dynamics.h"
 #include "base_particles.hpp"
-#include "neighborhood_ck.h"
 #include "relation_ck.hpp"
 
 namespace SPH

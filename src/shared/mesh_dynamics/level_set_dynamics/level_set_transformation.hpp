@@ -40,7 +40,7 @@ UpdateKernelIntegrals::UpdateKernel::
       kernel_weight_(encloser.mv_kernel_weight_.DelegatedData(ex_policy)),
       kernel_gradient_(encloser.mv_kernel_gradient_.DelegatedData(ex_policy)),
       kernel_second_gradient_(encloser.mv_kernel_second_gradient_.DelegatedData(ex_policy)),
-      kernel_(ex_policy, encloser.neighbor_method_),
+      kernel_(encloser.neighbor_method_),
       data_spacing_(encloser.index_handler_.DataSpacing()),
       data_cell_volume_(math::pow(data_spacing_, Dimensions)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
@@ -110,7 +110,7 @@ inline Real UpdateKernelIntegrals::UpdateKernel::
                ? 1.0
                : computeIntegral(phi, package_index, data_index, 0.0,
                                  [&](const Vecd &displacement) -> Real
-                                 { return kernel_.W(displacement, 0, 0); });
+                                 { return kernel_.W(displacement); });
 }
 //=============================================================================================//
 inline Vecd UpdateKernelIntegrals::UpdateKernel::
@@ -120,7 +120,7 @@ inline Vecd UpdateKernelIntegrals::UpdateKernel::
     Vecd integral = Vecd::Zero();
     return computeIntegral(phi, package_index, data_index, integral,
                            [&](const Vecd &displacement) -> Vecd
-                           { return kernel_.dW(displacement, 0, 0) * displacement /
+                           { return kernel_.dW(displacement) * displacement /
                                     (displacement.norm() + TinyReal); });
 }
 //=============================================================================================//
@@ -131,7 +131,7 @@ inline Matd UpdateKernelIntegrals::UpdateKernel::
     Matd integral = Matd::Zero();
     return computeIntegral(phi, package_index, data_index, integral,
                            [&](const Vecd &displacement) -> Matd
-                           { return kernel_.d2W(displacement, 0, 0) *
+                           { return kernel_.d2W(displacement) *
                                     displacement * displacement.transpose() /
                                     (displacement.squaredNorm() + TinyReal); });
 }

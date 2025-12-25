@@ -32,7 +32,7 @@ Relation<NeighborMethod<AdaptationParameters...>>::Relation(
         dv_target_particle_offset_.push_back(addRelationVariable<UnsignedInt>(
             name + "ParticleOffset", offset_list_size_));
         neighborhoods_.push_back(
-            neighborhood_ptrs_.template createPtr<Neighbor<NeighborMethodType>>(
+            neighborhood_ptrs_.template createPtr<NeighborhoodType>(
                 source_identifier, *contact_identifiers[k], dv_source_pos_, dv_target_pos_.back()));
     }
     registered_computing_kernels_.resize(contact_identifiers.size());
