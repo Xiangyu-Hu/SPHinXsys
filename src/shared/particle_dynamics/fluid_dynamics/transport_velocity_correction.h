@@ -64,7 +64,7 @@ template <class AdaptationType, class LimiterType, typename... CommonControlType
 class TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonControlTypes...>
     : public TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>
 {
-    using SmoothingRatioType = typename AdaptationType::SmoothingRatioType;
+    using SmoothingLengthRatioType = typename AdaptationType::SmoothingLengthRatioType;
 
   public:
     explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2);
@@ -79,7 +79,7 @@ class TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonCont
     const Real h_ref_, correction_scaling_;
     Real *Vol_;
     Vecd *pos_;
-    SmoothingRatioType h_ratio_;
+    SmoothingLengthRatioType h_ratio_;
     LimiterType limiter_;
 };
 template <class LimiterType, class ParticleScope>

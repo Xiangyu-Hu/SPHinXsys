@@ -13,8 +13,8 @@ Real DL = 5.366;              /**< Tank length. */
 Real DH = 5.366;              /**< Tank height. */
 Real LL = 2.0;                /**< Liquid column length. */
 Real LH = 1.0;                /**< Liquid column height. */
-Real resolution_ref = 0.025;  /**< Global reference resolution. */
-Real BW = resolution_ref * 4; /**< Extending width for BCs. */
+Real global_resolution = 0.025;  /**< Global reference resolution. */
+Real BW = global_resolution * 4; /**< Extending width for BCs. */
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 //----------------------------------------------------------------------
@@ -104,7 +104,7 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
@@ -141,11 +141,11 @@ int main(int ac, char *av[])
 
     /** Define the confinement condition for wall. */
     NearShapeSurface near_surface_wall(water_block, makeShared<WallShape>("Wall"));
-    near_surface_wall.getLevelSetShape().writeLevelSet(sph_system);
+    near_surface_wall.getLevelSetShape().writeLevelSet();
     fluid_dynamics::StaticConfinement confinement_condition_wall(near_surface_wall);
     /** Define the confinement condition for structure. */
     NearShapeSurface near_surface_triangle(water_block, makeShared<InverseShape<Triangle>>("Triangle"));
-    near_surface_triangle.getLevelSetShape().writeLevelSet(sph_system);
+    near_surface_triangle.getLevelSetShape().writeLevelSet();
     fluid_dynamics::StaticConfinement confinement_condition_triangle(near_surface_triangle);
     /** Push back the static confinement condition to corresponding dynamics. */
     update_density_by_summation.post_processes_.push_back(&confinement_condition_wall.density_summation_);

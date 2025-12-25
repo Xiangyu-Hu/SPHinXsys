@@ -11,10 +11,10 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 Real DL = 4.0;                        /**< box length. */
 Real DH = 4.0;                        /**< box height. */
-Real resolution_ref = 0.025;          /**< reference resolution. */
-Real BW = resolution_ref * 4.;        /**< wall width for BCs. */
-Real thickness = resolution_ref * 1.; /**< shell thickness. */
-Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
+Real global_resolution = 0.025;          /**< reference resolution. */
+Real BW = global_resolution * 4.;        /**< wall width for BCs. */
+Real thickness = global_resolution * 1.; /**< shell thickness. */
+Real level_set_refinement = global_resolution / (0.1 * thickness);
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Vec2d circle_center(2.0, 2.0);
 Real circle_radius = 0.5;
@@ -48,7 +48,7 @@ class Shell : public ComplexShape
   public:
     explicit Shell(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<GeometricShapeBall>(circle_center, circle_radius + resolution_ref);
+        add<GeometricShapeBall>(circle_center, circle_radius + global_resolution);
         subtract<GeometricShapeBall>(circle_center, circle_radius);
     }
 };
@@ -59,14 +59,14 @@ MultiPolygon createBeamConstrainShape()
 {
     // a beam base shape
     std::vector<Vecd> bottom_beam_base_shape{
-        Vecd(-1.5 * BW, -1.5 * BW), Vecd(-1.5 * BW, 0.5 * resolution_ref),
-        Vecd(0.5 * resolution_ref, 0.5 * resolution_ref),
-        Vecd(0.5 * resolution_ref, -1.5 * BW), Vecd(-1.5 * BW, -1.5 * BW)};
+        Vecd(-1.5 * BW, -1.5 * BW), Vecd(-1.5 * BW, 0.5 * global_resolution),
+        Vecd(0.5 * global_resolution, 0.5 * global_resolution),
+        Vecd(0.5 * global_resolution, -1.5 * BW), Vecd(-1.5 * BW, -1.5 * BW)};
 
     std::vector<Vecd> top_beam_base_shape{
-        Vecd(-1.5 * BW, DH - 0.5 * resolution_ref), Vecd(-1.5 * BW, DH + 1.5 * BW),
-        Vecd(0.5 * resolution_ref, DH + 1.5 * BW),
-        Vecd(0.5 * resolution_ref, DH - 0.5 * resolution_ref), Vecd(-1.5 * BW, DH - 0.5 * resolution_ref)};
+        Vecd(-1.5 * BW, DH - 0.5 * global_resolution), Vecd(-1.5 * BW, DH + 1.5 * BW),
+        Vecd(0.5 * global_resolution, DH + 1.5 * BW),
+        Vecd(0.5 * global_resolution, DH - 0.5 * global_resolution), Vecd(-1.5 * BW, DH - 0.5 * global_resolution)};
 
     MultiPolygon multi_polygon;
     multi_polygon.addAPolygon(bottom_beam_base_shape, ShapeBooleanOps::add);
@@ -81,7 +81,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
@@ -99,8 +99,8 @@ int main(int ac, char *av[])
     }
     else
     {
-        shell.defineBodyLevelSetShape(level_set_refinement_ratio, UsageType::Surface)
-            ->writeLevelSet(sph_system);
+        shell.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
+            ->writeLevelSet();
         shell.generateParticles<SurfaceParticles, Lattice>(thickness);
     }
 

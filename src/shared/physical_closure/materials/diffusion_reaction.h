@@ -305,7 +305,7 @@ class ReactionDiffusion : public AbstractDiffusion
     static constexpr int NumReactiveSpecies = ReactionType::NumSpecies;
 
   private:
-    UniquePtrsKeeper<DiffusionType> diffusion_ptrs_keeper_;
+    UniquePtrsKeeper<DiffusionType> diffusions_keeper_;
 
   protected:
     ReactionType *reaction_model_;
@@ -359,7 +359,7 @@ class ReactionDiffusion : public AbstractDiffusion
             std::find(species_names.begin(), species_names.end(), gradient_species_name) != std::end(species_names))
         {
             all_diffusions_.push_back(
-                diffusion_ptrs_keeper_.template createPtr<DiffusionType>(
+                diffusions_keeper_.template createPtr<DiffusionType>(
                     diffusion_species_name, gradient_species_name, std::forward<Args>(args)...));
         }
         else

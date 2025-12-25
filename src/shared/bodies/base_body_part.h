@@ -159,7 +159,7 @@ class BodyPartByCell : public BodyPart
 class BodyRegionByParticle : public BodyPartByParticle
 {
   private:
-    SharedPtrKeeper<Shape> shape_ptr_keeper_;
+    SharedPtrKeeper<Shape> shape_keeper_;
 
   public:
     BodyRegionByParticle(SPHBody &sph_body, Shape &body_part_shape);
@@ -209,7 +209,7 @@ class BodySurfaceLayer : public BodyPartByParticle
 class BodyRegionByCell : public BodyPartByCell
 {
   private:
-    SharedPtrKeeper<Shape> shape_ptr_keeper_;
+    SharedPtrKeeper<Shape> shape_keeper_;
 
   public:
     BodyRegionByCell(RealBody &real_body, Shape &body_part_shape);

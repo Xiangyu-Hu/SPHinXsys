@@ -12,8 +12,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 5.366;              /**< Tank length. */
 Real DH = 5.366;              /**< Tank height. */
-Real resolution_ref = 0.025;  /**< Initial reference particle spacing. */
-Real BW = resolution_ref * 4; /**< Extending width for wall boundary. */
+Real global_resolution = 0.025;  /**< Initial reference particle spacing. */
+Real BW = global_resolution * 4; /**< Extending width for wall boundary. */
 Real LL = 2.0 * BW;           /**< Inflow region length. */
 Real LH = 0.125;              /**< Inflows region height. */
 Real inlet_height = 1.0;      /**< Inflow location height */
@@ -88,7 +88,7 @@ class InletInflowCondition : public fluid_dynamics::EmitterInflowCondition
 int main(int ac, char *av[])
 {
     /** Build up a SPHSystem */
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.

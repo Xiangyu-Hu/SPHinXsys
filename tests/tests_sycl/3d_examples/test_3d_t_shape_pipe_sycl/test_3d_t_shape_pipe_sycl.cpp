@@ -205,12 +205,12 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
                                          })
                             ->diameter;
     Real min_vessels_diameter = min_diameter;
-    Real resolution_ref = min_diameter / params.number_of_particles;
+    Real global_resolution = min_diameter / params.number_of_particles;
     std::cout << "simulation_param.min_vessels_diameter = " << min_vessels_diameter << std::endl;
-    std::cout << "simulation_param.resolution_ref = " << resolution_ref << std::endl;
+    std::cout << "simulation_param.global_resolution = " << global_resolution << std::endl;
 
     // --- Section 5: Set Simulation Resolution and Boundary Emitter Length ---
-    Real boundary_length = 3.0 * resolution_ref;
+    Real boundary_length = 3.0 * global_resolution;
     for (auto &BoundaryParameter : boundaries)
         BoundaryParameter.L_emitter = boundary_length;
 
@@ -223,7 +223,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
     std::cout << "Domain lower bounds: " << system_bounds.lower_.transpose() << std::endl;
     std::cout << "Domain upper bounds: " << system_bounds.upper_.transpose() << std::endl;
 
-    SPHSystem sph_system(system_bounds, resolution_ref);
+    SPHSystem sph_system(system_bounds, global_resolution);
     sph_system.setRunParticleRelaxation(run_relaxation); // Tag for run particle relaxation for body-fitted distribution
     sph_system.setReloadParticles(reload_particles);     // Tag for computation with save particles distribution
 

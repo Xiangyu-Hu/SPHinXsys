@@ -9,13 +9,13 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real resolution_ref = 0.05;                         /**< reference resolution. */
-Real thickness = resolution_ref * 1.;               /**< shell thickness. */
+Real global_resolution = 0.05;                         /**< reference resolution. */
+Real thickness = global_resolution * 1.;               /**< shell thickness. */
 Real radius = 2.0;                                  /**< cylinder radius. */
 Real half_height = 1.0;                             /** Height of the cylinder. */
 Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surface. */
-int particle_number_mid_surface = int(2.0 * radius_mid_surface * Pi * 215.0 / 360.0 / resolution_ref);
-int particle_number_height = 2 * int(half_height / resolution_ref);
+int particle_number_mid_surface = int(2.0 * radius_mid_surface * Pi * 215.0 / 360.0 / global_resolution);
+int particle_number_height = 2 * int(half_height / global_resolution);
 int BWD = 1; /** Width of the boundary layer measured by number of particles. */
 Vec3d ball_center(radius / 2.0, 0.0, 0.0);
 Real ball_radius = 0.5;
@@ -45,9 +45,9 @@ class ParticleGenerator<SurfaceParticles, Cylinder> : public ParticleGenerator<S
             for (int j = 0; j < particle_number_height; j++)
             {
                 Real x = radius_mid_surface * cos(162.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-                Real y = (j - particle_number_height / 2) * resolution_ref + resolution_ref * 0.5;
+                Real y = (j - particle_number_height / 2) * global_resolution + global_resolution * 0.5;
                 Real z = radius_mid_surface * sin(162.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-                addPositionAndVolumetricMeasure(Vecd(x, y, z), resolution_ref * resolution_ref);
+                addPositionAndVolumetricMeasure(Vecd(x, y, z), global_resolution * global_resolution);
                 Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
                 addSurfaceProperties(n_0, thickness);
             }
@@ -65,7 +65,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vec3d(-radius - thickness, -half_height - thickness, -radius - thickness),
                                      Vec3d(radius + thickness, half_height + thickness, radius + thickness));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
@@ -86,7 +86,7 @@ int main(int ac, char *av[])
     }
     else
     {
-        ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+        ball.defineBodyLevelSetShape()->writeLevelSet();
         ball.generateParticles<BaseParticles, Lattice>();
     }
 

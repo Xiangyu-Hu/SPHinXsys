@@ -60,7 +60,7 @@ void SimbodyStateEngine::addStateVariable(std::string statevariablename,
     }
     /** Allocate space for a new state variable. */
     AddedStateVariable *asv =
-        added_state_variable_ptr_keeper_
+        added_state_variable_keeper_
             .createPtr<AddedStateVariable>(statevariablename, *this, invalidatestage);
     // Add it to the Component and let it take ownership
     addStateVariable(asv);

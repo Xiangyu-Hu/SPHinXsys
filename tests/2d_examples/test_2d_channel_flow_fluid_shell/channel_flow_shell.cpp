@@ -42,29 +42,29 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
 {
     Real DL_sponge_;
     Real BW_;
-    Real resolution_ref_;
+    Real global_resolution_;
     Real wall_thickness_;
 
   public:
     explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
-                               Real resolution_ref, Real wall_thickness)
+                               Real global_resolution, Real wall_thickness)
         : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
-          DL_sponge_(20 * resolution_ref), BW_(4 * resolution_ref),
-          resolution_ref_(resolution_ref), wall_thickness_(wall_thickness) {};
+          DL_sponge_(20 * global_resolution), BW_(4 * global_resolution),
+          global_resolution_(global_resolution), wall_thickness_(wall_thickness) {};
     void prepareGeometricData() override
     {
-        auto particle_number_mid_surface = int((DL + DL_sponge_ + 2 * BW_) / resolution_ref_);
+        auto particle_number_mid_surface = int((DL + DL_sponge_ + 2 * BW_) / global_resolution_);
         for (int i = 0; i < particle_number_mid_surface; i++)
         {
-            Real x = -DL_sponge_ - BW_ + (Real(i) + 0.5) * resolution_ref_;
+            Real x = -DL_sponge_ - BW_ + (Real(i) + 0.5) * global_resolution_;
             // upper wall
-            Real y1 = DH + 0.5 * resolution_ref_;
-            addPositionAndVolumetricMeasure(Vecd(x, y1), resolution_ref_);
+            Real y1 = DH + 0.5 * global_resolution_;
+            addPositionAndVolumetricMeasure(Vecd(x, y1), global_resolution_);
             Vec2d normal_direction_1 = Vec2d(0, 1.0);
             addSurfaceProperties(normal_direction_1, wall_thickness_);
             // lower wall
-            Real y2 = -0.5 * resolution_ref_; // lower wall
-            addPositionAndVolumetricMeasure(Vecd(x, y2), resolution_ref_);
+            Real y2 = -0.5 * global_resolution_; // lower wall
+            addPositionAndVolumetricMeasure(Vecd(x, y2), global_resolution_);
             Vec2d normal_direction_2 = Vec2d(0, -1.0);
             addSurfaceProperties(normal_direction_2, wall_thickness_);
         }
@@ -98,13 +98,13 @@ struct InflowVelocity
     }
 };
 
-StdVec<Vecd> createFluidAxialObservationPoints(Real resolution_ref)
+StdVec<Vecd> createFluidAxialObservationPoints(Real global_resolution)
 {
     StdVec<Vecd> observation_points;
     /** A line of measuring points at the entrance of the channel. */
     size_t number_observation_points = 51;
-    Real range_of_measure = DL - resolution_ref * 4.0;
-    Real start_of_measure = resolution_ref * 2.0;
+    Real range_of_measure = DL - global_resolution * 4.0;
+    Real start_of_measure = global_resolution * 2.0;
     Real y_position = 0.5 * DH;
     /** the measuring locations */
     for (size_t i = 0; i < number_observation_points; ++i)
@@ -115,13 +115,13 @@ StdVec<Vecd> createFluidAxialObservationPoints(Real resolution_ref)
     return observation_points;
 };
 
-StdVec<Vecd> createFluidRadialObservationPoints(Real resolution_ref)
+StdVec<Vecd> createFluidRadialObservationPoints(Real global_resolution)
 {
     StdVec<Vecd> observation_points;
     /** A line of measuring points at the entrance of the channel. */
     size_t number_observation_points = 21;
-    Real range_of_measure = DH - resolution_ref * 4.0;
-    Real start_of_measure = resolution_ref * 2.0;
+    Real range_of_measure = DH - global_resolution * 4.0;
+    Real start_of_measure = global_resolution * 2.0;
     Real x_position = 0.5 * DL;
     /** the measuring locations */
     for (size_t i = 0; i < number_observation_points; ++i)
@@ -133,10 +133,10 @@ StdVec<Vecd> createFluidRadialObservationPoints(Real resolution_ref)
 };
 } // namespace SPH
 
-void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
+void channel_flow_shell(const Real global_resolution, const Real wall_thickness)
 {
-    Real DL_sponge = resolution_ref * 20.0; /**< Sponge region to impose inflow condition. */
-    Real BW = resolution_ref * 4.0;         /**< Boundary width, determined by specific layer of boundary particles. */
+    Real DL_sponge = global_resolution * 20.0; /**< Sponge region to impose inflow condition. */
+    Real BW = global_resolution * 4.0;         /**< Boundary width, determined by specific layer of boundary particles. */
 
     /** Domain bounds of the system. */
     BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge - BW, -wall_thickness), Vec2d(DL + BW, DH + wall_thickness));
@@ -161,7 +161,7 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -171,13 +171,13 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
     wall_boundary.defineMaterial<Solid>();
-    wall_boundary.generateParticles<SurfaceParticles, WallBoundary>(resolution_ref, wall_thickness);
+    wall_boundary.generateParticles<SurfaceParticles, WallBoundary>(global_resolution, wall_thickness);
 
     ObserverBody fluid_axial_observer(sph_system, "FluidAxialObserver");
-    fluid_axial_observer.generateParticles<ObserverParticles>(createFluidAxialObservationPoints(resolution_ref));
+    fluid_axial_observer.generateParticles<ObserverParticles>(createFluidAxialObservationPoints(global_resolution));
 
     ObserverBody fluid_radial_observer(sph_system, "FluidRadialObserver");
-    fluid_radial_observer.generateParticles<ObserverParticles>(createFluidRadialObservationPoints(resolution_ref));
+    fluid_radial_observer.generateParticles<ObserverParticles>(createFluidRadialObservationPoints(global_resolution));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -363,9 +363,9 @@ void channel_flow_shell(const Real resolution_ref, const Real wall_thickness)
 
 TEST(channel_flow_shell, thickness_10x)
 { // for CI
-    const Real resolution_ref = 0.05;
-    const Real wall_thickness = 10 * resolution_ref;
-    channel_flow_shell(resolution_ref, wall_thickness);
+    const Real global_resolution = 0.05;
+    const Real wall_thickness = 10 * global_resolution;
+    channel_flow_shell(global_resolution, wall_thickness);
 }
 
 //----------------------------------------------------------------------

@@ -18,8 +18,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 0.004;                                             /**< Channel length. */
 Real DH = 0.001;                                             /**< Channel height. */
-Real resolution_ref = DH / 20.0;                             /**< Initial reference particle spacing. */
-Real BW = resolution_ref * 4;                                /**< Extending width for BCs. */
+Real global_resolution = DH / 20.0;                             /**< Initial reference particle spacing. */
+Real BW = global_resolution * 4;                                /**< Extending width for BCs. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
@@ -35,9 +35,9 @@ Real c_f = 10.0 * U_f;
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
-Vec2d bidirectional_buffer_halfsize = Vec2d(2.5 * resolution_ref, 0.5 * DH);
+Vec2d bidirectional_buffer_halfsize = Vec2d(2.5 * global_resolution, 0.5 * DH);
 Vec2d left_bidirectional_translation = bidirectional_buffer_halfsize;
-Vec2d right_bidirectional_translation = Vec2d(DL - 2.5 * resolution_ref, 0.5 * DH);
+Vec2d right_bidirectional_translation = Vec2d(DL - 2.5 * global_resolution, 0.5 * DH);
 Vec2d normal = Vec2d(1.0, 0.0);
 //----------------------------------------------------------------------
 //	Pressure boundary definition.
@@ -144,7 +144,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.

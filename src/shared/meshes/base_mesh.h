@@ -137,7 +137,7 @@ class MultiResolutionMeshField : public BaseMeshField
         BoundingBoxd tentative_bounds, Real Reference_grid_spacing, UnsignedInt buffer_width);
     virtual ~MultiResolutionMeshField() {};
 
-    UniquePtrsKeeper<MeshType> mesh_ptrs_keeper_;
+    UniquePtrsKeeper<MeshType> meshs_keeper_;
     MeshType *getMeshes() { return ca_meshes_.Data(); };
     MeshType &getMesh(UnsignedInt level) { return ca_meshes_.Data()[level]; };
     MeshType &getCoarsestMesh() { return ca_meshes_.Data()[0]; };

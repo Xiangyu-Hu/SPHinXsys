@@ -17,15 +17,15 @@ using namespace SPH;
  */
 Real DL = 11.0;                         /**< Channel length. */
 Real DH = 8.0;                          /**< Channel height. */
-Real resolution_ref = 0.1;              /** Initial particle spacing. */
-Real DL_sponge = resolution_ref * 20.0; /**< Sponge region to impose inflow condition. */
-Real BW = resolution_ref * 4.0;         /**< Extending width for BCs. */
+Real global_resolution = 0.1;              /** Initial particle spacing. */
+Real DL_sponge = global_resolution * 20.0; /**< Sponge region to impose inflow condition. */
+Real BW = global_resolution * 4.0;         /**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
 Real cx = 2.0;            /**< Center of fish in x direction. */
 Real cy = 4.0;            /**< Center of fish in y direction. */
 Real fish_length = 3.738; /**< Length of fish. */
-Real fish_shape_resolution = resolution_ref * 0.5;
+Real fish_shape_resolution = global_resolution * 0.5;
 Vecd tethering_point(-1.0, cy); /**< The tethering point. */
 /**
  * Material properties of the fluid.
@@ -162,8 +162,8 @@ MultiPolygon createFishHeadShape(SPHBody &sph_body)
 StdVec<Vecd> createObservationPoints()
 {
     StdVec<Vecd> observation_points;
-    observation_points.push_back(Vecd(cx + resolution_ref, cy));
-    observation_points.push_back(Vecd(cx + fish_length - resolution_ref, cy));
+    observation_points.push_back(Vecd(cx + global_resolution, cy));
+    observation_points.push_back(Vecd(cx + fish_length - global_resolution, cy));
     return observation_points;
 };
 //----------------------------------------------------------------------
@@ -199,7 +199,7 @@ int main(int ac, char *av[])
     /**
      * Build up context -- a SPHSystem.
      */
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem system(system_domain_bounds, global_resolution);
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */

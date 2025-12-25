@@ -73,10 +73,10 @@ class KernelTabulatedCK
     };
 
   protected:
+    Real kernel_size_;
     Real dimension_factor_1D_, dimension_factor_2D_, dimension_factor_3D_;
 
   private:
-    Real kernel_size_;
     Real dq_, delta_q_0_, delta_q_1_, delta_q_2_, delta_q_3_;
     Real w_1d[tabulated_size_], dw_1d[tabulated_size_], d2w_1d[tabulated_size_];
 };

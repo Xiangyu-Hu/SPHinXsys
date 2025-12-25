@@ -14,8 +14,8 @@ std::string full_path_to_file = "./input/coil.stl";
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real half_width = 55.0;
-Real resolution_ref = half_width / 30.0;
-Real BW = resolution_ref * 4;
+Real global_resolution = half_width / 30.0;
+Real BW = global_resolution * 4;
 Vec3d domain_lower_bound(-half_width - BW, -half_width - 1.5 * BW, -BW);
 Vec3d domain_upper_bound(half_width + BW, half_width + BW, 2.0 * half_width + BW);
 // Domain bounds of the system.
@@ -56,7 +56,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     // Tag for run particle relaxation for the initial body fitted distribution.
     sph_system.setRunParticleRelaxation(false);
     // Tag for reload initially relaxed particles.
@@ -69,7 +69,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody coil(sph_system, makeShared<Coil>("Coil"));
-    coil.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    coil.defineBodyLevelSetShape()->writeLevelSet();
     coil.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? coil.generateParticles<BaseParticles, Reload>(coil.getName())

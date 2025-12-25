@@ -63,10 +63,10 @@ class BodySurface;
 class SPHBody
 {
   private:
-    SharedPtrKeeper<Shape> shape_ptr_keeper_;
-    UniquePtrKeeper<SPHAdaptation> sph_adaptation_ptr_keeper_;
-    UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
-    UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
+    SharedPtrKeeper<Shape> shape_keeper_;
+    UniquePtrKeeper<SPHAdaptation> sph_adaptation_keeper_;
+    UniquePtrKeeper<BaseParticles> base_particles_keeper_;
+    UniquePtrKeeper<BaseMaterial> base_material_keeper_;
 
   protected:
     SPHSystem &sph_system_;
@@ -133,14 +133,14 @@ class SPHBody
     //----------------------------------------------------------------------
     //		Object factory template functions
     //----------------------------------------------------------------------
-    virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
+    virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_refinement_to_global = 1.0);
 
     template <class AdaptationType, typename... Args>
     void defineAdaptation(Args &&...args)
     {
         sph_adaptation_ =
-            sph_adaptation_ptr_keeper_.createPtr<AdaptationType>(
-                sph_system_, std::forward<Args>(args)...);
+            sph_adaptation_keeper_.createPtr<AdaptationType>(
+                sph_adaptation_->GlobalResolution(), std::forward<Args>(args)...);
     };
 
     template <typename... Args>
@@ -154,7 +154,7 @@ class SPHBody
     LevelSetShape *defineBodyLevelSetShape(Args &&...args)
     {
         LevelSetShape *level_set_shape =
-            shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *initial_shape_, std::forward<Args>(args)...);
+            shape_keeper_.resetPtr<LevelSetShape>(*this, *initial_shape_, std::forward<Args>(args)...);
         initial_shape_ = level_set_shape;
         return level_set_shape;
     }
@@ -163,7 +163,8 @@ class SPHBody
     LevelSetShape *defineBodyLevelSetShape(const ExecutionPolicy &ex_policy, Args &&...args)
     {
         LevelSetShape *level_set_shape =
-            shape_ptr_keeper_.resetPtr<LevelSetShape>(ex_policy, *this, *initial_shape_, std::forward<Args>(args)...);
+            shape_keeper_.resetPtr<LevelSetShape>(
+                ex_policy, sph_system_, *sph_adaptation_, *initial_shape_, std::forward<Args>(args)...);
         initial_shape_ = level_set_shape;
         return level_set_shape;
     };
@@ -171,7 +172,7 @@ class SPHBody
     template <class MaterialType = BaseMaterial, typename... Args>
     MaterialType *defineMaterial(Args &&...args)
     {
-        MaterialType *material = base_material_ptr_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
+        MaterialType *material = base_material_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
         base_material_ = material;
         return material;
     };
@@ -180,7 +181,7 @@ class SPHBody
     Closure<BaseModel, AuxiliaryModels...> *defineClosure(Args &&...args)
     {
         Closure<BaseModel, AuxiliaryModels...> *closure =
-            base_material_ptr_keeper_.createPtr<Closure<BaseModel, AuxiliaryModels...>>(std::forward<Args>(args)...);
+            base_material_keeper_.createPtr<Closure<BaseModel, AuxiliaryModels...>>(std::forward<Args>(args)...);
         base_material_ = closure;
         return closure;
     };
@@ -192,7 +193,7 @@ class SPHBody
     template <class ParticleType, class... Parameters, typename... Args>
     ParticleType *generateParticles(Args &&...args)
     {
-        ParticleType *particles = base_particles_ptr_keeper_.createPtr<ParticleType>(*this, base_material_);
+        ParticleType *particles = base_particles_keeper_.createPtr<ParticleType>(*this, base_material_);
         ParticleGenerator<ParticleType, Parameters...> particle_generator(*this, *particles, std::forward<Args>(args)...);
         particle_generator.generateParticlesWithGeometricVariables();
         particles->initializeBasicParticleVariables();

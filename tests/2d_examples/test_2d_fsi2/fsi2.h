@@ -15,9 +15,9 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 11.0;                         /**< Channel length. */
 Real DH = 4.1;                          /**< Channel height. */
-Real resolution_ref = 0.1;              /**< Global reference resolution. */
-Real DL_sponge = resolution_ref * 20.0; /**< Sponge region to impose inflow condition. */
-Real BW = resolution_ref * 4.0;         /**< Boundary width, determined by specific layer of boundary particles. */
+Real global_resolution = 0.1;              /**< Global reference resolution. */
+Real DL_sponge = global_resolution * 20.0; /**< Sponge region to impose inflow condition. */
+Real BW = global_resolution * 4.0;         /**< Boundary width, determined by specific layer of boundary particles. */
 Vec2d insert_circle_center(2.0, 2.0);   /**< Location of the cylinder center. */
 Real insert_circle_radius = 0.5;        /**< Radius of the cylinder. */
 Real bh = 0.4 * insert_circle_radius;   /**< Height of the beam. */
@@ -171,8 +171,8 @@ StdVec<Vecd> createObservationPoints()
     StdVec<Vecd> observation_points;
     /** A line of measuring points at the entrance of the channel. */
     size_t number_observation_points = 21;
-    Real range_of_measure = DH - resolution_ref * 4.0;
-    Real start_of_measure = resolution_ref * 2.0;
+    Real range_of_measure = DH - global_resolution * 4.0;
+    Real start_of_measure = global_resolution * 2.0;
     /** the measuring locations */
     for (size_t i = 0; i < number_observation_points; ++i)
     {

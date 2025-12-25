@@ -10,8 +10,8 @@ namespace SPH
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
     : sph_system_(sph_system), body_name_(name), newly_updated_(true),
       base_particles_(nullptr), is_bound_set_(false), initial_shape_(&shape),
-      sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(sph_system.ReferenceResolution())),
-      base_material_(base_material_ptr_keeper_.createPtr<BaseMaterial>())
+      sph_adaptation_(sph_adaptation_keeper_.createPtr<SPHAdaptation>(sph_system.GlobalResolution())),
+      base_material_(base_material_keeper_.createPtr<BaseMaterial>())
 {
     sph_system_.addSPHBody(this);
 }
@@ -25,7 +25,7 @@ SPHBody::SPHBody(SPHSystem &sph_system, const std::string &name)
 SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &name)
     : SPHBody(sph_system, *shape_ptr.get(), name)
 {
-    shape_ptr_keeper_.assignPtr(shape_ptr);
+    shape_keeper_.assignPtr(shape_ptr);
 }
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
@@ -74,9 +74,9 @@ BoundingBoxd SPHBody::getSPHBodyBounds()
     return is_bound_set_ ? bound_ : initial_shape_->getBounds();
 }
 //=================================================================================================//
-void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
+void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_refinement_to_global)
 {
-    sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
+    sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_refinement_to_global);
 }
 //=================================================================================================//
 BaseCellLinkedList &RealBody::getCellLinkedList()

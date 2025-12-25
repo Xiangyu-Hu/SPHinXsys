@@ -11,8 +11,8 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 Real DL = 6.0;                   /**< Tank length. */
 Real DH = 1.0;                   /**< Tank height. */
-Real resolution_ref = DH / 20.0; /**< Initial reference particle spacing. */
-Real BW = resolution_ref * 4;    /**< Extending width for BCs. */
+Real global_resolution = DH / 20.0; /**< Initial reference particle spacing. */
+Real BW = global_resolution * 4;    /**< Extending width for BCs. */
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 //	Material parameters.
@@ -73,7 +73,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.

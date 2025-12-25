@@ -90,7 +90,7 @@ template <class AdaptationType, class LimiterType, typename... CommonControlType
 class TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonControlTypes...>
     : public fluid_dynamics::TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>
 {
-    using SmoothingRatioType = typename AdaptationType::SmoothingRatioType;
+    using SmoothingLengthRatioType = typename AdaptationType::SmoothingLengthRatioType;
 
   public:
     explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2)
@@ -147,7 +147,7 @@ class TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonCont
     const Real h_ref_, correction_scaling_;
     Real *Vol_, *pos_div_;
     Vecd *pos_;
-    SmoothingRatioType h_ratio_;
+    SmoothingLengthRatioType h_ratio_;
     LimiterType limiter_;
     int *indicator_, *corner_indicator_;
     Vecd *surface_normal_;

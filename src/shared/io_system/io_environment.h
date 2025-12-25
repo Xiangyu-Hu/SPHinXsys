@@ -50,7 +50,7 @@ class SPHSystem;
 class IOEnvironment
 {
   private:
-    UniquePtrKeeper<ParameterizationIO> parameterization_io_ptr_keeper_;
+    UniquePtrKeeper<ParameterizationIO> parameterization_io_keeper_;
 
   public:
     explicit IOEnvironment(SPHSystem &sph_system);

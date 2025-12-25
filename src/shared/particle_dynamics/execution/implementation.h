@@ -95,7 +95,7 @@ template <class ExecutionPolicy, class LocalDynamicsType, class ComputingKernelT
 class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     : public Implementation<Base>
 {
-    UniquePtrKeeper<ComputingKernelType> kernel_ptr_keeper_;
+    UniquePtrKeeper<ComputingKernelType> kernel_keeper_;
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
@@ -113,7 +113,7 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
         {
             computing_kernel_ = allocateComputingKernel<ComputingKernelType>(ExecutionPolicy{});
             ComputingKernelType *temp_kernel =
-                kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
+                kernel_keeper_.template createPtr<ComputingKernelType>(
                     ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
             copyComputingKernel(ExecutionPolicy{}, temp_kernel, computing_kernel_);
             this->setUpdated();
@@ -131,7 +131,7 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     void overwriteComputingKernel(Args &&...args)
     {
         ComputingKernelType *temp_kernel =
-            kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
+            kernel_keeper_.template createPtr<ComputingKernelType>(
                 ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
         copyComputingKernel(ExecutionPolicy{}, temp_kernel, computing_kernel_);
         this->setUpdated();

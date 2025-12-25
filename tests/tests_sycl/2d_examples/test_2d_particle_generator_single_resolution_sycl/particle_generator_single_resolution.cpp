@@ -20,7 +20,7 @@ std::string input_body = "./input/SPHinXsys-2d.dat";
 Real DL = 2.5;                          /**< InputBody length right part. */
 Real DL1 = 2.5;                         /**< InputBody length left part. */
 Real DH = 5.0;                          /**< InputBody height. */
-Real resolution_ref = (DL + DL1) / 120; /**< Reference resolution. */
+Real global_resolution = (DL + DL1) / 120; /**< Reference resolution. */
 BoundingBoxd system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	The main program
@@ -30,7 +30,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -38,14 +38,14 @@ int main(int ac, char *av[])
     MultiPolygon original_logo;
     original_logo.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
     ComplexShape input_shape("SPHInXsysLogo");
-    input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * resolution_ref, original_logo);
+    input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * global_resolution, original_logo);
     input_shape.subtract<MultiPolygonShape>(original_logo);
     RealBody input_body(sph_system, input_shape);
     LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(par_ck, 2.0)
                                          ->addPackageVariableToWrite<Real>("KernelWeight")
                                          ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
                                          ->addCellVariableToWrite<int>("CellContainID")
-                                         ->writeLevelSet(sph_system);
+                                         ->writeLevelSet();
     input_body.generateParticles<BaseParticles, Lattice>();
 
     MultiPolygonShape filler_shape(original_logo, "Filler");
