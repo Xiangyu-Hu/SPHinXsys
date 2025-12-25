@@ -186,12 +186,12 @@ TriangleMeshShapeSphere::TriangleMeshShapeSphere(Real radius, int resolution, Ve
 }
 //=================================================================================================//
 TriangleMeshShapeCylinder::TriangleMeshShapeCylinder(
-    SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution,
+    Vecd axis, Real radius, Real halflength, int resolution,
     Vecd translation, const std::string &shape_name)
     : TriangleMeshShape(shape_name)
 {
     SimTK::PolygonalMesh poly_mesh =
-        SimTK::PolygonalMesh::createCylinderMesh(axis, radius, halflength, resolution);
+        SimTK::PolygonalMesh::createCylinderMesh(SimTK::UnitVec3(axis[0], axis[1], axis[2]), radius, halflength, resolution);
     initializeFromPolygonalMesh(
         poly_mesh.transformMesh(SimTKVec3(translation[0], translation[1], translation[2])));
 }

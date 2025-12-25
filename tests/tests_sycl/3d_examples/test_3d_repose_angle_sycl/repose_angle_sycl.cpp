@@ -30,7 +30,7 @@ class SoilBlock : public ComplexShape
     explicit SoilBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd translation_column(DL / 2, 0.5 * height, DW / 2);
-        add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0, 1.0, 0), inner_circle_radius,
+        add<TriangleMeshShapeCylinder>(Vec3d(0, 1.0, 0), inner_circle_radius,
                                        0.5 * height, resolution, translation_column);
     }
 };
