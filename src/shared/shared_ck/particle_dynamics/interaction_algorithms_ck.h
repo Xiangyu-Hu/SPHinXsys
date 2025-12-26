@@ -111,6 +111,11 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>
 
     template <class UpdateType, typename... Args>
     auto &addPostStateDynamics(Args &&...args);
+    
+    template <template <typename...> class UpdateType, typename... ControlParameters,
+              class DynamicsIdentifier, typename... Args>
+    auto &addPostStateDynamics(DynamicsIdentifier &dynamics_identifier, Args &&...args);          
+    
     auto &addPostStateDynamics(BaseDynamics<void> &state_dynamics);
 
     template <class UpdateType, typename... Args>

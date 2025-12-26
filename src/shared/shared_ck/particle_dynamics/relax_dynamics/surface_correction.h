@@ -73,12 +73,15 @@ class LevelsetBounding : public BaseLocalDynamics<BodyPartByCell>
     Real constrained_distance_;
 };
 
-class LevelsetKernelGradientIntegral : public LocalDynamics
+template <class DynamicIdentifier>
+class LevelsetKernelGradientIntegral : public BaseLocalDynamics<DynamicIdentifier>
 {
+    using BaseAdaptation = typename DynamicIdentifier::BaseAdaptation;
+    using SmoothingLengthRatio = typename BaseAdaptation::SmoothingLengthRatioType;
     using ProbeKernelGradientIntegral = LevelSet::ProbeLevelSet<Vecd>;
 
   public:
-    LevelsetKernelGradientIntegral(SPHBody &sph_body, LevelSetShape &level_set_shape);
+    LevelsetKernelGradientIntegral(DynamicIdentifier &identfier, LevelSetShape &level_set_shape);
     virtual ~LevelsetKernelGradientIntegral() {};
 
     class UpdateKernel
@@ -89,17 +92,19 @@ class LevelsetKernelGradientIntegral : public LocalDynamics
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            residual_[index_i] -= 2.0 * kernel_gradient_integral_(pos_[index_i], 1.0);
+            residual_[index_i] -= 2.0 * kernel_gradient_integral_(pos_[index_i], h_ratio_(index_i));
         };
 
       protected:
         Vecd *pos_, *residual_;
+        SmoothingLengthRatio h_ratio_;
         ProbeKernelGradientIntegral kernel_gradient_integral_;
     };
 
   protected:
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Vecd> *dv_residual_;
+    BaseAdaptation &adaptaion_;
     LevelSet &level_set_;
 };
 
