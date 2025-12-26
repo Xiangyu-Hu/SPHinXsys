@@ -149,7 +149,7 @@ Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::Neighbor(
 template <class ExecutionPolicy, class EncloserType>
 Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::SmoothingKernel(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : BaseKernel(encloser),
+    : BaseKernel(ex_policy, encloser),
       src_inv_h_ref_(encloser.src_inv_h_ref_), tar_inv_h_ref_(encloser.tar_inv_h_ref_),
       src_h_ratio_(encloser.dv_src_h_ratio_->DelegatedData(ex_policy)),
       tar_h_ratio_(encloser.dv_tar_h_ratio_->DelegatedData(ex_policy)) {}

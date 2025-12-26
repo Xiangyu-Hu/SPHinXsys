@@ -50,7 +50,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &airfoil = sph_system.addAdaptiveBody<RealBody>(
         AdaptiveNearSurface(global_resolution, 1.15, 1.0, 3), makeShared<ImportModel>("AirFoil"));
-    LevelSetShape *level_set_shape = airfoil.defineBodyLevelSetShape()
+    LevelSetShape *level_set_shape = airfoil.defineBodyLevelSetShape(par_ck)
                                          ->cleanLevelSet()
                                          ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
                                          ->writeLevelSet();

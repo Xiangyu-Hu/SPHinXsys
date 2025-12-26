@@ -13,7 +13,7 @@ AdaptiveNearSurface::LocalSpacing::ComputingKernel::
       signed_distance_(ex_policy, encloser.level_set_, "LevelSet"),
       spacing_ref_(encloser.spacing_ref_), finest_spacing_bound_(encloser.finest_spacing_bound_),
       coarsest_spacing_bound_(encloser.coarsest_spacing_bound_),
-      kernel_size_(smoothing_kerel_.KernelSize()), inv_w0_(10 / smoothing_kerel_.normalized_W(0)) {}
+      kernel_size_(smoothing_kerel_.KernelSize()), inv_w0_(1.0 / smoothing_kerel_.normalized_W(0)) {}
 //=================================================================================================//
 inline Real AdaptiveNearSurface::LocalSpacing::ComputingKernel::operator()(const Vecd &position)
 {
