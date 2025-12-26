@@ -212,7 +212,7 @@ Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::NeighborCriterion::
       src_h_ratio_(encloser.dv_src_h_ratio_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 inline bool Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::NeighborCriterion::
-operator()(UnsignedInt i, UnsignedInt j) const
+operator()(UnsignedInt j, UnsignedInt i) const
 {
     Real inv_h_i = src_h_ratio_[i] * src_inv_h_ref_;
     return (inv_h_i * (src_pos_[i] - tar_pos_[j])).squaredNorm() < kernel_size_squared_;

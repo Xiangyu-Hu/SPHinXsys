@@ -109,7 +109,6 @@ int main(int ac, char *av[])
     //	First output before the simulation.
     //----------------------------------------------------------------------
     body_state_recorder.writeToFile();
-    cell_linked_list_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------

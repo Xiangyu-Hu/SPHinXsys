@@ -195,7 +195,7 @@ class Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public Neighb
       public:
         template <class ExecutionPolicy, class EncloserType>
         NeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        bool operator()(UnsignedInt i, UnsignedInt j) const;
+        bool operator()(UnsignedInt j, UnsignedInt i) const; // Note the reverse order of indices
     };
 
     class ReverseNeighborCriterion
