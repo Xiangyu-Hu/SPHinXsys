@@ -1,4 +1,4 @@
-#include "neighbor_method.hpp"
+#include "neighbor_method.h"
 
 namespace SPH
 {

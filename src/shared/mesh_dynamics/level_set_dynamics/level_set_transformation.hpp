@@ -1,9 +1,10 @@
+#ifndef LEVEL_SET_TRANSFORMATION_HPP
+#define LEVEL_SET_TRANSFORMATION_HPP
+
 #include "level_set_transformation.h"
 
 #include "mesh_iterators.hpp"
-
-#ifndef LEVEL_SET_TRANSFORMATION_HPP
-#define LEVEL_SET_TRANSFORMATION_HPP
+#include "neighbor_method.hpp"
 
 namespace SPH
 {

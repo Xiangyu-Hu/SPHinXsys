@@ -102,8 +102,9 @@ class PositionRelaxationCK : public LocalDynamics
 template <class DynamicIdentifier>
 class UpdateSmoothingLengthRatio : public BaseLocalDynamics<DynamicIdentifier>
 {
-    using SpacingAdaptation = typename DynamicIdentifier::SpacingAdaptation;
-    using AdaptationKerenl = typename SpacingAdaptation::ComptutingKernel;
+    using Adaptation = typename DynamicIdentifier::Adaptation;
+    using LocalSpacing = typename Adaptation::LocalSpacing;
+    using LocalSpacingKerenl = typename LocalSpacing::ComputingKernel;
 
   public:
     template <typename... Args>
@@ -112,7 +113,7 @@ class UpdateSmoothingLengthRatio : public BaseLocalDynamics<DynamicIdentifier>
           dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
           dv_h_ratio_(this->particles_->template getVariableByName<Real>("SmoothingLengthRatio")),
           dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-          adaptation_method_(identfier.getAdaptation(), std::forward<Args>(args)...),
+          local_spacing_method_(identfier.getAdaptation(), std::forward<Args>(args)...),
           reference_spacing_(identfier.getAdaptation().ReferenceSpacing()){};
     virtual ~UpdateSmoothingLengthRatio() {};
 
@@ -124,12 +125,12 @@ class UpdateSmoothingLengthRatio : public BaseLocalDynamics<DynamicIdentifier>
             : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
               h_ratio_(encloser.dv_h_ratio_->DelegatedData(ex_policy)),
               Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-              spacing_adaptation_(encloser.adaptation_method_),
+              local_spacing_(ex_policy, encloser.local_spacing_method_),
               reference_spacing_(encloser.reference_spacing_){};
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            Real local_spacing = spacing_adaptation_(pos_[index_i]);
+            Real local_spacing = local_spacing_(pos_[index_i]);
             h_ratio_[index_i] = reference_spacing_ / local_spacing;
             Vol_[index_i] = math::pow(local_spacing, Dimensions);
         };
@@ -137,14 +138,14 @@ class UpdateSmoothingLengthRatio : public BaseLocalDynamics<DynamicIdentifier>
       protected:
         Vecd *pos_;
         Real *h_ratio_, *Vol_;
-        AdaptationKerenl spacing_adaptation_;
+        LocalSpacingKerenl local_spacing_;
         Real reference_spacing_;
     };
 
   protected:
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_h_ratio_, *dv_Vol_;
-    SpacingAdaptation adaptation_method_;
+    LocalSpacing local_spacing_method_;
     Real reference_spacing_;
 };
 } // namespace SPH

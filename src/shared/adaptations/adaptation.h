@@ -33,6 +33,7 @@
 #include "base_kernel.h"
 #include "base_mesh.hpp"
 #include "execution_policy.h"
+#include "level_set.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH
@@ -40,8 +41,8 @@ namespace SPH
 
 class Shape;
 class BaseParticles;
-class LevelSet;
 class BaseCellLinkedList;
+class LevelSetShape;
 
 /**
  * @class SPHAdaptation
@@ -70,20 +71,20 @@ class SPHAdaptation
     virtual ~SPHAdaptation() {};
 
     Real GlobalResolution() const { return global_resolution_; }
-    int LocalRefinementLevel()const  { return local_refinement_level_; };
+    int LocalRefinementLevel() const { return local_refinement_level_; };
     Real SmoothingLengthSpacingRatio() { return h_spacing_ratio_; };
     Real ReferenceSpacing() const { return spacing_ref_; };
     Real MinimumSpacing() const { return spacing_min_; };
-    Real ReferenceSmoothingLength() const{ return h_ref_; };
-    Real MinimumSmoothingLength() const{ return h_ref_ / h_ratio_max_; };
+    Real ReferenceSmoothingLength() const { return h_ref_; };
+    Real MinimumSmoothingLength() const { return h_ref_ / h_ratio_max_; };
     Kernel *getKernel() const { return kernel_ptr_.get(); };
     SharedPtr<Kernel> getKernelPtr() const { return kernel_ptr_; };
-    Real LatticeNumberDensity() const{ return sigma0_ref_; };
+    Real LatticeNumberDensity() const { return sigma0_ref_; };
     Real NumberDensityScaleFactor(Real smoothing_length_ratio);
     virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
     void resetAdaptationRatios(Real h_spacing_ratio, Real new_refinement_to_global = 1.0);
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) {};
-    Real SmoothingLengthByLevel(int level)const { return h_ref_ / pow(2.0, level); };
+    Real SmoothingLengthByLevel(int level) const { return h_ref_ / pow(2.0, level); };
     DiscreteVariable<Real> *AdaptiveSmoothingLength(BaseParticles &base_particles);
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
@@ -190,6 +191,29 @@ class AdaptiveNearSurface : public AdaptiveByShape
     virtual ~AdaptiveNearSurface() {};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
+
+    class LocalSpacing
+    {
+        using ProbeSignedDistance = LevelSet::ProbeLevelSet<Real>;
+        SharedPtr<Kernel> kernel_ptr_;
+        LevelSet &level_set_;
+        Real spacing_ref_, finest_spacing_bound_, coarsest_spacing_bound_;
+
+      public:
+        LocalSpacing(AdaptiveNearSurface &encloser, LevelSetShape &level_set_shape);
+        class ComputingKernel
+        {
+            KernelTabulatedCK smoothing_kerel_;
+            ProbeSignedDistance signed_distance_;
+            Real spacing_ref_, finest_spacing_bound_, coarsest_spacing_bound_;
+            Real kernel_size_, inv_w0_;
+
+          public:
+            template <class ExecutionPolicy, class EncloserType>
+            ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+            Real operator()(const Vecd &position);
+        };
+    };
 };
 
 /**

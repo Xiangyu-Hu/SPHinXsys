@@ -1,7 +1,7 @@
-#include "level_set_correction.h"
-
 #ifndef LEVEL_SET_CORRECTION_HPP
 #define LEVEL_SET_CORRECTION_HPP
+
+#include "level_set_correction.h"
 
 namespace SPH
 {

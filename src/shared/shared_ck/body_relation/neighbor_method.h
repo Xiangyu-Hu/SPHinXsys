@@ -29,13 +29,13 @@
 #ifndef NEIGHBOR_METHOD_H
 #define NEIGHBOR_METHOD_H
 
-#include "adaptation.h"
 #include "kernel_tabulated_ck.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH
 {
-class BodyPartitionSpatial;
+class SPHAdaptation;
+class AdaptiveSmoothingLength;
 
 template <typename...>
 class Neighbor;
@@ -45,7 +45,7 @@ class Neighbor<Base>
 {
   public:
     Neighbor(SharedPtr<Kernel> base_kernel,
-                   DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos);
+             DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos);
     Neighbor(SharedPtr<Kernel> base_kernel);
     ~Neighbor() {};
 
@@ -62,12 +62,12 @@ class Neighbor<Base>
       protected:
         Vecd *src_pos_, *tar_pos_;
 
-        inline Real W(const Real &inv_h_squared, const Vec2d &displacement, const Real &inv_h) const;
-        inline Real W(const Real &inv_h_cubed, const Vec3d &displacement, const Real &inv_h) const;
-        inline Real dW(const Real &inv_h_cubed, const Vec2d &displacement, const Real &inv_h) const;
-        inline Real dW(const Real &inv_h_fourth, const Vec3d &displacement, const Real &inv_h) const;
-        inline Real d2W(const Real &inv_h_fourth, const Vec2d &displacement, const Real &inv_h) const;
-        inline Real d2W(const Real &inv_h_fifth, const Vec3d &displacement, const Real &inv_h) const;
+        Real W(const Real &inv_h_squared, const Vec2d &displacement, const Real &inv_h) const;
+        Real W(const Real &inv_h_cubed, const Vec3d &displacement, const Real &inv_h) const;
+        Real dW(const Real &inv_h_cubed, const Vec2d &displacement, const Real &inv_h) const;
+        Real dW(const Real &inv_h_fourth, const Vec3d &displacement, const Real &inv_h) const;
+        Real d2W(const Real &inv_h_fourth, const Vec2d &displacement, const Real &inv_h) const;
+        Real d2W(const Real &inv_h_fifth, const Vec3d &displacement, const Real &inv_h) const;
     };
 
   protected:
@@ -84,7 +84,7 @@ class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
   public:
     template <typename SourceIdentifier, typename TargetIdentifier>
     Neighbor(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier,
-                   DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos);
+             DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos);
     Neighbor(SharedPtr<Kernel> base_kernel, Real h, Real search_increment);
 
     class SmoothingKernel : public BaseKernel
@@ -97,13 +97,13 @@ class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
         SmoothingKernel(Neighbor<SPHAdaptation, SPHAdaptation> &encloser);
         inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return W(vec_r_ij(i, j)); };
         inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return dW(vec_r_ij(i, j)); };
-        inline Real W(const Vec2d &displacement) const;
-        inline Real W(const Vec3d &displacement) const;
-        inline Real dW(const Vec2d &displacement) const;
-        inline Real dW(const Vec3d &displacement) const;
-        inline Real d2W(const Vec2d &displacement) const;
-        inline Real d2W(const Vec3d &displacement) const;
-        Real CutOffRadius() const { return kernel_size_ / inv_h_; }
+        Real W(const Vec2d &displacement) const;
+        Real W(const Vec3d &displacement) const;
+        Real dW(const Vec2d &displacement) const;
+        Real dW(const Vec3d &displacement) const;
+        Real d2W(const Vec2d &displacement) const;
+        Real d2W(const Vec3d &displacement) const;
+        inline Real CutOffRadius() const { return kernel_size_ / inv_h_; }
     };
     typedef SmoothingKernel NeighborKernel;
 
@@ -115,7 +115,7 @@ class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
       public:
         template <class ExecutionPolicy, class EncloserType>
         NeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        inline bool operator()(UnsignedInt j, UnsignedInt i) const; // Note the reverse order of indices
+        bool operator()(UnsignedInt j, UnsignedInt i) const; // Note the reverse order of indices
     };
 
     class ReverseNeighborCriterion
@@ -159,7 +159,7 @@ class Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public Neighb
   public:
     template <typename SourceIdentifier, typename TargetIdentifier>
     Neighbor(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier,
-                   DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos);
+             DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos);
 
     class SmoothingKernel : public Neighbor<Base>::SmoothingKernel
     {
@@ -175,13 +175,13 @@ class Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public Neighb
         Real src_inv_h_ref_, tar_inv_h_ref_;
         Real *src_h_ratio_, *tar_h_ratio_;
 
-        inline Real invSmoothingLength(UnsignedInt i, UnsignedInt j) const;
-        inline Real W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
-        inline Real W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
-        inline Real dW(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
-        inline Real dW(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
-        inline Real d2W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
-        inline Real d2W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
+        Real invSmoothingLength(UnsignedInt i, UnsignedInt j) const;
+        Real W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
+        Real W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
+        Real dW(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
+        Real dW(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
+        Real d2W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
+        Real d2W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
     };
     typedef SmoothingKernel NeighborKernel;
 
@@ -195,7 +195,7 @@ class Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public Neighb
       public:
         template <class ExecutionPolicy, class EncloserType>
         NeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        inline bool operator()(UnsignedInt i, UnsignedInt j) const;
+        bool operator()(UnsignedInt i, UnsignedInt j) const;
     };
 
     class ReverseNeighborCriterion
@@ -208,7 +208,7 @@ class Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public Neighb
       public:
         template <class ExecutionPolicy, class EncloserType>
         ReverseNeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        inline bool operator()(UnsignedInt i, UnsignedInt j) const;
+        bool operator()(UnsignedInt i, UnsignedInt j) const;
     };
 
     class SearchBox
@@ -216,7 +216,7 @@ class Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public Neighb
       public:
         template <class ExecutionPolicy, class EncloserType>
         SearchBox(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        inline BoundingBoxi operator()(UnsignedInt i) const;
+        BoundingBoxi operator()(UnsignedInt i) const;
 
       private:
         Real src_inv_h_ref_, tar_inv_h_min_;

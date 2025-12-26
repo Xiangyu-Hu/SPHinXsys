@@ -95,6 +95,7 @@ int main(int ac, char *av[])
     ParticleDynamicsGroup update_particle_position;
     update_particle_position.add(&main_methods.addStateDynamics<PositionRelaxationCK>(airfoil));
     update_particle_position.add(&main_methods.addStateDynamics<LevelsetBounding>(near_body_surface));
+    update_particle_position.add(&main_methods.addStateDynamics<UpdateSmoothingLengthRatio>(airfoil, *level_set_shape));
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------

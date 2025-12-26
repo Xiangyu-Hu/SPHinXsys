@@ -1,7 +1,8 @@
 #include "level_set.hpp"
+
 #include "adaptation.h"
 #include "base_kernel.h"
-#include <type_traits>
+#include "level_set_initialization.hpp"
 
 namespace SPH
 {

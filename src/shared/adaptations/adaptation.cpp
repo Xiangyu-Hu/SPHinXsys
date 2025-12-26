@@ -2,7 +2,7 @@
 
 #include "base_particles.hpp"
 #include "cell_linked_list.h"
-#include "level_set.h"
+#include "level_set_shape.h"
 
 namespace SPH
 {
@@ -156,6 +156,12 @@ Real AdaptiveNearSurface::getLocalSpacing(Shape &shape, const Vecd &position)
     Real phi = fabs(shape.findSignedDistance(position));
     return smoothedSpacing(phi, spacing_ref_);
 }
+//=================================================================================================//
+AdaptiveNearSurface::LocalSpacing::LocalSpacing(
+    AdaptiveNearSurface &encloser, LevelSetShape &level_set_shape)
+    : kernel_ptr_(encloser.kernel_ptr_), level_set_(level_set_shape.getLevelSet()),
+      spacing_ref_(encloser.spacing_ref_), finest_spacing_bound_(encloser.finest_spacing_bound_),
+      coarsest_spacing_bound_(encloser.coarsest_spacing_bound_) {}
 //=================================================================================================//
 Real AdaptiveWithinShape::getLocalSpacing(Shape &shape, const Vecd &position)
 {

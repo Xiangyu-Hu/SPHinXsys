@@ -42,6 +42,7 @@ class AdaptiveBody<AdaptationType, BaseBodyType> : public BaseBodyType
     AdaptationType adaptation_;
 
   public:
+    typedef AdaptationType Adaptation;
     using BaseAdaptation = typename AdaptationType::BaseAdaptation;
     using SpacingAdaptation = typename AdaptationType::SpacingAdaptation;
 

@@ -29,17 +29,17 @@
 #ifndef LEVEL_SET_H
 #define LEVEL_SET_H
 
-#include "adaptation.h"
 #include "base_geometry.h"
 #include "kernel_tabulated_ck.h"
-#include "level_set_correction.hpp"
-#include "level_set_initialization.hpp"
-#include "level_set_transformation.hpp"
 #include "mesh_data_package_sort.h"
 #include "mesh_dynamics_algorithm.h"
 #include "sphinxsys_variable.h"
+#include "neighbor_method.h"
+
 namespace SPH
 {
+class SPHAdaptation;
+
 enum class UsageType
 {
     Volumetric,
