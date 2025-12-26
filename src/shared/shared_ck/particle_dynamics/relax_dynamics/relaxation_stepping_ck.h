@@ -72,10 +72,18 @@ class RelaxationScalingCK : public LocalDynamicsReduce<ReduceMax>
     Real h_ref_;
 };
 
-class PositionRelaxationCK : public LocalDynamics
+template <class DynamicIdentifier>
+class PositionRelaxationCK : public BaseLocalDynamics<DynamicIdentifier>
 {
+    using BaseAdaptation = typename DynamicIdentifier::BaseAdaptation;
+    using SmoothingLengthRatio = typename BaseAdaptation::SmoothingLengthRatioType;
+
   public:
-    explicit PositionRelaxationCK(SPHBody &sph_body);
+    explicit PositionRelaxationCK(DynamicIdentifier &identfier)
+        : BaseLocalDynamics<DynamicIdentifier>(identfier),
+          pos_(this->particles_->template getVariableByName<Vecd>("Position")),
+          residual_(this->particles_->template getVariableByName<Vecd>("KernelGradientIntegral")),
+          adaptaion_(DynamicCast<BaseAdaptation>(this, identfier.getSPHAdaptation())) {};
     virtual ~PositionRelaxationCK() {};
 
     class UpdateKernel
@@ -84,19 +92,22 @@ class PositionRelaxationCK : public LocalDynamics
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy, PositionRelaxationCK &encloser)
             : pos_(encloser.pos_->DelegatedData(ex_policy)),
-              residual_(encloser.residual_->DelegatedData(ex_policy)){};
+              residual_(encloser.residual_->DelegatedData(ex_policy)),
+              h_ratio_(ex_policy, encloser.adaptaion_){};
 
         void update(size_t index_i, Real dt_square)
         {
-            pos_[index_i] += residual_[index_i] * dt_square * 0.5;
+            pos_[index_i] += residual_[index_i] * dt_square * 0.5 / h_ratio_(index_i);
         };
 
       protected:
         Vecd *pos_, *residual_;
+        SmoothingLengthRatio h_ratio_;
     };
 
   protected:
     DiscreteVariable<Vecd> *pos_, *residual_;
+    BaseAdaptation &adaptaion_;
 };
 
 template <class DynamicIdentifier>

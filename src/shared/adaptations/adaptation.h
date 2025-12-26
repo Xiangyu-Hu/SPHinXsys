@@ -102,6 +102,8 @@ class SPHAdaptation
     {
       public:
         explicit UnitSmoothingLengthRatio(SPHAdaptation &adaptation) {};
+        template <class ExecutionPolicy>
+        UnitSmoothingLengthRatio(const ExecutionPolicy &ex_policy, SPHAdaptation &adaptation){};
         Real operator()(size_t /*particle_index_i*/) { return 1.0; };
     };
 
@@ -144,6 +146,9 @@ class AdaptiveSmoothingLength : public SPHAdaptation
       public:
         explicit ContinuousSmoothingLengthRatio(AdaptiveSmoothingLength &adaptation)
             : h_ratio_(adaptation.h_ratio_) {};
+        template <class ExecutionPolicy>
+        ContinuousSmoothingLengthRatio(const ExecutionPolicy &ex_policy, AdaptiveSmoothingLength &adaptation)
+            : h_ratio_(adaptation.dv_h_ratio_->DelegatedData(ex_policy)){};
         Real operator()(size_t index_i) { return h_ratio_[index_i]; };
     };
 

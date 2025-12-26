@@ -84,18 +84,18 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     host_methods.addStateDynamics<RandomizeParticlePositionCK>(airfoil).exec();
-    auto &airfoil_update_cell_linked_list = main_methods.addCellLinkedListDynamics(airfoil);
-    auto &airfoil_update_inner_relation = main_methods.addRelationDynamics(airfoil_inner);
+    auto &update_cell_linked_list = main_methods.addCellLinkedListDynamics(airfoil);
+    auto &update_inner_relation = main_methods.addRelationDynamics(airfoil_inner);
 
-    ParticleDynamicsGroup relaxation_residual;
-    relaxation_residual.add(
-        &main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(airfoil_inner)
-             .addPostStateDynamics<LevelsetKernelGradientIntegral>(airfoil, *level_set_shape));
+    auto &relaxation_residual =
+        main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(airfoil_inner)
+            .addPostStateDynamics<LevelsetKernelGradientIntegral>(airfoil, *level_set_shape);
 
-    ParticleDynamicsGroup update_particle_position;
-    update_particle_position.add(&main_methods.addStateDynamics<PositionRelaxationCK>(airfoil));
-    update_particle_position.add(&main_methods.addStateDynamics<LevelsetBounding>(near_body_surface));
-    update_particle_position.add(&main_methods.addStateDynamics<UpdateSmoothingLengthRatio>(airfoil, *level_set_shape));
+    auto &update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(airfoil);
+    auto &level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_body_surface);
+    auto &update_smoothing_length_ratio = main_methods.addStateDynamics<UpdateSmoothingLengthRatio>(airfoil, *level_set_shape);
+
+    auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(airfoil);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
@@ -105,13 +105,34 @@ int main(int ac, char *av[])
     BaseCellLinkedList &airfoil_cell_linked_list = airfoil.getCellLinkedList();
     airfoil_cell_linked_list.addCellVariableToWrite<UnsignedInt>("CurrentListSize");
     MeshRecordingToPlt cell_linked_list_recording(sph_system, airfoil_cell_linked_list);
-
-    airfoil_update_cell_linked_list.exec();
-    airfoil_update_inner_relation.exec();
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------
     body_state_recorder.writeToFile();
     cell_linked_list_recording.writeToFile();
+    //----------------------------------------------------------------------
+    //	Particle relaxation time stepping start here.
+    //----------------------------------------------------------------------
+    int ite_p = 0;
+    while (ite_p < 1000)
+    {
+        update_cell_linked_list.exec();
+        update_inner_relation.exec();
+
+        relaxation_residual.exec();
+        Real relaxation_step = relaxation_scaling.exec();
+        update_particle_position.exec(relaxation_step);
+        level_set_bounding.exec();
+        update_smoothing_length_ratio.exec();
+
+        ite_p += 1;
+        if (ite_p % 100 == 0)
+        {
+            std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
+            body_state_recorder.writeToFile(ite_p);
+            cell_linked_list_recording.writeToFile(ite_p);
+        }
+    }
+    std::cout << "The physics relaxation process finish !" << std::endl;
     return 0;
 }
