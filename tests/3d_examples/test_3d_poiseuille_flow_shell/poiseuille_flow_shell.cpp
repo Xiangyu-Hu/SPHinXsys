@@ -161,7 +161,7 @@ void poiseuille_flow(const Real global_resolution, const Real resolution_shell, 
     //  Define water shape
     //----------------------------------------------------------------------
     auto water_block_shape = makeShared<ComplexShape>("WaterBody");
-    water_block_shape->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0., 1., 0.), fluid_radius,
+    water_block_shape->add<TriangleMeshShapeCylinder>(Vec3d(0., 1., 0.), fluid_radius,
                                                       full_length * 0.5, SimTK_resolution,
                                                       translation_fluid);
 

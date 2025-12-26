@@ -193,15 +193,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     size_t SimTK_resolution = 15;
     auto water_body_shape = makeShared<ComplexShape>("WaterBody");
-    water_body_shape->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(1., 0., 0.), DH * 0.5,
+    water_body_shape->add<TriangleMeshShapeCylinder>(Vec3d(1., 0., 0.), DH * 0.5,
                                                      DL * 0.5, SimTK_resolution,
                                                      translation_fluid);
 
     auto wall_body_shape = makeShared<ComplexShape>("WallBody");
-    wall_body_shape->add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(1., 0., 0.), DH * 0.5 + BW,
+    wall_body_shape->add<TriangleMeshShapeCylinder>(Vec3d(1., 0., 0.), DH * 0.5 + BW,
                                                     DL * 0.5 + BW, SimTK_resolution,
                                                     translation_fluid);
-    wall_body_shape->subtract<TriangleMeshShapeCylinder>(SimTK::UnitVec3(1., 0., 0.), DH * 0.5,
+    wall_body_shape->subtract<TriangleMeshShapeCylinder>(Vec3d(1., 0., 0.), DH * 0.5,
                                                          DL * 0.5 + 2.0 * BW, SimTK_resolution,
                                                          translation_fluid);
 

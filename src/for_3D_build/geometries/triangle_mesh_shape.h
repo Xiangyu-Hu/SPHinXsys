@@ -111,7 +111,7 @@ class TriangleMeshShapeSphere : public TriangleMeshShape
 class TriangleMeshShapeCylinder : public TriangleMeshShape
 {
   public:
-    explicit TriangleMeshShapeCylinder(SimTK::UnitVec3 axis, Real radius,
+    explicit TriangleMeshShapeCylinder(Vec3d axis, Real radius,
                                        Real halflength, int resolution, Vec3d translation,
                                        const std::string &shape_name = "TriangleMeshShapeCylinder");
     virtual ~TriangleMeshShapeCylinder() {};

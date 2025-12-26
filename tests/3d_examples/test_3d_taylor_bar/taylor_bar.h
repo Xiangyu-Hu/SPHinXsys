@@ -49,7 +49,7 @@ class Column : public ComplexShape
     explicit Column(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd translation_column(0.0, 0.0, 0.6 * PW);
-        add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0, 0, 1.0), inner_circle_radius,
+        add<TriangleMeshShapeCylinder>(Vec3d(0, 0, 1.0), inner_circle_radius,
                                        0.5 * PW, resolution, translation_column);
     }
 };
