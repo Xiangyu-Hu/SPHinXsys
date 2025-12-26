@@ -157,8 +157,8 @@ Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::Smo
 inline Real Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::
     W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const
 {
-    Real inv_h = invSmoothingLength(i, j);
-    return BaseKernel::W(math::pow(inv_h, 2), displacement, inv_h);
+    Real inv_h_i = src_h_ratio_[i] * src_inv_h_ref_;
+    return BaseKernel::W(math::pow(inv_h_i, 2), displacement, inv_h_i);
 };
 //=================================================================================================//
 inline Real Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::
@@ -171,8 +171,8 @@ inline Real Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::Smoothin
 inline Real Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::
     dW(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const
 {
-    Real inv_h_i = src_h_ratio_[i] * src_inv_h_ref_;
-    return BaseKernel::dW(math::pow(inv_h_i, 3), displacement, inv_h_i);
+    Real inv_h = invSmoothingLength(i, j);
+    return BaseKernel::dW(math::pow(inv_h, 3), displacement, inv_h);
 };
 //=================================================================================================//
 inline Real Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::

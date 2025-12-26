@@ -31,7 +31,8 @@ UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::InteractKernel::InteractK
       masked_criterion_(
           ex_policy, encloser.inner_relation_.getDynamicsIdentifier(),
           ex_policy, encloser.inner_relation_.getNeighborhood()),
-      neighbor_search_(ex_policy, encloser.cell_linked_list_) {}
+      neighbor_search_(ex_policy, encloser.cell_linked_list_),
+      search_box_(ex_policy, encloser.inner_relation_.getNeighborhood()) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
@@ -59,7 +60,8 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
                     AtomicRef<UnsignedInt> atomic_tar_size(this->neighbor_index_[tar_index]);
                     ++atomic_tar_size;
                 }
-            });
+            },
+            search_box_(src_index));
     }
     AtomicRef<UnsignedInt> atomic_src_size(this->neighbor_index_[src_index]);
     atomic_src_size.fetch_add(neighbor_count);
@@ -82,7 +84,8 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
                     AtomicRef<UnsignedInt> atomic_tar_size(this->neighbor_size_[tar_index]);
                     this->neighbor_index_[this->particle_offset_[tar_index] + atomic_tar_size++] = src_index;
                 }
-            });
+            },
+            search_box_(src_index));
     }
 }
 //=================================================================================================//

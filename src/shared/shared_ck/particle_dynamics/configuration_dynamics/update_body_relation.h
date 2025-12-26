@@ -54,6 +54,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     using Identifier = typename BaseLocalDynamicsType::Identifier;
     using MaskedSource = typename Identifier::SourceParticleMask;
     using NeighborMethodType = typename InnerRelationType::NeighborhoodType;
+    using SearchBox = typename NeighborMethodType::SearchBox;
     using NeighborCriterion = typename NeighborMethodType::NeighborCriterion;
     using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion>;
 
@@ -93,6 +94,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
         OneSidedCheck is_one_sided_;
         MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
+        SearchBox search_box_;
     };
     typedef UpdateRelation<ExecutionPolicy, Inner<Parameters...>> LocalDynamicsType;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;

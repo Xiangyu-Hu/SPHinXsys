@@ -43,14 +43,14 @@ int main(int ac, char *av[])
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, global_resolution);
-    sph_system.setReloadParticles(true);
+    sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     auto &airfoil = sph_system.addAdaptiveBody<RealBody>(
         AdaptiveNearSurface(global_resolution, 1.15, 1.0, 3), makeShared<ImportModel>("AirFoil"));
-    LevelSetShape *level_set_shape = airfoil.defineBodyLevelSetShape(par_ck)
+    LevelSetShape *level_set_shape = airfoil.defineBodyLevelSetShape()
                                          ->cleanLevelSet()
                                          ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
                                          ->writeLevelSet();
@@ -80,8 +80,8 @@ int main(int ac, char *av[])
     // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(seq);
-    //auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -93,7 +93,7 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    //host_methods.addStateDynamics<RandomizeParticlePositionCK>(airfoil).exec();
+    host_methods.addStateDynamics<RandomizeParticlePositionCK>(airfoil).exec();
     auto &update_cell_linked_list = main_methods.addCellLinkedListDynamics(airfoil);
     auto &update_inner_relation = main_methods.addRelationDynamics(airfoil_inner);
 
