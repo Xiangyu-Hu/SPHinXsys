@@ -38,23 +38,23 @@ namespace SPH
 class BodyPartitionSpatial;
 
 template <typename...>
-class NeighborMethod;
+class Neighbor;
 
 template <>
-class NeighborMethod<Base>
+class Neighbor<Base>
 {
   public:
-    NeighborMethod(SharedPtr<Kernel> base_kernel,
+    Neighbor(SharedPtr<Kernel> base_kernel,
                    DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos);
-    NeighborMethod(SharedPtr<Kernel> base_kernel);
-    ~NeighborMethod() {};
+    Neighbor(SharedPtr<Kernel> base_kernel);
+    ~Neighbor() {};
 
     class SmoothingKernel : public KernelTabulatedCK
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        SmoothingKernel(NeighborMethod<Base> &encloser);
+        SmoothingKernel(Neighbor<Base> &encloser);
 
         inline Vecd vec_r_ij(UnsignedInt i, UnsignedInt j) const { return src_pos_[i] - tar_pos_[j]; };
         inline Vecd e_ij(UnsignedInt i, UnsignedInt j) const { return vec_r_ij(i, j).normalized(); };
@@ -77,15 +77,15 @@ class NeighborMethod<Base>
 };
 
 template <>
-class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
+class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
 {
-    using BaseKernel = NeighborMethod<Base>::SmoothingKernel;
+    using BaseKernel = Neighbor<Base>::SmoothingKernel;
 
   public:
     template <typename SourceIdentifier, typename TargetIdentifier>
-    NeighborMethod(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier,
+    Neighbor(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier,
                    DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos);
-    NeighborMethod(SharedPtr<Kernel> base_kernel, Real h, Real search_increment);
+    Neighbor(SharedPtr<Kernel> base_kernel, Real h, Real search_increment);
 
     class SmoothingKernel : public BaseKernel
     {
@@ -94,7 +94,7 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
       public:
         template <class ExecutionPolicy, class EncloserType>
         SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        SmoothingKernel(NeighborMethod<SPHAdaptation, SPHAdaptation> &encloser);
+        SmoothingKernel(Neighbor<SPHAdaptation, SPHAdaptation> &encloser);
         inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return W(vec_r_ij(i, j)); };
         inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return dW(vec_r_ij(i, j)); };
         inline Real W(const Vec2d &displacement) const;
@@ -154,16 +154,16 @@ class NeighborMethod<SPHAdaptation, SPHAdaptation> : public NeighborMethod<Base>
 };
 
 template <>
-class NeighborMethod<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public NeighborMethod<Base>
+class Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public Neighbor<Base>
 {
   public:
     template <typename SourceIdentifier, typename TargetIdentifier>
-    NeighborMethod(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier,
+    Neighbor(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier,
                    DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos);
 
-    class SmoothingKernel : public NeighborMethod<Base>::SmoothingKernel
+    class SmoothingKernel : public Neighbor<Base>::SmoothingKernel
     {
-        using BaseKernel = NeighborMethod<Base>::SmoothingKernel;
+        using BaseKernel = Neighbor<Base>::SmoothingKernel;
 
       public:
         template <class ExecutionPolicy, class EncloserType>

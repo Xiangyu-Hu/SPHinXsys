@@ -58,7 +58,7 @@ class Relation<SourceIdentifier, TargetIdentifier> : public RelationBase
     using SourceAdaptation = typename SourceIdentifier::BaseAdaptation;
     using TargetAdaptation = typename TargetIdentifier::BaseAdaptation;
     SharedPtrsKeeper<Entity> relation_variable_ptrs_;
-    SharedPtrsKeeper<NeighborMethod<Base>> neighborhood_ptrs_;
+    SharedPtrsKeeper<Neighbor<Base>> neighborhood_ptrs_;
     DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
 
     template <class DataType>
@@ -67,7 +67,7 @@ class Relation<SourceIdentifier, TargetIdentifier> : public RelationBase
   public:
     typedef SourceIdentifier SourceType;
     typedef TargetIdentifier TargetType;
-    using NeighborhoodType = NeighborMethod<SourceAdaptation, TargetAdaptation>;
+    using NeighborhoodType = Neighbor<SourceAdaptation, TargetAdaptation>;
     Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers,
              ConfigType config_type = ConfigType::Eulerian);
     virtual ~Relation() {};

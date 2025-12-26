@@ -197,7 +197,7 @@ class CleanInterface : public RepeatTimes, public BaseDynamics<void>
 {
   public:
     CleanInterface(SparseMeshField<4> &mesh_data, UnsignedInt resolution_level,
-                   NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method,
+                   Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method,
                    Real refinement);
     virtual ~CleanInterface() {};
 
@@ -221,7 +221,7 @@ class CleanInterface : public RepeatTimes, public BaseDynamics<void>
     }
 
   private:
-    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method_;
+    Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method_;
     MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient;
     MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals;
     MeshInnerDynamics<ExecutionPolicy, MarkCutInterfaces> mark_cut_interfaces;
@@ -235,7 +235,7 @@ class CorrectTopology : public BaseDynamics<void>
   public:
     CorrectTopology(
         SparseMeshField<4> &mesh_data, UnsignedInt resolution_level,
-        NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method);
+        Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method);
     virtual ~CorrectTopology() {};
 
     void exec(Real dt = 0.0) override
@@ -251,7 +251,7 @@ class CorrectTopology : public BaseDynamics<void>
     }
 
   private:
-    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method_;
+    Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method_;
     SingularVariable<UnsignedInt> sv_count_modified_{"CountModifiedData", 1};
     MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient;
     MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals;

@@ -312,7 +312,7 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package
 template <class ExecutionPolicy>
 CleanInterface<ExecutionPolicy>::CleanInterface(
     SparseMeshField<4> &mesh_data, UnsignedInt resolution_level,
-    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method, Real refinement)
+    Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method, Real refinement)
     : RepeatTimes(), BaseDynamics<void>(),
       neighbor_method_(neighbor_method),
       update_level_set_gradient{mesh_data, resolution_level},
@@ -324,7 +324,7 @@ CleanInterface<ExecutionPolicy>::CleanInterface(
 template <class ExecutionPolicy>
 CorrectTopology<ExecutionPolicy>::CorrectTopology(
     SparseMeshField<4> &mesh_data, UnsignedInt resolution_level,
-    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method)
+    Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method)
     : BaseDynamics<void>(), neighbor_method_(neighbor_method),
       update_level_set_gradient(mesh_data, resolution_level),
       update_kernel_integrals(mesh_data, resolution_level, neighbor_method),

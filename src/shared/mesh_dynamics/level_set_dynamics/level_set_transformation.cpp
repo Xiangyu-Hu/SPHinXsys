@@ -12,7 +12,7 @@ UpdateLevelSetGradient::UpdateLevelSetGradient(
 //=============================================================================================//
 UpdateKernelIntegrals::UpdateKernelIntegrals(
     SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
-    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method)
+    Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       neighbor_method_(neighbor_method),
       mv_phi_(*data_mesh.getPackageVariable<Real>("LevelSet")),
