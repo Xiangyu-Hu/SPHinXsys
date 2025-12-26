@@ -12,8 +12,8 @@ DiscreteVariable<DataType> *BaseParticles::getVariableByName(const std::string &
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);
     if (variable == nullptr)
     {
-        std::cout << "\nError: the" << type_name<DiscreteVariable<DataType>>() << " variable '"
-                  << name << "' in body " << getBodyName() << "is not registered!\n";
+        std::cout << "\nError: the " << type_name<DiscreteVariable<DataType>>() << " variable '"
+                  << name << "' in body " << getBodyName() << " is not registered!\n";
         exit(1);
     }
     return variable;
@@ -137,8 +137,8 @@ SingularVariable<DataType> *BaseParticles::getSingularVariableByName(const std::
     SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
     if (variable == nullptr)
     {
-        std::cout << "\nError: the" << type_name<SingularVariable<DataType>>() << " variable '"
-                  << name << "' in body " << getBodyName() << "is not registered!\n";
+        std::cout << "\nError: the " << type_name<SingularVariable<DataType>>() << " variable '"
+                  << name << "' in body " << getBodyName() << " is not registered!\n";
         exit(1);
     }
     return variable;

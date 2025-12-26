@@ -50,10 +50,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &airfoil = sph_system.addAdaptiveBody<RealBody>(
         AdaptiveNearSurface(global_resolution, 1.15, 1.0, 3), makeShared<ImportModel>("AirFoil"));
-    airfoil.defineBodyLevelSetShape()
-        ->cleanLevelSet()
-        ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
-        ->writeLevelSet();
+    LevelSetShape *level_set_shape = airfoil.defineBodyLevelSetShape()
+                                         ->cleanLevelSet()
+                                         ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
+                                         ->writeLevelSet();
     airfoil.generateParticles<BaseParticles, Lattice>();
     auto &near_body_surface = airfoil.addBodyPart<NearShapeSurface>();
     //----------------------------------------------------------------------
@@ -87,8 +87,10 @@ int main(int ac, char *av[])
     auto &airfoil_update_cell_linked_list = main_methods.addCellLinkedListDynamics(airfoil);
     auto &airfoil_update_inner_relation = main_methods.addRelationDynamics(airfoil_inner);
 
-    airfoil_update_cell_linked_list.exec();
-    airfoil_update_inner_relation.exec();
+    ParticleDynamicsGroup relaxation_residual;
+    relaxation_residual.add(
+        &main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(airfoil_inner)
+             .addPostStateDynamics<LevelsetKernelGradientIntegral>(airfoil, *level_set_shape));
 
     ParticleDynamicsGroup update_particle_position;
     update_particle_position.add(&main_methods.addStateDynamics<PositionRelaxationCK>(airfoil));
@@ -98,9 +100,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     body_state_recorder.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
+    body_state_recorder.addToWrite<UnsignedInt>(airfoil, "NeighborSize");
     BaseCellLinkedList &airfoil_cell_linked_list = airfoil.getCellLinkedList();
     airfoil_cell_linked_list.addCellVariableToWrite<UnsignedInt>("CurrentListSize");
     MeshRecordingToPlt cell_linked_list_recording(sph_system, airfoil_cell_linked_list);
+
+    airfoil_update_cell_linked_list.exec();
+    airfoil_update_inner_relation.exec();
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------

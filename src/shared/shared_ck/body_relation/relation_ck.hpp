@@ -12,8 +12,8 @@ Relation<SourceIdentifier, TargetIdentifier>::Relation(
     : sph_body_(&source_identifier.getSPHBody()),
       particles_(&sph_body_->getBaseParticles()),
       dv_source_pos_(this->assignConfigPosition(*particles_, config_type)),
-      dv_neighbor_size_(addRelationVariable<UnsignedInt>(
-          source_identifier.getName() + "NeighborSize", particles_->ParticlesBound())),
+      dv_neighbor_size_(particles_->registerDiscreteVariable<UnsignedInt>(
+          "NeighborSize", particles_->ParticlesBound())),
       offset_list_size_(particles_->ParticlesBound() + 1)
 {
     std::string source_name = source_identifier.getName();
