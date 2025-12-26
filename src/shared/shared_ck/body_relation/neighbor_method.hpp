@@ -56,10 +56,10 @@ Neighbor<SPHAdaptation, SPHAdaptation>::Neighbor(
     : Neighbor<Base>(
           source_identifier.getSPHAdaptation().getKernelPtr(), dv_source_pos, dv_target_pos)
 {
-    Real source_h = source_identifier.getSPHAdaptation().ReferenceSmoothingLength();
-    Real target_h = target_identifier.getSPHAdaptation().ReferenceSmoothingLength();
-    inv_h_ = 1.0 / SMAX(source_h, target_h);
-    search_depth_ = static_cast<int>(std::ceil((source_h - Eps) / target_h));
+    Real src_h = source_identifier.getSPHAdaptation().ReferenceSmoothingLength();
+    Real tar_h = target_identifier.getSPHAdaptation().ReferenceSmoothingLength();
+    inv_h_ = 1.0 / SMAX(src_h, tar_h);
+    search_depth_ = static_cast<int>(std::ceil((src_h - Eps) / tar_h));
     search_box_ = BoundingBoxi(Arrayi::Constant(search_depth_));
 }
 //=================================================================================================//
@@ -155,7 +155,7 @@ Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::Smo
 inline Real Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::
     W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const
 {
-    Real inv_h = invH(i, j);
+    Real inv_h = invSmoothingLength(i, j);
     return BaseKernel::W(math::pow(inv_h, 2), displacement, inv_h);
 };
 //=================================================================================================//
@@ -176,26 +176,26 @@ inline Real Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::Smoothin
 inline Real Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::
     dW(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const
 {
-    Real inv_h = invH(i, j);
+    Real inv_h = invSmoothingLength(i, j);
     return BaseKernel::dW(math::pow(inv_h, 4), displacement, inv_h);
 };
 //=================================================================================================//
 inline Real Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::
     d2W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const
 {
-    Real inv_h = invH(i, j);
+    Real inv_h = invSmoothingLength(i, j);
     return BaseKernel::d2W(math::pow(inv_h, 4), displacement, inv_h);
 }
 //=================================================================================================//
 inline Real Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::
     d2W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const
 {
-    Real inv_h = invH(i, j);
+    Real inv_h = invSmoothingLength(i, j);
     return BaseKernel::d2W(math::pow(inv_h, 5), displacement, inv_h);
 }
 //=================================================================================================//
 inline Real Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::
-    invH(UnsignedInt i, UnsignedInt j) const
+    invSmoothingLength(UnsignedInt i, UnsignedInt j) const
 {
     return SMIN(src_h_ratio_[i] * src_inv_h_ref_, src_h_ratio_[j] * tar_inv_h_ref_);
 }
@@ -241,8 +241,8 @@ Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SearchBox::SearchBox
 inline BoundingBoxi Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::
     SearchBox::operator()(UnsignedInt i) const
 {
-    Real search_depth =
-        static_cast<int>(std::ceil((src_h_ratio_[i] * src_inv_h_ref_ - Eps) * tar_inv_h_min_));
+    Real src_h = 1.0 / (src_h_ratio_[i] * src_inv_h_ref_);
+    Real search_depth = static_cast<int>(std::ceil((src_h - Eps) * tar_inv_h_min_));
     return BoundingBoxi(Arrayi::Constant(search_depth));
 }
 //=================================================================================================//

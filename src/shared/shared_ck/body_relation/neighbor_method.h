@@ -175,7 +175,7 @@ class Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public Neighb
         Real src_inv_h_ref_, tar_inv_h_ref_;
         Real *src_h_ratio_, *tar_h_ratio_;
 
-        inline Real invH(UnsignedInt i, UnsignedInt j) const;
+        inline Real invSmoothingLength(UnsignedInt i, UnsignedInt j) const;
         inline Real W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
         inline Real W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
         inline Real dW(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
