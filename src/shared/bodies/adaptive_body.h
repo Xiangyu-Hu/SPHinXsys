@@ -56,13 +56,6 @@ class AdaptiveBody<AdaptationType, BaseBodyType> : public BaseBodyType
     virtual ~AdaptiveBody() {};
     AdaptationType &getAdaptation() { return adaptation_; };
 
-    template <class ParticleType, class GeneratorType, typename... Args>
-    ParticleType *generateParticles(Args &&...args)
-    {
-        return BaseBodyType::template generateParticles<
-            ParticleType, GeneratorType, SpacingAdaptation>(std::forward<Args>(args)...);
-    };
-
     virtual void createCellLinkedListPtr() override
     {
         this->cell_linked_list_ptr_ = adaptation_.createFinestCellLinkedList(

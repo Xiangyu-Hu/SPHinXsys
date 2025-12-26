@@ -43,7 +43,7 @@ int main(int ac, char *av[])
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, global_resolution);
-    sph_system.setRunParticleRelaxation(true); // tag to run particle relaxation when no commandline option
+    sph_system.setReloadParticles(true);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -54,7 +54,17 @@ int main(int ac, char *av[])
                                          ->cleanLevelSet()
                                          ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
                                          ->writeLevelSet();
-    airfoil.generateParticles<BaseParticles, Lattice>();
+
+    if (sph_system.ReloadParticles())
+    {
+        airfoil.generateParticles<BaseParticles, Reload>("AirFoil")
+            ->reloadExtraVariable<Vecd>("SmoothingLengthRatio");
+    }
+    else
+    {
+        airfoil.generateParticles<BaseParticles, Lattice, AdaptiveByShape>();
+    }
+
     auto &near_body_surface = airfoil.addBodyPart<NearShapeSurface>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -70,8 +80,8 @@ int main(int ac, char *av[])
     // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    auto &main_methods = sph_solver.addParticleMethodContainer(seq);
+    //auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -83,7 +93,7 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    host_methods.addStateDynamics<RandomizeParticlePositionCK>(airfoil).exec();
+    //host_methods.addStateDynamics<RandomizeParticlePositionCK>(airfoil).exec();
     auto &update_cell_linked_list = main_methods.addCellLinkedListDynamics(airfoil);
     auto &update_inner_relation = main_methods.addRelationDynamics(airfoil_inner);
 
@@ -105,10 +115,13 @@ int main(int ac, char *av[])
     BaseCellLinkedList &airfoil_cell_linked_list = airfoil.getCellLinkedList();
     airfoil_cell_linked_list.addCellVariableToWrite<UnsignedInt>("CurrentListSize");
     MeshRecordingToPlt cell_linked_list_recording(sph_system, airfoil_cell_linked_list);
+    auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(airfoil);
+    write_particle_reload_files.addToReload<Real>(airfoil, "SmoothingLengthRatio");
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------
     body_state_recorder.writeToFile();
+    write_particle_reload_files.writeToFile();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------

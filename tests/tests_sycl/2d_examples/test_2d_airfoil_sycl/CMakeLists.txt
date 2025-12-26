@@ -21,6 +21,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "
 target_link_libraries(${PROJECT_NAME} sphinxsys_2d)
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation
-     COMMAND ${PROJECT_NAME} --relax=true --state_recording=${TEST_STATE_RECORDING}
+     COMMAND ${PROJECT_NAME} --state_recording=${TEST_STATE_RECORDING}
      WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 set_tests_properties(${PROJECT_NAME}_particle_relaxation PROPERTIES LABELS "particle relaxation")

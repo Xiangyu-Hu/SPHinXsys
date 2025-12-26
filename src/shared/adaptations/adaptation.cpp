@@ -84,7 +84,7 @@ UniquePtr<BaseCellLinkedList> SPHAdaptation::
 UniquePtr<BaseCellLinkedList> SPHAdaptation::createFinestCellLinkedList(
     const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
 {
-    Real grid_spacing = kernel_ptr_->CutOffRadius() / pow(2.0, local_refinement_level_ - 1);
+    Real grid_spacing = kernel_ptr_->CutOffRadius() / pow(2.0, local_refinement_level_);
     return makeUnique<CellLinkedList>(domain_bounds, grid_spacing, base_particles, *this);
 }
 //=================================================================================================//
