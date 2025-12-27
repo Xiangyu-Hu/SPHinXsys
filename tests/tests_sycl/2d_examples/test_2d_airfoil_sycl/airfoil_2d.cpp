@@ -43,7 +43,6 @@ int main(int ac, char *av[])
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, global_resolution);
-    sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -54,17 +53,7 @@ int main(int ac, char *av[])
                                          ->cleanLevelSet()
                                          ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
                                          ->writeLevelSet();
-
-    if (sph_system.ReloadParticles())
-    {
-        airfoil.generateParticles<BaseParticles, Reload>("AirFoil")
-            ->reloadExtraVariable<Vecd>("SmoothingLengthRatio");
-    }
-    else
-    {
-        airfoil.generateParticles<BaseParticles, Lattice>();
-    }
-
+    airfoil.generateParticles<BaseParticles, Lattice>();
     auto &near_body_surface = airfoil.addBodyPart<NearShapeSurface>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -86,7 +75,7 @@ int main(int ac, char *av[])
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
@@ -111,13 +100,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     body_state_recorder.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
-    auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(airfoil);
-    write_particle_reload_files.addToReload<Real>(airfoil, "SmoothingLengthRatio");
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------
     body_state_recorder.writeToFile();
-    write_particle_reload_files.writeToFile();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
