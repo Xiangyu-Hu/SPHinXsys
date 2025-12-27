@@ -47,9 +47,10 @@ class GeneratingMethod<Lattice>
     virtual ~GeneratingMethod() {};
 
   protected:
-    Real lattice_spacing_;      /**< Initial particle spacing. */
+    SPHAdaptation &sph_adaptation_;
+    Real lattice_spacing_;       /**< Define minimum particle spacing. */
     BoundingBoxd domain_bounds_; /**< Domain bounds. */
-    Shape &initial_shape_;      /**< Geometry shape for body. */
+    Shape &initial_shape_;       /**< Geometry shape for body. */
 };
 
 template <>
@@ -57,22 +58,13 @@ class ParticleGenerator<BaseParticles, Lattice>
     : public ParticleGenerator<BaseParticles>, public GeneratingMethod<Lattice>
 {
   public:
-    explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles);
-    virtual ~ParticleGenerator() {};
-    virtual void prepareGeometricData() override;
-};
-
-template <> // For generating particles with adaptive resolution from lattice positions
-class ParticleGenerator<BaseParticles, Lattice, AdaptiveByShape> : public ParticleGenerator<BaseParticles, Lattice>
-{
-  public:
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape);
     explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles);
     virtual ~ParticleGenerator() {};
+    virtual void prepareGeometricData() override;
 
   protected:
     Shape &target_shape_;
-    AdaptiveByShape *particle_adaptation_;
     virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
 };
 
