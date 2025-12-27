@@ -111,10 +111,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     body_state_recorder.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
-    body_state_recorder.addToWrite<UnsignedInt>(airfoil, "NeighborSize");
-    BaseCellLinkedList &airfoil_cell_linked_list = airfoil.getCellLinkedList();
-    airfoil_cell_linked_list.addCellVariableToWrite<UnsignedInt>("CurrentListSize");
-    MeshRecordingToPlt cell_linked_list_recording(sph_system, airfoil_cell_linked_list);
     auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(airfoil);
     write_particle_reload_files.addToReload<Real>(airfoil, "SmoothingLengthRatio");
     //----------------------------------------------------------------------
@@ -126,7 +122,7 @@ int main(int ac, char *av[])
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
     int ite_p = 0;
-    while (ite_p < 1000)
+    while (ite_p < 2000)
     {
         update_cell_linked_list.exec();
         update_inner_relation.exec();
@@ -142,7 +138,6 @@ int main(int ac, char *av[])
         {
             std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
             body_state_recorder.writeToFile(ite_p);
-            cell_linked_list_recording.writeToFile(ite_p);
         }
     }
     std::cout << "The physics relaxation process finish !" << std::endl;
