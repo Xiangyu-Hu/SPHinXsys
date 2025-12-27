@@ -62,7 +62,7 @@ int main(int ac, char *av[])
     }
     else
     {
-        airfoil.generateParticles<BaseParticles, Lattice, AdaptiveByShape>();
+        airfoil.generateParticles<BaseParticles, Lattice>();
     }
 
     auto &near_body_surface = airfoil.addBodyPart<NearShapeSurface>();
