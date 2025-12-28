@@ -32,7 +32,7 @@ int main(int ac, char *av[])
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_block.getName())
-        : water_block.generateParticles<BaseParticles, Lattice, AdaptiveByShape>(refinement_region);
+        : water_block.generateParticles<BaseParticles, Lattice>(refinement_region);
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 4.0);
