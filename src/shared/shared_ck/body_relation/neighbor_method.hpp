@@ -199,7 +199,7 @@ inline Real Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::Smoothin
 inline Real Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength>::SmoothingKernel::
     invSmoothingLength(UnsignedInt i, UnsignedInt j) const
 {
-    return SMIN(src_h_ratio_[i] * src_inv_h_ref_, src_h_ratio_[j] * tar_inv_h_ref_);
+    return SMIN(src_h_ratio_[i] * src_inv_h_ref_, tar_h_ratio_[j] * tar_inv_h_ref_);
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
