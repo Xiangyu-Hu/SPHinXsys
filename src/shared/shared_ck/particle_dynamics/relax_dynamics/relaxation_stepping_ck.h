@@ -54,8 +54,7 @@ class RelaxationScalingCK : public LocalDynamicsReduce<ReduceMax>
       public:
         template <class ExecutionPolicy>
         ReduceKernel(const ExecutionPolicy &ex_policy, RelaxationScalingCK &encloser)
-            : residual_(encloser.dv_residual_->DelegatedData(ex_policy)),
-              h_ref_(encloser.h_ref_){};
+            : residual_(encloser.dv_residual_->DelegatedData(ex_policy)){};
 
         Real reduce(size_t index_i, Real dt)
         {
@@ -64,7 +63,6 @@ class RelaxationScalingCK : public LocalDynamicsReduce<ReduceMax>
 
       protected:
         Vecd *residual_;
-        Real h_ref_;
     };
 
   protected:

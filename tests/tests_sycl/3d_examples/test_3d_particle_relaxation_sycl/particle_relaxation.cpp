@@ -107,20 +107,29 @@ int main(int ac, char *av[])
     int ite_p = 0;
     while (ite_p < 1000)
     {
+        std::cout << "I am here 0 !" << std::endl;
         update_cell_linked_list.exec();
+        std::cout << "I am here 1 !" << std::endl;
         update_inner_relation.exec();
+        std::cout << "I am here 2 !" << std::endl;
 
         relaxation_residual.exec();
+        std::cout << "I am here 3 !" << std::endl;
         Real relaxation_step = relaxation_scaling.exec();
+        std::cout << "I am here 4 !" << std::endl;
         update_particle_position.exec(relaxation_step);
+        std::cout << "I am here 5 !" << std::endl;
         level_set_bounding.exec();
+        std::cout << "I am here 6 !" << std::endl;
         update_smoothing_length_ratio.exec();
+        std::cout << "I am here 7 !" << std::endl;
 
         ite_p += 1;
         if (ite_p % 100 == 0)
         {
             std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
             body_state_recorder.writeToFile(ite_p);
+            std::cout << "I am here 8 !" << std::endl;
         }
     }
     std::cout << "The physics relaxation process finish !" << std::endl;
