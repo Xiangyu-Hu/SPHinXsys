@@ -30,6 +30,7 @@
 #define IO_OBSERVATION_H
 
 #include "io_plt.hpp"
+#include "general_dynamics/general_interpolation.h"
 
 namespace SPH
 {

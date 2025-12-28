@@ -1,5 +1,5 @@
 #pragma once
-#include "sphinxsys.h"
+#include "data_type.h"
 #include "muscl_reconstruction.hpp"
 #include "eulerian_fluid_dynamics/eulerian_riemann_solver.h"
 

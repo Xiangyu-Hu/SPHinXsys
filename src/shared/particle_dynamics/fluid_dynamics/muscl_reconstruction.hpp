@@ -1,6 +1,6 @@
 #pragma once
  
- #include "sphinxsys.h"
+#include "data_type.h"
  #include <algorithm>
  #include <cmath>
  #include <string>

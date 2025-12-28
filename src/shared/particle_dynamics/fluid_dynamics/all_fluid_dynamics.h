@@ -45,3 +45,4 @@
 #include "viscous_dynamics.hpp"
 #include "pressure_gradient.hpp"
 #include "energy_gradient.hpp"
+#include "density_gradient.hpp"

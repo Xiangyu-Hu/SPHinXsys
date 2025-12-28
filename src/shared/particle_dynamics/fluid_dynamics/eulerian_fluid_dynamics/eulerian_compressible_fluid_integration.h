@@ -36,22 +36,36 @@
 #include "fluid_integration.hpp"
 #include "fluid_time_step.h"
 #include "viscous_dynamics.hpp"
+#include "muscl_hllc_integration.h"
+#include <tuple>
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
-class BaseIntegrationInCompressible : public BaseIntegration<DataDelegateInner>
+template <class DataDelegationType>
+class BaseIntegrationInCompressibleType : public BaseIntegration<DataDelegationType>
 {
   public:
-    explicit BaseIntegrationInCompressible(BaseInnerRelation &inner_relation);
-    virtual ~BaseIntegrationInCompressible(){};
+    template <class BaseRelationType>
+    explicit BaseIntegrationInCompressibleType(BaseRelationType &relation)
+        : BaseIntegration<DataDelegationType>(relation),
+          compressible_fluid_(CompressibleFluid(1.0, 1.4)),
+          Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
+          E_(this->particles_->template registerStateVariable<Real>("TotalEnergy")),
+          dE_dt_(this->particles_->template registerStateVariable<Real>("TotalEnergyChangeRate")),
+          dmass_dt_(this->particles_->template registerStateVariable<Real>("MassChangeRate")),
+          mom_(this->particles_->template registerStateVariable<Vecd>("Momentum")),
+          force_(this->particles_->template registerStateVariable<Vecd>("Force")),
+          force_prior_(this->particles_->template registerStateVariable<Vecd>("ForcePrior")){};
+    virtual ~BaseIntegrationInCompressibleType(){};
 
   protected:
     CompressibleFluid compressible_fluid_;
     Real *Vol_, *E_, *dE_dt_, *dmass_dt_;
     Vecd *mom_, *force_, *force_prior_;
 };
+using BaseIntegrationInCompressible = BaseIntegrationInCompressibleType<DataDelegateInner>;
 
 template <class RiemannSolverType>
 class EulerianCompressibleIntegration1stHalf : public BaseIntegrationInCompressible
@@ -85,6 +99,99 @@ using EulerianCompressibleIntegration2ndHalfNoRiemann = EulerianCompressibleInte
 using EulerianCompressibleIntegration2ndHalfHLLCRiemann = EulerianCompressibleIntegration2ndHalf<HLLCRiemannSolver>;
 using EulerianCompressibleIntegration2ndHalfHLLCWithLimiterRiemann = EulerianCompressibleIntegration2ndHalf<HLLCWithLimiterRiemannSolver>;
 
+/**
+ * @brief MUSCL-HLLC variant: reconstruct interface states with MUSCL and call HLLC.
+ */
+template <typename... InteractionTypes>
+class EulerianCompressibleIntegration1stHalfMUSCL;
+
+template <>
+class EulerianCompressibleIntegration1stHalfMUSCL<Inner<>> : public BaseIntegrationInCompressible
+{
+  public:
+    explicit EulerianCompressibleIntegration1stHalfMUSCL(BaseInnerRelation &inner_relation, const MUSCLHLLCBridgeConfig &bridge_cfg = MUSCLHLLCBridgeConfig());
+    template <typename BodyRelationType, typename FirstArg>
+    explicit EulerianCompressibleIntegration1stHalfMUSCL(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : EulerianCompressibleIntegration1stHalfMUSCL(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~EulerianCompressibleIntegration1stHalfMUSCL(){};
+    // Expose Riemann solver type for compatibility with interfaces expecting it.
+    using RiemannSolver = HLLCFSIRiemannSolver;
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    MUSCL_HLLC_Bridge bridge_;
+    MUSCLHLLCBridgeConfig bridge_cfg_;
+    Vecd *rho_grad_;
+    Matd *vel_grad_;
+    Vecd *p_grad_;
+};
+
+template <>
+class EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>> : public InteractionWithWall<BaseIntegrationInCompressibleType>
+{
+  public:
+    explicit EulerianCompressibleIntegration1stHalfMUSCL(BaseContactRelation &contact_relation, const MUSCLHLLCBridgeConfig &bridge_cfg = MUSCLHLLCBridgeConfig());
+    template <typename BodyRelationType, typename FirstArg>
+    explicit EulerianCompressibleIntegration1stHalfMUSCL(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : EulerianCompressibleIntegration1stHalfMUSCL(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~EulerianCompressibleIntegration1stHalfMUSCL(){};
+    using RiemannSolver = HLLCFSIRiemannSolver;
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    MUSCL_HLLC_Bridge bridge_;
+    MUSCLHLLCBridgeConfig bridge_cfg_;
+    Vecd *rho_grad_;
+    Matd *vel_grad_;
+    Vecd *p_grad_;
+};
+
+template <typename... InteractionTypes>
+class EulerianCompressibleIntegration2ndHalfMUSCL;
+
+template <>
+class EulerianCompressibleIntegration2ndHalfMUSCL<Inner<>> : public BaseIntegrationInCompressible
+{
+  public:
+    explicit EulerianCompressibleIntegration2ndHalfMUSCL(BaseInnerRelation &inner_relation, const MUSCLHLLCBridgeConfig &bridge_cfg = MUSCLHLLCBridgeConfig());
+    template <typename BodyRelationType, typename FirstArg>
+    explicit EulerianCompressibleIntegration2ndHalfMUSCL(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : EulerianCompressibleIntegration2ndHalfMUSCL(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~EulerianCompressibleIntegration2ndHalfMUSCL(){};
+    // Expose Riemann solver type for interfaces such as PressureForceFromFluid.
+    using RiemannSolver = HLLCFSIRiemannSolver;
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    MUSCL_HLLC_Bridge bridge_;
+    MUSCLHLLCBridgeConfig bridge_cfg_;
+    Vecd *rho_grad_;
+    Matd *vel_grad_;
+    Vecd *p_grad_;
+};
+
+template <>
+class EulerianCompressibleIntegration2ndHalfMUSCL<Contact<Wall>> : public InteractionWithWall<BaseIntegrationInCompressibleType>
+{
+  public:
+    explicit EulerianCompressibleIntegration2ndHalfMUSCL(BaseContactRelation &contact_relation, const MUSCLHLLCBridgeConfig &bridge_cfg = MUSCLHLLCBridgeConfig());
+    template <typename BodyRelationType, typename FirstArg>
+    explicit EulerianCompressibleIntegration2ndHalfMUSCL(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : EulerianCompressibleIntegration2ndHalfMUSCL(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~EulerianCompressibleIntegration2ndHalfMUSCL(){};
+    using RiemannSolver = HLLCFSIRiemannSolver;
+    void interaction(size_t index_i, Real dt = 0.0);
+
+  protected:
+    MUSCL_HLLC_Bridge bridge_;
+    MUSCLHLLCBridgeConfig bridge_cfg_;
+    Vecd *rho_grad_;
+    Matd *vel_grad_;
+    Vecd *p_grad_;
+};
+
 class CompressibleFluidInitialCondition : public FluidInitialCondition
 {
   public:
@@ -101,6 +208,7 @@ class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStep
     Real *rho_, *p_;
     Vecd *vel_;
     Real smoothing_length_;
+    Fluid &fluid_;
 
   public:
     explicit EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.6);
@@ -108,8 +216,14 @@ class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStep
 
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
-    CompressibleFluid compressible_fluid_;
 };
+
+// With-wall aliases for MUSCL (inner + wall contact)
+using EulerianCompressibleIntegration1stHalfMUSCLWithWall =
+    ComplexInteraction<EulerianCompressibleIntegration1stHalfMUSCL<Inner<>, Contact<Wall>>>;
+using EulerianCompressibleIntegration2ndHalfMUSCLWithWall =
+    ComplexInteraction<EulerianCompressibleIntegration2ndHalfMUSCL<Inner<>, Contact<Wall>>>;
+    
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // EULERIAN_COMPRESSIBLE_FLUID_INTEGRATION_H
