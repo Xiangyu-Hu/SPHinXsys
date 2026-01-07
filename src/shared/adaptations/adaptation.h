@@ -90,10 +90,10 @@ class SPHAdaptation
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
     UniquePtr<BaseCellLinkedList> createFinestCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
     virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const;
-    virtual Real getLocalSpacing(Shape &shape, const Vecd &position) {return spacing_ref_;}
+    virtual Real getLocalSpacing(Shape &shape, const Vecd &position) { return spacing_ref_; }
 
     template <class KernelType, typename... Args>
-        void resetKernel(Args &&...args)
+    void resetKernel(Args &&...args)
     {
         kernel_ptr_.reset(new KernelType(h_ref_, std::forward<Args>(args)...));
         sigma0_ref_ = computeLatticeNumberDensity(Vecd());
@@ -139,7 +139,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const override;
     DiscreteVariable<Real> *dvSmoothingLengthRatio() { return dv_h_ratio_; };
     DiscreteVariable<int> *dvSmoothingLengthLevel() { return dv_h_level_; };
-    virtual Real getLocalSpacing(Shape &shape, const Vecd &position) = 0;
+    virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override = 0;
 
     class ContinuousSmoothingLengthRatio
     {
