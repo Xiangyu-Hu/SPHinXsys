@@ -127,7 +127,7 @@ template <class ExecutionPolicy, class EncloserType>
 MarkNearInterface::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : index_handler_(encloser.index_handler_),
-      threshold_(index_handler_.GridSpacing() * sqrt(Dimensions)),
+      threshold_(index_handler_.DataSpacing() * sqrt(Dimensions)),
       phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
       near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)) {}
@@ -140,7 +140,7 @@ inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_i
         {
             near_interface_id_[package_index](index) = 3; // undetermined
             Real phi0 = phi_[package_index](index);
-            if (ABS(phi0) < 2.0 * threshold_) // only consider data close to the interface
+            if (ABS(phi0) < threshold_) // only consider data close to the interface
             {
                 bool is_sign_changed = mesh_any_of(
                     Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
@@ -154,7 +154,7 @@ inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_i
 
                 if (is_sign_changed)
                 {
-                    if (ABS(phi0) < threshold_)
+                    if (ABS(phi0) < 0.5 * threshold_)
                     {
                         near_interface_id_[package_index](index) = 0; // cut cell
                     }
