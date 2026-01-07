@@ -6,6 +6,8 @@
 [![Windows](https://img.shields.io/badge/os-Windows-green.svg)](https://shields.io/)
 [![macOS](https://img.shields.io/badge/os-macOs-green.svg)](https://shields.io/)
 ![ci workflow](https://github.com/Xiangyu-Hu/SPHinXsys/actions/workflows/ci.yml/badge.svg?event=push)
+[![Heterogeneous Computing](https://img.shields.io/badge/Heterogeneous-Computing-orange)](https://shields.io/)
+[![Unified SYCL Kernel](https://img.shields.io/badge/Unified-SYCL_Kernel-orange)](https://shields.io/)
 
 **Project communication**  
 [![LinkedIn](https://custom-icon-badges.demolab.com/badge/LinkedIn-0A66C2?logo=linkedin-white&logoColor=fff)](https://www.linkedin.com/in/xiangyu-hu-tum)
@@ -13,6 +15,11 @@
 [![YouTube](https://img.shields.io/badge/YouTube-FF0000.svg?style=flat&logo=YouTube&logoColor=white)](https://www.youtube.com/channel/UCexdJbxOn9dvim6Jg1dnCFQ)
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
 [![QQ](https://img.shields.io/badge/QQ_Group-blue?logo=tencentqq&logoColor=white)](https://qm.qq.com/q/BZDAqz70Iw)
+
+## Heterogeneous parallel computing for multi-resolution simulations
+
+Now, the SYCL kernel is applied for multi-resolution particle generation and
+body-fitting relaxation. For this, one-sided particle neighbor search algorithm is developed to improve the efficiency. Currently, only the isotropic SPH smoothing kernel is implemented, while the anisotropic kernel will be available soon.
 
 ## Repository Description
 
