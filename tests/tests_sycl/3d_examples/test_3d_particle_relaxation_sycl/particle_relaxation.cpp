@@ -49,7 +49,7 @@ int main(int ac, char *av[])
     auto &imported_model = sph_system.addAdaptiveBody<RealBody>(
         AdaptiveNearSurface(global_resolution, 1.15, 1.0, 3), makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     LevelSetShape *level_set_shape =
-        imported_model.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet();
+        imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->cleanLevelSet()->writeLevelSet();
     imported_model.generateParticles<BaseParticles, Lattice>();
     auto &near_body_surface = imported_model.addBodyPart<NearShapeSurface>();
     //----------------------------------------------------------------------

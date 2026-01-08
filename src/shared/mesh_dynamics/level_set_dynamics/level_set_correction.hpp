@@ -355,7 +355,7 @@ CorrectFinestLevelSetSign<ExecutionPolicy>::CorrectFinestLevelSetSign(
 template <class ExecutionPolicy>
 CorrectTopology<ExecutionPolicy>::CorrectTopology(
     SparseMeshField<4> &mesh_data,
-    StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set)
+    StdVec<Neighbor<SPHAdaptation, SPHAdaptation> *> neighbor_method_set)
     : BaseDynamics<void>(), resolution_levels_(mesh_data.ResolutionLevels()),
       neighbor_method_set_(neighbor_method_set)
 {
