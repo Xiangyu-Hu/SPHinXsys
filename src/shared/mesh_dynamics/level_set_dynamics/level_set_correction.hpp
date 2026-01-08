@@ -308,6 +308,30 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package
             }
         });
 }
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+LevelSetSignFromFine::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
+      pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_.DelegatedData(ex_policy)),
+      index_handler_(encloser.index_handler_),
+      fine_index_handler_(
+          encloser.data_mesh_.getMesh(encloser.fine_resolution_level_)),
+      probe_fine_phi_(ex_policy, encloser.data_mesh_, "LevelSet") {}
+//=============================================================================================//
+inline void LevelSetSignFromFine::UpdateKernel::update(const UnsignedInt &package_index)
+{
+    auto &phi_addrs = phi_[package_index];
+    mesh_for_each(
+        Arrayi::Zero(), Arrayi::Constant(pkg_size),
+        [&](const Arrayi &index)
+        {
+            Arrayi cell_index = index_handler_.DimensionalCellIndex(pkg_1d_cell_index_[package_index]);
+            Vecd data_poistion = index_handler_.DataPositionFromIndex(cell_index, index);
+            Real phi = probe_fine_phi_(fine_index_handler_, data_poistion);
+            phi_addrs(index) = SGN(phi) * ABS(phi_addrs(index));
+        });
+}
 //=============================================================================================//
 template <class ExecutionPolicy>
 CleanInterface<ExecutionPolicy>::CleanInterface(
@@ -322,14 +346,40 @@ CleanInterface<ExecutionPolicy>::CleanInterface(
       reinitialize_level_set{mesh_data, resolution_level} {}
 //=============================================================================================//
 template <class ExecutionPolicy>
+CorrectFinestLevelSetSign<ExecutionPolicy>::CorrectFinestLevelSetSign(
+    SparseMeshField<4> &mesh_data, UnsignedInt finest_level)
+    : BaseDynamics<void>(),
+      mark_near_interface(mesh_data, finest_level),
+      diffuse_level_set_sign(mesh_data, finest_level, sv_count_modified_) {}
+//=============================================================================================//
+template <class ExecutionPolicy>
 CorrectTopology<ExecutionPolicy>::CorrectTopology(
-    SparseMeshField<4> &mesh_data, UnsignedInt resolution_level,
-    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method)
-    : BaseDynamics<void>(), neighbor_method_(neighbor_method),
-      update_level_set_gradient(mesh_data, resolution_level),
-      update_kernel_integrals(mesh_data, resolution_level, neighbor_method),
-      mark_near_interface(mesh_data, resolution_level),
-      diffuse_level_set_sign(mesh_data, resolution_level, sv_count_modified_) {}
+    SparseMeshField<4> &mesh_data,
+    StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set)
+    : BaseDynamics<void>(), resolution_levels_(mesh_data.ResolutionLevels()),
+      neighbor_method_set_(neighbor_method_set)
+{
+    for (UnsignedInt resolution_level = 0; resolution_level != resolution_levels_; resolution_level++)
+    {
+        if (resolution_level != resolution_levels_ - 1)
+        {
+            level_set_sign_correction_set_.push_back(
+                base_dyanmics_keeper_.createPtr<MeshInnerDynamics<ExecutionPolicy, LevelSetSignFromFine>>(
+                    mesh_data, resolution_level));
+        }
+
+        update_level_set_gradient_set_.push_back(
+            base_dyanmics_keeper_.createPtr<MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient>>(
+                mesh_data, resolution_level));
+        update_kernel_integrals_set.push_back(
+            base_dyanmics_keeper_.createPtr<MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals>>(
+                mesh_data, resolution_level, *neighbor_method_set[resolution_level]));
+    }
+
+    level_set_sign_correction_set_.push_back(
+        base_dyanmics_keeper_.createPtr<CorrectFinestLevelSetSign<ExecutionPolicy>>(
+            mesh_data, resolution_levels_ - 1));
+}
 //=================================================================================================//
 } // namespace SPH
 #endif // LEVEL_SET_CORRECTION_HPP
