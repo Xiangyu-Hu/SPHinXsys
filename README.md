@@ -16,10 +16,13 @@
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
 [![QQ](https://img.shields.io/badge/QQ_Group-blue?logo=tencentqq&logoColor=white)](https://qm.qq.com/q/BZDAqz70Iw)
 
-## Heterogeneous parallel computing for multi-resolution simulations
+## Newest: Heterogeneous parallel computing for multi-resolution simulations
 
 Now, the SYCL kernel is applied for multi-resolution particle generation and
-body-fitting relaxation. For this, one-sided particle neighbor search algorithm is developed to improve the efficiency. Currently, only the isotropic SPH smoothing kernel is implemented, while the anisotropic kernel will be available soon.
+body-fitting relaxation. For this, one-sided particle neighbor search algorithm is developed to improve the efficiency. 
+Currently, only the isotropic SPH smoothing kernel is implemented, while the anisotropic kernel will be available soon.
+
+![Multi-resolution Particle Relaxation](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/multi-resolution-particles.png)
 
 ## Repository Description
 
