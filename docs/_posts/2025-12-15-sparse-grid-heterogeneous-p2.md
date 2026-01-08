@@ -9,7 +9,7 @@ Xiangyu Hu and Fan Gu
 <p align="center"><img src="{{site.baseurl}}/assets/img/mesh-data-package.jpg" alt="Heading Figure" style="width:300px; height:auto;">
 <center>Fig. 2. Level-set field with narrow band data-package storage: ‘inner packages’ (light blue cells) and ‘core packages’ (dark blue cells) around the surface. <i>l<sub>c</sub></i> indicates the coarse cell size of the background mesh. The far field negative and positive represent the far regions within and outside the body surface.</center> </p>
 
-## Sparse Grid Storage Class
+## Mesh Local Dynamics
 
 This class `MeshWithGridDataPackages` defines a coarse (background) mesh,
 as shown from the simplified structure
@@ -157,7 +157,7 @@ For those data beyond that, a generalized access function is designed
 for a two step approach by which a cell shift is determined first 
 and then the above access function is applied to finalize the data location.
 
-### Computation Offloading
+## Computation Offloading
 
 A computational operation acting on a data packages is designed as local mesh dynamics, 
 in respected to the corresponding term, i.e. local particle dynamics, 
