@@ -7,9 +7,9 @@ categories: high performance computing
 Xiangyu Hu and Fan Gu
 
 <p align="center"><img src="{{site.baseurl}}/assets/img/multi-resolution-level-set.png" alt="Heading Figure" sstyle="max-width:100%; height:auto;">
-<center>Fig. 3. Multi-resolution level-set field shown with successively doubled resolutions from top to boottom and left to right. </center> </p>
+<center> Fig. 3. Multi-resolution level-set field shown with successively doubled resolutions from top to boottom and left to right. </center> </p>
 
-### Mesh Local Dynamics
+## Mesh Local Dynamics
 
 The class of a specific mesh local dynamics is decomposed into two components: variable management and a computing kernel. Variables involved in an operation must either be stored as copyable small objects or managed by the variables mentioned above. While the small objects are copied directly to the device alongside computing kernel instance, larger data structures are managed via the functions of `DiscreteVariable`, as will be discussed in the next section, which ensures correct allocation and synchronization across host and device.
 
@@ -19,18 +19,15 @@ During initialization, the mesh local dynamics object is instantiated and config
 
 ### Implementation Class and Data Transfer
 
-An implementation class is responsible for the computing kernel transfer and provide the mesh dynamics with a valid computing kernel based on execution policy. As shown in Lsts. 3 and 4, the computing kernel will be created in the implementation object by a getter function at the first call. According to the execution policy chosen, the implementation object is responsible to copy the computing kernel inside local dynamics instance to the device to execute. As computing kernels take only copyable objects or raw variable pointers, the kernel can be copied to the device directly with no extra attention.
-
-
+An implementation class is responsible for the computing kernel transfer and provide the mesh dynamics with a valid computing kernel based on execution policy. As shown in the previous code snippets, the computing kernel will be created in the implementation object by a getter function at the first call. According to the execution policy chosen, the implementation object is responsible to copy the computing kernel inside local dynamics instance to the device to execute. As computing kernels take only copyable objects or raw variable pointers, the kernel can be copied to the device directly with no extra attention.
 
 To enable computation on GPU, all relevant data must be resident on the device in advance. In SYCL, two primary memory access mechanisms are available. The first utilizes `sycl::buffer` and accessors. SYCL automatically manages data transfers between host and device, ensuring that data is available when accessed. This implicit data management simplifies development but can reduce control and transparency.
 
-The present work adopts mainly the second unified share memory (USM) mechanism, due to its explicit control and pointer access can used in the same way on host and device with plain cpp. The pointer-based nature of USM simplifies the function interface, as only raw pointers need to be handled. This eliminates the need for buffer management in user-defined functions, allowing them to work directly without aware of the SYCL types and functions.
+The present work adopts mainly the second unified share memory (USM) mechanism, due to its explicit control and pointer access can be used in the same way on host and device with plain `cpp`. The pointer-based nature of USM simplifies the function interface, as only raw pointers need to be handled. This eliminates the need for buffer management in user-defined functions, allowing them to work directly without aware of the SYCL types and functions.
 
-For data arrays that requires updates, such as mesh, background-mesh and meta variables, they are managed by the `DiscreteVariable` class. Each `DiscreteVariable` includes a `DeviceOnlyVariable` instance that manages the device-side allocation, transfer, synchronization, and deallocation, ensuring correct memory management and preventing leaks. Note that, device-side memory is only allocated and data transferred when the device pointer is first requested. Again the latter is generated only when a computing kernel is first requested by the loop function mesh_for package_for, as shown in Lst. 3 and 4, with device execution policies.
+For data arrays that requires updates, such as mesh, background-mesh and meta variables, they are managed by the `DiscreteVariable` class. Each `DiscreteVariable` includes a `DeviceOnlyVariable` instance that manages the device-side allocation, transfer, synchronization, and de-allocation, ensuring correct memory management and preventing leaks. Note that, device-side memory is only allocated and data transferred when the device pointer is first requested. Again the latter is generated only when a computing kernel is first requested by the loop function mesh_for package_for, as shown in the previous code snippets, with device execution policies.
 
-For singular global parameters, such as total number of data packages, memory is allocated using `malloc`_shared from the USM mechanism. This shared memory is accessible from both host and device, with synchronization handled automatically by SYCL.
-
+For singular global parameters, such as total number of data packages, memory is allocated using `malloc_shared` from the USM mechanism. This shared memory is accessible from both host and device, with synchronization handled automatically by SYCL.
 
 ## Multi-resolution Level-set
 
@@ -53,14 +50,13 @@ The present initialization process is mainly carried out on CPUs due to the pres
 
 Note that, after the level-set value is evaluated for all data packages, the computation can be carried out either on CPU or GPU according ro the chosen execution policies. Also note that, the level-set value evaluation can be carried before the sorting, which then can be run on GPU but need to reorder the level-set data packages evaluated in arbitrary order.
 
-### Consistency Correction and Consistency Correction
+### Consistency Correction and Small Feature Cleaning
 
 Due to the possible topological inconsistency of STL file, directly application of signed-distance function [(Bærentzen at al. 2005)](https://doi.org/10.1109/VG.2005.194111) to identify the contain condition (or the sign) of level set may go wrong. Such issue may finally leads to the generation of SPH particles wrong. To avoid this issue, only the sign of level set for those data points very close to the surface is directly used, those at other locations are obtained by a two-step diffusion process from the near interface to the entire domain. The first coarse step is on the mesh cells and the second refined one is on the data packages. Note that only on the coarsest layer all cells are evaluated. For refined layers, the operation is limited to inner cells or data packages.
 
-Very often the geometry which is originally generated for manufacturing includes many small features which are not necessary for computational fluid or solid dynamics (CFD or CSD) simulations and may lead to numerical instabilities if not cleaned. In the present work, we reimplemented the level-set cleaning algorithms (only on the finest layer) in [(Zhang et al. 2021)]( https://doi.org/10.1016/j.cpc.2021.108066) so that it can be run on GPU.
+Very often the geometry which is originally generated for manufacturing includes many small features which are not necessary for computational fluid or solid dynamics (CFD or CSD) simulations and may lead to numerical instabilities if not cleaned. In the present work, we reimplemented the level-set cleaning algorithms (only on the finest layer) in [(Yu et al. 2023)](https://doi.org/10.1016/j.cpc.2023.108744) so that it can be run on GPU.
 
 Note that, these algorithms heavily replies on the indirect access to neighbor data packages. As shown in the following,
-
 
 ```cpp
 template <int PKG_SIZE, typename RegularizeFunction>
@@ -89,7 +85,6 @@ const Array2i &data_index, const RegularizeFunction &regularize_function)
 ```
 
 a typical regularized central difference scheme for gradient evaluation can be implemented with the help of `NeighbourIndexShift`. Also note that efficient high-order finite difference can be extended easily due to the relative large size of the data package.
-
 
 ### Integral with SPH Smoothing Kernel and Grid-Particle Coupling
 
