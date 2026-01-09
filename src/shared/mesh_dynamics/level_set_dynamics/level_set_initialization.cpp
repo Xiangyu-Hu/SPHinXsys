@@ -130,18 +130,18 @@ InitializeBasicPackageData::InitializeBasicPackageData(
     SparseMeshField<4> &data_mesh, UnsignedInt resolution_level, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh, resolution_level), shape_(shape),
       dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
-      mv_phi_(*data_mesh.registerPackageVariable<Real>("LevelSet")),
-      mv_phi_gradient_(*data_mesh.registerPackageVariable<Vecd>("LevelSetGradient")),
-      mv_near_interface_id_(*data_mesh.registerPackageVariable<int>("NearInterfaceID"))
+      pmv_phi_(*data_mesh.registerPackageVariable<Real>("LevelSet")),
+      pmv_phi_gradient_(*data_mesh.registerPackageVariable<Vecd>("LevelSetGradient")),
+      pmv_near_interface_id_(*data_mesh.registerPackageVariable<int>("NearInterfaceID"))
 {
     Real far_field_distance = index_handler_.GridSpacing() * (Real)index_handler_.BufferWidth();
     data_mesh.addPackageVariableToWrite<Real>("LevelSet");
-    data_mesh.setBoundaryData(&mv_phi_, resolution_level, [&](UnsignedInt k)
+    data_mesh.setBoundaryData(&pmv_phi_, resolution_level, [&](UnsignedInt k)
                               { Real phi = k == 0 ? -far_field_distance : far_field_distance; 
                                 return PackageVariableData<Real>::Constant(phi); });
-    data_mesh.setBoundaryData(&mv_near_interface_id_, resolution_level, [&](UnsignedInt k)
+    data_mesh.setBoundaryData(&pmv_near_interface_id_, resolution_level, [&](UnsignedInt k)
                               { return PackageVariableData<int>::Constant(k == 0 ? -2 : 2); });
-    data_mesh.setBoundaryData(&mv_phi_gradient_, resolution_level, [&](UnsignedInt k)
+    data_mesh.setBoundaryData(&pmv_phi_gradient_, resolution_level, [&](UnsignedInt k)
                               { return PackageVariableData<Vecd>::Constant(Vecd::Ones()); });
 }
 //=============================================================================================//
@@ -164,7 +164,7 @@ NearInterfaceCellTagging::NearInterfaceCellTagging(
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
       mcv_cell_contain_id_(*data_mesh.getCellVariable<int>("CellContainID")),
-      mv_phi_(*data_mesh.getPackageVariable<Real>("LevelSet")) {}
+      pmv_phi_(*data_mesh.getPackageVariable<Real>("LevelSet")) {}
 //=============================================================================================//
 CellContainDiffusion::CellContainDiffusion(
     SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,

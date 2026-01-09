@@ -60,8 +60,8 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
     };
 
   protected:
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<int> &pmv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
@@ -90,8 +90,8 @@ class MarkCutInterfaces : public BaseMeshLocalDynamics
 
   protected:
     Real perturbation_ratio_;
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<int> &pmv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
@@ -118,8 +118,8 @@ class MarkNearInterface : public BaseMeshLocalDynamics
     };
 
   protected:
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<int> &pmv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
@@ -146,9 +146,9 @@ class RedistanceInterface : public BaseMeshLocalDynamics
     };
 
   protected:
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<Vecd> &mv_phi_gradient_;
-    PackageVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<Vecd> &pmv_phi_gradient_;
+    PackageVariable<int> &pmv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
@@ -175,8 +175,8 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
     };
 
   protected:
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<int> &pmv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
     SingularVariable<UnsignedInt> &sv_count_modified_;
 };
@@ -205,7 +205,7 @@ class LevelSetSignFromFine : public BaseMeshLocalDynamics
     };
 
   private:
-    PackageVariable<Real> &mv_phi_;
+    PackageVariable<Real> &pmv_phi_;
     MetaVariable<UnsignedInt> &dv_pkg_1d_cell_index_;
     UnsignedInt fine_resolution_level_;
 };
@@ -284,7 +284,7 @@ class CorrectFinestLevelSetSign : public BaseDynamics<void>
 template <class ExecutionPolicy>
 class CorrectTopology : public BaseDynamics<void>
 {
-    UniquePtrsKeeper<BaseDynamics<void>> base_dyanmics_keeper_;
+    UniquePtrsKeeper<BaseDynamics<void>> base_dynamics_keeper_;
 
   public:
     CorrectTopology(

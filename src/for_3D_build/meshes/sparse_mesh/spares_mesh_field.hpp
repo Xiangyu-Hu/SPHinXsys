@@ -105,51 +105,6 @@ void SparseMeshField<PKG_SIZE>::writePackageVariablesToPltByMesh(
         output_file << " \n";
     }
 }
-//=============================================================================================//
-template <int PKG_SIZE>
-template <typename DataType>
-DataType SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::probePackageData(
-    const IndexHandler &index_handler, UnsignedInt package_index,
-    const Array3i &cell_index, const Vec3d &position)
-{
-    Array3i data_index = index_handler.DataIndexFromPosition(cell_index, position);
-    Vec3d data_position = index_handler.DataPositionFromIndex(cell_index, data_index);
-    Vec3d alpha = (position - data_position) / index_handler.DataSpacing();
-    Vec3d beta = Vec3d::Ones() - alpha;
-
-    auto &neighborhood = cell_neighborhood_[package_index];
-    PackageDataPair neighbour_index_1 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 0, 0), neighborhood);
-    PackageDataPair neighbour_index_2 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(1, 0, 0), neighborhood);
-    PackageDataPair neighbour_index_3 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 1, 0), neighborhood);
-    PackageDataPair neighbour_index_4 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(1, 1, 0), neighborhood);
-
-    DataType bilinear_1 =
-        pkg_data_[neighbour_index_1.first](neighbour_index_1.second) * beta[0] * beta[1] +
-        pkg_data_[neighbour_index_2.first](neighbour_index_2.second) * alpha[0] * beta[1] +
-        pkg_data_[neighbour_index_3.first](neighbour_index_3.second) * beta[0] * alpha[1] +
-        pkg_data_[neighbour_index_4.first](neighbour_index_4.second) * alpha[0] * alpha[1];
-
-    neighbour_index_1 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 0, 1), neighborhood);
-    neighbour_index_2 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(1, 0, 1), neighborhood);
-    neighbour_index_3 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 1, 1), neighborhood);
-    neighbour_index_4 =
-        NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(1, 1, 1), neighborhood);
-
-    DataType bilinear_2 =
-        pkg_data_[neighbour_index_1.first](neighbour_index_1.second) * beta[0] * beta[1] +
-        pkg_data_[neighbour_index_2.first](neighbour_index_2.second) * alpha[0] * beta[1] +
-        pkg_data_[neighbour_index_3.first](neighbour_index_3.second) * beta[0] * alpha[1] +
-        pkg_data_[neighbour_index_4.first](neighbour_index_4.second) * alpha[0] * alpha[1];
-
-    return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
-}
 //=================================================================================================//
 } // namespace SPH
 #endif // SPARSE_MESH_FIELD_3D_HPP

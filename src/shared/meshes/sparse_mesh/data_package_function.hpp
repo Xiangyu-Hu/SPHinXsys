@@ -16,6 +16,14 @@ PackageDataPair NeighbourIndexShift(const Arrayi &shift_index, const CellNeighbo
     return result;
 }
 //=============================================================================================//
+template <typename DataType, int PKG_SIZE>
+DataType DataFromIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
+                       const CellNeighborhood &neighbour, const Arrayi &data_index)
+{
+    PackageDataPair neighbour_index_shift = NeighbourIndexShift<PKG_SIZE>(data_index, neighbour);
+    return pkg_data[neighbour_index_shift.first](neighbour_index_shift.second);
+}
+//=============================================================================================//
 template <int PKG_SIZE>
 PackageDataPair GeneralNeighbourIndexShift(
     UnsignedInt package_index, CellNeighborhood *neighbour, const Arrayi &shift_index)
@@ -47,9 +55,7 @@ DataType CornerAverage(PackageData<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_i
         Arrayi::Zero(), Arrayi::Ones() * 2,
         [&](const Arrayi &index)
         {
-            PackageDataPair neighbour_index =
-                NeighbourIndexShift<PKG_SIZE>(addrs_index + index * corner_direction, neighborhood);
-            average += pkg_data[neighbour_index.first](neighbour_index.second);
+            average += DataFromIndex(pkg_data, neighborhood, addrs_index + index * corner_direction);
             count += 1.0;
         });
     return average / count;
@@ -71,16 +77,16 @@ Vec2d regularizedCentralDifference(
     PackageData<Real, PKG_SIZE> *input, const CellNeighborhood2d &neighborhood,
     const Array2i &data_index, const RegularizeFunction &regularize_function)
 {
-    PackageDataPair center = NeighbourIndexShift<PKG_SIZE>(data_index, neighborhood);
-    PackageDataPair x1 = NeighbourIndexShift<PKG_SIZE>(data_index + Array2i(1, 0), neighborhood);
-    PackageDataPair x2 = NeighbourIndexShift<PKG_SIZE>(data_index + Array2i(-1, 0), neighborhood);
-    PackageDataPair y1 = NeighbourIndexShift<PKG_SIZE>(data_index + Array2i(0, 1), neighborhood);
-    PackageDataPair y2 = NeighbourIndexShift<PKG_SIZE>(data_index + Array2i(0, -1), neighborhood);
-    Real dphidx_p = input[x1.first](x1.second) - input[center.first](center.second);
-    Real dphidx_m = input[center.first](center.second) - input[x2.first](x2.second);
+    Real center = DataFromIndex(input, neighborhood, data_index);
+    Real xp = DataFromIndex(input, neighborhood, data_index + Array2i(1, 0));
+    Real xm = DataFromIndex(input, neighborhood, data_index + Array2i(-1, 0));
+    Real yp = DataFromIndex(input, neighborhood, data_index + Array2i(0, 1));
+    Real ym = DataFromIndex(input, neighborhood, data_index + Array2i(0, -1));
+    Real dphidx_p = xp - center;
+    Real dphidx_m = center - xm;
     Real dphidx = regularize_function(dphidx_p, dphidx_m);
-    Real dphidy_p = input[y1.first](y1.second) - input[center.first](center.second);
-    Real dphidy_m = input[center.first](center.second) - input[y2.first](y2.second);
+    Real dphidy_p = yp - center;
+    Real dphidy_m = center - ym;
     Real dphidy = regularize_function(dphidy_p, dphidy_m);
     return Vec2d(dphidx, dphidy);
 }
@@ -90,21 +96,21 @@ Vec3d regularizedCentralDifference(
     PackageData<Real, PKG_SIZE> *input, const CellNeighborhood3d &neighborhood,
     const Array3i &data_index, const RegularizeFunction &regularize_function)
 {
-    PackageDataPair center = NeighbourIndexShift<PKG_SIZE>(data_index, neighborhood);
-    PackageDataPair x1 = NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(1, 0, 0), neighborhood);
-    PackageDataPair x2 = NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(-1, 0, 0), neighborhood);
-    PackageDataPair y1 = NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 1, 0), neighborhood);
-    PackageDataPair y2 = NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, -1, 0), neighborhood);
-    PackageDataPair z1 = NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 0, 1), neighborhood);
-    PackageDataPair z2 = NeighbourIndexShift<PKG_SIZE>(data_index + Array3i(0, 0, -1), neighborhood);
-    Real dphidx_p = input[x1.first](x1.second) - input[center.first](center.second);
-    Real dphidx_m = input[center.first](center.second) - input[x2.first](x2.second);
+    Real center = DataFromIndex(input, neighborhood, data_index);
+    Real xp = DataFromIndex(input, neighborhood, data_index + Array3i(1, 0, 0));
+    Real xm = DataFromIndex(input, neighborhood, data_index + Array3i(-1, 0, 0));
+    Real yp = DataFromIndex(input, neighborhood, data_index + Array3i(0, 1, 0));
+    Real ym = DataFromIndex(input, neighborhood, data_index + Array3i(0, -1, 0));
+    Real zp = DataFromIndex(input, neighborhood, data_index + Array3i(0, 0, 1));
+    Real zm = DataFromIndex(input, neighborhood, data_index + Array3i(0, 0, -1));
+    Real dphidx_p = xp - center;
+    Real dphidx_m = center - xm;
     Real dphidx = regularize_function(dphidx_p, dphidx_m);
-    Real dphidy_p = input[y1.first](y1.second) - input[center.first](center.second);
-    Real dphidy_m = input[center.first](center.second) - input[y2.first](y2.second);
+    Real dphidy_p = yp - center;
+    Real dphidy_m = center - ym;
     Real dphidy = regularize_function(dphidy_p, dphidy_m);
-    Real dphidz_p = input[z1.first](z1.second) - input[center.first](center.second);
-    Real dphidz_m = input[center.first](center.second) - input[z2.first](z2.second);
+    Real dphidz_p = zp - center;
+    Real dphidz_m = center - zm;
     Real dphidz = regularize_function(dphidz_p, dphidz_m);
     return Vec3d(dphidx, dphidy, dphidz);
 }

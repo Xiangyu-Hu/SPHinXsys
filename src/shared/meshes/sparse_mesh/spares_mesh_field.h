@@ -145,7 +145,9 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
         DataType probeInResolutionLevel(UnsignedInt level, const Vecd &position);
         DataType probeBetweenResolutionLevels(UnsignedInt coarser_level, Real coarser_weight, const Vecd &position);
         DataType probePackageData(const IndexHandler &index_handler, UnsignedInt package_index,
-                                  const Arrayi &cell_index, const Vecd &position);
+                                  const Array2i &cell_index, const Vec2d &position);
+        DataType probePackageData(const IndexHandler &index_handler, UnsignedInt package_index,
+                                  const Array3i &cell_index, const Vec3d &position);
     };
 
   protected:

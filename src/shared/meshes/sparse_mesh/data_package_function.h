@@ -39,6 +39,10 @@ namespace SPH
 template <int PKG_SIZE>
 PackageDataPair NeighbourIndexShift(const Arrayi &shift_index, const CellNeighborhood &neighbour);
 
+template <typename DataType, int PKG_SIZE>
+DataType DataFromIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
+                       const CellNeighborhood &neighbour, const Arrayi &data_index);
+
 template <int PKG_SIZE>
 PackageDataPair GeneralNeighbourIndexShift(
     UnsignedInt package_index, CellNeighborhood *neighbour, const Arrayi &shift_index);

@@ -13,8 +13,8 @@ template <class ExecutionPolicy, class EncloserType>
 UpdateLevelSetGradient::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : data_spacing_(encloser.index_handler_.DataSpacing()),
-      phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-      phi_gradient_(encloser.mv_phi_gradient_.DelegatedData(ex_policy)),
+      phi_(encloser.pmv_phi_.DelegatedData(ex_policy)),
+      phi_gradient_(encloser.pmv_phi_gradient_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 inline void UpdateLevelSetGradient::UpdateKernel::update(const UnsignedInt &package_index)
@@ -36,11 +36,11 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const UnsignedInt &pack
 template <class ExecutionPolicy, class EncloserType>
 UpdateKernelIntegrals::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-      phi_gradient_(encloser.mv_phi_gradient_.DelegatedData(ex_policy)),
-      kernel_weight_(encloser.mv_kernel_weight_.DelegatedData(ex_policy)),
-      kernel_gradient_(encloser.mv_kernel_gradient_.DelegatedData(ex_policy)),
-      kernel_second_gradient_(encloser.mv_kernel_second_gradient_.DelegatedData(ex_policy)),
+    : phi_(encloser.pmv_phi_.DelegatedData(ex_policy)),
+      phi_gradient_(encloser.pmv_phi_gradient_.DelegatedData(ex_policy)),
+      kernel_weight_(encloser.pmv_kernel_weight_.DelegatedData(ex_policy)),
+      kernel_gradient_(encloser.pmv_kernel_gradient_.DelegatedData(ex_policy)),
+      kernel_second_gradient_(encloser.pmv_kernel_second_gradient_.DelegatedData(ex_policy)),
       kernel_(encloser.neighbor_method_),
       data_spacing_(encloser.index_handler_.DataSpacing()),
       data_cell_volume_(math::pow(data_spacing_, Dimensions)),
