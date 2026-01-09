@@ -30,7 +30,9 @@
 #ifndef BASE_BODY_PART_H
 #define BASE_BODY_PART_H
 
-#include "base_body.h"
+#include "all_geometries.h"
+#include "base_data_type_package.h"
+#include "sphinxsys_containers.h"
 
 #include <optional>
 
@@ -47,10 +49,11 @@ class BodyPart
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
 
   public:
+    typedef SPHAdaptation BaseAdaptation;
     BodyPart(SPHBody &sph_body);
     virtual ~BodyPart() {};
     SPHBody &getSPHBody() { return sph_body_; };
-    SPHSystem &getSPHSystem() { return sph_body_.getSPHSystem(); };
+    SPHSystem &getSPHSystem();
     std::string getName() const { return alias_.value_or(part_name_); };
     int getPartID() { return part_id_; };
     SingularVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
@@ -106,7 +109,7 @@ class BodyPartByID : public BodyPart
 class BodyPartByParticle : public BodyPart
 {
   public:
-    typedef BodyPartByParticle BaseIdentifier;
+    typedef BodyPartByParticle BaseIdentifier;    
     IndexVector body_part_particles_; /**< Collection particle in this body part. */
     BaseParticles &getBaseParticles() { return base_particles_; };
     DiscreteVariable<UnsignedInt> *dvParticleList() { return dv_particle_list_; };

@@ -1,9 +1,10 @@
+#ifndef LEVEL_SET_TRANSFORMATION_HPP
+#define LEVEL_SET_TRANSFORMATION_HPP
+
 #include "level_set_transformation.h"
 
 #include "mesh_iterators.hpp"
-
-#ifndef LEVEL_SET_TRANSFORMATION_HPP
-#define LEVEL_SET_TRANSFORMATION_HPP
+#include "neighbor_method.hpp"
 
 namespace SPH
 {
@@ -40,7 +41,7 @@ UpdateKernelIntegrals::UpdateKernel::
       kernel_weight_(encloser.mv_kernel_weight_.DelegatedData(ex_policy)),
       kernel_gradient_(encloser.mv_kernel_gradient_.DelegatedData(ex_policy)),
       kernel_second_gradient_(encloser.mv_kernel_second_gradient_.DelegatedData(ex_policy)),
-      kernel_(ex_policy, encloser.neighbor_method_),
+      kernel_(encloser.neighbor_method_),
       data_spacing_(encloser.index_handler_.DataSpacing()),
       data_cell_volume_(math::pow(data_spacing_, Dimensions)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),

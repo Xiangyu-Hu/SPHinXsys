@@ -39,6 +39,7 @@
 #include "sphinxsys_variable_sycl.hpp"
 #endif // SPHINXSYS_USE_SYCL
 
+#include "adaptation.hpp"
 #include "all_bodies.h"
 #include "all_body_relations.h"
 #include "all_closures.h"

@@ -1,7 +1,8 @@
 #include "level_set.hpp"
+
 #include "adaptation.h"
 #include "base_kernel.h"
-#include <type_traits>
+#include "level_set_initialization.hpp"
 
 namespace SPH
 {
@@ -20,7 +21,7 @@ LevelSet::LevelSet(
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec.push_back(global_h_ratio);
     neighbor_method_set_.push_back(
-        neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
+        neighbor_method_keeper_.template createPtr<Neighbor<SPHAdaptation, SPHAdaptation>>(
             sph_adaptation.getKernelPtr(), smoothing_length, data_spacing));
 
     initializeLevel(0, coarse_data, coarse_data->ResolutionLevels() - 1);
@@ -40,7 +41,7 @@ LevelSet::LevelSet(
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec.push_back(global_h_ratio);
     neighbor_method_set_.push_back(
-        neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
+        neighbor_method_keeper_.template createPtr<Neighbor<SPHAdaptation, SPHAdaptation>>(
             sph_adaptation.getKernelPtr(), smoothing_length, data_spacing));
 
     initializeLevel(0);
@@ -51,7 +52,7 @@ LevelSet::LevelSet(
         smoothing_length *= 0.5; // Halve the smoothing length
         global_h_ratio_vec.push_back(global_h_ratio);
         neighbor_method_set_.push_back(
-            neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
+            neighbor_method_keeper_.template createPtr<Neighbor<SPHAdaptation, SPHAdaptation>>(
                 sph_adaptation.getKernelPtr(), smoothing_length, data_spacing));
 
         initializeLevel(level, this, level - 1);

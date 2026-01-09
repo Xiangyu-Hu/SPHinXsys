@@ -1,7 +1,7 @@
-#include "level_set_initialization.h"
-
 #ifndef LEVEL_SET_INITIALIZATION_HPP
 #define LEVEL_SET_INITIALIZATION_HPP
+
+#include "level_set_initialization.h"
 
 namespace SPH
 {

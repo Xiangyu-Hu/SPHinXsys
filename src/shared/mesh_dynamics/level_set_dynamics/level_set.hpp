@@ -2,6 +2,8 @@
 #define LEVEL_SET_HPP
 
 #include "level_set.h"
+#include "level_set_transformation.hpp"
+#include "level_set_correction.hpp"
 
 namespace SPH
 {

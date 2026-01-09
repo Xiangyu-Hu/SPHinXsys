@@ -35,7 +35,6 @@
 #include "base_configuration_dynamics.h"
 #include "base_local_dynamics.h"
 #include "base_particles.hpp"
-#include "neighborhood_ck.h"
 #include "relation_ck.hpp"
 
 namespace SPH
@@ -50,10 +49,12 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
 {
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::SourceType>;
     using InnerRelationType = Inner<Parameters...>;
+    using NeighborSearch = typename CellLinkedList::NeighborSearch;
     using NeighborList = typename InnerRelationType::NeighborList;
     using Identifier = typename BaseLocalDynamicsType::Identifier;
     using MaskedSource = typename Identifier::SourceParticleMask;
     using NeighborMethodType = typename InnerRelationType::NeighborhoodType;
+    using SearchBox = typename NeighborMethodType::SearchBox;
     using NeighborCriterion = typename NeighborMethodType::NeighborCriterion;
     using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion>;
 
@@ -93,6 +94,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
         OneSidedCheck is_one_sided_;
         MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
+        SearchBox search_box_;
     };
     typedef UpdateRelation<ExecutionPolicy, Inner<Parameters...>> LocalDynamicsType;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
@@ -109,6 +111,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
 {
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
     using ContactRelationType = Contact<Parameters...>;
+    using NeighborSearch = typename CellLinkedList::NeighborSearch;
     using NeighborList = typename ContactRelationType::NeighborList;
     using Neighborhood = typename ContactRelationType::NeighborhoodType;
     using SearchBox = typename Neighborhood::SearchBox;

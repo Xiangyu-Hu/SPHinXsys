@@ -1,7 +1,7 @@
-#include "level_set_correction.h"
-
 #ifndef LEVEL_SET_CORRECTION_HPP
 #define LEVEL_SET_CORRECTION_HPP
+
+#include "level_set_correction.h"
 
 namespace SPH
 {
@@ -336,7 +336,7 @@ inline void LevelSetSignFromFine::UpdateKernel::update(const UnsignedInt &packag
 template <class ExecutionPolicy>
 CleanInterface<ExecutionPolicy>::CleanInterface(
     SparseMeshField<4> &mesh_data, UnsignedInt resolution_level,
-    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method, Real refinement)
+    Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method, Real refinement)
     : RepeatTimes(), BaseDynamics<void>(),
       neighbor_method_(neighbor_method),
       update_level_set_gradient{mesh_data, resolution_level},
@@ -355,7 +355,7 @@ CorrectFinestLevelSetSign<ExecutionPolicy>::CorrectFinestLevelSetSign(
 template <class ExecutionPolicy>
 CorrectTopology<ExecutionPolicy>::CorrectTopology(
     SparseMeshField<4> &mesh_data,
-    StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set)
+    StdVec<Neighbor<SPHAdaptation, SPHAdaptation> *> neighbor_method_set)
     : BaseDynamics<void>(), resolution_levels_(mesh_data.ResolutionLevels()),
       neighbor_method_set_(neighbor_method_set)
 {

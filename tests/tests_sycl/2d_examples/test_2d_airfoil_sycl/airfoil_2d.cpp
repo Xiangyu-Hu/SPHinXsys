@@ -1,29 +1,41 @@
 /**
- * @file 	particle_generator_single_resolution.cpp
- * @brief 	This is the test of using level set to generate particles with single resolution and relax particles.
- * @details	We use this case to test the particle generation and relaxation by level set for a complex geometry (2D).
- *			Before particle generation, we clean the level set, then do re-initialization.
+ * @file 	airfoil_2d.cpp
+ * @brief 	This is the test of using level set to generate body fitted SPH particles.
+ * @details	We use this case to test the particle generation and relaxation with a complex geometry (2D).
+ *			Before the particles are generated, we clean the sharp corners and other unresolvable surfaces.
  * @author 	Yongchuan Yu and Xiangyu Hu
  */
-
 #include "sphinxsys.h"
-
 using namespace SPH;
-
 //----------------------------------------------------------------------
-//	Set the file path to the data file
+//	Set the file path to the data file.
 //----------------------------------------------------------------------
-std::string input_body = "./input/SPHinXsys-2d.dat";
+std::string airfoil_flap_front = "./input/airfoil_flap_front.dat";
+std::string airfoil_wing = "./input/airfoil_wing.dat";
+std::string airfoil_flap_rear = "./input/airfoil_flap_rear.dat";
 //----------------------------------------------------------------------
-//	Basic geometry parameters
+//	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 2.5;                             /**< InputBody length right part. */
-Real DL1 = 2.5;                            /**< InputBody length left part. */
-Real DH = 5.0;                             /**< InputBody height. */
-Real global_resolution = (DL + DL1) / 120; /**< Reference resolution. */
-BoundingBoxd system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
+Real DL = 1.25;                /**< airfoil length rear part. */
+Real DL1 = 0.25;               /**< airfoil length front part. */
+Real DH = 0.25;                /**< airfoil height. */
+Real global_resolution = 0.02; /**< Reference resolution. */
+BoundingBoxd system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
 //----------------------------------------------------------------------
-//	The main program
+//	import model as a complex shape
+//----------------------------------------------------------------------
+class ImportModel : public MultiPolygonShape
+{
+  public:
+    explicit ImportModel(const std::string &import_model_name) : MultiPolygonShape(import_model_name)
+    {
+        multi_polygon_.addAPolygonFromFile(airfoil_flap_front, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygonFromFile(airfoil_wing, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygonFromFile(airfoil_flap_rear, ShapeBooleanOps::add);
+    }
+};
+//----------------------------------------------------------------------
+//	Main program starts here.
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
@@ -33,25 +45,16 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
-    //	Creating body, materials, particles and body parts.
+    //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    auto &input_shape = sph_system.addShape<ComplexShape>("SPHInXsysLogo");
-    MultiPolygon original_logo;
-    original_logo.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
-    input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * global_resolution, original_logo);
-    input_shape.subtract<MultiPolygonShape>(original_logo);
-    auto &input_body = sph_system.addBody<RealBody>(input_shape);
-    LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(par_ck, 2.0)
-                                         ->addPackageVariableToWrite<Real>("KernelWeight")
+    auto &airfoil = sph_system.addAdaptiveBody<RealBody>(
+        AdaptiveNearSurface(global_resolution, 1.15, 1.0, 3), makeShared<ImportModel>("AirFoil"));
+    LevelSetShape *level_set_shape = airfoil.defineBodyLevelSetShape()
+                                         ->cleanLevelSet()
                                          ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
-                                         ->addCellVariableToWrite<int>("CellContainID")
                                          ->writeLevelSet();
-    input_body.generateParticles<BaseParticles, Lattice>();
-    auto &near_body_surface = input_body.addBodyPart<NearShapeSurface>();
-
-    auto &filler_shape = sph_system.addShape<MultiPolygonShape>(original_logo, "Filler");
-    auto &filler = sph_system.addBody<RealBody>(filler_shape);
-    filler.generateParticles<BaseParticles, Lattice>();
+    airfoil.generateParticles<BaseParticles, Lattice>();
+    auto &near_body_surface = airfoil.addBodyPart<NearShapeSurface>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -60,9 +63,7 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    auto &input_body_inner = sph_system.addInnerRelation(input_body);
-    auto &filler_inner = sph_system.addInnerRelation(filler);
-    auto &filler_contact = sph_system.addContactRelation(filler, input_body);
+    auto &airfoil_inner = sph_system.addInnerRelation(airfoil);
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.
@@ -81,57 +82,50 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    StdVec<RealBody *> real_bodies = {&input_body, &filler};
+    host_methods.addStateDynamics<RandomizeParticlePositionCK>(airfoil).exec();
+    auto &update_cell_linked_list = main_methods.addCellLinkedListDynamics(airfoil);
+    auto &update_inner_relation = main_methods.addRelationDynamics(airfoil_inner);
 
-    host_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies).exec(); // host method able to run immediately
+    auto &relaxation_residual =
+        main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(airfoil_inner)
+            .addPostStateDynamics<LevelsetKernelGradientIntegral>(airfoil, *level_set_shape);
 
-    ParticleDynamicsGroup update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
-    ParticleDynamicsGroup update_relation;
-    update_relation.add(&main_methods.addRelationDynamics(input_body_inner));
-    update_relation.add(&main_methods.addRelationDynamics(filler_inner, filler_contact));
-    ParticleDynamicsGroup update_configuration = update_cell_linked_list + update_relation;
+    auto &update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(airfoil);
+    auto &level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_body_surface);
+    auto &update_smoothing_length_ratio = main_methods.addStateDynamics<UpdateSmoothingLengthRatio>(airfoil, *level_set_shape);
 
-    ParticleDynamicsGroup relaxation_residual;
-    relaxation_residual.add(&main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(input_body_inner)
-                                 .addPostStateDynamics<LevelsetKernelGradientIntegral>(input_body, *level_set_shape));
-    relaxation_residual.add(&main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(filler_inner)
-                                 .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(filler_contact));
-
-    ReduceDynamicsGroup relaxation_scaling = main_methods.addReduceDynamics<ReduceMin, RelaxationScalingCK>(real_bodies);
-
-    ParticleDynamicsGroup update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(real_bodies);
-    update_particle_position.add(&main_methods.addStateDynamics<LevelsetBounding>(near_body_surface));
+    auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(airfoil);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
-    BaseCellLinkedList &input_body_cell_linked_list = input_body.getCellLinkedList();
-    input_body_cell_linked_list.addCellVariableToWrite<UnsignedInt>("CurrentListSize");
-    MeshRecordingToPlt cell_linked_list_recording(sph_system, input_body_cell_linked_list);
+    body_state_recorder.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
     //----------------------------------------------------------------------
     //	First output before the simulation.
     //----------------------------------------------------------------------
-    body_state_recorder.writeToFile(0);
+    body_state_recorder.writeToFile();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
     int ite_p = 0;
-    while (ite_p < 1000)
+    while (ite_p < 2000)
     {
-        update_configuration.exec();
+        update_cell_linked_list.exec();
+        update_inner_relation.exec();
+
         relaxation_residual.exec();
         Real relaxation_step = relaxation_scaling.exec();
         update_particle_position.exec(relaxation_step);
+        level_set_bounding.exec();
+        update_smoothing_length_ratio.exec();
 
         ite_p += 1;
         if (ite_p % 100 == 0)
         {
             std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
             body_state_recorder.writeToFile(ite_p);
-            cell_linked_list_recording.writeToFile(ite_p);
         }
     }
     std::cout << "The physics relaxation process finish !" << std::endl;
-
     return 0;
 }

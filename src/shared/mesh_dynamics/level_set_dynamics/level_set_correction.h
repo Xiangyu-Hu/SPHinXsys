@@ -226,7 +226,7 @@ class CleanInterface : public RepeatTimes, public BaseDynamics<void>
 {
   public:
     CleanInterface(SparseMeshField<4> &mesh_data, UnsignedInt resolution_level,
-                   NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method,
+                   Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method,
                    Real refinement);
     virtual ~CleanInterface() {};
 
@@ -250,7 +250,7 @@ class CleanInterface : public RepeatTimes, public BaseDynamics<void>
     }
 
   private:
-    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method_;
+    Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method_;
     MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient;
     MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals;
     MeshInnerDynamics<ExecutionPolicy, MarkCutInterfaces> mark_cut_interfaces;
@@ -289,7 +289,7 @@ class CorrectTopology : public BaseDynamics<void>
   public:
     CorrectTopology(
         SparseMeshField<4> &mesh_data,
-        StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set);
+        StdVec<Neighbor<SPHAdaptation, SPHAdaptation> *> neighbor_method_set);
     virtual ~CorrectTopology() {};
 
     void exec(Real dt = 0.0) override
@@ -306,7 +306,7 @@ class CorrectTopology : public BaseDynamics<void>
 
   private:
     UnsignedInt resolution_levels_;
-    StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
+    StdVec<Neighbor<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
     StdVec<BaseDynamics<void> *> level_set_sign_correction_set_;
     StdVec<BaseDynamics<void> *> update_level_set_gradient_set_;
     StdVec<BaseDynamics<void> *> update_kernel_integrals_set;

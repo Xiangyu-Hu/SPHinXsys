@@ -32,5 +32,6 @@
 #include "all_complex_bodies.h"
 #include "base_body_part.h"
 #include "predefined_bodies.h"
+#include "adaptive_body.h"
 
 #endif // ALL_BODIES_H

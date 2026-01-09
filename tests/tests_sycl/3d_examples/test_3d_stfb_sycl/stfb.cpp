@@ -171,12 +171,13 @@ int main(int ac, char *av[])
     Contact<> water_block_contact(water_block, {&wall_boundary, &structure});
     Contact<> structure_contact(structure, {&water_block});
     Contact<> observer_contact(observer, {&structure}, ConfigType::Lagrangian);
-    Contact<SPHBody, BodyPartByParticle> structure_proxy_contact(structure_proxy, {&structure_surface}, ConfigType::Lagrangian);
+    Contact<Relation<SPHBody, BodyPartByParticle>> structure_proxy_contact(
+        structure_proxy, {&structure_surface}, ConfigType::Lagrangian);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
@@ -193,7 +194,7 @@ int main(int ac, char *av[])
         structure_update_contact_relation(structure_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>>
         observer_update_contact_relation(observer_contact);
-    UpdateRelation<MainExecutionPolicy, Contact<SPHBody, BodyPartByParticle>>
+    UpdateRelation<MainExecutionPolicy, Contact<Relation<SPHBody, BodyPartByParticle>>>
         structure_proxy_update_contact_relation(structure_proxy_contact);
     ParticleSortCK<MainExecutionPolicy> particle_sort(water_block);
 
@@ -232,8 +233,8 @@ int main(int ac, char *av[])
 
     ArbitraryDynamicsSequence<
         StateDynamics<MainExecutionPolicy, solid_dynamics::UpdateDisplacementFromPosition>,
-        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, SPHBody, BodyPartByParticle>>>,
-        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, SPHBody, BodyPartByParticle>>>,
+        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, Relation<SPHBody, BodyPartByParticle>>>>,
+        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, Relation<SPHBody, BodyPartByParticle>>>>,
         StateDynamics<MainExecutionPolicy, solid_dynamics::UpdatePositionFromDisplacement>>
         update_structure_proxy_states(
             structure,

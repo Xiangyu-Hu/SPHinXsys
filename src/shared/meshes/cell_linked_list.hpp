@@ -111,14 +111,15 @@ void BaseCellLinkedList::particle_for_split(const ExecutionPolicy &ex_policy,
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-NeighborSearch::NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list)
+CellLinkedList::NeighborSearch::NeighborSearch(
+    const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list)
     : Mesh(cell_linked_list.getMesh()),
       particle_index_(cell_linked_list.dvParticleIndex()->DelegatedData(ex_policy)),
       cell_offset_(cell_linked_list.dvCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename FunctionOnEach>
-void NeighborSearch::forEachSearch(const Vecd &source_pos, const FunctionOnEach &function,
-                                   const BoundingBoxi &search_box) const
+void CellLinkedList::NeighborSearch::forEachSearch(
+    const Vecd &source_pos, const FunctionOnEach &function, const BoundingBoxi &search_box) const
 {
     const BoundingBoxi search_range =
         search_box.translate(CellIndexFromPosition(source_pos));
@@ -134,12 +135,6 @@ void NeighborSearch::forEachSearch(const Vecd &source_pos, const FunctionOnEach 
                 function(particle_index_[n]);
             }
         });
-}
-//=================================================================================================//
-template <class ExecutionPolicy>
-NeighborSearch CellLinkedList::createNeighborSearch(const ExecutionPolicy &ex_policy)
-{
-    return NeighborSearch(ex_policy, *this);
 }
 //=================================================================================================//
 } // namespace SPH
