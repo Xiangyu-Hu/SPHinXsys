@@ -23,8 +23,8 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const UnsignedInt &pack
                   [&](const Arrayi &index)
                   {
                       phi_gradient_[package_index](index) =
-                          regularizedCentralDifference(
-                              phi_, cell_neighborhood_[package_index], index,
+                          cell_neighborhood_[package_index].regularizedCentralDifference(
+                              phi_, index,
                               [](Real dp, Real dm)
                               {
                                   return 0.5 * (dp + dm); // no upwinding
@@ -51,14 +51,14 @@ UpdateKernelIntegrals::UpdateKernel::
 //=================================================================================================//
 inline void UpdateKernelIntegrals::UpdateKernel::update(const UnsignedInt &package_index)
 {
-    assignByDataIndex(
-        kernel_weight_[package_index], [&](const Arrayi &data_index) -> Real
+    kernel_weight_[package_index].assignByIndex(
+        [&](const Arrayi &data_index) -> Real
         { return computeKernelIntegral(package_index, data_index); });
-    assignByDataIndex(
-        kernel_gradient_[package_index], [&](const Arrayi &data_index) -> Vecd
+    kernel_gradient_[package_index].assignByIndex(
+        [&](const Arrayi &data_index) -> Vecd
         { return computeKernelGradientIntegral(package_index, data_index); });
-    assignByDataIndex(
-        kernel_second_gradient_[package_index], [&](const Arrayi &data_index) -> Matd
+    kernel_second_gradient_[package_index].assignByIndex(
+        [&](const Arrayi &data_index) -> Matd
         { return computeKernelSecondGradientIntegral(package_index, data_index); });
 }
 //=================================================================================================//

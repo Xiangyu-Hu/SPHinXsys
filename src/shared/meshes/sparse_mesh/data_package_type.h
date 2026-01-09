@@ -38,44 +38,21 @@ template <int PKG_SIZE>
 inline constexpr std::size_t as_size_t_v = static_cast<std::size_t>(PKG_SIZE);
 
 template <class DataType, int PKG_SIZE>
-class PackageData2d
+class PackageBase2d
     : public std::array<std::array<DataType, as_size_t_v<PKG_SIZE>>, as_size_t_v<PKG_SIZE>>
 {
   public:
     DataType operator()(const Array2i &index) const { return (*this)[index[0]][index[1]]; }
     DataType &operator()(const Array2i &index) { return (*this)[index[0]][index[1]]; }
-    static PackageData2d Constant(const DataType &value)
-    {
-        PackageData2d pkg_data{};
-        mesh_for_each(Array2i::Zero(), Array2i::Constant(PKG_SIZE),
-                      [&](const Array2i &data_index)
-                      {
-                          pkg_data(data_index) = value;
-                      });
-        return pkg_data;
-    }
 };
 
 template <class DataType, int PKG_SIZE>
-class PackageData3d
+class PackageBase3d
     : public std::array<std::array<std::array<DataType, as_size_t_v<PKG_SIZE>>, as_size_t_v<PKG_SIZE>>, as_size_t_v<PKG_SIZE>>
 {
   public:
     DataType operator()(const Array3i &index) const { return (*this)[index[0]][index[1]][index[2]]; }
     DataType &operator()(const Array3i &index) { return (*this)[index[0]][index[1]][index[2]]; }
-    static PackageData3d Constant(const DataType &value)
-    {
-        PackageData3d pkg_data{};
-        mesh_for_each(Array3i::Zero(), Array3i::Constant(PKG_SIZE),
-                      [&](const Array3i &data_index)
-                      {
-                          pkg_data(data_index) = value;
-                      });
-        return pkg_data;
-    }
 };
-
-using CellNeighborhood2d = PackageData2d<UnsignedInt, 3>;
-using CellNeighborhood3d = PackageData3d<UnsignedInt, 3>;
 } // namespace SPH
 #endif // DATA_PACKAGE_TYPE_H

@@ -21,45 +21,64 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file data_package_function.h
- * @brief This is for the base functions for mesh iterator.
- * There are two types of functions: one is for static ranged
- * which are defined by template parameters,
- * the other for dynamics ranges which are input parameters.
+ * @file data_package_utility.h
+ * @brief TBD.
  * @author  Xiangyu Hu
  */
 
-#ifndef DATA_PACKAGE_FUNCTIONS_H
-#define DATA_PACKAGE_FUNCTIONS_H
+#ifndef DATA_PACKAGE_UTILITY_H
+#define DATA_PACKAGE_UTILITY_H
 
-#include "spares_mesh_field.h"
+#include "data_package_type.hpp"
 
 namespace SPH
 {
-template <int PKG_SIZE>
-PackageDataPair NeighbourIndexShift(const Arrayi &shift_index, const CellNeighborhood &neighbour);
+template <class DataType, int PKG_SIZE>
+class PackageData : public PackageBase<DataType, PKG_SIZE>
+{
+  public:
+    static PackageData Constant(const DataType &value)
+    {
+        PackageData pkg_data{};
+        mesh_for_each(Arrayi::Zero(), Arrayi::Constant(PKG_SIZE),
+                      [&](const Arrayi &data_index)
+                      {
+                          pkg_data(data_index) = value;
+                      });
+        return pkg_data;
+    };
 
-template <typename DataType, int PKG_SIZE>
-DataType DataFromIndex(PackageData<DataType, PKG_SIZE> *pkg_data,
-                       const CellNeighborhood &neighbour, const Arrayi &data_index);
+    template <typename FunctionByIndex>
+    void assignByIndex(const FunctionByIndex &function_by_index);
+};
+
+class CellNeighborhood : public PackageData<UnsignedInt, 3>
+{
+  public:
+    CellNeighborhood() = default;
+    CellNeighborhood(const PackageData<UnsignedInt, 3> &base_obj)
+        : PackageData<UnsignedInt, 3>(base_obj) {};
+
+    template <int PKG_SIZE>
+    PackageDataPair IndexShift(const Arrayi &shift_index);
+
+    template <typename DataType, int PKG_SIZE>
+    DataType DataFromIndex(PackageData<DataType, PKG_SIZE> *pkg_data, const Arrayi &data_index);
+
+    template <typename DataType, int PKG_SIZE>
+    DataType CornerAverage(PackageData<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
+                           Arrayi corner_direction, DataType zero);
+
+    template <int PKG_SIZE, typename RegularizeFunction>
+    Vec2d regularizedCentralDifference(PackageData<Real, PKG_SIZE> *input, const Array2i &data_index,
+                                       const RegularizeFunction &regularize_function);
+    template <int PKG_SIZE, typename RegularizeFunction>
+    Vec3d regularizedCentralDifference(PackageData<Real, PKG_SIZE> *input, const Array3i &data_index,
+                                       const RegularizeFunction &regularize_function);
+};
 
 template <int PKG_SIZE>
 PackageDataPair GeneralNeighbourIndexShift(
     UnsignedInt package_index, CellNeighborhood *neighbour, const Arrayi &shift_index);
-
-template <typename DataType, int PKG_SIZE>
-DataType CornerAverage(PackageData<DataType, PKG_SIZE> *pkg_data, Arrayi addrs_index,
-                       Arrayi corner_direction, const CellNeighborhood &neighborhood, DataType zero);
-
-template <typename DataType, int PKG_SIZE, typename FunctionByIndex>
-void assignByDataIndex(PackageData<DataType, PKG_SIZE> &pkg_data, const FunctionByIndex &function_by_index);
-
-template <int PKG_SIZE, typename RegularizeFunction>
-Vec2d regularizedCentralDifference(PackageData<Real, PKG_SIZE> *input, const CellNeighborhood2d &neighborhood,
-                                   const Array2i &data_index, const RegularizeFunction &regularize_function);
-
-template <int PKG_SIZE, typename RegularizeFunction>
-Vec3d regularizedCentralDifference(PackageData<Real, PKG_SIZE> *input, const CellNeighborhood3d &neighborhood,
-                                   const Array3i &data_index, const RegularizeFunction &regularize_function);
 } // namespace SPH
-#endif // DATA_PACKAGE_FUNCTIONS_H
+#endif // DATA_PACKAGE_UTILITY_H

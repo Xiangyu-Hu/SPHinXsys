@@ -49,8 +49,8 @@ inline void ReinitializeLevelSet::UpdateKernel::update(const UnsignedInt &packag
                 Real phi_0 = phi_pkg(index);
                 Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
 
-                Vecd difference = regularizedCentralDifference(
-                    phi_, neighborhood, index,
+                Vecd difference = neighborhood.regularizedCentralDifference(
+                    phi_, index,
                     [&](Real dp, Real dm)
                     {
                         return upwindDifference(sign, dp, dm);
@@ -77,14 +77,13 @@ inline void MarkCutInterfaces::UpdateKernel::update(const UnsignedInt &package_i
     auto &near_interface_id_addrs = near_interface_id_[package_index];
 
     // corner averages, note that the first row and first column are not used
-    PackageData<Real, 5> corner_averages;
+    PackageData<Real, 5> corner_averages{};
     mesh_for_each(
         Arrayi::Zero(), Arrayi::Constant(5),
         [&](const Arrayi &index)
         {
-            corner_averages(index) =
-                CornerAverage(phi_, index, Arrayi::Constant(-1),
-                              cell_neighborhood_[package_index], (Real)0);
+            corner_averages(index) = cell_neighborhood_[package_index]
+                                         .CornerAverage(phi_, index, Arrayi::Constant(-1), (Real)0);
         });
 
     mesh_for_each(Arrayi::Zero(), Arrayi::Constant(pkg_size),
@@ -146,10 +145,8 @@ inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_i
                     Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
                     [&](const Arrayi &shift) -> bool
                     {
-                        PackageDataPair neighbour_index = NeighbourIndexShift<pkg_size>(
-                            index + shift, cell_neighborhood_[package_index]);
-
-                        return phi0 * phi_[neighbour_index.first](neighbour_index.second) < 0.0;
+                        Real neighbor_phi = cell_neighborhood_[package_index].DataFromIndex(phi_, index + shift);
+                        return phi0 * neighbor_phi < 0.0;
                     });
 
                 if (is_sign_changed)
@@ -191,10 +188,8 @@ inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package
                     Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
                     [&](const Arrayi &shift)
                     {
-                        PackageDataPair neighbour_index = NeighbourIndexShift<pkg_size>(
-                            index + shift, cell_neighborhood_[package_index]);
                         int neighbor_near_interface_id =
-                            near_interface_id_[neighbour_index.first](neighbour_index.second);
+                            cell_neighborhood_[package_index].DataFromIndex(near_interface_id_, index + shift);
                         if (neighbor_near_interface_id >= 1)
                             positive_band = true;
                         if (neighbor_near_interface_id <= -1)
@@ -207,8 +202,8 @@ inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package
                         Arrayi::Constant(-4), Arrayi::Constant(5), // check in the 4x4x4 neighborhood
                         [&](const Arrayi &shift)
                         {
-                            PackageDataPair neighbour_index = NeighbourIndexShift<pkg_size>(
-                                index + shift, cell_neighborhood_[package_index]);
+                            PackageDataPair neighbour_index =
+                                cell_neighborhood_[package_index].IndexShift<pkg_size>(index + shift);
                             auto &neighbor_phi = phi_[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
                             auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
@@ -235,8 +230,8 @@ inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package
                         Arrayi::Constant(-4), Arrayi::Constant(5), // check in the 4x4x4 neighborhood
                         [&](const Arrayi &shift)
                         {
-                            PackageDataPair neighbour_index = NeighbourIndexShift<pkg_size>(
-                                index + shift, cell_neighborhood_[package_index]);
+                            PackageDataPair neighbour_index =
+                                cell_neighborhood_[package_index].IndexShift<pkg_size>(index + shift);
                             auto &neighbor_phi = phi_[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
                             auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
@@ -281,9 +276,8 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package
                         Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
                         [&](const Arrayi &shift) -> bool
                         {
-                            PackageDataPair neighbour_index = NeighbourIndexShift<pkg_size>(
-                                index + shift, cell_neighborhood_[package_index]);
-                            return near_interface_id_[neighbour_index.first](neighbour_index.second) == 1;
+                            return cell_neighborhood_[package_index]
+                                       .DataFromIndex(near_interface_id_, index + shift) == 1;
                         }))
                 {
                     phi_[package_index](index) = ABS(phi);
@@ -295,9 +289,8 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package
                              Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
                              [&](const Arrayi &shift) -> bool
                              {
-                                 PackageDataPair neighbour_index = NeighbourIndexShift<pkg_size>(
-                                     index + shift, cell_neighborhood_[package_index]);
-                                 return near_interface_id_[neighbour_index.first](neighbour_index.second) == -1;
+                                 return cell_neighborhood_[package_index]
+                                            .DataFromIndex(near_interface_id_, index + shift) == -1;
                              }))
                 {
                     phi_[package_index](index) = -ABS(phi);

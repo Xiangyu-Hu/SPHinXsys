@@ -31,7 +31,7 @@
 
 #include "base_mesh.hpp"
 
-#include "data_package_type.hpp"
+#include "data_package_utility.hpp"
 #include "execution_policy.h"
 
 namespace SPH
