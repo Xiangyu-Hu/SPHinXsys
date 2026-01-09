@@ -37,6 +37,7 @@
 
 #include "adaptation.h"
 #include "all_geometries.h"
+#include "base_body_part.h"
 #include "base_data_type_package.h"
 #include "base_implementation.h"
 #include "base_material.h"
@@ -45,8 +46,6 @@
 #include "cell_linked_list.h"
 #include "closure_wrapper.h"
 #include "sphinxsys_containers.h"
-
-#include <string>
 
 namespace SPH
 {
@@ -74,7 +73,7 @@ class SPHBody
     bool newly_updated_;                   /**< whether this body is in a newly updated state */
     BaseParticles *base_particles_;        /**< Base particles for dynamic cast DataDelegate  */
     bool is_bound_set_;                    /**< whether the bounding box is set */
-    BoundingBoxd bound_;                    /**< bounding box of the body */
+    BoundingBoxd bound_;                   /**< bounding box of the body */
     Shape *initial_shape_;                 /**< initial volumetric geometry enclosing the body */
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
     BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
@@ -82,6 +81,7 @@ class SPHBody
 
   public:
     typedef SPHBody BaseIdentifier;
+    typedef SPHAdaptation BaseAdaptation;
     SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name);
     SPHBody(SPHSystem &sph_system, Shape &shape);
     SPHBody(SPHSystem &sph_system, const std::string &name);
@@ -217,16 +217,10 @@ class SPHBody
  */
 class RealBody : public SPHBody
 {
-  private:
-    UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
-    bool cell_linked_list_created_;
-    void addRealBodyToSPHSystem();
-
   public:
     template <typename... Args>
     RealBody(Args &&...args)
-        : SPHBody(std::forward<Args>(args)...),
-          cell_linked_list_created_(false)
+        : SPHBody(std::forward<Args>(args)...), cell_linked_list_created_(false)
     {
         addRealBodyToSPHSystem();
     };
@@ -234,6 +228,21 @@ class RealBody : public SPHBody
     BaseCellLinkedList &getCellLinkedList();
     void updateCellLinkedList();
     using ListedParticleMask = typename SPHBody::SourceParticleMask;
+
+    template <class BodyPartType, typename... Args>
+    BodyPartType &addBodyPart(Args &&...args)
+    {
+        return *body_parts_keeper_.createPtr<BodyPartType>(*this, std::forward<Args>(args)...);
+    };
+
+  protected:
+    UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
+    UniquePtrsKeeper<BodyPart> body_parts_keeper_;
+    bool cell_linked_list_created_;
+    virtual void createCellLinkedListPtr();
+
+  private:
+    void addRealBodyToSPHSystem();
 };
 } // namespace SPH
 #endif // BASE_BODY_H

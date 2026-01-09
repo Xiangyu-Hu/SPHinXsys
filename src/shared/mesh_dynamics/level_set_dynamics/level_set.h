@@ -29,17 +29,17 @@
 #ifndef LEVEL_SET_H
 #define LEVEL_SET_H
 
-#include "adaptation.h"
 #include "base_geometry.h"
 #include "kernel_tabulated_ck.h"
-#include "level_set_correction.hpp"
-#include "level_set_initialization.hpp"
-#include "level_set_transformation.hpp"
 #include "mesh_data_package_sort.h"
 #include "mesh_dynamics_algorithm.h"
 #include "sphinxsys_variable.h"
+#include "neighbor_method.h"
+
 namespace SPH
 {
+class SPHAdaptation;
+
 enum class UsageType
 {
     Volumetric,
@@ -97,7 +97,7 @@ class LevelSet : public SparseMeshField<4>
     Shape &shape_; /**< the geometry is described by the level set. */
     Real refinement_;
     ConstantArray<Real> *ca_global_h_ratio_; /**< the ratio of the reference spacing to the data spacing */
-    StdVec<NeighborMethod<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
+    StdVec<Neighbor<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
     ProbeLevelSet<Real> *probe_signed_distance_;
     ProbeLevelSet<Vecd> *probe_level_set_gradient_;
     ProbeLevelSet<Real> *probe_kernel_integral_;
@@ -111,7 +111,7 @@ class LevelSet : public SparseMeshField<4>
 
     UniquePtr<BaseDynamics<void>> correct_topology_keeper_;
     UniquePtr<BaseDynamics<void>> clean_interface_keeper_;
-    UniquePtrsKeeper<NeighborMethod<SPHAdaptation, SPHAdaptation>> neighbor_method_keeper_;
+    UniquePtrsKeeper<Neighbor<SPHAdaptation, SPHAdaptation>> neighbor_method_keeper_;
     std::function<void()> sync_mesh_variables_to_write_, sync_mesh_variables_to_probe_;
 
     template <class ExecutionPolicy>

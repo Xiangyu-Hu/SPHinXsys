@@ -41,5 +41,21 @@ DiffuseLevelSetSign::DiffuseLevelSetSign(
       mv_near_interface_id_(*data_mesh.getPackageVariable<int>("NearInterfaceID")),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
       sv_count_modified_(sv_count_modified) {}
+//=============================================================================================//
+LevelSetSignFromFine::LevelSetSignFromFine(
+    SparseMeshField<4> &data_mesh, UnsignedInt resolution_level)
+    : BaseMeshLocalDynamics(data_mesh, resolution_level),
+      mv_phi_(*data_mesh.getPackageVariable<Real>("LevelSet")),
+      dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
+      fine_resolution_level_(resolution_level + 1)
+{
+    if (fine_resolution_level_ > data_mesh.ResolutionLevels() - 1)
+    {
+        std::cout << "\nError: in" << type_name<LevelSetSignFromFine>()
+                  << ", the fine resolution level: " << fine_resolution_level_
+                  << " is not exist !" << std::endl;
+        exit(1);
+    }
+}
 //=================================================================================================//
 } // namespace SPH

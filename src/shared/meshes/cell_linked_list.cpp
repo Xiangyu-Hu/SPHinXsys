@@ -13,10 +13,7 @@ BaseCellLinkedList::BaseCellLinkedList(
     BoundingBoxd tentative_bounds, Real Reference_grid_spacing, size_t total_levels)
     : MultiResolutionMeshField<Mesh>("CellLinkedList", total_levels, tentative_bounds, Reference_grid_spacing, 2),
       base_particles_(base_particles), kernel_(*sph_adaptation.getKernel()),
-      cell_offset_list_size_(total_number_of_cells_ + 1),
-      index_list_size_(SMAX(base_particles.ParticlesBound(), cell_offset_list_size_)),
-      dv_particle_index_(createUniqueEnity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size_)),
-      dv_cell_offset_(createUniqueEnity<UnsignedInt, DiscreteVariable>("CellOffset", cell_offset_list_size_))
+      dv_particle_index_(nullptr), dv_cell_offset_(nullptr)
 {
     cell_index_lists_.resize(total_number_of_cells_);
     cell_data_lists_.resize(total_number_of_cells_);
@@ -164,7 +161,13 @@ void BaseCellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_data_lists,
 CellLinkedList::CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
                                BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, grid_spacing, 1),
-      mesh_(&getCoarsestMesh()) {}
+      mesh_(&getCoarsestMesh())
+{
+    cell_offset_list_size_ = total_number_of_cells_ + 1;
+    UnsignedInt index_list_size_ = SMAX(base_particles.ParticlesBound(), cell_offset_list_size_);
+    dv_particle_index_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size_);
+    dv_cell_offset_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("CellOffset", cell_offset_list_size_);
+}
 //=================================================================================================//
 void CellLinkedList ::insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position)
 {

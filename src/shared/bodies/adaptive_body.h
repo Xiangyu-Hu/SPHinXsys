@@ -21,45 +21,46 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    body_part_for_simbody.h
- * @brief 	This is the class for bodies used for solid BCs or Elastic structure.
+ * @file    adaptive_body.h
+ * @brief 	This is the class for templated bodies.
  * @author	Xiangyu Hu
  */
 
-#ifndef BODY_PART_FOR_SIMBODY_H
-#define BODY_PART_FOR_SIMBODY_H
+#ifndef ADAPTIVE_BODY_H
+#define ADAPTIVE_BODY_H
 
-#include "base_body_part.h"
-#include "simtk_wrapper.h"
+#include "base_body.h"
 
 namespace SPH
 {
-/**
- * @class SolidBodyPartForSimbody
- * @brief A SolidBodyPart for coupling with Simbody.
- * The mass, origin, and unit inertial matrix are computed.
- * Note: In Simbody, all spatial vectors are three dimensional.
- */
-class SolidBodyPartForSimbody : public BodyRegionByParticle
+template <typename...>
+class AdaptiveBody;
+
+template <class AdaptationType, class BaseBodyType>
+class AdaptiveBody<AdaptationType, BaseBodyType> : public BaseBodyType
 {
-  protected:
-    UniquePtrKeeper<SimTK::MassProperties> mass_properties_keeper_;
+    AdaptationType adaptation_;
 
   public:
-    Vecd initial_mass_center_;
-    SimTK::MassProperties *body_part_mass_properties_;
+    typedef AdaptationType Adaptation;
+    using BaseAdaptation = typename AdaptationType::BaseAdaptation;
+    using SpacingAdaptation = typename AdaptationType::SpacingAdaptation;
 
-    SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape);
-    SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);
-    virtual ~SolidBodyPartForSimbody() {};
+    template <typename... Args>
+    AdaptiveBody(SPHSystem &sph_system, AdaptationType adaptation, Args &&...args)
+        : BaseBodyType(sph_system, std::forward<Args>(args)...), adaptation_(adaptation)
+    {
+        this->sph_adaptation_ = &adaptation_;
+    };
 
-  protected:
-    Real rho0_;
-    Real *Vol_;
-    Vecd *pos_;
+    virtual ~AdaptiveBody() {};
+    AdaptationType &getAdaptation() { return adaptation_; };
 
-  private:
-    void setMassProperties();
+    virtual void createCellLinkedListPtr() override
+    {
+        this->cell_linked_list_ptr_ = adaptation_.createFinestCellLinkedList(
+            this->getSPHSystemBounds(), *this->base_particles_);
+    };
 };
 } // namespace SPH
-#endif // BODY_PART_FOR_SIMBODY_H
+#endif // ADAPTIVE_BODY_H
