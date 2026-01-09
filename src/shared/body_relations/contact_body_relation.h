@@ -223,5 +223,31 @@ class SurfaceContactRelation : public ContactRelationCrossResolution
 
     void resetNeighborhoodCurrentSize() override;
 };
+
+class ContactRelationFSI2 : public ContactRelationCrossResolution
+{
+  private:
+    UniquePtrsKeeper<NeighborBuilderContactFS2> neighbor_builder_contacts_keeper_;
+
+  public:
+    ContactRelationFSI2(SPHBody &sph_body, RealBodyVector contact_bodies);
+    void updateConfiguration() override;
+
+  private:
+    StdVec<NeighborBuilderContactFS2 *> get_contact_neighbors_;
+};
+
+class ContactRelationSFI2 : public ContactRelationCrossResolution
+{
+  private:
+    UniquePtrsKeeper<NeighborBuilderContactSF2> neighbor_builder_contacts_keeper_;
+
+  public:
+    ContactRelationSFI2(SPHBody &sph_body, RealBodyVector contact_bodies);
+    void updateConfiguration() override;
+
+  private:
+    StdVec<NeighborBuilderContactSF2 *> get_contact_neighbors_;
+};
 } // namespace SPH
 #endif // CONTACT_BODY_RELATION_H
