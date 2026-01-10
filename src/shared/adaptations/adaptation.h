@@ -193,6 +193,7 @@ class AdaptiveByShape : public AdaptiveSmoothingLength
 
   protected:
     SmoothedSpacing smoothed_spacing_;
+    Real smoothedSpacing(const Real &measure, const Real &transition_thickness);
 };
 
 /**

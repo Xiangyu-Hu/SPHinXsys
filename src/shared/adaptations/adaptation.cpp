@@ -99,6 +99,18 @@ UniquePtr<LevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement)
     return makeUnique<LevelSet>(shape.getBounds(), &coarser_level_sets, shape, *this, refinement);
 }
 //=================================================================================================//
+Real AdaptiveByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)
+{
+    Real ratio_ref = measure / (2.0 * transition_thickness);
+    Real target_spacing = coarsest_spacing_bound_;
+    if (ratio_ref < kernel_ptr_->KernelSize())
+    {
+        Real weight = kernel_ptr_->W_1D(ratio_ref) / kernel_ptr_->W_1D(0.0);
+        target_spacing = weight * finest_spacing_bound_ + (1.0 - weight) * coarsest_spacing_bound_;
+    }
+    return target_spacing;
+}
+//=================================================================================================//
 AdaptiveSmoothingLength::AdaptiveSmoothingLength(
     Real global_resolution, Real h_spacing_ratio, Real refinement_to_global, int local_refinement_level)
     : SPHAdaptation(global_resolution, h_spacing_ratio, refinement_to_global),
@@ -148,7 +160,7 @@ AdaptiveSmoothingLength::SmoothedSpacing::SmoothedSpacing(AdaptiveSmoothingLengt
 Real AdaptiveNearSurface::getLocalSpacing(Shape &shape, const Vecd &position)
 {
     Real phi = fabs(shape.findSignedDistance(position));
-    return smoothed_spacing_(phi, spacing_ref_);
+    return smoothedSpacing(phi, spacing_ref_);
 }
 //=================================================================================================//
 AdaptiveNearSurface::LocalSpacing::LocalSpacing(
@@ -159,7 +171,7 @@ AdaptiveNearSurface::LocalSpacing::LocalSpacing(
 Real AdaptiveWithinShape::getLocalSpacing(Shape &shape, const Vecd &position)
 {
     Real phi = shape.findSignedDistance(position);
-    return phi < 0.0 ? finest_spacing_bound_ : smoothed_spacing_(phi, 2.0 * spacing_ref_);
+    return phi < 0.0 ? finest_spacing_bound_ : smoothedSpacing(phi, 2.0 * spacing_ref_);
 }
 //=================================================================================================//
 AdaptiveWithinShape::LocalSpacing::LocalSpacing(
