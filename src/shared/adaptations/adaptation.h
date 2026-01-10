@@ -183,8 +183,6 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 class AdaptiveByShape : public AdaptiveSmoothingLength
 {
   public:
-    typedef AdaptiveByShape SpacingAdaptation;
-
     template <typename... Args>
     AdaptiveByShape(Args &&...args)
         : AdaptiveSmoothingLength(std::forward<Args>(args)...), smoothed_spacing_(*this){};
