@@ -29,8 +29,6 @@
 
 #pragma once
 
-#include "adapt_criterion.h"
-#include "adapt_indication.h"
 #include "all_surface_indication_ck.h"
 #include "force_prior_ck.hpp"
 #include "general_assignment.h"
