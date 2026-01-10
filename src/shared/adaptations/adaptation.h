@@ -85,7 +85,6 @@ class SPHAdaptation
     void resetAdaptationRatios(Real h_spacing_ratio, Real new_refinement_to_global = 1.0);
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) {};
     Real SmoothingLengthByLevel(int level) const { return h_ref_ / pow(2.0, level); };
-    DiscreteVariable<Real> *AdaptiveSmoothingLength(BaseParticles &base_particles);
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
     UniquePtr<BaseCellLinkedList> createFinestCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
@@ -156,6 +155,18 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 
     typedef ContinuousSmoothingLengthRatio SmoothingLengthRatioType;
 
+    class SmoothedSpacing
+    {
+        KernelTabulatedCK smoothing_kerel_;
+        Real kernel_size_, inv_w0_;
+        Real finest_spacing_bound_, coarsest_spacing_bound_;
+
+      public:
+        SmoothedSpacing(AdaptiveSmoothingLength &encloser);
+        Real operator()(const Real &measure, const Real &transition_thickness);
+        Real FinestSpacingBound() { return finest_spacing_bound_; };
+    };
+
   protected:
     DiscreteVariable<Real> *dv_h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
     DiscreteVariable<int> *dv_h_level_;  /**< the resolution level of particle */
@@ -176,12 +187,12 @@ class AdaptiveByShape : public AdaptiveSmoothingLength
 
     template <typename... Args>
     AdaptiveByShape(Args &&...args)
-        : AdaptiveSmoothingLength(std::forward<Args>(args)...){};
+        : AdaptiveSmoothingLength(std::forward<Args>(args)...), smoothed_spacing_(*this){};
 
     virtual ~AdaptiveByShape() {};
 
   protected:
-    Real smoothedSpacing(const Real &measure, const Real &transition_thickness);
+    SmoothedSpacing smoothed_spacing_;
 };
 
 /**
@@ -201,18 +212,18 @@ class AdaptiveNearSurface : public AdaptiveByShape
     class LocalSpacing
     {
         using ProbeSignedDistance = LevelSet::ProbeLevelSet<Real>;
-        SharedPtr<Kernel> kernel_ptr_;
+        SmoothedSpacing smoothed_spacing_;
         LevelSet &level_set_;
-        Real spacing_ref_, finest_spacing_bound_, coarsest_spacing_bound_;
+        Real spacing_ref_;
 
       public:
         LocalSpacing(AdaptiveNearSurface &encloser, LevelSetShape &level_set_shape);
+
         class ComputingKernel
         {
-            KernelTabulatedCK smoothing_kerel_;
+            SmoothedSpacing smoothed_spacing_;
             ProbeSignedDistance signed_distance_;
-            Real spacing_ref_, finest_spacing_bound_, coarsest_spacing_bound_;
-            Real kernel_size_, inv_w0_;
+            Real spacing_ref_;
 
           public:
             template <class ExecutionPolicy, class EncloserType>
@@ -235,6 +246,29 @@ class AdaptiveWithinShape : public AdaptiveByShape
     virtual ~AdaptiveWithinShape() {};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
+
+    class LocalSpacing
+    {
+        using ProbeSignedDistance = LevelSet::ProbeLevelSet<Real>;
+        SmoothedSpacing smoothed_spacing_;
+        LevelSet &level_set_;
+        Real spacing_ref_;
+
+      public:
+        LocalSpacing(AdaptiveWithinShape &encloser, LevelSetShape &level_set_shape);
+
+        class ComputingKernel
+        {
+            SmoothedSpacing smoothed_spacing_;
+            ProbeSignedDistance signed_distance_;
+            Real spacing_ref_;
+
+          public:
+            template <class ExecutionPolicy, class EncloserType>
+            ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+            Real operator()(const Vecd &position);
+        };
+    };
 };
 } // namespace SPH
 #endif // ADAPTATION_H

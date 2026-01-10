@@ -1,4 +1,4 @@
-#include "adaptation.h"
+#include "adaptation.hpp"
 
 #include "base_particles.hpp"
 #include "cell_linked_list.h"
@@ -139,34 +139,32 @@ UniquePtr<LevelSet> AdaptiveSmoothingLength::createLevelSet(Shape &shape, Real r
                                 local_refinement_level_ + 1, shape, *this, refinement);
 }
 //=================================================================================================//
-Real AdaptiveByShape::smoothedSpacing(const Real &measure, const Real &transition_thickness)
-{
-    Real ratio_ref = measure / (2.0 * transition_thickness);
-    Real target_spacing = coarsest_spacing_bound_;
-    if (ratio_ref < kernel_ptr_->KernelSize())
-    {
-        Real weight = kernel_ptr_->W_1D(ratio_ref) / kernel_ptr_->W_1D(0.0);
-        target_spacing = weight * finest_spacing_bound_ + (1.0 - weight) * coarsest_spacing_bound_;
-    }
-    return target_spacing;
-}
+AdaptiveSmoothingLength::SmoothedSpacing::SmoothedSpacing(AdaptiveSmoothingLength &encloser)
+    : smoothing_kerel_(*encloser.kernel_ptr_),
+      kernel_size_(smoothing_kerel_.KernelSize()), inv_w0_(1.0 / smoothing_kerel_.normalized_W(0)),
+      finest_spacing_bound_(encloser.finest_spacing_bound_),
+      coarsest_spacing_bound_(encloser.coarsest_spacing_bound_) {}
 //=================================================================================================//
 Real AdaptiveNearSurface::getLocalSpacing(Shape &shape, const Vecd &position)
 {
     Real phi = fabs(shape.findSignedDistance(position));
-    return smoothedSpacing(phi, spacing_ref_);
+    return smoothed_spacing_(phi, spacing_ref_);
 }
 //=================================================================================================//
 AdaptiveNearSurface::LocalSpacing::LocalSpacing(
     AdaptiveNearSurface &encloser, LevelSetShape &level_set_shape)
-    : kernel_ptr_(encloser.kernel_ptr_), level_set_(level_set_shape.getLevelSet()),
-      spacing_ref_(encloser.spacing_ref_), finest_spacing_bound_(encloser.finest_spacing_bound_),
-      coarsest_spacing_bound_(encloser.coarsest_spacing_bound_) {}
+    : smoothed_spacing_(encloser), level_set_(level_set_shape.getLevelSet()),
+      spacing_ref_(encloser.spacing_ref_) {}
 //=================================================================================================//
 Real AdaptiveWithinShape::getLocalSpacing(Shape &shape, const Vecd &position)
 {
     Real phi = shape.findSignedDistance(position);
-    return phi < 0.0 ? finest_spacing_bound_ : smoothedSpacing(phi, 2.0 * spacing_ref_);
+    return phi < 0.0 ? finest_spacing_bound_ : smoothed_spacing_(phi, 2.0 * spacing_ref_);
 }
+//=================================================================================================//
+AdaptiveWithinShape::LocalSpacing::LocalSpacing(
+    AdaptiveWithinShape &encloser, LevelSetShape &level_set_shape)
+    : smoothed_spacing_(encloser), level_set_(level_set_shape.getLevelSet()),
+      spacing_ref_(encloser.spacing_ref_) {}
 //=================================================================================================//
 } // namespace SPH

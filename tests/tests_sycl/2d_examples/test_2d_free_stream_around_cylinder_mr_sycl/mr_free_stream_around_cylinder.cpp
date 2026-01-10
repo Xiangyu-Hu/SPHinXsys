@@ -34,7 +34,6 @@ Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re; /**< Dynamics visc
 //	Define geometries
 //----------------------------------------------------------------------
 GeometricShapeBox outer_boundary(BoundingBoxd(Vecd(-DL_sponge, 0.0), Vecd(DL, DH)), "OuterBoundary");
-ComplexShape water_body_shape("WaterBody");
 GeometricShapeBall cylinder_shape(insert_circle_center, insert_circle_radius, "Cylinder");
 
 Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
@@ -75,10 +74,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
+    auto &water_body_shape = sph_system.addShape<ComplexShape>("WaterBody");
     water_body_shape.add(&outer_boundary);
     water_body_shape.subtract(&cylinder_shape);
     auto &water_body = sph_system.addAdaptiveBody<FluidBody>(water_body_adaptation, water_body_shape);
     water_body.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet();
+    LevelSetShape *refinement_region_level_set_shape =
+        sph_system.addShape<LevelSetShape>(water_body, refinement_region).writeLevelSet();
 
     auto &cylinder = sph_system.addBody<SolidBody>(cylinder_shape);
     cylinder.defineAdaptationRatios(1.15, 4.0);
@@ -88,7 +90,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
-        water_body.generateParticles<BaseParticles, Lattice>(refinement_region);
+        water_body.generateParticles<BaseParticles, Lattice>(*refinement_region_level_set_shape);
         cylinder.generateParticles<BaseParticles, Lattice>();
         //----------------------------------------------------------------------
         // Define SPH solver with particle methods and execution policies.
