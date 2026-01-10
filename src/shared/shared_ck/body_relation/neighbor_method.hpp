@@ -134,12 +134,12 @@ Neighbor<SourceAdaptationType, TargetAdaptationType>::Neighbor(
     SourceIdentifier &source_identifier, TargetIdentifier &target_identifier,
     DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos)
     : Neighbor<Base>(source_identifier.getSPHAdaptation().getKernelPtr(), dv_src_pos, dv_tar_pos),
-      src_adaptation_(source_identifier.getAdaptation()),
-      tar_adaptation_(target_identifier.getAdaptation())
+      src_adaptation_(DynamicCast<SourceAdaptationType>(this, source_identifier.getSPHAdaptation())),
+      tar_adaptation_(DynamicCast<TargetAdaptationType>(this, target_identifier.getSPHAdaptation()))
 {
     src_inv_h_ref_ = 1.0 / src_adaptation_.ReferenceSmoothingLength();
     src_inv_h_min_ = 1.0 / src_adaptation_.MinimumSmoothingLength();
-    
+
     tar_inv_h_ref_ = 1.0 / tar_adaptation_.ReferenceSmoothingLength();
     tar_inv_h_min_ = 1.0 / tar_adaptation_.MinimumSmoothingLength();
 }

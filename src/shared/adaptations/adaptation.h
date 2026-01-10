@@ -183,12 +183,11 @@ class AdaptiveByShape : public AdaptiveSmoothingLength
   public:
     template <typename... Args>
     AdaptiveByShape(Args &&...args)
-        : AdaptiveSmoothingLength(std::forward<Args>(args)...), smoothed_spacing_(*this){};
+        : AdaptiveSmoothingLength(std::forward<Args>(args)...){};
 
     virtual ~AdaptiveByShape() {};
 
   protected:
-    SmoothedSpacing smoothed_spacing_;
     Real smoothedSpacing(const Real &measure, const Real &transition_thickness);
 };
 
@@ -200,8 +199,7 @@ class AdaptiveNearSurface : public AdaptiveByShape
 {
   public:
     template <typename... Args>
-    AdaptiveNearSurface(Args &&...args)
-        : AdaptiveByShape(std::forward<Args>(args)...){};
+    AdaptiveNearSurface(Args &&...args);
     virtual ~AdaptiveNearSurface() {};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
