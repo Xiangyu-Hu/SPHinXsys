@@ -76,8 +76,8 @@ class LevelsetBounding : public BaseLocalDynamics<BodyPartByCell>
 template <class DynamicIdentifier>
 class LevelsetKernelGradientIntegral : public BaseLocalDynamics<DynamicIdentifier>
 {
-    using BaseAdaptation = typename DynamicIdentifier::BaseAdaptation;
-    using SmoothingLengthRatio = typename BaseAdaptation::SmoothingLengthRatioType;
+    using Adaptation = typename DynamicIdentifier::Adaptation;
+    using SmoothingLengthRatio = typename Adaptation::SmoothingLengthRatioType;
     using ProbeKernelGradientIntegral = LevelSet::ProbeLevelSet<Vecd>;
 
   public:
@@ -104,7 +104,7 @@ class LevelsetKernelGradientIntegral : public BaseLocalDynamics<DynamicIdentifie
   protected:
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Vecd> *dv_residual_;
-    BaseAdaptation &adaptaion_;
+    Adaptation &adaptaion_;
     LevelSet &level_set_;
 };
 

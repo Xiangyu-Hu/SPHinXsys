@@ -123,8 +123,6 @@ class SPHAdaptation
 class AdaptiveSmoothingLength : public SPHAdaptation
 {
   public:
-    typedef AdaptiveSmoothingLength BaseAdaptation;
-
     AdaptiveSmoothingLength(Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level);
     virtual ~AdaptiveSmoothingLength() {};
 

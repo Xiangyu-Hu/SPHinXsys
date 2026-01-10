@@ -49,7 +49,7 @@ class BodyPart
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
 
   public:
-    typedef SPHAdaptation BaseAdaptation;
+    typedef SPHAdaptation Adaptation;
     BodyPart(SPHBody &sph_body);
     virtual ~BodyPart() {};
     SPHBody &getSPHBody() { return sph_body_; };

@@ -43,7 +43,6 @@ class AdaptiveBody<AdaptationType, BaseBodyType> : public BaseBodyType
 
   public:
     typedef AdaptationType Adaptation;
-    using BaseAdaptation = typename AdaptationType::BaseAdaptation;
 
     template <typename... Args>
     AdaptiveBody(SPHSystem &sph_system, AdaptationType adaptation, Args &&...args)

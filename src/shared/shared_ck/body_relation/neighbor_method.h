@@ -35,7 +35,6 @@
 namespace SPH
 {
 class SPHAdaptation;
-class AdaptiveSmoothingLength;
 
 template <typename...>
 class Neighbor;

@@ -139,10 +139,9 @@ Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::Neighbor(
 {
     src_inv_h_ref_ = 1.0 / src_base_adaptation_.ReferenceSmoothingLength();
     src_inv_h_min_ = 1.0 / src_base_adaptation_.MinimumSmoothingLength();
-
-    AdaptiveSmoothingLength &tar_adaptation = target_identifier.getAdaptation();
-    tar_inv_h_ref_ = 1.0 / tar_adaptation.ReferenceSmoothingLength();
-    tar_inv_h_min_ = 1.0 / tar_adaptation.MinimumSmoothingLength();
+    
+    tar_inv_h_ref_ = 1.0 / tar_base_adaptation_.ReferenceSmoothingLength();
+    tar_inv_h_min_ = 1.0 / tar_base_adaptation_.MinimumSmoothingLength();
 }
 //=================================================================================================//
 template <class SourceBaseAdaptation, class TargetBaseAdaptation>
