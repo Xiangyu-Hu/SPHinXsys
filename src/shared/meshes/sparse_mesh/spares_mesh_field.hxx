@@ -334,6 +334,51 @@ UnsignedInt SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::locateResolutionLeve
     }
     return proble_level;
 }
+//=================================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+DataType SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::probePackageData(
+    const IndexHandler &index_handler, UnsignedInt package_index,
+    const Array2i &cell_index, const Vec2d &position)
+{
+    Array2i data_index = index_handler.DataIndexFromPosition(cell_index, position);
+    Vec2d data_position = index_handler.DataPositionFromIndex(cell_index, data_index);
+    Vec2d alpha = (position - data_position) / index_handler.DataSpacing();
+    Vec2d beta = Vec2d::Ones() - alpha;
+
+    auto &neighborhood = cell_neighborhood_[package_index];
+    return neighborhood.DataFromIndex(pkg_data_, data_index + Array2i(0, 0)) * beta[0] * beta[1] +
+           neighborhood.DataFromIndex(pkg_data_, data_index + Array2i(1, 0)) * alpha[0] * beta[1] +
+           neighborhood.DataFromIndex(pkg_data_, data_index + Array2i(0, 1)) * beta[0] * alpha[1] +
+           neighborhood.DataFromIndex(pkg_data_, data_index + Array2i(1, 1)) * alpha[0] * alpha[1];
+}
+//=============================================================================================//
+template <int PKG_SIZE>
+template <typename DataType>
+DataType SparseMeshField<PKG_SIZE>::ProbeMesh<DataType>::probePackageData(
+    const IndexHandler &index_handler, UnsignedInt package_index,
+    const Array3i &cell_index, const Vec3d &position)
+{
+    Array3i data_index = index_handler.DataIndexFromPosition(cell_index, position);
+    Vec3d data_position = index_handler.DataPositionFromIndex(cell_index, data_index);
+    Vec3d alpha = (position - data_position) / index_handler.DataSpacing();
+    Vec3d beta = Vec3d::Ones() - alpha;
+
+    auto &neighborhood = cell_neighborhood_[package_index];
+    DataType bilinear_1 =
+        neighborhood.DataFromIndex(pkg_data_, data_index + Array3i(0, 0, 0)) * beta[0] * beta[1] +
+        neighborhood.DataFromIndex(pkg_data_, data_index + Array3i(1, 0, 0)) * alpha[0] * beta[1] +
+        neighborhood.DataFromIndex(pkg_data_, data_index + Array3i(0, 1, 0)) * beta[0] * alpha[1] +
+        neighborhood.DataFromIndex(pkg_data_, data_index + Array3i(1, 1, 0)) * alpha[0] * alpha[1];
+
+    DataType bilinear_2 =
+        neighborhood.DataFromIndex(pkg_data_, data_index + Array3i(0, 0, 1)) * beta[0] * beta[1] +
+        neighborhood.DataFromIndex(pkg_data_, data_index + Array3i(1, 0, 1)) * alpha[0] * beta[1] +
+        neighborhood.DataFromIndex(pkg_data_, data_index + Array3i(0, 1, 1)) * beta[0] * alpha[1] +
+        neighborhood.DataFromIndex(pkg_data_, data_index + Array3i(1, 1, 1)) * alpha[0] * alpha[1];
+
+    return bilinear_1 * beta[2] + bilinear_2 * alpha[2];
+}
 //=============================================================================================//
 } // namespace SPH
 #endif // SPARSE_MESH_FIELD_HXX

@@ -54,15 +54,15 @@ InitializeBasicPackageData::UpdateKernel::
     : index_handler_(encloser.index_handler_),
       pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_.DelegatedData(ex_policy)),
       shape_(&encloser.shape_),
-      phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-      near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)) {}
+      phi_(encloser.pmv_phi_.DelegatedData(ex_policy)),
+      near_interface_id_(encloser.pmv_near_interface_id_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 NearInterfaceCellTagging::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_.DelegatedData(ex_policy)),
       cell_contain_id_(encloser.mcv_cell_contain_id_.DelegatedData(ex_policy)),
-      phi_(encloser.mv_phi_.DelegatedData(ex_policy)) {}
+      phi_(encloser.pmv_phi_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 inline void NearInterfaceCellTagging::UpdateKernel::update(const UnsignedInt &package_index)
 {

@@ -66,7 +66,7 @@ class InitialCellTagging : public BaseMeshLocalDynamics
 
 class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
 {
-  using ProbeCoarsePhi = SparseMeshField<4>::ProbeMesh<Real>;
+    using ProbeCoarsePhi = SparseMeshField<4>::ProbeMesh<Real>;
 
   public:
     InitialCellTaggingFromCoarse(
@@ -201,9 +201,9 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
   private:
     Shape &shape_;
     MetaVariable<UnsignedInt> &dv_pkg_1d_cell_index_;
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<Vecd> &mv_phi_gradient_;
-    PackageVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<Vecd> &pmv_phi_gradient_;
+    PackageVariable<int> &pmv_near_interface_id_;
 };
 
 class NearInterfaceCellTagging : public BaseMeshLocalDynamics
@@ -229,7 +229,7 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
   protected:
     MetaVariable<UnsignedInt> &dv_pkg_1d_cell_index_;
     CellVariable<int> &mcv_cell_contain_id_;
-    PackageVariable<Real> &mv_phi_;
+    PackageVariable<Real> &pmv_phi_;
 };
 
 class CellContainDiffusion : public BaseMeshLocalDynamics
