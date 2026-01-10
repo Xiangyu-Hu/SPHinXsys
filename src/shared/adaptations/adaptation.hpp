@@ -38,7 +38,7 @@ AdaptiveWithinShape::LocalSpacing::ComputingKernel::
       signed_distance_(ex_policy, encloser.level_set_, "LevelSet"),
       spacing_ref_(encloser.spacing_ref_) {}
 //=================================================================================================//
-inline Real AdaptiveWithinShape::LocalSpacing::ComputingKernel::operator()(const Vecd &position)
+inline Real AdaptiveWithinShape::LocalSpacing::ComputingKernel::operator()(const Vecd &position) 
 {
     Real phi = signed_distance_(position);
     return phi < 0.0 ? smoothed_spacing_.FinestSpacingBound() : smoothed_spacing_(phi, 2.0 * spacing_ref_);

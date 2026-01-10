@@ -104,7 +104,7 @@ class SPHAdaptation
         explicit UnitSmoothingLengthRatio(SPHAdaptation &adaptation) {};
         template <class ExecutionPolicy>
         UnitSmoothingLengthRatio(const ExecutionPolicy &ex_policy, SPHAdaptation &adaptation){};
-        Real operator()(size_t /*particle_index_i*/) { return 1.0; };
+        Real operator()(UnsignedInt /*particle_index_i*/) const { return 1.0; };
     };
 
     typedef UnitSmoothingLengthRatio SmoothingLengthRatioType;
@@ -150,7 +150,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
         template <class ExecutionPolicy>
         ContinuousSmoothingLengthRatio(const ExecutionPolicy &ex_policy, AdaptiveSmoothingLength &adaptation)
             : h_ratio_(adaptation.dv_h_ratio_->DelegatedData(ex_policy)){};
-        Real operator()(size_t index_i) { return h_ratio_[index_i]; };
+        Real operator()(UnsignedInt index_i) const { return h_ratio_[index_i]; };
     };
 
     typedef ContinuousSmoothingLengthRatio SmoothingLengthRatioType;
@@ -163,8 +163,8 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 
       public:
         SmoothedSpacing(AdaptiveSmoothingLength &encloser);
-        Real operator()(const Real &measure, const Real &transition_thickness);
-        Real FinestSpacingBound() { return finest_spacing_bound_; };
+        Real operator() (const Real &measure, const Real &transition_thickness);
+        Real FinestSpacingBound() const { return finest_spacing_bound_; };
     };
 
   protected:
@@ -228,7 +228,7 @@ class AdaptiveNearSurface : public AdaptiveByShape
           public:
             template <class ExecutionPolicy, class EncloserType>
             ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-            Real operator()(const Vecd &position);
+            Real operator() (const Vecd &position);
         };
     };
 };
