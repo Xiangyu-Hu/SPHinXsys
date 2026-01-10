@@ -128,131 +128,131 @@ Neighbor<SPHAdaptation, SPHAdaptation>::SearchBox::SearchBox(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : search_box_(encloser.search_box_) {}
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
+template <class SourceAdaptationType, class TargetAdaptationType>
 template <typename SourceIdentifier, typename TargetIdentifier>
-Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::Neighbor(
+Neighbor<SourceAdaptationType, TargetAdaptationType>::Neighbor(
     SourceIdentifier &source_identifier, TargetIdentifier &target_identifier,
     DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos)
     : Neighbor<Base>(source_identifier.getSPHAdaptation().getKernelPtr(), dv_src_pos, dv_tar_pos),
-      src_base_adaptation_(source_identifier.getAdaptation()),
-      tar_base_adaptation_(target_identifier.getAdaptation())
+      src_adaptation_(source_identifier.getAdaptation()),
+      tar_adaptation_(target_identifier.getAdaptation())
 {
-    src_inv_h_ref_ = 1.0 / src_base_adaptation_.ReferenceSmoothingLength();
-    src_inv_h_min_ = 1.0 / src_base_adaptation_.MinimumSmoothingLength();
+    src_inv_h_ref_ = 1.0 / src_adaptation_.ReferenceSmoothingLength();
+    src_inv_h_min_ = 1.0 / src_adaptation_.MinimumSmoothingLength();
     
-    tar_inv_h_ref_ = 1.0 / tar_base_adaptation_.ReferenceSmoothingLength();
-    tar_inv_h_min_ = 1.0 / tar_base_adaptation_.MinimumSmoothingLength();
+    tar_inv_h_ref_ = 1.0 / tar_adaptation_.ReferenceSmoothingLength();
+    tar_inv_h_min_ = 1.0 / tar_adaptation_.MinimumSmoothingLength();
 }
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
+template <class SourceAdaptationType, class TargetAdaptationType>
 template <class ExecutionPolicy, class EncloserType>
-Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::SmoothingKernel::SmoothingKernel(
+Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::SmoothingKernel(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseKernel(ex_policy, encloser),
       src_inv_h_ref_(encloser.src_inv_h_ref_), tar_inv_h_ref_(encloser.tar_inv_h_ref_),
-      src_h_ratio_(ex_policy, encloser.src_base_adaptation_),
-      tar_h_ratio_(ex_policy, encloser.tar_base_adaptation_) {}
+      src_h_ratio_(ex_policy, encloser.src_adaptation_),
+      tar_h_ratio_(ex_policy, encloser.tar_adaptation_) {}
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
-Real Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::SmoothingKernel::
+template <class SourceAdaptationType, class TargetAdaptationType>
+Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const
 {
     Real inv_h_i = src_h_ratio_(i) * src_inv_h_ref_;
     return BaseKernel::W(math::pow(inv_h_i, 2), displacement, inv_h_i);
 };
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
-Real Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::SmoothingKernel::
+template <class SourceAdaptationType, class TargetAdaptationType>
+Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const
 {
     Real inv_h_i = src_h_ratio_(i) * src_inv_h_ref_;
     return BaseKernel::W(math::pow(inv_h_i, 3), displacement, inv_h_i);
 };
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
-Real Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::SmoothingKernel::
+template <class SourceAdaptationType, class TargetAdaptationType>
+Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     dW(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const
 {
     Real inv_h = invSmoothingLength(i, j);
     return BaseKernel::dW(math::pow(inv_h, 3), displacement, inv_h);
 };
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
-Real Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::SmoothingKernel::
+template <class SourceAdaptationType, class TargetAdaptationType>
+Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     dW(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const
 {
     Real inv_h = invSmoothingLength(i, j);
     return BaseKernel::dW(math::pow(inv_h, 4), displacement, inv_h);
 };
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
-Real Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::SmoothingKernel::
+template <class SourceAdaptationType, class TargetAdaptationType>
+Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     d2W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const
 {
     Real inv_h = invSmoothingLength(i, j);
     return BaseKernel::d2W(math::pow(inv_h, 4), displacement, inv_h);
 }
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
-Real Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::SmoothingKernel::
+template <class SourceAdaptationType, class TargetAdaptationType>
+Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     d2W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const
 {
     Real inv_h = invSmoothingLength(i, j);
     return BaseKernel::d2W(math::pow(inv_h, 5), displacement, inv_h);
 }
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
-Real Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::SmoothingKernel::
+template <class SourceAdaptationType, class TargetAdaptationType>
+Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     invSmoothingLength(UnsignedInt i, UnsignedInt j) const
 {
     return SMIN(src_h_ratio_(i) * src_inv_h_ref_, tar_h_ratio_(j) * tar_inv_h_ref_);
 }
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
+template <class SourceAdaptationType, class TargetAdaptationType>
 template <class ExecutionPolicy, class EncloserType>
-Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::NeighborCriterion::
+Neighbor<SourceAdaptationType, TargetAdaptationType>::NeighborCriterion::
     NeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : src_pos_(encloser.dv_src_pos_->DelegatedData(ex_policy)),
       tar_pos_(encloser.dv_tar_pos_->DelegatedData(ex_policy)),
       kernel_size_squared_(math::pow(encloser.base_kernel_->KernelSize(), 2)),
       src_inv_h_ref_(encloser.src_inv_h_ref_),
-      src_h_ratio_(ex_policy, encloser.src_base_adaptation_) {}
+      src_h_ratio_(ex_policy, encloser.src_adaptation_) {}
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
-inline bool Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::NeighborCriterion::
+template <class SourceAdaptationType, class TargetAdaptationType>
+inline bool Neighbor<SourceAdaptationType, TargetAdaptationType>::NeighborCriterion::
 operator()(UnsignedInt j, UnsignedInt i) const
 {
     Real inv_h_i = src_h_ratio_(i) * src_inv_h_ref_;
     return (inv_h_i * (src_pos_[i] - tar_pos_[j])).squaredNorm() < kernel_size_squared_;
 }
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
+template <class SourceAdaptationType, class TargetAdaptationType>
 template <class ExecutionPolicy, class EncloserType>
-Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::ReverseNeighborCriterion::
+Neighbor<SourceAdaptationType, TargetAdaptationType>::ReverseNeighborCriterion::
     ReverseNeighborCriterion(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : src_pos_(encloser.dv_src_pos_->DelegatedData(ex_policy)),
       tar_pos_(encloser.dv_tar_pos_->DelegatedData(ex_policy)),
       kernel_size_squared_(math::pow(encloser.base_kernel_->KernelSize(), 2)),
       tar_inv_h_ref_(encloser.tar_inv_h_ref_),
-      tar_h_ratio_(ex_policy, encloser.tar_base_adaptation_) {}
+      tar_h_ratio_(ex_policy, encloser.tar_adaptation_) {}
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
-bool Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::
+template <class SourceAdaptationType, class TargetAdaptationType>
+bool Neighbor<SourceAdaptationType, TargetAdaptationType>::
     ReverseNeighborCriterion::operator()(UnsignedInt i, UnsignedInt j) const
 {
     Real inv_h_j = tar_h_ratio_(j) * tar_inv_h_ref_;
     return (inv_h_j * (src_pos_[i] - tar_pos_[j])).squaredNorm() < kernel_size_squared_;
 }
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
+template <class SourceAdaptationType, class TargetAdaptationType>
 template <class ExecutionPolicy, class EncloserType>
-Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::SearchBox::SearchBox(
+Neighbor<SourceAdaptationType, TargetAdaptationType>::SearchBox::SearchBox(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : src_inv_h_ref_(encloser.src_inv_h_ref_), tar_inv_h_min_(encloser.tar_inv_h_min_),
-      src_h_ratio_(ex_policy, encloser.src_base_adaptation_) {}
+      src_h_ratio_(ex_policy, encloser.src_adaptation_) {}
 //=================================================================================================//
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
-inline BoundingBoxi Neighbor<SourceBaseAdaptation, TargetBaseAdaptation>::
+template <class SourceAdaptationType, class TargetAdaptationType>
+inline BoundingBoxi Neighbor<SourceAdaptationType, TargetAdaptationType>::
     SearchBox::operator()(UnsignedInt i) const
 {
     Real src_h = 1.0 / (src_h_ratio_(i) * src_inv_h_ref_);

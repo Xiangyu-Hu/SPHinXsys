@@ -152,11 +152,11 @@ class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
     BoundingBoxi search_box_; /**< Search depth for neighbor search. */
 };
 
-template <class SourceBaseAdaptation, class TargetBaseAdaptation>
-class Neighbor<SourceBaseAdaptation, TargetBaseAdaptation> : public Neighbor<Base>
+template <class SourceAdaptationType, class TargetAdaptationType>
+class Neighbor<SourceAdaptationType, TargetAdaptationType> : public Neighbor<Base>
 {
-    using SourceSmoothingLengthRatio = typename SourceBaseAdaptation::SmoothingLengthRatioType;
-    using TargetSmoothingLengthRatio = typename TargetBaseAdaptation::SmoothingLengthRatioType;
+    using SourceSmoothingLengthRatio = typename SourceAdaptationType::SmoothingLengthRatioType;
+    using TargetSmoothingLengthRatio = typename TargetAdaptationType::SmoothingLengthRatioType;
 
   public:
     template <typename SourceIdentifier, typename TargetIdentifier>
@@ -229,8 +229,8 @@ class Neighbor<SourceBaseAdaptation, TargetBaseAdaptation> : public Neighbor<Bas
   protected:
     Real src_inv_h_ref_, tar_inv_h_ref_;
     Real src_inv_h_min_, tar_inv_h_min_;
-    SourceBaseAdaptation &src_base_adaptation_;
-    TargetBaseAdaptation &tar_base_adaptation_;
+    SourceAdaptationType &src_adaptation_;
+    TargetAdaptationType &tar_adaptation_;
 };
 } // namespace SPH
 #endif // NEIGHBOR_METHOD_H
