@@ -42,8 +42,6 @@ class GeometricShapeBox : public TransformShape<GeometricBox>
                       const std::string &name = "GeometricShapeBox");
     explicit GeometricShapeBox(const BoundingBoxd &bounding_box,
                                const std::string &name = "GeometricShapeBox");
-    GeometricShapeBox(const Vecd &lower_bound, const Vecd &upper_bound,
-                      const std::string &name = "GeometricShapeBox");
     virtual ~GeometricShapeBox() {};
 };
 
