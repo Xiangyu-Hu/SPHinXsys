@@ -276,19 +276,28 @@ int main(int ac, char *av[])
     auto &water_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(water_body);
     auto &water_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(water_body);
 
+    auto &fluid_boundary_indicator =
+        main_methods.addInteractionDynamicsWithUpdate<fluid_dynamics::FreeSurfaceIndicationCK>(water_body_inner)
+            .addPostContactInteraction(water_body_contact);
     auto &fluid_acoustic_step_1st_half =
-        main_methods.addInteractionDynamics<
-                        fluid_dynamics::AcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
-            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_contact);
+        main_methods.addInteractionDynamicsOneLevel<
+                        fluid_dynamics::AcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_contact)
+            .addPostStateDynamics<fluid_dynamics::FreeStreamCondition, FreeStreamVelocity>(water_body);
     auto &fluid_acoustic_step_2nd_half =
-        main_methods.addInteractionDynamics<
-                        fluid_dynamics::AcousticStep2ndHalf, OneLevel, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
+        main_methods.addInteractionDynamicsOneLevel<
+                        fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
             .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_contact);
     auto &fluid_density_regularization =
-        main_methods.addInteractionDynamics<
-                        fluid_dynamics::DensityRegularization, WithUpdate, FreeStream, AllParticles>(water_body_inner)
+        main_methods.addInteractionDynamicsWithUpdate<
+                        fluid_dynamics::DensityRegularization, FreeStream, AllParticles>(water_body_inner)
             .addPostContactInteraction(water_body_contact);
 
+    auto &transport_correction =
+        main_methods.addInteractionDynamicsWithUpdate<
+                        fluid_dynamics::TransportVelocityCorrectionCK, NoKernelCorrectionCK, NoLimiter, BulkParticles>(water_body_inner)
+            .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(water_body_contact);
+    
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_body, U_f);
     auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_body);
 
