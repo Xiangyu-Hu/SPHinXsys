@@ -222,7 +222,8 @@ int main(int ac, char *av[])
     }
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
-    water_body.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_body.getName());
+    water_body.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_body.getName())
+        ->reloadExtraVariable<Real>("SmoothingLengthRatio");
     // //----------------------------------------------------------------------
     // //	Creating body parts.
     // //----------------------------------------------------------------------
@@ -297,7 +298,7 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamicsWithUpdate<
                         fluid_dynamics::TransportVelocityCorrectionCK, NoKernelCorrectionCK, NoLimiter, BulkParticles>(water_body_inner)
             .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(water_body_contact);
-    
+
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_body, U_f);
     auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_body);
 
