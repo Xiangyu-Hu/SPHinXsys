@@ -126,8 +126,8 @@ int main(int ac, char *av[])
         // Finally, the auxiliary models such as time step estimator, initial condition,
         // boundary condition and other constraints should be defined.
         //----------------------------------------------------------------------
-        auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-        host_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies).exec(); // host method able to run immediately
+ //       auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+//        host_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies).exec(); // host method able to run immediately
         //----------------------------------------------------------------------
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------
