@@ -39,12 +39,15 @@ GeometricShapeBall cylinder_shape(insert_circle_center, insert_circle_radius, "C
 
 Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
 Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
+AlignedBox emitter_box(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize);
 
 Vec2d emitter_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d emitter_buffer_translation = Vec2d(-DL_sponge, 0.0) + emitter_buffer_halfsize;
+AlignedBox emitter_buffer_box(xAxis, Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize);
 
 Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
 Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
+AlignedBox disposer_box(xAxis, Transform(Rotation2d(Pi), Vec2d(disposer_translation)), disposer_halfsize);
 //----------------------------------------------------------------------
 //	Define adaptation
 //----------------------------------------------------------------------
@@ -223,9 +226,9 @@ int main(int ac, char *av[])
     // //----------------------------------------------------------------------
     // //	Creating body parts.
     // //----------------------------------------------------------------------
-    auto &emitter = water_body.addBodyPart<AlignedBoxByParticle>(AlignedBox(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
-    auto &emitter_buffer = water_body.addBodyPart<AlignedBoxByCell>(AlignedBox(xAxis, Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
-    auto &disposer = water_body.addBodyPart<AlignedBoxByCell>(AlignedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(disposer_translation)), disposer_halfsize));
+    auto &emitter = water_body.addBodyPart<AlignedBoxByParticle>(emitter_box);
+    auto &emitter_buffer = water_body.addBodyPart<AlignedBoxByCell>(emitter_buffer_box);
+    auto &disposer = water_body.addBodyPart<AlignedBoxByCell>(disposer_box);
 
     cylinder.defineMaterial<Solid>();
     cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
