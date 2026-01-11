@@ -10,6 +10,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Define basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
+Real total_physical_time = 200.0;             /**< TOTAL SIMULATION TIME*/
 Real DL = 30.0;                               /**< Domain length. */
 Real DH = 16.0;                               /**< Domain height. */
 Real particle_spacing_ref = 0.4;              /**< Initial reference particle spacing. */
@@ -38,15 +39,12 @@ GeometricShapeBall cylinder_shape(insert_circle_center, insert_circle_radius, "C
 
 Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
 Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
-GeometricShapeBox emitter_shape(Transform(emitter_translation), emitter_halfsize);
 
 Vec2d emitter_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
 Vec2d emitter_buffer_translation = Vec2d(-DL_sponge, 0.0) + emitter_buffer_halfsize;
-GeometricShapeBox emitter_buffer_shape(Transform(emitter_buffer_translation), emitter_buffer_halfsize);
 
 Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
 Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
-GeometricShapeBox disposer_shape(Transform(disposer_translation), disposer_halfsize);
 //----------------------------------------------------------------------
 //	Define adaptation
 //----------------------------------------------------------------------
@@ -55,6 +53,33 @@ AdaptiveWithinShape water_body_adaptation(particle_spacing_ref, 1.3, 1.0, 1);
 GeometricShapeBox refinement_region(
     BoundingBoxd(Vecd(-DL_sponge - BW, 0.5 * DH - 0.1 * DL), Vecd(DL + BW, 0.5 * DH + 0.1 * DL)),
     "RefinementRegion");
+//----------------------------------------------------------------------
+//	Free-stream velocity
+//----------------------------------------------------------------------
+class FreeStreamVelocity : public BaseStateCondition
+{
+  public:
+    FreeStreamVelocity(BaseParticles *particles)
+        : BaseStateCondition(particles) {};
+
+    class ComputingKernel : public BaseStateCondition::ComputingKernel
+    {
+        Real u_ref_, t_ref_;
+
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseStateCondition::ComputingKernel(ex_policy, encloser),
+            : u_ref_(U_f), t_ref_(2.0){};
+
+        void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real current_time)
+        {
+            Real target_speed =
+                current_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * current_time / t_ref_)) : u_ref_;
+            vel_[index_i] = Vec2d(target_speed, 0.0);
+        };
+    };
+};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -86,18 +111,18 @@ int main(int ac, char *av[])
     auto &cylinder = sph_system.addBody<SolidBody>(cylinder_shape);
     cylinder.defineAdaptationRatios(1.15, 4.0);
     LevelSetShape *cylinder_level_set_shape = cylinder.defineBodyLevelSetShape()->writeLevelSet();
+
+    StdVec<RealBody *> real_bodies = {&water_body, &cylinder};
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
         water_body.generateParticles<BaseParticles, Lattice>(*refinement_region_level_set_shape);
-        auto &near_water_body_surface = water_body.addBodyPart<NearShapeSurface>(*outer_boundary_level_set_shape);
-
         cylinder.generateParticles<BaseParticles, Lattice>();
-        auto &near_cylinder_surface = cylinder.addBodyPart<NearShapeSurface>();
 
-        StdVec<RealBody *> real_bodies = {&water_body, &cylinder};
+        auto &near_water_body_surface = water_body.addBodyPart<NearShapeSurface>(*outer_boundary_level_set_shape);
+        auto &near_cylinder_surface = cylinder.addBodyPart<NearShapeSurface>();
         StdVec<NearShapeSurface *> near_body_surfaces = {&near_water_body_surface, &near_cylinder_surface};
         //----------------------------------------------------------------------
         //	Define body relation map.
@@ -183,20 +208,206 @@ int main(int ac, char *av[])
                 body_state_recorder.writeToFile(ite_p);
             }
         }
+
         host_methods.addStateDynamics<NormalFromBodyShapeCK>(cylinder).exec();
         write_particle_reload_files.addToReload<Vecd>(cylinder, "NormalDirection");
+        write_particle_reload_files.addToReload<Real>(water_body, "SmoothingLengthRatio");
+        write_particle_reload_files.writeToFile();
+
         std::cout << "The physics relaxation process finish !" << std::endl;
         return 0;
     }
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_body.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_body.getName());
+    // //----------------------------------------------------------------------
+    // //	Creating body parts.
+    // //----------------------------------------------------------------------
+    auto &emitter = water_body.addBodyPart<AlignedBoxByParticle>(AlignedBox(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
+    auto &emitter_buffer = water_body.addBodyPart<AlignedBoxByCell>(AlignedBox(xAxis, Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
+    auto &disposer = water_body.addBodyPart<AlignedBoxByCell>(AlignedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(disposer_translation)), disposer_halfsize));
 
     cylinder.defineMaterial<Solid>();
-    cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName());
+    cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
+        ->reloadExtraVariable<Vecd>("NormalDirection");
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticles>(observation_locations);
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
+    //----------------------------------------------------------------------
+    auto &water_body_inner = sph_system.addInnerRelation(water_body);
+    auto &water_body_contact = sph_system.addContactRelation(water_body, cylinder);
+    auto &fluid_observer_contact = sph_system.addContactRelation(fluid_observer, water_body);
+    //----------------------------------------------------------------------
+    // Define SPH solver with particle methods and execution policies.
+    // Generally, the host methods should be able to run immediately.
+    //----------------------------------------------------------------------
+    SPHSolver sph_solver(sph_system);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    //----------------------------------------------------------------------
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the configuration dynamics, such as update cell linked list,
+    // update body relations, are defined first.
+    // Then the geometric models or simple objects without data dependencies,
+    // such as gravity, initialized normal direction.
+    // After that, the major physical particle dynamics model should be introduced.
+    // Finally, the auxiliary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    //----------------------------------------------------------------------
+    auto &update_cylinder_cell_linked_list = main_methods.addCellLinkedListDynamics(cylinder);
+    ParticleDynamicsGroup update_water_body_configuration;
+    update_water_body_configuration.add(&main_methods.addCellLinkedListDynamics(water_body));
+    update_water_body_configuration.add(&main_methods.addRelationDynamics(water_body_inner, water_body_contact));
+    auto &update_observer_relation = main_methods.addRelationDynamics(fluid_observer_contact);
+    auto &particle_sort = main_methods.addSortDynamics(water_body);
 
+    auto &time_dependent_gravity = main_methods.addStateDynamics<GravityForceCK>(water_body, StartupAcceleration(Vec2d(U_f, 0.0), 2.0));
+    auto &water_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(water_body);
+    auto &water_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(water_body);
+
+    auto &fluid_acoustic_step_1st_half =
+        main_methods.addInteractionDynamics<
+                        fluid_dynamics::AcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_contact);
+    auto &fluid_acoustic_step_2nd_half =
+        main_methods.addInteractionDynamics<
+                        fluid_dynamics::AcousticStep2ndHalf, OneLevel, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_contact);
+    auto &fluid_density_regularization =
+        main_methods.addInteractionDynamics<
+                        fluid_dynamics::DensityRegularization, WithUpdate, FreeStream, AllParticles>(water_body_inner)
+            .addPostContactInteraction(water_body_contact);
+
+    auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_body, U_f);
+    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_body);
+
+    auto &fluid_viscous_force =
+        main_methods.addInteractionDynamicsWithUpdate<
+                        fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(water_body_inner)
+            .addPostContactInteraction<Wall, Viscosity, NoKernelCorrectionCK>(water_body_contact);
+
+    auto &emitter_injection = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitter);
+    auto &inflow_condition = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK, FreeStreamVelocity>(emitter_buffer);
+    auto &disposer_outflow_indication = main_methods.addStateDynamics<fluid_dynamics::BufferOutflowIndication>(disposer);
+    auto &outflow_particle_deletion = main_methods.addStateDynamics<fluid_dynamics::OutflowParticleDeletion>(water_body);
+    //----------------------------------------------------------------------
+    //	Define the methods for I/O operations and observations of the simulation.
+    //----------------------------------------------------------------------
+    auto &write_real_body_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    auto &write_fluid_observation =
+        main_methods.addObserveRegression<RegressionTestDynamicTimeWarping, Vecd>("Velocity", fluid_observer_contact);
+    //----------------------------------------------------------------------
+    //	Define time stepper with end and start time.
+    //----------------------------------------------------------------------
+    TimeStepper time_stepper(sph_system, total_physical_time);
+    auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
+    auto &trigger_FSI = time_stepper.addTriggerByPhysicalTime(1.0);
+    size_t advection_steps = 0;
+    int screening_interval = 100;
+    int restart_interval = 1000;
+    int observation_interval = screening_interval / 2;
+    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
+    update_cylinder_cell_linked_list.exec();
+    update_water_body_configuration.exec();
+
+    time_dependent_gravity.exec();
+    fluid_density_regularization.exec();
+    water_advection_step_setup.exec();
+    fluid_viscous_force.exec();
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    write_real_body_states.writeToFile();
+    update_observer_relation.exec();
+    write_fluid_observation.writeToFile();
+    /** statistics for computing time. */
+    TimeInterval interval_advection_step;
+    TimeInterval interval_acoustic_step;
+    TimeInterval interval_updating_configuration;
+    //----------------------------------------------------------------------
+    //	Main loop of time stepping starts here.
+    //----------------------------------------------------------------------
+    while (!time_stepper.isEndTime())
+    {
+        //----------------------------------------------------------------------
+        //	the fastest and most frequent acostic time stepping.
+        //----------------------------------------------------------------------
+        TickCount time_instance = TickCount::now();
+        Real acoustic_dt = time_stepper.incrementPhysicalTime(fluid_acoustic_time_step);
+        fluid_acoustic_step_1st_half.exec(acoustic_dt);
+        fluid_acoustic_step_2nd_half.exec(acoustic_dt);
+        interval_acoustic_step += TickCount::now() - time_instance;
+        //----------------------------------------------------------------------
+        //	the following are slower and less frequent time stepping.
+        //----------------------------------------------------------------------
+        if (advection_step(fluid_advection_time_step))
+        {
+            advection_steps++;
+            water_update_particle_position.exec();
+
+            if (advection_steps % screening_interval == 0)
+            {
+                std::cout << std::fixed << std::setprecision(9) << "N=" << advection_steps
+                          << "	Physical Time = " << time_stepper.getPhysicalTime()
+                          << "	advection_dt = " << advection_step.getInterval()
+                          << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
+            }
+
+            if (advection_steps % observation_interval == 0)
+            {
+                update_observer_relation.exec();
+                write_fluid_observation.writeToFile(advection_steps);
+            }
+
+            if (state_recording())
+            {
+                write_real_body_states.writeToFile();
+            }
+
+            /** Particle creation, deletion, sort and update configuration. */
+            time_instance = TickCount::now();
+            emitter_injection.exec();
+            disposer_outflow_indication.exec();
+            outflow_particle_deletion.exec();
+
+            if (advection_steps % 100)
+            {
+                particle_sort.exec();
+            }
+
+            update_water_body_configuration.exec();
+            interval_updating_configuration += TickCount::now() - time_instance;
+
+            /** outer loop for dual-time criteria time-stepping. */
+            time_instance = TickCount::now();
+            time_dependent_gravity.exec();
+            fluid_density_regularization.exec();
+            water_advection_step_setup.exec();
+            fluid_viscous_force.exec();
+            interval_advection_step += TickCount::now() - time_instance;
+        }
+    }
+
+    //----------------------------------------------------------------------
+    // Summary for wall time used for real computations.
+    //----------------------------------------------------------------------
+    std::cout << std::fixed << std::setprecision(9) << "interval_advection_step ="
+              << interval_advection_step.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_step = "
+              << interval_acoustic_step.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
+              << interval_updating_configuration.seconds() << "\n";
     return 0;
 }
