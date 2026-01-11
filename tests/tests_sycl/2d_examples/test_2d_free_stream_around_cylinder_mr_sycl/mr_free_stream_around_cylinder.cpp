@@ -50,7 +50,7 @@ GeometricShapeBox disposer_shape(Transform(disposer_translation), disposer_halfs
 //----------------------------------------------------------------------
 //	Define adaptation
 //----------------------------------------------------------------------
-AdaptiveWithinShape water_body_adaptation(particle_spacing_ref, 1.3, 1.0, 1);
+AdaptiveWithinShape water_body_adaptation(particle_spacing_ref, 1.3, 1.0, );
 
 GeometricShapeBox refinement_region(
     BoundingBoxd(Vecd(-DL_sponge - BW, 0.5 * DH - 0.1 * DL), Vecd(DL + BW, 0.5 * DH + 0.1 * DL)),
@@ -78,26 +78,77 @@ int main(int ac, char *av[])
     water_body_shape.add(&outer_boundary);
     water_body_shape.subtract(&cylinder_shape);
     auto &water_body = sph_system.addAdaptiveBody<FluidBody>(water_body_adaptation, water_body_shape);
-    water_body.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet();
+    LevelSetShape *outer_boundary_level_set_shape =
+        water_body.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet();
     LevelSetShape *refinement_region_level_set_shape =
         sph_system.addShape<LevelSetShape>(water_body, refinement_region).writeLevelSet();
 
     auto &cylinder = sph_system.addBody<SolidBody>(cylinder_shape);
     cylinder.defineAdaptationRatios(1.15, 4.0);
-    cylinder.defineBodyLevelSetShape();
+    LevelSetShape *cylinder_level_set_shape = cylinder.defineBodyLevelSetShape()->writeLevelSet();
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
         water_body.generateParticles<BaseParticles, Lattice>(*refinement_region_level_set_shape);
+        auto &near_water_body_surface = water_body.addBodyPart<NearShapeSurface>(*outer_boundary_level_set_shape);
+        
         cylinder.generateParticles<BaseParticles, Lattice>();
+        auto &near_cylinder_surface = cylinder.addBodyPart<NearShapeSurface>();
+
+        StdVec<RealBody *> real_bodies = {&water_body, &cylinder};
+        StdVec<NearShapeSurface *> near_body_surfaces = {&near_water_body_surface, &near_cylinder_surface};
+        //----------------------------------------------------------------------
+        //	Define body relation map.
+        //	The contact map gives the topological connections between the bodies.
+        //	Basically the the range of bodies to build neighbor particle lists.
+        //  Generally, we first define all the inner relations, then the contact relations.
+        //  At last, we define the complex relaxations by combining previous defined
+        //  inner and contact relations.
+        //----------------------------------------------------------------------
+        auto &water_body_inner = sph_system.addInnerRelation(water_body);
+        auto &cylinder_inner = sph_system.addInnerRelation(cylinder);
+        auto &water_body_contact = sph_system.addContactRelation(water_body, cylinder);
         //----------------------------------------------------------------------
         // Define SPH solver with particle methods and execution policies.
         // Generally, the host methods should be able to run immediately.
         //----------------------------------------------------------------------
         SPHSolver sph_solver(sph_system);
+        //----------------------------------------------------------------------
+        // Define the numerical methods used in the simulation.
+        // Note that there may be data dependence on the sequence of constructions.
+        // Generally, the configuration dynamics, such as update cell linked list,
+        // update body relations, are defined first.
+        // Then the geometric models or simple objects without data dependencies,
+        // such as gravity, initialized normal direction.
+        // After that, the major physical particle dynamics model should be introduced.
+        // Finally, the auxiliary models such as time step estimator, initial condition,
+        // boundary condition and other constraints should be defined.
+        //----------------------------------------------------------------------
+        auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+        host_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies).exec(); // host method able to run immediately
+        //----------------------------------------------------------------------
+        //	Define simple file input and outputs functions.
+        //----------------------------------------------------------------------
         auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+        ParticleDynamicsGroup update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
+        ParticleDynamicsGroup update_relation;
+        update_relation.add(&main_methods.addRelationDynamics(water_body_inner, water_body_contact));
+        update_relation.add(&main_methods.addRelationDynamics(cylinder_inner));
+        ParticleDynamicsGroup update_configuration = update_cell_linked_list + update_relation;
+
+        ParticleDynamicsGroup relaxation_residual;
+        relaxation_residual.add(&main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(water_body_inner)
+                                     .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(water_body_contact)
+                                     .addPostStateDynamics<LevelsetKernelGradientIntegral>(water_body, *outer_boundary_level_set_shape));
+        relaxation_residual.add(&main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(cylinder_inner)
+                                     .addPostStateDynamics<LevelsetKernelGradientIntegral>(cylinder, *cylinder_level_set_shape));
+
+        ReduceDynamicsGroup relaxation_scaling = main_methods.addReduceDynamics<ReduceMin, RelaxationScalingCK>(real_bodies);
+        ParticleDynamicsGroup update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(real_bodies);
+        ParticleDynamicsGroup level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_body_surfaces);
+        auto &update_smoothing_length_ratio = main_methods.addStateDynamics<UpdateSmoothingLengthRatio>(water_body, *refinement_region_level_set_shape);
         //----------------------------------------------------------------------
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------
@@ -107,7 +158,27 @@ int main(int ac, char *av[])
         //	First output before the simulation.
         //----------------------------------------------------------------------
         body_state_recorder.writeToFile();
+        //----------------------------------------------------------------------
+        //	Particle relaxation time stepping start here.
+        //----------------------------------------------------------------------
+        int ite_p = 0;
+        while (ite_p < 1000)
+        {
+            update_configuration.exec();
+            relaxation_residual.exec();
+            Real relaxation_step = relaxation_scaling.exec();
+            update_particle_position.exec(relaxation_step);
+            level_set_bounding.exec();
+            update_smoothing_length_ratio.exec();
 
+            ite_p += 1;
+            if (ite_p % 100 == 0)
+            {
+                std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
+                body_state_recorder.writeToFile(ite_p);
+            }
+        }
+        std::cout << "The physics relaxation process finish !" << std::endl;
         return 0;
     }
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
