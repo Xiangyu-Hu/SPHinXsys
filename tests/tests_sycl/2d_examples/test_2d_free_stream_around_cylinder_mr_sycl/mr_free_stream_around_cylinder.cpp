@@ -126,8 +126,8 @@ int main(int ac, char *av[])
         // Finally, the auxiliary models such as time step estimator, initial condition,
         // boundary condition and other constraints should be defined.
         //----------------------------------------------------------------------
- //       auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-//        host_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies).exec(); // host method able to run immediately
+        auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+        host_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies).exec(); // host method able to run immediately
         //----------------------------------------------------------------------
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------
@@ -155,8 +155,12 @@ int main(int ac, char *av[])
         auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
         body_state_recorder.addToWrite<Real>(water_body, "SmoothingLengthRatio");
         //----------------------------------------------------------------------
-        //	First output before the simulation.
+        //	Prepare for the time integration loop.
         //----------------------------------------------------------------------
+        level_set_bounding.exec();
+        update_smoothing_length_ratio.exec();
+        //----------------------------------------------------------------------
+        //	First output before the simulation.
         body_state_recorder.writeToFile();
         //----------------------------------------------------------------------
         //	Particle relaxation time stepping start here.
