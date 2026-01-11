@@ -50,7 +50,7 @@ GeometricShapeBox disposer_shape(Transform(disposer_translation), disposer_halfs
 //----------------------------------------------------------------------
 //	Define adaptation
 //----------------------------------------------------------------------
-AdaptiveWithinShape water_body_adaptation(particle_spacing_ref, 1.3, 1.0, );
+AdaptiveWithinShape water_body_adaptation(particle_spacing_ref, 1.3, 1.0, 1);
 
 GeometricShapeBox refinement_region(
     BoundingBoxd(Vecd(-DL_sponge - BW, 0.5 * DH - 0.1 * DL), Vecd(DL + BW, 0.5 * DH + 0.1 * DL)),
