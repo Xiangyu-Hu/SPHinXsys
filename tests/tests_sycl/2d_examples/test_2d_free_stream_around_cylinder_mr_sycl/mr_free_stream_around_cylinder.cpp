@@ -93,7 +93,7 @@ int main(int ac, char *av[])
     {
         water_body.generateParticles<BaseParticles, Lattice>(*refinement_region_level_set_shape);
         auto &near_water_body_surface = water_body.addBodyPart<NearShapeSurface>(*outer_boundary_level_set_shape);
-        
+
         cylinder.generateParticles<BaseParticles, Lattice>();
         auto &near_cylinder_surface = cylinder.addBodyPart<NearShapeSurface>();
 
@@ -154,6 +154,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
         body_state_recorder.addToWrite<Real>(water_body, "SmoothingLengthRatio");
+        auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(real_bodies);
         //----------------------------------------------------------------------
         //	Prepare for the time integration loop.
         //----------------------------------------------------------------------
@@ -182,6 +183,8 @@ int main(int ac, char *av[])
                 body_state_recorder.writeToFile(ite_p);
             }
         }
+        host_methods.addStateDynamics<NormalFromBodyShapeCK>(cylinder).exec();
+        write_particle_reload_files.addToReload<Vecd>(cylinder, "NormalDirection");
         std::cout << "The physics relaxation process finish !" << std::endl;
         return 0;
     }
