@@ -181,6 +181,7 @@ class ReloadParticleIO : public BaseIO
   public:
     ReloadParticleIO(SPHSystem &sph_system);
     ReloadParticleIO(SPHBodyVector bodies);
+    ReloadParticleIO(RealBodyVector real_bodies);
     ReloadParticleIO(SPHBody &sph_body);
     ReloadParticleIO(SPHBody &sph_body, const std::string &given_body_name);
     virtual ~ReloadParticleIO() {};
