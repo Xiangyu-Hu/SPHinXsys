@@ -132,6 +132,16 @@ ReloadParticleIO::ReloadParticleIO(SPHBodyVector bodies)
     }
 }
 //=============================================================================================//
+ReloadParticleIO::ReloadParticleIO(RealBodyVector real_bodies)
+    : BaseIO(real_bodies[0]->getSPHSystem())
+{
+    for (size_t i = 0; i < real_bodies.size(); ++i)
+    {
+        file_names_.push_back(io_environment_.ReloadFolder() + "/" + real_bodies[i]->getName() + "_rld.xml");
+        bodies_.push_back(real_bodies[i]);
+    }
+}
+//=============================================================================================//
 ReloadParticleIO::ReloadParticleIO(SPHSystem &sph_system)
     : ReloadParticleIO(sph_system.getRealBodies()) {}
 //=============================================================================================//
