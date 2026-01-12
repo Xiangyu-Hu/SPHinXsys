@@ -158,8 +158,8 @@ class RestartIO : public BaseIO
     RestartIO(SPHSystem &sph_system);
     virtual ~RestartIO() {};
 
-    virtual void writeToFile(size_t iteration_step = 0) override;
-    virtual void readFromFile(size_t iteration_step = 0);
+    virtual void writeToFile(size_t iteration_step) override;
+    virtual void readFromFile(size_t iteration_step);
 
     virtual Real readRestartFiles(size_t restart_step)
     {
