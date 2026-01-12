@@ -353,8 +353,8 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_real_body_states.writeToFile();
-    write_structure_position.writeToFile(number_of_iterations);
-    wave_gauge.writeToFile(number_of_iterations);
+    write_structure_position.writeToFile();
+    wave_gauge.writeToFile();
     write_structure_surface.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
@@ -414,8 +414,8 @@ int main(int ac, char *av[])
 
             if (total_time >= relax_time)
             {
-                write_structure_position.writeToFile(number_of_iterations);
-                wave_gauge.writeToFile(number_of_iterations);
+                write_structure_position.writeToFile();
+                wave_gauge.writeToFile();
             }
         }
 

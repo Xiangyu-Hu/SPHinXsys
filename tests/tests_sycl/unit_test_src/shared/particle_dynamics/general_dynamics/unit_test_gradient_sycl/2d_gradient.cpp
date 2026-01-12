@@ -203,18 +203,18 @@ int main(int ac, char *av[])
 
     linear_correction_matrix.exec();
     position_linear_gradient.exec();
-    observed_position_gradient.writeToFile(0);
+    observed_position_gradient.writeToFile();
     approximated_gradient = *observed_position_gradient.getObservedQuantity();
 
     displacement_matrix_gradient.exec();
     hessian_correction_matrix.exec();
     variable_linear_gradient.exec();
     variable_hessian.exec();
-    observed_hessian.writeToFile(0);
+    observed_hessian.writeToFile();
     approximated_hessian = *observed_hessian.getObservedQuantity();
 
     variable_2nd_order_gradient.exec();
-    observed_2nd_order_gradient.writeToFile(0);
+    observed_2nd_order_gradient.writeToFile();
     approximated_2nd_order_gradient = *observed_2nd_order_gradient.getObservedQuantity();
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();

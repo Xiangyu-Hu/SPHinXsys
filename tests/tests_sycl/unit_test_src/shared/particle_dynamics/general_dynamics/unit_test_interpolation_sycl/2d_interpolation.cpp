@@ -98,7 +98,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     water_cell_linked_list.exec();
     fluid_observer_contact_relation.exec();
-    fluid_observer_position.writeToFile(0);
+    fluid_observer_position.writeToFile();
     approximated_coordinate = *fluid_observer_position.getObservedQuantity();
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();

@@ -173,8 +173,8 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
-    record_water_mechanical_energy.writeToFile(number_of_iterations);
-    fluid_observer_pressure.writeToFile(number_of_iterations);
+    record_water_mechanical_energy.writeToFile();
+    fluid_observer_pressure.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -218,10 +218,10 @@ int main(int ac, char *av[])
             water_cell_linked_list.exec();
             water_block_update_complex_relation.exec();
             fluid_observer_contact_relation.exec();
-            fluid_observer_pressure.writeToFile(number_of_iterations);
+            fluid_observer_pressure.writeToFile();
         }
 
-        record_water_mechanical_energy.writeToFile(number_of_iterations);
+        record_water_mechanical_energy.writeToFile();
 
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();

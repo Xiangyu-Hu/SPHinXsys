@@ -292,7 +292,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
         }
         std::cout << "The physics relaxation process of wall finish !" << std::endl;
 
-        write_particle_reload_files.writeToFile(0);
+        write_particle_reload_files.writeToFile();
 
         return;
     }

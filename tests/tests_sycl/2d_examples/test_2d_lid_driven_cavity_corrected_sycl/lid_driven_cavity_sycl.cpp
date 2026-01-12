@@ -265,8 +265,8 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
-    write_horizontal_velocity.writeToFile(number_of_iterations);
-    write_vertical_velocity.writeToFile(number_of_iterations);
+    write_horizontal_velocity.writeToFile();
+    write_vertical_velocity.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -333,8 +333,8 @@ int main(int ac, char *av[])
         /** Output body state during the simulation according output_interval. */
         horizontal_observer_contact_relation.exec();
         vertical_observer_contact_relation.exec();
-        write_horizontal_velocity.writeToFile(number_of_iterations);
-        write_vertical_velocity.writeToFile(number_of_iterations);
+        write_horizontal_velocity.writeToFile();
+        write_vertical_velocity.writeToFile();
         body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval_writing_body_state += t3 - t2;

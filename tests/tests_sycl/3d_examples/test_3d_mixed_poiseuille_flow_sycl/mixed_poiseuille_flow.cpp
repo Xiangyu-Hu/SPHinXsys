@@ -339,7 +339,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
-    write_centerline_velocity.writeToFile(number_of_iterations);
+    write_centerline_velocity.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -383,7 +383,7 @@ int main(int ac, char *av[])
                           << "	Dt = " << advection_dt << "	dt = " << acoustic_dt << "\n";
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
-                    write_centerline_velocity.writeToFile(number_of_iterations);
+                    write_centerline_velocity.writeToFile();
                 }
             }
             interval_io += TickCount::now() - tick_instance;

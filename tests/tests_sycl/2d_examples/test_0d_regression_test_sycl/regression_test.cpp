@@ -212,7 +212,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_states.writeToFile();
-    write_solid_temperature.writeToFile(iteration_steps);
+    write_solid_temperature.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -232,8 +232,8 @@ int main(int ac, char *av[])
 
         if (iteration_steps % 100 == 0)
         {
-            write_solid_temperature.writeToFile(iteration_steps);
-            write_solid_average_temperature_part.writeToFile(iteration_steps);
+            write_solid_temperature.writeToFile();
+            write_solid_average_temperature_part.writeToFile();
         }
 
         if (state_recording())

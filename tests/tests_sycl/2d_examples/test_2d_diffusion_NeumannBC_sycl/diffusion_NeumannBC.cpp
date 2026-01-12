@@ -225,7 +225,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_states.writeToFile();
-    write_solid_temperature.writeToFile(ite);
+    write_solid_temperature.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -256,7 +256,7 @@ int main(int ac, char *av[])
 
         TickCount t2 = TickCount::now();
         write_states.writeToFile();
-        write_solid_temperature.writeToFile(ite);
+        write_solid_temperature.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }

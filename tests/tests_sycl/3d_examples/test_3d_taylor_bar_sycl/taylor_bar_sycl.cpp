@@ -71,7 +71,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	First output before the simulation.
         //----------------------------------------------------------------------
-        body_state_recorder.writeToFile(0);
+        body_state_recorder.writeToFile();
         //----------------------------------------------------------------------
         //	Particle relaxation time stepping start here.
         //----------------------------------------------------------------------
@@ -160,7 +160,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_states.writeToFile();
-    write_displacement.writeToFile(0);
+    write_displacement.writeToFile();
     //----------------------------------------------------------------------
     // Main time-stepping loop.
     //----------------------------------------------------------------------
@@ -177,7 +177,7 @@ int main(int ac, char *av[])
 
                 if (ite != 0 && ite % observation_sample_interval == 0)
                 {
-                    write_displacement.writeToFile(ite);
+                    write_displacement.writeToFile();
                 }
             }
             column_wall_contact_force.exec(dt);

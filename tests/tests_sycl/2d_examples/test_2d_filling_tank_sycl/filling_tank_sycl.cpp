@@ -196,8 +196,8 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
-    write_water_mechanical_energy.writeToFile(number_of_iterations);
-    write_recorded_water_pressure.writeToFile(number_of_iterations);
+    write_water_mechanical_energy.writeToFile();
+    write_recorded_water_pressure.writeToFile();
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -247,9 +247,9 @@ int main(int ac, char *av[])
         }
 
         TickCount t2 = TickCount::now();
-        write_water_mechanical_energy.writeToFile(number_of_iterations);
+        write_water_mechanical_energy.writeToFile();
         body_states_recording.writeToFile();
-        write_recorded_water_pressure.writeToFile(number_of_iterations);
+        write_recorded_water_pressure.writeToFile();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }

@@ -397,9 +397,9 @@ int main(int ac, char *av[])
 
             if (trigger_FSI() && advection_steps % observation_interval == 0)
             {
-                write_structure_position.writeToFile(advection_steps);
-                wave_gauge.writeToFile(advection_steps);
-                action_on_structure_recording.writeToFile(advection_steps);
+                write_structure_position.writeToFile();
+                wave_gauge.writeToFile();
+                action_on_structure_recording.writeToFile();
             }
 
             if (advection_steps % restart_interval == 0)

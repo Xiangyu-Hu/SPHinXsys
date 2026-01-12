@@ -167,8 +167,8 @@ int main(int ac, char *av[])
     //	First output before the integration loop.
     //----------------------------------------------------------------------
     body_state_recorder.writeToFile();
-    record_water_mechanical_energy.writeToFile(advection_steps);
-    fluid_observer_pressure.writeToFile(advection_steps);
+    record_water_mechanical_energy.writeToFile();
+    fluid_observer_pressure.writeToFile();
     //----------------------------------------------------------------------
     //	Statistics for the computing time information
     //----------------------------------------------------------------------
@@ -211,9 +211,9 @@ int main(int ac, char *av[])
 
             if (advection_steps % observation_interval == 0)
             {
-                record_water_mechanical_energy.writeToFile(advection_steps);
+                record_water_mechanical_energy.writeToFile();
                 fluid_observer_contact_relation.exec();
-                fluid_observer_pressure.writeToFile(advection_steps);
+                fluid_observer_pressure.writeToFile();
             }
 
             if (advection_steps % restart_output_interval == 0)
