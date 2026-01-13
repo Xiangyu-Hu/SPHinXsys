@@ -250,7 +250,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
         InnerRelation water_block_inner(water_block);
         ContactRelation water_contact(water_block, {&wall_boundary});
 
-        ReloadParticleIO write_particle_reload_files({&wall_boundary, &water_block});
+        ReloadParticleIO write_particle_reload_files(StdVec<SPHBody *>{&wall_boundary, &water_block});
 
         // Randomize particle positions for relaxation
         using namespace relax_dynamics;
