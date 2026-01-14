@@ -59,28 +59,14 @@ GeometricShapeBox refinement_region(
 //----------------------------------------------------------------------
 //	Free-stream velocity
 //----------------------------------------------------------------------
-class FreeStreamVelocity : public BaseStateCondition
+struct FreeStreamVelocity
 {
-  public:
-    FreeStreamVelocity(BaseParticles *particles)
-        : BaseStateCondition(particles) {};
+    Real u_ref_, t_ref_;
 
-    class ComputingKernel : public BaseStateCondition::ComputingKernel
+    FreeStreamVelocity() : u_ref_(U_f), t_ref_(2.0) {};
+    Real getAxisVelocity(const Vecd &input_position, const Real &input_axis_velocity, Real time)
     {
-        Real u_ref_, t_ref_;
-
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseStateCondition::ComputingKernel(ex_policy, encloser),
-            : u_ref_(U_f), t_ref_(2.0){};
-
-        void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real current_time)
-        {
-            Real target_speed =
-                current_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * current_time / t_ref_)) : u_ref_;
-            vel_[index_i] = Vec2d(target_speed, 0.0);
-        };
+        return time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * time / t_ref_)) : u_ref_;
     };
 };
 //----------------------------------------------------------------------

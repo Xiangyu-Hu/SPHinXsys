@@ -35,49 +35,37 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-/**
- * @class   FreeStreamCondition
- * @brief   modify the velocity of free surface particles with far-field velocity
- *          TargetVelocity gives the velocity profile along the free-stream direction,
- *          i.e. x direction in local frame.
- */
-template <typename TargetVelocity>
+template <typename ConditionFunction>
 class FreeStreamCondition : public LocalDynamics
 {
-  protected:
-    Transform transform_;
-    Real rho0_;
-    Real *rho_sum_;
-    Vecd *pos_, *vel_;
-    int *indicator_;
-    TargetVelocity target_velocity;
-    Real *physical_time_;
-
   public:
-    explicit FreeStreamCondition(SPHBody &sph_body, const Transform &transform = Transform())
-        : LocalDynamics(sph_body),
-          transform_(transform), rho0_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceDensity()),
-          rho_sum_(particles_->getVariableDataByName<Real>("DensitySummation")),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-          indicator_(particles_->getVariableDataByName<int>("Indicator")),
-          target_velocity(*this),
-          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
+    explicit FreeStreamCondition(SPHBody &sph_body, const ConditionFunction &free_stream_velocity);
     virtual ~FreeStreamCondition() {};
 
-    void update(size_t index_i, Real dt = 0.0)
+    class ComputingKernel
     {
-        if (indicator_[index_i] == 1)
-        {
-            Vecd frame_position = transform_.shiftBaseStationToFrame(pos_[index_i]);
-            Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_[index_i]);
-            Real frame_u_stream_direction = frame_velocity[0];
-            Real u_freestream = target_velocity(frame_position, frame_velocity, *physical_time_)[0];
-            frame_velocity[0] = u_freestream + (frame_u_stream_direction - u_freestream) *
-                                                   SMIN(rho_sum_[index_i], rho0_) / rho0_;
-            vel_[index_i] = transform_.xformFrameVecToBase(frame_velocity);
-        }
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Transform transform_;
+        ConditionFunction free_stream_velocity_;
+        Real rho0_;
+        Real *rho_sum_;
+        Vecd *pos_, *vel_;
+        int *indicator_;
+        Real *physical_time_;
     };
+
+  protected:
+    ConditionFunction free_stream_velocity_;
+    Real rho0_;
+    DiscreteVariable<Real> *dv_rho_sum_;
+    DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
+    DiscreteVariable<int> *dv_indicator_;
+    SingularVariable<Real> *sv_physical_time_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH
