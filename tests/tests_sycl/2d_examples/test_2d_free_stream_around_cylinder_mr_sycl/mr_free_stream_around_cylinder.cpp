@@ -258,7 +258,7 @@ int main(int ac, char *av[])
     auto &update_observer_relation = main_methods.addRelationDynamics(fluid_observer_contact);
     auto &particle_sort = main_methods.addSortDynamics(water_body);
 
-    auto &time_dependent_gravity = main_methods.addStateDynamics<GravityForceCK>(water_body, StartupAcceleration(Vec2d(U_f, 0.0), 2.0));
+    auto &time_dependent_gravity = main_methods.addStateDynamics<GravityForceCK<StartupAcceleration>>(water_body, Vec2d(U_f, 0.0), 2.0);
     auto &water_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(water_body);
     auto &water_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(water_body);
 
@@ -269,7 +269,7 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamicsOneLevel<
                         fluid_dynamics::AcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
             .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_contact)
-            .addPostStateDynamics<fluid_dynamics::FreeStreamCondition>(water_body, FreeStreamVelocity());
+            .addPostStateDynamics<fluid_dynamics::FreeStreamCondition<FreeStreamVelocity>>(water_body);
     auto &fluid_acoustic_step_2nd_half =
         main_methods.addInteractionDynamicsOneLevel<
                         fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
@@ -292,8 +292,8 @@ int main(int ac, char *av[])
                         fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(water_body_inner)
             .addPostContactInteraction<Wall, Viscosity, NoKernelCorrectionCK>(water_body_contact);
 
-    auto &emitter_injection = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitter);
-    auto &inflow_condition = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK, FreeStreamVelocity>(emitter_buffer, FreeStreamVelocity());
+    auto &emitter_injection = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitter, inlet_particle_buffer);
+    auto &inflow_condition = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK, FreeStreamVelocity>(emitter_buffer);
     auto &disposer_outflow_indication = main_methods.addStateDynamics<fluid_dynamics::BufferOutflowIndication>(disposer);
     auto &outflow_particle_deletion = main_methods.addStateDynamics<fluid_dynamics::OutflowParticleDeletion>(water_body);
     //----------------------------------------------------------------------

@@ -39,7 +39,8 @@ template <typename ConditionFunction>
 class FreeStreamCondition : public LocalDynamics
 {
   public:
-    explicit FreeStreamCondition(SPHBody &sph_body, const ConditionFunction &free_stream_velocity);
+    template <typename... Args>
+    explicit FreeStreamCondition(SPHBody &sph_body, Args &&...args);
     virtual ~FreeStreamCondition() {};
 
     class UpdateKernel

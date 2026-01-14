@@ -9,9 +9,10 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 template <typename ConditionFunction>
+template <typename... Args>
 FreeStreamCondition<ConditionFunction>::FreeStreamCondition(
-    SPHBody &sph_body, const ConditionFunction &free_stream_velocity)
-    : LocalDynamics(sph_body), free_stream_velocity_(free_stream_velocity),
+    SPHBody &sph_body, Args &&...args)
+    : LocalDynamics(sph_body), free_stream_velocity_(std::forward<Args>(args)...),
       rho0_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceDensity()),
       dv_rho_sum_(particles_->getVariableByName<Real>("DensitySummation")),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
