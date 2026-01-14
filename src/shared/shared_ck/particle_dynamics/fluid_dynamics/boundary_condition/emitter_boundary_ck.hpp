@@ -9,10 +9,12 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 template <class ConditionFunction, class AlignedBoxPartType>
+template <typename... Args>
 EmitterInflowConditionCK<ConditionFunction, AlignedBoxPartType>::EmitterInflowConditionCK(
-    AlignedBoxPartType &aligned_box_part, const ConditionFunction &inflow_velocity)
+    AlignedBoxPartType &aligned_box_part, Args &&...args)
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
-      sv_aligned_box_(aligned_box_part.svAlignedBox()), inflow_velocity_(inflow_velocity),
+      sv_aligned_box_(aligned_box_part.svAlignedBox()),
+      inflow_velocity_(std::forward<Args>(args)...),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       sv_physical_time_(this->sph_system_->template getSystemVariableByName<Real>("PhysicalTime")) {}

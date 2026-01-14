@@ -50,7 +50,8 @@ class EmitterInflowConditionCK<ConditionFunction, AlignedBoxPartType>
     : public BaseLocalDynamics<AlignedBoxPartType>
 {
   public:
-    EmitterInflowConditionCK(AlignedBoxPartType &aligned_box_part, const ConditionFunction &inflow_velocity);
+    template <typename... Args>
+    EmitterInflowConditionCK(AlignedBoxPartType &aligned_box_part, Args &&...args);
 
     class UpdateKernel
     {
