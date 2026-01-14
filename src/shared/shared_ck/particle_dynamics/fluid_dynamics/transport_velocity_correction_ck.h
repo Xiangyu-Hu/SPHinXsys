@@ -21,7 +21,9 @@ class TransportVelocityCorrectionCK<
 {
     using BaseInteraction = KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>;
     using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
-    using SmoothingRatio = typename Inner<Parameters...>::NeighborhoodType::SmoothingRatio;
+    using SourceType = typename Inner<Parameters...>::SourceType;
+    using BaseAdaptation = typename SourceType::BaseAdaptation;
+    using SmoothingLengthRatio = typename BaseAdaptation::SmoothingLengthRatioType;
 
   public:
     explicit TransportVelocityCorrectionCK(Inner<Parameters...> &inner_relation, Real coefficient = 0.2);
@@ -36,7 +38,7 @@ class TransportVelocityCorrectionCK<
 
       protected:
         Real correction_scaling_;
-        SmoothingRatio h_ratio_;
+        SmoothingLengthRatio h_ratio_;
         LimiterType limiter_;
         Vecd *dpos_;
         Vecd *kernel_gradient_integral_;
@@ -49,6 +51,7 @@ class TransportVelocityCorrectionCK<
     LimiterType limiter_;     ///< e.g. a limiter on the final correction step
     ParticleScopeTypeCK<ParticleScopeType> within_scope_method_;
     DiscreteVariable<Vecd> *dv_dpos_;
+    BaseAdaptation &adaptaion_;
 };
 
 template <class KernelCorrectionType, typename... Parameters>

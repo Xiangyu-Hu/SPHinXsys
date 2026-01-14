@@ -126,15 +126,6 @@ class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
         inline bool operator()(UnsignedInt i, UnsignedInt j) const { return true; };
     };
 
-    class SmoothingRatio
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        SmoothingRatio(const ExecutionPolicy &ex_policy, EncloserType &encloser){};
-
-        inline Real operator()(UnsignedInt i) const { return 1.0; };
-    };
-
     class SearchBox
     {
       public:
