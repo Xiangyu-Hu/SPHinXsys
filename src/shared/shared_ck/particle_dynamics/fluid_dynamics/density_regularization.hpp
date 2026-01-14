@@ -40,9 +40,7 @@ DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, P
     DensityRegularization(Inner<Parameters...> &inner_relation)
     : DensityRegularization<Base, Inner<Parameters...>>(inner_relation),
       regularization_method_(this->particles_),
-      within_scope_method_(this->particles_)
-{
-}
+      within_scope_method_(this->particles_) {}
 //=================================================================================================//
 template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
 template <class ExecutionPolicy>

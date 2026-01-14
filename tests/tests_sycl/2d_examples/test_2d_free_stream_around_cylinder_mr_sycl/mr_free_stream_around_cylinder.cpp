@@ -277,7 +277,7 @@ int main(int ac, char *av[])
             .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_contact);
     auto &fluid_density_regularization =
         main_methods.addInteractionDynamicsWithUpdate<
-                        fluid_dynamics::DensityRegularization, FreeStream, AllParticles>(water_body_inner)
+                        fluid_dynamics::DensityRegularization, Internal, BulkParticles>(water_body_inner)
             .addPostContactInteraction(water_body_contact);
 
     auto &transport_correction =

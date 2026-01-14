@@ -29,7 +29,7 @@
 #ifndef FREE_STREAM_BOUNDARY_H
 #define FREE_STREAM_BOUNDARY_H
 
-#include "fluid_boundary_state.h"
+#include "base_fluid_dynamics.h"
 
 namespace SPH
 {
@@ -42,11 +42,11 @@ class FreeStreamCondition : public LocalDynamics
     explicit FreeStreamCondition(SPHBody &sph_body, const ConditionFunction &free_stream_velocity);
     virtual ~FreeStreamCondition() {};
 
-    class ComputingKernel
+    class UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
