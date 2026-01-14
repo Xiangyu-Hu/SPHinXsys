@@ -240,7 +240,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -294,7 +293,7 @@ int main(int ac, char *av[])
             .addPostContactInteraction<Wall, Viscosity, NoKernelCorrectionCK>(water_body_contact);
 
     auto &emitter_injection = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitter);
-    auto &inflow_condition = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK>(emitter_buffer, FreeStreamVelocity());
+    auto &inflow_condition = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK, FreeStreamVelocity>(emitter_buffer, FreeStreamVelocity());
     auto &disposer_outflow_indication = main_methods.addStateDynamics<fluid_dynamics::BufferOutflowIndication>(disposer);
     auto &outflow_particle_deletion = main_methods.addStateDynamics<fluid_dynamics::OutflowParticleDeletion>(water_body);
     //----------------------------------------------------------------------
@@ -308,10 +307,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     TimeStepper time_stepper(sph_system, total_physical_time);
     auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
-    auto &trigger_FSI = time_stepper.addTriggerByPhysicalTime(1.0);
     size_t advection_steps = 0;
     int screening_interval = 100;
-    int restart_interval = 1000;
     int observation_interval = screening_interval / 2;
     auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
     //----------------------------------------------------------------------
@@ -322,8 +319,10 @@ int main(int ac, char *av[])
     update_water_body_configuration.exec();
 
     time_dependent_gravity.exec();
+    fluid_boundary_indicator.exec();
     fluid_density_regularization.exec();
     water_advection_step_setup.exec();
+    transport_correction.exec();
     fluid_viscous_force.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
@@ -346,6 +345,7 @@ int main(int ac, char *av[])
         TickCount time_instance = TickCount::now();
         Real acoustic_dt = time_stepper.incrementPhysicalTime(fluid_acoustic_time_step);
         fluid_acoustic_step_1st_half.exec(acoustic_dt);
+        inflow_condition.exec();
         fluid_acoustic_step_2nd_half.exec(acoustic_dt);
         interval_acoustic_step += TickCount::now() - time_instance;
         //----------------------------------------------------------------------
@@ -392,8 +392,10 @@ int main(int ac, char *av[])
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
             time_dependent_gravity.exec();
+            fluid_boundary_indicator.exec();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
+            transport_correction.exec();
             fluid_viscous_force.exec();
             interval_advection_step += TickCount::now() - time_instance;
         }
