@@ -6,9 +6,9 @@ categories: high performance computing
 ---
 Xiangyu Hu and Fan Gu
 
-<p align="center"><img src="{{site.baseurl}}/assets/img/multi-resolution-particles.png" 
-alt="Heading Figure" style="max-width:100%; height:auto;">
-<center> Fig. 4. Multi-resolution particles generated using multi-resolution level-set field. </center> </p>
+<p align="center"><img src="https://arxiv.org/html/2512.11473v1/x1.png" 
+alt="Heading Figure" sstyle="max-width:100%; height:auto;">
+<center> Fig. 5. Corrected level-set field, zero-level contour and the finally generated SPH particles. The zero-level contour is colored with green. </center> </p>
 
 ## Performance Evaluation
 
@@ -35,31 +35,27 @@ The evaluation results for both single and multi-thread execution are shown in T
 
 Here, we demonstrate two typical applications, both as pre-processing tool for SPH simulation, of the present method.
 
-In the first case, SPH particles are generated from a gear model in STL file for a gearbox simulation, as shown in Fig. 5. While the STL model visually is perfectly water-tight, there are many triangle faces are not strictly connected and a straightforward application of the signed-distance function from a triangle mesh will leads to many particles generated (leaked) away from the surface due to the contain condition is wrongly predicted.
+In the first case, SPH particles are generated from a gear model in STL file for a gearbox simulation, as shown in Fig. 4. While the STL model visually is perfectly water-tight, there are many triangle faces are not strictly connected and a straightforward application of the signed-distance function from a triangle mesh will leads to many particles generated (leaked) away from the surface due to the contain condition is wrongly predicted.
 
 <p align="center"><img src="https://arxiv.org/html/2512.11473v1/gear.jpeg" 
 alt="Heading Figure" sstyle="max-width:100%; height:auto;">
-<center> Fig. 5. STL triangle mesh of a gear. The leaking regions are indicated with yellow lines. </center> </p>
+<center> Fig. 4. STL triangle mesh of a gear. The leaking regions are indicated with yellow lines. </center> </p>
 
-With the present method, after the initial level set is generated, the contain consistency correction algorithm is applied and run on GPU with high computational efficiency. The corrected level set field and final generated SPH particles is shown in Fig. 6.
-
-<p align="center"><img src="https://arxiv.org/html/2512.11473v1/x1.png" 
-alt="Heading Figure" sstyle="max-width:100%; height:auto;">
-<center> Fig. 6. Corrected level-set field, zero-level contour and the finally generated SPH particles. The zero-level contour is colored with green. </center> </p>
+With the present method, after the initial level set is generated, the contain consistency correction algorithm is applied and run on GPU with high computational efficiency. The corrected level set field and final generated SPH particles is shown in Fig. 4.
 
 Note that gear surface is represented with a narrow band of (core) data packages, which is able to achieve memory efficiency and is able to handle those level-set based algorithms evolving data locations considerably far from the surface.
 
-Second example is to handle a industrial design of heat exchanger, as shown in Fig. 7, where very small geometry features are presented near the connections between pipes and plates. Note that, while these features can be captured accurately using high-resolution level-set field, they are not necessarily for a optimization-oriented numerical simulations focusing on the heat-transfer performance only.
+Second example is to handle a industrial design of heat exchanger, as shown in Fig. 5, where very small geometry features are presented near the connections between pipes and plates. Note that, while these features can be captured accurately using high-resolution level-set field, they are not necessarily for a optimization-oriented numerical simulations focusing on the heat-transfer performance only.
 
 <p align="center"><img src="https://arxiv.org/html/2512.11473v1/x2.png" 
 alt="Heading Figure" sstyle="max-width:100%; height:auto;">
-<center> Fig. 7. Geometric model of a heat exchanger. (left) the entire model. (right) a cross-section view indicting very small features.  </center> </p>
+<center> Fig. 6. Geometric model of a heat exchanger. (left) the entire model. (right) a cross-section view indicting very small features.  </center> </p>
 
-As shown in Fig. 8, these small features are removed by applying the cleaning algorithm. With the present method, this operation can be carried out on GPU, and decreases computation time greatly (with about 5 times speed up). As shown in the finally generated SPH particles, a regular particle distribution without single layer or filament of particles generated and hence ensure stable SPH simulations.
+As shown in Fig. 7, these small features are removed by applying the cleaning algorithm. With the present method, this operation can be carried out on GPU, and decreases computation time greatly (with about 5 times speed up). As shown in the finally generated SPH particles, a regular particle distribution without single layer or filament of particles generated and hence ensure stable SPH simulations.
 
 <p align="center"><img src="https://arxiv.org/html/2512.11473v1/x3.png" 
 alt="Heading Figure" sstyle="max-width:100%; height:auto;">
-<center> Fig. 8.SPH particles for a heat exchanger model. (left) the entire model. (right) a detail-view near the region where small features are cleaned.</center> </p>
+<center> Fig. 7.SPH particles for a heat exchanger model. (left) the entire model. (right) a detail-view near the region where small features are cleaned.</center> </p>
 
 ## Limitations and Future Work
 
