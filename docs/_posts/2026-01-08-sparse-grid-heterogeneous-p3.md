@@ -6,7 +6,7 @@ categories: high performance computing
 ---
 Xiangyu Hu and Fan Gu
 
-<p align="center"><img src="{{site.baseurl}}/assets/img/multi-resolution-level-set.png" alt="Heading Figure" sstyle="max-width:100%; height:auto;">
+<p align="center"><img src="{{site.baseurl}}/assets/img/multi-resolution-level-set.png" alt="Heading Figure" style="max-width:100%; height:auto;">
 <center> Fig. 3. Multi-resolution level-set field shown with successively doubled resolutions from top to boottom and left to right. </center> </p>
 
 ## Mesh Local Dynamics

@@ -6,7 +6,8 @@ categories: high performance computing
 ---
 Xiangyu Hu and Fan Gu
 
-<p align="center"><img src="{{site.baseurl}}/assets/img/docs/assets/img/multi-resolution-particles.png" alt="Heading Figure" sstyle="max-width:100%; height:auto;">
+<p align="center"><img src="{{site.baseurl}}/assets/img/multi-resolution-particles.png" 
+alt="Heading Figure" style="max-width:100%; height:auto;">
 <center> Fig. 4. Multi-resolution particles generated using multi-resolution level-set field. </center> </p>
 
 ## Performance Evaluation
