@@ -45,12 +45,13 @@ namespace fluid_dynamics
 template <typename... T>
 class EmitterInflowConditionCK;
 
-template <class AlignedBoxPartType, class ConditionFunction>
-class EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>
+template <class ConditionFunction, class AlignedBoxPartType>
+class EmitterInflowConditionCK<ConditionFunction, AlignedBoxPartType>
     : public BaseLocalDynamics<AlignedBoxPartType>
 {
   public:
-    EmitterInflowConditionCK(AlignedBoxPartType &aligned_box_part, const ConditionFunction &inflow_velocity);
+    template <typename... Args>
+    EmitterInflowConditionCK(AlignedBoxPartType &aligned_box_part, Args &&...args);
 
     class UpdateKernel
     {
