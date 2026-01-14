@@ -6,7 +6,7 @@ categories: high performance computing
 ---
 Xiangyu Hu and Fan Gu
 
-<p align="center"><img src="{{site.baseurl}}/assets/img/multi-resolution-particle.png" alt="Heading Figure" sstyle="max-width:100%; height:auto;">
+<p align="center"><img src="{{site.baseurl}}/assets/img/docs/assets/img/multi-resolution-particles.png" alt="Heading Figure" sstyle="max-width:100%; height:auto;">
 <center> Fig. 4. Multi-resolution particles generated using multi-resolution level-set field. </center> </p>
 
 ## Performance Evaluation
@@ -20,7 +20,7 @@ Compared to the previous implementation on SPHinXsys, memory usage has been sign
 |Stencil, 1 thread             |1013.162 |229.572 |59.972     |
 |Stencil, 4 threads            |303.902  |68.8437 |21.378     |
 
-<p> <center>Tab. 1. Timing for operations for SPGrid, OpenVDB, and SPHinXsys.</center> </p>
+<p> <center>Tab. 1. Timing for operations using SPGrid, OpenVDB, and SPHinXsys.</center> </p>
 
 To evaluate the computational performance with previous popular sparse-grid methods, namely OpenVDB and SPGrid, a shelled sphere is used as the shared test geometry across all methods. The shell is centered at (0.5, 0.5, 0.5) and has an inner radius of 0.3 and outer one of 0.31, with a resolution of 1/1024. A sequential access and a stencil operation are carried out on all the activated data.
 
@@ -44,24 +44,21 @@ With the present method, after the initial level set is generated, the contain c
 
 <p align="center"><img src="https://arxiv.org/html/2512.11473v1/x1.png" 
 alt="Heading Figure" sstyle="max-width:100%; height:auto;">
-<center> Fig. 6. SCorrected level-set field, zero-level contour and the finally generated SPH particles. The zero-level contour is colored with green. </center> </p>
+<center> Fig. 6. Corrected level-set field, zero-level contour and the finally generated SPH particles. The zero-level contour is colored with green. </center> </p>
 
 Note that gear surface is represented with a narrow band of (core) data packages, which is able to achieve memory efficiency and is able to handle those level-set based algorithms evolving data locations considerably far from the surface.
 
-Second example is to handle a industrial design of heat exchanger, as shown in Fig. 7, where very small geometry features are presented near the connections between pipes and plates. Note that, while these features can be captured accuracy using high-resolution level-set field, they are not necessarily for a optimization-oriented numerical simulations focusing on the heat-transfer performance only.
+Second example is to handle a industrial design of heat exchanger, as shown in Fig. 7, where very small geometry features are presented near the connections between pipes and plates. Note that, while these features can be captured accurately using high-resolution level-set field, they are not necessarily for a optimization-oriented numerical simulations focusing on the heat-transfer performance only.
 
 <p align="center"><img src="https://arxiv.org/html/2512.11473v1/x2.png" 
 alt="Heading Figure" sstyle="max-width:100%; height:auto;">
 <center> Fig. 7. Geometric model of a heat exchanger. (left) the entire model. (right) a cross-section view indicting very small features.  </center> </p>
 
-As shown in Fig. 8, these small features are removed by applying the cleaning algorithm. With the present method, this operation can be carried out on GPU, and decreases computation time greatly (with about 5 times speed up). As shown in the finally generated SPH particles,
+As shown in Fig. 8, these small features are removed by applying the cleaning algorithm. With the present method, this operation can be carried out on GPU, and decreases computation time greatly (with about 5 times speed up). As shown in the finally generated SPH particles, a regular particle distribution without single layer or filament of particles generated and hence ensure stable SPH simulations.
 
-<p align="center"><img src="https://arxiv.org/html/2512.11473v1/x2.png" 
+<p align="center"><img src="https://arxiv.org/html/2512.11473v1/x3.png" 
 alt="Heading Figure" sstyle="max-width:100%; height:auto;">
 <center> Fig. 8.SPH particles for a heat exchanger model. (left) the entire model. (right) a detail-view near the region where small features are cleaned.</center> </p>
-
-a regular particle distribution without single layer or filament of particles generated and hence ensure stable SPH simulations.
-
 
 ## Limitations and Future Work
 
