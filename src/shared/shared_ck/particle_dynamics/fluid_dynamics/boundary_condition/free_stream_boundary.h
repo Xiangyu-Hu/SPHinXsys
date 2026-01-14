@@ -50,7 +50,6 @@ class FreeStreamCondition : public LocalDynamics
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
-        Transform transform_;
         ConditionFunction free_stream_velocity_;
         Real rho0_;
         Real *rho_sum_;
