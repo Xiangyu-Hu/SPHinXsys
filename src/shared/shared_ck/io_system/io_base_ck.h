@@ -87,7 +87,7 @@ class RestartIOCK : public RestartIO
     RestartIOCK(Args &&...args) : RestartIO(std::forward<Args>(args)...){};
     virtual ~RestartIOCK() {};
 
-    virtual void writeToFile(size_t iteration_step = 0) override
+    virtual void writeToFile(size_t iteration_step) override
     {
         for (size_t i = 0; i < bodies_.size(); ++i)
         {
@@ -97,7 +97,7 @@ class RestartIOCK : public RestartIO
         RestartIO::writeToFile(iteration_step);
     };
 
-    virtual void readFromFile(size_t iteration_step = 0) override
+    virtual void readFromFile(size_t iteration_step) override
     {
         RestartIO::readFromFile(iteration_step);
 
