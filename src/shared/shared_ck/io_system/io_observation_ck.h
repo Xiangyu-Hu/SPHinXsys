@@ -51,7 +51,8 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
     DataType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
-    ObservedQuantityRecording(const std::string &quantity_name, Contact<Parameters...> &contact_relation)
+    template <typename... RelationParameters>
+    ObservedQuantityRecording(const std::string &quantity_name, Contact<RelationParameters...> &contact_relation)
         : BaseQuantityRecording(contact_relation.getSPHBody().getSPHSystem(),
                                 contact_relation.getSPHBody().getName()),
           observer_(contact_relation.getSPHBody()),
