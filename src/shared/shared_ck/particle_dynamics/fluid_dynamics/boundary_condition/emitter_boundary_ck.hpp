@@ -9,26 +9,36 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 template <class AlignedBoxPartType, class ConditionFunction>
-EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>::
-    EmitterInflowConditionCK(AlignedBoxPartType &aligned_box_part)
+EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>::EmitterInflowConditionCK(
+    AlignedBoxPartType &aligned_box_part, const ConditionFunction &inflow_velocity)
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
-      sv_physical_time_(this->sph_system_->template getSystemVariableByName<Real>("PhysicalTime")),
-      sv_aligned_box_(aligned_box_part.svAlignedBox()),
-      condition_function_(this->particles_) {}
+      sv_aligned_box_(aligned_box_part.svAlignedBox()), inflow_velocity_(inflow_velocity),
+      dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
+      dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
+      sv_physical_time_(this->sph_system_->template getSystemVariableByName<Real>("PhysicalTime")) {}
 //=================================================================================================//
 template <class AlignedBoxPartType, class ConditionFunction>
 template <class ExecutionPolicy, class EncloserType>
 EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
-      aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
-      condition_(ex_policy, encloser.condition_function_) {}
+    : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+      inflow_velocity_(encloser.inflow_velocity_),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class AlignedBoxPartType, class ConditionFunction>
 void EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
-    condition_(aligned_box_, index_i, *physical_time_);
+    int aligned_axis = aligned_box_->AlignmentAxis();
+    Transform &transform = aligned_box_->getTransform();
+    Vecd frame_position = transform.shiftBaseStationToFrame(pos_[index_i]);
+    Real current_axis_velocity = transform.xformBaseVecToFrame(vel_[index_i])[aligned_axis];
+    Vecd frame_velocity = Vecd::Zero();
+    frame_velocity[aligned_axis] =
+        inflow_velocity_.getAxisVelocity(frame_position, current_axis_velocity, *physical_time_);
+    vel_[index_i] = transform.xformFrameVecToBase(frame_velocity);
 }
 //=================================================================================================//
 template <typename AlignedBoxPartType>

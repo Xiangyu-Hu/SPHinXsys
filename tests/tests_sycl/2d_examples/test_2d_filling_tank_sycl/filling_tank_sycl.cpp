@@ -10,14 +10,14 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Global geometry, material parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.366;              /**< Tank length. */
-Real DH = 5.366;              /**< Tank height. */
+Real DL = 5.366;                 /**< Tank length. */
+Real DH = 5.366;                 /**< Tank height. */
 Real global_resolution = 0.025;  /**< Initial reference particle spacing. */
 Real BW = global_resolution * 4; /**< Extending width for wall boundary. */
-Real LL = 2.0 * BW;           /**< Inflow region length. */
-Real LH = 0.125;              /**< Inflows region height. */
-Real inlet_height = 1.0;      /**< Inflow location height */
-Real inlet_distance = -BW;    /**< Inflow location distance */
+Real LL = 2.0 * BW;              /**< Inflow region length. */
+Real LH = 0.125;                 /**< Inflows region height. */
+Real inlet_height = 1.0;         /**< Inflow location height */
+Real inlet_distance = -BW;       /**< Inflow location distance */
 Vec2d inlet_halfsize = Vec2d(0.5 * LL, 0.5 * LH);
 Vec2d inlet_translation = Vec2d(inlet_distance, inlet_height) + inlet_halfsize;
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
@@ -70,23 +70,13 @@ class WallBoundary : public MultiPolygonShape
 //----------------------------------------------------------------------
 //	Inlet inflow condition
 //----------------------------------------------------------------------
-class InletInflowCondition : public BaseStateCondition
+struct ConstantInflowVelocity
 {
-  public:
-    InletInflowCondition(BaseParticles *particles)
-        : BaseStateCondition(particles) {};
+    ConstantInflowVelocity() {};
 
-    class ComputingKernel : public BaseStateCondition::ComputingKernel
+    Real getAxisVelocity(const Vecd &, const Real &, Real)
     {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseStateCondition::ComputingKernel(ex_policy, encloser){};
-
-        void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real /*time*/)
-        {
-            vel_[index_i] = Vec2d(2.0, 0.0);
-        };
+        return 2.0;
     };
 };
 //----------------------------------------------------------------------
@@ -158,7 +148,8 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
 
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowConditionCK<AlignedBoxByParticle, InletInflowCondition>> inflow_condition(emitter);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowConditionCK<AlignedBoxByParticle, ConstantInflowVelocity>>
+        inflow_condition(emitter, ConstantInflowVelocity());
     StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxByParticle>> emitter_injection(emitter, inlet_buffer);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
