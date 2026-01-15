@@ -66,8 +66,8 @@ class Interpolation<Contact<DataType, Parameters...>> : public Interpolation<Con
     using BaseDynamicsType = Interpolation<Contact<Base, DataType, Parameters...>>;
 
   public:
-    template <typename... Args>
-    Interpolation(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
+    Interpolation(Contact<Parameters...> &pair_contact_relation, const std::string &variable_name) 
+    : BaseDynamicsType(pair_contact_relation, variable_name){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -101,8 +101,8 @@ class Interpolation<Contact<DataType, RestoringCorrection, Parameters...>> : pub
     using PredictVecd = ScalarVec<DataType, RestoringSize>;
 
   public:
-    template <typename... Args>
-    Interpolation(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
+    Interpolation(Contact<Parameters...> &pair_contact_relation, const std::string &variable_name) 
+    : BaseDynamicsType(pair_contact_relation, variable_name){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
