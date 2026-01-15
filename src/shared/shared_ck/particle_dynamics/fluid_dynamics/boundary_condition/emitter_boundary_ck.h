@@ -116,6 +116,33 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_rho_, *dv_p_;
 };
+
+class WithinDisposerIndication : public BaseLocalDynamics<AlignedBoxByCell>
+{
+  public:
+    WithinDisposerIndication(AlignedBoxByCell &aligned_box_part);
+    virtual ~WithinDisposerIndication() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        AlignedBox *aligned_box_;
+        Vecd *pos_;
+        int *life_status_;
+        UnsignedInt *total_real_particles_;
+    };
+
+  protected:
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<int> *dv_life_status_; // 0: alive, 1: to delete
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // EMITTER_BOUNDARY_CK_H

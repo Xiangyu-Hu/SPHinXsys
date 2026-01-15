@@ -38,8 +38,8 @@ void FreeStreamCondition<ConditionFunction>::UpdateKernel::update(size_t index_i
     {
         Real current_velocity = vel_[index_i][0];
         Real target_velocity = free_stream_velocity_.getAxisVelocity(pos_[index_i], current_velocity, *physical_time_);
-        Real corrected_velocity =
-            current_velocity + (current_velocity - target_velocity) * SMIN(rho_sum_[index_i], rho0_) / rho0_;
+        Real alpha = SMIN(rho_sum_[index_i], rho0_) / rho0_;
+        Real corrected_velocity = current_velocity * alpha + (1.0 - alpha) * target_velocity;
         vel_[index_i][0] = corrected_velocity;
     }
 };

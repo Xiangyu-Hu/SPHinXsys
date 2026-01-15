@@ -92,6 +92,22 @@ void EmitterInflowInjectionCK<AlignedBoxPartType>::UpdateKernel::update(size_t i
     }
 }
 //=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+WithinDisposerIndication::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      life_status_(encloser.dv_life_status_->DelegatedData(ex_policy)),
+      total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+inline void WithinDisposerIndication::UpdateKernel::update(size_t index_i, Real dt)
+{
+    if (aligned_box_->checkContain(pos_[index_i]) && index_i < *total_real_particles_)
+    {
+            life_status_[index_i] = 1; // mark as to delete but will not delete immediately
+    }
+}
+//=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // EMITTER_BOUNDARY_CK_HPP

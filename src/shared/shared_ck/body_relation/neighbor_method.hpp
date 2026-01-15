@@ -18,13 +18,15 @@ Neighbor<Base>::SmoothingKernel::SmoothingKernel(
 inline Real Neighbor<Base>::SmoothingKernel::W(
     const Real &inv_h_squared, const Vec2d &displacement, const Real &inv_h) const
 {
-    return inv_h_squared * dimension_factor_2D_ * normalized_W((displacement * inv_h).norm());
+    return inv_h_squared * dimension_factor_2D_ *
+           normalized_W(SMIN((displacement * inv_h).norm(), kernel_size_));
 }
 //=================================================================================================//
 inline Real Neighbor<Base>::SmoothingKernel::W(
     const Real &inv_h_cubed, const Vec3d &displacement, const Real &inv_h) const
 {
-    return inv_h_cubed * dimension_factor_3D_ * normalized_W((displacement * inv_h).norm());
+    return inv_h_cubed * dimension_factor_3D_ *
+           normalized_W(SMIN((displacement * inv_h).norm(), kernel_size_));
 }
 //=================================================================================================//
 inline Real Neighbor<Base>::SmoothingKernel::W0(

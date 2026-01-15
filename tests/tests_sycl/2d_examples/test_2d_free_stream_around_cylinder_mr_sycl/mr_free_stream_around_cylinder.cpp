@@ -80,9 +80,9 @@ int main(int ac, char *av[])
     BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     /** Tag for run particle relaxation for the initial body fitted distribution. */
-    sph_system.setRunParticleRelaxation(true);
+    sph_system.setRunParticleRelaxation(false);
     /** Tag for computation start with relaxed body fitted particles distribution. */
-    sph_system.setReloadParticles(false);
+    sph_system.setReloadParticles(true);
     /** handle command line arguments. */
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
@@ -214,7 +214,7 @@ int main(int ac, char *av[])
     // //	Creating body parts.
     // //----------------------------------------------------------------------
     auto &emitter = water_body.addBodyPart<AlignedBoxByParticle>(emitter_box);
-    auto &emitter_buffer = water_body.addBodyPart<AlignedBoxByCell>(emitter_buffer_box);
+    //auto &emitter_buffer = water_body.addBodyPart<AlignedBoxByCell>(emitter_buffer_box);
     auto &disposer = water_body.addBodyPart<AlignedBoxByCell>(disposer_box);
 
     cylinder.defineMaterial<Solid>();
@@ -265,6 +265,12 @@ int main(int ac, char *av[])
     auto &fluid_boundary_indicator =
         main_methods.addInteractionDynamicsWithUpdate<fluid_dynamics::FreeSurfaceIndicationCK>(water_body_inner)
             .addPostContactInteraction(water_body_contact);
+
+    auto &fluid_density_regularization =
+        main_methods.addInteractionDynamicsWithUpdate<
+                        fluid_dynamics::DensityRegularization, Internal, BulkParticles>(water_body_inner)
+            .addPostContactInteraction(water_body_contact);
+
     auto &fluid_acoustic_step_1st_half =
         main_methods.addInteractionDynamicsOneLevel<
                         fluid_dynamics::AcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
@@ -274,10 +280,6 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamicsOneLevel<
                         fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
             .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_contact);
-    auto &fluid_density_regularization =
-        main_methods.addInteractionDynamicsWithUpdate<
-                        fluid_dynamics::DensityRegularization, Internal, BulkParticles>(water_body_inner)
-            .addPostContactInteraction(water_body_contact);
 
     auto &transport_correction =
         main_methods.addInteractionDynamicsWithUpdate<
@@ -293,15 +295,20 @@ int main(int ac, char *av[])
             .addPostContactInteraction<Wall, Viscosity, NoKernelCorrectionCK>(water_body_contact);
 
     auto &emitter_injection = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitter, inlet_particle_buffer);
-    auto &inflow_condition = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK, FreeStreamVelocity>(emitter_buffer);
-    auto &disposer_outflow_indication = main_methods.addStateDynamics<fluid_dynamics::BufferOutflowIndication>(disposer);
-    auto &outflow_particle_deletion = main_methods.addStateDynamics<fluid_dynamics::OutflowParticleDeletion>(water_body);
+//    auto &inflow_condition = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK, FreeStreamVelocity>(emitter_buffer);
+    auto &disposer_indication = main_methods.addStateDynamics<fluid_dynamics::WithinDisposerIndication>(disposer);
+    auto &particle_deletion = main_methods.addStateDynamics<fluid_dynamics::OutflowParticleDeletion>(water_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     auto &write_real_body_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
-    auto &write_fluid_observation =
-        main_methods.addObserveRegression<RegressionTestDynamicTimeWarping, Vecd>("Velocity", fluid_observer_contact);
+    write_real_body_states.addToWrite<Real>(water_body, "Density");
+    write_real_body_states.addToWrite<Real>(water_body, "DensitySummation");
+    write_real_body_states.addToWrite<Real>(water_body, "Mass");
+    write_real_body_states.addToWrite<Real>(water_body, "VolumetricMeasure");
+    write_real_body_states.addToWrite<int>(water_body, "Indicator");
+    write_real_body_states.addToWrite<Vecd>(cylinder, "NormalDirection");
+    auto &write_fluid_observation = main_methods.addObserveRecorder<Vecd>("Velocity", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
@@ -310,7 +317,7 @@ int main(int ac, char *av[])
     size_t advection_steps = 0;
     int screening_interval = 100;
     int observation_interval = screening_interval / 2;
-    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
+    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 200.0);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -345,7 +352,7 @@ int main(int ac, char *av[])
         TickCount time_instance = TickCount::now();
         Real acoustic_dt = time_stepper.incrementPhysicalTime(fluid_acoustic_time_step);
         fluid_acoustic_step_1st_half.exec(acoustic_dt);
-        inflow_condition.exec();
+//        inflow_condition.exec();
         fluid_acoustic_step_2nd_half.exec(acoustic_dt);
         interval_acoustic_step += TickCount::now() - time_instance;
         //----------------------------------------------------------------------
@@ -378,8 +385,8 @@ int main(int ac, char *av[])
             /** Particle creation, deletion, sort and update configuration. */
             time_instance = TickCount::now();
             emitter_injection.exec();
-            disposer_outflow_indication.exec();
-            outflow_particle_deletion.exec();
+            disposer_indication.exec();
+            particle_deletion.exec();
 
             if (advection_steps % 100)
             {
