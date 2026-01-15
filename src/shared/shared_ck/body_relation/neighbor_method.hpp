@@ -182,6 +182,22 @@ Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::Smoothing
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
+    W0(UnsignedInt i, const Vec2d &zero) const
+{
+    Real inv_h_i = src_h_ratio_(i) * src_inv_h_ref_;
+    return BaseKernel::W0(math::pow(inv_h_i, 2), zero);
+}
+//=================================================================================================//
+template <class SourceAdaptationType, class TargetAdaptationType>
+Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
+    W0(UnsignedInt i, const Vec3d &zero) const
+{
+    Real inv_h_i = src_h_ratio_(i) * src_inv_h_ref_;
+    return BaseKernel::W0(math::pow(inv_h_i, 3), zero);
+}
+//=================================================================================================//
+template <class SourceAdaptationType, class TargetAdaptationType>
+Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const
 {
     Real inv_h_i = src_h_ratio_(i) * src_inv_h_ref_;

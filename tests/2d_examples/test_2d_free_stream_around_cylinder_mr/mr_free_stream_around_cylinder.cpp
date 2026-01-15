@@ -75,7 +75,7 @@ int main(int ac, char *av[])
         SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
         SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
         BodyStatesRecordingToVtp write_real_body_states(sph_system);
-        ReloadParticleIO write_real_body_particle_reload_files({&water_block, &cylinder});
+        ReloadParticleIO write_real_body_particle_reload_files(StdVec<SPHBody *>{&water_block, &cylinder});
         /** A  Physics relaxation step. */
         RelaxationStepLevelSetCorrectionInner relaxation_step_inner(cylinder_inner);
         RelaxationStepLevelSetCorrectionComplex relaxation_step_complex(
