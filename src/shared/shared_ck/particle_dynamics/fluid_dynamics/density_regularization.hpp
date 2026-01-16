@@ -18,8 +18,7 @@ DensityRegularization<Base, RelationType<Parameters...>>::
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_mass_(this->particles_->template getVariableByName<Real>("Mass")),
       dv_rho_sum_(this->particles_->template registerStateVariable<Real>("DensitySummation")),
-      rho0_(this->sph_body_->getBaseMaterial().ReferenceDensity()),
-      inv_sigma0_(1.0 / this->sph_adaptation_->LatticeNumberDensity()) {}
+      rho0_(this->sph_body_->getBaseMaterial().ReferenceDensity()) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
 template <class ExecutionPolicy, typename... Args>
@@ -33,16 +32,14 @@ DensityRegularization<Base, RelationType<Parameters...>>::InteractKernel::
       mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
       rho_sum_(encloser.dv_rho_sum_->DelegatedData(ex_policy)),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      rho0_(encloser.rho0_), inv_sigma0_(encloser.inv_sigma0_) {}
+      rho0_(encloser.rho0_){}
 //=================================================================================================//
 template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
 DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>>::
     DensityRegularization(Inner<Parameters...> &inner_relation)
     : DensityRegularization<Base, Inner<Parameters...>>(inner_relation),
       regularization_method_(this->particles_),
-      within_scope_method_(this->particles_)
-{
-}
+      within_scope_method_(this->particles_) {}
 //=================================================================================================//
 template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
 template <class ExecutionPolicy>
@@ -50,17 +47,19 @@ DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, P
     InteractKernel(const ExecutionPolicy &ex_policy,
                    DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>> &encloser)
     : DensityRegularization<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
-      W0_(this->W(ZeroData<Vecd>::value)) {}
+      zero_(Vecd::Zero()) {}
 //=================================================================================================//
 template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
 void DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    Real sigma = W0_;
+    Real sigma = this->W0(index_i, zero_) * this->mass_[index_i];
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
-        sigma += this->W_ij(index_i, this->neighbor_index_[n]);
-
-    this->rho_sum_[index_i] = sigma * this->rho0_ * this->inv_sigma0_;
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        sigma += this->W_ij(index_i, index_j) * this->mass_[index_j];
+    }
+    this->rho_sum_[index_i] = sigma;
 }
 //=================================================================================================//
 template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
@@ -70,9 +69,7 @@ DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, P
                  DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>> &encloser)
     : DensityRegularization<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
       regularization_(ex_policy, encloser.regularization_method_, *this),
-      particle_scope_(ex_policy, encloser.within_scope_method_, *this)
-{
-}
+      particle_scope_(ex_policy, encloser.within_scope_method_, *this) {}
 //=================================================================================================//
 template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
 void DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>>::
@@ -116,8 +113,7 @@ void DensityRegularization<Contact<Parameters...>>::
         UnsignedInt index_j = this->neighbor_index_[n];
         sigma += this->W_ij(index_i, index_j) * contact_inv_rho0_k_ * contact_mass_k_[index_j];
     }
-    this->rho_sum_[index_i] += sigma * this->rho0_ * this->rho0_ *
-                               this->inv_sigma0_ / this->mass_[index_i];
+    this->rho_sum_[index_i] += sigma * this->rho0_;
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

@@ -45,14 +45,13 @@ namespace fluid_dynamics
 template <typename... T>
 class EmitterInflowConditionCK;
 
-template <class AlignedBoxPartType, class ConditionFunction>
-class EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>
+template <class ConditionFunction, class AlignedBoxPartType>
+class EmitterInflowConditionCK<ConditionFunction, AlignedBoxPartType>
     : public BaseLocalDynamics<AlignedBoxPartType>
 {
-    using ConditionKernel = typename ConditionFunction::ComputingKernel;
-
   public:
-    EmitterInflowConditionCK(AlignedBoxPartType &aligned_box_part);
+    template <typename... Args>
+    EmitterInflowConditionCK(AlignedBoxPartType &aligned_box_part, Args &&...args);
 
     class UpdateKernel
     {
@@ -62,15 +61,17 @@ class EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
-        Real *physical_time_;
         AlignedBox *aligned_box_;
-        ConditionKernel condition_;
+        ConditionFunction inflow_velocity_;
+        Vecd *pos_, *vel_;
+        Real *physical_time_;
     };
 
   protected:
-    SingularVariable<Real> *sv_physical_time_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
-    ConditionFunction condition_function_;
+    ConditionFunction inflow_velocity_;
+    DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
+    SingularVariable<Real> *sv_physical_time_;
 };
 
 template <typename AlignedBoxPartType>

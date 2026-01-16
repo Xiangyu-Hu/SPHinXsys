@@ -110,12 +110,12 @@ class DensityRegularization<Base, RelationType<Parameters...>>
 
       protected:
         Real *rho_, *mass_, *rho_sum_, *Vol_;
-        Real rho0_, inv_sigma0_;
+        Real rho0_;
     };
 
   protected:
     DiscreteVariable<Real> *dv_rho_, *dv_mass_, *dv_rho_sum_;
-    Real rho0_, inv_sigma0_;
+    Real rho0_;
 };
 
 template <class FlowType, class ParticleScopeType, typename... Parameters>
@@ -139,7 +139,7 @@ class DensityRegularization<Inner<WithUpdate, FlowType, ParticleScopeType, Param
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        Real W0_;
+        Vecd zero_;
     };
 
     class UpdateKernel

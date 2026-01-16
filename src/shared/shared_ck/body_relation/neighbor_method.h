@@ -64,6 +64,8 @@ class Neighbor<Base>
 
         Real W(const Real &inv_h_squared, const Vec2d &displacement, const Real &inv_h) const;
         Real W(const Real &inv_h_cubed, const Vec3d &displacement, const Real &inv_h) const;
+        Real W0(const Real &inv_h_squared, const Vec2d &) const;
+        Real W0(const Real &inv_h_cubed, const Vec3d &) const;
         Real dW(const Real &inv_h_cubed, const Vec2d &displacement, const Real &inv_h) const;
         Real dW(const Real &inv_h_fourth, const Vec3d &displacement, const Real &inv_h) const;
         Real d2W(const Real &inv_h_fourth, const Vec2d &displacement, const Real &inv_h) const;
@@ -89,6 +91,7 @@ class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
 
     class SmoothingKernel : public BaseKernel
     {
+        Real src_inv_h_, src_inv_h_squared_, src_inv_h_cubed_;
         Real inv_h_, inv_h_squared_, inv_h_cubed_, inv_h_fourth_, inv_h_fifth_;
 
       public:
@@ -97,6 +100,9 @@ class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
         SmoothingKernel(Neighbor<SPHAdaptation, SPHAdaptation> &encloser);
         inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return W(vec_r_ij(i, j)); };
         inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return dW(vec_r_ij(i, j)); };
+        Real W0(UnsignedInt i, const Vec2d &zero) const;
+        Real W0(UnsignedInt i, const Vec3d &zero) const;
+
         Real W(const Vec2d &displacement) const;
         Real W(const Vec3d &displacement) const;
         Real dW(const Vec2d &displacement) const;
@@ -127,15 +133,6 @@ class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
         inline bool operator()(UnsignedInt i, UnsignedInt j) const { return true; };
     };
 
-    class SmoothingRatio
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        SmoothingRatio(const ExecutionPolicy &ex_policy, EncloserType &encloser){};
-
-        inline Real operator()(UnsignedInt i) const { return 1.0; };
-    };
-
     class SearchBox
     {
       public:
@@ -148,7 +145,7 @@ class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
     };
 
   protected:
-    Real inv_h_;
+    Real src_inv_h_, inv_h_;
     int search_depth_;
     BoundingBoxi search_box_; /**< Search depth for neighbor search. */
 };
