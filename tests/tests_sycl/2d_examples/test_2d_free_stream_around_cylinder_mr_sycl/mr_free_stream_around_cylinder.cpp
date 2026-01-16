@@ -181,7 +181,7 @@ int main(int ac, char *av[])
         //	Particle relaxation time stepping start here.
         //----------------------------------------------------------------------
         int ite_p = 0;
-        while (ite_p < 1000)
+        while (ite_p < 2000)
         {
             update_configuration.exec();
             relaxation_residual.exec();
@@ -214,7 +214,6 @@ int main(int ac, char *av[])
     // //	Creating body parts.
     // //----------------------------------------------------------------------
     auto &emitter = water_body.addBodyPart<AlignedBoxByParticle>(emitter_box);
-    //auto &emitter_buffer = water_body.addBodyPart<AlignedBoxByCell>(emitter_buffer_box);
     auto &disposer = water_body.addBodyPart<AlignedBoxByCell>(disposer_box);
 
     cylinder.defineMaterial<Solid>();
@@ -295,7 +294,7 @@ int main(int ac, char *av[])
             .addPostContactInteraction<Wall, Viscosity, NoKernelCorrectionCK>(water_body_contact);
 
     auto &emitter_injection = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitter, inlet_particle_buffer);
-//    auto &inflow_condition = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK, FreeStreamVelocity>(emitter_buffer);
+    auto &inflow_condition = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK, FreeStreamVelocity>(emitter);
     auto &disposer_indication = main_methods.addStateDynamics<fluid_dynamics::WithinDisposerIndication>(disposer);
     auto &particle_deletion = main_methods.addStateDynamics<fluid_dynamics::OutflowParticleDeletion>(water_body);
     //----------------------------------------------------------------------
@@ -352,7 +351,7 @@ int main(int ac, char *av[])
         TickCount time_instance = TickCount::now();
         Real acoustic_dt = time_stepper.incrementPhysicalTime(fluid_acoustic_time_step);
         fluid_acoustic_step_1st_half.exec(acoustic_dt);
-//        inflow_condition.exec();
+        inflow_condition.exec();
         fluid_acoustic_step_2nd_half.exec(acoustic_dt);
         interval_acoustic_step += TickCount::now() - time_instance;
         //----------------------------------------------------------------------
