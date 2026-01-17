@@ -43,8 +43,8 @@ Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 AlignedBox emitter_box(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize);
 
 Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
-Vec2d disposer_translation = Vec2d(DL + 0.5 * BW, -0.25 * DH) + disposer_halfsize;
-AlignedBox disposer_box(xAxis, Transform(Rotation2d(Pi), Vec2d(disposer_translation)), disposer_halfsize);
+Vec2d disposer_translation = Vec2d(DL, -0.25 * DH) + disposer_halfsize;
+AlignedBox disposer_box(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize);
 //----------------------------------------------------------------------
 //	Define adaptation
 //----------------------------------------------------------------------
@@ -281,6 +281,8 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamicsWithUpdate<
                         fluid_dynamics::TransportVelocityCorrectionCK, NoKernelCorrectionCK, NoLimiter, BulkParticles>(water_body_inner)
             .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(water_body_contact);
+    auto &emitter_no_transsport_correction =
+        main_methods.addStateDynamics<ConstantConstraintCK, Vecd>(emitter, "Displacement", Vecd::Zero());
 
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_body, U_f);
     auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_body);
@@ -299,9 +301,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &write_real_body_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     write_real_body_states.addToWrite<Real>(water_body, "Density");
-    write_real_body_states.addToWrite<Real>(water_body, "DensitySummation");
-    write_real_body_states.addToWrite<Real>(water_body, "Mass");
-    write_real_body_states.addToWrite<Real>(water_body, "VolumetricMeasure");
+    write_real_body_states.addToWrite<Real>(water_body, "SmoothingLengthRatio");
     write_real_body_states.addToWrite<int>(water_body, "Indicator");
     write_real_body_states.addToWrite<Vecd>(cylinder, "NormalDirection");
     auto &write_fluid_observation = main_methods.addObserveRecorder<Vecd>("Velocity", fluid_observer_contact);
@@ -326,6 +326,7 @@ int main(int ac, char *av[])
     fluid_density_regularization.exec();
     water_advection_step_setup.exec();
     transport_correction.exec();
+//    emitter_no_transsport_correction.exec();
     fluid_viscous_force.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
@@ -386,7 +387,7 @@ int main(int ac, char *av[])
 
             if (advection_steps % 100)
             {
-                particle_sort.exec();
+               particle_sort.exec();
             }
 
             update_water_body_configuration.exec();
@@ -399,6 +400,7 @@ int main(int ac, char *av[])
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             transport_correction.exec();
+            emitter_no_transsport_correction.exec();
             fluid_viscous_force.exec();
             interval_advection_step += TickCount::now() - time_instance;
         }
