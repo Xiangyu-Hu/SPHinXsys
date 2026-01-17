@@ -48,7 +48,7 @@ AlignedBox disposer_box(xAxis, Transform(Vec2d(disposer_translation)), disposer_
 //----------------------------------------------------------------------
 //	Define adaptation
 //----------------------------------------------------------------------
-AdaptiveWithinShape water_body_adaptation(particle_spacing_ref, 1.3, 1.0, 2);
+AdaptiveWithinShape water_body_adaptation(particle_spacing_ref, 1.3, 1.0, 1);
 
 GeometricShapeBox refinement_region(
     BoundingBoxd(Vecd(-DL_sponge - BW, 0.5 * DH - 0.1 * DL), Vecd(DL + BW, 0.5 * DH + 0.1 * DL)),
@@ -313,7 +313,7 @@ int main(int ac, char *av[])
     size_t advection_steps = 0;
     int screening_interval = 100;
     int observation_interval = screening_interval / 2;
-    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 200.0);
+    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 400.0);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
