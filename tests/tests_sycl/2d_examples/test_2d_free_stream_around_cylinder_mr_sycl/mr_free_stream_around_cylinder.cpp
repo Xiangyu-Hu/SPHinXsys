@@ -10,14 +10,15 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Define basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real total_physical_time = 200.0;             /**< TOTAL SIMULATION TIME*/
-Real DL = 30.0;                               /**< Domain length. */
-Real DH = 16.0;                               /**< Domain height. */
-Real particle_spacing_ref = 0.4;              /**< Initial reference particle spacing. */
-Real DL_sponge = particle_spacing_ref * 20.0; /**< Sponge region to impose emitter. */
-Real BW = 4.0 * particle_spacing_ref;         /**< Sponge region to impose injection. */
-Vec2d insert_circle_center(10.0, 0.5 * DH);   /**< Location of the cylinder center. */
-Real insert_circle_radius = 1.0;              /**< Radius of the cylinder. */
+Real total_physical_time = 200.0;                /**< TOTAL SIMULATION TIME*/
+Real start_up_time = total_physical_time / 10.0; /**< explicity startup time*/
+Real DL = 30.0;                                  /**< Domain length. */
+Real DH = 16.0;                                  /**< Domain height. */
+Real particle_spacing_ref = 0.4;                 /**< Initial reference particle spacing. */
+Real DL_sponge = particle_spacing_ref * 20.0;    /**< Sponge region to impose emitter. */
+Real BW = 4.0 * particle_spacing_ref;            /**< Sponge region to impose injection. */
+Vec2d insert_circle_center(10.0, 0.5 * DH);      /**< Location of the cylinder center. */
+Real insert_circle_radius = 1.0;                 /**< Radius of the cylinder. */
 // Observation locations
 Vec2d point_1(3.0, 5.0);
 Vec2d point_2(4.0, 5.0);
@@ -41,17 +42,13 @@ Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
 Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 AlignedBox emitter_box(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize);
 
-Vec2d emitter_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
-Vec2d emitter_buffer_translation = Vec2d(-DL_sponge, 0.0) + emitter_buffer_halfsize;
-AlignedBox emitter_buffer_box(xAxis, Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize);
-
 Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
-Vec2d disposer_translation = Vec2d(DL, DH + 0.25 * DH) - disposer_halfsize;
+Vec2d disposer_translation = Vec2d(DL + 0.5 * BW, -0.25 * DH) + disposer_halfsize;
 AlignedBox disposer_box(xAxis, Transform(Rotation2d(Pi), Vec2d(disposer_translation)), disposer_halfsize);
 //----------------------------------------------------------------------
 //	Define adaptation
 //----------------------------------------------------------------------
-AdaptiveWithinShape water_body_adaptation(particle_spacing_ref, 1.3, 1.0, 1);
+AdaptiveWithinShape water_body_adaptation(particle_spacing_ref, 1.3, 1.0, 2);
 
 GeometricShapeBox refinement_region(
     BoundingBoxd(Vecd(-DL_sponge - BW, 0.5 * DH - 0.1 * DL), Vecd(DL + BW, 0.5 * DH + 0.1 * DL)),
@@ -63,7 +60,7 @@ struct FreeStreamVelocity
 {
     Real u_ref_, t_ref_;
 
-    FreeStreamVelocity() : u_ref_(U_f), t_ref_(2.0) {};
+    FreeStreamVelocity() : u_ref_(U_f), t_ref_(start_up_time) {};
     Real getAxisVelocity(const Vecd &input_position, const Real &input_axis_velocity, Real time)
     {
         return time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * time / t_ref_)) : u_ref_;
@@ -257,7 +254,7 @@ int main(int ac, char *av[])
     auto &update_observer_relation = main_methods.addRelationDynamics(fluid_observer_contact);
     auto &particle_sort = main_methods.addSortDynamics(water_body);
 
-    auto &time_dependent_gravity = main_methods.addStateDynamics<GravityForceCK<StartupAcceleration>>(water_body, Vec2d(U_f, 0.0), 2.0);
+    auto &time_dependent_gravity = main_methods.addStateDynamics<GravityForceCK<StartupAcceleration>>(water_body, Vec2d(U_f, 0.0), start_up_time);
     auto &water_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(water_body);
     auto &water_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(water_body);
 
@@ -267,7 +264,7 @@ int main(int ac, char *av[])
 
     auto &fluid_density_regularization =
         main_methods.addInteractionDynamicsWithUpdate<
-                        fluid_dynamics::DensityRegularization, Internal, BulkParticles>(water_body_inner)
+                        fluid_dynamics::DensityRegularization, FreeStream, AllParticles>(water_body_inner)
             .addPostContactInteraction(water_body_contact);
 
     auto &fluid_acoustic_step_1st_half =

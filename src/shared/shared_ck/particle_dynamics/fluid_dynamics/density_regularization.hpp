@@ -32,7 +32,7 @@ DensityRegularization<Base, RelationType<Parameters...>>::InteractKernel::
       mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
       rho_sum_(encloser.dv_rho_sum_->DelegatedData(ex_policy)),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      rho0_(encloser.rho0_){}
+      rho0_(encloser.rho0_) {}
 //=================================================================================================//
 template <typename RegularizationType, typename ParticleScopeType, typename... Parameters>
 DensityRegularization<Inner<WithUpdate, RegularizationType, ParticleScopeType, Parameters...>>::
