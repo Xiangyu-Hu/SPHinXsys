@@ -104,7 +104,7 @@ inline void WithinDisposerIndication::UpdateKernel::update(size_t index_i, Real 
 {
     if (aligned_box_->checkContain(pos_[index_i]) && index_i < *total_real_particles_)
     {
-            life_status_[index_i] = 1; // mark as to delete but will not delete immediately
+        life_status_[index_i] = 1; // mark as to delete but will not delete immediately
     }
 }
 //=================================================================================================//
