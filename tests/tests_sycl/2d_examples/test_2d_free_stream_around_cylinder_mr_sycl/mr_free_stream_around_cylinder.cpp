@@ -280,9 +280,8 @@ int main(int ac, char *av[])
     auto &transport_correction =
         main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(water_body_inner)
             .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(water_body_contact)
-            .addPostStateDynamics<fluid_dynamics::TransportVelocityCorrectionCK, NoLimiter, BulkParticles>(water_body);
-    auto &emitter_no_transsport_correction =
-        main_methods.addStateDynamics<ConstantConstraintCK, Vecd>(emitter, "Displacement", Vecd::Zero());
+            .addPostStateDynamics<fluid_dynamics::TransportVelocityCorrectionCK, NoLimiter, BulkParticles>(water_body)
+            .addPostStateDynamics<ConstantConstraintCK, Vecd>(emitter, "Displacement", Vecd::Zero());
 
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_body, U_f);
     auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_body);
@@ -326,7 +325,6 @@ int main(int ac, char *av[])
     fluid_density_regularization.exec();
     water_advection_step_setup.exec();
     transport_correction.exec();
-    //    emitter_no_transsport_correction.exec();
     fluid_viscous_force.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
@@ -400,7 +398,6 @@ int main(int ac, char *av[])
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             transport_correction.exec();
-            emitter_no_transsport_correction.exec();
             fluid_viscous_force.exec();
             interval_advection_step += TickCount::now() - time_instance;
         }
