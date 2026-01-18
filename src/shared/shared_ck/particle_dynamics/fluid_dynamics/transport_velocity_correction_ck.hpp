@@ -8,27 +8,26 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-template <class KernelCorrectionType, class LimiterType, class ParticleScopeType, typename... Parameters>
-TransportVelocityCorrectionCK<
-    Inner<WithUpdate, KernelCorrectionType, LimiterType, ParticleScopeType, Parameters...>>::
-    TransportVelocityCorrectionCK(Inner<Parameters...> &inner_relation, Real coefficient)
-    : BaseInteraction(inner_relation),
+template <class DynamicsIdentifier, class LimiterType, typename... ParticleScopes>
+TransportVelocityCorrectionCK<DynamicsIdentifier, LimiterType, ParticleScopes...>::
+    TransportVelocityCorrectionCK(DynamicsIdentifier &identifier, Real coefficient)
+    : BaseLocalDynamics<DynamicsIdentifier>(identifier),
       h_ref_(this->getSPHAdaptation().ReferenceSmoothingLength()),
       correction_scaling_(coefficient * h_ref_ * h_ref_),
       limiter_(h_ref_ * h_ref_), within_scope_method_(this->particles_),
       dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),
-      adaptaion_(DynamicCast<Adaptation>(this, this->getSPHAdaptation()))
+      dv_kernel_gradient_integral_(this->particles_->template getVariableByName<Vecd>("KernelGradientIntegral")),
+      adaptaion_(DynamicCast<BaseAdaptation>(this, this->getSPHAdaptation()))
 {
-    static_assert(std::is_base_of<WithinScope, ParticleScopeType>::value,
-                  "WithinScope is not the base of ParticleScope!");
     static_assert(std::is_base_of<Limiter, LimiterType>::value,
                   "Limiter is not the base of LimiterType!");
+    static_assert(std::is_base_of<WithinScope, ParticleScopeTypeCK<ParticleScopes...>>::value,
+                  "WithinScope is not the base of ParticleScope!");
 }
 //=================================================================================================//
-template <class KernelCorrectionType, class LimiterType, class ParticleScopeType, typename... Parameters>
+template <class DynamicsIdentifier, class LimiterType, typename... ParticleScopes>
 template <class ExecutionPolicy, class EncloserType>
-TransportVelocityCorrectionCK<
-    Inner<WithUpdate, KernelCorrectionType, LimiterType, ParticleScopeType, Parameters...>>::
+TransportVelocityCorrectionCK<DynamicsIdentifier, LimiterType, ParticleScopes...>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : correction_scaling_(encloser.correction_scaling_),
       h_ratio_(ex_policy, encloser.adaptaion_), limiter_(encloser.limiter_),
@@ -36,9 +35,8 @@ TransportVelocityCorrectionCK<
       kernel_gradient_integral_(encloser.dv_kernel_gradient_integral_->DelegatedData(ex_policy)),
       within_scope_(ex_policy, encloser.within_scope_method_, *this) {}
 //=================================================================================================//
-template <class KernelCorrectionType, class LimiterType, class ParticleScopeType, typename... Parameters>
-void TransportVelocityCorrectionCK<
-    Inner<WithUpdate, KernelCorrectionType, LimiterType, ParticleScopeType, Parameters...>>::
+template <class DynamicsIdentifier, class LimiterType, typename... ParticleScopes>
+void TransportVelocityCorrectionCK<DynamicsIdentifier, LimiterType, ParticleScopes...>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
     if (this->within_scope_(index_i))

@@ -37,8 +37,33 @@ namespace SPH
  * velocity correction is applied. It is a template class specialized for
  * different particle types, defining rules for inclusion in the computation.
  */
-template <typename ScopeType>
+template <typename...>
 class ParticleScopeTypeCK;
+//-------------------------------------------------------------------------------------------------
+// 0) Null Specialization
+//-------------------------------------------------------------------------------------------------
+template <>
+class ParticleScopeTypeCK<> : public WithinScope
+{
+  public:
+    // Constructor
+    explicit ParticleScopeTypeCK(BaseParticles *particles) : WithinScope() {}
+
+    // Nested functor-like class:
+    class ComputingKernel
+    {
+      public:
+        // The signature typically follows the style of other SPH "ComputingKernel" constructors
+        template <class ExecutionPolicy, class ComputingKernelType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        ParticleScopeTypeCK<> &encloser, ComputingKernelType &computing_kernel){};
+
+        constexpr bool operator()(size_t /*index_i*/) const
+        {
+            return true; // Always in scope
+        };
+    };
+};
 //-------------------------------------------------------------------------------------------------
 // 1) Specialization for AllParticles
 //-------------------------------------------------------------------------------------------------

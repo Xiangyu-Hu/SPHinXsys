@@ -52,7 +52,7 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
 {
     this->post_processes_.push_back(
         supplementary_dynamics_keeper_.template createPtr<
-            StateDynamics<ExecutionPolicy, UpdateType<ControlParameters..., DynamicsIdentifier>>>(
+            StateDynamics<ExecutionPolicy, UpdateType<DynamicsIdentifier, ControlParameters...>>>(
             dynamics_identifier, std::forward<Args>(args)...));
     return *this;
 }
