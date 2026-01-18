@@ -343,10 +343,10 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
             std::make_unique<PressureBC<MainExecutionPolicy, LinearCorrectionCK>>(
                 water_block, boundary, params.t_ref));
     StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> particle_deletion(water_block);
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        fluid_dynamics::DensityRegularizationComplexInternalPressureBoundary>
-        fluid_density_regularization(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+        fluid_density_summation(water_body_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, Internal, ExcludeBufferParticles>>
+        fluid_density_regularization(water_block);
 
     // --- Section 12: Setup Recording for Body States and Observers ---
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
@@ -417,6 +417,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
             {
                 // ─── SPH PHYSICS STEPS (unchanged)
                 // ─────────────────────────────────────
+                fluid_density_summation.exec();
                 fluid_density_regularization.exec();
                 water_advection_step_setup.exec();
                 fluid_linear_correction_matrix.exec();
