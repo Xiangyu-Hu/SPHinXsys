@@ -8,9 +8,9 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-template <class ConditionFunction, class AlignedBoxPartType>
+template <class AlignedBoxPartType, class ConditionFunction>
 template <typename... Args>
-EmitterInflowConditionCK<ConditionFunction, AlignedBoxPartType>::EmitterInflowConditionCK(
+EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>::EmitterInflowConditionCK(
     AlignedBoxPartType &aligned_box_part, Args &&...args)
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
@@ -19,9 +19,9 @@ EmitterInflowConditionCK<ConditionFunction, AlignedBoxPartType>::EmitterInflowCo
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       sv_physical_time_(this->sph_system_->template getSystemVariableByName<Real>("PhysicalTime")) {}
 //=================================================================================================//
-template <class ConditionFunction, class AlignedBoxPartType>
+template <class AlignedBoxPartType, class ConditionFunction>
 template <class ExecutionPolicy, class EncloserType>
-EmitterInflowConditionCK<ConditionFunction, AlignedBoxPartType>::UpdateKernel::
+EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
       inflow_velocity_(encloser.inflow_velocity_),
@@ -29,8 +29,8 @@ EmitterInflowConditionCK<ConditionFunction, AlignedBoxPartType>::UpdateKernel::
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
       physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <class ConditionFunction, class AlignedBoxPartType>
-void EmitterInflowConditionCK<ConditionFunction, AlignedBoxPartType>::
+template <class AlignedBoxPartType, class ConditionFunction>
+void EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
     int aligned_axis = aligned_box_->AlignmentAxis();
@@ -89,6 +89,22 @@ void EmitterInflowInjectionCK<AlignedBoxPartType>::UpdateKernel::update(size_t i
         pos_[index_i] = aligned_box_->getUpperPeriodic(original_position);
         rho_[index_i] = rho0_;
         p_[index_i] = 0.0;
+    }
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+WithinDisposerIndication::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      life_status_(encloser.dv_life_status_->DelegatedData(ex_policy)),
+      total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+inline void WithinDisposerIndication::UpdateKernel::update(size_t index_i, Real dt)
+{
+    if (aligned_box_->checkContain(pos_[index_i]) && index_i < *total_real_particles_)
+    {
+        life_status_[index_i] = 1; // mark as to delete but will not delete immediately
     }
 }
 //=================================================================================================//

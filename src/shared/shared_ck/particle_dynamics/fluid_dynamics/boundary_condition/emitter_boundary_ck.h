@@ -42,12 +42,8 @@ namespace SPH
 namespace fluid_dynamics
 {
 
-template <typename... T>
-class EmitterInflowConditionCK;
-
-template <class ConditionFunction, class AlignedBoxPartType>
-class EmitterInflowConditionCK<ConditionFunction, AlignedBoxPartType>
-    : public BaseLocalDynamics<AlignedBoxPartType>
+template <class AlignedBoxPartType, class ConditionFunction>
+class EmitterInflowConditionCK : public BaseLocalDynamics<AlignedBoxPartType>
 {
   public:
     template <typename... Args>
@@ -115,6 +111,33 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
     Real rho0_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_rho_, *dv_p_;
+};
+
+class WithinDisposerIndication : public BaseLocalDynamics<AlignedBoxByCell>
+{
+  public:
+    WithinDisposerIndication(AlignedBoxByCell &aligned_box_part);
+    virtual ~WithinDisposerIndication() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        AlignedBox *aligned_box_;
+        Vecd *pos_;
+        int *life_status_;
+        UnsignedInt *total_real_particles_;
+    };
+
+  protected:
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<int> *dv_life_status_; // 0: alive, 1: to delete
 };
 } // namespace fluid_dynamics
 } // namespace SPH
