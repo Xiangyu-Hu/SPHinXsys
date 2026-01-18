@@ -92,9 +92,9 @@ int main(int ac, char *av[])
     ParticleDynamicsGroup update_configuration = update_cell_linked_list + update_relation;
 
     ParticleDynamicsGroup relaxation_residual;
-    relaxation_residual.add(&main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(input_body_inner)
+    relaxation_residual.add(&main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(input_body_inner)
                                  .addPostStateDynamics<LevelsetKernelGradientIntegral>(input_body, *level_set_shape));
-    relaxation_residual.add(&main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(filler_inner)
+    relaxation_residual.add(&main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(filler_inner)
                                  .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(filler_contact));
 
     ReduceDynamicsGroup relaxation_scaling = main_methods.addReduceDynamics<ReduceMin, RelaxationScalingCK>(real_bodies);

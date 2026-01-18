@@ -87,7 +87,7 @@ int main(int ac, char *av[])
     auto &update_inner_relation = main_methods.addRelationDynamics(airfoil_inner);
 
     auto &relaxation_residual =
-        main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(airfoil_inner)
+        main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(airfoil_inner)
             .addPostStateDynamics<LevelsetKernelGradientIntegral>(airfoil, *level_set_shape);
 
     auto &update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(airfoil);
