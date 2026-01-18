@@ -159,13 +159,13 @@ int main(int ac, char *av[])
     UpdateRelation<MainExecutionPolicy, Contact<>> observer_contact_relation(temperature_observer_contact);
 
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_Neumann);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<ConstantValue<Real>, SPHBody>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
         diffusion_initial_condition(diffusion_body, diffusion_species_name, initial_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<ConstantValue<Real>, BodyRegionByParticle>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
         left_initial_condition(wall_Dirichlet_left_region, diffusion_species_name, left_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<ConstantValue<Real>, BodyRegionByParticle>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
         right_initial_condition(wall_Dirichlet_right_region, diffusion_species_name, right_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<ConstantValue<Real>, SPHBody>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
         wall_Neumann_initial_condition(wall_Neumann, diffusion_species_name + "Flux", heat_flux);
 
     IsotropicDiffusion isotropic_diffusion(diffusion_species_name, diffusion_coeff);

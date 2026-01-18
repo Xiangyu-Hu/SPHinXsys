@@ -263,7 +263,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     auto &addStateDynamics(DynamicsIdentifier &dynamics_identifier, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
-            StateDynamics<ExecutionPolicy, UpdateType<ControlParameters..., DynamicsIdentifier>>>(
+            StateDynamics<ExecutionPolicy, UpdateType<DynamicsIdentifier, ControlParameters...>>>(
             dynamics_identifier, std::forward<Args>(args)...);
     };
 
@@ -372,7 +372,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     {
         return *other_io_keeper_.createPtr<
             RegressionType<ObservedQuantityRecording<ExecutionPolicy, ControlParameters..., RelationParameters...>>>(
-                  variable_name, contact_relation);
+            variable_name, contact_relation);
     };
 
     template <template <typename...> class RegressionType, template <typename...> class LocalReduceMethodType,
