@@ -42,12 +42,8 @@ namespace SPH
 namespace fluid_dynamics
 {
 
-template <typename... T>
-class EmitterInflowConditionCK;
-
-template <class ConditionFunction, class AlignedBoxPartType>
-class EmitterInflowConditionCK<ConditionFunction, AlignedBoxPartType>
-    : public BaseLocalDynamics<AlignedBoxPartType>
+template <class AlignedBoxPartType, class ConditionFunction>
+class EmitterInflowConditionCK : public BaseLocalDynamics<AlignedBoxPartType>
 {
   public:
     template <typename... Args>

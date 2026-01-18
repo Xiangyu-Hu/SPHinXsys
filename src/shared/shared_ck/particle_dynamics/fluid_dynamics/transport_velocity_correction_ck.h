@@ -41,7 +41,7 @@ class TransportVelocityCorrectionCK : public BaseLocalDynamics<DynamicsIdentifie
     LimiterType limiter_;     ///< e.g. a limiter on the final correction step
     ParticleScopeTypeCK<ParticleScopes...> within_scope_method_;
     DiscreteVariable<Vecd> *dv_dpos_, *dv_kernel_gradient_integral_;
-    BaseAdaptation &adaptaion_;
+    Adaptation &adaptaion_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

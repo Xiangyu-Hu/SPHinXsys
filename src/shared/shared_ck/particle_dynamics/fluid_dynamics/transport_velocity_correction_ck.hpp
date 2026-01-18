@@ -17,7 +17,7 @@ TransportVelocityCorrectionCK<DynamicsIdentifier, LimiterType, ParticleScopes...
       limiter_(h_ref_ * h_ref_), within_scope_method_(this->particles_),
       dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),
       dv_kernel_gradient_integral_(this->particles_->template getVariableByName<Vecd>("KernelGradientIntegral")),
-      adaptaion_(DynamicCast<BaseAdaptation>(this, this->getSPHAdaptation()))
+      adaptaion_(DynamicCast<Adaptation>(this, this->getSPHAdaptation()))
 {
     static_assert(std::is_base_of<Limiter, LimiterType>::value,
                   "Limiter is not the base of LimiterType!");

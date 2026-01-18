@@ -263,9 +263,9 @@ int main(int ac, char *av[])
             .addPostContactInteraction(water_body_contact);
 
     auto &fluid_density_regularization =
-        main_methods.addInteractionDynamicsWithUpdate<
-                        fluid_dynamics::DensityRegularization, FreeStream, AllParticles>(water_body_inner)
-            .addPostContactInteraction(water_body_contact);
+        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(water_body_inner)
+            .addPostContactInteraction(water_body_contact)
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeStream>(water_body);
 
     auto &fluid_acoustic_step_1st_half =
         main_methods.addInteractionDynamicsOneLevel<
@@ -278,9 +278,9 @@ int main(int ac, char *av[])
             .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_contact);
 
     auto &transport_correction =
-        main_methods.addInteractionDynamicsWithUpdate<
-                        fluid_dynamics::TransportVelocityCorrectionCK, NoKernelCorrectionCK, NoLimiter, BulkParticles>(water_body_inner)
-            .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(water_body_contact);
+        main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(water_body_inner)
+            .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(water_body_contact)
+            .addPostStateDynamics<fluid_dynamics::TransportVelocityCorrectionCK, NoLimiter, BulkParticles>(water_body);
     auto &emitter_no_transsport_correction =
         main_methods.addStateDynamics<ConstantConstraintCK, Vecd>(emitter, "Displacement", Vecd::Zero());
 
@@ -313,7 +313,7 @@ int main(int ac, char *av[])
     size_t advection_steps = 0;
     int screening_interval = 100;
     int observation_interval = screening_interval / 2;
-    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 400.0);
+    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 200.0);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -326,7 +326,7 @@ int main(int ac, char *av[])
     fluid_density_regularization.exec();
     water_advection_step_setup.exec();
     transport_correction.exec();
-//    emitter_no_transsport_correction.exec();
+    //    emitter_no_transsport_correction.exec();
     fluid_viscous_force.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
@@ -387,7 +387,7 @@ int main(int ac, char *av[])
 
             if (advection_steps % 100)
             {
-               particle_sort.exec();
+                particle_sort.exec();
             }
 
             update_water_body_configuration.exec();
