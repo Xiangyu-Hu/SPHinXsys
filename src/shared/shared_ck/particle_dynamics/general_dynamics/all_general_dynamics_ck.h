@@ -41,3 +41,4 @@
 #include "hessian_correction_ck.hpp"
 #include "interpolation_dynamics.hpp"
 #include "kernel_correction_ck.hpp"
+#include "kernel_gradient_integral.hpp"

@@ -11,8 +11,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //  Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.004;                 /**< Channel length. */
-Real DH = 0.001;                 /**< Channel height. */
+Real DL = 0.004;                    /**< Channel length. */
+Real DH = 0.001;                    /**< Channel height. */
 Real global_resolution = DH / 20.0; /**< Reference particle spacing. */
 Real BW = global_resolution * 4;    /**< Extending width for BCs. */
 StdVec<Vecd> observer_location;
@@ -303,8 +303,8 @@ int main(int ac, char *av[])
         fluid_density_regularization(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
         fluid_boundary_indicator(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionComplexBulkParticlesCK>
-        transport_correction_ck(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex> kernel_gradient_integral(water_body_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear, BulkParticles>> transport_correction(water_body);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
@@ -369,7 +369,8 @@ int main(int ac, char *av[])
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             fluid_linear_correction_matrix.exec();
-            transport_correction_ck.exec();
+            kernel_gradient_integral.exec();
+            transport_correction.exec();
             fluid_viscous_force.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             interval_computing_time_step += TickCount::now() - time_instance;

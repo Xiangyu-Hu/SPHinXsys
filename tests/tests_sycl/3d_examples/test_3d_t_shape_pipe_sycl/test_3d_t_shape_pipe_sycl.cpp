@@ -318,11 +318,12 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
         fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
 
-    InteractionDynamicsCK<MainExecutionPolicy,
-                          fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionComplexBulkParticlesCK>
-        transport_correction_ck(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex>
+        kernel_gradient_integral(water_body_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear, BulkParticles>>
+        transport_correction(water_block);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionViscousTimeStepCK>
         fluid_advection_time_step(water_block, params.U_max);
@@ -370,7 +371,8 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
         {
             /** Integrate time (loop) until the next output time. */
             water_advection_step_setup.exec();
-            transport_correction_ck.exec();
+            kernel_gradient_integral.exec();
+            transport_correction.exec();
             water_advection_step_close.exec();
             if (relaxation_fluid_itr % 10 == 0)
             {
@@ -421,7 +423,8 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
                 for (auto &bc : bidirectional_pressure_conditions)
                     bc->reset_buffer_correction_matrix.exec();
                 fluid_viscous_force.exec();
-                transport_correction_ck.exec();
+                kernel_gradient_integral.exec();
+                transport_correction.exec();
 
                 Real Dt = fluid_advection_time_step.exec();
                 if (Dt < Dt_ref)
