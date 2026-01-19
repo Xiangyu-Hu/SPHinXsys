@@ -303,7 +303,8 @@ int main(int ac, char *av[])
     write_real_body_states.addToWrite<Real>(water_body, "SmoothingLengthRatio");
     write_real_body_states.addToWrite<int>(water_body, "Indicator");
     write_real_body_states.addToWrite<Vecd>(cylinder, "NormalDirection");
-    auto &write_fluid_observation = main_methods.addObserveRecorder<Vecd>("Velocity", fluid_observer_contact);
+    auto &fluid_observer_pressure = main_methods.addObserveRegression<
+        RegressionTestDynamicTimeWarping, Vecd>("Velocity", fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
@@ -331,7 +332,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     write_real_body_states.writeToFile();
     update_observer_relation.exec();
-    write_fluid_observation.writeToFile();
+    fluid_observer_pressure.writeToFile();
     /** statistics for computing time. */
     TimeInterval interval_advection_step;
     TimeInterval interval_acoustic_step;
@@ -369,7 +370,7 @@ int main(int ac, char *av[])
             if (advection_steps % observation_interval == 0)
             {
                 update_observer_relation.exec();
-                write_fluid_observation.writeToFile(advection_steps);
+                fluid_observer_pressure.writeToFile(advection_steps);
             }
 
             if (state_recording())
@@ -412,5 +413,15 @@ int main(int ac, char *av[])
               << interval_acoustic_step.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
+
+    if (sph_system.GenerateRegressionData())
+    {
+        fluid_observer_pressure.generateDataBase(1e-3);
+    }
+    else
+    {
+        fluid_observer_pressure.testResult();
+    }
+
     return 0;
 }
