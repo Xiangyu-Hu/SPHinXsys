@@ -8,7 +8,7 @@ using namespace SPH;   // Namespace cite here
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real L = 2.0;
+Real L = 20.0;
 Real H = 0.4;
 Real global_resolution = H / 40.0;
 BoundingBoxd system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
