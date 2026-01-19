@@ -30,6 +30,7 @@
 #define KERNEL_GRADIENT_INTEGRAL_H
 
 #include "base_general_dynamics.h"
+#include "kernel_correction_ck.hpp"
 
 namespace SPH
 {
@@ -103,5 +104,12 @@ class KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters.
   protected:
     KernelCorrectionType kernel_correction_;
 };
+
+using KernelGradientIntegralComplex =
+    KernelGradientIntegral<Inner<NoKernelCorrectionCK>, Contact<Boundary, NoKernelCorrectionCK>>;
+
+using KernelGradientIntegralCorrectedComplex =
+    KernelGradientIntegral<Inner<LinearCorrectionCK>, Contact<Boundary, LinearCorrectionCK>>;
+
 } // namespace SPH
 #endif // KERNEL_GRADIENT_RESIDUAL_H

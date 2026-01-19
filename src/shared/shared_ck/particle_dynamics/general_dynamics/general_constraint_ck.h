@@ -34,7 +34,7 @@
 
 namespace SPH
 {
-template <typename DataType, class DynamicsIdentifier>
+template <class DynamicsIdentifier, typename DataType>
 class ConstantConstraintCK : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:

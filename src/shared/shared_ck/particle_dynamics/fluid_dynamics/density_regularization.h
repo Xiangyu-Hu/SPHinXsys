@@ -40,7 +40,81 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
+template <typename...>
+class DensitySummationCK;
 
+template <template <typename...> class RelationType, typename... Parameters>
+class DensitySummationCK<Base, RelationType<Parameters...>>
+    : public Interaction<RelationType<Parameters...>>
+{
+  public:
+    template <class DynamicsIdentifier>
+    explicit DensitySummationCK(DynamicsIdentifier &identifier);
+    virtual ~DensitySummationCK() {};
+
+    class InteractKernel : public Interaction<RelationType<Parameters...>>::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class Encloser, typename... Args>
+        InteractKernel(const ExecutionPolicy &ex_policy, Encloser &encloser, Args &&...args);
+        Real InitialDensity() { return rho0_; };
+
+      protected:
+        Real *rho_, *mass_, *rho_sum_, *Vol_;
+        Real rho0_;
+    };
+
+  protected:
+    DiscreteVariable<Real> *dv_rho_, *dv_mass_, *dv_rho_sum_;
+    Real rho0_;
+};
+
+template <typename... Parameters>
+class DensitySummationCK<Inner<Parameters...>>
+    : public DensitySummationCK<Base, Inner<Parameters...>>
+{
+  public:
+    explicit DensitySummationCK(Inner<Parameters...> &inner_relation);
+    virtual ~DensitySummationCK() {};
+
+    class InteractKernel
+        : public DensitySummationCK<Base, Inner<Parameters...>>::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class Encloser>
+        InteractKernel(const ExecutionPolicy &ex_policy, Encloser &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Vecd zero_;
+    };
+};
+
+template <typename... Parameters>
+class DensitySummationCK<Contact<Parameters...>>
+    : public DensitySummationCK<Base, Contact<Parameters...>>
+{
+  public:
+    explicit DensitySummationCK(Contact<Parameters...> &contact_relation);
+    virtual ~DensitySummationCK() {};
+
+    class InteractKernel
+        : public DensitySummationCK<Base, Contact<Parameters...>>::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class Encloser>
+        InteractKernel(const ExecutionPolicy &ex_policy, Encloser &encloser, size_t contact_index);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real contact_inv_rho0_k_;
+        Real *contact_mass_k_;
+    };
+
+  protected:
+    StdVec<Real> contact_inv_rho0_;
+    StdVec<DiscreteVariable<Real> *> dv_contact_mass_;
+};
 //------------------------------------------------------------------
 // forward declarations of Regularization<FlowType>
 //------------------------------------------------------------------
@@ -87,112 +161,37 @@ class Regularization<FreeSurface>
     };
 };
 
-template <typename... RelationTypes>
-class DensityRegularization;
-
-template <template <typename...> class RelationType, typename... Parameters>
-class DensityRegularization<Base, RelationType<Parameters...>>
-    : public Interaction<RelationType<Parameters...>>
+template <class DynamicsIdentifier, class FlowType, typename... ParticleScopes>
+class DensityRegularization : public BaseLocalDynamics<DynamicsIdentifier>
 {
+    using RegularizationKernel = typename Regularization<FlowType>::ComputingKernel;
+    using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopes...>::ComputingKernel;
+
   public:
-    template <class DynamicsIdentifier>
     explicit DensityRegularization(DynamicsIdentifier &identifier);
     virtual ~DensityRegularization() {};
 
-    class InteractKernel : public Interaction<RelationType<Parameters...>>::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, typename... Args>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       DensityRegularization<Base, RelationType<Parameters...>> &encloser,
-                       Args &&...args);
-        Real InitialDensity() { return rho0_; };
-
-      protected:
-        Real *rho_, *mass_, *rho_sum_, *Vol_;
-        Real rho0_, inv_sigma0_;
-    };
-
-  protected:
-    DiscreteVariable<Real> *dv_rho_, *dv_mass_, *dv_rho_sum_;
-    Real rho0_, inv_sigma0_;
-};
-
-template <class FlowType, class ParticleScopeType, typename... Parameters>
-class DensityRegularization<Inner<WithUpdate, FlowType, ParticleScopeType, Parameters...>>
-    : public DensityRegularization<Base, Inner<Parameters...>>
-{
-    using RegularizationKernel = typename Regularization<FlowType>::ComputingKernel;
-    using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
-
-  public:
-    explicit DensityRegularization(Inner<Parameters...> &inner_relation);
-    virtual ~DensityRegularization() {};
-
-    class InteractKernel
-        : public DensityRegularization<Base, Inner<Parameters...>>::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       DensityRegularization<Inner<WithUpdate, FlowType, ParticleScopeType, Parameters...>> &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
-
-      protected:
-        Real W0_;
-    };
-
     class UpdateKernel
-        : public DensityRegularization<Base, Inner<Parameters...>>::InteractKernel
     {
       public:
-        template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy,
-                     DensityRegularization<Inner<WithUpdate, FlowType, ParticleScopeType, Parameters...>> &encloser);
+        template <class ExecutionPolicy, class Encloser>
+        UpdateKernel(const ExecutionPolicy &ex_policy, Encloser &encloser);
+        Real InitialDensity() { return rho0_; };
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
+        Real rho0_;
+        Real *rho_, *rho_sum_;
         RegularizationKernel regularization_;
         ParticleScopeTypeKernel particle_scope_;
     };
 
   protected:
+    Real rho0_;
+    DiscreteVariable<Real> *dv_rho_, *dv_rho_sum_;
     Regularization<FlowType> regularization_method_;
-    ParticleScopeTypeCK<ParticleScopeType> within_scope_method_;
+    ParticleScopeTypeCK<ParticleScopes...> within_scope_method_;
 };
-
-template <typename... Parameters>
-class DensityRegularization<Contact<Parameters...>>
-    : public DensityRegularization<Base, Contact<Parameters...>>
-{
-  public:
-    explicit DensityRegularization(Contact<Parameters...> &contact_relation);
-    virtual ~DensityRegularization() {};
-
-    class InteractKernel
-        : public DensityRegularization<Base, Contact<Parameters...>>::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       DensityRegularization<Contact<Parameters...>> &encloser,
-                       size_t contact_index);
-        void interact(size_t index_i, Real dt = 0.0);
-
-      protected:
-        Real contact_inv_rho0_k_;
-        Real *contact_mass_k_;
-    };
-
-  protected:
-    StdVec<Real> contact_inv_rho0_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_mass_;
-};
-
-using DensityRegularizationComplex = DensityRegularization<Inner<WithUpdate, Internal, AllParticles>, Contact<>>;
-using DensityRegularizationComplexFreeSurface = DensityRegularization<Inner<WithUpdate, FreeSurface, AllParticles>, Contact<>>;
-using DensityRegularizationComplexInternalPressureBoundary = DensityRegularization<Inner<WithUpdate, Internal, ExcludeBufferParticles>, Contact<>>;
-
 } // namespace fluid_dynamics
 } // namespace SPH
 

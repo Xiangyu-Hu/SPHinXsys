@@ -130,8 +130,10 @@ int main(int ac, char *av[])
         soil_acoustic_step_1st_half(soil_block_inner, soil_block_contact);
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::PlasticAcousticStep2ndHalfWithWallRiemannCK>
         soil_acoustic_step_2nd_half(soil_block_inner, soil_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
-        soil_density_regularization(soil_block_inner, soil_block_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+        soil_density_summation(soil_block_inner, soil_block_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
+        soil_density_regularization(soil_block);
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::StressDiffusionInnerCK> stress_diffusion(soil_block_inner);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> soil_acoustic_time_step(soil_block, 0.4);
     //----------------------------------------------------------------------
@@ -194,6 +196,7 @@ int main(int ac, char *av[])
         while (integration_time < D_Time)
         {
             /** outer loop for dual-time criteria time-stepping. */
+            soil_density_summation.exec();
             soil_density_regularization.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 

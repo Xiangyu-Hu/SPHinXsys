@@ -2,29 +2,21 @@
 #define TRANSPORT_VELOCITY_CORRECTION_CK_H
 
 #include "base_fluid_dynamics.h"
-#include "interaction_ck.hpp"
-#include "kernel_correction_ck.hpp"
-#include "kernel_gradient_integral.hpp"
 #include "particle_functors_ck.h"
 
 namespace SPH
 {
 namespace fluid_dynamics
 {
-template <typename...>
-class TransportVelocityCorrectionCK;
-
-template <class KernelCorrectionType, class LimiterType, class ParticleScopeType, typename... Parameters>
-class TransportVelocityCorrectionCK<
-    Inner<WithUpdate, KernelCorrectionType, LimiterType, ParticleScopeType, Parameters...>>
-    : public KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>
+template <class DynamicsIdentifier, class LimiterType, typename... ParticleScopes>
+class TransportVelocityCorrectionCK : public BaseLocalDynamics<DynamicsIdentifier>
 {
-    using BaseInteraction = KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>;
-    using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopeType>::ComputingKernel;
-    using SmoothingRatio = typename Inner<Parameters...>::NeighborhoodType::SmoothingRatio;
+    using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopes...>::ComputingKernel;
+    using BaseAdaptation = typename DynamicsIdentifier::BaseAdaptation;
+    using SmoothingLengthRatio = typename BaseAdaptation::SmoothingLengthRatioType;
 
   public:
-    explicit TransportVelocityCorrectionCK(Inner<Parameters...> &inner_relation, Real coefficient = 0.2);
+    explicit TransportVelocityCorrectionCK(DynamicsIdentifier &identifier, Real coefficient = 0.2);
     virtual ~TransportVelocityCorrectionCK() {}
 
     class UpdateKernel
@@ -36,7 +28,7 @@ class TransportVelocityCorrectionCK<
 
       protected:
         Real correction_scaling_;
-        SmoothingRatio h_ratio_;
+        SmoothingLengthRatio h_ratio_;
         LimiterType limiter_;
         Vecd *dpos_;
         Vecd *kernel_gradient_integral_;
@@ -47,33 +39,10 @@ class TransportVelocityCorrectionCK<
     Real h_ref_;              ///< e.g. reference smoothing length
     Real correction_scaling_; ///< typically coefficient * h_ref^2
     LimiterType limiter_;     ///< e.g. a limiter on the final correction step
-    ParticleScopeTypeCK<ParticleScopeType> within_scope_method_;
-    DiscreteVariable<Vecd> *dv_dpos_;
+    ParticleScopeTypeCK<ParticleScopes...> within_scope_method_;
+    DiscreteVariable<Vecd> *dv_dpos_, *dv_kernel_gradient_integral_;
+    BaseAdaptation &adaptaion_;
 };
-
-template <class KernelCorrectionType, typename... Parameters>
-class TransportVelocityCorrectionCK<Contact<Boundary, KernelCorrectionType, Parameters...>>
-    : public KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>
-{
-    using BaseInteraction = KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>;
-
-  public:
-    explicit TransportVelocityCorrectionCK(Contact<Parameters...> &contact_relation)
-        : BaseInteraction(contact_relation) {}
-    virtual ~TransportVelocityCorrectionCK() {}
-};
-//--------------------------------------------------------------------------------------
-// Alias Definitions for Specific Configurations
-//--------------------------------------------------------------------------------------
-using TransportVelocityCorrectionComplexBulkParticlesCK =
-    TransportVelocityCorrectionCK<
-        Inner<WithUpdate, NoKernelCorrectionCK, NoLimiter, BulkParticles>,
-        Contact<Boundary, NoKernelCorrectionCK>>;
-
-using TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCK =
-    TransportVelocityCorrectionCK<
-        Inner<WithUpdate, LinearCorrectionCK, TruncatedLinear, BulkParticles>,
-        Contact<Boundary, LinearCorrectionCK>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // TRANSPORT_VELOCITY_CORRECTION_CK_H
