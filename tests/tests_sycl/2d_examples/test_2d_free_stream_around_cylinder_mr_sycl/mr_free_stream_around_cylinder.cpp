@@ -150,10 +150,10 @@ int main(int ac, char *av[])
         ParticleDynamicsGroup update_configuration = update_cell_linked_list + update_relation;
 
         ParticleDynamicsGroup relaxation_residual;
-        relaxation_residual.add(&main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(water_body_inner)
+        relaxation_residual.add(&main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(water_body_inner)
                                      .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(water_body_contact)
                                      .addPostStateDynamics<LevelsetKernelGradientIntegral>(water_body, *outer_boundary_level_set_shape));
-        relaxation_residual.add(&main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(cylinder_inner)
+        relaxation_residual.add(&main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(cylinder_inner)
                                      .addPostStateDynamics<LevelsetKernelGradientIntegral>(cylinder, *cylinder_level_set_shape));
 
         ReduceDynamicsGroup relaxation_scaling = main_methods.addReduceDynamics<ReduceMin, RelaxationScalingCK>(real_bodies);
@@ -165,7 +165,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
         body_state_recorder.addToWrite<Real>(water_body, "SmoothingLengthRatio");
-        auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(real_bodies);
+        auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(StdVec<SPHBody *>{&water_body, &cylinder});
         //----------------------------------------------------------------------
         //	Prepare for the time integration loop.
         //----------------------------------------------------------------------

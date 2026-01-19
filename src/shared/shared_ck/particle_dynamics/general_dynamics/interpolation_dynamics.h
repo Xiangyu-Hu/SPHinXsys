@@ -68,6 +68,9 @@ class Interpolation<Contact<DataType, Parameters...>> : public Interpolation<Con
   public:
     Interpolation(Contact<Parameters...> &pair_contact_relation, const std::string &variable_name) 
     : BaseDynamicsType(pair_contact_relation, variable_name){};
+    template <typename BodyRelationType, typename FirstArg>
+    explicit Interpolation(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : BaseDynamicsType(parameters.identifier_, std::get<0>(parameters.others_)){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
