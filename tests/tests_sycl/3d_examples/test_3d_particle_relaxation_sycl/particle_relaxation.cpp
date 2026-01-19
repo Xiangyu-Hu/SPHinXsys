@@ -84,7 +84,7 @@ int main(int ac, char *av[])
     auto &update_inner_relation = main_methods.addRelationDynamics(imported_model_inner);
 
     auto &relaxation_residual =
-        main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(imported_model_inner)
+        main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(imported_model_inner)
             .addPostStateDynamics<LevelsetKernelGradientIntegral>(imported_model, *level_set_shape);
 
     auto &update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(imported_model);
