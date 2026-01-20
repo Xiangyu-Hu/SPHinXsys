@@ -31,7 +31,8 @@ Mat3d PlasticContinuum::PlasticKernel::ConstitutiveRelation(Mat3d &velocity_grad
     Mat3d strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     Mat3d spin_rate = 0.5 * (velocity_gradient - velocity_gradient.transpose());
     Mat3d deviatoric_strain_rate = strain_rate - (1.0 / stress_dimension_) * strain_rate.trace() * Mat3d::Identity();
-    Mat3d stress_rate_elastic = 2.0 * G_ * deviatoric_strain_rate + K_ * strain_rate.trace() * Mat3d::Identity() + stress_tensor * (spin_rate.transpose()) + spin_rate * stress_tensor;
+    Mat3d stress_rate_elastic = 2.0 * G_ * deviatoric_strain_rate + K_ * strain_rate.trace() * Mat3d::Identity() +
+                                stress_tensor * (spin_rate.transpose()) + spin_rate * stress_tensor;
     Mat3d deviatoric_stress_tensor = stress_tensor - (1.0 / stress_dimension_) * stress_tensor.trace() * Mat3d::Identity();
     Real stress_tensor_J2 = 0.5 * (deviatoric_stress_tensor.cwiseProduct(deviatoric_stress_tensor.transpose())).sum();
     Real f = sqrt(stress_tensor_J2) + alpha_phi_ * stress_tensor.trace() - k_c_;
@@ -41,18 +42,19 @@ Mat3d PlasticContinuum::PlasticKernel::ConstitutiveRelation(Mat3d &velocity_grad
     {
         Real deviatoric_stress_times_strain_rate = (deviatoric_stress_tensor.cwiseProduct(strain_rate)).sum();
         // non-associate flow rule
-        lambda_dot_ = (3.0 * alpha_phi_ * K_ * strain_rate.trace() + (G_ / (sqrt(stress_tensor_J2)+TinyReal)) * deviatoric_stress_times_strain_rate) / (9.0 * alpha_phi_ * K_ * getDPConstantsA(psi_) + G_);
-        g = lambda_dot_ * (3.0 * K_ * getDPConstantsA(psi_) * Mat3d::Identity() + G_ * deviatoric_stress_tensor / (sqrt(stress_tensor_J2+ TinyReal)));
+        lambda_dot_ = (3.0 * alpha_phi_ * K_ * strain_rate.trace() + (G_ / (sqrt(stress_tensor_J2) + TinyReal)) * deviatoric_stress_times_strain_rate) /
+                      (9.0 * alpha_phi_ * K_ * getDPConstantsA(psi_) + G_);
+        g = lambda_dot_ * (3.0 * K_ * getDPConstantsA(psi_) * Mat3d::Identity() + G_ * deviatoric_stress_tensor / (sqrt(stress_tensor_J2 + TinyReal)));
     }
     Mat3d stress_rate_temp = stress_rate_elastic - g;
     return stress_rate_temp;
-}; 
+};
 //=================================================================================================//
 Mat3d PlasticContinuum::PlasticKernel::ReturnMapping(Mat3d &stress_tensor)
 {
     Real stress_tensor_I1 = stress_tensor.trace();
     if (-alpha_phi_ * stress_tensor_I1 + k_c_ < 0)
-    stress_tensor -= (1.0 / stress_dimension_) * (stress_tensor_I1 - k_c_ / alpha_phi_) * Mat3d::Identity();
+        stress_tensor -= (1.0 / stress_dimension_) * (stress_tensor_I1 - k_c_ / alpha_phi_) * Mat3d::Identity();
     stress_tensor_I1 = stress_tensor.trace();
     Mat3d deviatoric_stress_tensor = stress_tensor - (1.0 / stress_dimension_) * stress_tensor.trace() * Mat3d::Identity();
     volatile Real stress_tensor_J2 = 0.5 * (deviatoric_stress_tensor.cwiseProduct(deviatoric_stress_tensor.transpose())).sum();
@@ -63,5 +65,5 @@ Mat3d PlasticContinuum::PlasticKernel::ReturnMapping(Mat3d &stress_tensor)
     }
     return stress_tensor;
 }
-}// namespace SPH
-#endif //GENERAL_CONTINUUM_HPP
+} // namespace SPH
+#endif // GENERAL_CONTINUUM_HPP
