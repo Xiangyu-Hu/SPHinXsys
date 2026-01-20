@@ -22,7 +22,7 @@ LevelsetKernelGradientIntegral<DynamicIdentifier>::LevelsetKernelGradientIntegra
     : BaseLocalDynamics<DynamicIdentifier>(identfier),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_residual_(this->particles_->template registerStateVariable<Vecd>("KernelGradientIntegral")),
-      adaptaion_(DynamicCast<BaseAdaptation>(this, identfier.getSPHAdaptation())),
+      adaptaion_(DynamicCast<Adaptation>(this, identfier.getSPHAdaptation())),
       level_set_(level_set_shape.getLevelSet()) {}
 //=================================================================================================//
 template <class DynamicIdentifier>

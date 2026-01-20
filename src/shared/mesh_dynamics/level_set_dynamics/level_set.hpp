@@ -2,8 +2,8 @@
 #define LEVEL_SET_HPP
 
 #include "level_set.h"
-#include "level_set_transformation.hpp"
 #include "level_set_correction.hpp"
+#include "level_set_transformation.hpp"
 
 namespace SPH
 {
@@ -132,6 +132,11 @@ DataType LevelSet::ProbeLevelSet<DataType>::operator()(const Vecd &position, Rea
             coarse_level = level; // jump out the loop!
             break;
         }
+    }
+
+    if (coarse_level == this->resolution_levels_ - 1)
+    {
+        return BaseProbe::probeInResolutionLevel(coarse_level, position);
     }
 
     Real alpha = (global_h_ratio_[coarse_level + 1] - h_ratio) /

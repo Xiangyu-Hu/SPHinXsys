@@ -73,15 +73,15 @@ class RelaxationScalingCK : public LocalDynamicsReduce<ReduceMax>
 template <class DynamicIdentifier>
 class PositionRelaxationCK : public BaseLocalDynamics<DynamicIdentifier>
 {
-    using BaseAdaptation = typename DynamicIdentifier::BaseAdaptation;
-    using SmoothingLengthRatio = typename BaseAdaptation::SmoothingLengthRatioType;
+    using Adaptation = typename DynamicIdentifier::Adaptation;
+    using SmoothingLengthRatio = typename Adaptation::SmoothingLengthRatioType;
 
   public:
     explicit PositionRelaxationCK(DynamicIdentifier &identfier)
         : BaseLocalDynamics<DynamicIdentifier>(identfier),
           pos_(this->particles_->template getVariableByName<Vecd>("Position")),
           residual_(this->particles_->template getVariableByName<Vecd>("KernelGradientIntegral")),
-          adaptaion_(DynamicCast<BaseAdaptation>(this, identfier.getSPHAdaptation())) {};
+          adaptaion_(DynamicCast<Adaptation>(this, identfier.getSPHAdaptation())) {};
     virtual ~PositionRelaxationCK() {};
 
     class UpdateKernel
@@ -105,7 +105,7 @@ class PositionRelaxationCK : public BaseLocalDynamics<DynamicIdentifier>
 
   protected:
     DiscreteVariable<Vecd> *pos_, *residual_;
-    BaseAdaptation &adaptaion_;
+    Adaptation &adaptaion_;
 };
 
 template <class DynamicIdentifier>

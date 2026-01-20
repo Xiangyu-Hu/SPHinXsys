@@ -21,44 +21,52 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    adaptive_body.h
- * @brief 	This is the class for templated bodies.
+ * @file 	free_stream_boundary.h
+ * @brief 	TBD.
  * @author	Xiangyu Hu
  */
 
-#ifndef ADAPTIVE_BODY_H
-#define ADAPTIVE_BODY_H
+#ifndef FREE_STREAM_BOUNDARY_H
+#define FREE_STREAM_BOUNDARY_H
 
-#include "base_body.h"
+#include "base_fluid_dynamics.h"
 
 namespace SPH
 {
-template <typename...>
-class AdaptiveBody;
-
-template <class AdaptationType, class BaseBodyType>
-class AdaptiveBody<AdaptationType, BaseBodyType> : public BaseBodyType
+namespace fluid_dynamics
 {
-    AdaptationType adaptation_;
-
+template <typename ConditionFunction>
+class FreeStreamCondition : public LocalDynamics
+{
   public:
-    typedef AdaptationType Adaptation;
-
     template <typename... Args>
-    AdaptiveBody(SPHSystem &sph_system, AdaptationType adaptation, Args &&...args)
-        : BaseBodyType(sph_system, std::forward<Args>(args)...), adaptation_(adaptation)
+    explicit FreeStreamCondition(SPHBody &sph_body, Args &&...args);
+    virtual ~FreeStreamCondition() {};
+
+    class UpdateKernel
     {
-        this->sph_adaptation_ = &adaptation_;
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        ConditionFunction free_stream_velocity_;
+        Real rho0_;
+        Real *rho_sum_;
+        Vecd *pos_, *vel_;
+        int *indicator_;
+        Real *physical_time_;
     };
 
-    virtual ~AdaptiveBody() {};
-    AdaptationType &getAdaptation() { return adaptation_; };
-
-    virtual void createCellLinkedListPtr() override
-    {
-        this->cell_linked_list_ptr_ = adaptation_.createFinestCellLinkedList(
-            this->getSPHSystemBounds(), *this->base_particles_);
-    };
+  protected:
+    ConditionFunction free_stream_velocity_;
+    Real rho0_;
+    DiscreteVariable<Real> *dv_rho_sum_;
+    DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
+    DiscreteVariable<int> *dv_indicator_;
+    SingularVariable<Real> *sv_physical_time_;
 };
+} // namespace fluid_dynamics
 } // namespace SPH
-#endif // ADAPTIVE_BODY_H
+#endif // FREE_STREAM_BOUNDARY_H

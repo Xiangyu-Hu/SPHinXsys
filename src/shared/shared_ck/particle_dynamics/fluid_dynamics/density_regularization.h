@@ -161,6 +161,32 @@ class Regularization<FreeSurface>
     };
 };
 
+template <>
+class Regularization<FreeStream>
+{
+    DiscreteVariable<int> *dv_indicator_;
+
+  public:
+    Regularization(BaseParticles *particles)
+        : dv_indicator_(particles->getVariableByName<int>("Indicator")) {};
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class ComputingKernelType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        Regularization<FreeStream> &encloser, ComputingKernelType &computing_kernel)
+            : rho0_(computing_kernel.InitialDensity()),
+              indicator_(encloser.dv_indicator_->DelegatedData(ex_policy)){};
+
+        Real operator()(UnsignedInt index_i, Real &rho_sum) { return indicator_[index_i] != 0 ? rho0_ : rho_sum; };
+
+      protected:
+        Real rho0_;
+        int *indicator_;
+    };
+};
+
 template <class DynamicsIdentifier, class FlowType, typename... ParticleScopes>
 class DensityRegularization : public BaseLocalDynamics<DynamicsIdentifier>
 {

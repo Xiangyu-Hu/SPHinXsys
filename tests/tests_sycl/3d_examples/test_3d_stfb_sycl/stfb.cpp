@@ -233,16 +233,16 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_block);
 
-    ArbitraryDynamicsSequence<
+    ArbitraryDynamicsSequence <
         StateDynamics<MainExecutionPolicy, solid_dynamics::UpdateDisplacementFromPosition>,
         InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, Relation<SPHBody, BodyPartByParticle>>>>,
         InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, Relation<SPHBody, BodyPartByParticle>>>>,
-        StateDynamics<MainExecutionPolicy, solid_dynamics::UpdatePositionFromDisplacement>>
-        update_structure_proxy_states(
-            structure,
-            DynamicsArgs(structure_proxy_contact, std::string("Velocity")),
-            DynamicsArgs(structure_proxy_contact, std::string("Displacement")),
-            structure_proxy);
+                              StateDynamics<MainExecutionPolicy, solid_dynamics::UpdatePositionFromDisplacement>>
+            update_structure_proxy_states(
+                structure,
+                DynamicsArgs(structure_proxy_contact, std::string("Velocity")),
+                DynamicsArgs(structure_proxy_contact, std::string("Displacement")),
+                structure_proxy);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------

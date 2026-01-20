@@ -12,8 +12,8 @@ template <class DynamicsIdentifier, class LimiterType, typename... ParticleScope
 class TransportVelocityCorrectionCK : public BaseLocalDynamics<DynamicsIdentifier>
 {
     using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScopes...>::ComputingKernel;
-    using BaseAdaptation = typename DynamicsIdentifier::BaseAdaptation;
-    using SmoothingLengthRatio = typename BaseAdaptation::SmoothingLengthRatioType;
+    using Adaptation = typename DynamicsIdentifier::Adaptation;
+    using SmoothingLengthRatio = typename Adaptation::SmoothingLengthRatioType;
 
   public:
     explicit TransportVelocityCorrectionCK(DynamicsIdentifier &identifier, Real coefficient = 0.2);
@@ -41,7 +41,7 @@ class TransportVelocityCorrectionCK : public BaseLocalDynamics<DynamicsIdentifie
     LimiterType limiter_;     ///< e.g. a limiter on the final correction step
     ParticleScopeTypeCK<ParticleScopes...> within_scope_method_;
     DiscreteVariable<Vecd> *dv_dpos_, *dv_kernel_gradient_integral_;
-    BaseAdaptation &adaptaion_;
+    Adaptation &adaptaion_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

@@ -81,7 +81,7 @@ class SPHBody
 
   public:
     typedef SPHBody BaseIdentifier;
-    typedef SPHAdaptation BaseAdaptation;
+    typedef SPHAdaptation Adaptation;
     SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name);
     SPHBody(SPHSystem &sph_system, Shape &shape);
     SPHBody(SPHSystem &sph_system, const std::string &name);

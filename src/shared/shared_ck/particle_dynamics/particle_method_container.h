@@ -375,6 +375,14 @@ class ParticleMethodContainer : public BaseMethodContainer
             variable_name, contact_relation);
     };
 
+    template <typename... ControlParameters, typename... RelationParameters>
+    auto &addObserveRecorder(const std::string &variable_name, Contact<RelationParameters...> &contact_relation)
+    {
+        return *other_io_keeper_.createPtr<
+            ObservedQuantityRecording<ExecutionPolicy, ControlParameters..., RelationParameters...>>(
+            variable_name, contact_relation);
+    };
+
     template <template <typename...> class RegressionType, template <typename...> class LocalReduceMethodType,
               typename... Parameters, class DynamicsIdentifier, typename... Args>
     auto &addReduceRegression(DynamicsIdentifier &dynamics_identifier, Args &&...args)

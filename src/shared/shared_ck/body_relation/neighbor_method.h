@@ -35,7 +35,6 @@
 namespace SPH
 {
 class SPHAdaptation;
-class AdaptiveSmoothingLength;
 
 template <typename...>
 class Neighbor;
@@ -150,9 +149,12 @@ class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
     BoundingBoxi search_box_; /**< Search depth for neighbor search. */
 };
 
-template <>
-class Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public Neighbor<Base>
+template <class SourceAdaptationType, class TargetAdaptationType>
+class Neighbor<SourceAdaptationType, TargetAdaptationType> : public Neighbor<Base>
 {
+    using SourceSmoothingLengthRatio = typename SourceAdaptationType::SmoothingLengthRatioType;
+    using TargetSmoothingLengthRatio = typename TargetAdaptationType::SmoothingLengthRatioType;
+
   public:
     template <typename SourceIdentifier, typename TargetIdentifier>
     Neighbor(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier,
@@ -167,10 +169,13 @@ class Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public Neighb
         SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return W(vec_r_ij(i, j), i, j); };
         inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return dW(vec_r_ij(i, j), i, j); };
+        Real W0(UnsignedInt i, const Vec2d &zero) const;
+        Real W0(UnsignedInt i, const Vec3d &zero) const;
 
       protected:
         Real src_inv_h_ref_, tar_inv_h_ref_;
-        Real *src_h_ratio_, *tar_h_ratio_;
+        SourceSmoothingLengthRatio src_h_ratio_;
+        TargetSmoothingLengthRatio tar_h_ratio_;
 
         Real invSmoothingLength(UnsignedInt i, UnsignedInt j) const;
         Real W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
@@ -187,7 +192,7 @@ class Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public Neighb
         Vecd *src_pos_;
         Vecd *tar_pos_;
         Real kernel_size_squared_, src_inv_h_ref_;
-        Real *src_h_ratio_;
+        SourceSmoothingLengthRatio src_h_ratio_;
 
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -200,7 +205,7 @@ class Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public Neighb
         Vecd *src_pos_;
         Vecd *tar_pos_;
         Real kernel_size_squared_, tar_inv_h_ref_;
-        Real *tar_h_ratio_;
+        TargetSmoothingLengthRatio tar_h_ratio_;
 
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -217,13 +222,14 @@ class Neighbor<AdaptiveSmoothingLength, AdaptiveSmoothingLength> : public Neighb
 
       private:
         Real src_inv_h_ref_, tar_inv_h_min_;
-        Real *src_h_ratio_;
+        SourceSmoothingLengthRatio src_h_ratio_;
     };
 
   protected:
     Real src_inv_h_ref_, tar_inv_h_ref_;
     Real src_inv_h_min_, tar_inv_h_min_;
-    DiscreteVariable<Real> *dv_src_h_ratio_, *dv_tar_h_ratio_;
+    SourceAdaptationType &src_adaptation_;
+    TargetAdaptationType &tar_adaptation_;
 };
 } // namespace SPH
 #endif // NEIGHBOR_METHOD_H
