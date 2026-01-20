@@ -123,7 +123,7 @@ int main(int ac, char *av[])
             .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(soil_block_contact);
     auto &soil_acoustic_step_2nd_half =
         main_methods.addInteractionDynamicsOneLevel<
-                        continuum_dynamics::PlasticAcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(soil_block_inner)
+                        continuum_dynamics::PlasticAcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(soil_block_inner)
             .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(soil_block_contact);
     auto &soil_density_regularization =
         main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(soil_block_inner)
