@@ -11,8 +11,13 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(true);
     sph_system.handleCommandlineOptions(ac, av);
 
-    RealBody column(sph_system, makeShared<Column>("Column"));
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+    auto &column_shape = sph_system.addShape<TriangleMeshShapeCylinder>(
+        Vec3d(0, 0, 1.0), column_radius, 0.5 * PW, resolution, translation_column, "Column");
+    auto &wall_shape = sph_system.addShape<TriangleMeshShapeBrick>(
+        halfsize_holder, resolution, translation_holder, "Wall");
+
+    auto &column = sph_system.addBody<RealBody>(column_shape);
+    auto &wall_boundary = sph_system.addBody<SolidBody>(wall_shape);
     if (sph_system.RunParticleRelaxation())
     {
         LevelSetShape *level_set_shape = column.defineBodyLevelSetShape(par_ck, 2.0)->writeLevelSet();
@@ -90,26 +95,53 @@ int main(int ac, char *av[])
     wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
         ->reloadExtraVariable<Vecd>("NormalDirection");
 
-    ObserverBody column_observer(sph_system, "ColumnObserver");
-    StdVec<Vecd> observation_location = {Vecd(0.0, 0.0, PW)};
+    auto &column_observer = sph_system.addBody<ObserverBody>("ColumnObserver");
     column_observer.generateParticles<ObserverParticles>(observation_location);
 
     /**body relation topology */
-    InnerRelation column_inner(column);
-    ContactRelation column_observer_contact(column_observer, {&column});
-    SurfaceContactRelation column_wall_contact(column, {&wall_boundary});
+    auto &column_inner = sph_system.addInnerRelation(column);
+    auto &column_wall_contact = sph_system.addContactRelation(column, wall_boundary);
+    auto &column_observer_contact = sph_system.addContactRelation(column_observer, column);
     //----------------------------------------------------------------------
-    //	All numerical methods will be used in this case.
+    // Define SPH solver with particle methods and execution policies.
+    // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
-    SimpleDynamics<InitialCondition> initial_condition(column);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(column_inner);
-    Dynamics1Level<continuum_dynamics::Integration1stHalf> column_pressure_relaxation(column_inner);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfInnerDissipativeRiemann> column_density_relaxation(column_inner);
+    SPHSolver sph_solver(sph_system);
+    //----------------------------------------------------------------------
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the configuration dynamics, such as update cell linked list,
+    // update body relations, are defined first.
+    // Then the geometric models or simple objects without data dependencies,
+    // such as gravity, initialized normal direction.
+    // After that, the major physical particle dynamics model should be introduced.
+    // Finally, the auxiliary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    //----------------------------------------------------------------------
+    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    host_methods.addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(column, "Vecolity", Vec3d(0, 0, -vel_0)).exec();
+
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    ParticleDynamicsGroup update_column_configuration;
+    update_column_configuration.add(&main_methods.addCellLinkedListDynamics(column));
+    update_column_configuration.add(&main_methods.addRelationDynamics(column_inner, column_wall_contact));
+    auto &wall_boundary_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
+
+    auto &soil_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(column);
+    auto &soil_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(column);
+    auto &column_linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(column_inner);
+
+    auto &soil_acoustic_step_1st_half =
+        main_methods.addInteractionDynamicsOneLevel< // to check why not use Riemann solver
+            fluid_dynamics::AcousticStep1stHalf, NoRiemannSolverCK, NoKernelCorrectionCK>(column_inner);
+    auto &soil_acoustic_step_2nd_half =
+        main_methods.addInteractionDynamicsOneLevel<
+            fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner);
+
     InteractionWithUpdate<continuum_dynamics::ShearStressRelaxationHourglassControl1stHalfJ2Plasticity> column_shear_stress(column_inner);
     InteractionDynamics<continuum_dynamics::ShearStressRelaxationHourglassControl2ndHalf> column_shear_acceleration(column_inner);
-    SimpleDynamics<fluid_dynamics::ContinuumVolumeUpdate> column_volume_update(column);
-    ReduceDynamics<fluid_dynamics::AdvectionTimeStep> advection_time_step(column, U_max, 0.2);
-    ReduceDynamics<continuum_dynamics::AcousticTimeStep> acoustic_time_step(column, 0.4);
+    auto &column_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(column, U_max, 0.2);
+    auto &column_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(column, 0.4);
     InteractionDynamics<DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
     //----------------------------------------------------------------------
     //	Output
@@ -128,7 +160,6 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
     corrected_configuration.exec();
-    initial_condition.exec();
     //----------------------------------------------------------------------
     // Setup time-stepping related simulation parameters.
     //----------------------------------------------------------------------

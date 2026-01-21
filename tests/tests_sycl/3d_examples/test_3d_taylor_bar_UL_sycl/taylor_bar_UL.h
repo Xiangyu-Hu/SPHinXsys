@@ -12,12 +12,16 @@ using namespace SPH;
 Real PL = 0.00391; /**< X-direction domain. */
 Real PW = 0.02346; /**< Z-direction domain. */
 Real particle_spacing_ref = PL / 12.0;
+Real column_radius = PL;
+Vecd translation_column(0.0, 0.0, 0.5 * PW + particle_spacing_ref);
 Real SL = particle_spacing_ref * 4.0;
-Real inner_circle_radius = PL;
+Vecd halfsize_holder(3.0 * PL, 3.0 * PL, 0.5 * SL);
+Vecd translation_holder(0.0, 0.0, -0.5 * SL);
+int resolution(20);
+StdVec<Vecd> observation_location = {Vecd(0.0, 0.0, PW)};
 Vec3d domain_lower_bound(-4.0 * PL, -4.0 * PL, -SL);
 Vec3d domain_upper_bound(4.0 * PL, 4.0 * PL, 2.0 * PW);
 BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
-int resolution(20);
 //----------------------------------------------------------------------
 //	Material properties and global parameters
 //----------------------------------------------------------------------
@@ -28,43 +32,6 @@ Real yield_stress = 0.29e9;
 Real vel_0 = 373.0;
 Real U_max = vel_0;
 Real c0 = sqrt(Youngs_modulus / (3 * (1 - 2 * poisson) * rho0_s));
-/** Define the wall. */
-class WallBoundary : public ComplexShape
-{
-  public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        Vecd halfsize_holder(3.0 * PL, 3.0 * PL, 0.5 * SL);
-        Vecd translation_holder(0.0, 0.0, -0.5 * SL);
-        add<TriangleMeshShapeBrick>(halfsize_holder, resolution, translation_holder);
-    }
-};
-/** Define the body. */
-class Column : public ComplexShape
-{
-  public:
-    explicit Column(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        Vecd translation_column(0.0, 0.0, 0.5 * PW + particle_spacing_ref);
-        add<TriangleMeshShapeCylinder>(Vec3d(0, 0, 1.0), inner_circle_radius,
-                                       0.5 * PW, resolution, translation_column);
-    }
-};
-/**
- * application dependent initial condition
- */
-class InitialCondition
-    : public fluid_dynamics::FluidInitialCondition
-{
-  public:
-    explicit InitialCondition(SPHBody &sph_body)
-        : fluid_dynamics::FluidInitialCondition(sph_body) {};
-
-    void update(size_t index_i, Real dt)
-    {
-        vel_[index_i][2] = -vel_0;
-    }
-};
 /** Contact force. */
 class DynamicContactForceWithWall : public LocalDynamics,
                                     public DataDelegateContact
