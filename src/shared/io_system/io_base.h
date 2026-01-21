@@ -84,6 +84,8 @@ class BaseIO
  */
 class BodyStatesRecording : public BaseIO
 {
+  protected:
+    UniquePtrsKeeper<BaseDynamics<void>> derived_variables_keeper_;
 
   public:
     BodyStatesRecording(SPHSystem &sph_system);
@@ -136,9 +138,6 @@ class BodyStatesRecording : public BaseIO
     StdVec<BaseDynamics<void> *> derived_variables_;
     bool state_recording_;
     virtual void writeWithFileName(const std::string &sequence) = 0;
-
-  private:
-    UniquePtrsKeeper<BaseDynamics<void>> derived_variables_keeper_;
 };
 
 /**

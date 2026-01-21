@@ -37,18 +37,6 @@ Vec2d outer_wall_translation = Vec2d(-BW, -BW) + outer_wall_halfsize;
 Vec2d inner_wall_halfsize = Vec2d(0.5 * DL, 0.5 * DH);
 Vec2d inner_wall_translation = inner_wall_halfsize;
 //----------------------------------------------------------------------
-//	Complex for wall boundary
-//----------------------------------------------------------------------
-class WallBoundary : public ComplexShape
-{
-  public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
-    }
-};
-//----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
@@ -130,6 +118,8 @@ int main(int ac, char *av[])
             .addPostContactInteraction(soil_block_contact)
             .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(soil_block);
     auto &stress_diffusion = main_methods.addInteractionDynamics<continuum_dynamics::StressDiffusionCK>(soil_block_inner);
+
+    auto &soil_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(soil_block, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -137,14 +127,10 @@ int main(int ac, char *av[])
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     body_state_recorder.addToWrite<Vecd>(wall_boundary, "NormalDirection");
     body_state_recorder.addToWrite<Real>(soil_block, "Density");
-    StateDynamics<MainExecutionPolicy, continuum_dynamics::VerticalStressCK> vertical_stress(soil_block);
-    body_state_recorder.addToWrite<Real>(soil_block, "VerticalStress");
-    StateDynamics<MainExecutionPolicy, continuum_dynamics::AccDeviatoricPlasticStrainCK> accumulated_deviatoric_plastic_strain(soil_block);
-    body_state_recorder.addToWrite<Real>(soil_block, "AccDeviatoricPlasticStrain");
+    body_state_recorder.addDerivedVariableToWrite<continuum_dynamics::VerticalStressCK>(soil_block);
+    body_state_recorder.addDerivedVariableToWrite<continuum_dynamics::AccDeviatoricPlasticStrainCK>(soil_block);
     auto &record_water_mechanical_energy = main_methods.addReduceRegression<
         RegressionTestDynamicTimeWarping, TotalMechanicalEnergyCK>(soil_block, gravity);
-
-    auto &soil_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(soil_block, 0.4);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -224,8 +210,6 @@ int main(int ac, char *av[])
                 interval_updating_configuration += TickCount::now() - time_instance;
             }
         }
-        vertical_stress.exec();
-        accumulated_deviatoric_plastic_strain.exec();
         body_state_recorder.writeToFile();
         TickCount t2 = TickCount::now();
         TickCount t3 = TickCount::now();
