@@ -163,10 +163,13 @@ int main(int ac, char *av[])
     auto &column_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(column);
     auto &column_linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(column_inner);
 
-    auto &column_acoustic_step_1st_half =
-        main_methods.addInteractionDynamicsOneLevel< // to check why not use Riemann solver
-                        fluid_dynamics::AcousticStep1stHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner)
-            .addPostContactInteraction<Wall, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_wall_contact);
+    ParticleDynamicsGroup column_acoustic_step_1st_half;
+    column_acoustic_step_1st_half.add(
+        &main_methods.addInteractionDynamics<LinearGradient, Vecd>(column_inner, "Velocity"));
+    column_acoustic_step_1st_half.add(
+        &main_methods.addInteractionDynamicsOneLevel< // to check why not use Riemann solver
+                         fluid_dynamics::AcousticStep1stHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner)
+             .addPostContactInteraction<Wall, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_wall_contact));
     auto &column_acoustic_step_2nd_half =
         main_methods.addInteractionDynamicsOneLevel<
                         fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner)

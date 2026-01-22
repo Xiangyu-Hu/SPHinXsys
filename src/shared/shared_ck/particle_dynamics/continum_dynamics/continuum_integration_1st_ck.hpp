@@ -1,5 +1,5 @@
-#ifndef CONTINUUM_INTERGRATION_1ST_CK_HPP
-#define CONTINUUM_INTERGRATION_1ST_CK_HPP
+#ifndef CONTINUUM_INTEGRATION_1ST_CK_HPP
+#define CONTINUUM_INTEGRATION_1ST_CK_HPP
 
 #include "base_particles.hpp"
 #include "continuum_integration_1st_ck.h"
@@ -29,7 +29,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     PlasticAcousticStep1stHalf(Inner<Parameters...> &inner_relation)
     : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
-      correction_method_(this->particles_), 
+      correction_method_(this->particles_),
       riemann_solver_(this->plastic_continuum_, this->plastic_continuum_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
@@ -113,7 +113,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     PlasticAcousticStep1stHalf(Contact<Parameters...> &wall_contact_relation)
     : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
-      correction_method_(this->particles_), 
+      correction_method_(this->particles_),
       riemann_solver_(this->plastic_continuum_, this->plastic_continuum_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -161,4 +161,4 @@ void PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectio
 
 } // namespace continuum_dynamics
 } // namespace SPH
-#endif // CONTINUUM_INTERGRATION_1ST_CK_HPP
+#endif // CONTINUUM_INTEGRATION_1ST_CK_HPP
