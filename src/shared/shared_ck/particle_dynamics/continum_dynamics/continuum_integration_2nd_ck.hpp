@@ -73,7 +73,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : constitute_kernel_(ex_policy, encloser.plastic_continuum_),
+    : constitute_(ex_policy, encloser.plastic_continuum_),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
       velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)),
@@ -92,9 +92,9 @@ void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
     strain_tensor_3D_[index_i] += strain_rate_3D_[index_i] * dt;
 
     stress_rate_3D_[index_i] += // stress diffusion is on
-        constitute_kernel_.StressTensorRate(index_i, velocity_gradient, stress_tensor_3D_[index_i]);
-    stress_tensor_3D_[index_i] = constitute_kernel_.updateStressTensor(
-        index_i, stress_tensor_3D_[index_i], stress_rate_3D_[index_i] * dt);
+        constitute_.StressTensorRate(index_i, velocity_gradient, stress_tensor_3D_[index_i]);
+    stress_tensor_3D_[index_i] = constitute_.updateStressTensor(
+        index_i, stress_tensor_3D_[index_i] + stress_rate_3D_[index_i] * dt);
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>

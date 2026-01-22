@@ -102,7 +102,7 @@ class PlasticContinuum : public GeneralContinuum
         inline Real getDPConstantsA(Real friction_angle);
         inline Real getFrictionAngle() { return phi_; };
         inline Mat3d StressTensorRate(UnsignedInt index_i, const Mat3d &velocity_gradient, const Mat3d &stress_tensor);
-        inline Mat3d updateStressTensor(UnsignedInt index_i, const Mat3d &prev_stress_tensor, const Mat3d &stress_tensor_increment);
+        inline Mat3d updateStressTensor(UnsignedInt index_i, const Mat3d &try_stress_tensor);
 
       protected:
         Real c_;                                                   /* cohesion  */
@@ -112,7 +112,7 @@ class PlasticContinuum : public GeneralContinuum
         Real k_c_;                                                 /* Drucker-Prager's constants */
         Real stress_dimension_ = 3.0; /* plain strain condition */ // Temporarily cancel const --need to check
 
-        inline Mat3d ReturnMapping(UnsignedInt index_i, Mat3d try_stress_tensor);
+        inline Mat3d ReturnMapping(UnsignedInt index_i, Mat3d stress_tensor);
     };
 };
 
