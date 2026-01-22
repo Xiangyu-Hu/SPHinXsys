@@ -1,5 +1,6 @@
 #include "general_continuum.h"
-#include "general_continuum.hpp"
+
+#include "base_particles.hpp"
 
 namespace SPH
 {
@@ -39,7 +40,7 @@ Matd GeneralContinuum::ConstitutiveRelationShearStress(Matd &velocity_gradient, 
     return stress_rate;
 }
 //=================================================================================================//
-GeneralContinuum::GeneralContinuumKernel::GeneralContinuumKernel(GeneralContinuum &encloser)
+GeneralContinuum::ConstituteKernel::ConstituteKernel(GeneralContinuum &encloser)
     : E_(encloser.E_), G_(encloser.G_), K_(encloser.K_),
       nu_(encloser.nu_), contact_stiffness_(encloser.contact_stiffness_),
       rho0_(encloser.rho0_) {}
@@ -104,15 +105,16 @@ Mat3d PlasticContinuum::ReturnMapping(Mat3d &stress_tensor)
     return stress_tensor;
 }
 //=================================================================================================//
-PlasticContinuum::PlasticKernel::PlasticKernel(PlasticContinuum &encloser)
-    : GeneralContinuum::GeneralContinuumKernel(encloser),
+PlasticContinuum::ConstituteKernel::ConstituteKernel(PlasticContinuum &encloser)
+    : GeneralContinuum::ConstituteKernel(encloser),
       c_(encloser.c_), phi_(encloser.phi_),
       psi_(encloser.psi_), alpha_phi_(encloser.alpha_phi_), k_c_(encloser.k_c_) {}
 //=================================================================================================//
 J2Plasticity::J2Plasticity(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio,
                            Real yield_stress, Real hardening_modulus)
     : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),
-      yield_stress_(yield_stress), hardening_modulus_(hardening_modulus)
+      yield_stress_(yield_stress), hardening_modulus_(hardening_modulus),
+      dv_hardening_factor_(nullptr)
 {
     material_type_name_ = "J2Plasticity";
 }
@@ -159,4 +161,12 @@ Real J2Plasticity::HardeningFactorRate(const Matd &shear_stress, Real &hardening
     Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_);
     return (f > TinyReal) ? 0.5 * f / (G_ + hardening_modulus_ / 3.0) : 0.0;
 }
+//=================================================================================================//
+void J2Plasticity::initializeLocalParameters(BaseParticles *base_particles)
+{
+    GeneralContinuum::initializeLocalParameters(base_particles);
+    dv_hardening_factor_ = base_particles->registerStateVariable<Real>("HardeningFactor");
+    base_particles->addEvolvingVariable<Real>(dv_hardening_factor_);
+}
+//=================================================================================================//
 } // namespace SPH
