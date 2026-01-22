@@ -176,10 +176,6 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamicsOneLevel<
                         fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner)
             .addPostContactInteraction<Wall, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_wall_contact);
-    auto &column_density_regularization =
-        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(column_inner)
-            .addPostContactInteraction(column_wall_contact)
-            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(column);
 
     auto &column_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(column, U_max, 0.2);
     auto &column_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(column, 0.4);
@@ -212,7 +208,6 @@ int main(int ac, char *av[])
     wall_boundary_cell_linked_list.exec();
     update_column_configuration.exec();
 
-    column_density_regularization.exec();
     column_advection_step_setup.exec();
     column_linear_correction_matrix.exec();
     //----------------------------------------------------------------------
@@ -282,7 +277,6 @@ int main(int ac, char *av[])
 
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
-            column_density_regularization.exec();
             column_advection_step_setup.exec();
             column_linear_correction_matrix.exec();
             interval_advection_step += TickCount::now() - time_instance;
