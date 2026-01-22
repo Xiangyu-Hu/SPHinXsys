@@ -21,7 +21,7 @@ template <class ExecutionPolicy, class EncloserType>
 StressDiffusionCK<Inner<Parameters...>>::
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
-      constitute_kernel_(encloser.plastic_continuum_),
+      constitute_kernel_(ex_policy, encloser.plastic_continuum_),
       zeta_(encloser.dv_zeta_), phi_(encloser.dv_phi_),
       smoothing_length_(encloser.dv_smoothing_length_), sound_speed_(encloser.dv_sound_speed_),
       mass_(encloser.dv_mass_->DelegatedData(ex_policy)), Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),

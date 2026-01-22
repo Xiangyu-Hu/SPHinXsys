@@ -40,11 +40,6 @@ Matd GeneralContinuum::ConstitutiveRelationShearStress(Matd &velocity_gradient, 
     return stress_rate;
 }
 //=================================================================================================//
-GeneralContinuum::ConstituteKernel::ConstituteKernel(GeneralContinuum &encloser)
-    : E_(encloser.E_), G_(encloser.G_), K_(encloser.K_),
-      nu_(encloser.nu_), contact_stiffness_(encloser.contact_stiffness_),
-      rho0_(encloser.rho0_) {}
-//=================================================================================================//
 PlasticContinuum::PlasticContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio,
                                    Real friction_angle, Real cohesion, Real dilatancy)
     : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),
@@ -104,11 +99,6 @@ Mat3d PlasticContinuum::ReturnMapping(Mat3d &stress_tensor)
     }
     return stress_tensor;
 }
-//=================================================================================================//
-PlasticContinuum::ConstituteKernel::ConstituteKernel(PlasticContinuum &encloser)
-    : GeneralContinuum::ConstituteKernel(encloser),
-      c_(encloser.c_), phi_(encloser.phi_),
-      psi_(encloser.psi_), alpha_phi_(encloser.alpha_phi_), k_c_(encloser.k_c_) {}
 //=================================================================================================//
 J2Plasticity::J2Plasticity(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio,
                            Real yield_stress, Real hardening_modulus)

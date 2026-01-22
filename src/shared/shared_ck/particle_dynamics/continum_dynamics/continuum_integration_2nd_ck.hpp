@@ -73,7 +73,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : constitute_kernel_(encloser.plastic_continuum_),
+    : constitute_kernel_(ex_policy, encloser.plastic_continuum_),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
       velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)),

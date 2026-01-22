@@ -56,7 +56,8 @@ class GeneralContinuum : public WeaklyCompressibleFluid
     class ConstituteKernel
     {
       public:
-        ConstituteKernel(GeneralContinuum &encloser);
+        template <typename ExecutionPolicy>
+        ConstituteKernel(const ExecutionPolicy &ex_policy, GeneralContinuum &encloser);
         inline Real getYoungsModulus() { return E_; };
         inline Real getPoissonRatio() { return nu_; };
         inline Real getDensity() { return rho0_; };
@@ -96,7 +97,8 @@ class PlasticContinuum : public GeneralContinuum
     class ConstituteKernel : public GeneralContinuum::ConstituteKernel
     {
       public:
-        ConstituteKernel(PlasticContinuum &encloser);
+        template <typename ExecutionPolicy>
+        ConstituteKernel(const ExecutionPolicy &ex_policy, PlasticContinuum &encloser);
         inline Real getDPConstantsA(Real friction_angle);
         inline Real getFrictionAngle() { return phi_; };
         inline Mat3d StressTensorRate(UnsignedInt index_i, const Mat3d &velocity_gradient, const Mat3d &stress_tensor);
