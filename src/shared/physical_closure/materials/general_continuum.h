@@ -133,6 +133,17 @@ class J2Plasticity : public GeneralContinuum
     virtual Real ScalePenaltyForce(Matd &shear_stress, Real &hardening_factor);
     virtual Real HardeningFactorRate(const Matd &shear_stress, Real &hardening_factor);
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+
+    class ConstituteKernel : public GeneralContinuum::ConstituteKernel
+    {
+      public:
+        ConstituteKernel(J2Plasticity &encloser);
+        inline Mat3d StressTensorRate(UnsignedInt index_i, const Mat3d &velocity_gradient, const Mat3d &stress_tensor);
+        inline Mat3d updateStressTensor(UnsignedInt index_i, const Mat3d &prev_stress_tensor, const Mat3d &stress_tensor_increment);
+
+      protected:
+        inline Mat3d ReturnMapping(Mat3d try_stress_tensor);
+    };
 };
 } // namespace SPH
 #endif // GENERAL_CONTINUUM_H
