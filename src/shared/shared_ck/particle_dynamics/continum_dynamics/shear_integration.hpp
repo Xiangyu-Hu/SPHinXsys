@@ -18,10 +18,14 @@ ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
       xi_(xi), dv_shear_force_(this->getCurrentForce()),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_vel_gradient_(this->particles_->template getVariableByName<Matd>("VelocityGradient")),
-      dv_strain_tensor_(this->particles_->template getVariableByName<Matd>("StrainTensor")),
-      dv_shear_stress_(this->particles_->template getVariableByName<Matd>("ShearStress")),
+      dv_strain_tensor_(this->particles_->template registerStateVariable<Matd>("StrainTensor")),
+      dv_shear_stress_(this->particles_->template registerStateVariable<Matd>("ShearStress")),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-      dv_scale_penalty_force_(this->particles_->template getVariableByName<Real>("ScalePenaltyForce")) {}
+      dv_scale_penalty_force_(this->particles_->template registerStateVariable<Real>("ScalePenaltyForce"))
+{
+    this->particles_->template addEvolvingVariable<Matd>(dv_strain_tensor_);
+    this->particles_->template addEvolvingVariable<Matd>(dv_shear_stress_);
+}
 //====================================================================================//
 template <class MaterialType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
