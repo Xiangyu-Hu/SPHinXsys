@@ -3,7 +3,38 @@
  * @brief This is the case setup for plastic taylor bar using updated Lagragian SPH.
  * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu
  */
-#include "taylor_bar_UL.h"
+#include "sphinxsys.h"
+using namespace SPH;
+//----------------------------------------------------------------------
+//	Global geometry parameters.
+//----------------------------------------------------------------------
+Real total_physical_time = 6.0e-5; /**< TOTAL SIMULATION TIME*/
+Real PL = 0.00391;                 /**< X-direction domain. */
+Real PW = 0.02346;                 /**< Z-direction domain. */
+Real particle_spacing_ref = PL / 12.0;
+Real column_radius = PL;
+Vecd translation_column(0.0, 0.0, 0.5 * PW + particle_spacing_ref);
+Real SL = particle_spacing_ref * 4.0;
+Vecd halfsize_holder(3.0 * PL, 3.0 * PL, 0.5 * SL);
+Vecd translation_holder(0.0, 0.0, -0.5 * SL);
+int resolution(20);
+StdVec<Vecd> observation_location = {Vecd(0.0, 0.0, PW)};
+Vec3d domain_lower_bound(-4.0 * PL, -4.0 * PL, -SL);
+Vec3d domain_upper_bound(4.0 * PL, 4.0 * PL, 2.0 * PW);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
+//----------------------------------------------------------------------
+//	Material properties and global parameters
+//----------------------------------------------------------------------
+Real rho0_s = 2700.0; /**< Reference density. */
+Real poisson = 0.3;   /**< Poisson ratio. */
+Real Youngs_modulus = 78.2e9;
+Real yield_stress = 0.29e9;
+Real vel_0 = 373.0;
+Real U_max = vel_0;
+Real c0 = sqrt(Youngs_modulus / (3 * (1 - 2 * poisson) * rho0_s));
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
@@ -126,116 +157,149 @@ int main(int ac, char *av[])
     update_column_configuration.add(&main_methods.addCellLinkedListDynamics(column));
     update_column_configuration.add(&main_methods.addRelationDynamics(column_inner, column_wall_contact));
     auto &wall_boundary_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
+    auto &column_observer_contact_relation = main_methods.addRelationDynamics(column_observer_contact);
 
-    auto &soil_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(column);
-    auto &soil_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(column);
+    auto &column_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(column);
+    auto &column_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(column);
     auto &column_linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(column_inner);
 
-    auto &soil_acoustic_step_1st_half =
+    auto &column_acoustic_step_1st_half =
         main_methods.addInteractionDynamicsOneLevel< // to check why not use Riemann solver
-            fluid_dynamics::AcousticStep1stHalf, NoRiemannSolverCK, NoKernelCorrectionCK>(column_inner);
-    auto &soil_acoustic_step_2nd_half =
+                        fluid_dynamics::AcousticStep1stHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner)
+            .addPostContactInteraction<DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_wall_contact);
+    auto &column_acoustic_step_2nd_half =
         main_methods.addInteractionDynamicsOneLevel<
-            fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner);
+                        fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner)
+            .addPostContactInteraction<DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_wall_contact);
+    auto &column_density_regularization =
+        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(column_inner)
+            .addPostContactInteraction(column_wall_contact)
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(column);
 
-    InteractionWithUpdate<continuum_dynamics::ShearStressRelaxationHourglassControl1stHalfJ2Plasticity> column_shear_stress(column_inner);
-    InteractionDynamics<continuum_dynamics::ShearStressRelaxationHourglassControl2ndHalf> column_shear_acceleration(column_inner);
     auto &column_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(column, U_max, 0.2);
     auto &column_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(column, 0.4);
-    InteractionDynamics<DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
     //----------------------------------------------------------------------
-    //	Output
+    //	Define the methods for I/O operations, observations
+    //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    /**define simple data file input and outputs functions. */
+    auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    body_state_recorder.addToWrite<Real>(wall_boundary, "Pressure");
+    body_state_recorder.addToWrite<Real>(column, "Density");
+    auto &restart_io = main_methods.addIODynamics<RestartIOCK>(sph_system);
+    auto &record_column_mechanical_energy = main_methods.addReduceRegression<
+        RegressionTestDynamicTimeWarping, TotalKineticEnergyCK>(column);
+
     BodyStatesRecordingToVtp write_states(sph_system);
     write_states.addToWrite<Real>(column, "Pressure");
     write_states.addToWrite<Real>(column, "Density");
-    SimpleDynamics<continuum_dynamics::VonMisesStress> column_von_mises_stress(column);
-    write_states.addToWrite<Real>(column, "VonMisesStress");
-    ObservedQuantityRecording<Vecd> write_displacement("Position", column_observer_contact);
+    auto &column_observer_position =
+        main_methods.addObserveRegression<RegressionTestDynamicTimeWarping, Vecd>("Position", column_observer_contact);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_kinetic_energy(column);
     //----------------------------------------------------------------------
-    // From here the time stepping begins.
+    //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
-    corrected_configuration.exec();
+    TimeStepper &time_stepper = sph_solver.defineTimeStepper(total_physical_time);
     //----------------------------------------------------------------------
-    // Setup time-stepping related simulation parameters.
+    //	Setup for advection-step based time-stepping control
     //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
-    int ite = 0;
-    Real end_time = 6.0e-5;
-    int screen_output_interval = 100;
-    Real output_period = end_time / 60;
-    /** Statistics for computing time. */
-    TickCount t1 = TickCount::now();
-    TimeInterval interval;
+    auto &advection_step = time_stepper.addTriggerByInterval(column_advection_time_step.exec());
+    size_t advection_steps = sph_system.RestartStep() + 1;
+    int screening_interval = 100;
+    int observation_interval = screening_interval * 2;
+    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 60.0);
     //----------------------------------------------------------------------
-    //	First output before the main loop.
+    //	Prepare for the time integration loop.
     //----------------------------------------------------------------------
-    write_states.writeToFile();
-    write_displacement.writeToFile(0);
-    write_kinetic_energy.writeToFile(0);
+    wall_boundary_cell_linked_list.exec();
+    update_column_configuration.exec();
+
+    column_density_regularization.exec();
+    column_advection_step_setup.exec();
+    column_linear_correction_matrix.exec();
     //----------------------------------------------------------------------
-    // Main time-stepping loop.
+    //	First output before the integration loop.
     //----------------------------------------------------------------------
-    while (physical_time < end_time)
+    body_state_recorder.writeToFile();
+    record_column_mechanical_energy.writeToFile(advection_steps);
+    column_observer_position.writeToFile(advection_steps);
+    //----------------------------------------------------------------------
+    //	Statistics for the computing time information
+    //----------------------------------------------------------------------
+    TimeInterval interval_output;
+    TimeInterval interval_advection_step;
+    TimeInterval interval_acoustic_step;
+    TimeInterval interval_updating_configuration;
+    //----------------------------------------------------------------------
+    //	Single time stepping loop is used for multi-time stepping.
+    //----------------------------------------------------------------------
+    TickCount t0 = TickCount::now();
+    while (!time_stepper.isEndTime())
     {
-        Real integration_time = 0.0;
-        while (integration_time < output_period)
+        //----------------------------------------------------------------------
+        //	the fastest and most frequent acostic time stepping.
+        //----------------------------------------------------------------------
+        TickCount time_instance = TickCount::now();
+        Real acoustic_dt = time_stepper.incrementPhysicalTime(column_acoustic_time_step);
+        column_acoustic_step_1st_half.exec(acoustic_dt);
+        column_acoustic_step_2nd_half.exec(acoustic_dt);
+        interval_acoustic_step += TickCount::now() - time_instance;
+        //----------------------------------------------------------------------
+        //	the following are slower and less frequent time stepping.
+        //----------------------------------------------------------------------
+        if (advection_step(column_advection_time_step))
         {
-            Real relaxation_time = 0.0;
-            Real advection_dt = advection_time_step.exec();
-            column_volume_update.exec();
-            while (relaxation_time < advection_dt)
+            advection_steps++;
+            column_update_particle_position.exec();
+
+            /** Output body state during the simulation according output_interval. */
+            time_instance = TickCount::now();
+            /** screen output, write body observables and restart files  */
+            if (advection_steps % screening_interval == 0)
             {
-                Real acoustic_dt = acoustic_time_step.exec();
-                if (ite % screen_output_interval == 0)
-                {
-                    std::cout << "N=" << ite << " Time: "
-                              << physical_time << "	advection_dt: "
-                              << advection_dt << "	acoustic_dt: "
-                              << acoustic_dt << "\n";
-                }
-                column_wall_contact_force.exec(acoustic_dt);
-
-                column_pressure_relaxation.exec(acoustic_dt);
-                column_shear_stress.exec(acoustic_dt);
-                column_shear_acceleration.exec(acoustic_dt);
-                column_density_relaxation.exec(acoustic_dt);
-
-                ite++;
-                relaxation_time += acoustic_dt;
-                integration_time += acoustic_dt;
-                physical_time += acoustic_dt;
+                std::cout << std::fixed << std::setprecision(9) << "N=" << advection_steps
+                          << "	Time = " << time_stepper.getPhysicalTime() << "	"
+                          << "	advection_dt = " << advection_step.getInterval()
+                          << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
             }
-            column.updateCellLinkedList();
-            column_inner.updateConfiguration();
-            column_wall_contact.updateConfiguration();
-            corrected_configuration.exec();
-        }
-        TickCount t2 = TickCount::now();
-        column_von_mises_stress.exec();
-        write_states.writeToFile(ite);
-        write_displacement.writeToFile(ite);
-        write_kinetic_energy.writeToFile(ite);
-        TickCount t3 = TickCount::now();
-        interval += t3 - t2;
-    }
-    TickCount t4 = TickCount::now();
-    TimeInterval tt;
-    tt = t4 - t1 - interval;
-    std::cout << "Total wall_boundary time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-    if (sph_system.GenerateRegressionData())
-    {
-        write_kinetic_energy.generateDataBase(5.0e-2);
+            if (advection_steps % observation_interval == 0)
+            {
+                record_column_mechanical_energy.writeToFile(advection_steps);
+                column_observer_contact_relation.exec();
+                column_observer_position.writeToFile(advection_steps);
+            }
+
+            if (state_recording())
+            {
+                body_state_recorder.writeToFile();
+            }
+            interval_output += TickCount::now() - time_instance;
+
+            /** Particle sort, update cell linked list and configuration. */
+            time_instance = TickCount::now();
+            update_column_configuration.exec();
+            interval_updating_configuration += TickCount::now() - time_instance;
+
+            /** outer loop for dual-time criteria time-stepping. */
+            time_instance = TickCount::now();
+            column_density_regularization.exec();
+            column_advection_step_setup.exec();
+            column_linear_correction_matrix.exec();
+            interval_advection_step += TickCount::now() - time_instance;
+        }
     }
-    else
-    {
-        write_kinetic_energy.testResult();
-    }
+    //----------------------------------------------------------------------
+    // Summary for wall time used for the simulation.
+    //----------------------------------------------------------------------
+    TimeInterval tt = TickCount::now() - t0 - interval_output;
+    std::cout << "Total wall time for computation: " << tt.seconds()
+              << " seconds." << std::endl;
+    std::cout << std::fixed << std::setprecision(9) << "interval_advection_step ="
+              << interval_advection_step.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_step = "
+              << interval_acoustic_step.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
+              << interval_updating_configuration.seconds() << "\n";
 
     return 0;
 }
