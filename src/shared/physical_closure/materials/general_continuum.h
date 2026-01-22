@@ -112,7 +112,7 @@ class PlasticContinuum : public GeneralContinuum
         Real k_c_;                                                 /* Drucker-Prager's constants */
         Real stress_dimension_ = 3.0; /* plain strain condition */ // Temporarily cancel const --need to check
 
-        inline Mat3d ReturnMapping(Mat3d try_stress_tensor);
+        inline Mat3d ReturnMapping(UnsignedInt index_i, Mat3d try_stress_tensor);
     };
 };
 
@@ -138,13 +138,19 @@ class J2Plasticity : public GeneralContinuum
 
     class ConstituteKernel : public GeneralContinuum::ConstituteKernel
     {
+        Real yield_stress_;
+        Real hardening_modulus_;
+        Real sqrt_2_over_3_;
+        Real *hardening_factor_;
+
       public:
-        ConstituteKernel(J2Plasticity &encloser);
+        template <typename ExecutionPolicy>
+        ConstituteKernel(const ExecutionPolicy &ex_policy, J2Plasticity &encloser);
         inline Mat3d StressTensorRate(UnsignedInt index_i, const Mat3d &velocity_gradient, const Mat3d &stress_tensor);
         inline Mat3d updateStressTensor(UnsignedInt index_i, const Mat3d &prev_stress_tensor, const Mat3d &stress_tensor_increment);
 
       protected:
-        inline Mat3d ReturnMapping(Mat3d try_stress_tensor);
+        inline Mat3d ReturnMapping(UnsignedInt index_i, Mat3d try_shear_stress);
     };
 };
 } // namespace SPH

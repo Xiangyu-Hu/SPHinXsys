@@ -67,10 +67,10 @@ Mat3d PlasticContinuum::ConstituteKernel::StressTensorRate(
 Mat3d PlasticContinuum::ConstituteKernel::updateStressTensor(
     UnsignedInt index_i, const Mat3d &prev_stress_tensor, const Mat3d &stress_tensor_increment)
 {
-    return ReturnMapping(prev_stress_tensor + stress_tensor_increment);
+    return ReturnMapping(index_i, prev_stress_tensor + stress_tensor_increment);
 }
 //=================================================================================================//
-Mat3d PlasticContinuum::ConstituteKernel::ReturnMapping(Mat3d stress_tensor)
+Mat3d PlasticContinuum::ConstituteKernel::ReturnMapping(UnsignedInt index_i, Mat3d stress_tensor)
 {
     Real stress_tensor_I1 = stress_tensor.trace();
     if (-alpha_phi_ * stress_tensor_I1 + k_c_ < 0)
@@ -84,6 +84,53 @@ Mat3d PlasticContinuum::ConstituteKernel::ReturnMapping(Mat3d stress_tensor)
         stress_tensor = r * deviatoric_stress_tensor + (1.0 / stress_dimension_) * stress_tensor_I1 * Mat3d::Identity();
     }
     return stress_tensor;
+}
+//=================================================================================================//
+template <typename ExecutionPolicy>
+J2Plasticity::ConstituteKernel::
+    ConstituteKernel(const ExecutionPolicy &ex_policy, J2Plasticity &encloser)
+    : GeneralContinuum::ConstituteKernel(ex_policy, encloser),
+      yield_stress_(encloser.yield_stress_),
+      hardening_modulus_(encloser.hardening_modulus_),
+      sqrt_2_over_3_(encloser.sqrt_2_over_3_),
+      hardening_factor_(encloser.dv_hardening_factor_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+Mat3d J2Plasticity::ConstituteKernel::StressTensorRate(
+    UnsignedInt index_i, const Mat3d &velocity_gradient, const Mat3d &shear_stress)
+{
+    Matd strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
+    Matd deviatoric_strain_rate = strain_rate - (1.0 / (Real)Dimensions) * strain_rate.trace() * Matd::Identity();
+    Matd spin_rate = 0.5 * (velocity_gradient - velocity_gradient.transpose());
+    Matd shear_stress_rate_elastic = 2.0 * G_ * deviatoric_strain_rate + shear_stress * (spin_rate.transpose()) + spin_rate * shear_stress;
+    Real stress_tensor_J2 = 0.5 * (shear_stress.cwiseProduct(shear_stress.transpose())).sum();
+    Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor_[index_i] + yield_stress_);
+    if (f > TinyReal)
+    {
+        Real deviatoric_stress_times_strain_rate = (shear_stress.cwiseProduct(strain_rate)).sum();
+        Real lambda_dot_ = deviatoric_stress_times_strain_rate / (sqrt(2.0 * stress_tensor_J2) * (1.0 + hardening_modulus_ / (3.0 * G_)));
+        return shear_stress_rate_elastic - lambda_dot_ * (sqrt(2.0) * G_ * shear_stress / (sqrt(stress_tensor_J2)));
+    }
+    return shear_stress_rate_elastic;
+};
+//=================================================================================================//
+Mat3d J2Plasticity::ConstituteKernel::updateStressTensor(
+    UnsignedInt index_i, const Mat3d &prev_stress_tensor, const Mat3d &stress_tensor_increment)
+{
+    return ReturnMapping(index_i, prev_stress_tensor + stress_tensor_increment);
+}
+//=================================================================================================//
+Mat3d J2Plasticity::ConstituteKernel::ReturnMapping(UnsignedInt index_i, Mat3d try_shear_stress)
+{
+    Real stress_tensor_J2 = 0.5 * (try_shear_stress.cwiseProduct(try_shear_stress.transpose())).sum();
+    Real f = sqrt(2.0 * stress_tensor_J2) -
+             sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor_[index_i] + yield_stress_);
+    Real r = 1.0;
+    if (f > TinyReal)
+    {
+        r = (sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor_[index_i] + yield_stress_)) /
+            (sqrt(2.0 * stress_tensor_J2) + TinyReal);
+    }
+    return r * try_shear_stress;
 }
 //=================================================================================================//
 } // namespace SPH
