@@ -5,28 +5,28 @@
 
 namespace SPH
 {
-Real GeneralContinuum::GeneralContinuumKernel::getBulkModulus(Real youngs_modulus, Real poisson_ratio)
+Real GeneralContinuum::ConstituteKernel::getBulkModulus(Real youngs_modulus, Real poisson_ratio)
 {
     return youngs_modulus / 3.0 / (1.0 - 2.0 * poisson_ratio);
 }
 //=================================================================================================//
-Real GeneralContinuum::GeneralContinuumKernel::getShearModulus(Real youngs_modulus, Real poisson_ratio)
+Real GeneralContinuum::ConstituteKernel::getShearModulus(Real youngs_modulus, Real poisson_ratio)
 {
     return 0.5 * youngs_modulus / (1.0 + poisson_ratio);
 }
 //=================================================================================================//
-Real GeneralContinuum::GeneralContinuumKernel::getLambda(Real youngs_modulus, Real poisson_ratio)
+Real GeneralContinuum::ConstituteKernel::getLambda(Real youngs_modulus, Real poisson_ratio)
 {
     return nu_ * youngs_modulus / (1.0 + poisson_ratio) / (1.0 - 2.0 * poisson_ratio);
 }
 //=================================================================================================//
-//=================================================================================================//
-Real PlasticContinuum::PlasticKernel::getDPConstantsA(Real friction_angle)
+Real PlasticContinuum::ConstituteKernel::getDPConstantsA(Real friction_angle)
 {
     return tan(friction_angle) / sqrt(9.0 + 12.0 * tan(friction_angle) * tan(friction_angle));
 };
 //=================================================================================================//
-Mat3d PlasticContinuum::PlasticKernel::ConstitutiveRelation(Mat3d &velocity_gradient, Mat3d &stress_tensor)
+Mat3d PlasticContinuum::ConstituteKernel::StressTensorRate(
+    UnsignedInt index_i, const Mat3d &velocity_gradient, const Mat3d &stress_tensor)
 {
     Mat3d strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     Mat3d spin_rate = 0.5 * (velocity_gradient - velocity_gradient.transpose());
@@ -50,7 +50,13 @@ Mat3d PlasticContinuum::PlasticKernel::ConstitutiveRelation(Mat3d &velocity_grad
     return stress_rate_temp;
 };
 //=================================================================================================//
-Mat3d PlasticContinuum::PlasticKernel::ReturnMapping(Mat3d &stress_tensor)
+Mat3d PlasticContinuum::ConstituteKernel::updateStressTensor(
+    UnsignedInt index_i, const Mat3d &prev_stress_tensor, const Mat3d &stress_tensor_increment)
+{
+    return ReturnMapping(prev_stress_tensor + stress_tensor_increment);
+}
+//=================================================================================================//
+Mat3d PlasticContinuum::ConstituteKernel::ReturnMapping(Mat3d stress_tensor)
 {
     Real stress_tensor_I1 = stress_tensor.trace();
     if (-alpha_phi_ * stress_tensor_I1 + k_c_ < 0)
@@ -65,5 +71,6 @@ Mat3d PlasticContinuum::PlasticKernel::ReturnMapping(Mat3d &stress_tensor)
     }
     return stress_tensor;
 }
+//=================================================================================================//
 } // namespace SPH
 #endif // GENERAL_CONTINUUM_HPP

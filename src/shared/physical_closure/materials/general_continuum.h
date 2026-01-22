@@ -53,10 +53,10 @@ class GeneralContinuum : public WeaklyCompressibleFluid
     Real ContactStiffness() { return contact_stiffness_; };
     virtual Matd ConstitutiveRelationShearStress(Matd &velocity_gradient, Matd &shear_stress);
 
-    class GeneralContinuumKernel
+    class ConstituteKernel
     {
       public:
-        GeneralContinuumKernel(GeneralContinuum &encloser);
+        ConstituteKernel(GeneralContinuum &encloser);
         inline Real getYoungsModulus() { return E_; };
         inline Real getPoissonRatio() { return nu_; };
         inline Real getDensity() { return rho0_; };
@@ -93,14 +93,14 @@ class PlasticContinuum : public GeneralContinuum
     virtual Mat3d ConstitutiveRelation(Mat3d &velocity_gradient, Mat3d &stress_tensor);
     virtual Mat3d ReturnMapping(Mat3d &stress_tensor);
 
-    class PlasticKernel : public GeneralContinuum::GeneralContinuumKernel
+    class ConstituteKernel : public GeneralContinuum::ConstituteKernel
     {
       public:
-        PlasticKernel(PlasticContinuum &encloser);
+        ConstituteKernel(PlasticContinuum &encloser);
         inline Real getDPConstantsA(Real friction_angle);
-        inline Mat3d ConstitutiveRelation(Mat3d &velocity_gradient, Mat3d &stress_tensor);
-        inline Mat3d ReturnMapping(Mat3d &stress_tensor);
         inline Real getFrictionAngle() { return phi_; };
+        inline Mat3d StressTensorRate(UnsignedInt index_i, const Mat3d &velocity_gradient, const Mat3d &stress_tensor);
+        inline Mat3d updateStressTensor(UnsignedInt index_i, const Mat3d &prev_stress_tensor, const Mat3d &stress_tensor_increment);
 
       protected:
         Real c_;                                                   /* cohesion  */
@@ -109,6 +109,8 @@ class PlasticContinuum : public GeneralContinuum
         Real alpha_phi_;                                           /* Drucker-Prager's constants */
         Real k_c_;                                                 /* Drucker-Prager's constants */
         Real stress_dimension_ = 3.0; /* plain strain condition */ // Temporarily cancel const --need to check
+
+        inline Mat3d ReturnMapping(Mat3d try_stress_tensor);
     };
 };
 
@@ -118,6 +120,7 @@ class J2Plasticity : public GeneralContinuum
     Real yield_stress_;
     Real hardening_modulus_;
     const Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
+    DiscreteVariable<Real> *dv_hardening_factor_;
 
   public:
     explicit J2Plasticity(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio,
@@ -129,6 +132,7 @@ class J2Plasticity : public GeneralContinuum
     virtual Matd ReturnMappingShearStress(Matd &shear_stress, Real &hardening_factor);
     virtual Real ScalePenaltyForce(Matd &shear_stress, Real &hardening_factor);
     virtual Real HardeningFactorRate(const Matd &shear_stress, Real &hardening_factor);
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
 };
 } // namespace SPH
 #endif // GENERAL_CONTINUUM_H
