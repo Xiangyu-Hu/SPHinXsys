@@ -67,10 +67,10 @@ Mat3d PlasticContinuum::ConstituteKernel::StressTensorRate(
 Mat3d PlasticContinuum::ConstituteKernel::updateStressTensor(
     UnsignedInt index_i, const Mat3d &prev_stress_tensor, const Mat3d &stress_tensor_increment)
 {
-    return ReturnMapping(prev_stress_tensor + stress_tensor_increment);
+    return ReturnMapping(index_i, prev_stress_tensor + stress_tensor_increment);
 }
 //=================================================================================================//
-Mat3d PlasticContinuum::ConstituteKernel::ReturnMapping(Mat3d stress_tensor)
+Mat3d PlasticContinuum::ConstituteKernel::ReturnMapping(UnsignedInt index_i, Mat3d stress_tensor)
 {
     Real stress_tensor_I1 = stress_tensor.trace();
     if (-alpha_phi_ * stress_tensor_I1 + k_c_ < 0)

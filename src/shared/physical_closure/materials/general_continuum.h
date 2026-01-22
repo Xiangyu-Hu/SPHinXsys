@@ -112,7 +112,7 @@ class PlasticContinuum : public GeneralContinuum
         Real k_c_;                                                 /* Drucker-Prager's constants */
         Real stress_dimension_ = 3.0; /* plain strain condition */ // Temporarily cancel const --need to check
 
-        inline Mat3d ReturnMapping(Mat3d try_stress_tensor);
+        inline Mat3d ReturnMapping(UnsignedInt index_i, Mat3d try_stress_tensor);
     };
 };
 
