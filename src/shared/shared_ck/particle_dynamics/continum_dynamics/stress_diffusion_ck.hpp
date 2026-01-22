@@ -21,7 +21,7 @@ template <class ExecutionPolicy, class EncloserType>
 StressDiffusionCK<Inner<Parameters...>>::
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
-      constitute_kernel_(ex_policy, encloser.plastic_continuum_),
+      constitute_(ex_policy, encloser.plastic_continuum_),
       zeta_(encloser.dv_zeta_), phi_(encloser.dv_phi_),
       smoothing_length_(encloser.dv_smoothing_length_), sound_speed_(encloser.dv_sound_speed_),
       mass_(encloser.dv_mass_->DelegatedData(ex_policy)), Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
@@ -36,7 +36,7 @@ void StressDiffusionCK<Inner<Parameters...>>::
 {
     Vecd acc_prior_i = force_prior_[index_i] / this->mass_[index_i];
     Real gravity = abs(acc_prior_i(1, 0));
-    Real density = constitute_kernel_.getDensity();
+    Real density = constitute_.getDensity();
     Mat3d diffusion_stress_rate = Mat3d::Zero();
     Mat3d diffusion_stress = Mat3d::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)

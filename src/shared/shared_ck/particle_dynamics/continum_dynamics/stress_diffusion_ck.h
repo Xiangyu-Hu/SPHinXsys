@@ -62,7 +62,7 @@ class StressDiffusionCK<Inner<Parameters...>> : public PlasticAcousticStep<Inter
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        ConstituteKernel constitute_kernel_;
+        ConstituteKernel constitute_;
         Real zeta_, phi_;
         Real smoothing_length_, sound_speed_;
         Real *mass_, *Vol_;

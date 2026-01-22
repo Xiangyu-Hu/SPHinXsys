@@ -82,7 +82,7 @@ class AccDeviatoricPlasticStrainCK : public BaseDerivedVariable<Real>
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
-        ConstituteKernel constitute_kernel_;
+        ConstituteKernel constitute_;
         Mat3d *stress_tensor_3D_, *strain_tensor_3D_;
         Real *derived_variable_;
         Real E_, nu_;
