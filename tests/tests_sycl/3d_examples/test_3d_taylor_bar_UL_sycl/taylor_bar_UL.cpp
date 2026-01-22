@@ -163,9 +163,11 @@ int main(int ac, char *av[])
     auto &column_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(column);
     auto &column_linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(column_inner);
 
+    ParticleDynamicsGroup column_shear_force;
+    column_shear_force.add(&main_methods.addInteractionDynamics<LinearGradient, Vecd>(column_inner, "Velocity"));
+    column_shear_force.add(&main_methods.addInteractionDynamicsOneLevel<continuum_dynamics::ShearIntegration, J2Plasticity>(column_inner));
+
     ParticleDynamicsGroup column_acoustic_step_1st_half;
-    column_acoustic_step_1st_half.add(
-        &main_methods.addInteractionDynamics<LinearGradient, Vecd>(column_inner, "Velocity"));
     column_acoustic_step_1st_half.add(
         &main_methods.addInteractionDynamicsOneLevel< // to check why not use Riemann solver
                          fluid_dynamics::AcousticStep1stHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner)
@@ -237,6 +239,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         TickCount time_instance = TickCount::now();
         Real acoustic_dt = time_stepper.incrementPhysicalTime(column_acoustic_time_step);
+        column_shear_force.exec(acoustic_dt);
         column_acoustic_step_1st_half.exec(acoustic_dt);
         column_acoustic_step_2nd_half.exec(acoustic_dt);
         interval_acoustic_step += TickCount::now() - time_instance;

@@ -95,8 +95,8 @@ J2Plasticity::ConstituteKernel::
       sqrt_2_over_3_(encloser.sqrt_2_over_3_),
       hardening_factor_(encloser.dv_hardening_factor_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-Mat3d J2Plasticity::ConstituteKernel::StressTensorRate(
-    UnsignedInt index_i, const Mat3d &velocity_gradient, const Mat3d &shear_stress)
+Matd J2Plasticity::ConstituteKernel::ShearStressRate(
+    UnsignedInt index_i, const Matd &velocity_gradient, const Matd &shear_stress)
 {
     Matd strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     Matd deviatoric_strain_rate = strain_rate - (1.0 / (Real)Dimensions) * strain_rate.trace() * Matd::Identity();
@@ -113,24 +113,36 @@ Mat3d J2Plasticity::ConstituteKernel::StressTensorRate(
     return shear_stress_rate_elastic;
 };
 //=================================================================================================//
-Mat3d J2Plasticity::ConstituteKernel::updateStressTensor(
-    UnsignedInt index_i, const Mat3d &prev_stress_tensor, const Mat3d &stress_tensor_increment)
+Matd J2Plasticity::ConstituteKernel::updateShearStress(
+    UnsignedInt index_i, const Matd &try_shear_stress)
 {
-    return ReturnMapping(index_i, prev_stress_tensor + stress_tensor_increment);
+    Real hardening_factor_increment = HardeningFactorRate(try_shear_stress, hardening_factor_[index_i]);
+    hardening_factor_[index_i] += sqrt(2.0 / 3.0) * hardening_factor_increment;
+    return ReturnMapping(index_i, try_shear_stress);
 }
 //=================================================================================================//
-Mat3d J2Plasticity::ConstituteKernel::ReturnMapping(UnsignedInt index_i, Mat3d try_shear_stress)
+Real J2Plasticity::ConstituteKernel::ScalePenaltyForce(UnsignedInt index_i, const Matd &try_shear_stress)
 {
     Real stress_tensor_J2 = 0.5 * (try_shear_stress.cwiseProduct(try_shear_stress.transpose())).sum();
-    Real f = sqrt(2.0 * stress_tensor_J2) -
-             sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor_[index_i] + yield_stress_);
-    Real r = 1.0;
-    if (f > TinyReal)
-    {
-        r = (sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor_[index_i] + yield_stress_)) /
-            (sqrt(2.0 * stress_tensor_J2) + TinyReal);
-    }
-    return r * try_shear_stress;
+    Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor_[index_i] + yield_stress_);
+    return (f > TinyReal)
+               ? (sqrt_2_over_3_ *
+                  (hardening_modulus_ * hardening_factor_[index_i] + yield_stress_)) /
+                     (sqrt(2.0 * stress_tensor_J2) + TinyReal)
+               : 1.0;
+}
+//=================================================================================================//
+Matd J2Plasticity::ConstituteKernel::ReturnMapping(UnsignedInt index_i, Matd try_shear_stress)
+{
+    return ScalePenaltyForce(index_i, try_shear_stress) * try_shear_stress;
+}
+//=================================================================================================//
+Real J2Plasticity::ConstituteKernel::HardeningFactorRate(
+    const Matd &shear_stress, Real &hardening_factor)
+{
+    Real stress_tensor_J2 = 0.5 * (shear_stress.cwiseProduct(shear_stress.transpose())).sum();
+    Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_);
+    return (f > TinyReal) ? 0.5 * f / (G_ + hardening_modulus_ / 3.0) : 0.0;
 }
 //=================================================================================================//
 } // namespace SPH

@@ -11,34 +11,75 @@ namespace continuum_dynamics
 {
 //====================================================================================//
 template <class MaterialType, typename... Parameters>
-void ShearForce<Inner<WithInitialization, MaterialType, Parameters...>>::
-    InitializeKernel::update(size_t index_i, Real dt)
+ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
+    ShearIntegration(Inner<Parameters...> &inner_relation, Real xi)
+    : BaseInteraction(inner_relation), ForcePriorCK(this->particles_, "ShearForce"),
+      materal_(DynamicCast<MaterialType>(this, this->sph_body_->getBaseMaterial())),
+      xi_(xi), dv_shear_force_(this->getCurrentForce()),
+      dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
+      dv_vel_gradient_(this->particles_->template getVariableByName<Matd>("VelocityGradient")),
+      dv_strain_tensor_(this->particles_->template getVariableByName<Matd>("StrainTensor")),
+      dv_shear_stress_(this->particles_->template getVariableByName<Matd>("ShearStress")),
+      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
+      dv_scale_penalty_force_(this->particles_->template getVariableByName<Real>("ScalePenaltyForce")) {}
+//====================================================================================//
+template <class MaterialType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::InitializeKernel::
+    InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : constitute_(ex_policy, encloser.materal_), xi_(encloser.xi_),
+      vel_gradient_(encloser.dv_vel_gradient_->DelegatedData(ex_policy)),
+      strain_tensor_(encloser.dv_strain_tensor_->DelegatedData(ex_policy)),
+      shear_stress_(encloser.dv_shear_stress_->DelegatedData(ex_policy)),
+      scale_penalty_force_(encloser.dv_scale_penalty_force_->DelegatedData(ex_policy)) {}
+//====================================================================================//
+template <class MaterialType, typename... Parameters>
+void ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
+    InitializeKernel::initialize(size_t index_i, Real dt)
 {
-    Matd shear_stress_rate = J2_plasticity_.ConstitutiveRelationShearStressWithHardening(
-        velocity_gradient_[index_i], shear_stress_[index_i], hardening_factor_[index_i]);
-    Matd shear_stress_try = shear_stress_[index_i] + shear_stress_rate * dt;
-    Real hardening_factor_increment = J2_plasticity_.HardeningFactorRate(shear_stress_try, hardening_factor_[index_i]);
-    hardening_factor_[index_i] += sqrt(2.0 / 3.0) * hardening_factor_increment;
-    scale_penalty_force_[index_i] = xi_ * J2_plasticity_.ScalePenaltyForce(shear_stress_try, hardening_factor_[index_i]);
-    shear_stress_[index_i] = J2_plasticity_.ReturnMappingShearStress(shear_stress_try, hardening_factor_[index_i]);
-    Matd strain_rate = 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_i].transpose());
+    Matd strain_rate = 0.5 * (vel_gradient_[index_i] + vel_gradient_[index_i].transpose());
     strain_tensor_[index_i] += strain_rate * dt;
+
+    Matd shear_stress_rate =
+        constitute_.ShearStressRate(index_i, vel_gradient_[index_i], shear_stress_[index_i]);
+    Matd shear_stress_try = shear_stress_[index_i] + shear_stress_rate * dt;
+    scale_penalty_force_[index_i] = xi_ * constitute_.ScalePenaltyForce(index_i, shear_stress_try);
+    shear_stress_[index_i] = constitute_.updateShearStress(index_i, shear_stress_try);
 }
 //====================================================================================//
-void ShearStressRelaxationHourglassControl1stHalf::interaction(size_t index_i, Real dt)
+template <class MaterialType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseInteraction::InteractKernel(ex_policy, encloser),
+      G_(encloser.materal_.ShearModulus()),
+      shear_force_(encloser.dv_shear_force_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      vel_gradient_(encloser.dv_vel_gradient_->DelegatedData(ex_policy)),
+      shear_stress_(encloser.dv_shear_stress_->DelegatedData(ex_policy)),
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      scale_penalty_force_(encloser.dv_scale_penalty_force_->DelegatedData(ex_policy)) {}
+//====================================================================================//
+template <class MaterialType, typename... Parameters>
+void ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
+    InteractKernel::interact(size_t index_i, Real dt)
 {
-    Matd velocity_gradient = Matd::Zero();
-    Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-    Vecd vel_i = vel_[index_i];
-    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    Vecd sum = Vecd::Zero();
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
-        size_t index_j = inner_neighborhood.j_[n];
-        Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
-        Vecd &e_ij = inner_neighborhood.e_ij_[n];
-        Matd velocity_gradient_ij = -(vel_i - vel_[index_j]) * (B_[index_i] * e_ij * dW_ijV_j).transpose();
-        velocity_gradient += velocity_gradient_ij;
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
+        Vecd e_ij = this->e_ij(index_i, index_j);
+        Vecd vec_r_ij = this->vec_r_ij(index_i, index_j);
+
+        sum += (shear_stress_[index_i] + shear_stress_[index_j]) * dW_ijV_j * e_ij;
+        Vecd v_ij_correction = vel_[index_i] - vel_[index_j] -
+                               0.5 * (vel_gradient_[index_i] + vel_gradient_[index_j]) * vec_r_ij;
+        Real penalty_scale = 0.5 * (scale_penalty_force_[index_i] + scale_penalty_force_[index_j]);
+        sum += penalty_scale * G_ * v_ij_correction.dot(e_ij) * vec_r_ij *
+               dW_ijV_j * dt / vec_r_ij.squaredNorm();
     }
-    velocity_gradient_[index_i] = velocity_gradient;
+    shear_force_[index_i] = sum * Vol_[index_i];
 }
 //=================================================================================================//
 } // namespace continuum_dynamics

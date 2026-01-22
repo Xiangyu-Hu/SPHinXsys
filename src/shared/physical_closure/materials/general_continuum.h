@@ -46,6 +46,7 @@ class GeneralContinuum : public WeaklyCompressibleFluid
     virtual ~GeneralContinuum() {};
     Real getYoungsModulus() { return E_; };
     Real getPoissonRatio() { return nu_; };
+    Real ShearModulus() { return G_; };
     Real getDensity() { return rho0_; };
     Real getBulkModulus(Real youngs_modulus, Real poisson_ratio);
     Real getShearModulus(Real youngs_modulus, Real poisson_ratio);
@@ -138,19 +139,21 @@ class J2Plasticity : public GeneralContinuum
 
     class ConstituteKernel : public GeneralContinuum::ConstituteKernel
     {
+      public:
+        template <typename ExecutionPolicy>
+        ConstituteKernel(const ExecutionPolicy &ex_policy, J2Plasticity &encloser);
+        inline Matd ShearStressRate(UnsignedInt index_i, const Matd &velocity_gradient, const Matd &shear_stress);
+        inline Matd updateShearStress(UnsignedInt index_i, const Matd &try_shear_stress);
+        inline Real ScalePenaltyForce(UnsignedInt index_i, const Matd &try_shear_stress);
+
+      protected:
         Real yield_stress_;
         Real hardening_modulus_;
         Real sqrt_2_over_3_;
         Real *hardening_factor_;
 
-      public:
-        template <typename ExecutionPolicy>
-        ConstituteKernel(const ExecutionPolicy &ex_policy, J2Plasticity &encloser);
-        inline Mat3d StressTensorRate(UnsignedInt index_i, const Mat3d &velocity_gradient, const Mat3d &stress_tensor);
-        inline Mat3d updateStressTensor(UnsignedInt index_i, const Mat3d &prev_stress_tensor, const Mat3d &stress_tensor_increment);
-
-      protected:
-        inline Mat3d ReturnMapping(UnsignedInt index_i, Mat3d try_shear_stress);
+        inline Matd ReturnMapping(UnsignedInt index_i, Matd try_shear_stress);
+        inline Real HardeningFactorRate(const Matd &shear_stress, Real &hardening_factor);
     };
 };
 } // namespace SPH

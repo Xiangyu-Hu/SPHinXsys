@@ -30,27 +30,28 @@
 #define SHEAR_INTEGRATION_H
 
 #include "acoustic_step_1st_half.h"
-#include "general_continuum.h"
+#include "force_prior_ck.h"
 #include "general_continuum.hpp"
 #include "general_gradient.h"
+
 namespace SPH
 {
 namespace continuum_dynamics
 {
 
 template <typename...>
-class ShearForce;
+class ShearIntegration;
 
 template <class MaterialType, typename... Parameters>
-class ShearForce<Inner<WithInitialization, MaterialType, Parameters...>>
-    : public Interaction<Inner<Parameters...>>
+class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
+    : public Interaction<Inner<Parameters...>>, public ForcePriorCK
 {
     using BaseInteraction = Interaction<Inner<Parameters...>>;
-    using MaterialKernel = typename MaterialType::MaterialKernel;
+    using ConstituteKernel = typename MaterialType::ConstituteKernel;
 
   public:
-    explicit ShearForce(Inner<Parameters...> &inner_relation);
-    virtual ~ShearForce() {};
+    explicit ShearIntegration(Inner<Parameters...> &inner_relation, Real xi = 2.0);
+    virtual ~ShearIntegration() {};
 
     class InitializeKernel
     {
@@ -60,8 +61,10 @@ class ShearForce<Inner<WithInitialization, MaterialType, Parameters...>>
         void initialize(size_t index_i, Real dt = 0.0);
 
       protected:
-        MaterialKernel material_;
-        Matd *velocity_gradient_, *shear_stress_;
+        ConstituteKernel constitute_;
+        Real xi_;
+        Matd *vel_gradient_, *strain_tensor_, *shear_stress_;
+        Real *scale_penalty_force_;
     };
 
     class InteractKernel : public BaseInteraction::InteractKernel
@@ -72,11 +75,18 @@ class ShearForce<Inner<WithInitialization, MaterialType, Parameters...>>
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        Matd *shear_stress_;
-        Real *scale_penalty_force_, xi_;
+        Real G_;
+        Vecd *shear_force_, *vel_;
+        Matd *vel_gradient_, *shear_stress_;
+        Real *Vol_, *scale_penalty_force_;
     };
 
   protected:
+    MaterialType &materal_;
+    Real xi_;
+    DiscreteVariable<Vecd> *dv_shear_force_, *dv_vel_;
+    DiscreteVariable<Matd> *dv_vel_gradient_, *dv_strain_tensor_, *dv_shear_stress_;
+    DiscreteVariable<Real> *dv_Vol_, *dv_scale_penalty_force_;
 };
 } // namespace continuum_dynamics
 } // namespace SPH
