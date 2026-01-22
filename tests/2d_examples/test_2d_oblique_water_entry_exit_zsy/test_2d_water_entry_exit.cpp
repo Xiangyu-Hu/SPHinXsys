@@ -31,13 +31,13 @@ Real DL = 400.0 * cylinder_radius;                          /**< Water tank leng
 Real DH = 500.0 * cylinder_radius;                          /**< Water tank height. */
 Real LL = DL;                                             /**< Water column length. */
 Real LH = 200.0 * cylinder_radius;                          /**< Water column height. */
-Real particle_spacing_ref = 1.0 * cylinder_radius / 8.0; /**< Initial reference particle spacing. */
+Real particle_spacing_ref = 1.0 * cylinder_radius / 5; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;                       /**< Thickness of tank wall. */
 
 Vec2d cylinder_center(0.05 * DL, LH + 0.2);               /**< Location of the cylinder center. */
 
 // 初始速度参数
-Real initial_speed =70;                         /**< Initial velocity magnitude (m/s). */
+Real initial_speed =90;                         /**< Initial velocity magnitude (m/s). */
 Real initial_angle =-20 * Pi / 180.0;          /**< Initial velocity angle (radians, negative = downward). */
 Real initial_rotation_angle = -20 * Pi / 180.0; /**< Initial body rotation (radians). */
 Real initial_angular_velocity = 0.0; // 可选：初始角速度（rad/s）（如果需要旋转入水，可设置）
@@ -47,8 +47,7 @@ Real initial_angular_velocity = 0.0; // 可选：初始角速度（rad/s）（�
 Real rho0_f = 1.0;     /**< Fluid density. */
 Real rho0_s = 2.063;   /**< Cylinder density. */
 Real gravity_g = 9.81; /**< Gravity. */
- Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
-//Real U_max = 100;        /**< Characteristic velocity. */
+Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 Real mu_f = 8.9e-7;      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
@@ -124,7 +123,7 @@ std::vector<Vecd> getScaledRawPoints()
 }
 
 //----------------------------------------------------------------------
-// 计算前段中心（原始2.780,0）的初始位置（缩放+旋转+平移）
+// 计算前段中心（入水点）的初始位置（缩放+旋转+平移）
 //----------------------------------------------------------------------
 Vecd calculateFrontCenterPosition()
 {
@@ -165,8 +164,8 @@ Real transformGlobalForceToLocalX(const Vecd &global_force, Real rotation_angle)
 
 Real getCylinderRotationAngle(SimTK::MobilizedBody::Planar &tethered_spot, const SimTK::State &state)
 {
-    // 方法1：从关节Q获取（可能有问题）
-    Real angle_from_q = tethered_spot.getQ(state)[2];
+    //// 方法1：从关节Q获取（可能有问题）
+    //Real angle_from_q = tethered_spot.getQ(state)[2];
 
     // 方法2：从旋转矩阵获取（更可靠）
     SimTK::Rotation rot = tethered_spot.getBodyRotation(state);
@@ -174,12 +173,12 @@ Real getCylinderRotationAngle(SimTK::MobilizedBody::Planar &tethered_spot, const
     Real angle_from_rot = angles[2]; // 绕Z轴的旋转
 
     // 比较两种方法
-    if (fabs(angle_from_q - angle_from_rot) > 1e-4)
-    {
-        std::cout << "Warning: The rotation angles obtained by the two methods are inconsistent!" << std::endl;
-        std::cout << "  Q[2]: " << angle_from_q * 180.0 / Pi << "degree" << std::endl;
-        std::cout << "  angle_from_rot: " << angle_from_rot * 180.0 / Pi << "degree" << std::endl;
-    }
+    //if (fabs(angle_from_q - angle_from_rot) > 1e-4)
+    //{
+    //    std::cout << "Warning: The rotation angles obtained by the two methods are inconsistent!" << std::endl;
+    //    std::cout << "  Q[2]: " << angle_from_q * 180.0 / Pi << "degree" << std::endl;
+    //    std::cout << "  angle_from_rot: " << angle_from_rot * 180.0 / Pi << "degree" << std::endl;
+    //}
 
     return angle_from_rot; // 使用旋转矩阵的角度
 }
@@ -464,75 +463,6 @@ class CylinderInitialVelocity : public LocalDynamics
     Real total_mass_;
 };
 
-////----------------------------------------------------------------------
-//// 动态Q[2]修正函数定义
-////----------------------------------------------------------------------
-void dynamicQ2Correction(SimTK::State &state,
-                         Real initial_rotation_angle,
-                         Real &last_corrected_angle,
-                         Real &correction_phase,
-                         SimTK::MobilizedBody::Planar &tethered_spot,
-                         SimTK::MultibodySystem &MBsystem)
-{
-    // 1. 获取各种角度
-    SimTK::Rotation rot = tethered_spot.getBodyRotation(state);
-    SimTK::Vec3 body_x_axis = rot.col(0);
-    Real angle_from_rot = atan2(body_x_axis[1], body_x_axis[0]);
-    Real current_q2 = state.getQ()[2];
-
-    // 2. 获取物理信息
-    Real angular_velocity = tethered_spot.getU(state)[0];
-    Real angular_acceleration = 0.0;
-    try
-    {
-        angular_acceleration = tethered_spot.getUDot(state)[0];
-    }
-    catch (...)
-    {
-        angular_acceleration = 0.0;
-    }
-
-    // 3. 判断是否应该修正
-    bool should_correct = false;
-    Real correction_strength = 0.0;
-
-    // 条件1：角速度和角加速度都很小（没有真实旋转）
-    if (fabs(angular_velocity) < 0.01 && fabs(angular_acceleration) < 0.01)
-    {
-        should_correct = true;
-        correction_strength = 0.3;
-    }
-    // 条件2：角度漂移很大
-    else if (fabs(current_q2 - angle_from_rot) > 0.2)
-    {
-        should_correct = true;
-        correction_strength = 0.01;
-    }
-    // 条件3：周期性修正（每100步修正一次）
-    else if (correction_phase++ > 50)
-    {
-        should_correct = true;
-        correction_strength = 0.001;
-        correction_phase = 0;
-    }
-
-    // 4. 执行修正
-    if (should_correct)
-    {
-        Real target_angle = angle_from_rot + initial_rotation_angle;
-        Real corrected_q2 = (1.0 - correction_strength) * current_q2 +
-                            correction_strength * target_angle;
-
-        state.updQ()[2] = corrected_q2;
-        MBsystem.realize(state, SimTK::Stage::Velocity);
-
-        last_corrected_angle = corrected_q2;
-
-        std::cout << "current Q[2]=" << current_q2 * 180.0 / Pi
-                  << "angle_from_rot=" << angle_from_rot * 180.0 / Pi
-                  << "corrected_q2" << corrected_q2 * 180.0 / Pi << "°" << std::endl;
-    }
-}
 
 
 //----------------------------------------------------------------------
@@ -543,7 +473,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.1. 构建SPH系统
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+    BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.setRunParticleRelaxation(false);
     sph_system.setReloadParticles(true);
@@ -585,8 +515,6 @@ int main(int ac, char *av[])
     // 前段中心观测体（仿照OWSC的ObserverBody）
     ObserverBody front_center_observer(sph_system, "FrontCenterObserver");
     front_center_observer.generateParticles<ObserverParticles>(front_center_observer_location);
-
-
 
 
     //----------------------------------------------------------------------
@@ -721,10 +649,8 @@ int main(int ac, char *av[])
     Vecd tethering_point = actual_centroid; // 使用实际计算的质心
     SimTK::MassProperties cylinder_mass_props(
         cylinder_constraint_area.body_part_mass_properties_->getMass(),       // 保留原质量
-        //actual_total_mass,                                                    // 总质量1.855kg
         SimTKVec3(tethering_point[0], tethering_point[1], 0.0),               // 强制质心为tethering_point
         cylinder_constraint_area.body_part_mass_properties_->getUnitInertia() // 保留原转动惯量
-       /* SimTK::Inertia(Ix, Iy, Iz) */
     );
 
     SimTK::Body::Rigid tethered_spot_info(cylinder_mass_props);
@@ -774,53 +700,10 @@ int main(int ac, char *av[])
     integ.setAllowInterpolation(false);
     integ.initialize(state);
 
-    // 在Simbody初始化后，立即检查
-    {
-        SimTK::State initState = integ.getState();
-        Real init_angle_simbody = tethered_spot.getQ(initState)[2];
-        std::cout << "initial Simbody rotation_angle: " << init_angle_simbody * 180.0 / Pi << "degree" << std::endl;
-        std::cout << "expect initial_rotation_angle: " << initial_rotation_angle * 180.0 / Pi << "degree" << std::endl;
-
-
-        // 在Simbody初始化后，添加验证
-        {
-            // 获取初始状态
-            SimTK::State initialState = integ.getState();
-
-            // 输出完整的Q向量
-            std::cout << "initial Simbody Q: " << std::endl;
-            for (int i = 0; i < 3; ++i)
-            {
-                std::cout << "  Q[" << i << "] = " << initialState.getQ()[i] << std::endl;
-            }
-
-            // 输出完整的U向量
-            std::cout << "initial Simbody U: " << std::endl;
-            for (int i = 0; i < 3; ++i)
-            {
-                std::cout << "  U[" << i << "] = " << initialState.getU()[i] << std::endl;
-            }
-
-            // 验证旋转角度
-            Real initial_simbody_angle = initialState.getQ()[2];
-            std::cout << "initial Simbody rotation_angle: " << initial_simbody_angle * 180.0 / Pi << "degree" << std::endl;
-            std::cout << "expect initial_rotation_angle: " << initial_rotation_angle * 180.0 / Pi << "degree" << std::endl;
-            std::cout << "difference value: " << (initial_simbody_angle - initial_rotation_angle) * 180.0 / Pi << "degree" << std::endl;
-
-            // 可能的问题：Planar关节的旋转中心可能不是我们期望的
-            // 让我们检查Simbody的几何
-            std::cout << "Simbody tethering_point: (" << tethering_point[0] << ", " << tethering_point[1] << ")" << std::endl;
-            std::cout << "cylinder_cente: (" << cylinder_center[0] << ", " << cylinder_center[1] << ")" << std::endl;
-            std::cout << "displacement0: (" << displacement0[0] << ", " << displacement0[1] << ")" << std::endl;
-
-        }
-    }
+ 
     // 在 main 函数开始处，Simbody 初始化后，添加修正相关变量
         static Real last_corrected_angle = initial_rotation_angle; // 初始化为初始旋转角度
         static Real correction_phase = 0;
-
-        
-
 
 
     //----------------------------------------------------------------------
@@ -854,8 +737,7 @@ int main(int ac, char *av[])
 
     // 新增：记录前段中心观测点的位置（仿照OWSC的write_flap_pin_data）
     ObservedQuantityRecording<Vecd> write_front_center_position("Position", front_center_observer_contact);
-    //RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_cylinder_displacement("Position", cylinder_observer_contact);
-    //RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_cylinder_wetting("Phi", wetting_observer_contact);
+
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -883,7 +765,7 @@ int main(int ac, char *av[])
     int observation_sample_interval = screen_output_interval * 0.1;
     int restart_output_interval = screen_output_interval * 10;
     Real end_time = 0.02;
-    Real output_interval = end_time /50.0;
+    Real output_interval = end_time /100.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -904,10 +786,6 @@ int main(int ac, char *av[])
 
     // 创建自定义的汇总输出对象
     SummaryOutput summary_output("./output/SummaryOutput.dat");
-
-
-
-
 
 
 
@@ -949,15 +827,6 @@ int main(int ac, char *av[])
                 integ.stepBy(dt);
                 SimTK::State &state_for_update = integ.updAdvancedState();
 
-                //    // ===== 在这里添加Q[2]修正 =====
-                //dynamicQ2Correction(state_for_update,
-                //                    initial_rotation_angle,
-                //                    last_corrected_angle,
-                //                    correction_phase,
-                //                    tethered_spot,
-                //                    MBsystem);
-
-
 
                 force_on_bodies.clearAllBodyForces(state_for_update);
                 force_on_bodies.setOneBodyForce(state_for_update, tethered_spot, force_on_tethered_spot.exec());
@@ -979,24 +848,12 @@ int main(int ac, char *av[])
                           << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
 
-                //// 新增：统计全局坐标系总粘性力/压力力
-                //viscous_force_from_fluid.exec();
-                //pressure_force_from_fluid.exec();
-                //  在屏幕输出时进行Q[2]修正
                 SimTK::State &output_state = integ.updAdvancedState();
-                //dynamicQ2Correction(output_state,
-                //                    initial_rotation_angle,
-                //                    last_corrected_angle,
-                //                    correction_phase,
-                //                    tethered_spot,
-                //                    MBsystem);
-
 
                 write_total_viscous_force_global.writeToFile(number_of_iterations); // 记录结果到文件
                 write_total_pressure_force_global.writeToFile(number_of_iterations);
 
                 Real cylinder_rot_angle = getCylinderRotationAngle(tethered_spot, integ.getAdvancedState()); // 获取圆柱实时旋转角度
-
 
                 // 需要先获取粒子数据
 
@@ -1017,16 +874,12 @@ int main(int ac, char *av[])
                 }
 
 
-
                 Real current_rotation_from_matrix = getCylinderRotationAngle(tethered_spot, integ.getAdvancedState());
                 Real total_rotation_angle = initial_rotation_angle + current_rotation_from_matrix;
 
-                std::cout << " current_rotation_from_matrix: " << current_rotation_from_matrix * 180.0 / Pi << " degree" << std::endl;
-                std::cout << "initial_rotation_angle: " << initial_rotation_angle * 180.0 / Pi << " degree" << std::endl;
-                std::cout << "total_rotation_angle: " << total_rotation_angle * 180.0 / Pi << " degree" << std::endl;
+
                 Real angular_velocity = tethered_spot.getU(integ.getAdvancedState())[0];
-                std::cout << "Simbody angular_velocity: " << angular_velocity << " rad/s" << std::endl;
-                std::cout << "unit change: " << angular_velocity * 180.0 / Pi << " degree/s" << std::endl;
+
 
                 Real viscous_local_x = transformGlobalForceToLocalX(total_viscous_force_g, total_rotation_angle);
                 Real pressure_local_x = transformGlobalForceToLocalX(total_pressure_force_g, total_rotation_angle);
@@ -1059,9 +912,9 @@ int main(int ac, char *av[])
                     write_cylinder_displacement.writeToFile(number_of_iterations);
                     write_cylinder_wetting.writeToFile(number_of_iterations);
 
-                    // 新增：输出前段中心位置
+                    // 输出前段中心位置
                     write_front_center_position.writeToFile(number_of_iterations);
-                    // 新增：输出全局坐标系力（可选，用于验证）
+                    // 输出全局坐标系力
                     write_total_viscous_force_global.writeToFile(number_of_iterations);
                     write_total_pressure_force_global.writeToFile(number_of_iterations);
                 }
@@ -1079,7 +932,7 @@ int main(int ac, char *av[])
             water_block.updateCellLinkedList();
             cylinder.updateCellLinkedList();
 
-            // 新增：仿照OWSC的flap.updateCellLinkedList()，更新观测体的网格（ObserverBody无需updateCellLinkedList，但需更新contact配置）
+            // 更新观测体的网格
             water_block_inner.updateConfiguration();
 
             water_block_inner.updateConfiguration();
@@ -1087,7 +940,7 @@ int main(int ac, char *av[])
             cylinder_contact.updateConfiguration();
             water_block_complex.updateConfiguration();
             
-                // 新增：更新前段中心观测点的配置
+            //更新前段中心观测点的配置
             front_center_observer_contact.updateConfiguration();
 
             free_stream_surface_indicator.exec();
