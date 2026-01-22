@@ -1,5 +1,5 @@
 /**
- * @file taylor_bar.cpp
+ * @file taylor_bar_UL.cpp
  * @brief This is the case setup for plastic taylor bar using updated Lagragian SPH.
  * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu
  */
@@ -39,7 +39,7 @@ int main(int ac, char *av[])
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.setRunParticleRelaxation(true);
+    sph_system.setRunParticleRelaxation(false);
     sph_system.handleCommandlineOptions(ac, av);
 
     auto &column_shape = sph_system.addShape<TriangleMeshShapeCylinder>(
@@ -132,7 +132,7 @@ int main(int ac, char *av[])
     /**body relation topology */
     auto &column_inner = sph_system.addInnerRelation(column);
     auto &column_wall_contact = sph_system.addContactRelation(column, wall_boundary);
-    auto &column_observer_contact = sph_system.addContactRelation(column_observer, column);
+    //    auto &column_observer_contact = sph_system.addContactRelation(column_observer, column);
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.
@@ -150,14 +150,14 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-    host_methods.addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(column, "Vecolity", Vec3d(0, 0, -vel_0)).exec();
+    host_methods.addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(column, "Velocity", Vec3d(0, 0, -vel_0)).exec();
 
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     ParticleDynamicsGroup update_column_configuration;
     update_column_configuration.add(&main_methods.addCellLinkedListDynamics(column));
     update_column_configuration.add(&main_methods.addRelationDynamics(column_inner, column_wall_contact));
     auto &wall_boundary_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
-    auto &column_observer_contact_relation = main_methods.addRelationDynamics(column_observer_contact);
+    //    auto &column_observer_contact_relation = main_methods.addRelationDynamics(column_observer_contact);
 
     auto &column_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(column);
     auto &column_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(column);
@@ -166,11 +166,11 @@ int main(int ac, char *av[])
     auto &column_acoustic_step_1st_half =
         main_methods.addInteractionDynamicsOneLevel< // to check why not use Riemann solver
                         fluid_dynamics::AcousticStep1stHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner)
-            .addPostContactInteraction<DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_wall_contact);
+            .addPostContactInteraction<Wall, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_wall_contact);
     auto &column_acoustic_step_2nd_half =
         main_methods.addInteractionDynamicsOneLevel<
                         fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner)
-            .addPostContactInteraction<DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_wall_contact);
+            .addPostContactInteraction<Wall, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_wall_contact);
     auto &column_density_regularization =
         main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(column_inner)
             .addPostContactInteraction(column_wall_contact)
@@ -183,18 +183,12 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
-    body_state_recorder.addToWrite<Real>(wall_boundary, "Pressure");
+    body_state_recorder.addToWrite<Real>(column, "Pressure");
     body_state_recorder.addToWrite<Real>(column, "Density");
-    auto &restart_io = main_methods.addIODynamics<RestartIOCK>(sph_system);
-    auto &record_column_mechanical_energy = main_methods.addReduceRegression<
-        RegressionTestDynamicTimeWarping, TotalKineticEnergyCK>(column);
-
-    BodyStatesRecordingToVtp write_states(sph_system);
-    write_states.addToWrite<Real>(column, "Pressure");
-    write_states.addToWrite<Real>(column, "Density");
-    auto &column_observer_position =
-        main_methods.addObserveRegression<RegressionTestDynamicTimeWarping, Vecd>("Position", column_observer_contact);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalKineticEnergy>> write_kinetic_energy(column);
+    //    auto &record_column_mechanical_energy = main_methods.addReduceRegression<
+    //        RegressionTestDynamicTimeWarping, TotalKineticEnergyCK>(column);
+    //    auto &column_observer_position = main_methods.addObserveRegression<
+    //        RegressionTestDynamicTimeWarping, Vecd>("Position", column_observer_contact);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
@@ -220,8 +214,8 @@ int main(int ac, char *av[])
     //	First output before the integration loop.
     //----------------------------------------------------------------------
     body_state_recorder.writeToFile();
-    record_column_mechanical_energy.writeToFile(advection_steps);
-    column_observer_position.writeToFile(advection_steps);
+    //   record_column_mechanical_energy.writeToFile(advection_steps);
+    //   column_observer_position.writeToFile(advection_steps);
     //----------------------------------------------------------------------
     //	Statistics for the computing time information
     //----------------------------------------------------------------------
@@ -264,9 +258,9 @@ int main(int ac, char *av[])
 
             if (advection_steps % observation_interval == 0)
             {
-                record_column_mechanical_energy.writeToFile(advection_steps);
-                column_observer_contact_relation.exec();
-                column_observer_position.writeToFile(advection_steps);
+                //                record_column_mechanical_energy.writeToFile(advection_steps);
+                //                column_observer_contact_relation.exec();
+                //                column_observer_position.writeToFile(advection_steps);
             }
 
             if (state_recording())
