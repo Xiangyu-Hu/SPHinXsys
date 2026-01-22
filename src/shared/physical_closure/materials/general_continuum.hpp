@@ -5,6 +5,14 @@
 
 namespace SPH
 {
+//=================================================================================================//
+template <typename ExecutionPolicy>
+GeneralContinuum::ConstituteKernel::
+    ConstituteKernel(const ExecutionPolicy &ex_policy, GeneralContinuum &encloser)
+    : E_(encloser.E_), G_(encloser.G_), K_(encloser.K_),
+      nu_(encloser.nu_), contact_stiffness_(encloser.contact_stiffness_),
+      rho0_(encloser.rho0_) {}
+//=================================================================================================//
 Real GeneralContinuum::ConstituteKernel::getBulkModulus(Real youngs_modulus, Real poisson_ratio)
 {
     return youngs_modulus / 3.0 / (1.0 - 2.0 * poisson_ratio);
@@ -19,6 +27,13 @@ Real GeneralContinuum::ConstituteKernel::getLambda(Real youngs_modulus, Real poi
 {
     return nu_ * youngs_modulus / (1.0 + poisson_ratio) / (1.0 - 2.0 * poisson_ratio);
 }
+//=================================================================================================//
+template <typename ExecutionPolicy>
+PlasticContinuum::ConstituteKernel::
+    ConstituteKernel(const ExecutionPolicy &ex_policy, PlasticContinuum &encloser)
+    : GeneralContinuum::ConstituteKernel(ex_policy, encloser),
+      c_(encloser.c_), phi_(encloser.phi_),
+      psi_(encloser.psi_), alpha_phi_(encloser.alpha_phi_), k_c_(encloser.k_c_) {}
 //=================================================================================================//
 Real PlasticContinuum::ConstituteKernel::getDPConstantsA(Real friction_angle)
 {
