@@ -32,6 +32,93 @@ Real yield_stress = 0.29e9;
 Real vel_0 = 373.0;
 Real U_max = vel_0;
 Real c0 = sqrt(Youngs_modulus / (3 * (1 - 2 * poisson) * rho0_s));
+/** Contact force. */
+template <typename...>
+class DynamicContactForceWithWallCK;
+
+template <class MaterialType, typename... Parameters>
+class DynamicContactForceWithWallCK<Contact<Wall, MaterialType, Parameters...>>
+    : public Interaction<Contact<Parameters...>>, public Interaction<Wall>
+{
+    using BaseInteraction = Interaction<Contact<Parameters...>>;
+
+  public:
+    explicit DynamicContactForceWithWallCK(Contact<Parameters...> &contact_relation, Real penalty_strength = 1.0)
+        : Interaction<Contact<Parameters...>>(contact_relation), Interaction<Wall>(contact_relation),
+          material_(DynamicCast<MaterialType>(this, this->sph_body_->getBaseMaterial())),
+          dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
+          dv_force_prior_(this->particles_->template getVariableByName<Vecd>("ForcePrior")),
+          penalty_strength_(penalty_strength)
+    {
+        impedance_ = material_.ReferenceDensity() * sqrt(material_.ContactStiffness());
+        reference_pressure_ = material_.ReferenceDensity() * material_.ContactStiffness();
+
+        for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
+        {
+            Real spacing_j1 = 1.0 / this->contact_bodies_[k]->getSPHAdaptation().ReferenceSpacing();
+            particle_spacing_j1_.push_back(spacing_j1);
+            Real spacing_ratio2 = 1.0 / (this->getSPHAdaptation().ReferenceSpacing() * spacing_j1);
+            spacing_ratio2 *= 0.1 * spacing_ratio2;
+            particle_spacing_ratio2_.push_back(spacing_ratio2);
+        }
+    };
+    virtual ~DynamicContactForceWithWallCK() {};
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
+            : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+              Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+              vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+              force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)),
+              contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+              contact_vel_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)),
+              contact_n_(encloser.dv_wall_n_[contact_index]->DelegatedData(ex_policy)),
+              penalty_strength_(encloser.penalty_strength_),
+              impedance_(encloser.impedance_), reference_pressure_(encloser.reference_pressure_),
+              particle_spacing_j1_(encloser.particle_spacing_j1_[contact_index]),
+              particle_spacing_ratio2_(encloser.particle_spacing_ratio2_[contact_index]) {}
+
+        void interact(size_t index_i, Real dt = 0.0)
+        {
+            Vecd force = Vecd::Zero();
+            for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+            {
+                UnsignedInt index_j = this->neighbor_index_[n];
+                Vecd e_ij = this->e_ij(index_i, index_j);
+                Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
+                Real r_ij = this->vec_r_ij(index_i, index_j).norm();
+
+                Vecd n_j = contact_n_[index_j];
+                Real impedance_p = 0.5 * impedance_ * (vel_[index_i] - contact_vel_[index_j]).dot(-n_j);
+                Real overlap = r_ij * n_j.dot(e_ij);
+                Real delta = 2.0 * overlap * particle_spacing_j1_;
+                Real beta = delta < 1.0 ? (1.0 - delta) * (1.0 - delta) * particle_spacing_ratio2_ : 0.0;
+                Real penalty_p = penalty_strength_ * beta * fabs(overlap) * reference_pressure_;
+                // force due to pressure
+                force -= 2.0 * (impedance_p + penalty_p) * e_ij.dot(n_j) * n_j * dW_ijV_j;
+            }
+            force_prior_[index_i] += force * Vol_[index_i];
+        }
+
+      protected:
+        Real *Vol_;
+        Vecd *vel_, *force_prior_; // note that prior force directly used here
+        Real *contact_Vol_;
+        Vecd *contact_vel_, *contact_n_;
+        Real penalty_strength_;
+        Real impedance_, reference_pressure_;
+        Real particle_spacing_j1_, particle_spacing_ratio2_;
+    };
+
+  protected:
+    MaterialType &material_;
+    DiscreteVariable<Vecd> *dv_vel_, *dv_force_prior_; // note that prior force directly used here
+    Real penalty_strength_;
+    Real impedance_, reference_pressure_;
+    StdVec<Real> particle_spacing_j1_, particle_spacing_ratio2_;
+};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -167,15 +254,14 @@ int main(int ac, char *av[])
     column_shear_force.add(&main_methods.addInteractionDynamics<LinearGradient, Vecd>(column_inner, "Velocity"));
     column_shear_force.add(&main_methods.addInteractionDynamicsOneLevel<continuum_dynamics::ShearIntegration, J2Plasticity>(column_inner));
 
-    ParticleDynamicsGroup column_acoustic_step_1st_half;
-    column_acoustic_step_1st_half.add(
-        &main_methods.addInteractionDynamicsOneLevel< // to check why not use Riemann solver
-                         fluid_dynamics::AcousticStep1stHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner)
-             .addPostContactInteraction<Wall, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_wall_contact));
+    auto &column_acoustic_step_1st_half =
+        main_methods.addInteractionDynamicsOneLevel< // to check why not use Riemann solver
+            fluid_dynamics::AcousticStep1stHalf, NoRiemannSolverCK, NoKernelCorrectionCK>(column_inner);
     auto &column_acoustic_step_2nd_half =
         main_methods.addInteractionDynamicsOneLevel<
-                        fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner)
-            .addPostContactInteraction<Wall, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_wall_contact);
+            fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner);
+    auto &column_wall_contact_force =
+        main_methods.addInteractionDynamics<DynamicContactForceWithWallCK, Wall, J2Plasticity>(column_wall_contact);
 
     auto &column_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(column, U_max, 0.2);
     auto &column_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(column, 0.4);
@@ -235,6 +321,7 @@ int main(int ac, char *av[])
         TickCount time_instance = TickCount::now();
         Real acoustic_dt = time_stepper.incrementPhysicalTime(column_acoustic_time_step);
         column_shear_force.exec(acoustic_dt);
+        column_wall_contact_force.exec();
         column_acoustic_step_1st_half.exec(acoustic_dt);
         column_acoustic_step_2nd_half.exec(acoustic_dt);
         interval_acoustic_step += TickCount::now() - time_instance;
