@@ -6,8 +6,8 @@ namespace SPH
 {
 //=================================================================================================//
 GeneralContinuum::GeneralContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio)
-    : WeaklyCompressibleFluid(rho0, c0), E_(0.0), G_(0.0), K_(0.0), nu_(0.0),
-      contact_stiffness_(rho0_ * c0 * c0)
+    : WeaklyCompressibleFluid(rho0, c0), SolidContact(rho0, rho0 * c0 * c0, 0.0),
+      E_(0.0), G_(0.0), K_(0.0), nu_(0.0)
 {
     material_type_name_ = "GeneralContinuum";
     E_ = youngs_modulus;

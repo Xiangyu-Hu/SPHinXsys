@@ -33,14 +33,13 @@
 
 namespace SPH
 {
-class GeneralContinuum : public WeaklyCompressibleFluid
+class GeneralContinuum : public WeaklyCompressibleFluid, public SolidContact
 {
   protected:
-    Real E_;                 /* Youngs or tensile modules  */
-    Real G_;                 /* shear modules  */
-    Real K_;                 /* bulk modules  */
-    Real nu_;                /* Poisson ratio  */
-    Real contact_stiffness_; /* contact-force stiffness related to bulk modulus*/
+    Real E_;  /* Youngs or tensile modules  */
+    Real G_;  /* shear modules  */
+    Real K_;  /* bulk modules  */
+    Real nu_; /* Poisson ratio  */
   public:
     explicit GeneralContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio);
     virtual ~GeneralContinuum() {};
@@ -51,7 +50,6 @@ class GeneralContinuum : public WeaklyCompressibleFluid
     Real getBulkModulus(Real youngs_modulus, Real poisson_ratio);
     Real getShearModulus(Real youngs_modulus, Real poisson_ratio);
     Real getLambda(Real youngs_modulus, Real poisson_ratio);
-    Real ContactStiffness() { return contact_stiffness_; };
     virtual Matd ConstitutiveRelationShearStress(Matd &velocity_gradient, Matd &shear_stress);
 
     class ConstituteKernel
