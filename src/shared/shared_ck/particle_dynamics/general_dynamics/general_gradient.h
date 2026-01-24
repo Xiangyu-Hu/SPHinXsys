@@ -119,6 +119,9 @@ class LinearGradient<Inner<DataType, Parameters...>>
   public:
     explicit LinearGradient(Inner<Parameters...> &inner_relation, const std::string &variable_name)
         : BaseDynamicsType(inner_relation, variable_name) {};
+    template <typename FirstArg>
+    explicit LinearGradient(DynamicsArgs<Inner<Parameters...>, FirstArg> parameters)
+        : LinearGradient(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~LinearGradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
@@ -138,8 +141,10 @@ class LinearGradient<Contact<DataType, Parameters...>>
     using BaseDynamicsType = Gradient<Base, DataType, Contact<Parameters...>>;
 
   public:
-    template <typename... Args>
-    explicit LinearGradient(Args &&...args);
+    explicit LinearGradient(Contact<Parameters...> &contact_relation, const std::string &variable_name);
+    template <typename FirstArg>
+    explicit LinearGradient(DynamicsArgs<Contact<Parameters...>, FirstArg> parameters)
+        : LinearGradient(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~LinearGradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
