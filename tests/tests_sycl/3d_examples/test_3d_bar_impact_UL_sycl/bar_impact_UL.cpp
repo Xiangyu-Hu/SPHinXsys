@@ -1,6 +1,7 @@
 /**
- * @file taylor_bar_UL.cpp
- * @brief This is the case setup for plastic taylor bar using updated Lagragian SPH.
+ * @file bar_impact_UL.cpp
+ * @brief This is the case setup for a plastic bar impacting on rigid wall
+ * and feedbacked by contact force using updated Lagrangian SPH.
  * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu
  */
 #include "sphinxsys.h"
@@ -132,7 +133,7 @@ int main(int ac, char *av[])
     /**body relation topology */
     auto &column_inner = sph_system.addInnerRelation(column);
     auto &column_wall_contact = sph_system.addContactRelation(column, wall_boundary);
-    //    auto &column_observer_contact = sph_system.addContactRelation(column_observer, column);
+    auto &column_observer_contact = sph_system.addContactRelation(column_observer, column);
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.
@@ -157,7 +158,7 @@ int main(int ac, char *av[])
     update_column_configuration.add(&main_methods.addCellLinkedListDynamics(column));
     update_column_configuration.add(&main_methods.addRelationDynamics(column_inner, column_wall_contact));
     auto &wall_boundary_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
-    //    auto &column_observer_contact_relation = main_methods.addRelationDynamics(column_observer_contact);
+    auto &column_observer_contact_relation = main_methods.addRelationDynamics(column_observer_contact);
 
     auto &column_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(column);
     auto &column_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(column);
@@ -168,14 +169,14 @@ int main(int ac, char *av[])
     column_shear_force.add(&main_methods.addInteractionDynamicsOneLevel<continuum_dynamics::ShearIntegration, J2Plasticity>(column_inner));
 
     auto &column_acoustic_step_1st_half =
-        main_methods.addInteractionDynamicsOneLevel< // to check why not use Riemann solver
+        main_methods.addInteractionDynamicsOneLevel<
             fluid_dynamics::AcousticStep1stHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner);
     auto &column_acoustic_step_2nd_half =
         main_methods.addInteractionDynamicsOneLevel<
             fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner);
-    ParticleDynamicsGroup column_wall_contact_force;
-    column_wall_contact_force.add(&main_methods.addInteractionDynamics<solid_dynamics::RepulsionFactor>(column_wall_contact));
-    column_wall_contact_force.add(&main_methods.addInteractionDynamicsWithUpdate<solid_dynamics::RepulsionForceCK, Wall>(column_wall_contact));
+
+    auto &column_wall_contact_factor = main_methods.addInteractionDynamics<solid_dynamics::RepulsionFactor>(column_wall_contact);
+    auto &column_wall_contact_force = main_methods.addInteractionDynamicsWithUpdate<solid_dynamics::RepulsionForceCK, Wall>(column_wall_contact);
 
     auto &column_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(column, U_max, 0.2);
     auto &column_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(column, 0.4);
@@ -186,10 +187,9 @@ int main(int ac, char *av[])
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     body_state_recorder.addToWrite<Real>(column, "Pressure");
     body_state_recorder.addToWrite<Real>(column, "Density");
-    //    auto &record_column_mechanical_energy = main_methods.addReduceRegression<
-    //        RegressionTestDynamicTimeWarping, TotalKineticEnergyCK>(column);
-    //    auto &column_observer_position = main_methods.addObserveRegression<
-    //        RegressionTestDynamicTimeWarping, Vecd>("Position", column_observer_contact);
+    auto &record_column_mechanical_energy = main_methods.addReduceRegression<
+        RegressionTestDynamicTimeWarping, TotalKineticEnergyCK>(column);
+    auto &column_observer_position = main_methods.addObserveRecorder<Vecd>("Position", column_observer_contact);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
@@ -214,8 +214,8 @@ int main(int ac, char *av[])
     //	First output before the integration loop.
     //----------------------------------------------------------------------
     body_state_recorder.writeToFile();
-    //   record_column_mechanical_energy.writeToFile(advection_steps);
-    //   column_observer_position.writeToFile(advection_steps);
+    record_column_mechanical_energy.writeToFile(advection_steps);
+    column_observer_position.writeToFile(advection_steps);
     //----------------------------------------------------------------------
     //	Statistics for the computing time information
     //----------------------------------------------------------------------
@@ -260,9 +260,9 @@ int main(int ac, char *av[])
 
             if (advection_steps % observation_interval == 0)
             {
-                //                record_column_mechanical_energy.writeToFile(advection_steps);
-                //                column_observer_contact_relation.exec();
-                //                column_observer_position.writeToFile(advection_steps);
+                record_column_mechanical_energy.writeToFile(advection_steps);
+                column_observer_contact_relation.exec();
+                column_observer_position.writeToFile(advection_steps);
             }
 
             if (state_recording())
@@ -279,6 +279,7 @@ int main(int ac, char *av[])
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
             column_advection_step_setup.exec();
+            column_wall_contact_factor.exec();
             column_linear_correction_matrix.exec();
             interval_advection_step += TickCount::now() - time_instance;
         }
@@ -295,6 +296,15 @@ int main(int ac, char *av[])
               << interval_acoustic_step.seconds() << "\n";
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
+
+    if (sph_system.GenerateRegressionData())
+    {
+        record_column_mechanical_energy.generateDataBase(5.0e-2);
+    }
+    else
+    {
+        record_column_mechanical_energy.testResult();
+    }
 
     return 0;
 }
