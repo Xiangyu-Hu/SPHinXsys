@@ -16,13 +16,16 @@
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
 [![QQ](https://img.shields.io/badge/QQ_Group-blue?logo=tencentqq&logoColor=white)](https://qm.qq.com/q/BZDAqz70Iw)
 
-## Newest: Heterogeneous parallel computing for multi-resolution simulations
+## Newest update: Heterogeneous parallel computing for update Lagrangian Solid Dynamics
 
-Now, the SYCL kernel is applied for multi-resolution particle generation and
-body-fitting relaxation. For this, one-sided particle neighbor search algorithm is developed to improve the efficiency. 
-Currently, only the isotropic SPH smoothing kernel is implemented, while the anisotropic kernel will be available soon.
+With our recent progress on numerical method for the Update Lagrangian SPH, 
+published on Journal of Computational Physics [(Zhang et al. 2026)](https://doi.org/10.1016/j.jcp.2025.114646),
+we are able to simulate large deformation and damage.
+Now, the SYCL kernel is implemented for this feature so that heterogeneous parallel computing can be achieved too.
 
-![Multi-resolution Particle Relaxation](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/multi-resolution-particles.png)
+The following example gives a metal bar impacting at high speed and the corresponding deformation and damage processes.
+
+![Bar impact and damage](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/bar_impact.mp4)
 
 ## Repository Description
 
