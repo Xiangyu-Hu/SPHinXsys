@@ -102,28 +102,23 @@ class Mesh
     static UnsignedInt MortonCode(const UnsignedInt &i);
 };
 
-class Octree
+struct Octree // full octree with unit root size
 {
   public:
-    explicit Octree(int max_level) : max_level_(max_level) {};
-    int MaxLevel() const { return max_level_; };
-    UnsignedInt Resolution(int level) const; // Resolution at level
-    Real StepSize(int level) const { return 1.0 / static_cast<Real>(Resolution(level)); };
-    UnsignedInt LevelOffset(int level) const;                            // Index offset at level
-    UnsignedInt LinearIndex(int level, const Array3i &cell_index) const; // Linear index
-    UnsignedInt LinearIndex(int level, const Array2i &cell_index) const; // Linear index
-    Arrayi CellIndex(int level, const Vecd &fraction_position) const;    // cell index
-    UnsignedInt LinearIndexFromPosition(int level, const Vecd &fraction_position) const;
-    bool isValid(int level, const Array3i &cell_index) const; // Bounds check
-    bool isValid(int level, const Array2i &cell_index) const; // Bounds check
+    static UnsignedInt Resolution(int level); // Resolution at level
+    static Real StepSize(int level) { return 1.0 / static_cast<Real>(Resolution(level)); };
+    static UnsignedInt LevelOffset(int level);                            // Index offset at level
+    static UnsignedInt LinearIndex(int level, const Array3i &cell_index); // Linear index
+    static UnsignedInt LinearIndex(int level, const Array2i &cell_index); // Linear index
+    static Arrayi CellIndex(int level, const Vecd &fraction_position);    // cell index
+    static UnsignedInt LinearIndexFromPosition(int level, const Vecd &fraction_position);
+    static bool isValid(int level, const Array3i &cell_index); // Bounds check
+    static bool isValid(int level, const Array2i &cell_index); // Bounds check
     // check if a connected neighbor at same level exist
-    bool eixstNeighbor(int level, const Arrayi &cell_index, const Arrayi &grid_shift) const;
-    Array3i Parent(int level, const Array3i cell_index) const; // Parent (l > 0)
-    Array2i Parent(int level, const Array2i cell_index) const; // Parent (l > 0)
-    static UnsignedInt LeafAndChilds(int refined_levels);      // Leaf and all childs included in refined levels
-
-  private:
-    int max_level_;
+    static bool eixstNeighbor(int level, const Arrayi &cell_index, const Arrayi &grid_shift);
+    static Array3i Parent(int level, const Array3i cell_index); // Parent (l > 0)
+    static Array2i Parent(int level, const Array2i cell_index); // Parent (l > 0)
+    static UnsignedInt LeafAndChilds(int refined_levels);       // Leaf and all childs included in refined levels
 };
 
 class OctreeMesh
