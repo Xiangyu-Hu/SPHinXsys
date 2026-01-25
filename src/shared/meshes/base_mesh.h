@@ -107,16 +107,19 @@ class Octree
   public:
     explicit Octree(int max_level) : max_level_(max_level) {};
     int MaxLevel() const { return max_level_; };
-    UnsignedInt Resolution(int level) const;                             // Resolution at level
+    UnsignedInt Resolution(int level) const; // Resolution at level
+    Real StepSize(int level) const { return 1.0 / static_cast<Real>(Resolution(level)); };
     UnsignedInt LevelOffset(int level) const;                            // Index offset at level
-    UnsignedInt LinearIndex(int level, const Array3i &grid_index) const; // Linear index
-    UnsignedInt LinearIndex(int level, const Array2i &grid_index) const; // Linear index
-    bool isValid(int level, const Array3i &grid_index) const;            // Bounds check
-    bool isValid(int level, const Array2i &grid_index) const;            // Bounds check
+    UnsignedInt LinearIndex(int level, const Array3i &cell_index) const; // Linear index
+    UnsignedInt LinearIndex(int level, const Array2i &cell_index) const; // Linear index
+    Arrayi CellIndex(int level, const Vecd &fraction_position) const;    // cell index
+    UnsignedInt LinearIndexFromPosition(int level, const Vecd &fraction_position) const;
+    bool isValid(int level, const Array3i &cell_index) const; // Bounds check
+    bool isValid(int level, const Array2i &cell_index) const; // Bounds check
     // check if a connected neighbor at same level exist
-    bool eixstNeighbor(int level, const Arrayi &grid_index, const Arrayi &grid_shift) const;
-    Array3i Parent(int level, const Array3i grid_index) const; // Parent (l > 0)
-    Array2i Parent(int level, const Array2i grid_index) const; // Parent (l > 0)
+    bool eixstNeighbor(int level, const Arrayi &cell_index, const Arrayi &grid_shift) const;
+    Array3i Parent(int level, const Array3i cell_index) const; // Parent (l > 0)
+    Array2i Parent(int level, const Array2i cell_index) const; // Parent (l > 0)
     static UnsignedInt LeafAndChilds(int refined_levels);      // Leaf and all childs included in refined levels
 
   private:
