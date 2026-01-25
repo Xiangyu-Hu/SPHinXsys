@@ -47,7 +47,7 @@ class StressDiffusionCK;
 template <typename... Parameters>
 class StressDiffusionCK<Inner<Parameters...>> : public PlasticAcousticStep<Interaction<Inner<Parameters...>>>
 {
-    using PlasticKernel = typename PlasticContinuum::PlasticKernel;
+    using ConstituteKernel = typename PlasticContinuum::ConstituteKernel;
     using BaseInteraction = PlasticAcousticStep<Interaction<Inner<Parameters...>>>;
 
   public:
@@ -62,7 +62,7 @@ class StressDiffusionCK<Inner<Parameters...>> : public PlasticAcousticStep<Inter
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        PlasticKernel plastic_kernel_;
+        ConstituteKernel constitute_;
         Real zeta_, phi_;
         Real smoothing_length_, sound_speed_;
         Real *mass_, *Vol_;

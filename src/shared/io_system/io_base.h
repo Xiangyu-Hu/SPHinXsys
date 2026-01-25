@@ -68,7 +68,7 @@ class BaseIO
     std::string convertPhysicalTimeToString(Real physical_time);
 
     template <typename T>
-    std::string padValueWithZeros(T &&value, size_t max_string_width = 10)
+    std::string padValueWithZeros(T &&value, size_t max_string_width = 15)
     {
         std::ostringstream s_time;
         s_time << std::setw(max_string_width) << std::setfill('0') << value;
@@ -84,6 +84,8 @@ class BaseIO
  */
 class BodyStatesRecording : public BaseIO
 {
+  protected:
+    UniquePtrsKeeper<BaseDynamics<void>> derived_variables_keeper_;
 
   public:
     BodyStatesRecording(SPHSystem &sph_system);
@@ -136,9 +138,6 @@ class BodyStatesRecording : public BaseIO
     StdVec<BaseDynamics<void> *> derived_variables_;
     bool state_recording_;
     virtual void writeWithFileName(const std::string &sequence) = 0;
-
-  private:
-    UniquePtrsKeeper<BaseDynamics<void>> derived_variables_keeper_;
 };
 
 /**

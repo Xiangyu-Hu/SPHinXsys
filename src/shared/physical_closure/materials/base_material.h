@@ -100,24 +100,34 @@ class Fluid : public BaseMaterial
     };
 };
 
+class SolidContact
+{
+  private:
+    Real rho0_copy_; /**< reference density. */
+  public:
+    explicit SolidContact(Real rho0, Real contact_stiffness, Real contact_friction = 0.0);
+    virtual ~SolidContact() {};
+    Real ContactReferenceDensity() { return rho0_copy_; };
+    Real ContactFriction() { return contact_friction_; };
+    Real ContactStiffness() { return contact_stiffness_; };
+
+  protected:
+    Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/
+    Real contact_friction_;  /**< friction property mimic fluid viscosity*/
+    void setContactStiffness(Real rho0, Real c0) { contact_stiffness_ = rho0 * c0 * c0; };
+};
+
 /** @class  Solid
  *  @brief Base class of all solid materials
  */
-class Solid : public BaseMaterial
+class Solid : public BaseMaterial, public SolidContact
 {
   public:
-    Solid(Real rho0, Real contact_stiffness, Real contact_friction = 0.0)
-        : BaseMaterial(rho0), contact_stiffness_(contact_stiffness),
-          contact_friction_(contact_friction)
-    {
-        material_type_name_ = "Solid";
-    };
+    Solid(Real rho0, Real contact_stiffness, Real contact_friction = 0.0);
     explicit Solid(Real rho0) : Solid(rho0, 1.0) {};
     Solid() : Solid(1.0) {};
     virtual ~Solid() {};
 
-    Real ContactFriction() { return contact_friction_; };
-    Real ContactStiffness() { return contact_stiffness_; };
     /** Get average velocity when interacting with fluid. */
     virtual Vecd *AverageVelocity(BaseParticles *base_particles);
     /** Get average acceleration when interacting with fluid. */
@@ -127,11 +137,6 @@ class Solid : public BaseMaterial
     virtual DiscreteVariable<Vecd> *AverageVelocityVariable(BaseParticles *base_particles);
     /** Get average acceleration when interacting with fluid. */
     virtual DiscreteVariable<Vecd> *AverageAccelerationVariable(BaseParticles *base_particles);
-
-  protected:
-    Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/
-    Real contact_friction_;  /**< friction property mimic fluid viscosity*/
-    void setContactStiffness(Real c0) { contact_stiffness_ = rho0_ * c0 * c0; };
 };
 } // namespace SPH
 #endif // BASE_MATERIAL_H

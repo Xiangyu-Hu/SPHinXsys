@@ -21,81 +21,73 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file continuum_dynamics_variable_ck.h
- * @brief Here, we define the algorithm classes for computing derived solid dynamics variables.
- * @details These variable can be added into variable list for state output.
- * @author Shuang Li and Xiangyu Hu
+ * @file 	shear_integration.h
+ * @brief 	Here, we define the algorithm classes for continuum dynamics within the body.
+ * @details CK and SYCL version.
+ * @author	Shuang Li,Xiangyu Hu and Shuaihao Zhang
  */
+#ifndef SHEAR_INTEGRATION_H
+#define SHEAR_INTEGRATION_H
 
-#ifndef CONTINUUM_DYNAMICS_VARIABLE_CK_H
-#define CONTINUUM_DYNAMICS_VARIABLE_CK_H
-
-#include "base_general_dynamics.h"
-#include "general_continuum.h"
+#include "acoustic_step_1st_half.h"
+#include "force_prior_ck.h"
 #include "general_continuum.hpp"
+#include "general_gradient.h"
 
 namespace SPH
 {
 namespace continuum_dynamics
 {
-/**
- * @class VerticalStress
- */
-class VerticalStressCK : public BaseDerivedVariable<Real>
+
+template <typename...>
+class ShearIntegration;
+
+template <class MaterialType, typename... Parameters>
+class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
+    : public Interaction<Inner<Parameters...>>, public ForcePriorCK
 {
+    using BaseInteraction = Interaction<Inner<Parameters...>>;
+    using ConstituteKernel = typename MaterialType::ConstituteKernel;
+
   public:
-    explicit VerticalStressCK(SPHBody &sph_body);
-    virtual ~VerticalStressCK() {};
-    class UpdateKernel
+    explicit ShearIntegration(Inner<Parameters...> &inner_relation, Real xi = 2.0);
+    virtual ~ShearIntegration() {};
+
+    class InitializeKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
-
-      protected:
-        Mat3d *stress_tensor_3D_;
-        Real *derived_variable_;
-    };
-
-  protected:
-    DiscreteVariable<Mat3d> *dv_stress_tensor_3D_;
-    DiscreteVariable<Real> *dv_derived_variable_;
-};
-
-/**
- * @class AccumulatedDeviatoricPlasticStrain
- */
-class AccDeviatoricPlasticStrainCK : public BaseDerivedVariable<Real>
-{
-    using ConstituteKernel = typename PlasticContinuum::ConstituteKernel;
-
-  public:
-    explicit AccDeviatoricPlasticStrainCK(SPHBody &sph_body);
-    virtual ~AccDeviatoricPlasticStrainCK() {};
-
-    class UpdateKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void initialize(size_t index_i, Real dt = 0.0);
 
       protected:
         ConstituteKernel constitute_;
-        Mat3d *stress_tensor_3D_, *strain_tensor_3D_;
-        Real *derived_variable_;
-        Real E_, nu_;
+        Real xi_;
+        Matd *vel_gradient_, *strain_tensor_, *shear_stress_;
+        Real *scale_penalty_force_;
+    };
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real G_;
+        Vecd *shear_force_, *vel_;
+        Matd *vel_gradient_, *shear_stress_;
+        Real *Vol_, *scale_penalty_force_;
     };
 
   protected:
-    PlasticContinuum &plastic_continuum_;
-    DiscreteVariable<Mat3d> *dv_stress_tensor_3D_, *dv_strain_tensor_3D_;
-    DiscreteVariable<Real> *dv_derived_variable_;
-    Real E_, nu_;
+    MaterialType &materal_;
+    Real xi_;
+    DiscreteVariable<Vecd> *dv_shear_force_, *dv_vel_;
+    DiscreteVariable<Matd> *dv_vel_gradient_, *dv_strain_tensor_, *dv_shear_stress_;
+    DiscreteVariable<Real> *dv_Vol_, *dv_scale_penalty_force_;
 };
-
 } // namespace continuum_dynamics
 } // namespace SPH
-
-#endif // CONTINUUM_DYNAMICS_VARIABLE_CK_H
+#endif // SHEAR_INTEGRATION_H

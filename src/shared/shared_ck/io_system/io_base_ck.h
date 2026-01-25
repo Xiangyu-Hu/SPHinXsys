@@ -32,6 +32,7 @@
 #include "execution_policy.h"
 #include "io_base.h"
 #include "io_vtk.h"
+#include "simple_algorithms_ck.h"
 
 namespace SPH
 {
@@ -77,6 +78,26 @@ class BodyStatesRecordingToVtpCK : public BodyStatesRecordingToVtp
             BodyStatesRecordingToVtp::writeToFile(iteration_step);
         }
     }
+
+    template <typename DerivedVariableMethod, typename DynamicsIdentifier, typename... Args>
+    BodyStatesRecording &addDerivedVariableToWrite(DynamicsIdentifier &identifier, Args &&...args)
+    {
+        SPHBody &sph_body = identifier.getSPHBody();
+        if (isBodyIncluded(bodies_, &sph_body))
+        {
+            derived_variables_.push_back(
+                derived_variables_keeper_.createPtr<StateDynamics<ParallelPolicy, DerivedVariableMethod>>(
+                    identifier, std::forward<Args>(args)...));
+        }
+        else
+        {
+            std::cout << "\n Error: the body:" << sph_body.getName()
+                      << " is not in the recording body list" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+        return *this;
+    };
 };
 
 template <class ExecutionPolicy>
