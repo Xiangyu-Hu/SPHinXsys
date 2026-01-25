@@ -102,6 +102,42 @@ class Mesh
     static UnsignedInt MortonCode(const UnsignedInt &i);
 };
 
+class Octree
+{
+  public:
+    explicit Octree(int max_level) : max_level_(max_level) {};
+    int MaxLevel() const { return max_level_; };
+    UnsignedInt Resolution(int level) const;                             // Resolution at level
+    UnsignedInt LevelOffset(int level) const;                            // Index offset at level
+    UnsignedInt LinearIndex(int level, const Array3i &grid_index) const; // Linear index
+    UnsignedInt LinearIndex(int level, const Array2i &grid_index) const; // Linear index
+    bool isValid(int level, const Array3i &grid_index) const;            // Bounds check
+    bool isValid(int level, const Array2i &grid_index) const;            // Bounds check
+    // check if a connected neighbor at same level exist
+    bool eixstNeighbor(int level, const Arrayi &grid_index, const Arrayi &grid_shift) const;
+    Array3i Parent(int level, const Array3i grid_index) const; // Parent (l > 0)
+    Array2i Parent(int level, const Array2i grid_index) const; // Parent (l > 0)
+    static UnsignedInt LeafAndChilds(int refined_levels);      // Leaf and all childs included in refined levels
+
+  private:
+    int max_level_;
+};
+
+class OctreeMesh
+{
+  public:
+    OctreeMesh(const Mesh &coarest_mesh, int refinement_level);
+    UnsignedInt LinearCellIndexFromPosition(const Vecd &position, UnsignedInt level) const;
+    UnsignedInt NeighborLinearCellLinearIndex(UnsignedInt input, const Arrayi &space_shift, int level_shift) const;
+    Mesh CoarestMesh() const;
+    Mesh FinestMesh() const;
+    Mesh MeshLevel(int level) const;
+
+  protected:
+    Mesh coarest_mesh_;
+    int refinement_level_;
+    UnsignedInt num_cells_;
+};
 /**
  * @class BaseMeshField
  * @brief Abstract base class for the geometric or physics field.

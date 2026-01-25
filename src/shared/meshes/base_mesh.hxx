@@ -98,6 +98,79 @@ inline UnsignedInt Mesh::MortonCode(const UnsignedInt &i)
     return x;
 }
 //=================================================================================================//
+inline UnsignedInt Octree::Resolution(int level) const
+{
+    assert(level >= 0 && level <= max_level_);
+    return UnsignedInt{1} << level;
+}
+//=================================================================================================//
+inline UnsignedInt Octree::LevelOffset(int level) const
+{
+    assert(level >= 0 && level <= max_level_);
+    return ((UnsignedInt{1} << (Dimensions * level)) - 1) / ((UnsignedInt{1} << Dimensions) - 1);
+}
+//=================================================================================================//
+inline UnsignedInt Octree::LinearIndex(int level, const Array3i &grid_index) const
+{
+    UnsignedInt N = Resolution(level);
+    assert(isValid(level, grid_index));
+    return LevelOffset(level) +
+           UnsignedInt(grid_index[0]) + N * (UnsignedInt(grid_index[1]) + N * UnsignedInt(grid_index[2]));
+}
+//=================================================================================================//
+inline UnsignedInt Octree::LinearIndex(int level, const Array2i &grid_index) const
+{
+    UnsignedInt N = Resolution(level);
+    assert(isValid(level, grid_index));
+    return LevelOffset(level) +
+           UnsignedInt(grid_index[0]) + N * UnsignedInt(grid_index[1]);
+}
+//=================================================================================================//
+inline bool Octree::isValid(int level, const Array3i &grid_index) const
+{
+    UnsignedInt N = Resolution(level);
+    return (grid_index[0] >= 0 && grid_index[1] >= 0 && grid_index[2] >= 0 &&
+            grid_index[0] < int(N) && grid_index[1] < int(N) && grid_index[2] < int(N));
+}
+//=================================================================================================//
+inline bool Octree::isValid(int level, const Array2i &grid_index) const
+{
+    UnsignedInt N = Resolution(level);
+    return (grid_index[0] >= 0 && grid_index[1] >= 0 &&
+            grid_index[0] < int(N) && grid_index[1] < int(N));
+}
+//=================================================================================================//
+inline bool Octree::eixstNeighbor(int level, const Arrayi &grid_index, const Arrayi &grid_shift) const
+{
+    Arrayi n_index = grid_index + grid_shift;
+    if (!isValid(level, n_index))
+        return false;
+
+    return true;
+}
+//=================================================================================================//
+inline Array3i Octree::Parent(int level, const Array3i grid_index) const
+{
+    assert(level > 0);
+    return Array3i(grid_index[0] >> 1, grid_index[1] >> 1, grid_index[2] >> 1);
+}
+//=================================================================================================//
+inline Array2i Octree::Parent(int level, const Array2i grid_index) const
+{
+    assert(level > 0);
+    return Array2i(grid_index[0] >> 1, grid_index[1] >> 1);
+}
+//=================================================================================================//
+inline UnsignedInt Octree::LeafAndChilds(int refined_levels)
+{
+    UnsignedInt num(0);
+    for (int l = 0; l != refined_levels + 1; l++)
+    {
+        num += std::pow(UnsignedInt{1} << l, Dimensions);
+    }
+    return num;
+}
+//=================================================================================================//
 template <class MeshType>
 MultiResolutionMeshField<MeshType>::MultiResolutionMeshField(
     const std::string &name, size_t resolution_levels, BoundingBoxd tentative_bounds,
