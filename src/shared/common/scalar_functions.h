@@ -144,7 +144,7 @@ inline T clamp(T a, T lower, T upper)
 template <class T>
 inline bool Not_a_number(T a)
 {
-    return (std::isnan(a) || !(std::isfinite(a))) ? true : false;
+    return (std::isnan(a) || !(std::isfinite(a)));
 }
 
 inline Real harmonic_average(const Real &a, const Real &b)

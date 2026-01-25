@@ -49,10 +49,7 @@ bool AnisotropicKernel<KernelType>::checkIfWithinCutOffRadius(Vec2d displacement
 {
     Vec2d transformed_displacement = this->h_ * transformed_tensor_2d_ * displacement;
     Real distance_metric = transformed_displacement.squaredNorm();
-    if (distance_metric < this->CutOffRadiusSqr())
-        return true;
-    else
-        return false;
+    return distance_metric < this->CutOffRadiusSqr();
 }
 //=========================================================================================//
 template <class KernelType>
@@ -60,10 +57,7 @@ bool AnisotropicKernel<KernelType>::checkIfWithinCutOffRadius(Vec3d displacement
 {
     Vec3d transformed_displacement = this->h_ * transformed_tensor_3d_ * displacement;
     Real distance_metric = transformed_displacement.squaredNorm();
-    if (distance_metric < this->CutOffRadiusSqr())
-        return true;
-    else
-        return false;
+    return distance_metric < this->CutOffRadiusSqr()
 }
 //=========================================================================================//
 template <class KernelType>
