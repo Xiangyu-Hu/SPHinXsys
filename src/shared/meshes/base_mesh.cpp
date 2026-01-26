@@ -33,4 +33,9 @@ Vecd Mesh::GridPositionFromIndex(const Arrayi &grid_index) const
     return mesh_lower_bound_ + grid_index.cast<Real>().matrix() * grid_spacing_;
 }
 //=================================================================================================//
+OctreeMesh::OctreeMesh(const Mesh &coarsest_mesh, int refinement_level)
+    : coarsest_mesh_(coarsest_mesh), refinement_level_(refinement_level),
+      octree_view_(), octree_capacity_(octree_view_.LeafAndChilds(refinement_level_)),
+      total_capacity_(octree_capacity_ * coarsest_mesh.NumberOfCells()) {}
+//=================================================================================================//
 } // namespace SPH

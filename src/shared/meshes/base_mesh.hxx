@@ -8,10 +8,14 @@ namespace SPH
 //=================================================================================================//
 inline Arrayi Mesh::CellIndexFromPosition(const Vecd &position) const
 {
-    return floor((position - mesh_lower_bound_).array() / grid_spacing_)
+    return floor(MeshCoordinate(position).array() / grid_spacing_)
         .cast<int>()
         .max(Arrayi::Zero())
         .min(all_grid_points_ - 2 * Arrayi::Ones());
+}
+Vecd Mesh::MeshCellCoordinate(const Vecd &position, const Arrayi &cell_index) const
+{
+    return MeshCoordinate(position) - cell_index.cast<Real>().matrix() * grid_spacing_;
 }
 //=================================================================================================//
 inline UnsignedInt Mesh::LinearCellIndexFromPosition(const Vecd &position) const
@@ -98,17 +102,17 @@ inline UnsignedInt Mesh::MortonCode(const UnsignedInt &i)
     return x;
 }
 //=================================================================================================//
-inline UnsignedInt OctreeView::Resolution(int level)
+inline UnsignedInt OctreeView::Resolution(int level) const
 {
     return UnsignedInt{1} << level;
 }
 //=================================================================================================//
-inline UnsignedInt OctreeView::LevelOffset(int level)
+inline UnsignedInt OctreeView::LevelOffset(int level) const
 {
     return ((UnsignedInt{1} << (Dimensions * level)) - 1) / ((UnsignedInt{1} << Dimensions) - 1);
 }
 //=================================================================================================//
-inline UnsignedInt OctreeView::LinearIndex(int level, const Array3i &cell_index)
+inline UnsignedInt OctreeView::LinearIndex(int level, const Array3i &cell_index) const
 {
     UnsignedInt N = Resolution(level);
     assert(isValid(level, cell_index));
@@ -116,7 +120,7 @@ inline UnsignedInt OctreeView::LinearIndex(int level, const Array3i &cell_index)
            UnsignedInt(cell_index[0]) + N * (UnsignedInt(cell_index[1]) + N * UnsignedInt(cell_index[2]));
 }
 //=================================================================================================//
-inline UnsignedInt OctreeView::LinearIndex(int level, const Array2i &cell_index)
+inline UnsignedInt OctreeView::LinearIndex(int level, const Array2i &cell_index) const
 {
     UnsignedInt N = Resolution(level);
     assert(isValid(level, cell_index));
@@ -124,31 +128,31 @@ inline UnsignedInt OctreeView::LinearIndex(int level, const Array2i &cell_index)
            UnsignedInt(cell_index[0]) + N * UnsignedInt(cell_index[1]);
 }
 //=================================================================================================//
-inline Arrayi OctreeView::CellIndexFromPosition(int level, const Vecd &fraction_position)
+inline Arrayi OctreeView::CellIndexFromPosition(int level, const Vecd &position) const
 {
-    return floor(fraction_position.array() / GridSpacing(level)).cast<int>();
+    return floor(position.array() / GridSpacing(level)).cast<int>();
 }
 //=================================================================================================//
-inline UnsignedInt OctreeView::LinearIndexFromPosition(int level, const Vecd &fraction_position)
+inline UnsignedInt OctreeView::LinearIndexFromPosition(int level, const Vecd &position) const
 {
-    return LinearIndex(level, CellIndexFromPosition(level, fraction_position));
+    return LinearIndex(level, CellIndexFromPosition(level, position));
 }
 //=================================================================================================//
-inline bool OctreeView::isValid(int level, const Array3i &cell_index)
+inline bool OctreeView::isValid(int level, const Array3i &cell_index) const
 {
     UnsignedInt N = Resolution(level);
     return (cell_index[0] >= 0 && cell_index[1] >= 0 && cell_index[2] >= 0 &&
             cell_index[0] < int(N) && cell_index[1] < int(N) && cell_index[2] < int(N));
 }
 //=================================================================================================//
-inline bool OctreeView::isValid(int level, const Array2i &cell_index)
+inline bool OctreeView::isValid(int level, const Array2i &cell_index) const
 {
     UnsignedInt N = Resolution(level);
     return (cell_index[0] >= 0 && cell_index[1] >= 0 &&
             cell_index[0] < int(N) && cell_index[1] < int(N));
 }
 //=================================================================================================//
-inline bool OctreeView::existNeighbor(int level, const Arrayi &cell_index, const Arrayi &shift)
+inline bool OctreeView::existNeighbor(int level, const Arrayi &cell_index, const Arrayi &shift) const
 {
     Arrayi n_index = cell_index + shift;
     if (!isValid(level, n_index))
@@ -157,19 +161,19 @@ inline bool OctreeView::existNeighbor(int level, const Arrayi &cell_index, const
     return true;
 }
 //=================================================================================================//
-inline Array3i OctreeView::Parent(int level, const Array3i &cell_index)
+inline Array3i OctreeView::Parent(int level, const Array3i &cell_index) const
 {
     assert(level > 0);
     return Array3i(cell_index[0] >> 1, cell_index[1] >> 1, cell_index[2] >> 1);
 }
 //=================================================================================================//
-inline Array2i OctreeView::Parent(int level, const Array2i &cell_index)
+inline Array2i OctreeView::Parent(int level, const Array2i &cell_index) const
 {
     assert(level > 0);
     return Array2i(cell_index[0] >> 1, cell_index[1] >> 1);
 }
 //=================================================================================================//
-inline UnsignedInt OctreeView::LeafAndChilds(int refine_levels)
+inline UnsignedInt OctreeView::LeafAndChilds(int refine_levels) const
 {
     UnsignedInt num(0);
     for (int l = 0; l != refine_levels + 1; l++)
@@ -177,6 +181,41 @@ inline UnsignedInt OctreeView::LeafAndChilds(int refine_levels)
         num += std::pow(UnsignedInt{1} << l, Dimensions);
     }
     return num;
+}
+//=================================================================================================//
+inline UnsignedInt OctreeMesh::LinearIndex(
+    int level, const Arrayi &coarsest_cell_index, const Arrayi &level_cell_index) const
+{
+    return coarsest_mesh_.LinearCellIndex(coarsest_cell_index) * octree_capacity_ +
+           octree_view_.LinearIndex(level, level_cell_index);
+}
+//=================================================================================================//
+inline std::pair<Arrayi, Arrayi> OctreeMesh::CellIndexPairFromPosition(int level, const Vecd &position) const
+{
+    Arrayi coarsest_cell_index = coarsest_mesh_.CellIndexFromPosition(position);
+    Vecd position_in_octree = (coarsest_mesh_.MeshCellCoordinate(position, coarsest_cell_index) /
+                               coarsest_mesh_.GridSpacing());
+    Arrayi level_cell_index = octree_view_.CellIndexFromPosition(level, position_in_octree);
+    return std::pair<Arrayi, Arrayi>(coarsest_cell_index, level_cell_index);
+}
+//=================================================================================================//
+inline UnsignedInt OctreeMesh::NeighborLinearIndex(
+    int level, const Arrayi &coarsest_cell_index, const Arrayi &level_cell_index, const Arrayi &shift) const
+{
+    if (octree_view_.existNeighbor(level, level_cell_index, shift))
+    {
+        Arrayi n_level_cell_index = level_cell_index + shift;
+        return LinearIndex(level, coarsest_cell_index, n_level_cell_index);
+    }
+
+    int resolution = octree_view_.Resolution(level);
+    Arrayi temp_index = level_cell_index + shift + resolution * Arrayi::Ones();
+    Arrayi temp_cell_index_shift = temp_index / resolution;
+    Arrayi n_level_cell_index = temp_index - temp_cell_index_shift * resolution;
+
+    return LinearIndex(level,
+                       coarsest_cell_index + temp_cell_index_shift - Arrayi::Ones(),
+                       n_level_cell_index);
 }
 //=================================================================================================//
 template <class MeshType>

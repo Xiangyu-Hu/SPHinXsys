@@ -59,6 +59,7 @@ class Mesh
     ~Mesh() {};
 
     Vecd MeshLowerBound() const { return mesh_lower_bound_; };
+    Vecd MeshCoordinate(const Vecd &position) const { return position - mesh_lower_bound_; };
     Real GridSpacing() const { return grid_spacing_; };
     UnsignedInt BufferWidth() { return buffer_width_; };
     Arrayi AllGridPoints() const { return all_grid_points_; };
@@ -67,6 +68,7 @@ class Mesh
     UnsignedInt NumberOfCells() const { return all_cells_.prod(); };
 
     Arrayi CellIndexFromPosition(const Vecd &position) const;
+    Vecd MeshCellCoordinate(const Vecd &position, const Arrayi &cell_index) const;
     UnsignedInt LinearCellIndexFromPosition(const Vecd &position) const;
     UnsignedInt LinearCellIndex(const Arrayi &cell_index) const;
     Arrayi DimensionalCellIndex(UnsignedInt linear_index) const;
@@ -102,39 +104,43 @@ class Mesh
     static UnsignedInt MortonCode(const UnsignedInt &i);
 };
 
-struct OctreeView // the view of a cell-based full octree with unit root grid spacing
+class OctreeView // the view of a cell-based full octree with unit root grid spacing
 {
-    UnsignedInt Resolution(int level); // Resolution at level
-    Real GridSpacing(int level) { return 1.0 / static_cast<Real>(Resolution(level)); };
-    UnsignedInt LevelOffset(int level);                                     // Index offset at level
-    UnsignedInt LinearIndex(int level, const Array3i &cell_index);          // Linear index
-    UnsignedInt LinearIndex(int level, const Array2i &cell_index);          // Linear index
-    Arrayi CellIndexFromPosition(int level, const Vecd &fraction_position); // cell index
-    UnsignedInt LinearIndexFromPosition(int level, const Vecd &fraction_position);
-    bool isValid(int level, const Array3i &cell_index); // Bounds check
-    bool isValid(int level, const Array2i &cell_index); // Bounds check
+  public:
+    UnsignedInt Resolution(int level) const; // Resolution at level
+    Real GridSpacing(int level) const { return 1.0 / static_cast<Real>(Resolution(level)); };
+    UnsignedInt LinearIndex(int level, const Array3i &cell_index) const; // Linear index
+    UnsignedInt LinearIndex(int level, const Array2i &cell_index) const; // Linear index
+    Arrayi CellIndexFromPosition(int level, const Vecd &position) const; // cell index
+    UnsignedInt LinearIndexFromPosition(int level, const Vecd &position) const;
     // check if a connected neighbor at same level exist
-    bool existNeighbor(int level, const Arrayi &cell_index, const Arrayi &shift);
-    Array3i Parent(int level, const Array3i &cell_index); // Parent (l > 0)
-    Array2i Parent(int level, const Array2i &cell_index); // Parent (l > 0)
-    static UnsignedInt LeafAndChilds(int refine_levels);  // Leaf and all childs included in refined levels
+    bool existNeighbor(int level, const Arrayi &cell_index, const Arrayi &shift) const;
+    Array3i Parent(int level, const Array3i &cell_index) const; // Parent (l > 0)
+    Array2i Parent(int level, const Array2i &cell_index) const; // Parent (l > 0)
+    UnsignedInt LeafAndChilds(int refine_levels) const;         // Leaf and all childs included in refined levels
+
+  protected:
+    bool isValid(int level, const Array3i &cell_index) const; // Bounds check
+    bool isValid(int level, const Array2i &cell_index) const; // Bounds check
+    UnsignedInt LevelOffset(int level) const;                 // Index offset at level
 };
 
 class OctreeMesh
 {
   public:
     OctreeMesh(const Mesh &coarsest_mesh, int refinement_level);
-    UnsignedInt LinearCellIndexFromPosition(const Vecd &position, UnsignedInt level) const;
-    UnsignedInt NeighborLinearCellLinearIndex(UnsignedInt input, const Arrayi &space_shift, int level_shift) const;
-    Mesh CoarsestMesh() const;
-    Mesh FinestMesh() const;
-    Mesh MeshLevel(int level) const;
+    UnsignedInt LinearIndex(int level, const Arrayi &coarsest_cell_index,
+                            const Arrayi &level_cell_index) const;
+    std::pair<Arrayi, Arrayi> CellIndexPairFromPosition(int level, const Vecd &position) const;
+    UnsignedInt NeighborLinearIndex(int level, const Arrayi &coarsest_cell_index,
+                                    const Arrayi &level_cell_index, const Arrayi &shift) const;
 
   protected:
     Mesh coarsest_mesh_;
-    OctreeView octree_view_;
     int refinement_level_;
-    UnsignedInt num_cells_;
+    OctreeView octree_view_;
+    UnsignedInt octree_capacity_;
+    UnsignedInt total_capacity_;
 };
 /**
  * @class BaseMeshField
