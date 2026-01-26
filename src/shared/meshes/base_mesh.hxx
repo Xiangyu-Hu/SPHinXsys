@@ -98,17 +98,17 @@ inline UnsignedInt Mesh::MortonCode(const UnsignedInt &i)
     return x;
 }
 //=================================================================================================//
-inline UnsignedInt Octree::Resolution(int level)
+inline UnsignedInt OctreeView::Resolution(int level)
 {
     return UnsignedInt{1} << level;
 }
 //=================================================================================================//
-inline UnsignedInt Octree::LevelOffset(int level)
+inline UnsignedInt OctreeView::LevelOffset(int level)
 {
     return ((UnsignedInt{1} << (Dimensions * level)) - 1) / ((UnsignedInt{1} << Dimensions) - 1);
 }
 //=================================================================================================//
-inline UnsignedInt Octree::LinearIndex(int level, const Array3i &cell_index)
+inline UnsignedInt OctreeView::LinearIndex(int level, const Array3i &cell_index)
 {
     UnsignedInt N = Resolution(level);
     assert(isValid(level, cell_index));
@@ -116,7 +116,7 @@ inline UnsignedInt Octree::LinearIndex(int level, const Array3i &cell_index)
            UnsignedInt(cell_index[0]) + N * (UnsignedInt(cell_index[1]) + N * UnsignedInt(cell_index[2]));
 }
 //=================================================================================================//
-inline UnsignedInt Octree::LinearIndex(int level, const Array2i &cell_index)
+inline UnsignedInt OctreeView::LinearIndex(int level, const Array2i &cell_index)
 {
     UnsignedInt N = Resolution(level);
     assert(isValid(level, cell_index));
@@ -124,55 +124,55 @@ inline UnsignedInt Octree::LinearIndex(int level, const Array2i &cell_index)
            UnsignedInt(cell_index[0]) + N * UnsignedInt(cell_index[1]);
 }
 //=================================================================================================//
-inline Arrayi Octree::CellIndex(int level, const Vecd &fraction_position)
+inline Arrayi OctreeView::CellIndexFromPosition(int level, const Vecd &fraction_position)
 {
-    return floor(fraction_position.array() / StepSize(level)).cast<int>();
+    return floor(fraction_position.array() / GridSpacing(level)).cast<int>();
 }
 //=================================================================================================//
-inline UnsignedInt Octree::LinearIndexFromPosition(int level, const Vecd &fraction_position)
+inline UnsignedInt OctreeView::LinearIndexFromPosition(int level, const Vecd &fraction_position)
 {
-    return LinearIndex(level, CellIndex(level, fraction_position));
+    return LinearIndex(level, CellIndexFromPosition(level, fraction_position));
 }
 //=================================================================================================//
-inline bool Octree::isValid(int level, const Array3i &cell_index)
+inline bool OctreeView::isValid(int level, const Array3i &cell_index)
 {
     UnsignedInt N = Resolution(level);
     return (cell_index[0] >= 0 && cell_index[1] >= 0 && cell_index[2] >= 0 &&
             cell_index[0] < int(N) && cell_index[1] < int(N) && cell_index[2] < int(N));
 }
 //=================================================================================================//
-inline bool Octree::isValid(int level, const Array2i &cell_index)
+inline bool OctreeView::isValid(int level, const Array2i &cell_index)
 {
     UnsignedInt N = Resolution(level);
     return (cell_index[0] >= 0 && cell_index[1] >= 0 &&
             cell_index[0] < int(N) && cell_index[1] < int(N));
 }
 //=================================================================================================//
-inline bool Octree::eixstNeighbor(int level, const Arrayi &cell_index, const Arrayi &cell_shift)
+inline bool OctreeView::existNeighbor(int level, const Arrayi &cell_index, const Arrayi &shift)
 {
-    Arrayi n_index = cell_index + cell_shift;
+    Arrayi n_index = cell_index + shift;
     if (!isValid(level, n_index))
         return false;
 
     return true;
 }
 //=================================================================================================//
-inline Array3i Octree::Parent(int level, const Array3i cell_index)
+inline Array3i OctreeView::Parent(int level, const Array3i &cell_index)
 {
     assert(level > 0);
     return Array3i(cell_index[0] >> 1, cell_index[1] >> 1, cell_index[2] >> 1);
 }
 //=================================================================================================//
-inline Array2i Octree::Parent(int level, const Array2i cell_index)
+inline Array2i OctreeView::Parent(int level, const Array2i &cell_index)
 {
     assert(level > 0);
     return Array2i(cell_index[0] >> 1, cell_index[1] >> 1);
 }
 //=================================================================================================//
-inline UnsignedInt Octree::LeafAndChilds(int refined_levels)
+inline UnsignedInt OctreeView::LeafAndChilds(int refine_levels)
 {
     UnsignedInt num(0);
-    for (int l = 0; l != refined_levels + 1; l++)
+    for (int l = 0; l != refine_levels + 1; l++)
     {
         num += std::pow(UnsignedInt{1} << l, Dimensions);
     }
