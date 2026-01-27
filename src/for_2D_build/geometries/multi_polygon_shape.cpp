@@ -264,7 +264,7 @@ BoundingBoxd MultiPolygon::findBounds()
 //=================================================================================================//
 bool MultiPolygonShape::isValid()
 {
-    return !(multi_polygon_.getBoostMultiPoly().size() == 0);
+    return !multi_polygon_.getBoostMultiPoly().empty();
 }
 //=================================================================================================//
 bool MultiPolygonShape::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
