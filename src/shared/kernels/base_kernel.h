@@ -105,18 +105,12 @@ class Kernel
     virtual bool checkIfWithinCutOffRadius(Vec2d displacement)
     {
         Real distance_metric = displacement.squaredNorm();
-        if (distance_metric < CutOffRadiusSqr())
-            return true;
-        else
-            return false;
+        return distance_metric < CutOffRadiusSqr();
     };
     virtual bool checkIfWithinCutOffRadius(Vec3d displacement)
     {
         Real distance_metric = displacement.squaredNorm();
-        if (distance_metric < CutOffRadiusSqr())
-            return true;
-        else
-            return false;
+        return distance_metric < CutOffRadiusSqr();
     };
 
     /**

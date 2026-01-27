@@ -44,7 +44,7 @@ LevelSetShape *LevelSetShape::correctLevelSetSign()
 //=================================================================================================//
 bool LevelSetShape::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
 {
-    return level_set_.probeSignedDistance(probe_point) < 0.0 ? true : false;
+    return level_set_.probeSignedDistance(probe_point) < 0.0;
 }
 //=================================================================================================//
 Vecd LevelSetShape::findClosestPoint(const Vecd &probe_point)

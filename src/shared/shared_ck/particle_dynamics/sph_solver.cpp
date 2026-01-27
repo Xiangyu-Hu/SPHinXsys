@@ -19,11 +19,7 @@ TimeStepper::TriggerByPhysicalTime::
 //=================================================================================================//
 bool TimeStepper::TriggerByPhysicalTime::operator()()
 {
-    if (sv_physical_time_->getValue() > trigger_time_)
-    {
-        return true;
-    }
-    return false;
+    return sv_physical_time_->getValue() > trigger_time_;
 }
 //=================================================================================================//
 TimeStepper::TriggerByInterval::TriggerByInterval(Real initial_interval)

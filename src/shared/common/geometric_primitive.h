@@ -128,7 +128,7 @@ class BoundingBox
 template <template <int> typename BoundType, int N>
 bool operator==(const BoundingBox<BoundType, N> &bb1, const BoundingBox<BoundType, N> &bb2)
 {
-    return bb1.lower_ == bb2.lower_ && bb1.upper_ == bb2.upper_ ? true : false;
+    return bb1.lower_ == bb2.lower_ && bb1.upper_ == bb2.upper_;
 };
 
 using Rotation2d = Eigen::Rotation2D<Real>;

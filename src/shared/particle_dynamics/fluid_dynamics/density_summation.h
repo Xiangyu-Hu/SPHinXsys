@@ -142,11 +142,7 @@ struct NearFreeStream
 {
     Real operator()(Real rho_sum, Real rho0, Real rho)
     {
-        if (rho_sum < rho)
-        {
-            return rho_sum + SMAX(Real(0), (rho - rho_sum)) * rho0 / rho;
-        }
-        return rho_sum;
+      return (rho_sum < rho) ? (rho_sum + (rho - rho_sum) * rho0 / rho) : rho_sum;
     };
 };
 
