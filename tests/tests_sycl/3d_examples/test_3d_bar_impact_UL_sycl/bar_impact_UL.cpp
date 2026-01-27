@@ -118,7 +118,11 @@ int main(int ac, char *av[])
         /** Output results. */
         wall_boundary_normal_direction.exec();
         write_particle_reload_files.writeToFile();
-        return 0;
+
+        if (!sph_system.ReloadParticles()) // program exits after particle relaxation
+        {
+            return 0;
+        }
     }
     column.defineMaterial<J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
     column.generateParticles<BaseParticles, Reload>(column.getName());
@@ -168,6 +172,13 @@ int main(int ac, char *av[])
     column_shear_force.add(&main_methods.addInteractionDynamics<LinearGradient, Vecd>(column_inner, "Velocity"));
     column_shear_force.add(&main_methods.addInteractionDynamicsOneLevel<continuum_dynamics::ShearIntegration, J2Plasticity>(column_inner));
 
+    auto &column_surface_indicator =
+        main_methods.addInteractionDynamicsWithUpdate<fluid_dynamics::FreeSurfaceIndicationCK>(column_inner);
+
+    auto &column_density_regularization =
+        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(column_inner)
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, Internal, BulkParticles>(column);
+
     auto &column_acoustic_step_1st_half =
         main_methods.addInteractionDynamicsOneLevel<
             fluid_dynamics::AcousticStep1stHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner);
@@ -208,6 +219,8 @@ int main(int ac, char *av[])
     wall_boundary_cell_linked_list.exec();
     update_column_configuration.exec();
 
+    column_surface_indicator.exec();
+    column_density_regularization.exec();
     column_advection_step_setup.exec();
     column_linear_correction_matrix.exec();
     //----------------------------------------------------------------------
@@ -278,6 +291,8 @@ int main(int ac, char *av[])
 
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
+            column_surface_indicator.exec();
+            column_density_regularization.exec();
             column_advection_step_setup.exec();
             column_wall_contact_factor.exec();
             column_linear_correction_matrix.exec();
