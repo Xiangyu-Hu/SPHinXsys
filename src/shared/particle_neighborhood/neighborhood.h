@@ -349,5 +349,18 @@ class NeighborBuilderSplitInnerAdaptive : public NeighborBuilder
     Real *h_ratio_;
     int *level_;
 };
+
+/**
+ * @class MaxSmoothingLengthNeighborBuilder
+ * @brief A contact neighbor builder functor, where the cut-off radius is set as factor * 2h_max
+ */
+class MaxSmoothingLengthNeighborBuilder : public NeighborBuilderContact
+{
+  private:
+    UniquePtrKeeper<Kernel> kernel_keeper_;
+
+  public:
+    MaxSmoothingLengthNeighborBuilder(SPHBody &body, SPHBody &contact_body, Real factor = 1.0);
+};
 } // namespace SPH
 #endif // NEIGHBORHOOD_H
