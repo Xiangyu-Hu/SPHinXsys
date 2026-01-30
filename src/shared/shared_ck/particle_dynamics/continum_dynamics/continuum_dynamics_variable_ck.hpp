@@ -14,7 +14,7 @@ VonMisesStressCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, E
       derived_variable_(encloser.dv_derived_variable_->DelegatedData(ex_policy)),
       shear_stress_(encloser.dv_shear_stress_->DelegatedData(ex_policy)) {}
 //=============================================================================================//
-void VonMisesStressCK::UpdateKernel::update(size_t index_i, Real dt)
+inline void VonMisesStressCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     Matd stress_tensor = shear_stress_[index_i] - p_[index_i] * Matd::Identity();
     derived_variable_[index_i] = getVonMisesStressFromMatrix(stress_tensor);
