@@ -9,6 +9,18 @@ namespace continuum_dynamics
 {
 //=============================================================================================//
 template <class ExecutionPolicy, class EncloserType>
+VonMisesStressCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : p_(encloser.dv_p_->DelegatedData(ex_policy)),
+      derived_variable_(encloser.dv_derived_variable_->DelegatedData(ex_policy)),
+      shear_stress_(encloser.dv_shear_stress_->DelegatedData(ex_policy)) {}
+//=============================================================================================//
+void VonMisesStressCK::UpdateKernel::update(size_t index_i, Real dt)
+{
+    Matd stress_tensor = shear_stress_[index_i] - p_[index_i] * Matd::Identity();
+    derived_variable_[index_i] = getVonMisesStressFromMatrix(stress_tensor);
+}
+//=============================================================================================//
+template <class ExecutionPolicy, class EncloserType>
 VerticalStressCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),
       derived_variable_(encloser.dv_derived_variable_->DelegatedData(ex_policy)) {}

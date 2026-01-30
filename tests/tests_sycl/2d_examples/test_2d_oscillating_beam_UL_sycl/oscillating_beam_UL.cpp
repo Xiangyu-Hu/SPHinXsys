@@ -152,6 +152,7 @@ int main(int ac, char *av[])
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     body_state_recorder.addToWrite<Real>(beam, "Pressure");
     body_state_recorder.addToWrite<Real>(beam, "Density");
+    body_state_recorder.addDerivedVariableToWrite<continuum_dynamics::VonMisesStressCK>(beam);
     auto &record_beam_mechanical_energy = main_methods.addReduceRegression<
         RegressionTestDynamicTimeWarping, TotalKineticEnergyCK>(beam);
     auto &beam_observer_position = main_methods.addObserveRecorder<Vecd>("Position", beam_observer_contact);
@@ -260,5 +261,15 @@ int main(int ac, char *av[])
     std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
 
+    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+    if (sph_system.GenerateRegressionData())
+    {
+        record_beam_mechanical_energy.generateDataBase(1.0e-3);
+    }
+    else
+    {
+        record_beam_mechanical_energy.testResult();
+    }
     return 0;
 }
