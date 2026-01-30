@@ -25,7 +25,7 @@ Now, the SYCL kernel is implemented for this feature so that heterogeneous paral
 
 The following example gives a metal bar impacting at high speed and the corresponding deformation and damage processes.
 
-[![Bar impact and damage](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/impact-24.png)](https://github.com/Xiangyu-Hu/SPHinXsys/tree/master/tests/tests_sycl/3d_examples/test_3d_bar_impact_UL_sycl)
+![Bar impact and damage](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/impact-24.png)
 
 ## Repository Description
 
