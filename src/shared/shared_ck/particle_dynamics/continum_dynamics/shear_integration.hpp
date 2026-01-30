@@ -90,22 +90,6 @@ void ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
     hourglass_force_[index_i] += sum_hourglass * Vol_[index_i] * dt;
     shear_force_[index_i] = sum_shear * Vol_[index_i] + hourglass_force_[index_i] ;
 }
-//====================================================================================//
-template <class MaterialType, typename... Parameters>
-Matd ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
-    InteractKernel::computeRotationMatrixRodrigues(const Matd &spin_rate, Real dt)
-{
-    Matd spin_rate_square = spin_rate * spin_rate;
-    Real trace_val = spin_rate_square.trace();
-    Real omega_norm = (trace_val <= 0) ? std::sqrt(-0.5 * trace_val) : 0.0;
-    Real theta = omega_norm * dt;
-    if (std::abs(theta) < Eps)
-        return Matd::Identity();
-    Matd spin_rate_normalized = spin_rate / omega_norm;
-    Matd rotation_matrix = Matd::Identity() + std::sin(theta) * spin_rate_normalized +
-                           (1 - std::cos(theta)) * (spin_rate_normalized * spin_rate_normalized);
-    return rotation_matrix;
-}
 //=================================================================================================//
 } // namespace continuum_dynamics
 } // namespace SPH

@@ -79,8 +79,6 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
         Vecd *shear_force_, *vel_, *hourglass_force_;
         Matd *vel_gradient_, *shear_stress_;
         Real *Vol_, *scale_penalty_force_;
-
-        Matd computeRotationMatrixRodrigues(const Matd &spin_rate, Real dt);
     };
 
   protected:
