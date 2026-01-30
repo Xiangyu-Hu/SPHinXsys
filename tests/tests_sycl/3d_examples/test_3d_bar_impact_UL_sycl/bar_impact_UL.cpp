@@ -12,7 +12,7 @@ using namespace SPH;
 Real total_physical_time = 6.0e-5; /**< TOTAL SIMULATION TIME*/
 Real PL = 0.00391;                 /**< X-direction domain. */
 Real PW = 0.02346;                 /**< Z-direction domain. */
-Real particle_spacing_ref = PL / 24.0;
+Real particle_spacing_ref = PL / 12.0;
 Real column_radius = PL;
 Vecd translation_column(0.0, 0.0, 0.5 * PW + particle_spacing_ref);
 Real SL = particle_spacing_ref * 4.0;
@@ -118,7 +118,10 @@ int main(int ac, char *av[])
         /** Output results. */
         wall_boundary_normal_direction.exec();
         write_particle_reload_files.writeToFile();
-        return 0;
+        if (!sph_system.ReloadParticles())
+        {
+            return 0;
+        }
     }
     column.defineMaterial<J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
     column.generateParticles<BaseParticles, Reload>(column.getName());
