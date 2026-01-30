@@ -198,9 +198,9 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         TickCount time_instance = TickCount::now();
         Real acoustic_dt = time_stepper.incrementPhysicalTime(beam_acoustic_time_step);
-        column_shear_force.exec(acoustic_dt);
         beam_acoustic_step_1st_half.exec(acoustic_dt);
         beam_base_constraint.exec();
+        column_shear_force.exec(acoustic_dt);
         beam_acoustic_step_2nd_half.exec(acoustic_dt);
         interval_acoustic_step += TickCount::now() - time_instance;
         //----------------------------------------------------------------------
