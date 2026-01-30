@@ -76,7 +76,7 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
 
       protected:
         Real G_;
-        Vecd *shear_force_, *vel_, *hourglass_acc_;
+        Vecd *shear_force_, *vel_, *hourglass_force_;
         Matd *vel_gradient_, *shear_stress_;
         Real *Vol_, *scale_penalty_force_;
 
@@ -86,7 +86,7 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
   protected:
     MaterialType &material_;
     Real xi_;
-    DiscreteVariable<Vecd> *dv_shear_force_, *dv_vel_, *dv_hourglass_acc_;
+    DiscreteVariable<Vecd> *dv_shear_force_, *dv_vel_, *dv_hourglass_force_;
     DiscreteVariable<Matd> *dv_vel_gradient_, *dv_strain_tensor_, *dv_shear_stress_;
     DiscreteVariable<Real> *dv_Vol_, *dv_scale_penalty_force_;
 };
