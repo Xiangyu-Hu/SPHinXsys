@@ -227,8 +227,8 @@ BaseNeighborBuilderContactShell::BaseNeighborBuilderContactShell(SPHBody &shell_
       k2_ave_(shell_body.getBaseParticles().registerStateVariableData<Real>("Average2ndPrincipleCurvature")),
       particle_distance_(shell_body.getSPHBodyResolutionRef()) {}
 //=================================================================================================//
-void BaseNeighborBuilderContactShell::createNeighbor(Neighborhood &neighborhood, const Real &distance,
-                                                     size_t index_j, const Real &W_ij, const Real &dW_ij, const Vecd &e_ij)
+void NeighborBuilder::createNeighbor(Neighborhood &neighborhood, const Real &distance,
+                                     size_t index_j, const Real &W_ij, const Real &dW_ij, const Vecd &e_ij)
 {
     neighborhood.j_.push_back(index_j);
     neighborhood.W_ij_.push_back(W_ij);
@@ -238,8 +238,8 @@ void BaseNeighborBuilderContactShell::createNeighbor(Neighborhood &neighborhood,
     neighborhood.allocated_size_++;
 }
 //=================================================================================================//
-void BaseNeighborBuilderContactShell::initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-                                                         size_t index_j, const Real &W_ij, const Real &dW_ij, const Vecd &e_ij)
+void NeighborBuilder::initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
+                                         size_t index_j, const Real &W_ij, const Real &dW_ij, const Vecd &e_ij)
 {
     size_t current_size = neighborhood.current_size_;
     neighborhood.j_[current_size] = index_j;
@@ -554,6 +554,57 @@ operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const 
         neighborhood.current_size_ >= neighborhood.allocated_size_
             ? createNeighbor(neighborhood, distance, displacement, index_j, i_h_ratio, h_ratio_min)
             : initializeNeighbor(neighborhood, distance, displacement, index_j, i_h_ratio, h_ratio_min);
+        neighborhood.current_size_++;
+    }
+};
+//=================================================================================================//
+NeighborBuilderContactFS2::NeighborBuilderContactFS2(SPHBody &fluid_body, SPHBody &shell_body)
+    : NeighborBuilderContact(fluid_body, shell_body),
+      thickness_(shell_body.getBaseParticles().getVariableDataByName<Real>("Thickness")),
+      particle_distance_(shell_body.getSPHBodyResolutionRef())
+{
+}
+//=================================================================================================//
+void NeighborBuilderContactFS2::operator()(Neighborhood &neighborhood,
+                                           const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+{
+    size_t index_j = list_data_j.first;
+    Vecd displacement = pos_i - list_data_j.second;
+    Real distance = displacement.norm();
+    if (kernel_->checkIfWithinCutOffRadius(displacement))
+    {
+        Real W_ij = kernel_->W(distance, displacement) * particle_distance_ / thickness_[index_j];
+        Real dW_ij = kernel_->dW(distance, displacement) * particle_distance_;
+        Vecd e_ij = displacement / (distance + TinyReal);
+
+        neighborhood.current_size_ >= neighborhood.allocated_size_
+            ? createNeighbor(neighborhood, distance, index_j, W_ij, dW_ij, e_ij)
+            : initializeNeighbor(neighborhood, distance, index_j, W_ij, dW_ij, e_ij);
+        neighborhood.current_size_++;
+    }
+};
+//=================================================================================================//
+NeighborBuilderContactSF2::NeighborBuilderContactSF2(SPHBody &shell_body, SPHBody &fluid_body)
+    : NeighborBuilderContact(shell_body, fluid_body),
+      particle_distance_(shell_body.getSPHBodyResolutionRef())
+{
+}
+//=================================================================================================//
+void NeighborBuilderContactSF2::operator()(Neighborhood &neighborhood,
+                                           const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
+{
+    size_t index_j = list_data_j.first;
+    Vecd displacement = pos_i - list_data_j.second;
+    Real distance = displacement.norm();
+    if (kernel_->checkIfWithinCutOffRadius(displacement))
+    {
+        Real W_ij = kernel_->W(distance, displacement);
+        Real dW_ij = kernel_->dW(distance, displacement) * particle_distance_;
+        Vecd e_ij = displacement / (distance + TinyReal);
+
+        neighborhood.current_size_ >= neighborhood.allocated_size_
+            ? createNeighbor(neighborhood, distance, index_j, W_ij, dW_ij, e_ij)
+            : initializeNeighbor(neighborhood, distance, index_j, W_ij, dW_ij, e_ij);
         neighborhood.current_size_++;
     }
 };
