@@ -20,8 +20,7 @@ void LinearGradientCorrectionMatrix<Inner<>>::interaction(size_t index_i, Real d
 void LinearGradientCorrectionMatrix<Inner<>>::update(size_t index_i, Real dt)
 {
     Real det_sqr = SMAX(alpha_ - B_[index_i].determinant(), Real(0));
-    Matd B_T = B_[index_i].transpose(); //for Tikhonov regularization
-    Matd inverse = (B_T * B_[index_i] + SqrtEps * Matd::Identity()).inverse() * B_T;
+    Matd inverse = inverseTikhonov(B_[index_i], SqrtEps);
     Real weight1_ = B_[index_i].determinant() / (B_[index_i].determinant() + det_sqr);
     Real weight2_ = det_sqr / (B_[index_i].determinant() + det_sqr);
     B_[index_i] = weight1_ * inverse + weight2_ * Matd::Identity();
