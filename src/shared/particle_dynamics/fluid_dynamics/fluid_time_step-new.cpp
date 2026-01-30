@@ -12,23 +12,13 @@ AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real acousticCFL)
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
-      mass_(particles_->getVariableDataByName<Real>("Mass")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-      force_(particles_->getVariableDataByName<Vecd>("Force")),
-      force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
       h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
-//Real AcousticTimeStep::reduce(size_t index_i, Real dt)
-//{
-//    return fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
-//}
-// 改成旧版考虑了加速度项
- Real AcousticTimeStep::reduce(size_t index_i, Real dt)
+Real AcousticTimeStep::reduce(size_t index_i, Real dt)
 {
-    Real acceleration_scale = 4.0 * h_min_ *
-                              (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
-    return SMAX(fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm(), acceleration_scale);
+    return fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
 }
 //=================================================================================================//
 Real AcousticTimeStep::outputResult(Real reduced_value)

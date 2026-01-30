@@ -37,7 +37,7 @@ Real BW = particle_spacing_ref * 4;                       /**< Thickness of tank
 Vec2d cylinder_center(0.05 * DL, LH + 0.2);               /**< Location of the cylinder center. */
 
 // 初始速度参数
-Real initial_speed =90;                         /**< Initial velocity magnitude (m/s). */
+Real initial_speed =70;                         /**< Initial velocity magnitude (m/s). */
 Real initial_angle =-20 * Pi / 180.0;          /**< Initial velocity angle (radians, negative = downward). */
 Real initial_rotation_angle = -20 * Pi / 180.0; /**< Initial body rotation (radians). */
 Real initial_angular_velocity = 0.0; // 可选：初始角速度（rad/s）（如果需要旋转入水，可设置）
@@ -48,6 +48,7 @@ Real rho0_f = 1.0;     /**< Fluid density. */
 Real rho0_s = 2.063;   /**< Cylinder density. */
 Real gravity_g = 9.81; /**< Gravity. */
 Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
+//Real U_max = 2.54; /**< Characteristic velocity. */
 Real c_f = 10.0 * U_max; /**< Reference sound speed. */
 Real mu_f = 8.9e-7;      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
@@ -761,11 +762,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
-    int screen_output_interval = 10;
-    int observation_sample_interval = screen_output_interval * 0.1;
-    int restart_output_interval = screen_output_interval * 10;
+    int screen_output_interval = 1;
+    int observation_sample_interval = screen_output_interval * 1;
+    int restart_output_interval = screen_output_interval * 500;
     Real end_time = 0.02;
-    Real output_interval = end_time /100.0;
+    Real output_interval = end_time /20.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -795,6 +796,28 @@ int main(int ac, char *av[])
     while (physical_time < end_time)
     {
         Real integration_time = 0.0;
+
+        //// 1. 实时更新所有模块的步长（包括热扩散步长）
+        //Real dt_advection = fluid_advection_time_step.exec();
+        //Real dt_acoustic = fluid_acoustic_time_step.exec();
+        //Real dt_thermal = get_thermal_time_step.exec(); // 新增：循环内实时计算
+        //                                                // 打印所有步长的原始值（关键：看dt_advection和dt_acoustic是否相等）
+        //std::cout << "debug:dt_advection=" << dt_advection
+        //          << " | dt_acoustic=" << dt_acoustic
+        //          << " | dt_thermal=" << dt_thermal << std::endl;
+
+        //// 2. 合并所有步长，取最小值
+        //Real dt = SMIN(SMIN(dt_advection, dt_acoustic), dt_thermal);
+
+        //// 3. 显式约束步长上下限（避免步长过小/过大）
+        //Real dt_min = 1e-8;
+        //Real dt_max = 1e-4;
+        //dt = std::clamp(dt, dt_min, dt_max);
+        //// 3. 打印最终Dt和dt（确认是否从源头就相等）
+        //std::cout << "debug:Dt=" << dt_advection << "| dt=" << dt << std::endl;
+        //// 4. 同步Simbody积分器步长（关键：新版本强耦合）
+        //integ.setFixedStepSize(dt); 
+
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
@@ -879,7 +902,6 @@ int main(int ac, char *av[])
 
 
                 Real angular_velocity = tethered_spot.getU(integ.getAdvancedState())[0];
-
 
                 Real viscous_local_x = transformGlobalForceToLocalX(total_viscous_force_g, total_rotation_angle);
                 Real pressure_local_x = transformGlobalForceToLocalX(total_pressure_force_g, total_rotation_angle);

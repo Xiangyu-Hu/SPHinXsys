@@ -52,8 +52,8 @@ class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax>
 
   protected:
     Fluid &fluid_;
-    Real *rho_, *p_, *mass_;
-    Vecd *vel_, *force_, *force_prior_;
+    Real *rho_, *p_;
+    Vecd *vel_;
     Real h_min_;
     Real acousticCFL_;
 };

@@ -1048,3 +1048,5 @@ dkms.conf
 # wasm build
 build_wasm_release
 build_wasm_debug
+tests/2d_examples/test_2d_oblique_water_entry_exit_zsy/history/test_2d_water_entry_exitV10加入位置观测.cpp
+/tests/2d_examples/test_2d_oblique_water_entry_exit_zsy/history
