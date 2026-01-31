@@ -13,12 +13,16 @@ BaseCellLinkedList::BaseCellLinkedList(
     BoundingBoxd tentative_bounds, Real Reference_grid_spacing, size_t total_levels)
     : MultiResolutionMeshField<Mesh>("CellLinkedList", total_levels, tentative_bounds, Reference_grid_spacing, 2),
       base_particles_(base_particles), kernel_(*sph_adaptation.getKernel()),
-      dv_particle_index_(this->createUniqueEnity<UnsignedInt, DiscreteVariable>(
-          "ParticleIndex", SMAX(base_particles.ParticlesBound(), total_number_of_cells_))),
-      dv_cell_offset_(createUniqueEnity<UnsignedInt, DiscreteVariable>("CellOffset", total_number_of_cells_ + 1))
+      cell_linked_list_mesh_(this->getFinestMesh()), dv_particle_index_(nullptr), dv_cell_offset_(nullptr)
 {
     cell_index_lists_.resize(total_number_of_cells_);
     cell_data_lists_.resize(total_number_of_cells_);
+    cell_linked_list_mesh_.setLinearCellIndexOffset(0);
+
+    UnsignedInt cell_offset_list_size = cell_linked_list_mesh_.AllCells().prod() + 1;
+    UnsignedInt index_list_size = SMAX(base_particles.ParticlesBound(), cell_offset_list_size);
+    dv_particle_index_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size);
+    dv_cell_offset_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("CellOffset", cell_offset_list_size);
 }
 //=================================================================================================//
 void BaseCellLinkedList::clearCellLists()
@@ -83,17 +87,15 @@ void BaseCellLinkedList::tagBodyPartByCellByMesh(Mesh &mesh, ConcurrentCellLists
         });
 }
 //=================================================================================================//
-Mesh BaseCellLinkedList::getCellLinkedListMesh()
+Mesh &BaseCellLinkedList::getCellLinkedListMesh()
 {
-    Mesh mesh(getFinestMesh());
-    mesh.setLinearCellIndexOffset(0);
-    return mesh;
+    return cell_linked_list_mesh_;
 }
 //=================================================================================================//
 void BaseCellLinkedList::tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes,
                                              std::function<bool(Vecd, Real)> &check_included)
 {
-    Mesh mesh = getCellLinkedListMesh();
+    Mesh &mesh = getCellLinkedListMesh();
     mesh_parallel_for(
         MeshRange(Arrayi::Zero(), mesh.AllCells()),
         [&](const Arrayi &cell_index)
