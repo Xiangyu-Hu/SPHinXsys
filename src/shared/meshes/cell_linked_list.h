@@ -84,6 +84,22 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
                                GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
     DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
+    Mesh getCellLinkedListMesh();
+
+    class NeighborSearch : public Mesh
+    {
+      public:
+        template <class ExecutionPolicy>
+        NeighborSearch(const ExecutionPolicy &ex_policy, BaseCellLinkedList &cell_linked_list);
+
+        template <typename FunctionOnEach>
+        void forEachSearch(const Vecd &source_pos, const FunctionOnEach &function,
+                           const BoundingBoxi &search_box = BoundingBoxi(Arrayi::Ones())) const;
+
+      protected:
+        UnsignedInt *particle_index_;
+        UnsignedInt *cell_offset_;
+    };
 
   protected:
     Kernel &kernel_;
@@ -97,8 +113,8 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
     void clearCellLists();
     void UpdateCellListData(BaseParticles &base_particles);
     void tagBodyPartByCellByMesh(Mesh &mesh, ConcurrentCellLists &cell_lists,
-                                 ConcurrentIndexVector &cell_indexes,
                                  std::function<bool(Vecd, Real)> &check_included);
+    void tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes, std::function<bool(Vecd, Real)> &check_included);
     void tagBoundingCellsByMesh(Mesh &mesh, StdVec<CellLists> &cell_data_lists,
                                 const BoundingBoxd &bounding_bounds, int axis);
     void findNearestListDataEntryByMesh(Mesh &mesh, Real &min_distance_sqr, ListData &nearest_entry,
@@ -126,26 +142,6 @@ class CellLinkedList : public BaseCellLinkedList
     Mesh &getMesh() { return *mesh_; };
     void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
-
-    class NeighborSearch : public Mesh
-    {
-      public:
-        template <class ExecutionPolicy>
-        NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list);
-
-        template <typename FunctionOnEach>
-        void forEachSearch(const Vecd &source_pos, const FunctionOnEach &function,
-                           const BoundingBoxi &search_box = BoundingBoxi(Arrayi::Ones())) const;
-
-      protected:
-        UnsignedInt *particle_index_;
-        UnsignedInt *cell_offset_;
-    };
-
-    UnsignedInt getCellOffsetListSize() { return cell_offset_list_size_; };
-
-  protected:
-    UnsignedInt cell_offset_list_size_;
 };
 
 /**

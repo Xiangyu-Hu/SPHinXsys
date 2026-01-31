@@ -15,8 +15,7 @@ UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
     : BaseLocalDynamicsType(inner_relation.getDynamicsIdentifier()),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
       inner_relation_(inner_relation),
-      cell_linked_list_(DynamicCast<CellLinkedList>(
-          this, inner_relation.getDynamicsIdentifier().getCellLinkedList())),
+      cell_linked_list_(inner_relation.getDynamicsIdentifier().getCellLinkedList()),
       kernel_implementation_(*this) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
@@ -147,9 +146,7 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
 {
     for (size_t k = 0; k != contact_relation.getContactBodies().size(); ++k)
     {
-        contact_cell_linked_list_.push_back(
-            DynamicCast<CellLinkedList>(
-                this, &contact_relation.getContactIdentifier(k).getCellLinkedList()));
+        contact_cell_linked_list_.push_back(&contact_relation.getContactIdentifier(k).getCellLinkedList());
         contact_kernel_implementation_.push_back(
             contact_kernel_implementation_ptrs_.template createPtr<KernelImplementation>(*this));
     }
