@@ -30,35 +30,12 @@ Real friction_angle = 21.9 * Pi / 180;
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
-Vec2d soil_block_halfsize = Vec2d(0.5 * LL, 0.5 * LH); // local center at origin:
+Vec2d soil_block_halfsize = Vec2d(0.5 * LL, 0.5 * LH); // local center at origin
 Vec2d soil_block_translation = soil_block_halfsize;
 Vec2d outer_wall_halfsize = Vec2d(0.5 * DL + BW, 0.5 * DH + BW);
 Vec2d outer_wall_translation = Vec2d(-BW, -BW) + outer_wall_halfsize;
 Vec2d inner_wall_halfsize = Vec2d(0.5 * DL, 0.5 * DH);
 Vec2d inner_wall_translation = inner_wall_halfsize;
-//----------------------------------------------------------------------
-//	Complex for wall boundary
-//----------------------------------------------------------------------
-class WallBoundary : public ComplexShape
-{
-  public:
-    explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
-    {
-        add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
-    }
-};
-std::vector<Vecd> soil_shape{
-    Vecd(0, 0), Vecd(0, LH), Vecd(LL, LH), Vecd(LL, 0), Vecd(0, 0)};
-
-class Soil : public MultiPolygonShape
-{
-  public:
-    explicit Soil(const std::string &shape_name) : MultiPolygonShape(shape_name)
-    {
-        multi_polygon_.addAPolygon(soil_shape, ShapeBooleanOps::add);
-    }
-};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -72,85 +49,102 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    GeometricShapeBox initial_soil_block(Transform(soil_block_translation), soil_block_halfsize, "GranularBody");
-    RealBody soil_block(sph_system, initial_soil_block);
+    auto &initial_soil_block = sph_system.addShape<GeometricShapeBox>(
+        Transform(soil_block_translation), soil_block_halfsize, "GranularBody");
+    auto &soil_block = sph_system.addBody<RealBody>(initial_soil_block);
     soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     soil_block.generateParticles<BaseParticles, Lattice>();
 
-    SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+    auto &wall_shape = sph_system.addShape<ComplexShape>("WallBoundary");
+    wall_shape.add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
+    wall_shape.subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
+    auto &wall_boundary = sph_system.addBody<SolidBody>(wall_shape);
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //  At last, we define the complex relaxations by combining previous defined
+    //  inner and contact relations.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> soil_cell_linked_list(soil_block);
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall_boundary);
-
+    auto &soil_block_inner = sph_system.addInnerRelation(soil_block);
+    auto &soil_block_contact = sph_system.addContactRelation(soil_block, wall_boundary);
     //----------------------------------------------------------------------
-    // Combined relations built from basic relations
-    // which is only used for update configuration.
+    // Define SPH solver with particle methods and execution policies.
+    // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
+    SPHSolver sph_solver(sph_system);
+    //----------------------------------------------------------------------
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the configuration dynamics, such as update cell linked list,
+    // update body relations, are defined first.
+    // Then the geometric models or simple objects without data dependencies,
+    // such as gravity, initialized normal direction.
+    // After that, the major physical particle dynamics model should be introduced.
+    // Finally, the auxiliary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    //----------------------------------------------------------------------
+    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall_boundary).exec();
 
-    Inner<> soil_block_inner(soil_block);
-    Contact<> soil_block_contact(soil_block, {&wall_boundary});
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
 
-    UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> soil_block_update_complex_relation(soil_block_inner, soil_block_contact);
-    ParticleSortCK<MainExecutionPolicy> particle_sort(soil_block);
+    ParticleDynamicsGroup soil_update_configuration;
+    soil_update_configuration.add(&main_methods.addCellLinkedListDynamics(soil_block));
+    soil_update_configuration.add(&main_methods.addRelationDynamics(soil_block_inner, soil_block_contact));
     //----------------------------------------------------------------------
     //	Define the main numerical methods used in the simulation.
     //	Note that there may be data dependence on the constructors of these methods.
     //----------------------------------------------------------------------
     Gravity gravity(Vecd(0.0, -gravity_g));
-    StateDynamics<MainExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(soil_block, gravity);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> soil_advection_step_setup(soil_block);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> soil_update_particle_position(soil_block);
+    auto &constant_gravity = main_methods.addStateDynamics<GravityForceCK<Gravity>>(soil_block, gravity);
+    auto &soil_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(soil_block);
+    auto &soil_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(soil_block);
 
-    InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::PlasticAcousticStep1stHalfWithWallRiemannCK>
-        soil_acoustic_step_1st_half(soil_block_inner, soil_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::PlasticAcousticStep2ndHalfWithWallRiemannCK>
-        soil_acoustic_step_2nd_half(soil_block_inner, soil_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
-        soil_density_summation(soil_block_inner, soil_block_contact);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
-        soil_density_regularization(soil_block);
-    InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::StressDiffusionInnerCK> stress_diffusion(soil_block_inner);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> soil_acoustic_time_step(soil_block, 0.4);
+    auto &soil_acoustic_step_1st_half =
+        main_methods.addInteractionDynamicsOneLevel<
+                        continuum_dynamics::PlasticAcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(soil_block_inner)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(soil_block_contact);
+    auto &soil_acoustic_step_2nd_half =
+        main_methods.addInteractionDynamicsOneLevel<
+                        continuum_dynamics::PlasticAcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(soil_block_inner)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(soil_block_contact);
+    auto &soil_density_regularization =
+        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(soil_block_inner)
+            .addPostContactInteraction(soil_block_contact)
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(soil_block);
+    auto &stress_diffusion = main_methods.addInteractionDynamics<continuum_dynamics::StressDiffusionCK>(soil_block_inner);
+
+    auto &soil_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(soil_block, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
-    body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
-    body_states_recording.addToWrite<Real>(soil_block, "Density");
-    StateDynamics<MainExecutionPolicy, continuum_dynamics::VerticalStressCK> vertical_stress(soil_block);
-    body_states_recording.addToWrite<Real>(soil_block, "VerticalStress");
-    StateDynamics<MainExecutionPolicy, continuum_dynamics::AccDeviatoricPlasticStrainCK> accumulated_deviatoric_plastic_strain(soil_block);
-    body_states_recording.addToWrite<Real>(soil_block, "AccDeviatoricPlasticStrain");
-    RestartIOCK<MainExecutionPolicy> restart_io(sph_system);
-
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
-        write_mechanical_energy(soil_block, gravity);
+    auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    body_state_recorder.addToWrite<Vecd>(wall_boundary, "NormalDirection");
+    body_state_recorder.addToWrite<Real>(soil_block, "Density");
+    body_state_recorder.addDerivedVariableToWrite<continuum_dynamics::VerticalStressCK>(soil_block);
+    body_state_recorder.addDerivedVariableToWrite<continuum_dynamics::AccDeviatoricPlasticStrainCK>(soil_block);
+    auto &record_water_mechanical_energy = main_methods.addReduceRegression<
+        RegressionTestDynamicTimeWarping, TotalMechanicalEnergyCK>(soil_block, gravity);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
-    wall_boundary_normal_direction.exec();
     constant_gravity.exec();
-    soil_cell_linked_list.exec();
     wall_cell_linked_list.exec();
-    soil_block_update_complex_relation.exec();
-
+    soil_update_configuration.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     size_t number_of_iterations = 0;
     int screen_output_interval = 500;
     int observation_sample_interval = screen_output_interval * 2;
-    int restart_output_interval = screen_output_interval * 10;
     Real End_Time = 0.8;         /**< End time. */
     Real D_Time = End_Time / 40; /**< Time stamps for output of body states. */
     Real Dt = 0.1 * D_Time;
@@ -166,8 +160,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile();
-    write_mechanical_energy.writeToFile(number_of_iterations);
+    body_state_recorder.writeToFile();
+    record_water_mechanical_energy.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -178,7 +172,6 @@ int main(int ac, char *av[])
         while (integration_time < D_Time)
         {
             /** outer loop for dual-time criteria time-stepping. */
-            soil_density_summation.exec();
             soil_density_regularization.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
@@ -206,23 +199,18 @@ int main(int ac, char *av[])
 
                     if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                     {
-                        write_mechanical_energy.writeToFile(number_of_iterations);
+                        record_water_mechanical_energy.writeToFile(number_of_iterations);
                     }
-                    if (number_of_iterations % restart_output_interval == 0)
-                        restart_io.writeToFile(number_of_iterations);
                 }
                 soil_update_particle_position.exec();
                 number_of_iterations++;
                 /** Update cell linked list and configuration. */
                 time_instance = TickCount::now();
-                soil_cell_linked_list.exec();
-                soil_block_update_complex_relation.exec();
+                soil_update_configuration.exec();
                 interval_updating_configuration += TickCount::now() - time_instance;
             }
         }
-        vertical_stress.exec();
-        accumulated_deviatoric_plastic_strain.exec();
-        body_states_recording.writeToFile();
+        body_state_recorder.writeToFile();
         TickCount t2 = TickCount::now();
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
@@ -240,11 +228,11 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_mechanical_energy.generateDataBase(1.0e-3);
+        record_water_mechanical_energy.generateDataBase(1.0e-3);
     }
     else if (sph_system.RestartStep() == 0)
     {
-        write_mechanical_energy.testResult();
+        record_water_mechanical_energy.testResult();
     }
 
     return 0;

@@ -21,14 +21,13 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_continuum_dynamics.h
+ * @file    all_contact_dynamics_ck.h
+ * @brief   This is the header file that user code should include to pick up all
+ *          solid dynamics used in SPHinXsys.
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #pragma once
 
-#include "continuum_dynamics_variable_ck.hpp"
-#include "continuum_integration_1st_ck.hpp"
-#include "continuum_integration_2nd_ck.hpp"
-#include "initialization_dynamics_ck.hpp"
-#include "shear_integration.hpp"
-#include "stress_diffusion_ck.hpp"
+#include "repulsion_factor.hpp"
+#include "repulsion_force.hpp"

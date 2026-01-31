@@ -81,10 +81,9 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
     using BaseDynamicsType = Interaction<RelationType<Parameters...>>;
 
   public:
-    template <class DynamicsIdentifier>
-    explicit Gradient(DynamicsIdentifier &identifier, std::string &variable_name);
-    template <typename BodyRelationType, typename FirstArg>
-    explicit Gradient(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+    explicit Gradient(RelationType<Parameters...> &relation, const std::string &variable_name);
+    template <typename FirstArg>
+    explicit Gradient(DynamicsArgs<RelationType<Parameters...>, FirstArg> parameters)
         : Gradient(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~Gradient() {};
 
@@ -118,8 +117,11 @@ class LinearGradient<Inner<DataType, Parameters...>>
     using BaseDynamicsType = Gradient<Base, DataType, Inner<Parameters...>>;
 
   public:
-    template <typename... Args>
-    explicit LinearGradient(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
+    explicit LinearGradient(Inner<Parameters...> &inner_relation, const std::string &variable_name)
+        : BaseDynamicsType(inner_relation, variable_name) {};
+    template <typename FirstArg>
+    explicit LinearGradient(DynamicsArgs<Inner<Parameters...>, FirstArg> parameters)
+        : LinearGradient(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~LinearGradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
@@ -139,8 +141,10 @@ class LinearGradient<Contact<DataType, Parameters...>>
     using BaseDynamicsType = Gradient<Base, DataType, Contact<Parameters...>>;
 
   public:
-    template <typename... Args>
-    explicit LinearGradient(Args &&...args);
+    explicit LinearGradient(Contact<Parameters...> &contact_relation, const std::string &variable_name);
+    template <typename FirstArg>
+    explicit LinearGradient(DynamicsArgs<Contact<Parameters...>, FirstArg> parameters)
+        : LinearGradient(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~LinearGradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel

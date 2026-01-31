@@ -11,7 +11,7 @@ BaseIO::BaseIO(SPHSystem &sph_system)
 //=============================================================================================//
 std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream)
 {
-    size_t i_time = size_t(sv_physical_time_->getValue() * 1.0e6);
+    size_t i_time = size_t(sv_physical_time_->getValue() * 1.0e8);
     return padValueWithZeros(i_time);
 }
 //=============================================================================================/
@@ -20,7 +20,7 @@ bool BaseIO::isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body)
     auto result = std::find_if(bodies.begin(), bodies.end(),
                                [&](auto &body) -> bool
                                { return body == sph_body; });
-    return result != bodies.end() ? true : false;
+    return result != bodies.end();
 }
 //=============================================================================================//
 BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)

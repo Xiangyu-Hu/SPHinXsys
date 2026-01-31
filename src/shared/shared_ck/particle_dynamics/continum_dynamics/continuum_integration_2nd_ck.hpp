@@ -12,7 +12,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     PlasticAcousticStep2ndHalf(Inner<Parameters...> &inner_relation)
     : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
-      correction_(this->particles_), riemann_solver_(this->plastic_continuum_, this->plastic_continuum_, 20.0 * (Real)Dimensions)
+      correction_method_(this->particles_), riemann_solver_(this->plastic_continuum_, this->plastic_continuum_, 20.0 * (Real)Dimensions)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");
@@ -37,7 +37,7 @@ template <class ExecutionPolicy, class EncloserType>
 PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
-      correction_(encloser.correction_),
+      correction_(ex_policy, encloser.correction_method_),
       riemann_solver_(encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
@@ -73,7 +73,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : plastic_kernel_(encloser.plastic_continuum_),
+    : constitute_(ex_policy, encloser.plastic_continuum_),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
       velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)),
@@ -88,20 +88,21 @@ void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
 {
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
     Mat3d velocity_gradient = upgradeToMat3d(velocity_gradient_[index_i]);
-    Mat3d stress_tensor_rate_3D_ = plastic_kernel_.ConstitutiveRelation(velocity_gradient, stress_tensor_3D_[index_i]);
-    stress_rate_3D_[index_i] += stress_tensor_rate_3D_; // stress diffusion is on
-    stress_tensor_3D_[index_i] += stress_rate_3D_[index_i] * dt;
-    /*return mapping*/
-    stress_tensor_3D_[index_i] = plastic_kernel_.ReturnMapping(stress_tensor_3D_[index_i]);
     strain_rate_3D_[index_i] = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     strain_tensor_3D_[index_i] += strain_rate_3D_[index_i] * dt;
+
+    stress_rate_3D_[index_i] += // stress diffusion is on
+        constitute_.StressTensorRate(index_i, velocity_gradient, stress_tensor_3D_[index_i]);
+    stress_tensor_3D_[index_i] = constitute_.updateStressTensor(
+        index_i, stress_tensor_3D_[index_i] + stress_rate_3D_[index_i] * dt);
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     PlasticAcousticStep2ndHalf(Contact<Parameters...> &wall_contact_relation)
     : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
-      correction_(this->particles_), riemann_solver_(this->plastic_continuum_, this->plastic_continuum_) {}
+      correction_method_(this->particles_),
+      riemann_solver_(this->plastic_continuum_, this->plastic_continuum_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -109,7 +110,7 @@ PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType
     InteractKernel::InteractKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
-      correction_(encloser.correction_),
+      correction_(ex_policy, encloser.correction_method_),
       riemann_solver_(encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
