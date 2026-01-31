@@ -119,10 +119,11 @@ BaseCellLinkedList::NeighborSearch::NeighborSearch(
 //=================================================================================================//
 template <typename FunctionOnEach>
 void BaseCellLinkedList::NeighborSearch::forEachSearch(
-    const Vecd &source_pos, const FunctionOnEach &function, const BoundingBoxi &search_box) const
+    const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const
 {
-    const BoundingBoxi search_range =
-        search_box.translate(CellIndexFromPosition(source_pos));
+    BoundingBoxi search_box = SearchBox(src_cut_off);
+    const BoundingBoxi search_range = search_box.translate(CellIndexFromPosition(source_pos));
+
     mesh_for_each(
         Arrayi::Zero().max(search_range.lower_), all_cells_.min(search_range.upper_ + Arrayi::Ones()),
         [&](const Arrayi &cell_index)
@@ -135,6 +136,11 @@ void BaseCellLinkedList::NeighborSearch::forEachSearch(
                 function(particle_index_[n]);
             }
         });
+}
+//=================================================================================================//
+BoundingBoxi BaseCellLinkedList::NeighborSearch::SearchBox(const Vecd &src_cut_off) const
+{
+    return BoundingBoxi(ceil((src_cut_off - Eps * Vecd::Ones()).array() / grid_spacing_).cast<int>());
 }
 //=================================================================================================//
 } // namespace SPH
