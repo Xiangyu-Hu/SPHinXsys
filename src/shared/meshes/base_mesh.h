@@ -65,6 +65,7 @@ class Mesh
     Arrayi AllCells() const { return all_cells_; };
     UnsignedInt NumberOfGridPoints() const { return all_grid_points_.prod(); };
     UnsignedInt NumberOfCells() const { return all_cells_.prod(); };
+    void setLinearCellIndexOffset(UnsignedInt offset) { linear_cell_index_offset_ = offset; };
 
     Arrayi CellIndexFromPosition(const Vecd &position) const;
     UnsignedInt LinearCellIndexFromPosition(const Vecd &position) const;

@@ -239,7 +239,6 @@ class RealBody : public SPHBody
     UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
     UniquePtrsKeeper<BodyPart> body_parts_keeper_;
     bool cell_linked_list_created_;
-    virtual void createCellLinkedListPtr();
 
   private:
     void addRealBodyToSPHSystem();

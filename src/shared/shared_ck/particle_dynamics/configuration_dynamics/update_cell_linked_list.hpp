@@ -15,10 +15,9 @@ template <class ExecutionPolicy, typename DynamicsIdentifier>
 UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::
     UpdateCellLinkedList(DynamicsIdentifier &identifier)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier), BaseDynamics<void>(),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, identifier.getCellLinkedList())),
-      mesh_(cell_linked_list_.getMesh()),
-      total_number_of_cells_(cell_linked_list_.TotalNumberOfCells()),
-      cell_offset_list_size_(cell_linked_list_.getCellOffsetListSize()),
+      cell_linked_list_(identifier.getCellLinkedList()),
+      mesh_(cell_linked_list_.getCellLinkedListMesh()),
+      number_of_cells_(mesh_.NumberOfCells()),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_particle_index_(cell_linked_list_.dvParticleIndex()),
       dv_cell_offset_(cell_linked_list_.dvCellOffset()),
@@ -77,7 +76,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::exec(Real dt)
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
 
     particle_for(ExecutionPolicy{},
-                 IndexRange(0, total_number_of_cells_),
+                 IndexRange(0, number_of_cells_),
                  [=](size_t i)
                  { computing_kernel->clearAllLists(i); });
 
@@ -92,7 +91,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::exec(Real dt)
     UnsignedInt *particle_index = this->dv_particle_index_->DelegatedData(ExecutionPolicy{});
     UnsignedInt *cell_offset = this->dv_cell_offset_->DelegatedData(ExecutionPolicy{});
     exclusive_scan(ExecutionPolicy{}, particle_index, cell_offset,
-                   cell_offset_list_size_,
+                   number_of_cells_ + 1,
                    typename PlusUnsignedInt<ExecutionPolicy>::type());
 
     particle_for(ExecutionPolicy{},

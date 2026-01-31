@@ -101,7 +101,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
 
     ExecutionPolicy ex_policy_;
     InnerRelationType &inner_relation_;
-    CellLinkedList &cell_linked_list_;
+    BaseCellLinkedList &cell_linked_list_;
     Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel> kernel_implementation_;
 };
 
@@ -149,7 +149,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
     ExecutionPolicy ex_policy_;
     ContactRelationType &contact_relation_;
-    StdVec<CellLinkedList *> contact_cell_linked_list_;
+    StdVec<BaseCellLinkedList *> contact_cell_linked_list_;
     StdVec<KernelImplementation *> contact_kernel_implementation_;
 };
 
