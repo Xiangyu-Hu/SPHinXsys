@@ -135,7 +135,7 @@ bool TriangleMeshShape::checkContain(const Vec3d &probe_point, bool BOUNDARY_INC
 {
     Real distance = triangle_mesh_distance_.signed_distance(probe_point).distance;
 
-    return distance < 0.0 ? true : false;
+    return distance < 0.0;
 }
 //=================================================================================================//
 Vecd TriangleMeshShape::findClosestPoint(const Vecd &probe_point)

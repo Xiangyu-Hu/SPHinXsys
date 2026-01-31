@@ -27,13 +27,13 @@ BoundingBoxd Shape::getBounds()
 //=================================================================================================//
 bool Shape::checkNotFar(const Vecd &probe_point, Real threshold)
 {
-    return checkContain(probe_point) || checkNearSurface(probe_point, threshold) ? true : false;
+    return checkContain(probe_point) || checkNearSurface(probe_point, threshold);
 }
 //=================================================================================================//
 bool Shape::checkNearSurface(const Vecd &probe_point, Real threshold)
 {
     Vecd distance = probe_point - findClosestPoint(probe_point);
-    return distance.cwiseAbs().maxCoeff() < threshold ? true : false;
+    return distance.cwiseAbs().maxCoeff() < threshold;
 }
 //=================================================================================================//
 Real Shape::findSignedDistance(const Vecd &probe_point)
@@ -60,7 +60,7 @@ Vecd Shape::findNormalDirection(const Vecd &probe_point)
 //=================================================================================================//
 bool BinaryShapes::isValid()
 {
-    return sub_shapes_and_ops_.size() == 0 ? false : true;
+    return !sub_shapes_and_ops_.empty();
 }
 //=================================================================================================//
 BoundingBoxd BinaryShapes::findBounds()
