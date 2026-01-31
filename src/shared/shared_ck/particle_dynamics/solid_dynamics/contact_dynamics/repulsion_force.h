@@ -45,7 +45,7 @@ class RepulsionForceCK<Base, Contact<Parameters...>>
     : public Interaction<Contact<Parameters...>>, public ForcePriorCK
 {
   public:
-    explicit RepulsionForceCK(Contact<Parameters...> &contact_relation, Real numerical_damping = 0.0);
+    explicit RepulsionForceCK(Contact<Parameters...> &contact_relation, Real numerical_damping = 0.5);
     virtual ~RepulsionForceCK() {};
 
   protected:

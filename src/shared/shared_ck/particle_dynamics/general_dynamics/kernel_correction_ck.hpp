@@ -60,8 +60,7 @@ void LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
 {
     Real determinant = this->B_[index_i].determinant();
     Real det_sqr = SMAX(alpha_ - determinant, Real(0));
-    Matd B_T = this->B_[index_i].transpose(); // for Tikhonov regularization
-    Matd inverse = (B_T * this->B_[index_i] + SqrtEps * Matd::Identity()).inverse() * B_T;
+    Matd inverse = inverseTikhonov(this->B_[index_i], SqrtEps);
     Real weight = determinant / (determinant + det_sqr);
     this->B_[index_i] = weight * inverse + (1.0 - weight) * Matd::Identity();
 }

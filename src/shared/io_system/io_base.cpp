@@ -46,7 +46,7 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
     {
         derived_variable->exec();
     }
-    writeWithFileName(padValueWithZeros(iteration_step));
+    writeWithFileName("ite_" + padValueWithZeros(iteration_step));
 };
 //=============================================================================================//
 RestartIO::RestartIO(SPHSystem &sph_system)
