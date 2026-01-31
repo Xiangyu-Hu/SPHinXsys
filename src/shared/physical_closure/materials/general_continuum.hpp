@@ -28,6 +28,15 @@ Real GeneralContinuum::ConstituteKernel::getLambda(Real youngs_modulus, Real poi
     return nu_ * youngs_modulus / (1.0 + poisson_ratio) / (1.0 - 2.0 * poisson_ratio);
 }
 //=================================================================================================//
+Matd GeneralContinuum::ConstituteKernel::ShearStressRate(
+    UnsignedInt index_i, const Matd &velocity_gradient, const Matd &shear_stress)
+{
+    Matd strain_rate = 0.5 * (velocity_gradient + velocity_gradient.transpose());
+    Matd deviatoric_strain_rate = strain_rate - (1.0 / (Real)Dimensions) * strain_rate.trace() * Matd::Identity();
+    Matd spin_rate = 0.5 * (velocity_gradient - velocity_gradient.transpose());
+    return 2.0 * G_ * deviatoric_strain_rate + shear_stress * (spin_rate.transpose()) + spin_rate * shear_stress;
+};
+//=================================================================================================//
 template <typename ExecutionPolicy>
 PlasticContinuum::ConstituteKernel::
     ConstituteKernel(const ExecutionPolicy &ex_policy, PlasticContinuum &encloser)

@@ -118,7 +118,10 @@ int main(int ac, char *av[])
         /** Output results. */
         wall_boundary_normal_direction.exec();
         write_particle_reload_files.writeToFile();
-        return 0;
+        if (!sph_system.ReloadParticles())
+        {
+            return 0;
+        }
     }
     column.defineMaterial<J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
     column.generateParticles<BaseParticles, Reload>(column.getName());

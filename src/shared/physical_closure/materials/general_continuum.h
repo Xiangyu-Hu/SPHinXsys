@@ -63,6 +63,9 @@ class GeneralContinuum : public WeaklyCompressibleFluid, public SolidContact
         inline Real getBulkModulus(Real youngs_modulus, Real poisson_ratio);
         inline Real getShearModulus(Real youngs_modulus, Real poisson_ratio);
         inline Real getLambda(Real youngs_modulus, Real poisson_ratio);
+        inline Matd ShearStressRate(UnsignedInt index_i, const Matd &velocity_gradient, const Matd &shear_stress);
+        inline Matd updateShearStress(UnsignedInt index_i, const Matd &try_shear_stress) { return try_shear_stress; };
+        inline Real ScalePenaltyForce(UnsignedInt index_i, const Matd &try_shear_stress) { return 1.0; };
 
       protected:
         Real E_;                 /* Youngs or tensile modules  */

@@ -38,9 +38,28 @@ namespace SPH
 {
 namespace continuum_dynamics
 {
-/**
- * @class VerticalStress
- */
+class VonMisesStressCK : public BaseDerivedVariable<Real>
+{
+  public:
+    explicit VonMisesStressCK(SPHBody &sph_body);
+    virtual ~VonMisesStressCK() {};
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *p_, *derived_variable_;
+        Matd *shear_stress_;
+    };
+
+  protected:
+    DiscreteVariable<Real> *dv_p_, *dv_derived_variable_;
+    DiscreteVariable<Matd> *dv_shear_stress_;
+};
+
 class VerticalStressCK : public BaseDerivedVariable<Real>
 {
   public:
