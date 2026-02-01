@@ -29,8 +29,8 @@
  * @author	Chi Zhang, Yongchuan and Xiangyu Hu
  */
 
-#ifndef MESH_CELL_LINKED_LIST_H
-#define MESH_CELL_LINKED_LIST_H
+#ifndef CELL_LINKED_LIST_H
+#define CELL_LINKED_LIST_H
 
 #include "base_mesh.hpp"
 #include "execution_policy.h"
@@ -98,7 +98,7 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
       protected:
         UnsignedInt *particle_index_;
         UnsignedInt *cell_offset_;
-        
+
         inline BoundingBoxi SearchBox(const Vecd &src_cut_off) const;
     };
 
@@ -169,4 +169,4 @@ class MultilevelCellLinkedList : public BaseCellLinkedList
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
 };
 } // namespace SPH
-#endif // MESH_CELL_LINKED_LIST_H
+#endif // CELL_LINKED_LIST_H

@@ -7,7 +7,8 @@
  * @author	Chi Zhang, Yongchuan and Xiangyu Hu
  */
 
-#pragma once
+#ifndef CELL_LINKED_LIST_HPP
+#define CELL_LINKED_LIST_HPP
 
 #include "base_particles.h"
 #include "cell_linked_list.h"
@@ -144,3 +145,4 @@ BoundingBoxi BaseCellLinkedList::NeighborSearch::SearchBox(const Vecd &src_cut_o
 }
 //=================================================================================================//
 } // namespace SPH
+#endif // CELL_LINKED_LIST_HPP
