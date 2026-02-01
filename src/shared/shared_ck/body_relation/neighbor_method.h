@@ -132,21 +132,19 @@ class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
         inline bool operator()(UnsignedInt i, UnsignedInt j) const { return true; };
     };
 
-    class SearchBox
+    class CutOff
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        SearchBox(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        inline BoundingBoxi operator()(UnsignedInt i) const { return search_box_; };
+        CutOff(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        inline Vecd operator()(UnsignedInt i) const { return cut_off_; };
 
       private:
-        BoundingBoxi search_box_;
+        Vecd cut_off_;
     };
 
   protected:
     Real src_inv_h_, inv_h_;
-    int search_depth_;
-    BoundingBoxi search_box_; /**< Search depth for neighbor search. */
 };
 
 template <class SourceAdaptationType, class TargetAdaptationType>
@@ -213,15 +211,15 @@ class Neighbor<SourceAdaptationType, TargetAdaptationType> : public Neighbor<Bas
         bool operator()(UnsignedInt i, UnsignedInt j) const;
     };
 
-    class SearchBox
+    class CutOff
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        SearchBox(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        BoundingBoxi operator()(UnsignedInt i) const;
+        CutOff(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        Vecd operator()(UnsignedInt i) const;
 
       private:
-        Real src_inv_h_ref_, tar_inv_h_min_;
+        Real kernel_size_, src_inv_h_ref_;
         SourceSmoothingLengthRatio src_h_ratio_;
     };
 

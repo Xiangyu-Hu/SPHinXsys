@@ -16,9 +16,7 @@ Neighbor<Base>::SmoothingKernel::SmoothingKernel(Neighbor<Base> &encloser)
 //=================================================================================================//
 Neighbor<SPHAdaptation, SPHAdaptation>::Neighbor(
     SharedPtr<Kernel> base_kernel, Real h, Real search_increment)
-    : Neighbor<Base>(base_kernel), inv_h_(1.0 / h),
-      search_depth_(static_cast<int>(std::ceil((h - Eps) / search_increment))),
-      search_box_(BoundingBoxi(Arrayi::Constant(search_depth_))) {}
+    : Neighbor<Base>(base_kernel), src_inv_h_(1.0 / h), inv_h_(1.0 / h) {}
 //=================================================================================================//
 Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::SmoothingKernel(
     Neighbor<SPHAdaptation, SPHAdaptation> &encloser)

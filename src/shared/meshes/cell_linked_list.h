@@ -84,7 +84,7 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
                                GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
     DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
-    Mesh getCellLinkedListMesh();
+    Mesh &getCellLinkedListMesh();
 
     class NeighborSearch : public Mesh
     {
@@ -93,16 +93,18 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
         NeighborSearch(const ExecutionPolicy &ex_policy, BaseCellLinkedList &cell_linked_list);
 
         template <typename FunctionOnEach>
-        void forEachSearch(const Vecd &source_pos, const FunctionOnEach &function,
-                           const BoundingBoxi &search_box = BoundingBoxi(Arrayi::Ones())) const;
+        void forEachSearch(const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const;
 
       protected:
         UnsignedInt *particle_index_;
         UnsignedInt *cell_offset_;
+        
+        inline BoundingBoxi SearchBox(const Vecd &src_cut_off) const;
     };
 
   protected:
     Kernel &kernel_;
+    Mesh cell_linked_list_mesh_;
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
     DiscreteVariable<UnsignedInt> *dv_cell_offset_;
     /** using concurrent vectors due to writing conflicts when building the list */
