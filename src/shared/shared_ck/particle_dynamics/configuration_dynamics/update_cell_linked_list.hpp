@@ -15,7 +15,7 @@ template <class ExecutionPolicy, typename DynamicsIdentifier>
 UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::
     UpdateCellLinkedList(DynamicsIdentifier &identifier)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier), BaseDynamics<void>(),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, identifier.getCellLinkedList())),
+      cell_linked_list_(DynamicCast<CellLinkedList<SPHAdaptation>>(this, identifier.getCellLinkedList())),
       mesh_(cell_linked_list_.getMesh()),
       total_number_of_cells_(cell_linked_list_.TotalNumberOfCells()),
       cell_offset_list_size_(cell_linked_list_.getCellOffsetListSize()),

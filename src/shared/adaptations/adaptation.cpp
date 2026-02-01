@@ -78,14 +78,16 @@ void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_refinem
 UniquePtr<BaseCellLinkedList> SPHAdaptation::
     createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
 {
-    return makeUnique<CellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(), base_particles, *this);
+    return makeUnique<CellLinkedList<SPHAdaptation>>(
+        domain_bounds, kernel_ptr_->CutOffRadius(), base_particles, *this);
 }
 //=================================================================================================//
 UniquePtr<BaseCellLinkedList> SPHAdaptation::createFinestCellLinkedList(
     const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
 {
     Real grid_spacing = kernel_ptr_->CutOffRadius() / pow(2.0, local_refinement_level_);
-    return makeUnique<CellLinkedList>(domain_bounds, grid_spacing, base_particles, *this);
+    return makeUnique<CellLinkedList<SPHAdaptation>>(
+        domain_bounds, grid_spacing, base_particles, *this);
 }
 //=================================================================================================//
 UniquePtr<LevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement) const
@@ -140,8 +142,9 @@ void AdaptiveSmoothingLength::initializeAdaptationVariables(BaseParticles &base_
 UniquePtr<BaseCellLinkedList> AdaptiveSmoothingLength::
     createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
 {
-    return makeUnique<MultilevelCellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(),
-                                                local_refinement_level_, base_particles, *this);
+    return makeUnique<CellLinkedList<AdaptiveSmoothingLength>>(
+        domain_bounds, kernel_ptr_->CutOffRadius(),
+        local_refinement_level_, base_particles, *this);
 }
 //=================================================================================================//
 UniquePtr<LevelSet> AdaptiveSmoothingLength::createLevelSet(Shape &shape, Real refinement) const

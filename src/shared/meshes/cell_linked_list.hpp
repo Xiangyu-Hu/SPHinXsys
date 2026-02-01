@@ -110,15 +110,15 @@ void BaseCellLinkedList::particle_for_split(const ExecutionPolicy &ex_policy,
         particle_for_split_by_mesh(ex_policy, getMesh(level), local_dynamics_function);
 }
 //=================================================================================================//
-template <class ExecutionPolicy>
-CellLinkedList::NeighborSearch::NeighborSearch(
-    const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list)
-    : Mesh(cell_linked_list.getMesh()),
-      particle_index_(cell_linked_list.dvParticleIndex()->DelegatedData(ex_policy)),
-      cell_offset_(cell_linked_list.dvCellOffset()->DelegatedData(ex_policy)) {}
+template <class ExecutionPolicy, class Encloser>
+CellLinkedList<SPHAdaptation>::NeighborSearch::NeighborSearch(
+    const ExecutionPolicy &ex_policy, Encloser &encloser)
+    : Mesh(encloser.getMesh()),
+      particle_index_(encloser.dvParticleIndex()->DelegatedData(ex_policy)),
+      cell_offset_(encloser.dvCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename FunctionOnEach>
-void CellLinkedList::NeighborSearch::forEachSearch(
+void CellLinkedList<SPHAdaptation>::NeighborSearch::forEachSearch(
     const Vecd &source_pos, const FunctionOnEach &function, const BoundingBoxi &search_box) const
 {
     const BoundingBoxi search_range =

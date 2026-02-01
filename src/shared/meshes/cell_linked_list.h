@@ -42,7 +42,7 @@ namespace SPH
 class BaseParticles;
 class Kernel;
 class SPHAdaptation;
-class CellLinkedList;
+class AdaptiveSmoothingLength;
 
 /**
  * @class BaseCellLinkedList
@@ -109,12 +109,11 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
                                     const LocalDynamicsFunction &local_dynamics_function);
 };
 
-/**
- * @class CellLinkedList
- * @brief Defining a mesh cell linked list for a body.
- * 		  The meshes for all bodies share the same global coordinates.
- */
-class CellLinkedList : public BaseCellLinkedList
+template <typename...>
+class CellLinkedList;
+
+template <>
+class CellLinkedList<SPHAdaptation> : public BaseCellLinkedList
 {
   protected:
     Mesh *mesh_;
@@ -130,8 +129,8 @@ class CellLinkedList : public BaseCellLinkedList
     class NeighborSearch : public Mesh
     {
       public:
-        template <class ExecutionPolicy>
-        NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list);
+        template <class ExecutionPolicy, class Encloser>
+        NeighborSearch(const ExecutionPolicy &ex_policy, Encloser &encloser);
 
         template <typename FunctionOnEach>
         void forEachSearch(const Vecd &source_pos, const FunctionOnEach &function,
@@ -148,12 +147,8 @@ class CellLinkedList : public BaseCellLinkedList
     UnsignedInt cell_offset_list_size_;
 };
 
-/**
- * @class MultilevelCellLinkedList
- * @brief Defining a multilevel mesh cell linked list for a body
- * 		  for multi-resolution particle configuration.
- */
-class MultilevelCellLinkedList : public BaseCellLinkedList
+template <>
+class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
 {
   protected:
     Real *h_ratio_; /**< Smoothing length for each level. */
@@ -163,10 +158,10 @@ class MultilevelCellLinkedList : public BaseCellLinkedList
     inline UnsignedInt getMeshLevel(Real particle_cutoff_radius);
 
   public:
-    MultilevelCellLinkedList(BoundingBoxd tentative_bounds,
-                             Real reference_grid_spacing, UnsignedInt total_levels,
-                             BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    virtual ~MultilevelCellLinkedList() {};
+    CellLinkedList(BoundingBoxd tentative_bounds,
+                   Real reference_grid_spacing, UnsignedInt total_levels,
+                   BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
+    virtual ~CellLinkedList() {};
     void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
 };

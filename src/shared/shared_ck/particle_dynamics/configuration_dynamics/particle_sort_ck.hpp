@@ -10,7 +10,7 @@ template <class ExecutionPolicy>
 ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
     : LocalDynamics(real_body), BaseDynamics<void>(),
       ex_policy_(ExecutionPolicy{}),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())),
+      cell_linked_list_(DynamicCast<CellLinkedList<SPHAdaptation>>(this, real_body.getCellLinkedList())),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_sequence_(particles_->registerDiscreteVariable<UnsignedInt>(
           "Sequence", particles_->ParticlesBound())),

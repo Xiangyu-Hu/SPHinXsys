@@ -52,8 +52,9 @@ class ContactRelationCrossResolution : public BaseContactRelation
     {
         for (size_t k = 0; k != contact_bodies_.size(); ++k)
         {
-            CellLinkedList *target_cell_linked_list =
-                DynamicCast<CellLinkedList>(this, &contact_bodies_[k]->getCellLinkedList());
+            CellLinkedList<SPHAdaptation> *target_cell_linked_list =
+                DynamicCast<CellLinkedList<SPHAdaptation>>(
+                    this, &contact_bodies_[k]->getCellLinkedList());
             target_cell_linked_lists_.push_back(target_cell_linked_list);
             get_search_depths_.push_back(
                 search_depths_keeper_.createPtr<SearchDepthContact>(
@@ -61,10 +62,13 @@ class ContactRelationCrossResolution : public BaseContactRelation
         }
     };
     virtual ~ContactRelationCrossResolution() {};
-    StdVec<CellLinkedList *> getContactCellLinkedList() { return target_cell_linked_lists_; }
+    StdVec<CellLinkedList<SPHAdaptation> *> getContactCellLinkedList()
+    {
+        return target_cell_linked_lists_;
+    }
 
   protected:
-    StdVec<CellLinkedList *> target_cell_linked_lists_;
+    StdVec<CellLinkedList<SPHAdaptation> *> target_cell_linked_lists_;
     StdVec<SearchDepthContact *> get_search_depths_;
 };
 

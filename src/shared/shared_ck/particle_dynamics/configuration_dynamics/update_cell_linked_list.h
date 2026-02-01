@@ -47,7 +47,7 @@ class UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>
     using ParticleMask = typename DynamicsIdentifier::ListedParticleMask;
 
   protected:
-    CellLinkedList &cell_linked_list_;
+    CellLinkedList<SPHAdaptation> &cell_linked_list_;
     Mesh mesh_;
     UnsignedInt total_number_of_cells_;
     UnsignedInt cell_offset_list_size_;

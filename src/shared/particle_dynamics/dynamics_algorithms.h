@@ -142,10 +142,11 @@ class ReduceDynamics : public LocalDynamicsType,
     virtual ReturnType exec(Real dt = 0.0) override
     {
         this->setupDynamics(dt);
-        ReturnType temp = particle_reduce(ExecutionPolicy(),
-                                          this->identifier_->LoopRange(), this->Reference(), this->getOperation(),
-                                          [&](size_t i) -> ReturnType
-                                          { return this->reduce(i, dt); });
+        ReturnType temp = particle_reduce(
+            ExecutionPolicy(),
+            this->identifier_->LoopRange(), this->Reference(), this->getOperation(),
+            [&](size_t i) -> ReturnType
+            { return this->reduce(i, dt); });
         return this->outputResult(temp);
     };
 };
@@ -223,10 +224,10 @@ class BaseInteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, P
 };
 
 template <class LocalDynamicsType>
-using InteractionSplit = BaseInteractionSplit<LocalDynamicsType, CellLinkedList>;
+using InteractionSplit = BaseInteractionSplit<LocalDynamicsType, CellLinkedList<SPHAdaptation>>;
 
 template <class LocalDynamicsType>
-using InteractionAdaptiveSplit = BaseInteractionSplit<LocalDynamicsType, MultilevelCellLinkedList>;
+using InteractionAdaptiveSplit = BaseInteractionSplit<LocalDynamicsType, CellLinkedList<AdaptiveSmoothingLength>>;
 
 /**
  * @class InteractionDynamics

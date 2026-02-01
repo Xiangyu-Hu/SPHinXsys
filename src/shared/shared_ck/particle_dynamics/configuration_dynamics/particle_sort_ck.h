@@ -82,7 +82,7 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
 
   protected:
     ExecutionPolicy ex_policy_;
-    CellLinkedList &cell_linked_list_;
+    CellLinkedList<SPHAdaptation> &cell_linked_list_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<UnsignedInt> *dv_sequence_;
     DiscreteVariable<UnsignedInt> *dv_index_permutation_;

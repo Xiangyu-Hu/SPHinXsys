@@ -85,7 +85,7 @@ BaseCellLinkedList &RealBody::getCellLinkedList()
     {
         createCellLinkedListPtr();
         cell_linked_list_created_ = true;
-        cell_linked_list_ptr_.get()->setName(getName() + "CellLinkedList");
+        cell_linked_list_ptr_.get()->setName(getName() + "CellLinkedList<SPHAdaptation>");
     }
     return *cell_linked_list_ptr_.get();
 }

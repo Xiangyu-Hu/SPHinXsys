@@ -158,8 +158,8 @@ void BaseCellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_data_lists,
     }
 }
 //=================================================================================================//
-CellLinkedList::CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
-                               BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
+CellLinkedList<SPHAdaptation>::CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
+                                              BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, grid_spacing, 1),
       mesh_(&getCoarsestMesh())
 {
@@ -169,26 +169,28 @@ CellLinkedList::CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
     dv_cell_offset_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("CellOffset", cell_offset_list_size_);
 }
 //=================================================================================================//
-void CellLinkedList ::insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position)
+void CellLinkedList<SPHAdaptation>::insertParticleIndex(
+    UnsignedInt particle_index, const Vecd &particle_position)
 {
     UnsignedInt linear_index = mesh_->LinearCellIndexFromPosition(particle_position);
     cell_index_lists_[linear_index].emplace_back(particle_index);
 }
 //=================================================================================================//
-void CellLinkedList ::InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position)
+void CellLinkedList<SPHAdaptation>::InsertListDataEntry(
+    UnsignedInt particle_index, const Vecd &particle_position)
 {
     UnsignedInt linear_index = mesh_->LinearCellIndexFromPosition(particle_position);
     cell_data_lists_[linear_index].emplace_back(std::make_pair(particle_index, particle_position));
 }
 //=================================================================================================//
-MultilevelCellLinkedList::MultilevelCellLinkedList(
+CellLinkedList<AdaptiveSmoothingLength>::CellLinkedList(
     BoundingBoxd tentative_bounds, Real reference_grid_spacing, UnsignedInt total_levels,
     BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, reference_grid_spacing, total_levels),
       h_ratio_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->dvSmoothingLengthRatio()->Data()),
       h_level_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->dvSmoothingLengthLevel()->Data()) {}
 //=================================================================================================//
-UnsignedInt MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
+UnsignedInt CellLinkedList<AdaptiveSmoothingLength>::getMeshLevel(Real particle_cutoff_radius)
 {
     for (UnsignedInt level = resolution_levels_; level != 0; --level)
     {
@@ -202,7 +204,8 @@ UnsignedInt MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
     return 999; // means an error in level searching
 };
 //=================================================================================================//
-void MultilevelCellLinkedList::insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position)
+void CellLinkedList<AdaptiveSmoothingLength>::insertParticleIndex(
+    UnsignedInt particle_index, const Vecd &particle_position)
 {
     UnsignedInt level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
     h_level_[particle_index] = level;
@@ -210,7 +213,8 @@ void MultilevelCellLinkedList::insertParticleIndex(UnsignedInt particle_index, c
     cell_index_lists_[linear_index].emplace_back(particle_index);
 }
 //=================================================================================================//
-void MultilevelCellLinkedList::InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position)
+void CellLinkedList<AdaptiveSmoothingLength>::InsertListDataEntry(
+    UnsignedInt particle_index, const Vecd &particle_position)
 {
     UnsignedInt level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
     UnsignedInt linear_index = getMesh(level).LinearCellIndexFromPosition(particle_position);
