@@ -17,6 +17,81 @@
 namespace SPH
 {
 //=================================================================================================//
+inline UnsignedInt CellLinkedListMesh::Cell1DIndexFromPosition(const Vecd &position_on_coarsest_mesh) const
+{
+    return coarsest_mesh_.Cell1DIndexFromPosition(position_on_coarsest_mesh);
+}
+//=================================================================================================//
+inline UnsignedInt CellLinkedListMesh::Cell1DIndexFromPosition(
+    const Vecd &position, const Vecd &src_cut_off) const
+{
+    Arrayi coarsest_cell_index = coarsest_mesh_.CellIndexFromPosition(position);
+    if (refinement_level_ == 0)
+    {
+        return coarsest_mesh_.Cell1DIndex(coarsest_cell_index);
+    }
+    int level = getLevel(src_cut_off);
+    Vecd position_in_octree = (coarsest_mesh_.MeshCellCoordinate(position, coarsest_cell_index) /
+                               coarsest_mesh_.GridSpacing());
+    Arrayi level_cell_index = octree_view_.CellIndexFromPosition(level, position_in_octree);
+    return Cell1DIndex(level, coarsest_cell_index, level_cell_index);
+}
+//=================================================================================================//
+inline int CellLinkedListMesh::getLevel(const Vecd &src_cut_off) const
+{
+    Real radius_max = src_cut_off.maxCoeff() - Eps;
+    UnsignedInt target_level = 0;
+    for (UnsignedInt level = refinement_level_; level != 0; --level)
+    {
+        if (radius_max < octree_view_.GridSpacing(level))
+        {
+            target_level = level; // jump out the loop!
+            break;
+        }
+    }
+    return target_level;
+}
+//=================================================================================================//
+inline UnsignedInt CellLinkedListMesh::Cell1DIndex(const Array3i &coarsest_cell_index) const
+{
+    return coarsest_mesh_.Cell1DIndex(coarsest_cell_index);
+}
+//=================================================================================================//
+inline UnsignedInt CellLinkedListMesh::Cell1DIndex(
+    int level, const Arrayi &coarsest_cell_index, const Arrayi &level_cell_index) const
+{
+    return coarsest_mesh_.Cell1DIndex(coarsest_cell_index) * octree_capacity_ +
+           octree_view_.Cell1DIndex(level, level_cell_index);
+}
+//=================================================================================================//
+inline std::pair<Arrayi, Arrayi> CellLinkedListMesh::CellIndexPairFromPosition(int level, const Vecd &position) const
+{
+    Arrayi coarsest_cell_index = coarsest_mesh_.CellIndexFromPosition(position);
+    Vecd position_in_octree = (coarsest_mesh_.MeshCellCoordinate(position, coarsest_cell_index) /
+                               coarsest_mesh_.GridSpacing());
+    Arrayi level_cell_index = octree_view_.CellIndexFromPosition(level, position_in_octree);
+    return std::pair<Arrayi, Arrayi>(coarsest_cell_index, level_cell_index);
+}
+//=================================================================================================//
+inline UnsignedInt CellLinkedListMesh::NeighborCell1DIndex(
+    int level, const Arrayi &coarsest_cell_index, const Arrayi &level_cell_index, const Arrayi &shift) const
+{
+    if (octree_view_.existNeighbor(level, level_cell_index, shift))
+    {
+        Arrayi n_level_cell_index = level_cell_index + shift;
+        return Cell1DIndex(level, coarsest_cell_index, n_level_cell_index);
+    }
+
+    int resolution = octree_view_.Resolution(level);
+    Arrayi temp_index = level_cell_index + shift + resolution * Arrayi::Ones();
+    Arrayi temp_cell_index_shift = temp_index / resolution;
+    Arrayi n_level_cell_index = temp_index - temp_cell_index_shift * resolution;
+
+    return Cell1DIndex(level,
+                       coarsest_cell_index + temp_cell_index_shift - Arrayi::Ones(),
+                       n_level_cell_index);
+}
+//=================================================================================================//
 template <class DynamicsRange, typename GetSearchDepth, typename GetNeighborRelation>
 void BaseCellLinkedList::searchNeighborsByMesh(
     Mesh &mesh, DynamicsRange &dynamics_range, ParticleConfiguration &particle_configuration,

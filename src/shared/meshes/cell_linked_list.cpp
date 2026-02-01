@@ -8,6 +8,11 @@
 namespace SPH
 {
 //=================================================================================================//
+CellLinkedListMesh::CellLinkedListMesh(const Mesh &coarsest_mesh, int refinement_level)
+    : coarsest_mesh_(coarsest_mesh), refinement_level_(refinement_level),
+      octree_view_(), octree_capacity_(octree_view_.LeafAndChilds(refinement_level_)),
+      total_capacity_(octree_capacity_ * coarsest_mesh.NumberOfCells()) {}
+//=================================================================================================//
 BaseCellLinkedList::BaseCellLinkedList(
     BaseParticles &base_particles, SPHAdaptation &sph_adaptation,
     BoundingBoxd tentative_bounds, Real Reference_grid_spacing, size_t total_levels)

@@ -184,41 +184,6 @@ inline UnsignedInt OctreeView::LeafAndChilds(int refine_levels) const
     return num;
 }
 //=================================================================================================//
-inline UnsignedInt OctreeMesh::Cell1DIndex(
-    int level, const Arrayi &coarsest_cell_index, const Arrayi &level_cell_index) const
-{
-    return coarsest_mesh_.Cell1DIndex(coarsest_cell_index) * octree_capacity_ +
-           octree_view_.Cell1DIndex(level, level_cell_index);
-}
-//=================================================================================================//
-inline std::pair<Arrayi, Arrayi> OctreeMesh::CellIndexPairFromPosition(int level, const Vecd &position) const
-{
-    Arrayi coarsest_cell_index = coarsest_mesh_.CellIndexFromPosition(position);
-    Vecd position_in_octree = (coarsest_mesh_.MeshCellCoordinate(position, coarsest_cell_index) /
-                               coarsest_mesh_.GridSpacing());
-    Arrayi level_cell_index = octree_view_.CellIndexFromPosition(level, position_in_octree);
-    return std::pair<Arrayi, Arrayi>(coarsest_cell_index, level_cell_index);
-}
-//=================================================================================================//
-inline UnsignedInt OctreeMesh::NeighborCell1DIndex(
-    int level, const Arrayi &coarsest_cell_index, const Arrayi &level_cell_index, const Arrayi &shift) const
-{
-    if (octree_view_.existNeighbor(level, level_cell_index, shift))
-    {
-        Arrayi n_level_cell_index = level_cell_index + shift;
-        return Cell1DIndex(level, coarsest_cell_index, n_level_cell_index);
-    }
-
-    int resolution = octree_view_.Resolution(level);
-    Arrayi temp_index = level_cell_index + shift + resolution * Arrayi::Ones();
-    Arrayi temp_cell_index_shift = temp_index / resolution;
-    Arrayi n_level_cell_index = temp_index - temp_cell_index_shift * resolution;
-
-    return Cell1DIndex(level,
-                       coarsest_cell_index + temp_cell_index_shift - Arrayi::Ones(),
-                       n_level_cell_index);
-}
-//=================================================================================================//
 template <class MeshType>
 MultiResolutionMeshField<MeshType>::MultiResolutionMeshField(
     const std::string &name, size_t resolution_levels, BoundingBoxd tentative_bounds,

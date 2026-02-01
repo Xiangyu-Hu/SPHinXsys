@@ -44,6 +44,27 @@ class Kernel;
 class SPHAdaptation;
 class CellLinkedList;
 
+class CellLinkedListMesh
+{
+  public:
+    CellLinkedListMesh(const Mesh &coarsest_mesh, int refinement_level);
+    UnsignedInt Cell1DIndexFromPosition(const Vecd &position_on_coarsest_mesh) const;
+    UnsignedInt Cell1DIndexFromPosition(const Vecd &position, const Vecd &src_cut_off) const;
+    UnsignedInt Cell1DIndex(const Array3i &coarsest_cell_index) const;
+    UnsignedInt Cell1DIndex(int level, const Arrayi &coarsest_cell_index,
+                            const Arrayi &level_cell_index) const;
+    std::pair<Arrayi, Arrayi> CellIndexPairFromPosition(int level, const Vecd &position) const;
+    UnsignedInt NeighborCell1DIndex(int level, const Arrayi &coarsest_cell_index,
+                                    const Arrayi &level_cell_index, const Arrayi &shift) const;
+    int getLevel(const Vecd &src_cut_off) const;
+
+  protected:
+    Mesh coarsest_mesh_;
+    int refinement_level_;
+    OctreeView octree_view_;
+    UnsignedInt octree_capacity_;
+    UnsignedInt total_capacity_;
+};
 /**
  * @class BaseCellLinkedList
  * @brief The Abstract class for mesh cell linked list derived from BaseMeshField.
@@ -98,7 +119,7 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
       protected:
         UnsignedInt *particle_index_;
         UnsignedInt *cell_offset_;
-        
+
         inline BoundingBoxi SearchBox(const Vecd &src_cut_off) const;
     };
 

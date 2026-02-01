@@ -126,23 +126,6 @@ class OctreeView // the view of a cell-based full octree with unit root grid spa
     UnsignedInt LevelOffset(int level) const;                 // Index offset at level
 };
 
-class OctreeMesh
-{
-  public:
-    OctreeMesh(const Mesh &coarsest_mesh, int refinement_level);
-    UnsignedInt Cell1DIndex(int level, const Arrayi &coarsest_cell_index,
-                            const Arrayi &level_cell_index) const;
-    std::pair<Arrayi, Arrayi> CellIndexPairFromPosition(int level, const Vecd &position) const;
-    UnsignedInt NeighborCell1DIndex(int level, const Arrayi &coarsest_cell_index,
-                                    const Arrayi &level_cell_index, const Arrayi &shift) const;
-
-  protected:
-    Mesh coarsest_mesh_;
-    int refinement_level_;
-    OctreeView octree_view_;
-    UnsignedInt octree_capacity_;
-    UnsignedInt total_capacity_;
-};
 /**
  * @class BaseMeshField
  * @brief Abstract base class for the geometric or physics field.
