@@ -20,7 +20,7 @@ void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
     UnsignedInt index_1d = index_handler_.Cell1DIndex(cell_index);
     cell_pkg_index_[index_1d] = 1;  // outside far field by default
     cell_contain_id_[index_1d] = 2; // default value is 2, indicating not near interface
-    Vecd cell_position = index_handler_.CellPositionFromIndex(cell_index);
+    Vecd cell_position = index_handler_.PositionFromCellIndex(cell_index);
     if (ABS(shape_->findSignedDistance(cell_position)) < grid_spacing_)
     {
         cell_pkg_index_[index_1d] = MaxUnsignedInt;                  // indicate initially tagged temporarily
@@ -48,7 +48,7 @@ InitialCellTaggingFromCoarse::InitialCellTaggingFromCoarse(
 //=================================================================================================//
 void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index)
 {
-    Vecd cell_position = index_handler_.CellPositionFromIndex(cell_index);
+    Vecd cell_position = index_handler_.PositionFromCellIndex(cell_index);
     Real phi = probe_coarse_phi_(coarse_index_handler_, cell_position);
     UnsignedInt index_1d = index_handler_.Cell1DIndex(cell_index);
     cell_pkg_index_[index_1d] = phi < 0.0 ? boundary_pkg_index_offset_ : boundary_pkg_index_offset_ + 1;

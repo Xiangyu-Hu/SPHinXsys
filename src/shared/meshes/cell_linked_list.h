@@ -48,6 +48,7 @@ class CellLinkedListMesh
 {
   public:
     CellLinkedListMesh(const Mesh &coarsest_mesh, int refinement_level);
+    UnsignedInt TotalCapacity() const { return total_capacity_; };
     UnsignedInt Cell1DIndexFromPosition(const Vecd &position_on_coarsest_mesh) const;
     UnsignedInt Cell1DIndexFromPosition(const Vecd &position, const Vecd &src_cut_off) const;
     UnsignedInt Cell1DIndex(const Array3i &coarsest_cell_index) const;
@@ -57,6 +58,8 @@ class CellLinkedListMesh
     UnsignedInt NeighborCell1DIndex(int level, const Arrayi &coarsest_cell_index,
                                     const Arrayi &level_cell_index, const Arrayi &shift) const;
     int getLevel(const Vecd &src_cut_off) const;
+    std::pair<Vecd, int> PositionLevelPairFromCell1DIndex(UnsignedInt linear_index) const;
+    Real GridSpacing(int level) { return octree_view_.GridSpacing(level) * coarsest_mesh_.GridSpacing(); };
 
   protected:
     Mesh coarsest_mesh_;
@@ -105,7 +108,7 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
                                GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
     DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
-    Mesh &getCellLinkedListMesh();
+    CellLinkedListMesh &getCellLinkedListMesh();
 
     class NeighborSearch : public Mesh
     {
@@ -125,7 +128,7 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
 
   protected:
     Kernel &kernel_;
-    Mesh cell_linked_list_mesh_;
+    CellLinkedListMesh cell_linked_list_mesh_;
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
     DiscreteVariable<UnsignedInt> *dv_cell_offset_;
     /** using concurrent vectors due to writing conflicts when building the list */

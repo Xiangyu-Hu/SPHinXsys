@@ -73,8 +73,9 @@ class Mesh
     UnsignedInt Cell1DIndexFromPosition(const Vecd &position) const;
     UnsignedInt Cell1DIndex(const Arrayi &cell_index) const;
     Arrayi DimensionalCellIndex(UnsignedInt linear_index) const;
-    Vecd CellPositionFromIndex(const Arrayi &cell_index) const;
-    Vecd GridPositionFromIndex(const Arrayi &grid_index) const;
+    Vecd PositionFromCellIndex(const Arrayi &cell_index) const;
+    Vecd PositionFromCell1DIndex(UnsignedInt linear_index) const;
+    Vecd PositionFromGridIndex(const Arrayi &grid_index) const;
     Vecd CellLowerCornerPosition(const Arrayi &cell_index) const;
     Arrayi boundCellIndex(const Arrayi &input) const;
     //----------------------------------------------------------------------
@@ -114,6 +115,7 @@ class OctreeView // the view of a cell-based full octree with unit root grid spa
     UnsignedInt Cell1DIndex(int level, const Array2i &cell_index) const; // Linear index
     Arrayi CellIndexFromPosition(int level, const Vecd &position) const; // cell index
     UnsignedInt Cell1DIndexFromPosition(int level, const Vecd &position) const;
+    std::pair<Vecd, int> PositionLevelPairFromCell1DIndex(UnsignedInt linear_index) const;
     // check if a connected neighbor at same level exist
     bool existNeighbor(int level, const Arrayi &cell_index, const Arrayi &shift) const;
     Array3i Parent(int level, const Array3i &cell_index) const; // Parent (l > 0)

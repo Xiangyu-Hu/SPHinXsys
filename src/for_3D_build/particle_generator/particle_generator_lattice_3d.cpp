@@ -18,7 +18,7 @@ void ParticleGenerator<BaseParticles, Lattice>::prepareGeometricData()
         for (int j = 0; j < number_of_lattices[1]; ++j)
             for (int k = 0; k < number_of_lattices[2]; ++k)
             {
-                Vecd particle_position = mesh.CellPositionFromIndex(Arrayi(i, j, k));
+                Vecd particle_position = mesh.PositionFromCellIndex(Arrayi(i, j, k));
                 if (initial_shape_.checkContain(particle_position))
                     addPositionAndVolumetricMeasure(particle_position, particle_volume);
             }
@@ -34,7 +34,7 @@ void ParticleGenerator<SurfaceParticles, Lattice>::prepareGeometricData()
         for (int j = 0; j < number_of_lattices[1]; ++j)
             for (int k = 0; k < number_of_lattices[2]; ++k)
             {
-                Vecd particle_position = mesh.CellPositionFromIndex(Arrayi(i, j, k));
+                Vecd particle_position = mesh.PositionFromCellIndex(Arrayi(i, j, k));
                 if (initial_shape_.checkContain(particle_position))
                 {
                     all_cells_++;
@@ -58,7 +58,7 @@ void ParticleGenerator<SurfaceParticles, Lattice>::prepareGeometricData()
         for (int j = 0; j < number_of_lattices[1]; ++j)
             for (int k = 0; k < number_of_lattices[2]; ++k)
             {
-                Vecd particle_position = mesh.CellPositionFromIndex(Arrayi(i, j, k));
+                Vecd particle_position = mesh.PositionFromCellIndex(Arrayi(i, j, k));
                 if (initial_shape_.checkContain(particle_position))
                 {
                     Real random_real = uniform_distr(rng);

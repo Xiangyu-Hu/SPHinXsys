@@ -23,14 +23,26 @@ Mesh::Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points)
     all_cells_ = all_grid_points_ - Arrayi::Ones();
 }
 //=================================================================================================//
-Vecd Mesh::CellPositionFromIndex(const Arrayi &cell_index) const
+Vecd Mesh::PositionFromCellIndex(const Arrayi &cell_index) const
 {
     return CellLowerCornerPosition(cell_index) + 0.5 * Vecd::Ones() * grid_spacing_;
 }
 //=================================================================================================//
-Vecd Mesh::GridPositionFromIndex(const Arrayi &grid_index) const
+Vecd Mesh::PositionFromGridIndex(const Arrayi &grid_index) const
 {
     return mesh_lower_bound_ + grid_index.cast<Real>().matrix() * grid_spacing_;
+}
+//=================================================================================================//
+Vecd Mesh::PositionFromCell1DIndex(UnsignedInt linear_index) const
+{
+    return PositionFromCellIndex(DimensionalCellIndex(linear_index));
+}
+//=================================================================================================//
+std::pair<Vecd, int> OctreeView::PositionLevelPairFromCell1DIndex(UnsignedInt linear_index) const
+{
+    std::cout << "\n OctreeView::PositionLevelPairFromCell1DIndex not implemented!" << std::endl;
+    exit(1);
+    return std::pair<Vecd, int>(Vecd::Zero(), 0);
 }
 //=================================================================================================//
 } // namespace SPH

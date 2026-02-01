@@ -54,7 +54,7 @@ void SparseMeshField<PKG_SIZE>::writePackageVariablesToPltByMesh(
         Arrayi::Zero(), number_of_operation,
         [&](const Array2i &global_index)
         {
-            Vecd data_position = global_mesh.GridPositionFromIndex(global_index);
+            Vecd data_position = global_mesh.PositionFromGridIndex(global_index);
             output_file << data_position[0] << " " << data_position[1] << " ";
 
             for (PackageVariable<UnsignedInt> *variable : std::get<type_index_unsigned>(pkg_variables_to_write_))

@@ -77,7 +77,7 @@ void SparseMeshField<PKG_SIZE>::writePackageVariablesToPltByMesh(
             global_lower_bound, global_upper_bound,
             [&](const Array3i &global_index)
             {
-                Vec3d data_position = global_mesh.GridPositionFromIndex(global_index);
+                Vec3d data_position = global_mesh.PositionFromGridIndex(global_index);
                 output_file << data_position[0] << " " << data_position[1] << " " << data_position[2] << " ";
 
                 constexpr int type_index_int = DataTypeIndex<int>::value;
