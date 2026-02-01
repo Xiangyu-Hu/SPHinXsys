@@ -13,7 +13,8 @@ inline Arrayi Mesh::CellIndexFromPosition(const Vecd &position) const
         .max(Arrayi::Zero())
         .min(all_grid_points_ - 2 * Arrayi::Ones());
 }
-Vecd Mesh::MeshCellCoordinate(const Vecd &position, const Arrayi &cell_index) const
+//=================================================================================================//
+inline Vecd Mesh::MeshCellCoordinate(const Vecd &position, const Arrayi &cell_index) const
 {
     return MeshCoordinate(position) - cell_index.cast<Real>().matrix() * grid_spacing_;
 }
