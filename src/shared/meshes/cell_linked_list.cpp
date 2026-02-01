@@ -17,7 +17,7 @@ BaseCellLinkedList::BaseCellLinkedList(
 {
     cell_index_lists_.resize(total_number_of_cells_);
     cell_data_lists_.resize(total_number_of_cells_);
-    cell_linked_list_mesh_.setLinearCellIndexOffset(0);
+    cell_linked_list_mesh_.setCell1DIndexOffset(0);
 
     UnsignedInt cell_offset_list_size = cell_linked_list_mesh_.AllCells().prod() + 1;
     UnsignedInt index_list_size = SMAX(base_particles.ParticlesBound(), cell_offset_list_size);
@@ -81,7 +81,7 @@ void BaseCellLinkedList::tagBodyPartByCellByMesh(Mesh &mesh, ConcurrentCellLists
                 });
             if (is_included == true)
             {
-                UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
+                UnsignedInt linear_index = mesh.Cell1DIndex(cell_index);
                 cell_lists.push_back(&cell_index_lists_[linear_index]);
             }
         });
@@ -113,7 +113,7 @@ void BaseCellLinkedList::tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes
                 });
             if (is_included == true)
             {
-                UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
+                UnsignedInt linear_index = mesh.Cell1DIndex(cell_index);
                 cell_indexes.push_back(linear_index);
             }
         });
@@ -147,7 +147,7 @@ void BaseCellLinkedList::findNearestListDataEntryByMesh(Mesh &mesh, Real &min_di
         mesh.AllCells().min(cell + 2 * Arrayi::Ones()),
         [&](const Arrayi &cell_index)
         {
-            UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
+            UnsignedInt linear_index = mesh.Cell1DIndex(cell_index);
             ListDataVector &target_particles = cell_data_lists_[linear_index];
             for (const ListData &list_data : target_particles)
             {
@@ -202,13 +202,13 @@ CellLinkedList::CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
 //=================================================================================================//
 void CellLinkedList ::insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position)
 {
-    UnsignedInt linear_index = mesh_->LinearCellIndexFromPosition(particle_position);
+    UnsignedInt linear_index = mesh_->Cell1DIndexFromPosition(particle_position);
     cell_index_lists_[linear_index].emplace_back(particle_index);
 }
 //=================================================================================================//
 void CellLinkedList ::InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position)
 {
-    UnsignedInt linear_index = mesh_->LinearCellIndexFromPosition(particle_position);
+    UnsignedInt linear_index = mesh_->Cell1DIndexFromPosition(particle_position);
     cell_data_lists_[linear_index].emplace_back(std::make_pair(particle_index, particle_position));
 }
 //=================================================================================================//
@@ -237,14 +237,14 @@ void MultilevelCellLinkedList::insertParticleIndex(UnsignedInt particle_index, c
 {
     UnsignedInt level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
     h_level_[particle_index] = level;
-    UnsignedInt linear_index = getMesh(level).LinearCellIndexFromPosition(particle_position);
+    UnsignedInt linear_index = getMesh(level).Cell1DIndexFromPosition(particle_position);
     cell_index_lists_[linear_index].emplace_back(particle_index);
 }
 //=================================================================================================//
 void MultilevelCellLinkedList::InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position)
 {
     UnsignedInt level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
-    UnsignedInt linear_index = getMesh(level).LinearCellIndexFromPosition(particle_position);
+    UnsignedInt linear_index = getMesh(level).Cell1DIndexFromPosition(particle_position);
     cell_data_lists_[linear_index]
         .emplace_back(std::make_pair(particle_index, particle_position));
 }

@@ -17,7 +17,7 @@ InitialCellTagging::InitialCellTagging(SparseMeshField<4> &data_mesh, Shape &sha
 //=================================================================================================//
 void InitialCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 {
-    UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
+    UnsignedInt index_1d = index_handler_.Cell1DIndex(cell_index);
     cell_pkg_index_[index_1d] = 1;  // outside far field by default
     cell_contain_id_[index_1d] = 2; // default value is 2, indicating not near interface
     Vecd cell_position = index_handler_.CellPositionFromIndex(cell_index);
@@ -50,7 +50,7 @@ void InitialCellTaggingFromCoarse::UpdateKernel::update(const Arrayi &cell_index
 {
     Vecd cell_position = index_handler_.CellPositionFromIndex(cell_index);
     Real phi = probe_coarse_phi_(coarse_index_handler_, cell_position);
-    UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
+    UnsignedInt index_1d = index_handler_.Cell1DIndex(cell_index);
     cell_pkg_index_[index_1d] = phi < 0.0 ? boundary_pkg_index_offset_ : boundary_pkg_index_offset_ + 1;
     cell_contain_id_[index_1d] = 2;
     if (ABS(phi) > far_field_distance_)
@@ -77,14 +77,14 @@ void InnerCellTagging::UpdateKernel::update(const Arrayi &cell_index)
 {
     if (isNearInitiallyTagged(cell_index) && !isInitiallyTagged(cell_index))
     {
-        UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
+        UnsignedInt index_1d = index_handler_.Cell1DIndex(cell_index);
         occupied_data_pkgs_->push_back(std::make_pair(index_1d, 0)); // inner package
     }
 }
 //=============================================================================================//
 bool InnerCellTagging::UpdateKernel::isInitiallyTagged(const Arrayi &cell_index)
 {
-    UnsignedInt index_1d = index_handler_.LinearCellIndex(cell_index);
+    UnsignedInt index_1d = index_handler_.Cell1DIndex(cell_index);
     return cell_pkg_index_[index_1d] == MaxUnsignedInt;
 }
 //=============================================================================================//
@@ -102,7 +102,7 @@ bool InnerCellTagging::UpdateKernel::isNearInitiallyTagged(const Arrayi &cell_in
 InitializeCellNeighborhood::InitializeCellNeighborhood(
     SparseMeshField<4> &data_mesh, UnsignedInt resolution_level)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
-      dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
+      dv_pkg_1d_cell_index_(data_mesh.getPackageCell1DIndex()),
       dv_cell_neighborhood_(data_mesh.getCellNeighborhood()),
       mcv_cell_pkg_index_(data_mesh.getCellPackageIndex())
 {
@@ -129,7 +129,7 @@ void InitializeCellNeighborhood::UpdateKernel::update(const UnsignedInt &package
 InitializeBasicPackageData::InitializeBasicPackageData(
     SparseMeshField<4> &data_mesh, UnsignedInt resolution_level, Shape &shape)
     : BaseMeshLocalDynamics(data_mesh, resolution_level), shape_(shape),
-      dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
+      dv_pkg_1d_cell_index_(data_mesh.getPackageCell1DIndex()),
       pmv_phi_(*data_mesh.registerPackageVariable<Real>("LevelSet")),
       pmv_phi_gradient_(*data_mesh.registerPackageVariable<Vecd>("LevelSetGradient")),
       pmv_near_interface_id_(*data_mesh.registerPackageVariable<int>("NearInterfaceID"))
@@ -162,7 +162,7 @@ void InitializeBasicPackageData::UpdateKernel::update(const UnsignedInt &package
 NearInterfaceCellTagging::NearInterfaceCellTagging(
     SparseMeshField<4> &data_mesh, UnsignedInt resolution_level)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
-      dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
+      dv_pkg_1d_cell_index_(data_mesh.getPackageCell1DIndex()),
       mcv_cell_contain_id_(*data_mesh.getCellVariable<int>("CellContainID")),
       pmv_phi_(*data_mesh.getPackageVariable<Real>("LevelSet")) {}
 //=============================================================================================//

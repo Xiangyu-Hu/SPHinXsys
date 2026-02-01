@@ -47,7 +47,7 @@ class PackageSort : public BaseDynamics<void>
           kernel_implementation_(*this),
           dv_sequence_(mesh_data.registerMetaVariable<UnsignedInt>("Sequence")),
           dv_index_permutation_(mesh_data.registerMetaVariable<UnsignedInt>("IndexPermutation")),
-          dv_pkg_1d_cell_index_(&mesh_data.getPackage1DCellIndex()),
+          dv_pkg_1d_cell_index_(&mesh_data.getPackageCell1DIndex()),
           mcv_cell_pkg_index_(&mesh_data.getCellPackageIndex()),
           update_meta_variables_to_sort_(mesh_data.PackageBound()),
           update_mesh_variables_to_sort_(mesh_data.PackageBound()),

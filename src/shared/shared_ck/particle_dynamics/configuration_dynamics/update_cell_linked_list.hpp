@@ -50,7 +50,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel:
     if (particle_mask_(index_i))
     {
         // Here, particle_index_ takes role of current_list_size_.
-        const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
+        const UnsignedInt linear_index = mesh_.Cell1DIndexFromPosition(pos_[index_i]);
         AtomicRef<UnsignedInt> atomic_cell_size(particle_index_[linear_index]);
         ++atomic_cell_size;
     }
@@ -63,7 +63,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel:
     if (particle_mask_(index_i))
     {
         // Here, particle_index_ takes its original role.
-        const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
+        const UnsignedInt linear_index = mesh_.Cell1DIndexFromPosition(pos_[index_i]);
         AtomicRef<UnsignedInt> atomic_current_list_size(current_list_size_[linear_index]);
         particle_index_[cell_offset_[linear_index] + atomic_current_list_size++] = index_i;
     }

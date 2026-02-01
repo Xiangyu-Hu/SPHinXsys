@@ -38,7 +38,7 @@ template <int PKG_SIZE>
 UnsignedInt PackageMesh<PKG_SIZE>::PackageIndexFromCellIndex(
     UnsignedInt *cell_pkg_index, const Arrayi &cell_index) const
 {
-    UnsignedInt index_1d = LinearCellIndex(cell_index);
+    UnsignedInt index_1d = Cell1DIndex(cell_index);
     return cell_pkg_index[index_1d];
 }
 //=============================================================================================//
@@ -96,9 +96,9 @@ DiscreteVariable<CellNeighborhood> &SparseMeshField<PKG_SIZE>::getCellNeighborho
 }
 //=============================================================================================//
 template <int PKG_SIZE>
-DiscreteVariable<UnsignedInt> &SparseMeshField<PKG_SIZE>::getPackage1DCellIndex()
+DiscreteVariable<UnsignedInt> &SparseMeshField<PKG_SIZE>::getPackageCell1DIndex()
 {
-    return checkOrganized("getPackage1DCellIndex", *dv_pkg_1d_cell_index_);
+    return checkOrganized("getPackageCell1DIndex", *dv_pkg_1d_cell_index_);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
@@ -262,9 +262,9 @@ void SparseMeshField<PKG_SIZE>::organizeOccupiedPackages(UnsignedInt level)
         pkgs_bound_ += pkgs_bound_ / 4; // add extra for safety
         is_organized_ = true;
 
-        dv_pkg_1d_cell_index_ = registerMetaVariable<UnsignedInt>("Package1DCellIndex");
+        dv_pkg_1d_cell_index_ = registerMetaVariable<UnsignedInt>("PackageCell1DIndex");
         dv_pkg_type_ = registerMetaVariable<int>("PackageType");
-        addEvolvingMetaVariable<UnsignedInt>("Package1DCellIndex");
+        addEvolvingMetaVariable<UnsignedInt>("PackageCell1DIndex");
         addEvolvingMetaVariable<int>("PackageType");
         cell_neighborhood_ = unique_variable_ptrs_.createPtr<
             MetaVariable<CellNeighborhood>>("CellNeighborhood", pkgs_bound_);

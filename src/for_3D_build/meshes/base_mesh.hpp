@@ -55,7 +55,7 @@ void MultiResolutionMeshField<MeshType>::writeCellVariablesToPltByMesh(
         Arrayi::Zero(), number_of_operation,
         [&](const Arrayi &cell_index)
         {
-            UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
+            UnsignedInt linear_index = mesh.Cell1DIndex(cell_index);
             Vecd data_position = mesh.CellPositionFromIndex(cell_index);
             output_file << data_position[0] << " " << data_position[1] << " " << data_position[2] << " ";
 

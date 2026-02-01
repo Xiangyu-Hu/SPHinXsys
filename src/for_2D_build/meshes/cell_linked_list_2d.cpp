@@ -21,7 +21,7 @@ void BaseCellLinkedList::tagBoundingCellsByMesh(Mesh &mesh, StdVec<CellLists> &c
             Array2i cell = Array2i::Zero();
             cell[axis] = i;
             cell[second_axis] = j;
-            UnsignedInt linear_index = mesh.LinearCellIndex(cell);
+            UnsignedInt linear_index = mesh.Cell1DIndex(cell);
             cell_data_lists[0].first.push_back(&cell_index_lists_[linear_index]);
             cell_data_lists[0].second.push_back(&cell_data_lists_[linear_index]);
         }
@@ -35,7 +35,7 @@ void BaseCellLinkedList::tagBoundingCellsByMesh(Mesh &mesh, StdVec<CellLists> &c
             Array2i cell = Array2i::Zero();
             cell[axis] = i;
             cell[second_axis] = j;
-            UnsignedInt linear_index = mesh.LinearCellIndex(cell);
+            UnsignedInt linear_index = mesh.Cell1DIndex(cell);
             cell_data_lists[1].first.push_back(&cell_index_lists_[linear_index]);
             cell_data_lists[1].second.push_back(&cell_data_lists_[linear_index]);
         }

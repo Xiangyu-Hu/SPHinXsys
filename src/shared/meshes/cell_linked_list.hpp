@@ -35,7 +35,7 @@ void BaseCellLinkedList::searchNeighborsByMesh(
                          mesh.AllCells().min(target_cell_index + (search_depth + 1) * Arrayi::Ones()),
                          [&](const Arrayi &cell_index)
                          {
-                             UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
+                             UnsignedInt linear_index = mesh.Cell1DIndex(cell_index);
                              ListDataVector &target_particles = cell_data_lists_[linear_index];
                              for (const ListData &data_list : target_particles)
                              {
@@ -71,7 +71,7 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
                          // e.g. all_cells = (M,N) = (6, 9), (m, n) = (1, 1), l = 0, then (i, j) = (1, 1)
                          // l = 1, then (i, j) = (1, 4), l = 3, then (i, j) = (4, 1), etc.
                          const Arrayi cell_index = split_cell_index + 3 * Mesh::transfer1DtoMeshIndex(all_cells_k, l);
-                         UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
+                         UnsignedInt linear_index = mesh.Cell1DIndex(cell_index);
                          // get the list of particles in the cell (i, j)
                          const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
                          // looping over all particles in the cell (i, j)
@@ -92,7 +92,7 @@ void BaseCellLinkedList::particle_for_split_by_mesh(
                      [&](UnsignedInt l)
                      {
                          const Arrayi cell_index = split_cell_index + 3 * Mesh::transfer1DtoMeshIndex(all_cells_k, l);
-                         UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
+                         UnsignedInt linear_index = mesh.Cell1DIndex(cell_index);
                          const ConcurrentIndexVector &cell_list = cell_index_lists_[linear_index];
                          for (UnsignedInt i = cell_list.size(); i != 0; --i)
                          {
@@ -128,7 +128,7 @@ void BaseCellLinkedList::NeighborSearch::forEachSearch(
         Arrayi::Zero().max(search_range.lower_), all_cells_.min(search_range.upper_ + Arrayi::Ones()),
         [&](const Arrayi &cell_index)
         {
-            const UnsignedInt linear_index = LinearCellIndex(cell_index);
+            const UnsignedInt linear_index = Cell1DIndex(cell_index);
             // Since offset_cell_size_ has linear_cell_size_+1 elements, no boundary checks are needed.
             // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
             for (UnsignedInt n = cell_offset_[linear_index]; n < cell_offset_[linear_index + 1]; ++n)

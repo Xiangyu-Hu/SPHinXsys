@@ -96,7 +96,7 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
     CellVariable<UnsignedInt> &getCellPackageIndex() { return *mcv_cell_pkg_index_; };
     ConcurrentVec<std::pair<UnsignedInt, int>> &getOccupiedPackageDatas() { return occupied_data_pkgs_; };
     MetaVariable<CellNeighborhood> &getCellNeighborhood();
-    MetaVariable<UnsignedInt> &getPackage1DCellIndex();
+    MetaVariable<UnsignedInt> &getPackageCell1DIndex();
     MetaVariable<int> &getPackageType();
     MetaVariableAssemble &getEvolvingMetaVariables() { return evolving_meta_variables_; };
     PackageVariableAssemble &getEvolvingPackageVariables() { return evolving_pkg_variables_; };

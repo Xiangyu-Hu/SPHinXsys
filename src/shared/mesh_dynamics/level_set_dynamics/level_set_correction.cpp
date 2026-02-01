@@ -46,7 +46,7 @@ LevelSetSignFromFine::LevelSetSignFromFine(
     SparseMeshField<4> &data_mesh, UnsignedInt resolution_level)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       pmv_phi_(*data_mesh.getPackageVariable<Real>("LevelSet")),
-      dv_pkg_1d_cell_index_(data_mesh.getPackage1DCellIndex()),
+      dv_pkg_1d_cell_index_(data_mesh.getPackageCell1DIndex()),
       fine_resolution_level_(resolution_level + 1)
 {
     if (fine_resolution_level_ > data_mesh.ResolutionLevels() - 1)
