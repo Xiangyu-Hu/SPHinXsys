@@ -140,11 +140,13 @@ class CellLinkedList<SPHAdaptation> : public BaseCellLinkedList
 
         template <typename FunctionOnEach>
         void forEachSearch(const Vecd &source_pos, const FunctionOnEach &function,
-                           const BoundingBoxi &search_box = BoundingBoxi(Arrayi::Ones())) const;
+                           const Vecd &src_cut_off) const;
 
       protected:
         UnsignedInt *particle_index_;
         UnsignedInt *cell_offset_;
+
+        inline BoundingBoxi SearchBox(const Vecd &src_cut_off) const;
     };
 
     Mesh &getCellLinkedListMesh() { return cell_linked_list_mesh_; };
@@ -183,11 +185,13 @@ class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
 
         template <typename FunctionOnEach>
         void forEachSearch(const Vecd &source_pos, const FunctionOnEach &function,
-                           const BoundingBoxi &search_box = BoundingBoxi(Arrayi::Ones())) const;
+                           const Vecd &src_cut_off) const;
 
       protected:
         UnsignedInt *particle_index_;
         UnsignedInt *cell_offset_;
+
+        inline BoundingBoxi SearchBox(const Vecd &src_cut_off) const;
     };
 
     CellLinkedListMeshType &getCellLinkedListMesh() { return cell_linked_list_mesh_; };

@@ -119,8 +119,9 @@ CellLinkedList<SPHAdaptation>::NeighborSearch::NeighborSearch(
 //=================================================================================================//
 template <typename FunctionOnEach>
 void CellLinkedList<SPHAdaptation>::NeighborSearch::forEachSearch(
-    const Vecd &source_pos, const FunctionOnEach &function, const BoundingBoxi &search_box) const
+    const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const
 {
+    BoundingBoxi search_box = SearchBox(src_cut_off);
     const BoundingBoxi search_range =
         search_box.translate(CellIndexFromPosition(source_pos));
     mesh_for_each(
@@ -137,6 +138,12 @@ void CellLinkedList<SPHAdaptation>::NeighborSearch::forEachSearch(
         });
 }
 //=================================================================================================//
+BoundingBoxi CellLinkedList<SPHAdaptation>::NeighborSearch::
+    SearchBox(const Vecd &src_cut_off) const
+{
+    return BoundingBoxi(ceil((src_cut_off - Eps * Vecd::Ones()).array() / grid_spacing_).cast<int>());
+}
+//=================================================================================================//
 template <class ExecutionPolicy, class Encloser>
 CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::NeighborSearch(
     const ExecutionPolicy &ex_policy, Encloser &encloser)
@@ -146,8 +153,9 @@ CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::NeighborSearch(
 //=================================================================================================//
 template <typename FunctionOnEach>
 void CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::forEachSearch(
-    const Vecd &source_pos, const FunctionOnEach &function, const BoundingBoxi &search_box) const
+    const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const
 {
+    BoundingBoxi search_box = SearchBox(src_cut_off);
     const BoundingBoxi search_range =
         search_box.translate(CellIndexFromPosition(source_pos));
     mesh_for_each(
@@ -162,6 +170,12 @@ void CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::forEachSearch(
                 function(particle_index_[n]);
             }
         });
+}
+//=================================================================================================//
+BoundingBoxi CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::
+    SearchBox(const Vecd &src_cut_off) const
+{
+    return BoundingBoxi(ceil((src_cut_off - Eps * Vecd::Ones()).array() / grid_spacing_).cast<int>());
 }
 //=================================================================================================//
 } // namespace SPH

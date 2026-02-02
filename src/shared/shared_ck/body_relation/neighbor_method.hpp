@@ -74,8 +74,6 @@ Neighbor<SPHAdaptation, SPHAdaptation>::Neighbor(
     Real tar_h = target_identifier.getSPHAdaptation().ReferenceSmoothingLength();
     src_inv_h_ = 1.0 / src_h;
     inv_h_ = 1.0 / SMAX(src_h, tar_h);
-    search_depth_ = static_cast<int>(std::ceil((src_h - Eps) / tar_h));
-    search_box_ = BoundingBoxi(Arrayi::Constant(search_depth_));
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
@@ -151,9 +149,9 @@ inline bool Neighbor<SPHAdaptation, SPHAdaptation>::NeighborCriterion::operator(
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
-Neighbor<SPHAdaptation, SPHAdaptation>::SearchBox::SearchBox(
+Neighbor<SPHAdaptation, SPHAdaptation>::CutOff::CutOff(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : search_box_(encloser.search_box_) {}
+    : cut_off_(encloser.base_kernel_->KernelSize() * Vecd::Ones() / encloser.src_inv_h_) {}
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 template <typename SourceIdentifier, typename TargetIdentifier>
@@ -289,18 +287,17 @@ bool Neighbor<SourceAdaptationType, TargetAdaptationType>::
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 template <class ExecutionPolicy, class EncloserType>
-Neighbor<SourceAdaptationType, TargetAdaptationType>::SearchBox::SearchBox(
+Neighbor<SourceAdaptationType, TargetAdaptationType>::CutOff::CutOff(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : src_inv_h_ref_(encloser.src_inv_h_ref_), tar_inv_h_min_(encloser.tar_inv_h_min_),
+    : kernel_size_(encloser.base_kernel_->KernelSize()),
+      src_inv_h_ref_(encloser.src_inv_h_ref_),
       src_h_ratio_(ex_policy, encloser.src_adaptation_) {}
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
-inline BoundingBoxi Neighbor<SourceAdaptationType, TargetAdaptationType>::
-    SearchBox::operator()(UnsignedInt i) const
+inline Vecd Neighbor<SourceAdaptationType, TargetAdaptationType>::
+    CutOff::operator()(UnsignedInt i) const
 {
-    Real src_h = 1.0 / (src_h_ratio_(i) * src_inv_h_ref_);
-    Real search_depth = static_cast<int>(std::ceil((src_h - Eps) * tar_inv_h_min_));
-    return BoundingBoxi(Arrayi::Constant(search_depth));
+    return kernel_size_ * Vecd::Ones() / (src_h_ratio_(i) * src_inv_h_ref_);
 }
 //=================================================================================================//
 } // namespace SPH

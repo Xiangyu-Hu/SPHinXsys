@@ -56,7 +56,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     using Identifier = typename BaseLocalDynamicsType::Identifier;
     using MaskedSource = typename Identifier::SourceParticleMask;
     using NeighborMethodType = typename InnerRelationType::NeighborhoodType;
-    using SearchBox = typename NeighborMethodType::SearchBox;
+    using CutOff = typename NeighborMethodType::CutOff;
     using NeighborCriterion = typename NeighborMethodType::NeighborCriterion;
     using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion>;
 
@@ -96,7 +96,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
         OneSidedCheck is_one_sided_;
         MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
-        SearchBox search_box_;
+        CutOff src_cut_off_;
     };
     typedef UpdateRelation<ExecutionPolicy, Inner<Parameters...>> LocalDynamicsType;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
@@ -119,7 +119,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     using NeighborSearch = typename CellLinkedList<CellLinkedListType>::NeighborSearch;
     using NeighborList = typename ContactRelationType::NeighborList;
     using Neighborhood = typename ContactRelationType::NeighborhoodType;
-    using SearchBox = typename Neighborhood::SearchBox;
+    using CutOff = typename Neighborhood::CutOff;
     using Identifier = typename BaseLocalDynamicsType::Identifier;
     using MaskedSource = typename SourceType::SourceParticleMask;
     using NeighborCriterion = typename Neighborhood::NeighborCriterion;
@@ -144,7 +144,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
         MaskedSource masked_src_;
         MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
-        SearchBox search_box_;
+        CutOff src_cut_off_;
     };
 
     typedef UpdateRelation<ExecutionPolicy, Contact<Parameters...>> LocalDynamicsType;
