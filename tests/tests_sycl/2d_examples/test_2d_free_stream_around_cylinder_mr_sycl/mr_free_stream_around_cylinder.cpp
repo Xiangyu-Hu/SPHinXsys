@@ -174,12 +174,10 @@ int main(int ac, char *av[])
         level_set_bounding.exec();
         update_smoothing_length_ratio.exec();
         //----------------------------------------------------------------------
-        //	First output before the simulation.
-        body_state_recorder.writeToFile();
-        //----------------------------------------------------------------------
         //	Particle relaxation time stepping start here.
         //----------------------------------------------------------------------
         int ite_p = 0;
+        body_state_recorder.writeToFile(0);
         while (ite_p < 2000)
         {
             update_configuration.exec();
