@@ -53,6 +53,7 @@ AdaptiveWithinShape water_body_adaptation(particle_spacing_ref, 1.3, 1.0, 1);
 GeometricShapeBox refinement_region(
     BoundingBoxd(Vecd(-DL_sponge - BW, 0.5 * DH - 0.1 * DL), Vecd(DL + BW, 0.5 * DH + 0.1 * DL)),
     "RefinementRegion");
+AdaptiveNearSurface cylinder_adaptation(particle_spacing_ref, 1.3, 1.0, 2);
 //----------------------------------------------------------------------
 //	Free-stream velocity
 //----------------------------------------------------------------------
@@ -94,8 +95,7 @@ int main(int ac, char *av[])
     LevelSetShape *refinement_region_level_set_shape =
         sph_system.addShape<LevelSetShape>(water_body, refinement_region).writeLevelSet();
 
-    auto &cylinder = sph_system.addBody<SolidBody>(cylinder_shape);
-    cylinder.defineAdaptationRatios(1.15, 4.0);
+    auto &cylinder = sph_system.addAdaptiveBody<SolidBody>(cylinder_adaptation, cylinder_shape);
     LevelSetShape *cylinder_level_set_shape = cylinder.defineBodyLevelSetShape()->writeLevelSet();
 
     StdVec<RealBody *> real_bodies = {&water_body, &cylinder};
