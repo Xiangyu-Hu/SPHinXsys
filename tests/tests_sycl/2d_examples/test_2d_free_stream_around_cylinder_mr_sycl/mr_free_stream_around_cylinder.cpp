@@ -143,7 +143,9 @@ int main(int ac, char *av[])
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------
         auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-        ParticleDynamicsGroup update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
+        ParticleDynamicsGroup update_cell_linked_list;
+        update_cell_linked_list.add(&main_methods.addCellLinkedListDynamics(water_body));
+        update_cell_linked_list.add(&main_methods.addCellLinkedListDynamics(cylinder));
         ParticleDynamicsGroup update_relation;
         update_relation.add(&main_methods.addRelationDynamics(water_body_inner, water_body_contact));
         update_relation.add(&main_methods.addRelationDynamics(cylinder_inner));
