@@ -118,14 +118,29 @@ CellLinkedList<SPHAdaptation>::NeighborSearch::NeighborSearch(
       cell_offset_(encloser.dvCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename FunctionOnEach>
-void CellLinkedList<SPHAdaptation>::NeighborSearch::forEachSearch(
+void CellLinkedList<SPHAdaptation>::NeighborSearch::forInnerSearch(
     const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const
 {
-    BoundingBoxi search_box = SearchBox(src_cut_off);
-    const BoundingBoxi search_range =
-        search_box.translate(CellIndexFromPosition(source_pos));
+    BoundingBoxi search_box = InnerSearchBox(src_cut_off);
+    const BoundingBoxi search_range = search_box.translate(CellIndexFromPosition(source_pos));
+    searchInRange(function, search_range);
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<SPHAdaptation>::NeighborSearch::forContactSearch(
+    const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const
+{
+    BoundingBoxi search_box = ContactSearchBox(src_cut_off);
+    const BoundingBoxi search_range = search_box.translate(CellIndexFromPosition(source_pos));
+    searchInRange(function, search_range);
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<SPHAdaptation>::NeighborSearch::
+    searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const
+{
     mesh_for_each(
-        Arrayi::Zero().max(search_range.lower_), all_cells_.min(search_range.upper_ + Arrayi::Ones()),
+        Arrayi::Zero().max(rang_box.lower_), all_cells_.min(rang_box.upper_ + Arrayi::Ones()),
         [&](const Arrayi &cell_index)
         {
             const UnsignedInt linear_index = LinearCellIndex(cell_index);
@@ -139,9 +154,16 @@ void CellLinkedList<SPHAdaptation>::NeighborSearch::forEachSearch(
 }
 //=================================================================================================//
 BoundingBoxi CellLinkedList<SPHAdaptation>::NeighborSearch::
-    SearchBox(const Vecd &src_cut_off) const
+    InnerSearchBox(const Vecd &src_cut_off) const
 {
-    return BoundingBoxi(ceil((src_cut_off - Eps * Vecd::Ones()).array() / grid_spacing_).cast<int>());
+    return BoundingBoxi(Arrayi::Ones());
+}
+//=================================================================================================//
+BoundingBoxi CellLinkedList<SPHAdaptation>::NeighborSearch::
+    ContactSearchBox(const Vecd &src_cut_off) const
+{
+    Vecd cut_off = (Vecd::Ones() * grid_spacing_).cwiseMax(src_cut_off);
+    return BoundingBoxi(ceil((cut_off - Vecd::Constant(Eps)).array() / grid_spacing_).cast<int>());
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class Encloser>
@@ -152,14 +174,29 @@ CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::NeighborSearch(
       cell_offset_(encloser.dvCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename FunctionOnEach>
-void CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::forEachSearch(
+void CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::forInnerSearch(
     const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const
 {
-    BoundingBoxi search_box = SearchBox(src_cut_off);
-    const BoundingBoxi search_range =
-        search_box.translate(CellIndexFromPosition(source_pos));
+    BoundingBoxi search_box = InnerSearchBox(src_cut_off);
+    const BoundingBoxi search_range = search_box.translate(CellIndexFromPosition(source_pos));
+    searchInRange(function, search_range);
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::forContactSearch(
+    const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const
+{
+    BoundingBoxi search_box = ContactSearchBox(src_cut_off);
+    const BoundingBoxi search_range = search_box.translate(CellIndexFromPosition(source_pos));
+    searchInRange(function, search_range);
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::
+    searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const
+{
     mesh_for_each(
-        Arrayi::Zero().max(search_range.lower_), all_cells_.min(search_range.upper_ + Arrayi::Ones()),
+        Arrayi::Zero().max(rang_box.lower_), all_cells_.min(rang_box.upper_ + Arrayi::Ones()),
         [&](const Arrayi &cell_index)
         {
             const UnsignedInt linear_index = LinearCellIndex(cell_index);
@@ -173,9 +210,16 @@ void CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::forEachSearch(
 }
 //=================================================================================================//
 BoundingBoxi CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::
-    SearchBox(const Vecd &src_cut_off) const
+    InnerSearchBox(const Vecd &src_cut_off) const
 {
-    return BoundingBoxi(ceil((src_cut_off - Eps * Vecd::Ones()).array() / grid_spacing_).cast<int>());
+    return BoundingBoxi(ceil((src_cut_off - Vecd::Constant(Eps)).array() / grid_spacing_).cast<int>());
+}
+//=================================================================================================//
+BoundingBoxi CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::
+    ContactSearchBox(const Vecd &src_cut_off) const
+{
+    Vecd cut_off = (Vecd::Ones() * CoarsestGridSpacing()).cwiseMax(src_cut_off);
+    return BoundingBoxi(ceil((cut_off - Vecd::Constant(Eps)).array() / grid_spacing_).cast<int>());
 }
 //=================================================================================================//
 } // namespace SPH

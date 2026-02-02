@@ -50,7 +50,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
     UnsignedInt neighbor_count = 0;
     if (masked_src_(src_index))
     {
-        neighbor_search_.forEachSearch(
+        neighbor_search_.forInnerSearch(
             src_pos_[src_index],
             [&](size_t tar_index)
             {
@@ -73,7 +73,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
 {
     if (masked_src_(src_index))
     {
-        neighbor_search_.forEachSearch(
+        neighbor_search_.forInnerSearch(
             src_pos_[src_index],
             [&](size_t tar_index)
             {
@@ -177,7 +177,7 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     UnsignedInt neighbor_count = 0;
     if (masked_src_(src_index))
     {
-        neighbor_search_.forEachSearch(
+        neighbor_search_.forContactSearch(
             src_pos_[src_index],
             [&](size_t tar_index)
             {
@@ -196,7 +196,7 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     UnsignedInt neighbor_count = 0;
     if (masked_src_(src_index))
     {
-        neighbor_search_.forEachSearch(
+        neighbor_search_.forContactSearch(
             src_pos_[src_index],
             [&](size_t tar_index)
             {
