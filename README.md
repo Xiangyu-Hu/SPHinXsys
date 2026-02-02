@@ -16,16 +16,18 @@
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
 [![QQ](https://img.shields.io/badge/QQ_Group-blue?logo=tencentqq&logoColor=white)](https://qm.qq.com/q/BZDAqz70Iw)
 
-## Newest update: Heterogeneous parallel computing for update Lagrangian Solid Dynamics
+## Newest update: Heterogeneous parallel computing for flow simulation with adaptive resolution
 
-With our recent progress on numerical method for the Update Lagrangian SPH, 
-published on Journal of Computational Physics [(Zhang et al. 2026)](https://doi.org/10.1016/j.jcp.2025.114646),
-we are able to simulate large deformation and damage.
-Now, the SYCL kernel is implemented for this feature so that heterogeneous parallel computing can be achieved too.
+By using template for cell linked list with adaptation in SPHinXsys,
+we are able to implement the SYCL kernel for the multi-resolution SPH method simulating flow problems.
+Heterogeneous parallel computing has been achieved by hybridization the usage of object-oriented programming
+for setting up computation but template-based programming for device execution.
 
-The following example gives a metal bar impacting at high speed and the corresponding deformation and damage processes.
+The following example gives a multi-resolution flow simulation around a cylinder.
+Note that the resolutions for both the fluid and wall particles are refined
+near the cylinder surface and coarsened away from the cylinder.
 
-![Bar impact and damage](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/impact-24.png)
+![Flow around cylinder](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/flow-around-cylinder.png)
 
 ## Repository Description
 
