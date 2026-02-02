@@ -18,16 +18,16 @@
 
 ## Newest update: Heterogeneous parallel computing for flow simulation with adaptive resolution
 
-By using template for cell linked list with adaptation in SPHinXsys,
+By using template for the cell linked list class with adaptation in SPHinXsys,
 we are able to implement the SYCL kernel for the multi-resolution SPH method simulating flow problems.
-Heterogeneous parallel computing has been achieved by hybridization the usage of object-oriented programming
-for setting up computation but template-based programming for device execution.
+Heterogeneous parallel computing has been achieved by hybridizing the object-oriented programming
+for setting up computation and template-based programming for device execution.
 
 The following example gives a multi-resolution flow simulation around a cylinder.
-Note that the resolutions for both the fluid and wall particles are refined
-near the cylinder surface and coarsened away from the cylinder.
+Note that both the resolutions for fluid and wall particles are refined
+near the cylinder surface or mainstream and coarsened away from them.
 
-![Flow around cylinder](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/flow-around-cylinder.png)
+[![Flow around cylinder](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/flow-around-cylinder.png)](https://github.com/Xiangyu-Hu/SPHinXsys/blob/xiangyu/use_partial_specilization_for_cell_linked_list/tests/tests_sycl/2d_examples/test_2d_free_stream_around_cylinder_mr_sycl/mr_free_stream_around_cylinder.cpp)
 
 ## Repository Description
 
