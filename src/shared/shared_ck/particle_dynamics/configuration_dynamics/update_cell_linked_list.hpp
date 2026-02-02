@@ -15,21 +15,22 @@ template <class ExecutionPolicy, typename DynamicsIdentifier>
 UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::
     UpdateCellLinkedList(DynamicsIdentifier &identifier)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier), BaseDynamics<void>(),
-      cell_linked_list_(DynamicCast<CellLinkedList<SPHAdaptation>>(this, identifier.getCellLinkedList())),
-      mesh_(cell_linked_list_.getMesh()),
-      total_number_of_cells_(cell_linked_list_.TotalNumberOfCells()),
-      cell_offset_list_size_(cell_linked_list_.getCellOffsetListSize()),
+      cell_linked_list_(
+          DynamicCast<CellLinkedList<CellLinkedListType>>(this, identifier.getCellLinkedList())),
+      cell_linked_list_mesh_(cell_linked_list_.getCellLinkedListMesh()),
+      number_of_cells_(cell_linked_list_mesh_.NumberOfCells()),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_particle_index_(cell_linked_list_.dvParticleIndex()),
       dv_cell_offset_(cell_linked_list_.dvCellOffset()),
       cell_dv_current_list_size_(
-          cell_linked_list_.registerCellVariable<UnsignedInt>("CurrentListSize")),
+          cell_linked_list_.template registerCellVariable<UnsignedInt>("CurrentListSize")),
       identifier_(identifier), kernel_implementation_(*this) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename DynamicsIdentifier>
 UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : mesh_(encloser.mesh_), particle_mask_(ex_policy, encloser.identifier_),
+    : cell_linked_list_mesh_(encloser.cell_linked_list_mesh_),
+      particle_mask_(ex_policy, encloser.identifier_),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       particle_index_(encloser.dv_particle_index_->DelegatedData(ex_policy)),
       cell_offset_(encloser.dv_cell_offset_->DelegatedData(ex_policy)),
@@ -51,7 +52,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel:
     if (particle_mask_(index_i))
     {
         // Here, particle_index_ takes role of current_list_size_.
-        const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
+        const UnsignedInt linear_index = cell_linked_list_mesh_.LinearCellIndexFromPosition(pos_[index_i]);
         AtomicRef<UnsignedInt> atomic_cell_size(particle_index_[linear_index]);
         ++atomic_cell_size;
     }
@@ -64,7 +65,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel:
     if (particle_mask_(index_i))
     {
         // Here, particle_index_ takes its original role.
-        const UnsignedInt linear_index = mesh_.LinearCellIndexFromPosition(pos_[index_i]);
+        const UnsignedInt linear_index = cell_linked_list_mesh_.LinearCellIndexFromPosition(pos_[index_i]);
         AtomicRef<UnsignedInt> atomic_current_list_size(current_list_size_[linear_index]);
         particle_index_[cell_offset_[linear_index] + atomic_current_list_size++] = index_i;
     }
@@ -77,7 +78,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::exec(Real dt)
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
 
     particle_for(ExecutionPolicy{},
-                 IndexRange(0, total_number_of_cells_),
+                 IndexRange(0, number_of_cells_),
                  [=](size_t i)
                  { computing_kernel->clearAllLists(i); });
 
@@ -92,7 +93,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::exec(Real dt)
     UnsignedInt *particle_index = this->dv_particle_index_->DelegatedData(ExecutionPolicy{});
     UnsignedInt *cell_offset = this->dv_cell_offset_->DelegatedData(ExecutionPolicy{});
     exclusive_scan(ExecutionPolicy{}, particle_index, cell_offset,
-                   cell_offset_list_size_,
+                   number_of_cells_ + 1,
                    typename PlusUnsignedInt<ExecutionPolicy>::type());
 
     particle_for(ExecutionPolicy{},

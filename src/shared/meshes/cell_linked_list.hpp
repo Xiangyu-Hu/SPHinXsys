@@ -113,12 +113,39 @@ void BaseCellLinkedList::particle_for_split(const ExecutionPolicy &ex_policy,
 template <class ExecutionPolicy, class Encloser>
 CellLinkedList<SPHAdaptation>::NeighborSearch::NeighborSearch(
     const ExecutionPolicy &ex_policy, Encloser &encloser)
-    : Mesh(encloser.getMesh()),
+    : Mesh(encloser.getCellLinkedListMesh()),
       particle_index_(encloser.dvParticleIndex()->DelegatedData(ex_policy)),
       cell_offset_(encloser.dvCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename FunctionOnEach>
 void CellLinkedList<SPHAdaptation>::NeighborSearch::forEachSearch(
+    const Vecd &source_pos, const FunctionOnEach &function, const BoundingBoxi &search_box) const
+{
+    const BoundingBoxi search_range =
+        search_box.translate(CellIndexFromPosition(source_pos));
+    mesh_for_each(
+        Arrayi::Zero().max(search_range.lower_), all_cells_.min(search_range.upper_ + Arrayi::Ones()),
+        [&](const Arrayi &cell_index)
+        {
+            const UnsignedInt linear_index = LinearCellIndex(cell_index);
+            // Since offset_cell_size_ has linear_cell_size_+1 elements, no boundary checks are needed.
+            // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
+            for (UnsignedInt n = cell_offset_[linear_index]; n < cell_offset_[linear_index + 1]; ++n)
+            {
+                function(particle_index_[n]);
+            }
+        });
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class Encloser>
+CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::NeighborSearch(
+    const ExecutionPolicy &ex_policy, Encloser &encloser)
+    : CellLinkedListMeshType(encloser.getCellLinkedListMesh()),
+      particle_index_(encloser.dvParticleIndex()->DelegatedData(ex_policy)),
+      cell_offset_(encloser.dvCellOffset()->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::forEachSearch(
     const Vecd &source_pos, const FunctionOnEach &function, const BoundingBoxi &search_box) const
 {
     const BoundingBoxi search_range =

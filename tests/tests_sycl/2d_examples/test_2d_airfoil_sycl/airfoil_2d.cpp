@@ -101,13 +101,10 @@ int main(int ac, char *av[])
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     body_state_recorder.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
     //----------------------------------------------------------------------
-    //	First output before the simulation.
-    //----------------------------------------------------------------------
-    body_state_recorder.writeToFile();
-    //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
     int ite_p = 0;
+    body_state_recorder.writeToFile(0);
     while (ite_p < 2000)
     {
         update_cell_linked_list.exec();

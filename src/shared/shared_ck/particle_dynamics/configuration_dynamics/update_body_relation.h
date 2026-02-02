@@ -47,9 +47,11 @@ template <class ExecutionPolicy, typename... Parameters>
 class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     : public BaseLocalDynamics<typename Inner<Parameters...>::SourceType>, public BaseDynamics<void>
 {
+    using SourceType = typename Inner<Parameters...>::SourceType;
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::SourceType>;
     using InnerRelationType = Inner<Parameters...>;
-    using NeighborSearch = typename CellLinkedList<SPHAdaptation>::NeighborSearch;
+    using CellLinkedListType = typename SourceType::Adaptation::CellLinkedListType;
+    using NeighborSearch = typename CellLinkedList<CellLinkedListType>::NeighborSearch;
     using NeighborList = typename InnerRelationType::NeighborList;
     using Identifier = typename BaseLocalDynamicsType::Identifier;
     using MaskedSource = typename Identifier::SourceParticleMask;
@@ -101,7 +103,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
 
     ExecutionPolicy ex_policy_;
     InnerRelationType &inner_relation_;
-    CellLinkedList<SPHAdaptation> &cell_linked_list_;
+    CellLinkedList<CellLinkedListType> &cell_linked_list_;
     Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel> kernel_implementation_;
 };
 
@@ -109,15 +111,16 @@ template <class ExecutionPolicy, typename... Parameters>
 class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     : public BaseLocalDynamics<typename Contact<Parameters...>::SourceType>, public BaseDynamics<void>
 {
-    using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
     using ContactRelationType = Contact<Parameters...>;
-    using NeighborSearch = typename CellLinkedList<SPHAdaptation>::NeighborSearch;
+    using TargetType = typename ContactRelationType::TargetType;
+    using SourceType = typename ContactRelationType::SourceType;
+    using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
+    using CellLinkedListType = typename TargetType::Adaptation::CellLinkedListType;
+    using NeighborSearch = typename CellLinkedList<CellLinkedListType>::NeighborSearch;
     using NeighborList = typename ContactRelationType::NeighborList;
     using Neighborhood = typename ContactRelationType::NeighborhoodType;
     using SearchBox = typename Neighborhood::SearchBox;
     using Identifier = typename BaseLocalDynamicsType::Identifier;
-    using SourceType = typename ContactRelationType::SourceType;
-    using TargetType = typename ContactRelationType::TargetType;
     using MaskedSource = typename SourceType::SourceParticleMask;
     using NeighborCriterion = typename Neighborhood::NeighborCriterion;
     using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
@@ -149,7 +152,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
     ExecutionPolicy ex_policy_;
     ContactRelationType &contact_relation_;
-    StdVec<CellLinkedList<SPHAdaptation> *> contact_cell_linked_list_;
+    StdVec<CellLinkedList<CellLinkedListType> *> contact_cell_linked_list_;
     StdVec<KernelImplementation *> contact_kernel_implementation_;
 };
 
