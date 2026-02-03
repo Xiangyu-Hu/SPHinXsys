@@ -63,7 +63,7 @@ class BaseLocalDynamics
           particles_(&sph_body_->getBaseParticles()),
           logger_(Log::get()) {};
     virtual ~BaseLocalDynamics() {};
-    using LoopRangeIdentifier = typename DynamicsIdentifier::LoopRangeIdentifier;
+    using Identifier = typename DynamicsIdentifier::BaseIdentifier;
     SPHBody &getSPHBody() { return *sph_body_; };
     BaseParticles &getBaseParticles() { return *particles_; };
     SPHAdaptation &getSPHAdaptation() { return *sph_adaptation_; };

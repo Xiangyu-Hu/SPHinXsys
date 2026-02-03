@@ -97,7 +97,7 @@ class BodyPart
 class BodyPartByID : public BodyPart
 {
   public:
-    typedef BodyPartByID LoopRangeIdentifier;
+    typedef BodyPartByID BaseIdentifier;
     BodyPartByID(SPHBody &sph_body);
     virtual ~BodyPartByID() {};
 };
@@ -109,7 +109,7 @@ class BodyPartByID : public BodyPart
 class BodyPartByParticle : public BodyPart
 {
   public:
-    typedef BodyPartByParticle LoopRangeIdentifier;    
+    typedef BodyPartByParticle BaseIdentifier;    
     IndexVector body_part_particles_; /**< Collection particle in this body part. */
     BaseParticles &getBaseParticles() { return base_particles_; };
     DiscreteVariable<UnsignedInt> *dvParticleList() { return dv_particle_list_; };
@@ -135,7 +135,7 @@ class BodyPartByParticle : public BodyPart
 class BodyPartByCell : public BodyPart
 {
   public:
-    typedef BodyPartByCell LoopRangeIdentifier;
+    typedef BodyPartByCell BaseIdentifier;
     ConcurrentCellLists body_part_cells_; /**< Collection of cells to indicate the body part. */
     ConcurrentCellLists &LoopRange() { return body_part_cells_; };
     size_t SizeOfLoopRange();
