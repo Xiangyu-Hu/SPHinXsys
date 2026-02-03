@@ -53,12 +53,11 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     using CellLinkedListType = typename SourceType::Adaptation::CellLinkedListType;
     using NeighborSearch = typename CellLinkedList<CellLinkedListType>::NeighborSearch;
     using NeighborList = typename InnerRelationType::NeighborList;
-    using Identifier = typename BaseLocalDynamicsType::Identifier;
-    using MaskedSource = typename Identifier::SourceParticleMask;
+    using MaskedSource = typename LoopRangeIdentifier::SourceParticleMask;
     using NeighborMethodType = typename InnerRelationType::NeighborhoodType;
     using CutOff = typename NeighborMethodType::CutOff;
     using NeighborCriterion = typename NeighborMethodType::NeighborCriterion;
-    using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion>;
+    using MaskedCriterion = typename LoopRangeIdentifier::template TargetParticleMask<NeighborCriterion>;
 
     class OneSidedCheck
     {
@@ -120,7 +119,6 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     using NeighborList = typename ContactRelationType::NeighborList;
     using Neighborhood = typename ContactRelationType::NeighborhoodType;
     using CutOff = typename Neighborhood::CutOff;
-    using Identifier = typename BaseLocalDynamicsType::Identifier;
     using MaskedSource = typename SourceType::SourceParticleMask;
     using NeighborCriterion = typename Neighborhood::NeighborCriterion;
     using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
