@@ -110,21 +110,37 @@ void BaseCellLinkedList::particle_for_split(const ExecutionPolicy &ex_policy,
         particle_for_split_by_mesh(ex_policy, getMesh(level), local_dynamics_function);
 }
 //=================================================================================================//
-template <class ExecutionPolicy>
-CellLinkedList::NeighborSearch::NeighborSearch(
-    const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list)
-    : Mesh(cell_linked_list.getMesh()),
-      particle_index_(cell_linked_list.dvParticleIndex()->DelegatedData(ex_policy)),
-      cell_offset_(cell_linked_list.dvCellOffset()->DelegatedData(ex_policy)) {}
+template <class ExecutionPolicy, class Encloser>
+CellLinkedList<SPHAdaptation>::NeighborSearch::NeighborSearch(
+    const ExecutionPolicy &ex_policy, Encloser &encloser)
+    : Mesh(encloser.getCellLinkedListMesh()),
+      particle_index_(encloser.dvParticleIndex()->DelegatedData(ex_policy)),
+      cell_offset_(encloser.dvCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename FunctionOnEach>
-void CellLinkedList::NeighborSearch::forEachSearch(
-    const Vecd &source_pos, const FunctionOnEach &function, const BoundingBoxi &search_box) const
+void CellLinkedList<SPHAdaptation>::NeighborSearch::forInnerSearch(
+    const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const
 {
-    const BoundingBoxi search_range =
-        search_box.translate(CellIndexFromPosition(source_pos));
+    BoundingBoxi search_box = InnerSearchBox(src_cut_off);
+    const BoundingBoxi search_range = search_box.translate(CellIndexFromPosition(source_pos));
+    searchInRange(function, search_range);
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<SPHAdaptation>::NeighborSearch::forContactSearch(
+    const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const
+{
+    BoundingBoxi search_box = ContactSearchBox(src_cut_off);
+    const BoundingBoxi search_range = search_box.translate(CellIndexFromPosition(source_pos));
+    searchInRange(function, search_range);
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<SPHAdaptation>::NeighborSearch::
+    searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const
+{
     mesh_for_each(
-        Arrayi::Zero().max(search_range.lower_), all_cells_.min(search_range.upper_ + Arrayi::Ones()),
+        Arrayi::Zero().max(rang_box.lower_), all_cells_.min(rang_box.upper_ + Arrayi::Ones()),
         [&](const Arrayi &cell_index)
         {
             const UnsignedInt linear_index = LinearCellIndex(cell_index);
@@ -135,6 +151,75 @@ void CellLinkedList::NeighborSearch::forEachSearch(
                 function(particle_index_[n]);
             }
         });
+}
+//=================================================================================================//
+BoundingBoxi CellLinkedList<SPHAdaptation>::NeighborSearch::
+    InnerSearchBox(const Vecd &src_cut_off) const
+{
+    return BoundingBoxi(Arrayi::Ones());
+}
+//=================================================================================================//
+BoundingBoxi CellLinkedList<SPHAdaptation>::NeighborSearch::
+    ContactSearchBox(const Vecd &src_cut_off) const
+{
+    Vecd cut_off = (Vecd::Ones() * grid_spacing_).cwiseMax(src_cut_off);
+    return BoundingBoxi(ceil((cut_off - Vecd::Constant(Eps)).array() / grid_spacing_).cast<int>());
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class Encloser>
+CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::NeighborSearch(
+    const ExecutionPolicy &ex_policy, Encloser &encloser)
+    : CellLinkedListMeshType(encloser.getCellLinkedListMesh()),
+      particle_index_(encloser.dvParticleIndex()->DelegatedData(ex_policy)),
+      cell_offset_(encloser.dvCellOffset()->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::forInnerSearch(
+    const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const
+{
+    BoundingBoxi search_box = InnerSearchBox(src_cut_off);
+    const BoundingBoxi search_range = search_box.translate(CellIndexFromPosition(source_pos));
+    searchInRange(function, search_range);
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::forContactSearch(
+    const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const
+{
+    BoundingBoxi search_box = ContactSearchBox(src_cut_off);
+    const BoundingBoxi search_range = search_box.translate(CellIndexFromPosition(source_pos));
+    searchInRange(function, search_range);
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::
+    searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const
+{
+    mesh_for_each(
+        Arrayi::Zero().max(rang_box.lower_), all_cells_.min(rang_box.upper_ + Arrayi::Ones()),
+        [&](const Arrayi &cell_index)
+        {
+            const UnsignedInt linear_index = LinearCellIndex(cell_index);
+            // Since offset_cell_size_ has linear_cell_size_+1 elements, no boundary checks are needed.
+            // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
+            for (UnsignedInt n = cell_offset_[linear_index]; n < cell_offset_[linear_index + 1]; ++n)
+            {
+                function(particle_index_[n]);
+            }
+        });
+}
+//=================================================================================================//
+BoundingBoxi CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::
+    InnerSearchBox(const Vecd &src_cut_off) const
+{
+    return BoundingBoxi(ceil((src_cut_off - Vecd::Constant(Eps)).array() / grid_spacing_).cast<int>());
+}
+//=================================================================================================//
+BoundingBoxi CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::
+    ContactSearchBox(const Vecd &src_cut_off) const
+{
+    Vecd cut_off = (Vecd::Ones() * CoarsestGridSpacing()).cwiseMax(src_cut_off);
+    return BoundingBoxi(ceil((cut_off - Vecd::Constant(Eps)).array() / grid_spacing_).cast<int>());
 }
 //=================================================================================================//
 } // namespace SPH

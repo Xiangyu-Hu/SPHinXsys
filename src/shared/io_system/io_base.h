@@ -68,7 +68,7 @@ class BaseIO
     std::string convertPhysicalTimeToString(Real physical_time);
 
     template <typename T>
-    std::string padValueWithZeros(T &&value, size_t max_string_width = 15)
+    std::string padValueWithZeros(T &&value, size_t max_string_width = 10)
     {
         std::ostringstream s_time;
         s_time << std::setw(max_string_width) << std::setfill('0') << value;

@@ -53,6 +53,7 @@ AdaptiveWithinShape water_body_adaptation(particle_spacing_ref, 1.3, 1.0, 1);
 GeometricShapeBox refinement_region(
     BoundingBoxd(Vecd(-DL_sponge - BW, 0.5 * DH - 0.1 * DL), Vecd(DL + BW, 0.5 * DH + 0.1 * DL)),
     "RefinementRegion");
+AdaptiveNearSurface cylinder_adaptation(particle_spacing_ref, 1.3, 1.0, 2);
 //----------------------------------------------------------------------
 //	Free-stream velocity
 //----------------------------------------------------------------------
@@ -94,8 +95,7 @@ int main(int ac, char *av[])
     LevelSetShape *refinement_region_level_set_shape =
         sph_system.addShape<LevelSetShape>(water_body, refinement_region).writeLevelSet();
 
-    auto &cylinder = sph_system.addBody<SolidBody>(cylinder_shape);
-    cylinder.defineAdaptationRatios(1.15, 4.0);
+    auto &cylinder = sph_system.addAdaptiveBody<SolidBody>(cylinder_adaptation, cylinder_shape);
     LevelSetShape *cylinder_level_set_shape = cylinder.defineBodyLevelSetShape()->writeLevelSet();
 
     StdVec<RealBody *> real_bodies = {&water_body, &cylinder};
@@ -143,7 +143,9 @@ int main(int ac, char *av[])
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------
         auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-        ParticleDynamicsGroup update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
+        ParticleDynamicsGroup update_cell_linked_list;
+        update_cell_linked_list.add(&main_methods.addCellLinkedListDynamics(water_body));
+        update_cell_linked_list.add(&main_methods.addCellLinkedListDynamics(cylinder));
         ParticleDynamicsGroup update_relation;
         update_relation.add(&main_methods.addRelationDynamics(water_body_inner, water_body_contact));
         update_relation.add(&main_methods.addRelationDynamics(cylinder_inner));
@@ -172,12 +174,10 @@ int main(int ac, char *av[])
         level_set_bounding.exec();
         update_smoothing_length_ratio.exec();
         //----------------------------------------------------------------------
-        //	First output before the simulation.
-        body_state_recorder.writeToFile();
-        //----------------------------------------------------------------------
         //	Particle relaxation time stepping start here.
         //----------------------------------------------------------------------
         int ite_p = 0;
+        body_state_recorder.writeToFile(0);
         while (ite_p < 2000)
         {
             update_configuration.exec();
