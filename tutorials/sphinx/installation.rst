@@ -161,8 +161,9 @@ and choose the appropriate system and method to install Intel oneAPI.
 For instance, we choose Linux(For now, only full Linux can run SPHinXsys SYCL version) and offline installer, 
 then we get following instructions:
 
-..  code-block:: pwsh
+..  code-block:: bash
 
+    cd $HOME
     wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/20f4e6a1-6b0b-4752-b8c1-e5eacba10e01/l_BaseKit_p_2024.0.0.49564_offline.sh
     sudo sh ./l_BaseKit_p_2024.0.0.49564_offline.sh
 
@@ -171,7 +172,7 @@ Just use the default settings (the warning of the Prerequistes Check can be igno
 
 The sign of successful installation is to open the terminal and enter:
 
-..  code-block:: pwsh
+..  code-block:: bash
     
     source /opt/intel/oneapi/setvars.sh --include-intel-llvm
  
@@ -198,8 +199,9 @@ CUDA: Go to "https://developer.nvidia.com/cuda-downloads" and choose the appropr
 For instance, we choose Ubuntu and runfile (local) installer, 
 then we get following instructions:
 
-..  code-block:: pwsh
+..  code-block:: bash
 
+    cd $HOME    
     wget https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda_12.3.1_545.23.08_linux.run
     sudo sh cuda_12.3.1_545.23.08_linux.run
 
@@ -215,7 +217,7 @@ because we have already installed it before.
 
 After CUDA is installed, go to the "~/.bashrc" file, add the following instructions at the end of the file:
 
-..  code-block:: pwsh
+..  code-block:: bash
 
     export CUDA_HOME=/usr/local/cuda
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${CUDA_HOME}/lib64
@@ -245,8 +247,9 @@ Final Step: Building SPHinXsys-SYCL
 
 Clone the latest branch of SPHinXsys:
 
-..  code-block:: pwsh
+..  code-block:: bash
 
+    cd $HOME
     git clone https://github.com/Xiangyu-Hu/SPHinXsys.git SPHinXsysSYCL
     cd SPHinXsysSYCL
     cmake   -G "Unix Makefiles"                                                     \
@@ -262,7 +265,7 @@ Clone the latest branch of SPHinXsys:
 
 Then, you can run it:
 
-..  code-block:: pwsh
+..  code-block:: bash
 
     cd build/tests/2d_examples/test_2d_dambreak_sycl/bin/
     ./test_2d_dambreak_sycl
@@ -425,6 +428,7 @@ Building SPHinXsys
 
 ..  code-block:: bash
     
+    cd $HOME    
     git clone https://github.com/Xiangyu-Hu/SPHinXsys.git sphinxsys
     cd sphinxsys
     cmake   -G Ninja                                                                    \
