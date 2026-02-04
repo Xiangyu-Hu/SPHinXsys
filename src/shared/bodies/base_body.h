@@ -80,7 +80,7 @@ class SPHBody
     StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
 
   public:
-    typedef SPHBody BaseIdentifier;
+    typedef SPHBody RangeIdentifier;
     typedef SPHAdaptation Adaptation;
     SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name);
     SPHBody(SPHSystem &sph_system, Shape &shape);

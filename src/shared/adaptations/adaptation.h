@@ -67,7 +67,7 @@ class SPHAdaptation
     Real h_ratio_max_;             /**< the ratio between the reference smoothing length to the minimum smoothing length */
 
   public:
-    typedef SPHAdaptation CellLinkedListType;
+    typedef SPHAdaptation CellLinkedListIdentifier;
 
     explicit SPHAdaptation(Real global_resolution, Real h_spacing_ratio = 1.3, Real refinement_to_global = 1.0);
     virtual ~SPHAdaptation() {};
@@ -125,7 +125,7 @@ class SPHAdaptation
 class AdaptiveSmoothingLength : public SPHAdaptation
 {
   public:
-    typedef AdaptiveSmoothingLength CellLinkedListType;
+    typedef AdaptiveSmoothingLength CellLinkedListIdentifier;
     
     AdaptiveSmoothingLength(Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level);
     virtual ~AdaptiveSmoothingLength() {};

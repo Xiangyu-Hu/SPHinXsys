@@ -50,15 +50,15 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     using SourceType = typename Inner<Parameters...>::SourceType;
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::SourceType>;
     using InnerRelationType = Inner<Parameters...>;
-    using CellLinkedListType = typename SourceType::Adaptation::CellLinkedListType;
-    using NeighborSearch = typename CellLinkedList<CellLinkedListType>::NeighborSearch;
+    using CellLinkedListIdentifier = typename SourceType::Adaptation::CellLinkedListIdentifier;
+    using NeighborSearch = typename CellLinkedList<CellLinkedListIdentifier>::NeighborSearch;
     using NeighborList = typename InnerRelationType::NeighborList;
-    using Identifier = typename BaseLocalDynamicsType::Identifier;
-    using MaskedSource = typename Identifier::SourceParticleMask;
+    using RangeIdentifier = typename BaseLocalDynamicsType::RangeIdentifier;
+    using MaskedSource = typename RangeIdentifier::SourceParticleMask;
     using NeighborMethodType = typename InnerRelationType::NeighborhoodType;
     using CutOff = typename NeighborMethodType::CutOff;
     using NeighborCriterion = typename NeighborMethodType::NeighborCriterion;
-    using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion>;
+    using MaskedCriterion = typename RangeIdentifier::template TargetParticleMask<NeighborCriterion>;
 
     class OneSidedCheck
     {
@@ -103,7 +103,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
 
     ExecutionPolicy ex_policy_;
     InnerRelationType &inner_relation_;
-    CellLinkedList<CellLinkedListType> &cell_linked_list_;
+    CellLinkedList<CellLinkedListIdentifier> &cell_linked_list_;
     Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel> kernel_implementation_;
 };
 
@@ -115,12 +115,12 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     using TargetType = typename ContactRelationType::TargetType;
     using SourceType = typename ContactRelationType::SourceType;
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
-    using CellLinkedListType = typename TargetType::Adaptation::CellLinkedListType;
-    using NeighborSearch = typename CellLinkedList<CellLinkedListType>::NeighborSearch;
+    using CellLinkedListIdentifier = typename TargetType::Adaptation::CellLinkedListIdentifier;
+    using NeighborSearch = typename CellLinkedList<CellLinkedListIdentifier>::NeighborSearch;
     using NeighborList = typename ContactRelationType::NeighborList;
     using Neighborhood = typename ContactRelationType::NeighborhoodType;
     using CutOff = typename Neighborhood::CutOff;
-    using Identifier = typename BaseLocalDynamicsType::Identifier;
+    using RangeIdentifier = typename BaseLocalDynamicsType::RangeIdentifier;
     using MaskedSource = typename SourceType::SourceParticleMask;
     using NeighborCriterion = typename Neighborhood::NeighborCriterion;
     using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
@@ -152,7 +152,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
     ExecutionPolicy ex_policy_;
     ContactRelationType &contact_relation_;
-    StdVec<CellLinkedList<CellLinkedListType> *> contact_cell_linked_list_;
+    StdVec<CellLinkedList<CellLinkedListIdentifier> *> contact_cell_linked_list_;
     StdVec<KernelImplementation *> contact_kernel_implementation_;
 };
 

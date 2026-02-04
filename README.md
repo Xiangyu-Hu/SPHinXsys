@@ -27,7 +27,7 @@ The following example gives a multi-resolution flow simulation around a cylinder
 Note that both the resolutions for fluid and wall particles are refined
 near the cylinder surface or mainstream and coarsened away from them.
 
-[![Flow around cylinder](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/flow-around-cylinder.png)](https://github.com/Xiangyu-Hu/SPHinXsys/blob/xiangyu/use_partial_specilization_for_cell_linked_list/tests/tests_sycl/2d_examples/test_2d_free_stream_around_cylinder_mr_sycl/mr_free_stream_around_cylinder.cpp)
+[![Flow around cylinder](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/flow-around-cylinder.png)](https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/tests_sycl/2d_examples/test_2d_free_stream_around_cylinder_mr_sycl/mr_free_stream_around_cylinder.cpp)
 
 ## Repository Description
 

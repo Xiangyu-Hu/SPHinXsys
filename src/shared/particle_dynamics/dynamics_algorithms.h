@@ -196,19 +196,19 @@ class BaseInteractionDynamics : public LocalDynamicsType, public BaseDynamics<vo
  * @class InteractionSplit
  * @brief This is for the splitting algorithm
  */
-template <class LocalDynamicsType, class CellLinkedListType, class ExecutionPolicy = ParallelPolicy>
+template <class LocalDynamicsType, class CellLinkedListIdentifier, class ExecutionPolicy = ParallelPolicy>
 class BaseInteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, ParallelPolicy>
 {
   protected:
     RealBody &real_body_;
-    CellLinkedListType &cell_linked_list_;
+    CellLinkedListIdentifier &cell_linked_list_;
 
   public:
     template <typename... Args>
     explicit BaseInteractionSplit(Args &&...args)
         : BaseInteractionDynamics<LocalDynamicsType, ParallelPolicy>(std::forward<Args>(args)...),
           real_body_(DynamicCast<RealBody>(this, this->getSPHBody())),
-          cell_linked_list_(DynamicCast<CellLinkedListType>(this, real_body_.getCellLinkedList()))
+          cell_linked_list_(DynamicCast<CellLinkedListIdentifier>(this, real_body_.getCellLinkedList()))
     {
         static_assert(!has_initialize<LocalDynamicsType>::value &&
                           !has_update<LocalDynamicsType>::value,
