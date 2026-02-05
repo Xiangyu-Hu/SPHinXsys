@@ -61,6 +61,17 @@ TEST(LinearGradient, Error)
               << "Predicted Gradient: " << approximated_gradient << std::endl;
 };
 
+Real linear_approximated_divergence(0);
+Real plain_approximated_divergence(0);
+Real reference_divergence = Real(Dimensions);
+TEST(LinearDivergence, Error)
+{
+    EXPECT_LT(std::abs(reference_divergence - linear_approximated_divergence), 1.0e-6);
+    std::cout << "Reference Divergence: " << reference_divergence << " and "
+              << "Predicted Linear Divergence: " << linear_approximated_divergence << " and "
+              << "Predicted Plain Divergence: " << plain_approximated_divergence << std::endl;
+};
+
 Vec2d first_coefficient(rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0));
 VecMat2d second_coefficient{rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0), rand_uniform(-1.0, 1.0)};
 class ParabolicProfile : public ReturnFunction<Real>
@@ -108,7 +119,7 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2),
-                                     Vecd(width + boundary_width * 2, height + boundary_width * 2));
+                                      Vecd(width + boundary_width * 2, height + boundary_width * 2));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
@@ -167,6 +178,20 @@ int main(int ac, char *av[])
     ObservedQuantityRecording<MainExecutionPolicy, Matd, RestoringCorrection>
         observed_position_gradient("PositionGradient", fluid_observer_contact);
 
+    InteractionDynamicsCK<MainExecutionPolicy, LinearDivergence<Inner<Vecd>, Contact<Vecd>>>
+        position_linear_divergence(
+            DynamicsArgs(water_block_inner, std::string("Position")),
+            DynamicsArgs(water_wall_contact, std::string("Position")));
+    ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>
+        observed_position_divergence("PositionDivergence", fluid_observer_contact);
+
+    InteractionDynamicsCK<MainExecutionPolicy, PlainDivergence<Inner<Vecd>, Contact<Vecd>>>
+        position_plain_divergence(
+            DynamicsArgs(water_block_inner, std::string("Position")),
+            DynamicsArgs(water_wall_contact, std::string("Position")));
+    ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>
+        observed_position_plain_divergence("PositionDivergence", fluid_observer_contact);
+
     InteractionDynamicsCK<MainExecutionPolicy, DisplacementMatrixGradient<Inner<>, Contact<>>>
         displacement_matrix_gradient(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, HessianCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
@@ -210,6 +235,14 @@ int main(int ac, char *av[])
     position_linear_gradient.exec();
     observed_position_gradient.writeToFile(0);
     approximated_gradient = *observed_position_gradient.getObservedQuantity();
+
+    position_linear_divergence.exec();
+    observed_position_divergence.writeToFile(0);
+    linear_approximated_divergence = *observed_position_divergence.getObservedQuantity();
+
+    position_plain_divergence.exec();
+    observed_position_plain_divergence.writeToFile(0);
+    plain_approximated_divergence = *observed_position_plain_divergence.getObservedQuantity();
 
     displacement_matrix_gradient.exec();
     hessian_correction_matrix.exec();

@@ -32,26 +32,211 @@
 #define GENERAL_GRADIENT_H
 
 #include "base_general_dynamics.h"
+#include "kernel_correction_ck.h"
 
 namespace SPH
 {
+struct Divergence;
+
 template <typename...>
-struct GradHelper;
+struct DerivativeHelper;
 
 template <int N>
-struct GradHelper<Eigen::Matrix<Real, N, 1>>
+struct DerivativeHelper<Divergence, Eigen::Matrix<Real, N, 1>>
+{
+    using type = Real;
+};
+
+template <int N>
+struct DerivativeHelper<Divergence, Eigen::Matrix<Real, N, N>>
+{
+    using type = Eigen::Matrix<Real, N, 1>;
+};
+
+template <typename T>
+using Div = typename DerivativeHelper<Divergence, T>::type;
+
+struct Divergence
+{
+    Real operator()(const Vecd &difference, const Vecd &kernel_gradient) const
+    {
+        return difference.dot(kernel_gradient);
+    }
+
+    Vecd operator()(const Matd &difference, const Vecd &kernel_gradient) const
+    {
+        return difference * kernel_gradient;
+    }
+};
+
+struct Gradient;
+
+template <int N>
+struct DerivativeHelper<Gradient, Eigen::Matrix<Real, N, 1>>
 {
     using type = Eigen::Matrix<Real, N, N>;
 };
 
 template <>
-struct GradHelper<Real>
+struct DerivativeHelper<Gradient, Real>
 {
     using type = Vecd;
 };
 
 template <typename T>
-using Grad = typename GradHelper<T>::type;
+using Grad = typename DerivativeHelper<Gradient, T>::type;
+
+struct Gradient
+{
+    Vecd operator()(const Real &difference, const Vecd &kernel_gradient) const
+    {
+        return difference * kernel_gradient;
+    }
+
+    Matd operator()(const Vecd &difference, const Vecd &kernel_gradient) const
+    {
+        return difference * kernel_gradient.transpose();
+    }
+};
+
+template <typename...>
+class Derivative;
+
+template <typename OperatorType, typename DataType, typename KernelCorrectionType,
+          template <typename...> class RelationType, typename... Parameters>
+class Derivative<Base, OperatorType, DataType, KernelCorrectionType, RelationType<Parameters...>>
+    : public Interaction<RelationType<Parameters...>>
+{
+    using BaseDynamicsType = Interaction<RelationType<Parameters...>>;
+
+  public:
+    explicit Derivative(RelationType<Parameters...> &relation, const std::string &variable_name);
+    template <typename FirstArg>
+    explicit Derivative(DynamicsArgs<RelationType<Parameters...>, FirstArg> parameters)
+        : Derivative(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~Derivative() {};
+
+  protected:
+    using DerivativeType = typename DerivativeHelper<OperatorType, DataType>::type;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+
+    std::string variable_name_;
+    DiscreteVariable<DataType> *dv_variable_;
+    DiscreteVariable<DerivativeType> *dv_derivative_;
+    KernelCorrectionType kernel_correction_;
+
+    std::string getDerivativeName(const Gradient &) const { return "Gradient"; }
+    std::string getDerivativeName(const Divergence &) const { return "Divergence"; }
+};
+
+template <typename OperatorType, typename DataType, typename KernelCorrectionType, typename... Parameters>
+class Derivative<OperatorType, DataType, KernelCorrectionType, Inner<Parameters...>>
+    : public Derivative<Base, OperatorType, DataType, KernelCorrectionType, Inner<Parameters...>>
+{
+
+    using BaseDynamicsType = Derivative<Base, OperatorType, DataType, KernelCorrectionType, Inner<Parameters...>>;
+    using DerivativeType = typename BaseDynamicsType::DerivativeType;
+    using CorrectionKernel = typename BaseDynamicsType::CorrectionKernel;
+
+  public:
+    explicit Derivative(Inner<Parameters...> &relation, const std::string &variable_name);
+    virtual ~Derivative() {};
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        OperatorType operator_;
+        DerivativeType zero_derivative_;
+        Real *Vol_;
+        DataType *variable_;
+        DerivativeType *derivative_;
+        CorrectionKernel correction_;
+    };
+};
+
+template <typename OperatorType, typename DataType, typename KernelCorrectionType, typename... Parameters>
+class Derivative<OperatorType, DataType, KernelCorrectionType, Contact<Parameters...>>
+    : public Derivative<Base, OperatorType, DataType, KernelCorrectionType, Contact<Parameters...>>
+{
+
+    using BaseDynamicsType = Derivative<Base, OperatorType, DataType, KernelCorrectionType, Contact<Parameters...>>;
+    using DerivativeType = typename BaseDynamicsType::DerivativeType;
+    using CorrectionKernel = typename BaseDynamicsType::CorrectionKernel;
+
+  public:
+    explicit Derivative(Contact<Parameters...> &relation, const std::string &variable_name);
+    virtual ~Derivative() {};
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        OperatorType operator_;
+        DerivativeType zero_derivative_;
+        Real *contact_Vol_;
+        DataType *variable_, *contact_variable_;
+        DerivativeType *derivative_;
+        CorrectionKernel correction_;
+    };
+
+  protected:
+    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
+};
+
+template <typename...>
+class LinearGradient;
+
+template <typename DataType, template <typename...> class RelationType, typename... Parameters>
+class LinearGradient<RelationType<DataType, Parameters...>>
+    : public Derivative<Gradient, DataType, LinearCorrectionCK, RelationType<Parameters...>>
+{
+  public:
+    explicit LinearGradient(RelationType<Parameters...> &relation, const std::string &variable_name)
+        : Derivative<Gradient, DataType, LinearCorrectionCK, RelationType<Parameters...>>(relation, variable_name) {};
+    template <typename FirstArg>
+    explicit LinearGradient(DynamicsArgs<RelationType<Parameters...>, FirstArg> parameters)
+        : LinearGradient(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~LinearGradient() {};
+};
+
+template <typename...>
+class LinearDivergence;
+
+template <typename DataType, template <typename...> class RelationType, typename... Parameters>
+class LinearDivergence<RelationType<DataType, Parameters...>>
+    : public Derivative<Divergence, DataType, LinearCorrectionCK, RelationType<Parameters...>>
+{
+  public:
+    explicit LinearDivergence(RelationType<Parameters...> &relation, const std::string &variable_name)
+        : Derivative<Divergence, DataType, LinearCorrectionCK, RelationType<Parameters...>>(relation, variable_name) {};
+    template <typename FirstArg>
+    explicit LinearDivergence(DynamicsArgs<RelationType<Parameters...>, FirstArg> parameters)
+        : LinearDivergence(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~LinearDivergence() {};
+};
+
+template <typename...>
+class PlainDivergence;
+
+template <typename DataType, template <typename...> class RelationType, typename... Parameters>
+class PlainDivergence<RelationType<DataType, Parameters...>>
+    : public Derivative<Divergence, DataType, NoKernelCorrectionCK, RelationType<Parameters...>>
+{
+  public:
+    explicit PlainDivergence(RelationType<Parameters...> &relation, const std::string &variable_name)
+        : Derivative<Divergence, DataType, NoKernelCorrectionCK, RelationType<Parameters...>>(relation, variable_name) {};
+    template <typename FirstArg>
+    explicit PlainDivergence(DynamicsArgs<RelationType<Parameters...>, FirstArg> parameters)
+        : PlainDivergence(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~PlainDivergence() {};
+};
 
 template <typename...>
 struct HessHelper;
@@ -71,21 +256,21 @@ struct HessHelper<Real>
 template <typename T>
 using Hess = typename HessHelper<T>::type;
 
-template <typename... RelationTypes>
-class Gradient;
+template <typename...>
+class Hessian;
 
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>
-class Gradient<Base, DataType, RelationType<Parameters...>>
+class Hessian<Base, DataType, RelationType<Parameters...>>
     : public Interaction<RelationType<Parameters...>>
 {
     using BaseDynamicsType = Interaction<RelationType<Parameters...>>;
 
   public:
-    explicit Gradient(RelationType<Parameters...> &relation, const std::string &variable_name);
+    explicit Hessian(RelationType<Parameters...> &relation, const std::string &variable_name);
     template <typename FirstArg>
-    explicit Gradient(DynamicsArgs<RelationType<Parameters...>, FirstArg> parameters)
-        : Gradient(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~Gradient() {};
+    explicit Hessian(DynamicsArgs<RelationType<Parameters...>, FirstArg> parameters)
+        : Hessian(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~Hessian() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -98,6 +283,8 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
         DataType *variable_;
         Grad<DataType> *gradient_;
         Matd *B_;
+        MatTend *M_;
+        Hess<DataType> *hessian_;
     };
 
   protected:
@@ -105,90 +292,6 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
     DiscreteVariable<DataType> *dv_variable_;
     DiscreteVariable<Grad<DataType>> *dv_gradient_;
     DiscreteVariable<Matd> *dv_B_;
-};
-
-template <typename... RelationTypes>
-class LinearGradient;
-
-template <typename DataType, typename... Parameters>
-class LinearGradient<Inner<DataType, Parameters...>>
-    : public Gradient<Base, DataType, Inner<Parameters...>>
-{
-    using BaseDynamicsType = Gradient<Base, DataType, Inner<Parameters...>>;
-
-  public:
-    explicit LinearGradient(Inner<Parameters...> &inner_relation, const std::string &variable_name)
-        : BaseDynamicsType(inner_relation, variable_name) {};
-    template <typename FirstArg>
-    explicit LinearGradient(DynamicsArgs<Inner<Parameters...>, FirstArg> parameters)
-        : LinearGradient(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~LinearGradient() {};
-
-    class InteractKernel : public BaseDynamicsType::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseDynamicsType::InteractKernel(ex_policy, encloser){};
-        void interact(size_t index_i, Real dt = 0.0);
-    };
-};
-
-template <typename DataType, typename... Parameters>
-class LinearGradient<Contact<DataType, Parameters...>>
-    : public Gradient<Base, DataType, Contact<Parameters...>>
-{
-    using BaseDynamicsType = Gradient<Base, DataType, Contact<Parameters...>>;
-
-  public:
-    explicit LinearGradient(Contact<Parameters...> &contact_relation, const std::string &variable_name);
-    template <typename FirstArg>
-    explicit LinearGradient(DynamicsArgs<Contact<Parameters...>, FirstArg> parameters)
-        : LinearGradient(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~LinearGradient() {};
-
-    class InteractKernel : public BaseDynamicsType::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
-        void interact(size_t index_i, Real dt = 0.0);
-
-      protected:
-        Real *contact_Vol_;
-        DataType *contact_variable_;
-    };
-
-  protected:
-    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
-};
-
-template <typename... RelationTypes>
-class Hessian;
-
-template <typename DataType, template <typename...> class RelationType, typename... Parameters>
-class Hessian<Base, DataType, RelationType<Parameters...>>
-    : public Gradient<Base, DataType, RelationType<Parameters...>>
-{
-    using BaseDynamicsType = Gradient<Base, DataType, RelationType<Parameters...>>;
-
-  public:
-    template <typename... Args>
-    explicit Hessian(Args &&...args);
-    virtual ~Hessian() {};
-
-    class InteractKernel : public BaseDynamicsType::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType, typename... Args>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args);
-
-      protected:
-        MatTend *M_;
-        Hess<DataType> *hessian_;
-    };
-
-  protected:
     DiscreteVariable<MatTend> *dv_M_;
     DiscreteVariable<Hess<DataType>> *dv_hessian_;
 };
