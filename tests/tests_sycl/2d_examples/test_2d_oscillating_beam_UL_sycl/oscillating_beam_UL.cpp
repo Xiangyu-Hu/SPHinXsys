@@ -154,7 +154,7 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Real>(beam, "Density");
     body_state_recorder.addDerivedVariableToWrite<continuum_dynamics::VonMisesStressCK>(beam);
     auto &record_beam_mechanical_energy = main_methods.addReduceRegression<
-        RegressionTestDynamicTimeWarping, TotalKineticEnergyCK>(beam);
+        RegressionTestEnsembleAverage, TotalKineticEnergyCK>(beam);
     auto &beam_observer_position = main_methods.addObserveRecorder<Vecd>("Position", beam_observer_contact);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
@@ -265,7 +265,7 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        record_beam_mechanical_energy.generateDataBase(1.0e-3);
+        record_beam_mechanical_energy.generateDataBase(1.0e-3, 1.0e-3);
     }
     else
     {

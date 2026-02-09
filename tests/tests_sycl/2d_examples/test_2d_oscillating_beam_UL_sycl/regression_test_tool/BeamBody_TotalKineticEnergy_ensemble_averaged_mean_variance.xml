@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<meanvariance>
+    <Mean_Element>
+        <Snapshot_1 TotalKineticEnergy_0="4.0647984104106447" />
+        <Snapshot_200 TotalKineticEnergy_0="1.6928242158627682" />
+        <Snapshot_400 TotalKineticEnergy_0="0.15539071724233791" />
+        <Snapshot_600 TotalKineticEnergy_0="3.1413541969367089" />
+        <Snapshot_800 TotalKineticEnergy_0="3.4946888232081115" />
+        <Snapshot_1000 TotalKineticEnergy_0="0.39881032420302093" />
+        <Snapshot_1200 TotalKineticEnergy_0="1.2165760648908825" />
+        <Snapshot_1400 TotalKineticEnergy_0="3.9689953478371005" />
+        <Snapshot_1600 TotalKineticEnergy_0="2.1719685298799818" />
+        <Snapshot_1800 TotalKineticEnergy_0="0.018975880859193297" />
+        <Snapshot_2000 TotalKineticEnergy_0="2.6618973338199567" />
+        <Snapshot_2200 TotalKineticEnergy_0="3.7812231975537252" />
+        <Snapshot_2400 TotalKineticEnergy_0="0.79277321735710515" />
+        <Snapshot_2600 TotalKineticEnergy_0="0.71921395554874501" />
+        <Snapshot_2800 TotalKineticEnergy_0="3.7320589865010891" />
+        <Snapshot_3000 TotalKineticEnergy_0="2.7454562610135107" />
+        <Snapshot_3200 TotalKineticEnergy_0="0.037196632392693996" />
+        <Snapshot_3400 TotalKineticEnergy_0="2.0272436433752041" />
+        <Snapshot_3600 TotalKineticEnergy_0="3.9663783826482173" />
+        <Snapshot_3800 TotalKineticEnergy_0="1.3821986952276368" />
+        <Snapshot_4000 TotalKineticEnergy_0="0.26846079258751238" />
+        <Snapshot_4200 TotalKineticEnergy_0="3.2732965963923042" />
+        <Snapshot_4400 TotalKineticEnergy_0="3.3299629204113246" />
+        <Snapshot_4600 TotalKineticEnergy_0="0.31592291539180078" />
+        <Snapshot_4800 TotalKineticEnergy_0="1.286360910393207" />
+        <Snapshot_5000 TotalKineticEnergy_0="3.9313407021406204" />
+    </Mean_Element>
+    <Variance_Element>
+        <Snapshot_1 TotalKineticEnergy_0="0.0016522586117276906" />
+        <Snapshot_200 TotalKineticEnergy_0="0.00028656538258113975" />
+        <Snapshot_400 TotalKineticEnergy_0="2.414627500508841e-06" />
+        <Snapshot_600 TotalKineticEnergy_0="0.00098681061906119019" />
+        <Snapshot_800 TotalKineticEnergy_0="0.0012212849971055748" />
+        <Snapshot_1000 TotalKineticEnergy_0="1.5904967469092217e-05" />
+        <Snapshot_1200 TotalKineticEnergy_0="0.00014800573216653995" />
+        <Snapshot_1400 TotalKineticEnergy_0="0.0015752924071152578" />
+        <Snapshot_1600 TotalKineticEnergy_0="0.00047174472947890649" />
+        <Snapshot_1800 TotalKineticEnergy_0="3.6008405438231236e-08" />
+        <Snapshot_2000 TotalKineticEnergy_0="0.00070856974157978319" />
+        <Snapshot_2200 TotalKineticEnergy_0="0.0014297648869718584" />
+        <Snapshot_2400 TotalKineticEnergy_0="6.2848937415878488e-05" />
+        <Snapshot_2600 TotalKineticEnergy_0="5.1726871385607224e-05" />
+        <Snapshot_2800 TotalKineticEnergy_0="0.0013928264278723556" />
+        <Snapshot_3000 TotalKineticEnergy_0="0.00075375300811385856" />
+        <Snapshot_3200 TotalKineticEnergy_0="1.3835894613581265e-07" />
+        <Snapshot_3400 TotalKineticEnergy_0="0.00041097167896051736" />
+        <Snapshot_3600 TotalKineticEnergy_0="0.0015732157474339277" />
+        <Snapshot_3800 TotalKineticEnergy_0="0.00019104732330892316" />
+        <Snapshot_4000 TotalKineticEnergy_0="7.2071197156715485e-06" />
+        <Snapshot_4200 TotalKineticEnergy_0="0.0010714470607953448" />
+        <Snapshot_4400 TotalKineticEnergy_0="0.0011088653051314972" />
+        <Snapshot_4600 TotalKineticEnergy_0="9.9807288469698221e-06" />
+        <Snapshot_4800 TotalKineticEnergy_0="0.00016547243917876454" />
+        <Snapshot_5000 TotalKineticEnergy_0="0.0015455439716307523" />
+    </Variance_Element>
+</meanvariance>
