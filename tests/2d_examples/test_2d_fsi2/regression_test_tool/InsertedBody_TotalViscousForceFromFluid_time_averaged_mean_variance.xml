@@ -4,6 +4,6 @@
         <Snapshot_MeanValue TotalViscousForceFromFluid_0="~[0.451157,0.00157671]" />
     </MeanValue_Element>
     <Variance_Element>
-        <Snapshot_Variance TotalViscousForceFromFluid_0="~[0.000632001,0.0079911]" />
+        <Snapshot_Variance TotalViscousForceFromFluid_0="~[0.04,0.0079911]" />
     </Variance_Element>
 </meanvariance>
