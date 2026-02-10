@@ -3,7 +3,7 @@
 
 #include "neighbor_method.h"
 
-#include "adaptation.h"
+#include "base_adaptation.h"
 
 namespace SPH
 {

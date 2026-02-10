@@ -1,6 +1,6 @@
 #include "level_set.hpp"
 
-#include "adaptation.h"
+#include "base_adaptation.h"
 #include "base_kernel.h"
 #include "level_set_initialization.hpp"
 

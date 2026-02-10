@@ -1,5 +1,5 @@
 #include "cell_linked_list.h"
-#include "adaptation.h"
+#include "base_adaptation.h"
 #include "base_kernel.h"
 #include "base_particles.h"
 #include "mesh_iterators.hpp"

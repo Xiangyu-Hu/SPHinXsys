@@ -1,7 +1,7 @@
-#ifndef ADAPTATION_HPP
-#define ADAPTATION_HPP
+#ifndef BASE_ADAPTATION_HPP
+#define BASE_ADAPTATION_HPP
 
-#include "adaptation.h"
+#include "base_adaptation.h"
 
 namespace SPH
 {
@@ -49,4 +49,4 @@ inline Real AdaptiveWithinShape::LocalSpacing::ComputingKernel::operator()(const
 }
 //=================================================================================================//
 } // namespace SPH
-#endif // ADAPTATION_HPP
+#endif // BASE_ADAPTATION_HPP

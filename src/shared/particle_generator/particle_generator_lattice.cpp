@@ -1,6 +1,6 @@
 #include "particle_generator_lattice.h"
 
-#include "adaptation.h"
+#include "base_adaptation.h"
 #include "base_body.h"
 #include "complex_geometry.h"
 

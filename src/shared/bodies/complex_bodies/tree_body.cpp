@@ -1,6 +1,6 @@
 #include "tree_body.h"
 
-#include "adaptation.h"
+#include "base_adaptation.h"
 #include "base_material.h"
 #include "base_particle_dynamics.h"
 #include "base_particles.hpp"

@@ -1,4 +1,4 @@
-#include "adaptation.hpp"
+#include "base_adaptation.hpp"
 
 #include "base_particles.hpp"
 #include "cell_linked_list.h"

@@ -3,7 +3,7 @@
 
 #include "update_cell_linked_list.h"
 
-#include "adaptation.h"
+#include "base_adaptation.h"
 #include "base_particles.hpp"
 #include "mesh_iterators.hpp"
 #include "particle_iterators_ck.h"

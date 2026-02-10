@@ -35,8 +35,8 @@
 #ifndef BASE_BODY_H
 #define BASE_BODY_H
 
-#include "adaptation.h"
 #include "all_geometries.h"
+#include "base_adaptation.h"
 #include "base_body_part.h"
 #include "base_data_type_package.h"
 #include "base_implementation.h"

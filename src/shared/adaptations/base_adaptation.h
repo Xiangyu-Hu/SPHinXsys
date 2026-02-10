@@ -21,13 +21,13 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	adaptation.h
+ * @file 	base_adaptation.h
  * @brief 	Adaptation scheme for particle in multi-resolution scenario.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef ADAPTATION_H
-#define ADAPTATION_H
+#ifndef BASE_ADAPTATION_H
+#define BASE_ADAPTATION_H
 
 #include "base_data_type_package.h"
 #include "base_kernel.h"
@@ -126,7 +126,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 {
   public:
     typedef AdaptiveSmoothingLength CellLinkedListIdentifier;
-    
+
     AdaptiveSmoothingLength(Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level);
     virtual ~AdaptiveSmoothingLength() {};
 
@@ -165,7 +165,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 
       public:
         SmoothedSpacing(AdaptiveSmoothingLength &encloser);
-        Real operator() (const Real &measure, const Real &transition_thickness);
+        Real operator()(const Real &measure, const Real &transition_thickness);
         Real FinestSpacingBound() const { return finest_spacing_bound_; };
     };
 
@@ -227,7 +227,7 @@ class AdaptiveNearSurface : public AdaptiveByShape
           public:
             template <class ExecutionPolicy, class EncloserType>
             ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-            Real operator() (const Vecd &position);
+            Real operator()(const Vecd &position);
         };
     };
 };
@@ -270,4 +270,4 @@ class AdaptiveWithinShape : public AdaptiveByShape
     };
 };
 } // namespace SPH
-#endif // ADAPTATION_H
+#endif // BASE_ADAPTATION_H
