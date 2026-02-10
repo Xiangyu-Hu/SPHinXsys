@@ -89,4 +89,80 @@ BoundingBoxd GeometricBall::findBounds()
     return BoundingBoxd(-shift, shift);
 }
 //=================================================================================================//
+GeometricCylinder::GeometricCylinder(const Vecd &axis, Real radius, Real halflength)
+    : axis_(axis.normalized()), radius_(radius), halflength_(halflength)
+{
+    if (radius < 0.0)
+    {
+        std::cout << "\n Error: the GeometricCylinder radius must be positive! " << std::endl;
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+    if (halflength < 0.0)
+    {
+        std::cout << "\n Error: the GeometricCylinder halflength must be positive! " << std::endl;
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+}
+//=================================================================================================//
+bool GeometricCylinder::checkContain(const Vecd &probe_point)
+{
+    Real axial_projection = probe_point.dot(axis_);
+    if (ABS(axial_projection) > halflength_)
+    {
+        return false;
+    }
+    Vecd radial_vector = probe_point - axial_projection * axis_;
+    return radial_vector.norm() < radius_;
+}
+//=================================================================================================//
+Vecd GeometricCylinder::findClosestPoint(const Vecd &probe_point)
+{
+    Real axial_projection = probe_point.dot(axis_);
+    Vecd radial_vector = probe_point - axial_projection * axis_;
+    Real radial_distance = radial_vector.norm();
+    
+    // Clamp axial projection to cylinder length
+    Real clamped_axial = axial_projection;
+    if (clamped_axial < -halflength_)
+        clamped_axial = -halflength_;
+    else if (clamped_axial > halflength_)
+        clamped_axial = halflength_;
+    
+    // Project radial component to cylinder radius
+    Vecd clamped_radial = radial_vector;
+    if (radial_distance > Eps)
+    {
+        clamped_radial = radius_ * radial_vector / radial_distance;
+    }
+    else
+    {
+        // Point is on the axis, choose any radial direction
+        clamped_radial = Vecd::Zero();
+        clamped_radial[0] = radius_;
+    }
+    
+    return clamped_axial * axis_ + clamped_radial;
+}
+//=================================================================================================//
+BoundingBoxd GeometricCylinder::findBounds()
+{
+    // Create bounding box that encompasses the cylinder
+    // This is a conservative approximation
+    Vecd half_axis = halflength_ * axis_;
+    Vecd radial_extent = radius_ * Vecd::Ones();
+    
+    Vecd min_corner = -ABS(half_axis[0]) * Vecd::Unit(0);
+    Vecd max_corner = ABS(half_axis[0]) * Vecd::Unit(0);
+    
+    for (int i = 0; i < Dimensions; ++i)
+    {
+        min_corner[i] = -ABS(half_axis[i]) - radius_;
+        max_corner[i] = ABS(half_axis[i]) + radius_;
+    }
+    
+    return BoundingBoxd(min_corner, max_corner);
+}
+//=================================================================================================//
 } // namespace SPH
