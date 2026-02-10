@@ -143,7 +143,7 @@ int main(int ac, char *av[])
     if (sph_system.RunParticleRelaxation())
     {
         // setup a sub-system for particle relaxation and delete it after particle relaxation.
-        SPHSystem relaxation_system(system_domain_bounds, particle_spacing_ref);
+        RelaxationSystem relaxation_system(system_domain_bounds, particle_spacing_ref);
         auto &column = relaxation_system.addBody<RealBody>(column_shape);
         auto &wall = relaxation_system.addBody<SolidBody>(wall_shape);
 

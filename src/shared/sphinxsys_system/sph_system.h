@@ -68,6 +68,7 @@ class SPHSystem
     SPHSystem *handleCommandlineOptions(int ac, char *av[]);
 #endif
     IOEnvironment &getIOEnvironment();
+    bool isPhysical() { return is_physical_; };
     void setRunParticleRelaxation(bool run_particle_relaxation) { run_particle_relaxation_ = run_particle_relaxation; };
     bool RunParticleRelaxation() { return run_particle_relaxation_; };
     void setReloadParticles(bool reload_particles) { reload_particles_ = reload_particles; };
@@ -129,6 +130,7 @@ class SPHSystem
     BoundingBoxd system_domain_bounds_;      /**< Lower and Upper domain bounds. */
     Real global_resolution_;                 /**< reference resolution of the SPH system */
     tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
+    bool is_physical_;                       /**< flag for physical or non-physical system. */
     SPHBodyVector sph_bodies_;               /**< All sph bodies. */
     SPHBodyVector observation_bodies_;       /**< The bodies without inner particle configuration. */
     SolidBodyVector solid_bodies_;           /**< The bodies with inner particle configuration and acoustic time steps . */
@@ -141,6 +143,17 @@ class SPHSystem
     bool state_recording_;                   /**< Record state in output folder. */
     int log_level_ = 2;                      /**< Log level, 0: trace, 1: debug, 2: info, 3: warning, 4: error, 5: critical, 6: off */
     SingularVariables all_system_variables_;
+
+    SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds, Real global_resolution,
+              size_t number_of_threads = std::thread::hardware_concurrency());
+};
+
+class RelaxationSystem : public SPHSystem
+{
+  public:
+    RelaxationSystem(BoundingBoxd system_domain_bounds, Real global_resolution,
+                     size_t number_of_threads = std::thread::hardware_concurrency())
+        : SPHSystem(false, system_domain_bounds, global_resolution, number_of_threads) {};
 };
 } // namespace SPH
 #endif // SPH_SYSTEM_H
