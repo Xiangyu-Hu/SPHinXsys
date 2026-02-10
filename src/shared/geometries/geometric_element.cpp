@@ -114,7 +114,7 @@ bool GeometricCylinder::checkContain(const Vecd &probe_point)
         return false;
     }
     Vecd radial_vector = probe_point - axial_projection * axis_;
-    return radial_vector.norm() < radius_;
+    return radial_vector.norm() <= radius_;
 }
 //=================================================================================================//
 Vecd GeometricCylinder::findClosestPoint(const Vecd &probe_point)
@@ -199,10 +199,9 @@ BoundingBoxd GeometricCylinder::findBounds()
     // Create bounding box that encompasses the cylinder
     // This is a conservative approximation
     Vecd half_axis = halflength_ * axis_;
-    Vecd radial_extent = radius_ * Vecd::Ones();
     
-    Vecd min_corner = -ABS(half_axis[0]) * Vecd::Unit(0);
-    Vecd max_corner = ABS(half_axis[0]) * Vecd::Unit(0);
+    Vecd min_corner = Vecd::Zero();
+    Vecd max_corner = Vecd::Zero();
     
     for (int i = 0; i < Dimensions; ++i)
     {
