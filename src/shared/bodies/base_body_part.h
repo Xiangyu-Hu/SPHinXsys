@@ -117,13 +117,9 @@ class BodyPartByParticle : public BodyPart
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
     BodyPartByParticle(SPHBody &sph_body);
     virtual ~BodyPartByParticle() {};
-    void setBodyPartBounds(BoundingBoxd bbox);
-    BoundingBoxd getBodyPartBounds();
 
   protected:
     DiscreteVariable<UnsignedInt> *dv_particle_list_;
-    BoundingBoxd body_part_bounds_;
-    bool body_part_bounds_set_;
     typedef std::function<bool(size_t)> TaggingParticleMethod;
     void tagParticles(TaggingParticleMethod &tagging_particle_method);
 };
