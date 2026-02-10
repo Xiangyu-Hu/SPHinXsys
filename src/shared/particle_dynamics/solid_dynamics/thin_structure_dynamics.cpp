@@ -223,7 +223,7 @@ void ShellStressRelaxationSecondHalf::initialization(size_t index_i, Real dt)
     pos_[index_i] += vel_[index_i] * dt * 0.5;
     rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
     dpseudo_n_dt_[index_i] = transformation_matrix0_[index_i].transpose() *
-                             getVectorChangeRateAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i], angular_vel_[index_i]);
+                             getVectorChangeRateAfterThinStructureRotation(local_n0, rotation_[index_i], angular_vel_[index_i]);
     pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
 }
 //=================================================================================================//

@@ -263,10 +263,10 @@ void BarStressRelaxationSecondHalf::initialization(size_t index_i, Real dt)
     Vecd pseudo_b_n_temp = pseudo_b_n_[index_i];
 
     pseudo_n_[index_i] = transformation_matrix0_[index_i].transpose() *
-                         getVectorAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i]);
+                         getVectorAfterThinStructureRotation(local_n0, rotation_[index_i]);
 
     pseudo_b_n_[index_i] = transformation_matrix0_[index_i].transpose() *
-                           getVectorAfterThinStructureRotation(local_pseudo_b_n_0, rotation_b_[index_i]);
+                           getVectorAfterThinStructureRotation(local_bn0, rotation_b_[index_i]);
 
     if (dt < 1e-10)
     {

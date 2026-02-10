@@ -56,8 +56,8 @@ const Matd reduced_unit_matrix{
     {0.0, 0.0}, // Second row
 };
 
-/** initial local normal, only works for thin structure dynamics. */
-const Vecd local_pseudo_n_0 = Vecd(0.0, 1.0);
+/** Initial or reference local normal. */
+const Vecd local_n0 = Vecd(0.0, 1.0);
 const Vecd ZeroVecd = Vec2d::Zero();
 
 inline Vecd degradeToVecd(const Vec3d &input) { return Vecd(input[0], input[1]); };
