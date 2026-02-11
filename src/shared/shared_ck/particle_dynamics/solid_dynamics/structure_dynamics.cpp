@@ -31,13 +31,14 @@ StructureIntegrationVariables::StructureIntegrationVariables(BaseParticles *part
       dv_vel_(particles->getVariableByName<Vecd>("Velocity")),
       dv_force_(particles->registerStateVariable<Vecd>("Force")),
       dv_force_prior_(particles->registerStateVariable<Vecd>("ForcePrior")),
-      dv_B_(particles->getVariableByName<Matd>("LinearGradientCorrectionMatrix")),
+      dv_B_(particles->getVariableByName<Matd>("LinearCorrectionMatrix")),
       dv_F_(particles->registerStateVariable<Matd>(
           "DeformationGradient", IdentityMatrix<Matd>::value)),
       dv_dF_dt_(particles->registerStateVariable<Matd>("DeformationRate")),
       dv_inverse_F_(particles->registerStateVariable<Matd>(
           "InverseDeformationGradient", IdentityMatrix<Matd>::value)),
-      dv_stress_on_particle_(particles->registerStateVariable<Matd>("StressOnParticle"))
+      dv_stress_on_particle_(particles->registerStateVariable<Matd>("StressOnParticle")),
+      dv_scaling_matrix_(particles->registerStateVariable<Matd>("ScalingMatrix"))
 {
     particles->addEvolvingVariable<Vecd>(dv_pos_);
     particles->addEvolvingVariable<Vecd>(dv_vel_);

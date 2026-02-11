@@ -77,6 +77,7 @@ StructureIntegration1stHalf<Inner<OneLevel, MaterialType, Parameters...>>::Inter
       G_(encloser.material_.ShearModulus()),
       Vol0_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      force_(encloser.dv_force_->DelegatedData(ex_policy)),
       scaling_matrix_(encloser.dv_scaling_matrix_->DelegatedData(ex_policy)),
       inverse_F_(encloser.dv_inverse_F_->DelegatedData(ex_policy)),
       stress_on_particle_(encloser.dv_stress_on_particle_->DelegatedData(ex_policy)) {}
