@@ -197,16 +197,21 @@ Vecd GeometricCylinder::findClosestPoint(const Vecd &probe_point)
 BoundingBoxd GeometricCylinder::findBounds()
 {
     // Create bounding box that encompasses the cylinder
-    // This is a conservative approximation
-    Vecd half_axis = halflength_ * axis_;
+    // For each dimension i, the extent is:
+    // halflength * |axis[i]| + radius * sqrt(1 - axis[i]^2)
+    // This accounts for the cylinder extending halflength along the axis
+    // and radius in directions perpendicular to the axis
     
     Vecd min_corner = Vecd::Zero();
     Vecd max_corner = Vecd::Zero();
     
     for (int i = 0; i < Dimensions; ++i)
     {
-        min_corner[i] = -ABS(half_axis[i]) - radius_;
-        max_corner[i] = ABS(half_axis[i]) + radius_;
+        Real axis_component = ABS(axis_[i]);
+        Real perpendicular_factor = std::sqrt(1.0 - axis_component * axis_component);
+        Real extent = halflength_ * axis_component + radius_ * perpendicular_factor;
+        min_corner[i] = -extent;
+        max_corner[i] = extent;
     }
     
     return BoundingBoxd(min_corner, max_corner);
