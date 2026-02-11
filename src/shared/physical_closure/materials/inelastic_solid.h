@@ -81,20 +81,14 @@ class HardeningPlasticSolid : public PlasticSolid
     /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
     virtual Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
 
-    class ConstituteKernel
+    class ConstituteKernel : public PlasticSolid::ConstituteKernel
     {
       public:
         template <typename ExecutionPolicy>
         ConstituteKernel(const ExecutionPolicy &ex_policy, HardeningPlasticSolid &encloser);
         Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0);
-        Real VolumetricKirchhoff(Real J);
-        Matd DeviatoricKirchhoff(const Matd &deviatoric_be);
-        template <typename ScalingType>
-        Matd NumericalDampingLeftCauchy(const Matd &deformation, const Matd &deformation_rate,
-                                        const ScalingType &scaling, size_t particle_index_i);
 
       protected:
-        Real rho0_, K0_, G0_, c0_, cs0_;
         Real hardening_modulus_, yield_stress_;
         Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
         Matd *inverse_plastic_strain_;

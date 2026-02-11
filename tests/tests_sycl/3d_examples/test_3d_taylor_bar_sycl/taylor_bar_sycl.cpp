@@ -198,9 +198,6 @@ int main(int ac, char *av[])
 
     auto &column_acoustic_time_step = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(column, 0.2);
     //----------------------------------------------------------------------
-    //	Output
-    //----------------------------------------------------------------------
-    //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------

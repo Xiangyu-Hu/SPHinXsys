@@ -184,6 +184,22 @@ class NeoHookeanSolid : public LinearElasticSolid
     virtual Real VolumetricKirchhoff(Real J) override;
     /** Define the calculation of the stress matrix for postprocessing */
     virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };
+
+    class ConstituteKernel
+    {
+      public:
+        template <typename ExecutionPolicy>
+        ConstituteKernel(const ExecutionPolicy &ex_policy, NeoHookeanSolid &encloser);
+        Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0);
+        Real VolumetricKirchhoff(Real J);
+        Matd DeviatoricKirchhoff(const Matd &deviatoric_be);
+        template <typename ScalingType>
+        Matd NumericalDampingLeftCauchy(const Matd &deformation, const Matd &deformation_rate,
+                                        const ScalingType &scaling, size_t particle_index_i);
+
+      protected:
+        Real rho0_, K0_, G0_, c0_, cs0_;
+    };
 };
 
 /**

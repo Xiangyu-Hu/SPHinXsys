@@ -37,7 +37,7 @@ namespace SPH
 namespace solid_dynamics
 {
 
-class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMin>
+class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
 {
   public:
     explicit AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL = 0.6);
