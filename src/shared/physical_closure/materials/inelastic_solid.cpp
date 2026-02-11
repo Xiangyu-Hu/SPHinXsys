@@ -4,16 +4,28 @@
 namespace SPH
 {
 //=================================================================================================//
+HardeningPlasticSolid::HardeningPlasticSolid(
+    Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress, Real hardening_modulus)
+    : PlasticSolid(rho0, youngs_modulus, poisson_ratio, yield_stress),
+      dv_inverse_plastic_strain_(nullptr), dv_hardening_parameter_(nullptr),
+      hardening_modulus_(hardening_modulus),
+      inverse_plastic_strain_(nullptr), hardening_parameter_(nullptr)
+{
+    material_type_name_ = "HardeningPlasticSolid";
+}
+//=================================================================================================//
 void HardeningPlasticSolid::initializeLocalParameters(BaseParticles *base_particles)
 {
     PlasticSolid::initializeLocalParameters(base_particles);
-    inverse_plastic_strain_ = base_particles->registerStateVariableData<Matd>(
+    dv_inverse_plastic_strain_ = base_particles->registerStateVariable<Matd>(
         "InversePlasticRightCauchyStrain",
         [&](size_t i) -> Matd
         { return Matd::Identity(); });
-    hardening_parameter_ = base_particles->registerStateVariableData<Real>("HardeningParameter");
-    base_particles->addEvolvingVariable<Matd>("InversePlasticRightCauchyStrain");
-    base_particles->addEvolvingVariable<Real>("HardeningParameter");
+    inverse_plastic_strain_ = dv_inverse_plastic_strain_->Data();
+    dv_hardening_parameter_ = base_particles->registerStateVariable<Real>("HardeningParameter");
+    hardening_parameter_ = dv_hardening_parameter_->Data();
+    base_particles->addEvolvingVariable<Matd>(dv_inverse_plastic_strain_);
+    base_particles->addEvolvingVariable<Real>(dv_hardening_parameter_);
 }
 //=================================================================================================//
 Matd HardeningPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t index_i, Real dt)

@@ -12,8 +12,9 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Global geometry parameters.
 //----------------------------------------------------------------------
-Real PL = 0.0032; /**< X-direction domain. */
-Real PW = 0.0324; /**< Z-direction domain. */
+Real total_physical_time = 1.0e-4; /**< TOTAL SIMULATION TIME*/
+Real PL = 0.0032;                  /**< X-direction domain. */
+Real PW = 0.0324;                  /**< Z-direction domain. */
 Real particle_spacing_ref = PL / 5.0;
 /** YOU can try PW = 0.2 and particle_spacing_ref = PH / 10.0 to see an interesting test. */
 Real SL = particle_spacing_ref * 4.0; /**< Length of the holder is one layer particle. */
@@ -25,6 +26,8 @@ Vec3d domain_lower_bound(-4.0 * PL, -4.0 * PL, -SL);
 Vec3d domain_upper_bound(4.0 * PL, 4.0 * PL, 2.0 * PW);
 BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 int resolution(20);
+StdVec<Vecd> observation_location{Vecd(0.0, 0.0, PW)};
+Real impact_speed = 227.0;
 //----------------------------------------------------------------------
 //	Material properties and global parameters
 //----------------------------------------------------------------------
@@ -33,92 +36,6 @@ Real poisson = 0.35;  /**< Poisson ratio. */
 Real Youngs_modulus = 1.17e11;
 Real yield_stress = 0.4e9;
 Real hardening_modulus = 0.1e9;
-class InitialCondition
-    : public solid_dynamics::ElasticDynamicsInitialCondition
-{
-  public:
-    explicit InitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body) {};
-
-    void update(size_t index_i, Real dt)
-    {
-        vel_[index_i][2] = -227.0;
-    }
-};
-
-/**
- * @class DynamicContactForceWithWall
- * @brief Computing the contact force with a rigid wall.
- *  Note that the body surface of the wall should be
- *  updated before computing the contact force.
- */
-class DynamicContactForceWithWall : public LocalDynamics,
-                                    public DataDelegateContact
-{
-  public:
-    explicit DynamicContactForceWithWall(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength = 1.0)
-        : LocalDynamics(solid_body_contact_relation.getSPHBody()),
-          DataDelegateContact(solid_body_contact_relation),
-          solid_(DynamicCast<Solid>(this, sph_body_->getBaseMaterial())),
-          Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-          vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-          force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
-          penalty_strength_(penalty_strength)
-    {
-        impedance_ = sqrt(solid_.ReferenceDensity() * solid_.ContactStiffness());
-        reference_pressure_ = solid_.ContactStiffness();
-        for (size_t k = 0; k != contact_particles_.size(); ++k)
-        {
-            contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
-            contact_vel_.push_back(contact_particles_[k]->registerStateVariableData<Vecd>("Velocity"));
-            contact_n_.push_back(contact_particles_[k]->template getVariableDataByName<Vecd>("NormalDirection"));
-        }
-    };
-    virtual ~DynamicContactForceWithWall() {};
-    void interaction(size_t index_i, Real dt = 0.0)
-    {
-        Vecd force = Vecd::Zero();
-        for (size_t k = 0; k < contact_configuration_.size(); ++k)
-        {
-            Real particle_spacing_j1 = 1.0 / contact_bodies_[k]->getSPHAdaptation().ReferenceSpacing();
-            Real particle_spacing_ratio2 =
-                1.0 / (getSPHAdaptation().ReferenceSpacing() * particle_spacing_j1);
-            particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
-
-            Vecd *n_k = contact_n_[k];
-            Vecd *vel_n_k = contact_vel_[k];
-            Real *Vol_k = contact_Vol_[k];
-            Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-            {
-                size_t index_j = contact_neighborhood.j_[n];
-                Vecd e_ij = contact_neighborhood.e_ij_[n];
-                Vecd n_k_j = n_k[index_j];
-
-                Real impedance_p = 0.5 * impedance_ * (vel_[index_i] - vel_n_k[index_j]).dot(-n_k_j);
-                Real overlap = contact_neighborhood.r_ij_[n] * n_k_j.dot(e_ij);
-                Real delta = 2.0 * overlap * particle_spacing_j1;
-                Real beta = delta < 1.0 ? (1.0 - delta) * (1.0 - delta) * particle_spacing_ratio2 : 0.0;
-                Real penalty_p = penalty_strength_ * beta * fabs(overlap) * reference_pressure_;
-
-                // force due to pressure
-                force -= 2.0 * (impedance_p + penalty_p) * e_ij.dot(n_k_j) *
-                         n_k_j * contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
-            }
-        }
-
-        force_prior_[index_i] += force * Vol_[index_i];
-    };
-
-  protected:
-    Solid &solid_;
-    Real *Vol_;
-    Vecd *vel_, *force_prior_; // note that prior force directly used here
-    StdVec<Real *> contact_Vol_;
-    StdVec<Vecd *> contact_vel_, contact_n_;
-    Real penalty_strength_;
-    Real impedance_, reference_pressure_;
-};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -171,7 +88,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Run on CPU after relaxation finished and output results.
         //----------------------------------------------------------------------
-        auto &wall_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall);
+        auto &wall_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall);
         //----------------------------------------------------------------------
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------
@@ -210,7 +127,7 @@ int main(int ac, char *av[])
             }
         }
         std::cout << "The physics relaxation process finish !" << std::endl;
-        wall_boundary_normal_direction.exec();
+        wall_normal_direction.exec();
         write_particle_reload_files.writeToFile();
 
         if (!sph_system.ReloadParticles())
@@ -223,7 +140,7 @@ int main(int ac, char *av[])
         }
     }
     //----------------------------------------------------------------------
-    //	Simulation setup start here.
+    //	Simulation setup continues to define bodies.
     //----------------------------------------------------------------------
     auto &column = sph_system.addBody<RealBody>(column_shape);
     column.defineMaterial<HardeningPlasticSolid>(
@@ -231,104 +148,150 @@ int main(int ac, char *av[])
     column.generateParticles<BaseParticles, Reload>(column.getName());
 
     auto &wall = sph_system.addBody<RealBody>(wall_shape);
-    wall.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    wall.defineMaterial<Solid>();
     wall.generateParticles<BaseParticles, Reload>(wall.getName())
         ->reloadExtraVariable<Vecd>("NormalDirection");
 
-    /** Define Observer. */
-    ObserverBody my_observer(sph_system, "MyObserver");
-    StdVec<Vecd> observation_location = {Vecd(0.0, 0.0, PW)};
+    auto &my_observer = sph_system.addBody<ObserverBody>("MyObserver");
     my_observer.generateParticles<ObserverParticles>(observation_location);
-    /**body relation topology */
-    InnerRelation column_inner(column);
-    ContactRelation my_observer_contact(my_observer, {&column});
-    SurfaceContactRelation column_wall_contact(column, {&wall});
-    /**define simple data file input and outputs functions. */
-    BodyStatesRecordingToVtp write_states(sph_system);
     //----------------------------------------------------------------------
-    //	All numerical methods will be used in this case.
+    //	All body relations.
     //----------------------------------------------------------------------
-    SimpleDynamics<::InitialCondition> initial_condition(column);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> corrected_configuration(column_inner);
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
-    Dynamics1Level<solid_dynamics::DecomposedPlasticIntegration1stHalf> stress_relaxation_first_half(column_inner);
-    Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(column_inner);
-    InteractionDynamics<DynamicContactForceWithWall> column_wall_contact_force(column_wall_contact);
+    auto &column_inner = sph_system.addInnerRelation(column, ConfigType::Lagrangian);
+    auto &column_wall_contact = sph_system.addContactRelation(column, wall);
+    auto &my_observer_contact = sph_system.addContactRelation(my_observer, column, ConfigType::Lagrangian);
+    //----------------------------------------------------------------------
+    // Define SPH solver with particle methods and execution policies.
+    // Generally, the host methods should be able to run immediately.
+    //----------------------------------------------------------------------
+    SPHSolver sph_solver(sph_system);
+    //----------------------------------------------------------------------
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the configuration dynamics, such as update cell linked list,
+    // update body relations, are defined first.
+    // Then the geometric models or simple objects without data dependencies,
+    // such as gravity, initialized normal direction.
+    // After that, the major physical particle dynamics model should be introduced.
+    // Finally, the auxiliary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    //----------------------------------------------------------------------
+    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    host_methods.addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(column, "Velocity", Vec3d(0, 0, -impact_speed)).exec();
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(column, 0.2);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall);
+    ParticleDynamicsGroup update_conact_configuration;
+    update_conact_configuration.add(&main_methods.addCellLinkedListDynamics(column));
+    update_conact_configuration.add(&main_methods.addRelationDynamics(column_wall_contact));
+    auto &column_inner_configuration = main_methods.addRelationDynamics(column_inner);
+    auto &my_observer_contact_relation = main_methods.addRelationDynamics(my_observer_contact);
+
+    auto &column_linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(column_inner);
+    auto &column_wall_contact_factor = main_methods.addInteractionDynamics<solid_dynamics::RepulsionFactor>(column_wall_contact);
+    auto &column_wall_contact_force = main_methods.addInteractionDynamicsWithUpdate<solid_dynamics::RepulsionForceCK, Wall>(column_wall_contact);
+
+    auto &column_acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
+        solid_dynamics::StructureIntegration1stHalf, HardeningPlasticSolid>(column_inner);
+    auto &column_acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
+        solid_dynamics::StructureIntegration2ndHalf>(column_inner);
+
+    auto &column_acoustic_time_step = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(column, 0.2);
     //----------------------------------------------------------------------
     //	Output
     //----------------------------------------------------------------------
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_displacement("Position", my_observer_contact);
-
     //----------------------------------------------------------------------
-    // From here the time stepping begins.
+    //	Define the methods for I/O operations, observations
+    //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
-    wall_normal_direction.exec();
-    corrected_configuration.exec();
-    initial_condition.exec();
+    auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    auto &write_displacement = main_methods.addObserveRegression<
+        RegressionTestDynamicTimeWarping, Vecd>("Position", my_observer_contact);
     //----------------------------------------------------------------------
-    // Setup time-stepping related simulation parameters.
+    //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
-    int ite = 0;
-    Real end_time = 1.0e-4;
-    int screen_output_interval = 100;
-    int observation_sample_interval = screen_output_interval * 2;
-    Real output_period = 1.0e-6; // anyway 50 write_states files in total
-    Real dt = 0.0;
-    /** Statistics for computing time. */
-    TickCount t1 = TickCount::now();
-    TimeInterval interval;
+    TimeStepper &time_stepper = sph_solver.defineTimeStepper(total_physical_time);
     //----------------------------------------------------------------------
-    //	First output before the main loop.
+    //	Setup for advection-step based time-stepping control
     //----------------------------------------------------------------------
-    write_states.writeToFile();
+    size_t acoustic_steps = 1;
+    int screening_interval = 100;
+    int observation_interval = screening_interval * 2;
+    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 60.0);
+    //----------------------------------------------------------------------
+    //	Prepare for the time integration loop.
+    //----------------------------------------------------------------------
+    wall_cell_linked_list.exec();
+    update_conact_configuration.exec();
+    column_inner_configuration.exec();
+    my_observer_contact_relation.exec();
+    column_linear_correction_matrix.exec();
+    //----------------------------------------------------------------------
+    //	First output before the integration loop.
+    //----------------------------------------------------------------------
+    body_state_recorder.writeToFile();
     write_displacement.writeToFile(0);
     //----------------------------------------------------------------------
-    // Main time-stepping loop.
+    //	Statistics for the computing time information
     //----------------------------------------------------------------------
-    while (physical_time < end_time)
+    TimeInterval interval_output;
+    TimeInterval interval_acoustic_step;
+    TimeInterval interval_updating_configuration;
+    //----------------------------------------------------------------------
+    //	Single time stepping loop is used for multi-time stepping.
+    //----------------------------------------------------------------------
+    TickCount t0 = TickCount::now();
+    while (!time_stepper.isEndTime())
     {
-        Real integration_time = 0.0;
-        while (integration_time < output_period)
+        //----------------------------------------------------------------------
+        //	the fastest and most frequent acostic time stepping.
+        //----------------------------------------------------------------------
+        TickCount time_instance = TickCount::now();
+        Real acoustic_dt = time_stepper.incrementPhysicalTime(column_acoustic_time_step);
+        column_wall_contact_factor.exec();
+        column_wall_contact_force.exec();
+        column_acoustic_step_1st_half.exec(acoustic_dt);
+        column_acoustic_step_2nd_half.exec(acoustic_dt);
+        interval_acoustic_step += TickCount::now() - time_instance;
+
+        /** Output body state during the simulation according output_interval. */
+        time_instance = TickCount::now();
+        /** screen output, write body observables and restart files  */
+        if (acoustic_steps % screening_interval == 0)
         {
-            if (ite % screen_output_interval == 0)
-            {
-                std::cout << "N=" << ite << " Time: "
-                          << physical_time << "	dt: "
-                          << dt << "\n";
-
-                if (ite != 0 && ite % observation_sample_interval == 0)
-                {
-                    write_displacement.writeToFile(ite);
-                }
-            }
-            column_wall_contact_force.exec(dt);
-            stress_relaxation_first_half.exec(dt);
-            stress_relaxation_second_half.exec(dt);
-
-            column.updateCellLinkedList();
-            column_wall_contact.updateConfiguration();
-
-            ite++;
-            dt = computing_time_step_size.exec();
-            integration_time += dt;
-            physical_time += dt;
+            std::cout << std::fixed << std::setprecision(9) << "N=" << acoustic_steps
+                      << "	Time = " << time_stepper.getPhysicalTime() << "	"
+                      << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
         }
-        TickCount t2 = TickCount::now();
-        write_states.writeToFile();
-        TickCount t3 = TickCount::now();
-        interval += t3 - t2;
-    }
-    TickCount t4 = TickCount::now();
 
-    TimeInterval tt;
-    tt = t4 - t1 - interval;
-    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+        if (acoustic_steps % observation_interval == 0)
+        {
+            write_displacement.writeToFile(acoustic_steps);
+        }
+
+        if (state_recording())
+        {
+            body_state_recorder.writeToFile();
+        }
+        interval_output += TickCount::now() - time_instance;
+
+        /** Particle sort, update cell linked list and configuration. */
+        time_instance = TickCount::now();
+        update_conact_configuration.exec();
+        interval_updating_configuration += TickCount::now() - time_instance;
+
+        acoustic_steps++;
+    }
+    //----------------------------------------------------------------------
+    // Summary for wall time used for the simulation.
+    //----------------------------------------------------------------------
+    TimeInterval tt = TickCount::now() - t0 - interval_output;
+    std::cout << "Total wall time for computation: " << tt.seconds()
+              << " seconds." << std::endl;
+    std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_step = "
+              << interval_acoustic_step.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
+              << interval_updating_configuration.seconds() << "\n";
 
     if (sph_system.GenerateRegressionData())
     {
