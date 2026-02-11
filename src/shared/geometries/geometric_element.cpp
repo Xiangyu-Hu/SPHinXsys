@@ -119,78 +119,64 @@ bool GeometricCylinder::checkContain(const Vecd &probe_point)
 //=================================================================================================//
 Vecd GeometricCylinder::findClosestPoint(const Vecd &probe_point)
 {
+    // Decompose probe point into axial and radial components
     Real axial_projection = probe_point.dot(axis_);
     Vecd radial_vector = probe_point - axial_projection * axis_;
     Real radial_distance = radial_vector.norm();
     
-    // Determine if the point is within the axial extent
-    bool within_axial_extent = ABS(axial_projection) <= halflength_;
-    // Determine if the point is within the radial extent
-    bool within_radial_extent = radial_distance <= radius_;
+    // Compute signed distance components
+    // dh: signed distance along the axis (positive if outside caps)
+    Real dh = ABS(axial_projection) - halflength_;
+    // dr: signed distance normal to the axis (positive if outside cylinder surface)
+    Real dr = radial_distance - radius_;
     
-    if (within_axial_extent && within_radial_extent)
+    // Clamp axial projection to cylinder caps
+    Real clamped_axial = axial_projection;
+    if (axial_projection > halflength_)
+        clamped_axial = halflength_;
+    else if (axial_projection < -halflength_)
+        clamped_axial = -halflength_;
+    
+    // Normalize radial vector and scale to radius
+    Vecd normalized_radial;
+    if (radial_distance > Eps)
+        normalized_radial = radius_ * radial_vector / radial_distance;
+    else
     {
-        // Point is inside the cylinder, find closest surface point
-        Real distance_to_side = radius_ - radial_distance;
-        Real distance_to_cap = halflength_ - ABS(axial_projection);
-        
-        if (distance_to_side < distance_to_cap)
+        // Point on axis - choose arbitrary radial direction
+        normalized_radial = Vecd::Zero();
+        normalized_radial[0] = radius_;
+    }
+    
+    // Determine closest point based on signed distances
+    if (dr <= 0.0 && dh <= 0.0)
+    {
+        // Point inside cylinder - project to nearest surface
+        if (-dr < -dh)
         {
-            // Closest to the cylindrical surface
-            if (radial_distance > Eps)
-            {
-                return axial_projection * axis_ + radius_ * radial_vector / radial_distance;
-            }
-            else
-            {
-                // Point is on the axis, choose any radial direction
-                Vecd radial_out = Vecd::Zero();
-                radial_out[0] = radius_;
-                return axial_projection * axis_ + radial_out;
-            }
+            // Closer to cylindrical surface
+            return axial_projection * axis_ + normalized_radial;
         }
         else
         {
-            // Closest to one of the end caps
-            Real cap_position = axial_projection > 0 ? halflength_ : -halflength_;
-            return cap_position * axis_ + radial_vector;
+            // Closer to end cap
+            return clamped_axial * axis_ + radial_vector;
         }
     }
-    else if (within_axial_extent)
+    else if (dr > 0.0 && dh <= 0.0)
     {
-        // Outside radially, but within axial extent
-        if (radial_distance > Eps)
-        {
-            return axial_projection * axis_ + radius_ * radial_vector / radial_distance;
-        }
-        else
-        {
-            // Point is on the axis but outside
-            Vecd radial_out = Vecd::Zero();
-            radial_out[0] = radius_;
-            return axial_projection * axis_ + radial_out;
-        }
+        // Outside radially, inside axially
+        return axial_projection * axis_ + normalized_radial;
     }
-    else if (within_radial_extent)
+    else if (dr <= 0.0 && dh > 0.0)
     {
-        // Outside axially, but within radial extent
-        Real cap_position = axial_projection > 0 ? halflength_ : -halflength_;
-        return cap_position * axis_ + radial_vector;
+        // Inside radially, outside axially
+        return clamped_axial * axis_ + radial_vector;
     }
     else
     {
-        // Outside both axially and radially - closest to edge of end cap
-        Real cap_position = axial_projection > 0 ? halflength_ : -halflength_;
-        if (radial_distance > Eps)
-        {
-            return cap_position * axis_ + radius_ * radial_vector / radial_distance;
-        }
-        else
-        {
-            Vecd radial_out = Vecd::Zero();
-            radial_out[0] = radius_;
-            return cap_position * axis_ + radial_out;
-        }
+        // Outside both axially and radially
+        return clamped_axial * axis_ + normalized_radial;
     }
 }
 //=================================================================================================//
