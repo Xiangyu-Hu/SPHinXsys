@@ -14,7 +14,7 @@ ContactRelation::ContactRelation(SPHBody &sph_body, RealBodyVector contact_bodie
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         get_contact_neighbors_.push_back(
-            neighbor_builder_contact_ptrs_keeper_.createPtr<NeighborBuilderContact>(
+            neighbor_builder_contacts_keeper_.createPtr<NeighborBuilderContact>(
                 sph_body_, *contact_bodies_[k]));
     }
 }
@@ -33,13 +33,13 @@ void ContactRelation::updateConfiguration()
 //=================================================================================================//
 ShellSurfaceContactRelation::ShellSurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies)
     : ContactRelationCrossResolution(sph_body, contact_bodies),
-      body_surface_layer_(shape_surface_ptr_keeper_.createPtr<BodySurfaceLayer>(sph_body)),
+      body_surface_layer_(shape_surface_keeper_.createPtr<BodySurfaceLayer>(sph_body)),
       body_part_particles_(body_surface_layer_->body_part_particles_)
 {
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         get_contact_neighbors_.push_back(
-            neighbor_builder_contact_ptrs_keeper_
+            neighbor_builder_contacts_keeper_
                 .createPtr<NeighborBuilderSurfaceContact>(sph_body_, *contact_bodies_[k]));
     }
 }
@@ -75,7 +75,7 @@ ContactRelationToBodyPart::
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         get_part_contact_neighbors_.push_back(
-            neighbor_builder_contact_ptrs_keeper_
+            neighbor_builder_contacts_keeper_
                 .createPtr<NeighborBuilderContactBodyPart>(sph_body_, *contact_body_parts_[k]));
     }
 }
@@ -102,12 +102,12 @@ AdaptiveContactRelation::AdaptiveContactRelation(SPHBody &sph_body, RealBodyVect
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         cell_linked_lists_[k] = &contact_bodies_[k]->getCellLinkedList();
-        StdVec<Mesh *> &meshes = cell_linked_lists_[k]->getMeshes();
-        for (size_t l = 0; l != meshes.size(); ++l)
+        Mesh *meshes = cell_linked_lists_[k]->getMeshes();
+        for (size_t l = 0; l != cell_linked_lists_[k]->ResolutionLevels(); ++l)
         {
             get_multi_level_search_range_[k].push_back(
                 adaptive_search_depth_ptr_vector_keeper_
-                    .createPtr<SearchDepthAdaptiveContact>(sph_body_, *meshes[l]));
+                    .createPtr<SearchDepthAdaptiveContact>(sph_body_, meshes[l]));
 
             get_contact_neighbors_adaptive_[k].push_back(
                 neighbor_builder_contact_adaptive_ptr_vector_keeper_
@@ -121,11 +121,11 @@ void AdaptiveContactRelation::updateConfiguration()
     resetNeighborhoodCurrentSize();
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
-        StdVec<Mesh *> &meshes = cell_linked_lists_[k]->getMeshes();
-        for (size_t l = 0; l != meshes.size(); ++l)
+        Mesh *meshes = cell_linked_lists_[k]->getMeshes();
+        for (size_t l = 0; l != cell_linked_lists_[k]->ResolutionLevels(); ++l)
         {
             cell_linked_lists_[k]->searchNeighborsByMesh(
-                *meshes[l], sph_body_, contact_configuration_[k],
+                meshes[l], sph_body_, contact_configuration_[k],
                 *get_multi_level_search_range_[k][l], *get_contact_neighbors_adaptive_[k][l]);
         }
     }
@@ -143,7 +143,7 @@ ContactRelationFromShellToFluid::ContactRelationFromShellToFluid(SPHBody &sph_bo
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         get_shell_contact_neighbors_.push_back(
-            neighbor_builder_contact_from_shell_ptrs_keeper_.createPtr<NeighborBuilderContactFromShellToFluid>(
+            neighbor_builder_contact_from_shells_keeper_.createPtr<NeighborBuilderContactFromShellToFluid>(
                 sph_body_, *contact_bodies_[k], normal_corrections[k]));
     }
 }
@@ -172,7 +172,7 @@ ContactRelationFromFluidToShell::ContactRelationFromFluidToShell(SPHBody &sph_bo
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
         get_contact_neighbors_.push_back(
-            neighbor_builder_contact_to_shell_ptrs_keeper_.createPtr<NeighborBuilderContactFromFluidToShell>(
+            neighbor_builder_contact_to_shells_keeper_.createPtr<NeighborBuilderContactFromFluidToShell>(
                 sph_body_, *contact_bodies_[k], normal_corrections[k]));
     }
 }
@@ -191,7 +191,7 @@ void ContactRelationFromFluidToShell::updateConfiguration()
 //=================================================================================================//
 SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies, StdVec<bool> normal_corrections)
     : ContactRelationCrossResolution(sph_body, std::move(contact_bodies)),
-      body_surface_layer_(shape_surface_ptr_keeper_.createPtr<BodySurfaceLayer>(sph_body)),
+      body_surface_layer_(shape_surface_keeper_.createPtr<BodySurfaceLayer>(sph_body)),
       body_part_particles_(body_surface_layer_->body_part_particles_)
 {
     // Check if the source body is a shell body
@@ -211,7 +211,7 @@ SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, RealBodyVector
         {
             // solid neighbors
             get_contact_neighbors_.push_back(
-                solid_neighbor_builder_contact_ptrs_keeper_
+                solid_neighbor_builder_contacts_keeper_
                     .createPtr<NeighborBuilderSurfaceContactFromSolid>(sph_body_, *contact_bodies_[k]));
         }
         else
@@ -219,7 +219,7 @@ SurfaceContactRelation::SurfaceContactRelation(SPHBody &sph_body, RealBodyVector
             // shell neighbors
             const bool normal_correction = normal_corrections.empty() ? false : normal_corrections[k];
             get_contact_neighbors_.push_back(
-                shell_neighbor_builder_contact_ptrs_keeper_
+                shell_neighbor_builder_contacts_keeper_
                     .createPtr<NeighborBuilderSurfaceContactFromShell>(sph_body_, *contact_bodies_[k], normal_correction));
         }
     }

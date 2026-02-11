@@ -11,8 +11,8 @@ using namespace SPH;   //	Namespace cite here.
 //----------------------------------------------------------------------
 Real DL = 1.0;                    /**< box length. */
 Real DH = 1.0;                    /**< box height. */
-Real resolution_ref = 1.0 / 50.0; /**< Global reference resolution. */
-Real BW = resolution_ref * 6;     /**< Extending width for BCs. */
+Real global_resolution = 1.0 / 50.0; /**< Global reference resolution. */
+Real BW = global_resolution * 6;     /**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
@@ -92,8 +92,8 @@ StdVec<Vecd> VelocityXObserverParticle()
 {
     StdVec<Vecd> observation_points;
     size_t number_of_observation_point = 5;
-    Real range_of_measure = 1.0 - 0.5 * resolution_ref;
-    Real start_of_measure = 0.5 * resolution_ref;
+    Real range_of_measure = 1.0 - 0.5 * global_resolution;
+    Real start_of_measure = 0.5 * global_resolution;
 
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
@@ -107,8 +107,8 @@ StdVec<Vecd> VelocityYObserverParticle()
 {
     StdVec<Vecd> observation_points;
     size_t number_of_observation_point = 5;
-    Real range_of_measure = 1.0 - 0.5 * resolution_ref;
-    Real start_of_measure = 0.5 * resolution_ref;
+    Real range_of_measure = 1.0 - 0.5 * global_resolution;
+    Real start_of_measure = 0.5 * global_resolution;
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
         Vec2d point_coordinate(0.5 * DH, range_of_measure * (Real)i /
@@ -126,7 +126,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     // Tag for run particle relaxation for the initial body fitted distribution.
     sph_system.setRunParticleRelaxation(false);
     // Tag for computation start with relaxed body fitted particles distribution.

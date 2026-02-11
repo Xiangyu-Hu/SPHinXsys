@@ -17,10 +17,10 @@ std::string input_body = "./input/SPHinXsys-2d.dat";
 //----------------------------------------------------------------------
 //	Basic geometry parameters
 //----------------------------------------------------------------------
-Real DL = 2.5;                          /**< InputBody length right part. */
-Real DL1 = 2.5;                         /**< InputBody length left part. */
-Real DH = 5.0;                          /**< InputBody height. */
-Real resolution_ref = (DL + DL1) / 120; /**< Reference resolution. */
+Real DL = 2.5;                             /**< InputBody length right part. */
+Real DL1 = 2.5;                            /**< InputBody length left part. */
+Real DH = 5.0;                             /**< InputBody height. */
+Real global_resolution = (DL + DL1) / 120; /**< Reference resolution. */
 BoundingBoxd system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	The main program
@@ -30,32 +30,28 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
-    //	Creating body, materials and particles.
+    //	Creating body, materials, particles and body parts.
     //----------------------------------------------------------------------
+    auto &input_shape = sph_system.addShape<ComplexShape>("SPHInXsysLogo");
     MultiPolygon original_logo;
     original_logo.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
-    ComplexShape input_shape("SPHInXsysLogo");
-    input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * resolution_ref, original_logo);
+    input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * global_resolution, original_logo);
     input_shape.subtract<MultiPolygonShape>(original_logo);
-    RealBody input_body(sph_system, input_shape);
+    auto &input_body = sph_system.addBody<RealBody>(input_shape);
     LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(par_ck, 2.0)
-                                         ->addMeshVariableToWrite<Real>("KernelWeight")
-                                         ->writeLevelSet(sph_system)
-                                         ->addBKGMeshVariableToWrite<UnsignedInt>("CellPackageIndex")
-                                         ->addBKGMeshVariableToWrite<int>("CellContainID")
-                                         ->writeBKGMesh(sph_system);
+                                         ->addPackageVariableToWrite<Real>("KernelWeight")
+                                         ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
+                                         ->addCellVariableToWrite<int>("CellContainID")
+                                         ->writeLevelSet();
     input_body.generateParticles<BaseParticles, Lattice>();
+    auto &near_body_surface = input_body.addBodyPart<NearShapeSurface>();
 
-    MultiPolygonShape filler_shape(original_logo, "Filler");
-    RealBody filler(sph_system, filler_shape);
+    auto &filler_shape = sph_system.addShape<MultiPolygonShape>(original_logo, "Filler");
+    auto &filler = sph_system.addBody<RealBody>(filler_shape);
     filler.generateParticles<BaseParticles, Lattice>();
-    //----------------------------------------------------------------------
-    //	Creating body parts.
-    //----------------------------------------------------------------------
-    NearShapeSurface near_body_surface(input_body);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -64,9 +60,9 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    Inner<> input_body_inner(input_body);
-    Inner<> filler_inner(filler);
-    Contact<> filler_contact(filler, {&input_body});
+    auto &input_body_inner = sph_system.addInnerRelation(input_body);
+    auto &filler_inner = sph_system.addInnerRelation(filler);
+    auto &filler_contact = sph_system.addContactRelation(filler, input_body);
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.
@@ -78,7 +74,7 @@ int main(int ac, char *av[])
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
@@ -96,9 +92,9 @@ int main(int ac, char *av[])
     ParticleDynamicsGroup update_configuration = update_cell_linked_list + update_relation;
 
     ParticleDynamicsGroup relaxation_residual;
-    relaxation_residual.add(&main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(input_body_inner)
+    relaxation_residual.add(&main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(input_body_inner)
                                  .addPostStateDynamics<LevelsetKernelGradientIntegral>(input_body, *level_set_shape));
-    relaxation_residual.add(&main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(filler_inner)
+    relaxation_residual.add(&main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(filler_inner)
                                  .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(filler_contact));
 
     ReduceDynamicsGroup relaxation_scaling = main_methods.addReduceDynamics<ReduceMin, RelaxationScalingCK>(real_bodies);

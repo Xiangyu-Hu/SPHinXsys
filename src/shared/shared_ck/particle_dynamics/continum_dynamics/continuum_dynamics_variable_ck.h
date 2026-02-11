@@ -38,9 +38,28 @@ namespace SPH
 {
 namespace continuum_dynamics
 {
-/**
- * @class VerticalStress
- */
+class VonMisesStressCK : public BaseDerivedVariable<Real>
+{
+  public:
+    explicit VonMisesStressCK(SPHBody &sph_body);
+    virtual ~VonMisesStressCK() {};
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *p_, *derived_variable_;
+        Matd *shear_stress_;
+    };
+
+  protected:
+    DiscreteVariable<Real> *dv_p_, *dv_derived_variable_;
+    DiscreteVariable<Matd> *dv_shear_stress_;
+};
+
 class VerticalStressCK : public BaseDerivedVariable<Real>
 {
   public:
@@ -68,7 +87,7 @@ class VerticalStressCK : public BaseDerivedVariable<Real>
  */
 class AccDeviatoricPlasticStrainCK : public BaseDerivedVariable<Real>
 {
-    using PlasticKernel = typename PlasticContinuum::PlasticKernel;
+    using ConstituteKernel = typename PlasticContinuum::ConstituteKernel;
 
   public:
     explicit AccDeviatoricPlasticStrainCK(SPHBody &sph_body);
@@ -82,7 +101,7 @@ class AccDeviatoricPlasticStrainCK : public BaseDerivedVariable<Real>
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
-        PlasticKernel plastic_kernel_;
+        ConstituteKernel constitute_;
         Mat3d *stress_tensor_3D_, *strain_tensor_3D_;
         Real *derived_variable_;
         Real E_, nu_;

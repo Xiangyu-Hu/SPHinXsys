@@ -213,7 +213,7 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
 //=================================================================================================//
 size_t TreeBody::BranchLocation(size_t total_particles, size_t particle_idx)
 {
-    return particle_idx < total_particles ? branch_locations_[particle_idx] : MaxSize_t;
+    return particle_idx < total_particles ? branch_locations_[particle_idx] : MaxUnsignedInt;
 }
 //=================================================================================================//
 TreeBody::Branch::Branch(TreeBody *tree)

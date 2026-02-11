@@ -32,8 +32,6 @@
 #include "base_geometry.h"
 #include "level_set.hpp"
 
-#include <string>
-
 namespace SPH
 {
 class SPHBody;
@@ -49,24 +47,14 @@ class LevelSetShape : public Shape
     SharedPtr<SPHAdaptation> sph_adaptation_;
 
   public:
-    /** refinement_ratio is between body reference resolution and level set resolution */
-    LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation,
-                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric);
-    LevelSetShape(SPHBody &sph_body, Shape &shape,
-                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric);
+    /** refinement is between body reference resolution and level set resolution */
+    LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement = 1.0,
+                  UsageType usage_type = UsageType::Volumetric);
 
     template <class ExecutionPolicy>
-    LevelSetShape(const ExecutionPolicy &ex_policy, Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation,
-                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric)
-        : LevelSetShape(shape.getBounds(), shape, sph_adaptation, refinement_ratio)
-    {
-        finishInitialization(ex_policy, usage_type);
-    };
-
-    template <class ExecutionPolicy>
-    LevelSetShape(const ExecutionPolicy &ex_policy, SPHBody &sph_body, Shape &shape,
-                  Real refinement_ratio = 1.0, UsageType usage_type = UsageType::Volumetric)
-        : LevelSetShape(shape.getBounds(), sph_body, shape, refinement_ratio)
+    LevelSetShape(const ExecutionPolicy &ex_policy, SPHSystem &sph_system, const SPHAdaptation &sph_adaptation,
+                  Shape &shape, Real refinement = 1.0, UsageType usage_type = UsageType::Volumetric)
+        : LevelSetShape(sph_system, sph_adaptation, shape, refinement)
     {
         finishInitialization(ex_policy, usage_type);
     };
@@ -90,29 +78,27 @@ class LevelSetShape : public Shape
     LevelSetShape *cleanLevelSet(UnsignedInt repeat_times = 1);
     /** required to build level set from triangular mesh in stl file format. */
     LevelSetShape *correctLevelSetSign();
-    LevelSetShape *writeLevelSet(SPHSystem &sph_system);
-    LevelSetShape *writeBKGMesh(SPHSystem &sph_system);
+    LevelSetShape *writeLevelSet();
     LevelSet &getLevelSet() { return level_set_; }
 
     template <typename DataType>
-    LevelSetShape *addMeshVariableToWrite(const std::string &variable_name)
+    LevelSetShape *addPackageVariableToWrite(const std::string &variable_name)
     {
-        level_set_.addMeshVariableToWrite<DataType>(variable_name);
+        level_set_.addPackageVariableToWrite<DataType>(variable_name);
         return this;
     };
 
     template <typename DataType>
-    LevelSetShape *addBKGMeshVariableToWrite(const std::string &variable_name)
+    LevelSetShape *addCellVariableToWrite(const std::string &variable_name)
     {
-        level_set_.addBKGMeshVariableToWrite<DataType>(variable_name);
+        level_set_.addCellVariableToWrite<DataType>(variable_name);
         return this;
     };
 
   protected:
-    LevelSetShape(BoundingBoxd bounding_box, Shape &shape,
-                  SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio);
-    LevelSetShape(BoundingBoxd bounding_box, SPHBody &sph_body, Shape &shape, Real refinement_ratio);
-    LevelSet &level_set_; /**< narrow bounded level set mesh. */
+    LevelSetShape(SPHSystem &sph_system, const SPHAdaptation &sph_adaptation, Shape &shape, Real refinement);
+    SPHSystem &sph_system_; /**< for write level to file. */
+    LevelSet &level_set_;   /**< narrow bounded level set mesh. */
 };
 } // namespace SPH
 #endif // LEVEL_SET_SHAPE_H

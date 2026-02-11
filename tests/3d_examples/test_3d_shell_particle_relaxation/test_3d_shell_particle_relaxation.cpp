@@ -19,7 +19,7 @@ Vec3d domain_upper_bound(1315, 1317, 1302);
 Real dp_0 = 25.0;
 Real thickness = 50.0;
 // level set resolution much higher than that of particles is required
-Real level_set_refinement_ratio = dp_0 / (0.1 * thickness);
+Real level_set_refinement = dp_0 / (0.1 * thickness);
 //----------------------------------------------------------------------
 //	Domain bounds of the system.
 //----------------------------------------------------------------------
@@ -49,8 +49,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody imported_model(sph_system, makeShared<ImportedShellModel>("ImportedShellModel"));
-    imported_model.defineBodyLevelSetShape(level_set_refinement_ratio, UsageType::Surface)
-        ->writeLevelSet(sph_system);
+    imported_model.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
+        ->writeLevelSet();
     imported_model.generateParticles<SurfaceParticles, Lattice>(thickness);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.

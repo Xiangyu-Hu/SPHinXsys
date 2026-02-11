@@ -50,10 +50,10 @@ Vecd ParticleGenerator<BaseParticles, Network>::getGradientFromNearestPoints(Vec
         downwind[i] += shift[i];
         ListData up_nearest_list = cell_linked_list_.findNearestListDataEntry(upwind);
         ListData down_nearest_list = cell_linked_list_.findNearestListDataEntry(downwind);
-        up_grad[i] = std::get<0>(up_nearest_list) != MaxSize_t
+        up_grad[i] = std::get<0>(up_nearest_list) != MaxUnsignedInt
                          ? (upwind - std::get<1>(up_nearest_list)).norm() / 2.0 * delta
                          : 1.0;
-        down_grad[i] = std::get<0>(down_nearest_list) != MaxSize_t
+        down_grad[i] = std::get<0>(down_nearest_list) != MaxUnsignedInt
                            ? (downwind - std::get<1>(down_nearest_list)).norm() / 2.0 * delta
                            : 1.0;
     }

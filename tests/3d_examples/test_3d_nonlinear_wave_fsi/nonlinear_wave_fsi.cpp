@@ -18,9 +18,9 @@ int main(int ac, char *av[])
     system_fit.handleCommandlineOptions(ac, av);
     SolidBody structure_fit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
     structure_fit.defineAdaptation<AdaptiveNearSurface>(1.3, 0.7, 3);
-    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(system_fit);
+    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet();
     structure_fit.defineMaterial<Solid>(StructureDensity);
-    structure_fit.generateParticles<BaseParticles, Lattice, AdaptiveByShape>();
+    structure_fit.generateParticles<BaseParticles, Lattice>();
 
     //----------------------------------------------------------------------
     //	Define body relation map.

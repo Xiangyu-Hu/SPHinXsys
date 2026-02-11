@@ -5,25 +5,25 @@ namespace SPH
 //=================================================================================================//
 bool AlignedBox::checkNotFar(const Vecd &probe_point, Real threshold)
 {
-    return checkContain(probe_point) || checkNearSurface(probe_point, threshold) ? true : false;
+    return checkContain(probe_point) || checkNearSurface(probe_point, threshold);
 }
 //=================================================================================================//
 bool AlignedBox::checkNearSurface(const Vecd &probe_point, Real threshold)
 {
     Vecd distance = probe_point - findClosestPoint(probe_point);
-    return distance.cwiseAbs().maxCoeff() < threshold ? true : false;
+    return distance.cwiseAbs().maxCoeff() < threshold;
 }
 //=================================================================================================//
 bool AlignedBox::checkNearUpperBound(const Vecd &probe_point, Real threshold)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    return ABS(position_in_frame[alignment_axis_] - halfsize_[alignment_axis_]) <= threshold ? true : false;
+    return ABS(position_in_frame[alignment_axis_] - halfsize_[alignment_axis_]) <= threshold;
 }
 //=================================================================================================//
 bool AlignedBox::checkNearLowerBound(const Vecd &probe_point, Real threshold)
 {
     Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-    return ABS(position_in_frame[alignment_axis_] + halfsize_[alignment_axis_]) <= threshold ? true : false;
+    return ABS(position_in_frame[alignment_axis_] + halfsize_[alignment_axis_]) <= threshold;
 }
 //=================================================================================================//
 Vecd AlignedBox::getLowerPeriodic(const Vecd &probe_point)

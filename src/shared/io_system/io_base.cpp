@@ -20,7 +20,7 @@ bool BaseIO::isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body)
     auto result = std::find_if(bodies.begin(), bodies.end(),
                                [&](auto &body) -> bool
                                { return body == sph_body; });
-    return result != bodies.end() ? true : false;
+    return result != bodies.end();
 }
 //=============================================================================================//
 BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)
@@ -46,7 +46,7 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
     {
         derived_variable->exec();
     }
-    writeWithFileName(padValueWithZeros(iteration_step));
+    writeWithFileName("ite_" + padValueWithZeros(iteration_step));
 };
 //=============================================================================================//
 RestartIO::RestartIO(SPHSystem &sph_system)

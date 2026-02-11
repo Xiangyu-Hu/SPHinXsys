@@ -172,7 +172,8 @@ class UniquePtrsKeeper
         {
             return ptr_keepers_[index];
         }
-        std::cout << "\n Error in UniquePtrsKeeper : UniquePtr index is out of bound! \n";
+        std::cout << "\n Error in UniquePtrsKeeper : UniquePtr "
+                  << type_name<BaseType>() << " index is out of bound ! \n ";
         exit(1);
     }
 

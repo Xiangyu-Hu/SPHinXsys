@@ -111,6 +111,11 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>
 
     template <class UpdateType, typename... Args>
     auto &addPostStateDynamics(Args &&...args);
+    
+    template <template <typename...> class UpdateType, typename... ControlParameters,
+              class DynamicsIdentifier, typename... Args>
+    auto &addPostStateDynamics(DynamicsIdentifier &dynamics_identifier, Args &&...args);          
+    
     auto &addPostStateDynamics(BaseDynamics<void> &state_dynamics);
 
     template <class UpdateType, typename... Args>
@@ -123,7 +128,7 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Paramet
     : public InteractionType<Inner<Parameters...>>
 {
     using LocalDynamicsType = InteractionType<Inner<Parameters...>>;
-    using Identifier = typename LocalDynamicsType::Identifier;
+    using RangeIdentifier = typename LocalDynamicsType::RangeIdentifier;
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
     KernelImplementation kernel_implementation_;
@@ -142,7 +147,7 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Param
     : public InteractionType<Contact<Parameters...>>
 {
     using LocalDynamicsType = InteractionType<Contact<Parameters...>>;
-    using Identifier = typename LocalDynamicsType::Identifier;
+    using RangeIdentifier = typename LocalDynamicsType::RangeIdentifier;
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
@@ -181,7 +186,7 @@ class InteractionDynamicsCK<
       public InteractionDynamicsCK<ExecutionPolicy, InteractionType<WithUpdate>>
 {
     using LocalDynamicsType = InteractionType<RelationType<WithUpdate, OtherParameters...>>;
-    using Identifier = typename LocalDynamicsType::Identifier;
+    using RangeIdentifier = typename LocalDynamicsType::RangeIdentifier;
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using BaseInteractKernel = typename LocalDynamicsType::BaseInteractKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, UpdateKernel>;
@@ -207,7 +212,7 @@ class InteractionDynamicsCK<
       public InteractionDynamicsCK<ExecutionPolicy, InteractionType<OneLevel>>
 {
     using LocalDynamicsType = InteractionType<RelationType<OneLevel, OtherParameters...>>;
-    using Identifier = typename LocalDynamicsType::Identifier;
+    using RangeIdentifier = typename LocalDynamicsType::RangeIdentifier;
     using InitializeKernel = typename LocalDynamicsType::InitializeKernel;
     using UpdateKernel = typename LocalDynamicsType::UpdateKernel;
     using BaseInteractKernel = typename LocalDynamicsType::BaseInteractKernel;

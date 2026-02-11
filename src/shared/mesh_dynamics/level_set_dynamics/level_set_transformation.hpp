@@ -1,9 +1,10 @@
+#ifndef LEVEL_SET_TRANSFORMATION_HPP
+#define LEVEL_SET_TRANSFORMATION_HPP
+
 #include "level_set_transformation.h"
 
 #include "mesh_iterators.hpp"
-
-#ifndef LEVEL_SET_TRANSFORMATION_HPP
-#define LEVEL_SET_TRANSFORMATION_HPP
+#include "neighbor_method.hpp"
 
 namespace SPH
 {
@@ -12,8 +13,8 @@ template <class ExecutionPolicy, class EncloserType>
 UpdateLevelSetGradient::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : data_spacing_(encloser.index_handler_.DataSpacing()),
-      phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-      phi_gradient_(encloser.mv_phi_gradient_.DelegatedData(ex_policy)),
+      phi_(encloser.pmv_phi_.DelegatedData(ex_policy)),
+      phi_gradient_(encloser.pmv_phi_gradient_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 inline void UpdateLevelSetGradient::UpdateKernel::update(const UnsignedInt &package_index)
@@ -22,8 +23,8 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const UnsignedInt &pack
                   [&](const Arrayi &index)
                   {
                       phi_gradient_[package_index](index) =
-                          regularizedCentralDifference(
-                              phi_, cell_neighborhood_[package_index], index,
+                          cell_neighborhood_[package_index].regularizedCentralDifference(
+                              phi_, index,
                               [](Real dp, Real dm)
                               {
                                   return 0.5 * (dp + dm); // no upwinding
@@ -35,29 +36,29 @@ inline void UpdateLevelSetGradient::UpdateKernel::update(const UnsignedInt &pack
 template <class ExecutionPolicy, class EncloserType>
 UpdateKernelIntegrals::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-      phi_gradient_(encloser.mv_phi_gradient_.DelegatedData(ex_policy)),
-      kernel_weight_(encloser.mv_kernel_weight_.DelegatedData(ex_policy)),
-      kernel_gradient_(encloser.mv_kernel_gradient_.DelegatedData(ex_policy)),
-      kernel_second_gradient_(encloser.mv_kernel_second_gradient_.DelegatedData(ex_policy)),
-      kernel_(ex_policy, encloser.neighbor_method_),
+    : phi_(encloser.pmv_phi_.DelegatedData(ex_policy)),
+      phi_gradient_(encloser.pmv_phi_gradient_.DelegatedData(ex_policy)),
+      kernel_weight_(encloser.pmv_kernel_weight_.DelegatedData(ex_policy)),
+      kernel_gradient_(encloser.pmv_kernel_gradient_.DelegatedData(ex_policy)),
+      kernel_second_gradient_(encloser.pmv_kernel_second_gradient_.DelegatedData(ex_policy)),
+      kernel_(encloser.neighbor_method_),
       data_spacing_(encloser.index_handler_.DataSpacing()),
       data_cell_volume_(math::pow(data_spacing_, Dimensions)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
-      cutoff_radius_(encloser.neighbor_method_.CutOffRadius()),
+      cutoff_radius_(kernel_.CutOffRadius()),
       bounding_box_(BoundingBoxi(Arrayi::Constant(
           static_cast<int>(std::ceil((cutoff_radius_ - Eps) / data_spacing_))))) {}
 //=================================================================================================//
 inline void UpdateKernelIntegrals::UpdateKernel::update(const UnsignedInt &package_index)
 {
-    assignByDataIndex(
-        kernel_weight_[package_index], [&](const Arrayi &data_index) -> Real
+    kernel_weight_[package_index].assignByIndex(
+        [&](const Arrayi &data_index) -> Real
         { return computeKernelIntegral(package_index, data_index); });
-    assignByDataIndex(
-        kernel_gradient_[package_index], [&](const Arrayi &data_index) -> Vecd
+    kernel_gradient_[package_index].assignByIndex(
+        [&](const Arrayi &data_index) -> Vecd
         { return computeKernelGradientIntegral(package_index, data_index); });
-    assignByDataIndex(
-        kernel_second_gradient_[package_index], [&](const Arrayi &data_index) -> Matd
+    kernel_second_gradient_[package_index].assignByIndex(
+        [&](const Arrayi &data_index) -> Matd
         { return computeKernelSecondGradientIntegral(package_index, data_index); });
 }
 //=================================================================================================//
@@ -86,7 +87,7 @@ DataType UpdateKernelIntegrals::UpdateKernel::
             bounding_box_.lower_, bounding_box_.upper_ + Arrayi::Ones(),
             [&](const Arrayi &search_index)
             {
-                DataPackagePair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
+                PackageDataPair neighbor_meta = GeneralNeighbourIndexShift<pkg_size>(
                     package_index, cell_neighborhood_, grid_index + search_index);
                 Real phi_neighbor = phi_[neighbor_meta.first](neighbor_meta.second);
                 if (phi_neighbor > -data_spacing_)

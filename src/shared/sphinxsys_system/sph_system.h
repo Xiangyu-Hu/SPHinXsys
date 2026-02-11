@@ -37,8 +37,11 @@
 namespace po = boost::program_options;
 #endif
 
+#include "all_bodies.h"
 #include "base_data_type_package.h"
+#include "base_geometry.h"
 #include "io_environment.h"
+#include "relation_ck.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH
@@ -49,12 +52,15 @@ namespace SPH
  */
 class SPHSystem
 {
-    UniquePtrKeeper<IOEnvironment> io_ptr_keeper_;
+    UniquePtrKeeper<IOEnvironment> io_keeper_;
     DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
+    UniquePtrsKeeper<SPHBody> sph_bodies_keeper_;
+    UniquePtrsKeeper<Shape> shapes_keeper_;
+    UniquePtrsKeeper<RelationBase> relations_keeper_;
 
   public:
-    SPHSystem(BoundingBoxd system_domain_bounds, Real resolution_ref,
+    SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution,
               size_t number_of_threads = std::thread::hardware_concurrency());
     virtual ~SPHSystem() {};
 
@@ -79,8 +85,8 @@ class SPHSystem
     void initializeSystemConfigurations();
     /** get the min time step from all bodies. */
     Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
-    Real ReferenceResolution() { return resolution_ref_; };
-    void setReferenceResolution(Real resolution_ref) { resolution_ref_ = resolution_ref; };
+    Real GlobalResolution() { return global_resolution_; };
+    void setGlobalResolution(Real global_resolution) { global_resolution_ = global_resolution; };
     SPHBodyVector getSPHBodies() { return sph_bodies_; };
     SPHBodyVector getRealBodies() { return real_bodies_; };
     void addSPHBody(SPHBody *sph_body) { sph_bodies_.push_back(sph_body); };
@@ -100,13 +106,28 @@ class SPHSystem
     template <typename DataType>
     DataType *getSystemVariableDataByName(const std::string &name);
 
-    template <typename BodyType, typename... Args>
+    template <class BodyType, typename... Args>
     BodyType &addBody(Args &&...args);
+
+    template <class BaseBodyType, class AdaptationType, typename... Args>
+    auto &addAdaptiveBody(const AdaptationType &adaptation, Args &&...args);
+
+    template <class ShapeType, typename... Args>
+    auto &addShape(Args &&...args);
+
+    template <class DynamicIdentifier, typename... Args>
+    auto &addInnerRelation(DynamicIdentifier &identifier, Args &&...args);
+
+    template <class SourceIdentifier, class TargetIdentifier, typename... Args>
+    auto &addContactRelation(SourceIdentifier &src_identifier, StdVec<TargetIdentifier *> tar_identifiers, Args &&...args);
+
+    template <class SourceIdentifier, class TargetIdentifier, typename... Args>
+    auto &addContactRelation(SourceIdentifier &src_identifier, TargetIdentifier &tar_identifiers, Args &&...args);
 
   protected:
     friend class IOEnvironment;
-    BoundingBoxd system_domain_bounds_;       /**< Lower and Upper domain bounds. */
-    Real resolution_ref_;                    /**< reference resolution of the SPH system */
+    BoundingBoxd system_domain_bounds_;      /**< Lower and Upper domain bounds. */
+    Real global_resolution_;                 /**< reference resolution of the SPH system */
     tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
     SPHBodyVector sph_bodies_;               /**< All sph bodies. */
     SPHBodyVector observation_bodies_;       /**< The bodies without inner particle configuration. */

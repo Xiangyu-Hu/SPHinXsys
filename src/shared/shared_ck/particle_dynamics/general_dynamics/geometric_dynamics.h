@@ -72,6 +72,33 @@ class NormalFromBodyShapeCK : public LocalDynamics
     DiscreteVariable<Real> *dv_phi_, *dv_phi0_;
 };
 
+class NormalFromSubShapeAndOpCK : public LocalDynamics
+{
+  public:
+    NormalFromSubShapeAndOpCK(SPHBody &sph_body, ComplexShape &complex_shape, const std::string &shape_name);
+    NormalFromSubShapeAndOpCK(SPHBody &sph_body, const std::string &shape_name);
+    virtual ~NormalFromSubShapeAndOpCK() {};
+
+    class UpdateKernel : public HostKernel
+    {
+      public:
+        template <class ExecutionPolicy, class Encloser>
+        UpdateKernel(const ExecutionPolicy &ex_policy, Encloser &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Shape *shape_;
+        Real switch_sign_;
+        Vecd *pos_, *n_, *n0_;
+        Real *phi_, *phi0_;
+    };
+
+  protected:
+    SubShapeAndOp *shape_and_op_;
+    DiscreteVariable<Vecd> *dv_pos_, *dv_n_, *dv_n0_;
+    DiscreteVariable<Real> *dv_phi_, *dv_phi0_;
+};
+
 class SurfaceIndicationFromBodyShape : public LocalDynamics
 {
   public:

@@ -47,8 +47,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     imported_model.defineAdaptation<AdaptiveNearSurface>(1.15, 1.0, 2);
-    imported_model.defineBodyLevelSetShape()->writeLevelSet(sph_system);
-    imported_model.generateParticles<BaseParticles, Lattice, AdaptiveByShape>();
+    imported_model.defineBodyLevelSetShape()->writeLevelSet();
+    imported_model.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------

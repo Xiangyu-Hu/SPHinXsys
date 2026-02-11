@@ -176,9 +176,9 @@ class StructuralSimulationInput
 class StructuralSimulation
 {
   private:
-    UniquePtrsKeeper<SurfaceContactRelation> contact_relation_ptr_keeper_;
-    UniquePtrsKeeper<Gravity> gravity_ptr_keeper_;
-    UniquePtrsKeeper<BodyPartFromMesh> body_part_tri_mesh_ptr_keeper_;
+    UniquePtrsKeeper<SurfaceContactRelation> contact_relation_keeper_;
+    UniquePtrsKeeper<Gravity> gravity_keeper_;
+    UniquePtrsKeeper<BodyPartFromMesh> body_part_tri_mesh_keeper_;
 
   protected:
     // mandatory input

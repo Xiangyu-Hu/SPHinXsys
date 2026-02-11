@@ -11,7 +11,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 50.0;                  /**< Channel length. */
 Real DH = 30.0;                  /**< Channel height. */
-Real resolution_ref = 1.0 / 5.0; /**< Initial reference particle spacing. */
+Real global_resolution = 1.0 / 5.0; /**< Initial reference particle spacing. */
 Real DL_sponge = 2.0;            /**< Sponge region to impose inflow condition. */
 Real DH_sponge = 2.0;            /**< Sponge region to impose inflow condition. */
 Real cylinder_radius = 1.0;      /**< Radius of the cylinder. */

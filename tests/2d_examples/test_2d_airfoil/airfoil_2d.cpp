@@ -16,10 +16,10 @@ std::string airfoil_flap_rear = "./input/airfoil_flap_rear.dat";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 1.25;             /**< airfoil length rear part. */
-Real DL1 = 0.25;            /**< airfoil length front part. */
-Real DH = 0.25;             /**< airfoil height. */
-Real resolution_ref = 0.02; /**< Reference resolution. */
+Real DL = 1.25;                /**< airfoil length rear part. */
+Real DL1 = 0.25;               /**< airfoil length front part. */
+Real DH = 0.25;                /**< airfoil height. */
+Real global_resolution = 0.02; /**< Reference resolution. */
 BoundingBoxd system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	import model as a complex shape
@@ -42,7 +42,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.setRunParticleRelaxation(true); // tag to run particle relaxation when no commandline option
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
@@ -50,14 +50,17 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody airfoil(sph_system, makeShared<ImportModel>("AirFoil"));
     airfoil.defineAdaptation<AdaptiveNearSurface>(1.15, 1.0, 3);
-    airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(sph_system);
-    airfoil.generateParticles<BaseParticles, Lattice, AdaptiveByShape>();
+    airfoil.defineBodyLevelSetShape()
+        ->cleanLevelSet()
+        ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
+        ->writeLevelSet();
+    airfoil.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp airfoil_recording_to_vtp(airfoil);
     airfoil_recording_to_vtp.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
-      //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies,
     //	basically, in the the range of bodies to build neighbor particle lists.

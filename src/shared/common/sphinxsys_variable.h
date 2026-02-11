@@ -160,6 +160,21 @@ class DiscreteVariable : public Entity
     void setValue(size_t index, const DataType &value) { data_field_[index] = value; };
     DataType getValue(size_t index) { return data_field_[index]; };
 
+    template <class FillFunction>
+    void fill(UnsignedInt begin_index, UnsignedInt end_index, const FillFunction &fill_function)
+    {
+        if (end_index > data_size_)
+        {
+            std::cout << "\n Error: trying to fill data out of range in DiscreteVariable '"
+                      << name_ << "'!" << std::endl;
+            exit(1);
+        }
+        for (UnsignedInt i = begin_index; i < end_index; ++i)
+        {
+            data_field_[i] = fill_function(i);
+        }
+    };
+
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return data_field_; };
     template <class PolicyType>

@@ -40,7 +40,7 @@ void SolidBodyPartForSimbody::setMassProperties()
     Iy /= body_part_volume;
     Iz /= body_part_volume;
 
-    body_part_mass_properties_ = mass_properties_ptr_keeper_.createPtr<SimTK::MassProperties>(
+    body_part_mass_properties_ = mass_properties_keeper_.createPtr<SimTK::MassProperties>(
         body_part_volume * rho0_, SimTKVec3(0), SimTK::UnitInertia(Ix, Iy, Iz));
 }
 //=================================================================================================//

@@ -11,9 +11,9 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real DL = 15.0;                        /**< Channel length. */
 Real DH = 10.0;                        /**< Channel height. */
-Real resolution_ref = 1.0 / 4.0;       /**< Initial reference particle spacing. */
-Real DL_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
-Real DH_sponge = resolution_ref * 2.0; /**< Sponge region to impose inflow condition. */
+Real global_resolution = 1.0 / 4.0;       /**< Initial reference particle spacing. */
+Real DL_sponge = global_resolution * 2.0; /**< Sponge region to impose inflow condition. */
+Real DH_sponge = global_resolution * 2.0; /**< Sponge region to impose inflow condition. */
 Vec2d cylinder_center(4.0, DH / 2.0);  /**< Location of the cylinder center. */
 Real cylinder_radius = 1.0;            /**< Radius of the cylinder. */
 //----------------------------------------------------------------------
@@ -80,7 +80,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     // Tag for run particle relaxation for the initial body fitted distribution.
     sph_system.setRunParticleRelaxation(false);
     // Tag for computation start with relaxed body fitted particles distribution.

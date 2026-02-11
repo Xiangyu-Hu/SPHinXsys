@@ -1,7 +1,9 @@
 #include "base_body_part.h"
 
+#include "base_body.h"
 #include "base_particles.hpp"
 #include "cell_linked_list.hpp"
+
 namespace SPH
 {
 //=================================================================================================//
@@ -19,6 +21,8 @@ BaseCellLinkedList &BodyPart::getCellLinkedList()
     RealBody &real_body = DynamicCast<RealBody>(this, sph_body_);
     return real_body.getCellLinkedList();
 }
+//=================================================================================================//
+SPHSystem &BodyPart::getSPHSystem() { return sph_body_.getSPHSystem(); }
 //=================================================================================================//
 BodyPartByID::BodyPartByID(SPHBody &sph_body) : BodyPart(sph_body)
 {
@@ -112,7 +116,7 @@ BodyRegionByParticle::
 BodyRegionByParticle::BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr)
     : BodyRegionByParticle(sph_body, *shape_ptr.get())
 {
-    shape_ptr_keeper_.assignRef(shape_ptr);
+    shape_keeper_.assignRef(shape_ptr);
 }
 //=================================================================================================//
 bool BodyRegionByParticle::tagByContain(size_t particle_index)
@@ -163,7 +167,7 @@ BodyRegionByCell::BodyRegionByCell(RealBody &real_body, Shape &body_part_shape)
 BodyRegionByCell::BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr)
     : BodyRegionByCell(real_body, *shape_ptr.get())
 {
-    shape_ptr_keeper_.assignRef(shape_ptr);
+    shape_keeper_.assignRef(shape_ptr);
 }
 //=================================================================================================//
 bool BodyRegionByCell::checkNotFar(Vecd cell_position, Real threshold)

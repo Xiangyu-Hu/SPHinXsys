@@ -35,7 +35,6 @@
 #include "base_configuration_dynamics.h"
 #include "base_local_dynamics.h"
 #include "base_particles.hpp"
-#include "neighborhood_ck.h"
 #include "relation_ck.hpp"
 
 namespace SPH
@@ -48,14 +47,18 @@ template <class ExecutionPolicy, typename... Parameters>
 class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     : public BaseLocalDynamics<typename Inner<Parameters...>::SourceType>, public BaseDynamics<void>
 {
+    using SourceType = typename Inner<Parameters...>::SourceType;
     using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::SourceType>;
     using InnerRelationType = Inner<Parameters...>;
+    using CellLinkedListIdentifier = typename SourceType::Adaptation::CellLinkedListIdentifier;
+    using NeighborSearch = typename CellLinkedList<CellLinkedListIdentifier>::NeighborSearch;
     using NeighborList = typename InnerRelationType::NeighborList;
-    using Identifier = typename BaseLocalDynamicsType::Identifier;
-    using MaskedSource = typename Identifier::SourceParticleMask;
+    using RangeIdentifier = typename BaseLocalDynamicsType::RangeIdentifier;
+    using MaskedSource = typename RangeIdentifier::SourceParticleMask;
     using NeighborMethodType = typename InnerRelationType::NeighborhoodType;
+    using CutOff = typename NeighborMethodType::CutOff;
     using NeighborCriterion = typename NeighborMethodType::NeighborCriterion;
-    using MaskedCriterion = typename Identifier::template TargetParticleMask<NeighborCriterion>;
+    using MaskedCriterion = typename RangeIdentifier::template TargetParticleMask<NeighborCriterion>;
 
     class OneSidedCheck
     {
@@ -93,13 +96,14 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
         OneSidedCheck is_one_sided_;
         MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
+        CutOff src_cut_off_;
     };
     typedef UpdateRelation<ExecutionPolicy, Inner<Parameters...>> LocalDynamicsType;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
 
     ExecutionPolicy ex_policy_;
     InnerRelationType &inner_relation_;
-    CellLinkedList &cell_linked_list_;
+    CellLinkedList<CellLinkedListIdentifier> &cell_linked_list_;
     Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel> kernel_implementation_;
 };
 
@@ -107,14 +111,16 @@ template <class ExecutionPolicy, typename... Parameters>
 class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     : public BaseLocalDynamics<typename Contact<Parameters...>::SourceType>, public BaseDynamics<void>
 {
-    using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
     using ContactRelationType = Contact<Parameters...>;
+    using TargetType = typename ContactRelationType::TargetType;
+    using SourceType = typename ContactRelationType::SourceType;
+    using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
+    using CellLinkedListIdentifier = typename TargetType::Adaptation::CellLinkedListIdentifier;
+    using NeighborSearch = typename CellLinkedList<CellLinkedListIdentifier>::NeighborSearch;
     using NeighborList = typename ContactRelationType::NeighborList;
     using Neighborhood = typename ContactRelationType::NeighborhoodType;
-    using SearchBox = typename Neighborhood::SearchBox;
-    using Identifier = typename BaseLocalDynamicsType::Identifier;
-    using SourceType = typename ContactRelationType::SourceType;
-    using TargetType = typename ContactRelationType::TargetType;
+    using CutOff = typename Neighborhood::CutOff;
+    using RangeIdentifier = typename BaseLocalDynamicsType::RangeIdentifier;
     using MaskedSource = typename SourceType::SourceParticleMask;
     using NeighborCriterion = typename Neighborhood::NeighborCriterion;
     using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
@@ -138,7 +144,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
         MaskedSource masked_src_;
         MaskedCriterion masked_criterion_;
         NeighborSearch neighbor_search_;
-        SearchBox search_box_;
+        CutOff src_cut_off_;
     };
 
     typedef UpdateRelation<ExecutionPolicy, Contact<Parameters...>> LocalDynamicsType;
@@ -146,7 +152,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
     ExecutionPolicy ex_policy_;
     ContactRelationType &contact_relation_;
-    StdVec<CellLinkedList *> contact_cell_linked_list_;
+    StdVec<CellLinkedList<CellLinkedListIdentifier> *> contact_cell_linked_list_;
     StdVec<KernelImplementation *> contact_kernel_implementation_;
 };
 

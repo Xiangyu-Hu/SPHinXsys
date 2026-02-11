@@ -59,7 +59,7 @@ class ComplexShape : public BinaryShapes
     LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
     {
         size_t index = getSubShapeIndexByName(shape_name);
-        LevelSetShape *level_set_shape = sub_shape_ptrs_keeper_[index].createPtr<LevelSetShape>(
+        LevelSetShape *level_set_shape = sub_shapes_keeper_.createPtr<LevelSetShape>(
             sph_body, *sub_shapes_and_ops_[index].first, std::forward<Args>(args)...);
         sub_shapes_and_ops_[index].first = DynamicCast<Shape>(this, level_set_shape);
         return level_set_shape;
@@ -106,12 +106,12 @@ class AlignedBox : public TransformGeometry<GeometricBox>
     bool checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe = 0.0)
     {
         Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-        return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] + upper_bound_fringe ? true : false;
+        return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] + upper_bound_fringe;
     };
     bool checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe = 0.0)
     {
         Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-        return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] - lower_bound_fringe ? true : false;
+        return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] - lower_bound_fringe;
     }
     bool checkNearUpperBound(const Vecd &probe_point, Real threshold);
     bool checkNearLowerBound(const Vecd &probe_point, Real threshold);

@@ -9,11 +9,11 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real resolution_ref = 0.005;    /* reference resolution. */
+Real global_resolution = 0.005;    /* reference resolution. */
 Real DL = 0.5;                  /* platform length. */
 Real DH = 2.0;                  /* height. */
-Real BW = resolution_ref * 5.0; /* width for boundary. */
-Real cream_radius = resolution_ref * 20.0;
+Real BW = global_resolution * 5.0; /* width for boundary. */
+Real cream_radius = global_resolution * 20.0;
 Vec2d cream_center(0.0, -cream_radius);
 BoundingBoxd system_domain_bounds(Vec2d(-DL, -DH), Vec2d(DL, BW));
 Real sqrt_3 = sqrt(3);
@@ -81,7 +81,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */

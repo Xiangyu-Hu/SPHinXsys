@@ -73,7 +73,7 @@ class StructureSystemForSimbody : public SolidBodyPartForSimbody
         // Vec2d mass_center(G[0], G[1]);
         // initial_mass_center_ = SimTKVec3(mass_center[0], mass_center[1], 0.0);
         body_part_mass_properties_ =
-            mass_properties_ptr_keeper_
+            mass_properties_keeper_
                 .createPtr<SimTK::MassProperties>(StructureMass, SimTKVec3(0.0), SimTK::UnitInertia(Ix, Iy, Iz));
     }
 };
@@ -171,12 +171,13 @@ int main(int ac, char *av[])
     Contact<> water_block_contact(water_block, {&wall_boundary, &structure});
     Contact<> structure_contact(structure, {&water_block});
     Contact<> observer_contact(observer, {&structure}, ConfigType::Lagrangian);
-    Contact<SPHBody, BodyPartByParticle> structure_proxy_contact(structure_proxy, {&structure_surface}, ConfigType::Lagrangian);
+    Contact<Relation<SPHBody, BodyPartByParticle>> structure_proxy_contact(
+        structure_proxy, {&structure_surface}, ConfigType::Lagrangian);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
@@ -193,7 +194,7 @@ int main(int ac, char *av[])
         structure_update_contact_relation(structure_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>>
         observer_update_contact_relation(observer_contact);
-    UpdateRelation<MainExecutionPolicy, Contact<SPHBody, BodyPartByParticle>>
+    UpdateRelation<MainExecutionPolicy, Contact<Relation<SPHBody, BodyPartByParticle>>>
         structure_proxy_update_contact_relation(structure_proxy_contact);
     ParticleSortCK<MainExecutionPolicy> particle_sort(water_block);
 
@@ -213,8 +214,10 @@ int main(int ac, char *av[])
         fluid_acoustic_step_2nd_half_with_wall(water_block_contact);
     fluid_acoustic_step_2nd_half.addPostContactInteraction(fluid_acoustic_step_2nd_half_with_wall);
 
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
-        fluid_density_regularization(water_block_inner, water_block_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+        fluid_density_summation(water_block_inner, water_block_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
+        fluid_density_regularization(water_block);
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceCK<Inner<WithUpdate, Viscosity, NoKernelCorrectionCK>>>
         fluid_viscous_force(water_block_inner);
@@ -230,16 +233,16 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_block);
 
-    ArbitraryDynamicsSequence<
+    ArbitraryDynamicsSequence <
         StateDynamics<MainExecutionPolicy, solid_dynamics::UpdateDisplacementFromPosition>,
-        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, SPHBody, BodyPartByParticle>>>,
-        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, SPHBody, BodyPartByParticle>>>,
-        StateDynamics<MainExecutionPolicy, solid_dynamics::UpdatePositionFromDisplacement>>
-        update_structure_proxy_states(
-            structure,
-            DynamicsArgs(structure_proxy_contact, std::string("Velocity")),
-            DynamicsArgs(structure_proxy_contact, std::string("Displacement")),
-            structure_proxy);
+        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, Relation<SPHBody, BodyPartByParticle>>>>,
+        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, Relation<SPHBody, BodyPartByParticle>>>>,
+                              StateDynamics<MainExecutionPolicy, solid_dynamics::UpdatePositionFromDisplacement>>
+            update_structure_proxy_states(
+                structure,
+                DynamicsArgs(structure_proxy_contact, std::string("Velocity")),
+                DynamicsArgs(structure_proxy_contact, std::string("Displacement")),
+                structure_proxy);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
@@ -363,6 +366,7 @@ int main(int ac, char *av[])
         Real integral_time = 0.0;
         while (integral_time < output_interval)
         {
+            fluid_density_summation.exec();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             Real advection_dt = fluid_advection_time_step.exec();

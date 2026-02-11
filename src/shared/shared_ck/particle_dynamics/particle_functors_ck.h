@@ -37,20 +37,17 @@ namespace SPH
  * velocity correction is applied. It is a template class specialized for
  * different particle types, defining rules for inclusion in the computation.
  */
-template <typename ScopeType>
+template <typename...>
 class ParticleScopeTypeCK;
 //-------------------------------------------------------------------------------------------------
-// 1) Specialization for AllParticles
+// 1) Null Specialization
 //-------------------------------------------------------------------------------------------------
 template <>
-class ParticleScopeTypeCK<AllParticles> : public WithinScope
+class ParticleScopeTypeCK<> : public WithinScope
 {
   public:
     // Constructor
-    explicit ParticleScopeTypeCK(BaseParticles *particles)
-        : WithinScope()
-    {
-    }
+    explicit ParticleScopeTypeCK(BaseParticles *particles) : WithinScope() {}
 
     // Nested functor-like class:
     class ComputingKernel
@@ -59,8 +56,7 @@ class ParticleScopeTypeCK<AllParticles> : public WithinScope
         // The signature typically follows the style of other SPH "ComputingKernel" constructors
         template <class ExecutionPolicy, class ComputingKernelType>
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        ParticleScopeTypeCK<AllParticles> &encloser,
-                        ComputingKernelType &computing_kernel){};
+                        ParticleScopeTypeCK<> &encloser, ComputingKernelType &computing_kernel){};
 
         constexpr bool operator()(size_t /*index_i*/) const
         {
@@ -68,7 +64,6 @@ class ParticleScopeTypeCK<AllParticles> : public WithinScope
         };
     };
 };
-
 //-------------------------------------------------------------------------------------------------
 // 2) Specialization for BulkParticles (which is typically IndicatedParticles<0> in SPH code)
 //    i.e. we only want particles that have indicator_[i] == 0
@@ -108,7 +103,6 @@ class ParticleScopeTypeCK<BulkParticles> : public WithinScope
   protected:
     DiscreteVariable<int> *dv_indicator_;
 };
-
 //-------------------------------------------------------------------------------------------------
 // 3) Specialization for NotIndicatedParticles (which is typically "indicator != 0")
 //-------------------------------------------------------------------------------------------------
@@ -145,7 +139,9 @@ class ParticleScopeTypeCK<NotIndicatedParticles<INDICATOR>> : public WithinScope
   protected:
     DiscreteVariable<int> *dv_indicator_;
 };
-
+//-------------------------------------------------------------------------------------------------
+// 4) Specialization for ExcludeBufferParticles (which is typically "buffer_particle_indicator == 0")
+//-------------------------------------------------------------------------------------------------
 class ExcludeBufferParticles;
 template <>
 class ParticleScopeTypeCK<ExcludeBufferParticles> : public WithinScope
@@ -180,6 +176,5 @@ class ParticleScopeTypeCK<ExcludeBufferParticles> : public WithinScope
   protected:
     DiscreteVariable<int> *dv_buffer_particles_indicator_;
 };
-
 } // namespace SPH
 #endif // PARTICLE_FUNCTORS_CK_H

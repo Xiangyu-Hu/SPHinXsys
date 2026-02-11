@@ -255,24 +255,24 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
-        SolidBody herat_model(sph_system, makeShared<Heart>("HeartModel"));
-        herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
-        herat_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
+        SolidBody heart_model(sph_system, makeShared<Heart>("HeartModel"));
+        heart_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet();
+        heart_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
             ConstructArgs(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0),
             ConstructArgs(diffusion_species_name, diffusion_coeff));
-        herat_model.generateParticles<BaseParticles, Lattice>();
+        heart_model.generateParticles<BaseParticles, Lattice>();
         /** topology */
-        InnerRelation herat_model_inner(herat_model);
+        InnerRelation herat_model_inner(heart_model);
         using namespace relax_dynamics;
-        SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
+        SimpleDynamics<RandomizeParticlePosition> random_particles(heart_model);
         RelaxationStepInner relaxation_step_inner(herat_model_inner);
         //----------------------------------------------------------------------
         //	Relaxation output
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_herat_model_state_to_vtp({herat_model});
-        ReloadParticleIO write_particle_reload_files(herat_model);
-        write_particle_reload_files.addToReload<Vecd>(herat_model, "Fiber");
-        write_particle_reload_files.addToReload<Vecd>(herat_model, "Sheet");
+        BodyStatesRecordingToVtp write_herat_model_state_to_vtp({heart_model});
+        ReloadParticleIO write_particle_reload_files(heart_model);
+        write_particle_reload_files.addToReload<Vecd>(heart_model, "Fiber");
+        write_particle_reload_files.addToReload<Vecd>(heart_model, "Sheet");
         //----------------------------------------------------------------------
         //	Physics relaxation starts here.
         //----------------------------------------------------------------------
@@ -297,13 +297,13 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Diffusion process to initialize fiber direction
         //----------------------------------------------------------------------
-        GetDiffusionTimeStepSize get_time_step_size(herat_model);
+        GetDiffusionTimeStepSize get_time_step_size(heart_model);
         FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner);
-        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model, diffusion_species_name);
-        BodySurface surface_part(herat_model);
+        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(heart_model, diffusion_species_name);
+        BodySurface surface_part(heart_model);
         SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, diffusion_species_name);
         impose_diffusion_bc.exec();
-        write_herat_model_state_to_vtp.addToWrite<Real>(herat_model, diffusion_species_name);
+        write_herat_model_state_to_vtp.addToWrite<Real>(heart_model, diffusion_species_name);
         write_herat_model_state_to_vtp.writeToFile(ite);
 
         int diffusion_step = 100;

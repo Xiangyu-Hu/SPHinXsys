@@ -9,8 +9,8 @@ using namespace SPH;
 // general parameters for geometry
 Real radius = 0.1;                                         // Soil column length
 Real height = 0.1;                                         // Soil column height
-Real resolution_ref = radius / 10;                         // particle spacing
-Real BW = resolution_ref * 4;                              // boundary width
+Real global_resolution = radius / 10;                         // particle spacing
+Real BW = global_resolution * 4;                              // boundary width
 Real DL = 2 * radius * (1 + 1.24 * height / radius) + 0.1; // tank length
 Real DH = height + 0.02;                                   // tank height
 Real DW = DL;                                              // tank width
@@ -30,7 +30,7 @@ class SoilBlock : public ComplexShape
     explicit SoilBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd translation_column(DL / 2, 0.5 * height, DW / 2);
-        add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0, 1.0, 0), inner_circle_radius,
+        add<TriangleMeshShapeCylinder>(Vec3d(0, 1.0, 0), inner_circle_radius,
                                        0.5 * height, resolution, translation_column);
     }
 };
@@ -83,13 +83,13 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vecd(-BW, -BW, -BW), Vecd(DL + BW, DH + BW, DW + BW));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     RealBody soil_block(sph_system, makeShared<SoilBlock>("GranularBody"));
-    soil_block.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    soil_block.defineBodyLevelSetShape()->writeLevelSet();
     soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     soil_block.generateParticles<BaseParticles, Lattice>();
 
@@ -130,8 +130,10 @@ int main(int ac, char *av[])
         soil_acoustic_step_1st_half(soil_block_inner, soil_block_contact);
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::PlasticAcousticStep2ndHalfWithWallRiemannCK>
         soil_acoustic_step_2nd_half(soil_block_inner, soil_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
-        soil_density_regularization(soil_block_inner, soil_block_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+        soil_density_summation(soil_block_inner, soil_block_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
+        soil_density_regularization(soil_block);
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::StressDiffusionInnerCK> stress_diffusion(soil_block_inner);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> soil_acoustic_time_step(soil_block, 0.4);
     //----------------------------------------------------------------------
@@ -194,6 +196,7 @@ int main(int ac, char *av[])
         while (integration_time < D_Time)
         {
             /** outer loop for dual-time criteria time-stepping. */
+            soil_density_summation.exec();
             soil_density_regularization.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 

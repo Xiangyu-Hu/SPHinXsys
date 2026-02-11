@@ -11,10 +11,10 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //  Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.004;                 /**< Channel length. */
-Real DH = 0.001;                 /**< Channel height. */
-Real resolution_ref = DH / 20.0; /**< Reference particle spacing. */
-Real BW = resolution_ref * 4;    /**< Extending width for BCs. */
+Real DL = 0.004;                    /**< Channel length. */
+Real DH = 0.001;                    /**< Channel height. */
+Real global_resolution = DH / 20.0; /**< Reference particle spacing. */
+Real BW = global_resolution * 4;    /**< Extending width for BCs. */
 StdVec<Vecd> observer_location;
 BoundingBoxd system_domain_bounds(
     Vec2d(-2.0 * BW, -2.0 * BW),
@@ -50,7 +50,7 @@ Real c_f = std::max(10.0 * U_f, sqrt(4 * (Inlet_pressure - Outlet_pressure) / (r
 //----------------------------------------------------------------------
 //  Geometric shapes for the channel and boundaries.
 //----------------------------------------------------------------------
-Real bidirectional_buffer_length = 3.0 * resolution_ref;
+Real bidirectional_buffer_length = 3.0 * global_resolution;
 Vec2d bidirectional_buffer_halfsize(
     0.5 * bidirectional_buffer_length, 0.5 * DH);
 Vec2d left_bidirectional_translation = bidirectional_buffer_halfsize;
@@ -226,7 +226,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
@@ -243,8 +243,8 @@ int main(int ac, char *av[])
     {
         int num_points = 15;
         // Avoid deploy observer too close to wall
-        Real y_start = 2.0 * resolution_ref;
-        Real y_end = DH - 2.0 * resolution_ref;
+        Real y_start = 2.0 * global_resolution;
+        Real y_end = DH - 2.0 * global_resolution;
         Real total_range = y_end - y_start;
         Real dy = total_range / (num_points - 1);
 
@@ -299,12 +299,14 @@ int main(int ac, char *av[])
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexInternalPressureBoundary>
-        fluid_density_regularization(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+        fluid_density_summation(water_body_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, Internal, ExcludeBufferParticles>>
+        fluid_density_regularization(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
         fluid_boundary_indicator(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionComplexBulkParticlesCK>
-        transport_correction_ck(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex> kernel_gradient_integral(water_body_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear, BulkParticles>> transport_correction(water_body);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
@@ -366,10 +368,12 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
+            fluid_density_summation.exec();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             fluid_linear_correction_matrix.exec();
-            transport_correction_ck.exec();
+            kernel_gradient_integral.exec();
+            transport_correction.exec();
             fluid_viscous_force.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             interval_computing_time_step += TickCount::now() - time_instance;

@@ -9,7 +9,7 @@
 using namespace SPH;
 
 /** Geometry parameters. */
-Real resolution_ref = 0.005;
+Real global_resolution = 0.005;
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vecd(-0.026, -0.026, -0.021), Vecd(0.026, 0.026, 0.101));
 StdVec<Vecd> observation_location = {Vecd(0.0, 0.0, 0.04)};
@@ -109,7 +109,7 @@ class PullingForce : public solid_dynamics::BaseLoadingForce<BodyPartByParticle>
 int main(int ac, char *av[])
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);
@@ -142,7 +142,7 @@ int main(int ac, char *av[])
 
     /** === define load === */
     /** create a brick to tag the surface */
-    Vecd half_size_0(0.03, 0.03, resolution_ref);
+    Vecd half_size_0(0.03, 0.03, global_resolution);
     BodyRegionByParticle load_surface(beam_body, makeShared<TriangleMeshShapeBrick>(half_size_0, 1, Vecd(0.00, 0.00, 0.1)));
     StdVec<std::array<Real, 2>> force_over_time = {
         {Real(0), Real(0)},

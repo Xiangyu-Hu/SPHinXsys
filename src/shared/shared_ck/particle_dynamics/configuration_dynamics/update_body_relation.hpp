@@ -15,7 +15,7 @@ UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
     : BaseLocalDynamicsType(inner_relation.getDynamicsIdentifier()),
       BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
       inner_relation_(inner_relation),
-      cell_linked_list_(DynamicCast<CellLinkedList>(
+      cell_linked_list_(DynamicCast<CellLinkedList<CellLinkedListIdentifier>>(
           this, inner_relation.getDynamicsIdentifier().getCellLinkedList())),
       kernel_implementation_(*this) {}
 //=================================================================================================//
@@ -31,7 +31,8 @@ UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::InteractKernel::InteractK
       masked_criterion_(
           ex_policy, encloser.inner_relation_.getDynamicsIdentifier(),
           ex_policy, encloser.inner_relation_.getNeighborhood()),
-      neighbor_search_(encloser.cell_linked_list_.createNeighborSearch(ex_policy)) {}
+      neighbor_search_(ex_policy, encloser.cell_linked_list_),
+      src_cut_off_(ex_policy, encloser.inner_relation_.getNeighborhood()) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
@@ -49,7 +50,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
     UnsignedInt neighbor_count = 0;
     if (masked_src_(src_index))
     {
-        neighbor_search_.forEachSearch(
+        neighbor_search_.forInnerSearch(
             src_pos_[src_index],
             [&](size_t tar_index)
             {
@@ -59,7 +60,8 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
                     AtomicRef<UnsignedInt> atomic_tar_size(this->neighbor_index_[tar_index]);
                     ++atomic_tar_size;
                 }
-            });
+            },
+            src_cut_off_(src_index));
     }
     AtomicRef<UnsignedInt> atomic_src_size(this->neighbor_index_[src_index]);
     atomic_src_size.fetch_add(neighbor_count);
@@ -71,7 +73,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
 {
     if (masked_src_(src_index))
     {
-        neighbor_search_.forEachSearch(
+        neighbor_search_.forInnerSearch(
             src_pos_[src_index],
             [&](size_t tar_index)
             {
@@ -82,7 +84,8 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
                     AtomicRef<UnsignedInt> atomic_tar_size(this->neighbor_size_[tar_index]);
                     this->neighbor_index_[this->particle_offset_[tar_index] + atomic_tar_size++] = src_index;
                 }
-            });
+            },
+            src_cut_off_(src_index));
     }
 }
 //=================================================================================================//
@@ -145,7 +148,7 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     for (size_t k = 0; k != contact_relation.getContactBodies().size(); ++k)
     {
         contact_cell_linked_list_.push_back(
-            DynamicCast<CellLinkedList>(
+            DynamicCast<CellLinkedList<CellLinkedListIdentifier>>(
                 this, &contact_relation.getContactIdentifier(k).getCellLinkedList()));
         contact_kernel_implementation_.push_back(
             contact_kernel_implementation_ptrs_.template createPtr<KernelImplementation>(*this));
@@ -163,9 +166,8 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
       masked_criterion_(
           ex_policy, encloser.contact_relation_.getContactIdentifier(contact_index),
           ex_policy, encloser.contact_relation_.getNeighborhood(contact_index)),
-      neighbor_search_(
-          encloser.contact_cell_linked_list_[contact_index]->createNeighborSearch(ex_policy)),
-      search_box_(ex_policy, encloser.contact_relation_.getNeighborhood(contact_index)) {}
+      neighbor_search_(ex_policy, *encloser.contact_cell_linked_list_[contact_index]),
+      src_cut_off_(ex_policy, encloser.contact_relation_.getNeighborhood(contact_index)) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
@@ -175,14 +177,14 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     UnsignedInt neighbor_count = 0;
     if (masked_src_(src_index))
     {
-        neighbor_search_.forEachSearch(
+        neighbor_search_.forContactSearch(
             src_pos_[src_index],
             [&](size_t tar_index)
             {
                 if (masked_criterion_(tar_index, src_index))
                     neighbor_count++;
             },
-            search_box_(src_index));
+            src_cut_off_(src_index));
     }
     this->neighbor_index_[src_index] = neighbor_count;
 }
@@ -194,7 +196,7 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
     UnsignedInt neighbor_count = 0;
     if (masked_src_(src_index))
     {
-        neighbor_search_.forEachSearch(
+        neighbor_search_.forContactSearch(
             src_pos_[src_index],
             [&](size_t tar_index)
             {
@@ -204,7 +206,7 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
                     neighbor_count++;
                 }
             },
-            search_box_(src_index));
+            src_cut_off_(src_index));
     }
 }
 //=================================================================================================//

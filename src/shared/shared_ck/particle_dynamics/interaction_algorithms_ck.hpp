@@ -42,7 +42,21 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
         supplementary_dynamics_keeper_.template createPtr<
             StateDynamics<ExecutionPolicy, UpdateType>>(std::forward<Args>(args)...));
     return *this;
-} //=================================================================================================//
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+template <template <typename...> class UpdateType, typename... ControlParameters,
+          class DynamicsIdentifier, typename... Args>
+auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
+    addPostStateDynamics(DynamicsIdentifier &dynamics_identifier, Args &&...args)
+{
+    this->post_processes_.push_back(
+        supplementary_dynamics_keeper_.template createPtr<
+            StateDynamics<ExecutionPolicy, UpdateType<DynamicsIdentifier, ControlParameters...>>>(
+            dynamics_identifier, std::forward<Args>(args)...));
+    return *this;
+}
+//=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
     addPostStateDynamics(BaseDynamics<void> &state_dynamics)
@@ -85,7 +99,7 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Paramete
     runInteraction(Real dt)
 {
     InteractKernel *interact_kernel = kernel_implementation_.getComputingKernel();
-    particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(*this->identifier_),
+    particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                  [=](size_t i)
                  { interact_kernel->interact(i, dt); });
 
@@ -119,9 +133,11 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parame
         InteractKernel *interact_kernel =
             contact_kernel_implementation_[k]->getComputingKernel(k);
 
-        particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(*this->identifier_),
+        particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                      [=](size_t i)
-                     { interact_kernel->interact(i, dt); });
+                     {  if(interact_kernel->hasNeighor(i)) {
+                            interact_kernel->interact(i, dt);
+                        } });
 
         this->logger_->debug(
             "InteractionDynamicsCK::runInteraction() for {} at {}",
@@ -199,7 +215,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpd
     runUpdateStep(Real dt)
 {
     UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-    particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(*this->identifier_),
+    particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                  [=](size_t i)
                  { update_kernel->update(i, dt); });
 
@@ -254,7 +270,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
     runInitializationStep(Real dt)
 {
     InitializeKernel *initialize_kernel = initialize_kernel_implementation_.getComputingKernel();
-    particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(*this->identifier_),
+    particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                  [=](size_t i)
                  { initialize_kernel->initialize(i, dt); });
 
@@ -270,7 +286,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
     runUpdateStep(Real dt)
 {
     UpdateKernel *update_kernel = update_kernel_implementation_.getComputingKernel();
-    particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(*this->identifier_),
+    particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                  [=](size_t i)
                  { update_kernel->update(i, dt); });
 

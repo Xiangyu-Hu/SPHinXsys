@@ -25,7 +25,7 @@ SolidBodyFromMesh::SolidBodyFromMesh(
     SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, Real *volume)
     : SolidBody(system, triangle_mesh_shape)
 {
-    defineAdaptationRatios(1.15, system.ReferenceResolution() / resolution);
+    defineAdaptationRatios(1.15, system.GlobalResolution() / resolution);
     defineBodyLevelSetShape()->cleanLevelSet();
     defineMaterial<SaintVenantKirchhoffSolid>(*material_model.get());
     generateParticles<BaseParticles, Lattice>();
@@ -276,7 +276,7 @@ void StructuralSimulation::setSystemResolutionMax()
             system_resolution_ = resolution_list_[i];
         }
     }
-    system_.setReferenceResolution(system_resolution_);
+    system_.setGlobalResolution(system_resolution_);
 }
 
 void StructuralSimulation::calculateSystemBoundaries()
@@ -444,7 +444,7 @@ void StructuralSimulation::initializeForceInBodyRegion()
         // SimTK geometric modeling resolution
         int resolution(20);
         // create the triangle mesh of the box
-        BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
+        BodyPartFromMesh *bp = body_part_tri_mesh_keeper_.createPtr<BodyPartFromMesh>(
             *solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, imported_stl_list_[body_index]));
         force_in_body_region_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::ForceInBodyRegion>>(*bp, force, end_time));
     }
@@ -460,7 +460,7 @@ void StructuralSimulation::initializeSurfacePressure()
         Vec3d point = std::get<2>(surface_pressure_tuple_[i]);
         StdVec<std::array<Real, 2>> pressure_over_time = std::get<3>(surface_pressure_tuple_[i]);
 
-        BodyPartByParticle *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(*solid_body_list_[body_index]->getSolidBodyFromMesh(), tri_mesh);
+        BodyPartByParticle *bp = body_part_tri_mesh_keeper_.createPtr<BodyPartFromMesh>(*solid_body_list_[body_index]->getSolidBodyFromMesh(), tri_mesh);
         surface_pressure_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::SurfacePressureFromSource>>(*bp, point, pressure_over_time));
     }
 }
@@ -522,7 +522,7 @@ void StructuralSimulation::initializeConstrainSolidBodyRegion()
         // SimTK geometric modeling resolution
         int resolution(20);
         // create the triangle mesh of the box
-        BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
+        BodyPartFromMesh *bp = body_part_tri_mesh_keeper_.createPtr<BodyPartFromMesh>(
             *solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, imported_stl_list_[body_index]));
         fixed_constraint_region_.emplace_back(makeShared<SimpleDynamics<FixBodyPartConstraint>>(*bp));
     }
@@ -579,7 +579,7 @@ void StructuralSimulation::initializeTranslateSolidBodyPart()
         Real start_time = std::get<1>(translation_solid_body_part_tuple_[i]);
         Real end_time = std::get<2>(translation_solid_body_part_tuple_[i]);
         Vecd translation = std::get<3>(translation_solid_body_part_tuple_[i]);
-        BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
+        BodyPartFromMesh *bp = body_part_tri_mesh_keeper_.createPtr<BodyPartFromMesh>(
             *solid_body_list_[body_index]->getSolidBodyFromMesh(), body_mesh_list_[body_index]);
 
         translation_solid_body_part_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::TranslateSolidBodyPart>>(

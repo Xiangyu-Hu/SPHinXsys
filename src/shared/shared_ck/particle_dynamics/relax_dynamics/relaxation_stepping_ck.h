@@ -54,8 +54,7 @@ class RelaxationScalingCK : public LocalDynamicsReduce<ReduceMax>
       public:
         template <class ExecutionPolicy>
         ReduceKernel(const ExecutionPolicy &ex_policy, RelaxationScalingCK &encloser)
-            : residual_(encloser.dv_residual_->DelegatedData(ex_policy)),
-              h_ref_(encloser.h_ref_){};
+            : residual_(encloser.dv_residual_->DelegatedData(ex_policy)){};
 
         Real reduce(size_t index_i, Real dt)
         {
@@ -64,7 +63,6 @@ class RelaxationScalingCK : public LocalDynamicsReduce<ReduceMax>
 
       protected:
         Vecd *residual_;
-        Real h_ref_;
     };
 
   protected:
@@ -72,10 +70,18 @@ class RelaxationScalingCK : public LocalDynamicsReduce<ReduceMax>
     Real h_ref_;
 };
 
-class PositionRelaxationCK : public LocalDynamics
+template <class DynamicIdentifier>
+class PositionRelaxationCK : public BaseLocalDynamics<DynamicIdentifier>
 {
+    using Adaptation = typename DynamicIdentifier::Adaptation;
+    using SmoothingLengthRatio = typename Adaptation::SmoothingLengthRatioType;
+
   public:
-    explicit PositionRelaxationCK(SPHBody &sph_body);
+    explicit PositionRelaxationCK(DynamicIdentifier &identfier)
+        : BaseLocalDynamics<DynamicIdentifier>(identfier),
+          pos_(this->particles_->template getVariableByName<Vecd>("Position")),
+          residual_(this->particles_->template getVariableByName<Vecd>("KernelGradientIntegral")),
+          adaptaion_(DynamicCast<Adaptation>(this, identfier.getSPHAdaptation())) {};
     virtual ~PositionRelaxationCK() {};
 
     class UpdateKernel
@@ -84,20 +90,72 @@ class PositionRelaxationCK : public LocalDynamics
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy, PositionRelaxationCK &encloser)
             : pos_(encloser.pos_->DelegatedData(ex_policy)),
-              residual_(encloser.residual_->DelegatedData(ex_policy)){};
+              residual_(encloser.residual_->DelegatedData(ex_policy)),
+              h_ratio_(ex_policy, encloser.adaptaion_){};
 
         void update(size_t index_i, Real dt_square)
         {
-            pos_[index_i] += residual_[index_i] * dt_square * 0.5;
+            pos_[index_i] += residual_[index_i] * dt_square * 0.5 / h_ratio_(index_i);
         };
 
       protected:
         Vecd *pos_, *residual_;
+        SmoothingLengthRatio h_ratio_;
     };
 
   protected:
     DiscreteVariable<Vecd> *pos_, *residual_;
+    Adaptation &adaptaion_;
 };
 
+template <class DynamicIdentifier>
+class UpdateSmoothingLengthRatio : public BaseLocalDynamics<DynamicIdentifier>
+{
+    using Adaptation = typename DynamicIdentifier::Adaptation;
+    using LocalSpacing = typename Adaptation::LocalSpacing;
+    using LocalSpacingKerenl = typename LocalSpacing::ComputingKernel;
+
+  public:
+    template <typename... Args>
+    UpdateSmoothingLengthRatio(DynamicIdentifier &identfier, Args &&...args)
+        : BaseLocalDynamics<DynamicIdentifier>(identfier),
+          dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
+          dv_h_ratio_(this->particles_->template getVariableByName<Real>("SmoothingLengthRatio")),
+          dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
+          local_spacing_method_(identfier.getAdaptation(), std::forward<Args>(args)...),
+          reference_spacing_(identfier.getAdaptation().ReferenceSpacing()){};
+    virtual ~UpdateSmoothingLengthRatio() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+              h_ratio_(encloser.dv_h_ratio_->DelegatedData(ex_policy)),
+              Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+              local_spacing_(ex_policy, encloser.local_spacing_method_),
+              reference_spacing_(encloser.reference_spacing_){};
+
+        void update(size_t index_i, Real dt = 0.0)
+        {
+            Real local_spacing = local_spacing_(pos_[index_i]);
+            h_ratio_[index_i] = reference_spacing_ / local_spacing;
+            Vol_[index_i] = math::pow(local_spacing, Dimensions);
+        };
+
+      protected:
+        Vecd *pos_;
+        Real *h_ratio_, *Vol_;
+        LocalSpacingKerenl local_spacing_;
+        Real reference_spacing_;
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<Real> *dv_h_ratio_, *dv_Vol_;
+    LocalSpacing local_spacing_method_;
+    Real reference_spacing_;
+};
 } // namespace SPH
 #endif // RELAXATION_STEPPING_CK_H

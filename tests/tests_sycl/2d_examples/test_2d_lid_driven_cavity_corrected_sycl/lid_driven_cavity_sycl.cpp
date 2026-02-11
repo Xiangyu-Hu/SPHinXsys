@@ -9,10 +9,10 @@ using namespace SPH;   //	Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 1.0;                    /**< box length. */
-Real DH = 1.0;                    /**< box height. */
-Real resolution_ref = 1.0 / 50.0; /**< Global reference resolution. */
-Real BW = resolution_ref * 6;     /**< Extending width for BCs. */
+Real DL = 1.0;                       /**< box length. */
+Real DH = 1.0;                       /**< box height. */
+Real global_resolution = 1.0 / 50.0; /**< Global reference resolution. */
+Real BW = global_resolution * 6;     /**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
@@ -92,8 +92,8 @@ StdVec<Vecd> VelocityXObserverParticle()
 {
     StdVec<Vecd> observation_points;
     size_t number_of_observation_point = 5;
-    Real range_of_measure = 1.0 - 0.5 * resolution_ref;
-    Real start_of_measure = 0.5 * resolution_ref;
+    Real range_of_measure = 1.0 - 0.5 * global_resolution;
+    Real start_of_measure = 0.5 * global_resolution;
 
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
@@ -107,8 +107,8 @@ StdVec<Vecd> VelocityYObserverParticle()
 {
     StdVec<Vecd> observation_points;
     size_t number_of_observation_point = 5;
-    Real range_of_measure = 1.0 - 0.5 * resolution_ref;
-    Real start_of_measure = 0.5 * resolution_ref;
+    Real range_of_measure = 1.0 - 0.5 * global_resolution;
+    Real start_of_measure = 0.5 * global_resolution;
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
         Vec2d point_coordinate(0.5 * DH, range_of_measure * (Real)i /
@@ -126,7 +126,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     // Tag for run particle relaxation for the initial body fitted distribution.
     sph_system.setRunParticleRelaxation(false);
     // Tag for computation start with relaxed body fitted particles distribution.
@@ -163,7 +163,7 @@ int main(int ac, char *av[])
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
@@ -189,8 +189,11 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
     /** Evaluation of density by summation approach. */
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplex>
-        fluid_density_regularization(water_block_inner, water_wall_contact); /** Pressure and density relaxation algorithm by using Verlet time stepping. */
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+        fluid_density_summation(water_block_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, Internal>>
+        fluid_density_regularization(water_body);
+    /** Pressure and density relaxation algorithm by using Verlet time stepping. */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
@@ -202,9 +205,8 @@ int main(int ac, char *av[])
      */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
         fluid_boundary_indicator(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCK>
-        transport_correction_ck(water_block_inner, water_wall_contact);
-
+    InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex> kernel_gradient_integral(water_block_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear>> transport_correction(water_body);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
     /** Computing viscous acceleration with wall. */
@@ -279,13 +281,15 @@ int main(int ac, char *av[])
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
 
+            fluid_density_summation.exec();
             fluid_density_regularization.exec();
 
             water_advection_step_setup.exec();
             fluid_viscous_force.exec();
             fluid_linear_correction_matrix.exec();
             fluid_boundary_indicator.exec();
-            transport_correction_ck.exec();
+            kernel_gradient_integral.exec();
+            transport_correction.exec();
 
             Real advection_dt = fluid_advection_time_step.exec();
             interval_computing_time_step += TickCount::now() - time_instance;

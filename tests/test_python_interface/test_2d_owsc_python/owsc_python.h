@@ -280,7 +280,7 @@ class FlapSystemForSimbody : public SolidBodyPartForSimbody
          */
         Real Iz = 1.84 / 33.04;
         body_part_mass_properties_ =
-            mass_properties_ptr_keeper_
+            mass_properties_keeper_
                 .createPtr<SimTK::MassProperties>(33.04, SimTK::Vec3(0.0), SimTK::UnitInertia(0.0, 0.0, Iz));
     }
 };

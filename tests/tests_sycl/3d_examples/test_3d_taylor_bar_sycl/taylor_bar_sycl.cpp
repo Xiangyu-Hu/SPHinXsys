@@ -31,7 +31,7 @@ int main(int ac, char *av[])
 
     if (sph_system.RunParticleRelaxation())
     {
-        LevelSetShape *level_set_shape = column.defineBodyLevelSetShape(par_ck, 2.0)->writeLevelSet(sph_system);
+        LevelSetShape *level_set_shape = column.defineBodyLevelSetShape(par_ck, 2.0)->writeLevelSet();
         column.generateParticles<BaseParticles, Lattice>();
         wall.generateParticles<BaseParticles, Lattice>();
         NearShapeSurface near_body_surface(column);
@@ -47,7 +47,7 @@ int main(int ac, char *av[])
         auto &input_body_update_inner_relation = main_methods.addRelationDynamics(column_inner);
         auto &random_input_body_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(column);
         auto &relaxation_residual =
-            main_methods.addInteractionDynamics<RelaxationResidualCK, NoKernelCorrectionCK>(column_inner)
+            main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(column_inner)
                 .addPostStateDynamics<LevelsetKernelGradientIntegral>(column, *level_set_shape);
         auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(column);
         auto &update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(column);

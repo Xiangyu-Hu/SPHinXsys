@@ -205,12 +205,12 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
                                          })
                             ->diameter;
     Real min_vessels_diameter = min_diameter;
-    Real resolution_ref = min_diameter / params.number_of_particles;
+    Real global_resolution = min_diameter / params.number_of_particles;
     std::cout << "simulation_param.min_vessels_diameter = " << min_vessels_diameter << std::endl;
-    std::cout << "simulation_param.resolution_ref = " << resolution_ref << std::endl;
+    std::cout << "simulation_param.global_resolution = " << global_resolution << std::endl;
 
     // --- Section 5: Set Simulation Resolution and Boundary Emitter Length ---
-    Real boundary_length = 3.0 * resolution_ref;
+    Real boundary_length = 3.0 * global_resolution;
     for (auto &BoundaryParameter : boundaries)
         BoundaryParameter.L_emitter = boundary_length;
 
@@ -223,7 +223,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
     std::cout << "Domain lower bounds: " << system_bounds.lower_.transpose() << std::endl;
     std::cout << "Domain upper bounds: " << system_bounds.upper_.transpose() << std::endl;
 
-    SPHSystem sph_system(system_bounds, resolution_ref);
+    SPHSystem sph_system(system_bounds, global_resolution);
     sph_system.setRunParticleRelaxation(run_relaxation); // Tag for run particle relaxation for body-fitted distribution
     sph_system.setReloadParticles(reload_particles);     // Tag for computation with save particles distribution
 
@@ -318,11 +318,12 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
         fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
 
-    InteractionDynamicsCK<MainExecutionPolicy,
-                          fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionComplexBulkParticlesCK>
-        transport_correction_ck(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex>
+        kernel_gradient_integral(water_body_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear, BulkParticles>>
+        transport_correction(water_block);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionViscousTimeStepCK>
         fluid_advection_time_step(water_block, params.U_max);
@@ -342,10 +343,10 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
             std::make_unique<PressureBC<MainExecutionPolicy, LinearCorrectionCK>>(
                 water_block, boundary, params.t_ref));
     StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> particle_deletion(water_block);
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        fluid_dynamics::DensityRegularizationComplexInternalPressureBoundary>
-        fluid_density_regularization(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+        fluid_density_summation(water_body_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, Internal, ExcludeBufferParticles>>
+        fluid_density_regularization(water_block);
 
     // --- Section 12: Setup Recording for Body States and Observers ---
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
@@ -370,7 +371,8 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
         {
             /** Integrate time (loop) until the next output time. */
             water_advection_step_setup.exec();
-            transport_correction_ck.exec();
+            kernel_gradient_integral.exec();
+            transport_correction.exec();
             water_advection_step_close.exec();
             if (relaxation_fluid_itr % 10 == 0)
             {
@@ -415,13 +417,15 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
             {
                 // ─── SPH PHYSICS STEPS (unchanged)
                 // ─────────────────────────────────────
+                fluid_density_summation.exec();
                 fluid_density_regularization.exec();
                 water_advection_step_setup.exec();
                 fluid_linear_correction_matrix.exec();
                 for (auto &bc : bidirectional_pressure_conditions)
                     bc->reset_buffer_correction_matrix.exec();
                 fluid_viscous_force.exec();
-                transport_correction_ck.exec();
+                kernel_gradient_integral.exec();
+                transport_correction.exec();
 
                 Real Dt = fluid_advection_time_step.exec();
                 if (Dt < Dt_ref)

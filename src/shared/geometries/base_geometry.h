@@ -115,7 +115,7 @@ class BinaryShapes : public Shape
     template <class SubShapeType, typename... Args>
     void add(Args &&...args)
     {
-        Shape *sub_shape = sub_shape_ptrs_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
+        Shape *sub_shape = sub_shapes_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
         add(sub_shape);
     };
 
@@ -128,7 +128,7 @@ class BinaryShapes : public Shape
     template <class SubShapeType, typename... Args>
     void subtract(Args &&...args)
     {
-        Shape *sub_shape = sub_shape_ptrs_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
+        Shape *sub_shape = sub_shapes_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
         subtract(sub_shape);
     };
 
@@ -141,7 +141,7 @@ class BinaryShapes : public Shape
     size_t getSubShapeIndexByName(const std::string &name);
 
   protected:
-    UniquePtrsKeeper<Shape> sub_shape_ptrs_keeper_;
+    UniquePtrsKeeper<Shape> sub_shapes_keeper_;
     StdVec<SubShapeAndOp> sub_shapes_and_ops_;
 };
 
@@ -159,7 +159,7 @@ class Edge
     /** constructor without specifying a leading-in edge */
     template <class EdgeStructureType>
     explicit Edge(EdgeStructureType *structure)
-        : id_(structure->ContainerSize()), in_edge_(MaxSize_t){};
+        : id_(structure->ContainerSize()), in_edge_(MaxUnsignedInt){};
     /** constructor with specifying a leading-in edge */
     template <class EdgeStructureType>
     Edge(InEdgeType in_edge, EdgeStructureType *structure)
