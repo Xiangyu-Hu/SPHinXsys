@@ -89,17 +89,18 @@ class StructureIntegrationVariables
 template <typename...>
 class StructureIntegration1stHalf;
 
-template <class MaterialType, typename... Parameters>
-class StructureIntegration1stHalf<Inner<OneLevel, MaterialType, Parameters...>>
+template <class MaterialType, typename KernelCorrectionType, typename... Parameters>
+class StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, Parameters...>>
     : public Interaction<Inner<Parameters...>>, public StructureIntegrationVariables
 {
     using BaseInteraction = Interaction<Inner<Parameters...>>;
     using Adaptation = typename Inner<Parameters...>::SourceType::Adaptation;
     using SmoothingLengthRatioType = typename Adaptation::SmoothingLengthRatioType;
     using ConstituteKernel = typename MaterialType::ConstituteKernel;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit StructureIntegration1stHalf(Inner<Parameters...> &inner_relation);
+    explicit StructureIntegration1stHalf(Inner<Parameters...> &inner_relation, Real numerical_damping_factor = 0.125);
     virtual ~StructureIntegration1stHalf() {};
 
     class InitializeKernel
@@ -111,7 +112,8 @@ class StructureIntegration1stHalf<Inner<OneLevel, MaterialType, Parameters...>>
 
       protected:
         ConstituteKernel constitute_;
-        Real rho0_, G_, h_ref_;
+        CorrectionKernel correction_;
+        Real rho0_, G_, h_ref_, numerical_damping_factor_;
         SmoothingLengthRatioType h_ratio_;
         Real *rho_;
         Vecd *pos_, *vel_;
@@ -147,7 +149,8 @@ class StructureIntegration1stHalf<Inner<OneLevel, MaterialType, Parameters...>>
   protected:
     MaterialType &material_;
     Adaptation &adaptation_;
-    Real h_ref_;
+    KernelCorrectionType kernel_correction_;
+    Real h_ref_, numerical_damping_factor_;
 };
 
 template <typename...>
