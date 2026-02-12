@@ -145,12 +145,13 @@ Vecd GeometricCylinder::findClosestPoint(const Vecd &probe_point)
     }
     
     // Determine closest point based on signed distances using SMAX
-    if (SMAX(dr, dh) <= 0.0)
+    Real max_dist = SMAX(dr, dh);
+    if (max_dist <= 0.0)
     {
         // Point inside cylinder - project to nearest surface
-        if (SMAX(dr, dh) == dr)
+        if (dr >= dh)
         {
-            // Closer to cylindrical surface
+            // Closer to cylindrical surface (or equal distance - choose surface)
             return axial_projection * axis_ + normalized_radial;
         }
         else
