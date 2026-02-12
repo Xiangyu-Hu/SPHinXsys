@@ -34,7 +34,7 @@ Matd NeoHookeanSolid::ConstituteKernel::NumericalDampingLeftCauchy(
 {
     Matd strain_rate = 0.5 * (deformation_rate * deformation.transpose() +
                               deformation * deformation_rate.transpose());
-    Matd normal_rate = getDiagonal(strain_rate);
+    Matd normal_rate = strain_rate.diagonal().asDiagonal();
     return 0.5 * rho0_ * (cs0_ * (strain_rate - normal_rate) + c0_ * normal_rate) * scaling;
 }
 //=================================================================================================//

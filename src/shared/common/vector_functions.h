@@ -57,8 +57,6 @@ Mat2d getAverageValue(const Mat2d &A, const Mat2d &B);
 Mat3d getAverageValue(const Mat3d &A, const Mat3d &B);
 Mat2d inverseCholeskyDecomposition(const Mat2d &A);
 Mat3d inverseCholeskyDecomposition(const Mat3d &A);
-Mat2d getDiagonal(const Mat2d &A);
-Mat3d getDiagonal(const Mat3d &A);
 
 /** Real dot product between two matrices, resulting in a scalar value (sum of products of element-wise) */
 Real CalculateBiDotProduct(Mat2d Matrix1, Mat2d Matrix2); // calculate Real dot
