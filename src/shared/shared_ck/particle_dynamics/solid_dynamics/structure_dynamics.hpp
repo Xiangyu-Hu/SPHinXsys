@@ -69,7 +69,7 @@ void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionT
     stress_on_particle_[index_i] =
         inverse_F_T * (constitute_.VolumetricKirchhoff(J) - isotropic_stress) * correction_(index_i) +
         numerical_damping_factor_ *
-            constitute_.NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], h_ref_ * h_ratio_(index_i), index_i) *
+            constitute_.NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], h_ref_ / h_ratio_(index_i), index_i) *
             inverse_F_T;
 }
 //=================================================================================================//
