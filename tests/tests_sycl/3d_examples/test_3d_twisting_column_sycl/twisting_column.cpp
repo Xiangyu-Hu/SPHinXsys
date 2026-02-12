@@ -31,7 +31,7 @@ StdVec<Vecd> observation_location = {Vecd(PL, 0.0, 0.0)};
 Real rho0_s = 1100.0; /**< Reference density. */
 Real poisson = 0.45;  /**< Poisson ratio. */
 Real Youngs_modulus = 1.7e7;
-Real angular_0 = -400.0;
+Real angular_0 = -105.0;
 //------------------------------------------------------------------------------
 // define a velocity profile for initial condition
 //------------------------------------------------------------------------------
