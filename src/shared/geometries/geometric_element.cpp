@@ -130,12 +130,8 @@ Vecd GeometricCylinder::findClosestPoint(const Vecd &probe_point)
     // dr: signed distance normal to the axis (positive if outside cylinder surface)
     Real dr = radial_distance - radius_;
     
-    // Clamp axial projection to cylinder caps
-    Real clamped_axial = axial_projection;
-    if (axial_projection > halflength_)
-        clamped_axial = halflength_;
-    else if (axial_projection < -halflength_)
-        clamped_axial = -halflength_;
+    // Clamp axial projection to cylinder caps using clamp function
+    Real clamped_axial = clamp(axial_projection, -halflength_, halflength_);
     
     // Normalize radial vector and scale to radius
     Vecd normalized_radial;
@@ -148,11 +144,11 @@ Vecd GeometricCylinder::findClosestPoint(const Vecd &probe_point)
         normalized_radial[0] = radius_;
     }
     
-    // Determine closest point based on signed distances
-    if (dr <= 0.0 && dh <= 0.0)
+    // Determine closest point based on signed distances using SMAX
+    if (SMAX(dr, dh) <= 0.0)
     {
         // Point inside cylinder - project to nearest surface
-        if (-dr < -dh)
+        if (SMAX(dr, dh) == dr)
         {
             // Closer to cylindrical surface
             return axial_projection * axis_ + normalized_radial;
