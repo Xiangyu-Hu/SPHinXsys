@@ -12,13 +12,18 @@ AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real acousticCFL)
       fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
+      mass_(particles_->getVariableDataByName<Real>("Mass")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+      force_(particles_->getVariableDataByName<Vecd>("Force")),
+      force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
       h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
 Real AcousticTimeStep::reduce(size_t index_i, Real dt)
 {
-    return fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
+    Real force_norm = (force_[index_i] + force_prior_[index_i]).norm();
+    Real acc_scale = std::sqrt(4.0 * h_min_ * force_norm / mass_[index_i]);
+    return SMAX(fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm(), acc_scale);
 }
 //=================================================================================================//
 Real AcousticTimeStep::outputResult(Real reduced_value)
@@ -42,18 +47,13 @@ Real SurfaceTensionTimeStep::outputResult(Real reduced_value)
 AdvectionTimeStep::
     AdvectionTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      mass_(particles_->getVariableDataByName<Real>("Mass")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-      force_(particles_->getVariableDataByName<Vecd>("Force")),
-      force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
       h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       speed_ref_(U_ref), advectionCFL_(advectionCFL) {}
 //=================================================================================================//
 Real AdvectionTimeStep::reduce(size_t index_i, Real dt)
 {
-    Real acceleration_scale = 4.0 * h_min_ *
-                              (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
-    return SMAX(vel_[index_i].squaredNorm(), acceleration_scale);
+    return vel_[index_i].squaredNorm();
 }
 //=================================================================================================//
 Real AdvectionTimeStep::outputResult(Real reduced_value)
