@@ -56,8 +56,8 @@ const Matd reduced_unit_matrix{
     {0, 0, 0}, // 2 row
 };
 /** Initial or reference local normals. */
-const Vecd local_n0 = Vecd(0.0, 0.0, 1.0);
-const Vecd local_bn0 = Vecd(0.0, 1.0, 0.0);
+const Vecd local_n0 = Vec3d::UnitZ();
+const Vecd local_bn0 = Vec3d::UnitY();
 const Vecd ZeroVecd = Vec3d::Zero();
 
 inline Vecd degradeToVecd(const Vec3d &input) { return input; };

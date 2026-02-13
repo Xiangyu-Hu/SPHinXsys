@@ -82,14 +82,6 @@ UniquePtr<BaseCellLinkedList> SPHAdaptation::
         domain_bounds, kernel_ptr_->CutOffRadius(), base_particles, *this);
 }
 //=================================================================================================//
-UniquePtr<BaseCellLinkedList> SPHAdaptation::createFinestCellLinkedList(
-    const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
-{
-    Real grid_spacing = kernel_ptr_->CutOffRadius() / pow(2.0, local_refinement_level_);
-    return makeUnique<CellLinkedList<SPHAdaptation>>(
-        domain_bounds, grid_spacing, base_particles, *this);
-}
-//=================================================================================================//
 UniquePtr<LevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement) const
 {
     // estimate the required mesh levels
@@ -155,8 +147,8 @@ UniquePtr<LevelSet> AdaptiveSmoothingLength::createLevelSet(Shape &shape, Real r
 }
 //=================================================================================================//
 AdaptiveSmoothingLength::SmoothedSpacing::SmoothedSpacing(AdaptiveSmoothingLength &encloser)
-    : smoothing_kerel_(*encloser.kernel_ptr_),
-      kernel_size_(smoothing_kerel_.KernelSize()), inv_w0_(1.0 / smoothing_kerel_.normalized_W(0)),
+    : smoothing_kernel_(*encloser.kernel_ptr_),
+      kernel_size_(smoothing_kernel_.KernelSize()), inv_w0_(1.0 / smoothing_kernel_.normalized_W(0)),
       finest_spacing_bound_(encloser.finest_spacing_bound_),
       coarsest_spacing_bound_(encloser.coarsest_spacing_bound_) {}
 //=================================================================================================//

@@ -21,48 +21,37 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	data_type.h
- * @brief 	This is the date type definition in 2D for SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file anisotropic_adaptation.h
+ * @brief TBD.
+ * @author Xiangyu Hu
  */
 
-#ifndef DATA_TYPE_2D_H
-#define DATA_TYPE_2D_H
+#ifndef ANISOTROPIC_ADAPTATION_H
+#define ANISOTROPIC_ADAPTATION_H
 
-#include "base_data_type.h"
-#include "geometric_primitive.h"
-#include "scalar_functions.h"
+#include "base_adaptation.h"
 
 namespace SPH
 {
-using Arrayi = Array2i;
-using Vecd = Vec2d;
-using Matd = Mat2d;
-using VecMatd = Vec3d;           // vectorized symmetric 2x2 matrix
-using MatTend = Mat3d;           // matricized symmetric 2x2x2x2 tensor
-using VecMatGrad = VecMatGrad2d; // gradient of vectorized symmetric 2x2 matrix
-using AngularVecd = Real;
-using Rotation = Rotation2d;
-using BoundingBoxd = BoundingBox<VecdBound, 2>;
-using BoundingBoxi = BoundingBox<ArrayiBound, 2>;
-using Transform = BaseTransform<Rotation2d, Vec2d>;
 
-/** only works for smoothing length ratio less or equal than 1.3*/
-constexpr int MaximumNeighborhoodSize = int(M_PI * 9);
-constexpr int Dimensions = 2;
-/** correction matrix, only works for thin structure dynamics. */
-const Matd reduced_unit_matrix{
-    {1.0, 0.0}, // First row
-    {0.0, 0.0}, // Second row
+class AnisotropicAdaptation : public SPHAdaptation
+{
+  public:
+    typedef AnisotropicAdaptation CellLinkedListIdentifier;
+
+    AnisotropicAdaptation(const Vecd &scaling, const Vecd &orientation, Real global_resolution,
+                          Real h_spacing_ratio = 1.3, Real refinement_to_global = 1.0);
+    virtual ~AnisotropicAdaptation() {};
+
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
+    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const;
+
+  protected:
+    Vecd scaling_;
+    Vecd orientation_;
+    Matd deformation_matrix_;
+    Real spacing_ref_min_;
+    Real h_ref_max_;
 };
-
-/** Initial or reference local normal. */
-const Vecd local_n0 = Vec2d::UnitY();
-const Vecd ZeroVecd = Vec2d::Zero();
-
-inline Vecd degradeToVecd(const Vec3d &input) { return Vecd(input[0], input[1]); };
-inline Matd degradeToMatd(const Mat3d &input) { return input.block<2, 2>(0, 0); };
-
 } // namespace SPH
-
-#endif // DATA_TYPE_2D_H
+#endif // ANISOTROPIC_ADAPTATION_H

@@ -13,7 +13,7 @@ inline Real AdaptiveSmoothingLength::SmoothedSpacing::operator()(
     Real target_spacing = coarsest_spacing_bound_;
     if (ratio_ref < kernel_size_)
     {
-        Real weight = smoothing_kerel_.normalized_W(ratio_ref) * inv_w0_;
+        Real weight = smoothing_kernel_.normalized_W(ratio_ref) * inv_w0_;
         target_spacing = weight * finest_spacing_bound_ + (1.0 - weight) * coarsest_spacing_bound_;
     }
     return target_spacing;

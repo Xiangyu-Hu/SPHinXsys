@@ -55,7 +55,7 @@ class SPHAdaptation
 {
   protected:
     Real global_resolution_;
-    Real h_spacing_ratio_;         /**< ratio of reference kernel smoothing length to particle spacing */
+    Real h_spacing_ratio_;         /**< ratio of reference kernel smoothing length to reference particle spacing */
     Real refinement_to_global_;    /**< ratio of global resolution to body resolution, set to 1.0 by default */
     int local_refinement_level_;   /**< refinement level respect to reference particle spacing */
     Real spacing_ref_;             /**< reference particle spacing used to determine local particle spacing */
@@ -89,7 +89,6 @@ class SPHAdaptation
     Real SmoothingLengthByLevel(int level) const { return h_ref_ / pow(2.0, level); };
 
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
-    UniquePtr<BaseCellLinkedList> createFinestCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
     virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const;
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) { return spacing_ref_; }
 
@@ -159,7 +158,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 
     class SmoothedSpacing
     {
-        KernelTabulatedCK smoothing_kerel_;
+        KernelTabulatedCK smoothing_kernel_;
         Real kernel_size_, inv_w0_;
         Real finest_spacing_bound_, coarsest_spacing_bound_;
 
