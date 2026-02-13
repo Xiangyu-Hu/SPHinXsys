@@ -26,7 +26,8 @@
  * 			Several plastic materials including linear hardening, non-linear hardening and viscous plastic, are presented.
  * @author	Xiaojing Tang, Dong Wu, and Xiangyu Hu
  */
-#pragma once
+#ifndef INELASTIC_SOLID_H
+#define INELASTIC_SOLID_H
 
 #include "elastic_solid.h"
 
@@ -61,6 +62,9 @@ class PlasticSolid : public NeoHookeanSolid
  */
 class HardeningPlasticSolid : public PlasticSolid
 {
+    DiscreteVariable<Matd> *dv_inverse_plastic_strain_;
+    DiscreteVariable<Real> *dv_hardening_parameter_;
+
   protected:
     Real hardening_modulus_;
     const Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
@@ -68,19 +72,28 @@ class HardeningPlasticSolid : public PlasticSolid
     Real *hardening_parameter_;    /**< hardening parameter */
 
   public:
-    /** Constructor */
-    explicit HardeningPlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress, Real hardening_modulus)
-        : PlasticSolid(rho0, youngs_modulus, poisson_ratio, yield_stress), hardening_modulus_(hardening_modulus),
-          inverse_plastic_strain_(nullptr), hardening_parameter_(nullptr)
-    {
-        material_type_name_ = "HardeningPlasticSolid";
-    };
+    explicit HardeningPlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio,
+                                   Real yield_stress, Real hardening_modulus);
     virtual ~HardeningPlasticSolid() {};
 
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     Real HardeningModulus() { return hardening_modulus_; };
     /** compute the elastic part of normalized left Cauchy-Green deformation gradient tensor. */
     virtual Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
+
+    class ConstituteKernel : public PlasticSolid::ConstituteKernel
+    {
+      public:
+        template <typename ExecutionPolicy>
+        ConstituteKernel(const ExecutionPolicy &ex_policy, HardeningPlasticSolid &encloser);
+        Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real hardening_modulus_, yield_stress_;
+        Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
+        Matd *inverse_plastic_strain_;
+        Real *hardening_parameter_;
+    };
 };
 
 /**
@@ -143,3 +156,4 @@ class ViscousPlasticSolid : public PlasticSolid
     virtual Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
 };
 } // namespace SPH
+#endif // INELASTIC_SOLID_H
