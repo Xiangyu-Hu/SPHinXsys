@@ -62,5 +62,9 @@ const Vecd ZeroVecd = Vec3d::Zero();
 
 inline Vecd degradeToVecd(const Vec3d &input) { return input; };
 inline Matd degradeToMatd(const Mat3d &input) { return input; };
+inline Matd RotationMatrixTo(const Vecd &orientation)
+{
+    return Eigen::Quaterniond::FromTwoVectors(local_n0, orientation).toRotationMatrix();
+};
 } // namespace SPH
 #endif // DATA_TYPE_3D_H

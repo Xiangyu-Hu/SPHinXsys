@@ -37,8 +37,6 @@ namespace SPH
 class AnisotropicAdaptation : public SPHAdaptation
 {
   public:
-    typedef AnisotropicAdaptation CellLinkedListIdentifier;
-
     AnisotropicAdaptation(const Vecd &scaling, const Vecd &orientation, Real global_resolution,
                           Real h_spacing_ratio = 1.3, Real refinement_to_global = 1.0);
     virtual ~AnisotropicAdaptation() {};

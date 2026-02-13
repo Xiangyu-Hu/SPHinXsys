@@ -1,5 +1,9 @@
 #include "anisotropic_adaptation.h"
 
+#include "base_particles.hpp"
+#include "cell_linked_list.h"
+#include "level_set_shape.h"
+
 namespace SPH
 {
 //=================================================================================================//
@@ -8,18 +12,16 @@ AnisotropicAdaptation::AnisotropicAdaptation(
     Real global_resolution, Real h_spacing_ratio, Real refinement_to_global)
     : SPHAdaptation(global_resolution, h_spacing_ratio, refinement_to_global),
       scaling_(scaling), orientation_(orientation), deformation_matrix_(Matd::Identity()),
-      spacing_ref_min_(spacing_ref_ * scaling_.cwiseMin()), h_ref_max_(h_ref_ * scaling_.cwiseMax())
+      spacing_ref_min_(spacing_ref_ * scaling_.minCoeff()), h_ref_max_(h_ref_ * scaling_.maxCoeff())
 {
-    // rotation from local reference normal to orientation
-    deformation_matrix_ = scaling.cwiseInverse().asDiagonal() *
-                          Eigen::Quaterniond::FromTwoVectors(local_n0, orientation).toRotationMatrix();
+    deformation_matrix_ = scaling.cwiseInverse().asDiagonal() * RotationMatrixTo(orientation_);
     spacing_min_ = spacing_ref_min_;
 }
 //=================================================================================================//
 UniquePtr<BaseCellLinkedList> AnisotropicAdaptation::
     createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
 {
-    return makeUnique<CellLinkedList<AnisotropicAdaptation>>(
+    return makeUnique<CellLinkedList<SPHAdaptation>>(
         domain_bounds, kernel_ptr_->KernelSize() * h_ref_max_, base_particles, *this);
 }
 //=================================================================================================//

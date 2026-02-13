@@ -21,53 +21,15 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	data_type.h
- * @brief 	This is the date type definition in 2D for SPHinXsys.
+ * @file 	all_adaptations.h
+ * @brief 	This is the header file that user code should include to pick up all
+ *          bodies used in SPHinXsys.
  * @author	Chi Zhang and Xiangyu Hu
  */
+#ifndef ALL_ADAPTATIONS_H
+#define ALL_ADAPTATIONS_H
 
-#ifndef DATA_TYPE_2D_H
-#define DATA_TYPE_2D_H
+#include "anisotropic_adaptation.h"
+#include "base_adaptation.hpp"
 
-#include "base_data_type.h"
-#include "geometric_primitive.h"
-#include "scalar_functions.h"
-
-namespace SPH
-{
-using Arrayi = Array2i;
-using Vecd = Vec2d;
-using Matd = Mat2d;
-using VecMatd = Vec3d;           // vectorized symmetric 2x2 matrix
-using MatTend = Mat3d;           // matricized symmetric 2x2x2x2 tensor
-using VecMatGrad = VecMatGrad2d; // gradient of vectorized symmetric 2x2 matrix
-using AngularVecd = Real;
-using Rotation = Rotation2d;
-using BoundingBoxd = BoundingBox<VecdBound, 2>;
-using BoundingBoxi = BoundingBox<ArrayiBound, 2>;
-using Transform = BaseTransform<Rotation2d, Vec2d>;
-
-/** only works for smoothing length ratio less or equal than 1.3*/
-constexpr int MaximumNeighborhoodSize = int(M_PI * 9);
-constexpr int Dimensions = 2;
-/** correction matrix, only works for thin structure dynamics. */
-const Matd reduced_unit_matrix{
-    {1.0, 0.0}, // First row
-    {0.0, 0.0}, // Second row
-};
-
-/** Initial or reference local normal. */
-const Vecd local_n0 = Vec2d::UnitY();
-const Vecd ZeroVecd = Vec2d::Zero();
-
-inline Vecd degradeToVecd(const Vec3d &input) { return Vecd(input[0], input[1]); };
-inline Matd degradeToMatd(const Mat3d &input) { return input.block<2, 2>(0, 0); };
-inline Matd RotationMatrixTo(const Vecd &orientation)
-{
-    return Eigen::Rotation2D(
-               std::atan2(orientation[1], orientation[0]) - std::atan2(local_n0[1], local_n0[0]))
-        .toRotationMatrix();
-};
-} // namespace SPH
-
-#endif // DATA_TYPE_2D_H
+#endif // ALL_ADAPTATIONS_H

@@ -39,6 +39,7 @@
 #include "sphinxsys_variable_sycl.hpp"
 #endif // SPHINXSYS_USE_SYCL
 
+#include "all_adaptations.h"
 #include "all_bodies.h"
 #include "all_body_relations.h"
 #include "all_closures.h"
@@ -50,7 +51,6 @@
 #include "all_physical_dynamics.h"
 #include "all_regression_test_methods.h"
 #include "all_simbody.h"
-#include "base_adaptation.hpp"
 #include "parameterization.h"
 #include "particle_method_container.h"
 #include "sph_solver.h"
