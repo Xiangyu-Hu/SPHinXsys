@@ -119,7 +119,11 @@ template <>
 class CellLinkedList<SPHAdaptation> : public BaseCellLinkedList
 {
   public:
-    typedef Mesh CellLinkedListMeshType;
+    class CellLinkedListMesh : public Mesh
+    {
+      public:
+        CellLinkedListMesh(CellLinkedList<SPHAdaptation> &cell_linked_list);
+    };
 
     CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
@@ -130,7 +134,7 @@ class CellLinkedList<SPHAdaptation> : public BaseCellLinkedList
     virtual void tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes,
                                      std::function<bool(Vecd, Real)> &check_included) override;
 
-    class NeighborSearch : public Mesh
+    class NeighborSearch : public CellLinkedListMesh
     {
       public:
         template <class ExecutionPolicy, class Encloser>
@@ -150,12 +154,6 @@ class CellLinkedList<SPHAdaptation> : public BaseCellLinkedList
         template <typename FunctionOnEach>
         void searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const;
     };
-
-    Mesh &getCellLinkedListMesh() { return cell_linked_list_mesh_; };
-
-  protected:
-    Mesh *mesh_;
-    Mesh cell_linked_list_mesh_;
 };
 
 template <>
@@ -181,15 +179,13 @@ class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
     class CellLinkedListMesh : public Mesh
     {
       public:
-        CellLinkedListMesh(BaseCellLinkedList &base_cell_linked_list);
+        CellLinkedListMesh(CellLinkedList<AdaptiveSmoothingLength> &cell_linked_list);
         Real CoarsestGridSpacing() const { return coarsest_grid_spacing_; };
 
       protected:
         Real coarsest_grid_spacing_;
     };
 
-    typedef CellLinkedListMesh CellLinkedListMeshType;
-
     class NeighborSearch : public CellLinkedListMesh
     {
       public:
@@ -210,65 +206,6 @@ class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
         template <typename FunctionOnEach>
         void searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const;
     };
-
-    CellLinkedListMesh &getCellLinkedListMesh() { return cell_linked_list_mesh_; };
-
-  protected:
-    CellLinkedListMesh cell_linked_list_mesh_;
-};
-
-template <class IsotropicAdaptationType>
-class CellLinkedList<Anisotropy<IsotropicAdaptationType>> : public CellLinkedList<IsotropicAdaptationType>
-{
-    using AnisotropicAdaptation = Anisotropy<IsotropicAdaptationType>;
-    using BaseCellLinkedListType = CellLinkedList<IsotropicAdaptationType>;
-
-  public:
-    CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
-                   BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-
-    void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override {};
-    void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override {};
-    virtual void tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes,
-                                     std::function<bool(Vecd, Real)> &check_included) override {};
-
-    class CellLinkedListMesh : public BaseCellLinkedListType::CellLinkedListMesh
-    {
-      public:
-        CellLinkedListMesh(BaseCellLinkedList &base_cell_linked_list, AnisotropicAdaptation &adaptation);
-
-      protected:
-        Real max_cut_off_;
-    };
-
-    typedef CellLinkedListMesh CellLinkedListMeshType;
-
-    class NeighborSearch : public CellLinkedListMesh
-    {
-      public:
-        template <class ExecutionPolicy, class Encloser>
-        NeighborSearch(const ExecutionPolicy &ex_policy, Encloser &encloser);
-
-        template <typename FunctionOnEach>
-        void forInnerSearch(const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const;
-        template <typename FunctionOnEach>
-        void forContactSearch(const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const;
-
-      protected:
-        UnsignedInt *particle_index_;
-        UnsignedInt *cell_offset_;
-
-        inline BoundingBoxi InnerSearchBox(const Vecd &src_cut_off) const;
-        inline BoundingBoxi ContactSearchBox(const Vecd &src_cut_off) const;
-        template <typename FunctionOnEach>
-        void searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const;
-    };
-
-    CellLinkedListMesh &getCellLinkedListMesh() { return cell_linked_list_mesh_; };
-
-  protected:
-    AnisotropicAdaptation &adaptation_;
-    CellLinkedListMesh cell_linked_list_mesh_;
 };
 } // namespace SPH
 #endif // MESH_CELL_LINKED_LIST_H

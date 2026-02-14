@@ -46,6 +46,7 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
     {
         derived_variable->exec();
     }
+    sph_system_.svPhysicalTime().setValue(iteration_step);
     writeWithFileName("ite_" + padValueWithZeros(iteration_step));
 };
 //=============================================================================================//
