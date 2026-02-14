@@ -125,6 +125,7 @@ AdaptiveSmoothingLength::AdaptiveSmoothingLength(
     // To ensure that the adaptation strictly within all level set and mesh cell linked list levels
     finest_spacing_bound_ = spacing_min_ + Eps;
     coarsest_spacing_bound_ = spacing_ref_ - Eps;
+    max_cutoff_radius_ = kernel_ptr_->KernelSize() * h_ref_;
 }
 //=================================================================================================//
 void AdaptiveSmoothingLength::initializeAdaptationVariables(BaseParticles &base_particles)
@@ -172,7 +173,6 @@ AnisotropicAdaptation::AnisotropicAdaptation(
 {
     deformation_matrix_ref_ =
         scaling_ref_.cwiseInverse().asDiagonal() * RotationMatrix(Vecd::UnitX(), orientation_ref_);
-    min_cutoff_radius_ *= scaling_ref_.minCoeff();
     max_cutoff_radius_ *= scaling_ref_.maxCoeff();
     spacing_min_ *= scaling_ref_.minCoeff();
 }

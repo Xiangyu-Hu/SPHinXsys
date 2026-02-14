@@ -140,6 +140,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const override;
     DiscreteVariable<Real> *dvSmoothingLengthRatio() { return dv_h_ratio_; };
     DiscreteVariable<int> *dvSmoothingLengthLevel() { return dv_h_level_; };
+    Real MaxCutoffRadius() { return max_cutoff_radius_; };
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override = 0;
 
     class ContinuousSmoothingLengthRatio
@@ -176,6 +177,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     int *h_level_;
     Real finest_spacing_bound_;   /**< the adaptation bound for finest particles */
     Real coarsest_spacing_bound_; /**< the adaptation bound for coarsest particles */
+    Real max_cutoff_radius_;
 };
 
 class AnisotropicAdaptation : public AdaptiveSmoothingLength

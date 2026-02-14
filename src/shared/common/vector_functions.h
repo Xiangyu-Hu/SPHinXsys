@@ -196,5 +196,17 @@ Eigen::Matrix<Real, Dim, Dim> inverseTikhonov(const Eigen::Matrix<Real, Dim, Dim
     Eigen::Matrix<Real, Dim, Dim> input_t = input.transpose();
     return (input_t * input + epsilon * Eigen::Matrix<Real, Dim, Dim>::Identity()).inverse() * input_t;
 };
+
+inline Mat2d RotationMatrix(const Vec2d &from, const Vec2d &to)
+{
+    return Eigen::Rotation2D(
+               std::atan2(to[1], to[0]) - std::atan2(from[1], from[0]))
+        .toRotationMatrix();
+};
+
+inline Mat3d RotationMatrix(const Vec3d &from, const Vec3d &to)
+{
+    return Eigen::Quaterniond::FromTwoVectors(from, to).toRotationMatrix();
+};
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H
