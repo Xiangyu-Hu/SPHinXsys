@@ -20,7 +20,7 @@ Real Total_PL = PL + SL;                                   // total length
 int x_num = Total_PL / global_resolution_large;            // particle number in x direction
 //   anisotropic parameters
 Vec2d scaling_vector = Vec2d(1.0, 1.0 / ratio_); // scaling_vector for defining the anisotropic kernel
-Vec2d orientation_vector = Vec2d::UnitY();       // orientation vector for defining the anisotropic kernel
+Vec2d orientation_vector = Vec2d::UnitX();       // orientation vector for defining the anisotropic kernel
 Real scaling_factor = 1.0 / ratio_;              // scaling factor to calculate the time step
 Real BW = global_resolution * 4;                 // boundary width, at least three particles
 /** Domain bounds of the sph_system. */

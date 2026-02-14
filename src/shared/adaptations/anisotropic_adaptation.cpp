@@ -11,18 +11,27 @@ AnisotropicAdaptation::AnisotropicAdaptation(
     const Vecd &scaling, const Vecd &orientation,
     Real global_resolution, Real h_spacing_ratio, Real refinement_to_global)
     : SPHAdaptation(global_resolution, h_spacing_ratio, refinement_to_global),
-      scaling_(scaling), orientation_(orientation), deformation_matrix_(Matd::Identity()),
-      spacing_ref_min_(spacing_ref_ * scaling_.minCoeff()), h_ref_max_(h_ref_ * scaling_.maxCoeff())
+      scaling_ref_(scaling), orientation_ref_(orientation), deformation_matrix_ref_(Matd::Identity()),
+      spacing_ref_min_(spacing_ref_ * scaling_ref_.minCoeff()), h_ref_max_(h_ref_ * scaling_ref_.maxCoeff()),
+      dv_scaling_(nullptr), dv_orientation_(nullptr)
 {
-    deformation_matrix_ = scaling.cwiseInverse().asDiagonal() * RotationMatrixTo(orientation_);
+    deformation_matrix_ref_ =
+        scaling_ref_.cwiseInverse().asDiagonal() * RotationMatrix(Vecd::UnitX(), orientation_ref_);
     spacing_min_ = spacing_ref_min_;
+}
+void AnisotropicAdaptation::initializeAdaptationVariables(BaseParticles &particles)
+{
+    dv_scaling_ = particles.registerStateVariable<Vecd>("AnisotropicScaling", scaling_ref_);
+    dv_orientation_ = particles.registerStateVariable<Vecd>("AnisotropicOrientation", orientation_ref_);
+    particles.addVariableToWrite<Vecd>(dv_scaling_);
+    particles.addVariableToWrite<Vecd>(dv_orientation_);
 }
 //=================================================================================================//
 UniquePtr<BaseCellLinkedList> AnisotropicAdaptation::createCellLinkedList(
-    const BoundingBoxd &domain_bounds, BaseParticles &base_particles) 
+    const BoundingBoxd &domain_bounds, BaseParticles &particles)
 {
     return makeUnique<CellLinkedList<CellLinkedListIdentifier>>(
-        domain_bounds, kernel_ptr_->KernelSize() * h_ref_max_, base_particles, *this);
+        domain_bounds, kernel_ptr_->KernelSize() * h_ref_max_, particles, *this);
 }
 //=================================================================================================//
 UniquePtr<LevelSet> AnisotropicAdaptation::createLevelSet(Shape &shape, Real refinement) const

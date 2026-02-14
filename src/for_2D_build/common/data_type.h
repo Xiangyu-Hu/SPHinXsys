@@ -62,12 +62,6 @@ const Vecd ZeroVecd = Vec2d::Zero();
 
 inline Vecd degradeToVecd(const Vec3d &input) { return Vecd(input[0], input[1]); };
 inline Matd degradeToMatd(const Mat3d &input) { return input.block<2, 2>(0, 0); };
-inline Matd RotationMatrixTo(const Vecd &orientation)
-{
-    return Eigen::Rotation2D(
-               std::atan2(orientation[1], orientation[0]) - std::atan2(local_n0[1], local_n0[0]))
-        .toRotationMatrix();
-};
 } // namespace SPH
 
 #endif // DATA_TYPE_2D_H
