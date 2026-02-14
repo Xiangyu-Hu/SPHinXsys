@@ -1,5 +1,5 @@
 #include "cell_linked_list.h"
-#include "base_adaptation.h"
+#include "all_adaptations.h"
 #include "base_kernel.h"
 #include "base_particles.h"
 #include "mesh_iterators.hpp"
@@ -299,11 +299,19 @@ CellLinkedList<AnisotropicAdaptation>::CellLinkedList(
     BoundingBoxd tentative_bounds, Real grid_spacing,
     BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, grid_spacing, 1),
-      mesh_(&getCoarsestMesh()), cell_linked_list_mesh_(getCoarsestMesh())
+      adaptation_(DynamicCast<AnisotropicAdaptation>(this, sph_adaptation)),
+      cell_linked_list_mesh_(*this, adaptation_)
 {
     UnsignedInt index_list_size = SMAX(base_particles.ParticlesBound(), total_number_of_cells_);
     dv_particle_index_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size);
     dv_cell_offset_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("CellOffset", total_number_of_cells_ + 1);
 }
-    //=================================================================================================//
+//=================================================================================================//
+CellLinkedList<AnisotropicAdaptation>::CellLinkedListMesh::CellLinkedListMesh(
+    BaseCellLinkedList &base_cell_linked_list, AnisotropicAdaptation &adaptation)
+    : Mesh(base_cell_linked_list.getFinestMesh()), max_cut_off_(adaptation.MaxCutOffRadius())
+{
+    setLinearCellIndexOffset(0);
+}
+//=================================================================================================//
 } // namespace SPH

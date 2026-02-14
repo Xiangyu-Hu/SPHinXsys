@@ -222,4 +222,71 @@ BoundingBoxi CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::
     return BoundingBoxi(ceil((cut_off - Vecd::Constant(Eps)).array() / grid_spacing_).cast<int>());
 }
 //=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<AnisotropicAdaptation>::NeighborSearch::
+    searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const
+{
+    mesh_for_each(
+        Arrayi::Zero().max(rang_box.lower_), all_cells_.min(rang_box.upper_ + Arrayi::Ones()),
+        [&](const Arrayi &cell_index)
+        {
+            const UnsignedInt linear_index = LinearCellIndex(cell_index);
+            // Since offset_cell_size_ has linear_cell_size_+1 elements, no boundary checks are needed.
+            // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
+            for (UnsignedInt n = cell_offset_[linear_index]; n < cell_offset_[linear_index + 1]; ++n)
+            {
+                function(particle_index_[n]);
+            }
+        });
+}
+//=================================================================================================//
+BoundingBoxi CellLinkedList<AnisotropicAdaptation>::NeighborSearch::
+    InnerSearchBox(const Vecd &src_cut_off) const
+{
+    return BoundingBoxi(ceil((src_cut_off - Vecd::Constant(Eps)).array() / grid_spacing_).cast<int>());
+}
+//=================================================================================================//
+BoundingBoxi CellLinkedList<AnisotropicAdaptation>::NeighborSearch::
+    ContactSearchBox(const Vecd &src_cut_off) const
+{
+    Vecd cut_off = (Vecd::Ones() * max_cut_off_).cwiseMax(src_cut_off);
+    return BoundingBoxi(ceil((cut_off - Vecd::Constant(Eps)).array() / grid_spacing_).cast<int>());
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<AnisotropicAdaptation>::NeighborSearch::forInnerSearch(
+    const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const
+{
+    BoundingBoxi search_box = InnerSearchBox(src_cut_off);
+    const BoundingBoxi search_range = search_box.translate(CellIndexFromPosition(source_pos));
+    searchInRange(function, search_range);
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<AnisotropicAdaptation>::NeighborSearch::forContactSearch(
+    const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const
+{
+    BoundingBoxi search_box = ContactSearchBox(src_cut_off);
+    const BoundingBoxi search_range = search_box.translate(CellIndexFromPosition(source_pos));
+    searchInRange(function, search_range);
+}
+//=================================================================================================//
+template <typename FunctionOnEach>
+void CellLinkedList<AnisotropicAdaptation>::NeighborSearch::
+    searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const
+{
+    mesh_for_each(
+        Arrayi::Zero().max(rang_box.lower_), all_cells_.min(rang_box.upper_ + Arrayi::Ones()),
+        [&](const Arrayi &cell_index)
+        {
+            const UnsignedInt linear_index = LinearCellIndex(cell_index);
+            // Since offset_cell_size_ has linear_cell_size_+1 elements, no boundary checks are needed.
+            // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
+            for (UnsignedInt n = cell_offset_[linear_index]; n < cell_offset_[linear_index + 1]; ++n)
+            {
+                function(particle_index_[n]);
+            }
+        });
+}
+//=================================================================================================//
 } // namespace SPH

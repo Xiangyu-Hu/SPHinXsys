@@ -12,7 +12,8 @@ AnisotropicAdaptation::AnisotropicAdaptation(
     Real global_resolution, Real h_spacing_ratio, Real refinement_to_global)
     : SPHAdaptation(global_resolution, h_spacing_ratio, refinement_to_global),
       scaling_ref_(scaling), orientation_ref_(orientation), deformation_matrix_ref_(Matd::Identity()),
-      spacing_ref_min_(spacing_ref_ * scaling_ref_.minCoeff()), h_ref_max_(h_ref_ * scaling_ref_.maxCoeff()),
+      spacing_ref_min_(spacing_ref_ * scaling_ref_.minCoeff()),
+      h_ref_min_(h_ref_ * scaling_ref_.minCoeff()), h_ref_max_(h_ref_ * scaling_ref_.maxCoeff()),
       dv_scaling_(nullptr), dv_orientation_(nullptr)
 {
     deformation_matrix_ref_ =
@@ -31,7 +32,7 @@ UniquePtr<BaseCellLinkedList> AnisotropicAdaptation::createCellLinkedList(
     const BoundingBoxd &domain_bounds, BaseParticles &particles)
 {
     return makeUnique<CellLinkedList<CellLinkedListIdentifier>>(
-        domain_bounds, kernel_ptr_->KernelSize() * h_ref_max_, particles, *this);
+        domain_bounds, MinCutOffRadius(), particles, *this);
 }
 //=================================================================================================//
 UniquePtr<LevelSet> AnisotropicAdaptation::createLevelSet(Shape &shape, Real refinement) const

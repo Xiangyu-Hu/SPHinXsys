@@ -40,11 +40,14 @@ class AnisotropicAdaptation : public SPHAdaptation
     AnisotropicAdaptation(const Vecd &scaling, const Vecd &orientation, Real global_resolution,
                           Real h_spacing_ratio = 1.3, Real refinement_to_global = 1.0);
     virtual ~AnisotropicAdaptation() {};
+    Real MinRefSmoothingLength() const { return h_ref_min_; }
+    Real MinCutOffRadius() const { return kernel_ptr_->KernelSize() * h_ref_min_; }
+    Real MaxCutOffRadius() const { return kernel_ptr_->KernelSize() * h_ref_max_; }
     virtual void initializeAdaptationVariables(BaseParticles &particles) override;
 
     typedef AnisotropicAdaptation CellLinkedListIdentifier;
     virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(
-        const BoundingBoxd &domain_bounds, BaseParticles &particles)  override;
+        const BoundingBoxd &domain_bounds, BaseParticles &particles) override;
     virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const override;
 
   protected:
@@ -52,6 +55,7 @@ class AnisotropicAdaptation : public SPHAdaptation
     Vecd orientation_ref_;
     Matd deformation_matrix_ref_;
     Real spacing_ref_min_;
+    Real h_ref_min_;
     Real h_ref_max_;
 
     DiscreteVariable<Vecd> *dv_scaling_, *dv_orientation_;

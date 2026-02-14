@@ -229,10 +229,43 @@ class CellLinkedList<AnisotropicAdaptation> : public BaseCellLinkedList
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override {};
     virtual void tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes,
                                      std::function<bool(Vecd, Real)> &check_included) override {};
+    class CellLinkedListMesh : public Mesh
+    {
+      public:
+        CellLinkedListMesh(BaseCellLinkedList &base_cell_linked_list, AnisotropicAdaptation &adaptation);
+
+      protected:
+        Real max_cut_off_;
+    };
+
+    typedef CellLinkedListMesh CellLinkedListMeshType;
+
+    class NeighborSearch : public CellLinkedListMesh
+    {
+      public:
+        template <class ExecutionPolicy, class Encloser>
+        NeighborSearch(const ExecutionPolicy &ex_policy, Encloser &encloser);
+
+        template <typename FunctionOnEach>
+        void forInnerSearch(const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const;
+        template <typename FunctionOnEach>
+        void forContactSearch(const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const;
+
+      protected:
+        UnsignedInt *particle_index_;
+        UnsignedInt *cell_offset_;
+
+        inline BoundingBoxi InnerSearchBox(const Vecd &src_cut_off) const;
+        inline BoundingBoxi ContactSearchBox(const Vecd &src_cut_off) const;
+        template <typename FunctionOnEach>
+        void searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const;
+    };
+
+    CellLinkedListMesh &getCellLinkedListMesh() { return cell_linked_list_mesh_; };
 
   protected:
-    Mesh *mesh_;
-    Mesh cell_linked_list_mesh_;
+    AnisotropicAdaptation &adaptation_;
+    CellLinkedListMesh cell_linked_list_mesh_;
 };
 } // namespace SPH
 #endif // MESH_CELL_LINKED_LIST_H
