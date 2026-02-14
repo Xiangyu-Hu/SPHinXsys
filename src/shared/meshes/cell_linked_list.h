@@ -43,6 +43,7 @@ class BaseParticles;
 class Kernel;
 class SPHAdaptation;
 class AdaptiveSmoothingLength;
+class AnisotropicAdaptation;
 
 /**
  * @class BaseCellLinkedList
@@ -117,9 +118,6 @@ class CellLinkedList;
 template <>
 class CellLinkedList<SPHAdaptation> : public BaseCellLinkedList
 {
-  protected:
-    Mesh *mesh_;
-
   public:
     typedef Mesh CellLinkedListMeshType;
 
@@ -156,6 +154,7 @@ class CellLinkedList<SPHAdaptation> : public BaseCellLinkedList
     Mesh &getCellLinkedListMesh() { return cell_linked_list_mesh_; };
 
   protected:
+    Mesh *mesh_;
     Mesh cell_linked_list_mesh_;
 };
 
@@ -216,6 +215,19 @@ class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
 
   protected:
     CellLinkedListMesh cell_linked_list_mesh_;
+};
+
+template <>
+class CellLinkedList<AnisotropicAdaptation> : public BaseCellLinkedList
+{
+
+  public:
+    CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
+                   BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
+
+  protected:
+    Mesh *mesh_;
+    Mesh cell_linked_list_mesh_;
 };
 } // namespace SPH
 #endif // MESH_CELL_LINKED_LIST_H

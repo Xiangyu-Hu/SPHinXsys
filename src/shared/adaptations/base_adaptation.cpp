@@ -76,9 +76,9 @@ void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_refinem
 }
 //=================================================================================================//
 UniquePtr<BaseCellLinkedList> SPHAdaptation::
-    createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
+    createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles) 
 {
-    return makeUnique<CellLinkedList<SPHAdaptation>>(
+    return makeUnique<CellLinkedList<CellLinkedListIdentifier>>(
         domain_bounds, kernel_ptr_->CutOffRadius(), base_particles, *this);
 }
 //=================================================================================================//
@@ -132,9 +132,9 @@ void AdaptiveSmoothingLength::initializeAdaptationVariables(BaseParticles &base_
 }
 //=================================================================================================//
 UniquePtr<BaseCellLinkedList> AdaptiveSmoothingLength::
-    createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
+    createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles) 
 {
-    return makeUnique<CellLinkedList<AdaptiveSmoothingLength>>(
+    return makeUnique<CellLinkedList<CellLinkedListIdentifier>>(
         domain_bounds, kernel_ptr_->CutOffRadius(),
         local_refinement_level_, base_particles, *this);
 }

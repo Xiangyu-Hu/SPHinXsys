@@ -18,10 +18,10 @@ AnisotropicAdaptation::AnisotropicAdaptation(
     spacing_min_ = spacing_ref_min_;
 }
 //=================================================================================================//
-UniquePtr<BaseCellLinkedList> AnisotropicAdaptation::
-    createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles)
+UniquePtr<BaseCellLinkedList> AnisotropicAdaptation::createCellLinkedList(
+    const BoundingBoxd &domain_bounds, BaseParticles &base_particles) 
 {
-    return makeUnique<CellLinkedList<SPHAdaptation>>(
+    return makeUnique<CellLinkedList<CellLinkedListIdentifier>>(
         domain_bounds, kernel_ptr_->KernelSize() * h_ref_max_, base_particles, *this);
 }
 //=================================================================================================//

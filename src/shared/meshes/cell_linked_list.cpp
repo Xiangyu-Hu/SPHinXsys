@@ -295,4 +295,15 @@ void CellLinkedList<AdaptiveSmoothingLength>::tagBodyPartByCellCK(
         });
 }
 //=================================================================================================//
+CellLinkedList<AnisotropicAdaptation>::CellLinkedList(
+    BoundingBoxd tentative_bounds, Real grid_spacing,
+    BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
+    : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, grid_spacing, 1),
+      mesh_(&getCoarsestMesh()), cell_linked_list_mesh_(getCoarsestMesh())
+{
+    UnsignedInt index_list_size = SMAX(base_particles.ParticlesBound(), total_number_of_cells_);
+    dv_particle_index_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size);
+    dv_cell_offset_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("CellOffset", total_number_of_cells_ + 1);
+}
+    //=================================================================================================//
 } // namespace SPH

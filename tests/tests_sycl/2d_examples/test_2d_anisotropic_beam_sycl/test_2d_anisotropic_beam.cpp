@@ -9,22 +9,22 @@ using namespace SPH;
 //------------------------------------------------------------------------------
 // global parameters for the case
 //------------------------------------------------------------------------------
-Real PL = 0.2;                                       // beam length
-Real PH = 0.02;                                      // beam width
-Real SL = 0.02;                                      // constrained length
-int y_num = 10;                                      // particle number in y direction
-Real ratio_ = 4.0;                                   // anisotropic ratio, also dp_x / dp_y
-Real global_resolution = PH / y_num;                    // particle spacing in y direction
+Real PL = 0.2;                                             // beam length
+Real PH = 0.02;                                            // beam width
+Real SL = 0.02;                                            // constrained length
+int y_num = 10;                                            // particle number in y direction
+Real ratio_ = 4.0;                                         // anisotropic ratio, also dp_x / dp_y
+Real global_resolution = PH / y_num;                       // particle spacing in y direction
 Real global_resolution_large = ratio_ * global_resolution; // large particle spacing, also the particle spacing in x direction
-Real Total_PL = PL + SL;                             // total length
-int x_num = Total_PL / global_resolution_large;         // particle number in x direction
+Real Total_PL = PL + SL;                                   // total length
+int x_num = Total_PL / global_resolution_large;            // particle number in x direction
 //   anisotropic parameters
 Vec2d scaling_vector = Vec2d(1.0, 1.0 / ratio_); // scaling_vector for defining the anisotropic kernel
 Real scaling_factor = 1.0 / ratio_;              // scaling factor to calculate the time step
-Real BW = global_resolution * 4;                    // boundary width, at least three particles
+Real BW = global_resolution * 4;                 // boundary width, at least three particles
 /** Domain bounds of the system. */
-BoundingBoxd system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
-                                 Vec2d(PL + 3.0 * BW, PL / 2.0));
+BoundingBoxd system_domain_bounds(
+    Vec2d(-SL - BW, -PL / 2.0), Vec2d(PL + 3.0 * BW, PL / 2.0));
 //----------------------------------------------------------------------
 //	Material properties of the solid.
 //----------------------------------------------------------------------

@@ -67,8 +67,6 @@ class SPHAdaptation
     Real h_ratio_max_;             /**< the ratio between the reference smoothing length to the minimum smoothing length */
 
   public:
-    typedef SPHAdaptation CellLinkedListIdentifier;
-
     explicit SPHAdaptation(Real global_resolution, Real h_spacing_ratio = 1.3, Real refinement_to_global = 1.0);
     virtual ~SPHAdaptation() {};
 
@@ -88,7 +86,10 @@ class SPHAdaptation
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) {};
     Real SmoothingLengthByLevel(int level) const { return h_ref_ / pow(2.0, level); };
 
-    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
+    typedef SPHAdaptation CellLinkedListIdentifier;
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(
+      const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
+
     virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const;
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) { return spacing_ref_; }
 
@@ -124,8 +125,6 @@ class SPHAdaptation
 class AdaptiveSmoothingLength : public SPHAdaptation
 {
   public:
-    typedef AdaptiveSmoothingLength CellLinkedListIdentifier;
-
     AdaptiveSmoothingLength(Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level);
     virtual ~AdaptiveSmoothingLength() {};
 
@@ -135,7 +134,10 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     };
 
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
-    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles) override;
+
+    typedef AdaptiveSmoothingLength CellLinkedListIdentifier;
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(
+        const BoundingBoxd &domain_bounds, BaseParticles &base_particles) override;
     virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const override;
     DiscreteVariable<Real> *dvSmoothingLengthRatio() { return dv_h_ratio_; };
     DiscreteVariable<int> *dvSmoothingLengthLevel() { return dv_h_level_; };

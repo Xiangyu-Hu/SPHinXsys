@@ -41,8 +41,10 @@ class AnisotropicAdaptation : public SPHAdaptation
                           Real h_spacing_ratio = 1.3, Real refinement_to_global = 1.0);
     virtual ~AnisotropicAdaptation() {};
 
-    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
-    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const;
+    typedef AnisotropicAdaptation CellLinkedListIdentifier;
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(
+        const BoundingBoxd &domain_bounds, BaseParticles &base_particles)  override;
+    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const override;
 
   protected:
     Vecd scaling_;
