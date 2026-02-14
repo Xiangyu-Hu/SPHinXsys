@@ -178,6 +178,28 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     Real coarsest_spacing_bound_; /**< the adaptation bound for coarsest particles */
 };
 
+class AnisotropicAdaptation : public AdaptiveSmoothingLength
+{
+  public:
+    AnisotropicAdaptation(const Vecd &scaling, const Vecd &orientation,
+                          Real global_resolution, Real h_spacing_ratio_,
+                          Real refinement_to_global, int local_refinement_level);
+    virtual ~AnisotropicAdaptation() {};
+
+    virtual void initializeAdaptationVariables(BaseParticles &particles) override;
+
+    typedef AnisotropicAdaptation CellLinkedListIdentifier;
+
+  protected:
+    Vecd scaling_ref_;
+    Vecd orientation_ref_;
+    Matd deformation_matrix_ref_;
+
+    DiscreteVariable<Vecd> *dv_scaling_, *dv_orientation_;
+    DiscreteVariable<Matd> *dv_deformation_matrix_;
+    DiscreteVariable<Real> *dv_deformation_det_;
+};
+
 /**
  * @class AdaptiveByShape
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.

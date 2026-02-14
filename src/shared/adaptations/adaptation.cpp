@@ -160,6 +160,34 @@ AdaptiveSmoothingLength::SmoothedSpacing::SmoothedSpacing(AdaptiveSmoothingLengt
       finest_spacing_bound_(encloser.finest_spacing_bound_),
       coarsest_spacing_bound_(encloser.coarsest_spacing_bound_) {}
 //=================================================================================================//
+AnisotropicAdaptation::AnisotropicAdaptation(
+    const Vecd &scaling, const Vecd &orientation,
+    Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level)
+    : AdaptiveSmoothingLength(
+          global_resolution, h_spacing_ratio_, refinement_to_global, local_refinement_level),
+      scaling_ref_(scaling), orientation_ref_(orientation),
+      deformation_matrix_ref_(Matd::Identity()),
+      dv_scaling_(nullptr), dv_orientation_(nullptr),
+      dv_deformation_matrix_(nullptr), dv_deformation_det_(nullptr)
+{
+    deformation_matrix_ref_ =
+        scaling_ref_.cwiseInverse().asDiagonal() * RotationMatrix(Vecd::UnitX(), orientation_ref_);
+    min_cutoff_radius_ *= scaling_ref_.minCoeff();
+    max_cutoff_radius_ *= scaling_ref_.maxCoeff();
+    spacing_min_ *= scaling_ref_.minCoeff();
+}
+//=================================================================================================//
+void AnisotropicAdaptation::initializeAdaptationVariables(BaseParticles &particles)
+{
+    AdaptiveSmoothingLength::initializeAdaptationVariables(particles);
+    dv_scaling_ = particles.registerStateVariable<Vecd>("AnisotropicScaling", scaling_ref_);
+    dv_orientation_ = particles.registerStateVariable<Vecd>("AnisotropicOrientation", orientation_ref_);
+    dv_deformation_matrix_ = particles.registerStateVariable<Matd>("AnisotropicMatrix", deformation_matrix_ref_);
+    dv_deformation_det_ = particles.registerStateVariable<Real>("AnisotropicDeterminate", deformation_matrix_ref_.determinant());
+    particles.addVariableToWrite<Vecd>(dv_scaling_);
+    particles.addVariableToWrite<Vecd>(dv_orientation_);
+}
+//=================================================================================================//
 Real AdaptiveNearSurface::getLocalSpacing(Shape &shape, const Vecd &position)
 {
     Real phi = fabs(shape.findSignedDistance(position));
