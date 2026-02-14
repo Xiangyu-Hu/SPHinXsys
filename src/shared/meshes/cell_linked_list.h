@@ -225,6 +225,11 @@ class CellLinkedList<AnisotropicAdaptation> : public BaseCellLinkedList
     CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
 
+    void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override {};
+    void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override {};
+    virtual void tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes,
+                                     std::function<bool(Vecd, Real)> &check_included) override {};
+
   protected:
     Mesh *mesh_;
     Mesh cell_linked_list_mesh_;
