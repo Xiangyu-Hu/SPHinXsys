@@ -80,6 +80,7 @@ class SPHSystem
     void setRestartStep(size_t restart_step) { restart_step_ = restart_step; };
     void setLogLevel(size_t log_level);
     size_t RestartStep() { return restart_step_; };
+    SingularVariable<Real> &svPhysicalTime() { return *sv_physical_time_; };
     /** Initialize cell linked list for the SPH system. */
     void initializeSystemCellLinkedLists();
     /** Initialize particle configuration for the SPH system. */
@@ -143,6 +144,7 @@ class SPHSystem
     bool state_recording_;                   /**< Record state in output folder. */
     int log_level_ = 2;                      /**< Log level, 0: trace, 1: debug, 2: info, 3: warning, 4: error, 5: critical, 6: off */
     SingularVariables all_system_variables_;
+    SingularVariable<Real> *sv_physical_time_; /**< global physical time of the SPH system. */
 
     SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds, Real global_resolution,
               size_t number_of_threads = std::thread::hardware_concurrency());
