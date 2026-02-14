@@ -162,6 +162,7 @@ template <>
 class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
 {
   protected:
+    AdaptiveSmoothingLength &adaptation_;
     Real *h_ratio_; /**< Smoothing length for each level. */
     int *h_level_;  /**< Smoothing length level for each particle. */
 
@@ -182,10 +183,9 @@ class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
     {
       public:
         CellLinkedListMesh(CellLinkedList<AdaptiveSmoothingLength> &cell_linked_list);
-        Real CoarsestGridSpacing() const { return coarsest_grid_spacing_; };
 
       protected:
-        Real coarsest_grid_spacing_;
+        Real max_cut_off_;
     };
 
     class NeighborSearch : public CellLinkedListMesh
