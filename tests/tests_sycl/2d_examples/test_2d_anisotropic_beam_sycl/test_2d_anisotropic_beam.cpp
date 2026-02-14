@@ -20,9 +20,10 @@ Real Total_PL = PL + SL;                                   // total length
 int x_num = Total_PL / global_resolution_large;            // particle number in x direction
 //   anisotropic parameters
 Vec2d scaling_vector = Vec2d(1.0, 1.0 / ratio_); // scaling_vector for defining the anisotropic kernel
+Vec2d orientation_vector = Vec2d::UnitY();       // orientation vector for defining the anisotropic kernel
 Real scaling_factor = 1.0 / ratio_;              // scaling factor to calculate the time step
 Real BW = global_resolution * 4;                 // boundary width, at least three particles
-/** Domain bounds of the system. */
+/** Domain bounds of the sph_system. */
 BoundingBoxd system_domain_bounds(
     Vec2d(-SL - BW, -PL / 2.0), Vec2d(PL + 3.0 * BW, PL / 2.0));
 //----------------------------------------------------------------------
@@ -41,11 +42,15 @@ Real Q = 2.0 * (cos(kl) * sinh(kl) - sin(kl) * cosh(kl));
 Real vf = 0.05;
 Real R = PL / (0.5 * Pi);
 //----------------------------------------------------------------------
-//	Geometric shapes used in the system.
+//	Geometric shapes used in the sph_system.
 //----------------------------------------------------------------------
 GeometricShapeBox beam_shape(BoundingBoxd(Vecd(-SL, -PH / 2), Vecd(PL, PH / 2)), "BeamBody");
 GeometricShapeBox beam_base_shape(BoundingBoxd(Vecd(-SL, -PH / 2), Vecd(0.0, PH / 2)), "BeamBase");
 StdVec<Vecd> observation_location = {Vecd(PL, 0.0)};
+//----------------------------------------------------------------------
+//	Adaptation used in the sph_system.
+//----------------------------------------------------------------------
+AnisotropicAdaptation y_refinement(scaling_vector, orientation_vector, global_resolution, 1.15, 1.0);
 namespace SPH
 {
 //----------------------------------------------------------------------
@@ -159,130 +164,33 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, global_resolution_large);
+    SPHSystem sph_system(system_domain_bounds, global_resolution_large);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
-    system.handleCommandlineOptions(ac, av);
+    sph_system.handleCommandlineOptions(ac, av);
 #endif
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody beam_body(system, beam_shape);
-    beam_body.getSPHAdaptation().resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
+    auto &beam_body = sph_system.addAdaptiveBody<RealBody, AnisotropicAdaptation>(y_refinement, beam_shape);
     beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, UserDefined>();
-    BodyRegionByParticle beam_base(beam_body, beam_base_shape);
+    //    auto &beam_base = beam_body.addBodyPart<BodyRegionByParticle>(beam_base_shape);
 
-    ObserverBody beam_observer(system, "BeamObserver");
-    beam_observer.getSPHAdaptation().resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
+    auto &beam_observer = sph_system.addAdaptiveBody<ObserverBody, AnisotropicAdaptation>(y_refinement, "BeamObserver");
     beam_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
-    //	Define body relation map.
-    //	The contact map gives the topological connections between the bodies.
-    //	Basically the the range of bodies to build neighbor particle lists.
+    // Define SPH solver with particle methods and execution policies.
+    // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
-    InnerRelation beam_body_inner(beam_body);
-    ContactRelation beam_observer_contact(beam_observer, {&beam_body});
+    SPHSolver sph_solver(sph_system);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     //----------------------------------------------------------------------
-    // Define the numerical methods used in the simulation.
-    // Note that there may be data dependence on the sequence of constructions.
-    // Generally, the geometric models or simple objects without data dependencies,
-    // such as gravity, should be initiated first.
-    // Then the major physical particle dynamics model should be introduced.
-    // Finally, the auxiliary models such as time step estimator, initial condition,
-    // boundary condition and other constraints should be defined.
+    //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    InteractionWithUpdate<AnisotropicCorrectConfiguration> beam_corrected_configuration(beam_body_inner);
-    Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(beam_body_inner);
-    Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
+    auto &write_real_body_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    write_real_body_states.addToWrite<Real>(beam_body, "Density");
 
-    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
-    SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
-    //-----------------------------------------------------------------------------
-    // outputs
-    //-----------------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_beam_states(beam_body);
-    write_beam_states.addToWrite<Real>(beam_body, "ShowingNeighbor");
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>
-        write_beam_tip_displacement("Position", beam_observer_contact);
-    //----------------------------------------------------------------------
-    //	Setup computing and initial conditions.
-    //----------------------------------------------------------------------
-    system.initializeSystemCellLinkedLists();
-    system.initializeSystemConfigurations();
-    beam_initial_velocity.exec();
-    beam_corrected_configuration.exec();
-    //----------------------------------------------------------------------
-    //	Setup computing time-step controls.
-    //----------------------------------------------------------------------
-    Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
-    int number_of_iterations = 0;
-    Real T0 = 1.0;
-    Real end_time = T0;
-    // time step size for output file
-    Real output_interval = 0.01 * T0;
-    Real Dt = 0.1 * output_interval; /**< Time period for data observing */
-    Real dt = 0.0;                   // default acoustic time step sizes
-
-    // statistics for computing time
-    TickCount t1 = TickCount::now();
-    TimeInterval interval;
-    //-----------------------------------------------------------------------------
-    // from here the time stepping begins
-    //-----------------------------------------------------------------------------
-    write_beam_states.writeToFile();
-    write_beam_tip_displacement.writeToFile(number_of_iterations);
-    // computation loop starts
-    while (physical_time < end_time)
-    {
-        Real integration_time = 0.0;
-        // integrate time (loop) until the next output time
-        while (integration_time < output_interval)
-        {
-
-            Real relaxation_time = 0.0;
-            while (relaxation_time < Dt)
-            {
-                stress_relaxation_first_half.exec(dt);
-                constraint_beam_base.exec();
-                stress_relaxation_second_half.exec(dt);
-
-                number_of_iterations++;
-                dt = scaling_factor * computing_time_step_size.exec();
-                relaxation_time += dt;
-                integration_time += dt;
-                physical_time += dt;
-
-                if (number_of_iterations % 100 == 0)
-                {
-                    std::cout << "N=" << number_of_iterations << " Time: "
-                              << physical_time << "	dt: "
-                              << dt << "\n";
-                }
-            }
-        }
-
-        TickCount t2 = TickCount::now();
-        write_beam_tip_displacement.writeToFile(number_of_iterations);
-        write_beam_states.writeToFile();
-        TickCount t3 = TickCount::now();
-        interval += t3 - t2;
-    }
-    TickCount t4 = TickCount::now();
-
-    TimeInterval tt;
-    tt = t4 - t1 - interval;
-    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
-    if (system.GenerateRegressionData())
-    {
-        write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
-    }
-    else
-    {
-        write_beam_tip_displacement.testResult();
-    }
-
+    write_real_body_states.writeToFile();
     return 0;
 }
