@@ -43,34 +43,16 @@ Real R = PL / (0.5 * Pi);
 //----------------------------------------------------------------------
 //	Geometric shapes used in the system.
 //----------------------------------------------------------------------
-// a beam base shape
-std::vector<Vecd> beam_base_shape{
-    Vecd(-SL, -PH / 2), Vecd(-SL, PH / 2), Vecd(0.0, PH / 2),
-    Vecd(0.0, -PH / 2), Vecd(-SL, -PH / 2)};
-// a beam shape
-std::vector<Vecd> beam_shape{
-    Vecd(0.0, -PH / 2), Vecd(0.0, PH / 2), Vecd(PL, PH / 2), Vecd(PL, -PH / 2), Vecd(0.0, -PH / 2)};
-// Beam observer location
+GeometricShapeBox beam_shape(BoundingBoxd(Vecd(-SL, -PH / 2), Vecd(PL, PH / 2)), "BeamBody");
+GeometricShapeBox beam_base_shape(BoundingBoxd(Vecd(-SL, -PH / 2), Vecd(0.0, PH / 2)), "BeamBase");
 StdVec<Vecd> observation_location = {Vecd(PL, 0.0)};
 namespace SPH
 {
 //----------------------------------------------------------------------
-//	Define the beam body
-//----------------------------------------------------------------------
-class Beam : public MultiPolygonShape
-{
-  public:
-    explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
-    {
-        multi_polygon_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(beam_shape, ShapeBooleanOps::add);
-    }
-};
-//----------------------------------------------------------------------
 //	particle generation considering the anisotropic resolution
 //----------------------------------------------------------------------
 template <>
-class ParticleGenerator<BaseParticles, Beam> : public ParticleGenerator<BaseParticles>
+class ParticleGenerator<BaseParticles, UserDefined> : public ParticleGenerator<BaseParticles>
 {
   public:
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
@@ -114,16 +96,6 @@ class BeamInitialCondition
 
   protected:
     ElasticSolid &elastic_solid_;
-};
-//----------------------------------------------------------------------
-//	define the beam base which will be constrained.
-//----------------------------------------------------------------------
-MultiPolygon createBeamConstrainShape()
-{
-    MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(beam_shape, ShapeBooleanOps::sub);
-    return multi_polygon;
 };
 //----------------------------------------------------------------------
 //	calculate correction matrix B to keep the accuracy
@@ -195,10 +167,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
+    SolidBody beam_body(system, beam_shape);
     beam_body.getSPHAdaptation().resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
     beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    beam_body.generateParticles<BaseParticles, Beam>();
+    beam_body.generateParticles<BaseParticles, UserDefined>();
+    BodyRegionByParticle beam_base(beam_body, beam_base_shape);
 
     ObserverBody beam_observer(system, "BeamObserver");
     beam_observer.getSPHAdaptation().resetKernel<AnisotropicKernel<KernelWendlandC2>>(scaling_vector);
@@ -225,7 +198,6 @@ int main(int ac, char *av[])
 
     ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
     SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
     SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
     //-----------------------------------------------------------------------------
     // outputs
