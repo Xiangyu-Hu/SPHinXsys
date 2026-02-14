@@ -184,13 +184,31 @@ int main(int ac, char *av[])
     // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
+    //----------------------------------------------------------------------
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the configuration dynamics, such as update cell linked list,
+    // update body relations, are defined first.
+    // Then the geometric models or simple objects without data dependencies,
+    // such as gravity, initialized normal direction.
+    // After that, the major physical particle dynamics model should be introduced.
+    // Finally, the auxiliary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    //----------------------------------------------------------------------
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &update_cell_linked_list = main_methods.addCellLinkedListDynamics(beam_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     auto &write_real_body_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     write_real_body_states.addToWrite<Real>(beam_body, "Density");
-
+    //----------------------------------------------------------------------
+    //	Prepare for the time integration loop.
+    //----------------------------------------------------------------------
+    update_cell_linked_list.exec();
+    //----------------------------------------------------------------------
+    //	First output before the integration loop.
+    //----------------------------------------------------------------------
     write_real_body_states.writeToFile();
     return 0;
 }

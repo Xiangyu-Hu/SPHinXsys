@@ -271,22 +271,4 @@ void CellLinkedList<AnisotropicAdaptation>::NeighborSearch::forContactSearch(
     searchInRange(function, search_range);
 }
 //=================================================================================================//
-template <typename FunctionOnEach>
-void CellLinkedList<AnisotropicAdaptation>::NeighborSearch::
-    searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const
-{
-    mesh_for_each(
-        Arrayi::Zero().max(rang_box.lower_), all_cells_.min(rang_box.upper_ + Arrayi::Ones()),
-        [&](const Arrayi &cell_index)
-        {
-            const UnsignedInt linear_index = LinearCellIndex(cell_index);
-            // Since offset_cell_size_ has linear_cell_size_+1 elements, no boundary checks are needed.
-            // offset_cell_size_[0] == 0 && offset_cell_size_[linear_cell_size_] == total_real_particles_
-            for (UnsignedInt n = cell_offset_[linear_index]; n < cell_offset_[linear_index + 1]; ++n)
-            {
-                function(particle_index_[n]);
-            }
-        });
-}
-//=================================================================================================//
 } // namespace SPH
