@@ -217,9 +217,11 @@ class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
     CellLinkedListMesh cell_linked_list_mesh_;
 };
 
-template <>
-class CellLinkedList<AnisotropicAdaptation> : public BaseCellLinkedList
+template <class IsotropicAdaptationType>
+class CellLinkedList<Anisotropy<IsotropicAdaptationType>> : public CellLinkedList<IsotropicAdaptationType>
 {
+    using AnisotropicAdaptation = Anisotropy<IsotropicAdaptationType>;
+    using BaseCellLinkedListType = CellLinkedList<IsotropicAdaptationType>;
 
   public:
     CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
@@ -229,7 +231,8 @@ class CellLinkedList<AnisotropicAdaptation> : public BaseCellLinkedList
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override {};
     virtual void tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes,
                                      std::function<bool(Vecd, Real)> &check_included) override {};
-    class CellLinkedListMesh : public Mesh
+
+    class CellLinkedListMesh : public BaseCellLinkedListType::CellLinkedListMesh
     {
       public:
         CellLinkedListMesh(BaseCellLinkedList &base_cell_linked_list, AnisotropicAdaptation &adaptation);
