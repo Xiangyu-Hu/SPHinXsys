@@ -121,7 +121,11 @@ class CellLinkedList<SPHAdaptation> : public BaseCellLinkedList
     Mesh *mesh_;
 
   public:
-    typedef Mesh CellLinkedListMeshType;
+    class CellLinkedListMesh : public Mesh
+    {
+      public:
+        CellLinkedListMesh(CellLinkedList<SPHAdaptation> &cell_linked_list);
+    };
 
     CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
@@ -132,7 +136,7 @@ class CellLinkedList<SPHAdaptation> : public BaseCellLinkedList
     virtual void tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes,
                                      std::function<bool(Vecd, Real)> &check_included) override;
 
-    class NeighborSearch : public Mesh
+    class NeighborSearch : public CellLinkedListMesh
     {
       public:
         template <class ExecutionPolicy, class Encloser>
@@ -152,11 +156,6 @@ class CellLinkedList<SPHAdaptation> : public BaseCellLinkedList
         template <typename FunctionOnEach>
         void searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const;
     };
-
-    Mesh &getCellLinkedListMesh() { return cell_linked_list_mesh_; };
-
-  protected:
-    Mesh cell_linked_list_mesh_;
 };
 
 template <>
@@ -182,14 +181,12 @@ class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
     class CellLinkedListMesh : public Mesh
     {
       public:
-        CellLinkedListMesh(BaseCellLinkedList &base_cell_linked_list);
+        CellLinkedListMesh(CellLinkedList<AdaptiveSmoothingLength> &cell_linked_list);
         Real CoarsestGridSpacing() const { return coarsest_grid_spacing_; };
 
       protected:
         Real coarsest_grid_spacing_;
     };
-
-    typedef CellLinkedListMesh CellLinkedListMeshType;
 
     class NeighborSearch : public CellLinkedListMesh
     {
@@ -211,11 +208,6 @@ class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
         template <typename FunctionOnEach>
         void searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const;
     };
-
-    CellLinkedListMesh &getCellLinkedListMesh() { return cell_linked_list_mesh_; };
-
-  protected:
-    CellLinkedListMesh cell_linked_list_mesh_;
 };
 } // namespace SPH
 #endif // MESH_CELL_LINKED_LIST_H
