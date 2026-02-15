@@ -126,7 +126,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 {
   public:
     typedef AdaptiveSmoothingLength CellLinkedListIdentifier;
-    
+
     AdaptiveSmoothingLength(Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level);
     virtual ~AdaptiveSmoothingLength() {};
 
@@ -140,6 +140,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const override;
     DiscreteVariable<Real> *dvSmoothingLengthRatio() { return dv_h_ratio_; };
     DiscreteVariable<int> *dvSmoothingLengthLevel() { return dv_h_level_; };
+    Real MaxCutOffRadius() const { return max_cut_off_radius_; };
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override = 0;
 
     class ContinuousSmoothingLengthRatio
@@ -165,7 +166,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 
       public:
         SmoothedSpacing(AdaptiveSmoothingLength &encloser);
-        Real operator() (const Real &measure, const Real &transition_thickness);
+        Real operator()(const Real &measure, const Real &transition_thickness);
         Real FinestSpacingBound() const { return finest_spacing_bound_; };
     };
 
@@ -176,6 +177,8 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     int *h_level_;
     Real finest_spacing_bound_;   /**< the adaptation bound for finest particles */
     Real coarsest_spacing_bound_; /**< the adaptation bound for coarsest particles */
+    Real max_cut_off_radius_;      /**< the maximum cut-off radius determined by the reference smoothing length and kernel function */
+
 };
 
 /**
@@ -227,7 +230,7 @@ class AdaptiveNearSurface : public AdaptiveByShape
           public:
             template <class ExecutionPolicy, class EncloserType>
             ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-            Real operator() (const Vecd &position);
+            Real operator()(const Vecd &position);
         };
     };
 };

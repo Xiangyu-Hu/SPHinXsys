@@ -121,7 +121,11 @@ class CellLinkedList<SPHAdaptation> : public BaseCellLinkedList
     Mesh *mesh_;
 
   public:
-    typedef Mesh CellLinkedListMeshType;
+    class CellLinkedListMesh : public Mesh
+    {
+      public:
+        CellLinkedListMesh(CellLinkedList<SPHAdaptation> &cell_linked_list);
+    };
 
     CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
@@ -131,65 +135,6 @@ class CellLinkedList<SPHAdaptation> : public BaseCellLinkedList
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
     virtual void tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes,
                                      std::function<bool(Vecd, Real)> &check_included) override;
-
-    class NeighborSearch : public Mesh
-    {
-      public:
-        template <class ExecutionPolicy, class Encloser>
-        NeighborSearch(const ExecutionPolicy &ex_policy, Encloser &encloser);
-
-        template <typename FunctionOnEach>
-        void forInnerSearch(const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const;
-        template <typename FunctionOnEach>
-        void forContactSearch(const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const;
-
-      protected:
-        UnsignedInt *particle_index_;
-        UnsignedInt *cell_offset_;
-
-        inline BoundingBoxi InnerSearchBox(const Vecd &src_cut_off) const;
-        inline BoundingBoxi ContactSearchBox(const Vecd &src_cut_off) const;
-        template <typename FunctionOnEach>
-        void searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const;
-    };
-
-    Mesh &getCellLinkedListMesh() { return cell_linked_list_mesh_; };
-
-  protected:
-    Mesh cell_linked_list_mesh_;
-};
-
-template <>
-class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
-{
-  protected:
-    Real *h_ratio_; /**< Smoothing length for each level. */
-    int *h_level_;  /**< Smoothing length level for each particle. */
-
-    /** determine mesh level from particle cutoff radius */
-    inline UnsignedInt getMeshLevel(Real particle_cutoff_radius);
-
-  public:
-    CellLinkedList(BoundingBoxd tentative_bounds,
-                   Real reference_grid_spacing, UnsignedInt total_levels,
-                   BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    virtual ~CellLinkedList() {};
-    void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
-    void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
-    virtual void tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes,
-                                     std::function<bool(Vecd, Real)> &check_included) override;
-
-    class CellLinkedListMesh : public Mesh
-    {
-      public:
-        CellLinkedListMesh(BaseCellLinkedList &base_cell_linked_list);
-        Real CoarsestGridSpacing() const { return coarsest_grid_spacing_; };
-
-      protected:
-        Real coarsest_grid_spacing_;
-    };
-
-    typedef CellLinkedListMesh CellLinkedListMeshType;
 
     class NeighborSearch : public CellLinkedListMesh
     {
@@ -211,11 +156,58 @@ class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
         template <typename FunctionOnEach>
         void searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const;
     };
+};
 
-    CellLinkedListMesh &getCellLinkedListMesh() { return cell_linked_list_mesh_; };
-
+template <>
+class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
+{
   protected:
-    CellLinkedListMesh cell_linked_list_mesh_;
+    AdaptiveSmoothingLength &adaptation_;
+    Real *h_ratio_; /**< Smoothing length for each level. */
+    int *h_level_;  /**< Smoothing length level for each particle. */
+
+    /** determine mesh level from particle cutoff radius */
+    inline UnsignedInt getMeshLevel(Real particle_cutoff_radius);
+
+  public:
+    CellLinkedList(BoundingBoxd tentative_bounds,
+                   Real reference_grid_spacing, UnsignedInt total_levels,
+                   BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
+    virtual ~CellLinkedList() {};
+    void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
+    void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
+    virtual void tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes,
+                                     std::function<bool(Vecd, Real)> &check_included) override;
+
+    class CellLinkedListMesh : public Mesh
+    {
+      public:
+        CellLinkedListMesh(CellLinkedList<AdaptiveSmoothingLength> &cell_linked_list);
+
+      protected:
+        Real max_cut_off_;
+    };
+
+    class NeighborSearch : public CellLinkedListMesh
+    {
+      public:
+        template <class ExecutionPolicy, class Encloser>
+        NeighborSearch(const ExecutionPolicy &ex_policy, Encloser &encloser);
+
+        template <typename FunctionOnEach>
+        void forInnerSearch(const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const;
+        template <typename FunctionOnEach>
+        void forContactSearch(const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const;
+
+      protected:
+        UnsignedInt *particle_index_;
+        UnsignedInt *cell_offset_;
+
+        inline BoundingBoxi InnerSearchBox(const Vecd &src_cut_off) const;
+        inline BoundingBoxi ContactSearchBox(const Vecd &src_cut_off) const;
+        template <typename FunctionOnEach>
+        void searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const;
+    };
 };
 } // namespace SPH
 #endif // MESH_CELL_LINKED_LIST_H

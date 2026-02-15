@@ -23,7 +23,7 @@ SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
 {
     Log::init();
     spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
-    registerSystemVariable<Real>("PhysicalTime", 0.0);
+    sv_physical_time_ = registerSystemVariable<Real>("PhysicalTime", 0.0);
     Log::get()->info("The reference resolution of the SPHSystem is {}.", global_resolution_);
 }
 //=================================================================================================//

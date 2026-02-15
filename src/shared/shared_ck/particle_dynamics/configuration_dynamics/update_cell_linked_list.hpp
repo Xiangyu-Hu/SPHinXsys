@@ -17,7 +17,7 @@ UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::
     : BaseLocalDynamics<DynamicsIdentifier>(identifier), BaseDynamics<void>(),
       cell_linked_list_(
           DynamicCast<CellLinkedList<CellLinkedListIdentifier>>(this, identifier.getCellLinkedList())),
-      cell_linked_list_mesh_(cell_linked_list_.getCellLinkedListMesh()),
+      cell_linked_list_mesh_(cell_linked_list_),
       number_of_cells_(cell_linked_list_mesh_.NumberOfCells()),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_particle_index_(cell_linked_list_.dvParticleIndex()),
