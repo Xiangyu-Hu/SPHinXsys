@@ -123,7 +123,7 @@ Real RestartIO::readRestartTime(size_t restart_step)
     std::string old_filefullpath = io_environment_.RestartFolder() + "/Restart_time_" + padValueWithZeros(restart_step) + ".dat";
     if (!fs::exists(old_filefullpath))
     {
-        std::cout << "\n Error: the input file:" << overall_filefullpath << " is not exists" << std::endl;
+        std::cout << "\n Error: the input file:" << old_filefullpath << " is not exists" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
