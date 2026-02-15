@@ -85,7 +85,7 @@ void RestartIO::writeToFile(size_t iteration_step)
         std::string body_name = real_bodies_[i]->getName();
         
         std::cout << "\n Total real particles of body " << body_name
-                  << " written to restart is " << base_particles.TotalRealParticles() << "\n";
+                  << " written to restart: " << base_particles.TotalRealParticles() << "\n";
         
         // Add a body element
         restart_xml.addNewElement(restart_xml.first_element_, "body");
@@ -123,7 +123,7 @@ Real RestartIO::readRestartTime(size_t restart_step)
     std::string old_filefullpath = io_environment_.RestartFolder() + "/Restart_time_" + padValueWithZeros(restart_step) + ".dat";
     if (!fs::exists(old_filefullpath))
     {
-        std::cout << "\n Error: the input file:" << old_filefullpath << " is not exists" << std::endl;
+        std::cout << "\n Error: the input file:" << old_filefullpath << " does not exist" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
@@ -166,7 +166,7 @@ void RestartIO::readFromFile(size_t restart_step)
                     found = true;
                     base_particles.readParticlesFromXmlForRestart(restart_xml, body_element);
                     std::cout << "\n Total real particles of body " << body_name
-                              << " from restart is " << base_particles.TotalRealParticles() << "\n";
+                              << " read from restart: " << base_particles.TotalRealParticles() << "\n";
                     break;
                 }
                 
@@ -191,7 +191,7 @@ void RestartIO::readFromFile(size_t restart_step)
 
             if (!fs::exists(filefullpath))
             {
-                std::cout << "\n Error: the input file:" << filefullpath << " is not exists" << std::endl;
+                std::cout << "\n Error: the input file:" << filefullpath << " does not exist" << std::endl;
                 std::cout << __FILE__ << ':' << __LINE__ << std::endl;
                 exit(1);
             }
