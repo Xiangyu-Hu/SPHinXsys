@@ -182,4 +182,60 @@ void BaseParticles::readReloadXmlFile(const std::string &filefullpath)
     reload_xml_parser_.loadXmlFile(filefullpath);
 }
 //=================================================================================================//
+void BaseParticles::writeParticlesToXmlForRestart(XmlParser &xml_parser, tinyxml2::XMLElement *body_element)
+{
+    // Resize the body element to have the correct number of particle children
+    UnsignedInt total_real_particles = TotalRealParticles();
+    size_t total_elements = xml_parser.Size(body_element);
+    
+    if (total_elements != total_real_particles)
+    {
+        xml_parser.resize(body_element, total_real_particles, "particle");
+    }
+    
+    // Write all evolving variables to the body element's particle children
+    for (auto &variable_container : evolving_variables_)
+    {
+        variable_container.second([&](auto &variables) {
+            using DataType = typename std::remove_pointer_t<decltype(variables[0])>::DataType;
+            
+            for (size_t i = 0; i != variables.size(); ++i)
+            {
+                size_t index = 0;
+                DataType *data_field = variables[i]->Data();
+                for (auto child = body_element->FirstChildElement(); child; child = child->NextSiblingElement())
+                {
+                    xml_parser.setAttributeToElement(child, variables[i]->Name(), data_field[index]);
+                    index++;
+                }
+            }
+        });
+    }
+}
+//=================================================================================================//
+void BaseParticles::readParticlesFromXmlForRestart(XmlParser &xml_parser, tinyxml2::XMLElement *body_element)
+{
+    // Reset total real particles from the body element's particle count
+    sv_total_real_particles_->setValue(xml_parser.Size(body_element));
+    
+    // Read all evolving variables from the body element's particle children
+    for (auto &variable_container : evolving_variables_)
+    {
+        variable_container.second([&](auto &variables) {
+            using DataType = typename std::remove_pointer_t<decltype(variables[0])>::DataType;
+            
+            for (size_t i = 0; i != variables.size(); ++i)
+            {
+                size_t index = 0;
+                DataType *data_field = variables[i]->Data();
+                for (auto child = body_element->FirstChildElement(); child; child = child->NextSiblingElement())
+                {
+                    xml_parser.queryAttributeValue(child, variables[i]->Name(), data_field[index]);
+                    index++;
+                }
+            }
+        });
+    }
+}
+//=================================================================================================//
 } // namespace SPH

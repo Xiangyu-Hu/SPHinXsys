@@ -51,7 +51,7 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
 //=============================================================================================//
 RestartIO::RestartIO(SPHSystem &sph_system)
     : BaseIO(sph_system), real_bodies_(sph_system.getRealBodies()),
-      overall_file_path_(io_environment_.RestartFolder() + "/Restart_time_")
+      overall_file_path_(io_environment_.RestartFolder() + "/Restart_")
 {
     if (sph_system_.RestartStep() == 0)
     {
@@ -66,39 +66,69 @@ RestartIO::RestartIO(SPHSystem &sph_system)
 //=============================================================================================//
 void RestartIO::writeToFile(size_t iteration_step)
 {
-    std::string overall_filefullpath = overall_file_path_ + padValueWithZeros(iteration_step) + ".dat";
+    std::string overall_filefullpath = overall_file_path_ + padValueWithZeros(iteration_step) + ".xml";
     if (fs::exists(overall_filefullpath))
     {
         fs::remove(overall_filefullpath);
     }
-    std::ofstream out_file(overall_filefullpath.c_str(), std::ios::app);
-    out_file << std::fixed << std::setprecision(9) << sv_physical_time_->getValue() << "   \n";
-    out_file.close();
 
+    // Create a new XML document for restart
+    XmlParser restart_xml("xml_restart", "restart_data");
+    
+    // Add restart time as an attribute to the root element
+    restart_xml.setAttributeToElement(restart_xml.first_element_, "restart_time", sv_physical_time_->getValue());
+
+    // Write all bodies to the single XML file
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
-        std::string filefullpath = file_names_[i] + padValueWithZeros(iteration_step) + ".xml";
-
-        if (fs::exists(filefullpath))
-        {
-            fs::remove(filefullpath);
-        }
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
-        base_particles.writeParticlesToXmlForRestart(filefullpath);
+        std::string body_name = real_bodies_[i]->getName();
+        
+        std::cout << "\n Total real particles of body " << body_name
+                  << " write to restart is " << base_particles.TotalRealParticles() << "\n";
+        
+        // Add a body element
+        restart_xml.addNewElement(restart_xml.first_element_, "body");
+        
+        // Get the last added body element
+        tinyxml2::XMLElement *body_element = restart_xml.first_element_->LastChildElement("body");
+        
+        // Set body name attribute
+        restart_xml.setAttributeToElement(body_element, "name", body_name);
+        
+        // Write particles to this body element
+        base_particles.writeParticlesToXmlForRestart(restart_xml, body_element);
     }
+    
+    // Write the consolidated XML file
+    restart_xml.writeToXmlFile(overall_filefullpath);
 }
 //=============================================================================================//
 Real RestartIO::readRestartTime(size_t restart_step)
 {
-    std::string overall_filefullpath = overall_file_path_ + padValueWithZeros(restart_step) + ".dat";
-    if (!fs::exists(overall_filefullpath))
+    std::string overall_filefullpath = overall_file_path_ + padValueWithZeros(restart_step) + ".xml";
+    
+    // Check for new format first
+    if (fs::exists(overall_filefullpath))
+    {
+        XmlParser restart_xml("xml_restart");
+        restart_xml.loadXmlFile(overall_filefullpath);
+        
+        Real restart_time;
+        restart_xml.queryAttributeValue(restart_xml.first_element_, "restart_time", restart_time);
+        return restart_time;
+    }
+    
+    // Fallback to old format for backward compatibility
+    std::string old_filefullpath = io_environment_.RestartFolder() + "/Restart_time_" + padValueWithZeros(restart_step) + ".dat";
+    if (!fs::exists(old_filefullpath))
     {
         std::cout << "\n Error: the input file:" << overall_filefullpath << " is not exists" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
     Real restart_time;
-    std::ifstream in_file(overall_filefullpath.c_str());
+    std::ifstream in_file(old_filefullpath.c_str());
     in_file >> restart_time;
     in_file.close();
 
@@ -108,18 +138,67 @@ Real RestartIO::readRestartTime(size_t restart_step)
 void RestartIO::readFromFile(size_t restart_step)
 {
     std::cout << "\n Reading restart files from the restart step = " << restart_step << std::endl;
-    for (size_t i = 0; i < real_bodies_.size(); ++i)
+    
+    std::string overall_filefullpath = overall_file_path_ + padValueWithZeros(restart_step) + ".xml";
+    
+    // Check for new consolidated format first
+    if (fs::exists(overall_filefullpath))
     {
-        std::string filefullpath = file_names_[i] + padValueWithZeros(restart_step) + ".xml";
-
-        if (!fs::exists(filefullpath))
+        XmlParser restart_xml("xml_restart");
+        restart_xml.loadXmlFile(overall_filefullpath);
+        
+        // Iterate through all body elements in the XML
+        for (size_t i = 0; i < real_bodies_.size(); ++i)
         {
-            std::cout << "\n Error: the input file:" << filefullpath << " is not exists" << std::endl;
-            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-            exit(1);
+            std::string body_name = real_bodies_[i]->getName();
+            BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
+            
+            // Find the body element by iterating through child elements
+            tinyxml2::XMLElement *body_element = restart_xml.first_element_->FirstChildElement("body");
+            bool found = false;
+            
+            while (body_element != nullptr)
+            {
+                const char *name_attr = nullptr;
+                body_element->QueryAttribute("name", &name_attr);
+                
+                if (name_attr != nullptr && std::string(name_attr) == body_name)
+                {
+                    found = true;
+                    base_particles.readParticlesFromXmlForRestart(restart_xml, body_element);
+                    std::cout << "\n Total real particles of body " << body_name
+                              << " from restart is " << base_particles.TotalRealParticles() << "\n";
+                    break;
+                }
+                
+                body_element = body_element->NextSiblingElement("body");
+            }
+            
+            if (!found)
+            {
+                std::cout << "\n Error: body " << body_name << " not found in restart file: " 
+                          << overall_filefullpath << std::endl;
+                std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+                exit(1);
+            }
         }
-        BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
-        base_particles.readParticlesFromXmlForRestart(filefullpath);
+    }
+    else
+    {
+        // Fallback to old format for backward compatibility
+        for (size_t i = 0; i < real_bodies_.size(); ++i)
+        {
+            std::string filefullpath = file_names_[i] + padValueWithZeros(restart_step) + ".xml";
+
+            if (!fs::exists(filefullpath))
+            {
+                std::cout << "\n Error: the input file:" << filefullpath << " is not exists" << std::endl;
+                std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+                exit(1);
+            }
+            BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
+            base_particles.readParticlesFromXmlForRestart(filefullpath);
+        }
     }
 }
 //=============================================================================================//

@@ -170,6 +170,9 @@ class BaseParticles
     void resetTotalRealParticlesFromXmlDoc(XmlParser &xml_parser);
     void writeParticlesToXmlForRestart(const std::string &filefullpath);
     void readParticlesFromXmlForRestart(const std::string &filefullpath);
+    // New methods for writing/reading to/from XML element (for consolidated restart file)
+    void writeParticlesToXmlForRestart(XmlParser &xml_parser, tinyxml2::XMLElement *body_element);
+    void readParticlesFromXmlForRestart(XmlParser &xml_parser, tinyxml2::XMLElement *body_element);
     void writeParticlesToXmlForReload(const std::string &filefullpath);
     void readReloadXmlFile(const std::string &filefullpath);
     template <typename DataType>
