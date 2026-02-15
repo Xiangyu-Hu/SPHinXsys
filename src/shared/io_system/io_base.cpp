@@ -85,7 +85,7 @@ void RestartIO::writeToFile(size_t iteration_step)
         std::string body_name = real_bodies_[i]->getName();
         
         std::cout << "\n Total real particles of body " << body_name
-                  << " write to restart is " << base_particles.TotalRealParticles() << "\n";
+                  << " written to restart is " << base_particles.TotalRealParticles() << "\n";
         
         // Add a body element
         restart_xml.addNewElement(restart_xml.first_element_, "body");
@@ -159,8 +159,7 @@ void RestartIO::readFromFile(size_t restart_step)
             
             while (body_element != nullptr)
             {
-                const char *name_attr = nullptr;
-                body_element->QueryAttribute("name", &name_attr);
+                const char *name_attr = body_element->Attribute("name");
                 
                 if (name_attr != nullptr && std::string(name_attr) == body_name)
                 {
