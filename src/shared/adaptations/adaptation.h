@@ -160,7 +160,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 
     class SmoothedSpacing
     {
-        KernelTabulatedCK smoothing_kerel_;
+        KernelTabulatedCK smoothing_kernel_;
         Real kernel_size_, inv_w0_;
         Real finest_spacing_bound_, coarsest_spacing_bound_;
 
@@ -270,6 +270,33 @@ class AdaptiveWithinShape : public AdaptiveByShape
             Real operator()(const Vecd &position);
         };
     };
+};
+
+class AnisotropicAdaptation : public AdaptiveSmoothingLength
+{
+  public:
+    AnisotropicAdaptation(Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level);
+    virtual ~AnisotropicAdaptation() {};
+    virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
+
+  protected:
+    DiscreteVariable<Vecd> *dv_scaling_, *dv_orientation_;
+    DiscreteVariable<Matd> *dv_deformation_matrix_;
+    DiscreteVariable<Real> *dv_deformation_det_;
+};
+
+class PrescribedAnisotropy : public AnisotropicAdaptation
+{
+  public:
+    PrescribedAnisotropy(const Vecd &scaling, const Vecd &orientation,
+                         Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global);
+    virtual ~PrescribedAnisotropy() {};
+    virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
+    virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override {};
+
+  protected:
+    Vecd scaling_ref_, orientation_ref_;
+    Matd deformation_matrix_ref_;
 };
 } // namespace SPH
 #endif // ADAPTATION_H

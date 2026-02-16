@@ -156,37 +156,10 @@ UniquePtr<LevelSet> AdaptiveSmoothingLength::createLevelSet(Shape &shape, Real r
 }
 //=================================================================================================//
 AdaptiveSmoothingLength::SmoothedSpacing::SmoothedSpacing(AdaptiveSmoothingLength &encloser)
-    : smoothing_kerel_(*encloser.kernel_ptr_),
-      kernel_size_(smoothing_kerel_.KernelSize()), inv_w0_(1.0 / smoothing_kerel_.normalized_W(0)),
+    : smoothing_kernel_(*encloser.kernel_ptr_),
+      kernel_size_(smoothing_kernel_.KernelSize()), inv_w0_(1.0 / smoothing_kernel_.normalized_W(0)),
       finest_spacing_bound_(encloser.finest_spacing_bound_),
       coarsest_spacing_bound_(encloser.coarsest_spacing_bound_) {}
-//=================================================================================================//
-AnisotropicAdaptation::AnisotropicAdaptation(
-    const Vecd &scaling, const Vecd &orientation,
-    Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level)
-    : AdaptiveSmoothingLength(
-          global_resolution, h_spacing_ratio_, refinement_to_global, local_refinement_level),
-      scaling_ref_(scaling), orientation_ref_(orientation),
-      deformation_matrix_ref_(Matd::Identity()),
-      dv_scaling_(nullptr), dv_orientation_(nullptr),
-      dv_deformation_matrix_(nullptr), dv_deformation_det_(nullptr)
-{
-    deformation_matrix_ref_ =
-        scaling_ref_.cwiseInverse().asDiagonal() * RotationMatrix(Vecd::UnitX(), orientation_ref_);
-    max_cutoff_radius_ *= scaling_ref_.maxCoeff();
-    spacing_min_ *= scaling_ref_.minCoeff();
-}
-//=================================================================================================//
-void AnisotropicAdaptation::initializeAdaptationVariables(BaseParticles &particles)
-{
-    AdaptiveSmoothingLength::initializeAdaptationVariables(particles);
-    dv_scaling_ = particles.registerStateVariable<Vecd>("AnisotropicScaling", scaling_ref_);
-    dv_orientation_ = particles.registerStateVariable<Vecd>("AnisotropicOrientation", orientation_ref_);
-    dv_deformation_matrix_ = particles.registerStateVariable<Matd>("AnisotropicMatrix", deformation_matrix_ref_);
-    dv_deformation_det_ = particles.registerStateVariable<Real>("AnisotropicDeterminate", deformation_matrix_ref_.determinant());
-    particles.addVariableToWrite<Vecd>(dv_scaling_);
-    particles.addVariableToWrite<Vecd>(dv_orientation_);
-}
 //=================================================================================================//
 Real AdaptiveNearSurface::getLocalSpacing(Shape &shape, const Vecd &position)
 {
@@ -209,5 +182,48 @@ AdaptiveWithinShape::LocalSpacing::LocalSpacing(
     AdaptiveWithinShape &encloser, LevelSetShape &level_set_shape)
     : smoothed_spacing_(encloser), level_set_(level_set_shape.getLevelSet()),
       spacing_ref_(encloser.spacing_ref_) {}
+//=================================================================================================//
+AnisotropicAdaptation::AnisotropicAdaptation(
+    Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level)
+    : AdaptiveSmoothingLength(
+          global_resolution, h_spacing_ratio_, refinement_to_global, local_refinement_level),
+      dv_scaling_(nullptr), dv_orientation_(nullptr),
+      dv_deformation_matrix_(nullptr), dv_deformation_det_(nullptr) {}
+//=================================================================================================//
+void AnisotropicAdaptation::initializeAdaptationVariables(BaseParticles &particles)
+{
+    AdaptiveSmoothingLength::initializeAdaptationVariables(particles);
+    dv_scaling_ = particles.registerStateVariable<Vecd>("AnisotropicScaling", Vecd::Ones());
+    dv_orientation_ = particles.registerStateVariable<Vecd>("AnisotropicOrientation", Vecd::Zero());
+    dv_deformation_matrix_ = particles.registerStateVariable<Matd>("AnisotropicMatrix", Matd::Identity());
+    dv_deformation_det_ = particles.registerStateVariable<Real>("AnisotropicDeterminate", 1.0);
+    particles.addVariableToWrite<Vecd>(dv_scaling_);
+    particles.addVariableToWrite<Vecd>(dv_orientation_);
+}
+//=================================================================================================//
+PrescribedAnisotropy::PrescribedAnisotropy(
+    const Vecd &scaling, const Vecd &orientation,
+    Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global)
+    : AnisotropicAdaptation(global_resolution, h_spacing_ratio_, refinement_to_global, 0),
+      scaling_ref_(scaling), orientation_ref_(orientation)
+{
+    deformation_matrix_ref_ =
+        scaling_ref_.cwiseInverse().asDiagonal() * RotationMatrix(Vecd::UnitX(), orientation_ref_);
+    max_cut_off_radius_ = kernel_ptr_->KernelSize() * h_ref_ * scaling_ref_.maxCoeff();
+}
+//=================================================================================================//
+void PrescribedAnisotropy::initializeAdaptationVariables(BaseParticles &particles)
+{
+    AnisotropicAdaptation::initializeAdaptationVariables(particles);
+    UnsignedInt total_real_particles = particles.TotalRealParticles();
+    dv_scaling_->fill(0, total_real_particles, [&](size_t i) -> Vecd
+                      { return scaling_ref_; });
+    dv_orientation_->fill(0, total_real_particles, [&](size_t i) -> Vecd
+                          { return orientation_ref_; });
+    dv_deformation_matrix_->fill(0, total_real_particles, [&](size_t i) -> Matd
+                                 { return deformation_matrix_ref_; });
+    dv_deformation_det_->fill(0, total_real_particles, [&](size_t i) -> Real
+                              { return deformation_matrix_ref_.determinant(); });
+}
 //=================================================================================================//
 } // namespace SPH
