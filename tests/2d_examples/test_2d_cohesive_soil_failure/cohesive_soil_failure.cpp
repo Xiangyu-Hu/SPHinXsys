@@ -65,7 +65,6 @@ int main(int ac, char *av[])
     SimpleDynamics<continuum_dynamics::AccDeviatoricPlasticStrain> accumulated_deviatoric_plastic_strain(soil_block);
     body_states_recording.addToWrite<Real>(soil_block, "AccDeviatoricPlasticStrain");
     body_states_recording.addToWrite<int>(soil_block, "Indicator");
-    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_mechanical_energy(soil_block, gravity);
     //----------------------------------------------------------------------
@@ -85,7 +84,6 @@ int main(int ac, char *av[])
     size_t number_of_iterations = 0;
     int screen_output_interval = 500;
     int observation_sample_interval = screen_output_interval * 2;
-    int restart_output_interval = screen_output_interval * 10;
     Real End_Time = 2.0;         /**< End time. */
     Real D_Time = End_Time / 50; /**< Time stamps for output of body states. */
     //----------------------------------------------------------------------
@@ -127,19 +125,17 @@ int main(int ac, char *av[])
 
             interval_computing_soil_stress_relaxation += TickCount::now() - time_instance;
 
-            /** screen output, write body reduced values and restart files  */
+            /** screen output, write body reduced values  */
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << std::setprecision(4) << "	Time = "
                           << physical_time
                           << std::scientific << "	dt = " << dt << "\n";
 
-                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                if (number_of_iterations % observation_sample_interval == 0)
                 {
                     write_mechanical_energy.writeToFile(number_of_iterations);
                 }
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
             time_instance = TickCount::now();
@@ -173,7 +169,7 @@ int main(int ac, char *av[])
     {
         write_mechanical_energy.generateDataBase(1.0e-3);
     }
-    else if (sph_system.RestartStep() == 0)
+    else
     {
         write_mechanical_energy.testResult();
     }

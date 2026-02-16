@@ -289,15 +289,12 @@ int main(int ac, char *av[])
     ObservedQuantityRecording<Real>
         write_recorded_pressure_bp1("Pressure", bp1_contact_w);
 
-    RestartIO restart_io(sph_system);
-
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     int screen_output_interval = 100;
-    int restart_output_interval = screen_output_interval * 10;
     Real end_time = total_physical_time;
     Real output_interval = end_time / 100;
     Real dt = 0.0;
@@ -317,23 +314,6 @@ int main(int ac, char *av[])
     structure_normal_direction.exec();
     structure_corrected_configuration.exec();
     constant_gravity_to_fluid.exec();
-    //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        water_block.updateCellLinkedList();
-        wall_boundary.updateCellLinkedList();
-        structure.updateCellLinkedList();
-        water_block_complex.updateConfiguration();
-        structure_contact.updateConfiguration();
-        observer_contact_with_water.updateConfiguration();
-        WMobserver_contact_with_water.updateConfiguration();
-
-        fp1_contact_w.updateConfiguration();
-        bp1_contact_w.updateConfiguration();
-    }
 
     //----------------------------------------------------------------------
     //	First output before the main loop.
@@ -404,8 +384,6 @@ int main(int ac, char *av[])
                           << "	Total Time = " << total_time
                           << "	Physical Time = " << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
             damping_wave.exec(Dt);
@@ -460,7 +438,7 @@ int main(int ac, char *av[])
         write_str_displacement.generateDataBase(1.0e-3);
         write_recorded_pressure_fp1.generateDataBase(1.0e-3);
     }
-    else if (sph_system.RestartStep() == 0)
+    else
     {
         write_str_displacement.testResult();
         write_recorded_pressure_fp1.testResult();
