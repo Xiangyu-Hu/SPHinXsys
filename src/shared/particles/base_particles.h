@@ -231,6 +231,22 @@ class BaseParticles
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles, XmlParser &xml_parser);
     };
 
+    struct WriteAParticleVariableToXmlElement
+    {
+        tinyxml2::XMLElement *element_;
+        WriteAParticleVariableToXmlElement(tinyxml2::XMLElement *element) : element_(element) {}
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser);
+    };
+
+    struct ReadAParticleVariableFromXmlElement
+    {
+        tinyxml2::XMLElement *element_;
+        ReadAParticleVariableFromXmlElement(tinyxml2::XMLElement *element) : element_(element) {}
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles, XmlParser &xml_parser);
+    };
+
     OperationOnDataAssemble<ParticleData, CopyParticleState> copy_particle_state_;
     OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
     OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_;
