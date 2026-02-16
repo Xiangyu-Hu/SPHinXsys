@@ -247,7 +247,7 @@ int main(int ac, char *av[])
                               << physical_time
                               << std::scientific << "	dt = " << dt << "\n";
 
-                    if (number_of_iterations % observation_sample_interval == 0)
+                    if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != 0)
                     {
                         write_soil_mechanical_energy.writeToFile(number_of_iterations);
                     }
