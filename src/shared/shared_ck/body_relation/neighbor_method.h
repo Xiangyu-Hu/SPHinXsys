@@ -165,8 +165,8 @@ class Neighbor<SourceAdaptationType, TargetAdaptationType> : public Neighbor<Bas
       public:
         template <class ExecutionPolicy, class EncloserType>
         SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return W(vec_r_ij(i, j), i, j); };
-        inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return dW(vec_r_ij(i, j), i, j); };
+        inline Real W_ij(UnsignedInt i, UnsignedInt j) const;
+        inline Real dW_ij(UnsignedInt i, UnsignedInt j) const;
         Real W0(UnsignedInt i, const Vec2d &zero) const;
         Real W0(UnsignedInt i, const Vec3d &zero) const;
 

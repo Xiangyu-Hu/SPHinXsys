@@ -48,5 +48,30 @@ inline Real AdaptiveWithinShape::LocalSpacing::ComputingKernel::operator()(const
     return phi < 0.0 ? smoothed_spacing_.FinestSpacingBound() : smoothed_spacing_(phi, 2.0 * spacing_ref_);
 }
 //=================================================================================================//
+template <class ExecutionPolicy>
+AnisotropicAdaptation::AnisotropicSmoothingLengthRatio::
+    AnisotropicSmoothingLengthRatio(const ExecutionPolicy &ex_policy, AnisotropicAdaptation &adaptation)
+    : ContinuousSmoothingLengthRatio(adaptation),
+      deformation_matrix_(adaptation.dv_deformation_matrix_->DelegatedData(ex_policy)),
+      deformation_det_(adaptation.dv_deformation_det_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+inline Vecd AnisotropicAdaptation::AnisotropicSmoothingLengthRatio::
+    NormalizedDisplacement(const Vecd &original, UnsignedInt index_i) const
+{
+    return deformation_matrix_[index_i] * original;
+}
+//=================================================================================================//
+inline Real AnisotropicAdaptation::AnisotropicSmoothingLengthRatio::
+    KernelScale(UnsignedInt index_i) const
+{
+    return deformation_det_[index_i];
+}
+//=================================================================================================//
+inline Matd AnisotropicAdaptation::AnisotropicSmoothingLengthRatio::
+    GradientScale(UnsignedInt index_i) const
+{
+    return deformation_det_[index_i] * deformation_matrix_[index_i];
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // ADAPTATION_HPP

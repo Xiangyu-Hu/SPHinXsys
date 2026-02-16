@@ -180,6 +180,17 @@ Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::Smoothing
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
+    W_ij(UnsignedInt i, UnsignedInt j) const
+{
+    return W(vec_r_ij(i, j), i, j);
+};
+//=================================================================================================//
+template <class SourceAdaptationType, class TargetAdaptationType>
+Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
+    dW_ij(UnsignedInt i, UnsignedInt j) const { return dW(vec_r_ij(i, j), i, j); };
+//=================================================================================================//
+template <class SourceAdaptationType, class TargetAdaptationType>
+Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     W0(UnsignedInt i, const Vec2d &zero) const
 {
     Real inv_h_i = src_h_ratio_(i) * src_inv_h_ref_;
