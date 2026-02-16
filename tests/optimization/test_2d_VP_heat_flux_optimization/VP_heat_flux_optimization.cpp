@@ -249,7 +249,6 @@ TEST(test_optimization, test_problem4_optimized)
     int ite_loop = 0;             /* define loop index for optimization cycle. */
     int ite_T_comparison_opt = 0; /* define the real step for splitting temperature by solving PDE. */
     int ite_output = 50;          /* define the interval for state output. */
-    int ite_restart = 50;         /* define the interval for restart output. */
     int dt_ratio_k = 1;           /* ratio for adjusting the time step for the parameter evolution. */
     int dt_ratio_rg = 1;          /* ratio for adjusting the time step for the regularization.*/
     int dt_ratio_t = 1;           /* ratio for adjusting the time step for the state advancing.*/
