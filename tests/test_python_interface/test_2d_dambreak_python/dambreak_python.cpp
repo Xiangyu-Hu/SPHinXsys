@@ -128,7 +128,6 @@ class Environment : public PreSettingCase
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp body_states_recording;
-    RestartIO restart_io;
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
         write_water_mechanical_energy;
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
@@ -138,7 +137,6 @@ class Environment : public PreSettingCase
     //----------------------------------------------------------------------
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
-    int restart_output_interval = screen_output_interval * 10;
     Real output_interval = 0.1;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -168,7 +166,6 @@ class Environment : public PreSettingCase
           fluid_acoustic_time_step(water_block),
           particle_sorting(water_block),
           body_states_recording(sph_system),
-          restart_io(sph_system),
           write_water_mechanical_energy(water_block, gravity),
           write_recorded_water_pressure("Pressure", fluid_observer_contact)
     {
@@ -180,14 +177,12 @@ class Environment : public PreSettingCase
         sph_system.initializeSystemConfigurations();
         wall_boundary_normal_direction.exec();
         constant_gravity.exec();
-        /** set restart step. */
-        sph_system.setRestartStep(set_restart_step);
         //----------------------------------------------------------------------
         //	First output before the main loop.
         //----------------------------------------------------------------------
         body_states_recording.writeToFile();
-        write_water_mechanical_energy.writeToFile(sph_system.RestartStep());
-        write_recorded_water_pressure.writeToFile(sph_system.RestartStep());
+        write_water_mechanical_energy.writeToFile(0);
+        write_recorded_water_pressure.writeToFile(0);
     }
 
     virtual ~Environment() {};
@@ -232,20 +227,18 @@ class Environment : public PreSettingCase
                 }
                 interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
-                /** screen output, write body reduced values and restart files  */
+                /** screen output, write body reduced values  */
                 if (number_of_iterations % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                               << physical_time
                               << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
 
-                    if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                    if (number_of_iterations % observation_sample_interval == 0)
                     {
                         write_water_mechanical_energy.writeToFile(number_of_iterations);
                         write_recorded_water_pressure.writeToFile(number_of_iterations);
                     }
-                    if (number_of_iterations % restart_output_interval == 0)
-                        restart_io.writeToFile(number_of_iterations);
                 }
                 number_of_iterations++;
 
@@ -285,7 +278,7 @@ class Environment : public PreSettingCase
             write_recorded_water_pressure.generateDataBase(1.0e-3);
         }
 
-        else if (sph_system.RestartStep() == 0)
+        else
         {
             write_water_mechanical_energy.testResult();
             write_recorded_water_pressure.testResult();

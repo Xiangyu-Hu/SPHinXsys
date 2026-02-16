@@ -217,7 +217,6 @@ TEST(test_optimization, test_problem1_optimized)
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    RestartIO restart_io(sph_system);
     //----------------------------------------------------------------------
     //	Setup parameter for optimization control
     //----------------------------------------------------------------------
@@ -305,15 +304,6 @@ TEST(test_optimization, test_problem1_optimized)
     setup_diffusion_initial_condition.exec();
     setup_diffusion_boundary_condition.exec();
     thermal_diffusivity_random_initialization.exec();
-    //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        diffusion_body.updateCellLinkedList();
-        diffusion_body_complex.updateConfiguration();
-    }
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -479,10 +469,6 @@ TEST(test_optimization, test_problem1_optimized)
         relative_temperature_difference = abs(current_averaged_temperature - last_averaged_temperature) / last_averaged_temperature;
         relative_average_variation_difference = abs(averaged_variation_current_global - averaged_variation_last_global) / abs(averaged_variation_last_global);
         averaged_variation_last_global = averaged_variation_current_global;
-        if (ite_loop % ite_restart == 0)
-        {
-            restart_io.writeToFile(ite_loop);
-        }
     }
     out_file_opt_temperature.close();
     out_file_nonopt_temperature.close();
