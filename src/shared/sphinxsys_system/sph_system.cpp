@@ -9,16 +9,21 @@ namespace SPH
 {
 //=================================================================================================//
 SPHSystem::SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution, size_t number_of_threads)
+    : SPHSystem(true, system_domain_bounds, global_resolution, number_of_threads) {}
+//=================================================================================================//
+SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
+                     Real global_resolution, size_t number_of_threads)
     : system_domain_bounds_(system_domain_bounds),
       global_resolution_(global_resolution),
       tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
+      is_physical_(is_physical),
       io_environment_(io_keeper_.createPtr<IOEnvironment>(*this)),
       run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true)
 {
     Log::init();
     spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
-    registerSystemVariable<Real>("PhysicalTime", 0.0);
+    sv_physical_time_ = registerSystemVariable<Real>("PhysicalTime", 0.0);
     Log::get()->info("The reference resolution of the SPHSystem is {}.", global_resolution_);
 }
 //=================================================================================================//

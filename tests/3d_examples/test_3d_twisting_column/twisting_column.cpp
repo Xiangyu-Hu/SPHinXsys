@@ -156,7 +156,7 @@ int main(int ac, char *av[])
         Real integration_time = 0.0;
         while (integration_time < output_period)
         {
-            if (number_of_iterations % 100 == 0)
+            if (number_of_iterations == 1 || number_of_iterations % 100 == 0)
             {
                 std::cout << "N=" << number_of_iterations << " Time: "
                           << physical_time << "	dt: "

@@ -32,7 +32,7 @@
 #include "all_surface_indication_ck.h"
 #include "force_prior_ck.hpp"
 #include "general_assignment.h"
-#include "general_constraint_ck.h"
+#include "general_constraint_ck.hpp"
 #include "general_gradient.hpp"
 #include "general_reduce_ck.hpp"
 #include "geometric_dynamics.hpp"

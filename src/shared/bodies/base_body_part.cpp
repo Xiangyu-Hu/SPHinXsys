@@ -30,24 +30,10 @@ BodyPartByID::BodyPartByID(SPHBody &sph_body) : BodyPart(sph_body)
 }
 //=================================================================================================//
 BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body)
-    : BodyPart(sph_body), body_part_bounds_(Vecd::Zero(), Vecd::Zero()),
-      body_part_bounds_set_(false)
+    : BodyPart(sph_body)
 {
     base_particles_.addBodyPartByParticle(this);
     base_particles_.addEvolvingVariable<int>(dv_body_part_id_);
-}
-//=================================================================================================//
-void BodyPartByParticle::setBodyPartBounds(BoundingBoxd bbox)
-{
-    body_part_bounds_ = bbox;
-    body_part_bounds_set_ = true;
-}
-//=================================================================================================//
-BoundingBoxd BodyPartByParticle::getBodyPartBounds()
-{
-    if (!body_part_bounds_set_)
-        std::cout << "WARNING: the body part bounds are not set for BodyPartByParticle." << std::endl;
-    return body_part_bounds_;
 }
 //=================================================================================================//
 void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)

@@ -74,6 +74,22 @@ class GeometricBall
   protected:
     Real radius_;
 };
+
+class GeometricCylinder
+{
+  public:
+    explicit GeometricCylinder(const Vecd &axis, Real radius, Real halflength);
+    ~GeometricCylinder() {};
+
+    bool checkContain(const Vecd &probe_point);
+    Vecd findClosestPoint(const Vecd &probe_point);
+    BoundingBoxd findBounds();
+
+  protected:
+    Vecd axis_;
+    Real radius_;
+    Real halflength_;
+};
 } // namespace SPH
 
 #endif // GEOMETRIC_ELEMENT_H

@@ -113,7 +113,7 @@ void BaseCellLinkedList::particle_for_split(const ExecutionPolicy &ex_policy,
 template <class ExecutionPolicy, class Encloser>
 CellLinkedList<SPHAdaptation>::NeighborSearch::NeighborSearch(
     const ExecutionPolicy &ex_policy, Encloser &encloser)
-    : Mesh(encloser.getCellLinkedListMesh()),
+    : CellLinkedListMesh(encloser),
       particle_index_(encloser.dvParticleIndex()->DelegatedData(ex_policy)),
       cell_offset_(encloser.dvCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -169,7 +169,7 @@ BoundingBoxi CellLinkedList<SPHAdaptation>::NeighborSearch::
 template <class ExecutionPolicy, class Encloser>
 CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::NeighborSearch(
     const ExecutionPolicy &ex_policy, Encloser &encloser)
-    : CellLinkedListMeshType(encloser.getCellLinkedListMesh()),
+    : CellLinkedListMesh(encloser),
       particle_index_(encloser.dvParticleIndex()->DelegatedData(ex_policy)),
       cell_offset_(encloser.dvCellOffset()->DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -218,7 +218,7 @@ BoundingBoxi CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::
 BoundingBoxi CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::
     ContactSearchBox(const Vecd &src_cut_off) const
 {
-    Vecd cut_off = (Vecd::Ones() * CoarsestGridSpacing()).cwiseMax(src_cut_off);
+    Vecd cut_off = (Vecd::Ones() * max_cut_off_).cwiseMax(src_cut_off);
     return BoundingBoxi(ceil((cut_off - Vecd::Constant(Eps)).array() / grid_spacing_).cast<int>());
 }
 //=================================================================================================//

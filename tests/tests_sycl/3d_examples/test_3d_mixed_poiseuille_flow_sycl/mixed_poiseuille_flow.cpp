@@ -190,7 +190,7 @@ int main(int ac, char *av[])
     sph_system.setRunParticleRelaxation(false);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
-    //	Creating bodies with corresponding materials and particles.
+    //	Setup geometry first.
     //----------------------------------------------------------------------
     size_t SimTK_resolution = 15;
     auto water_body_shape = makeShared<ComplexShape>("WaterBody");
@@ -205,19 +205,20 @@ int main(int ac, char *av[])
     wall_body_shape->subtract<TriangleMeshShapeCylinder>(Vec3d(1., 0., 0.), DH * 0.5,
                                                          DL * 0.5 + BW, SimTK_resolution,
                                                          translation_fluid, "InnerBoundary");
-
-    FluidBody water_body(sph_system, water_body_shape);
-    SolidBody wall(sph_system, wall_body_shape);
     //----------------------------------------------------------------------
     //	Run particle relaxation for body-fitted distribution if chosen.
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
+        RelaxationSystem relaxation_system(system_domain_bounds, global_resolution);
+
+        SolidBody wall(relaxation_system, wall_body_shape);
+        wall.generateParticles<BaseParticles, Lattice>();
         LevelSetShape *outer_level_set_shape = wall.defineComponentLevelSetShape("OuterBoundary", 2.0)
                                                    ->writeLevelSet();
-        wall.generateParticles<BaseParticles, Lattice>();
         NearShapeSurface near_wall_outer_surface(wall, "OuterBoundary");
 
+        FluidBody water_body(relaxation_system, water_body_shape);
         LevelSetShape *water_level_set_shape = water_body.defineBodyLevelSetShape(2.0)
                                                    ->writeLevelSet();
         water_body.generateParticles<BaseParticles, Lattice>();
@@ -229,7 +230,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
-        SPHSolver sph_solver(sph_system);
+        SPHSolver sph_solver(relaxation_system);
         auto &main_methods = sph_solver.addParticleMethodContainer(par_host);
         auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
 
@@ -262,7 +263,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------
-        auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+        auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(relaxation_system);
         body_state_recorder.addToWrite<Vecd>(wall, "NormalDirection");
         auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(StdVec<SPHBody *>{&wall, &water_body});
         write_particle_reload_files.addToReload<Vecd>(wall, "NormalDirection");
@@ -308,12 +309,21 @@ int main(int ac, char *av[])
         wall_normal_direction.exec();
         write_particle_reload_files.writeToFile();
 
-        return 0;
+        if (!sph_system.ReloadParticles())
+        {
+            return 0;
+        }
+        else
+        {
+            std::cout << "To reload particles and start the main simulation." << std::endl;
+        }
     }
+    FluidBody water_body(sph_system, water_body_shape);
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     ParticleBuffer<ReserveSizeFactor> particle_buffer(0.5);
     water_body.generateParticlesWithReserve<BaseParticles, Reload>(particle_buffer, water_body.getName());
 
+    SolidBody wall(sph_system, wall_body_shape);
     wall.defineMaterial<Solid>();
     wall.generateParticles<BaseParticles, Reload>(wall.getName())
         ->reloadExtraVariable<Vecd>("NormalDirection");

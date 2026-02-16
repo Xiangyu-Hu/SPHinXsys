@@ -46,11 +46,11 @@ class UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>
     typedef UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier> EncloserType;
     using ParticleMask = typename DynamicsIdentifier::ListedParticleMask;
     using CellLinkedListIdentifier = typename DynamicsIdentifier::Adaptation::CellLinkedListIdentifier;
-    using CellLinkedListMeshType = typename CellLinkedList<CellLinkedListIdentifier>::CellLinkedListMeshType;
+    using CellLinkedListMesh = typename CellLinkedList<CellLinkedListIdentifier>::CellLinkedListMesh;
 
   protected:
     CellLinkedList<CellLinkedListIdentifier> &cell_linked_list_;
-    CellLinkedListMeshType cell_linked_list_mesh_;
+    CellLinkedListMesh cell_linked_list_mesh_;
     UnsignedInt number_of_cells_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
@@ -70,7 +70,7 @@ class UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>
         void updateCellList(UnsignedInt index_i);
 
       protected:
-        CellLinkedListMeshType cell_linked_list_mesh_;
+        CellLinkedListMesh cell_linked_list_mesh_;
         ParticleMask particle_mask_;
 
         Vecd *pos_;

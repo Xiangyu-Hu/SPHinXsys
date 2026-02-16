@@ -33,4 +33,26 @@ BoundingBoxd GeometricShapeBall::findBounds()
     return BoundingBoxd(center_ - shift, center_ + shift);
 }
 //=================================================================================================//
+GeometricShapeCylinder::GeometricShapeCylinder(const Vecd &center, const Vecd &axis, Real radius, Real halflength,
+                                               const std::string &name)
+    : GeometricCylinder(axis, radius, halflength), Shape(name), center_(center) {}
+//=================================================================================================//
+bool GeometricShapeCylinder::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
+{
+    return GeometricCylinder::checkContain(probe_point - center_);
+}
+//=================================================================================================//
+Vecd GeometricShapeCylinder::findClosestPoint(const Vecd &probe_point)
+{
+    return center_ + GeometricCylinder::findClosestPoint(probe_point - center_);
+}
+//=================================================================================================//
+BoundingBoxd GeometricShapeCylinder::findBounds()
+{
+    // Get bounds from base class (centered at origin)
+    BoundingBoxd base_bounds = GeometricCylinder::findBounds();
+    // Translate to actual center
+    return BoundingBoxd(center_ + base_bounds.lower_, center_ + base_bounds.upper_);
+}
+//=================================================================================================//
 } // namespace SPH

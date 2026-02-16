@@ -110,9 +110,9 @@ class RestartIOCK : public RestartIO
 
     virtual void writeToFile(size_t iteration_step) override
     {
-        for (size_t i = 0; i < bodies_.size(); ++i)
+        for (size_t i = 0; i < real_bodies_.size(); ++i)
         {
-            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+            BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
             prepare_variable_to_write_(base_particles.EvolvingVariables(), ExecutionPolicy{});
         }
         RestartIO::writeToFile(iteration_step);
@@ -122,9 +122,9 @@ class RestartIOCK : public RestartIO
     {
         RestartIO::readFromFile(iteration_step);
 
-        for (size_t i = 0; i < bodies_.size(); ++i)
+        for (size_t i = 0; i < real_bodies_.size(); ++i)
         {
-            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+            BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
             finalize_variables_after_read_(base_particles.EvolvingVariables(), ExecutionPolicy{});
         }
     };

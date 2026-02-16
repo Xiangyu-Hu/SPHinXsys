@@ -1,6 +1,7 @@
 #include "io_vtk.hpp"
 
 #include "io_environment.h"
+#include "sph_system.h"
 
 namespace SPH
 {
@@ -27,11 +28,14 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
                 out_file << " <PolyData>\n";
 
                 // physical time
-                out_file << "<FieldData>\n";
-                out_file << "<DataArray type=\"Float64\"  Name=\"TimeValue\" NumberOfTuples=\"1\" format=\"ascii\">\n";
-                out_file << std::fixed << std::setprecision(9) << sv_physical_time_->getValue() << "\n";
-                out_file << " </DataArray>\n";
-                out_file << "</FieldData>\n";
+                if (sph_system_.isPhysical())
+                {
+                    out_file << "<FieldData>\n";
+                    out_file << "<DataArray type=\"Float64\"  Name=\"TimeValue\" NumberOfTuples=\"1\" format=\"ascii\">\n";
+                    out_file << std::fixed << std::setprecision(9) << sv_physical_time_->getValue() << "\n";
+                    out_file << " </DataArray>\n";
+                    out_file << "</FieldData>\n";
+                }
 
                 size_t total_real_particles = base_particles.TotalRealParticles();
                 out_file << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles
