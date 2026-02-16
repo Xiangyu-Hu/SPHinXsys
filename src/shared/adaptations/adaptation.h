@@ -126,7 +126,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 {
   public:
     typedef AdaptiveSmoothingLength CellLinkedListIdentifier;
-    
+
     AdaptiveSmoothingLength(Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level);
     virtual ~AdaptiveSmoothingLength() {};
 
@@ -140,7 +140,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const override;
     DiscreteVariable<Real> *dvSmoothingLengthRatio() { return dv_h_ratio_; };
     DiscreteVariable<int> *dvSmoothingLengthLevel() { return dv_h_level_; };
-    Real MaxCutoffRadius() { return max_cutoff_radius_; };
+    Real MaxCutOffRadius() const { return max_cut_off_radius_; };
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override = 0;
 
     class ContinuousSmoothingLengthRatio
@@ -166,7 +166,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 
       public:
         SmoothedSpacing(AdaptiveSmoothingLength &encloser);
-        Real operator() (const Real &measure, const Real &transition_thickness);
+        Real operator()(const Real &measure, const Real &transition_thickness);
         Real FinestSpacingBound() const { return finest_spacing_bound_; };
     };
 
@@ -177,29 +177,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     int *h_level_;
     Real finest_spacing_bound_;   /**< the adaptation bound for finest particles */
     Real coarsest_spacing_bound_; /**< the adaptation bound for coarsest particles */
-    Real max_cutoff_radius_;
-};
-
-class AnisotropicAdaptation : public AdaptiveSmoothingLength
-{
-  public:
-    AnisotropicAdaptation(const Vecd &scaling, const Vecd &orientation,
-                          Real global_resolution, Real h_spacing_ratio_,
-                          Real refinement_to_global, int local_refinement_level);
-    virtual ~AnisotropicAdaptation() {};
-
-    virtual void initializeAdaptationVariables(BaseParticles &particles) override;
-
-    typedef AnisotropicAdaptation CellLinkedListIdentifier;
-
-  protected:
-    Vecd scaling_ref_;
-    Vecd orientation_ref_;
-    Matd deformation_matrix_ref_;
-
-    DiscreteVariable<Vecd> *dv_scaling_, *dv_orientation_;
-    DiscreteVariable<Matd> *dv_deformation_matrix_;
-    DiscreteVariable<Real> *dv_deformation_det_;
+    Real max_cut_off_radius_;     /**< the maximum cut-off radius determined by the reference smoothing length and kernel function */
 };
 
 /**
@@ -251,7 +229,7 @@ class AdaptiveNearSurface : public AdaptiveByShape
           public:
             template <class ExecutionPolicy, class EncloserType>
             ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-            Real operator() (const Vecd &position);
+            Real operator()(const Vecd &position);
         };
     };
 };

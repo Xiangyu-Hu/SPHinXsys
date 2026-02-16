@@ -223,8 +223,9 @@ CellLinkedList<AdaptiveSmoothingLength>::CellLinkedList(
     BoundingBoxd tentative_bounds, Real reference_grid_spacing, UnsignedInt total_levels,
     BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, reference_grid_spacing, total_levels),
-      h_ratio_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->dvSmoothingLengthRatio()->Data()),
-      h_level_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->dvSmoothingLengthLevel()->Data())
+      adaptation_(DynamicCast<AdaptiveSmoothingLength>(this, sph_adaptation)),
+      h_ratio_(adaptation_.dvSmoothingLengthRatio()->Data()),
+      h_level_(adaptation_.dvSmoothingLengthLevel()->Data())
 {
     UnsignedInt index_list_size = SMAX(base_particles.ParticlesBound(), total_number_of_cells_);
     dv_particle_index_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size);
@@ -266,7 +267,7 @@ void CellLinkedList<AdaptiveSmoothingLength>::InsertListDataEntry(
 CellLinkedList<AdaptiveSmoothingLength>::CellLinkedListMesh::CellLinkedListMesh(
     CellLinkedList<AdaptiveSmoothingLength> &cell_linked_list)
     : Mesh(cell_linked_list.getFinestMesh()),
-      coarsest_grid_spacing_(cell_linked_list.getCoarsestMesh().GridSpacing())
+      max_cut_off_(cell_linked_list.adaptation_.MaxCutOffRadius())
 {
     setLinearCellIndexOffset(0);
 }

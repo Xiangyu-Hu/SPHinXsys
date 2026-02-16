@@ -218,7 +218,7 @@ BoundingBoxi CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::
 BoundingBoxi CellLinkedList<AdaptiveSmoothingLength>::NeighborSearch::
     ContactSearchBox(const Vecd &src_cut_off) const
 {
-    Vecd cut_off = (Vecd::Ones() * CoarsestGridSpacing()).cwiseMax(src_cut_off);
+    Vecd cut_off = (Vecd::Ones() * max_cut_off_).cwiseMax(src_cut_off);
     return BoundingBoxi(ceil((cut_off - Vecd::Constant(Eps)).array() / grid_spacing_).cast<int>());
 }
 //=================================================================================================//

@@ -46,12 +46,11 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
     {
         derived_variable->exec();
     }
-    sph_system_.svPhysicalTime().setValue(iteration_step);
     writeWithFileName("ite_" + padValueWithZeros(iteration_step));
 };
 //=============================================================================================//
 RestartIO::RestartIO(SPHSystem &sph_system)
-    : BaseIO(sph_system), bodies_(sph_system.getSPHBodies()),
+    : BaseIO(sph_system), real_bodies_(sph_system.getRealBodies()),
       overall_file_path_(io_environment_.RestartFolder() + "/Restart_time_")
 {
     if (sph_system_.RestartStep() == 0)
@@ -59,9 +58,9 @@ RestartIO::RestartIO(SPHSystem &sph_system)
         io_environment_.resetForRestart();
     }
 
-    for (size_t i = 0; i < bodies_.size(); ++i)
+    for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
-        file_names_.push_back(io_environment_.RestartFolder() + "/" + bodies_[i]->getName() + "_rst_");
+        file_names_.push_back(io_environment_.RestartFolder() + "/" + real_bodies_[i]->getName() + "_rst_");
     }
 }
 //=============================================================================================//
@@ -76,7 +75,7 @@ void RestartIO::writeToFile(size_t iteration_step)
     out_file << std::fixed << std::setprecision(9) << sv_physical_time_->getValue() << "   \n";
     out_file.close();
 
-    for (size_t i = 0; i < bodies_.size(); ++i)
+    for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
         std::string filefullpath = file_names_[i] + padValueWithZeros(iteration_step) + ".xml";
 
@@ -84,7 +83,7 @@ void RestartIO::writeToFile(size_t iteration_step)
         {
             fs::remove(filefullpath);
         }
-        BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+        BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
         base_particles.writeParticlesToXmlForRestart(filefullpath);
     }
 }
@@ -109,7 +108,7 @@ Real RestartIO::readRestartTime(size_t restart_step)
 void RestartIO::readFromFile(size_t restart_step)
 {
     std::cout << "\n Reading restart files from the restart step = " << restart_step << std::endl;
-    for (size_t i = 0; i < bodies_.size(); ++i)
+    for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
         std::string filefullpath = file_names_[i] + padValueWithZeros(restart_step) + ".xml";
 
@@ -119,7 +118,7 @@ void RestartIO::readFromFile(size_t restart_step)
             std::cout << __FILE__ << ':' << __LINE__ << std::endl;
             exit(1);
         }
-        BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+        BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
         base_particles.readParticlesFromXmlForRestart(filefullpath);
     }
 }
