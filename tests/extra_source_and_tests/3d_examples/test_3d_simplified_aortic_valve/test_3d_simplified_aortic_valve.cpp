@@ -12,12 +12,12 @@ using Integration2ndHalfWithWallDissipativeRiemann = fluid_dynamics::Integration
 
 void aortic_valve_pulsatile_fsi(size_t res_factor, bool is_fsi = true, bool is_dissipative = false);
 
-int main(int argc, char *argv[]) { aortic_valve_pulsatile_fsi(1, true, true); }
+int main(int argc, char *argv[]) { aortic_valve_pulsatile_fsi(2, true, false); }
 struct parameters
 {
     const Real scale = 0.001;
     const Real stent_diameter = 25.0 * scale;
-    const Real leaflet_thickness = 1.0 * scale;
+    const Real leaflet_thickness = 2.0 * scale;
 
     const Real fluid_upstream_length = 1.5 * stent_diameter;
     const Real fluid_downstream_length = 1.5 * stent_diameter;
@@ -31,7 +31,7 @@ struct parameters
 
     // TIME PARAMETERS
     // To avoid instability, use dissipative Riemann for the beginning of the simulation
-    const Real dissipation_time = 0.1;
+    const Real dissipation_time = 0.2;
     const Real time_cycle = 1.0;
     size_t num_cycles = 1;
     const Real end_time = dissipation_time + time_cycle * num_cycles;
@@ -42,14 +42,14 @@ struct parameters
     Real shear_modulus = 2.4e6 * std::pow(0.15 * scale / leaflet_thickness, 3);
 
     // FILEPATH
-    std::string leaflet_1 = "leaflet_1";
-    std::string leaflet_2 = "leaflet_2";
-    std::string leaflet_3 = "leaflet_3";
+    std::string leaflet_1 = "leaflet_1_2mm";
+    std::string leaflet_2 = "leaflet_2_2mm";
+    std::string leaflet_3 = "leaflet_3_2mm";
     const std::vector<std::string> leaflet_names = {leaflet_1, leaflet_2, leaflet_3};
     const std::vector<std::string> seperate_leaflet_files = {
-        "input/simplified_leaflets/leaflet_1_remeshed.stl",
-        "input/simplified_leaflets/leaflet_2_remeshed.stl",
-        "input/simplified_leaflets/leaflet_3_remeshed.stl"};
+        "input/simplified_leaflets/leaflet_1_2mm.stl",
+        "input/simplified_leaflets/leaflet_2_2mm.stl",
+        "input/simplified_leaflets/leaflet_3_2mm.stl"};
 };
 
 //----------------------------------------------------------------------
@@ -304,6 +304,23 @@ find_earliest_output_file(const fs::path &root_output_folder, const std::string 
     return std::tuple(min_time, earliest);
 }
 
+class VariableUnitChange : public BaseDerivedVariable<Real>
+{
+  private:
+    Real *variable_;
+    Real unit_conversion_factor_;
+
+  public:
+    explicit VariableUnitChange(SPHBody &sph_body, const std::string &variable_name, const std::string &derived_variable_name, Real unit_conversion_factor)
+        : BaseDerivedVariable<Real>(sph_body, derived_variable_name),
+          variable_(particles_->getVariableDataByName<Real>(variable_name)),
+          unit_conversion_factor_(unit_conversion_factor) {};
+    void update(size_t index_i, Real dt = 0.0)
+    {
+        derived_variable_[index_i] = variable_[index_i] * unit_conversion_factor_;
+    }
+};
+
 void aortic_valve_pulsatile_fsi(size_t res_factor, bool is_fsi, bool is_dissipative)
 {
     const parameters params;
@@ -364,7 +381,9 @@ void aortic_valve_pulsatile_fsi(size_t res_factor, bool is_fsi, bool is_dissipat
 
     // SEPERATE LEAFLET OBJECTS
     std::cout << "leaflet generation starting" << std::endl;
-    const Real youngs_modulus = 9 * params.bulk_modulus * params.shear_modulus / (3 * params.bulk_modulus + params.shear_modulus);
+    const Real E_factor = 1.0;
+    const Real youngs_modulus = E_factor * 9 * params.bulk_modulus * params.shear_modulus / (3 * params.bulk_modulus + params.shear_modulus);
+    std::cout << "youngs modulus: " << youngs_modulus << std::endl;
     const Real poisson_ratio = 0.49; // use a larger poisson ratio
     NeoHookeanSolid material(params.rho0_s, youngs_modulus, poisson_ratio);
     std::vector<std::unique_ptr<ElasticSolidObject>> leaflet_vec;
@@ -421,7 +440,7 @@ void aortic_valve_pulsatile_fsi(size_t res_factor, bool is_fsi, bool is_dissipat
         .mesh = wall_shape,
         .material = &material,
         .resolution = resolution_wall,
-        .use_reload = true};
+        .use_reload = false};
     SolidObject wall_object(system, wall_input);
     std::cout << "wall generation done" << std::endl;
 
@@ -508,9 +527,11 @@ void aortic_valve_pulsatile_fsi(size_t res_factor, bool is_fsi, bool is_dissipat
     vtp_binary_output.addToWrite<Real>(fluid_block, "Pressure");
     vtp_binary_output.addToWrite<Vecd>(fluid_block, "Velocity");
     vtp_binary_output.addToWrite<Real>(fluid_block, "Density");
+    vtp_binary_output.addToWrite<Real>(fluid_block, "VolumetricMeasure");
     vtp_binary_output.addToWrite<int>(fluid_block, "Indicator");
     vtp_binary_output.addToWrite<int>(fluid_block, "BufferIndicator");
     vtp_binary_output.addToWrite<Vec3d>(fluid_block, "ForcePrior");
+    vtp_binary_output.addDerivedVariableRecording<SimpleDynamics<VariableUnitChange>>(fluid_block, "VolumetricMeasure", "VolumeinMM3", 1e9);
     for (const auto &leaflet : leaflet_vec)
     {
         vtp_binary_output.addToWrite<Vecd>(leaflet->get_body(), "Velocity");
@@ -608,8 +629,8 @@ void aortic_valve_pulsatile_fsi(size_t res_factor, bool is_fsi, bool is_dissipat
         run_fluid_relaxation();
     for (const auto &alg : fsi_algorithm_vec)
         alg->get_contact_relation().updateConfiguration();
-
-    vtp_binary_output.writeToFile(0);
+    update_fluid_density.exec();
+    vtp_binary_output.writeToFile();
 
     //----------------------------------------------------------------------
     //	Main loop of FSI starts here.
@@ -702,7 +723,7 @@ void aortic_valve_pulsatile_fsi(size_t res_factor, bool is_fsi, bool is_dissipat
                               << "\tTime = " << physical_time
                               << "\tDt = " << Dt
                               << "\tdt = " << dt;
-                    if (is_fsi && physical_time > params.dissipation_time)
+                    if (is_fsi && physical_time)
                         std::cout << "\tdt_s = " << dt_s;
                     std::cout << "\tU_max = " << *write_maximum_speed.getObservedQuantity() << std::endl;
                 }
@@ -712,7 +733,7 @@ void aortic_valve_pulsatile_fsi(size_t res_factor, bool is_fsi, bool is_dissipat
                 transport_velocity_correction.exec(Dt);
 
                 // FSI
-                if (is_fsi && physical_time > params.dissipation_time)
+                if (is_fsi)
                 {
                     for (auto &alg : fsi_algorithm_vec)
                         alg->exec_viscous_force();
@@ -744,12 +765,12 @@ void aortic_valve_pulsatile_fsi(size_t res_factor, bool is_fsi, bool is_dissipat
                         right_inflow_pressure_condition.exec(dt);
                         inflow_velocity_condition.exec();
                     }
-                    if (is_fsi && physical_time > params.dissipation_time)
+                    if (is_fsi)
                         pressure_force_from_fluid_exec();
                     density_relaxation_exec(dt);
 
                     /** Solid dynamics. */
-                    if (is_fsi && physical_time > params.dissipation_time)
+                    if (is_fsi)
                     {
                         inner_ite_dt_s = 0;
                         Real dt_s_sum = 0.0;
@@ -773,6 +794,10 @@ void aortic_valve_pulsatile_fsi(size_t res_factor, bool is_fsi, bool is_dissipat
                                 leaflet->exec_stress_first(dt_s);
                             for (auto &constraint : fixed_constraint_vec)
                                 constraint->exec();
+                            // for (auto &alg : fsi_algorithm_vec)
+                            //     alg->damping.exec(dt_s);
+                            // for (auto &constraint : fixed_constraint_vec)
+                            //     constraint->exec();
                             for (auto &leaflet : leaflet_vec)
                                 leaflet->exec_stress_second(dt_s);
 
@@ -782,15 +807,11 @@ void aortic_valve_pulsatile_fsi(size_t res_factor, bool is_fsi, bool is_dissipat
                         for (auto &alg : fsi_algorithm_vec)
                             alg->update_averages(dt);
                     }
+
                     relaxation_time += dt;
                     integration_time += dt;
                     physical_time += dt;
                     ++inner_ite_dt;
-                }
-
-                if (is_fsi && physical_time > params.dissipation_time)
-                {
-                    record_newest_steps();
                 }
 
                 ++number_of_iterations;
@@ -803,13 +824,13 @@ void aortic_valve_pulsatile_fsi(size_t res_factor, bool is_fsi, bool is_dissipat
                 right_bidirection_buffer.deletion.exec();
 
                 fluid_block.updateCellLinkedList();
-                if (is_fsi && physical_time > params.dissipation_time)
+                if (is_fsi)
                 {
                     for (auto &leaflet : leaflet_vec)
                         leaflet->get_body().updateCellLinkedList();
                 }
                 fluid_block_complex.updateConfiguration();
-                if (is_fsi && physical_time > params.dissipation_time)
+                if (is_fsi)
                 {
                     for (const auto &alg : fsi_algorithm_vec)
                         alg->get_contact_relation().updateConfiguration();
@@ -820,7 +841,7 @@ void aortic_valve_pulsatile_fsi(size_t res_factor, bool is_fsi, bool is_dissipat
             }
             /** write run-time observation into file */
             vtp_binary_output.writeToFile();
-            //  restart_io.writeToFile();
+            //   restart_io.writeToFile();
         }
         std::cout << "-----------FSI FINISHED-----------" << std::endl;
     };
