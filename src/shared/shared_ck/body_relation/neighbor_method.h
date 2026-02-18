@@ -61,14 +61,14 @@ class Neighbor<Base>
       protected:
         Vecd *src_pos_, *tar_pos_;
 
-        Real W(const Real &inv_h_squared, const Vec2d &displacement, const Real &inv_h) const;
-        Real W(const Real &inv_h_cubed, const Vec3d &displacement, const Real &inv_h) const;
-        Real W0(const Real &inv_h_squared, const Vec2d &) const;
-        Real W0(const Real &inv_h_cubed, const Vec3d &) const;
-        Real dW(const Real &inv_h_cubed, const Vec2d &displacement, const Real &inv_h) const;
-        Real dW(const Real &inv_h_fourth, const Vec3d &displacement, const Real &inv_h) const;
-        Real d2W(const Real &inv_h_fourth, const Vec2d &displacement, const Real &inv_h) const;
-        Real d2W(const Real &inv_h_fifth, const Vec3d &displacement, const Real &inv_h) const;
+        Real W2D(const Real &inv_h_squared, const Real &scaled_r) const;
+        Real W3D(const Real &inv_h_cubed, const Real &scaled_r) const;
+        Real W02D(const Real &inv_h_squared) const;
+        Real W03D(const Real &inv_h_cubed) const;
+        Real dW2D(const Real &inv_h_cubed, const Real &scaled_r) const;
+        Real dW3D(const Real &inv_h_fourth, const Real &scaled_r) const;
+        Real d2W2D(const Real &inv_h_fourth, const Real &scaled_r) const;
+        Real d2W3D(const Real &inv_h_fifth, const Real &scaled_r) const;
     };
 
   protected:

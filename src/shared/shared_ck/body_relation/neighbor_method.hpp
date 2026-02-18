@@ -15,52 +15,52 @@ Neighbor<Base>::SmoothingKernel::SmoothingKernel(
       src_pos_(encloser.dv_src_pos_->DelegatedData(ex_policy)),
       tar_pos_(encloser.dv_tar_pos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-inline Real Neighbor<Base>::SmoothingKernel::W(
-    const Real &inv_h_squared, const Vec2d &displacement, const Real &inv_h) const
+inline Real Neighbor<Base>::SmoothingKernel::W2D(
+    const Real &inv_h_squared, const Real &scaled_r) const
 {
-    return inv_h_squared * dimension_factor_2D_ * normalized_W((displacement * inv_h).norm());
+    return inv_h_squared * dimension_factor_2D_ * normalized_W(scaled_r);
 }
 //=================================================================================================//
-inline Real Neighbor<Base>::SmoothingKernel::W(
-    const Real &inv_h_cubed, const Vec3d &displacement, const Real &inv_h) const
+inline Real Neighbor<Base>::SmoothingKernel::W3D(
+    const Real &inv_h_cubed, const Real &scaled_r) const
 {
-    return inv_h_cubed * dimension_factor_3D_ * normalized_W((displacement * inv_h).norm());
+    return inv_h_cubed * dimension_factor_3D_ * normalized_W(scaled_r);
 }
 //=================================================================================================//
-inline Real Neighbor<Base>::SmoothingKernel::W0(
-    const Real &inv_h_squared, const Vec2d &) const
+inline Real Neighbor<Base>::SmoothingKernel::W02D(
+    const Real &inv_h_squared) const
 {
     return inv_h_squared * dimension_factor_2D_ * normalized_W(0);
 }
 //=================================================================================================//
-inline Real Neighbor<Base>::SmoothingKernel::W0(
-    const Real &inv_h_cubed, const Vec3d &) const
+inline Real Neighbor<Base>::SmoothingKernel::W03D(
+    const Real &inv_h_cubed) const
 {
     return inv_h_cubed * dimension_factor_3D_ * normalized_W(0);
 }
 //=================================================================================================//
-inline Real Neighbor<Base>::SmoothingKernel::dW(
-    const Real &inv_h_cubed, const Vec2d &displacement, const Real &inv_h) const
+inline Real Neighbor<Base>::SmoothingKernel::dW2D(
+    const Real &inv_h_cubed, const Real &scaled_r) const
 {
-    return inv_h_cubed * dimension_factor_2D_ * normalized_dW((displacement * inv_h).norm());
+    return inv_h_cubed * dimension_factor_2D_ * normalized_dW(scaled_r);
 }
 //=================================================================================================//
-inline Real Neighbor<Base>::SmoothingKernel::dW(
-    const Real &inv_h_fourth, const Vec3d &displacement, const Real &inv_h) const
+inline Real Neighbor<Base>::SmoothingKernel::dW3D(
+    const Real &inv_h_fourth, const Real &scaled_r) const
 {
-    return inv_h_fourth * dimension_factor_3D_ * normalized_dW((displacement * inv_h).norm());
+    return inv_h_fourth * dimension_factor_3D_ * normalized_dW(scaled_r);
 }
 //=================================================================================================//
-inline Real Neighbor<Base>::SmoothingKernel::d2W(
-    const Real &inv_h_fourth, const Vec2d &displacement, const Real &inv_h) const
+inline Real Neighbor<Base>::SmoothingKernel::d2W2D(
+    const Real &inv_h_fourth, const Real &scaled_r) const
 {
-    return inv_h_fourth * dimension_factor_2D_ * normalized_d2W((displacement * inv_h).norm());
+    return inv_h_fourth * dimension_factor_2D_ * normalized_d2W(scaled_r);
 }
 //=================================================================================================//
-inline Real Neighbor<Base>::SmoothingKernel::d2W(
-    const Real &inv_h_fifth, const Vec3d &displacement, const Real &inv_h) const
+inline Real Neighbor<Base>::SmoothingKernel::d2W3D(
+    const Real &inv_h_fifth, const Real &scaled_r) const
 {
-    return inv_h_fifth * dimension_factor_3D_ * normalized_d2W((displacement * inv_h).norm());
+    return inv_h_fifth * dimension_factor_3D_ * normalized_d2W(scaled_r);
 }
 //=================================================================================================//
 template <typename SourceIdentifier, typename TargetIdentifier>
@@ -86,8 +86,8 @@ Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::SmoothingKernel(
       inv_h_cubed_(inv_h_squared_ * inv_h_), inv_h_fourth_(inv_h_cubed_ * inv_h_),
       inv_h_fifth_(inv_h_fourth_ * inv_h_) {}
 //=================================================================================================//
-inline Vecd Neighbor<SPHAdaptation, SPHAdaptation>::
-    SmoothingKernel::nablaW_ij(UnsignedInt i, UnsignedInt j) const
+inline Vecd Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::
+    nablaW_ij(UnsignedInt i, UnsignedInt j) const
 {
     Vecd disp = vec_r_ij(i, j);
     return dW(disp) * disp.normalized();
@@ -96,49 +96,49 @@ inline Vecd Neighbor<SPHAdaptation, SPHAdaptation>::
 inline Real Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::
     W0(UnsignedInt i, const Vec2d &zero) const
 {
-    return BaseKernel::W0(src_inv_h_squared_, zero);
+    return BaseKernel::W02D(src_inv_h_squared_);
 }
 //=================================================================================================//
 inline Real Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::
     W0(UnsignedInt i, const Vec3d &zero) const
 {
-    return BaseKernel::W0(src_inv_h_cubed_, zero);
+    return BaseKernel::W03D(src_inv_h_cubed_);
 }
 //=================================================================================================//
 inline Real Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::
     W(const Vec2d &displacement) const
 {
-    return BaseKernel::W(inv_h_squared_, displacement, inv_h_);
+    return BaseKernel::W2D(inv_h_squared_, displacement.norm() * inv_h_);
 };
 //=================================================================================================//
 inline Real Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::
     W(const Vec3d &displacement) const
 {
-    return BaseKernel::W(inv_h_cubed_, displacement, inv_h_);
+    return BaseKernel::W3D(inv_h_cubed_, displacement.norm() * inv_h_);
 };
 //=================================================================================================//
 inline Real Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::
     dW(const Vec2d &displacement) const
 {
-    return BaseKernel::dW(inv_h_cubed_, displacement, inv_h_);
+    return BaseKernel::dW2D(inv_h_squared_, displacement.norm() * inv_h_);
 };
 //=================================================================================================//
 inline Real Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::
     dW(const Vec3d &displacement) const
 {
-    return BaseKernel::dW(inv_h_fourth_, displacement, inv_h_);
+    return BaseKernel::dW3D(inv_h_fourth_, displacement.norm() * inv_h_);
 };
 //=================================================================================================//
 inline Real Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::
     d2W(const Vec2d &displacement) const
 {
-    return BaseKernel::d2W(inv_h_fourth_, displacement, inv_h_);
+    return BaseKernel::d2W2D(inv_h_fourth_, displacement.norm() * inv_h_);
 }
 //=================================================================================================//
 inline Real Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::
     d2W(const Vec3d &displacement) const
 {
-    return BaseKernel::d2W(inv_h_fifth_, displacement, inv_h_);
+    return BaseKernel::d2W3D(inv_h_fifth_, displacement.norm() * inv_h_);
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
@@ -224,7 +224,7 @@ Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     W0(UnsignedInt i, const Vec2d &zero) const
 {
     Real inv_h_i = src_h_ratio_(i) * src_inv_h_ref_;
-    return src_h_ratio_.KernelTransform(i) * BaseKernel::W0(math::pow(inv_h_i, 2), zero);
+    return src_h_ratio_.KernelTransform(i) * BaseKernel::W02D(math::pow(inv_h_i, 2));
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
@@ -232,49 +232,49 @@ Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     W0(UnsignedInt i, const Vec3d &zero) const
 {
     Real inv_h_i = src_h_ratio_(i) * src_inv_h_ref_;
-    return src_h_ratio_.KernelTransform(i) * BaseKernel::W0(math::pow(inv_h_i, 3), zero);
+    return src_h_ratio_.KernelTransform(i) * BaseKernel::W03D(math::pow(inv_h_i, 3));
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     W(const Vec2d &disp_transform, Real inv_h) const
 {
-    return BaseKernel::W(math::pow(inv_h, 2), disp_transform, inv_h);
+    return BaseKernel::W2D(math::pow(inv_h, 2), disp_transform.norm() * inv_h);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     W(const Vec3d &disp_transform, Real inv_h) const
 {
-    return BaseKernel::W(math::pow(inv_h, 3), disp_transform, inv_h);
+    return BaseKernel::W3D(math::pow(inv_h, 3), disp_transform.norm() * inv_h);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     dW(const Vec2d &disp_transform, Real inv_h) const
 {
-    return BaseKernel::dW(math::pow(inv_h, 3), disp_transform, inv_h);
+    return BaseKernel::dW2D(math::pow(inv_h, 3), disp_transform.norm() * inv_h);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     dW(const Vec3d &disp_transform, Real inv_h) const
 {
-    return BaseKernel::dW(math::pow(inv_h, 4), disp_transform, inv_h);
+    return BaseKernel::dW3D(math::pow(inv_h, 4), disp_transform.norm() * inv_h);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     d2W(const Vec2d &disp_transform, Real inv_h) const
 {
-    return BaseKernel::d2W(math::pow(inv_h, 4), disp_transform, inv_h);
+    return BaseKernel::d2W2D(math::pow(inv_h, 4), disp_transform.norm() * inv_h);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     d2W(const Vec3d &disp_transform, Real inv_h) const
 {
-    return BaseKernel::d2W(math::pow(inv_h, 5), disp_transform, inv_h);
+    return BaseKernel::d2W3D(math::pow(inv_h, 5), disp_transform.norm() * inv_h);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
