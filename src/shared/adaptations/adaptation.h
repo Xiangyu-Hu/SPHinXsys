@@ -107,9 +107,9 @@ class SPHAdaptation
         template <class ExecutionPolicy>
         UnitSmoothingLengthRatio(const ExecutionPolicy &ex_policy, SPHAdaptation &adaptation){};
         Real operator()(UnsignedInt /*particle_index_i*/) const { return 1.0; };
-        const Vecd &scaleDisplacement(const Vecd &original, UnsignedInt index_i) const { return original; };
-        Real KernelScale(UnsignedInt index_i) const { return 1.0; };
-        Real GradientScale(UnsignedInt index_i) const { return 1.0; };
+        const Vecd &transformDisplacement(const Vecd &original, UnsignedInt index_i) const { return original; };
+        Real KernelTransform(UnsignedInt index_i) const { return 1.0; };
+        Real GradientTransform(UnsignedInt index_i) const { return 1.0; };
     };
 
     typedef UnitSmoothingLengthRatio SmoothingLengthRatioType;
@@ -290,9 +290,9 @@ class AnisotropicAdaptation : public AdaptiveSmoothingLength
       public:
         template <class ExecutionPolicy>
         AnisotropicSmoothingLengthRatio(const ExecutionPolicy &ex_policy, AnisotropicAdaptation &adaptation);
-        Vecd scaleDisplacement(const Vecd &original, UnsignedInt index_i) const;
-        Real KernelScale(UnsignedInt index_i) const;
-        Matd GradientScale(UnsignedInt index_i) const;
+        Vecd transformDisplacement(const Vecd &original, UnsignedInt index_i) const;
+        Real KernelTransform(UnsignedInt index_i) const;
+        Matd GradientTransform(UnsignedInt index_i) const;
     };
 
     typedef AnisotropicSmoothingLengthRatio SmoothingLengthRatioType;

@@ -56,21 +56,21 @@ AnisotropicAdaptation::AnisotropicSmoothingLengthRatio::
       deformation_det_(adaptation.dv_deformation_det_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 inline Vecd AnisotropicAdaptation::AnisotropicSmoothingLengthRatio::
-    NormalizedDisplacement(const Vecd &original, UnsignedInt index_i) const
+    transformDisplacement(const Vecd &original, UnsignedInt index_i) const
 {
     return deformation_matrix_[index_i] * original;
 }
 //=================================================================================================//
 inline Real AnisotropicAdaptation::AnisotropicSmoothingLengthRatio::
-    KernelScale(UnsignedInt index_i) const
+    KernelTransform(UnsignedInt index_i) const
 {
     return deformation_det_[index_i];
 }
 //=================================================================================================//
 inline Matd AnisotropicAdaptation::AnisotropicSmoothingLengthRatio::
-    GradientScale(UnsignedInt index_i) const
+    GradientTransform(UnsignedInt index_i) const
 {
-    return deformation_det_[index_i] * deformation_matrix_[index_i];
+    return deformation_matrix_[index_i];
 }
 //=================================================================================================//
 } // namespace SPH
