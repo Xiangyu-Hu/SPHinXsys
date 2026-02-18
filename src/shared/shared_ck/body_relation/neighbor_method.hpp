@@ -86,6 +86,13 @@ Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::SmoothingKernel(
       inv_h_cubed_(inv_h_squared_ * inv_h_), inv_h_fourth_(inv_h_cubed_ * inv_h_),
       inv_h_fifth_(inv_h_fourth_ * inv_h_) {}
 //=================================================================================================//
+inline Vecd Neighbor<SPHAdaptation, SPHAdaptation>::
+    SmoothingKernel::nablaW_ij(UnsignedInt i, UnsignedInt j) const
+{
+    Vecd disp = vec_r_ij(i, j);
+    return dW(disp) * disp.normalized();
+}
+//=================================================================================================//
 inline Real Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::
     W0(UnsignedInt i, const Vec2d &zero) const
 {

@@ -97,6 +97,7 @@ class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
         template <class ExecutionPolicy, class EncloserType>
         SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         SmoothingKernel(Neighbor<SPHAdaptation, SPHAdaptation> &encloser);
+        inline Vecd nablaW_ij(UnsignedInt i, UnsignedInt j) const;
         inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return W(vec_r_ij(i, j)); };
         inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return dW(vec_r_ij(i, j)); };
         Real W0(UnsignedInt i, const Vec2d &zero) const;
