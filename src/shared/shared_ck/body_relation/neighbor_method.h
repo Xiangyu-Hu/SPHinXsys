@@ -178,12 +178,12 @@ class Neighbor<SourceAdaptationType, TargetAdaptationType> : public Neighbor<Bas
         TargetSmoothingLengthRatio tar_h_ratio_;
 
         std::tuple<Vecd, Real, bool> getTransformedMeasure(UnsignedInt i, UnsignedInt j) const;
-        Real W(const Vec2d &disp_transform, Real inv_h, Real kernel_transform) const;
-        Real W(const Vec3d &disp_transform, Real inv_h, Real kernel_transform) const;
-        Real dW(const Vec2d &disp_transform, Real inv_h, Real kernel_transform) const;
-        Real dW(const Vec3d &disp_transform, Real inv_h, Real kernel_transform) const;
-        Real d2W(const Vec2d &disp_transform, Real inv_h, Real kernel_transform) const;
-        Real d2W(const Vec3d &disp_transform, Real inv_h, Real kernel_transform) const;
+        Real W(const Vec2d &disp_transform, Real inv_h) const;
+        Real W(const Vec3d &disp_transform, Real inv_h) const;
+        Real dW(const Vec2d &disp_transform, Real inv_h) const;
+        Real dW(const Vec3d &disp_transform, Real inv_h) const;
+        Real d2W(const Vec2d &disp_transform, Real inv_h) const;
+        Real d2W(const Vec3d &disp_transform, Real inv_h) const;
     };
     typedef SmoothingKernel NeighborKernel;
 

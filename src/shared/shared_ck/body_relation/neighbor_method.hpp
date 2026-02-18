@@ -193,11 +193,11 @@ inline Vecd Neighbor<SourceAdaptationType, TargetAdaptationType>::
     const Vecd &disp_transform = std::get<0>(measure);
     if (std::get<2>(measure))
     {
-        return dW(disp_transform, std::get<1>(measure), src_h_ratio_.KernelTransform(i)) *
+        return src_h_ratio_.KernelTransform(i) * dW(disp_transform, std::get<1>(measure)) *
                src_h_ratio_.GradientTransform(i) * disp_transform.normalized();
     };
 
-    return dW(disp_transform, std::get<1>(measure), tar_h_ratio_.KernelTransform(j)) *
+    return tar_h_ratio_.KernelTransform(j) * dW(disp_transform, std::get<1>(measure)) *
            tar_h_ratio_.GradientTransform(j) * disp_transform.normalized();
 }
 //=================================================================================================//
@@ -207,7 +207,7 @@ Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
 {
     auto measure = getTransformedMeasure(i, j);
     Real kernel_transform = std::get<2>(measure) ? src_h_ratio_.KernelTransform(i) : tar_h_ratio_.KernelTransform(j);
-    return W(std::get<0>(measure), std::get<1>(measure), kernel_transform);
+    return kernel_transform * W(std::get<0>(measure), std::get<1>(measure));
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
@@ -216,7 +216,7 @@ Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
 {
     auto measure = getTransformedMeasure(i, j);
     Real kernel_transform = std::get<2>(measure) ? src_h_ratio_.KernelTransform(i) : tar_h_ratio_.KernelTransform(j);
-    return dW(std::get<0>(measure), std::get<1>(measure), kernel_transform);
+    return kernel_transform * dW(std::get<0>(measure), std::get<1>(measure));
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
@@ -224,7 +224,7 @@ Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     W0(UnsignedInt i, const Vec2d &zero) const
 {
     Real inv_h_i = src_h_ratio_(i) * src_inv_h_ref_;
-    return BaseKernel::W0(src_h_ratio_.KernelTransform(i) * math::pow(inv_h_i, 2), zero);
+    return src_h_ratio_.KernelTransform(i) * BaseKernel::W0(math::pow(inv_h_i, 2), zero);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
@@ -232,49 +232,49 @@ Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     W0(UnsignedInt i, const Vec3d &zero) const
 {
     Real inv_h_i = src_h_ratio_(i) * src_inv_h_ref_;
-    return BaseKernel::W0(src_h_ratio_.KernelTransform(i) * math::pow(inv_h_i, 3), zero);
+    return src_h_ratio_.KernelTransform(i) * BaseKernel::W0(math::pow(inv_h_i, 3), zero);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
-    W(const Vec2d &disp_transform, Real inv_h, Real kernel_transform) const
+    W(const Vec2d &disp_transform, Real inv_h) const
 {
-    return BaseKernel::W(kernel_transform * math::pow(inv_h, 2), disp_transform, inv_h);
+    return BaseKernel::W(math::pow(inv_h, 2), disp_transform, inv_h);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
-    W(const Vec3d &disp_transform, Real inv_h, Real kernel_transform) const
+    W(const Vec3d &disp_transform, Real inv_h) const
 {
-    return BaseKernel::W(kernel_transform * math::pow(inv_h, 3), disp_transform, inv_h);
+    return BaseKernel::W(math::pow(inv_h, 3), disp_transform, inv_h);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
-    dW(const Vec2d &disp_transform, Real inv_h, Real kernel_transform) const
+    dW(const Vec2d &disp_transform, Real inv_h) const
 {
-    return BaseKernel::dW(kernel_transform * math::pow(inv_h, 3), disp_transform, inv_h);
+    return BaseKernel::dW(math::pow(inv_h, 3), disp_transform, inv_h);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
-    dW(const Vec3d &disp_transform, Real inv_h, Real kernel_transform) const
+    dW(const Vec3d &disp_transform, Real inv_h) const
 {
-    return BaseKernel::dW(kernel_transform * math::pow(inv_h, 4), disp_transform, inv_h);
+    return BaseKernel::dW(math::pow(inv_h, 4), disp_transform, inv_h);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
-    d2W(const Vec2d &disp_transform, Real inv_h, Real kernel_transform) const
+    d2W(const Vec2d &disp_transform, Real inv_h) const
 {
-    return BaseKernel::d2W(kernel_transform * math::pow(inv_h, 4), disp_transform, inv_h);
+    return BaseKernel::d2W(math::pow(inv_h, 4), disp_transform, inv_h);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
-    d2W(const Vec3d &disp_transform, Real inv_h, Real kernel_transform) const
+    d2W(const Vec3d &disp_transform, Real inv_h) const
 {
-    return BaseKernel::d2W(kernel_transform * math::pow(inv_h, 5), disp_transform, inv_h);
+    return BaseKernel::d2W(math::pow(inv_h, 5), disp_transform, inv_h);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
