@@ -56,9 +56,15 @@ AnisotropicAdaptation::AnisotropicSmoothingLengthRatio::
       deformation_det_(adaptation.dv_deformation_det_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 inline Vecd AnisotropicAdaptation::AnisotropicSmoothingLengthRatio::
-    transformDisplacement(const Vecd &original, UnsignedInt index_i) const
+    transform(const Vecd &original, UnsignedInt index_i) const
 {
     return deformation_matrix_[index_i] * original;
+}
+//=================================================================================================//
+inline Vecd AnisotropicAdaptation::AnisotropicSmoothingLengthRatio::
+    inverseTransform(const Vecd &original, UnsignedInt index_i) const
+{
+    return deformation_matrix_[index_i].inverse() * original;
 }
 //=================================================================================================//
 inline Real AnisotropicAdaptation::AnisotropicSmoothingLengthRatio::

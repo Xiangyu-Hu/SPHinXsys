@@ -165,6 +165,7 @@ class Neighbor<SourceAdaptationType, TargetAdaptationType> : public Neighbor<Bas
       public:
         template <class ExecutionPolicy, class EncloserType>
         SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        inline Vecd nablaW_ij(UnsignedInt i, UnsignedInt j) const;
         inline Real W_ij(UnsignedInt i, UnsignedInt j) const;
         inline Real dW_ij(UnsignedInt i, UnsignedInt j) const;
         Real W0(UnsignedInt i, const Vec2d &zero) const;
@@ -175,13 +176,13 @@ class Neighbor<SourceAdaptationType, TargetAdaptationType> : public Neighbor<Bas
         SourceSmoothingLengthRatio src_h_ratio_;
         TargetSmoothingLengthRatio tar_h_ratio_;
 
-        Real invSmoothingLength(UnsignedInt i, UnsignedInt j) const;
-        Real W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
-        Real W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
-        Real dW(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
-        Real dW(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
-        Real d2W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
-        Real d2W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
+        std::tuple<Vecd, Real, bool> getTransformedMeasure(UnsignedInt i, UnsignedInt j) const;
+        Real W(const Vec2d &disp_transform, Real inv_h, Real kernel_transform) const;
+        Real W(const Vec3d &disp_transform, Real inv_h, Real kernel_transform) const;
+        Real dW(const Vec2d &disp_transform, Real inv_h, Real kernel_transform) const;
+        Real dW(const Vec3d &disp_transform, Real inv_h, Real kernel_transform) const;
+        Real d2W(const Vec2d &disp_transform, Real inv_h, Real kernel_transform) const;
+        Real d2W(const Vec3d &disp_transform, Real inv_h, Real kernel_transform) const;
     };
     typedef SmoothingKernel NeighborKernel;
 
