@@ -189,34 +189,48 @@ template <class SourceAdaptationType, class TargetAdaptationType>
 inline Vecd Neighbor<SourceAdaptationType, TargetAdaptationType>::
     SmoothingKernel::nablaW_ij(UnsignedInt i, UnsignedInt j) const
 {
-    auto measure = getTransformedMeasure(i, j);
-    const Vecd &disp_transform = std::get<0>(measure);
-    if (std::get<2>(measure))
+    if constexpr (!std::is_base_of_v<AnisotropicAdaptation, SourceAdaptationType> &&
+                  !std::is_base_of_v<AnisotropicAdaptation, TargetAdaptationType>)
     {
-        return src_h_ratio_.KernelTransform(i) * dW(disp_transform, std::get<1>(measure)) *
-               src_h_ratio_.GradientTransform(i) * disp_transform.normalized();
-    };
+        return dW(vec_r_ij(i, j), invSmoothingLength(i, j));
+    }
+    else
+    {
+        auto measure = getTransformedMeasure(i, j);
+        const Vecd &disp_transform = std::get<0>(measure);
+        if (std::get<2>(measure))
+        {
+            return src_h_ratio_.KernelTransform(i) * dW(disp_transform, std::get<1>(measure)) *
+                   src_h_ratio_.GradientTransform(i) * disp_transform.normalized();
+        };
 
-    return tar_h_ratio_.KernelTransform(j) * dW(disp_transform, std::get<1>(measure)) *
-           tar_h_ratio_.GradientTransform(j) * disp_transform.normalized();
+        return tar_h_ratio_.KernelTransform(j) * dW(disp_transform, std::get<1>(measure)) *
+               tar_h_ratio_.GradientTransform(j) * disp_transform.normalized();
+    }
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     W_ij(UnsignedInt i, UnsignedInt j) const
 {
-    auto measure = getTransformedMeasure(i, j);
-    Real kernel_transform = std::get<2>(measure) ? src_h_ratio_.KernelTransform(i) : tar_h_ratio_.KernelTransform(j);
-    return kernel_transform * W(std::get<0>(measure), std::get<1>(measure));
+    if constexpr (!std::is_base_of_v<AnisotropicAdaptation, SourceAdaptationType> &&
+                  !std::is_base_of_v<AnisotropicAdaptation, TargetAdaptationType>)
+    {
+        return W(vec_r_ij(i, j), invSmoothingLength(i, j));
+    }
+    else
+    {
+        auto measure = getTransformedMeasure(i, j);
+        Real kernel_transform = std::get<2>(measure) ? src_h_ratio_.KernelTransform(i) : tar_h_ratio_.KernelTransform(j);
+        return kernel_transform * W(std::get<0>(measure), std::get<1>(measure));
+    }
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     dW_ij(UnsignedInt i, UnsignedInt j) const
 {
-    auto measure = getTransformedMeasure(i, j);
-    Real kernel_transform = std::get<2>(measure) ? src_h_ratio_.KernelTransform(i) : tar_h_ratio_.KernelTransform(j);
-    return kernel_transform * dW(std::get<0>(measure), std::get<1>(measure));
+    return dW(vec_r_ij(i, j), invSmoothingLength(i, j));
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
@@ -289,6 +303,17 @@ std::tuple<Vecd, Real, bool> Neighbor<SourceAdaptationType, TargetAdaptationType
     return disp_i.squaredNorm() * inv_h_i * inv_h_i < disp_j.squaredNorm() * inv_h_j * inv_h_j
                ? std::tuple<Vecd, Real, bool>(disp_i, inv_h_i, true)
                : std::tuple<Vecd, Real, bool>(disp_j, inv_h_j, false);
+}
+//=================================================================================================//
+template <class SourceAdaptationType, class TargetAdaptationType>
+template <
+    typename U, typename V,
+    std::enable_if_t<
+        !std::is_base_of_v<AnisotropicAdaptation, U> && !std::is_base_of_v<AnisotropicAdaptation, V>, int>>
+Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
+    invSmoothingLength(UnsignedInt i, UnsignedInt j) const
+{
+    return SMIN(src_h_ratio_(i) * src_inv_h_ref_, tar_h_ratio_(j) * tar_inv_h_ref_);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>

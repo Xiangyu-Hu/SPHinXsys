@@ -35,6 +35,7 @@
 namespace SPH
 {
 class SPHAdaptation;
+class AnisotropicAdaptation;
 
 template <typename...>
 class Neighbor;
@@ -177,7 +178,15 @@ class Neighbor<SourceAdaptationType, TargetAdaptationType> : public Neighbor<Bas
         SourceSmoothingLengthRatio src_h_ratio_;
         TargetSmoothingLengthRatio tar_h_ratio_;
 
+        // Used when at least one of adaptations are anisotropic.
         std::tuple<Vecd, Real, bool> getTransformedMeasure(UnsignedInt i, UnsignedInt j) const;
+
+        template < // Only permited to use when both adaptations are isotropic.
+            typename U = SourceAdaptationType, typename V = TargetAdaptationType,
+            std::enable_if_t<
+                !std::is_base_of_v<AnisotropicAdaptation, U> && !std::is_base_of_v<AnisotropicAdaptation, V>, int> = 0>
+        Real invSmoothingLength(UnsignedInt i, UnsignedInt j) const;
+
         Real W(const Vec2d &disp_transform, Real inv_h) const;
         Real W(const Vec3d &disp_transform, Real inv_h) const;
         Real dW(const Vec2d &disp_transform, Real inv_h) const;
