@@ -79,8 +79,8 @@ void RepulsionForceCK<Contact<WithUpdate, Parameters...>>::
         Real impedance_p = 0.5 * numerical_damping_ * (impedance_ + contact_impedance_) *
                            (vel_[index_i] - contact_vel_[index_j]).dot(-e_ij);
         // contact force to mimic pressure but pointing to the average normal direction
-        force -= 2.0 * (p_star + impedance_p) * n_ave * n_ave.dot(e_ij) *
-                 this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
+        force -= 2.0 * (p_star + impedance_p) * n_ave *
+                 n_ave.dot(this->nablaW_ij(index_i, index_j)) * contact_Vol_[index_j];
     }
     repulsion_force_[index_i] = force * Vol_[index_i];
 }
