@@ -99,8 +99,9 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>
 
         void interact(size_t index_i, Real dt = 0.0);
 
-        /// Pointer to the previously stored surface indicator.
+      protected:
         int *previous_surface_indicator_;
+        bool isNearPreviousFreeSurface(size_t index_i);
     };
 
     //------------------------------------------------------------------------------------------//
@@ -121,7 +122,7 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>
 
       protected:
         int *previous_surface_indicator_;
-        FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> *outer_;
+        bool isVeryNearFreeSurface(size_t index_i);
     };
 
   protected:
