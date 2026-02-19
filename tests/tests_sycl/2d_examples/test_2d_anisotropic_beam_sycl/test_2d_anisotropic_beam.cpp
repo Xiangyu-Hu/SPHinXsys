@@ -194,7 +194,7 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    auto &main_methods = sph_solver.addParticleMethodContainer(seq);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     auto &update_cell_linked_list = main_methods.addCellLinkedListDynamics(beam_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
@@ -209,5 +209,6 @@ int main(int ac, char *av[])
     //	First output before the integration loop.
     //----------------------------------------------------------------------
     write_real_body_states.writeToFile();
+
     return 0;
 }
