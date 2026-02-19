@@ -9,6 +9,7 @@ using namespace SPH;
 //------------------------------------------------------------------------------
 // global parameters for the case
 //------------------------------------------------------------------------------
+Real total_physical_time = 1.0;                                  /**< TOTAL SIMULATION TIME*/
 Real PL = 0.2;                                                   // beam length
 Real PH = 0.02;                                                  // beam width
 Real SL = 0.02;                                                  // constrained length
@@ -79,79 +80,28 @@ class ParticleGenerator<BaseParticles, UserDefined> : public ParticleGenerator<B
 //----------------------------------------------------------------------
 //	application dependent initial condition
 //----------------------------------------------------------------------
-class BeamInitialCondition
-    : public solid_dynamics::ElasticDynamicsInitialCondition
+class LinearProfile : public ReturnFunction<Vecd>
 {
-  public:
-    explicit BeamInitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body),
-          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())) {};
+    Real vf_ = vf;
+    Real kl_ = kl;
+    Real M_ = M;
+    Real N_ = N;
+    Real Q_ = Q;
+    Real PL_ = PL;
+    Real c0_;
 
-    void update(size_t index_i, Real dt)
+  public:
+    LinearProfile(Real c0) : c0_(c0) {};
+
+    Vecd operator()(const Vec2d &position)
     {
-        /** initial velocity profile */
-        Real x = pos_[index_i][0] / PL;
+        Real x = position[0] / PL_;
+        Vecd result = Vec2d::Zero();
         if (x > 0.0)
         {
-            vel_[index_i][1] = vf * elastic_solid_.ReferenceSoundSpeed() *
-                               (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x))) / Q;
+            result[1] = vf_ * c0_ * (M_ * (cos(kl_ * x) - cosh(kl_ * x)) - N_ * (sin(kl_ * x) - sinh(kl_ * x))) / Q_;
         }
-    };
-
-  protected:
-    ElasticSolid &elastic_solid_;
-};
-//----------------------------------------------------------------------
-//	calculate correction matrix B to keep the accuracy
-//----------------------------------------------------------------------
-
-class AnisotropicCorrectConfiguration : public LocalDynamics, public DataDelegateInner
-{
-  public:
-    AnisotropicCorrectConfiguration(BaseInnerRelation &inner_relation, int beta = 0, Real alpha = Real(0))
-        : LocalDynamics(inner_relation.getSPHBody()),
-          DataDelegateInner(inner_relation),
-          beta_(beta), alpha_(alpha), Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-          B_(particles_->registerStateVariableData<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          show_neighbor_(particles_->registerStateVariableData<Real>("ShowingNeighbor", Real(0.0))) {};
-    virtual ~AnisotropicCorrectConfiguration() {};
-
-  protected:
-  protected:
-    int beta_;
-    Real alpha_;
-    Real *Vol_;
-    Matd *B_;
-    Vecd *pos_;
-    Real *show_neighbor_;
-
-    void interaction(size_t index_i, Real dt = 0.0)
-    {
-        Matd local_configuration = Eps * Matd::Identity();
-        const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-        for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-        {
-            size_t index_j = inner_neighborhood.j_[n];
-            Real dW_ijV_j = inner_neighborhood.dW_ij_[n] * Vol_[index_j];
-            Vecd e_ij = inner_neighborhood.e_ij_[n];
-            if (index_i == 67)
-            {
-                show_neighbor_[index_j] = 1.0;
-            };
-
-            Vecd gradW_ijV_j = dW_ijV_j * e_ij;
-            Vecd r_ji = pos_[index_i] - pos_[index_j];
-            local_configuration -= r_ji * gradW_ijV_j.transpose();
-        }
-        B_[index_i] = local_configuration;
-    };
-
-    void update(size_t index_i, Real dt)
-    {
-        Real det_sqr = pow(B_[index_i].determinant(), beta_);
-        Matd inverse = B_[index_i].inverse();
-        B_[index_i] = (det_sqr * inverse + alpha_ * Matd::Identity()) / (alpha_ + det_sqr);
+        return result;
     }
 };
 } // namespace SPH
@@ -172,12 +122,20 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     auto &beam_body = sph_system.addAdaptiveBody<RealBody, PrescribedAnisotropy>(y_refinement, beam_shape);
-    beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    auto *beam_material = beam_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, UserDefined>();
-    //    auto &beam_base = beam_body.addBodyPart<BodyRegionByParticle>(beam_base_shape);
+    auto &beam_base = beam_body.addBodyPart<BodyRegionByParticle>(beam_base_shape);
 
     auto &beam_observer = sph_system.addAdaptiveBody<ObserverBody, PrescribedAnisotropy>(y_refinement, "BeamObserver");
     beam_observer.generateParticles<ObserverParticles>(observation_location);
+    //----------------------------------------------------------------------
+    //	Define body relation map.
+    //	The contact map gives the topological connections between the bodies.
+    //	Basically the the range of bodies to build neighbor particle lists.
+    //  Generally, we first define all the inner relations, then the contact relations.
+    //----------------------------------------------------------------------
+    auto &beam_body_inner = sph_system.addInnerRelation(beam_body, ConfigType::Lagrangian);
+    auto &my_observer_contact = sph_system.addContactRelation(beam_observer, beam_body, ConfigType::Lagrangian);
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.
@@ -194,21 +152,101 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
+    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(
+                    beam_body, "Velocity", beam_material->ReferenceSoundSpeed())
+        .exec();
+
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-    auto &update_cell_linked_list = main_methods.addCellLinkedListDynamics(beam_body);
+    ParticleDynamicsGroup lagrangian_configuration;
+    lagrangian_configuration.add(&main_methods.addCellLinkedListDynamics(beam_body));
+    lagrangian_configuration.add(&main_methods.addRelationDynamics(beam_body_inner));
+    lagrangian_configuration.add(&main_methods.addRelationDynamics(my_observer_contact));
+
+    auto &linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(beam_body_inner);
+    auto &constraint_holder = main_methods.addStateDynamics<ConstantConstraintCK, Vecd>(beam_base, "Velocity", Vec2d::Zero());
+
+    auto &acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
+        solid_dynamics::StructureIntegration1stHalf, NeoHookeanSolid, NoKernelCorrectionCK>(beam_body_inner);
+    auto &acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
+        solid_dynamics::StructureIntegration2ndHalf>(beam_body_inner);
+
+    auto &acoustic_time_step = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(beam_body, 0.2);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     auto &write_real_body_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     write_real_body_states.addToWrite<Real>(beam_body, "Density");
     //----------------------------------------------------------------------
+    //	Define time stepper with end and start time.
+    //----------------------------------------------------------------------
+    TimeStepper &time_stepper = sph_solver.defineTimeStepper(total_physical_time);
+    //----------------------------------------------------------------------
+    //	Setup for advection-step based time-stepping control
+    //----------------------------------------------------------------------
+    size_t acoustic_steps = 1;
+    int screening_interval = 100;
+    int observation_interval = screening_interval;
+    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
+    //----------------------------------------------------------------------
+    //	Statistics for the computing time information
+    //----------------------------------------------------------------------
+    TimeInterval interval_output;
+    TimeInterval interval_acoustic_step;
+    //----------------------------------------------------------------------
     //	Prepare for the time integration loop.
     //----------------------------------------------------------------------
-    update_cell_linked_list.exec();
+    lagrangian_configuration.exec();
+    linear_correction_matrix.exec();
     //----------------------------------------------------------------------
     //	First output before the integration loop.
     //----------------------------------------------------------------------
     write_real_body_states.writeToFile();
+    //----------------------------------------------------------------------
+    // Main time-stepping loop.
+    //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
+    //	Single time stepping loop is used for multi-time stepping.
+    //----------------------------------------------------------------------
+    TickCount t0 = TickCount::now();
+    while (!time_stepper.isEndTime())
+    {
+        //----------------------------------------------------------------------
+        //	the fastest and most frequent acostic time stepping.
+        //----------------------------------------------------------------------
+        TickCount time_instance = TickCount::now();
+        Real acoustic_dt = time_stepper.incrementPhysicalTime(acoustic_time_step);
+        acoustic_step_1st_half.exec(acoustic_dt);
+        constraint_holder.exec();
+        acoustic_step_2nd_half.exec(acoustic_dt);
+        interval_acoustic_step += TickCount::now() - time_instance;
+
+        /** Output body state during the simulation according output_interval. */
+        time_instance = TickCount::now();
+        /** screen output, write body observables and restart files  */
+        if (acoustic_steps == 1 || acoustic_steps % screening_interval == 0)
+        {
+            std::cout << std::fixed << std::setprecision(9) << "N=" << acoustic_steps
+                      << "	Time = " << time_stepper.getPhysicalTime() << "	"
+                      << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
+        }
+
+        if (state_recording())
+        {
+            write_real_body_states.writeToFile();
+        }
+        interval_output += TickCount::now() - time_instance;
+
+        acoustic_steps++;
+    }
+    //----------------------------------------------------------------------
+    // Summary for wall time used for the simulation.
+    //----------------------------------------------------------------------
+    TimeInterval tt = TickCount::now() - t0 - interval_output;
+    std::cout << "Total wall time for computation: " << tt.seconds()
+              << " seconds." << std::endl;
+    std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_step = "
+              << interval_acoustic_step.seconds() << "\n";
 
     return 0;
 }
