@@ -192,7 +192,8 @@ inline Vecd Neighbor<SourceAdaptationType, TargetAdaptationType>::
     if constexpr (!std::is_base_of_v<AnisotropicAdaptation, SourceAdaptationType> &&
                   !std::is_base_of_v<AnisotropicAdaptation, TargetAdaptationType>)
     {
-        return dW(vec_r_ij(i, j), invSmoothingLength(i, j));
+        Vecd disp = vec_r_ij(i, j);
+        return dW(disp, invSmoothingLength(i, j)) * disp.normalized();
     }
     else
     {
