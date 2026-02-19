@@ -46,5 +46,21 @@ StructureIntegrationVariables::StructureIntegrationVariables(BaseParticles *part
     particles->addEvolvingVariable<Matd>(dv_dF_dt_);
 }
 //=================================================================================================//
+UpdateElasticNormalDirectionCK::UpdateElasticNormalDirectionCK(SPHBody &sph_body)
+    : LocalDynamics(sph_body),
+      dv_n_(particles_->getVariableByName<Vecd>("NormalDirection")),
+      dv_n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      dv_phi_(particles_->getVariableByName<Real>("SignedDistance")),
+      dv_phi0_(particles_->getVariableByName<Real>("InitialSignedDistance")),
+      dv_F_(particles_->getVariableByName<Matd>("DeformationGradient")) {}
+//=================================================================================================//
+UpdateAnisotropicMeasure::UpdateAnisotropicMeasure(SPHBody &sph_body)
+    : LocalDynamics(sph_body),
+      dv_scaling_(particles_->getVariableByName<Vecd>("AnisotropicScaling")),
+      dv_scaling0_(particles_->registerStateVariableFrom<Vecd>("InitialAnisotropicScaling", "AnisotropicScaling")),
+      dv_orientation_(particles_->getVariableByName<Vecd>("AnisotropicOrientation")),
+      dv_orientation0_(particles_->registerStateVariableFrom<Vecd>("InitialAnisotropicOrientation", "AnisotropicOrientation")),
+      dv_F_(particles_->getVariableByName<Matd>("DeformationGradient")) {}
+//=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH

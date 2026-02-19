@@ -186,6 +186,41 @@ void StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::UpdateKernel::
     F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 }
 //=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+UpdateElasticNormalDirectionCK::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : n_(encloser.dv_n_->DelegatedData(ex_policy)),
+      n0_(encloser.dv_n0_->DelegatedData(ex_policy)),
+      phi_(encloser.dv_phi_->DelegatedData(ex_policy)),
+      phi0_(encloser.dv_phi0_->DelegatedData(ex_policy)),
+      F_(encloser.dv_F_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+inline void UpdateElasticNormalDirectionCK::UpdateKernel::update(size_t index_i, Real dt)
+{
+    n_[index_i] = polarRotation(F_[index_i]) * n0_[index_i];
+    // Nanson's relation is used to update the distance to surface
+    Vecd current_normal = F_[index_i].inverse().transpose() * n0_[index_i];
+    phi_[index_i] = phi0_[index_i] / (current_normal.norm() + SqrtEps); // todo: check this
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+UpdateAnisotropicMeasure::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : scaling_(encloser.dv_scaling_->DelegatedData(ex_policy)),
+      scaling0_(encloser.dv_scaling0_->DelegatedData(ex_policy)),
+      orientation_(encloser.dv_orientation_->DelegatedData(ex_policy)),
+      orientation0_(encloser.dv_orientation0_->DelegatedData(ex_policy)),
+      F_(encloser.dv_F_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+inline void UpdateAnisotropicMeasure::UpdateKernel::update(size_t index_i, Real dt)
+{
+    Matd rotation = Matd::Identity();
+    Matd stretch = Matd::Identity();
+    polarDecomposition(F_[index_i], rotation, stretch);
+    orientation_[index_i] = rotation * orientation0_[index_i];
+    scaling_[index_i] = stretch * scaling0_[index_i];
+}
+//=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH
 #endif // STRUCTURE_DYNAMICS_HPP

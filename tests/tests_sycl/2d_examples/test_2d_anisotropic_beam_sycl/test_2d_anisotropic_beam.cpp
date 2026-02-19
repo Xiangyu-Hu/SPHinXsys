@@ -172,6 +172,7 @@ int main(int ac, char *av[])
         solid_dynamics::StructureIntegration2ndHalf>(beam_body_inner);
 
     auto &acoustic_time_step = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(beam_body, 0.2);
+    auto &update_anisotropic_measure = main_methods.addStateDynamics<solid_dynamics::UpdateAnisotropicMeasure>(beam_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -233,6 +234,7 @@ int main(int ac, char *av[])
 
         if (state_recording())
         {
+            update_anisotropic_measure.exec();
             write_real_body_states.writeToFile();
         }
         interval_output += TickCount::now() - time_instance;

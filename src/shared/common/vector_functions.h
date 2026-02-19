@@ -208,5 +208,23 @@ inline Mat3d RotationMatrix(const Vec3d &from, const Vec3d &to)
 {
     return Eigen::Quaterniond::FromTwoVectors(from, to).toRotationMatrix();
 };
+
+inline Matd polarRotation(const Matd &F)
+{
+    Eigen::JacobiSVD<Matd> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Matd R = svd.matrixU() * svd.matrixV().transpose();
+    assert(R.determinant() > 0.0);
+    return R;
+};
+
+inline void polarDecomposition(const Matd &F, Matd &R, Matd &S)
+{
+    Eigen::JacobiSVD<Matd> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    const Matd &U = svd.matrixU();
+    const Matd &V = svd.matrixV();
+    R = U * V.transpose();
+    assert(R.determinant() > 0.0);
+    S = V * svd.singularValues().asDiagonal() * V.transpose();
+}
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H
