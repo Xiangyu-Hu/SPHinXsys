@@ -94,7 +94,7 @@ void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionT
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol0_[index_j];
+        Vecd nablaW_ijV_j = this->nablaW_ij(index_i, index_j) * Vol0_[index_j];
         Vecd e_ij = this->e_ij(index_i, index_j);
         Real r_ij = this->vec_r_ij(index_i, index_j).norm();
 
@@ -105,8 +105,9 @@ void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionT
         Real e_ij_difference_norm = e_ij_difference.norm();
 
         Real limiter = SMIN(10.0 * SMAX(e_ij_difference_norm - 0.05, 0.0), 1.0);
-        Vecd shear_force_ij = G_ * pair_scaling * (e_ij + limiter * e_ij_difference);
-        sum += ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * e_ij + shear_force_ij) * dW_ijV_j;
+        Vecd corrected_e_ij = e_ij + limiter * e_ij_difference;
+        Matd correction_stress = G_ * pair_scaling * corrected_e_ij * corrected_e_ij.transpose();
+        sum += ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) + correction_stress) * nablaW_ijV_j;
     }
 
     force_[index_i] = sum * Vol0_[index_i];
@@ -165,11 +166,8 @@ void StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::InteractKernel
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol0_[index_j];
-        Vecd e_ij = this->e_ij(index_i, index_j);
-
-        Vecd gradW_ij = dW_ijV_j * e_ij;
-        sum -= (vel_[index_i] - vel_[index_j]) * gradW_ij.transpose();
+        Vecd nablaW_ijV_j = this->nablaW_ij(index_i, index_j) * Vol0_[index_j];
+        sum -= (vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
     }
     dF_dt_[index_i] = sum * B_[index_i];
 };
