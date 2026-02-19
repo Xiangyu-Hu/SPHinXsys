@@ -87,13 +87,13 @@ class Relation<SourceIdentifier, TargetIdentifier> : public RelationBase
         template <class ExecutionPolicy, class EncloserType>
         NeighborList(const ExecutionPolicy &ex_policy, EncloserType &encloser,
                      UnsignedInt target_index = 0);
-        inline bool hasNeighor(UnsignedInt i) { return particle_offset_[i] != particle_offset_[i + 1]; };
-        
+
       protected:
         UnsignedInt *neighbor_index_;
         UnsignedInt *particle_offset_;
         inline UnsignedInt FirstNeighbor(UnsignedInt i) { return particle_offset_[i]; };
         inline UnsignedInt LastNeighbor(UnsignedInt i) { return particle_offset_[i + 1]; };
+        inline bool hasNeighbor(UnsignedInt i) { return particle_offset_[i] != particle_offset_[i + 1]; };
     };
 
   protected:
