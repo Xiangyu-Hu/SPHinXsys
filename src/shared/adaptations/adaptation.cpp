@@ -216,6 +216,8 @@ void PrescribedAnisotropy::initializeAdaptationVariables(BaseParticles &particle
 {
     AnisotropicAdaptation::initializeAdaptationVariables(particles);
     UnsignedInt total_real_particles = particles.TotalRealParticles();
+    dv_h_ratio_->fill(0, total_real_particles, [&](size_t i) -> Real
+                      { return 1.0; });
     dv_scaling_->fill(0, total_real_particles, [&](size_t i) -> Vecd
                       { return scaling_ref_; });
     dv_orientation_->fill(0, total_real_particles, [&](size_t i) -> Vecd
