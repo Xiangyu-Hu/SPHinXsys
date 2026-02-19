@@ -61,38 +61,19 @@ void FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::InteractKernel::
         Real r_ij = this->vec_r_ij(index_i, index_j).norm();
         pos_div -= this->dW_ij(index_i, index_j) * this->Vol_[index_j] * r_ij;
     }
+
+    if (pos_div < this->threshold_by_dimensions_ &&
+        previous_surface_indicator_[index_i] != 1 && !isNearPreviousFreeSurface(index_i))
+    {
+        pos_div = 2.0 * this->threshold_by_dimensions_;
+    }
     this->pos_div_[index_i] = pos_div;
 }
 //=================================================================================================//
 template <typename... Parameters>
-template <class ExecutionPolicy>
-FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
-    UpdateKernel(const ExecutionPolicy &ex_policy,
-                 FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> &encloser)
-    : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
-      previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)),
-      outer_(&encloser) {}
-//=================================================================================================//
-template <typename... Parameters>
-void FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
-    update(size_t index_i, Real dt)
+bool FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::InteractKernel::
+    isNearPreviousFreeSurface(size_t index_i)
 {
-    // Detect if near surface based on neighbors
-    bool is_near_surface = false;
-    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
-    {
-        const UnsignedInt index_j = this->neighbor_index_[n];
-        Real r_ij = this->vec_r_ij(index_i, index_j).norm();
-
-        if ((this->pos_div_[index_j] < this->threshold_by_dimensions_) &&
-            (r_ij < this->smoothing_length_))
-        {
-            is_near_surface = true;
-            break;
-        }
-    }
-
-    // Check if near a previously marked surface
     bool is_near_previous_surface = false;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
@@ -103,25 +84,47 @@ void FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
             break;
         }
     }
-
-    // If the particle’s pos_div is under threshold but isolated (no surface neighbors),
-    // push it above threshold to avoid false positives.
-    if ((this->pos_div_[index_i] < this->threshold_by_dimensions_) &&
-        previous_surface_indicator_[index_i] != 1 && !is_near_previous_surface)
+    return is_near_previous_surface;
+}
+//=================================================================================================//
+template <typename... Parameters>
+template <class ExecutionPolicy>
+FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy,
+                 FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> &encloser)
+    : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
+      previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename... Parameters>
+void FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
+    update(size_t index_i, Real dt)
+{
+    this->indicator_[index_i] = 1;
+    if (this->pos_div_[index_i] > this->threshold_by_dimensions_ && !isVeryNearFreeSurface(index_i))
     {
-        this->pos_div_[index_i] = 2.0 * this->threshold_by_dimensions_;
+        this->indicator_[index_i] = 0;
     }
-
-    // Determine new indicator: surface (1) or not (0)
-    int new_indicator = 1;
-    if ((this->pos_div_[index_i] > this->threshold_by_dimensions_) && !is_near_surface)
+    previous_surface_indicator_[index_i] = this->indicator_[index_i];
+}
+//=================================================================================================//
+template <typename... Parameters>
+bool FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
+    isVeryNearFreeSurface(size_t index_i)
+{
+    bool is_very_near_surface = false;
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
-        new_indicator = 0;
-    }
+        const UnsignedInt index_j = this->neighbor_index_[n];
+        Real r_ij = this->vec_r_ij(index_i, index_j).norm();
 
-    // Update both current and previous indicators
-    this->indicator_[index_i] = new_indicator;
-    this->previous_surface_indicator_[index_i] = new_indicator;
+        if ((this->pos_div_[index_j] < this->threshold_by_dimensions_) &&
+            (r_ij < this->smoothing_length_))
+        {
+            is_very_near_surface = true;
+            break;
+        }
+    }
+    return is_very_near_surface;
 }
 //=================================================================================================//
 template <typename... Parameters>
