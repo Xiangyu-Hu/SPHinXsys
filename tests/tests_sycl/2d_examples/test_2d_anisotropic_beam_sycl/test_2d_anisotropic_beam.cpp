@@ -14,7 +14,7 @@ Real PL = 0.2;                                                   // beam length
 Real PH = 0.02;                                                  // beam width
 Real SL = 0.02;                                                  // constrained length
 int y_num = 10;                                                  // particle number in y direction
-Real anisotropic_ratio = 4.0;                                    // anisotropic ratio, also dp_x / dp_y
+Real anisotropic_ratio = 1.0;                                    // anisotropic ratio, also dp_x / dp_y
 Real particle_spacing_ref = PH / y_num;                          // particle spacing in y direction
 Real maximum_spacing = anisotropic_ratio * particle_spacing_ref; // large particle spacing, also the particle spacing in x direction
 Real Total_PL = PL + SL;                                         // total length
@@ -113,7 +113,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, maximum_spacing);
+    SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);
@@ -171,7 +171,7 @@ int main(int ac, char *av[])
     auto &acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
         solid_dynamics::StructureIntegration2ndHalf>(beam_body_inner);
 
-    auto &acoustic_time_step = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(beam_body, 0.2);
+    auto &acoustic_time_step = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(beam_body);
     auto &update_anisotropic_measure = main_methods.addStateDynamics<solid_dynamics::UpdateAnisotropicMeasure>(beam_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
@@ -186,7 +186,7 @@ int main(int ac, char *av[])
     //	Setup for advection-step based time-stepping control
     //----------------------------------------------------------------------
     size_t acoustic_steps = 1;
-    int screening_interval = 100;
+    int screening_interval = 500;
     int observation_interval = screening_interval;
     auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
     //----------------------------------------------------------------------
