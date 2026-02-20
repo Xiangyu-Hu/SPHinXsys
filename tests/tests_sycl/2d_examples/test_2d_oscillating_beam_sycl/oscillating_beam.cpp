@@ -105,11 +105,9 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
-    InnerRelation beam_body_inner(beam_body);
-    ContactRelation beam_observer_contact(beam_observer, {&beam_body});
+    auto &beam_body_inner = sph_system.addInnerRelation(beam_body, ConfigType::Lagrangian);
+    auto &beam_observer_contact = sph_system.addContactRelation(beam_observer, beam_body, ConfigType::Lagrangian);
     SPHSolver sph_solver(sph_system);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
@@ -130,10 +128,16 @@ int main(int ac, char *av[])
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
+    ParticleDynamicsGroup lagrangian_configuration;
+    lagrangian_configuration.add(&main_methods.addCellLinkedListDynamics(beam_body));
+    lagrangian_configuration.add(&main_methods.addRelationDynamics(beam_body_inner));
+    lagrangian_configuration.add(&main_methods.addRelationDynamics(beam_observer_contact));
 
-    Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(beam_body_inner);
-    Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
+    auto &beam_corrected_configuration = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(beam_body_inner);
+    auto &stress_relaxation_first_half = main_methods.addInteractionDynamicsOneLevel<
+        solid_dynamics::StructureIntegration1stHalf, NeoHookeanSolid, LinearCorrectionCK>(beam_body_inner);
+    auto &stress_relaxation_second_half = main_methods.addInteractionDynamicsOneLevel<
+        solid_dynamics::StructureIntegration2ndHalf>(beam_body_inner);
 
     auto &computing_time_step_size = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(beam_body);
     auto &constraint_beam_base = main_methods.addStateDynamics<FixBodyPartConstraintCK>(beam_base);
@@ -141,12 +145,10 @@ int main(int ac, char *av[])
     // outputs
     //-----------------------------------------------------------------------------
     BodyStatesRecordingToVtp write_beam_states(sph_system);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>> write_beam_tip_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    lagrangian_configuration.exec();
     beam_corrected_configuration.exec();
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
@@ -167,7 +169,6 @@ int main(int ac, char *av[])
     // from here the time stepping begins
     //-----------------------------------------------------------------------------
     write_beam_states.writeToFile();
-    write_beam_tip_displacement.writeToFile();
 
     // computation loop starts
     while (physical_time < end_time)
@@ -199,8 +200,6 @@ int main(int ac, char *av[])
             }
         }
 
-        write_beam_tip_displacement.writeToFile(ite);
-
         TickCount t2 = TickCount::now();
         write_beam_states.writeToFile();
         TickCount t3 = TickCount::now();
@@ -211,16 +210,6 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-
-    if (sph_system.GenerateRegressionData())
-    {
-        // The lift force at the cylinder is very small and not important in this case.
-        write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
-    }
-    else
-    {
-        write_beam_tip_displacement.testResult();
-    }
 
     return 0;
 }
