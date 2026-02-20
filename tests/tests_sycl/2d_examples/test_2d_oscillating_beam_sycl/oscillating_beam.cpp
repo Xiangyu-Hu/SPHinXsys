@@ -47,27 +47,29 @@ StdVec<Vecd> observation_location = {Vecd(PL, 0.0)};
 //----------------------------------------------------------------------
 //	application dependent initial condition
 //----------------------------------------------------------------------
-class BeamInitialCondition
-    : public solid_dynamics::ElasticDynamicsInitialCondition
+class LinearProfile : public ReturnFunction<Vecd>
 {
-  public:
-    explicit BeamInitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body),
-          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())) {};
+    Real vf_ = vf;
+    Real c0_;
+    Real kl_ = kl;
+    Real M_ = M;
+    Real N_ = N;
+    Real Q_ = Q;
+    Real PL_ = PL;
 
-    void update(size_t index_i, Real dt)
+  public:
+    LinearProfile(Real c0) : c0_(c0) {};
+
+    Vecd operator()(const Vec2d &position)
     {
-        /** initial velocity profile */
-        Real x = pos_[index_i][0] / PL;
+        Real x = position[0] / PL_;
+        Vecd result = Vec2d::Zero();
         if (x > 0.0)
         {
-            vel_[index_i][1] = vf * elastic_solid_.ReferenceSoundSpeed() *
-                               (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x))) / Q;
+            result[1] = vf_ * c0_ * (M_ * (cos(kl_ * x) - cosh(kl_ * x)) - N_ * (sin(kl_ * x) - sinh(kl_ * x))) / Q_;
         }
-    };
-
-  protected:
-    ElasticSolid &elastic_solid_;
+        return result;
+    }
 };
 //------------------------------------------------------------------------------
 // the main program
@@ -88,7 +90,7 @@ int main(int ac, char *av[])
     beam_shape.add(&beam_base_shape);
     beam_shape.add(&beam_column);
     SolidBody beam_body(sph_system, beam_shape);
-    beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    auto *beam_material = beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, Lattice>();
     ComplexShape beam_constrain_shape("BeamConstrain");
     beam_constrain_shape.add(&beam_base_shape);
@@ -108,17 +110,33 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     InnerRelation beam_body_inner(beam_body);
     ContactRelation beam_observer_contact(beam_observer, {&beam_body});
+    SPHSolver sph_solver(sph_system);
+    //----------------------------------------------------------------------
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the configuration dynamics, such as update cell linked list,
+    // update body relations, are defined first.
+    // Then the geometric models or simple objects without data dependencies,
+    // such as gravity, initialized normal direction.
+    // After that, the major physical particle dynamics model should be introduced.
+    // Finally, the auxiliary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    //----------------------------------------------------------------------
+    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(
+                    beam_body, "Velocity", beam_material->ReferenceSoundSpeed())
+        .exec();
     //-----------------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     InteractionWithUpdate<LinearGradientCorrectionMatrixInner> beam_corrected_configuration(beam_body_inner);
 
     Dynamics1Level<solid_dynamics::Integration1stHalfPK2> stress_relaxation_first_half(beam_body_inner);
     Dynamics1Level<solid_dynamics::Integration2ndHalf> stress_relaxation_second_half(beam_body_inner);
 
-    SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
-    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
-    SimpleDynamics<FixBodyPartConstraint> constraint_beam_base(beam_base);
+    auto &computing_time_step_size = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(beam_body);
+    auto &constraint_beam_base = main_methods.addStateDynamics<FixBodyPartConstraintCK>(beam_base);
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
@@ -129,7 +147,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     sph_system.initializeSystemCellLinkedLists();
     sph_system.initializeSystemConfigurations();
-    beam_initial_velocity.exec();
     beam_corrected_configuration.exec();
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
@@ -149,8 +166,8 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // from here the time stepping begins
     //-----------------------------------------------------------------------------
-    write_beam_states.writeToFile(0);
-    write_beam_tip_displacement.writeToFile(0);
+    write_beam_states.writeToFile();
+    write_beam_tip_displacement.writeToFile();
 
     // computation loop starts
     while (physical_time < end_time)
