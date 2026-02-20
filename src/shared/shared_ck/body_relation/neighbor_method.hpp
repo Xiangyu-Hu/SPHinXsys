@@ -120,7 +120,7 @@ inline Real Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::
 inline Real Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::
     dW(const Vec2d &displacement) const
 {
-    return BaseKernel::dW2D(inv_h_squared_, displacement.norm() * inv_h_);
+    return BaseKernel::dW2D(inv_h_cubed_, displacement.norm() * inv_h_);
 };
 //=================================================================================================//
 inline Real Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel::
