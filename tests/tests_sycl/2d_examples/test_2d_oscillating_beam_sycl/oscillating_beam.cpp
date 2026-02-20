@@ -11,9 +11,10 @@ using namespace SPH;
 //------------------------------------------------------------------------------
 // global parameters for the case
 //------------------------------------------------------------------------------
-Real PL = 0.2;  // beam length
-Real PH = 0.02; // for thick plate; =0.01 for thin plate
-Real SL = 0.06; // depth of the insert
+Real total_physical_time = 1.0; /**< TOTAL SIMULATION TIME*/
+Real PL = 0.2;                  // beam length
+Real PH = 0.02;                 // for thick plate; =0.01 for thin plate
+Real SL = 0.06;                 // depth of the insert
 // reference particle spacing
 Real global_resolution = PH / 10.0;
 Real BW = global_resolution * 4; // boundary width, at least three particles
@@ -90,7 +91,7 @@ int main(int ac, char *av[])
     beam_shape.add(&beam_base_shape);
     beam_shape.add(&beam_column);
     SolidBody beam_body(sph_system, beam_shape);
-    auto *beam_material = beam_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    auto *beam_material = beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, Lattice>();
     ComplexShape beam_constrain_shape("BeamConstrain");
     beam_constrain_shape.add(&beam_base_shape);
@@ -108,6 +109,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &beam_body_inner = sph_system.addInnerRelation(beam_body, ConfigType::Lagrangian);
     auto &beam_observer_contact = sph_system.addContactRelation(beam_observer, beam_body, ConfigType::Lagrangian);
+    //----------------------------------------------------------------------
+    // Define SPH solver with particle methods and execution policies.
+    // Generally, the host methods should be able to run immediately.
+    //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
@@ -134,82 +139,105 @@ int main(int ac, char *av[])
     lagrangian_configuration.add(&main_methods.addRelationDynamics(beam_observer_contact));
 
     auto &beam_corrected_configuration = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(beam_body_inner);
-    auto &stress_relaxation_first_half = main_methods.addInteractionDynamicsOneLevel<
-        solid_dynamics::StructureIntegration1stHalf, NeoHookeanSolid, LinearCorrectionCK>(beam_body_inner);
-    auto &stress_relaxation_second_half = main_methods.addInteractionDynamicsOneLevel<
+    auto &beam_acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
+        solid_dynamics::StructureIntegration1stHalf, SaintVenantKirchhoffSolid, NoKernelCorrectionCK>(beam_body_inner);
+    auto &beam_acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
         solid_dynamics::StructureIntegration2ndHalf>(beam_body_inner);
 
     auto &computing_time_step_size = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(beam_body);
     auto &constraint_beam_base = main_methods.addStateDynamics<FixBodyPartConstraintCK>(beam_base);
-    //-----------------------------------------------------------------------------
-    // outputs
-    //-----------------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_beam_states(sph_system);
     //----------------------------------------------------------------------
-    //	Setup computing and initial conditions.
+    //	Define the methods for I/O operations, observations
+    //	and regression tests of the simulation.
+    //----------------------------------------------------------------------
+    auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    auto &write_displacement = main_methods.addObserveRegression<
+        RegressionTestEnsembleAverage, Vecd>("Position", beam_observer_contact);
+    //----------------------------------------------------------------------
+    //	Define time stepper with end and start time.
+    //----------------------------------------------------------------------
+    TimeStepper &time_stepper = sph_solver.defineTimeStepper(total_physical_time);
+    //----------------------------------------------------------------------
+    //	Setup for advection-step based time-stepping control
+    //----------------------------------------------------------------------
+    size_t acoustic_steps = 1;
+    int screening_interval = 500;
+    int observation_interval = screening_interval;
+    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
+    //----------------------------------------------------------------------
+    //	Prepare for the time integration loop.
     //----------------------------------------------------------------------
     lagrangian_configuration.exec();
     beam_corrected_configuration.exec();
     //----------------------------------------------------------------------
-    //	Setup computing time-step controls.
+    //	Statistics for the computing time information
     //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
-    int ite = 0;
-    Real T0 = 1.0;
-    Real end_time = T0;
-    // time step size for output file
-    Real output_interval = 0.01 * T0;
-    Real Dt = 0.1 * output_interval; /**< Time period for data observing */
-    Real dt = 0.0;                   // default acoustic time step sizes
-
-    // statistics for computing time
-    TickCount t1 = TickCount::now();
-    TimeInterval interval;
-    //-----------------------------------------------------------------------------
-    // from here the time stepping begins
-    //-----------------------------------------------------------------------------
-    write_beam_states.writeToFile();
-
-    // computation loop starts
-    while (physical_time < end_time)
+    TimeInterval interval_output;
+    TimeInterval interval_acoustic_step;
+    //----------------------------------------------------------------------
+    //	First output before the main loop.
+    //----------------------------------------------------------------------
+    body_state_recorder.writeToFile();
+    write_displacement.writeToFile(acoustic_steps);
+    //----------------------------------------------------------------------
+    // Main time-stepping loop.
+    //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
+    //	Single time stepping loop is used for multi-time stepping.
+    //----------------------------------------------------------------------
+    TickCount t0 = TickCount::now();
+    while (!time_stepper.isEndTime())
     {
-        Real integration_time = 0.0;
-        // integrate time (loop) until the next output time
-        while (integration_time < output_interval)
+        //----------------------------------------------------------------------
+        //	the fastest and most frequent acostic time stepping.
+        //----------------------------------------------------------------------
+        TickCount time_instance = TickCount::now();
+        Real acoustic_dt = time_stepper.incrementPhysicalTime(computing_time_step_size);
+        beam_acoustic_step_1st_half.exec(acoustic_dt);
+        constraint_beam_base.exec();
+        beam_acoustic_step_2nd_half.exec(acoustic_dt);
+        interval_acoustic_step += TickCount::now() - time_instance;
+
+        /** Output body state during the simulation according output_interval. */
+        time_instance = TickCount::now();
+        /** screen output, write body observables and restart files  */
+        if (acoustic_steps == 1 || acoustic_steps % screening_interval == 0)
         {
-
-            Real relaxation_time = 0.0;
-            while (relaxation_time < Dt)
-            {
-                stress_relaxation_first_half.exec(dt);
-                constraint_beam_base.exec();
-                stress_relaxation_second_half.exec(dt);
-
-                ite++;
-                dt = computing_time_step_size.exec();
-                relaxation_time += dt;
-                integration_time += dt;
-                physical_time += dt;
-
-                if (ite % 100 == 0)
-                {
-                    std::cout << "N=" << ite << " Time: "
-                              << physical_time << "	dt: "
-                              << dt << "\n";
-                }
-            }
+            std::cout << std::fixed << std::setprecision(9) << "N=" << acoustic_steps
+                      << "	Time = " << time_stepper.getPhysicalTime() << "	"
+                      << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
         }
 
-        TickCount t2 = TickCount::now();
-        write_beam_states.writeToFile();
-        TickCount t3 = TickCount::now();
-        interval += t3 - t2;
-    }
-    TickCount t4 = TickCount::now();
+        if (acoustic_steps % observation_interval == 0)
+        {
+            write_displacement.writeToFile(acoustic_steps);
+        }
 
-    TimeInterval tt;
-    tt = t4 - t1 - interval;
-    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+        if (state_recording())
+        {
+            body_state_recorder.writeToFile();
+        }
+        interval_output += TickCount::now() - time_instance;
+
+        acoustic_steps++;
+    }
+    //----------------------------------------------------------------------
+    // Summary for wall time used for the simulation.
+    //----------------------------------------------------------------------
+    TimeInterval tt = TickCount::now() - t0 - interval_output;
+    std::cout << "Total wall time for computation: " << tt.seconds()
+              << " seconds." << std::endl;
+    std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_step = "
+              << interval_acoustic_step.seconds() << "\n";
+
+    if (sph_system.GenerateRegressionData())
+    {
+        write_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
+    }
+    else
+    {
+        write_displacement.testResult();
+    }
 
     return 0;
 }
