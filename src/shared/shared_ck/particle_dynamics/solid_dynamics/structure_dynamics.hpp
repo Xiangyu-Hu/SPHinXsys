@@ -106,9 +106,8 @@ void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionT
         Real e_ij_difference_norm = e_ij_difference.norm();
 
         Real limiter = SMIN(10.0 * SMAX(e_ij_difference_norm - 0.05, 0.0), 1.0);
-        Vecd corrected_e_ij = e_ij + limiter * e_ij_difference;
-        Matd correction_stress = G_ * pair_scaling * corrected_e_ij * corrected_e_ij.transpose();
-        sum += ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) + correction_stress) * nablaW_ijV_j;
+        Matd correction_stress_ij = G_ * pair_scaling * (1.0 + limiter * e_ij.dot(e_ij_difference));
+        sum += ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) + correction_stress_ij) * nablaW_ijV_j;
     }
 
     force_[index_i] = sum * Vol0_[index_i];

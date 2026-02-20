@@ -14,7 +14,7 @@ Real PL = 0.2;                                                   // beam length
 Real PH = 0.02;                                                  // beam width
 Real SL = 0.02;                                                  // constrained length
 int y_num = 10;                                                  // particle number in y direction
-Real anisotropic_ratio = 2.0;                                    // anisotropic ratio, also dp_x / dp_y
+Real anisotropic_ratio = 4.0;                                    // anisotropic ratio, also dp_x / dp_y
 Real particle_spacing_ref = PH / y_num;                          // particle spacing in y direction
 Real maximum_spacing = anisotropic_ratio * particle_spacing_ref; // large particle spacing, also the particle spacing in x direction
 Real Total_PL = PL + SL;                                         // total length
@@ -157,15 +157,13 @@ int main(int ac, char *av[])
                     beam_body, "Velocity", beam_material->ReferenceSoundSpeed())
         .exec();
 
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &main_methods = sph_solver.addParticleMethodContainer(seq);
     ParticleDynamicsGroup lagrangian_configuration;
     lagrangian_configuration.add(&main_methods.addCellLinkedListDynamics(beam_body));
     lagrangian_configuration.add(&main_methods.addRelationDynamics(beam_body_inner));
     lagrangian_configuration.add(&main_methods.addRelationDynamics(my_observer_contact));
 
     auto &linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(beam_body_inner);
-    auto &constraint_holder = main_methods.addStateDynamics<ConstantConstraintCK, Vecd>(beam_base, "Velocity", Vec2d::Zero());
-
     auto &acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
         solid_dynamics::StructureIntegration1stHalf, NeoHookeanSolid, NoKernelCorrectionCK>(beam_body_inner);
     auto &acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
@@ -173,11 +171,13 @@ int main(int ac, char *av[])
 
     auto &acoustic_time_step = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(beam_body);
     auto &update_anisotropic_measure = main_methods.addStateDynamics<solid_dynamics::UpdateAnisotropicMeasure>(beam_body);
+    auto &constraint_holder = main_methods.addStateDynamics<ConstantConstraintCK, Vecd>(beam_base, "Velocity", Vec2d::Zero());
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     auto &write_real_body_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     write_real_body_states.addToWrite<Real>(beam_body, "Density");
+    write_real_body_states.addToWrite<Vecd>(beam_body, "Velocity");
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
