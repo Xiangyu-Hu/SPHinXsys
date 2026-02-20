@@ -30,6 +30,7 @@
 #define STRUCTURE_DYNAMICS_H
 
 #include "elastic_solid.h"
+#include "force_prior_ck.h"
 #include "interaction_ck.hpp"
 
 namespace SPH
@@ -73,15 +74,15 @@ class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
     DiscreteVariable<Vecd> *dv_vel_, *dv_force_, *dv_force_prior_;
 };
 
-class StructureIntegrationVariables
+class StructureDynamicsVariables
 {
   public:
-    explicit StructureIntegrationVariables(BaseParticles *particles);
-    virtual ~StructureIntegrationVariables() {};
+    explicit StructureDynamicsVariables(BaseParticles *particles);
+    virtual ~StructureDynamicsVariables() {};
 
   protected:
     DiscreteVariable<Real> *dv_rho_, *dv_mass_;
-    DiscreteVariable<Vecd> *dv_pos_, *dv_vel_, *dv_force_, *dv_force_prior_;
+    DiscreteVariable<Vecd> *dv_pos_, *dv_vel_, *dv_force_;
     DiscreteVariable<Matd> *dv_B_, *dv_F_, *dv_dF_dt_, *dv_inverse_F_, *dv_stress_on_particle_,
         *dv_scaling_matrix_;
 };
@@ -91,7 +92,7 @@ class StructureIntegration1stHalf;
 
 template <class MaterialType, typename KernelCorrectionType, typename... Parameters>
 class StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, Parameters...>>
-    : public Interaction<Inner<Parameters...>>, public StructureIntegrationVariables
+    : public Interaction<Inner<Parameters...>>, public StructureDynamicsVariables
 {
     using BaseInteraction = Interaction<Inner<Parameters...>>;
     using Adaptation = typename Inner<Parameters...>::SourceType::Adaptation;
@@ -151,6 +152,7 @@ class StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrection
     Adaptation &adaptation_;
     KernelCorrectionType kernel_correction_;
     Real h_ref_, numerical_damping_factor_;
+    DiscreteVariable<Vecd> *dv_force_prior_;
 };
 
 template <typename...>
@@ -158,7 +160,7 @@ class StructureIntegration2ndHalf;
 
 template <typename... Parameters>
 class StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>
-    : public Interaction<Inner<Parameters...>>, public StructureIntegrationVariables
+    : public Interaction<Inner<Parameters...>>, public StructureDynamicsVariables
 {
     using BaseInteraction = Interaction<Inner<Parameters...>>;
 
@@ -200,6 +202,48 @@ class StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>
       protected:
         Matd *F_, *dF_dt_;
     };
+};
+
+template <typename...>
+class StructureNumericalDamping;
+
+template <class MaterialType, typename... Parameters>
+class StructureNumericalDamping<Inner<WithUpdate, MaterialType, Parameters...>>
+    : public Interaction<Inner<Parameters...>>,
+      public StructureDynamicsVariables,
+      public ForcePriorCK
+{
+    using BaseInteraction = Interaction<Inner<Parameters...>>;
+    using Adaptation = typename Inner<Parameters...>::SourceType::Adaptation;
+    using SmoothingLengthRatioType = typename Adaptation::SmoothingLengthRatioType;
+    using ConstituteKernel = typename MaterialType::ConstituteKernel;
+
+  public:
+    explicit StructureNumericalDamping(Inner<Parameters...> &inner_relation, Real numerical_damping_factor = 0.125);
+    virtual ~StructureNumericalDamping() {};
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        ConstituteKernel constitute_;
+        SmoothingLengthRatioType h_ratio_;
+        Vecd zero_;
+        Real h_ref_, numerical_damping_factor_;
+        Real *Vol0_;
+        Vecd *pos_, *vel_, *numerical_damping_force_;
+        Matd *F_;
+    };
+
+  protected:
+    MaterialType &material_;
+    Adaptation &adaptation_;
+    Real h_ref_, numerical_damping_factor_;
+    DiscreteVariable<Vecd> *dv_numerical_damping_force_;
 };
 
 class UpdateElasticNormalDirectionCK : public LocalDynamics

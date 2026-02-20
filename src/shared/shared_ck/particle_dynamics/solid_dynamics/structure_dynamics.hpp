@@ -27,11 +27,12 @@ inline Real AcousticTimeStepCK::ReduceKernel::reduce(size_t index_i, Real dt)
 template <class MaterialType, typename KernelCorrectionType, typename... Parameters>
 StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, Parameters...>>::
     StructureIntegration1stHalf(Inner<Parameters...> &inner_relation, Real numerical_damping_factor)
-    : BaseInteraction(inner_relation), StructureIntegrationVariables(this->particles_),
+    : BaseInteraction(inner_relation), StructureDynamicsVariables(this->particles_),
       material_(DynamicCast<MaterialType>(this, this->particles_->getBaseMaterial())),
       adaptation_(DynamicCast<Adaptation>(this, this->sph_body_->getSPHAdaptation())),
       kernel_correction_(this->particles_), h_ref_(adaptation_.ReferenceSmoothingLength()),
-      numerical_damping_factor_(numerical_damping_factor) {}
+      numerical_damping_factor_(numerical_damping_factor),
+      dv_force_prior_(this->particles_->template registerStateVariable<Vecd>("ForcePrior")) {}
 //=================================================================================================//
 template <class MaterialType, typename KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -132,7 +133,7 @@ void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionT
 template <typename... Parameters>
 StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::StructureIntegration2ndHalf(
     Inner<Parameters...> &inner_relation)
-    : BaseInteraction(inner_relation), StructureIntegrationVariables(this->particles_) {}
+    : BaseInteraction(inner_relation), StructureDynamicsVariables(this->particles_) {}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -185,6 +186,56 @@ void StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::UpdateKernel::
 {
     F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 }
+//=================================================================================================//
+template <class MaterialType, typename... Parameters>
+StructureNumericalDamping<Inner<WithUpdate, MaterialType, Parameters...>>::
+    StructureNumericalDamping(Inner<Parameters...> &inner_relation, Real numerical_damping_factor)
+    : BaseInteraction(inner_relation), StructureDynamicsVariables(this->particles_),
+      ForcePriorCK(this->particles_, "NumericalDampingForce"),
+      material_(DynamicCast<MaterialType>(this, this->particles_->getBaseMaterial())),
+      adaptation_(DynamicCast<Adaptation>(this, this->sph_body_->getSPHAdaptation())),
+      h_ref_(adaptation_.ReferenceSmoothingLength()),
+      numerical_damping_factor_(numerical_damping_factor),
+      dv_numerical_damping_force_(ForcePriorCK::getCurrentForce()) {}
+//=================================================================================================//
+template <class MaterialType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+StructureNumericalDamping<Inner<WithUpdate, MaterialType, Parameters...>>::
+    InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseInteraction::InteractKernel(ex_policy, encloser),
+      constitute_(ex_policy, encloser.material_), h_ratio_(ex_policy, encloser.adaptation_),
+      zero_(Vecd::Zero()), h_ref_(encloser.h_ref_),
+      numerical_damping_factor_(encloser.numerical_damping_factor_),
+      Vol0_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      numerical_damping_force_(encloser.dv_numerical_damping_force_->DelegatedData(ex_policy)),
+      F_(encloser.dv_F_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <class MaterialType, typename... Parameters>
+void StructureNumericalDamping<Inner<WithUpdate, MaterialType, Parameters...>>::InteractKernel::
+    interact(size_t index_i, Real dt)
+{
+    Vecd sum = Vecd::Zero();
+    Real inv_W0 = 1.0 / this->W0(index_i, zero_);
+    Real smoothing_length = h_ref_ / h_ratio_(index_i);
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Vecd nablaW_ijV_j = this->dW_ij(index_i, index_j) * Vol0_[index_j] * this->e_ij(index_i, index_j);
+        Real r_ij = this->vec_r_ij(index_i, index_j).norm();
+        Real weight = this->W_ij(index_i, index_j) * inv_W0;
+
+        Real dim_r_ij_1 = Dimensions / r_ij;
+        Vecd pos_jump = pos_[index_i] - pos_[index_j];
+        Vecd vel_jump = vel_[index_i] - vel_[index_j];
+        Real strain_rate = dim_r_ij_1 * dim_r_ij_1 * pos_jump.dot(vel_jump);
+        Matd numerical_stress_ij = constitute_.PairNumericalDamping(strain_rate, smoothing_length) *
+                                   0.5 * (F_[index_i] + F_[index_j]);
+        sum += numerical_damping_factor_ * weight * numerical_stress_ij * nablaW_ijV_j;
+    }
+    numerical_damping_force_[index_i] = sum * Vol0_[index_i];
+};
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 UpdateElasticNormalDirectionCK::UpdateKernel::

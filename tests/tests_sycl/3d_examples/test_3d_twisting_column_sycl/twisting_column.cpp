@@ -154,20 +154,15 @@ int main(int ac, char *av[])
     int observation_interval = screening_interval;
     auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 250.0);
     //----------------------------------------------------------------------
-    //	Prepare for the time integration loop.
-    //----------------------------------------------------------------------
-    lagrangian_configuration.exec();
-    column_linear_correction_matrix.exec();
-    //----------------------------------------------------------------------
-    //	First output before the integration loop.
-    //----------------------------------------------------------------------
-    body_state_recorder.writeToFile();
-    write_displacement.writeToFile(0);
-    //----------------------------------------------------------------------
     //	Statistics for the computing time information
     //----------------------------------------------------------------------
     TimeInterval interval_output;
     TimeInterval interval_acoustic_step;
+    //----------------------------------------------------------------------
+    //	Prepare for the time integration loop.
+    //----------------------------------------------------------------------
+    lagrangian_configuration.exec();
+    column_linear_correction_matrix.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
