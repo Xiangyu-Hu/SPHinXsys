@@ -189,24 +189,22 @@ template <class SourceAdaptationType, class TargetAdaptationType>
 inline Vecd Neighbor<SourceAdaptationType, TargetAdaptationType>::
     SmoothingKernel::nablaW_ij(UnsignedInt i, UnsignedInt j) const
 {
+    Vecd disp = vec_r_ij(i, j);
     if constexpr (!std::is_base_of_v<AnisotropicAdaptation, SourceAdaptationType> &&
                   !std::is_base_of_v<AnisotropicAdaptation, TargetAdaptationType>)
     {
-        Vecd disp = vec_r_ij(i, j);
         return dW(disp, invSmoothingLength(i, j)) * disp.normalized();
     }
     else
     {
-        auto measure = getTransformedMeasure(i, j);
-        const Vecd &disp_transform = std::get<0>(measure);
-        if (std::get<2>(measure))
-        {
-            return src_h_ratio_.KernelTransform(i) * dW(disp_transform, std::get<1>(measure)) *
-                   src_h_ratio_.GradientTransform(i) * disp_transform.normalized();
-        };
-
-        return tar_h_ratio_.KernelTransform(j) * dW(disp_transform, std::get<1>(measure)) *
-               tar_h_ratio_.GradientTransform(j) * disp_transform.normalized();
+        return selectKernelFunction(
+            i, j, disp, src_h_ratio_, tar_h_ratio_,
+            [&](const Vecd &disp_transform, Real inv_h, auto &src_h_ratio)->Vecd
+            { return src_h_ratio.KernelTransform(i) * dW(disp_transform, inv_h) *
+                     src_h_ratio_.GradientTransform(i) * disp_transform.normalized(); },
+            [&](const Vecd &disp_transform, Real inv_h, auto &tar_h_ratio)->Vecd
+            { return tar_h_ratio.KernelTransform(j) * dW(disp_transform, inv_h) *
+                     tar_h_ratio_.GradientTransform(j) * disp_transform.normalized(); });
     }
 }
 //=================================================================================================//
@@ -214,16 +212,20 @@ template <class SourceAdaptationType, class TargetAdaptationType>
 Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
     W_ij(UnsignedInt i, UnsignedInt j) const
 {
+    Vecd disp = vec_r_ij(i, j);
     if constexpr (!std::is_base_of_v<AnisotropicAdaptation, SourceAdaptationType> &&
                   !std::is_base_of_v<AnisotropicAdaptation, TargetAdaptationType>)
     {
-        return W(vec_r_ij(i, j), invSmoothingLength(i, j));
+        return W(disp, invSmoothingLength(i, j));
     }
     else
     {
-        auto measure = getTransformedMeasure(i, j);
-        Real kernel_transform = std::get<2>(measure) ? src_h_ratio_.KernelTransform(i) : tar_h_ratio_.KernelTransform(j);
-        return kernel_transform * W(std::get<0>(measure), std::get<1>(measure));
+        return selectKernelFunction(
+            i, j, disp, src_h_ratio_, tar_h_ratio_,
+            [&](const Vecd &disp_transform, Real inv_h, auto &src_h_ratio)->Real
+            { return src_h_ratio.KernelTransform(i) * W(disp_transform, inv_h); },
+            [&](const Vecd &disp_transform, Real inv_h, auto &tar_h_ratio)->Real
+            { return tar_h_ratio.KernelTransform(j) * W(disp_transform, inv_h); });
     }
 }
 //=================================================================================================//
@@ -293,17 +295,19 @@ Real Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>
-std::tuple<Vecd, Real, bool> Neighbor<SourceAdaptationType, TargetAdaptationType>::
-    SmoothingKernel::getTransformedMeasure(UnsignedInt i, UnsignedInt j) const
+template <typename FuncI, typename FuncJ>
+auto Neighbor<SourceAdaptationType, TargetAdaptationType>::SmoothingKernel::selectKernelFunction(
+    UnsignedInt i, UnsignedInt j, const Vecd &disp,
+    const SourceSmoothingLengthRatio &src_h_ratio, const TargetSmoothingLengthRatio &tar_h_ratio,
+    const FuncI &func_i, const FuncJ &func_j) const
 {
     Real inv_h_i = src_h_ratio_(i) * src_inv_h_ref_;
     Real inv_h_j = tar_h_ratio_(j) * tar_inv_h_ref_;
-    Vecd disp = vec_r_ij(i, j);
-    Vecd disp_i = src_h_ratio_.transform(disp, i);
-    Vecd disp_j = tar_h_ratio_.transform(disp, j);
+    const Vecd &disp_i = src_h_ratio_.transform(disp, i);
+    const Vecd &disp_j = tar_h_ratio_.transform(disp, j);
     return disp_i.squaredNorm() * inv_h_i * inv_h_i < disp_j.squaredNorm() * inv_h_j * inv_h_j
-               ? std::tuple<Vecd, Real, bool>(disp_i, inv_h_i, true)
-               : std::tuple<Vecd, Real, bool>(disp_j, inv_h_j, false);
+               ? func_i(disp_i, inv_h_i, src_h_ratio)
+               : func_j(disp_j, inv_h_j, tar_h_ratio);
 }
 //=================================================================================================//
 template <class SourceAdaptationType, class TargetAdaptationType>

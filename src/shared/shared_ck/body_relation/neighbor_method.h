@@ -179,7 +179,11 @@ class Neighbor<SourceAdaptationType, TargetAdaptationType> : public Neighbor<Bas
         TargetSmoothingLengthRatio tar_h_ratio_;
 
         // Used when at least one of adaptations are anisotropic.
-        std::tuple<Vecd, Real, bool> getTransformedMeasure(UnsignedInt i, UnsignedInt j) const;
+        template <typename FuncI, typename FuncJ>
+        auto selectKernelFunction(
+            UnsignedInt i, UnsignedInt j, const Vecd &disp,
+            const SourceSmoothingLengthRatio &src_h_ratio, const TargetSmoothingLengthRatio &tar_h_ratio,
+            const FuncI &func_i, const FuncJ &func_j) const;
 
         template < // Only permited to use when both adaptations are isotropic.
             typename U = SourceAdaptationType, typename V = TargetAdaptationType,
