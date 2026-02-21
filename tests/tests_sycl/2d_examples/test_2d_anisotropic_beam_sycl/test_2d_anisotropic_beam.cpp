@@ -122,7 +122,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     auto &beam_body = sph_system.addAdaptiveBody<RealBody, PrescribedAnisotropy>(y_refinement, beam_shape);
-    auto *beam_material = beam_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    auto *beam_material = beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, UserDefined>();
     auto &beam_base = beam_body.addBodyPart<BodyRegionByParticle>(beam_base_shape);
 
@@ -165,7 +165,7 @@ int main(int ac, char *av[])
 
     auto &linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(beam_body_inner);
     auto &acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
-        solid_dynamics::StructureIntegration1stHalf, NeoHookeanSolid, NoKernelCorrectionCK>(beam_body_inner);
+        solid_dynamics::StructureIntegration1stHalf, SaintVenantKirchhoffSolid, NoKernelCorrectionCK>(beam_body_inner);
     auto &acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
         solid_dynamics::StructureIntegration2ndHalf>(beam_body_inner);
 
