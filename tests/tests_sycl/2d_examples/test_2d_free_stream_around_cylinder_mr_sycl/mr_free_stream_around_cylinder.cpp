@@ -11,7 +11,7 @@ using namespace SPH;
 //	Define basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real total_physical_time = 200.0;                /**< TOTAL SIMULATION TIME*/
-Real start_up_time = total_physical_time / 10.0; /**< explicity startup time*/
+Real start_up_time = total_physical_time / 10.0; /**< explicit startup time*/
 Real DL = 30.0;                                  /**< Domain length. */
 Real DH = 16.0;                                  /**< Domain height. */
 Real particle_spacing_ref = 0.4;                 /**< Initial reference particle spacing. */
@@ -312,7 +312,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     auto &write_real_body_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
-    write_real_body_states.addToWrite<Real>(water_body, "Density");
+    write_real_body_states.addToWrite<int>(water_body, "PreviousSurfaceIndicator");
     write_real_body_states.addToWrite<Real>(water_body, "SmoothingLengthRatio");
     write_real_body_states.addToWrite<int>(water_body, "Indicator");
     write_real_body_states.addToWrite<Vecd>(cylinder, "NormalDirection");

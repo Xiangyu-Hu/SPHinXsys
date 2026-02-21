@@ -145,7 +145,7 @@ UniquePtr<BaseCellLinkedList> AdaptiveSmoothingLength::
 {
     return makeUnique<CellLinkedList<AdaptiveSmoothingLength>>(
         domain_bounds, kernel_ptr_->CutOffRadius(),
-        local_refinement_level_, base_particles, *this);
+        local_refinement_level_ + 1, base_particles, *this);
 }
 //=================================================================================================//
 UniquePtr<LevelSet> AdaptiveSmoothingLength::createLevelSet(Shape &shape, Real refinement) const
