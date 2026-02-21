@@ -2,22 +2,77 @@
 import os
 import sys
 
-path = os.path.abspath('../../../../../PythonScriptStore/RegressionTest')
-sys.path.append(path)
-from regression_test_base_tool import SphinxsysRegressionTest
+def find_upper_folder(folder_name, start_path=None):
+    """
+    Search for an upper-level folder by name, starting from a given directory and traversing upwards.
+    """
+    if start_path is None:
+        start_path = os.getcwd()
+
+    current_path = start_path
+    while True:
+        potential_path = os.path.join(current_path, folder_name)
+        if os.path.isdir(potential_path):
+            return potential_path
+        parent_path = os.path.dirname(current_path)
+        if parent_path == current_path:  # Reached the root directory
+            break
+        current_path = parent_path
+
+    return None
+
+def find_nested_folder(folder_chain, start_path=None):
+    """
+    Find a nested folder by traversing upward and then descending into a specified folder chain.
+    """
+    if not folder_chain:
+        return None
+
+    # Step 1: Find the first folder in the chain
+    first_folder = folder_chain[0]
+    first_folder_path = find_upper_folder(first_folder, start_path)
+    if not first_folder_path:
+        return None
+
+    # Step 2: Traverse the rest of the folder chain
+    current_path = first_folder_path
+    for folder in folder_chain[1:]:
+        current_path = os.path.join(current_path, folder)
+        if not os.path.isdir(current_path):
+            return None
+
+    return current_path
+
+# Step 1: Find the RegressionTest folder
+folder_chain = ["build", "PythonScriptStore", "RegressionTest"]
+regression_test_folder = find_nested_folder(folder_chain)
+
+if not regression_test_folder:
+    print("'RegressionTest' folder not found.")
+    exit(1)
+
+# Step 2: Add the RegressionTest folder to sys.path
+if regression_test_folder not in sys.path:
+    sys.path.insert(0, regression_test_folder)
+
+# Step 3: Import the module
+try:
+    from regression_test_base_tool import SphinxsysRegressionTest
+    print("Module imported successfully!")
+except ImportError as e:
+    print(f"Failed to import module: {e}")
 
 """
-case name: test_2d_anisotropic_beam
+case name: test_2d_anisotropic_beam_sycl
 """
 
-case_name = "test_2d_anisotropic_beam"
+case_name = "test_2d_anisotropic_beam_sycl"
 body_name = "BeamObserver"
 parameter_name = "Position"
 
 number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
-clean_input_folder(sphinxsys.input_file_path)
 
 while True:
     print("Now start a new run......")

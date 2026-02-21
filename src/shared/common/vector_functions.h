@@ -206,7 +206,7 @@ inline Mat2d RotationMatrix(const Vec2d &from, const Vec2d &to)
 
 inline Mat3d RotationMatrix(const Vec3d &from, const Vec3d &to)
 {
-    return Eigen::Quaterniond::FromTwoVectors(from, to).toRotationMatrix();
+    return Eigen::Quaternion<Real>::FromTwoVectors(from, to).toRotationMatrix();
 };
 
 inline Matd polarRotation(const Matd &F)

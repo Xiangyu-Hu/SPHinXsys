@@ -196,7 +196,7 @@ void AnisotropicAdaptation::initializeAdaptationVariables(BaseParticles &particl
     dv_scaling_ = particles.registerStateVariable<Vecd>("AnisotropicScaling", Vecd::Ones().eval());
     dv_orientation_ = particles.registerStateVariable<Vecd>("AnisotropicOrientation", Vecd::Zero().eval());
     dv_deformation_matrix_ = particles.registerStateVariable<Matd>("AnisotropicMatrix", Matd::Identity().eval());
-    dv_deformation_det_ = particles.registerStateVariable<Real>("AnisotropicDeterminate", 1.0);
+    dv_deformation_det_ = particles.registerStateVariable<Real>("AnisotropicDeterminate", Real(1));
     particles.addVariableToWrite<Vecd>(dv_scaling_);
     particles.addVariableToWrite<Vecd>(dv_orientation_);
 }

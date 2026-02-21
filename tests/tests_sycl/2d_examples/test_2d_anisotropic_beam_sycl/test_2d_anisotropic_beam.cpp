@@ -135,7 +135,7 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     auto &beam_body_inner = sph_system.addInnerRelation(beam_body, ConfigType::Lagrangian);
-    auto &my_observer_contact = sph_system.addContactRelation(beam_observer, beam_body, ConfigType::Lagrangian);
+    auto &beam_observer_contact = sph_system.addContactRelation(beam_observer, beam_body, ConfigType::Lagrangian);
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.
@@ -161,7 +161,7 @@ int main(int ac, char *av[])
     ParticleDynamicsGroup lagrangian_configuration;
     lagrangian_configuration.add(&main_methods.addCellLinkedListDynamics(beam_body));
     lagrangian_configuration.add(&main_methods.addRelationDynamics(beam_body_inner));
-    lagrangian_configuration.add(&main_methods.addRelationDynamics(my_observer_contact));
+    lagrangian_configuration.add(&main_methods.addRelationDynamics(beam_observer_contact));
 
     auto &linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(beam_body_inner);
     auto &acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
@@ -178,6 +178,8 @@ int main(int ac, char *av[])
     auto &write_real_body_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     write_real_body_states.addToWrite<Real>(beam_body, "Density");
     write_real_body_states.addToWrite<Vecd>(beam_body, "Velocity");
+    auto &write_displacement = main_methods.addObserveRegression<
+        RegressionTestEnsembleAverage, Vecd>("Position", beam_observer_contact);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
@@ -203,6 +205,7 @@ int main(int ac, char *av[])
     //	First output before the integration loop.
     //----------------------------------------------------------------------
     write_real_body_states.writeToFile();
+    write_displacement.writeToFile(acoustic_steps);
     //----------------------------------------------------------------------
     // Main time-stepping loop.
     //----------------------------------------------------------------------
@@ -232,6 +235,11 @@ int main(int ac, char *av[])
                       << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
         }
 
+        if (acoustic_steps % observation_interval == 0)
+        {
+            write_displacement.writeToFile(acoustic_steps);
+        }
+
         if (state_recording())
         {
             update_anisotropic_measure.exec();
@@ -249,6 +257,15 @@ int main(int ac, char *av[])
               << " seconds." << std::endl;
     std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_step = "
               << interval_acoustic_step.seconds() << "\n";
+
+    if (sph_system.GenerateRegressionData())
+    {
+        write_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
+    }
+    else
+    {
+        write_displacement.testResult();
+    }
 
     return 0;
 }
