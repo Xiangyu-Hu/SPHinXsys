@@ -24,13 +24,12 @@ Real AcousticTimeStepCK::FinishDynamics::Result(Real reduced_value)
     return acousticCFL_ * h_min_ / (reduced_value + TinyReal);
 }
 //=================================================================================================//
-StructureIntegrationVariables::StructureIntegrationVariables(BaseParticles *particles)
+StructureDynamicsVariables::StructureDynamicsVariables(BaseParticles *particles)
     : dv_rho_(particles->getVariableByName<Real>("Density")),
       dv_mass_(particles->getVariableByName<Real>("Mass")),
       dv_pos_(particles->getVariableByName<Vecd>("Position")),
       dv_vel_(particles->getVariableByName<Vecd>("Velocity")),
       dv_force_(particles->registerStateVariable<Vecd>("Force")),
-      dv_force_prior_(particles->registerStateVariable<Vecd>("ForcePrior")),
       dv_B_(particles->getVariableByName<Matd>("LinearCorrectionMatrix")),
       dv_F_(particles->registerStateVariable<Matd>(
           "DeformationGradient", IdentityMatrix<Matd>::value)),
