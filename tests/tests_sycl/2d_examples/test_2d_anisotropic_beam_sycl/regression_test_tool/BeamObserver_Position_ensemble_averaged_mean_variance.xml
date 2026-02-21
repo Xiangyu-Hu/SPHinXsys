@@ -89,7 +89,7 @@
         <Snapshot_42500 Position_0="~[0.158655,-0.0995243]" />
     </Mean_Element>
     <Variance_Element>
-        <Snapshot_1 Position_0="~[3.68565e-06,1.22129e-24]" />
+        <Snapshot_1 Position_0="~[3.68565e-06,1.22129e-08]" />
         <Snapshot_500 Position_0="~[3.59054e-06,9.12555e-08]" />
         <Snapshot_1000 Position_0="~[3.32065e-06,3.27108e-07]" />
         <Snapshot_1500 Position_0="~[2.96528e-06,6.23751e-07]" />
