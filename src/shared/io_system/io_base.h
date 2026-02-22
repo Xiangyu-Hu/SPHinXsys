@@ -35,6 +35,7 @@
 #include "parameterization.h"
 #include "sphinxsys_containers.h"
 #include "xml_engine.h"
+#include "xml_parser.h"
 
 #include <filesystem>
 #include <fstream>

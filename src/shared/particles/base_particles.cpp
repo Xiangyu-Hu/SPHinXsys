@@ -182,4 +182,32 @@ void BaseParticles::readReloadXmlFile(const std::string &filefullpath)
     reload_xml_parser_.loadXmlFile(filefullpath);
 }
 //=================================================================================================//
+void BaseParticles::writeParticlesToXmlForRestart(XmlParser &xml_parser, tinyxml2::XMLElement *body_element)
+{
+    // Resize the body element to have the correct number of particle children
+    UnsignedInt total_real_particles = TotalRealParticles();
+    size_t total_elements = xml_parser.Size(body_element);
+    
+    if (total_elements != total_real_particles)
+    {
+        xml_parser.resize(body_element, total_real_particles, "particle");
+    }
+    
+    // Write all evolving variables to the body element's particle children
+    OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXmlElement> 
+        write_variable_to_element(body_element);
+    write_variable_to_element(evolving_variables_, xml_parser);
+}
+//=================================================================================================//
+void BaseParticles::readParticlesFromXmlForRestart(XmlParser &xml_parser, tinyxml2::XMLElement *body_element)
+{
+    // Reset total real particles from the body element's particle count
+    sv_total_real_particles_->setValue(xml_parser.Size(body_element));
+    
+    // Read all evolving variables from the body element's particle children
+    OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXmlElement> 
+        read_variable_from_element(body_element);
+    read_variable_from_element(evolving_variables_, this, xml_parser);
+}
+//=================================================================================================//
 } // namespace SPH
