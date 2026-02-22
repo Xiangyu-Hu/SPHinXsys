@@ -234,7 +234,7 @@ class Environment : public PreSettingCase
                               << physical_time
                               << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
 
-                    if (number_of_iterations % observation_sample_interval == 0)
+                    if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != 0)
                     {
                         write_water_mechanical_energy.writeToFile(number_of_iterations);
                         write_recorded_water_pressure.writeToFile(number_of_iterations);
