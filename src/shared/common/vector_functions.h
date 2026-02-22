@@ -190,11 +190,11 @@ Eigen::Matrix<Real, N, M> tensorProduct(const Eigen::Matrix<Real, N, O> &value1,
     return value1 * value2.transpose();
 };
 
-template <int Dim>
-Eigen::Matrix<Real, Dim, Dim> inverseTikhonov(const Eigen::Matrix<Real, Dim, Dim> &input, Real epsilon)
+template <typename MatrixType>
+MatrixType inverseTikhonov(const MatrixType &input, Real epsilon)
 {
-    Eigen::Matrix<Real, Dim, Dim> input_t = input.transpose();
-    return (input_t * input + epsilon * Eigen::Matrix<Real, Dim, Dim>::Identity()).inverse() * input_t;
+    MatrixType input_t = input.transpose();
+    return (input_t * input + epsilon * MatrixType::Identity()).inverse() * input_t;
 };
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H
