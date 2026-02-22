@@ -342,6 +342,8 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
         bidirectional_pressure_conditions.emplace_back(
             std::make_unique<PressureBC<MainExecutionPolicy, LinearCorrectionCK>>(
                 water_block, boundary, params.t_ref));
+    for (auto &bc : bidirectional_pressure_conditions)
+        bc->alignedbox_by_cell.writeShapeProxy(sph_system);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> particle_deletion(water_block);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
         fluid_density_summation(water_body_inner, water_wall_contact);

@@ -222,7 +222,9 @@ int main(int ac, char *av[])
     // //	Creating body parts.
     // //----------------------------------------------------------------------
     auto &emitter = water_body.addBodyPart<AlignedBoxByParticle>(emitter_box);
+    emitter.writeShapeProxy(sph_system);
     auto &disposer = water_body.addBodyPart<AlignedBoxByCell>(disposer_box);
+    disposer.writeShapeProxy(sph_system);
 
     auto &cylinder = sph_system.addAdaptiveBody<SolidBody>(cylinder_adaptation, cylinder_shape);
     cylinder.defineBodyLevelSetShape()->writeLevelSet();
