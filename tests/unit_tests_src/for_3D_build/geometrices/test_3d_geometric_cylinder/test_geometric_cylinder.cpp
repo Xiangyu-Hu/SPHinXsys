@@ -7,15 +7,21 @@ using namespace SPH;
 auto tolerance = []()
 { return 100 * Eps; };
 
+/** Helper: build a Transform that maps UnitX to the given axis direction with translation center */
+Transform makeTransform(const Vec3d &center, const Vec3d &axis)
+{
+    Rotation3d rotation(Eigen::Quaternion<Real>::FromTwoVectors(Vec3d::UnitX(), axis.normalized()));
+    return Transform(rotation, center);
+}
+
 // Test GeometricShapeCylinder basic construction and bounds
 TEST(test_GeometricShapeCylinder, test_findBounds)
 {
-    Vec3d center(0.0, 0.0, 0.0);
-    Vec3d axis(0.0, 0.0, 1.0);  // z-axis
+    Vec3d axis(0.0, 0.0, 1.0); // z-axis
     Real radius = 1.0;
     Real halflength = 2.0;
 
-    GeometricShapeCylinder cylinder(center, axis, radius, halflength);
+    GeometricShapeCylinder cylinder(makeTransform(Vec3d::Zero(), axis), radius, halflength);
     BoundingBoxd box = cylinder.getBounds();
 
     // For a cylinder along z-axis: x,y should be [-radius, radius], z should be [-halflength, halflength]
@@ -30,12 +36,11 @@ TEST(test_GeometricShapeCylinder, test_findBounds)
 // Test containment - point inside cylinder
 TEST(test_GeometricShapeCylinder, test_contain_inside)
 {
-    Vec3d center(0.0, 0.0, 0.0);
-    Vec3d axis(0.0, 0.0, 1.0);  // z-axis
+    Vec3d axis(0.0, 0.0, 1.0); // z-axis
     Real radius = 1.0;
     Real halflength = 2.0;
 
-    GeometricShapeCylinder cylinder(center, axis, radius, halflength);
+    GeometricShapeCylinder cylinder(makeTransform(Vec3d::Zero(), axis), radius, halflength);
 
     // Point clearly inside
     Vec3d point_inside(0.5, 0.0, 1.0);
@@ -49,12 +54,11 @@ TEST(test_GeometricShapeCylinder, test_contain_inside)
 // Test containment - point outside cylinder
 TEST(test_GeometricShapeCylinder, test_contain_outside)
 {
-    Vec3d center(0.0, 0.0, 0.0);
-    Vec3d axis(0.0, 0.0, 1.0);  // z-axis
+    Vec3d axis(0.0, 0.0, 1.0); // z-axis
     Real radius = 1.0;
     Real halflength = 2.0;
 
-    GeometricShapeCylinder cylinder(center, axis, radius, halflength);
+    GeometricShapeCylinder cylinder(makeTransform(Vec3d::Zero(), axis), radius, halflength);
 
     // Point outside radially
     Vec3d point_outside_radial(2.0, 0.0, 0.0);
@@ -72,12 +76,11 @@ TEST(test_GeometricShapeCylinder, test_contain_outside)
 // Test containment - point on boundary
 TEST(test_GeometricShapeCylinder, test_contain_boundary)
 {
-    Vec3d center(0.0, 0.0, 0.0);
-    Vec3d axis(0.0, 0.0, 1.0);  // z-axis
+    Vec3d axis(0.0, 0.0, 1.0); // z-axis
     Real radius = 1.0;
     Real halflength = 2.0;
 
-    GeometricShapeCylinder cylinder(center, axis, radius, halflength);
+    GeometricShapeCylinder cylinder(makeTransform(Vec3d::Zero(), axis), radius, halflength);
 
     // Point on cylindrical surface
     Vec3d point_on_surface(1.0, 0.0, 1.0);
@@ -91,12 +94,11 @@ TEST(test_GeometricShapeCylinder, test_contain_boundary)
 // Test closest point - for point inside cylinder
 TEST(test_GeometricShapeCylinder, test_closest_point_inside)
 {
-    Vec3d center(0.0, 0.0, 0.0);
-    Vec3d axis(0.0, 0.0, 1.0);  // z-axis
+    Vec3d axis(0.0, 0.0, 1.0); // z-axis
     Real radius = 1.0;
     Real halflength = 2.0;
 
-    GeometricShapeCylinder cylinder(center, axis, radius, halflength);
+    GeometricShapeCylinder cylinder(makeTransform(Vec3d::Zero(), axis), radius, halflength);
 
     // Point inside, closer to side
     Vec3d point_inside(0.9, 0.0, 0.0);
@@ -110,12 +112,11 @@ TEST(test_GeometricShapeCylinder, test_closest_point_inside)
 // Test closest point - for point outside radially
 TEST(test_GeometricShapeCylinder, test_closest_point_outside_radial)
 {
-    Vec3d center(0.0, 0.0, 0.0);
-    Vec3d axis(0.0, 0.0, 1.0);  // z-axis
+    Vec3d axis(0.0, 0.0, 1.0); // z-axis
     Real radius = 1.0;
     Real halflength = 2.0;
 
-    GeometricShapeCylinder cylinder(center, axis, radius, halflength);
+    GeometricShapeCylinder cylinder(makeTransform(Vec3d::Zero(), axis), radius, halflength);
 
     // Point outside radially
     Vec3d point_outside(2.0, 0.0, 1.0);
@@ -129,12 +130,11 @@ TEST(test_GeometricShapeCylinder, test_closest_point_outside_radial)
 // Test closest point - for point outside axially
 TEST(test_GeometricShapeCylinder, test_closest_point_outside_axial)
 {
-    Vec3d center(0.0, 0.0, 0.0);
-    Vec3d axis(0.0, 0.0, 1.0);  // z-axis
+    Vec3d axis(0.0, 0.0, 1.0); // z-axis
     Real radius = 1.0;
     Real halflength = 2.0;
 
-    GeometricShapeCylinder cylinder(center, axis, radius, halflength);
+    GeometricShapeCylinder cylinder(makeTransform(Vec3d::Zero(), axis), radius, halflength);
 
     // Point outside axially
     Vec3d point_outside(0.5, 0.0, 3.0);
@@ -145,15 +145,15 @@ TEST(test_GeometricShapeCylinder, test_closest_point_outside_axial)
     EXPECT_LE(std::abs(closest[2] - 2.0), tolerance());
 }
 
-// Test with translated cylinder
+// Test with translated cylinder (axis along x, so no rotation needed)
 TEST(test_GeometricShapeCylinder, test_translated_cylinder)
 {
     Vec3d center(5.0, 3.0, 2.0);
-    Vec3d axis(1.0, 0.0, 0.0);  // x-axis
     Real radius = 0.5;
     Real halflength = 1.0;
 
-    GeometricShapeCylinder cylinder(center, axis, radius, halflength);
+    // Axis = UnitX: use translation-only Transform
+    GeometricShapeCylinder cylinder(Transform(center), radius, halflength);
 
     // Point inside translated cylinder
     Vec3d point_inside(5.0, 3.0, 2.0);
@@ -167,12 +167,11 @@ TEST(test_GeometricShapeCylinder, test_translated_cylinder)
 // Test with different axis orientations
 TEST(test_GeometricShapeCylinder, test_different_axis)
 {
-    Vec3d center(0.0, 0.0, 0.0);
-    Vec3d axis(1.0, 1.0, 0.0);  // diagonal in xy-plane (will be normalized)
+    Vec3d axis(1.0, 1.0, 0.0); // diagonal in xy-plane
     Real radius = 1.0;
     Real halflength = 1.0;
 
-    GeometricShapeCylinder cylinder(center, axis, radius, halflength);
+    GeometricShapeCylinder cylinder(makeTransform(Vec3d::Zero(), axis), radius, halflength);
 
     // Point at center should be inside
     Vec3d point_center(0.0, 0.0, 0.0);
