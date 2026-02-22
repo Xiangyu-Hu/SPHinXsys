@@ -246,6 +246,8 @@ class StructuralSimulation
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::TranslateSolidBodyPart>>> translation_solid_body_part_;
     StdVec<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
 
+    StdVec<SharedPtr<ReduceDynamics<solid_dynamics::AcousticTimeStep>>> acoustic_time_step_list_;
+
     // iterators
     int iteration_;
 
@@ -257,6 +259,7 @@ class StructuralSimulation
     void initializeElasticSolidBodies();
     void initializeContactBetweenTwoBodies(int first, int second);
     void initializeAllContacts();
+    void initializeAcousticTimeStepList();
 
     // for initializeBoundaryConditions
     void initializeGravity();
@@ -306,6 +309,7 @@ class StructuralSimulation
 
     StdVec<SharedPtr<SolidBodyForSimulation>> get_solid_body_list_() { return solid_body_list_; };
     Real getMaxDisplacement(int body_index);
+    Real getSmallestTimeStepAmongSolidBodies();
 
     // For c++
     void runSimulation(Real end_time);

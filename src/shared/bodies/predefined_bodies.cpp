@@ -7,11 +7,6 @@
 namespace SPH
 {
 //=================================================================================================//
-void SolidBody::addSolidBodyToSPHSystem()
-{
-    sph_system_.addSolidBody(this);
-}
-//=================================================================================================//
 void ObserverBody::addObserverBodyToSPHSystem()
 {
     sph_system_.addObservationBody(this);
