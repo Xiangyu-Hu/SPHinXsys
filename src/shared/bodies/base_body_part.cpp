@@ -202,8 +202,9 @@ bool NearShapeSurface::checkNearSurface(Vecd cell_position, Real threshold)
     return level_set_shape_.checkNearSurface(cell_position, threshold);
 }
 //=================================================================================================//
-AlignedBoxPart::AlignedBoxPart(const std::string &part_name, const AlignedBox &aligned_box)
-    : aligned_box_(*sv_aligned_box_keeper_
+AlignedBoxPart::AlignedBoxPart(SPHSystem &sph_system, const std::string &part_name, const AlignedBox &aligned_box)
+    : sph_system_(sph_system),
+      aligned_box_(*sv_aligned_box_keeper_
                         .createPtr<SingularVariable<AlignedBox>>(part_name, aligned_box)
                         ->Data())
 {
@@ -212,7 +213,7 @@ AlignedBoxPart::AlignedBoxPart(const std::string &part_name, const AlignedBox &a
 }
 //=================================================================================================//
 AlignedBoxByParticle::AlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box)
-    : BodyPartByParticle(real_body), AlignedBoxPart(part_name_, aligned_box)
+    : BodyPartByParticle(real_body), AlignedBoxPart(real_body.getSPHSystem(), part_name_, aligned_box)
 {
     TaggingParticleMethod tagging_particle_method =
         std::bind(&AlignedBoxByParticle::tagByContain, this, _1);
@@ -225,7 +226,7 @@ bool AlignedBoxByParticle::tagByContain(size_t particle_index)
 }
 //=================================================================================================//
 AlignedBoxByCell::AlignedBoxByCell(RealBody &real_body, const AlignedBox &aligned_box)
-    : BodyPartByCell(real_body), AlignedBoxPart(part_name_, aligned_box)
+    : BodyPartByCell(real_body), AlignedBoxPart(real_body.getSPHSystem(), part_name_, aligned_box)
 {
     TaggingCellMethod tagging_cell_method =
         std::bind(&AlignedBoxByCell::checkNotFar, this, _1, _2);
