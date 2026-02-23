@@ -31,7 +31,7 @@ StdVec<Vecd> observation_location = {Vecd(PL, 0.0, 0.0)};
 Real rho0_s = 1100.0; /**< Reference density. */
 Real poisson = 0.45;  /**< Poisson ratio. */
 Real Youngs_modulus = 1.7e7;
-Real angular_0 = -105.0;
+Real angular_0 = -300.0;
 //------------------------------------------------------------------------------
 // define a velocity profile for initial condition
 //------------------------------------------------------------------------------
@@ -127,7 +127,7 @@ int main(int ac, char *av[])
 
     auto &column_linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(column_inner);
     auto &column_acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
-        solid_dynamics::StructureIntegration1stHalf, NeoHookeanSolid, LinearCorrectionCK>(column_inner);
+        solid_dynamics::StructureIntegration1stHalf, NeoHookeanSolid, NoKernelCorrectionCK>(column_inner);
     auto &column_acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
         solid_dynamics::StructureIntegration2ndHalf>(column_inner);
 

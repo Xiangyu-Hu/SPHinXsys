@@ -196,5 +196,35 @@ Eigen::Matrix<Real, Dim, Dim> inverseTikhonov(const Eigen::Matrix<Real, Dim, Dim
     Eigen::Matrix<Real, Dim, Dim> input_t = input.transpose();
     return (input_t * input + epsilon * Eigen::Matrix<Real, Dim, Dim>::Identity()).inverse() * input_t;
 };
+
+inline Mat2d RotationMatrix(const Vec2d &from, const Vec2d &to)
+{
+    return Eigen::Rotation2D(
+               std::atan2(to[1], to[0]) - std::atan2(from[1], from[0]))
+        .toRotationMatrix();
+};
+
+inline Mat3d RotationMatrix(const Vec3d &from, const Vec3d &to)
+{
+    return Eigen::Quaternion<Real>::FromTwoVectors(from, to).toRotationMatrix();
+};
+
+inline Matd polarRotation(const Matd &F)
+{
+    Eigen::JacobiSVD<Matd> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Matd R = svd.matrixU() * svd.matrixV().transpose();
+    assert(R.determinant() > 0.0);
+    return R;
+};
+
+inline void polarDecomposition(const Matd &F, Matd &R, Matd &S)
+{
+    Eigen::JacobiSVD<Matd> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    const Matd &U = svd.matrixU();
+    const Matd &V = svd.matrixV();
+    R = U * V.transpose();
+    assert(R.determinant() > 0.0);
+    S = V * svd.singularValues().asDiagonal() * V.transpose();
+}
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H

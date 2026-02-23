@@ -246,6 +246,53 @@ class StructureNumericalDamping<Inner<WithUpdate, MaterialType, Parameters...>>
     DiscreteVariable<Vecd> *dv_numerical_damping_force_;
 };
 
+class UpdateElasticNormalDirectionCK : public LocalDynamics
+{
+  public:
+    explicit UpdateElasticNormalDirectionCK(SPHBody &sph_body);
+    virtual ~UpdateElasticNormalDirectionCK() {};
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Vecd *n_, *n0_;
+        Real *phi_, *phi0_;
+        Matd *F_;
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_n_, *dv_n0_;
+    DiscreteVariable<Real> *dv_phi_, *dv_phi0_;
+    DiscreteVariable<Matd> *dv_F_;
+};
+
+class UpdateAnisotropicMeasure : public LocalDynamics
+{
+  public:
+    explicit UpdateAnisotropicMeasure(SPHBody &sph_body);
+    virtual ~UpdateAnisotropicMeasure() {};
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Vecd *scaling_, *scaling0_;
+        Vecd *orientation_, *orientation0_;
+        Matd *F_;
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_scaling_, *dv_scaling0_;
+    DiscreteVariable<Vecd> *dv_orientation_, *dv_orientation0_;
+    DiscreteVariable<Matd> *dv_F_;
+};
 } // namespace solid_dynamics
 } // namespace SPH
 #endif // STRUCTURE_DYNAMICS_H

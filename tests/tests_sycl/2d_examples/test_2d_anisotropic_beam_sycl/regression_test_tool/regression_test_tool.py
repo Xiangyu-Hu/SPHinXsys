@@ -63,17 +63,16 @@ except ImportError as e:
     print(f"Failed to import module: {e}")
 
 """
-case name: test_2d_oscillating_beam_sycl
+case name: test_2d_anisotropic_beam_sycl
 """
 
-case_name = "test_2d_oscillating_beam_sycl"
+case_name = "test_2d_anisotropic_beam_sycl"
 body_name = "BeamObserver"
 parameter_name = "Position"
 
 number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
-
 
 while True:
     print("Now start a new run......")

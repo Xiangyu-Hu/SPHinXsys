@@ -17,7 +17,7 @@ TransportVelocityCorrectionCK<DynamicsIdentifier, LimiterType, ParticleScopes...
       limiter_(h_ref_ * h_ref_), within_scope_method_(this->particles_),
       dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),
       dv_kernel_gradient_integral_(this->particles_->template getVariableByName<Vecd>("KernelGradientIntegral")),
-      adaptaion_(DynamicCast<Adaptation>(this, this->getSPHAdaptation()))
+      adaptation_(DynamicCast<Adaptation>(this, this->getSPHAdaptation()))
 {
     static_assert(std::is_base_of<Limiter, LimiterType>::value,
                   "Limiter is not the base of LimiterType!");
@@ -30,7 +30,7 @@ template <class ExecutionPolicy, class EncloserType>
 TransportVelocityCorrectionCK<DynamicsIdentifier, LimiterType, ParticleScopes...>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : correction_scaling_(encloser.correction_scaling_),
-      h_ratio_(ex_policy, encloser.adaptaion_), limiter_(encloser.limiter_),
+      h_ratio_(ex_policy, encloser.adaptation_), limiter_(encloser.limiter_),
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
       kernel_gradient_integral_(encloser.dv_kernel_gradient_integral_->DelegatedData(ex_policy)),
       within_scope_(ex_policy, encloser.within_scope_method_, *this) {}

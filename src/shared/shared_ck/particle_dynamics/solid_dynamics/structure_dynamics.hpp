@@ -95,7 +95,7 @@ void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionT
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol0_[index_j];
+        Vecd nablaW_ijV_j = this->nablaW_ij(index_i, index_j) * Vol0_[index_j];
         Vecd e_ij = this->e_ij(index_i, index_j);
         Real r_ij = this->vec_r_ij(index_i, index_j).norm();
 
@@ -106,8 +106,8 @@ void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionT
         Real e_ij_difference_norm = e_ij_difference.norm();
 
         Real limiter = SMIN(10.0 * SMAX(e_ij_difference_norm - 0.05, 0.0), 1.0);
-        Vecd shear_force_ij = G_ * pair_scaling * (e_ij + limiter * e_ij_difference);
-        sum += ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * e_ij + shear_force_ij) * dW_ijV_j;
+        Vecd shear_force_ij = G_ * pair_scaling * (nablaW_ijV_j + limiter * nablaW_ijV_j.dot(e_ij) * e_ij_difference);
+        sum += (stress_on_particle_[index_i] + stress_on_particle_[index_j]) * nablaW_ijV_j + shear_force_ij;
     }
 
     force_[index_i] = sum * Vol0_[index_i];
@@ -166,11 +166,8 @@ void StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::InteractKernel
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol0_[index_j];
-        Vecd e_ij = this->e_ij(index_i, index_j);
-
-        Vecd gradW_ij = dW_ijV_j * e_ij;
-        sum -= (vel_[index_i] - vel_[index_j]) * gradW_ij.transpose();
+        Vecd nablaW_ijV_j = this->nablaW_ij(index_i, index_j) * Vol0_[index_j];
+        sum -= (vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
     }
     dF_dt_[index_i] = sum * B_[index_i];
 };
@@ -238,6 +235,41 @@ void StructureNumericalDamping<Inner<WithUpdate, MaterialType, Parameters...>>::
     }
     numerical_damping_force_[index_i] = sum * Vol0_[index_i];
 };
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+UpdateElasticNormalDirectionCK::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : n_(encloser.dv_n_->DelegatedData(ex_policy)),
+      n0_(encloser.dv_n0_->DelegatedData(ex_policy)),
+      phi_(encloser.dv_phi_->DelegatedData(ex_policy)),
+      phi0_(encloser.dv_phi0_->DelegatedData(ex_policy)),
+      F_(encloser.dv_F_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+inline void UpdateElasticNormalDirectionCK::UpdateKernel::update(size_t index_i, Real dt)
+{
+    n_[index_i] = polarRotation(F_[index_i]) * n0_[index_i];
+    // Nanson's relation is used to update the distance to surface
+    Vecd current_normal = F_[index_i].inverse().transpose() * n0_[index_i];
+    phi_[index_i] = phi0_[index_i] / (current_normal.norm() + SqrtEps); // todo: check this
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+UpdateAnisotropicMeasure::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : scaling_(encloser.dv_scaling_->DelegatedData(ex_policy)),
+      scaling0_(encloser.dv_scaling0_->DelegatedData(ex_policy)),
+      orientation_(encloser.dv_orientation_->DelegatedData(ex_policy)),
+      orientation0_(encloser.dv_orientation0_->DelegatedData(ex_policy)),
+      F_(encloser.dv_F_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+inline void UpdateAnisotropicMeasure::UpdateKernel::update(size_t index_i, Real dt)
+{
+    Matd rotation = Matd::Identity();
+    Matd stretch = Matd::Identity();
+    polarDecomposition(F_[index_i], rotation, stretch);
+    orientation_[index_i] = rotation * orientation0_[index_i];
+    scaling_[index_i] = stretch * scaling0_[index_i];
+}
 //=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH
