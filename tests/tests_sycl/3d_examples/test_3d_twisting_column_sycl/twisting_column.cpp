@@ -31,7 +31,7 @@ StdVec<Vecd> observation_location = {Vecd(PL, 0.0, 0.0)};
 Real rho0_s = 1100.0; /**< Reference density. */
 Real poisson = 0.45;  /**< Poisson ratio. */
 Real Youngs_modulus = 1.7e7;
-Real angular_0 = -105.0;
+Real angular_0 = -300.0;
 //------------------------------------------------------------------------------
 // define a velocity profile for initial condition
 //------------------------------------------------------------------------------
@@ -127,7 +127,7 @@ int main(int ac, char *av[])
 
     auto &column_linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(column_inner);
     auto &column_acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
-        solid_dynamics::StructureIntegration1stHalf, NeoHookeanSolid, LinearCorrectionCK>(column_inner);
+        solid_dynamics::StructureIntegration1stHalf, NeoHookeanSolid, NoKernelCorrectionCK>(column_inner);
     auto &column_acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
         solid_dynamics::StructureIntegration2ndHalf>(column_inner);
 
@@ -154,20 +154,15 @@ int main(int ac, char *av[])
     int observation_interval = screening_interval;
     auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 250.0);
     //----------------------------------------------------------------------
-    //	Prepare for the time integration loop.
-    //----------------------------------------------------------------------
-    lagrangian_configuration.exec();
-    column_linear_correction_matrix.exec();
-    //----------------------------------------------------------------------
-    //	First output before the integration loop.
-    //----------------------------------------------------------------------
-    body_state_recorder.writeToFile();
-    write_displacement.writeToFile(0);
-    //----------------------------------------------------------------------
     //	Statistics for the computing time information
     //----------------------------------------------------------------------
     TimeInterval interval_output;
     TimeInterval interval_acoustic_step;
+    //----------------------------------------------------------------------
+    //	Prepare for the time integration loop.
+    //----------------------------------------------------------------------
+    lagrangian_configuration.exec();
+    column_linear_correction_matrix.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------

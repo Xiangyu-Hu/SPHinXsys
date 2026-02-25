@@ -35,6 +35,7 @@
 namespace SPH
 {
 class SPHAdaptation;
+class AnisotropicAdaptation;
 
 template <typename...>
 class Neighbor;
@@ -61,14 +62,14 @@ class Neighbor<Base>
       protected:
         Vecd *src_pos_, *tar_pos_;
 
-        Real W(const Real &inv_h_squared, const Vec2d &displacement, const Real &inv_h) const;
-        Real W(const Real &inv_h_cubed, const Vec3d &displacement, const Real &inv_h) const;
-        Real W0(const Real &inv_h_squared, const Vec2d &) const;
-        Real W0(const Real &inv_h_cubed, const Vec3d &) const;
-        Real dW(const Real &inv_h_cubed, const Vec2d &displacement, const Real &inv_h) const;
-        Real dW(const Real &inv_h_fourth, const Vec3d &displacement, const Real &inv_h) const;
-        Real d2W(const Real &inv_h_fourth, const Vec2d &displacement, const Real &inv_h) const;
-        Real d2W(const Real &inv_h_fifth, const Vec3d &displacement, const Real &inv_h) const;
+        Real W2D(const Real &inv_h_squared, const Real &scaled_r) const;
+        Real W3D(const Real &inv_h_cubed, const Real &scaled_r) const;
+        Real W02D(const Real &inv_h_squared) const;
+        Real W03D(const Real &inv_h_cubed) const;
+        Real dW2D(const Real &inv_h_cubed, const Real &scaled_r) const;
+        Real dW3D(const Real &inv_h_fourth, const Real &scaled_r) const;
+        Real d2W2D(const Real &inv_h_fourth, const Real &scaled_r) const;
+        Real d2W3D(const Real &inv_h_fifth, const Real &scaled_r) const;
     };
 
   protected:
@@ -97,6 +98,7 @@ class Neighbor<SPHAdaptation, SPHAdaptation> : public Neighbor<Base>
         template <class ExecutionPolicy, class EncloserType>
         SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         SmoothingKernel(Neighbor<SPHAdaptation, SPHAdaptation> &encloser);
+        inline Vecd nablaW_ij(UnsignedInt i, UnsignedInt j) const;
         inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return W(vec_r_ij(i, j)); };
         inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return dW(vec_r_ij(i, j)); };
         Real W0(UnsignedInt i, const Vec2d &zero) const;
@@ -165,8 +167,9 @@ class Neighbor<SourceAdaptationType, TargetAdaptationType> : public Neighbor<Bas
       public:
         template <class ExecutionPolicy, class EncloserType>
         SmoothingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        inline Real W_ij(UnsignedInt i, UnsignedInt j) const { return W(vec_r_ij(i, j), i, j); };
-        inline Real dW_ij(UnsignedInt i, UnsignedInt j) const { return dW(vec_r_ij(i, j), i, j); };
+        inline Vecd nablaW_ij(UnsignedInt i, UnsignedInt j) const;
+        inline Real W_ij(UnsignedInt i, UnsignedInt j) const;
+        inline Real dW_ij(UnsignedInt i, UnsignedInt j) const;
         Real W0(UnsignedInt i, const Vec2d &zero) const;
         Real W0(UnsignedInt i, const Vec3d &zero) const;
 
@@ -175,13 +178,25 @@ class Neighbor<SourceAdaptationType, TargetAdaptationType> : public Neighbor<Bas
         SourceSmoothingLengthRatio src_h_ratio_;
         TargetSmoothingLengthRatio tar_h_ratio_;
 
+        // Used when at least one of adaptations are anisotropic.
+        template <typename FuncI, typename FuncJ>
+        auto selectKernelFunction(
+            UnsignedInt i, UnsignedInt j, const Vecd &disp,
+            const SourceSmoothingLengthRatio &src_h_ratio, const TargetSmoothingLengthRatio &tar_h_ratio,
+            const FuncI &func_i, const FuncJ &func_j) const;
+
+        template < // Only permited to use when both adaptations are isotropic.
+            typename U = SourceAdaptationType, typename V = TargetAdaptationType,
+            std::enable_if_t<
+                !std::is_base_of_v<AnisotropicAdaptation, U> && !std::is_base_of_v<AnisotropicAdaptation, V>, int> = 0>
         Real invSmoothingLength(UnsignedInt i, UnsignedInt j) const;
-        Real W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
-        Real W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
-        Real dW(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
-        Real dW(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
-        Real d2W(const Vec2d &displacement, UnsignedInt i, UnsignedInt j) const;
-        Real d2W(const Vec3d &displacement, UnsignedInt i, UnsignedInt j) const;
+
+        Real W(const Vec2d &disp_transform, Real inv_h) const;
+        Real W(const Vec3d &disp_transform, Real inv_h) const;
+        Real dW(const Vec2d &disp_transform, Real inv_h) const;
+        Real dW(const Vec3d &disp_transform, Real inv_h) const;
+        Real d2W(const Vec2d &disp_transform, Real inv_h) const;
+        Real d2W(const Vec3d &disp_transform, Real inv_h) const;
     };
     typedef SmoothingKernel NeighborKernel;
 

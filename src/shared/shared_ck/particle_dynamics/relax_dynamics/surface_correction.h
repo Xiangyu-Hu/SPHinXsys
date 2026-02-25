@@ -104,7 +104,7 @@ class LevelsetKernelGradientIntegral : public BaseLocalDynamics<DynamicIdentifie
   protected:
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Vecd> *dv_residual_;
-    Adaptation &adaptaion_;
+    Adaptation &adaptation_;
     LevelSet &level_set_;
 };
 

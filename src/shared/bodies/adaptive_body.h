@@ -45,7 +45,7 @@ class AdaptiveBody<AdaptationType, BaseBodyType> : public BaseBodyType
     typedef AdaptationType Adaptation;
 
     template <typename... Args>
-    AdaptiveBody(SPHSystem &sph_system, AdaptationType adaptation, Args &&...args)
+    AdaptiveBody(SPHSystem &sph_system, const AdaptationType &adaptation, Args &&...args)
         : BaseBodyType(sph_system, std::forward<Args>(args)...), adaptation_(adaptation)
     {
         this->sph_adaptation_ = &adaptation_;

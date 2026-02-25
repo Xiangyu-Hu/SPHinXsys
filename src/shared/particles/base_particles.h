@@ -170,6 +170,9 @@ class BaseParticles
     void resetTotalRealParticlesFromXmlDoc(XmlParser &xml_parser);
     void writeParticlesToXmlForRestart(const std::string &filefullpath);
     void readParticlesFromXmlForRestart(const std::string &filefullpath);
+    // New methods for writing/reading to/from XML element (for consolidated restart file)
+    void writeParticlesToXmlForRestart(XmlParser &xml_parser, tinyxml2::XMLElement *body_element);
+    void readParticlesFromXmlForRestart(XmlParser &xml_parser, tinyxml2::XMLElement *body_element);
     void writeParticlesToXmlForReload(const std::string &filefullpath);
     void readReloadXmlFile(const std::string &filefullpath);
     template <typename DataType>
@@ -224,6 +227,22 @@ class BaseParticles
 
     struct ReadAParticleVariableFromXml
     {
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles, XmlParser &xml_parser);
+    };
+
+    struct WriteAParticleVariableToXmlElement
+    {
+        tinyxml2::XMLElement *element_;
+        WriteAParticleVariableToXmlElement(tinyxml2::XMLElement *element) : element_(element) {}
+        template <typename DataType>
+        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser);
+    };
+
+    struct ReadAParticleVariableFromXmlElement
+    {
+        tinyxml2::XMLElement *element_;
+        ReadAParticleVariableFromXmlElement(tinyxml2::XMLElement *element) : element_(element) {}
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles, XmlParser &xml_parser);
     };

@@ -135,9 +135,9 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parame
 
         particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                      [=](size_t i)
-                     {  if(interact_kernel->hasNeighor(i)) {
-                            interact_kernel->interact(i, dt);
-                        } });
+                     {
+                         interact_kernel->interact(i, dt);
+                     });
 
         this->logger_->debug(
             "InteractionDynamicsCK::runInteraction() for {} at {}",

@@ -81,7 +81,7 @@ class PositionRelaxationCK : public BaseLocalDynamics<DynamicIdentifier>
         : BaseLocalDynamics<DynamicIdentifier>(identfier),
           pos_(this->particles_->template getVariableByName<Vecd>("Position")),
           residual_(this->particles_->template getVariableByName<Vecd>("KernelGradientIntegral")),
-          adaptaion_(DynamicCast<Adaptation>(this, identfier.getSPHAdaptation())) {};
+          adaptation_(DynamicCast<Adaptation>(this, identfier.getSPHAdaptation())) {};
     virtual ~PositionRelaxationCK() {};
 
     class UpdateKernel
@@ -91,7 +91,7 @@ class PositionRelaxationCK : public BaseLocalDynamics<DynamicIdentifier>
         UpdateKernel(const ExecutionPolicy &ex_policy, PositionRelaxationCK &encloser)
             : pos_(encloser.pos_->DelegatedData(ex_policy)),
               residual_(encloser.residual_->DelegatedData(ex_policy)),
-              h_ratio_(ex_policy, encloser.adaptaion_){};
+              h_ratio_(ex_policy, encloser.adaptation_){};
 
         void update(size_t index_i, Real dt_square)
         {
@@ -105,7 +105,7 @@ class PositionRelaxationCK : public BaseLocalDynamics<DynamicIdentifier>
 
   protected:
     DiscreteVariable<Vecd> *pos_, *residual_;
-    Adaptation &adaptaion_;
+    Adaptation &adaptation_;
 };
 
 template <class DynamicIdentifier>

@@ -102,11 +102,16 @@ class SPHAdaptation
 
     class UnitSmoothingLengthRatio
     {
+
       public:
         explicit UnitSmoothingLengthRatio(SPHAdaptation &adaptation) {};
         template <class ExecutionPolicy>
         UnitSmoothingLengthRatio(const ExecutionPolicy &ex_policy, SPHAdaptation &adaptation){};
         Real operator()(UnsignedInt /*particle_index_i*/) const { return 1.0; };
+        const Vecd &transform(const Vecd &original, UnsignedInt index_i) const { return original; };
+        const Vecd &inverseTransform(const Vecd &original, UnsignedInt index_i) const { return original; };
+        Real KernelTransform(UnsignedInt index_i) const { return 1.0; };
+        Real GradientTransform(UnsignedInt index_i) const { return 1.0; };
     };
 
     typedef UnitSmoothingLengthRatio SmoothingLengthRatioType;
@@ -143,16 +148,16 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     Real MaxCutOffRadius() const { return max_cut_off_radius_; };
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override = 0;
 
-    class ContinuousSmoothingLengthRatio
+    class ContinuousSmoothingLengthRatio : public UnitSmoothingLengthRatio
     {
         Real *h_ratio_;
 
       public:
         explicit ContinuousSmoothingLengthRatio(AdaptiveSmoothingLength &adaptation)
-            : h_ratio_(adaptation.h_ratio_) {};
+            : UnitSmoothingLengthRatio(adaptation), h_ratio_(adaptation.h_ratio_) {};
         template <class ExecutionPolicy>
         ContinuousSmoothingLengthRatio(const ExecutionPolicy &ex_policy, AdaptiveSmoothingLength &adaptation)
-            : h_ratio_(adaptation.dv_h_ratio_->DelegatedData(ex_policy)){};
+            : UnitSmoothingLengthRatio(adaptation), h_ratio_(adaptation.dv_h_ratio_->DelegatedData(ex_policy)){};
         Real operator()(UnsignedInt index_i) const { return h_ratio_[index_i]; };
     };
 
@@ -160,7 +165,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
 
     class SmoothedSpacing
     {
-        KernelTabulatedCK smoothing_kerel_;
+        KernelTabulatedCK smoothing_kernel_;
         Real kernel_size_, inv_w0_;
         Real finest_spacing_bound_, coarsest_spacing_bound_;
 
@@ -177,8 +182,7 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     int *h_level_;
     Real finest_spacing_bound_;   /**< the adaptation bound for finest particles */
     Real coarsest_spacing_bound_; /**< the adaptation bound for coarsest particles */
-    Real max_cut_off_radius_;      /**< the maximum cut-off radius determined by the reference smoothing length and kernel function */
-
+    Real max_cut_off_radius_;     /**< the maximum cut-off radius determined by the reference smoothing length and kernel function */
 };
 
 /**
@@ -271,6 +275,49 @@ class AdaptiveWithinShape : public AdaptiveByShape
             Real operator()(const Vecd &position);
         };
     };
+};
+
+class AnisotropicAdaptation : public AdaptiveSmoothingLength
+{
+  public:
+    AnisotropicAdaptation(Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level);
+    virtual ~AnisotropicAdaptation() {};
+    virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
+
+    class AnisotropicSmoothingLengthRatio : public ContinuousSmoothingLengthRatio
+    {
+        Matd *deformation_matrix_;
+        Real *deformation_det_;
+
+      public:
+        template <class ExecutionPolicy>
+        AnisotropicSmoothingLengthRatio(const ExecutionPolicy &ex_policy, AnisotropicAdaptation &adaptation);
+        Vecd transform(const Vecd &original, UnsignedInt index_i) const;
+        Vecd inverseTransform(const Vecd &original, UnsignedInt index_i) const;
+        Real KernelTransform(UnsignedInt index_i) const;
+        Matd GradientTransform(UnsignedInt index_i) const;
+    };
+
+    typedef AnisotropicSmoothingLengthRatio SmoothingLengthRatioType;
+
+  protected:
+    DiscreteVariable<Vecd> *dv_scaling_, *dv_orientation_;
+    DiscreteVariable<Matd> *dv_deformation_matrix_;
+    DiscreteVariable<Real> *dv_deformation_det_;
+};
+
+class PrescribedAnisotropy : public AnisotropicAdaptation
+{
+  public:
+    PrescribedAnisotropy(const Vecd &scaling, const Vecd &orientation,
+                         Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global);
+    virtual ~PrescribedAnisotropy() {};
+    virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
+    virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override { return spacing_ref_; };
+
+  protected:
+    Vecd scaling_ref_, orientation_ref_;
+    Matd deformation_matrix_ref_;
 };
 } // namespace SPH
 #endif // ADAPTATION_H

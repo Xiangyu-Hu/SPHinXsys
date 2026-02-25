@@ -24,13 +24,12 @@ Real AcousticTimeStepCK::FinishDynamics::Result(Real reduced_value)
     return acousticCFL_ * h_min_ / (reduced_value + TinyReal);
 }
 //=================================================================================================//
-StructureIntegrationVariables::StructureIntegrationVariables(BaseParticles *particles)
+StructureDynamicsVariables::StructureDynamicsVariables(BaseParticles *particles)
     : dv_rho_(particles->getVariableByName<Real>("Density")),
       dv_mass_(particles->getVariableByName<Real>("Mass")),
       dv_pos_(particles->getVariableByName<Vecd>("Position")),
       dv_vel_(particles->getVariableByName<Vecd>("Velocity")),
       dv_force_(particles->registerStateVariable<Vecd>("Force")),
-      dv_force_prior_(particles->registerStateVariable<Vecd>("ForcePrior")),
       dv_B_(particles->getVariableByName<Matd>("LinearCorrectionMatrix")),
       dv_F_(particles->registerStateVariable<Matd>(
           "DeformationGradient", IdentityMatrix<Matd>::value)),
@@ -45,6 +44,22 @@ StructureIntegrationVariables::StructureIntegrationVariables(BaseParticles *part
     particles->addEvolvingVariable<Matd>(dv_F_);
     particles->addEvolvingVariable<Matd>(dv_dF_dt_);
 }
+//=================================================================================================//
+UpdateElasticNormalDirectionCK::UpdateElasticNormalDirectionCK(SPHBody &sph_body)
+    : LocalDynamics(sph_body),
+      dv_n_(particles_->getVariableByName<Vecd>("NormalDirection")),
+      dv_n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      dv_phi_(particles_->getVariableByName<Real>("SignedDistance")),
+      dv_phi0_(particles_->getVariableByName<Real>("InitialSignedDistance")),
+      dv_F_(particles_->getVariableByName<Matd>("DeformationGradient")) {}
+//=================================================================================================//
+UpdateAnisotropicMeasure::UpdateAnisotropicMeasure(SPHBody &sph_body)
+    : LocalDynamics(sph_body),
+      dv_scaling_(particles_->getVariableByName<Vecd>("AnisotropicScaling")),
+      dv_scaling0_(particles_->registerStateVariableFrom<Vecd>("InitialAnisotropicScaling", "AnisotropicScaling")),
+      dv_orientation_(particles_->getVariableByName<Vecd>("AnisotropicOrientation")),
+      dv_orientation0_(particles_->registerStateVariableFrom<Vecd>("InitialAnisotropicOrientation", "AnisotropicOrientation")),
+      dv_F_(particles_->getVariableByName<Matd>("DeformationGradient")) {}
 //=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH

@@ -256,6 +256,39 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
     }
 }
 //=================================================================================================//
+template <typename DataType>
+void BaseParticles::WriteAParticleVariableToXmlElement::
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser)
+{
+    for (size_t i = 0; i != variables.size(); ++i)
+    {
+        size_t index = 0;
+        DataType *data_field = variables[i]->Data();
+        for (auto child = element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        {
+            xml_parser.setAttributeToElement(child, variables[i]->Name(), data_field[index]);
+            index++;
+        }
+    }
+}
+//=================================================================================================//
+template <typename DataType>
+void BaseParticles::ReadAParticleVariableFromXmlElement::
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
+           BaseParticles *base_particles, XmlParser &xml_parser)
+{
+    for (size_t i = 0; i != variables.size(); ++i)
+    {
+        size_t index = 0;
+        DataType *data_field = variables[i]->Data();
+        for (auto child = element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        {
+            xml_parser.queryAttributeValue(child, variables[i]->Name(), data_field[index]);
+            index++;
+        }
+    }
+}
+//=================================================================================================//
 template <class DataType, typename... Args>
 DataType *BaseParticles::
     addUniqueDiscreteVariableData(const std::string &name, size_t data_size, Args &&...args)
