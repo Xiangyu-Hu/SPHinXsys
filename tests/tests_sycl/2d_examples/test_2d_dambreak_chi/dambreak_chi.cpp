@@ -22,10 +22,10 @@ Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;                        /**< Reference density of fluid. */
-Real gravity_g = 1.0;                     /**< Gravity. */
-Real U_ref = 2.0 * sqrt(gravity_g * LH);  /**< Characteristic velocity. */
-Real c_f = 10.0 * U_ref;                  /**< Artificial sound speed. */
+Real rho0_f = 1.0;                       /**< Reference density of fluid. */
+Real gravity_g = 1.0;                    /**< Gravity. */
+Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref;                 /**< Artificial sound speed. */
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -33,16 +33,16 @@ int main()
 {
     SPHSimulation sim;
 
-    sim.createDomain(DL, DH, particle_spacing_ref);
+    sim.createDomain(Vec2d(DL, DH), particle_spacing_ref);
 
     sim.addFluidBlock("WaterBody")
-        .rectangle(LL, LH)
+        .block(Vec2d(LL, LH))
         .material(rho0_f, c_f);
 
     sim.addWall("WallBoundary")
-        .hollowBox(DL, DH, BW);
+        .hollowBox(Vec2d(DL, DH), BW);
 
-    sim.enableGravity(0.0, -gravity_g);
+    sim.enableGravity(Vec2d(0.0, -gravity_g));
 
     sim.addObserver("FluidObserver", Vec2d(DL, 0.2));
 

@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file    sph_simulation.cpp
- * @brief   Implementation of the high-level SPHSimulation facade for 2D simulations.
+ * @brief   Implementation of the high-level SPHSimulation facade for 2D and 3D simulations.
  * @author  Xiangyu Hu
  */
 
@@ -39,10 +39,9 @@ namespace SPH
 FluidBlockBuilder::FluidBlockBuilder(const std::string &name)
     : name_(name) {}
 //=================================================================================================//
-FluidBlockBuilder &FluidBlockBuilder::rectangle(Real length, Real height)
+FluidBlockBuilder &FluidBlockBuilder::block(Vecd dimensions)
 {
-    length_ = length;
-    height_ = height;
+    dimensions_ = dimensions;
     return *this;
 }
 //=================================================================================================//
@@ -56,10 +55,9 @@ FluidBlockBuilder &FluidBlockBuilder::material(Real rho0, Real c)
 WallBuilder::WallBuilder(const std::string &name)
     : name_(name) {}
 //=================================================================================================//
-WallBuilder &WallBuilder::hollowBox(Real domain_length, Real domain_height, Real wall_width)
+WallBuilder &WallBuilder::hollowBox(Vecd domain_dimensions, Real wall_width)
 {
-    DL_ = domain_length;
-    DH_ = domain_height;
+    domain_dims_ = domain_dimensions;
     BW_ = wall_width;
     return *this;
 }
@@ -76,10 +74,9 @@ SolverConfig &SolverConfig::freeSurfaceCorrection()
     return *this;
 }
 //=================================================================================================//
-void SPHSimulation::createDomain(Real domain_length, Real domain_height, Real particle_spacing)
+void SPHSimulation::createDomain(Vecd domain_dimensions, Real particle_spacing)
 {
-    DL_ = domain_length;
-    DH_ = domain_height;
+    domain_dims_ = domain_dimensions;
     dp_ref_ = particle_spacing;
 }
 //=================================================================================================//
@@ -95,15 +92,20 @@ WallBuilder &SPHSimulation::addWall(const std::string &name)
     return *walls_.back();
 }
 //=================================================================================================//
-void SPHSimulation::enableGravity(Real gx, Real gy)
+void SPHSimulation::enableGravity(Vecd gravity)
 {
-    gravity_ = Vec2d(gx, gy);
+    gravity_ = gravity;
     gravity_enabled_ = true;
 }
 //=================================================================================================//
-void SPHSimulation::addObserver(const std::string &name, const Vec2d &position)
+void SPHSimulation::addObserver(const std::string &name, const Vecd &position)
 {
-    observers_.push_back({name, position});
+    observers_.push_back({name, {position}});
+}
+//=================================================================================================//
+void SPHSimulation::addObserver(const std::string &name, const StdVec<Vecd> &positions)
+{
+    observers_.push_back({name, positions});
 }
 //=================================================================================================//
 SolverConfig &SPHSimulation::useSolver()
@@ -139,31 +141,27 @@ void SPHSimulation::run(Real end_time)
     //----------------------------------------------------------------------
     // Build the SPH system
     //----------------------------------------------------------------------
-    BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL_ + BW, DH_ + BW));
+    BoundingBoxd system_domain_bounds(-BW * Vecd::Ones(), domain_dims_ + BW * Vecd::Ones());
     SPHSystem sph_system(system_domain_bounds, dp_ref_);
 
     //----------------------------------------------------------------------
-    // Create fluid body
+    // Create fluid body (rectangular block starting at the coordinate origin)
     //----------------------------------------------------------------------
-    Vec2d water_halfsize(0.5 * fluid_cfg.getLength(), 0.5 * fluid_cfg.getHeight());
-    Vec2d water_translation = water_halfsize; // rectangle starts at origin
+    Vecd water_halfsize = 0.5 * fluid_cfg.getDimensions();
     GeometricShapeBox initial_water_block(
-        Transform(water_translation), water_halfsize, fluid_cfg.getName());
+        Transform(water_halfsize), water_halfsize, fluid_cfg.getName());
     FluidBody water_block(sph_system, initial_water_block);
     water_block.defineMaterial<WeaklyCompressibleFluid>(fluid_cfg.getRho0(), fluid_cfg.getC());
     water_block.generateParticles<BaseParticles, Lattice>();
 
     //----------------------------------------------------------------------
-    // Create wall body
+    // Create wall body (hollow box aligned with the domain origin)
     //----------------------------------------------------------------------
-    const Real wall_DL = wall_cfg.getDomainLength();
-    const Real wall_DH = wall_cfg.getDomainHeight();
-    Vec2d outer_halfsize(0.5 * wall_DL + BW, 0.5 * wall_DH + BW);
-    Vec2d outer_translation = Vec2d(-BW, -BW) + outer_halfsize;
-    Vec2d inner_halfsize(0.5 * wall_DL, 0.5 * wall_DH);
-
+    Vecd inner_halfsize = 0.5 * wall_cfg.getDomainDimensions();
+    Vecd outer_halfsize = inner_halfsize + BW * Vecd::Ones();
+    // Both inner and outer box are centered at inner_halfsize
     ComplexShape wall_complex_shape(wall_cfg.getName());
-    wall_complex_shape.add<GeometricShapeBox>(Transform(outer_translation), outer_halfsize);
+    wall_complex_shape.add<GeometricShapeBox>(Transform(inner_halfsize), outer_halfsize);
     wall_complex_shape.subtract<GeometricShapeBox>(Transform(inner_halfsize), inner_halfsize);
     SolidBody wall_boundary(sph_system, wall_complex_shape);
     wall_boundary.defineMaterial<Solid>();
@@ -176,8 +174,7 @@ void SPHSimulation::run(Real end_time)
     for (const auto &obs : observers_)
     {
         ObserverBody &obs_body = sph_system.addBody<ObserverBody>(obs.name);
-        StdVec<Vecd> locations = {obs.position};
-        obs_body.generateParticles<ObserverParticles>(locations);
+        obs_body.generateParticles<ObserverParticles>(obs.positions);
         observer_contacts.push_back(std::make_unique<Contact<>>(obs_body, StdVec<RealBody *>{&water_block}));
     }
 
@@ -221,7 +218,6 @@ void SPHSimulation::run(Real end_time)
     auto &water_update_particle_position =
         main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(water_block);
 
-    // Optional gravity
     Gravity gravity_force(gravity_enabled_ ? gravity_ : Vecd::Zero());
     auto &constant_gravity =
         main_methods.addStateDynamics<GravityForceCK<Gravity>>(water_block, gravity_force);
@@ -296,7 +292,7 @@ void SPHSimulation::run(Real end_time)
     auto &state_recording_trigger = time_stepper.addTriggerByInterval(0.1);
 
     //----------------------------------------------------------------------
-    // Initialise (must run on host first, then device)
+    // Initialise (must run host dynamics first, then device)
     //----------------------------------------------------------------------
     wall_boundary_normal_direction.exec();
     constant_gravity.exec();
