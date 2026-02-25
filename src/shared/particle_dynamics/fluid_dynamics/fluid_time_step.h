@@ -29,8 +29,8 @@
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#ifndef FLUID_TIME_STEP_H
-#define FLUID_TIME_STEP_H
+#ifndef VIRTOSIM_FLUID_TIME_STEP_H_B0F53B96_62E7_45F9_87E6_B8BBD63057ED
+#define VIRTOSIM_FLUID_TIME_STEP_H_B0F53B96_62E7_45F9_87E6_B8BBD63057ED
 
 #include "base_fluid_dynamics.h"
 
@@ -53,7 +53,10 @@ class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax>
   protected:
     Fluid &fluid_;
     Real *rho_, *p_;
+    Real *mass_;
     Vecd *vel_;
+    Vecd *force_;
+    Vecd *force_prior_;
     Real h_min_;
     Real acousticCFL_;
 };
@@ -79,8 +82,7 @@ class AdvectionTimeStep
     : public LocalDynamicsReduce<ReduceMax>
 {
   protected:
-    Real *mass_;
-    Vecd *vel_, *force_, *force_prior_;
+    Vecd *vel_;
     Real h_min_;
     Real speed_ref_, advectionCFL_;
 
@@ -104,4 +106,4 @@ class AdvectionViscousTimeStep : public AdvectionTimeStep
 };
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // FLUID_TIME_STEP_H
+#endif // VIRTOSIM_FLUID_TIME_STEP_H_B0F53B96_62E7_45F9_87E6_B8BBD63057ED
