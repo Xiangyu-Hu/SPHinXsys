@@ -249,4 +249,50 @@ void SurfaceContactRelation::updateConfiguration()
     }
 }
 //=================================================================================================//
+ContactRelationFSI2::ContactRelationFSI2(SPHBody &sph_body, RealBodyVector contact_bodies)
+    : ContactRelationCrossResolution(sph_body, contact_bodies)
+{
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        get_contact_neighbors_.push_back(
+            neighbor_builder_contacts_keeper_.createPtr<NeighborBuilderContactFS2>(
+                sph_body_, *contact_bodies_[k]));
+    }
+}
+//=================================================================================================//
+void ContactRelationFSI2::updateConfiguration()
+{
+    resetNeighborhoodCurrentSize();
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        Mesh &mesh = target_cell_linked_lists_[k]->getMesh();
+        target_cell_linked_lists_[k]->searchNeighborsByMesh(
+            mesh, sph_body_, contact_configuration_[k],
+            *get_search_depths_[k], *get_contact_neighbors_[k]);
+    }
+}
+//=================================================================================================//
+ContactRelationSFI2::ContactRelationSFI2(SPHBody &sph_body, RealBodyVector contact_bodies)
+    : ContactRelationCrossResolution(sph_body, contact_bodies)
+{
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        get_contact_neighbors_.push_back(
+            neighbor_builder_contacts_keeper_.createPtr<NeighborBuilderContactSF2>(
+                sph_body_, *contact_bodies_[k]));
+    }
+}
+//=================================================================================================//
+void ContactRelationSFI2::updateConfiguration()
+{
+    resetNeighborhoodCurrentSize();
+    for (size_t k = 0; k != contact_bodies_.size(); ++k)
+    {
+        Mesh &mesh = target_cell_linked_lists_[k]->getMesh();
+        target_cell_linked_lists_[k]->searchNeighborsByMesh(
+            mesh, sph_body_, contact_configuration_[k],
+            *get_search_depths_[k], *get_contact_neighbors_[k]);
+    }
+}
+//=================================================================================================//
 } // namespace SPH

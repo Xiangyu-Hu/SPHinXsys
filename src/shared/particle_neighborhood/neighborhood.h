@@ -85,6 +85,16 @@ class NeighborBuilder
                         const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min);
     void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
                             const Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min);
+    //----------------------------------------------------------------------
+    //	Below are for shell.
+    //----------------------------------------------------------------------
+    void createNeighbor(Neighborhood &neighborhood, const Real &distance,
+                        size_t index_j, const Real &W_ij,
+                        const Real &dW_ij, const Vecd &e_ij);
+    void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
+                            size_t index_j, const Real &W_ij,
+                            const Real &dW_ij, const Vecd &e_ij);
+    //----------------------------------------------------------------------
     static Kernel *chooseKernel(SPHBody &body, SPHBody &target_body);
 
   public:
@@ -213,13 +223,6 @@ class BaseNeighborBuilderContactShell : public NeighborBuilder
     Real *k1_ave_;           // 1st principle curvature of contact body
     Real *k2_ave_;           // 2nd principle curvature of contact body
     Real particle_distance_; // reference spacing of contact body
-
-    void createNeighbor(Neighborhood &neighborhood, const Real &distance,
-                        size_t index_j, const Real &W_ij,
-                        const Real &dW_ij, const Vecd &e_ij);
-    void initializeNeighbor(Neighborhood &neighborhood, const Real &distance,
-                            size_t index_j, const Real &W_ij,
-                            const Real &dW_ij, const Vecd &e_ij);
 };
 
 /**
@@ -348,6 +351,31 @@ class NeighborBuilderSplitInnerAdaptive : public NeighborBuilder
   private:
     Real *h_ratio_;
     int *level_;
+};
+
+// fluid-shell contact for 2-sided fsi
+class NeighborBuilderContactFS2 : public NeighborBuilderContact
+{
+  private:
+    Real *thickness_;
+    Real particle_distance_; // reference spacing of contact body
+
+  public:
+    NeighborBuilderContactFS2(SPHBody &fluid_body, SPHBody &shell_body);
+    void operator()(Neighborhood &neighborhood,
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
+};
+
+// shell-fluid contact for 2-sided fsi
+class NeighborBuilderContactSF2 : public NeighborBuilderContact
+{
+  private:
+    Real particle_distance_; // reference spacing of contact body
+
+  public:
+    NeighborBuilderContactSF2(SPHBody &shell_body, SPHBody &fluid_body);
+    void operator()(Neighborhood &neighborhood,
+                    const Vecd &pos_i, size_t index_i, const ListData &list_data_j) override;
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_H
