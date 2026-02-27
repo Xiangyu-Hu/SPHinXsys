@@ -823,6 +823,15 @@ void StructuralSimulation::initializeSimulation()
 
     /** INITIAL CONDITION */
     executeCorrectConfiguration();
+
+    /** ACOUSTIC TIME STEP */
+    initializeAcousticTimeStepList();
+}
+
+void StructuralSimulation::initializeAcousticTimeStepList()
+{
+    for (auto &body : solid_body_list_)
+        acoustic_time_step_list_.emplace_back(makeShared<ReduceDynamics<solid_dynamics::AcousticTimeStep>>(*body->getSolidBodyFromMesh()));
 }
 
 void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
@@ -870,7 +879,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
     executeStressRelaxationSecondHalf(dt);
     /** UPDATE TIME STEP SIZE, INCREMENT */
     iteration_++;
-    dt = system_.getSmallestTimeStepAmongSolidBodies();
+    dt = getSmallestTimeStepAmongSolidBodies();
     integration_time += dt;
     physical_time_ += dt;
 
@@ -957,6 +966,14 @@ Real StructuralSimulation::getMaxDisplacement(int body_index)
             displ_max = displ;
     }
     return displ_max;
+}
+
+Real StructuralSimulation::getSmallestTimeStepAmongSolidBodies()
+{
+    Real dt = MaxReal;
+    for (auto &acoustic_time_step : acoustic_time_step_list_)
+        dt = SMIN(dt, acoustic_time_step->exec());
+    return dt;
 }
 
 StructuralSimulationJS::StructuralSimulationJS(const StructuralSimulationInput &input)
