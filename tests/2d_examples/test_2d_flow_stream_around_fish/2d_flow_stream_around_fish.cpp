@@ -153,7 +153,6 @@ int main(int ac, char *av[])
     write_real_body_states.addToWrite<int>(water_block, "Indicator");
     write_real_body_states.addToWrite<int>(fish_body, "MaterialID");
     write_real_body_states.addToWrite<Matd>(fish_body, "ActiveStrain");
-    RestartIO restart_io(sph_system);
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_viscous_force_from_fluid(fish_body, "ViscousForceFromFluid");
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(fish_body, "PressureForceFromFluid");
     //----------------------------------------------------------------------

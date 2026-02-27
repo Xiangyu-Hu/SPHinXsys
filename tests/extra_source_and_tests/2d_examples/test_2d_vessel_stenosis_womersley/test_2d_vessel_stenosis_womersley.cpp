@@ -588,7 +588,6 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<int>(blood, "Indicator");
     body_states_recording.addToWrite<Real>(blood, "Density");
     body_states_recording.addToWrite<int>(blood, "BufferIndicator");
-    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_centerline_velocity_axial("Velocity", velocity_observer_contact_axial);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -602,25 +601,14 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec();
     wall_boundary_corrected_configuration.exec();
     //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
-    if (sph_system.RestartStep() != 0)
-    {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        blood.updateCellLinkedList();
-        blood_complex.updateConfiguration();
-        velocity_observer_contact_axial.updateConfiguration();
-    }
-    //----------------------------------------------------------------------
     //	Setup for time-stepping control   
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    int restart_output_interval = screen_output_interval * 10;
     Real end_time = 1.61;  
     Real Output_Time = 0.01; 
-    Real dt = 0.0;       
+    Real dt = 0.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -662,14 +650,12 @@ int main(int ac, char *av[])
                 integration_time += dt;
                 physical_time += dt;
             }
-            /** screen output, write body observables and restart files  */
+            /** screen output, write body observables  */
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
 
@@ -710,7 +696,7 @@ int main(int ac, char *av[])
     {
         write_centerline_velocity_axial.generateDataBase(0.05); 
     }
-    else if (sph_system.RestartStep() == 0)
+    else
     {
         write_centerline_velocity_axial.testResult();
     }
