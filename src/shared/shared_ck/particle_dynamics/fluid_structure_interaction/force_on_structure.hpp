@@ -127,8 +127,8 @@ void PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrect
             (contact_force_prior_[index_j] / contact_mass_[index_j] - acc_ave_[index_i]).dot(e_ij);
         Real p_j_in_wall = contact_p_[index_j] + contact_rho_[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
         Vecd face_to_fluid_n = -SGN(corrected_e_ij.dot(n_[index_i])) * n_[index_i];
-        Real u_jump = 2.0 * (this->contact_vel_[index_j] - this->vel_ave_[index_i]).dot(face_to_fluid_n);
-        force -= (riemann_solver_.DissipativePJump(u_jump) * face_to_fluid_n +
+        Real u_jump = -2.0 * (this->contact_vel_[index_j] - this->vel_ave_[index_i]).dot(face_to_fluid_n);
+        force += (riemann_solver_.DissipativePJump(u_jump) * face_to_fluid_n -
                   (p_j_in_wall + contact_p_[index_j]) * corrected_e_ij) *
                  this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j];
     }

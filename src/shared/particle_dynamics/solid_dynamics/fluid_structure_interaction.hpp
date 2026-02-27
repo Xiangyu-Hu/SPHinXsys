@@ -51,8 +51,8 @@ void PressureForceFromFluid<FluidIntegration2ndHalfType>::interaction(size_t ind
                 (force_prior_k[index_j] / mass_k[index_j] - acc_ave_[index_i]).dot(e_ij);
             Real p_j_in_wall = p_k[index_j] + rho_k[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
             Vecd face_to_fluid_n = -SGN(e_ij.dot(n_[index_i])) * n_[index_i];
-            Real u_jump = 2.0 * (vel_k[index_j] - vel_ave_[index_i]).dot(face_to_fluid_n);
-            force -= (riemann_solvers_k.DissipativePJump(u_jump) * face_to_fluid_n + (p_j_in_wall + p_k[index_j]) * e_ij) *
+            Real u_jump = -2.0 * (vel_k[index_j] - vel_ave_[index_i]).dot(face_to_fluid_n);
+            force += (riemann_solvers_k.DissipativePJump(u_jump) * face_to_fluid_n - (p_j_in_wall + p_k[index_j]) * e_ij) *
                      contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
     }
