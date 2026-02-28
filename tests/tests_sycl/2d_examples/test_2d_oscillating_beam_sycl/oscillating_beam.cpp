@@ -139,6 +139,8 @@ int main(int ac, char *av[])
     lagrangian_configuration.add(&main_methods.addRelationDynamics(beam_observer_contact));
 
     auto &beam_corrected_configuration = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(beam_body_inner);
+    auto &numerical_damping = main_methods.addInteractionDynamicsWithUpdate<
+        solid_dynamics::StructureNumericalDamping, SaintVenantKirchhoffSolid>(beam_body_inner);
     auto &beam_acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
         solid_dynamics::StructureIntegration1stHalfPK2, SaintVenantKirchhoffSolid>(beam_body_inner);
     auto &beam_acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
@@ -193,6 +195,7 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         TickCount time_instance = TickCount::now();
         Real acoustic_dt = time_stepper.incrementPhysicalTime(computing_time_step_size);
+        numerical_damping.exec();
         beam_acoustic_step_1st_half.exec(acoustic_dt);
         constraint_beam_base.exec();
         beam_acoustic_step_2nd_half.exec(acoustic_dt);
