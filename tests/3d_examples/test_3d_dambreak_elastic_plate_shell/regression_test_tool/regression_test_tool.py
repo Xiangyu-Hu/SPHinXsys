@@ -14,11 +14,13 @@ case name: test_3d_dambreak_elastic_plate_shell
 case_name = "test_3d_dambreak_elastic_plate_shell"
 body_name = "Observer1"
 parameter_name = "Displacement"
+body_name_1 = "Observer2"
+parameter_name_1 = "Displacement"
 
 number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
-clean_input_folder(sphinxsys.input_file_path)
+sphinxsys_1 = SphinxsysRegressionTest(case_name, body_name_1, parameter_name_1)
 
 
 while True:
@@ -26,14 +28,18 @@ while True:
     sphinxsys.run_case()
     number_of_run_times += 1
     converged = sphinxsys.read_dat_file()
+    converged1 = sphinxsys_1.read_dat_file()
     print("Please note: This is the", number_of_run_times, "run!")
     if number_of_run_times <= 200:
-        if converged == "true":
+        if (converged == "true") and (converged1 == "true"):
             print("The tested parameters of all variables are converged, and the run will stop here!")
             break
         elif converged != "true":
             print("The tested parameters of", sphinxsys.sphinxsys_parameter_name, "are not converged!")
             continue
-    else:
+        elif converged_1 != "true":
+            print("The tested parameters of", sphinxsys_1.sphinxsys_parameter_name, "are not converged!")
+            continue
+    else    :
         print("It's too many runs but still not converged, please try again!")
         break

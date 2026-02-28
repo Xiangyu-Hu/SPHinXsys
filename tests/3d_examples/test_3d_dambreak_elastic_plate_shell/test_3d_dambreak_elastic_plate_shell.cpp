@@ -155,7 +155,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
-    sph_system.setGenerateRegressionData(false);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
