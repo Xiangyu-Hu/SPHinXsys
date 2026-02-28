@@ -4,6 +4,6 @@
         <Snapshot number_of_snapshot_for_local_result_="21" />
     </Snapshot_Element>
     <Result_Element>
-        <Particle_0 snapshot_0="0.50000006" snapshot_1="0.500595212" snapshot_2="0.498366207" snapshot_3="0.466866851" snapshot_4="0.454911828" snapshot_5="0.448371589" snapshot_6="0.421814263" snapshot_7="0.394446522" snapshot_8="0.356404573" snapshot_9="0.313398659" snapshot_10="0.291812897" snapshot_11="0.266788542" snapshot_12="0.244694412" snapshot_13="0.239078939" snapshot_14="0.232575893" snapshot_15="0.227019086" snapshot_16="0.220913365" snapshot_17="0.216407508" snapshot_18="0.214410216" snapshot_19="0.211922139" snapshot_20="0.209365189" />
+        <Particle_0 snapshot_0="0.50000006" snapshot_1="0.505628109" snapshot_2="0.498733521" snapshot_3="0.475558519" snapshot_4="0.469534636" snapshot_5="0.4663679" snapshot_6="0.450055897" snapshot_7="0.424767137" snapshot_8="0.39386636" snapshot_9="0.334251165" snapshot_10="0.302056909" snapshot_11="0.281108141" snapshot_12="0.254682153" snapshot_13="0.249760777" snapshot_14="0.246170804" snapshot_15="0.241577834" snapshot_16="0.239057988" snapshot_17="0.236847296" snapshot_18="0.235242546" snapshot_19="0.227294832" snapshot_20="0.21692951" />
     </Result_Element>
 </result>

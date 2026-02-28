@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<result>
+    <Snapshot_Element>
+        <Snapshot number_of_snapshot_for_local_result_="53" />
+    </Snapshot_Element>
+    <Result_Element>
+        <Particle_0 snapshot_0="-0.0249996185" snapshot_1="0.0203058571" snapshot_2="0.0188414343" snapshot_3="0.0106783099" snapshot_4="-0.00181026082" snapshot_5="-0.00718971528" snapshot_6="-0.0151632661" snapshot_7="-0.0190445762" snapshot_8="-0.0149544468" snapshot_9="-0.0124491369" snapshot_10="-0.00471815094" snapshot_11="0.00112588075" snapshot_12="0.00428568851" snapshot_13="0.00463829748" snapshot_14="0.00135937321" snapshot_15="-0.000756317051" snapshot_16="-0.00717958342" snapshot_17="-0.0125900712" snapshot_18="-0.0139372824" snapshot_19="-0.0108445343" snapshot_20="-0.00876444299" snapshot_21="-0.00168525695" snapshot_22="-3.87990003e-05" snapshot_23="0.00210660975" snapshot_24="0.00388363306" snapshot_25="0.00200660666" snapshot_26="0.000424292055" snapshot_27="-0.000845770119" snapshot_28="-0.00685710041" snapshot_29="-0.00663628522" snapshot_30="-0.00502012204" snapshot_31="-0.00673462637" snapshot_32="-0.00739854621" snapshot_33="-0.00617654016" snapshot_34="-0.000841860077" snapshot_35="-0.001954498" snapshot_36="-0.00381452101" snapshot_37="-0.0027557686" snapshot_38="-0.00406521838" snapshot_39="-0.00454742229" snapshot_40="-0.00157538417" snapshot_41="-0.00520979147" snapshot_42="-0.00416546827" snapshot_43="-0.00791886169" snapshot_44="-0.00405053049" snapshot_45="-0.00150786049" snapshot_46="-0.00367390574" snapshot_47="-0.00228966586" snapshot_48="-0.00410197629" snapshot_49="-0.00221613236" snapshot_50="0.000246456882" snapshot_51="-0.000683836057" snapshot_52="-0.00594772166" />
+    </Result_Element>
+</result>
