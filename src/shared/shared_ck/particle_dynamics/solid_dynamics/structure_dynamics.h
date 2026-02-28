@@ -129,7 +129,6 @@ class StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrection
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        Real G_;
         Real *Vol0_;
         Vecd *pos_, *force_;
         Matd *scaling_matrix_, *inverse_F_, *stress_on_particle_;

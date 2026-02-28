@@ -64,7 +64,7 @@ void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionT
     Matd normalized_be = constitute_.ElasticLeftCauchy(F_[index_i], index_i, dt);
     inverse_F_[index_i] = F_[index_i].inverse();
     Matd inverse_F_T = inverse_F_[index_i].transpose();
-    scaling_matrix_[index_i] = normalized_be * inverse_F_T;
+    scaling_matrix_[index_i] = G_ * normalized_be * inverse_F_T * correction_(index_i);
     Real isotropic_stress = G_ * normalized_be.trace() * OneOverDimensions;
     // Note that as we use small numerical damping here, the time step size (CFL number) may need to be decreased.
     stress_on_particle_[index_i] =
@@ -79,7 +79,6 @@ template <class ExecutionPolicy, class EncloserType>
 StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, Parameters...>>::
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
-      G_(encloser.material_.ShearModulus()),
       Vol0_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
@@ -106,7 +105,7 @@ void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionT
         Real e_ij_difference_norm = e_ij_difference.norm();
 
         Real limiter = SMIN(10.0 * SMAX(e_ij_difference_norm - 0.05, 0.0), 1.0);
-        Vecd shear_force_ij = G_ * pair_scaling * (nablaW_ijV_j + limiter * nablaW_ijV_j.dot(e_ij) * e_ij_difference);
+        Vecd shear_force_ij = pair_scaling * (nablaW_ijV_j + limiter * nablaW_ijV_j.dot(e_ij) * e_ij_difference);
         sum += (stress_on_particle_[index_i] + stress_on_particle_[index_j]) * nablaW_ijV_j + shear_force_ij;
     }
 
