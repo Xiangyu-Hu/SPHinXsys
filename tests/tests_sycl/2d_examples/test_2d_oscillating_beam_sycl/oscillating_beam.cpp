@@ -140,7 +140,7 @@ int main(int ac, char *av[])
 
     auto &beam_corrected_configuration = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(beam_body_inner);
     auto &beam_acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
-        solid_dynamics::StructureIntegration1stHalf, SaintVenantKirchhoffSolid, NoKernelCorrectionCK>(beam_body_inner);
+        solid_dynamics::StructureIntegration1stHalfPK2, SaintVenantKirchhoffSolid>(beam_body_inner);
     auto &beam_acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
         solid_dynamics::StructureIntegration2ndHalf>(beam_body_inner);
 

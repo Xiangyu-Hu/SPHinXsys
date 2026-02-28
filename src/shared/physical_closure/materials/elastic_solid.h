@@ -148,9 +148,10 @@ class LinearElasticSolid : public ElasticSolid
         Matd NumericalDampingLeftCauchy(const Matd &deformation, const Matd &deformation_rate,
                                         const ScalingType &scaling, size_t particle_index_i);
         Real PairNumericalDamping(Real dE_dt_ij, Real smoothing_length);
+        Matd StressPK1(const Matd &F, size_t index_i);
 
       protected:
-        Real rho0_, K0_, G0_, c0_, cs0_;
+        Real rho0_, K0_, G0_, c0_, cs0_, lambda0_;
     };
 
   protected:
@@ -178,6 +179,14 @@ class SaintVenantKirchhoffSolid : public LinearElasticSolid
 
     /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
+
+    class ConstituteKernel : public LinearElasticSolid::ConstituteKernel
+    {
+      public:
+        template <typename ExecutionPolicy>
+        ConstituteKernel(const ExecutionPolicy &ex_policy, SaintVenantKirchhoffSolid &encloser);
+        Matd StressPK1(const Matd &F, size_t index_i);
+    };
 };
 
 /**
