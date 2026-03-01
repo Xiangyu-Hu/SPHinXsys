@@ -10,12 +10,14 @@ template <typename ExecutionPolicy>
 LinearElasticSolid::ConstituteKernel::ConstituteKernel(
     const ExecutionPolicy &ex_policy, LinearElasticSolid &encloser)
     : rho0_(encloser.ReferenceDensity()), K0_(encloser.BulkModulus()), G0_(encloser.ShearModulus()),
-      c0_(encloser.ReferenceSoundSpeed()), cs0_(encloser.ShearWaveSpeed()) {}
+      c0_(encloser.ReferenceSoundSpeed()), cs0_(encloser.ShearWaveSpeed()),
+      lambda0_(encloser.lambda0_) {}
 //=================================================================================================//
 inline Matd LinearElasticSolid::ConstituteKernel::ElasticLeftCauchy(
     const Matd &F, size_t index_i, Real dt)
 {
-    return F * F.transpose();
+    Matd be = F * F.transpose();
+    return be * pow(be.determinant(), -OneOverDimensions);
 }
 //=================================================================================================//
 inline Real LinearElasticSolid::ConstituteKernel::VolumetricKirchhoff(Real J)
@@ -41,6 +43,23 @@ Matd LinearElasticSolid::ConstituteKernel::NumericalDampingLeftCauchy(
 inline Real LinearElasticSolid::ConstituteKernel::PairNumericalDamping(Real dE_dt_ij, Real smoothing_length)
 {
     return 0.5 * rho0_ * c0_ * dE_dt_ij * smoothing_length;
+}
+//=================================================================================================//
+inline Matd LinearElasticSolid::ConstituteKernel::StressPK1(const Matd &F, size_t index_i)
+{
+    Matd strain = 0.5 * (F.transpose() + F) - Matd::Identity();
+    return F * (lambda0_ * strain.trace() * Matd::Identity() + 2.0 * G0_ * strain);
+}
+//=================================================================================================//
+template <typename ExecutionPolicy>
+SaintVenantKirchhoffSolid::ConstituteKernel::ConstituteKernel(
+    const ExecutionPolicy &ex_policy, SaintVenantKirchhoffSolid &encloser)
+    : LinearElasticSolid::ConstituteKernel(ex_policy, encloser) {}
+//=================================================================================================//
+inline Matd SaintVenantKirchhoffSolid::ConstituteKernel::StressPK1(const Matd &F, size_t index_i)
+{
+    Matd strain = 0.5 * (F.transpose() * F - Matd::Identity());
+    return F * (lambda0_ * strain.trace() * Matd::Identity() + 2.0 * G0_ * strain);
 }
 //=================================================================================================//
 template <typename ExecutionPolicy>

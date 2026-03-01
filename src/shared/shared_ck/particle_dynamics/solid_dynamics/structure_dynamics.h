@@ -87,12 +87,34 @@ class StructureDynamicsVariables
         *dv_scaling_matrix_;
 };
 
+class BaseStructureIntegration1stHalf : public StructureDynamicsVariables
+{
+  public:
+    explicit BaseStructureIntegration1stHalf(BaseParticles *particles);
+    virtual ~BaseStructureIntegration1stHalf() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *mass_;
+        Vecd *vel_, *force_, *force_prior_;
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_force_prior_;
+};
+
 template <typename...>
 class StructureIntegration1stHalf;
 
 template <class MaterialType, typename KernelCorrectionType, typename... Parameters>
 class StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, Parameters...>>
-    : public Interaction<Inner<Parameters...>>, public StructureDynamicsVariables
+    : public Interaction<Inner<Parameters...>>, public BaseStructureIntegration1stHalf
 {
     using BaseInteraction = Interaction<Inner<Parameters...>>;
     using Adaptation = typename Inner<Parameters...>::SourceType::Adaptation;
@@ -129,22 +151,9 @@ class StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrection
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        Real G_;
         Real *Vol0_;
         Vecd *pos_, *force_;
         Matd *scaling_matrix_, *inverse_F_, *stress_on_particle_;
-    };
-
-    class UpdateKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
-
-      protected:
-        Real *mass_;
-        Vecd *vel_, *force_, *force_prior_;
     };
 
   protected:
@@ -152,7 +161,55 @@ class StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrection
     Adaptation &adaptation_;
     KernelCorrectionType kernel_correction_;
     Real h_ref_, numerical_damping_factor_;
-    DiscreteVariable<Vecd> *dv_force_prior_;
+};
+
+template <typename...>
+class StructureIntegration1stHalfPK2;
+
+template <class MaterialType, typename... Parameters>
+class StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...>>
+    : public Interaction<Inner<Parameters...>>, public BaseStructureIntegration1stHalf
+{
+    using BaseInteraction = Interaction<Inner<Parameters...>>;
+    using Adaptation = typename Inner<Parameters...>::SourceType::Adaptation;
+    using SmoothingLengthRatioType = typename Adaptation::SmoothingLengthRatioType;
+    using ConstituteKernel = typename MaterialType::ConstituteKernel;
+
+  public:
+    explicit StructureIntegration1stHalfPK2(Inner<Parameters...> &inner_relation);
+    virtual ~StructureIntegration1stHalfPK2() {};
+
+    class InitializeKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void initialize(size_t index_i, Real dt = 0.0);
+
+      protected:
+        ConstituteKernel constitute_;
+        Real rho0_;
+        Real *rho_;
+        Vecd *pos_, *vel_;
+        Matd *B_, *F_, *dF_dt_, *stress_on_particle_;
+    };
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *Vol0_;
+        Vecd *force_;
+        Matd *stress_on_particle_;
+    };
+
+  protected:
+    MaterialType &material_;
+    Adaptation &adaptation_;
 };
 
 template <typename...>
@@ -219,7 +276,7 @@ class StructureNumericalDamping<Inner<WithUpdate, MaterialType, Parameters...>>
     using ConstituteKernel = typename MaterialType::ConstituteKernel;
 
   public:
-    explicit StructureNumericalDamping(Inner<Parameters...> &inner_relation, Real numerical_damping_factor = 0.125);
+    explicit StructureNumericalDamping(Inner<Parameters...> &inner_relation, Real numerical_damping_factor = 0.25);
     virtual ~StructureNumericalDamping() {};
 
     class InteractKernel : public BaseInteraction::InteractKernel
