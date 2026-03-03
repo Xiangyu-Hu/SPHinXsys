@@ -11,8 +11,8 @@ using namespace SPH;
 Real PL = 1.0;                   /**< Length of the myocardium body. */
 Real PH = 1.0;                   /**< Thickness of the myocardium body. */
 Real PW = 1.0;                   /**< Width of the myocardium body. */
-Real resolution_ref = PH / 25.0; /**< Initial particle spacing. */
-Real SL = 4.0 * resolution_ref;  /**< Extension for holder. */
+Real global_resolution = PH / 25.0; /**< Initial particle spacing. */
+Real SL = 4.0 * global_resolution;  /**< Extension for holder. */
 Vecd halfsize_myocardium(0.5 * (PL + SL), 0.5 * PH, 0.5 * PW);
 Vecd translation_myocardium(0.5 * (PL - SL), 0.5 * PH, 0.5 * PW);
 Vecd halfsize_holder(0.5 * SL, 0.5 * PH, 0.5 * PW);
@@ -38,7 +38,7 @@ class MyocardiumActivation
   public:
     explicit MyocardiumActivation(SPHBody &sph_body)
         : active_muscle_dynamics::MuscleActivation(sph_body),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -59,13 +59,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vecd(-SL, -SL, -SL), Vecd(PL + SL, PH + SL, PW + SL));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    BoundingBoxd system_domain_bounds(Vecd(-SL, -SL, -SL), Vecd(PL + SL, PH + SL, PW + SL));
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
-    TransformShape<GeometricShapeBox> muscle_body_shape(Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody");
+    GeometricShapeBox muscle_body_shape(Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody");
     SolidBody muscle_body(sph_system, muscle_body_shape);
     muscle_body.defineMaterial<ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     muscle_body.generateParticles<BaseParticles, Lattice>();
@@ -89,13 +89,12 @@ int main(int ac, char *av[])
 
     ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(muscle_body);
     SimpleDynamics<MyocardiumActivation> myocardium_activation(muscle_body);
-    BodyRegionByParticle holder(muscle_body, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder));
+    BodyRegionByParticle holder(muscle_body, makeShared<GeometricShapeBox>(Transform(translation_holder), halfsize_holder));
     SimpleDynamics<FixedInAxisDirection> constrain_holder(holder, Vecd(0.0, 1.0, 1.0));
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration

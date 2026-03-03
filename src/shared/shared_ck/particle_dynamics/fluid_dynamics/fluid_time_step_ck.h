@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -63,24 +63,18 @@ class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
       public:
         template <class ExecutionPolicy>
         ReduceKernel(const ExecutionPolicy &ex_policy, AcousticTimeStepCK<FluidType> &encloser);
-
-        Real reduce(size_t index_i, Real dt = 0.0)
-        {
-            Real acceleration_scale = 4.0 * h_min_ *
-                                      (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
-            return SMAX(eos_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm(), acceleration_scale);
-        };
+        Real reduce(size_t index_i, Real dt = 0.0);
 
       protected:
         EosKernel eos_;
-        Real *rho_, *p_, *mass_;
+        Real *mass_, *rho_, *p_;
         Vecd *vel_, *force_, *force_prior_;
         Real h_min_;
     };
 
   protected:
     FluidType &fluid_;
-    DiscreteVariable<Real> *dv_rho_, *dv_p_, *dv_mass_;
+    DiscreteVariable<Real> *dv_mass_, *dv_rho_, *dv_p_;
     DiscreteVariable<Vecd> *dv_vel_, *dv_force_, *dv_force_prior_;
     Real h_min_;
     Real acousticCFL_;
@@ -107,31 +101,22 @@ class AdvectionTimeStepCK : public LocalDynamicsReduce<ReduceMax>
     {
       public:
         template <class ExecutionPolicy>
-        ReduceKernel(const ExecutionPolicy &ex_policy, AdvectionTimeStepCK &encloser)
-            : h_min_(encloser.h_min_),
-              mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
-              vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
-              force_(encloser.dv_force_->DelegatedData(ex_policy)),
-              force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)){};
+        ReduceKernel(const ExecutionPolicy &ex_policy, AdvectionTimeStepCK &encloser);
 
         Real reduce(size_t index_i, Real dt)
         {
-            Real acceleration_scale =
-                4.0 * h_min_ * (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
-            return SMAX(vel_[index_i].squaredNorm(), acceleration_scale);
+            return vel_[index_i].squaredNorm();
         };
 
       protected:
         Real h_min_;
-        Real *mass_;
-        Vecd *vel_, *force_, *force_prior_;
+        Vecd *vel_;
     };
 
   protected:
     Real h_min_;
     Real speed_ref_, advectionCFL_;
-    DiscreteVariable<Real> *dv_mass_;
-    DiscreteVariable<Vecd> *dv_vel_, *dv_force_, *dv_force_prior_;
+    DiscreteVariable<Vecd> *dv_vel_;
 };
 
 /**
@@ -173,17 +158,17 @@ class AdvectionStepSetup : public LocalDynamics
     DiscreteVariable<Vecd> *dv_dpos_;
 };
 
-class AdvectionStepClose : public LocalDynamics
+class UpdateParticlePosition : public LocalDynamics
 {
   public:
-    explicit AdvectionStepClose(SPHBody &sph_body);
-    virtual ~AdvectionStepClose() {};
+    explicit UpdateParticlePosition(SPHBody &sph_body);
+    virtual ~UpdateParticlePosition() {};
 
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepClose &encloser);
+        UpdateKernel(const ExecutionPolicy &ex_policy, UpdateParticlePosition &encloser);
 
         void update(size_t index_i, Real dt = 0.0)
         {

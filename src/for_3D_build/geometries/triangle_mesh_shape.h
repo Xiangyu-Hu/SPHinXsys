@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -31,8 +31,9 @@
 #define TRIANGULAR_MESH_SHAPE_H
 
 #include "TriangleMeshDistance.h"
-#include "all_simbody.h"
 #include "base_geometry.h"
+#include "simtk_wrapper.h"
+#include "stl_reader.h"
 
 #include <filesystem>
 #include <fstream>
@@ -42,16 +43,13 @@ namespace fs = std::filesystem;
 
 namespace SPH
 {
-using TriangleMesh = SimTK::ContactGeometry::TriangleMesh;
+class SPHSystem;
 /**
  * @class TriangleMeshShape
  * @brief Derived class for triangle shape processing.
  */
 class TriangleMeshShape : public Shape
 {
-  private:
-    UniquePtrKeeper<TriangleMesh> triangle_mesh_ptr_keeper_;
-
   public:
     explicit TriangleMeshShape(const std::string &shape_name);
     /** Only reliable when the probe point is close to the shape surface.
@@ -59,14 +57,17 @@ class TriangleMeshShape : public Shape
      * when probe distance is far from the surface. */
     virtual bool checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vec3d findClosestPoint(const Vec3d &probe_point) override;
-    TriangleMesh *getTriangleMesh();
+    virtual BoundingBoxd findBounds() override;
+    StdVec<std::array<Real, 3>> &getVertices() { return vertices_; }
+    StdVec<std::array<int, 3>> &getFaces() { return faces_; }
+    void writeMeshToFile(SPHSystem &sph_system, Transform transform = Transform());
 
   protected:
-    TriangleMesh *triangle_mesh_;
+    StdVec<std::array<Real, 3>> vertices_;
+    StdVec<std::array<int, 3>> faces_;
     tmd::TriangleMeshDistance triangle_mesh_distance_;
-    /** generate triangle mesh from polygon mesh */
     void initializeFromPolygonalMesh(const SimTK::PolygonalMesh &poly_mesh);
-    virtual BoundingBox findBounds() override;
+    void initializeFromSTLMesh(const std::string &file_path_name, Vec3d translation, Real scale_factor);
 };
 
 /**
@@ -110,7 +111,7 @@ class TriangleMeshShapeSphere : public TriangleMeshShape
 class TriangleMeshShapeCylinder : public TriangleMeshShape
 {
   public:
-    explicit TriangleMeshShapeCylinder(SimTK::UnitVec3 axis, Real radius,
+    explicit TriangleMeshShapeCylinder(Vec3d axis, Real radius,
                                        Real halflength, int resolution, Vec3d translation,
                                        const std::string &shape_name = "TriangleMeshShapeCylinder");
     virtual ~TriangleMeshShapeCylinder() {};

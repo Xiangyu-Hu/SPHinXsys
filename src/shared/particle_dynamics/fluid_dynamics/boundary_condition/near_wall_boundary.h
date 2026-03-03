@@ -43,7 +43,7 @@ class NearWallDistance : public LocalDynamics, public DataDelegateContact
 {
   public:
     explicit NearWallDistance(BaseContactRelation &wall_contact_relation);
-    virtual ~NearWallDistance(){};
+    virtual ~NearWallDistance() {};
 
   protected:
     Real spacing_ref_, distance_default_;
@@ -58,7 +58,7 @@ class DistanceFromWall : public NearWallDistance
 {
   public:
     explicit DistanceFromWall(BaseContactRelation &wall_contact_relation);
-    virtual ~DistanceFromWall(){};
+    virtual ~DistanceFromWall() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -69,7 +69,7 @@ class BoundingFromWall : public NearWallDistance
 {
   public:
     explicit BoundingFromWall(BaseContactRelation &wall_contact_relation);
-    virtual ~BoundingFromWall(){};
+    virtual ~BoundingFromWall() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:

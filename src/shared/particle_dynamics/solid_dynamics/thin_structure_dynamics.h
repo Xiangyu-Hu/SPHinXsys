@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -34,7 +34,6 @@
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
-#include "solid_body.h"
 #include "thin_structure_math.h"
 
 namespace SPH
@@ -243,7 +242,7 @@ class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
     Matd *global_F_, *global_F_bending_;
     Real E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;
-    const Real inv_W0_ = 1.0 / sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd);
+    const Real inv_W0_ = 1.0 / getSPHAdaptation().getKernel()->W0(ZeroVecd);
     const Real shear_correction_factor_ = 5.0 / 6.0;
 
     const StdVec<Real> one_gaussian_point_ = {0.0};

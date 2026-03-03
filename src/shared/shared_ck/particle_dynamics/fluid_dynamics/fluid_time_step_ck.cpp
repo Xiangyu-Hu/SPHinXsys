@@ -12,10 +12,10 @@ AdvectionTimeStepCK::
     : LocalDynamicsReduce<ReduceMax>(sph_body),
       h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       speed_ref_(U_ref), advectionCFL_(advectionCFL),
-      dv_mass_(particles_->getVariableByName<Real>("Mass")),
-      dv_vel_(particles_->getVariableByName<Vecd>("Velocity")),
-      dv_force_(particles_->getVariableByName<Vecd>("Force")),
-      dv_force_prior_(particles_->getVariableByName<Vecd>("ForcePrior")) {}
+      dv_vel_(particles_->getVariableByName<Vecd>("Velocity"))
+{
+    std::cout << sph_body.getName() << ": AdvectionTimeStepCK::speed_ref_ = " << speed_ref_ << std::endl;
+}
 //=================================================================================================//
 AdvectionTimeStepCK::FinishDynamics::FinishDynamics(AdvectionTimeStepCK &encloser)
     : h_min_(encloser.h_min_), speed_ref_(encloser.speed_ref_),
@@ -40,9 +40,9 @@ AdvectionStepSetup::AdvectionStepSetup(SPHBody &sph_body)
       dv_Vol_(particles_->getVariableByName<Real>("VolumetricMeasure")),
       dv_mass_(particles_->getVariableByName<Real>("Mass")),
       dv_rho_(particles_->getVariableByName<Real>("Density")),
-      dv_dpos_(particles_->registerStateVariableOnly<Vecd>("Displacement")) {}
+      dv_dpos_(particles_->registerStateVariable<Vecd>("Displacement")) {}
 //=================================================================================================//
-AdvectionStepClose::AdvectionStepClose(SPHBody &sph_body)
+UpdateParticlePosition::UpdateParticlePosition(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_dpos_(particles_->getVariableByName<Vecd>("Displacement")) {}

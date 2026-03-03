@@ -13,7 +13,7 @@ PositionTranslate<DynamicsIdentifier>::
     PositionTranslate(DynamicsIdentifier &identifier, Real start_time, Real end_time, Vecd translation)
     : MotionConstraint<DynamicsIdentifier>(identifier),
       start_time_(start_time), end_time_(end_time),
-      physical_time_(this->sph_system_.template getSystemVariableDataByName<Real>("PhysicalTime")),
+      physical_time_(this->sph_system_->template getSystemVariableDataByName<Real>("PhysicalTime")),
       translation_(translation) {}
 //=================================================================================================//
 template <class DynamicsIdentifier>
@@ -42,8 +42,8 @@ ConstraintBySimBody<DynamicsIdentifier>::
     : MotionConstraint<DynamicsIdentifier>(identifier),
       MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
       n_(this->particles_->template getVariableDataByName<Vecd>("NormalDirection")),
-      n0_(this->particles_->template registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
-      acc_(this->particles_->template registerStateVariable<Vecd>("Acceleration"))
+      n0_(this->particles_->template registerStateVariableDataFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+      acc_(this->particles_->template registerStateVariableData<Vecd>("Acceleration"))
 {
     const SimTK::State *state = &integ_.getState();
     MBsystem_.realize(*state, SimTK::Stage::Acceleration);
@@ -94,7 +94,7 @@ TotalForceForSimBody<DynamicsIdentifier>::
                          SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ)
     : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
 
-      force_(this->particles_->template registerStateVariable<Vecd>("Force")),
+      force_(this->particles_->template registerStateVariableData<Vecd>("Force")),
       force_prior_(this->particles_->template getVariableDataByName<Vecd>("ForcePrior")),
       pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
       MBsystem_(MBsystem), mobod_(mobod), integ_(integ)

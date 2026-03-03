@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -36,7 +36,6 @@
 #include "base_kernel.h"
 #include "elastic_solid.h"
 #include "force_prior.hpp"
-#include "solid_body.h"
 
 namespace SPH
 {
@@ -48,8 +47,8 @@ class BaseLoadingForce : public BaseForcePrior<DynamicsIdentifier>
   public:
     BaseLoadingForce(DynamicsIdentifier &identifier, const std::string &loading_force_name)
         : BaseForcePrior<DynamicsIdentifier>(identifier, loading_force_name),
-          loading_force_(this->particles_->template getVariableDataByName<Vecd>(loading_force_name)){};
-    virtual ~BaseLoadingForce(){};
+          loading_force_(this->particles_->template getVariableDataByName<Vecd>(loading_force_name)) {};
+    virtual ~BaseLoadingForce() {};
 
   protected:
     Vecd *loading_force_;
@@ -143,12 +142,12 @@ class ExternalForceInBoundingBox : public LoadingForce
   protected:
     Vecd *pos_;
     Real *mass_;
-    BoundingBox bounding_box_;
+    BoundingBoxd bounding_box_;
     Vecd acceleration_;
 
   public:
-    ExternalForceInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration);
-    virtual ~ExternalForceInBoundingBox(){};
+    ExternalForceInBoundingBox(SPHBody &sph_body, BoundingBoxd &bounding_box, Vecd acceleration);
+    virtual ~ExternalForceInBoundingBox() {};
 
     void update(size_t index_i, Real dt = 0.0);
 };
@@ -161,7 +160,7 @@ class ForceInBodyRegion : public BaseLoadingForce<BodyPartByParticle>
 {
   public:
     ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time);
-    virtual ~ForceInBodyRegion(){};
+    virtual ~ForceInBodyRegion() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -203,7 +202,7 @@ class PressureForceOnShell : public LoadingForce
 
   public:
     PressureForceOnShell(SPHBody &sph_body, Real pressure);
-    virtual ~PressureForceOnShell(){};
+    virtual ~PressureForceOnShell() {};
     void update(size_t index_i, Real dt = 0.0);
 };
 

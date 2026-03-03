@@ -15,12 +15,12 @@ int main(int ac, char *av[])
     //	Build up the Structure Relax SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem system_fit(system_domain_bounds, particle_spacing_structure);
-    system_fit.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    system_fit.handleCommandlineOptions(ac, av);
     SolidBody structure_fit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
-    structure_fit.defineAdaptation<ParticleRefinementNearSurface>(1.3, 0.7, 3);
-    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(system_fit);
+    structure_fit.defineAdaptation<AdaptiveNearSurface>(1.3, 0.7, 3);
+    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet();
     structure_fit.defineMaterial<Solid>(StructureDensity);
-    structure_fit.generateParticles<BaseParticles, Lattice, Adaptive>();
+    structure_fit.generateParticles<BaseParticles, Lattice>();
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -68,7 +68,7 @@ int main(int ac, char *av[])
     //	Build up the Main environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
 
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -159,7 +159,7 @@ int main(int ac, char *av[])
     /** Damp waves */
     Vecd translation_damping(0.5 * DW, 9.5, 0.5 * HWM);
     Vecd damping(0.5 * DW, 0.5, 0.5 * HWM);
-    TransformShape<GeometricShapeBox> damping_buffer_shape(Transform(translation_damping), damping);
+    GeometricShapeBox damping_buffer_shape(Transform(translation_damping), damping);
     BodyRegionByCell damping_buffer(water_block, damping_buffer_shape);
     SimpleDynamics<fluid_dynamics::DampingBoundaryCondition> damping_wave(damping_buffer);
 
@@ -167,7 +167,7 @@ int main(int ac, char *av[])
     InteractionWithUpdate<solid_dynamics::ViscousForceFromFluid> viscous_force_on_solid(structure_contact);
     InteractionWithUpdate<solid_dynamics::PressureForceFromFluid<decltype(density_relaxation)>> pressure_force_on_structure(structure_contact);
     /** constrain region of the part of wall boundary. */
-    TransformShape<GeometricShapeBox> transform_wave_maker_shape(Transform(translation_wave_maker), wave_maker_shape);
+    GeometricShapeBox transform_wave_maker_shape(Transform(translation_wave_maker), wave_maker_shape);
     BodyRegionByParticle wave_maker(wall_boundary, transform_wave_maker_shape);
     SimpleDynamics<WaveMaking> wave_making(wave_maker);
     //----------------------------------------------------------------------
@@ -264,7 +264,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
     write_real_body_states.addToWrite<Real>(water_block, "Pressure");
     /** WaveProbes. */
-    BodyRegionByCell wave_probe_buffer(water_block, makeShared<TransformShape<GeometricShapeBox>>(Transform(translation_WGauge), WGaugeDim));
+    BodyRegionByCell wave_probe_buffer(water_block, makeShared<GeometricShapeBox>(Transform(translation_WGauge), WGaugeDim));
     ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
 
@@ -289,15 +289,12 @@ int main(int ac, char *av[])
     ObservedQuantityRecording<Real>
         write_recorded_pressure_bp1("Pressure", bp1_contact_w);
 
-    RestartIO restart_io(sph_system);
-
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     int screen_output_interval = 100;
-    int restart_output_interval = screen_output_interval * 10;
     Real end_time = total_physical_time;
     Real output_interval = end_time / 100;
     Real dt = 0.0;
@@ -317,23 +314,6 @@ int main(int ac, char *av[])
     structure_normal_direction.exec();
     structure_corrected_configuration.exec();
     constant_gravity_to_fluid.exec();
-    //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        water_block.updateCellLinkedList();
-        wall_boundary.updateCellLinkedList();
-        structure.updateCellLinkedList();
-        water_block_complex.updateConfiguration();
-        structure_contact.updateConfiguration();
-        observer_contact_with_water.updateConfiguration();
-        WMobserver_contact_with_water.updateConfiguration();
-
-        fp1_contact_w.updateConfiguration();
-        bp1_contact_w.updateConfiguration();
-    }
 
     //----------------------------------------------------------------------
     //	First output before the main loop.
@@ -404,8 +384,6 @@ int main(int ac, char *av[])
                           << "	Total Time = " << total_time
                           << "	Physical Time = " << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
             damping_wave.exec(Dt);
@@ -460,7 +438,7 @@ int main(int ac, char *av[])
         write_str_displacement.generateDataBase(1.0e-3);
         write_recorded_pressure_fp1.generateDataBase(1.0e-3);
     }
-    else if (sph_system.RestartStep() == 0)
+    else
     {
         write_str_displacement.testResult();
         write_recorded_pressure_fp1.testResult();

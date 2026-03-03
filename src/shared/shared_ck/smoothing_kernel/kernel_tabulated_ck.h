@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -35,7 +35,7 @@
 namespace SPH
 {
 constexpr int kernel_resolution_ = 20;
-constexpr int tabulated_array_size_ = kernel_resolution_ + 4;
+constexpr int tabulated_size_ = kernel_resolution_ + 4;
 
 class KernelTabulatedCK
 {
@@ -57,49 +57,18 @@ class KernelTabulatedCK
                (fraction_0 * fraction_1 * fraction_2) / delta_q_3_ * data[i + 2];
     };
 
-    Real W(const Real &displacement) const
-    {
-        Real q = displacement * inv_h_;
-        return factor_W_1D_ * interpolateCubic(w_1d, q);
-    };
+    inline Real normalized_W(Real normalized_distance) const { return interpolateCubic(w_1d, normalized_distance); };
+    inline Real normalized_dW(Real normalized_distance) const { return interpolateCubic(dw_1d, normalized_distance); };
+    inline Real normalized_d2W(Real normalized_distance) const { return interpolateCubic(d2w_1d, normalized_distance); };
+    inline Real KernelSize() const { return kernel_size_; };
 
-    Real W(const Vec2d &displacement) const
-    {
-        Real q = displacement.norm() * inv_h_;
-        return factor_W_2D_ * interpolateCubic(w_1d, q);
-    };
-
-    Real W(const Vec3d &displacement) const
-    {
-        Real q = displacement.norm() * inv_h_;
-        return factor_W_3D_ * interpolateCubic(w_1d, q);
-    };
-
-    Real dW(const Real &displacement) const
-    {
-        Real q = displacement * inv_h_;
-        return factor_dW_1D_ * interpolateCubic(dw_1d, q);
-    };
-    Real dW(const Vec2d &displacement) const
-    {
-        Real q = displacement.norm() * inv_h_;
-        return factor_dW_2D_ * interpolateCubic(dw_1d, q);
-    };
-    Real dW(const Vec3d &displacement) const
-    {
-        Real q = displacement.norm() * inv_h_;
-        return factor_dW_3D_ * interpolateCubic(dw_1d, q);
-    };
-
-    Real CutOffRadius() const { return rc_ref_; };
-    Real CutOffRadiusSqr() const { return rc_ref_sqr_; };
+  protected:
+    Real kernel_size_;
+    Real dimension_factor_1D_, dimension_factor_2D_, dimension_factor_3D_;
 
   private:
-    Real inv_h_, rc_ref_, rc_ref_sqr_;
-    Real factor_W_1D_, factor_W_2D_, factor_W_3D_;
-    Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
     Real dq_, delta_q_0_, delta_q_1_, delta_q_2_, delta_q_3_;
-    Real w_1d[tabulated_array_size_], dw_1d[tabulated_array_size_];
+    Real w_1d[tabulated_size_], dw_1d[tabulated_size_], d2w_1d[tabulated_size_];
 };
 } // namespace SPH
 #endif // KERNEL_TABULATED_CK_H

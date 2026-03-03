@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -31,6 +31,9 @@
 
 #include "io_base.h"
 
+#include "dynamics_algorithms.h"
+#include "general_reduce.h"
+
 using VtuStringData = std::map<std::string, std::string>;
 
 namespace SPH
@@ -43,9 +46,9 @@ namespace SPH
 class BodyStatesRecordingToVtp : public BodyStatesRecording
 {
   public:
-    BodyStatesRecordingToVtp(SPHBody &body) : BodyStatesRecording(body){};
-    BodyStatesRecordingToVtp(SPHSystem &sph_system) : BodyStatesRecording(sph_system){};
-    virtual ~BodyStatesRecordingToVtp(){};
+    BodyStatesRecordingToVtp(SPHBody &body) : BodyStatesRecording(body) {};
+    BodyStatesRecordingToVtp(SPHSystem &sph_system) : BodyStatesRecording(sph_system) {};
+    virtual ~BodyStatesRecordingToVtp() {};
 
   protected:
     virtual void writeWithFileName(const std::string &sequence) override;
@@ -63,7 +66,7 @@ class BodyStatesRecordingToVtpString : public BodyStatesRecordingToVtp
 {
   public:
     BodyStatesRecordingToVtpString(SPHSystem &sph_system)
-        : BodyStatesRecordingToVtp(sph_system){};
+        : BodyStatesRecordingToVtp(sph_system) {};
     virtual ~BodyStatesRecordingToVtpString() = default;
 
     const VtuStringData &GetVtuData() const;
@@ -89,7 +92,7 @@ class WriteToVtpIfVelocityOutOfBound
     : public BodyStatesRecordingToVtp
 {
   private:
-    UniquePtrsKeeper<ReduceDynamics<VelocityBoundCheck>> check_bodies_ptr_keeper_;
+    UniquePtrsKeeper<ReduceDynamics<VelocityBoundCheck>> check_bodies_keeper_;
 
   protected:
     bool out_of_bound_;
@@ -98,18 +101,18 @@ class WriteToVtpIfVelocityOutOfBound
 
   public:
     WriteToVtpIfVelocityOutOfBound(SPHSystem &sph_system, Real velocity_bound);
-    virtual ~WriteToVtpIfVelocityOutOfBound(){};
+    virtual ~WriteToVtpIfVelocityOutOfBound() {};
 };
 
 class ParticleGenerationRecordingToVtp : public ParticleGenerationRecording
 {
   public:
-    ParticleGenerationRecordingToVtp(SPHBody &body, StdLargeVec<Vecd> &position)
-        : ParticleGenerationRecording(body), position_(position){};
-    virtual ~ParticleGenerationRecordingToVtp(){};
+    ParticleGenerationRecordingToVtp(SPHBody &body, StdVec<Vecd> &position)
+        : ParticleGenerationRecording(body), position_(position) {};
+    virtual ~ParticleGenerationRecordingToVtp() {};
 
   protected:
-    StdLargeVec<Vecd> &position_;
+    StdVec<Vecd> &position_;
     virtual void writeWithFileName(const std::string &sequence) override;
 };
 } // namespace SPH

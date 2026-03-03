@@ -16,7 +16,7 @@ BufferIndicationCK::UpdateKernel::
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       buffer_indicator_(encloser.dv_buffer_indicator_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
+inline void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (aligned_box_->checkContain(pos_[index_i]))
     {
@@ -27,23 +27,22 @@ void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
 template <class ConditionType>
 template <typename... Args>
 BufferInflowInjectionCK<ConditionType>::
-    BufferInflowInjectionCK(AlignedBoxPartByCell &aligned_box_part,
-                            ParticleBuffer<Base> &buffer, Args &&...args)
-    : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
-      part_id_(aligned_box_part.getPartID()), buffer_(buffer),
-      fluid_(DynamicCast<FluidType>(this, sph_body_.getBaseMaterial())),
+    BufferInflowInjectionCK(AlignedBoxByCell &aligned_box_part, Args &&...args)
+    : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
+      part_id_(aligned_box_part.getPartID()),
+      fluid_(DynamicCast<FluidType>(this, sph_body_->getBaseMaterial())),
       condition_(std::forward<Args>(args)...),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       sv_total_real_particles_(this->particles_->svTotalRealParticles()),
       spawn_real_particle_method_(this->particles_),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_buffer_indicator_(this->particles_->template getVariableByName<int>("BufferIndicator")),
-      sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime")),
+      sv_physical_time_(this->sph_system_->template getSystemVariableByName<Real>("PhysicalTime")),
       dv_p_(this->particles_->template getVariableByName<Real>("Pressure")),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
-      upper_bound_fringe_(0.5 * this->sph_body_.getSPHBodyResolutionRef())
+      upper_bound_fringe_(0.5 * this->sph_body_->getSPHBodyResolutionRef())
 {
-    buffer_.checkParticlesReserved();
+    particles_->checkEnoughReserve();
 }
 //=================================================================================================//
 template <class ConditionType>
@@ -80,37 +79,51 @@ void BufferInflowInjectionCK<ConditionType>::UpdateKernel::update(size_t index_i
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
-BufferOutflowDeletionCK::UpdateKernel::
+BufferOutflowIndication::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      life_status_(encloser.dv_life_status_->DelegatedData(ex_policy)),
       is_deltable_(encloser.part_id_, aligned_box_, pos_,
                    encloser.dv_buffer_indicator_->DelegatedData(ex_policy)),
-      total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
-      remove_real_particle_(ex_policy, encloser.remove_real_particle_method_) {}
+      total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-void BufferOutflowDeletionCK::UpdateKernel::update(size_t index_i, Real dt)
+inline void BufferOutflowIndication::UpdateKernel::update(size_t index_i, Real dt)
 {
     if (!aligned_box_->checkInBounds(pos_[index_i]))
     {
         if (is_deltable_(index_i) && index_i < *total_real_particles_)
         {
-            remove_real_particle_(index_i, is_deltable_);
+            life_status_[index_i] = 1; // mark as to delete but will not delete immediately
         }
+    }
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+OutflowParticleDeletion::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : remove_real_particle_(ex_policy, encloser.remove_real_particle_method_),
+      life_status_(encloser.dv_life_status_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+inline void OutflowParticleDeletion::UpdateKernel::update(UnsignedInt index_i, Real dt)
+{
+    if (life_status_[index_i] == 1) // to delete
+    {
+        remove_real_particle_(index_i, life_status_);
     }
 }
 //=================================================================================================//
 template <class KernelCorrectionType, typename ConditionType>
 template <typename... Args>
 PressureVelocityCondition<KernelCorrectionType, ConditionType>::
-    PressureVelocityCondition(AlignedBoxPartByCell &aligned_box_part, Args &&...args)
-    : BaseLocalDynamics<AlignedBoxPartByCell>(aligned_box_part),
+    PressureVelocityCondition(AlignedBoxByCell &aligned_box_part, Args &&...args)
+    : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
       BaseStateCondition(this->particles_),
       sv_aligned_box_(aligned_box_part.svAlignedBox()),
       kernel_correction_method_(this->particles_),
       condition_(std::forward<Args>(args)...),
-      sv_physical_time_(this->sph_system_.template getSystemVariableByName<Real>("PhysicalTime")),
-      dv_zero_gradient_residue_(this->particles_->template getVariableByName<Vecd>("ZeroGradientResidue")) {}
+      sv_physical_time_(this->sph_system_->template getSystemVariableByName<Real>("PhysicalTime")),
+      dv_kernel_gradient_integral_(this->particles_->template getVariableByName<Vecd>("KernelGradientIntegral")) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename ConditionType>
 template <class ExecutionPolicy, class EncloserType>
@@ -121,7 +134,7 @@ PressureVelocityCondition<KernelCorrectionType, ConditionType>::UpdateKernel::
       correction_kernel_(ex_policy, encloser.kernel_correction_method_),
       condition_(encloser.condition_),
       physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
-      zero_gradient_residue_(encloser.dv_zero_gradient_residue_->DelegatedData(ex_policy)),
+      kernel_gradient_integral_(encloser.dv_kernel_gradient_integral_->DelegatedData(ex_policy)),
       axis_(aligned_box_->AlignmentAxis()), transform_(&aligned_box_->getTransform()) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename ConditionType>
@@ -130,9 +143,9 @@ void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
 {
     if (aligned_box_->checkContain(pos_[index_i]))
     {
-        Vecd corrected_residue = correction_kernel_(index_i) * zero_gradient_residue_[index_i];
+        Vecd corrected_residual = correction_kernel_(index_i) * kernel_gradient_integral_[index_i];
         vel_[index_i] -= dt * condition_.getPressure(p_[index_i], *physical_time_) /
-                         rho_[index_i] * corrected_residue;
+                         rho_[index_i] * corrected_residual;
 
         Vecd frame_velocity = Vecd::Zero();
         frame_velocity[axis_] = transform_->xformBaseVecToFrame(vel_[index_i])[axis_];
@@ -145,12 +158,11 @@ void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
 template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>
 template <typename... Args>
 BidirectionalBoundaryCK<ExecutionPolicy, KernelCorrectionType, ConditionType>::
-    BidirectionalBoundaryCK(AlignedBoxPartByCell &aligned_box_part,
-                            ParticleBuffer<Base> &particle_buffer, Args &&...args)
-    : tag_buffer_particles_(aligned_box_part),
+    BidirectionalBoundaryCK(AlignedBoxByCell &aligned_box_part, Args &&...args)
+    : AbstractDynamics(), tag_buffer_particles_(aligned_box_part),
       boundary_condition_(aligned_box_part, std::forward<Args>(args)...),
-      inflow_injection_(aligned_box_part, particle_buffer, std::forward<Args>(args)...),
-      outflow_deletion_(aligned_box_part) {}
+      inflow_injection_(aligned_box_part, std::forward<Args>(args)...),
+      outflow_indication_(aligned_box_part) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

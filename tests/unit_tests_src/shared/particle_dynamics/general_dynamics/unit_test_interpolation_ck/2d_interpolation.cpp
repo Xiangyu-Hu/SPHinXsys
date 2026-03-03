@@ -3,7 +3,7 @@
  * @brief 	test the linear reproducing approximation of interpolation.
  * @author 	Xiangyu Hu
  */
-#include "sphinxsys_ck.h"
+#include "sphinxsys.h"
 #include <gtest/gtest.h>
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -39,7 +39,7 @@ class WaterBlock : public ComplexShape
     {
         Vecd scaled_container(0.5 * width, 0.5 * height);
         Transform translate_to_origin(scaled_container);
-        add<TransformShape<GeometricShapeBox>>(Transform(translate_to_origin), scaled_container);
+        add<GeometricShapeBox>(Transform(translate_to_origin), scaled_container);
     }
 };
 //----------------------------------------------------------------------
@@ -50,10 +50,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2),
+    BoundingBoxd system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2),
                                      Vecd(width + boundary_width * 2, height + boundary_width * 2));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -72,7 +72,7 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Relation<Contact<>> fluid_observer_contact(fluid_observer, {&water_block});
+    Contact<> fluid_observer_contact(fluid_observer, {&water_block});
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
@@ -81,14 +81,14 @@ int main(int ac, char *av[])
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> water_cell_linked_list(water_block);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> water_cell_linked_list(water_block);
     UpdateRelation<MainExecutionPolicy, Contact<>> fluid_observer_contact_relation(fluid_observer_contact);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations

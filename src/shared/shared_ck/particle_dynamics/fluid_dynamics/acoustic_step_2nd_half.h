@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -34,9 +34,15 @@
 
 namespace SPH
 {
+
+namespace FSI
+{
+template <typename...>
+class PressureForceFromFluid;
+}
+
 namespace fluid_dynamics
 {
-
 template <typename...>
 class AcousticStep2ndHalf;
 
@@ -49,7 +55,7 @@ class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit AcousticStep2ndHalf(Relation<Inner<Parameters...>> &inner_relation);
+    explicit AcousticStep2ndHalf(Inner<Parameters...> &inner_relation);
     virtual ~AcousticStep2ndHalf() {};
 
     class InitializeKernel
@@ -89,9 +95,6 @@ class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
     };
 
   protected:
-    template <typename...>
-    friend class FSI::PressureForceFromFluid;
-
     KernelCorrectionType kernel_correction_;
     FluidType &fluid_;
     RiemannSolverType riemann_solver_;
@@ -99,14 +102,14 @@ class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
 
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>
-    : public AcousticStep<Interaction<Contact<Wall, Parameters...>>>
+    : public AcousticStep<Interaction<Contact<Parameters...>>>, public Interaction<Wall>
 {
     using FluidType = typename RiemannSolverType::SourceFluid;
-    using BaseInteraction = AcousticStep<Interaction<Contact<Wall, Parameters...>>>;
+    using BaseInteraction = AcousticStep<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit AcousticStep2ndHalf(Relation<Contact<Parameters...>> &wall_contact_relation);
+    explicit AcousticStep2ndHalf(Contact<Parameters...> &wall_contact_relation);
     virtual ~AcousticStep2ndHalf() {};
 
     class InteractKernel : public BaseInteraction::InteractKernel
@@ -121,14 +124,52 @@ class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
         RiemannSolverType riemann_solver_;
         Real *Vol_, *rho_, *drho_dt_;
         Vecd *vel_, *force_;
-        Real *wall_Vol_;
+        Real *contact_Vol_;
         Vecd *wall_vel_ave_, *wall_n_;
     };
 
   protected:
+    template <typename...>
+    friend class FSI::PressureForceFromFluid;
+
     KernelCorrectionType kernel_correction_;
     FluidType &fluid_;
     RiemannSolverType riemann_solver_;
+};
+
+template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+class AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters...>>
+    : public AcousticStep<Interaction<Contact<Parameters...>>>
+{
+    using SourceFluidType = typename RiemannSolverType::SourceFluid;
+    using TargetFluidType = typename RiemannSolverType::TargetFluid;
+    using BaseInteraction = AcousticStep<Interaction<Contact<Parameters...>>>;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+
+  public:
+    explicit AcousticStep2ndHalf(Contact<Parameters...> &wall_contact_relation);
+    virtual ~AcousticStep2ndHalf() {};
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        CorrectionKernel correction_;
+        RiemannSolverType riemann_solver_;
+        Real *Vol_, *rho_, *drho_dt_;
+        Vecd *vel_, *force_;
+        Real *contact_Vol_;
+        Vecd *contact_vel_;
+    };
+
+  protected:
+    KernelCorrectionType kernel_correction_;
+    StdVec<RiemannSolverType> riemann_solvers_;
+    StdVec<DiscreteVariable<Vecd> *> dv_contact_vel_;
 };
 
 using AcousticStep2ndHalfWithWallNoRiemannCK =

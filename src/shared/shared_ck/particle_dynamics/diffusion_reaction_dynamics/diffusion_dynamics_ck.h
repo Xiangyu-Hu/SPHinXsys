@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -90,7 +90,7 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
     DiscreteVariableArray<Real> dv_diffusion_species_array_;
     DiscreteVariableArray<Real> dv_gradient_species_array_;
     DiscreteVariableArray<Real> dv_diffusion_dt_array_;
-    ConstantArray<DiffusionType, InverseVolumetricCapacity> ca_inverse_volume_capacity_;
+    ConstantArray<InverseVolumetricCapacity> ca_inverse_volume_capacity_;
 };
 
 template <class DiffusionType, class KernelCorrectionType, class... Parameters>
@@ -122,8 +122,7 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrecti
 
   protected:
     KernelCorrectionType kernel_correction_method_;
-    ConstantArray<DiffusionType, InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
-    DiscreteVariable<Real> *dv_Vol_;
+    ConstantArray<InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
     Real smoothing_length_sq_;
 };
 
@@ -131,8 +130,8 @@ template <class DiffusionType, template <typename...> class BoundaryType, class 
 class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType>>
     : public DiffusionRelaxationCK<DiffusionType, Interaction<Contact<>>>
 {
-    UniquePtrsKeeper<DiscreteVariableArray<Real>> contact_transfer_array_ptrs_keeper_;
-    UniquePtrsKeeper<BoundaryType<DiffusionType>> boundary_ptrs_keeper_;
+    UniquePtrsKeeper<DiscreteVariableArray<Real>> contact_transfer_arrays_keeper_;
+    UniquePtrsKeeper<BoundaryType<DiffusionType>> boundaries_keeper_;
     using BaseInteraction = DiffusionRelaxationCK<DiffusionType, Interaction<Contact<>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
     using BoundaryKernel = typename BoundaryType<DiffusionType>::ComputingKernel;
@@ -159,7 +158,6 @@ class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>
 
   protected:
     KernelCorrectionType kernel_correction_method_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
     StdVec<DiscreteVariableArray<Real> *> contact_dv_transfer_array_;
     StdVec<BoundaryType<DiffusionType> *> contact_boundary_method_;
 };
@@ -280,7 +278,7 @@ class Dirichlet<DiffusionType>
     Real smoothing_length_sq_;
     DiscreteVariableArray<Real> &dv_gradient_species_array_;
     DiscreteVariableArray<Real> contact_dv_gradient_species_array_;
-    ConstantArray<DiffusionType, InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
+    ConstantArray<InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
 };
 
 template <class DiffusionType>

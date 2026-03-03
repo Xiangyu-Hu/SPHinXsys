@@ -13,11 +13,11 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    TransformShape<GeometricShapeBox> water_block_shape(Transform(water_block_translation), water_block_halfsize, "WaterBody");
+    GeometricShapeBox water_block_shape(Transform(water_block_translation), water_block_halfsize, "WaterBody");
     FluidBody water_block(sph_system, water_block_shape);
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
@@ -62,7 +62,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    TransformShape<GeometricShapeBox> wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
+    GeometricShapeBox wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
     BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<UpperFrontInAxisDirection<BodyPartByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
@@ -85,6 +85,7 @@ int main(int ac, char *av[])
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     int screen_output_interval = 1000;
+    int observation_interval = screen_output_interval / 20;
     Real end_time = total_physical_time;
     Real output_interval = end_time / 100;
     Real dt = 0.0;
@@ -128,7 +129,8 @@ int main(int ac, char *av[])
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
             }
             number_of_iterations++;
-            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+
+            if (number_of_iterations % 100 == 0)
             {
                 particle_sorting.exec();
             }
@@ -136,7 +138,7 @@ int main(int ac, char *av[])
             wall_boundary.updateCellLinkedList();
             water_block_complex.updateConfiguration();
 
-            if (total_time >= relax_time)
+            if (total_time >= relax_time && number_of_iterations % observation_interval == 0)
             {
                 wave_gauge.writeToFile(number_of_iterations);
             }

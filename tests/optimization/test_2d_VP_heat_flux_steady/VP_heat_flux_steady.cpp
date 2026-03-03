@@ -11,9 +11,9 @@ using namespace SPH; // Namespace cite here
 //----------------------------------------------------------------------
 Real L = 1.0;
 Real H = 1.0;
-Real resolution_ref = H / 50.0;
-Real BW = resolution_ref * 4.0;
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
+Real global_resolution = H / 50.0;
+Real BW = global_resolution * 4.0;
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
@@ -54,8 +54,8 @@ std::vector<Vecd> createBoundaryDomain()
 }
 
 std::vector<Vecd> heat_flux_boundary{
-    Vecd(0.45 * L, H - resolution_ref), Vecd(0.45 * L, H), Vecd(0.55 * L, H),
-    Vecd(0.55 * L, H - resolution_ref), Vecd(0.45 * L, H - resolution_ref)};
+    Vecd(0.45 * L, H - global_resolution), Vecd(0.45 * L, H), Vecd(0.55 * L, H),
+    Vecd(0.55 * L, H - global_resolution), Vecd(0.45 * L, H - global_resolution)};
 //----------------------------------------------------------------------
 //	Define SPH bodies.
 //----------------------------------------------------------------------
@@ -95,7 +95,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)){};
+          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -113,7 +113,7 @@ class WallBoundaryInitialCondition : public LocalDynamics
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(diffusion_species_name)),
+          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)),
           heat_flux_(particles_->getVariableDataByName<Real>("HeatFlux")) {}
 
     void update(size_t index_i, Real dt)
@@ -163,8 +163,7 @@ TEST(test_optimization, test_problem4_non_optimization)
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.setIOEnvironment();
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -217,7 +216,6 @@ TEST(test_optimization, test_problem4_non_optimization)
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    RestartIO restart_io(sph_system);
     ObservedQuantityRecording<Real> write_solid_temperature(diffusion_species_name, temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -236,7 +234,6 @@ TEST(test_optimization, test_problem4_non_optimization)
     int ite = 0;
     Real T0 = 10;
     Real End_Time = T0;
-    int restart_output_interval = 1000;
     Real dt = 0.0;
     Real current_averaged_temperature = 0.0;
     Real current_averaged_boundary_temperature = 0.0;
@@ -249,10 +246,10 @@ TEST(test_optimization, test_problem4_non_optimization)
     //	Main loop starts here.
     //----------------------------------------------------------------------
     std::string filefullpath_nonopt_temperature =
-        sph_system.getIOEnvironment().output_folder_ + "/" + "nonopt_temperature.dat";
+        sph_system.getIOEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app);
     std::string filefullpath_nonopt_boundary_temperature =
-        sph_system.getIOEnvironment().output_folder_ + "/" + "nonopt_boundary_temperature.dat";
+        sph_system.getIOEnvironment().OutputFolder() + "/" + "nonopt_boundary_temperature.dat";
     std::ofstream out_file_nonopt_boundary_temperature(filefullpath_nonopt_boundary_temperature.c_str(), std::ios::app);
 
     while (physical_time < End_Time)
@@ -278,10 +275,6 @@ TEST(test_optimization, test_problem4_non_optimization)
         ite++;
         physical_time += dt;
 
-        if (ite % restart_output_interval == 0)
-        {
-            restart_io.writeToFile(ite);
-        }
     }
     TickCount t4 = TickCount::now();
     TickCount::interval_t tt;

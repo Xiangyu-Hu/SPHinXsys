@@ -23,7 +23,7 @@ Vec3d domain_lower_bound(-55.0 * length_scale, -75.0 * length_scale, -35.0 * len
 Vec3d domain_upper_bound(35.0 * length_scale, 5.0 * length_scale, 35.0 * length_scale);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 45.0; /**< Initial particle spacing. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
 /** Material properties. */
 Real rho0_s = 1.06e-3;
@@ -73,12 +73,12 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
     explicit DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
     virtual ~DiffusionBCs() {};
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Vecd displacement = sph_body_.getInitialShape().findNormalDirection(pos_[index_i]);
+        Vecd displacement = sph_body_->getInitialShape().findNormalDirection(pos_[index_i]);
         Vecd face_norm = displacement / (displacement.norm() + 1.0e-15);
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 
@@ -89,7 +89,7 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
         }
         else
         {
-            if (pos_[index_i][1] < -sph_body_.getSPHAdaptation().ReferenceSpacing())
+            if (pos_[index_i][1] < -getSPHAdaptation().ReferenceSpacing())
                 phi_[index_i] = 0.0;
         }
     };
@@ -111,9 +111,9 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
   public:
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
         : LocalDynamics(sph_body),
-          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_.getBaseMaterial())),
+          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_->getBaseMaterial())),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(species_name))
+          phi_(particles_->registerStateVariableData<Real>(species_name))
     {
         center_line_vector_ = Vecd(0.0, 1.0, 0.0);
         beta_epi_ = -(70.0 / 180.0) * M_PI;
@@ -128,7 +128,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
          * 		Present  doi.org/10.1016/j.cma.2016.05.031
          */
         /** Probe the face norm from level set field. */
-        Vecd displacement = sph_body_.getInitialShape().findNormalDirection(pos_[index_i]);
+        Vecd displacement = sph_body_->getInitialShape().findNormalDirection(pos_[index_i]);
         Vecd face_norm = displacement / (displacement.norm() + 1.0e-15);
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
         if (face_norm.dot(center_norm) <= 0.0)
@@ -144,7 +144,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
         Vecd f_0 = cos(beta) * cd_norm + sin(beta) * getCrossProduct(face_norm, cd_norm) +
                    face_norm.dot(cd_norm) * (1.0 - cos(beta)) * face_norm;
 
-        if (pos_[index_i][1] < -sph_body_.getSPHAdaptation().ReferenceSpacing())
+        if (pos_[index_i][1] < -getSPHAdaptation().ReferenceSpacing())
         {
             muscle_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
             muscle_material_.local_s0_[index_i] = face_norm;
@@ -176,7 +176,7 @@ class ApplyStimulusCurrentSI : public LocalDynamics
     explicit ApplyStimulusCurrentSI(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerStateVariable<Real>("Voltage")) {};
+          voltage_(particles_->registerStateVariableData<Real>("Voltage")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -205,7 +205,7 @@ class ApplyStimulusCurrentSII : public LocalDynamics
     explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerStateVariable<Real>("Voltage")) {};
+          voltage_(particles_->registerStateVariableData<Real>("Voltage")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -247,32 +247,32 @@ int main(int ac, char *av[])
     //	SPHSystem section
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    sph_system.setRunParticleRelaxation(false);                      // Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(true);                             // Tag for computation with save particles distribution
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment(); // handle command line arguments
+    sph_system.setRunParticleRelaxation(false);  // Tag for run particle relaxation for body-fitted distribution
+    sph_system.setReloadParticles(true);         // Tag for computation with save particles distribution
+    sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
     //----------------------------------------------------------------------
     //	SPH Particle relaxation for body fitted particle distribution.
     //----------------------------------------------------------------------
     if (sph_system.RunParticleRelaxation())
     {
-        SolidBody herat_model(sph_system, makeShared<Heart>("HeartModel"));
-        herat_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet(sph_system);
-        herat_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
+        SolidBody heart_model(sph_system, makeShared<Heart>("HeartModel"));
+        heart_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet();
+        heart_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
             ConstructArgs(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0),
             ConstructArgs(diffusion_species_name, diffusion_coeff));
-        herat_model.generateParticles<BaseParticles, Lattice>();
+        heart_model.generateParticles<BaseParticles, Lattice>();
         /** topology */
-        InnerRelation herat_model_inner(herat_model);
+        InnerRelation herat_model_inner(heart_model);
         using namespace relax_dynamics;
-        SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
+        SimpleDynamics<RandomizeParticlePosition> random_particles(heart_model);
         RelaxationStepInner relaxation_step_inner(herat_model_inner);
         //----------------------------------------------------------------------
         //	Relaxation output
         //----------------------------------------------------------------------
-        BodyStatesRecordingToVtp write_herat_model_state_to_vtp({herat_model});
-        ReloadParticleIO write_particle_reload_files(herat_model);
-        write_particle_reload_files.addToReload<Vecd>(herat_model, "Fiber");
-        write_particle_reload_files.addToReload<Vecd>(herat_model, "Sheet");
+        BodyStatesRecordingToVtp write_herat_model_state_to_vtp({heart_model});
+        ReloadParticleIO write_particle_reload_files(heart_model);
+        write_particle_reload_files.addToReload<Vecd>(heart_model, "Fiber");
+        write_particle_reload_files.addToReload<Vecd>(heart_model, "Sheet");
         //----------------------------------------------------------------------
         //	Physics relaxation starts here.
         //----------------------------------------------------------------------
@@ -297,13 +297,13 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         //	Diffusion process to initialize fiber direction
         //----------------------------------------------------------------------
-        GetDiffusionTimeStepSize get_time_step_size(herat_model);
+        GetDiffusionTimeStepSize get_time_step_size(heart_model);
         FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner);
-        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model, diffusion_species_name);
-        BodySurface surface_part(herat_model);
+        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(heart_model, diffusion_species_name);
+        BodySurface surface_part(heart_model);
         SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, diffusion_species_name);
         impose_diffusion_bc.exec();
-        write_herat_model_state_to_vtp.addToWrite<Real>(herat_model, diffusion_species_name);
+        write_herat_model_state_to_vtp.addToWrite<Real>(heart_model, diffusion_species_name);
         write_herat_model_state_to_vtp.writeToFile(ite);
 
         int diffusion_step = 100;

@@ -36,8 +36,8 @@ class Column : public ComplexShape
   public:
     explicit Column(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_column), halfsize_column);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder);
+        add<GeometricShapeBox>(Transform(translation_column), halfsize_column);
+        add<GeometricShapeBox>(Transform(translation_holder), halfsize_holder);
     }
 };
 //----------------------------------------------------------------------
@@ -48,7 +48,7 @@ class InitialCondition
 {
   public:
     explicit InitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
+        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -77,9 +77,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Vec3d domain_lower_bound(-SL - BW, -0.5 * (PH + BW), -0.5 * (PW + BW));
     Vec3d domain_upper_bound(PL, 0.5 * (PH + BW), 0.5 * (PW + BW));
-    BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+    BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     // Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -110,7 +110,7 @@ int main(int ac, char *av[])
     ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(column, 0.5);
     SimpleDynamics<InitialCondition> initial_condition(column);
 
-    TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
+    GeometricShapeBox holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
     BodyRegionByParticle holder(column, holder_shape);
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     //----------------------------------------------------------------------
@@ -156,7 +156,7 @@ int main(int ac, char *av[])
         Real integration_time = 0.0;
         while (integration_time < output_period)
         {
-            if (number_of_iterations % 100 == 0)
+            if (number_of_iterations == 1 || number_of_iterations % 100 == 0)
             {
                 std::cout << "N=" << number_of_iterations << " Time: "
                           << physical_time << "	dt: "

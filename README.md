@@ -1,36 +1,33 @@
 # ![SPHinXsys Logo](assets/logo.png) SPHinXsys
 
-## A milestone for the heterogeneous parallelism
-
-SPHinXsys is undergoing a major transformation,
-moving from traditional CPU parallelism to a new era of heterogeneous parallelism,
-where compute-intensive tasks can harness the power of both CPUs and GPUs.
-This evolution will be driven by SYCL (via Intel's DPC++), enabling us to leverage heterogeneous architectures with standard C++.
-What's unique about this framework is that it allows for the development
-and testing of numerical methods even in environments without GPUs or DPC++ installed.
-If these methods are crafted following our specified guidelines and prove functional,
-they will seamlessly operate in environments equipped with DPC++ and GPU support.
-
-I am excited to announce that SPHinXsys has achieved a milestone on heterogeneous parallelism.
-Now, SPHinXsys is able to run on both CPUs and GPUs for the major applications
-in fluid and thermal-fluid dynamics and their coupling with multi-body system.
-All test cases following heterogeneous parallelism have been added to the `test/test_sycl` folder,
-showcasing the capabilities of our specially designed framework.
-
-Your tests, comments and modification of these test cases would be very welcomed!
-
-**Project status**
+**Project status**  
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Linux](https://img.shields.io/badge/os-Linux-green.svg)](https://shields.io/)
 [![Windows](https://img.shields.io/badge/os-Windows-green.svg)](https://shields.io/)
 [![macOS](https://img.shields.io/badge/os-macOs-green.svg)](https://shields.io/)
 ![ci workflow](https://github.com/Xiangyu-Hu/SPHinXsys/actions/workflows/ci.yml/badge.svg?event=push)
+[![Heterogeneous Computing](https://img.shields.io/badge/Heterogeneous-Computing-orange)](https://shields.io/)
+[![Unified SYCL Kernel](https://img.shields.io/badge/Unified-SYCL_Kernel-orange)](https://shields.io/)
 
 **Project communication**  
+[![LinkedIn](https://custom-icon-badges.demolab.com/badge/LinkedIn-0A66C2?logo=linkedin-white&logoColor=fff)](https://www.linkedin.com/in/xiangyu-hu-tum)
 [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/sphinxsys.svg?style=social&label=Follow%20%40sphinxsys)](https://twitter.com/sphinxsys)
 [![YouTube](https://img.shields.io/badge/YouTube-FF0000.svg?style=flat&logo=YouTube&logoColor=white)](https://www.youtube.com/channel/UCexdJbxOn9dvim6Jg1dnCFQ)
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
 [![QQ](https://img.shields.io/badge/QQ_Group-blue?logo=tencentqq&logoColor=white)](https://qm.qq.com/q/BZDAqz70Iw)
+
+## Newest update: Heterogeneous parallel computing for flow simulation with adaptive resolution
+
+By using template for the cell linked list class with adaptation in SPHinXsys,
+we are able to implement the SYCL kernel for the multi-resolution SPH method simulating flow problems.
+Heterogeneous parallel computing has been achieved by hybridizing the object-oriented programming
+for setting up computation and template-based programming for device execution.
+
+The following example gives a multi-resolution flow simulation around a cylinder.
+Note that both the resolutions for fluid and wall particles are refined
+near the cylinder surface or mainstream and coarsened away from them.
+
+[![Flow around cylinder](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/flow-around-cylinder.png)](https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/tests_sycl/2d_examples/test_2d_free_stream_around_cylinder_mr_sycl/mr_free_stream_around_cylinder.cpp)
 
 ## Repository Description
 

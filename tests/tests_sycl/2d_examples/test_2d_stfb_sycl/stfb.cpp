@@ -3,7 +3,7 @@
  * @brief 	This is the test for 2D still floating body using compute kernel.
  * @author   Nicolò Salis and Xiangyu Hu
  */
-#include "sphinxsys_sycl.h"
+#include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -15,7 +15,7 @@ Real WH = 2.0;                   /**< Water block height. */
 Real L = 1.0;                    /**< Base of the floating body. */
 Real particle_spacing_ref = L / 20;
 Real BW = particle_spacing_ref * 4.0; /**< Extending width for BCs. */
-BoundingBox system_domain_bounds(Vec2d(-DL - BW, -DH - BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL - BW, -DH - BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -69,7 +69,7 @@ class StructureSystemForSimbody : public SolidBodyPartForSimbody
         // Vec2d mass_center(G[0], G[1]);
         // initial_mass_center_ = SimTKVec3(mass_center[0], mass_center[1], 0.0);
         body_part_mass_properties_ =
-            mass_properties_ptr_keeper_
+            mass_properties_keeper_
                 .createPtr<SimTK::MassProperties>(StructureMass, SimTKVec3(0.0), SimTK::UnitInertia(Ix, Iy, Iz));
     }
 };
@@ -81,8 +81,8 @@ class WallBoundary : public ComplexShape
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
+        add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
+        subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
 class WaterBlock : public ComplexShape
@@ -90,8 +90,8 @@ class WaterBlock : public ComplexShape
   public:
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(water_block_translation), water_block_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(structure_translation), structure_halfsize);
+        add<GeometricShapeBox>(Transform(water_block_translation), water_block_halfsize);
+        subtract<GeometricShapeBox>(Transform(structure_translation), structure_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -100,7 +100,9 @@ class WaterBlock : public ComplexShape
 Real h = 1.3 * particle_spacing_ref;
 Vec2d gauge_halfsize = Vec2d(0.5 * h, 0.5 * DH);
 Vec2d gauge_translation = Vec2d(DL / 3, 0.5 * DH);
-//
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
     std::cout << "Mass " << StructureMass << " str_sup " << FlStA << " rho_s " << rho_s << std::endl;
@@ -108,7 +110,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -120,7 +122,7 @@ int main(int ac, char *av[])
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
-    TransformShape<GeometricShapeBox> structure_shape(Transform(structure_translation), structure_halfsize, "Structure");
+    GeometricShapeBox structure_shape(Transform(structure_translation), structure_halfsize, "Structure");
     SolidBody structure(sph_system, structure_shape);
     structure.defineMaterial<Solid>(rho_s);
     structure.generateParticles<BaseParticles, Lattice>();
@@ -131,79 +133,92 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
-    TransformShape<GeometricShapeBox> wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
+    GeometricShapeBox wave_probe_buffer_shape(Transform(gauge_translation), gauge_halfsize, "FreeSurfaceGauge");
     BodyRegionByCell wave_probe_buffer(water_block, wave_probe_buffer_shape);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
-    //  At last, we define the complex relaxations by combining previous defined
-    //  inner and contact relations.
     //----------------------------------------------------------------------
-    Relation<Inner<>> water_block_inner(water_block);
-    Relation<Contact<>> water_block_contact(water_block, {&wall_boundary, &structure});
-    Relation<Contact<>> structure_contact(structure, {&water_block});
-    Relation<Contact<>> observer_contact(observer, {&structure});
+    Inner<> water_block_inner(water_block);
+    Contact<> water_block_contact(water_block, {&wall_boundary, &structure});
+    Contact<> structure_contact(structure, {&water_block});
+    Contact<> observer_contact(observer, {&structure}, ConfigType::Lagrangian);
     //----------------------------------------------------------------------
-    // Define the main execution policy for this case.
+    // Define SPH solver with particle methods and execution policies.
     //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelDevicePolicy; // define
+    SPHSolver sph_solver(sph_system);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> water_cell_linked_list(water_block);
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> wall_cell_linked_list(wall_boundary);
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> structure_cell_linked_list(structure);
+    auto &wall_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall_boundary);  // run on CPU
+    auto &structure_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(structure); // run on CPU
 
-    UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>>
-        water_block_update_complex_relation(water_block_inner, water_block_contact);
-    UpdateRelation<MainExecutionPolicy, Contact<>>
-        structure_update_contact_relation(structure_contact);
-    UpdateRelation<MainExecutionPolicy, Contact<>>
-        observer_update_contact_relation(observer_contact);
-    ParticleSortCK<MainExecutionPolicy> particle_sort(water_block);
+    auto &water_cell_linked_list = main_methods.addCellLinkedListDynamics(water_block);
+    auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
+    auto &structure_cell_linked_list = main_methods.addCellLinkedListDynamics(structure);
+    auto &water_block_update_complex_relation = main_methods.addRelationDynamics(water_block_inner, water_block_contact);
+    auto &structure_update_contact_relation = main_methods.addRelationDynamics(structure_contact);
+    auto &observer_update_contact_relation = main_methods.addRelationDynamics(observer_contact);
+    auto &particle_sort = main_methods.addSortDynamics(water_block);
 
     Gravity gravity(Vecd(0.0, -gravity_g));
-    StateDynamics<MainExecutionPolicy, GravityForceCK<Gravity>> constant_gravity(water_block, gravity);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary);
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> structure_boundary_normal_direction(structure);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_block);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_block);
+    auto &constant_gravity = main_methods.addStateDynamics<GravityForceCK<Gravity>>(water_block, gravity);
+    auto &water_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(water_block);
+    auto &water_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(water_block);
 
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
-        fluid_acoustic_step_1st_half(water_block_inner, water_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
-        fluid_acoustic_step_2nd_half(water_block_inner, water_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
-        fluid_density_regularization(water_block_inner, water_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
-        fluid_viscous_force(water_block_inner, water_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, FSI::ViscousForceOnStructure<decltype(fluid_viscous_force)>>
-        viscous_force_on_structure(structure_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, FSI::PressureForceOnStructure<decltype(fluid_acoustic_step_2nd_half)>>
-        pressure_force_on_structure(structure_contact);
+    auto &fluid_acoustic_step_1st_half =
+        main_methods.addInteractionDynamicsOneLevel<
+                        fluid_dynamics::AcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_contact);
 
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_f);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_block);
+    auto &fluid_acoustic_step_2nd_half =
+        main_methods.addInteractionDynamicsOneLevel<
+            fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner);
+    auto &fluid_acoustic_step_2nd_half_with_wall =
+        main_methods.addInteractionDynamics<
+            fluid_dynamics::AcousticStep2ndHalf, Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_contact);
+    fluid_acoustic_step_2nd_half.addPostContactInteraction(fluid_acoustic_step_2nd_half_with_wall);
+
+    auto &fluid_density_regularization =
+        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(water_block_inner)
+            .addPostContactInteraction(water_block_contact)
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(water_block);
+
+    auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_f);
+    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_block);
+
+    auto &fluid_viscous_force = main_methods.addInteractionDynamicsWithUpdate<
+        fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(water_block_inner);
+    auto &fluid_viscous_force_from_wall =
+        main_methods.addInteractionDynamics<fluid_dynamics::ViscousForceCK, Wall, Viscosity, NoKernelCorrectionCK>(water_block_contact);
+    fluid_viscous_force.addPostContactInteraction(fluid_viscous_force_from_wall);
+
+    auto &viscous_force_on_structure =
+        main_methods.addInteractionDynamicsWithUpdate<
+            FSI::ViscousForceFromFluid, std::remove_reference_t<decltype(fluid_viscous_force_from_wall)>>(structure_contact);
+    auto &pressure_force_on_structure =
+        main_methods.addInteractionDynamicsWithUpdate<
+            FSI::PressureForceFromFluid, std::remove_reference_t<decltype(fluid_acoustic_step_2nd_half_with_wall)>>(structure_contact);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
-    /** set up the multi body system. */
     SimTK::MultibodySystem MBsystem;
-    /** the bodies or matter of the system. */
-    SimTK::SimbodyMatterSubsystem matter(MBsystem);
-    /** the forces of the system. */
-    SimTK::GeneralForceSubsystem forces(MBsystem);
-    /** mass properties of the fixed spot. */
+    SimTK::SimbodyMatterSubsystem matter(MBsystem);                // the bodies or matter of the system
+    SimTK::GeneralForceSubsystem forces(MBsystem);                 // the forces of the system
+    SimbodyStateEngine simbody_state_engine(sph_system, MBsystem); // the state engine of the system
+
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
@@ -249,26 +264,25 @@ int main(int ac, char *av[])
     /** discrete forces acting on the bodies. */
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
     /** Time stepping method for multibody system.*/
-    SimTK::State state = MBsystem.realizeTopology();
+    SimTK::State simbody_state = MBsystem.realizeTopology();
     SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
-    integ.setAccuracy(1e-3);
-    integ.setAllowInterpolation(false);
-    integ.initialize(state);
     //----------------------------------------------------------------------
     //	Coupling between SimBody and SPH
     //----------------------------------------------------------------------
-    ReduceDynamicsCK<MainExecutionPolicy, solid_dynamics::TotalForceOnBodyPartForSimBodyCK>
-        force_on_structure(structure_multibody, MBsystem, structure_mob, integ);
-    StateDynamics<MainExecutionPolicy, solid_dynamics::ConstraintBodyPartBySimBodyCK>
-        constraint_on_structure(structure_multibody, MBsystem, structure_mob, integ);
+    auto &force_on_structure = main_methods.addReduceDynamics<
+        solid_dynamics::TotalForceOnBodyPartForSimBodyCK>(structure_multibody, MBsystem, structure_mob, integ);
+    auto &constraint_on_structure = main_methods.addStateDynamics<
+        solid_dynamics::ConstraintBodyPartBySimBodyCK>(structure_multibody, MBsystem, structure_mob, integ);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
-        wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>>
-        write_structure_position("Position", observer_contact);
+    auto &restart_io = main_methods.addIODynamics<RestartIOCK>(sph_system);
+    auto &write_real_body_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    auto &wave_gauge = main_methods.addReduceRegression<
+        RegressionTestDynamicTimeWarping, UpperFrontInAxisDirectionCK>(wave_probe_buffer, "FreeSurfaceHeight");
+    auto &write_structure_position = main_methods.addObserveRegression<
+        RegressionTestDynamicTimeWarping, Vecd>("Position", observer_contact);
+
     SingularVariable<SimTK::SpatialVec> sv_action_on_structure("ActionOnStructure", SimTK::SpatialVec(0));
     SingularVariableRecording<SimTK::SpatialVec> action_on_structure_recording(sph_system, &sv_action_on_structure);
     //----------------------------------------------------------------------
@@ -277,87 +291,131 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     wall_boundary_normal_direction.exec();
     structure_boundary_normal_direction.exec();
+    //----------------------------------------------------------------------
+    //	From here, methods run on device.
+    //----------------------------------------------------------------------
     constant_gravity.exec();
-
-    water_cell_linked_list.exec();
+    //----------------------------------------------------------------------
+    //	Construct static cell linked list and Lagrangian configurations.
+    //----------------------------------------------------------------------
     wall_cell_linked_list.exec();
     structure_cell_linked_list.exec();
-
-    water_block_update_complex_relation.exec();
-    structure_update_contact_relation.exec();
     observer_update_contact_relation.exec();
     //----------------------------------------------------------------------
-    //	Basic control parameters for time stepping.
+    //	Load restart file if necessary.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
-    int number_of_iterations = 0;
-    int screen_output_interval = 1000;
-    Real end_time = total_physical_time;
-    Real output_interval = end_time / 100;
-    Real total_time = 0.0;
-    Real relax_time = 1.0;
-    /** statistics for computing time. */
-    TickCount t1 = TickCount::now();
-    TimeInterval interval;
+    Real restart_time = 0.0;
+    size_t restart_step = sph_system.RestartStep();
+    if (restart_step != 0)
+    {
+        restart_time = restart_io.readRestartFiles(restart_step);
+        structure_cell_linked_list.exec();
+
+        simbody_state_engine.readStateFromXml(restart_step, simbody_state);
+        simbody_state.setTime(Real(restart_time));
+    }
+    integ.setAccuracy(1e-3);
+    integ.setAllowInterpolation(false);
+    integ.initialize(simbody_state);
+    //----------------------------------------------------------------------
+    //	Define time stepper with end and start time.
+    //----------------------------------------------------------------------
+    TimeStepper time_stepper(sph_system, total_physical_time, restart_time);
+    auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
+    auto &trigger_FSI = time_stepper.addTriggerByPhysicalTime(1.0);
+    size_t advection_steps = restart_step;
+    int screening_interval = 100;
+    int restart_interval = 1000;
+    int observation_interval = screening_interval / 2;
+    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
+    //----------------------------------------------------------------------
+    //	Prepare the simulation with cell linked list, configuration
+    //	and case specified initial condition if necessary.
+    //----------------------------------------------------------------------
+    water_cell_linked_list.exec();
+    water_block_update_complex_relation.exec();
+    structure_update_contact_relation.exec();
+
+    fluid_density_regularization.exec();
+    water_advection_step_setup.exec();
+    fluid_viscous_force.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    write_real_body_states.writeToFile(MainExecutionPolicy{});
-    write_structure_position.writeToFile(0);
-    //    wave_gauge.writeToFile(0);
+    write_real_body_states.writeToFile();
+    write_structure_position.writeToFile();
+    wave_gauge.writeToFile();
+    /** statistics for computing time. */
+    TimeInterval interval_advection_step;
+    TimeInterval interval_acoustic_step;
+    TimeInterval interval_FSI;
+    TimeInterval interval_updating_configuration;
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
-    while (sv_physical_time->getValue() < end_time)
+    while (!time_stepper.isEndTime())
     {
-        Real integral_time = 0.0;
-        while (integral_time < output_interval)
+        //----------------------------------------------------------------------
+        //	the fastest and most frequent acostic time stepping.
+        //----------------------------------------------------------------------
+        TickCount time_instance = TickCount::now();
+        Real acoustic_dt = time_stepper.incrementPhysicalTime(fluid_acoustic_time_step);
+        fluid_acoustic_step_1st_half.exec(acoustic_dt);
+        interval_acoustic_step += TickCount::now() - time_instance;
+
+        time_instance = TickCount::now();
+        if (trigger_FSI())
         {
+            pressure_force_on_structure.exec();
+            SimTK::State &state_for_update = integ.updAdvancedState();
+            force_on_bodies.clearAllBodyForces(state_for_update);
+            sv_action_on_structure.setValue(force_on_structure.exec());
+            force_on_bodies.setOneBodyForce(state_for_update, structure_mob, sv_action_on_structure.getValue());
+            integ.stepBy(acoustic_dt);
+            constraint_on_structure.exec();
+        }
+        interval_FSI += TickCount::now() - time_instance;
 
-            fluid_density_regularization.exec();
-            water_advection_step_setup.exec();
-            Real advection_dt = fluid_advection_time_step.exec();
-            fluid_viscous_force.exec();
-            viscous_force_on_structure.exec();
+        time_instance = TickCount::now();
+        fluid_acoustic_step_2nd_half.exec(acoustic_dt);
+        interval_acoustic_step += TickCount::now() - time_instance;
+        //----------------------------------------------------------------------
+        //	the following are slower and less frequent time stepping.
+        //----------------------------------------------------------------------
+        if (advection_step(fluid_advection_time_step))
+        {
+            advection_steps++;
+            water_update_particle_position.exec();
 
-            Real relaxation_time = 0.0;
-            Real acoustic_dt = 0.0;
-            while (relaxation_time < advection_dt)
+            if (advection_steps % screening_interval == 0)
             {
-                acoustic_dt = fluid_acoustic_time_step.exec();
-                fluid_acoustic_step_1st_half.exec(acoustic_dt);
-                pressure_force_on_structure.exec();
-                if (total_time >= relax_time) // start coupled rigid body dynamics
-                {
-                    SimTK::State &state_for_update = integ.updAdvancedState();
-                    force_on_bodies.clearAllBodyForces(state_for_update);
-                    sv_action_on_structure.setValue(force_on_structure.exec());
-                    force_on_bodies.setOneBodyForce(state_for_update, structure_mob, sv_action_on_structure.getValue());
-                    integ.stepBy(acoustic_dt);
-                    constraint_on_structure.exec();
-                }
-                fluid_acoustic_step_2nd_half.exec(acoustic_dt);
-
-                relaxation_time += acoustic_dt;
-                integral_time += acoustic_dt;
-                total_time += acoustic_dt;
-                if (total_time >= relax_time)
-                    sv_physical_time->incrementValue(acoustic_dt);
+                std::cout << std::fixed << std::setprecision(9) << "N=" << advection_steps
+                          << "	Physical Time = " << time_stepper.getPhysicalTime()
+                          << "	advection_dt = " << advection_step.getInterval()
+                          << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
             }
-            water_advection_step_close.exec();
 
-            if (number_of_iterations % screen_output_interval == 0)
+            if (trigger_FSI() && advection_steps % observation_interval == 0)
             {
-                std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations
-                          << "	Total Time = " << total_time
-                          << "	Physical Time = " << sv_physical_time->getValue()
-                          << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
+                write_structure_position.writeToFile(advection_steps);
+                wave_gauge.writeToFile(advection_steps);
+                action_on_structure_recording.writeToFile(advection_steps);
             }
-            number_of_iterations++;
-            //----------------------------------------------------------------------
-            //	particle sort, cell linked list, body relation updating.
-            //----------------------------------------------------------------------
-            if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
+
+            if (advection_steps % restart_interval == 0)
+            {
+                restart_io.writeToFile(advection_steps);
+                simbody_state_engine.writeStateToXml(advection_steps, integ);
+            }
+
+            if (trigger_FSI() && state_recording())
+            {
+                write_real_body_states.writeToFile();
+            }
+
+            /** Particle sort, update cell linked list and configuration. */
+            time_instance = TickCount::now();
+            if (advection_steps % 100)
             {
                 particle_sort.exec();
             }
@@ -365,34 +423,42 @@ int main(int ac, char *av[])
             structure_cell_linked_list.exec();
             water_block_update_complex_relation.exec();
             structure_update_contact_relation.exec();
+            interval_updating_configuration += TickCount::now() - time_instance;
 
-            if (total_time >= relax_time)
+            /** outer loop for dual-time criteria time-stepping. */
+            time_instance = TickCount::now();
+            fluid_density_regularization.exec();
+            water_advection_step_setup.exec();
+            fluid_viscous_force.exec();
+            if (trigger_FSI())
             {
-                write_structure_position.writeToFile(number_of_iterations);
-                wave_gauge.writeToFile(number_of_iterations);
-                action_on_structure_recording.writeToFile(number_of_iterations);
-            }
+                viscous_force_on_structure.exec();
+            };
+            interval_advection_step += TickCount::now() - time_instance;
         }
-
-        TickCount t2 = TickCount::now();
-        if (total_time >= relax_time)
-            write_real_body_states.writeToFile(MainExecutionPolicy{});
-        TickCount t3 = TickCount::now();
-        interval += t3 - t2;
     }
 
-    TickCount t4 = TickCount::now();
-
-    TimeInterval tt;
-    tt = t4 - t1 - interval;
-    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+    //----------------------------------------------------------------------
+    // Summary for wall time used for real computations.
+    //----------------------------------------------------------------------
+    std::cout << std::fixed << std::setprecision(9) << "interval_advection_step ="
+              << interval_advection_step.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_step = "
+              << interval_acoustic_step.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
+              << interval_updating_configuration.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_FSI = "
+              << interval_FSI.seconds() << "\n";
+    //----------------------------------------------------------------------
+    // Post-run regression test to ensure that the case is validated
+    //----------------------------------------------------------------------
 
     if (sph_system.GenerateRegressionData())
     {
         write_structure_position.generateDataBase(0.001);
         wave_gauge.generateDataBase(0.001);
     }
-    else
+    else if (sph_system.RestartStep() == 0)
     {
         write_structure_position.testResult();
         wave_gauge.testResult();

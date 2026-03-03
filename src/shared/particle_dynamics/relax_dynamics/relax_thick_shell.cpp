@@ -8,9 +8,9 @@ namespace relax_dynamics
 ShellMidSurfaceBounding::ShellMidSurfaceBounding(NearShapeSurface &body_part)
     : BaseLocalDynamics<BodyPartByCell>(body_part),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      constrained_distance_(0.5 * sph_body_.getSPHAdaptation().MinimumSpacing()),
-      particle_spacing_ref_(sph_body_.getSPHAdaptation().MinimumSpacing()),
-      level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body_.getInitialShape())) {}
+      constrained_distance_(0.5 * getSPHAdaptation().MinimumSpacing()),
+      particle_spacing_ref_(getSPHAdaptation().MinimumSpacing()),
+      level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body_->getInitialShape())) {}
 //=================================================================================================//
 void ShellMidSurfaceBounding::update(size_t index_i, Real dt)
 {
@@ -84,7 +84,7 @@ ShellNormalDirectionPrediction::NormalPrediction::NormalPrediction(SPHBody &sph_
       level_set_shape_(DynamicCast<LevelSetShape>(this, &sph_body.getInitialShape())),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
-      n_temp_(particles_->registerStateVariable<Vecd>(
+      n_temp_(particles_->registerStateVariableData<Vecd>(
           "PreviousNormalDirection", [&](size_t i) -> Vecd
           { return n_[i]; })) {}
 //=================================================================================================//
@@ -111,7 +111,7 @@ ShellNormalDirectionPrediction::ConsistencyCorrection::
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
       consistency_criterion_(consistency_criterion),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
-      updated_indicator_(particles_->registerStateVariable<int>(
+      updated_indicator_(particles_->registerStateVariableData<int>(
           "UpdatedIndicator", [&](size_t i) -> int
           { return 0; }))
 {
@@ -172,7 +172,7 @@ ShellRelaxationStep::ShellRelaxationStep(BaseInnerRelation &inner_relation)
     : BaseDynamics<void>(),
       real_body_(DynamicCast<RealBody>(this, inner_relation.getSPHBody())),
       inner_relation_(inner_relation), near_shape_surface_(real_body_),
-      relaxation_residue_(inner_relation),
+      relaxation_residual_(inner_relation),
       relaxation_scaling_(real_body_), position_relaxation_(real_body_),
       mid_surface_bounding_(near_shape_surface_) {}
 //=================================================================================================//
@@ -180,7 +180,7 @@ void ShellRelaxationStep::exec(Real ite_p)
 {
     real_body_.updateCellLinkedList();
     inner_relation_.updateConfiguration();
-    relaxation_residue_.exec();
+    relaxation_residual_.exec();
     Real scaling = relaxation_scaling_.exec();
     position_relaxation_.exec(scaling);
     mid_surface_bounding_.exec();

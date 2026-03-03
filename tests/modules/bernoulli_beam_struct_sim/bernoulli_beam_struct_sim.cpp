@@ -21,8 +21,8 @@ TEST(BernoulliBeam20x, Pressure)
     std::vector<SharedPtr<SaintVenantKirchhoffSolid>> material_model_list = {material};
 
     SharedPtr<TriangleMeshShapeSTL> specimen = makeShared<TriangleMeshShapeSTL>("./input/bernoulli_beam_20x.stl", Vec3d::Zero(), scale_stl, "bernoulli_beam_20x");
-    BoundingBox fixation = specimen->getBounds();
-    fixation.second_[0] = fixation.first_[0] + 0.01;
+    BoundingBoxd fixation = specimen->getBounds();
+    fixation.upper_[0] = fixation.lower_[0] + 0.01;
 
     StructuralSimulationInput input{
         relative_input_path,
@@ -39,7 +39,7 @@ TEST(BernoulliBeam20x, Pressure)
         {Real(end_time * 0.1), Real(pressure)},
         {Real(end_time), Real(pressure)}};
     input.surface_pressure_tuple_ = StdVec<PressureTuple>{PressureTuple(0, specimen, Vec3d(0.1, 0.0, 0.1), pressure_over_time)};
-    input.particle_relaxation_list_ = {true};
+    input.particle_relaxation_list_ = StdVec<bool>{true};
 
     //=================================================================================================//
     StructuralSimulation sim(input);

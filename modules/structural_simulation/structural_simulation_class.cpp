@@ -15,9 +15,6 @@
 BodyPartFromMesh::BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> triangle_mesh_shape_ptr)
     : BodyRegionByParticle(body, triangle_mesh_shape_ptr)
 {
-    // set the body domain bounds because it is not set by default
-    BoundingBox bounds = triangle_mesh_shape_ptr->getBounds();
-    setBodyPartBounds(bounds);
 }
 
 SolidBodyFromMesh::SolidBodyFromMesh(
@@ -25,7 +22,7 @@ SolidBodyFromMesh::SolidBodyFromMesh(
     SharedPtr<SaintVenantKirchhoffSolid> material_model, Vecd *pos_0, Real *volume)
     : SolidBody(system, triangle_mesh_shape)
 {
-    defineAdaptationRatios(1.15, system.resolution_ref_ / resolution);
+    defineAdaptationRatios(1.15, system.GlobalResolution() / resolution);
     defineBodyLevelSetShape()->cleanLevelSet();
     defineMaterial<SaintVenantKirchhoffSolid>(*material_model.get());
     generateParticles<BaseParticles, Lattice>();
@@ -46,19 +43,21 @@ SolidBodyForSimulation::SolidBodyForSimulation(
     std::cout << "  normal initialization done" << std::endl;
 }
 
-void expandBoundingBox(BoundingBox *original, BoundingBox *additional)
+BoundingBoxd expandBoundingBox(const BoundingBoxd &original, const BoundingBoxd &additional)
 {
-    for (int i = 0; i < original->first_.size(); i++)
+    BoundingBoxd expanded = original;
+    for (int i = 0; i < expanded.lower_.size(); i++)
     {
-        if (additional->first_[i] < original->first_[i])
+        if (additional.lower_[i] < expanded.lower_[i])
         {
-            original->first_[i] = additional->first_[i];
+            expanded.lower_[i] = additional.lower_[i];
         }
-        if (additional->second_[i] > original->second_[i])
+        if (additional.upper_[i] > expanded.upper_[i])
         {
-            original->second_[i] = additional->second_[i];
+            expanded.upper_[i] = additional.upper_[i];
         }
     }
+    return expanded;
 }
 
 void relaxParticlesSingleResolution(bool write_particle_relaxation_data,
@@ -106,7 +105,7 @@ void relaxParticlesSingleResolution(bool write_particle_relaxation_data,
 std::tuple<Vecd *, Real *> generateAndRelaxParticlesFromMesh(
     SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution, bool particle_relaxation, bool write_particle_relaxation_data)
 {
-    BoundingBox bb = triangle_mesh_shape->getBounds();
+    BoundingBoxd bb = triangle_mesh_shape->getBounds();
     SPHSystem system(bb, resolution);
     SolidBody model(system, triangle_mesh_shape);
     model.defineBodyLevelSetShape()->cleanLevelSet();
@@ -115,7 +114,6 @@ std::tuple<Vecd *, Real *> generateAndRelaxParticlesFromMesh(
 
     if (particle_relaxation)
     {
-        system.setIOEnvironment();
         InnerRelation inner_relation(model);
         relaxParticlesSingleResolution(write_particle_relaxation_data, model, inner_relation);
     }
@@ -196,9 +194,8 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
       particle_relaxation_list_(input.particle_relaxation_list_),
       write_particle_relaxation_data_(input.write_particle_relaxation_data_),
       system_resolution_(0.0),
-      system_(SPHSystem(BoundingBox(Vec3d::Zero(), Vec3d::Zero()), system_resolution_)),
+      system_(SPHSystem(BoundingBoxd(Vec3d::Zero(), Vec3d::Zero()), system_resolution_)),
       scale_system_boundaries_(input.scale_system_boundaries_),
-      io_environment_(system_),
       physical_time_(*system_.getSystemVariableDataByName<Real>("PhysicalTime")),
 
       // optional: boundary conditions
@@ -276,7 +273,7 @@ void StructuralSimulation::setSystemResolutionMax()
             system_resolution_ = resolution_list_[i];
         }
     }
-    system_.resolution_ref_ = system_resolution_;
+    system_.setGlobalResolution(system_resolution_);
 }
 
 void StructuralSimulation::calculateSystemBoundaries()
@@ -284,17 +281,17 @@ void StructuralSimulation::calculateSystemBoundaries()
     // calculate system bounds from all bodies
     for (size_t i = 0; i < body_mesh_list_.size(); i++)
     {
-        BoundingBox additional = body_mesh_list_[i]->getBounds();
-        expandBoundingBox(&system_.system_domain_bounds_, &additional);
+        BoundingBoxd additional = body_mesh_list_[i]->getBounds();
+        system_.setSystemDomainBounds(expandBoundingBox(system_.getSystemDomainBounds(), additional));
     }
     // scale the system bounds around the center point
-    Vecd center_point = (system_.system_domain_bounds_.first_ + system_.system_domain_bounds_.second_) * 0.5;
+    Vecd center_point = (system_.getSystemDomainBounds().lower_ + system_.getSystemDomainBounds().upper_) * 0.5;
 
-    Vecd distance_first = system_.system_domain_bounds_.first_ - center_point;
-    Vecd distance_second = system_.system_domain_bounds_.second_ - center_point;
+    Vecd distance_first = system_.getSystemDomainBounds().lower_ - center_point;
+    Vecd distance_second = system_.getSystemDomainBounds().upper_ - center_point;
 
-    system_.system_domain_bounds_.first_ = center_point + distance_first * scale_system_boundaries_;
-    system_.system_domain_bounds_.second_ = center_point + distance_second * scale_system_boundaries_;
+    system_.getSystemDomainBounds().lower_ = center_point + distance_first * scale_system_boundaries_;
+    system_.getSystemDomainBounds().upper_ = center_point + distance_second * scale_system_boundaries_;
 }
 
 void StructuralSimulation::createBodyMeshList()
@@ -430,21 +427,21 @@ void StructuralSimulation::initializeForceInBodyRegion()
     for (size_t i = 0; i < force_in_body_region_tuple_.size(); i++)
     {
         int body_index = std::get<0>(force_in_body_region_tuple_[i]);
-        BoundingBox bbox = std::get<1>(force_in_body_region_tuple_[i]);
+        BoundingBoxd bbox = std::get<1>(force_in_body_region_tuple_[i]);
         Vec3d force = std::get<2>(force_in_body_region_tuple_[i]);
         Real end_time = std::get<3>(force_in_body_region_tuple_[i]);
 
         // get the length of each side to create the box
-        Real x_side = bbox.second_[0] - bbox.first_[0];
-        Real y_side = bbox.second_[1] - bbox.first_[1];
-        Real z_side = bbox.second_[2] - bbox.first_[2];
+        Real x_side = bbox.upper_[0] - bbox.lower_[0];
+        Real y_side = bbox.upper_[1] - bbox.lower_[1];
+        Real z_side = bbox.upper_[2] - bbox.lower_[2];
         Vec3d halfsize_bbox(0.5 * x_side, 0.5 * y_side, 0.5 * z_side);
         // get the center point for translation from the origin
-        Vec3d center = (bbox.second_ + bbox.first_) * 0.5;
+        Vec3d center = (bbox.upper_ + bbox.lower_) * 0.5;
         // SimTK geometric modeling resolution
         int resolution(20);
         // create the triangle mesh of the box
-        BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
+        BodyPartFromMesh *bp = body_part_tri_mesh_keeper_.createPtr<BodyPartFromMesh>(
             *solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, imported_stl_list_[body_index]));
         force_in_body_region_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::ForceInBodyRegion>>(*bp, force, end_time));
     }
@@ -460,7 +457,7 @@ void StructuralSimulation::initializeSurfacePressure()
         Vec3d point = std::get<2>(surface_pressure_tuple_[i]);
         StdVec<std::array<Real, 2>> pressure_over_time = std::get<3>(surface_pressure_tuple_[i]);
 
-        BodyPartByParticle *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(*solid_body_list_[body_index]->getSolidBodyFromMesh(), tri_mesh);
+        BodyPartByParticle *bp = body_part_tri_mesh_keeper_.createPtr<BodyPartFromMesh>(*solid_body_list_[body_index]->getSolidBodyFromMesh(), tri_mesh);
         surface_pressure_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::SurfacePressureFromSource>>(*bp, point, pressure_over_time));
     }
 }
@@ -510,19 +507,19 @@ void StructuralSimulation::initializeConstrainSolidBodyRegion()
     for (size_t i = 0; i < body_indices_fixed_constraint_region_.size(); i++)
     {
         int body_index = body_indices_fixed_constraint_region_[i].first;
-        BoundingBox bbox = body_indices_fixed_constraint_region_[i].second;
+        BoundingBoxd bbox = body_indices_fixed_constraint_region_[i].second;
 
         // get the length of each side to create the box
-        Real x_side = bbox.second_[0] - bbox.first_[0];
-        Real y_side = bbox.second_[1] - bbox.first_[1];
-        Real z_side = bbox.second_[2] - bbox.first_[2];
+        Real x_side = bbox.upper_[0] - bbox.lower_[0];
+        Real y_side = bbox.upper_[1] - bbox.lower_[1];
+        Real z_side = bbox.upper_[2] - bbox.lower_[2];
         Vec3d halfsize_bbox(0.5 * x_side, 0.5 * y_side, 0.5 * z_side);
         // get the center point for translation from the origin
-        Vec3d center = (bbox.second_ + bbox.first_) * 0.5;
+        Vec3d center = (bbox.upper_ + bbox.lower_) * 0.5;
         // SimTK geometric modeling resolution
         int resolution(20);
         // create the triangle mesh of the box
-        BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
+        BodyPartFromMesh *bp = body_part_tri_mesh_keeper_.createPtr<BodyPartFromMesh>(
             *solid_body_list_[body_index]->getSolidBodyFromMesh(), makeShared<TriangleMeshShapeBrick>(halfsize_bbox, resolution, center, imported_stl_list_[body_index]));
         fixed_constraint_region_.emplace_back(makeShared<SimpleDynamics<FixBodyPartConstraint>>(*bp));
     }
@@ -579,7 +576,7 @@ void StructuralSimulation::initializeTranslateSolidBodyPart()
         Real start_time = std::get<1>(translation_solid_body_part_tuple_[i]);
         Real end_time = std::get<2>(translation_solid_body_part_tuple_[i]);
         Vecd translation = std::get<3>(translation_solid_body_part_tuple_[i]);
-        BodyPartFromMesh *bp = body_part_tri_mesh_ptr_keeper_.createPtr<BodyPartFromMesh>(
+        BodyPartFromMesh *bp = body_part_tri_mesh_keeper_.createPtr<BodyPartFromMesh>(
             *solid_body_list_[body_index]->getSolidBodyFromMesh(), body_mesh_list_[body_index]);
 
         translation_solid_body_part_.emplace_back(makeShared<SimpleDynamics<solid_dynamics::TranslateSolidBodyPart>>(
@@ -826,6 +823,15 @@ void StructuralSimulation::initializeSimulation()
 
     /** INITIAL CONDITION */
     executeCorrectConfiguration();
+
+    /** ACOUSTIC TIME STEP */
+    initializeAcousticTimeStepList();
+}
+
+void StructuralSimulation::initializeAcousticTimeStepList()
+{
+    for (auto &body : solid_body_list_)
+        acoustic_time_step_list_.emplace_back(makeShared<ReduceDynamics<solid_dynamics::AcousticTimeStep>>(*body->getSolidBodyFromMesh()));
 }
 
 void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
@@ -873,7 +879,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
     executeStressRelaxationSecondHalf(dt);
     /** UPDATE TIME STEP SIZE, INCREMENT */
     iteration_++;
-    dt = system_.getSmallestTimeStepAmongSolidBodies();
+    dt = getSmallestTimeStepAmongSolidBodies();
     integration_time += dt;
     physical_time_ += dt;
 
@@ -951,7 +957,7 @@ Real StructuralSimulation::getMaxDisplacement(int body_index)
 {
     BaseParticles *base_particles = solid_body_list_[body_index].get()->getElasticSolidParticles();
     Vecd *pos = base_particles->ParticlePositions();
-    Vecd *pos0 = base_particles->registerStateVariableFrom<Vecd>("InitialPosition", "Position");
+    Vecd *pos0 = base_particles->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position");
     Real displ_max = 0;
     for (size_t i = 0; i < base_particles->TotalRealParticles(); i++)
     {
@@ -960,6 +966,14 @@ Real StructuralSimulation::getMaxDisplacement(int body_index)
             displ_max = displ;
     }
     return displ_max;
+}
+
+Real StructuralSimulation::getSmallestTimeStepAmongSolidBodies()
+{
+    Real dt = MaxReal;
+    for (auto &acoustic_time_step : acoustic_time_step_list_)
+        dt = SMIN(dt, acoustic_time_step->exec());
+    return dt;
 }
 
 StructuralSimulationJS::StructuralSimulationJS(const StructuralSimulationInput &input)

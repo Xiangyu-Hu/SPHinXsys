@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -42,13 +42,13 @@ class InnerRelation : public BaseInnerRelation
   protected:
     SearchDepthSingleResolution get_single_search_depth_;
     NeighborBuilderInner get_inner_neighbor_;
-    CellLinkedList &cell_linked_list_;
+    CellLinkedList<SPHAdaptation> &cell_linked_list_;
 
   public:
     explicit InnerRelation(RealBody &real_body);
-    virtual ~InnerRelation(){};
+    virtual ~InnerRelation() {};
 
-    CellLinkedList &getCellLinkedList() { return cell_linked_list_; };
+    CellLinkedList<SPHAdaptation> &getCellLinkedList() { return cell_linked_list_; };
     virtual void updateConfiguration() override;
 };
 
@@ -64,11 +64,11 @@ class AdaptiveInnerRelation : public BaseInnerRelation
   protected:
     StdVec<SearchDepthAdaptive *> get_multi_level_search_depth_;
     NeighborBuilderInnerAdaptive get_adaptive_inner_neighbor_;
-    MultilevelCellLinkedList &multi_level_cell_linked_list_;
+    CellLinkedList<AdaptiveSmoothingLength> &multi_level_cell_linked_list_;
 
   public:
     explicit AdaptiveInnerRelation(RealBody &real_body);
-    virtual ~AdaptiveInnerRelation(){};
+    virtual ~AdaptiveInnerRelation() {};
 
     virtual void updateConfiguration() override;
 };
@@ -83,14 +83,14 @@ class SelfSurfaceContactRelation : public BaseInnerRelation
     BodySurfaceLayer body_surface_layer_;
 
     explicit SelfSurfaceContactRelation(RealBody &real_body);
-    virtual ~SelfSurfaceContactRelation(){};
+    virtual ~SelfSurfaceContactRelation() {};
     virtual void updateConfiguration() override;
 
   protected:
     IndexVector &body_part_particles_;
     SearchDepthSingleResolution get_single_search_depth_;
     NeighborBuilderSelfContact get_self_contact_neighbor_;
-    CellLinkedList &cell_linked_list_;
+    CellLinkedList<SPHAdaptation> &cell_linked_list_;
 
     virtual void resetNeighborhoodCurrentSize() override;
 };
@@ -107,7 +107,7 @@ class TreeInnerRelation : public InnerRelation
 
   public:
     explicit TreeInnerRelation(RealBody &real_body);
-    virtual ~TreeInnerRelation(){};
+    virtual ~TreeInnerRelation() {};
 
     virtual void updateConfiguration() override;
 };
@@ -120,7 +120,7 @@ class TreeInnerRelation : public InnerRelation
 class ShellInnerRelationWithContactKernel : public BaseInnerRelation
 {
   private:
-    CellLinkedList &cell_linked_list_;
+    CellLinkedList<SPHAdaptation> &cell_linked_list_;
     SearchDepthContact get_contact_search_depth_;
     ShellNeighborBuilderInnerWithContactKernel get_inner_neighbor_with_contact_kernel_;
 
@@ -142,7 +142,7 @@ class ShellSelfContactRelation : public BaseInnerRelation
   private:
     SearchDepthSingleResolution get_single_search_depth_;
     NeighborBuilderShellSelfContact get_shell_self_contact_neighbor_;
-    CellLinkedList &cell_linked_list_;
+    CellLinkedList<SPHAdaptation> &cell_linked_list_;
 };
 
 /**
@@ -155,7 +155,7 @@ class AdaptiveSplittingInnerRelation : public AdaptiveInnerRelation
   public:
     explicit AdaptiveSplittingInnerRelation(RealBody &real_body)
         : AdaptiveInnerRelation(real_body),
-          get_adaptive_splitting_inner_neighbor_(real_body){};
+          get_adaptive_splitting_inner_neighbor_(real_body) {};
     void updateConfiguration() override;
 
   private:

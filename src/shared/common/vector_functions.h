@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -57,8 +57,6 @@ Mat2d getAverageValue(const Mat2d &A, const Mat2d &B);
 Mat3d getAverageValue(const Mat3d &A, const Mat3d &B);
 Mat2d inverseCholeskyDecomposition(const Mat2d &A);
 Mat3d inverseCholeskyDecomposition(const Mat3d &A);
-Mat2d getDiagonal(const Mat2d &A);
-Mat3d getDiagonal(const Mat3d &A);
 
 /** Real dot product between two matrices, resulting in a scalar value (sum of products of element-wise) */
 Real CalculateBiDotProduct(Mat2d Matrix1, Mat2d Matrix2); // calculate Real dot
@@ -83,10 +81,23 @@ VecType getVectorProjectionOfVector(const VecType &vector_1, const VecType &vect
     return vector_1.dot(vector_2) * vector_2 / (vector_2.squaredNorm() + TinyReal);
 };
 
+/** generalized formulation for scalar and tensor */
+template <typename Datatype>
+Real getNorm(const Datatype &variable) { return variable.norm(); };
+
+inline Real getNorm(const Real &variable) { return ABS(variable); };
+
 template <typename Datatype>
 Real getSquaredNorm(const Datatype &variable) { return variable.squaredNorm(); };
-
 inline Real getSquaredNorm(const Real &variable) { return variable * variable; };
+
+template <int Dim>
+Eigen::Matrix<Real, Dim, Dim> getInverse(const Eigen::Matrix<Real, Dim, Dim> &variable)
+{
+    return variable.inverse();
+};
+
+inline Real getInverse(const Real &variable) { return variable / (variable * variable + TinyReal); };
 
 /** von Mises stress from stress matrix */
 Real getVonMisesStressFromMatrix(const Mat2d &sigma);
@@ -166,15 +177,54 @@ inline Vec6d vectorizeSymMatrix(const Mat3d &input)
     return Vec6d(input(0, 0), input(1, 1), input(2, 2), input(0, 1), input(1, 2), input(2, 0));
 };
 
-inline Eigen::Matrix<Real, 1, 1> transferToMatrix(Real value)
+template <typename DataType>
+DataType tensorProduct(const DataType &value1, const Real &value2)
 {
-    return Eigen::Matrix<Real, 1, 1>::Identity() * value;
+    return value1 * value2;
 };
 
-template <int N, int M>
-Eigen::Matrix<Real, N, M> transferToMatrix(const Eigen::Matrix<Real, N, M> &value)
+template <int N, int M, int O>
+Eigen::Matrix<Real, N, M> tensorProduct(const Eigen::Matrix<Real, N, O> &value1,
+                                        const Eigen::Matrix<Real, M, O> &value2)
 {
-    return value;
+    return value1 * value2.transpose();
 };
+
+template <typename MatrixType>
+MatrixType inverseTikhonov(const MatrixType &input, Real epsilon)
+{
+    MatrixType input_t = input.transpose();
+    return (input_t * input + epsilon * MatrixType::Identity()).inverse() * input_t;
+};
+
+inline Mat2d RotationMatrix(const Vec2d &from, const Vec2d &to)
+{
+    return Eigen::Rotation2D(
+               std::atan2(to[1], to[0]) - std::atan2(from[1], from[0]))
+        .toRotationMatrix();
+};
+
+inline Mat3d RotationMatrix(const Vec3d &from, const Vec3d &to)
+{
+    return Eigen::Quaternion<Real>::FromTwoVectors(from, to).toRotationMatrix();
+};
+
+inline Matd polarRotation(const Matd &F)
+{
+    Eigen::JacobiSVD<Matd> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Matd R = svd.matrixU() * svd.matrixV().transpose();
+    assert(R.determinant() > 0.0);
+    return R;
+};
+
+inline void polarDecomposition(const Matd &F, Matd &R, Matd &S)
+{
+    Eigen::JacobiSVD<Matd> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    const Matd &U = svd.matrixU();
+    const Matd &V = svd.matrixV();
+    R = U * V.transpose();
+    assert(R.determinant() > 0.0);
+    S = V * svd.singularValues().asDiagonal() * V.transpose();
+}
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H

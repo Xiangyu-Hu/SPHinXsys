@@ -14,16 +14,16 @@ Real PH = 0.02;                                      // beam width
 Real SL = 0.02;                                      // constrained length
 int y_num = 10;                                      // particle number in y direction
 Real ratio_ = 4.0;                                   // anisotropic ratio, also dp_x / dp_y
-Real resolution_ref = PH / y_num;                    // particle spacing in y direction
-Real resolution_ref_large = ratio_ * resolution_ref; // large particle spacing, also the particle spacing in x direction
+Real global_resolution = PH / y_num;                    // particle spacing in y direction
+Real global_resolution_large = ratio_ * global_resolution; // large particle spacing, also the particle spacing in x direction
 Real Total_PL = PL + SL;                             // total length
-int x_num = Total_PL / resolution_ref_large;         // particle number in x direction
+int x_num = Total_PL / global_resolution_large;         // particle number in x direction
 //   anisotropic parameters
 Vec2d scaling_vector = Vec2d(1.0, 1.0 / ratio_); // scaling_vector for defining the anisotropic kernel
 Real scaling_factor = 1.0 / ratio_;              // scaling factor to calculate the time step
-Real BW = resolution_ref * 4;                    // boundary width, at least three particles
+Real BW = global_resolution * 4;                    // boundary width, at least three particles
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
+BoundingBoxd system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
                                  Vec2d(PL + 3.0 * BW, PL / 2.0));
 //----------------------------------------------------------------------
 //	Material properties of the solid.
@@ -74,7 +74,7 @@ class ParticleGenerator<BaseParticles, Beam> : public ParticleGenerator<BasePart
 {
   public:
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
-        : ParticleGenerator<BaseParticles>(sph_body, base_particles){};
+        : ParticleGenerator<BaseParticles>(sph_body, base_particles) {};
 
     virtual void prepareGeometricData() override
     {
@@ -83,9 +83,9 @@ class ParticleGenerator<BaseParticles, Beam> : public ParticleGenerator<BasePart
         {
             for (int j = 0; j < y_num; j++)
             {
-                Real x = -SL + (i + 0.5) * resolution_ref_large;
-                Real y = -PH / 2 + (j + 0.5) * resolution_ref;
-                addPositionAndVolumetricMeasure(Vecd(x, y), (resolution_ref * resolution_ref_large));
+                Real x = -SL + (i + 0.5) * global_resolution_large;
+                Real y = -PH / 2 + (j + 0.5) * global_resolution;
+                addPositionAndVolumetricMeasure(Vecd(x, y), (global_resolution * global_resolution_large));
             }
         }
     }
@@ -99,7 +99,7 @@ class BeamInitialCondition
   public:
     explicit BeamInitialCondition(SPHBody &sph_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(sph_body),
-          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_.getBaseMaterial())){};
+          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -136,10 +136,10 @@ class AnisotropicCorrectConfiguration : public LocalDynamics, public DataDelegat
         : LocalDynamics(inner_relation.getSPHBody()),
           DataDelegateInner(inner_relation),
           beta_(beta), alpha_(alpha), Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-          B_(particles_->registerStateVariable<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
+          B_(particles_->registerStateVariableData<Matd>("LinearGradientCorrectionMatrix", IdentityMatrix<Matd>::value)),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          show_neighbor_(particles_->registerStateVariable<Real>("ShowingNeighbor", Real(0.0))){};
-    virtual ~AnisotropicCorrectConfiguration(){};
+          show_neighbor_(particles_->registerStateVariableData<Real>("ShowingNeighbor", Real(0.0))) {};
+    virtual ~AnisotropicCorrectConfiguration() {};
 
   protected:
   protected:
@@ -187,7 +187,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, resolution_ref_large);
+    SPHSystem system(system_domain_bounds, global_resolution_large);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
     system.handleCommandlineOptions(ac, av);
@@ -230,7 +230,6 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // outputs
     //-----------------------------------------------------------------------------
-    IOEnvironment io_environment(system);
     BodyStatesRecordingToVtp write_beam_states(beam_body);
     write_beam_states.addToWrite<Real>(beam_body, "ShowingNeighbor");
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>>

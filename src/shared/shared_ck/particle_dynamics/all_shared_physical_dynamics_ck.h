@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -31,8 +31,10 @@
 #ifndef ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
 #define ALL_SHARED_PHYSICAL_DYNAMICS_CK_H
 
+#include "all_continum_dynamics.h"
 #include "all_fluid_structure_interactions.h"
 #include "all_general_dynamics_ck.h"
+#include "all_relax_dynamics_ck.h"
 #include "all_shared_fluid_dynamics_ck.h"
 #include "all_solid_dynamics_ck.h"
 #include "complex_algorithms_ck.h"
@@ -41,6 +43,6 @@
 #include "particle_functors_ck.h"
 #include "particle_sort_ck.hpp"
 #include "simple_algorithms_ck.h"
-#include "all_continum_dynamics.h"
+#include "sph_solver.h"
 
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H

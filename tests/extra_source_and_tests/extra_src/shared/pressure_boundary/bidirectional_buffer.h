@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -57,12 +57,12 @@ class BidirectionalBuffer
     class TagBufferParticles : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
-        TagBufferParticles(AlignedBoxPartByCell &aligned_box_part)
+        TagBufferParticles(AlignedBoxByCell &aligned_box_part)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               part_id_(aligned_box_part.getPartID()),
               pos_(particles_->getVariableDataByName<Vecd>("Position")),
               aligned_box_(aligned_box_part.getAlignedBox()),
-              buffer_indicator_(particles_->registerStateVariable<int>("BufferIndicator"))
+              buffer_indicator_(particles_->registerStateVariableData<int>("BufferIndicator"))
         {
             particles_->addEvolvingVariable<int>("BufferIndicator");
         };
@@ -86,7 +86,7 @@ class BidirectionalBuffer
     class Injection : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
-        Injection(AlignedBoxPartByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
+        Injection(AlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer,
                   TargetPressure &target_pressure)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               part_id_(aligned_box_part.getPartID()),
@@ -98,8 +98,8 @@ class BidirectionalBuffer
               p_(particles_->getVariableDataByName<Real>("Pressure")),
               previous_surface_indicator_(particles_->getVariableDataByName<int>("PreviousSurfaceIndicator")),
               buffer_indicator_(particles_->getVariableDataByName<int>("BufferIndicator")),
-              upper_bound_fringe_(0.5 * sph_body_.getSPHBodyResolutionRef()),
-              physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")),
+              upper_bound_fringe_(0.5 * sph_body_->getSPHBodyResolutionRef()),
+              physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")),
               target_pressure_(target_pressure)
         {
             particle_buffer_.checkParticlesReserved();
@@ -108,26 +108,23 @@ class BidirectionalBuffer
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            if (!aligned_box_.checkInBounds(pos_[index_i]))
-            {
-                if (aligned_box_.checkUpperBound(pos_[index_i], upper_bound_fringe_) &&
-                    buffer_indicator_[index_i] == part_id_ &&
-                    index_i < particles_->TotalRealParticles())
-                {
-                    mutex_switch.lock();
-                    particle_buffer_.checkEnoughBuffer(*particles_);
-                    size_t new_particle_index = particles_->createRealParticleFrom(index_i);
-                    buffer_indicator_[new_particle_index] = 0;
+          if (aligned_box_.checkUpperBound(pos_[index_i], upper_bound_fringe_) &&
+              buffer_indicator_[index_i] == part_id_ &&
+              index_i < particles_->TotalRealParticles())
+          {
+              mutex_switch.lock();
+              particle_buffer_.checkEnoughBuffer(*particles_);
+              size_t new_particle_index = particles_->createRealParticleFrom(index_i);
+              buffer_indicator_[new_particle_index] = 0;
 
-                    /** Periodic bounding. */
-                    pos_[index_i] = aligned_box_.getUpperPeriodic(pos_[index_i]);
-                    Real sound_speed = fluid_.getSoundSpeed(rho_[index_i]);
-                    p_[index_i] = target_pressure_(p_[index_i], *physical_time_);
-                    rho_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
-                    previous_surface_indicator_[index_i] = 1;
-                    mutex_switch.unlock();
-                }
-            }
+              /** Periodic bounding. */
+              pos_[index_i] = aligned_box_.getUpperPeriodic(pos_[index_i]);
+              Real sound_speed = fluid_.getSoundSpeed(rho_[index_i]);
+              p_[index_i] = target_pressure_(p_[index_i], *physical_time_);
+              rho_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
+              previous_surface_indicator_[index_i] = 1;
+              mutex_switch.unlock();
+          }
         }
 
       protected:
@@ -149,7 +146,7 @@ class BidirectionalBuffer
     class Deletion : public BaseLocalDynamics<BodyPartByCell>
     {
       public:
-        Deletion(AlignedBoxPartByCell &aligned_box_part)
+        Deletion(AlignedBoxByCell &aligned_box_part)
             : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
               part_id_(aligned_box_part.getPartID()),
               aligned_box_(aligned_box_part.getAlignedBox()),
@@ -181,11 +178,12 @@ class BidirectionalBuffer
     };
 
   public:
-    BidirectionalBuffer(AlignedBoxPartByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer)
-        : target_pressure_(*this),
+    template <typename... Args>
+    BidirectionalBuffer(AlignedBoxByCell &aligned_box_part, ParticleBuffer<Base> &particle_buffer, Args &&...args)
+        : target_pressure_(*this, std::forward<Args>(args)...),
           tag_buffer_particles(aligned_box_part),
           injection(aligned_box_part, particle_buffer, target_pressure_),
-          deletion(aligned_box_part) {};
+          deletion(aligned_box_part){};
     virtual ~BidirectionalBuffer() {};
 
     SimpleDynamics<TagBufferParticles, ExecutionPolicy> tag_buffer_particles;

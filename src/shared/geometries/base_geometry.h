@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -30,8 +30,10 @@
 #ifndef BASE_GEOMETRY_H
 #define BASE_GEOMETRY_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
+
+#include <spdlog/spdlog.h>
 #include <string>
 
 namespace SPH
@@ -63,14 +65,14 @@ enum class ShapeBooleanOps
 class Shape
 {
   public:
-    BoundingBox bounding_box_;
+    BoundingBoxd bounding_box_;
 
-    explicit Shape(const std::string &shape_name) : name_(shape_name), is_bounds_found_(false){};
-    virtual ~Shape(){};
+    explicit Shape(const std::string &shape_name);
+    virtual ~Shape() {};
 
     std::string getName() { return name_; };
     void setName(const std::string &name) { name_ = name; };
-    BoundingBox getBounds();
+    BoundingBoxd getBounds();
     virtual bool isValid() { return true; };
     virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) = 0;
     virtual Vecd findClosestPoint(const Vecd &probe_point) = 0;
@@ -81,12 +83,12 @@ class Shape
     Real findSignedDistance(const Vecd &probe_point);
     /** Normal direction point toward outside of the shape. */
     Vecd findNormalDirection(const Vecd &probe_point);
+    virtual BoundingBoxd findBounds() = 0;
 
   protected:
     std::string name_;
     bool is_bounds_found_;
-
-    virtual BoundingBox findBounds() = 0;
+    std::shared_ptr<spdlog::logger> logger_;
 };
 
 using SubShapeAndOp = std::pair<Shape *, ShapeBooleanOps>;
@@ -100,38 +102,47 @@ using SubShapeAndOp = std::pair<Shape *, ShapeBooleanOps>;
 class BinaryShapes : public Shape
 {
   public:
-    BinaryShapes() : Shape("BinaryShapes"){};
-    explicit BinaryShapes(const std::string &shape_name) : Shape(shape_name){};
-    virtual ~BinaryShapes(){};
+    BinaryShapes() : Shape("BinaryShapes") {};
+    explicit BinaryShapes(const std::string &shape_name) : Shape(shape_name) {};
+    virtual ~BinaryShapes() {};
 
-    template <class SubShapeType, typename... Args>
-    void add(Args &&... args)
+    void add(Shape *sub_shape)
     {
-        Shape *sub_shape = sub_shape_ptrs_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
         SubShapeAndOp sub_shape_and_op(sub_shape, ShapeBooleanOps::add);
         sub_shapes_and_ops_.push_back(sub_shape_and_op);
     };
 
     template <class SubShapeType, typename... Args>
-    void subtract(Args &&... args)
+    void add(Args &&...args)
     {
-        Shape *sub_shape = sub_shape_ptrs_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
+        Shape *sub_shape = sub_shapes_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
+        add(sub_shape);
+    };
+
+    void subtract(Shape *sub_shape)
+    {
         SubShapeAndOp sub_shape_and_op(sub_shape, ShapeBooleanOps::sub);
         sub_shapes_and_ops_.push_back(sub_shape_and_op);
+    };
+
+    template <class SubShapeType, typename... Args>
+    void subtract(Args &&...args)
+    {
+        Shape *sub_shape = sub_shapes_keeper_.createPtr<SubShapeType>(std::forward<Args>(args)...);
+        subtract(sub_shape);
     };
 
     virtual bool isValid() override;
     virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
+    virtual BoundingBoxd findBounds() override;
     Shape *getSubShapeByName(const std::string &name);
     SubShapeAndOp *getSubShapeAndOpByName(const std::string &name);
     size_t getSubShapeIndexByName(const std::string &name);
 
   protected:
-    UniquePtrsKeeper<Shape> sub_shape_ptrs_keeper_;
+    UniquePtrsKeeper<Shape> sub_shapes_keeper_;
     StdVec<SubShapeAndOp> sub_shapes_and_ops_;
-
-    virtual BoundingBox findBounds() override;
 };
 
 /**
@@ -148,12 +159,12 @@ class Edge
     /** constructor without specifying a leading-in edge */
     template <class EdgeStructureType>
     explicit Edge(EdgeStructureType *structure)
-        : id_(structure->ContainerSize()), in_edge_(MaxSize_t){};
+        : id_(structure->ContainerSize()), in_edge_(MaxUnsignedInt){};
     /** constructor with specifying a leading-in edge */
     template <class EdgeStructureType>
     Edge(InEdgeType in_edge, EdgeStructureType *structure)
         : id_(structure->ContainerSize()), in_edge_(in_edge){};
-    virtual ~Edge(){};
+    virtual ~Edge() {};
 
     size_t id_;            /**< id of this edge */
     InEdgeType in_edge_;   /**< id(s) of parent edge(s) */

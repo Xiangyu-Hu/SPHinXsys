@@ -18,12 +18,12 @@ Real DL = 1;            /**< Computation domain length. */
 Real DH = 0.6494805454; /**< Computation domain height. */
 Real DW = 0.038968832;  /**< Computation domain width. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec3d(-0.3, 0.0, 0.0), Vec3d(0.469846, 0.5, 0.03));
+BoundingBoxd system_domain_bounds(Vec3d(-0.3, 0.0, 0.0), Vec3d(0.469846, 0.5, 0.03));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;   /**< Density. */
-Real U_f = 1.0;      /**< freestream velocity. */
+Real rho0_f = 1.0; /**< Density. */
+Real U_f = 1.0;    /**< freestream velocity. */
 Real c_f = 10.0 * U_f;
 Real mu_f = 0.0; /**< Dynamics viscosity. */
 
@@ -42,7 +42,7 @@ class AirBody : public ComplexShape
     {
         Vecd halfsize_wave(0.5 * DH, 0.5 * DL, 0.5 * DW);
         Transform translation_wave(halfsize_wave);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_wave), halfsize_wave);
+        add<GeometricShapeBox>(Transform(translation_wave), halfsize_wave);
     }
 };
 ///----------------------------------------------------------------------
@@ -54,12 +54,12 @@ class InvCFInitialCondition
   public:
     explicit InvCFInitialCondition(SPHBody &sph_body)
         : FluidInitialCondition(sph_body),
-          rho_(particles_->registerStateVariable<Real>("Density")),
-          p_(particles_->registerStateVariable<Real>("Pressure")),
-          vel_(particles_->registerStateVariable<Vecd>("Velocity")),
-          Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")), 
+          rho_(particles_->registerStateVariableData<Real>("Density")),
+          p_(particles_->registerStateVariableData<Real>("Pressure")),
+          vel_(particles_->registerStateVariableData<Vecd>("Velocity")),
+          Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
           mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
-          mom_(this->particles_->template getVariableDataByName<Vecd>("Momentum")){};
+          mom_(this->particles_->template getVariableDataByName<Vecd>("Momentum")) {};
 
   protected:
     Real *rho_, *p_;
@@ -87,8 +87,8 @@ class InvCFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
   public:
     InvCFBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
         : BoundaryConditionSetupInFVM(inner_relation, ghost_creation),
-          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())){};
-    virtual ~InvCFBoundaryConditionSetup(){};
+          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())) {};
+    virtual ~InvCFBoundaryConditionSetup() {};
 
     void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) override
     {

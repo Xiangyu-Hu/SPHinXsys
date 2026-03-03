@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -35,7 +35,6 @@
 #include "base_kernel.h"
 #include "elastic_solid.h"
 #include "slender_structure_math.h"
-#include "solid_body.h"
 
 namespace SPH
 {
@@ -232,7 +231,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
 
     Real E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;
-    const Real inv_W0_ = 1.0 / sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd);
+    const Real inv_W0_ = 1.0 / getSPHAdaptation().getKernel()->W0(ZeroVecd);
     const Real shear_correction_factor_ = 5.0 / 6.0;
 
     Real gpt = sqrt(3.0 / 5.0);

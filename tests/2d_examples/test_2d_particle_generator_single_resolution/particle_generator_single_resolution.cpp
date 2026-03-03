@@ -21,8 +21,8 @@ std::string input_body = "./input/SPHinXsys-2d.dat";
 Real DL = 2.5;                          /**< InputBody length right part. */
 Real DL1 = 2.5;                         /**< InputBody length left part. */
 Real DH = 5.0;                          /**< InputBody height. */
-Real resolution_ref = (DL + DL1) / 120; /**< Reference resolution. */
-BoundingBox system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
+Real global_resolution = (DL + DL1) / 120; /**< Reference resolution. */
+BoundingBoxd system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Shape of the InputBody
 //----------------------------------------------------------------------
@@ -33,7 +33,7 @@ class InputBody : public ComplexShape
     {
         MultiPolygon original_logo;
         original_logo.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
-        add<ExtrudeShape<MultiPolygonShape>>(4.0 * resolution_ref, original_logo);
+        add<ExtrudeShape<MultiPolygonShape>>(4.0 * global_resolution, original_logo);
         subtract<MultiPolygonShape>(original_logo);
     }
 };
@@ -45,13 +45,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody input_body(sph_system, makeShared<InputBody>("SPHInXsysLogo"));
-    input_body.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+    input_body.defineBodyLevelSetShape(2.0)->writeLevelSet();
     input_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -72,7 +72,6 @@ int main(int ac, char *av[])
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp input_body_recording_to_vtp(input_body);
-    MeshRecordingToPlt cell_linked_list_recording(sph_system, input_body.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -84,7 +83,6 @@ int main(int ac, char *av[])
     //	First output before the simulation.
     //----------------------------------------------------------------------
     input_body_recording_to_vtp.writeToFile();
-    cell_linked_list_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------

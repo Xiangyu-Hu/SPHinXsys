@@ -16,13 +16,13 @@ Real Dam_L = 100.0;                     /**< Water block width. */
 Real Dam_H = 140.0;                     /**< Water block height. */
 Real Gate_width = 5.0;                  /**< Width of the gate. */
 Real Base_bottom_position = 79.0;       /**< Position of gate base. (In Y direction) */
-Real resolution_ref = Gate_width / 2.0; /**< Initial reference particle spacing. */
-Real BW = resolution_ref * 4.0;         /**< Extending width for BCs. */
+Real global_resolution = Gate_width / 2.0; /**< Initial reference particle spacing. */
+Real BW = global_resolution * 4.0;         /**< Extending width for BCs. */
 /** The offset that the rubber gate shifted above the tank. */
-Real dp_s = 0.5 * resolution_ref;
+Real dp_s = 0.5 * global_resolution;
 Vec2d offset = Vec2d(0.0, Base_bottom_position - floor(Base_bottom_position / dp_s) * dp_s);
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 /** Define the corner points of the water block geometry. */
 Vec2d DamP_lb(DL - Dam_L, 0.0);   /**< Left bottom. */
 Vec2d DamP_lt(DL - Dam_L, Dam_H); /**< Left top. */
@@ -140,8 +140,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -43,6 +43,19 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
+class BaseIntegrationInCompressible : public BaseIntegration<DataDelegateInner>
+{
+  public:
+    explicit BaseIntegrationInCompressible(BaseInnerRelation &inner_relation);
+    virtual ~BaseIntegrationInCompressible(){};
+
+  protected:
+    CompressibleFluid compressible_fluid_;
+    Real *Vol_, *E_, *dE_dt_, *dmass_dt_;
+    Vecd *mom_, *force_, *force_prior_;
+};
+
+// A templated wrapper is required for `InteractionWithWall`, which expects a class template.
 template <class DataDelegationType>
 class BaseIntegrationInCompressibleType : public BaseIntegration<DataDelegationType>
 {
@@ -52,12 +65,12 @@ class BaseIntegrationInCompressibleType : public BaseIntegration<DataDelegationT
         : BaseIntegration<DataDelegationType>(relation),
           compressible_fluid_(CompressibleFluid(1.0, 1.4)),
           Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-          E_(this->particles_->template registerStateVariable<Real>("TotalEnergy")),
-          dE_dt_(this->particles_->template registerStateVariable<Real>("TotalEnergyChangeRate")),
-          dmass_dt_(this->particles_->template registerStateVariable<Real>("MassChangeRate")),
-          mom_(this->particles_->template registerStateVariable<Vecd>("Momentum")),
-          force_(this->particles_->template registerStateVariable<Vecd>("Force")),
-          force_prior_(this->particles_->template registerStateVariable<Vecd>("ForcePrior")){};
+          E_(this->particles_->template registerStateVariableData<Real>("TotalEnergy")),
+          dE_dt_(this->particles_->template registerStateVariableData<Real>("TotalEnergyChangeRate")),
+          dmass_dt_(this->particles_->template registerStateVariableData<Real>("MassChangeRate")),
+          mom_(this->particles_->template registerStateVariableData<Vecd>("Momentum")),
+          force_(this->particles_->template registerStateVariableData<Vecd>("Force")),
+          force_prior_(this->particles_->template registerStateVariableData<Vecd>("ForcePrior")){};
     virtual ~BaseIntegrationInCompressibleType(){};
 
   protected:
@@ -65,7 +78,6 @@ class BaseIntegrationInCompressibleType : public BaseIntegration<DataDelegationT
     Real *Vol_, *E_, *dE_dt_, *dmass_dt_;
     Vecd *mom_, *force_, *force_prior_;
 };
-using BaseIntegrationInCompressible = BaseIntegrationInCompressibleType<DataDelegateInner>;
 
 template <class RiemannSolverType>
 class EulerianCompressibleIntegration1stHalf : public BaseIntegrationInCompressible
@@ -208,7 +220,6 @@ class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStep
     Real *rho_, *p_;
     Vecd *vel_;
     Real smoothing_length_;
-    Fluid &fluid_;
 
   public:
     explicit EulerianCompressibleAcousticTimeStepSize(SPHBody &sph_body, Real acousticCFL = 0.6);
@@ -216,6 +227,7 @@ class EulerianCompressibleAcousticTimeStepSize : public AcousticTimeStep
 
     Real reduce(size_t index_i, Real dt = 0.0);
     virtual Real outputResult(Real reduced_value) override;
+    CompressibleFluid compressible_fluid_;
 };
 
 // With-wall aliases for MUSCL (inner + wall contact)

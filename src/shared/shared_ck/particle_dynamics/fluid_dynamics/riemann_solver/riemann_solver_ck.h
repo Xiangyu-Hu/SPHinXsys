@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -29,7 +29,7 @@
 #ifndef RIEMANN_SOLVER_CK_H
 #define RIEMANN_SOLVER_CK_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "weakly_compressible_fluid.h"
 
 namespace SPH
@@ -49,7 +49,7 @@ class RiemannSolver<Base, FluidI, FluidJ>
     RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j);
 
     template <typename T>
-    T AverageP(const T &p_i, const T &p_j);
+    T AverageP(const T &p_i, const T &p_j) const;
     Vecd AverageV(const Vecd &vel_i, const Vecd &vel_j);
 
   protected:

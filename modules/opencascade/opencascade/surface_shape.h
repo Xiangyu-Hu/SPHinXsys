@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -23,45 +23,45 @@
 #ifndef SURFACE_SHAPE_H
 #define SURFACE_SHAPE_H
 
-#include "sphinxsys.h" 
+#include "sphinxsys.h"
 #include "vector.h"
 
-#include <opencascade/Standard_TypeDef.hxx>
 #include <opencascade/Geom_Surface.hxx>
+#include <opencascade/Standard_TypeDef.hxx>
 
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
-#include <fstream>
-#include <filesystem>
 namespace fs = std::filesystem;
 
 namespace SPH
 {
-	class SurfaceShape : public Shape
-        {
-              public:
-                explicit SurfaceShape(const std::string &shape_name)
-                    : Shape(shape_name){};
-                virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
-                virtual Vecd findClosestPoint(const Vecd &input_pnt) override;
-                Vecd getCartesianPoint(Standard_Real u, Standard_Real v);
-              
-                Handle_Geom_Surface surface_;
-              protected:
-                virtual BoundingBox findBounds() override;   
-        };
+class SurfaceShape : public Shape
+{
+  public:
+    explicit SurfaceShape(const std::string &shape_name)
+        : Shape(shape_name) {};
+    virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
+    virtual Vecd findClosestPoint(const Vecd &input_pnt) override;
+    Vecd getCartesianPoint(Standard_Real u, Standard_Real v);
 
-        class SurfaceShapeSTEP : public SurfaceShape
-        {
-               
-              public:
-                // constructor for load STEP file from out side
-                explicit SurfaceShapeSTEP(Standard_CString &filepathname,
-                                          const std::string &shape_name = "SurfaceShapeSTEP");
-                virtual ~SurfaceShapeSTEP(){};
-               
-        };
-	
-}
+    Handle_Geom_Surface surface_;
 
-#endif //SURFACE_SHAPE_H
+  protected:
+    virtual BoundingBoxd findBounds() override;
+};
+
+class SurfaceShapeSTEP : public SurfaceShape
+{
+
+  public:
+    // constructor for load STEP file from out side
+    explicit SurfaceShapeSTEP(Standard_CString &filepathname,
+                              const std::string &shape_name = "SurfaceShapeSTEP");
+    virtual ~SurfaceShapeSTEP() {};
+};
+
+} // namespace SPH
+
+#endif // SURFACE_SHAPE_H

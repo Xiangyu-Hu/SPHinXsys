@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -81,7 +81,7 @@ class ElasticSolid : public Solid
     Matd NumericalDampingRightCauchy(const Matd &deformation, const Matd &deformation_rate, const ScalingType &scaling, size_t particle_index_i)
     {
         Matd strain_rate = 0.5 * (deformation_rate.transpose() * deformation + deformation.transpose() * deformation_rate);
-        Matd normal_rate = getDiagonal(strain_rate);
+        Matd normal_rate = strain_rate.diagonal().asDiagonal();
         return 0.5 * rho0_ * (cs0_ * (strain_rate - normal_rate) + c0_ * normal_rate) * scaling;
     }
     /** Numerical damping stress using left Cauchy tensor. */
@@ -89,7 +89,7 @@ class ElasticSolid : public Solid
     Matd NumericalDampingLeftCauchy(const Matd &deformation, const Matd &deformation_rate, const ScalingType &scaling, size_t particle_index_i)
     {
         Matd strain_rate = 0.5 * (deformation_rate * deformation.transpose() + deformation * deformation_rate.transpose());
-        Matd normal_rate = getDiagonal(strain_rate);
+        Matd normal_rate = strain_rate.diagonal().asDiagonal();
         return 0.5 * rho0_ * (cs0_ * (strain_rate - normal_rate) + c0_ * normal_rate) * scaling;
     }
     /** Numerical damping is computed between particles i and j */
@@ -136,6 +136,24 @@ class LinearElasticSolid : public ElasticSolid
     Real getPoissonRatio() { return nu_; };
     Real getDensity() { return rho0_; };
 
+    class ConstituteKernel
+    {
+      public:
+        template <typename ExecutionPolicy>
+        ConstituteKernel(const ExecutionPolicy &ex_policy, LinearElasticSolid &encloser);
+        Matd ElasticLeftCauchy(const Matd &deformation, size_t index_i, Real dt = 0.0);
+        Real VolumetricKirchhoff(Real J);
+        Matd DeviatoricKirchhoff(const Matd &deviatoric_be);
+        template <typename ScalingType>
+        Matd NumericalDampingLeftCauchy(const Matd &deformation, const Matd &deformation_rate,
+                                        const ScalingType &scaling, size_t particle_index_i);
+        Real PairNumericalDamping(Real dE_dt_ij, Real smoothing_length);
+        Matd StressPK1(const Matd &F, size_t index_i);
+
+      protected:
+        Real rho0_, K0_, G0_, c0_, cs0_, lambda0_;
+    };
+
   protected:
     Real lambda0_; /*< first Lame parameter */
     Real getBulkModulus(Real youngs_modulus, Real poisson_ratio);
@@ -161,6 +179,14 @@ class SaintVenantKirchhoffSolid : public LinearElasticSolid
 
     /** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
     virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
+
+    class ConstituteKernel : public LinearElasticSolid::ConstituteKernel
+    {
+      public:
+        template <typename ExecutionPolicy>
+        ConstituteKernel(const ExecutionPolicy &ex_policy, SaintVenantKirchhoffSolid &encloser);
+        Matd StressPK1(const Matd &F, size_t index_i);
+    };
 };
 
 /**
@@ -184,6 +210,14 @@ class NeoHookeanSolid : public LinearElasticSolid
     virtual Real VolumetricKirchhoff(Real J) override;
     /** Define the calculation of the stress matrix for postprocessing */
     virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };
+
+    class ConstituteKernel : public LinearElasticSolid::ConstituteKernel
+    {
+      public:
+        template <typename ExecutionPolicy>
+        ConstituteKernel(const ExecutionPolicy &ex_policy, NeoHookeanSolid &encloser);
+        Real VolumetricKirchhoff(Real J);
+    };
 };
 
 /**
@@ -313,8 +347,9 @@ class LocallyOrthotropicMuscle : public Muscle
 
     LocallyOrthotropicMuscle(Real rho0, Real bulk_modulus, const Vecd &f0, const Vecd &s0,
                              const std::array<Real, 4> &a0, const std::array<Real, 4> &b0);
-    explicit LocallyOrthotropicMuscle(ConstructArgs<Real, Real, Vecd, Vecd, 
-    std::array<Real, 4>, std::array<Real, 4>> args);
+    explicit LocallyOrthotropicMuscle(ConstructArgs<Real, Real, Vecd, Vecd,
+                                                    std::array<Real, 4>, std::array<Real, 4>>
+                                          args);
     virtual ~LocallyOrthotropicMuscle() {};
 
     virtual void registerLocalParameters(BaseParticles *base_particles) override;

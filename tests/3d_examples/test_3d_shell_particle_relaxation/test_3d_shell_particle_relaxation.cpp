@@ -19,11 +19,11 @@ Vec3d domain_upper_bound(1315, 1317, 1302);
 Real dp_0 = 25.0;
 Real thickness = 50.0;
 // level set resolution much higher than that of particles is required
-Real level_set_refinement_ratio = dp_0 / (0.1 * thickness);
+Real level_set_refinement = dp_0 / (0.1 * thickness);
 //----------------------------------------------------------------------
 //	Domain bounds of the system.
 //----------------------------------------------------------------------
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 //----------------------------------------------------------------------
 //	Define the body shape.
 //----------------------------------------------------------------------
@@ -44,19 +44,19 @@ int main(int ac, char *av[])
     //	Build up a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, dp_0);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody imported_model(sph_system, makeShared<ImportedShellModel>("ImportedShellModel"));
-    imported_model.defineBodyLevelSetShape(level_set_refinement_ratio)->correctLevelSetSign()->writeLevelSet(sph_system);
+    imported_model.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
+        ->writeLevelSet();
     imported_model.generateParticles<SurfaceParticles, Lattice>(thickness);
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_imported_model_to_vtp({imported_model});
     write_imported_model_to_vtp.addToWrite<Vecd>(imported_model, "NormalDirection");
-    MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, imported_model.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -81,7 +81,6 @@ int main(int ac, char *av[])
     relaxation_step_inner.MidSurfaceBounding().exec();
     write_imported_model_to_vtp.writeToFile(0.0);
     imported_model.updateCellLinkedList();
-    write_mesh_cell_linked_list.writeToFile(0.0);
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------

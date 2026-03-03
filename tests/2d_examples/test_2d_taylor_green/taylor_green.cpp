@@ -11,7 +11,7 @@ using namespace SPH;   // SPHinXsys namespace.
 //----------------------------------------------------------------------
 Real DL = 1.0;                     /**< box length. */
 Real DH = 1.0;                     /**< box height. */
-Real resolution_ref = 1.0 / 100.0; /**< Global reference resolution. */
+Real global_resolution = 1.0 / 100.0; /**< Global reference resolution. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
@@ -45,7 +45,7 @@ class TaylorGreenInitialCondition
 {
   public:
     explicit TaylorGreenInitialCondition(SPHBody &sph_body)
-        : fluid_dynamics::FluidInitialCondition(sph_body){};
+        : fluid_dynamics::FluidInitialCondition(sph_body) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -64,12 +64,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    BoundingBoxd system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(false);
     // handle command line arguments
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------

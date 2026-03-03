@@ -1,0 +1,121 @@
+/* ------------------------------------------------------------------------- *
+ *                                SPHinXsys                                  *
+ * ------------------------------------------------------------------------- *
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for    *
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH   *
+ * (smoothed particle hydrodynamics), a meshless computational method using  *
+ * particle discretization.                                                  *
+ *                                                                           *
+ * SPHinXsys is partially funded by German Research Foundation               *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
+ *  HU1527/12-1 and HU1527/12-4.                                             *
+ *                                                                           *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
+ * the authors' affiliations.                                                *
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * ------------------------------------------------------------------------- */
+/**
+ * @file mesh_data_package_sort.h
+ * @brief TBD
+ * @author Xiangyu Hu
+ */
+
+#ifndef MESH_DATA_PACKAGE_SORT_H
+#define MESH_DATA_PACKAGE_SORT_H
+
+#include "base_configuration_dynamics.h"
+#include "mesh_dynamics_algorithm.h"
+
+namespace SPH
+{
+template <class ExecutionPolicy>
+class PackageSort : public BaseDynamics<void>
+{
+    using SortMethodType = typename SortMethod<ExecutionPolicy>::type;
+
+  public:
+    explicit PackageSort(SparseMeshField<4> &mesh_data, UnsignedInt resolution_level)
+        : BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
+          mesh_data_(mesh_data), resolution_level_(resolution_level),
+          num_pkgs_offsets_(mesh_data.getNumPackageOffsets()),
+          kernel_implementation_(*this),
+          dv_sequence_(mesh_data.registerMetaVariable<UnsignedInt>("Sequence")),
+          dv_index_permutation_(mesh_data.registerMetaVariable<UnsignedInt>("IndexPermutation")),
+          dv_pkg_1d_cell_index_(&mesh_data.getPackage1DCellIndex()),
+          mcv_cell_pkg_index_(&mesh_data.getCellPackageIndex()),
+          update_meta_variables_to_sort_(mesh_data.PackageBound()),
+          update_mesh_variables_to_sort_(mesh_data.PackageBound()),
+          sort_method_(ExecutionPolicy{}, dv_sequence_, dv_index_permutation_) {};
+    virtual ~PackageSort() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : sequence_(encloser.dv_sequence_->DelegatedData(ex_policy)),
+              index_permutation_(encloser.dv_index_permutation_->DelegatedData(ex_policy)),
+              pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_->DelegatedData(ex_policy)){};
+        void update(UnsignedInt &pkg_index)
+        {
+            sequence_[pkg_index] = pkg_1d_cell_index_[pkg_index];
+            index_permutation_[pkg_index] = pkg_index;
+        };
+
+      protected:
+        UnsignedInt *sequence_, *index_permutation_, *pkg_1d_cell_index_;
+    };
+
+    void exec(Real dt = 0.0)
+    {
+        UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
+        UnsignedInt start_pkg_index = num_pkgs_offsets_[this->resolution_level_];
+        UnsignedInt end_pkg_index = num_pkgs_offsets_[this->resolution_level_ + 1];
+        package_for(ex_policy_, start_pkg_index, end_pkg_index,
+                    [=](UnsignedInt package_index)
+                    {
+                        update_kernel->update(package_index);
+                    });
+
+        UnsignedInt sortable_size = end_pkg_index - start_pkg_index;
+        sort_method_.sort(ex_policy_, sortable_size, start_pkg_index);
+        update_meta_variables_to_sort_(
+            mesh_data_.getEvolvingMetaVariables(), ex_policy_,
+            start_pkg_index, end_pkg_index, dv_index_permutation_);
+        update_mesh_variables_to_sort_(
+            mesh_data_.getEvolvingPackageVariables(), ex_policy_,
+            start_pkg_index, end_pkg_index, dv_index_permutation_);
+
+        UnsignedInt *pkg_1d_cell_index = dv_pkg_1d_cell_index_->DelegatedData(ex_policy_);
+        UnsignedInt *cell_pkg_index = mcv_cell_pkg_index_->DelegatedData(ex_policy_);
+        package_for(ex_policy_, start_pkg_index, end_pkg_index,
+                    [=](UnsignedInt package_index)
+                    {
+                        UnsignedInt sort_index = pkg_1d_cell_index[package_index];
+                        cell_pkg_index[sort_index] = package_index;
+                    });
+    };
+
+  private:
+    ExecutionPolicy ex_policy_;
+    SparseMeshField<4> &mesh_data_;
+    UnsignedInt resolution_level_;
+    StdVec<UnsignedInt> &num_pkgs_offsets_;
+    using KernelImplementation = Implementation<ExecutionPolicy, PackageSort<ExecutionPolicy>, UpdateKernel>;
+    KernelImplementation kernel_implementation_;
+    DiscreteVariable<UnsignedInt> *dv_sequence_;
+    DiscreteVariable<UnsignedInt> *dv_index_permutation_;
+    MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;
+    CellVariable<UnsignedInt> *mcv_cell_pkg_index_;
+    OperationOnDataAssemble<MetaVariableAssemble, UpdateSortableVariables<MetaVariable>> update_meta_variables_to_sort_;
+    OperationOnDataAssemble<PackageVariableAssemble, UpdateSortableVariables<PackageVariable>> update_mesh_variables_to_sort_;
+    SortMethodType sort_method_;
+};
+} // namespace SPH
+#endif // MESH_DATA_PACKAGE_SORT_H

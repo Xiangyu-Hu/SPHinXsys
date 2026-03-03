@@ -9,10 +9,10 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real resolution_ref = 0.025;
+Real global_resolution = 0.025;
 Real shell_shape_radius = 2.0;
 Vec2d shell_shape_center(2.0, 2.0);
-Real thickness = resolution_ref * 1.;
+Real thickness = global_resolution * 1.;
 Vec2d ball_center(3.0, 1.5);
 Real ball_radius = 0.5;
 Vec2d gravity(0.0, -1.0);
@@ -45,13 +45,11 @@ int main(int ac, char *av[])
     Vec2d domain_lower_bound(-thickness, -thickness);
     Real domain_box_size = 2.0 * shell_shape_radius + thickness;
     Vec2d domain_upper_bound(domain_box_size, domain_box_size);
-    BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.setRunParticleRelaxation(true);
     sph_system.setReloadParticles(false);
     sph_system.handleCommandlineOptions(ac, av);
-
-    IOEnvironment io_environment(sph_system);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -63,7 +61,7 @@ int main(int ac, char *av[])
     }
     else
     {
-        ball.defineBodyLevelSetShape()->writeLevelSet(sph_system);
+        ball.defineBodyLevelSetShape()->writeLevelSet();
         ball.generateParticles<BaseParticles, Lattice>();
     }
 
@@ -81,8 +79,9 @@ int main(int ac, char *av[])
     }
     else
     {
-        Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
-        rigid_shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(sph_system);
+        Real level_set_refinement = global_resolution / (0.1 * thickness);
+        rigid_shell.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
+            ->writeLevelSet();
         rigid_shell.generateParticles<SurfaceParticles, Lattice>(thickness);
     }
 
@@ -115,7 +114,6 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         BodyStatesRecordingToVtp write_relaxed_particles(sph_system);
         write_relaxed_particles.addToWrite<int>(rigid_shell, "UpdatedIndicator");
-        MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, rigid_shell.getCellLinkedList());
         ReloadParticleIO write_particle_reload({&ball, &rigid_shell});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
@@ -125,7 +123,6 @@ int main(int ac, char *av[])
         rigid_shell_random_particles.exec(0.25);
         rigid_shell_relaxation_step.MidSurfaceBounding().exec();
         write_relaxed_particles.writeToFile(0);
-        write_mesh_cell_linked_list.writeToFile(0);
         //----------------------------------------------------------------------
         //	From here iteration for particle relaxation begins.
         //----------------------------------------------------------------------

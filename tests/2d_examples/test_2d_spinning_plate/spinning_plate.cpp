@@ -12,10 +12,10 @@ using namespace SPH;
 //------------------------------------------------------------------------------
 Real PL = 1.0; // square length
 Real PH = PL;
-Real resolution_ref = PH / 20;
-Real BW = resolution_ref * 4; // boundary width, at least three particles
+Real global_resolution = PH / 20;
+Real BW = global_resolution * 4; // boundary width, at least three particles
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-PL, -PH), Vec2d(PL, PH));
+BoundingBoxd system_domain_bounds(Vec2d(-PL, -PH), Vec2d(PL, PH));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -52,7 +52,7 @@ class SquareInitialCondition
 {
   public:
     explicit SquareInitialCondition(RealBody &square_column)
-        : fluid_dynamics::FluidInitialCondition(square_column){};
+        : fluid_dynamics::FluidInitialCondition(square_column) {};
 
   protected:
     void update(size_t index_i, Real dt)
@@ -73,8 +73,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

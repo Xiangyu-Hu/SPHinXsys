@@ -57,7 +57,7 @@ class AirBlock : public ComplexShape
 public:
     explicit AirBlock(const std::string& shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(air_translation), air_halfsize);
+        add<GeometricShapeBox>(Transform(air_translation), air_halfsize);
         subtract<GeometricShapeBall>(droplet_center, droplet_radius);
     }
 };
@@ -70,8 +70,8 @@ class WallBoundary : public ComplexShape
 public:
     explicit WallBoundary(const std::string& shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
+        add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
+        subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
 //----------------------------------------------------------------------

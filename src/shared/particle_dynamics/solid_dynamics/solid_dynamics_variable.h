@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -43,7 +43,7 @@ class Displacement : public BaseDerivedVariable<Vecd>
 {
   public:
     explicit Displacement(SPHBody &sph_body);
-    virtual ~Displacement(){};
+    virtual ~Displacement() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -58,7 +58,7 @@ class OffsetInitialPosition : public LocalDynamics
 {
   public:
     explicit OffsetInitialPosition(SPHBody &sph_body, Vecd &offset);
-    virtual ~OffsetInitialPosition(){};
+    virtual ~OffsetInitialPosition() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -74,7 +74,7 @@ class TranslationAndRotation : public LocalDynamics
 {
   public:
     explicit TranslationAndRotation(SPHBody &sph_body, Transform &transform);
-    virtual ~TranslationAndRotation(){};
+    virtual ~TranslationAndRotation() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -86,7 +86,7 @@ class GreenLagrangeStrain : public BaseDerivedVariable<Matd>
 {
   public:
     explicit GreenLagrangeStrain(SPHBody &sph_body);
-    virtual ~GreenLagrangeStrain(){};
+    virtual ~GreenLagrangeStrain() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -101,7 +101,7 @@ class VonMisesStress : public BaseDerivedVariable<Real>
 {
   public:
     explicit VonMisesStress(SPHBody &sph_body);
-    virtual ~VonMisesStress(){};
+    virtual ~VonMisesStress() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -119,7 +119,7 @@ class VonMisesStrain : public BaseDerivedVariable<Real>
 {
   public:
     explicit VonMisesStrain(SPHBody &sph_body);
-    virtual ~VonMisesStrain(){};
+    virtual ~VonMisesStrain() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -134,7 +134,7 @@ class VonMisesStrainDynamic : public BaseDerivedVariable<Real>
 {
   public:
     explicit VonMisesStrainDynamic(SPHBody &sph_body);
-    virtual ~VonMisesStrainDynamic(){};
+    virtual ~VonMisesStrainDynamic() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -151,7 +151,7 @@ class MidSurfaceVonMisesStress : public BaseDerivedVariable<Real>
 {
   public:
     explicit MidSurfaceVonMisesStress(SPHBody &sph_body);
-    virtual ~MidSurfaceVonMisesStress(){};
+    virtual ~MidSurfaceVonMisesStress() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:

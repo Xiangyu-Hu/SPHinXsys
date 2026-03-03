@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -51,7 +51,8 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
     DataType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
-    ObservedQuantityRecording(const std::string &quantity_name, Relation<Contact<>> &contact_relation)
+    template <typename... RelationParameters>
+    ObservedQuantityRecording(const std::string &quantity_name, Contact<RelationParameters...> &contact_relation)
         : BaseQuantityRecording(contact_relation.getSPHBody().getSPHSystem(),
                                 contact_relation.getSPHBody().getName()),
           observer_(contact_relation.getSPHBody()),

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -29,8 +29,8 @@
 #ifndef REGRESSION_TEST_BASE_H
 #define REGRESSION_TEST_BASE_H
 
+#include "all_io.h"
 #include "all_physical_dynamics.h"
-#include "io_all.h"
 #include "xml_engine.h"
 
 namespace SPH
@@ -113,7 +113,7 @@ class RegressionTestBase : public ObserveMethodType
     };
 
   private:
-    size_t last_iteration_step_ = MaxSize_t;
+    size_t last_iteration_step_ = MaxUnsignedInt;
 
     bool isIterationStepChanged(size_t iteration_step)
     {

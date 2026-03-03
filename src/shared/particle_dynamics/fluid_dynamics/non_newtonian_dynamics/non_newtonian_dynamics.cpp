@@ -8,8 +8,8 @@ namespace fluid_dynamics
 Oldroyd_BIntegration1stHalf<Inner<>>::
     Oldroyd_BIntegration1stHalf(BaseInnerRelation &inner_relation)
     : Integration1stHalfInnerRiemann(inner_relation),
-      tau_(particles_->registerStateVariable<Matd>("ElasticStress")),
-      dtau_dt_(particles_->registerStateVariable<Matd>("ElasticStressChangeRate"))
+      tau_(particles_->registerStateVariableData<Matd>("ElasticStress")),
+      dtau_dt_(particles_->registerStateVariableData<Matd>("ElasticStressChangeRate"))
 {
     particles_->addEvolvingVariable<Matd>("ElasticStress");
 }
@@ -93,7 +93,7 @@ void Oldroyd_BIntegration2ndHalf<Inner<>>::update(size_t index_i, Real dt)
 //=================================================================================================//
 SRDViscousTimeStepSize::SRDViscousTimeStepSize(SPHBody &sph_body, Real diffusionCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      smoothing_length_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
+      smoothing_length_(this->getSPHAdaptation().ReferenceSmoothingLength()),
       rho_(this->particles_->template getVariableDataByName<Real>("Density")),
       mu_srd_(this->particles_->getVariableDataByName<Real>("VariableViscosity")),
       diffusionCFL(diffusionCFL) {}
@@ -112,7 +112,7 @@ ShearRateDependentViscosity::ShearRateDependentViscosity(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       vel_grad_(particles_->getVariableDataByName<Matd>("VelocityGradient")),
       generalized_viscosity_(DynamicCast<GeneralizedNewtonianViscosity>(this, this->particles_->getBaseMaterial())),
-      mu_srd_(particles_->registerStateVariable<Real>("VariableViscosity"))
+      mu_srd_(particles_->registerStateVariableData<Real>("VariableViscosity"))
 {
     particles_->addVariableToWrite<Real>("VariableViscosity");
 }

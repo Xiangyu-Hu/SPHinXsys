@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -42,15 +42,9 @@ using MatTend = Mat6d;           // matricized symmetric 3x3x3x3 tensor
 using VecMatGrad = VecMatGrad3d; // gradient of vectorized symmetric 3x3 matrix
 using AngularVecd = Vec3d;
 using Rotation = Rotation3d;
-using BoundingBox = BaseBoundingBox<Vec3d>;
+using BoundingBoxd = BoundingBox<VecdBound, 3>;
+using BoundingBoxi = BoundingBox<ArrayiBound, 3>;
 using Transform = BaseTransform<Rotation3d, Vec3d>;
-using CellNeighborhood = std::array<std::array<std::array<int, 3>, 3>, 3>;
-
-template <class DataType, int array_size>
-using PackageDataMatrix = std::array<std::array<std::array<DataType, array_size>, array_size>, array_size>;
-
-template <class DataType>
-using MeshDataMatrix = DataType ***;
 
 /** only works for smoothing length ratio less or equal than 1.3*/
 constexpr int MaximumNeighborhoodSize = int(1.33 * M_PI * 27);

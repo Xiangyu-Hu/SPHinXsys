@@ -20,9 +20,9 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
       diffusions_(this->obtainConcreteDiffusions(*abstract_diffusion)),
       diffusion_species_names_(this->obtainDiffusionSpeciesNames(diffusions_)),
       gradient_species_names_(this->obtainGradientSpeciesNames(diffusions_)),
-      dv_diffusion_species_array_(this->particles_->template getVariablesByName<Real>(
+      dv_diffusion_species_array_(this->particles_->template registerStateVariables<Real>(
           diffusion_species_names_, "")),
-      dv_gradient_species_array_(this->particles_->template getVariablesByName<Real>(
+      dv_gradient_species_array_(this->particles_->template registerStateVariables<Real>(
           gradient_species_names_, "")),
       dv_diffusion_dt_array_(this->particles_->template registerStateVariables<Real>(
           diffusion_species_names_, "ChangeRate")),
@@ -102,7 +102,6 @@ DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrectionType
     : BaseInteraction(std::forward<Args>(args)...),
       kernel_correction_method_(this->particles_),
       ca_inter_particle_diffusion_coeff_(this->diffusions_),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       smoothing_length_sq_(pow(this->sph_adaptation_->ReferenceSmoothingLength(), 2)) {}
 //=================================================================================================//
 template <class DiffusionType, class KernelCorrectionType, class... Parameters>
@@ -146,14 +145,12 @@ DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, Kern
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
     {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         contact_dv_transfer_array_.push_back(
-            contact_transfer_array_ptrs_keeper_.createPtr<DiscreteVariableArray<Real>>(
+            contact_transfer_arrays_keeper_.createPtr<DiscreteVariableArray<Real>>(
                 this->particles_->template registerStateVariables<Real>(
-                    this->diffusion_species_names_, "TransferWith" + this->sph_body_.getName())));
+                    this->diffusion_species_names_, "TransferWith" + this->sph_body_->getName())));
         contact_boundary_method_.push_back(
-            boundary_ptrs_keeper_.template createPtr<BoundaryType<DiffusionType>>(
+            boundaries_keeper_.template createPtr<BoundaryType<DiffusionType>>(
                 *this, this->contact_particles_[k]));
     }
 }
@@ -285,7 +282,7 @@ template <class DiffusionType>
 template <class DiffusionDynamics>
 Dirichlet<DiffusionType>::Dirichlet(DiffusionDynamics &diffusion_dynamics, BaseParticles *contact_particles)
     : smoothing_length_sq_(
-          pow(diffusion_dynamics.getSPHAdaptation()->ReferenceSmoothingLength(), 2)),
+          pow(diffusion_dynamics.getSPHAdaptation().ReferenceSmoothingLength(), 2)),
       dv_gradient_species_array_(diffusion_dynamics.dvGradientSpeciesArray()),
       contact_dv_gradient_species_array_(contact_particles->template registerStateVariables<Real>(
           diffusion_dynamics.getGradientSpeciesNames(), "")),

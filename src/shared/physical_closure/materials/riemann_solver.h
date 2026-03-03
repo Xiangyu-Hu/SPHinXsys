@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -29,7 +29,7 @@
 #ifndef RIEMANN_SOLVER_H
 #define RIEMANN_SOLVER_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "weakly_compressible_fluid.h"
 
 namespace SPH
@@ -38,14 +38,14 @@ struct FluidStateIn
 {
     Vecd &vel_;
     Real &rho_, &p_;
-    FluidStateIn(Real &rho, Vecd &vel, Real &p) : vel_(vel), rho_(rho), p_(p){};
+    FluidStateIn(Real &rho, Vecd &vel, Real &p) : vel_(vel), rho_(rho), p_(p) {};
 };
 
 struct FluidStateOut
 {
     Vecd vel_;
     Real rho_, p_;
-    FluidStateOut(Real rho, Vecd vel, Real p) : vel_(vel), rho_(rho), p_(p){};
+    FluidStateOut(Real rho, Vecd vel, Real p) : vel_(vel), rho_(rho), p_(p) {};
 };
 
 /**
@@ -86,7 +86,7 @@ class BaseAcousticRiemannSolver : public NoRiemannSolver
     template <class FluidI, class FluidJ>
     BaseAcousticRiemannSolver(FluidI &fluid_i, FluidJ &fluid_j, Real limiter_coeff = 3.0)
         : NoRiemannSolver(fluid_i, fluid_j),
-          inv_rho0c0_ave_(2.0 * inv_rho0c0_sum_),
+          inv_rho0c0_ave_((rho0c0_i_ + rho0c0_j_) / (math::pow(rho0c0_i_, 2) + math::pow(rho0c0_j_, 2))),
           rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
           limiter_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_, limiter_coeff){};
     Real DissipativePJump(const Real &u_jump)

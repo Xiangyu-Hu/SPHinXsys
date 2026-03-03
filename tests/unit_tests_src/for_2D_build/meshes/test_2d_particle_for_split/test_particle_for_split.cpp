@@ -12,7 +12,7 @@ TEST(test_meshes, split_for)
     shape.addABox(Transform(0.5 * length * Vec2d::Ones()), 0.5 * length * Vec2d::Ones(), ShapeBooleanOps::add);
     auto polygon_shape = makeShared<MultiPolygonShape>(shape, "PolygonShape");
 
-    BoundingBox bb_system = polygon_shape->getBounds();
+    BoundingBoxd bb_system = polygon_shape->getBounds();
 
     SPHSystem system(bb_system, dp);
 
@@ -20,9 +20,9 @@ TEST(test_meshes, split_for)
     body.defineMaterial<Solid>();
     body.generateParticles<BaseParticles, Lattice>();
     auto &particles = body.getBaseParticles();
-    const auto pos = particles.registerStateVariable<Vec2d>("Position");
-    auto quantity = particles.registerStateVariable<Real>("Quantity", [&](size_t i) -> Real
-                                                          { return pos[i].norm(); });
+    const auto pos = particles.registerStateVariableData<Vec2d>("Position");
+    auto quantity = particles.registerStateVariableData<Real>("Quantity", [&](size_t i) -> Real
+                                                              { return pos[i].norm(); });
 
     InnerRelation inner(body);
 
@@ -41,7 +41,7 @@ TEST(test_meshes, split_for)
         }
     };
 
-    auto &cell_linked_list = *dynamic_cast<CellLinkedList *>(&body.getCellLinkedList());
+    auto &cell_linked_list = *dynamic_cast<CellLinkedList<SPHAdaptation> *>(&body.getCellLinkedList());
 
     // run the interaction in sequenced policy
     cell_linked_list.particle_for_split(execution::SequencedPolicy(), interaction);

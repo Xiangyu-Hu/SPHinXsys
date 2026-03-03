@@ -65,7 +65,7 @@ class MyocardiumSurfaces
   public:
     MyocardiumSurfaces(SolidBody &sph_body)
         : particles_(sph_body.getBaseParticles()),
-          pos0_(particles_.registerStateVariableFrom<Vecd>("InitialPosition", "Position")){};
+          pos0_(particles_.registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")) {};
     ~MyocardiumSurfaces() = default;
 
     // mesh_offset: max distance between myocardium and ventricle mesh
@@ -99,7 +99,7 @@ class SurfaceOperationsVentricle
         : particles_(inner_relation.getSPHBody().getBaseParticles()),
           vel_(particles_.getVariableDataByName<Vecd>("Velocity")),
           n_(particles_.getVariableDataByName<Vecd>("NormalDirection")),
-          n0_(particles_.registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
+          n0_(particles_.registerStateVariableDataFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
           F_(particles_.getVariableDataByName<Matd>("DeformationGradient")),
           ids_(ids), srf_area_0_(ids_.size(), 0), srf_area_n_(ids_.size(), 0),
           Q_current_(0), Q_prev_(0), dQ_dt_(0), delta_V_(0)

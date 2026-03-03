@@ -4,14 +4,14 @@
  * @details We consider a flow passing by a cylinder in 2D in FVM framework.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
-#include "common_weakly_compressible_FVM_classes.h"
+#include "FVM_flow_around_cylinder_2d_def.h"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real DL = 50.0;                  /**< Channel length. */
 Real DH = 30.0;                  /**< Channel height. */
-Real resolution_ref = 1.0 / 5.0; /**< Initial reference particle spacing. */
+Real global_resolution = 1.0 / 5.0; /**< Initial reference particle spacing. */
 Real DL_sponge = 2.0;            /**< Sponge region to impose inflow condition. */
 Real DH_sponge = 2.0;            /**< Sponge region to impose inflow condition. */
 Real cylinder_radius = 1.0;      /**< Radius of the cylinder. */
@@ -91,9 +91,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
+    BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
     SPHSystem sph_system(system_domain_bounds, ansys_mesh.MinMeshEdge());
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -29,6 +29,7 @@
 #ifndef IO_OBSERVATION_H
 #define IO_OBSERVATION_H
 
+#include "general_interpolation.h"
 #include "io_plt.hpp"
 #include "general_dynamics/general_interpolation.h"
 
@@ -40,12 +41,7 @@ class BaseQuantityRecording : public BaseIO
   public:
     BaseQuantityRecording(SPHSystem &sph_system,
                           const std::string &dynamics_identifier_name);
-    void setFullPath(const std::string &quantity_name)
-    {
-        quantity_name_ = quantity_name;
-        filefullpath_output_ = io_environment_.output_folder_ + "/" +
-                               dynamics_identifier_name_ + "_" + quantity_name + ".dat";
-    };
+    void setFullPath(const std::string &quantity_name);
 
   protected:
     PltEngine plt_engine_;

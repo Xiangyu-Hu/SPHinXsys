@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -44,8 +44,8 @@ class VariableNorm : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier
   public:
     VariableNorm(DynamicsIdentifier &identifier, const std::string &variable_name)
         : BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>(identifier),
-          variable_(this->particles_->template getVariableDataByName<DataType>(variable_name)){};
-    virtual ~VariableNorm(){};
+          variable_(this->particles_->template getVariableDataByName<DataType>(variable_name)) {};
+    virtual ~VariableNorm() {};
     virtual Real outputResult(Real reduced_value) override { return std::sqrt(reduced_value); }
     Real reduce(size_t index_i, Real dt = 0.0) { return getSquaredNorm(variable_[index_i]); };
 
@@ -65,7 +65,7 @@ class VelocityBoundCheck : public LocalDynamicsReduce<ReduceOR>
 
   public:
     VelocityBoundCheck(SPHBody &sph_body, Real velocity_bound);
-    virtual ~VelocityBoundCheck(){};
+    virtual ~VelocityBoundCheck() {};
 
     bool reduce(size_t index_i, Real dt = 0.0);
 };
@@ -89,7 +89,7 @@ class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, Dyna
     {
         this->quantity_name_ = name;
     }
-    virtual ~UpperFrontInAxisDirection(){};
+    virtual ~UpperFrontInAxisDirection() {};
 
     Real reduce(size_t index_i, Real dt = 0.0) { return pos_[index_i][axis_]; };
 };
@@ -105,7 +105,7 @@ class MaximumSpeed : public LocalDynamicsReduce<ReduceMax>
 
   public:
     explicit MaximumSpeed(SPHBody &sph_body);
-    virtual ~MaximumSpeed(){};
+    virtual ~MaximumSpeed() {};
 
     Real reduce(size_t index_i, Real dt = 0.0);
 };
@@ -122,7 +122,7 @@ class PositionLowerBound : public LocalDynamicsReduce<ReduceLowerBound>
 
   public:
     explicit PositionLowerBound(SPHBody &sph_body);
-    virtual ~PositionLowerBound(){};
+    virtual ~PositionLowerBound() {};
 
     Vecd reduce(size_t index_i, Real dt = 0.0);
 };
@@ -139,7 +139,7 @@ class PositionUpperBound : public LocalDynamicsReduce<ReduceUpperBound>
 
   public:
     explicit PositionUpperBound(SPHBody &sph_body);
-    virtual ~PositionUpperBound(){};
+    virtual ~PositionUpperBound() {};
 
     Vecd reduce(size_t index_i, Real dt = 0.0);
 };
@@ -159,7 +159,7 @@ class QuantitySummation : public BaseLocalDynamicsReduce<ReduceSum<DataType>, Dy
     {
         this->quantity_name_ = "Total" + variable_name;
     };
-    virtual ~QuantitySummation(){};
+    virtual ~QuantitySummation() {};
 
     DataType reduce(size_t index_i, Real dt = 0.0)
     {
@@ -187,7 +187,7 @@ class QuantityMoment : public QuantitySummation<DataType, DynamicsIdentifier>
     {
         this->quantity_name_ = variable_name + "Moment";
     };
-    virtual ~QuantityMoment(){};
+    virtual ~QuantityMoment() {};
 
     DataType reduce(size_t index_i, Real dt = 0.0)
     {
@@ -204,7 +204,7 @@ class TotalKineticEnergy
 
   public:
     explicit TotalKineticEnergy(SPHBody &sph_body);
-    virtual ~TotalKineticEnergy(){};
+    virtual ~TotalKineticEnergy() {};
     Real reduce(size_t index_i, Real dt = 0.0);
 };
 
@@ -216,7 +216,7 @@ class TotalMechanicalEnergy : public TotalKineticEnergy
 
   public:
     explicit TotalMechanicalEnergy(SPHBody &sph_body, Gravity &gravity);
-    virtual ~TotalMechanicalEnergy(){};
+    virtual ~TotalMechanicalEnergy() {};
     Real reduce(size_t index_i, Real dt = 0.0);
 };
 

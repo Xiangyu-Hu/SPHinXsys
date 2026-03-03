@@ -9,7 +9,7 @@ namespace continuum_dynamics
 template <class FluidDynamicsType>
 BaseIntegration1stHalf<FluidDynamicsType>::BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
     : FluidDynamicsType(inner_relation),
-      acc_shear_(this->particles_->template registerStateVariable<Vecd>("AccelerationByShear")) {}
+      acc_shear_(this->particles_->template registerStateVariableData<Vecd>("AccelerationByShear")) {}
 //=================================================================================================//
 template <class FluidDynamicsType>
 void BaseIntegration1stHalf<FluidDynamicsType>::update(size_t index_i, Real dt)
@@ -22,11 +22,11 @@ template <class BaseRelationType>
 BasePlasticIntegration<DataDelegationType>::BasePlasticIntegration(BaseRelationType &base_relation)
     : fluid_dynamics::BaseIntegration<DataDelegationType>(base_relation),
       plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->particles_->getBaseMaterial())),
-      stress_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StressTensor3D")),
-      strain_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainTensor3D")),
-      stress_rate_3D_(this->particles_->template registerStateVariable<Mat3d>("StressRate3D")),
-      strain_rate_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainRate3D")),
-      velocity_gradient_(this->particles_->template registerStateVariable<Matd>("VelocityGradient"))
+      stress_tensor_3D_(this->particles_->template registerStateVariableData<Mat3d>("StressTensor3D")),
+      strain_tensor_3D_(this->particles_->template registerStateVariableData<Mat3d>("StrainTensor3D")),
+      stress_rate_3D_(this->particles_->template registerStateVariableData<Mat3d>("StressRate3D")),
+      strain_rate_3D_(this->particles_->template registerStateVariableData<Mat3d>("StrainRate3D")),
+      velocity_gradient_(this->particles_->template registerStateVariableData<Matd>("VelocityGradient"))
 {
     this->particles_->template addEvolvingVariable<Mat3d>("StrainTensor3D");
     this->particles_->template addEvolvingVariable<Mat3d>("StressTensor3D");

@@ -51,7 +51,7 @@ Vec3d domain_lower_bound(-90.0 * length_scale, -40.0 * length_scale, -80.0 * len
 Vec3d domain_upper_bound(40.0 * length_scale, 30.0 * length_scale, 50.0 * length_scale);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
 /** Material properties. */
 Real rho0_s = 1.06e-3;
@@ -106,12 +106,12 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
     explicit DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
         : BaseLocalDynamics<BodyPartByParticle>(body_part),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
     virtual ~DiffusionBCs() {};
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        Vecd displacement = sph_body_.getInitialShape().findNormalDirection(pos_[index_i]);
+        Vecd displacement = sph_body_->getInitialShape().findNormalDirection(pos_[index_i]);
         Vecd face_norm = displacement / (displacement.norm() + 1.0e-15);
 
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
@@ -123,7 +123,7 @@ class DiffusionBCs : public BaseLocalDynamics<BodyPartByParticle>
         }
         else
         {
-            if (pos_[index_i][1] < -sph_body_.getSPHAdaptation().ReferenceSpacing())
+            if (pos_[index_i][1] < -getSPHAdaptation().ReferenceSpacing())
                 phi_[index_i] = 0.0;
         }
     };
@@ -146,9 +146,9 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
   public:
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
         : LocalDynamics(sph_body),
-          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_.getBaseMaterial())),
+          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_->getBaseMaterial())),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariable<Real>(species_name))
+          phi_(particles_->registerStateVariableData<Real>(species_name))
     {
         center_line_vector_ = Vecd(0.0, 1.0, 0.0);
         beta_epi_ = -(70.0 / 180.0) * M_PI;
@@ -163,7 +163,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
          * 		Present  doi.org/10.1016/j.cma.2016.05.031
          */
         /** Probe the face norm from Level set field. */
-        Vecd displacement = sph_body_.getInitialShape().findNormalDirection(pos_[index_i]);
+        Vecd displacement = sph_body_->getInitialShape().findNormalDirection(pos_[index_i]);
         Vecd face_norm = displacement / (displacement.norm() + 1.0e-15);
         Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
         if (face_norm.dot(center_norm) <= 0.0)
@@ -179,7 +179,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
         Vecd f_0 = cos(beta) * cd_norm + sin(beta) * getCrossProduct(face_norm, cd_norm) +
                    face_norm.dot(cd_norm) * (1.0 - cos(beta)) * face_norm;
 
-        if (pos_[index_i][2] < 2.0 * sph_body_.getSPHAdaptation().ReferenceSpacing())
+        if (pos_[index_i][2] < 2.0 * getSPHAdaptation().ReferenceSpacing())
         {
             muscle_material_.local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
             muscle_material_.local_s0_[index_i] = face_norm;
@@ -214,7 +214,7 @@ class ApplyStimulusCurrentToMyocardium : public LocalDynamics
     explicit ApplyStimulusCurrentToMyocardium(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerStateVariable<Real>("Voltage")) {};
+          voltage_(particles_->registerStateVariableData<Real>("Voltage")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -255,7 +255,7 @@ class ApplyStimulusCurrentToPKJ : public LocalDynamics
     explicit ApplyStimulusCurrentToPKJ(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerStateVariable<Real>("Voltage")) {};
+          voltage_(particles_->registerStateVariableData<Real>("Voltage")) {};
 
     void update(size_t index_i, Real dt)
     {

@@ -1,7 +1,11 @@
-SUBDIRLIST(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
+if(SPHINXSYS_2D AND SPHINXSYS_BUILD_2D_EXAMPLES)
+    ADD_SUBDIRECTORY(2d_examples)
+endif()
 
-foreach(subdir ${SUBDIRS})
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/CMakeLists.txt)
-	    add_subdirectory(${subdir})
-    endif()
-endforeach()
+if(SPHINXSYS_3D AND SPHINXSYS_BUILD_3D_EXAMPLES)
+    ADD_SUBDIRECTORY(3d_examples)
+endif()
+
+if(SPHINXSYS_USE_SYCL)
+    ADD_SUBDIRECTORY(unit_test_src)
+endif()

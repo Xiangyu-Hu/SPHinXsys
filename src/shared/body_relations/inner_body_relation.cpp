@@ -9,13 +9,13 @@ namespace SPH
 //=================================================================================================//
 InnerRelation::InnerRelation(RealBody &real_body)
     : BaseInnerRelation(real_body), get_inner_neighbor_(real_body),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())) {}
+      cell_linked_list_(DynamicCast<CellLinkedList<SPHAdaptation>>(this, real_body.getCellLinkedList())) {}
 //=================================================================================================//
 void InnerRelation::updateConfiguration()
 {
     resetNeighborhoodCurrentSize();
     Mesh &mesh = cell_linked_list_.getMesh();
-    cell_linked_list_.searchNeighborsByMesh(mesh, 0, sph_body_, inner_configuration_,
+    cell_linked_list_.searchNeighborsByMesh(mesh, sph_body_, inner_configuration_,
                                             get_single_search_depth_, get_inner_neighbor_);
 }
 //=================================================================================================//
@@ -24,26 +24,25 @@ AdaptiveInnerRelation::
     : BaseInnerRelation(real_body),
       get_adaptive_inner_neighbor_(real_body),
       multi_level_cell_linked_list_(
-          DynamicCast<MultilevelCellLinkedList>(this, real_body.getCellLinkedList()))
+          DynamicCast<CellLinkedList<AdaptiveSmoothingLength>>(this, real_body.getCellLinkedList()))
 {
-    StdVec<Mesh *> &meshes = multi_level_cell_linked_list_.getMeshes();
-    for (size_t l = 0; l != meshes.size(); ++l)
+    Mesh *meshes = multi_level_cell_linked_list_.getMeshes();
+    for (size_t l = 0; l != multi_level_cell_linked_list_.ResolutionLevels(); ++l)
     {
         get_multi_level_search_depth_.push_back(
             adaptive_search_depth_ptr_vector_keeper_
-                .createPtr<SearchDepthAdaptive>(real_body, *meshes[l]));
+                .createPtr<SearchDepthAdaptive>(real_body, meshes[l]));
     }
 }
 //=================================================================================================//
 void AdaptiveInnerRelation::updateConfiguration()
 {
     resetNeighborhoodCurrentSize();
-    StdVec<Mesh *> &meshes = multi_level_cell_linked_list_.getMeshes();
-    StdVec<UnsignedInt> &mesh_offsets = multi_level_cell_linked_list_.getMeshOffsets();
-    for (size_t l = 0; l != meshes.size(); ++l)
+    Mesh *meshes = multi_level_cell_linked_list_.getMeshes();
+    for (size_t l = 0; l != multi_level_cell_linked_list_.ResolutionLevels(); ++l)
     {
         multi_level_cell_linked_list_.searchNeighborsByMesh(
-            *meshes[l], mesh_offsets[l], sph_body_, inner_configuration_,
+            meshes[l], sph_body_, inner_configuration_,
             *get_multi_level_search_depth_[l], get_adaptive_inner_neighbor_);
     }
 }
@@ -54,7 +53,7 @@ SelfSurfaceContactRelation::
       body_surface_layer_(real_body),
       body_part_particles_(body_surface_layer_.body_part_particles_),
       get_self_contact_neighbor_(real_body),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())) {}
+      cell_linked_list_(DynamicCast<CellLinkedList<SPHAdaptation>>(this, real_body.getCellLinkedList())) {}
 //=================================================================================================//
 void SelfSurfaceContactRelation::resetNeighborhoodCurrentSize()
 {
@@ -70,7 +69,7 @@ void SelfSurfaceContactRelation::updateConfiguration()
     resetNeighborhoodCurrentSize();
     Mesh &mesh = cell_linked_list_.getMesh();
     cell_linked_list_.searchNeighborsByMesh(
-        mesh, 0, body_surface_layer_, inner_configuration_,
+        mesh, body_surface_layer_, inner_configuration_,
         get_single_search_depth_, get_self_contact_neighbor_);
 }
 //=================================================================================================//
@@ -85,7 +84,7 @@ void TreeInnerRelation::updateConfiguration()
 //=================================================================================================//
 ShellInnerRelationWithContactKernel::ShellInnerRelationWithContactKernel(RealBody &real_body, RealBody &contact_body)
     : BaseInnerRelation(real_body),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())),
+      cell_linked_list_(DynamicCast<CellLinkedList<SPHAdaptation>>(this, real_body.getCellLinkedList())),
       get_contact_search_depth_(contact_body, cell_linked_list_.getMesh()),
       get_inner_neighbor_with_contact_kernel_(real_body, contact_body) {}
 //=================================================================================================//
@@ -94,7 +93,7 @@ void ShellInnerRelationWithContactKernel::updateConfiguration()
     resetNeighborhoodCurrentSize();
     Mesh &mesh = cell_linked_list_.getMesh();
     cell_linked_list_.searchNeighborsByMesh(
-        mesh, 0, sph_body_, inner_configuration_,
+        mesh, sph_body_, inner_configuration_,
         get_contact_search_depth_, get_inner_neighbor_with_contact_kernel_);
 }
 //=================================================================================================//
@@ -102,26 +101,25 @@ ShellSelfContactRelation::
     ShellSelfContactRelation(RealBody &real_body)
     : BaseInnerRelation(real_body),
       get_shell_self_contact_neighbor_(real_body),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())) {}
+      cell_linked_list_(DynamicCast<CellLinkedList<SPHAdaptation>>(this, real_body.getCellLinkedList())) {}
 //=================================================================================================//
 void ShellSelfContactRelation::updateConfiguration()
 {
     resetNeighborhoodCurrentSize();
     Mesh &mesh = cell_linked_list_.getMesh();
     cell_linked_list_.searchNeighborsByMesh(
-        mesh, 0, sph_body_, inner_configuration_,
+        mesh, sph_body_, inner_configuration_,
         get_single_search_depth_, get_shell_self_contact_neighbor_);
 }
 //=================================================================================================//
 void AdaptiveSplittingInnerRelation::updateConfiguration()
 {
     resetNeighborhoodCurrentSize();
-    StdVec<Mesh *> &meshes = multi_level_cell_linked_list_.getMeshes();
-    StdVec<UnsignedInt> &mesh_offsets = multi_level_cell_linked_list_.getMeshOffsets();
-    for (size_t l = 0; l != meshes.size(); ++l)
+    Mesh *meshes = multi_level_cell_linked_list_.getMeshes();
+    for (size_t l = 0; l != multi_level_cell_linked_list_.ResolutionLevels(); ++l)
     {
         multi_level_cell_linked_list_.searchNeighborsByMesh(
-            *meshes[l], mesh_offsets[l], sph_body_, inner_configuration_,
+            meshes[l], sph_body_, inner_configuration_,
             *get_multi_level_search_depth_[l], get_adaptive_splitting_inner_neighbor_);
     }
 }

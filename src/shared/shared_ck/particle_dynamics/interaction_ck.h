@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -21,46 +21,61 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    interaction_ck.h
- * @brief 	This is for the base classes of local particle dynamics, which describe the
- * 			dynamics of a particle and it neighbors.
- * @author	Chi Zhang, Chenxi Zhao and Xiangyu Hu
+ * @file interaction_ck.h
+ * @brief This is for the base classes of particle interaction with its neighbors,
+ * which describe the basic patterns of particle methods.
+ * @author Xiangyu Hu
  */
 
 #ifndef INTERACTION_CK_H
 #define INTERACTION_CK_H
 
 #include "base_local_dynamics.h"
-#include "neighborhood_ck.hpp"
 #include "relation_ck.hpp"
 
 namespace SPH
 {
-class WithUpdate;
-class WithInitialization;
-class OneLevel;
-class InteractionOnly;
+class WithUpdate
+{
+};
+class WithInitialization
+{
+};
+class OneLevel
+{
+};
+class InteractionOnly
+{
+};
+class UpdateOnly
+{
+};
+class InitializationOnly
+{
+};
 
 template <typename... T>
 class Interaction;
 
 template <typename... Parameters>
-class Interaction<Inner<Parameters...>> : public LocalDynamics
+class Interaction<Inner<Parameters...>>
+    : public BaseLocalDynamics<typename Inner<Parameters...>::SourceType>
 {
-    typedef Relation<Inner<Parameters...>> InnerRelationType;
+    using BaseLocalDynamicsType = BaseLocalDynamics<typename Inner<Parameters...>::SourceType>;
+    typedef Inner<Parameters...> InnerRelationType;
     using NeighborList = typename InnerRelationType::NeighborList;
+    using Neighborhood = typename InnerRelationType::NeighborhoodType;
+    using NeighborKernel = typename Neighborhood::NeighborKernel;
 
   public:
     explicit Interaction(InnerRelationType &inner_relation);
     virtual ~Interaction() {};
-    SPHAdaptation *getSPHAdaptation() { return sph_adaptation_; };
 
-    class InteractKernel : public NeighborList, public Neighbor<Parameters...>
+    class InteractKernel : public NeighborList, public NeighborKernel
     {
       public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       Interaction<Inner<Parameters...>> &encloser);
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
     };
 
     typedef InteractKernel BaseInteractKernel;
@@ -68,28 +83,30 @@ class Interaction<Inner<Parameters...>> : public LocalDynamics
     void resetComputingKernelUpdated();
 
   protected:
-    InnerRelationType &inner_relation_;
-    RealBody *real_body_;
-    SPHAdaptation *sph_adaptation_;
+    InnerRelationType *inner_relation_;
+    DiscreteVariable<Real> *dv_Vol_;
 };
 
-template <class SourceIdentifier, class TargetIdentifier, typename... Parameters>
-class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
-    : public BaseLocalDynamics<SourceIdentifier>
+template <typename... Parameters>
+class Interaction<Contact<Parameters...>>
+    : public BaseLocalDynamics<typename Contact<Parameters...>::SourceType>
 {
-    typedef Relation<Contact<SourceIdentifier, TargetIdentifier, Parameters...>> ContactRelationType;
+    using BaseLocalDynamicsType = BaseLocalDynamics<typename Contact<Parameters...>::SourceType>;
+    typedef Contact<Parameters...> ContactRelationType;
     using NeighborList = typename ContactRelationType::NeighborList;
+    using Neighborhood = typename ContactRelationType::NeighborhoodType;
+    using NeighborKernel = typename Neighborhood::NeighborKernel;
 
   public:
     explicit Interaction(ContactRelationType &contact_relation);
     virtual ~Interaction() {};
-    SPHAdaptation *getSPHAdaptation() { return sph_adaptation_; };
 
-    class InteractKernel : public NeighborList, public Neighbor<Parameters...>
+    class InteractKernel : public NeighborList, public NeighborKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser,
+                       UnsignedInt contact_index);
     };
 
     typedef InteractKernel BaseInteractKernel;
@@ -97,32 +114,24 @@ class Interaction<Contact<SourceIdentifier, TargetIdentifier, Parameters...>>
     void resetComputingKernelUpdated(UnsignedInt contact_index);
 
   protected:
-    ContactRelationType &contact_relation_;
-    SPHAdaptation *sph_adaptation_;
-    RealBodyVector contact_bodies_;
+    ContactRelationType *contact_relation_;
+    StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
+    DiscreteVariable<Real> *dv_Vol_;
+    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
 
 template <>
-class Interaction<Contact<>> : public Interaction<Contact<SPHBody, RealBody>>
+class Interaction<Wall>
 {
   public:
-    explicit Interaction(Relation<Contact<>> &contact_relation)
-        : Interaction<Contact<SPHBody, RealBody>>(contact_relation) {};
-    virtual ~Interaction() {};
-};
-
-template <typename... Parameters>
-class Interaction<Contact<Wall, Parameters...>> : public Interaction<Contact<Parameters...>>
-{
-  public:
-    explicit Interaction(Relation<Contact<Parameters...>> &wall_contact_relation);
+    template <class WallContactRelationType>
+    Interaction(WallContactRelationType &wall_contact_relation);
     virtual ~Interaction() {};
 
   protected:
     StdVec<DiscreteVariable<Vecd> *> dv_wall_vel_ave_, dv_wall_acc_ave_, dv_wall_n_;
-    StdVec<DiscreteVariable<Real> *> dv_wall_Vol_;
 };
 } // namespace SPH
 #endif // INTERACTION_CK_H

@@ -6,6 +6,17 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
+BaseIntegrationInCompressible::BaseIntegrationInCompressible(BaseInnerRelation &inner_relation)
+    : BaseIntegration(inner_relation),
+      compressible_fluid_(CompressibleFluid(1.0, 1.4)),
+      Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      E_(particles_->registerStateVariableData<Real>("TotalEnergy")),
+      dE_dt_(particles_->registerStateVariableData<Real>("TotalEnergyChangeRate")),
+      dmass_dt_(particles_->registerStateVariableData<Real>("MassChangeRate")),
+      mom_(particles_->registerStateVariableData<Vecd>("Momentum")),
+      force_(particles_->registerStateVariableData<Vecd>("Force")),
+      force_prior_(particles_->registerStateVariableData<Vecd>("ForcePrior")) {};
+//=================================================================================================//
 inline MUSCLHLLCBridgeConfig make_default_bridge_config(CompressibleFluid &fluid, MUSCLHLLCBridgeConfig cfg_in)
 {
     cfg_in.muscl_cfg.gamma = fluid.HeatCapacityRatio();
@@ -27,9 +38,9 @@ EulerianCompressibleIntegration1stHalfMUSCL<Inner<>>::EulerianCompressibleIntegr
     : BaseIntegrationInCompressible(inner_relation),
       bridge_cfg_(make_default_bridge_config(compressible_fluid_, bridge_cfg)),
       bridge_(compressible_fluid_, compressible_fluid_, bridge_cfg_),
-      rho_grad_(this->particles_->template getVariableDataByName<Vecd>("DensityGradient")),
-      vel_grad_(this->particles_->template getVariableDataByName<Matd>("VelocityGradient")),
-      p_grad_(this->particles_->template getVariableDataByName<Vecd>("PressureGradient")) {}
+      rho_grad_(particles_->getVariableDataByName<Vecd>("DensityGradient")),
+      vel_grad_(particles_->getVariableDataByName<Matd>("VelocityGradient")),
+      p_grad_(particles_->getVariableDataByName<Vecd>("PressureGradient")) {}
 //-------------------------------------------------------------------------------------------------//
 void EulerianCompressibleIntegration1stHalfMUSCL<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -100,9 +111,9 @@ EulerianCompressibleIntegration2ndHalfMUSCL<Inner<>>::EulerianCompressibleIntegr
     : BaseIntegrationInCompressible(inner_relation),
       bridge_cfg_(make_default_bridge_config(compressible_fluid_, bridge_cfg)),
       bridge_(compressible_fluid_, compressible_fluid_, bridge_cfg_),
-      rho_grad_(this->particles_->template getVariableDataByName<Vecd>("DensityGradient")),
-      vel_grad_(this->particles_->template getVariableDataByName<Matd>("VelocityGradient")),
-      p_grad_(this->particles_->template getVariableDataByName<Vecd>("PressureGradient")) {}
+      rho_grad_(particles_->getVariableDataByName<Vecd>("DensityGradient")),
+      vel_grad_(particles_->getVariableDataByName<Matd>("VelocityGradient")),
+      p_grad_(particles_->getVariableDataByName<Vecd>("PressureGradient")) {}
 //-------------------------------------------------------------------------------------------------//
 void EulerianCompressibleIntegration2ndHalfMUSCL<Inner<>>::interaction(size_t index_i, Real dt)
 {
@@ -178,9 +189,9 @@ EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>>::EulerianCompressible
     : InteractionWithWall<BaseIntegrationInCompressibleType>(contact_relation),
       bridge_cfg_(make_default_bridge_config(compressible_fluid_, bridge_cfg)),
       bridge_(compressible_fluid_, compressible_fluid_, bridge_cfg_),
-      rho_grad_(this->particles_->template getVariableDataByName<Vecd>("DensityGradient")),
-      vel_grad_(this->particles_->template getVariableDataByName<Matd>("VelocityGradient")),
-      p_grad_(this->particles_->template getVariableDataByName<Vecd>("PressureGradient")) {}
+      rho_grad_(particles_->getVariableDataByName<Vecd>("DensityGradient")),
+      vel_grad_(particles_->getVariableDataByName<Matd>("VelocityGradient")),
+      p_grad_(particles_->getVariableDataByName<Vecd>("PressureGradient")) {}
 //-------------------------------------------------------------------------------------------------//
 void EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
@@ -247,9 +258,9 @@ EulerianCompressibleIntegration2ndHalfMUSCL<Contact<Wall>>::EulerianCompressible
     : InteractionWithWall<BaseIntegrationInCompressibleType>(contact_relation),
       bridge_cfg_(make_default_bridge_config(compressible_fluid_, bridge_cfg)),
       bridge_(compressible_fluid_, compressible_fluid_, bridge_cfg_),
-      rho_grad_(this->particles_->template getVariableDataByName<Vecd>("DensityGradient")),
-      vel_grad_(this->particles_->template getVariableDataByName<Matd>("VelocityGradient")),
-      p_grad_(this->particles_->template getVariableDataByName<Vecd>("PressureGradient")) {}
+      rho_grad_(particles_->getVariableDataByName<Vecd>("DensityGradient")),
+      vel_grad_(particles_->getVariableDataByName<Matd>("VelocityGradient")),
+      p_grad_(particles_->getVariableDataByName<Vecd>("PressureGradient")) {}
 //-------------------------------------------------------------------------------------------------//
 void EulerianCompressibleIntegration2ndHalfMUSCL<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
@@ -329,18 +340,14 @@ EulerianCompressibleAcousticTimeStepSize::
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       smoothing_length_(sph_body.getSPHAdaptation().ReferenceSmoothingLength()),
-      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()))
+      compressible_fluid_(CompressibleFluid(1.0, 1.4))
 {
     acousticCFL_ = acousticCFL;
 };
 //=================================================================================================//
 Real EulerianCompressibleAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 {
-    Real sound_speed = fluid_.getSoundSpeed(p_[index_i], rho_[index_i]);
-    Real vel_norm = vel_[index_i].norm();
-    if (std::isnan(sound_speed) || std::isnan(vel_norm) || sound_speed < Eps)
-        return 1.0;
-    return sound_speed + vel_norm;
+    return compressible_fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
 }
 //=================================================================================================//
 Real EulerianCompressibleAcousticTimeStepSize::outputResult(Real reduced_value)

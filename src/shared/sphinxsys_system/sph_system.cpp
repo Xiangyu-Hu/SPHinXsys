@@ -1,20 +1,41 @@
 #include "sph_system.hpp"
 
 #include "all_body_relations.h"
-#include "base_body.h"
-#include "elastic_dynamics.h"
+#include "io_log.h"
+#include "predefined_bodies.h"
 
 namespace SPH
 {
 //=================================================================================================//
-SPHSystem::SPHSystem(BoundingBox system_domain_bounds, Real resolution_ref, size_t number_of_threads)
+SPHSystem::SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution, size_t number_of_threads)
+    : SPHSystem(true, system_domain_bounds, global_resolution, number_of_threads) {}
+//=================================================================================================//
+SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
+                     Real global_resolution, size_t number_of_threads)
     : system_domain_bounds_(system_domain_bounds),
-      resolution_ref_(resolution_ref),
+      global_resolution_(global_resolution),
       tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
-      io_environment_(nullptr), run_particle_relaxation_(false), reload_particles_(false),
+      is_physical_(is_physical),
+      io_environment_(io_keeper_.createPtr<IOEnvironment>(*this)),
+      run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true)
 {
-    registerSystemVariable<Real>("PhysicalTime", 0.0);
+    Log::init();
+    spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
+    sv_physical_time_ = registerSystemVariable<Real>("PhysicalTime", 0.0);
+    Log::get()->info("The reference resolution of the SPHSystem is {}.", global_resolution_);
+}
+//=================================================================================================//
+void SPHSystem::setLogLevel(size_t log_level)
+{
+    if (log_level < 0 || log_level > 6)
+    {
+        std::cerr << "Log level must be between 0 and 6.\n";
+        exit(1);
+    }
+
+    log_level_ = log_level;
+    spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
 }
 //=================================================================================================//
 IOEnvironment &SPHSystem::getIOEnvironment()
@@ -26,6 +47,11 @@ IOEnvironment &SPHSystem::getIOEnvironment()
         exit(1);
     }
     return *io_environment_;
+}
+//=================================================================================================//
+void SPHSystem::addRealBody(RealBody *real_body)
+{
+    real_bodies_.push_back(real_body);
 }
 //=================================================================================================//
 
@@ -49,19 +75,6 @@ void SPHSystem::initializeSystemConfigurations()
     }
 }
 //=================================================================================================//
-Real SPHSystem::getSmallestTimeStepAmongSolidBodies(Real CFL)
-{
-    Real dt = MaxReal;
-    for (size_t i = 0; i < solid_bodies_.size(); i++)
-    {
-        ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(*solid_bodies_[i], CFL);
-        Real dt_temp = computing_time_step_size.exec();
-        if (dt_temp < dt)
-            dt = dt_temp;
-    }
-    return dt;
-}
-//=================================================================================================//
 #ifdef BOOST_AVAILABLE
 SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
 {
@@ -75,6 +88,8 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
         desc.add_options()("regression", po::value<bool>(), "Regression test.");
         desc.add_options()("state_recording", po::value<bool>(), "State recording in output folder.");
         desc.add_options()("restart_step", po::value<int>(), "Run form a restart file.");
+        desc.add_options()("log_level", po::value<int>(), "Output log level (0-6). "
+                                                          "0: trace, 1: debug, 2: info, 3: warning, 4: error, 5: critical, 6: off");
 
         po::variables_map vm;
         po::store(po::parse_command_line(ac, av, desc), vm);
@@ -96,6 +111,11 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
         {
             std::cout << "Particle relaxation was set to default ("
                       << run_particle_relaxation_ << ").\n";
+        }
+
+        if (run_particle_relaxation_)
+        {
+            io_environment_->reinitializeReloadFolder();
         }
 
         if (vm.count("reload"))
@@ -145,6 +165,22 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
             std::cout << "Restart inactivated, i.e. restart_step ("
                       << restart_step_ << ").\n";
         }
+
+        if (vm.count("log_level"))
+        {
+            log_level_ = vm["log_level"].as<int>();
+            if (log_level_ < 0 || log_level_ > 6)
+            {
+                std::cerr << "Log level must be between 0 and 6.\n";
+                exit(1);
+            }
+            std::cout << "Log level was set to " << log_level_ << ".\n";
+            spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
+        }
+        else
+        {
+            std::cout << "Log level was set to default (info).\n";
+        }
     }
     catch (std::exception &e)
     {
@@ -159,11 +195,5 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
     return this;
 }
 #endif
-//=================================================================================================//
-SPHSystem *SPHSystem::setIOEnvironment(bool delete_output)
-{
-    io_environment_ = io_ptr_keeper_.createPtr<IOEnvironment>(*this, delete_output);
-    return this;
-}
 //=================================================================================================//
 } // namespace SPH

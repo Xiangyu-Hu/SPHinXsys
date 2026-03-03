@@ -12,14 +12,14 @@ Real PL = 6.0;
 Real PH = 1.0;
 Real PW = 1.0;
 Real SL = 0.5;
-Real resolution_ref = PH / 12.0; /**< Initial particle spacing. */
-Real BW = resolution_ref * 4;    /**< Boundary width. */
+Real global_resolution = PH / 12.0; /**< Initial particle spacing. */
+Real BW = global_resolution * 4;    /**< Boundary width. */
 Vecd halfsize_cantilever(0.5 * (PL + SL), 0.5 * PH, 0.5 * PW);
 Vecd translation_cantilever(0.5 * (PL - SL), 0.5 * PH, 0.5 * PW);
 Vecd halfsize_holder(0.5 * SL, 0.5 * PH, 0.5 * PW);
 Vecd translation_holder(-0.5 * SL, 0.5 * PH, 0.5 * PW);
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vecd(-SL - BW, -BW, -BW),
+BoundingBoxd system_domain_bounds(Vecd(-SL - BW, -BW, -BW),
                                  Vecd(PL + BW, PH + BW, PH + BW));
 // Observer location
 StdVec<Vecd> observation_location = {Vecd(PL, PH, PW)};
@@ -41,8 +41,8 @@ class Cantilever : public ComplexShape
   public:
     explicit Cantilever(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_cantilever), halfsize_cantilever);
-        add<TransformShape<GeometricShapeBox>>(Transform(translation_holder), halfsize_holder);
+        add<GeometricShapeBox>(Transform(translation_cantilever), halfsize_cantilever);
+        add<GeometricShapeBox>(Transform(translation_holder), halfsize_holder);
     }
 };
 /**
@@ -53,7 +53,7 @@ class CantileverInitialCondition
 {
   public:
     explicit CantileverInitialCondition(SPHBody &sph_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
+        : solid_dynamics::ElasticDynamicsInitialCondition(sph_body) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -70,7 +70,7 @@ class CantileverInitialCondition
 int main(int ac, char *av[])
 {
     /** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     /** create a Cantilever body, corresponding material, particles and reaction model. */
     SolidBody cantilever_body(sph_system, makeShared<Cantilever>("CantileverBody"));
@@ -96,11 +96,10 @@ int main(int ac, char *av[])
     /** Time step size calculation. */
     ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(cantilever_body);
     /** Constrain the holder. */
-    TransformShape<GeometricShapeBox> holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
+    GeometricShapeBox holder_shape(Transform(translation_holder), halfsize_holder, "Holder");
     BodyRegionByParticle holder(cantilever_body, holder_shape);
     SimpleDynamics<FixBodyPartConstraint> constraint_holder(holder);
     /** Output */
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
         write_displacement("Position", cantilever_observer_contact);

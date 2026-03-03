@@ -8,9 +8,9 @@ namespace SPH
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 Interpolation<Contact<Base, DataType, Parameters...>>::Interpolation(
-    Relation<Contact<Parameters...>> &pair_contact_relation, const std::string &variable_name)
+    Contact<Parameters...> &pair_contact_relation, const std::string &variable_name)
     : Interaction<Contact<Parameters...>>(pair_contact_relation),
-      dv_interpolated_quantities_(this->particles_->template registerStateVariableOnly<DataType>(variable_name))
+      dv_interpolated_quantities_(this->particles_->template registerStateVariable<DataType>(variable_name))
 {
     if (this->contact_particles_.size() > 1)
     {
@@ -18,7 +18,6 @@ Interpolation<Contact<Base, DataType, Parameters...>>::Interpolation(
         exit(1);
     }
     // must be single contact body
-    dv_contact_Vol_.push_back(this->contact_particles_[0]->template getVariableByName<Real>("VolumetricMeasure"));
     dv_contact_data_.push_back(this->contact_particles_[0]->template getVariableByName<DataType>(variable_name));
 }
 //=================================================================================================//

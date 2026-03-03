@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -38,10 +38,6 @@
 
 namespace SPH
 {
-/* Base class to indicate the concept of operator splitting */
-class OperatorSplitting
-{
-};
 
 template <typename DataType>
 struct ErrorAndParameters
@@ -77,7 +73,7 @@ class Damping;
 
 template <typename DataType, typename DampingRateType, class DataDelegationType>
 class Damping<Base, DataType, DampingRateType, DataDelegationType>
-    : public LocalDynamics, public DataDelegationType, public OperatorSplitting
+    : public LocalDynamics, public DataDelegationType
 {
   public:
     template <class BaseRelationType, typename... Args>

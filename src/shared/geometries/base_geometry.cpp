@@ -1,9 +1,13 @@
 #include "base_geometry.h"
 
+#include "io_log.h"
 namespace SPH
 {
 //=================================================================================================//
-BoundingBox Shape::getBounds()
+Shape::Shape(const std::string &shape_name)
+    : name_(shape_name), is_bounds_found_(false), logger_(Log::init()) {}
+//=================================================================================================//
+BoundingBoxd Shape::getBounds()
 {
     if (!is_bounds_found_)
     {
@@ -11,25 +15,25 @@ BoundingBox Shape::getBounds()
         is_bounds_found_ = true;
     }
 
-    if (bounding_box_.getBoundSize().norm() < SqrtEps)
+    if (bounding_box_.BoundSize().norm() < SqrtEps)
     {
         std::cout << "\n Error: the Bounding box is unreasonably small! " << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
     }
-    
+
     return bounding_box_;
 }
 //=================================================================================================//
 bool Shape::checkNotFar(const Vecd &probe_point, Real threshold)
 {
-    return checkContain(probe_point) || checkNearSurface(probe_point, threshold) ? true : false;
+    return checkContain(probe_point) || checkNearSurface(probe_point, threshold);
 }
 //=================================================================================================//
 bool Shape::checkNearSurface(const Vecd &probe_point, Real threshold)
 {
     Vecd distance = probe_point - findClosestPoint(probe_point);
-    return distance.cwiseAbs().maxCoeff() < threshold ? true : false;
+    return distance.cwiseAbs().maxCoeff() < threshold;
 }
 //=================================================================================================//
 Real Shape::findSignedDistance(const Vecd &probe_point)
@@ -56,10 +60,10 @@ Vecd Shape::findNormalDirection(const Vecd &probe_point)
 //=================================================================================================//
 bool BinaryShapes::isValid()
 {
-    return sub_shapes_and_ops_.size() == 0 ? false : true;
+    return !sub_shapes_and_ops_.empty();
 }
 //=================================================================================================//
-BoundingBox BinaryShapes::findBounds()
+BoundingBoxd BinaryShapes::findBounds()
 {
     // initial reference values
     Vecd lower_bound = MaxReal * Vecd::Ones();
@@ -67,14 +71,14 @@ BoundingBox BinaryShapes::findBounds()
 
     for (auto &sub_shape_and_op : sub_shapes_and_ops_)
     {
-        BoundingBox shape_bounds = sub_shape_and_op.first->getBounds();
+        BoundingBoxd shape_bounds = sub_shape_and_op.first->getBounds();
         for (int j = 0; j != Dimensions; ++j)
         {
-            lower_bound[j] = SMIN(lower_bound[j], shape_bounds.first_[j]);
-            upper_bound[j] = SMAX(upper_bound[j], shape_bounds.second_[j]);
+            lower_bound[j] = SMIN(lower_bound[j], shape_bounds.lower_[j]);
+            upper_bound[j] = SMAX(upper_bound[j], shape_bounds.upper_[j]);
         }
     }
-    return BoundingBox(lower_bound, upper_bound);
+    return BoundingBoxd(lower_bound, upper_bound);
 }
 //=================================================================================================//
 bool BinaryShapes::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED)
@@ -166,7 +170,7 @@ size_t BinaryShapes::getSubShapeIndexByName(const std::string &name)
     std::cout << "\n FAILURE: the shape " << name << " has not been created!" << std::endl;
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 
-    return MaxSize_t;
+    return MaxUnsignedInt;
 }
 //=================================================================================================//
 } // namespace SPH

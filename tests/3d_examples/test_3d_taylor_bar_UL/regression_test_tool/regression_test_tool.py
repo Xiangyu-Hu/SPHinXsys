@@ -11,14 +11,12 @@ case name: test_3d_taylor_bar
 """
 
 case_name = "test_3d_taylor_bar_UL"
-body_name = "MyObserver"
-parameter_name = "Position"
+body_name = "Column"
+parameter_name = "TotalKineticEnergy"
 
 number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
-clean_input_folder(sphinxsys.input_file_path)
-
 
 while True:
     print("Now start a new run......")

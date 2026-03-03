@@ -16,7 +16,7 @@ Real DL = 5.0;                        /**< Tank length. */
 Real DH = 2.5;                        /**< Tank height. */
 Real particle_spacing_ref = LL / 100; /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4;   /**< Extending width for boundary conditions. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 //	Material properties of the soil.
 //----------------------------------------------------------------------
@@ -44,8 +44,8 @@ class WallBoundary : public ComplexShape
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
+        add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
+        subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
 std::vector<Vecd> soil_shape{
@@ -86,22 +86,24 @@ class SoilInitialCondition : public continuum_dynamics::ContinuumInitialConditio
 template <typename... T>
 class TransportVelocityCorrection;
 
-template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
-class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonControlTypes...>
+template <class AdaptationType, class LimiterType, typename... CommonControlTypes>
+class TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonControlTypes...>
     : public fluid_dynamics::TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>
 {
+    using SmoothingLengthRatioType = typename AdaptationType::SmoothingLengthRatioType;
+
   public:
     explicit TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient = 0.2)
         : fluid_dynamics::TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>(inner_relation),
-          h_ref_(this->sph_body_.getSPHAdaptation().ReferenceSmoothingLength()),
+          h_ref_(this->getSPHAdaptation().ReferenceSmoothingLength()),
           correction_scaling_(coefficient * h_ref_ * h_ref_),
           Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-          pos_div_(this->particles_->template registerStateVariable<Real>("PositionDivergence")),
+          pos_div_(this->particles_->template registerStateVariableData<Real>("PositionDivergence")),
           pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
-          h_ratio_(this->particles_), limiter_(h_ref_ * h_ref_),
-          indicator_(this->particles_->template registerStateVariable<int>("Indicator")),
-          corner_indicator_(this->particles_->template registerStateVariable<int>("CornerIndicator")),
-          surface_normal_(this->particles_->template registerStateVariable<Vecd>("SurfaceNormal"))
+          h_ratio_(DynamicCast<AdaptationType>(this, this->getSPHAdaptation())), limiter_(h_ref_ * h_ref_),
+          indicator_(this->particles_->template registerStateVariableData<int>("Indicator")),
+          corner_indicator_(this->particles_->template registerStateVariableData<int>("CornerIndicator")),
+          surface_normal_(this->particles_->template registerStateVariableData<Vecd>("SurfaceNormal"))
     {
         static_assert(std::is_base_of<Limiter, LimiterType>::value,
                       "Limiter is not the base of LimiterType!");
@@ -120,7 +122,7 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
                 inconsistency -= (this->kernel_correction_(index_i) + this->kernel_correction_(index_j)) *
                                  inner_neighborhood.dW_ij_[n] * this->Vol_[index_j] * inner_neighborhood.e_ij_[n];
             }
-            this->zero_gradient_residue_[index_i] = inconsistency;
+            this->kernel_gradient_integral_[index_i] = inconsistency;
         }
     };
     void update(size_t index_i, Real dt = 0.0)
@@ -128,9 +130,9 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
         if (this->within_scope_(index_i))
         {
             Real inv_h_ratio = 1.0 / h_ratio_(index_i);
-            Real squared_norm = this->zero_gradient_residue_[index_i].squaredNorm();
+            Real squared_norm = this->kernel_gradient_integral_[index_i].squaredNorm();
             Vecd pos_transport = correction_scaling_ * limiter_(squared_norm) *
-                                 this->zero_gradient_residue_[index_i] * inv_h_ratio * inv_h_ratio;
+                                 this->kernel_gradient_integral_[index_i] * inv_h_ratio * inv_h_ratio;
             if (this->indicator_[index_i])
             {
                 pos_transport = pos_transport - pos_transport.dot(this->surface_normal_[index_i]) * this->surface_normal_[index_i];
@@ -145,14 +147,14 @@ class TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, CommonCont
     const Real h_ref_, correction_scaling_;
     Real *Vol_, *pos_div_;
     Vecd *pos_;
-    ResolutionType h_ratio_;
+    SmoothingLengthRatioType h_ratio_;
     LimiterType limiter_;
     int *indicator_, *corner_indicator_;
     Vecd *surface_normal_;
 };
 template <class LimiterType, class ParticleScope>
 using TransportVelocityCorrectionInner =
-    TransportVelocityCorrection<Inner<SingleResolution, LimiterType>, NoKernelCorrection, ParticleScope>;
+    TransportVelocityCorrection<Inner<SPHAdaptation, LimiterType>, NoKernelCorrection, ParticleScope>;
 
 template <typename... CommonControlTypes>
 class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
@@ -185,20 +187,20 @@ class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
                                      wall_Vol_k[index_j] * contact_neighborhood.e_ij_[n];
                 }
             }
-            this->zero_gradient_residue_[index_i] += inconsistency;
+            this->kernel_gradient_integral_[index_i] += inconsistency;
         }
     };
 
   protected:
     StdVec<Real *> wall_Vol_;
 };
-template <class ResolutionType, class LimiterType, typename... CommonControlTypes>
+template <class AdaptationType, class LimiterType, typename... CommonControlTypes>
 using BaseTransportVelocityCorrectionComplex =
-    ComplexInteraction<TransportVelocityCorrection<Inner<ResolutionType, LimiterType>, Contact<Boundary>>, CommonControlTypes...>;
+    ComplexInteraction<TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, Contact<Boundary>>, CommonControlTypes...>;
 
 template <class ParticleScope>
 using TransportVelocityCorrectionComplex =
-    BaseTransportVelocityCorrectionComplex<SingleResolution, NoLimiter, NoKernelCorrection, ParticleScope>;
+    BaseTransportVelocityCorrectionComplex<SPHAdaptation, NoLimiter, NoKernelCorrection, ParticleScope>;
 
 //----------------------------------------------------------------------
 //	Free surface normal direction
@@ -214,10 +216,10 @@ class FreeSurfaceNormal<DataDelegationType>
     template <class BaseRelationType>
     explicit FreeSurfaceNormal(BaseRelationType &base_relation)
         : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-          surface_normal_(particles_->registerStateVariable<Vecd>("SurfaceNormal")),
-          color_gradient_(particles_->registerStateVariable<Vecd>("ColorGradient")),
+          surface_normal_(particles_->registerStateVariableData<Vecd>("SurfaceNormal")),
+          color_gradient_(particles_->registerStateVariableData<Vecd>("ColorGradient")),
           B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-          indicator_(particles_->registerStateVariable<int>("Indicator")),
+          indicator_(particles_->registerStateVariableData<int>("Indicator")),
           Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure"))
     {
         particles_->addEvolvingVariable<Vecd>("SurfaceNormal");

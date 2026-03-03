@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -22,14 +22,14 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	transform_geometry.h
- * @brief 	transformation related class for geometries.
+ * @brief 	Linear transformation related class for geometries.
  * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef TRANSFORM_SHAPE_H
 #define TRANSFORM_SHAPE_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "base_geometry.h"
 
 namespace SPH
@@ -71,43 +71,43 @@ class TransformGeometry : public GeometryType
  * before or/and after access the interface functions.
  * Note that this is more suitable to apply for simple geometric shapes.
  */
-template <class ShapeType>
-class TransformShape : public TransformGeometry<ShapeType>
+template <class GeometryType>
+class TransformShape : public TransformGeometry<GeometryType>, public Shape
 {
 
   public:
     /** template constructor for general shapes. */
     template <typename... Args>
-    explicit TransformShape(const Transform &transform, Args &&...args)
-        : TransformGeometry<ShapeType>(transform, std::forward<Args>(args)...){};
+    explicit TransformShape(const std::string &name, const Transform &transform, Args &&...args)
+        : TransformGeometry<GeometryType>(transform, std::forward<Args>(args)...),
+          Shape(name){};
     virtual ~TransformShape() {};
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
     {
-        return TransformGeometry<ShapeType>::checkContain(probe_point);
+        return TransformGeometry<GeometryType>::checkContain(probe_point);
     };
 
     virtual Vecd findClosestPoint(const Vecd &probe_point) override
     {
-        return TransformGeometry<ShapeType>::findClosestPoint(probe_point);
+        return TransformGeometry<GeometryType>::findClosestPoint(probe_point);
     };
 
-  protected:
     // Returns the AABB of the rotated underlying shape's AABB
     // It is not the tight fit AABB of the underlying shape
     // But at least it encloses the underlying shape fully
-    virtual BoundingBox findBounds() override
+    virtual BoundingBoxd findBounds() override
     {
-        BoundingBox original_bound = TransformGeometry<ShapeType>::findBounds();
+        BoundingBoxd original_bound = TransformGeometry<GeometryType>::findBounds();
         Vecd bb_min = Vecd::Constant(MaxReal);
         Vecd bb_max = Vecd::Constant(-MaxReal);
-        for (auto x : {original_bound.first_.x(), original_bound.second_.x()})
+        for (auto x : {original_bound.lower_.x(), original_bound.upper_.x()})
         {
-            for (auto y : {original_bound.first_.y(), original_bound.second_.y()})
+            for (auto y : {original_bound.lower_.y(), original_bound.upper_.y()})
             {
                 if constexpr (Dimensions == 3)
                 {
-                    for (auto z : {original_bound.first_.z(), original_bound.second_.z()})
+                    for (auto z : {original_bound.lower_.z(), original_bound.upper_.z()})
                     {
                         bb_min = bb_min.cwiseMin(this->transform_.shiftFrameStationToBase(Vecd(x, y, z)));
                         bb_max = bb_max.cwiseMax(this->transform_.shiftFrameStationToBase(Vecd(x, y, z)));
@@ -120,7 +120,7 @@ class TransformShape : public TransformGeometry<ShapeType>
                 }
             }
         }
-        return BoundingBox(bb_min, bb_max);
+        return BoundingBoxd(bb_min, bb_max);
     };
 };
 } // namespace SPH

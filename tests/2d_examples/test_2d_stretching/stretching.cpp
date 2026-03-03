@@ -14,11 +14,11 @@ Real PL = 0.05334;  // beam length
 Real PH = 0.012826; // for thick plate;
 
 // reference particle spacing
-Real resolution_ref = PH / 30;
-Real BW = resolution_ref * 4.0; // boundary width, at least three particles
+Real global_resolution = PH / 30;
+Real BW = global_resolution * 4.0; // boundary width, at least three particles
 
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-PL / 2.0, -PL / 2.0),
+BoundingBoxd system_domain_bounds(Vec2d(-PL / 2.0, -PL / 2.0),
                                  Vec2d(2.0 * PL, PL / 2.0));
 // two dimensional should be circle smooth between two parts.
 //----------------------------------------------------------------------
@@ -38,11 +38,11 @@ Real physical_viscosity = 1.0e4;
 Real refer_energy = 0.5 * 8000 * 0.01; // 40
 
 Vecd norm_(1.0, 0.0);
-Vecd upper_face_point_(0.02 + 3.0 * resolution_ref, 0.0);
+Vecd upper_face_point_(0.02 + 3.0 * global_resolution, 0.0);
 Vecd lower_face_point_(0.02, 0.0);
 
 Vecd norm_4(1.0, 0.0);
-Vecd upper_face_point_4(0.04 + 3.0 * resolution_ref, 0.0);
+Vecd upper_face_point_4(0.04 + 3.0 * global_resolution, 0.0);
 Vecd lower_face_point_4(0.04, 0.0);
 
 // Beam observer location
@@ -89,9 +89,9 @@ class LeftStretchSolidBodyRegion : public BodyPartMotionConstraint
     LeftStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")) {};
 
-    virtual ~LeftStretchSolidBodyRegion(){};
+    virtual ~LeftStretchSolidBodyRegion() {};
 
   protected:
     Vecd *vel_;
@@ -109,9 +109,9 @@ class RightStretchSolidBodyRegion : public BodyPartMotionConstraint
     RightStretchSolidBodyRegion(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")){};
+          pos_(particles_->getVariableDataByName<Vecd>("Position")) {};
 
-    virtual ~RightStretchSolidBodyRegion(){};
+    virtual ~RightStretchSolidBodyRegion() {};
 
   protected:
     Vecd *vel_;
@@ -151,9 +151,9 @@ class ConstrainXVelocity : public BodyPartMotionConstraint
     // TODO: use only body part as argment since body can be referred from it already
     ConstrainXVelocity(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
-          vel_(particles_->getVariableDataByName<Vecd>("Velocity")), pos_(particles_->getVariableDataByName<Vecd>("Position")){};
+          vel_(particles_->getVariableDataByName<Vecd>("Velocity")), pos_(particles_->getVariableDataByName<Vecd>("Position")) {};
 
-    virtual ~ConstrainXVelocity(){};
+    virtual ~ConstrainXVelocity() {};
 
   protected:
     Vecd *vel_;
@@ -172,15 +172,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem system(system_domain_bounds, global_resolution);
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
     system.setReloadParticles(true);
     system.setGenerateRegressionData(false);
     system.handleCommandlineOptions(ac, av);
-    IOEnvironment io_environment(system);
-
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

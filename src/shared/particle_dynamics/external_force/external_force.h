@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -30,7 +30,7 @@
 #ifndef EXTERNAL_FORCE_H
 #define EXTERNAL_FORCE_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 
 namespace SPH
 {
@@ -42,8 +42,8 @@ class Gravity
     Vecd zero_potential_reference_;
 
   public:
-    Gravity(Vecd gravity_vector, Vecd reference_position = Vecd::Zero());
-    ~Gravity(){};
+    Gravity(Vecd gravity_vector = Vecd::Zero(), Vecd reference_position = Vecd::Zero());
+    ~Gravity() {};
 
     Vecd InducedAcceleration(const Vecd &position = Vecd::Zero(), Real physical_time = 0.0) const
     {
@@ -62,7 +62,7 @@ class StartupAcceleration : public Gravity
 
   public:
     StartupAcceleration(Vecd target_velocity, Real target_time);
-    ~StartupAcceleration(){};
+    ~StartupAcceleration() {};
 
     Vecd InducedAcceleration(const Vecd &position, Real physical_time) const
     {

@@ -1,10 +1,6 @@
 #include "base_particles.hpp"
 
 #include "base_body.h"
-#include "base_body_part.h"
-#include "base_material.h"
-#include "base_particle_generator.h"
-#include "xml_parser.h"
 
 namespace SPH
 {
@@ -16,7 +12,8 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       sph_body_(sph_body), body_name_(sph_body.getName()),
       base_material_(*base_material),
       restart_xml_parser_("xml_restart", "particles"),
-      reload_xml_parser_("xml_particle_reload", "particles")
+      reload_xml_parser_("xml_particle_reload", "particles"),
+      total_body_parts_(0)
 {
     sph_body.assignBaseParticles(this);
     sv_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
@@ -27,36 +24,41 @@ SPHAdaptation &BaseParticles::getSPHAdaptation()
     return sph_body_.getSPHAdaptation();
 }
 //=================================================================================================//
+std::string BaseParticles::getBodyName()
+{
+    return sph_body_.getName();
+};
+//=================================================================================================//
 void BaseParticles::initializeBasicParticleVariables()
 {
     addEvolvingVariable<Vecd>("Position");
     addEvolvingVariable<Real>("VolumetricMeasure");
-     //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
-    rho_ = registerStateVariable<Real>("Density", base_material_.ReferenceDensity());
-    mass_ = registerStateVariable<Real>("Mass",
-                                        [&](size_t i) -> Real
-                                        { return rho_[i] * ParticleVolume(i); });
+    rho_ = registerStateVariableData<Real>("Density", base_material_.ReferenceDensity());
+    mass_ = registerStateVariableData<Real>("Mass",
+                                            [&](size_t i) -> Real
+                                            { return rho_[i] * ParticleVolume(i); });
     //----------------------------------------------------------------------
     //		unregistered variables and data
     //----------------------------------------------------------------------
-    original_id_ = registerDiscreteVariable<UnsignedInt>("OriginalID", particles_bound_, AssignIndex());
+    original_id_ = registerDiscreteVariableData<UnsignedInt>("OriginalID", particles_bound_, AssignIndex());
     addEvolvingVariable<UnsignedInt>("OriginalID");
     addVariableToWrite<UnsignedInt>("OriginalID");
-    sorted_id_ = registerDiscreteVariable<UnsignedInt>("SortedID", particles_bound_, AssignIndex());
+    sorted_id_ = registerDiscreteVariableData<UnsignedInt>("SortedID", particles_bound_, AssignIndex());
 }
 //=================================================================================================//
-void BaseParticles::registerPositionAndVolumetricMeasure(StdLargeVec<Vecd> &pos, StdLargeVec<Real> &Vol)
+void BaseParticles::registerPositionAndVolumetricMeasure(StdVec<Vecd> &pos, StdVec<Real> &Vol)
 {
-    dv_pos_ = registerStateVariableOnlyFrom<Vecd>("Position", pos);
-    Vol_ = registerStateVariableFrom<Real>("VolumetricMeasure", Vol);
+    dv_pos_ = registerStateVariableFrom<Vecd>("Position", pos);
+    Vol_ = registerStateVariableDataFrom<Real>("VolumetricMeasure", Vol);
 }
 //=================================================================================================//
 void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
 {
-    dv_pos_ = registerStateVariableOnlyFromReload<Vecd>("Position");
-    Vol_ = registerStateVariableFromReload<Real>("VolumetricMeasure");
+    dv_pos_ = registerStateVariableFromReload<Vecd>("Position");
+    Vol_ = registerStateVariableDataFromReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBounds(size_t number_of_particles)
@@ -73,6 +75,16 @@ void BaseParticles::initializeAllParticlesBoundsFromReloadXml()
 void BaseParticles::increaseParticlesBounds(size_t extra_size)
 {
     particles_bound_ += extra_size;
+}
+//=================================================================================================//
+void BaseParticles::checkEnoughReserve()
+{
+    if (TotalRealParticles() >= particles_bound_)
+    {
+        std::cout << "\n Error: Not enough particle reserve! \n"
+                  << " Please ensure the particle reserve size when generating particles. \n";
+        exit(EXIT_FAILURE);
+    }
 }
 //=================================================================================================//
 void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)
@@ -118,20 +130,33 @@ UnsignedInt BaseParticles::createRealParticleFrom(UnsignedInt index)
     return new_original_id;
 }
 //=================================================================================================//
+int BaseParticles::getNewBodyPartID()
+{
+    total_body_parts_++;
+    return total_body_parts_;
+};
+//=================================================================================================//
 void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 {
     size_t total_elements = xml_parser.Size(xml_parser.first_element_);
 
     UnsignedInt total_real_particles = TotalRealParticles();
-    if (total_elements <= total_real_particles)
+    if (total_elements != total_real_particles)
     {
         xml_parser.resize(xml_parser.first_element_, total_real_particles, "particle");
     }
 }
 //=================================================================================================//
+void BaseParticles::resetTotalRealParticlesFromXmlDoc(XmlParser &xml_parser)
+{
+    sv_total_real_particles_->setValue(xml_parser.Size(xml_parser.first_element_));
+}
+//=================================================================================================//
 void BaseParticles::writeParticlesToXmlForRestart(const std::string &filefullpath)
 {
     resizeXmlDocForParticles(restart_xml_parser_);
+    std::cout << "\n Total real particles of body" << sph_body_.getName()
+              << "write to restart is " << TotalRealParticles() << "\n";
     write_restart_variable_to_xml_(evolving_variables_, restart_xml_parser_);
     restart_xml_parser_.writeToXmlFile(filefullpath);
 }
@@ -139,6 +164,9 @@ void BaseParticles::writeParticlesToXmlForRestart(const std::string &filefullpat
 void BaseParticles::readParticlesFromXmlForRestart(const std::string &filefullpath)
 {
     restart_xml_parser_.loadXmlFile(filefullpath);
+    resetTotalRealParticlesFromXmlDoc(restart_xml_parser_);
+    std::cout << "\n Total real particles of body" << sph_body_.getName()
+              << "from restart is " << TotalRealParticles() << "\n";
     read_restart_variable_from_xml_(evolving_variables_, this, restart_xml_parser_);
 }
 //=================================================================================================//
@@ -152,6 +180,34 @@ void BaseParticles::writeParticlesToXmlForReload(const std::string &filefullpath
 void BaseParticles::readReloadXmlFile(const std::string &filefullpath)
 {
     reload_xml_parser_.loadXmlFile(filefullpath);
+}
+//=================================================================================================//
+void BaseParticles::writeParticlesToXmlForRestart(XmlParser &xml_parser, tinyxml2::XMLElement *body_element)
+{
+    // Resize the body element to have the correct number of particle children
+    UnsignedInt total_real_particles = TotalRealParticles();
+    size_t total_elements = xml_parser.Size(body_element);
+    
+    if (total_elements != total_real_particles)
+    {
+        xml_parser.resize(body_element, total_real_particles, "particle");
+    }
+    
+    // Write all evolving variables to the body element's particle children
+    OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXmlElement> 
+        write_variable_to_element(body_element);
+    write_variable_to_element(evolving_variables_, xml_parser);
+}
+//=================================================================================================//
+void BaseParticles::readParticlesFromXmlForRestart(XmlParser &xml_parser, tinyxml2::XMLElement *body_element)
+{
+    // Reset total real particles from the body element's particle count
+    sv_total_real_particles_->setValue(xml_parser.Size(body_element));
+    
+    // Read all evolving variables from the body element's particle children
+    OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXmlElement> 
+        read_variable_from_element(body_element);
+    read_variable_from_element(evolving_variables_, this, xml_parser);
 }
 //=================================================================================================//
 } // namespace SPH

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -42,8 +42,8 @@ class ConstantConstraintCK : public BaseLocalDynamics<DynamicsIdentifier>
                          const DataType &constrained_value)
         : BaseLocalDynamics<DynamicsIdentifier>(identifier),
           dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
-          constrained_value_(constrained_value){};
-    virtual ~ConstantConstraintCK(){};
+          constrained_value_(constrained_value) {};
+    virtual ~ConstantConstraintCK() {};
 
     class UpdateKernel
     {
@@ -67,5 +67,39 @@ class ConstantConstraintCK : public BaseLocalDynamics<DynamicsIdentifier>
     DiscreteVariable<DataType> *dv_variable_;
     DataType constrained_value_;
 };
+
+template <class DynamicsIdentifier>
+class MotionConstraintCK : public BaseLocalDynamics<DynamicsIdentifier>
+{
+  public:
+    explicit MotionConstraintCK(DynamicsIdentifier &identifier);
+    virtual ~MotionConstraintCK() {};
+
+  protected:
+    DiscreteVariable<Vecd> *dv_pos_, *dv_pos0_, *dv_vel_;
+};
+
+template <class DynamicsIdentifier>
+class FixConstraintCK : public MotionConstraintCK<DynamicsIdentifier>
+{
+  public:
+    explicit FixConstraintCK(DynamicsIdentifier &identifier)
+        : MotionConstraintCK<DynamicsIdentifier>(identifier) {};
+    virtual ~FixConstraintCK() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Vecd *pos_, *pos0_, *vel_;
+    };
+};
+using FixBodyConstraintCK = FixConstraintCK<SPHBody>;
+using FixBodyPartConstraintCK = FixConstraintCK<BodyPartByParticle>;
+
 } // namespace SPH
 #endif // GENERAL_CONSTRAINT_CK_H

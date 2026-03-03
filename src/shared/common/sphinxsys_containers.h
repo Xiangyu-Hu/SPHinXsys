@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -29,21 +29,25 @@
 #ifndef SPHINXSYS_CONTAINERS_H
 #define SPHINXSYS_CONTAINERS_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "base_data_type.h"
 #include "sphinxsys_constant.h"
 #include "sphinxsys_variable.h"
 
 namespace SPH
 {
-class Base;             // Indicating base class
-class Adaptive;         // Indicating with adaptive resolution
+class Base;  // Indicating base class
+class SingleValued
+{
+};
+class Continuous
+{
+};
 class Lattice;          // Indicating with lattice points
 class UnstructuredMesh; // Indicating with unstructured mesh
 class BaseMaterial;
 class SPHBody;
 class RealBody;
-class SolidBody;
 class BodyPart;
 class BaseParticles;
 class UserDefined; // Indicating with user defined type in apps
@@ -84,7 +88,6 @@ class SpatialTemporal;
 //----------------------------------------------------------------------
 using MaterialVector = StdVec<BaseMaterial *>;
 using SPHBodyVector = StdVec<SPHBody *>;
-using SolidBodyVector = StdVec<SolidBody *>;
 using RealBodyVector = StdVec<RealBody *>;
 using BodyPartVector = StdVec<BodyPart *>;
 
@@ -94,8 +97,8 @@ using ParticlesBound = std::pair<size_t, size_t>;
 
 /** List data pair: first for indexes, second for particle position. */
 using ListData = std::pair<size_t, Vecd>;
-using ListDataVector = StdLargeVec<ListData>;
-using DataListsInCells = StdLargeVec<ListDataVector *>;
+using ListDataVector = StdVec<ListData>;
+using DataListsInCells = StdVec<ListDataVector *>;
 using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
 /** Cell list for periodic boundary condition algorithms. */
 using CellLists = std::pair<ConcurrentCellLists, DataListsInCells>;
@@ -106,8 +109,5 @@ typedef DataContainerAssemble<AllocatedData> ParticleData;
 typedef DataContainerAddressAssemble<DiscreteVariable> ParticleVariables;
 /** Generalized particle variable type*/
 typedef DataContainerAddressAssemble<SingularVariable> SingularVariables;
-/** Generalized mesh data type */
-typedef DataContainerAddressAssemble<MeshVariable> MeshVariableAssemble;
-
 } // namespace SPH
 #endif // SPHINXSYS_CONTAINERS_H

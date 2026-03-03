@@ -12,7 +12,7 @@ using namespace SPH;
 Real DL = 5.0;                           /**< Tube length. */
 Real particle_spacing_ref = 1.0 / 200.0; /**< Initial reference particle spacing. */
 Real DH = particle_spacing_ref * 4;      /**< Tube height. */
-BoundingBox system_domain_bounds(Vec2d(-2.0 / 5.0 * DL, 0.0), Vec2d(3.0 / 5.0 * DL, DH));
+BoundingBoxd system_domain_bounds(Vec2d(-2.0 / 5.0 * DL, 0.0), Vec2d(3.0 / 5.0 * DL, DH));
 Real rho0_l = 1.0;              /**< initial density of left state. */
 Real rho0_r = 0.125;            /**< initial density of right state. */
 Vecd velocity_l = Vecd::Zero(); /**< initial velocity of left state. */
@@ -45,7 +45,7 @@ class ShockTubeInitialCondition : public fluid_dynamics::CompressibleFluidInitia
 {
   public:
     explicit ShockTubeInitialCondition(SPHBody &sph_body)
-        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
+        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body) {};
     void update(size_t index_i, Real dt)
     {
         if (pos_[index_i][0] < DL / 10.0)
@@ -84,7 +84,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Create body, materials and particles.
     //----------------------------------------------------------------------

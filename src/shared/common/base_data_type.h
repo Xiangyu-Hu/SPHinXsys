@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -69,7 +69,11 @@ namespace math = std;
 
 #if SPHINXSYS_USE_FLOAT
 using Real = float;
+#if defined(_MSC_VER)
+using UnsignedInt = uint32_t;
+#else
 using UnsignedInt = u_int32_t;
+#endif // _MSC_VER
 #else
 using Real = double;
 using UnsignedInt = size_t;
@@ -101,7 +105,13 @@ using MatXd = Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic>;
 template <typename DataType>
 struct ZeroData
 {
-    static inline const DataType value = DataType::Zero();
+    static inline const DataType value = DataType{};
+};
+
+template <typename DataType, int N, int M>
+struct ZeroData<Eigen::Matrix<DataType, N, M>>
+{
+    static inline const Eigen::Matrix<DataType, N, M> value = Eigen::Matrix<DataType, N, M>::Zero();
 };
 
 template <>
@@ -213,8 +223,9 @@ constexpr Real Pi = Real(M_PI);
 constexpr Real Eps = std::numeric_limits<Real>::epsilon();
 constexpr Real SqrtEps = Real(1.0e-8);
 constexpr Real TinyReal = Real(2.71051e-20);
-constexpr Real MinReal = std::numeric_limits<Real>::min();
+constexpr Real MinReal = std::numeric_limits<Real>::lowest();
 constexpr Real MaxReal = std::numeric_limits<Real>::max();
-constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
+constexpr UnsignedInt MaxUnsignedInt = std::numeric_limits<UnsignedInt>::max();
+constexpr int MaxInt = std::numeric_limits<int>::max();
 } // namespace SPH
 #endif // BASE_DATA_TYPE_H

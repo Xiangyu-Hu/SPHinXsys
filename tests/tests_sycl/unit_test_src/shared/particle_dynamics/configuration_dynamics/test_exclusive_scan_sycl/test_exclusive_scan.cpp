@@ -1,11 +1,13 @@
 #include "base_configuration_dynamics.h"
+#include "base_configuration_dynamics_sycl.h"
 #include "particle_functors.h"
+#include "particle_iterators_ck.h"
 #include "particle_iterators_sycl.h"
 
 #include <gtest/gtest.h>
 using namespace SPH;
 
-StdVec<UnsignedInt> cell_size_list{3, 2, 3, 5, 0, 1, 3, 2, 5, 1, 0};
+StdVec<UnsignedInt> cell_size_list{3, 2, 3, 5, 0, 1, 3, 2, 5, 1, 11}; //the last entry of the input is not used
 StdVec<UnsignedInt> solution{0, 3, 5, 8, 13, 13, 14, 17, 19, 24, 25};
 
 UnsignedInt list_size = cell_size_list.size();

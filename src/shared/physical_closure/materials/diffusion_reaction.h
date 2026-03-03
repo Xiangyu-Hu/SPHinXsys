@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -31,7 +31,7 @@
 #ifndef DIFFUSION_REACTION_H
 #define DIFFUSION_REACTION_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "particle_functors.h"
 
 #include <functional>
@@ -45,6 +45,7 @@ class BaseParticles;
 class AbstractDiffusion
 {
   public:
+    typedef Real DataType;
     AbstractDiffusion() {};
     virtual ~AbstractDiffusion() {};
     virtual StdVec<AbstractDiffusion *> AllDiffusions() = 0;
@@ -126,6 +127,7 @@ class IsotropicDiffusion : public BaseDiffusion
         InterParticleDiffusionCoeff(const ExecutionPolicy &ex_policy, IsotropicDiffusion &encloser)
             : InterParticleDiffusionCoeff(encloser){};
         Real operator()(size_t index_i, size_t index_j, const Vecd &e_ij) { return d_coeff_; };
+        Real operator()(size_t index_i, size_t index_j) { return d_coeff_; };
     };
 };
 
@@ -303,7 +305,7 @@ class ReactionDiffusion : public AbstractDiffusion
     static constexpr int NumReactiveSpecies = ReactionType::NumSpecies;
 
   private:
-    UniquePtrsKeeper<DiffusionType> diffusion_ptrs_keeper_;
+    UniquePtrsKeeper<DiffusionType> diffusions_keeper_;
 
   protected:
     ReactionType *reaction_model_;
@@ -357,7 +359,7 @@ class ReactionDiffusion : public AbstractDiffusion
             std::find(species_names.begin(), species_names.end(), gradient_species_name) != std::end(species_names))
         {
             all_diffusions_.push_back(
-                diffusion_ptrs_keeper_.template createPtr<DiffusionType>(
+                diffusions_keeper_.template createPtr<DiffusionType>(
                     diffusion_species_name, gradient_species_name, std::forward<Args>(args)...));
         }
         else

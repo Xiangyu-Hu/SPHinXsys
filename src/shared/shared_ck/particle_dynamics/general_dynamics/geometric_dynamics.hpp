@@ -18,6 +18,16 @@ NormalFromBodyShapeCK::UpdateKernel::
       phi_(encloser.dv_phi_->DelegatedData(ex_policy)),
       phi0_(encloser.dv_phi0_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
+template <class ExecutionPolicy, class Encloser>
+NormalFromSubShapeAndOpCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, Encloser &encloser)
+    : HostKernel(ex_policy, encloser), shape_(encloser.shape_and_op_->first),
+      switch_sign_(encloser.shape_and_op_->second == ShapeBooleanOps::add ? 1.0 : -1.0),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      n_(encloser.dv_n_->DelegatedData(ex_policy)),
+      n0_(encloser.dv_n0_->DelegatedData(ex_policy)),
+      phi_(encloser.dv_phi_->DelegatedData(ex_policy)),
+      phi0_(encloser.dv_phi0_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
 template <class ExecutionPolicy>
 SurfaceIndicationFromBodyShape::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, SurfaceIndicationFromBodyShape &encloser)
@@ -26,6 +36,13 @@ SurfaceIndicationFromBodyShape::UpdateKernel::
       spacing_ref_(encloser.spacing_ref_),
       indicator_(encloser.dv_indicator_->DelegatedData(ex_policy)),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+RandomizeParticlePositionCK::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : HostKernel(ex_policy, encloser),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      randomize_scale_(encloser.randomize_scale_) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // GEOMETRIC_DYNAMICS_HPP

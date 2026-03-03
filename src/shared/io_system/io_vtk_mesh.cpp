@@ -1,6 +1,7 @@
 #include "io_vtk_mesh.h"
-#include "io_vtk.hpp"
 
+#include "io_environment.h"
+#include "io_vtk.hpp"
 namespace SPH
 {
 //=================================================================================================//
@@ -14,7 +15,7 @@ void BodyStatesRecordingToMeshVtu::writeWithFileName(const std::string &sequence
     {
         if (body->checkNewlyUpdated() && state_recording_)
         {
-            std::string filefullpath = io_environment_.output_folder_ + "/" + body->getName() + "_" + sequence + ".vtu";
+            std::string filefullpath = io_environment_.OutputFolder() + "/" + body->getName() + "_" + sequence + ".vtu";
             if (fs::exists(filefullpath))
             {
                 fs::remove(filefullpath);
@@ -66,9 +67,9 @@ Real BodyStatesRecordingToMeshVtu::FileNodeCoordinates(std::ofstream &out_file)
     out_file << "<CellData>\n";
     out_file << "</CellData>\n";
     out_file << "<Points>\n";
-    BoundingBox bounds = bounds_.getSPHSystemBounds();
-    Real first_max = bounds.first_.cwiseAbs().maxCoeff();
-    Real second_max = bounds.second_.cwiseAbs().maxCoeff();
+    BoundingBoxd bounds = bounds_.getSPHSystemBounds();
+    Real first_max = bounds.lower_.cwiseAbs().maxCoeff();
+    Real second_max = bounds.upper_.cwiseAbs().maxCoeff();
     Real rangemax = 1.03075 * (std::max(first_max, second_max));
     out_file << "<DataArray type=\"Float64\" Name=\"Points\" NumberOfComponents=\"3\""
              << " format=\"ascii\" RangeMin=\"0\" RangeMax=\"" << rangemax << "\">\n";

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -40,49 +40,49 @@ void particle_for(const ParallelDevicePolicy &par_device,
                   const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
-    const size_t particles_size = particles_range.size();
+    const size_t loop_bound = particles_range.size();
     sycl_queue.submit([&](sycl::handler &cgh)
-                      { cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index)
+                      { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
                                          {
-                                 if(index.get_global_id(0) < particles_size)
+                                 if(index.get_global_id(0) < loop_bound)
                                      unary_func(index.get_global_id(0)); }); })
         .wait_and_throw();
 }
 
-template <class DynamicsIdentifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<SequencedDevicePolicy, DynamicsIdentifier> &loop_range,
+template <class Identifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<SequencedDevicePolicy, Identifier> &loop_range,
                   const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
-    const size_t particles_size = loop_range.LoopBound();
+    const size_t loop_bound = loop_range.LoopBound();
     sycl_queue.submit([&](sycl::handler &cgh)
                       { cgh.single_task([=]()
                                         {
-                                for (int i = 0; i != particles_size; i++)
+                                for (int i = 0; i != loop_bound; i++)
                                     loop_range.computeUnit(unary_func, i); }); })
         .wait_and_throw();
 }
 
-template <class DynamicsIdentifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &loop_range,
+template <class Identifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelDevicePolicy, Identifier> &loop_range,
                   const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
-    const size_t particles_size = loop_range.LoopBound();
+    const size_t loop_bound = loop_range.LoopBound();
     sycl_queue.submit([&](sycl::handler &cgh)
-                      { cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), [=](sycl::nd_item<1> index)
+                      { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
                                          {
-                                 if(index.get_global_id(0) < particles_size)
+                                 if(index.get_global_id(0) < loop_bound)
                                      loop_range.computeUnit(unary_func, index.get_global_id(0)); }); })
         .wait_and_throw();
 }
 
-template <typename Operation, class DynamicsIdentifier, class ReturnType, class UnaryFunc>
-ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdentifier> &loop_range,
+template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
+ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, Identifier> &loop_range,
                            ReturnType temp, const UnaryFunc &unary_func)
 {
     auto &sycl_queue = execution_instance.getQueue();
-    const size_t particles_size = loop_range.LoopBound();
+    const size_t loop_bound = loop_range.LoopBound();
     ReturnType temp0 = temp;
     {
         sycl::buffer<ReturnType> buffer_result(&temp, 1);
@@ -92,39 +92,16 @@ ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, DynamicsIdent
                                 Operation operation;
                                 sycl::accessor acc(buffer_reference, cgh, sycl::read_only);
                                 auto reduction_operator = sycl::reduction(buffer_result, cgh, operation);
-                                cgh.parallel_for(execution_instance.getUniformNdRange(particles_size), reduction_operator,
+                                cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), reduction_operator,
                                                  [=](sycl::nd_item<1> item, auto &reduction)
                                                  {
-                                                     if (item.get_global_id() < particles_size)
+                                                     if (item.get_global_id() < loop_bound)
                                                          reduction.combine(loop_range.computeUnit(
                                                              acc[0], operation, unary_func, item.get_global_id(0)));
                                                  }); })
             .wait_and_throw();
     } // buffer_result goes out of scope, so the result (of temp) is updated
     return temp;
-}
-
-template <typename T, typename Op>
-T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
-{
-    execution_instance.getQueue()
-        .submit([=](sycl::handler &cgh)
-                { cgh.parallel_for(
-                      execution_instance.getUniformNdRange(execution_instance.getWorkGroupSize()),
-                      [=](sycl::nd_item<1> item)
-                      {
-                          if (item.get_group_linear_id() == 0)
-                          {
-                              sycl::joint_exclusive_scan(
-                                  item.get_group(), first, first + d_size, d_first, T{0}, op);
-                          }
-                      }); })
-        .wait_and_throw();
-
-    UnsignedInt scan_size = d_size - 1;
-    T last_value;
-    copyFromDevice(&last_value, d_first + scan_size, 1);
-    return last_value;
 }
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_SYCL_H

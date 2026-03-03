@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -45,7 +45,7 @@ class ParticleGenerator<BaseParticles, Network> : public ParticleGenerator<BaseP
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
                       const Vecd &starting_pnt,
                       const Vecd &second_pnt, int iterator, Real grad_factor);
-    virtual ~ParticleGenerator(){};
+    virtual ~ParticleGenerator() {};
 
     /** Created base particles based on edges in branch */
     virtual void prepareGeometricData() override;

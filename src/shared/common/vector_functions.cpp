@@ -135,26 +135,6 @@ Mat3d getTransformationMatrix(const Vec3d &direction_of_z, const Vec3d &directio
 
     return transformation_matrix;
 }
-
-//=================================================================================================//
-
-Mat2d getDiagonal(const Mat2d &A)
-{
-    Mat2d diag = Mat2d::Identity();
-    diag(0, 0) = A(0, 0);
-    diag(1, 1) = A(1, 1);
-
-    return diag;
-}
-Mat3d getDiagonal(const Mat3d &A)
-{
-    Mat3d diag = Mat3d::Identity();
-    diag(0, 0) = A(0, 0);
-    diag(1, 1) = A(1, 1);
-    diag(2, 2) = A(2, 2);
-
-    return diag;
-}
 //=================================================================================================//
 Real CalculateBiDotProduct(Mat2d Matrix1, Mat2d Matrix2)
 {

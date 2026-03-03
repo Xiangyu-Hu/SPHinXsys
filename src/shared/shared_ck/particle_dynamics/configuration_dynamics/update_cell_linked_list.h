@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -31,58 +31,59 @@
 
 #include "base_configuration_dynamics.h"
 
+#include "all_bodies.h"
 #include "all_particle_dynamics.h"
-#include "base_body.h"
-#include "base_particles.hpp"
 
 namespace SPH
 {
 template <typename... T>
 class UpdateCellLinkedList;
 
-template <class ExecutionPolicy, typename CellLinkedListType>
-class UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType>
-    : public LocalDynamics, public BaseDynamics<void>
+template <class ExecutionPolicy, typename DynamicsIdentifier>
+class UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>
+    : public BaseLocalDynamics<DynamicsIdentifier>, public BaseDynamics<void>
 {
+    typedef UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier> EncloserType;
+    using ParticleMask = typename DynamicsIdentifier::ListedParticleMask;
+    using CellLinkedListIdentifier = typename DynamicsIdentifier::Adaptation::CellLinkedListIdentifier;
+    using CellLinkedListMesh = typename CellLinkedList<CellLinkedListIdentifier>::CellLinkedListMesh;
+
   protected:
-    CellLinkedListType &cell_linked_list_;
-    Mesh mesh_;
-    UnsignedInt cell_offset_list_size_;
+    CellLinkedList<CellLinkedListIdentifier> &cell_linked_list_;
+    CellLinkedListMesh cell_linked_list_mesh_;
+    UnsignedInt number_of_cells_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
     DiscreteVariable<UnsignedInt> *dv_cell_offset_;
-    DiscreteVariable<UnsignedInt> dv_current_cell_size_;
+    DiscreteVariable<UnsignedInt> *cell_dv_current_list_size_;
 
   public:
-    UpdateCellLinkedList(RealBody &real_body);
-    virtual ~UpdateCellLinkedList(){};
+    UpdateCellLinkedList(DynamicsIdentifier &identifier);
+    virtual ~UpdateCellLinkedList() {};
 
     class ComputingKernel
     {
       public:
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType> &encloser);
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void clearAllLists(UnsignedInt index_i);
         void incrementCellSize(UnsignedInt index_i);
         void updateCellList(UnsignedInt index_i);
 
       protected:
-        Mesh mesh_;
-        UnsignedInt cell_offset_list_size_;
+        CellLinkedListMesh cell_linked_list_mesh_;
+        ParticleMask particle_mask_;
 
         Vecd *pos_;
         UnsignedInt *particle_index_;
         UnsignedInt *cell_offset_;
-        UnsignedInt *current_cell_size_;
+        UnsignedInt *current_list_size_;
     };
 
     virtual void exec(Real dt = 0.0) override;
-    typedef UpdateCellLinkedList<ExecutionPolicy, CellLinkedListType> LocalDynamicsType;
-    using ComputingKernel = typename LocalDynamicsType::ComputingKernel;
 
   protected:
-    ExecutionPolicy ex_policy_;
-    Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel> kernel_implementation_;
+    DynamicsIdentifier &identifier_;
+    Implementation<ExecutionPolicy, EncloserType, ComputingKernel> kernel_implementation_;
 };
 
 } // namespace SPH

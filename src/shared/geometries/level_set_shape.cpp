@@ -1,51 +1,50 @@
 #include "level_set_shape.h"
 
-#include "base_body.h"
-#include "io_all.h"
+#include "all_io.h"
 #include "sph_system.h"
+#include "base_body.h"
 
 namespace SPH
 {
 //=================================================================================================//
-LevelSetShape::
-    LevelSetShape(Shape &shape, SharedPtr<SPHAdaptation> sph_adaptation, Real refinement_ratio)
-    : Shape(shape.getName()), sph_adaptation_(sph_adaptation),
-      level_set_(*level_set_keeper_.movePtr(sph_adaptation->createLevelSet(shape, refinement_ratio)))
+LevelSetShape::LevelSetShape(
+    SPHBody &sph_body, Shape &shape, Real refinement, UsageType usage_type)
+    : LevelSetShape(sph_body.getSPHSystem(), sph_body.getSPHAdaptation(), shape, refinement)
+{
+    finishInitialization(execution::par_host, usage_type);
+}
+//=================================================================================================//
+LevelSetShape::LevelSetShape(
+    SPHSystem &sph_system, const SPHAdaptation &sph_adaptation, Shape &shape, Real refinement)
+    : Shape(shape.getName()), sph_system_(sph_system),
+      level_set_(*level_set_keeper_.movePtr(sph_adaptation.createLevelSet(shape, refinement)))
 {
     bounding_box_ = shape.getBounds();
     is_bounds_found_ = true;
 }
 //=================================================================================================//
-LevelSetShape::LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio)
-    : Shape(shape.getName()),
-      level_set_(*level_set_keeper_.movePtr(
-          sph_body.getSPHAdaptation().createLevelSet(shape, refinement_ratio)))
+LevelSetShape *LevelSetShape::writeLevelSet()
 {
-    bounding_box_ = shape.getBounds();
-    is_bounds_found_ = true;
-}
-//=================================================================================================//
-void LevelSetShape::writeLevelSet(SPHSystem &sph_system)
-{
-    MeshRecordingToPlt write_level_set_to_plt(sph_system, level_set_);
+    MeshRecordingToPlt write_level_set_to_plt(sph_system_, level_set_);
     write_level_set_to_plt.writeToFile(0);
-}
-//=================================================================================================//
-LevelSetShape *LevelSetShape::cleanLevelSet(Real small_shift_factor)
-{
-    level_set_.cleanInterface(small_shift_factor);
     return this;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::correctLevelSetSign(Real small_shift_factor)
+LevelSetShape *LevelSetShape::cleanLevelSet(UnsignedInt repeat_times)
 {
-    level_set_.correctTopology(small_shift_factor);
+    level_set_.cleanInterface(repeat_times);
+    return this;
+}
+//=================================================================================================//
+LevelSetShape *LevelSetShape::correctLevelSetSign()
+{
+    level_set_.correctTopology();
     return this;
 }
 //=================================================================================================//
 bool LevelSetShape::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
 {
-    return level_set_.probeSignedDistance(probe_point) < 0.0 ? true : false;
+    return level_set_.probeSignedDistance(probe_point) < 0.0;
 }
 //=================================================================================================//
 Vecd LevelSetShape::findClosestPoint(const Vecd &probe_point)
@@ -55,7 +54,7 @@ Vecd LevelSetShape::findClosestPoint(const Vecd &probe_point)
     return probe_point - phi * normal;
 }
 //=================================================================================================//
-BoundingBox LevelSetShape::findBounds()
+BoundingBoxd LevelSetShape::findBounds()
 {
     if (!is_bounds_found_)
     {
@@ -81,7 +80,7 @@ Vecd LevelSetShape::computeKernelGradientIntegral(const Vecd &probe_point, Real 
     return level_set_.probeKernelGradientIntegral(probe_point, h_ratio);
 }
 //=================================================================================================//
-Matd LevelSetShape::computeKernelSecondGradientIntegral(const Vecd& probe_point, Real h_ratio)
+Matd LevelSetShape::computeKernelSecondGradientIntegral(const Vecd &probe_point, Real h_ratio)
 {
     return level_set_.probeKernelSecondGradientIntegral(probe_point, h_ratio);
 }

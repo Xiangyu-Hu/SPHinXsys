@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -59,7 +59,7 @@ class ComplexShape : public BinaryShapes
     LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
     {
         size_t index = getSubShapeIndexByName(shape_name);
-        LevelSetShape *level_set_shape = sub_shape_ptrs_keeper_[index].createPtr<LevelSetShape>(
+        LevelSetShape *level_set_shape = sub_shapes_keeper_.createPtr<LevelSetShape>(
             sph_body, *sub_shapes_and_ops_[index].first, std::forward<Args>(args)...);
         sub_shapes_and_ops_[index].first = DynamicCast<Shape>(this, level_set_shape);
         return level_set_shape;
@@ -87,8 +87,8 @@ class AlignedBox : public TransformGeometry<GeometricBox>
     template <typename... Args>
     explicit AlignedBox(int upper_bound_axis, const Shape &shape, Args &&...args)
         : TransformGeometry<GeometricBox>(
-              Transform(Vecd(0.5 * (shape.bounding_box_.second_ + shape.bounding_box_.first_))),
-              0.5 * (shape.bounding_box_.second_ - shape.bounding_box_.first_), std::forward<Args>(args)...),
+              Transform(Vecd(0.5 * (shape.bounding_box_.upper_ + shape.bounding_box_.lower_))),
+              0.5 * (shape.bounding_box_.upper_ - shape.bounding_box_.lower_), std::forward<Args>(args)...),
           alignment_axis_(upper_bound_axis){};
     ~AlignedBox() {};
 
@@ -106,12 +106,12 @@ class AlignedBox : public TransformGeometry<GeometricBox>
     bool checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe = 0.0)
     {
         Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-        return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] + upper_bound_fringe ? true : false;
+        return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] + upper_bound_fringe;
     };
     bool checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe = 0.0)
     {
         Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-        return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] - lower_bound_fringe ? true : false;
+        return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] - lower_bound_fringe;
     }
     bool checkNearUpperBound(const Vecd &probe_point, Real threshold);
     bool checkNearLowerBound(const Vecd &probe_point, Real threshold);
@@ -124,7 +124,7 @@ class AlignedBox : public TransformGeometry<GeometricBox>
     };
     Vecd getLowerPeriodic(const Vecd &probe_point);
     int AlignmentAxis() { return alignment_axis_; };
-    
+
     void imposeAlignment(Vecd &value)
     {
         Vecd frame_velocity = Vecd::Zero();

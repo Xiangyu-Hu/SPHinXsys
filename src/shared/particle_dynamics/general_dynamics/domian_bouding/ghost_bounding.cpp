@@ -3,7 +3,7 @@
 namespace SPH
 {
 //=================================================================================================//
-Ghost<PeriodicAlongAxis>::Ghost(BoundingBox bounding_bounds, int axis)
+Ghost<PeriodicAlongAxis>::Ghost(BoundingBoxd bounding_bounds, int axis)
     : Ghost<Base>(), PeriodicAlongAxis(bounding_bounds, axis) {}
 //=================================================================================================//
 void Ghost<PeriodicAlongAxis>::reserveGhostParticles(BaseParticles &base_particles, Real particle_spacing)
@@ -19,7 +19,7 @@ void Ghost<PeriodicAlongAxis>::reserveGhostParticles(BaseParticles &base_particl
 size_t Ghost<PeriodicAlongAxis>::calculateGhostSize(Real particle_spacing)
 {
     int next_axis = NextAxis(axis_);
-    Real bound_size = bounding_bounds_.second_[next_axis] - bounding_bounds_.first_[next_axis];
+    Real bound_size = bounding_bounds_.upper_[next_axis] - bounding_bounds_.lower_[next_axis];
     Real ghost_width = 4.0;
     return std::ceil(2.0 * ghost_width * ABS(bound_size) / particle_spacing);
 }
@@ -67,8 +67,8 @@ void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::exec(Rea
 void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)
 {
     Vecd particle_position = pos_[index_i];
-    if (particle_position[axis_] > bounding_bounds_.first_[axis_] &&
-        particle_position[axis_] < (bounding_bounds_.first_[axis_] + cut_off_radius_max_))
+    if (particle_position[axis_] > bounding_bounds_.lower_[axis_] &&
+        particle_position[axis_] < (bounding_bounds_.lower_[axis_] + cut_off_radius_max_))
     {
         mutex_create_ghost_particle_.lock();
         particles_->updateGhostParticle(lower_ghost_bound_.second, index_i);
@@ -84,8 +84,8 @@ void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::checkLow
 void PeriodicConditionUsingGhostParticles::CreatPeriodicGhostParticles::checkUpperBound(size_t index_i, Real dt)
 {
     Vecd particle_position = pos_[index_i];
-    if (particle_position[axis_] < bounding_bounds_.second_[axis_] &&
-        particle_position[axis_] > (bounding_bounds_.second_[axis_] - cut_off_radius_max_))
+    if (particle_position[axis_] < bounding_bounds_.upper_[axis_] &&
+        particle_position[axis_] > (bounding_bounds_.upper_[axis_] - cut_off_radius_max_))
     {
         mutex_create_ghost_particle_.lock();
         particles_->updateGhostParticle(upper_ghost_bound_.second, index_i);

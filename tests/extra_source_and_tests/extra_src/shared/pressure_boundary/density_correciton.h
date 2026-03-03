@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -45,7 +45,7 @@ class DensitySummationPressure<Base, DataDelegationType>
   public:
     template <class BaseRelationType>
     explicit DensitySummationPressure(BaseRelationType &base_relation);
-    virtual ~DensitySummationPressure(){};
+    virtual ~DensitySummationPressure() {};
 
   protected:
     Real *rho_, *mass_, *rho_sum_;
@@ -57,8 +57,8 @@ class DensitySummationPressure<Inner<Base>> : public DensitySummationPressure<Ba
 {
   public:
     explicit DensitySummationPressure(BaseInnerRelation &inner_relation)
-        : DensitySummationPressure<Base, DataDelegateInner>(inner_relation){};
-    virtual ~DensitySummationPressure(){};
+        : DensitySummationPressure<Base, DataDelegateInner>(inner_relation) {};
+    virtual ~DensitySummationPressure() {};
 
   protected:
     void assignDensity(size_t index_i) { rho_[index_i] = rho_sum_[index_i]; };
@@ -70,8 +70,8 @@ class DensitySummationPressure<Inner<>> : public DensitySummationPressure<Inner<
   public:
     explicit DensitySummationPressure(BaseInnerRelation &inner_relation)
         : DensitySummationPressure<Inner<Base>>(inner_relation),
-          buffer_indicator_(particles_->getVariableDataByName<int>("BufferIndicator")){};
-    virtual ~DensitySummationPressure(){};
+          buffer_indicator_(particles_->getVariableDataByName<int>("BufferIndicator")) {};
+    virtual ~DensitySummationPressure() {};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0)
     {
@@ -88,7 +88,7 @@ class DensitySummationPressure<Contact<Base>> : public DensitySummationPressure<
 {
   public:
     explicit DensitySummationPressure(BaseContactRelation &contact_relation);
-    virtual ~DensitySummationPressure(){};
+    virtual ~DensitySummationPressure() {};
 
   protected:
     StdVec<Real> contact_inv_rho0_;
@@ -101,8 +101,8 @@ class DensitySummationPressure<Contact<>> : public DensitySummationPressure<Cont
 {
   public:
     explicit DensitySummationPressure(BaseContactRelation &contact_relation)
-        : DensitySummationPressure<Contact<Base>>(contact_relation){};
-    virtual ~DensitySummationPressure(){};
+        : DensitySummationPressure<Contact<Base>>(contact_relation) {};
+    virtual ~DensitySummationPressure() {};
     void interaction(size_t index_i, Real dt = 0.0);
 };
 

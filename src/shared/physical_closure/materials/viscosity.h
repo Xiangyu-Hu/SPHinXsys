@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -29,7 +29,7 @@
 #ifndef VISCOSITY_H
 #define VISCOSITY_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "particle_functors.h"
 
 namespace SPH
@@ -48,12 +48,20 @@ class Viscosity
     virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
     virtual void initializeLocalParameters(BaseParticles *base_particles) {};
 
-    class ComputingKernel : public ParameterFixed<Real>
+    typedef ParameterFixed<Real> OneSideViscosity;
+
+    template <typename ExecutionPolicy>
+    ParameterFixed<Real> getOneSideViscosity(const ExecutionPolicy &ex_policy)
     {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : ParameterFixed<Real>(encloser.mu_){};
+        return ParameterFixed<Real>(mu_);
+    };
+
+    typedef PairGeomAverageFixed<Real> InterParticleViscosity;
+
+    template <typename ExecutionPolicy>
+    PairGeomAverageFixed<Real> getInterParticleViscosity(const ExecutionPolicy &ex_policy, Viscosity &other_viscosity)
+    {
+        return PairGeomAverageFixed<Real>(mu_, other_viscosity.ReferenceViscosity());
     };
 };
 

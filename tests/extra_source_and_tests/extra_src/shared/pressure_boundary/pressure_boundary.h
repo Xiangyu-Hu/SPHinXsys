@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -41,23 +41,26 @@ class PressureBoundaryCondition : public BaseFlowBoundaryCondition
 {
   public:
     /** default parameter indicates prescribe pressure */
-    explicit PressureBoundaryCondition(AlignedBoxPartByCell &aligned_box_part)
+    template <typename... Args>
+    explicit PressureBoundaryCondition(AlignedBoxByCell &aligned_box_part, Args &&...args)
         : BaseFlowBoundaryCondition(aligned_box_part),
           aligned_box_(aligned_box_part.getAlignedBox()),
           alignment_axis_(aligned_box_.AlignmentAxis()),
           transform_(aligned_box_.getTransform()),
-          target_pressure_(*this),
+          target_pressure_(TargetPressure(aligned_box_part), std::forward<Args>(args)...),
           kernel_sum_(particles_->getVariableDataByName<Vecd>("KernelSummation")),
           kernel_correction_(this->particles_),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
-    virtual ~PressureBoundaryCondition(){};
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")){};
+    virtual ~PressureBoundaryCondition() {};
     AlignedBox &getAlignedBox() { return aligned_box_; };
+
+    TargetPressure *getTargetPressure() { return &target_pressure_; }
 
     void update(size_t index_i, Real dt = 0.0)
     {
         if (aligned_box_.checkContain(pos_[index_i]))
         {
-            //vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
+            // vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
             vel_[index_i] += 2.0 * kernel_correction_(index_i) * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
 
             Vecd frame_velocity = Vecd::Zero();

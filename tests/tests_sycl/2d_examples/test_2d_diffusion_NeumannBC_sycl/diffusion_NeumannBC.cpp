@@ -4,7 +4,7 @@
  * @details This is the first case to validate multiple boundary conditions.
  * @author 	Chenxi Zhao, Bo Zhang, Chi Zhang and Xiangyu Hu
  */
-#include "sphinxsys_sycl.h"
+#include "sphinxsys.h"
 
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -12,9 +12,9 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real L = 1.0;
 Real H = 1.0;
-Real resolution_ref = H / 100.0;
-Real BW = resolution_ref * 2.0;
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
+Real global_resolution = H / 100.0;
+Real BW = global_resolution * 2.0;
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for diffusion properties.
 //----------------------------------------------------------------------
@@ -101,8 +101,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -134,28 +134,24 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Relation<Inner<>> diffusion_body_inner(diffusion_body);
-    Relation<Contact<>> diffusion_body_contact_Dirichlet(diffusion_body, {&wall_Dirichlet});
-    Relation<Contact<>> diffusion_body_contact_Neumann(diffusion_body, {&wall_Neumann});
-    Relation<Contact<>> temperature_observer_contact(temperature_observer, {&diffusion_body});
-    //----------------------------------------------------------------------
-    // Define the main execution policy for this case.
-    //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelDevicePolicy;
+    Inner<> diffusion_body_inner(diffusion_body);
+    Contact<> diffusion_body_contact_Dirichlet(diffusion_body, {&wall_Dirichlet});
+    Contact<> diffusion_body_contact_Neumann(diffusion_body, {&wall_Neumann});
+    Contact<> temperature_observer_contact(temperature_observer, {&diffusion_body});
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> diffusion_body_cell_linked_list(diffusion_body);
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> wall_Dirichlet_cell_linked_list(wall_Dirichlet);
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> wall_Neumann_cell_linked_list(wall_Neumann);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> diffusion_body_cell_linked_list(diffusion_body);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_Dirichlet_cell_linked_list(wall_Dirichlet);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_Neumann_cell_linked_list(wall_Neumann);
 
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>, Contact<>>
         water_block_update_complex_relation(
@@ -163,13 +159,13 @@ int main(int ac, char *av[])
     UpdateRelation<MainExecutionPolicy, Contact<>> observer_contact_relation(temperature_observer_contact);
 
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_Neumann);
-    StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, UniformDistribution<Real>>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
         diffusion_initial_condition(diffusion_body, diffusion_species_name, initial_temperature);
-    StateDynamics<MainExecutionPolicy, InitialCondition<BodyRegionByParticle, UniformDistribution<Real>>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
         left_initial_condition(wall_Dirichlet_left_region, diffusion_species_name, left_temperature);
-    StateDynamics<MainExecutionPolicy, InitialCondition<BodyRegionByParticle, UniformDistribution<Real>>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
         right_initial_condition(wall_Dirichlet_right_region, diffusion_species_name, right_temperature);
-    StateDynamics<MainExecutionPolicy, InitialCondition<SPHBody, UniformDistribution<Real>>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
         wall_Neumann_initial_condition(wall_Neumann, diffusion_species_name + "Flux", heat_flux);
 
     IsotropicDiffusion isotropic_diffusion(diffusion_species_name, diffusion_coeff);
@@ -190,7 +186,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system);
+    BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>>
         write_solid_temperature(diffusion_species_name, temperature_observer_contact);
     //----------------------------------------------------------------------
@@ -228,7 +224,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    write_states.writeToFile(MainExecutionPolicy{});
+    write_states.writeToFile();
     write_solid_temperature.writeToFile(ite);
     //----------------------------------------------------------------------
     //	Main loop starts here.
@@ -259,7 +255,7 @@ int main(int ac, char *av[])
         }
 
         TickCount t2 = TickCount::now();
-        write_states.writeToFile(MainExecutionPolicy{});
+        write_states.writeToFile();
         write_solid_temperature.writeToFile(ite);
         TickCount t3 = TickCount::now();
         interval += t3 - t2;

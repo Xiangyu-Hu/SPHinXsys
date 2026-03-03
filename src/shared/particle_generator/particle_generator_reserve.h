@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -64,7 +64,7 @@ class ParticleGenerator<ParticlesType, ParticleBuffer<BufferSizeEstimator>, Othe
         static_assert(!has_ghost_particles<ParticleGenerator<ParticlesType, OtherParameters...>>::value,
                       "ParticleGenerator: GhostReservation is not allowed ahead of BufferReservation.");
     };
-    virtual ~ParticleGenerator(){};
+    virtual ~ParticleGenerator() {};
 
     virtual void setAllParticleBounds() override
     {
@@ -86,7 +86,7 @@ class ParticleGenerator<ParticlesType, Ghost<GhostParameter>, OtherParameters...
                       Ghost<GhostParameter> &ghost_boundary, Args &&...args)
         : ParticleGenerator<ParticlesType, OtherParameters...>(sph_body, particles, std::forward<Args>(args)...),
           ghost_boundary_(ghost_boundary){};
-    virtual ~ParticleGenerator(){};
+    virtual ~ParticleGenerator() {};
 
     virtual void setAllParticleBounds() override
     {

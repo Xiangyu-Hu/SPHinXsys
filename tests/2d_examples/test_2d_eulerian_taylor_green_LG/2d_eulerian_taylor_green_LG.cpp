@@ -11,9 +11,9 @@ using namespace SPH; //	Namespace cite here.
 //----------------------------------------------------------------------
 Real DL = 1.0;                    /**< box length. */
 Real DH = 1.0;                    /**< box height. */
-Real resolution_ref = 1.0 / 50.0; /**< Global reference resolution. */
+Real global_resolution = 1.0 / 50.0; /**< Global reference resolution. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
+BoundingBoxd system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -48,8 +48,8 @@ class TaylorGreenInitialCondition : public fluid_dynamics::CompressibleFluidInit
 {
   public:
     explicit TaylorGreenInitialCondition(SPHBody &sph_body)
-        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
-    virtual ~TaylorGreenInitialCondition(){};
+        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body) {};
+    virtual ~TaylorGreenInitialCondition() {};
 
     void update(size_t index_i, Real dt)
     {
@@ -77,8 +77,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

@@ -6,7 +6,7 @@ namespace SPH
 ShapeSurfaceBounding::ShapeSurfaceBounding(NearShapeSurface &near_shape_surface)
     : BaseLocalDynamics<BodyPartByCell>(near_shape_surface),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      constrained_distance_(0.5 * sph_body_.getSPHAdaptation().MinimumSpacing())
+      constrained_distance_(0.5 * getSPHAdaptation().MinimumSpacing())
 {
     level_set_shape_ = &near_shape_surface.getLevelSetShape();
 }

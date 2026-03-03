@@ -16,7 +16,7 @@ Real WH = 2.0;                   /**< Water block height. */
 Real L = 1.0;                    /**< Base of the floating body. */
 Real particle_spacing_ref = L / 20;
 Real BW = particle_spacing_ref * 4.0; /**< Extending width for BCs. */
-BoundingBox system_domain_bounds(Vec2d(-DL - BW, -DH - BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL - BW, -DH - BW), Vec2d(DL + BW, DH + BW));
 Vec2d offset = Vec2d::Zero();
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
@@ -72,7 +72,7 @@ class StructureSystemForSimbody : public SolidBodyPartForSimbody
         // Vec2d mass_center(G[0], G[1]);
         // initial_mass_center_ = SimTKVec3(mass_center[0], mass_center[1], 0.0);
         body_part_mass_properties_ =
-            mass_properties_ptr_keeper_
+            mass_properties_keeper_
                 .createPtr<SimTK::MassProperties>(StructureMass, SimTKVec3(0.0), SimTK::UnitInertia(Ix, Iy, Iz));
     }
 };
@@ -84,8 +84,8 @@ class WallBoundary : public ComplexShape
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(outer_wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(inner_wall_translation), inner_wall_halfsize);
+        add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
+        subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
     }
 };
 class WaterBlock : public ComplexShape
@@ -93,8 +93,8 @@ class WaterBlock : public ComplexShape
   public:
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(water_block_translation), water_block_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(structure_translation), structure_halfsize);
+        add<GeometricShapeBox>(Transform(water_block_translation), water_block_halfsize);
+        subtract<GeometricShapeBox>(Transform(structure_translation), structure_halfsize);
     }
 };
 //----------------------------------------------------------------------

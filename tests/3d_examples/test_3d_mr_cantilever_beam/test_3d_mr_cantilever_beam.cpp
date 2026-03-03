@@ -99,7 +99,7 @@ struct solid_algs
         : corrected_configuration(inner_relation),
           stress_relaxation_first_half(inner_relation),
           stress_relaxation_second_half(inner_relation),
-          normal_direction(inner_relation.getSPHBody()){};
+          normal_direction(inner_relation.getSPHBody()) {};
 
     void corrected_config() { corrected_configuration.exec(); }
     void stress_relaxation_first(Real dt) { stress_relaxation_first_half.exec(dt); }
@@ -110,8 +110,7 @@ struct solid_algs
 class FixPart : public BodyPartByParticle
 {
   public:
-    FixPart(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    FixPart(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&FixPart::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -168,29 +167,28 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     // Import meshes
     const Vec3d halfsize = 0.5 * (Vec3d(params.length, params.height, params.width) + extension_length * Vec3d::UnitX());
     const Vec3d translation = 0.5 * (params.length - extension_length) * Vec3d::UnitX();
-    auto mesh = makeShared<TransformShape<GeometricShapeBox>>(Transform(translation), halfsize, "beam");
+    auto mesh = makeShared<GeometricShapeBox>(Transform(translation), halfsize, "beam");
 
     // refinement region
     const Real refinement_region_length = 0.5 * params.length;
     const Vec3d refinement_halfsize = 0.5 * Vec3d(refinement_region_length, params.height, params.width);
     const Vec3d refinement_translation = (params.length - 0.5 * refinement_region_length) * Vec3d::UnitX();
-    auto refinement_region = makeShared<TransformShape<GeometricShapeBox>>(Transform(refinement_translation), refinement_halfsize);
+    auto refinement_region = makeShared<GeometricShapeBox>(Transform(refinement_translation), refinement_halfsize);
 
     // System bounding box
-    BoundingBox bb_system = mesh->getBounds();
+    BoundingBoxd bb_system = mesh->getBounds();
 
     // System
     SPHSystem system(bb_system, dp);
-    IOEnvironment io_environment(system);
 
     // Create objects
     SolidBody beam_body(system, mesh);
     if (refinement_level > 0)
-        beam_body.defineAdaptation<ParticleRefinementWithinShape>(1.15, 1.0, refinement_level);
-    beam_body.defineBodyLevelSetShape()->cleanLevelSet(0);
+        beam_body.defineAdaptation<AdaptiveWithinShape>(1.15, 1.0, refinement_level);
+    beam_body.defineBodyLevelSetShape();
     beam_body.defineMaterial<NeoHookeanSolid>(*material.get());
     if (refinement_level > 0)
-        beam_body.generateParticles<BaseParticles, Lattice, Adaptive>(*refinement_region);
+        beam_body.generateParticles<BaseParticles, Lattice>(*refinement_region);
     else
         beam_body.generateParticles<BaseParticles, Lattice>();
 
@@ -230,7 +228,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     };
 
     // Boundary conditions
-    FixPart fix_bc_part(beam_body, "ClampingPart");
+    FixPart fix_bc_part(beam_body);
     SimpleDynamics<FixBodyPartConstraint> fix_bc(fix_bc_part);
 
     // gravity
@@ -244,7 +242,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     if (refinement_level > 0)
     {
         beam_body.getBaseParticles().addVariableToWrite<Real>("SmoothingLengthRatio");
-        beam_body.getBaseParticles().addVariableToWrite<int>("ParticleMeshLevel");
+        beam_body.getBaseParticles().addVariableToWrite<int>("SmoothingLengthLevel");
     }
     BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(beam_body);
@@ -274,7 +272,8 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     Real dt = 0.0;
     TickCount t1 = TickCount::now();
     TimeInterval time_damping;
-    const Real dt_ref = system.getSmallestTimeStepAmongSolidBodies();
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
+    const Real dt_ref = computing_time_step_size.exec();
     std::cout << "dt_ref: " << dt_ref << std::endl;
 
     auto run_simulation = [&]()
@@ -291,7 +290,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
                               << dt << "\n";
                 }
 
-                dt = system.getSmallestTimeStepAmongSolidBodies();
+                dt = computing_time_step_size.exec();
                 if (dt < dt_ref / 1e2)
                     throw std::runtime_error("time step decreased too much");
 

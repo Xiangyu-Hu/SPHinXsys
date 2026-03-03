@@ -16,7 +16,7 @@ using namespace SPH;
 Real DL = 4.0; /**< Computation domain length. */
 Real DH = 1.0; /**< Computation domain height. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
+BoundingBoxd system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -108,7 +108,7 @@ class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
     DMFBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
         : BoundaryConditionSetupInFVM(inner_relation, ghost_creation),
           E_(particles_->getVariableDataByName<Real>("TotalEnergy")),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime")){};
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~DMFBoundaryConditionSetup(){};
 
     // Override these methods to define the specific boundary conditions

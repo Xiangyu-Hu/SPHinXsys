@@ -10,9 +10,9 @@ template <typename VariableType>
 ParticleSmoothing<VariableType>::
     ParticleSmoothing(BaseInnerRelation &inner_relation, const std::string &variable_name)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
-      W0_(sph_body_.getSPHAdaptation().getKernel()->W0(ZeroVecd)),
+      W0_(getSPHAdaptation().getKernel()->W0(ZeroVecd)),
       smoothed_(particles_->template getVariableDataByName<VariableType>(variable_name)),
-      temp_(particles_->registerStateVariable<VariableType>(variable_name + "_temp")) {}
+      temp_(particles_->registerStateVariableData<VariableType>(variable_name + "_temp")) {}
 //=================================================================================================//
 template <typename VariableType>
 void ParticleSmoothing<VariableType>::interaction(size_t index_i, Real dt)
@@ -40,7 +40,7 @@ ParticleSnapshotAverage<VariableType>::
     ParticleSnapshotAverage(SPHBody &sph_body, const std::string &variable_name)
     : LocalDynamics(sph_body),
       target_variable_(particles_->template getVariableDataByName<VariableType>(variable_name)),
-      averaged_variable_(particles_->template registerStateVariable<VariableType>("Averaged" + variable_name))
+      averaged_variable_(particles_->template registerStateVariableData<VariableType>("Averaged" + variable_name))
 {
     particles_->addVariableToWrite<VariableType>("Averaged" + variable_name);
 }

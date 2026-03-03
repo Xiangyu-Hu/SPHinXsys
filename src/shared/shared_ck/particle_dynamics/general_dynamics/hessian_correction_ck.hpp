@@ -11,12 +11,11 @@ template <class DynamicsIdentifier>
 HessianCorrectionMatrix<Base, RelationType<Parameters...>>::
     HessianCorrectionMatrix(DynamicsIdentifier &identifier)
     : Interaction<RelationType<Parameters...>>(identifier),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-      dv_B_(this->particles_->template registerStateVariableOnly<Matd>(
+      dv_B_(this->particles_->template registerStateVariable<Matd>(
           "LinearCorrectionMatrix", IdentityMatrix<Matd>::value)),
-      dv_displacement_matrix_grad_(this->particles_->template registerStateVariableOnly<VecMatGrad>(
+      dv_displacement_matrix_grad_(this->particles_->template registerStateVariable<VecMatGrad>(
           "DisplacementMatrixGradient", ZeroData<VecMatGrad>::value)),
-      dv_M_(this->particles_->template registerStateVariableOnly<MatTend>(
+      dv_M_(this->particles_->template registerStateVariable<MatTend>(
           "HessianCorrectionMatrix", IdentityMatrix<MatTend>::value)) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
@@ -49,15 +48,8 @@ void DisplacementMatrixGradient<Inner<Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 DisplacementMatrixGradient<Contact<Parameters...>>::
-    DisplacementMatrixGradient(Relation<Contact<Parameters...>> &contact_relation)
-    : BaseDynamicsType(contact_relation)
-{
-    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
-    }
-}
+    DisplacementMatrixGradient(Contact<Parameters...> &contact_relation)
+    : BaseDynamicsType(contact_relation){}
 //=================================================================================================//
 template <typename... Parameters>
 void DisplacementMatrixGradient<Contact<Parameters...>>::
@@ -111,15 +103,8 @@ void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 HessianCorrectionMatrix<Contact<Parameters...>>::
-    HessianCorrectionMatrix(Relation<Contact<Parameters...>> &contact_relation)
-    : BaseDynamicsType(contact_relation)
-{
-    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
-    }
-}
+    HessianCorrectionMatrix(Contact<Parameters...> &contact_relation)
+    : BaseDynamicsType(contact_relation){}
 //=================================================================================================//
 template <typename... Parameters>
 void HessianCorrectionMatrix<Contact<Parameters...>>::

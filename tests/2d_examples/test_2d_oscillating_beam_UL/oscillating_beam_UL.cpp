@@ -16,10 +16,10 @@ using namespace SPH;
 Real PL = 0.2;  // beam length
 Real PH = 0.02; // for thick plate
 Real SL = 0.06; // depth of the insert
-Real resolution_ref = PH / 10;
-Real BW = resolution_ref * 4; // boundary width, at least three particles
+Real global_resolution = PH / 10;
+Real BW = global_resolution * 4; // boundary width, at least three particles
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
+BoundingBoxd system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
                                  Vec2d(PL + 3.0 * BW, PL / 2.0));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
@@ -70,7 +70,7 @@ class BeamInitialCondition
 {
   public:
     explicit BeamInitialCondition(RealBody &beam_column)
-        : fluid_dynamics::FluidInitialCondition(beam_column){};
+        : fluid_dynamics::FluidInitialCondition(beam_column) {};
 
   protected:
     void update(size_t index_i, Real dt)
@@ -102,8 +102,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

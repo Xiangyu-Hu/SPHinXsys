@@ -10,7 +10,7 @@ template <typename DataType, typename DampingRateType, class DataDelegationType>
 template <class BaseRelationType, typename... Args>
 Damping<Base, DataType, DampingRateType, DataDelegationType>::
     Damping(BaseRelationType &base_relation, const std::string &name, Args &&...args)
-    : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation), OperatorSplitting(),
+    : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       name_(name), damping_(this->particles_, std::forward<Args>(args)...),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       data_field_(this->particles_->template getVariableDataByName<DataType>(name)) {}
@@ -167,7 +167,7 @@ DampingWithRandomChoice<DampingAlgorithmType>::
 template <class DampingAlgorithmType>
 bool DampingWithRandomChoice<DampingAlgorithmType>::RandomChoice()
 {
-    return rand_uniform(0.0, 1.0) < random_ratio_ ? true : false;
+    return rand_uniform(0.0, 1.0) < random_ratio_;
 }
 //=================================================================================================//
 template <class DampingAlgorithmType>

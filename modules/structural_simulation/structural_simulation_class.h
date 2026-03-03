@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -37,8 +37,8 @@
 using namespace SPH;
 
 using GravityPair = std::pair<int, Vec3d>;
-using AccelTuple = std::tuple<int, BoundingBox, Vec3d>;
-using ForceTuple = std::tuple<int, BoundingBox, Vec3d, Real>;
+using AccelTuple = std::tuple<int, BoundingBoxd, Vec3d>;
+using ForceTuple = std::tuple<int, BoundingBoxd, Vec3d, Real>;
 using PressureTuple = std::tuple<int, SharedPtr<TriangleMeshShape>, Vec3d, StdVec<std::array<Real, 2>>>;
 using SpringDamperTuple = std::tuple<int, Vec3d, Real>;
 /**
@@ -51,11 +51,11 @@ using SpringDamperTuple = std::tuple<int, Vec3d, Real>;
  * Real: damping coefficient
  */
 using SurfaceSpringTuple = std::tuple<int, SharedPtr<TriangleMeshShape>, bool, Vec3d, Real, Real>;
-using ConstrainedRegionPair = std::pair<int, BoundingBox>;
+using ConstrainedRegionPair = std::pair<int, BoundingBoxd>;
 using PositionSolidBodyTuple = std::tuple<int, Real, Real, Vec3d>;
 using PositionScaleSolidBodyTuple = std::tuple<int, Real, Real, Real>;
 using TranslateSolidBodyTuple = std::tuple<int, Real, Real, Vec3d>;
-using TranslateSolidBodyPartTuple = std::tuple<int, Real, Real, Vec3d, BoundingBox>;
+using TranslateSolidBodyPartTuple = std::tuple<int, Real, Real, Vec3d, BoundingBoxd>;
 
 #ifdef __EMSCRIPTEN__
 struct StlData
@@ -73,7 +73,7 @@ class BodyPartFromMesh : public BodyRegionByParticle
 {
   public:
     BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> triangle_mesh_shape_ptr);
-    ~BodyPartFromMesh(){};
+    ~BodyPartFromMesh() {};
 };
 
 class SolidBodyFromMesh : public SolidBody
@@ -81,7 +81,7 @@ class SolidBodyFromMesh : public SolidBody
   public:
     SolidBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
                       SharedPtr<SaintVenantKirchhoffSolid> material_model, Vec3d *pos_0, Real *volume);
-    ~SolidBodyFromMesh(){};
+    ~SolidBodyFromMesh() {};
 };
 
 class SolidBodyForSimulation
@@ -101,7 +101,7 @@ class SolidBodyForSimulation
     SolidBodyForSimulation(
         SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
         Real physical_viscosity, SharedPtr<SaintVenantKirchhoffSolid> material_model, Vec3d *pos_0, Real *volume);
-    ~SolidBodyForSimulation(){};
+    ~SolidBodyForSimulation() {};
 
     SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
     BaseParticles *getElasticSolidParticles() { return DynamicCast<BaseParticles>(this, &solid_body_from_mesh_.getBaseParticles()); };
@@ -114,7 +114,7 @@ class SolidBodyForSimulation
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> *getDampingWithRandomChoice() { return &damping_random_; };
 };
 
-void expandBoundingBox(BoundingBox *original, BoundingBox *additional);
+BoundingBoxd expandBoundingBox(const BoundingBoxd &original, const BoundingBoxd &additional);
 
 void relaxParticlesSingleResolution(bool write_particles_to_file,
                                     SolidBodyFromMesh &solid_body_from_mesh,
@@ -176,9 +176,9 @@ class StructuralSimulationInput
 class StructuralSimulation
 {
   private:
-    UniquePtrsKeeper<SurfaceContactRelation> contact_relation_ptr_keeper_;
-    UniquePtrsKeeper<Gravity> gravity_ptr_keeper_;
-    UniquePtrsKeeper<BodyPartFromMesh> body_part_tri_mesh_ptr_keeper_;
+    UniquePtrsKeeper<SurfaceContactRelation> contact_relation_keeper_;
+    UniquePtrsKeeper<Gravity> gravity_keeper_;
+    UniquePtrsKeeper<BodyPartFromMesh> body_part_tri_mesh_keeper_;
 
   protected:
     // mandatory input
@@ -199,7 +199,6 @@ class StructuralSimulation
     Real system_resolution_;
     SPHSystem system_;
     Real scale_system_boundaries_;
-    IOEnvironment io_environment_;
     Real &physical_time_;
 
     StdVec<SharedPtr<SolidBodyForSimulation>> solid_body_list_;
@@ -247,6 +246,8 @@ class StructuralSimulation
     StdVec<SharedPtr<SimpleDynamics<solid_dynamics::TranslateSolidBodyPart>>> translation_solid_body_part_;
     StdVec<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
 
+    StdVec<SharedPtr<ReduceDynamics<solid_dynamics::AcousticTimeStep>>> acoustic_time_step_list_;
+
     // iterators
     int iteration_;
 
@@ -258,6 +259,7 @@ class StructuralSimulation
     void initializeElasticSolidBodies();
     void initializeContactBetweenTwoBodies(int first, int second);
     void initializeAllContacts();
+    void initializeAcousticTimeStepList();
 
     // for initializeBoundaryConditions
     void initializeGravity();
@@ -307,6 +309,7 @@ class StructuralSimulation
 
     StdVec<SharedPtr<SolidBodyForSimulation>> get_solid_body_list_() { return solid_body_list_; };
     Real getMaxDisplacement(int body_index);
+    Real getSmallestTimeStepAmongSolidBodies();
 
     // For c++
     void runSimulation(Real end_time);

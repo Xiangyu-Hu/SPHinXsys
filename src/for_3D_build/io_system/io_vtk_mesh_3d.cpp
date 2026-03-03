@@ -1,6 +1,7 @@
 #include "io_vtk_mesh_3d.hpp"
 #include "io_vtk.hpp"
 
+#include "io_environment.h"
 #include "triangle_mesh_shape.h"
 
 namespace SPH
@@ -8,18 +9,7 @@ namespace SPH
 //=================================================================================================//
 BodyStatesRecordingToTriangleMeshVtp::BodyStatesRecordingToTriangleMeshVtp(
     SPHBody &body, TriangleMeshShape &triangle_mesh_shape)
-    : BodyStatesRecordingToVtp(body)
-{
-    TriangleMesh &triangle_mesh = *triangle_mesh_shape.getTriangleMesh();
-    faces_.reserve(triangle_mesh.getNumFaces());
-    for (int i = 0; i < triangle_mesh.getNumFaces(); i++)
-    {
-        auto f1 = triangle_mesh.getFaceVertex(i, 0);
-        auto f2 = triangle_mesh.getFaceVertex(i, 1);
-        auto f3 = triangle_mesh.getFaceVertex(i, 2);
-        faces_.push_back({f1, f2, f3});
-    }
-}
+    : BodyStatesRecordingToVtp(body), faces_(triangle_mesh_shape.getFaces()) {}
 //=================================================================================================//
 void BodyStatesRecordingToTriangleMeshVtp::writeWithFileName(const std::string &sequence)
 {
@@ -27,7 +17,7 @@ void BodyStatesRecordingToTriangleMeshVtp::writeWithFileName(const std::string &
     {
         if (body->checkNewlyUpdated() && state_recording_)
         {
-            std::string filefullpath = io_environment_.output_folder_ + "/" + body->getName() + "_" + sequence + ".vtp";
+            std::string filefullpath = io_environment_.OutputFolder() + "/" + body->getName() + "_" + sequence + ".vtp";
             if (fs::exists(filefullpath))
             {
                 fs::remove(filefullpath);

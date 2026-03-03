@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -37,15 +37,13 @@ namespace SPH
 
 class ForcePriorCK
 {
+    DiscreteVariable<Vecd> *dv_force_prior_, *dv_current_force_, *dv_previous_force_;
+
   public:
-    ForcePriorCK(BaseParticles *particles, const std::string &force_name)
-        : dv_force_prior_(particles->registerStateVariableOnly<Vecd>("ForcePrior")),
-          dv_current_force_(particles->registerStateVariableOnly<Vecd>(force_name)),
-          dv_previous_force_(particles->registerStateVariableOnly<Vecd>("Previous" + force_name))
-    {
-        particles->addEvolvingVariable<Vecd>("Previous" + force_name);
-    };
+    ForcePriorCK(BaseParticles *particles, DiscreteVariable<Vecd> *dv_current_force);
+    ForcePriorCK(BaseParticles *particles, const std::string &force_name);
     virtual ~ForcePriorCK() {};
+    DiscreteVariable<Vecd> *getCurrentForce() { return dv_current_force_; }
 
     class UpdateKernel
     {
@@ -61,16 +59,14 @@ class ForcePriorCK
       protected:
         Vecd *force_prior_, *current_force_, *previous_force_;
     };
-
-  protected:
-    DiscreteVariable<Vecd> *dv_force_prior_, *dv_current_force_, *dv_previous_force_;
 };
 
 template <class GravityType>
 class GravityForceCK : public LocalDynamics, public ForcePriorCK
 {
   public:
-    GravityForceCK(SPHBody &sph_body, const GravityType &gravity);
+    template <typename... Args>
+    GravityForceCK(SPHBody &sph_body, Args &&...args);
     virtual ~GravityForceCK() {};
 
     class UpdateKernel : public ForcePriorCK::UpdateKernel

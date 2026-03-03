@@ -21,7 +21,7 @@ int particle_number_mid_surface = 2 * radius_mid_surface * Pi * 80.0 / 360.0 / p
 int BWD = 1;                                /** number of boundary particles layers . */
 Real BW = particle_spacing_ref * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-radius - thickness, 0.0),
+BoundingBoxd system_domain_bounds(Vec2d(-radius - thickness, 0.0),
                                  Vec2d(radius + thickness, radius + thickness));
 // Shell observer location
 StdVec<Vecd> observation_location = {Vecd(0.0, radius_mid_surface)};
@@ -63,8 +63,7 @@ class ParticleGenerator<SurfaceParticles, Cylinder> : public ParticleGenerator<S
 class BoundaryGeometry : public BodyPartByParticle
 {
   public:
-    BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometry(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
@@ -114,14 +113,13 @@ int main(int ac, char *av[])
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half(cylinder_body_inner);
 
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
-    BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
+    BoundaryGeometry boundary_geometry(cylinder_body);
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> fixed_free_rotate_shell_boundary(boundary_geometry);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         cylinder_position_damping(0.2, cylinder_body_inner, "Velocity", physical_viscosity);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
     /** Output */
-    IOEnvironment io_environment(sph_system);
     BodyStatesRecordingToVtp write_states(sph_system);
     write_states.addToWrite<Vecd>(cylinder_body, "PseudoNormal");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>

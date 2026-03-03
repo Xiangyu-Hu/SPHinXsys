@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -29,9 +29,11 @@
 #ifndef ADAPTATION_H
 #define ADAPTATION_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "base_kernel.h"
-#include "base_mesh.h"
+#include "base_mesh.hpp"
+#include "execution_policy.h"
+#include "level_set.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH
@@ -39,52 +41,57 @@ namespace SPH
 
 class Shape;
 class BaseParticles;
-class BodyRegionByCell;
-class MultilevelLevelSet;
 class BaseCellLinkedList;
+class LevelSetShape;
 
 /**
  * @class SPHAdaptation
  * @brief Base class for all adaptations.
  * The base class defines essential global parameters. It is also used for single-resolution method.
- * In the constructor parameter, system_refinement_ratio defines the relation between present resolution to the system reference resolution.
+ * In the constructor parameter, refinement_to_global defines the relation between present resolution to the global resolution.
  * The derived classes are defined for more complex adaptations.
  */
 class SPHAdaptation
 {
   protected:
+    Real global_resolution_;
     Real h_spacing_ratio_;         /**< ratio of reference kernel smoothing length to particle spacing */
-    Real system_refinement_ratio_; /**< ratio of system resolution to body resolution, set to 1.0 by default */
+    Real refinement_to_global_;    /**< ratio of global resolution to body resolution, set to 1.0 by default */
     int local_refinement_level_;   /**< refinement level respect to reference particle spacing */
     Real spacing_ref_;             /**< reference particle spacing used to determine local particle spacing */
     Real h_ref_;                   /**< reference smoothing length */
-    UniquePtr<Kernel> kernel_ptr_; /**< unique pointer of kernel function owned this class */
+    SharedPtr<Kernel> kernel_ptr_; /**< shared pointer of kernel function so the class is copyable */
     Real sigma0_ref_;              /**< Reference number density dependent on h_spacing_ratio_ and kernel function */
     Real spacing_min_;             /**< minimum particle spacing determined by local refinement level */
     Real Vol_min_;                 /**< minimum particle volume measure determined by local refinement level */
     Real h_ratio_max_;             /**< the ratio between the reference smoothing length to the minimum smoothing length */
 
   public:
-    explicit SPHAdaptation(Real resolution_ref, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
-    virtual ~SPHAdaptation(){};
+    typedef SPHAdaptation CellLinkedListIdentifier;
 
-    int LocalRefinementLevel() { return local_refinement_level_; };
-    Real ReferenceSpacing() { return spacing_ref_; };
-    Real MinimumSpacing() { return spacing_min_; };
-    Real ReferenceSmoothingLength() { return h_ref_; };
-    Real MinimumSmoothingLength() { return h_ref_ / h_ratio_max_; };
-    Kernel *getKernel() { return kernel_ptr_.get(); };
-    Real LatticeNumberDensity() { return sigma0_ref_; };
+    explicit SPHAdaptation(Real global_resolution, Real h_spacing_ratio = 1.3, Real refinement_to_global = 1.0);
+    virtual ~SPHAdaptation() {};
+
+    Real GlobalResolution() const { return global_resolution_; }
+    int LocalRefinementLevel() const { return local_refinement_level_; };
+    Real SmoothingLengthSpacingRatio() { return h_spacing_ratio_; };
+    Real ReferenceSpacing() const { return spacing_ref_; };
+    Real MinimumSpacing() const { return spacing_min_; };
+    Real ReferenceSmoothingLength() const { return h_ref_; };
+    Real MinimumSmoothingLength() const { return h_ref_ / h_ratio_max_; };
+    Kernel *getKernel() const { return kernel_ptr_.get(); };
+    SharedPtr<Kernel> getKernelPtr() const { return kernel_ptr_; };
+    Real LatticeNumberDensity() const { return sigma0_ref_; };
     Real NumberDensityScaleFactor(Real smoothing_length_ratio);
     virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
-    void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
+    void resetAdaptationRatios(Real h_spacing_ratio, Real new_refinement_to_global = 1.0);
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) {};
+    Real SmoothingLengthByLevel(int level) const { return h_ref_ / pow(2.0, level); };
 
-    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles);
-    virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
-
-    template <class MeshType, typename... Args>
-    MeshType createBackGroundMesh(SPHBody &sph_body, Args &&...args);
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
+    UniquePtr<BaseCellLinkedList> createFinestCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles);
+    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const;
+    virtual Real getLocalSpacing(Shape &shape, const Vecd &position) { return spacing_ref_; }
 
     template <class KernelType, typename... Args>
     void resetKernel(Args &&...args)
@@ -93,89 +100,224 @@ class SPHAdaptation
         sigma0_ref_ = computeLatticeNumberDensity(Vecd());
     };
 
+    class UnitSmoothingLengthRatio
+    {
+
+      public:
+        explicit UnitSmoothingLengthRatio(SPHAdaptation &adaptation) {};
+        template <class ExecutionPolicy>
+        UnitSmoothingLengthRatio(const ExecutionPolicy &ex_policy, SPHAdaptation &adaptation){};
+        Real operator()(UnsignedInt /*particle_index_i*/) const { return 1.0; };
+        const Vecd &transform(const Vecd &original, UnsignedInt index_i) const { return original; };
+        const Vecd &inverseTransform(const Vecd &original, UnsignedInt index_i) const { return original; };
+        Real KernelTransform(UnsignedInt index_i) const { return 1.0; };
+        Real GradientTransform(UnsignedInt index_i) const { return 1.0; };
+    };
+
+    typedef UnitSmoothingLengthRatio SmoothingLengthRatioType;
+
   protected:
     Real computeLatticeNumberDensity(Vec2d zero);
     Real computeLatticeNumberDensity(Vec3d zero);
-    virtual Real MostRefinedSpacing(Real coarse_particle_spacing, int local_refinement_level);
-    Real MostRefinedSpacingRegular(Real coarse_particle_spacing, int local_refinement_level);
+    Real MostRefinedSpacing(Real spacing_ref, int local_refinement_level);
 };
 
 /**
- * @class ParticleWithLocalRefinement
+ * @class AdaptiveSmoothingLength
  * @brief Base class for particle with local refinement.
  * @details Different refinement strategies will be used in derived classes.
  */
-class ParticleWithLocalRefinement : public SPHAdaptation
+class AdaptiveSmoothingLength : public SPHAdaptation
 {
   public:
-    Real *h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
-    int *level_;    /**< the mesh level of the particle */
+    typedef AdaptiveSmoothingLength CellLinkedListIdentifier;
 
-    ParticleWithLocalRefinement(Real resolution_ref, Real h_spacing_ratio_, Real system_refinement_ratio, int local_refinement_level);
-    virtual ~ParticleWithLocalRefinement(){};
+    AdaptiveSmoothingLength(Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level);
+    virtual ~AdaptiveSmoothingLength() {};
 
-    virtual size_t getCellLinkedListTotalLevel();
-    size_t getLevelSetTotalLevel();
     virtual Real SmoothingLengthRatio(size_t particle_index_i) override
     {
         return h_ratio_[particle_index_i];
     };
 
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
-    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, BaseParticles &base_particles) override;
-    virtual UniquePtr<MultilevelLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
+    virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBoxd &domain_bounds, BaseParticles &base_particles) override;
+    virtual UniquePtr<LevelSet> createLevelSet(Shape &shape, Real refinement) const override;
+    DiscreteVariable<Real> *dvSmoothingLengthRatio() { return dv_h_ratio_; };
+    DiscreteVariable<int> *dvSmoothingLengthLevel() { return dv_h_level_; };
+    Real MaxCutOffRadius() const { return max_cut_off_radius_; };
+    virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override = 0;
+
+    class ContinuousSmoothingLengthRatio : public UnitSmoothingLengthRatio
+    {
+        Real *h_ratio_;
+
+      public:
+        explicit ContinuousSmoothingLengthRatio(AdaptiveSmoothingLength &adaptation)
+            : UnitSmoothingLengthRatio(adaptation), h_ratio_(adaptation.h_ratio_) {};
+        template <class ExecutionPolicy>
+        ContinuousSmoothingLengthRatio(const ExecutionPolicy &ex_policy, AdaptiveSmoothingLength &adaptation)
+            : UnitSmoothingLengthRatio(adaptation), h_ratio_(adaptation.dv_h_ratio_->DelegatedData(ex_policy)){};
+        Real operator()(UnsignedInt index_i) const { return h_ratio_[index_i]; };
+    };
+
+    typedef ContinuousSmoothingLengthRatio SmoothingLengthRatioType;
+
+    class SmoothedSpacing
+    {
+        KernelTabulatedCK smoothing_kernel_;
+        Real kernel_size_, inv_w0_;
+        Real finest_spacing_bound_, coarsest_spacing_bound_;
+
+      public:
+        SmoothedSpacing(AdaptiveSmoothingLength &encloser);
+        Real operator()(const Real &measure, const Real &transition_thickness);
+        Real FinestSpacingBound() const { return finest_spacing_bound_; };
+    };
 
   protected:
+    DiscreteVariable<Real> *dv_h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
+    DiscreteVariable<int> *dv_h_level_;  /**< the resolution level of particle */
+    Real *h_ratio_;
+    int *h_level_;
     Real finest_spacing_bound_;   /**< the adaptation bound for finest particles */
     Real coarsest_spacing_bound_; /**< the adaptation bound for coarsest particles */
+    Real max_cut_off_radius_;     /**< the maximum cut-off radius determined by the reference smoothing length and kernel function */
 };
 
 /**
- * @class ParticleRefinementByShape
+ * @class AdaptiveByShape
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
  */
-class ParticleRefinementByShape : public ParticleWithLocalRefinement
+class AdaptiveByShape : public AdaptiveSmoothingLength
 {
   public:
     template <typename... Args>
-    ParticleRefinementByShape(Args &&...args)
-        : ParticleWithLocalRefinement(std::forward<Args>(args)...){};
+    AdaptiveByShape(Args &&...args)
+        : AdaptiveSmoothingLength(std::forward<Args>(args)...){};
 
-    virtual ~ParticleRefinementByShape(){};
-    virtual Real getLocalSpacing(Shape &shape, const Vecd &position) = 0;
+    virtual ~AdaptiveByShape() {};
 
   protected:
     Real smoothedSpacing(const Real &measure, const Real &transition_thickness);
 };
 
 /**
- * @class ParticleRefinementNearSurface
+ * @class AdaptiveNearSurface
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
  */
-class ParticleRefinementNearSurface : public ParticleRefinementByShape
+class AdaptiveNearSurface : public AdaptiveByShape
 {
   public:
     template <typename... Args>
-    ParticleRefinementNearSurface(Args &&...args)
-        : ParticleRefinementByShape(std::forward<Args>(args)...){};
-    virtual ~ParticleRefinementNearSurface(){};
+    AdaptiveNearSurface(Args &&...args);
+    virtual ~AdaptiveNearSurface() {};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
+
+    class LocalSpacing
+    {
+        using ProbeSignedDistance = LevelSet::ProbeLevelSet<Real>;
+        SmoothedSpacing smoothed_spacing_;
+        LevelSet &level_set_;
+        Real spacing_ref_;
+
+      public:
+        LocalSpacing(AdaptiveNearSurface &encloser, LevelSetShape &level_set_shape);
+
+        class ComputingKernel
+        {
+            SmoothedSpacing smoothed_spacing_;
+            ProbeSignedDistance signed_distance_;
+            Real spacing_ref_;
+
+          public:
+            template <class ExecutionPolicy, class EncloserType>
+            ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+            Real operator()(const Vecd &position);
+        };
+    };
 };
 
 /**
- * @class ParticleRefinementWithinShape
+ * @class AdaptiveWithinShape
  * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.
  */
-class ParticleRefinementWithinShape : public ParticleRefinementByShape
+class AdaptiveWithinShape : public AdaptiveByShape
 {
   public:
     template <typename... Args>
-    ParticleRefinementWithinShape(Args &&...args)
-        : ParticleRefinementByShape(std::forward<Args>(args)...){};
-    virtual ~ParticleRefinementWithinShape(){};
+    AdaptiveWithinShape(Args &&...args)
+        : AdaptiveByShape(std::forward<Args>(args)...){};
+    virtual ~AdaptiveWithinShape() {};
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
+
+    class LocalSpacing
+    {
+        using ProbeSignedDistance = LevelSet::ProbeLevelSet<Real>;
+        SmoothedSpacing smoothed_spacing_;
+        LevelSet &level_set_;
+        Real spacing_ref_;
+
+      public:
+        LocalSpacing(AdaptiveWithinShape &encloser, LevelSetShape &level_set_shape);
+
+        class ComputingKernel
+        {
+            SmoothedSpacing smoothed_spacing_;
+            ProbeSignedDistance signed_distance_;
+            Real spacing_ref_;
+
+          public:
+            template <class ExecutionPolicy, class EncloserType>
+            ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+            Real operator()(const Vecd &position);
+        };
+    };
+};
+
+class AnisotropicAdaptation : public AdaptiveSmoothingLength
+{
+  public:
+    AnisotropicAdaptation(Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global, int local_refinement_level);
+    virtual ~AnisotropicAdaptation() {};
+    virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
+
+    class AnisotropicSmoothingLengthRatio : public ContinuousSmoothingLengthRatio
+    {
+        Matd *deformation_matrix_;
+        Real *deformation_det_;
+
+      public:
+        template <class ExecutionPolicy>
+        AnisotropicSmoothingLengthRatio(const ExecutionPolicy &ex_policy, AnisotropicAdaptation &adaptation);
+        Vecd transform(const Vecd &original, UnsignedInt index_i) const;
+        Vecd inverseTransform(const Vecd &original, UnsignedInt index_i) const;
+        Real KernelTransform(UnsignedInt index_i) const;
+        Matd GradientTransform(UnsignedInt index_i) const;
+    };
+
+    typedef AnisotropicSmoothingLengthRatio SmoothingLengthRatioType;
+
+  protected:
+    DiscreteVariable<Vecd> *dv_scaling_, *dv_orientation_;
+    DiscreteVariable<Matd> *dv_deformation_matrix_;
+    DiscreteVariable<Real> *dv_deformation_det_;
+};
+
+class PrescribedAnisotropy : public AnisotropicAdaptation
+{
+  public:
+    PrescribedAnisotropy(const Vecd &scaling, const Vecd &orientation,
+                         Real global_resolution, Real h_spacing_ratio_, Real refinement_to_global);
+    virtual ~PrescribedAnisotropy() {};
+    virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
+    virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override { return spacing_ref_; };
+
+  protected:
+    Vecd scaling_ref_, orientation_ref_;
+    Matd deformation_matrix_ref_;
 };
 } // namespace SPH
 #endif // ADAPTATION_H

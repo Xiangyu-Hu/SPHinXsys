@@ -8,9 +8,9 @@ TEST(test_meshes, split_for)
     Real length = 10;
     Real dp = 1;
 
-    auto shape = makeShared<GeometricShapeBox>(0.5 * length * Vec3d::Ones(), "Shape");
+    auto shape = makeShared<GeometricShapeBox>(Transform(), 0.5 * length * Vec3d::Ones(), "Shape");
 
-    BoundingBox bb_system = shape->getBounds();
+    BoundingBoxd bb_system = shape->getBounds();
 
     SPHSystem system(bb_system, dp);
 
@@ -18,9 +18,9 @@ TEST(test_meshes, split_for)
     body.defineMaterial<Solid>();
     body.generateParticles<BaseParticles, Lattice>();
     auto &particles = body.getBaseParticles();
-    const auto pos = particles.registerStateVariable<Vec3d>("Position");
-    auto quantity = particles.registerStateVariable<Real>("Quantity", [&](size_t i) -> Real
-                                                          { return pos[i].norm(); });
+    const auto pos = particles.registerStateVariableData<Vec3d>("Position");
+    auto quantity = particles.registerStateVariableData<Real>("Quantity", [&](size_t i) -> Real
+                                                              { return pos[i].norm(); });
 
     InnerRelation inner(body);
 
@@ -39,7 +39,7 @@ TEST(test_meshes, split_for)
         }
     };
 
-    auto &cell_linked_list = *dynamic_cast<CellLinkedList *>(&body.getCellLinkedList());
+    auto &cell_linked_list = *dynamic_cast<CellLinkedList<SPHAdaptation> *>(&body.getCellLinkedList());
 
     // run the interaction in sequenced policy
     cell_linked_list.particle_for_split(execution::SequencedPolicy(), interaction);

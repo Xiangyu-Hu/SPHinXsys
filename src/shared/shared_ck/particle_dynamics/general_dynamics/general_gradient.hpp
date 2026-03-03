@@ -7,13 +7,11 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>
-template <class DynamicsIdentifier>
 Gradient<Base, DataType, RelationType<Parameters...>>::
-    Gradient(DynamicsIdentifier &identifier, std::string &variable_name)
-    : BaseDynamicsType(identifier), variable_name_(variable_name),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
+    Gradient(RelationType<Parameters...> &relation, const std::string &variable_name)
+    : BaseDynamicsType(relation), variable_name_(variable_name),
       dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
-      dv_gradient_(this->particles_->template registerStateVariableOnly<Grad<DataType>>(
+      dv_gradient_(this->particles_->template registerStateVariable<Grad<DataType>>(
           variable_name + "Gradient", ZeroData<Grad<DataType>>::value)),
       dv_B_(this->particles_->template getVariableByName<Matd>("LinearCorrectionMatrix")) {}
 //=================================================================================================//
@@ -28,8 +26,7 @@ Gradient<Base, DataType, RelationType<Parameters...>>::InteractKernel::
       B_(encloser.dv_B_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
-void LinearGradient<Inner<DataType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+void LinearGradient<Inner<DataType, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
 {
     Grad<DataType> summation = Grad<DataType>::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -38,20 +35,18 @@ void LinearGradient<Inner<DataType, Parameters...>>::
         Vecd corrected_gradW_ijV_j = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
                                      this->B_[index_i] * this->e_ij(index_i, index_j);
         DataType difference = this->variable_[index_i] - this->variable_[index_j];
-        summation -= corrected_gradW_ijV_j * transferToMatrix(difference).transpose();
+        summation -= tensorProduct(corrected_gradW_ijV_j, difference);
     }
     this->gradient_[index_i] = summation;
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
-template <typename... Args>
-LinearGradient<Contact<DataType, Parameters...>>::LinearGradient(Args &&...args)
-    : BaseDynamicsType(std::forward<Args>(args)...)
+LinearGradient<Contact<DataType, Parameters...>>::LinearGradient(
+    Contact<Parameters...> &contact_relation, const std::string &variable_name)
+    : BaseDynamicsType(contact_relation, variable_name)
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
     {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         dv_contact_variable_.push_back(
             this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
     }
@@ -76,7 +71,7 @@ void LinearGradient<Contact<DataType, Parameters...>>::
         Vecd corrected_gradW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
                                      this->B_[index_i] * this->e_ij(index_i, index_j);
         DataType difference = this->variable_[index_i] - contact_variable_[index_j];
-        summation -= corrected_gradW_ijV_j * transferToMatrix(difference).transpose();
+        summation -= tensorProduct(corrected_gradW_ijV_j, difference);
     }
     this->gradient_[index_i] += summation;
 }
@@ -86,7 +81,7 @@ template <typename... Args>
 Hessian<Base, DataType, RelationType<Parameters...>>::Hessian(Args &&...args)
     : BaseDynamicsType(std::forward<Args>(args)...),
       dv_M_(this->particles_->template getVariableByName<MatTend>("HessianCorrectionMatrix")),
-      dv_hessian_(this->particles_->template registerStateVariableOnly<Hess<DataType>>(
+      dv_hessian_(this->particles_->template registerStateVariable<Hess<DataType>>(
           this->variable_name_ + "Hessian")) {}
 //=================================================================================================//
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>
@@ -111,7 +106,7 @@ void Hessian<Inner<DataType, Parameters...>>::
         DataType corrected_difference = this->variable_[index_i] - this->variable_[index_j] -
                                         this->gradient_[index_i].dot(r_ij);
         summation += 2.0 * corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), 2) *
-                     vectorizeTensorSquare(r_ij) * transferToMatrix(corrected_difference).transpose();
+                     tensorProduct(vectorizeTensorSquare(r_ij), corrected_difference);
     }
     this->hessian_[index_i] = this->M_[index_i] * summation;
 }
@@ -123,8 +118,6 @@ Hessian<Contact<DataType, Parameters...>>::Hessian(Args &&...args)
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
     {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         dv_contact_variable_.push_back(
             this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
     }
@@ -152,7 +145,7 @@ void Hessian<Contact<DataType, Parameters...>>::
         DataType corrected_difference = this->variable_[index_i] - contact_variable_[index_j] -
                                         this->gradient_[index_i].dot(r_ij);
         summation += 2.0 * corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), 2) *
-                     vectorizeTensorSquare(r_ij) * transferToMatrix(corrected_difference).transpose();
+                     tensorProduct(vectorizeTensorSquare(r_ij), corrected_difference);
     }
     this->hessian_[index_i] += this->M_[index_i] * summation;
 }
@@ -182,8 +175,6 @@ SecondOrderGradient<Contact<DataType, Parameters...>>::SecondOrderGradient(Args 
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
     {
-        dv_contact_Vol_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("VolumetricMeasure"));
         dv_contact_variable_.push_back(
             this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
     }

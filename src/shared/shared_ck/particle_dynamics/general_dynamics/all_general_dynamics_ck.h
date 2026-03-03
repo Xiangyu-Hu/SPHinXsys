@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -31,11 +31,12 @@
 
 #include "all_surface_indication_ck.h"
 #include "force_prior_ck.hpp"
-#include "general_constraint_ck.h"
+#include "general_assignment.h"
+#include "general_constraint_ck.hpp"
 #include "general_gradient.hpp"
-#include "general_initial_condition.h"
 #include "general_reduce_ck.hpp"
 #include "geometric_dynamics.hpp"
 #include "hessian_correction_ck.hpp"
 #include "interpolation_dynamics.hpp"
 #include "kernel_correction_ck.hpp"
+#include "kernel_gradient_integral.hpp"

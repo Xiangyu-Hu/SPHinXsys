@@ -1,9 +1,7 @@
-/**
- * @file 	io_vtk.cpp
- * @author	Luhui Han, Chi Zhang and Xiangyu Hu
- */
-
 #include "io_vtk.hpp"
+
+#include "io_environment.h"
+#include "sph_system.h"
 
 namespace SPH
 {
@@ -18,7 +16,7 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
 
             if (state_recording_)
             {
-                std::string filefullpath = io_environment_.output_folder_ + "/" + body->getName() + "_" + sequence + ".vtp";
+                std::string filefullpath = io_environment_.OutputFolder() + "/" + body->getName() + "_" + sequence + ".vtp";
                 if (fs::exists(filefullpath))
                 {
                     fs::remove(filefullpath);
@@ -28,6 +26,16 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
                 out_file << "<?xml version=\"1.0\"?>\n";
                 out_file << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
                 out_file << " <PolyData>\n";
+
+                // physical time
+                if (sph_system_.isPhysical())
+                {
+                    out_file << "<FieldData>\n";
+                    out_file << "<DataArray type=\"Float64\"  Name=\"TimeValue\" NumberOfTuples=\"1\" format=\"ascii\">\n";
+                    out_file << std::fixed << std::setprecision(9) << sv_physical_time_->getValue() << "\n";
+                    out_file << " </DataArray>\n";
+                    out_file << "</FieldData>\n";
+                }
 
                 size_t total_real_particles = base_particles.TotalRealParticles();
                 out_file << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles
@@ -143,7 +151,7 @@ WriteToVtpIfVelocityOutOfBound::
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         check_bodies_.push_back(
-            check_bodies_ptr_keeper_.createPtr<ReduceDynamics<VelocityBoundCheck>>(*bodies_[i], velocity_bound));
+            check_bodies_keeper_.createPtr<ReduceDynamics<VelocityBoundCheck>>(*bodies_[i], velocity_bound));
     }
 }
 //=============================================================================================//
@@ -167,7 +175,7 @@ void ParticleGenerationRecordingToVtp::writeWithFileName(const std::string &sequ
 
     if (state_recording_)
     {
-        std::string filefullpath = io_environment_.output_folder_ + "/" + sph_body_.getName() +
+        std::string filefullpath = io_environment_.OutputFolder() + "/" + sph_body_.getName() +
                                    "particle_generation_" + sequence + ".vtp";
         if (fs::exists(filefullpath))
         {

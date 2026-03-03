@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -46,89 +46,81 @@ class ViscousForceCK;
 template <typename ViscosityType, class KernelCorrectionType,
           template <typename...> class RelationType, typename... Parameters>
 class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameters...>>
-    : public Interaction<RelationType<Parameters...>>, public ForcePriorCK
+    : public Interaction<RelationType<Parameters...>>
 {
-    using ViscosityKernel = typename ViscosityType::ComputingKernel;
-    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
-
   public:
     template <class BaseRelationType>
     explicit ViscousForceCK(BaseRelationType &base_relation);
     virtual ~ViscousForceCK() {};
 
-    class InteractKernel
-        : public Interaction<RelationType<Parameters...>>::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType, typename... Args>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args);
-
-      protected:
-        ViscosityKernel viscosity_;
-        CorrectionKernel correction_;
-        Real *Vol_;
-        Vecd *vel_, *viscous_force_;
-        Real smoothing_length_sq_;
-    };
-
   protected:
-    template <typename...>
-    friend class FSI::ViscousForceFromFluid;
     using ViscosityModel = ViscosityType;
-    
     ViscosityType &viscosity_model_;
     KernelCorrectionType kernel_correction_;
-    DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Vecd> *dv_vel_, *dv_viscous_force_;
     Real smoothing_length_sq_;
 };
 
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 class ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>
-    : public ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Inner<Parameters...>>
+    : public ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Inner<Parameters...>>,
+      public ForcePriorCK
 {
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+    using InterParticleViscosity = typename ViscosityType::InterParticleViscosity;
     using BaseViscousForceType = ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Inner<Parameters...>>;
 
   public:
-    explicit ViscousForceCK(Relation<Inner<Parameters...>> &inner_relation)
-        : BaseViscousForceType(inner_relation) {};
+    explicit ViscousForceCK(Inner<Parameters...> &inner_relation);
     virtual ~ViscousForceCK() {};
 
     class InteractKernel : public BaseViscousForceType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseViscousForceType::InteractKernel(ex_policy, encloser){};
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        InterParticleViscosity inter_particle_viscosity_;
+        CorrectionKernel correction_;
+        Real *Vol_;
+        Vecd *vel_, *viscous_force_;
+        Real smoothing_length_sq_;
     };
 };
 
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 class ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Parameters...>>
-    : public ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Contact<Wall, Parameters...>>
+    : public ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Contact<Parameters...>>,
+      public Interaction<Wall>
 {
-    using BaseViscousForceType = ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Contact<Wall, Parameters...>>;
+    using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+    using OneSideViscosity = typename ViscosityType::OneSideViscosity;
+    using BaseViscousForceType = ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Contact<Parameters...>>;
 
   public:
-    explicit ViscousForceCK(Relation<Contact<Parameters...>> &contact_relation)
-        : BaseViscousForceType(contact_relation) {};
+    explicit ViscousForceCK(Contact<Parameters...> &contact_relation);
     virtual ~ViscousForceCK() {};
 
     class InteractKernel : public BaseViscousForceType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
-            : BaseViscousForceType::InteractKernel(ex_policy, encloser, contact_index),
-              wall_Vol_(encloser.dv_wall_Vol_[contact_index]->DelegatedData(ex_policy)),
-              wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)){};
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        Real *wall_Vol_;
-        Vecd *wall_vel_ave_;
+        OneSideViscosity one_side_viscosity_;
+        CorrectionKernel correction_;
+        Real *Vol_, *contact_Vol_;
+        Vecd *vel_, *viscous_force_, *wall_vel_ave_;
+        Real smoothing_length_sq_;
     };
+
+  protected:
+    template <typename...>
+    friend class FSI::ViscousForceFromFluid;
 };
 
 using ViscousForceInnerCK = ViscousForceCK<Inner<WithUpdate, Viscosity, NoKernelCorrectionCK>>;

@@ -4,17 +4,17 @@
  * @details This is the one of the basic test cases for the RKGC inner flow.
  * @author 	Bo Zhang, Xiangyu Hu
  */
-#include "sphinxsys_sycl.h" //	SPHinXsys Library.
-using namespace SPH;        //	Namespace cite here.
+#include "sphinxsys.h" //	SPHinXsys Library.
+using namespace SPH;   //	Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 1.0;                    /**< box length. */
-Real DH = 1.0;                    /**< box height. */
-Real resolution_ref = 1.0 / 50.0; /**< Global reference resolution. */
-Real BW = resolution_ref * 6;     /**< Extending width for BCs. */
+Real DL = 1.0;                       /**< box length. */
+Real DH = 1.0;                       /**< box height. */
+Real global_resolution = 1.0 / 50.0; /**< Global reference resolution. */
+Real BW = global_resolution * 6;     /**< Extending width for BCs. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -92,13 +92,13 @@ StdVec<Vecd> VelocityXObserverParticle()
 {
     StdVec<Vecd> observation_points;
     size_t number_of_observation_point = 5;
-    Real range_of_measure = 1.0 - 0.5 * resolution_ref;
-    Real start_of_measure = 0.5 * resolution_ref;
+    Real range_of_measure = 1.0 - 0.5 * global_resolution;
+    Real start_of_measure = 0.5 * global_resolution;
 
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
-        Vec2d point_corrdinate(range_of_measure * (Real)i / (Real)(number_of_observation_point - 1) + start_of_measure, 0.5 * DL);
-        observation_points.push_back(point_corrdinate);
+        Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_of_observation_point - 1) + start_of_measure, 0.5 * DL);
+        observation_points.push_back(point_coordinate);
     }
     return observation_points;
 }
@@ -107,14 +107,14 @@ StdVec<Vecd> VelocityYObserverParticle()
 {
     StdVec<Vecd> observation_points;
     size_t number_of_observation_point = 5;
-    Real range_of_measure = 1.0 - 0.5 * resolution_ref;
-    Real start_of_measure = 0.5 * resolution_ref;
+    Real range_of_measure = 1.0 - 0.5 * global_resolution;
+    Real start_of_measure = 0.5 * global_resolution;
     for (size_t i = 0; i < number_of_observation_point; ++i)
     {
-        Vec2d point_corrdinate(0.5 * DH, range_of_measure * (Real)i /
+        Vec2d point_coordinate(0.5 * DH, range_of_measure * (Real)i /
                                                  (Real)(number_of_observation_point - 1) +
                                              start_of_measure);
-        observation_points.push_back(point_corrdinate);
+        observation_points.push_back(point_coordinate);
     }
     return observation_points;
 }
@@ -126,12 +126,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     // Tag for run particle relaxation for the initial body fitted distribution.
     sph_system.setRunParticleRelaxation(false);
     // Tag for computation start with relaxed body fitted particles distribution.
     sph_system.setReloadParticles(false);
-    IOEnvironment io_environment(sph_system);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -155,29 +154,24 @@ int main(int ac, char *av[])
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
-    Relation<Inner<>> water_block_inner(water_body);
-    Relation<Contact<>> water_wall_contact(water_body, {&wall_boundary});
-    Relation<Contact<>> horizontal_observer_contact(horizontal_observer, {&water_body});
-    Relation<Contact<>> vertical_observer_contact(vertical_observer, {&water_body});
-    //----------------------------------------------------------------------
-    // Define the main execution policy for this case.
-    //----------------------------------------------------------------------
-    using MainExecutionPolicy = execution::ParallelDevicePolicy; // define
-
+    Inner<> water_block_inner(water_body);
+    Contact<> water_wall_contact(water_body, {&wall_boundary});
+    Contact<> horizontal_observer_contact(horizontal_observer, {&water_body});
+    Contact<> vertical_observer_contact(vertical_observer, {&water_body});
     // ComplexRelation water_block_complex(water_block_inner, water_wall_contact);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> water_cell_linked_list(water_body);
-    UpdateCellLinkedList<MainExecutionPolicy, CellLinkedList> wall_cell_linked_list(wall_boundary);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> water_cell_linked_list(water_body);
+    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall_boundary);
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> water_block_update_complex_relation(water_block_inner, water_wall_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> horizontal_observer_contact_relation(horizontal_observer_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> vertical_observer_contact_relation(vertical_observer_contact);
@@ -187,7 +181,7 @@ int main(int ac, char *av[])
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_boundary); // run on CPU
     /** Time step size with considering sound wave speed. */
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepClose> water_advection_step_close(water_body);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_body);
 
     /** Initial condition with momentum field */
     SimpleDynamics<BoundaryVelocity> solid_initial_condition(wall_boundary);
@@ -195,8 +189,11 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
     /** Evaluation of density by summation approach. */
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplex>
-        fluid_density_regularization(water_block_inner, water_wall_contact); /** Pressure and density relaxation algorithm by using Verlet time stepping. */
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+        fluid_density_summation(water_block_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, Internal>>
+        fluid_density_regularization(water_body);
+    /** Pressure and density relaxation algorithm by using Verlet time stepping. */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
@@ -208,9 +205,8 @@ int main(int ac, char *av[])
      */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
         fluid_boundary_indicator(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityLimitedCorrectionCorrectedComplexBulkParticlesCK>
-        transport_correction_ck(water_block_inner, water_wall_contact);
-
+    InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex> kernel_gradient_integral(water_block_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear>> transport_correction(water_body);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
     /** Computing viscous acceleration with wall. */
@@ -220,13 +216,11 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     /** Output the body states. */
-    BodyStatesRecordingToVtp body_states_recording(sph_system);
+    BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
     body_states_recording.addToWrite<Vecd>(water_body, "Velocity");
     body_states_recording.addToWrite<Real>(water_body, "Density");
     body_states_recording.addToWrite<int>(water_body, "Indicator");
     body_states_recording.addToWrite<Vecd>(wall_boundary, "Velocity");
-
-    RestartIO restart_io(sph_system);
 
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_horizontal_velocity("Velocity", horizontal_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_vertical_velocity("Velocity", vertical_observer_contact);
@@ -235,13 +229,6 @@ int main(int ac, char *av[])
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
-    //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        sv_physical_time->setValue(restart_io.readRestartFiles(sph_system.RestartStep()));
-    }
     wall_boundary_normal_direction.exec(); // run particle dynamics on CPU first
     water_cell_linked_list.exec();
     wall_cell_linked_list.exec();
@@ -253,9 +240,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    int restart_output_interval = screen_output_interval * 10;
     Real end_time = 30.0;
     Real output_interval = 1.0;
     //----------------------------------------------------------------------
@@ -270,7 +256,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    body_states_recording.writeToFile(MainExecutionPolicy{});
+    body_states_recording.writeToFile();
     write_horizontal_velocity.writeToFile(number_of_iterations);
     write_vertical_velocity.writeToFile(number_of_iterations);
     //----------------------------------------------------------------------
@@ -285,13 +271,15 @@ int main(int ac, char *av[])
             /** outer loop for dual-time criteria time-stepping. */
             time_instance = TickCount::now();
 
+            fluid_density_summation.exec();
             fluid_density_regularization.exec();
 
             water_advection_step_setup.exec();
             fluid_viscous_force.exec();
             fluid_linear_correction_matrix.exec();
             fluid_boundary_indicator.exec();
-            transport_correction_ck.exec();
+            kernel_gradient_integral.exec();
+            transport_correction.exec();
 
             Real advection_dt = fluid_advection_time_step.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
@@ -309,18 +297,16 @@ int main(int ac, char *av[])
                 integration_time += acoustic_dt;
                 sv_physical_time->incrementValue(acoustic_dt);
             }
-            water_advection_step_close.exec();
+            water_update_particle_position.exec();
             interval_acoustic_steps += TickCount::now() - time_instance;
 
-            /** screen output, write body observables and restart files  */
+            /** screen output, write body observables  */
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << sv_physical_time->getValue()
                           << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
 
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(MainExecutionPolicy{}, number_of_iterations);
             }
             number_of_iterations++;
 
@@ -341,7 +327,7 @@ int main(int ac, char *av[])
         vertical_observer_contact_relation.exec();
         write_horizontal_velocity.writeToFile(number_of_iterations);
         write_vertical_velocity.writeToFile(number_of_iterations);
-        body_states_recording.writeToFile(MainExecutionPolicy{});
+        body_states_recording.writeToFile();
         TickCount t3 = TickCount::now();
         interval_writing_body_state += t3 - t2;
     }
@@ -362,7 +348,7 @@ int main(int ac, char *av[])
         write_horizontal_velocity.generateDataBase(1.0e-3);
         write_vertical_velocity.generateDataBase(1.0e-3);
     }
-    else if (sph_system.RestartStep() == 0)
+    else
     {
         write_horizontal_velocity.testResult();
         write_vertical_velocity.testResult();

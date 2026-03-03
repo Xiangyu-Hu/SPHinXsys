@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -31,8 +31,8 @@
 #define VISCOUS_DYNAMICS_H
 
 #include "base_fluid_dynamics.h"
-#include "viscosity.h"
 #include "force_prior.h"
+#include "viscosity.h"
 
 namespace SPH
 {
@@ -45,10 +45,10 @@ class FixedViscosity : public PairGeomAverageFixed<Real>
     FixedViscosity(BaseParticles *particles1, BaseParticles *particles2)
         : PairGeomAverageFixed<Real>(
               DynamicCast<Viscosity>(this, particles1->getBaseMaterial()).ReferenceViscosity(),
-              DynamicCast<Viscosity>(this, particles2->getBaseMaterial()).ReferenceViscosity()){};
+              DynamicCast<Viscosity>(this, particles2->getBaseMaterial()).ReferenceViscosity()) {};
     explicit FixedViscosity(BaseParticles *particles)
-        : FixedViscosity(particles, particles){};
-    virtual ~FixedViscosity(){};
+        : FixedViscosity(particles, particles) {};
+    virtual ~FixedViscosity() {};
 };
 
 class VariableViscosity : public PairGeomAverageVariable<Real>
@@ -57,10 +57,10 @@ class VariableViscosity : public PairGeomAverageVariable<Real>
     VariableViscosity(BaseParticles *particles1, BaseParticles *particles2)
         : PairGeomAverageVariable<Real>(
               particles1->getVariableDataByName<Real>("VariableViscosity"),
-              particles2->getVariableDataByName<Real>("VariableViscosity")){};
+              particles2->getVariableDataByName<Real>("VariableViscosity")) {};
     explicit VariableViscosity(BaseParticles *particles)
-        : VariableViscosity(particles, particles){};
-    virtual ~VariableViscosity(){};
+        : VariableViscosity(particles, particles) {};
+    virtual ~VariableViscosity() {};
 };
 
 template <typename... InteractionTypes>
@@ -73,7 +73,7 @@ class ViscousForce<DataDelegationType>
   public:
     template <class BaseRelationType>
     explicit ViscousForce(BaseRelationType &base_relation);
-    virtual ~ViscousForce(){};
+    virtual ~ViscousForce() {};
 
   protected:
     Real *rho_, *mass_, *Vol_;
@@ -87,7 +87,7 @@ class ViscousForce<Inner<>, ViscosityType, KernelCorrectionType>
 {
   public:
     explicit ViscousForce(BaseInnerRelation &inner_relation);
-    virtual ~ViscousForce(){};
+    virtual ~ViscousForce() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -102,7 +102,7 @@ class ViscousForce<Inner<AngularConservative>, ViscosityType, KernelCorrectionTy
 {
   public:
     explicit ViscousForce(BaseInnerRelation &inner_relation);
-    virtual ~ViscousForce(){};
+    virtual ~ViscousForce() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -118,7 +118,7 @@ class ViscousForce<Contact<Wall>, ViscosityType, KernelCorrectionType>
 {
   public:
     explicit ViscousForce(BaseContactRelation &wall_contact_relation);
-    virtual ~ViscousForce(){};
+    virtual ~ViscousForce() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -132,7 +132,7 @@ class ViscousForce<Contact<Wall, AngularConservative>, ViscosityType, KernelCorr
 {
   public:
     explicit ViscousForce(BaseContactRelation &wall_contact_relation);
-    virtual ~ViscousForce(){};
+    virtual ~ViscousForce() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -146,7 +146,7 @@ class ViscousForce<Contact<>, ViscosityType, KernelCorrectionType>
 {
   public:
     explicit ViscousForce(BaseContactRelation &contact_relation);
-    virtual ~ViscousForce(){};
+    virtual ~ViscousForce() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -173,7 +173,7 @@ class VorticityInner : public LocalDynamics, public DataDelegateInner
 {
   public:
     explicit VorticityInner(BaseInnerRelation &inner_relation);
-    virtual ~VorticityInner(){};
+    virtual ~VorticityInner() {};
 
     void interaction(size_t index_i, Real dt = 0.0);
 

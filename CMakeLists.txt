@@ -15,6 +15,7 @@ option(SPHINXSYS_USE_FLOAT "Build using float (single-precision floating-point f
 option(SPHINXSYS_USE_SIMD "Build using SIMD instructions" OFF)
 option(SPHINXSYS_MODULE_OPENCASCADE "Build extension relying on OpenCASCADE" OFF)
 option(SPHINXSYS_USE_SYCL "Build using SYCL acceleration or not" OFF)
+option(SPHINXSYS_USE_ONEDPL_SORTING "Build One DPL for particle sorting" ON)
 
 # ------ Global properties (Some cannot be set on INTERFACE targets)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
@@ -28,28 +29,44 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Enable for all targets, needed for p
 # ------ Declare core library
 add_library(sphinxsys_core INTERFACE)
 
+# ------ Constrain compilesr if SYCL is used
+if(SPHINXSYS_USE_SYCL)
+    if(NOT SPHINXSYS_USE_FLOAT)
+    set(SPHINXSYS_USE_FLOAT ON)
+    message("-- Float is used as required by SPHinXsysSYCL.")
+    endif()
+    
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    # Force CMake to use icx-cl rather than the default C++ compiler/linker 
+    # (needed on Windows only)
+    include (CMakeForceCompiler)
+    include (Platform/Windows-Clang)
+    else()
+        if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+            message(FATAL_ERROR "-- SPHinXsysSYCL is only supported with IntelLLVM compiler.")
+        endif()
+    endif()
+endif()
+
 # ------ Local properties
 target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compiler supporting at least C++17
 
 if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
     set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
-    target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES NOMINMAX)
-    target_compile_options(sphinxsys_core INTERFACE /MP)
+    target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES)
+    if(NOT SPHINXSYS_USE_SYCL)
+        target_compile_definitions(sphinxsys_core INTERFACE NOMINMAX)
+        target_compile_options(sphinxsys_core INTERFACE /MP)
+    endif()
     target_compile_options(sphinxsys_core INTERFACE /permissive-)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
 endif()
 
-if(SPHINXSYS_USE_SYCL)
-    if(NOT SPHINXSYS_USE_FLOAT)
-    set(SPHINXSYS_USE_FLOAT ON)
-    message("-- Float is used as required by SPHinXsysSYCL.")
-    endif()
-endif()
-
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_SYCL=$<BOOL:${SPHINXSYS_USE_SYCL}>)
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_FLOAT=$<BOOL:${SPHINXSYS_USE_FLOAT}>)
+target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_ONEDPL_SORTING=$<BOOL:${SPHINXSYS_USE_ONEDPL_SORTING}>)
 
 # ------ Dependencies
 # ## SIMD flags
@@ -99,11 +116,18 @@ if(TARGET Boost::program_options)
     target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
 endif()
 
+find_package(spdlog CONFIG REQUIRED)
+target_link_libraries(sphinxsys_core INTERFACE spdlog::spdlog_header_only)
+
 if(SPHINXSYS_USE_SYCL)
     set(SPHINXSYS_USE_SYCL ON)
-    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-        message(FATAL_ERROR "-- SPHinXsysSYCL is only supported with IntelLLVM compiler.")
+    
+    if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
+        target_compile_options(sphinxsys_core INTERFACE -Wno-ignored-attributes)
+        target_compile_options(sphinxsys_core INTERFACE -Wno-null-dereference)
+        target_compile_options(sphinxsys_core INTERFACE -Wno-unused-value)
     endif()
+    
 
     if(NOT SPHINXSYS_SYCL_TARGETS)
         set(SPHINXSYS_SYCL_TARGETS spir64_x86_64)

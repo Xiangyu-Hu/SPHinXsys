@@ -20,12 +20,12 @@ Real BW = particle_spacing_ref * 4;    /**< Extending width for BCs. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;        /**< Reference density of water. */
-Real rho0_a = 0.001;      /**< Reference density of air. */
-Real U_ref = 1.0;         /**< Characteristic velocity. */
-Real c_f = 10.0 * U_ref;  /**< Reference sound speed. */
-Real mu_f = 5.0e-2;       /**< Water viscosity. */
-Real mu_a = 5.0e-4;       /**< Air viscosity. */
+Real rho0_f = 1.0;                /**< Reference density of water. */
+Real rho0_a = 0.001;              /**< Reference density of air. */
+Real U_ref = 1.0;                 /**< Characteristic velocity. */
+Real c_f = 10.0 * U_ref;          /**< Reference sound speed. */
+Real mu_f = 5.0e-2;               /**< Water viscosity. */
+Real mu_a = 5.0e-4;               /**< Air viscosity. */
 Real surface_tension_coeff = 1.0; /**< Surface tension coefficient. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
@@ -48,7 +48,7 @@ class WaterBlock : public ComplexShape
   public:
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(droplet_translation), droplet_halfsize);
+        add<GeometricShapeBox>(Transform(droplet_translation), droplet_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -59,8 +59,8 @@ class AirBlock : public ComplexShape
   public:
     explicit AirBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(air_translation), air_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(droplet_translation), droplet_halfsize);
+        add<GeometricShapeBox>(Transform(air_translation), air_halfsize);
+        subtract<GeometricShapeBox>(Transform(droplet_translation), droplet_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -72,8 +72,8 @@ class WallBoundary : public ComplexShape
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TransformShape<GeometricShapeBox>>(Transform(wall_translation), outer_wall_halfsize);
-        subtract<TransformShape<GeometricShapeBox>>(Transform(wall_translation), inner_wall_halfsize);
+        add<GeometricShapeBox>(Transform(wall_translation), outer_wall_halfsize);
+        subtract<GeometricShapeBox>(Transform(wall_translation), inner_wall_halfsize);
     }
 };
 //----------------------------------------------------------------------
@@ -84,9 +84,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBox system_domain_bounds(Vec2d(-BW - DL / 2, -BW - DH / 2), Vec2d(BW + DL / 2, BW + DH / 2));
+    BoundingBoxd system_domain_bounds(Vec2d(-BW - DL / 2, -BW - DH / 2), Vec2d(BW + DL / 2, BW + DH / 2));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
@@ -177,7 +177,7 @@ int main(int ac, char *av[])
     int screen_output_interval = 500;
     Real end_time = 2.0;
     Real output_interval = end_time / 100; /**< Time stamps for output of body states. */
-    Real dt = 0.0;                        /**< Default acoustic time step sizes. */
+    Real dt = 0.0;                         /**< Default acoustic time step sizes. */
     /** statistics for computing CPU time. */
     TickCount t1 = TickCount::now();
     TimeInterval interval;
@@ -288,6 +288,6 @@ int main(int ac, char *av[])
     {
         write_water_kinetic_energy.testResult();
     }
-    
+
     return 0;
 }

@@ -28,7 +28,7 @@ Real Base_height = 0.1;
 Real particle_spacing_ref = Flap_width / 4.0; // particle spacing
 Real BW = particle_spacing_ref * 4.0;         // boundary width
 
-BoundingBox system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH + BW));
 
 // the offset that the rubber flap shifted above the tank
 // Real flap_off = Flap_x - 0.5 * Flap_width + DL_Extra + BW;
@@ -253,7 +253,7 @@ class FlapSystemForSimbody : public SolidBodyPartForSimbody
          */
         Real Iz = 1.84 / 33.04;
         body_part_mass_properties_ =
-            mass_properties_ptr_keeper_
+            mass_properties_keeper_
                 .createPtr<SimTK::MassProperties>(33.04, SimTKVec3(0.0), SimTK::UnitInertia(0.0, 0.0, Iz));
     }
 };
@@ -328,8 +328,8 @@ class WaveMaking : public BodyPartMotionConstraint
         : BodyPartMotionConstraint(body_part),
           model_scale_(25.0), gravity_(gravity_g), water_depth_(Water_H), wave_height_(5.0),
           wave_period_(10.0),
-          acc_(particles_->registerStateVariable<Vecd>("Acceleration")),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
+          acc_(particles_->registerStateVariableData<Vecd>("Acceleration")),
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime"))
     {
         computeWaveStrokeAndFrequency();
     }

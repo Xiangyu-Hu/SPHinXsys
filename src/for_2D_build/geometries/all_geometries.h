@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -31,9 +31,9 @@
 #define ALL_GEOMETRIES_H
 
 #include "complex_geometry.h"
-#include "mapping_shape.h"
 #include "geometric_shape.h"
 #include "level_set_shape.h"
+#include "mapping_shape.h"
 #include "multi_polygon_shape.h"
 #include "transform_geometry.h"
 

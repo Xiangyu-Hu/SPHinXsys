@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -47,16 +47,16 @@ class ParticleBuffer; // Indicating with buffer particles
 struct ReserveSizeFactor
 {
     Real size_factor_;
-    ReserveSizeFactor(Real size_factor) : size_factor_(size_factor){};
+    ReserveSizeFactor(Real size_factor) : size_factor_(size_factor) {};
     size_t operator()(BaseParticles &base_particles, Real particle_spacing);
 };
 
 class ParticleReserve
 {
   public:
-    ParticleReserve(){};
+    ParticleReserve() {};
     void checkParticlesReserved();
-    virtual ~ParticleReserve(){};
+    virtual ~ParticleReserve() {};
 
   protected:
     bool is_particles_reserved_ = false;
@@ -66,8 +66,8 @@ template <>
 class ParticleBuffer<Base> : public ParticleReserve
 {
   public:
-    ParticleBuffer() : ParticleReserve(){};
-    virtual ~ParticleBuffer(){};
+    ParticleBuffer() : ParticleReserve() {};
+    virtual ~ParticleBuffer() {};
     void checkEnoughBuffer(BaseParticles &base_particles);
     void allocateBufferParticles(BaseParticles &base_particles, size_t buffer_size);
 };
@@ -78,7 +78,7 @@ class ParticleBuffer<BufferSizeEstimator> : public ParticleBuffer<Base>
   public:
     template <typename... Args>
     ParticleBuffer(Args &&...args) : ParticleBuffer<Base>(), buffer_size_estimator_(std::forward<Args>(args)...){};
-    virtual ~ParticleBuffer(){};
+    virtual ~ParticleBuffer() {};
     void reserveBufferParticles(BaseParticles &base_particles, Real particle_spacing)
     {
         size_t buffer_size = buffer_size_estimator_(base_particles, particle_spacing);
@@ -94,8 +94,8 @@ template <>
 class Ghost<Base> : public ParticleReserve
 {
   public:
-    Ghost() : ParticleReserve(){};
-    virtual ~Ghost(){};
+    Ghost() : ParticleReserve() {};
+    virtual ~Ghost() {};
     size_t getGhostSize() { return ghost_size_; };
     void checkWithinGhostSize(const ParticlesBound &ghost_bound);
     IndexRange getGhostParticleRange(const ParticlesBound &ghost_bound);
@@ -110,7 +110,7 @@ class Ghost<GhostSizeEstimator> : public Ghost<Base>
   public:
     template <typename... Args>
     Ghost(Args &&...args) : Ghost<Base>(), ghost_size_estimator_(std::forward<Args>(args)...){};
-    virtual ~Ghost(){};
+    virtual ~Ghost() {};
     void reserveGhostParticles(BaseParticles &base_particles, Real particle_spacing)
     {
         ghost_size_ = ghost_size_estimator_(base_particles, particle_spacing);

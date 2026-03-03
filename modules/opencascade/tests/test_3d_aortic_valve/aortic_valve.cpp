@@ -28,7 +28,7 @@ Vec3d domain_upper_bound(15.0, 15.0, 26.0);
 //----------------------------------------------------------------------
 //	Domain bounds of the system.
 //----------------------------------------------------------------------
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+BoundingBoxd system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
 namespace SPH
 {
@@ -36,13 +36,12 @@ namespace SPH
 class BoundaryGeometry : public BodyPartByParticle
 {
   public:
-    BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
-        : BodyPartByParticle(body, body_part_name)
+    BoundaryGeometry(SPHBody &body) : BodyPartByParticle(body)
     {
         TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
         tagParticles(tagging_particle_method);
     };
-    virtual ~BoundaryGeometry(){};
+    virtual ~BoundaryGeometry() {};
 
   private:
     bool tagManually(size_t index_i)
@@ -57,7 +56,7 @@ class ParticleGenerator<SurfaceParticles, Leaflet> : public ParticleGenerator<Su
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles)
-        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles), sph_body_(sph_body){};
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles), sph_body_(sph_body) {};
     virtual void prepareGeometricData() override
     {
         SurfaceShape *a = DynamicCast<SurfaceShape>(this, &sph_body_.getInitialShape());
@@ -125,7 +124,7 @@ int main(int ac, char *av[])
     //	Build up a SPHSystem.
     //----------------------------------------------------------------------
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -137,7 +136,6 @@ int main(int ac, char *av[])
     //	Define simple file input and outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_relaxed_particles(sph_system);
-    MeshRecordingToPlt write_mesh_cell_linked_list(sph_system, leaflet.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -154,14 +152,13 @@ int main(int ac, char *av[])
     RelaxationStepInnerFirstHalf leaflet_relaxation_first_half(leaflet_inner);
     RelaxationStepInnerSecondHalf leaflet_relaxation_second_half(leaflet_inner);
     /** Constrain the boundary. */
-    BoundaryGeometry boundary_geometry(leaflet, "BoundaryGeometry");
+    BoundaryGeometry boundary_geometry(leaflet);
     SimpleDynamics<SurfaceNormalDirection> surface_normal_direction(leaflet);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
     write_relaxed_particles.writeToFile(0);
     leaflet.updateCellLinkedList();
-    write_mesh_cell_linked_list.writeToFile(0.0);
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------

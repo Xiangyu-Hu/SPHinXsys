@@ -28,7 +28,7 @@ Real particle_spacing_ref = StructureBasePlateH / 4;
 Real BW = particle_spacing_ref * 4.0;          /**< Extending width for BCs. */
 Real Maker_width = particle_spacing_ref * 4.0; /**< Width of the wavemaker. */
 
-BoundingBox system_domain_bounds(Vec2d(-EXS - BW, -BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-EXS - BW, -BW), Vec2d(DL + BW, DH + BW));
 
 Vec2d offset = Vec2d::Zero();
 
@@ -295,7 +295,7 @@ class StructureSystemForSimbody : public SolidBodyPartForSimbody
         : SolidBodyPartForSimbody(sph_body, shape_ptr)
     {
         body_part_mass_properties_ =
-            mass_properties_ptr_keeper_
+            mass_properties_keeper_
                 .createPtr<SimTK::MassProperties>(StructureMass, SimTK::Vec3(0.0), SimTK::UnitInertia(0, 0, Iz));
     }
 };
@@ -542,8 +542,8 @@ class WaveMaking : public BodyPartMotionConstraint
     WaveMaking(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part),
           h(WH), tf(20.480), xf(12.0), fmn(0.32), fmx(0.96), a(0.0068), N(32), g(gravity_g),
-          acc_(particles_->registerStateVariable<Vecd>("Acceleration")),
-          physical_time_(sph_system_.getSystemVariableDataByName<Real>("PhysicalTime"))
+          acc_(particles_->registerStateVariableData<Vecd>("Acceleration")),
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime"))
     {
         ComputeWaveChar();
     }

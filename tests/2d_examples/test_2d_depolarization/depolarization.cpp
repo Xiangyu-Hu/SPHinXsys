@@ -11,8 +11,8 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 Real L = 1.0;
 Real H = 1.0;
-Real resolution_ref = H / 50.0;
-BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
+Real global_resolution = H / 50.0;
+BoundingBoxd system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
 // observer location
 StdVec<Vecd> observation_location = {Vecd(0.3, 0.7)};
 //----------------------------------------------------------------------
@@ -55,7 +55,7 @@ class DepolarizationInitialCondition : public LocalDynamics
     explicit DepolarizationInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          voltage_(particles_->registerStateVariable<Real>("Voltage")) {};
+          voltage_(particles_->registerStateVariableData<Real>("Voltage")) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -74,8 +74,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -37,14 +37,14 @@ namespace SPH
 template <> // Generate a smooth line-shape using particles
 class ParticleGenerator<LinearParticles> : public ParticleGenerator<BaseParticles>
 {
-    StdLargeVec<Vecd> line_normal_;    /**< line normal */
-    StdLargeVec<Real> line_thickness_; /**< line thickness */
-    StdLargeVec<Vecd> line_binormal_;  /**< line binormal */
-    StdLargeVec<Real> line_width_;     /**< line width */
+    StdVec<Vecd> line_normal_;    /**< line normal */
+    StdVec<Real> line_thickness_; /**< line thickness */
+    StdVec<Vecd> line_binormal_;  /**< line binormal */
+    StdVec<Real> line_width_;     /**< line width */
 
   public:
     explicit ParticleGenerator(SPHBody &sph_body, LinearParticles &linear_particles);
-    virtual ~ParticleGenerator(){};
+    virtual ~ParticleGenerator() {};
 
   protected:
     LinearParticles &linear_particles_;

@@ -67,8 +67,7 @@ Volume 236, (2021) 109540
 17. Nicolò Salis, Xiangyu Hu, Min Luo, Alessandro Reali, Sauro Manenti, 3D SPH analysis of focused waves interacting with a floating structure, Applied Ocean Research, Volume 144, 2024, 103885.  
 [![Floating-structure](https://img.shields.io/badge/doi-10.1016%2Fj.apor.2024.103885-d45815.svg)](https://doi.org/10.1016/j.apor.2024.103885)
 
-18. Shuaihao Zhang, Sérgio DN Lourenço, Dong Wu, Chi Zhang, Xiangyu Hu, Essentially non-hourglass SPH elastic dynamics, Journal of Computational Physics
-Volume 510, 2024, 113072.  
+18. Shuaihao Zhang, Sérgio DN Lourenço, Dong Wu, Chi Zhang, Xiangyu Hu, "Essentially non-hourglass SPH elastic dynamics", Journal of Computational Physics, 510, 113072, 2024.  
 [![ul-hourglass](https://img.shields.io/badge/doi-10.1016%2Fj.jcp.2024.113072-d45815.svg)](https://doi.org/10.1016/j.jcp.2024.113072)
 
 19. Dong Wu, Chi Zhang, Xiangyu Hu, An SPH formulation for general plate and shell structures with finite deformation and large rotation, Journal of Computational Physics, Volume 510, 2024, 113113.  
@@ -77,3 +76,32 @@ Volume 510, 2024, 113072.
 20. Bo Zhang, Chi Zhang, Xiangyu Hu, Target-driven splitting SPH optimization of thermal conductivity distribution, International Journal of Heat and Mass Transfer
 Volume 227, 2024, 125476.  
 [![optimization-thermal](https://img.shields.io/badge/doi-10.1016%2Fj.ijheatmasstransfer.2024.125476-d45815.svg)](https://doi.org/10.1016/j.ijheatmasstransfer.2024.125476)
+
+21. M Rezavand, X Hu, Numerical simulation of two-phase slug flows in horizontal pipelines: A 3-D smoothed particle hydrodynamics application.
+European Journal of Mechanics-B/Fluids 104, 56-67.  
+[![slug-flow](https://img.shields.io/badge/doi-10.1016%2Fj.euromechflu.2023.11.005-d45815.svg)](https://doi.org/10.1016/j.euromechflu.2023.11.005)
+
+22. B Zhang, C Zhang, X Hu, Automated regression test method for scientific computing libraries: Illustration with SPHinXsys.
+Journal of Hydrodynamics 36 (3), 466-478.   
+[![repression-test](https://img.shields.io/badge/doi-10.1007%2Fs42241.024.0042.6-d45815.svg)](https://doi.org/10.1007/s42241-024-0042-6)
+
+23. S Zhang, Y Fan, Y Ren, B Qian, X Hu, Generalized and high-efficiency arbitrary-positioned buffer for smoothed particle hydrodynamics
+Physics of Fluids 36 (12).  
+[![buffer-pof](https://img.shields.io/badge/doi-10.1063%2F5.0242258-d45815.svg)](https://doi.org/10.1063/5.0242258)
+
+24. Z Wang, B Zhang, OJ Haidn, X Hu, A fourth-order kernel for improving numerical accuracy and stability in Eulerian SPH for fluids and total Lagrangian SPH for solids.
+Journal of Computational Physics 519, 113385.   
+[![4th-order](https://img.shields.io/badge/doi-10.1063%2Fj.jcp.2024.113385-d45815.svg)](https://doi.org/10.1016/j.jcp.2024.113385)
+
+25. B Zhang, N Adams, X Hu, Towards high-order consistency and convergence of conservative SPH approximations.
+Computer Methods in Applied Mechanics and Engineering 433, 117484.  
+[![rkgc](https://img.shields.io/badge/doi-10.1063%2Fj.cma.2024.117484-d45815.svg)](https://doi.org/10.1016/j.cma.2024.117484)
+
+26. Shuaihao Zhang, Dong Wu, Sérgio DN Lourenço, Xiangyu Hu, "A generalized non-hourglass updated Lagrangian formulation for SPH solid dynamics", Computer Methods in Applied Mechanics and Engineering, 440, 117948, 2025.  
+[![ul-generalized-hourglass](https://img.shields.io/badge/doi-10.1016/j.cma.2025.117948-d45815.svg)](https://doi.org/10.1016/j.cma.2025.117948)
+
+27. Shuaihao Zhang, Sérgio DN Lourenço, Xiangyu Hu, "Multiphase SPH for surface tension: Resolving zero-surface-energy modes and achieving high Reynolds number simulations", Computer Methods in Applied Mechanics and Engineering, 444, 118147, 2025.  
+[![surface-tension](https://img.shields.io/badge/doi-10.1016/j.cma.2025.118147-d45815.svg)](https://doi.org/10.1016/j.cma.2025.118147)
+
+27. Shuaihao Zhang, Feng Wang, Xiangyu Hu, Sérgio DN Lourenço, "A unified transport-velocity formulation for SPH simulation of cohesive granular materials", Computers and Geotechnics, 181, 107139, 2025.  
+[![unified-transport-formulation](https://img.shields.io/badge/doi-10.1016/j.compgeo.2025.107139-d45815.svg)](https://doi.org/10.1016/j.compgeo.2025.107139)

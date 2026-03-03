@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -45,7 +45,7 @@ class FluidInitialCondition : public LocalDynamics
 {
   public:
     explicit FluidInitialCondition(SPHBody &sph_body);
-    virtual ~FluidInitialCondition(){};
+    virtual ~FluidInitialCondition() {};
 
   protected:
     Vecd *pos_, *vel_;
@@ -55,7 +55,7 @@ class ContinuumVolumeUpdate : public LocalDynamics
 {
   public:
     explicit ContinuumVolumeUpdate(SPHBody &sph_body);
-    virtual ~ContinuumVolumeUpdate(){};
+    virtual ~ContinuumVolumeUpdate() {};
 
     void update(size_t index_i, Real dt)
     {
@@ -72,7 +72,7 @@ class BaseIntegration : public LocalDynamics, public DataDelegationType
   public:
     template <class BaseRelationType>
     explicit BaseIntegration(BaseRelationType &base_relation);
-    virtual ~BaseIntegration(){};
+    virtual ~BaseIntegration() {};
 
   protected:
     Fluid &fluid_;
@@ -89,7 +89,7 @@ class Integration1stHalf<Inner<>, RiemannSolverType, KernelCorrectionType>
 {
   public:
     explicit Integration1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~Integration1stHalf(){};
+    virtual ~Integration1stHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
@@ -112,7 +112,7 @@ class Integration1stHalf<Contact<Wall>, RiemannSolverType, KernelCorrectionType>
 {
   public:
     explicit Integration1stHalf(BaseContactRelation &wall_contact_relation);
-    virtual ~Integration1stHalf(){};
+    virtual ~Integration1stHalf() {};
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -126,7 +126,7 @@ class Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>
 {
   public:
     explicit Integration1stHalf(BaseContactRelation &contact_relation);
-    virtual ~Integration1stHalf(){};
+    virtual ~Integration1stHalf() {};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -159,7 +159,7 @@ class Integration2ndHalf<Inner<>, RiemannSolverType>
     typedef RiemannSolverType RiemannSolver;
 
     explicit Integration2ndHalf(BaseInnerRelation &inner_relation);
-    virtual ~Integration2ndHalf(){};
+    virtual ~Integration2ndHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
     inline void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
@@ -178,7 +178,7 @@ class Integration2ndHalf<Contact<Wall>, RiemannSolverType>
 {
   public:
     explicit Integration2ndHalf(BaseContactRelation &wall_contact_relation);
-    virtual ~Integration2ndHalf(){};
+    virtual ~Integration2ndHalf() {};
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -191,7 +191,7 @@ class Integration2ndHalf<Contact<>, RiemannSolverType>
 {
   public:
     explicit Integration2ndHalf(BaseContactRelation &contact_relation);
-    virtual ~Integration2ndHalf(){};
+    virtual ~Integration2ndHalf() {};
     inline void interaction(size_t index_i, Real dt = 0.0);
 
   protected:

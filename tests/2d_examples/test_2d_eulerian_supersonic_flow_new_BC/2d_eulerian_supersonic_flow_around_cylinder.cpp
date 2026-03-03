@@ -21,7 +21,7 @@ int main(int ac, char *av[])
     // Tag for computation start with relaxed body fitted particles distribution.
     sph_system.setReloadParticles(false);
     // Handle command line arguments and override the tags for particle relaxation and reload.
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

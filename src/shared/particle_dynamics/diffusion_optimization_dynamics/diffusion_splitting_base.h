@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -46,7 +46,7 @@ class OptimizationBySplittingAlgorithmBase
 {
   public:
     explicit OptimizationBySplittingAlgorithmBase(BaseInnerRelation &inner_relation, const std::string &name);
-    virtual ~OptimizationBySplittingAlgorithmBase(){};
+    virtual ~OptimizationBySplittingAlgorithmBase() {};
     virtual void interaction(size_t index_i, Real dt = 0.0) = 0;
 
   protected:
@@ -77,7 +77,7 @@ class RegularizationByDiffusionAnalogy
   public:
     RegularizationByDiffusionAnalogy(BaseInnerRelation &inner_relation, const std::string &name,
                                      Real initial_eta = 1, Real variation = 1);
-    virtual ~RegularizationByDiffusionAnalogy(){};
+    virtual ~RegularizationByDiffusionAnalogy() {};
 
     // TODO: One should use setupDynamics for the following.
     void UpdateCurrentEta(Real initial_eta) { initial_eta_ = initial_eta; }
@@ -102,7 +102,7 @@ class UpdateRegularizationVariation
 {
   public:
     UpdateRegularizationVariation(BaseInnerRelation &inner_relation, const std::string &name);
-    virtual ~UpdateRegularizationVariation(){};
+    virtual ~UpdateRegularizationVariation() {};
 
   protected:
     /* Redefine the compute function to avoid non-meaningful initial variation. */

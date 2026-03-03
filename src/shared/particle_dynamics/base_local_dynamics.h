@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -30,9 +30,10 @@
 #ifndef BASE_LOCAL_DYNAMICS_H
 #define BASE_LOCAL_DYNAMICS_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "base_particle_dynamics.h"
 #include "execution_policy.h"
+#include "io_log.h"
 #include "reduce_functors.h"
 #include "sphinxsys_containers.h"
 
@@ -56,12 +57,16 @@ class BaseLocalDynamics
 {
   public:
     explicit BaseLocalDynamics(DynamicsIdentifier &identifier)
-        : identifier_(identifier), sph_system_(identifier.getSPHSystem()),
-          sph_body_(identifier.getSPHBody()),
-          particles_(&sph_body_.getBaseParticles()) {};
+        : identifier_(&identifier), sph_system_(&identifier.getSPHSystem()),
+          sph_body_(&identifier.getSPHBody()),
+          sph_adaptation_(&sph_body_->getSPHAdaptation()),
+          particles_(&sph_body_->getBaseParticles()),
+          logger_(Log::get()) {};
     virtual ~BaseLocalDynamics() {};
-    using Identifier = typename DynamicsIdentifier::BaseIdentifier;
-    SPHBody &getSPHBody() { return sph_body_; };
+    using RangeIdentifier = typename DynamicsIdentifier::RangeIdentifier;
+    SPHBody &getSPHBody() { return *sph_body_; };
+    BaseParticles &getBaseParticles() { return *particles_; };
+    SPHAdaptation &getSPHAdaptation() { return *sph_adaptation_; };
     virtual void setupDynamics(Real dt = 0.0) {}; // setup global parameters
 
     class FinishDynamics
@@ -73,10 +78,12 @@ class BaseLocalDynamics
     };
 
   protected:
-    DynamicsIdentifier &identifier_;
-    SPHSystem &sph_system_;
-    SPHBody &sph_body_;
+    DynamicsIdentifier *identifier_;
+    SPHSystem *sph_system_;
+    SPHBody *sph_body_;
+    SPHAdaptation *sph_adaptation_;
     BaseParticles *particles_;
+    std::shared_ptr<spdlog::logger> logger_;
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 
@@ -138,7 +145,7 @@ class Average : public ReduceSumType
     virtual ReturnType outputResult(ReturnType reduced_value)
     {
         ReturnType sum = ReduceSumType::outputResult(reduced_value);
-        return sum / Real(this->identifier_.SizeOfLoopRange());
+        return sum / Real(this->identifier_->SizeOfLoopRange());
     }
 };
 

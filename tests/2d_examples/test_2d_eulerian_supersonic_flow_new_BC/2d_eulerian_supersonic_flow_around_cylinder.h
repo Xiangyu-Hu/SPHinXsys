@@ -16,7 +16,7 @@ Vecd insert_circle_center(7.0, 0.0);
 Vecd calculation_circle_center(calculation_circle_radius, 0.0);
 Real insert_circle_radius = 1.0;
 Real calculation_circle_radius_with_BW = 11.0 + 4.0 * particle_spacing_ref;
-BoundingBox system_domain_bounds(Vec2d(0.0, -calculation_circle_radius_with_BW), Vec2d(calculation_circle_radius_with_BW, calculation_circle_radius_with_BW));
+BoundingBoxd system_domain_bounds(Vec2d(0.0, -calculation_circle_radius_with_BW), Vec2d(calculation_circle_radius_with_BW, calculation_circle_radius_with_BW));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -123,7 +123,7 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
     // For outer boundaries, we set the non-refective far-field boundary conditions as boundary_type 9.
     void applyFarFieldBoundary(size_t ghost_index, size_t index_i) override
     {
-        Vecd normal_direction_index_i = sph_body_.getInitialShape().findNormalDirection(pos_[index_i]);
+        Vecd normal_direction_index_i = sph_body_->getInitialShape().findNormalDirection(pos_[index_i]);
         Vecd velocity_farfield = Vecd::Zero();
         Real sound_speed = sqrt(p_farfield * heat_capacity_ratio / rho_farfield);
         velocity_farfield[0] = Mach_number * sound_speed;

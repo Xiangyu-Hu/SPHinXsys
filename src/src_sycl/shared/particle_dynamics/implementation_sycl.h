@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -58,8 +58,8 @@ class ExecutionInstance
         {
             sycl_queue_ = makeUnique<sycl::queue>(sycl::default_selector_v);
             auto device = sycl_queue_->get_device();
-            size_t max_workgroup_size = device.get_info<sycl::info::device::max_work_group_size>();
-            work_group_size_ = std::min(max_workgroup_size, 64UL);
+            unsigned long max_workgroup_size = device.get_info<sycl::info::device::max_work_group_size>();
+            work_group_size_ = SMIN(max_workgroup_size, 64UL);
         }
         return *sycl_queue_;
     }
@@ -106,6 +106,12 @@ template <class T>
 inline T *allocateDeviceShared(std::size_t size)
 {
     return sycl::malloc_shared<T>(size, execution::execution_instance.getQueue());
+}
+
+template <class T>
+inline T *allocateHostStaging(std::size_t size)
+{
+    return sycl::malloc_host<T>(size, execution::execution_instance.getQueue());
 }
 
 template <class T>

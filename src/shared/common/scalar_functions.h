@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -144,7 +144,7 @@ inline T clamp(T a, T lower, T upper)
 template <class T>
 inline bool Not_a_number(T a)
 {
-    return (std::isnan(a) || !(std::isfinite(a))) ? true : false;
+    return !std::isfinite(a);
 }
 
 inline Real harmonic_average(const Real &a, const Real &b)
@@ -181,6 +181,10 @@ Real getLeftStateInWeno(Real v1, Real v2, Real v3, Real v4);
 Real getRightStateInWeno(Real v1, Real v2, Real v3, Real v4);
 
 /** linear heaviside function.*/
-Real Heaviside(Real phi, Real half_width);
+inline Real Heaviside(Real phi, Real half_width)
+{
+    Real normalized_phi = phi / half_width;
+    return std::clamp(0.5 + 0.5 * normalized_phi, 0.0, 1.0);
+}
 } // namespace SPH
 #endif // SCALAR_FUNCTIONS_H

@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -36,7 +36,7 @@
 #define BASE_PARTICLE_GENERATOR_H
 
 #include "all_particles.h"
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "large_data_containers.h"
 #include "sphinxsys_containers.h"
 
@@ -55,14 +55,14 @@ class ParticleGenerator<BaseParticles>
 {
   public:
     explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles);
-    virtual ~ParticleGenerator(){};
+    virtual ~ParticleGenerator() {};
     void generateParticlesWithGeometricVariables();
 
   protected:
     BaseParticles &base_particles_;
     Real particle_spacing_ref_;
-    StdLargeVec<Vecd> position_;           // prepared geometric data: particle position
-    StdLargeVec<Real> volumetric_measure_; // prepared geometric data: volumetric measure
+    StdVec<Vecd> position_;           // prepared geometric data: particle position
+    StdVec<Real> volumetric_measure_; // prepared geometric data: volumetric measure
 
     virtual void addParticlePosition(const Vecd &position);
     virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
@@ -75,12 +75,12 @@ class ParticleGenerator<BaseParticles>
 template <> // generate surface particles
 class ParticleGenerator<SurfaceParticles> : public ParticleGenerator<BaseParticles>
 {
-    StdLargeVec<Vecd> surface_normal_;
-    StdLargeVec<Real> surface_thickness_;
+    StdVec<Vecd> surface_normal_;
+    StdVec<Real> surface_thickness_;
 
   public:
     explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles);
-    virtual ~ParticleGenerator(){};
+    virtual ~ParticleGenerator() {};
 
   protected:
     SurfaceParticles &surface_particles_;
@@ -96,7 +96,7 @@ class ParticleGenerator<ObserverParticles> : public ParticleGenerator<BasePartic
   public:
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, const StdVec<Vecd> &positions);
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, TriangleMeshShape &triangle_mesh_shape);
-    virtual ~ParticleGenerator(){};
+    virtual ~ParticleGenerator() {};
     virtual void prepareGeometricData() override;
 
   protected:
@@ -111,7 +111,7 @@ class ParticleGenerator<ParticlesType, Reload> : public ParticleGenerator<Partic
 
   public:
     ParticleGenerator(SPHBody &sph_body, ParticlesType &particles, const std::string &reload_body_name);
-    virtual ~ParticleGenerator(){};
+    virtual ~ParticleGenerator() {};
     virtual void prepareGeometricData() override;
     virtual void setAllParticleBounds() override;
     virtual void initializeParticleVariables() override;

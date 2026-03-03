@@ -213,7 +213,7 @@ void TreeBody::buildParticleConfiguration(ParticleConfiguration &particle_config
 //=================================================================================================//
 size_t TreeBody::BranchLocation(size_t total_particles, size_t particle_idx)
 {
-    return particle_idx < total_particles ? branch_locations_[particle_idx] : MaxSize_t;
+    return particle_idx < total_particles ? branch_locations_[particle_idx] : MaxUnsignedInt;
 }
 //=================================================================================================//
 TreeBody::Branch::Branch(TreeBody *tree)
@@ -232,7 +232,7 @@ TreeBody::Branch::Branch(size_t parent_id, TreeBody *tree)
 }
 //=================================================================================================//
 TreeTerminates::TreeTerminates(SPHBody &sph_body)
-    : BodyPartByParticle(sph_body, "Leaves"),
+    : BodyPartByParticle(sph_body),
       tree_(DynamicCast<TreeBody>(this, sph_body))
 {
     for (const auto *branch : tree_.branches_)

@@ -16,11 +16,11 @@ std::string airfoil_flap_rear = "./input/airfoil_flap_rear.dat";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 1.25;             /**< airfoil length rear part. */
-Real DL1 = 0.25;            /**< airfoil length front part. */
-Real DH = 0.25;             /**< airfoil height. */
-Real resolution_ref = 0.02; /**< Reference resolution. */
-BoundingBox system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
+Real DL = 1.25;                /**< airfoil length rear part. */
+Real DL1 = 0.25;               /**< airfoil length front part. */
+Real DH = 0.25;                /**< airfoil height. */
+Real global_resolution = 0.02; /**< Reference resolution. */
+BoundingBoxd system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	import model as a complex shape
 //----------------------------------------------------------------------
@@ -42,22 +42,24 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.setRunParticleRelaxation(true); // tag to run particle relaxation when no commandline option
-    sph_system.handleCommandlineOptions(ac, av)->setIOEnvironment();
+    sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody airfoil(sph_system, makeShared<ImportModel>("AirFoil"));
-    airfoil.defineAdaptation<ParticleRefinementNearSurface>(1.15, 1.0, 3);
-    airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(sph_system);
-    airfoil.generateParticles<BaseParticles, Lattice, Adaptive>();
+    airfoil.defineAdaptation<AdaptiveNearSurface>(1.15, 1.0, 3);
+    airfoil.defineBodyLevelSetShape()
+        ->cleanLevelSet()
+        ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
+        ->writeLevelSet();
+    airfoil.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define outputs functions.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp airfoil_recording_to_vtp(airfoil);
     airfoil_recording_to_vtp.addToWrite<Real>(airfoil, "SmoothingLengthRatio");
-    MeshRecordingToPlt cell_linked_list_recording(sph_system, airfoil.getCellLinkedList());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies,
@@ -82,7 +84,6 @@ int main(int ac, char *av[])
     //	First output before the simulation.
     //----------------------------------------------------------------------
     airfoil_recording_to_vtp.writeToFile();
-    cell_linked_list_recording.writeToFile();
     //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------

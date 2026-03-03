@@ -32,6 +32,7 @@
 #define KERNEL_CORRECTION_CK_H
 
 #include "base_general_dynamics.h"
+#include "interaction_ck.h"
 
 namespace SPH
 {
@@ -63,7 +64,6 @@ class LinearCorrectionMatrix<Base, RelationType<Parameters...>>
     };
 
   protected:
-    DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Matd> *dv_B_;
 };
 
@@ -73,7 +73,7 @@ class LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>
 {
 
   public:
-    explicit LinearCorrectionMatrix(Relation<Inner<Parameters...>> &inner_relation, Real alpha = Real(0))
+    explicit LinearCorrectionMatrix(Inner<Parameters...> &inner_relation, Real alpha = Real(0))
         : LinearCorrectionMatrix<Base, Inner<Parameters...>>(inner_relation), alpha_(alpha) {};
     template <typename BodyRelationType, typename FirstArg>
     explicit LinearCorrectionMatrix(DynamicsArgs<BodyRelationType, FirstArg> parameters)
@@ -113,7 +113,7 @@ class LinearCorrectionMatrix<Contact<Parameters...>>
     : public LinearCorrectionMatrix<Base, Contact<Parameters...>>
 {
   public:
-    explicit LinearCorrectionMatrix(Relation<Contact<Parameters...>> &contact_relation);
+    explicit LinearCorrectionMatrix(Contact<Parameters...> &contact_relation);
     virtual ~LinearCorrectionMatrix() {};
 
     class InteractKernel
@@ -129,9 +129,6 @@ class LinearCorrectionMatrix<Contact<Parameters...>>
       protected:
         Real *contact_Vol_k_;
     };
-
-  protected:
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
 };
 
 using LinearCorrectionMatrixComplex = LinearCorrectionMatrix<Inner<WithUpdate>, Contact<>>;
@@ -139,6 +136,7 @@ using LinearCorrectionMatrixComplex = LinearCorrectionMatrix<Inner<WithUpdate>, 
 class NoKernelCorrectionCK : public KernelCorrection
 {
   public:
+    typedef Real CorrectionDataType;
     NoKernelCorrectionCK(BaseParticles *particles) : KernelCorrection() {};
 
     class ComputingKernel : public ParameterFixed<Real>
@@ -154,6 +152,7 @@ class NoKernelCorrectionCK : public KernelCorrection
 class LinearCorrectionCK : public KernelCorrection
 {
   public:
+    typedef Matd CorrectionDataType;
     LinearCorrectionCK(BaseParticles *particles)
         : KernelCorrection(),
           dv_B_(particles->getVariableByName<Matd>("LinearCorrectionMatrix")) {};

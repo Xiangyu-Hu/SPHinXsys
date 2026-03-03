@@ -12,7 +12,7 @@
  * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
  *  HU1527/12-1 and HU1527/12-4.                                             *
  *                                                                           *
- * Portions copyright (c) 2017-2023 Technical University of Munich and       *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
  * the authors' affiliations.                                                *
  *                                                                           *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
@@ -33,7 +33,6 @@
 #include "base_data_type.h"
 #include "base_implementation.h"
 #include "execution_policy.h"
-#include "loop_range.h"
 #include "ownership.h"
 
 namespace SPH
@@ -96,7 +95,7 @@ template <class ExecutionPolicy, class LocalDynamicsType, class ComputingKernelT
 class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     : public Implementation<Base>
 {
-    UniquePtrKeeper<ComputingKernelType> kernel_ptr_keeper_;
+    UniquePtrKeeper<ComputingKernelType> kernel_keeper_;
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
@@ -114,7 +113,7 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
         {
             computing_kernel_ = allocateComputingKernel<ComputingKernelType>(ExecutionPolicy{});
             ComputingKernelType *temp_kernel =
-                kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
+                kernel_keeper_.template createPtr<ComputingKernelType>(
                     ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
             copyComputingKernel(ExecutionPolicy{}, temp_kernel, computing_kernel_);
             this->setUpdated();
@@ -132,7 +131,7 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     void overwriteComputingKernel(Args &&...args)
     {
         ComputingKernelType *temp_kernel =
-            kernel_ptr_keeper_.template createPtr<ComputingKernelType>(
+            kernel_keeper_.template createPtr<ComputingKernelType>(
                 ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
         copyComputingKernel(ExecutionPolicy{}, temp_kernel, computing_kernel_);
         this->setUpdated();
