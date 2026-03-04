@@ -28,6 +28,7 @@ template <typename... SummationType>
 void DensitySummation<Inner<FreeSurface, SummationType...>>::update(size_t index_i, Real dt)
 {
     this->rho_[index_i] = SMAX(this->rho_sum_[index_i], this->rho0_);
+    this->Vol_[index_i] = this->mass_[index_i] / this->rho_[index_i];
 }
 //=================================================================================================//
 template <typename NearSurfaceType, typename... SummationType>
@@ -43,6 +44,7 @@ void DensitySummation<Inner<NearSurfaceType, SummationType...>>::update(size_t i
         isNearFreeSurface(index_i)
             ? near_surface_rho_(this->rho_sum_[index_i], this->rho0_, this->rho_[index_i])
             : this->rho_sum_[index_i];
+    this->Vol_[index_i] = this->mass_[index_i] / this->rho_[index_i];
 }
 //=================================================================================================//
 template <typename NearSurfaceType, typename... SummationType>
