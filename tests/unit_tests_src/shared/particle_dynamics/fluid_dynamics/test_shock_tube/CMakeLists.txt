@@ -15,8 +15,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE sphinxsys_2d)
 
 find_package(GTest REQUIRED)
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${GTEST_INCLUDE_DIRS})
-
-target_link_libraries(${PROJECT_NAME} PRIVATE /opt/homebrew/lib/libgtest_main.a /opt/homebrew/lib/libgtest.a)
+target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest GTest::gtest_main)
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
