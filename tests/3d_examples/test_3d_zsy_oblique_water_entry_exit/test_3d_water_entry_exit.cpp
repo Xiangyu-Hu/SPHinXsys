@@ -18,11 +18,11 @@ Real LL = 1.5; /**< Water column length. */
 Real LW = 1; /**< Water column width. */
 Real LH = 0.5; /**< Water column height. */
 
-Real particle_spacing_ref = 0.004;   /**< Initial reference particle spacing. */
+Real particle_spacing_ref = 0.02;   /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 
 //Vecd object_center(0.5 * DL, LH + 0.2, 0.5 * DW); /**< Location of the object center. */
-Vecd object_center(0.32, 0.528, 0.5); /**< Location of the object center. */
+Vecd object_center(0.46, 0.528, 0.5); /**< Location of the object center. */
 // 初始速度参数
 Real initial_speed = 70.0;                     /**< Initial velocity magnitude (m/s). */
 Real initial_angle = -20.0 * Pi / 180.0;       /**< Initial velocity angle (radians, negative = downward). */
@@ -83,7 +83,7 @@ StdVec<Vecd> observer_location = {object_center}; /**< Displacement observation 
 StdVec<Vecd> wetting_observer_location =
     {object_center - Vecd(0.0, 0.05, 0.0)}; /**< wetting observation point. */
 // 前缘观测点（入水点）
-StdVec<Vecd> leading_edge_location = {Vecd(0.32, 0.528, 0.5)}; /**< Leading edge observation point. */
+StdVec<Vecd> leading_edge_location = {object_center}; /**< Leading edge observation point. */
 
 //----------------------------------------------------------------------
 //  汇总输出类（3D版本）
@@ -99,12 +99,8 @@ class SummaryOutput3D
                      << "ViscousForceGlobal_X ViscousForceGlobal_Y ViscousForceGlobal_Z   "
                      << "PressureForceGlobal_X PressureForceGlobal_Y PressureForceGlobal_Z   "
                      << "ViscousForceLocal_X ViscousForceLocal_Y ViscousForceLocal_Z   "
-                     << "PressureForceLocal_X PressureForceLocal_Y PressureForceLocal_Z\n";
-    }
-
-    ~SummaryOutput3D()
-    {
-        output_file_.close();
+                     << "PressureForceLocal_X PressureForceLocal_Y PressureForceLocal_Z   "
+                     << "TotalForceLocal_X TotalForceLocal_Y TotalForceLocal_Z\n"; // 新增
     }
 
     void writeData(Real time,
@@ -112,7 +108,8 @@ class SummaryOutput3D
                    const Vecd &viscous_force_global,
                    const Vecd &pressure_force_global,
                    const Vecd &viscous_force_local,
-                   const Vecd &pressure_force_local)
+                   const Vecd &pressure_force_local,
+                   const Vecd &total_force_local) // 新增参数
     {
         output_file_ << std::scientific << std::setprecision(9)
                      << time << " "
@@ -120,14 +117,14 @@ class SummaryOutput3D
                      << viscous_force_global[0] << " " << viscous_force_global[1] << " " << viscous_force_global[2] << " "
                      << pressure_force_global[0] << " " << pressure_force_global[1] << " " << pressure_force_global[2] << " "
                      << viscous_force_local[0] << " " << viscous_force_local[1] << " " << viscous_force_local[2] << " "
-                     << pressure_force_local[0] << " " << pressure_force_local[1] << " " << pressure_force_local[2] << "\n";
+                     << pressure_force_local[0] << " " << pressure_force_local[1] << " " << pressure_force_local[2] << " "
+                     << total_force_local[0] << " " << total_force_local[1] << " " << total_force_local[2] << "\n"; // 新增
         output_file_.flush();
     }
 
   private:
     std::ofstream output_file_;
 };
-
 //----------------------------------------------------------------------
 //  Definition for water body (3D)
 //----------------------------------------------------------------------
@@ -607,7 +604,7 @@ int main(int ac, char *av[])
     int screen_output_interval = 1;
     int observation_sample_interval = screen_output_interval * 1;
 
-    Real end_time = 0.0015; // 模拟结束时间
+    Real end_time = 0.015; // 模拟结束时间
     Real output_interval = 0.0005;
 
     /*Real output_interval = end_time / 100.0;*/
@@ -736,21 +733,24 @@ int main(int ac, char *av[])
 
                 MBsystem.realize(current_state, SimTK::Stage::Velocity); // 确保状态已实现
 
-                Real rotation_angle_z = getObjectRotationAngle(structure_mob, current_state);
-
+                //Real rotation_angle_z = getObjectRotationAngle(structure_mob, current_state);
+                Real rotation_angle_z = initial_pitch_angle+getObjectRotationAngle(structure_mob, current_state);
 
                 // 将全局力转换到局部坐标系
                 Vecd viscous_force_local = transformGlobalForceToLocal(total_viscous_force_global, rotation_angle_z);
                 Vecd pressure_force_local = transformGlobalForceToLocal(total_pressure_force_global, rotation_angle_z);
 
 
-                // 输出到汇总文件
+
+                Vecd total_force_local = viscous_force_local + pressure_force_local;
+
                 summary_output.writeData(physical_time,
                                          leading_edge_pos,
                                          total_viscous_force_global,
                                          total_pressure_force_global,
                                          viscous_force_local,
-                                         pressure_force_local);
+                                         pressure_force_local,
+                                         total_force_local); // 新增参数
 
                 if (number_of_iterations % observation_sample_interval == 0)
                 {
