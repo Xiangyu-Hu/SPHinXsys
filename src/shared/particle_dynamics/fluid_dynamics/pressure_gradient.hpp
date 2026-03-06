@@ -13,8 +13,11 @@ template <class BaseRelationType>
 PressureGradient<DataDelegationType>::PressureGradient(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      p_(this->particles_->template getVariableDataByName<Real>("Pressure")),
-      p_grad_(this->particles_->template registerStateVariable<Vecd>("PressureGradient")) {}
+      p_(this->particles_->template getVariableDataByName<Real>("Pressure"))
+{
+    this->particles_->template registerStateVariable<Vecd>("PressureGradient");
+    p_grad_ = this->particles_->template getVariableDataByName<Vecd>("PressureGradient");
+}
 
 template <class KernelCorrectionType>
 PressureGradient<Inner<KernelCorrectionType>>::PressureGradient(BaseInnerRelation &inner_relation)

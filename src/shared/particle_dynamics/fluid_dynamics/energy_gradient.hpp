@@ -12,8 +12,12 @@ template <class BaseRelationType>
 EnergyGradient<DataDelegationType>::EnergyGradient(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      energy_(this->particles_->template getVariableDataByName<Real>("Energy")),
-      energy_grad_(this->particles_->template registerStateVariable<Vecd>("EnergyGradient")) {}
+      energy_(this->particles_->template getVariableDataByName<Real>("Energy"))
+{
+    this->particles_->template registerStateVariable<Vecd>("EnergyGradient");
+    energy_grad_ = this->particles_->template getVariableDataByName<Vecd>("EnergyGradient");
+}
+
 template <class KernelCorrectionType>
 EnergyGradient<Inner<KernelCorrectionType>>::EnergyGradient(BaseInnerRelation &inner_relation)
     : EnergyGradient<DataDelegateInner>(inner_relation),

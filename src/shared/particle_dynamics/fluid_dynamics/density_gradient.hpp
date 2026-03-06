@@ -12,8 +12,11 @@ template <class BaseRelationType>
 DensityGradient<DataDelegationType>::DensityGradient(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      rho_(this->particles_->template getVariableDataByName<Real>("Density")),
-      rho_grad_(this->particles_->template registerStateVariable<Vecd>("DensityGradient")) {}
+      rho_(this->particles_->template getVariableDataByName<Real>("Density"))
+{
+    this->particles_->template registerStateVariable<Vecd>("DensityGradient");
+    rho_grad_ = this->particles_->template getVariableDataByName<Vecd>("DensityGradient");
+}
 
 template <class KernelCorrectionType>
 DensityGradient<Inner<KernelCorrectionType>>::DensityGradient(BaseInnerRelation &inner_relation)

@@ -21,6 +21,7 @@ Real boundary_width   = particle_spacing * 4; // boundary width
 Real min_computed(0.0);
 Real max_computed(0.0);
 Real reference = 2.0;
+
 TEST(PressureGradient, MaxErrorNorm)
 {
     Real max_error = ABS(min_computed - reference) / reference;
@@ -38,10 +39,9 @@ class UpperBoundary : public ComplexShape
     explicit UpperBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd scaled_container(0.5 * width + boundary_width, 0.5 * boundary_width);
-        Transform translate_to_origin(scaled_container);
         Vecd transform(-boundary_width, height);
         Transform translate_to_position(transform + scaled_container);
-        add<TransformShape<GeometricShapeBox>>(Transform(translate_to_position), scaled_container);
+        add<GeometricShapeBox>(Transform(translate_to_position), scaled_container);
     }
 };
 
@@ -59,9 +59,9 @@ class WallBoundary : public ComplexShape
         Transform translate_to_origin_inner(
             Vec2d(-boundary_width, 0.0) + scaled_container);
 
-        add<TransformShape<GeometricShapeBox>>(
+        add<GeometricShapeBox>(
             Transform(translate_to_origin_outer), scaled_container_outer);
-        subtract<TransformShape<GeometricShapeBox>>(
+        subtract<GeometricShapeBox>(
             Transform(translate_to_origin_inner), scaled_container);
     }
 };
@@ -73,8 +73,7 @@ class WaterBlock : public ComplexShape
     {
         Vecd scaled_container(0.5 * width, 0.5 * height);
         Transform translate_to_origin(scaled_container);
-        add<TransformShape<GeometricShapeBox>>(Transform(translate_to_origin),
-                                               scaled_container);
+        add<GeometricShapeBox>(Transform(translate_to_origin), scaled_container);
     }
 };
 
@@ -84,7 +83,7 @@ class WaterBlock : public ComplexShape
 class LinearPressureProfile : public fluid_dynamics::FluidInitialCondition
 {
   public:
-    Real* p_;
+    Real *p_;
 
     explicit LinearPressureProfile(SPHBody &sph_body)
         : fluid_dynamics::FluidInitialCondition(sph_body)
@@ -95,14 +94,14 @@ class LinearPressureProfile : public fluid_dynamics::FluidInitialCondition
     void update(size_t index_i, Real dt)
     {
         // Exactly match the velocity profile pattern for linear reproduction
-        p_[index_i] = pos_[index_i][1] / height;  // Linear profile exactly like velocity
+        p_[index_i] = pos_[index_i][1] / height;
     }
 };
 
 class BoundaryPressure : public BodyPartMotionConstraint
 {
   public:
-    Real* p_;
+    Real *p_;
 
     explicit BoundaryPressure(BodyPartByParticle &body_part)
         : BodyPartMotionConstraint(body_part)
@@ -113,7 +112,7 @@ class BoundaryPressure : public BodyPartMotionConstraint
     void update(size_t index_i, Real dt = 0.0)
     {
         // Upper boundary value matches velocity test
-        p_[index_i] = 1.0;  // Same as velocity at upper boundary
+        p_[index_i] = 1.0;
     }
 };
 
@@ -122,12 +121,11 @@ class BoundaryPressure : public BodyPartMotionConstraint
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
-    BoundingBox system_domain_bounds(
+    BoundingBoxd system_domain_bounds(
         Vecd(-boundary_width * 2, -boundary_width * 2),
         Vecd(width + boundary_width * 2, height + boundary_width * 2));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
-    sph_system.setIOEnvironment();
-
+    sph_system.handleCommandlineOptions(ac, av);
     // Creating bodies with materials and particles
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(
@@ -152,14 +150,18 @@ int main(int ac, char *av[])
     PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);
     InteractionDynamics<fluid_dynamics::DistanceFromWall> distance_to_wall(water_wall_contact);
-    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(water_block_inner, water_wall_contact);
-    InteractionWithUpdate<fluid_dynamics::PressureGradientWithWall<LinearGradientCorrection>> pressure_grad_calculation(water_block_inner, water_wall_contact);
-    
+    InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> corrected_configuration_fluid(
+        water_block_inner, water_wall_contact);
+    InteractionWithUpdate<fluid_dynamics::PressureGradientWithWall<LinearGradientCorrection>>
+        pressure_grad_calculation(water_block_inner, water_wall_contact);
+
     BodyRegionByParticle upper_wall(wall_boundary, makeShared<UpperBoundary>("UpperWall"));
     SimpleDynamics<BoundaryPressure> upper_wall_pressure(upper_wall);
-    
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_pressure_gradient_norm(water_block, "PressureGradient");
-    ReduceDynamics<VariableNorm<Vecd, ReduceMin>> minimum_pressure_gradient_norm(water_block, "PressureGradient");
+
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_pressure_gradient_norm(
+        water_block, "PressureGradient");
+    ReduceDynamics<VariableNorm<Vecd, ReduceMin>> minimum_pressure_gradient_norm(
+        water_block, "PressureGradient");
 
     // I/O and regression test setup
     BodyStatesRecordingToVtp body_states_recording(sph_system);
