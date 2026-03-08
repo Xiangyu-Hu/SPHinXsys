@@ -41,25 +41,21 @@ SPHSystem &SPHBody::getSPHSystem()
     return sph_system_;
 }
 //=================================================================================================//
+SPHAdaptation &SPHBody::getSPHAdaptation()
+{
+    checkPointer(sph_adaptation_, "sph_adaptation_", body_name_);
+    return *sph_adaptation_;
+}
+//=================================================================================================//
 BaseParticles &SPHBody::getBaseParticles()
 {
-    if (base_particles_ == nullptr)
-    {
-        std::cout << "\n Error: BaseParticle not generated yet! \n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
+    checkPointer(base_particles_, "base_particles_", body_name_);
     return *base_particles_;
 };
 //=================================================================================================//
 BaseMaterial &SPHBody::getBaseMaterial()
 {
-    if (base_material_ == nullptr)
-    {
-        std::cout << "\n Error: BaseMaterial not generated yet! \n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
+    checkPointer(base_material_, "base_material_", body_name_);
     return *base_material_;
 };
 //=================================================================================================//

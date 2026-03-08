@@ -24,15 +24,27 @@ inline Real AcousticTimeStepCK::ReduceKernel::reduce(size_t index_i, Real dt)
     return SMAX(c0_ + vel_[index_i].norm(), acc_scale);
 }
 //=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+BaseStructureIntegration1stHalf::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      force_(encloser.dv_force_->DelegatedData(ex_policy)),
+      force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+inline void BaseStructureIntegration1stHalf::UpdateKernel::update(size_t index_i, Real dt)
+{
+    vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
+}
+//=================================================================================================//
 template <class MaterialType, typename KernelCorrectionType, typename... Parameters>
 StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, Parameters...>>::
     StructureIntegration1stHalf(Inner<Parameters...> &inner_relation, Real numerical_damping_factor)
-    : BaseInteraction(inner_relation), StructureDynamicsVariables(this->particles_),
+    : BaseInteraction(inner_relation), BaseStructureIntegration1stHalf(this->particles_),
       material_(DynamicCast<MaterialType>(this, this->particles_->getBaseMaterial())),
       adaptation_(DynamicCast<Adaptation>(this, this->sph_body_->getSPHAdaptation())),
       kernel_correction_(this->particles_), h_ref_(adaptation_.ReferenceSmoothingLength()),
-      numerical_damping_factor_(numerical_damping_factor),
-      dv_force_prior_(this->particles_->template registerStateVariable<Vecd>("ForcePrior")) {}
+      numerical_damping_factor_(numerical_damping_factor) {}
 //=================================================================================================//
 template <class MaterialType, typename KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -64,7 +76,7 @@ void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionT
     Matd normalized_be = constitute_.ElasticLeftCauchy(F_[index_i], index_i, dt);
     inverse_F_[index_i] = F_[index_i].inverse();
     Matd inverse_F_T = inverse_F_[index_i].transpose();
-    scaling_matrix_[index_i] = normalized_be * inverse_F_T;
+    scaling_matrix_[index_i] = G_ * normalized_be * inverse_F_T * correction_(index_i);
     Real isotropic_stress = G_ * normalized_be.trace() * OneOverDimensions;
     // Note that as we use small numerical damping here, the time step size (CFL number) may need to be decreased.
     stress_on_particle_[index_i] =
@@ -79,7 +91,6 @@ template <class ExecutionPolicy, class EncloserType>
 StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, Parameters...>>::
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
-      G_(encloser.material_.ShearModulus()),
       Vol0_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
@@ -106,27 +117,67 @@ void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionT
         Real e_ij_difference_norm = e_ij_difference.norm();
 
         Real limiter = SMIN(10.0 * SMAX(e_ij_difference_norm - 0.05, 0.0), 1.0);
-        Vecd shear_force_ij = G_ * pair_scaling * (nablaW_ijV_j + limiter * nablaW_ijV_j.dot(e_ij) * e_ij_difference);
+        Vecd shear_force_ij = pair_scaling * (nablaW_ijV_j + limiter * nablaW_ijV_j.dot(e_ij) * e_ij_difference);
         sum += (stress_on_particle_[index_i] + stress_on_particle_[index_j]) * nablaW_ijV_j + shear_force_ij;
     }
 
     force_[index_i] = sum * Vol0_[index_i];
 };
 //=================================================================================================//
-template <class MaterialType, typename KernelCorrectionType, typename... Parameters>
-template <class ExecutionPolicy, class EncloserType>
-StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, Parameters...>>::
-    UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
-      force_(encloser.dv_force_->DelegatedData(ex_policy)),
-      force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)) {}
+template <class MaterialType, typename... Parameters>
+StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...>>::
+    StructureIntegration1stHalfPK2(Inner<Parameters...> &inner_relation)
+    : BaseInteraction(inner_relation), BaseStructureIntegration1stHalf(this->particles_),
+      material_(DynamicCast<MaterialType>(this, this->particles_->getBaseMaterial())),
+      adaptation_(DynamicCast<Adaptation>(this, this->sph_body_->getSPHAdaptation())) {}
 //=================================================================================================//
-template <class MaterialType, typename KernelCorrectionType, typename... Parameters>
-void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, Parameters...>>::
-    UpdateKernel::update(size_t index_i, Real dt)
+template <class MaterialType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...>>::
+    InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : constitute_(ex_policy, encloser.material_), rho0_(encloser.material_.ReferenceDensity()),
+      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
+      B_(encloser.dv_B_->DelegatedData(ex_policy)),
+      F_(encloser.dv_F_->DelegatedData(ex_policy)),
+      dF_dt_(encloser.dv_dF_dt_->DelegatedData(ex_policy)),
+      stress_on_particle_(encloser.dv_stress_on_particle_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <class MaterialType, typename... Parameters>
+void StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...>>::
+    InitializeKernel::initialize(size_t index_i, Real dt)
 {
-    vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
+    pos_[index_i] += vel_[index_i] * dt * 0.5;
+    F_[index_i] += dF_dt_[index_i] * dt * 0.5;
+    rho_[index_i] = rho0_ / F_[index_i].determinant();
+    // obtain the first Piola-Kirchhoff stress from the second Piola-Kirchhoff stress
+    // it seems using reproducing correction here increases convergence rate near the free surface,
+    // note that the correction matrix is in a form of transpose
+    stress_on_particle_[index_i] = constitute_.StressPK1(F_[index_i], index_i) * B_[index_i].transpose();
+}
+//=================================================================================================//
+template <class MaterialType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...>>::
+    InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseInteraction::InteractKernel(ex_policy, encloser),
+      Vol0_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      force_(encloser.dv_force_->DelegatedData(ex_policy)),
+      stress_on_particle_(encloser.dv_stress_on_particle_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <class MaterialType, typename... Parameters>
+void StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...>>::InteractKernel::
+    interact(size_t index_i, Real dt)
+{
+    Vecd sum = Vecd::Zero();
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Vecd nablaW_ijV_j = this->nablaW_ij(index_i, index_j) * Vol0_[index_j];
+        sum += (stress_on_particle_[index_i] + stress_on_particle_[index_j]) * nablaW_ijV_j;
+    }
+    force_[index_i] = sum * Vol0_[index_i];
 }
 //=================================================================================================//
 template <typename... Parameters>
@@ -170,7 +221,7 @@ void StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::InteractKernel
         sum -= (vel_[index_i] - vel_[index_j]) * nablaW_ijV_j.transpose();
     }
     dF_dt_[index_i] = sum * B_[index_i];
-};
+}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -234,7 +285,7 @@ void StructureNumericalDamping<Inner<WithUpdate, MaterialType, Parameters...>>::
         sum += numerical_damping_factor_ * weight * numerical_stress_ij * nablaW_ijV_j;
     }
     numerical_damping_force_[index_i] = sum * Vol0_[index_i];
-};
+}
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 UpdateElasticNormalDirectionCK::UpdateKernel::

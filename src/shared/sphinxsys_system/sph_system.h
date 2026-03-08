@@ -85,8 +85,6 @@ class SPHSystem
     void initializeSystemCellLinkedLists();
     /** Initialize particle configuration for the SPH system. */
     void initializeSystemConfigurations();
-    /** get the min time step from all bodies. */
-    Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
     Real GlobalResolution() { return global_resolution_; };
     void setGlobalResolution(Real global_resolution) { global_resolution_ = global_resolution; };
     SPHBodyVector getSPHBodies() { return sph_bodies_; };
@@ -94,7 +92,6 @@ class SPHSystem
     void addSPHBody(SPHBody *sph_body) { sph_bodies_.push_back(sph_body); };
     void addRealBody(RealBody *real_body);
     void addObservationBody(SPHBody *sph_body) { observation_bodies_.push_back(sph_body); };
-    void addSolidBody(SolidBody *solid_body);
     BoundingBoxd getSystemDomainBounds() { return system_domain_bounds_; };
     void setSystemDomainBounds(const BoundingBoxd &domain_bounds) { system_domain_bounds_ = domain_bounds; };
 
@@ -134,7 +131,6 @@ class SPHSystem
     bool is_physical_;                       /**< flag for physical or non-physical system. */
     SPHBodyVector sph_bodies_;               /**< All sph bodies. */
     SPHBodyVector observation_bodies_;       /**< The bodies without inner particle configuration. */
-    SolidBodyVector solid_bodies_;           /**< The bodies with inner particle configuration and acoustic time steps . */
     IOEnvironment *io_environment_;          /**< io environment */
     SPHBodyVector real_bodies_;              /**< The bodies with inner particle configuration. */
     bool run_particle_relaxation_;           /**< run particle relaxation for body fitted particle distribution */

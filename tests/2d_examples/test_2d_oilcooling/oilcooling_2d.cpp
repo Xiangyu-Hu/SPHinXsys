@@ -28,7 +28,7 @@ Real angle_increment = 2 * Pi / Wnum;
 Real WD = 0.5 * DRO + AG + 0.5 * WH;     /**< Distance from center point to the center of a winding. */
 Real ZW = 0.5 * DRO + AG;                /**< Distance from center point to the site of a winding. */
 int resolution_circle = 60;              /**<Approximate the circle as the number of sides of the polygon. */
-Real global_resolution = 0.00075;           /**< Initial reference particle spacing. */
+Real global_resolution = 0.00075;        /**< Initial reference particle spacing. */
 Real BW = 0.5 * (DMO - DM);              /**< Extending width for wall boundary. */
 Real OH = LH;                            /**< Outflows region height. */
 Real Lnum = 5;                           /**< Inflows number. */
@@ -297,21 +297,21 @@ int main(int ac, char *av[])
     oil_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
-    wall.defineBodyLevelSetShape()->writeLevelSet();
+    wall.defineBodyLevelSetShape().writeLevelSet();
     wall.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? wall.generateParticles<BaseParticles, Reload>(wall.getName())
         : wall.generateParticles<BaseParticles, Lattice>();
 
     SolidBody rotor(sph_system, makeShared<RotorBoundary>("Rotor"));
-    rotor.defineBodyLevelSetShape()->writeLevelSet();
+    rotor.defineBodyLevelSetShape().writeLevelSet();
     rotor.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? rotor.generateParticles<BaseParticles, Reload>(rotor.getName())
         : rotor.generateParticles<BaseParticles, Lattice>();
 
     SolidBody winding(sph_system, makeShared<WindingBoundary>("Winding"));
-    winding.defineBodyLevelSetShape()->writeLevelSet();
+    winding.defineBodyLevelSetShape().writeLevelSet();
     winding.defineClosure<Solid, IsotropicDiffusion>(
         Solid(), ConstructArgs(temperature_species_name, k_winding));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())

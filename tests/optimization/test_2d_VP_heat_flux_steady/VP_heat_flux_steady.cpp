@@ -216,7 +216,6 @@ TEST(test_optimization, test_problem4_non_optimization)
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    RestartIO restart_io(sph_system);
     ObservedQuantityRecording<Real> write_solid_temperature(diffusion_species_name, temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -235,7 +234,6 @@ TEST(test_optimization, test_problem4_non_optimization)
     int ite = 0;
     Real T0 = 10;
     Real End_Time = T0;
-    int restart_output_interval = 1000;
     Real dt = 0.0;
     Real current_averaged_temperature = 0.0;
     Real current_averaged_boundary_temperature = 0.0;
@@ -277,10 +275,6 @@ TEST(test_optimization, test_problem4_non_optimization)
         ite++;
         physical_time += dt;
 
-        if (ite % restart_output_interval == 0)
-        {
-            restart_io.writeToFile(ite);
-        }
     }
     TickCount t4 = TickCount::now();
     TickCount::interval_t tt;

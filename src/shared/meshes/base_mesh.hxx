@@ -134,11 +134,7 @@ DiscreteVariable<DataType> *MultiResolutionMeshField<MeshType>::getCellVariable(
 {
     DiscreteVariable<DataType> *variable =
         findVariableByName<DataType, DiscreteVariable>(all_cell_variables_, variable_name);
-    if (variable == nullptr)
-    {
-        std::cout << "\n Error: the cell variable '" << variable_name << "' is not exist!" << std::endl;
-        exit(1);
-    }
+    checkPointer(variable, variable_name, "cell variable");
     return variable;
 }
 //=============================================================================================//

@@ -173,11 +173,7 @@ DiscreteVariable<PackageData<DataType, PKG_SIZE>> *SparseMeshField<PKG_SIZE>::
 {
     PackageVariable<DataType> *variable =
         findVariableByName<DataType, PackageVariable>(all_pkg_variables_, variable_name);
-    if (variable == nullptr)
-    {
-        std::cout << "\n Error: the mesh variable '" << variable_name << "' is not exist!" << std::endl;
-        exit(1);
-    }
+    checkPointer(variable, variable_name, "package variable");
     return variable;
 }
 //=============================================================================================//
@@ -188,11 +184,7 @@ DiscreteVariable<DataType> *SparseMeshField<PKG_SIZE>::
 {
     MetaVariable<DataType> *variable =
         findVariableByName<DataType, MetaVariable>(all_meta_variables_, variable_name);
-    if (variable == nullptr)
-    {
-        std::cout << "\n Error: the meta variable '" << variable_name << "' is not exist!" << std::endl;
-        exit(1);
-    }
+    checkPointer(variable, variable_name, "meta variable");
     return variable;
 }
 //=============================================================================================//

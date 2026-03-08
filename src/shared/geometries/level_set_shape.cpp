@@ -1,8 +1,8 @@
 #include "level_set_shape.h"
 
 #include "all_io.h"
-#include "sph_system.h"
 #include "base_body.h"
+#include "sph_system.h"
 
 namespace SPH
 {
@@ -23,23 +23,23 @@ LevelSetShape::LevelSetShape(
     is_bounds_found_ = true;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::writeLevelSet()
+LevelSetShape &LevelSetShape::writeLevelSet()
 {
     MeshRecordingToPlt write_level_set_to_plt(sph_system_, level_set_);
     write_level_set_to_plt.writeToFile(0);
-    return this;
+    return *this;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::cleanLevelSet(UnsignedInt repeat_times)
+LevelSetShape &LevelSetShape::cleanLevelSet(UnsignedInt repeat_times)
 {
     level_set_.cleanInterface(repeat_times);
-    return this;
+    return *this;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::correctLevelSetSign()
+LevelSetShape &LevelSetShape::correctLevelSetSign()
 {
     level_set_.correctTopology();
-    return this;
+    return *this;
 }
 //=================================================================================================//
 bool LevelSetShape::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)

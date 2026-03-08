@@ -222,8 +222,6 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<int>(water_body, "Indicator");
     body_states_recording.addToWrite<Vecd>(wall_boundary, "Velocity");
 
-    RestartIOCK<MainExecutionPolicy> restart_io(sph_system);
-
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_horizontal_velocity("Velocity", horizontal_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_vertical_velocity("Velocity", vertical_observer_contact);
     //----------------------------------------------------------------------
@@ -231,13 +229,6 @@ int main(int ac, char *av[])
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
     SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
-    //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        sv_physical_time->setValue(restart_io.readRestartFiles(sph_system.RestartStep()));
-    }
     wall_boundary_normal_direction.exec(); // run particle dynamics on CPU first
     water_cell_linked_list.exec();
     wall_cell_linked_list.exec();
@@ -249,9 +240,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    int restart_output_interval = screen_output_interval * 10;
     Real end_time = 30.0;
     Real output_interval = 1.0;
     //----------------------------------------------------------------------
@@ -310,15 +300,13 @@ int main(int ac, char *av[])
             water_update_particle_position.exec();
             interval_acoustic_steps += TickCount::now() - time_instance;
 
-            /** screen output, write body observables and restart files  */
+            /** screen output, write body observables  */
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << sv_physical_time->getValue()
                           << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
 
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
 
@@ -360,7 +348,7 @@ int main(int ac, char *av[])
         write_horizontal_velocity.generateDataBase(1.0e-3);
         write_vertical_velocity.generateDataBase(1.0e-3);
     }
-    else if (sph_system.RestartStep() == 0)
+    else
     {
         write_horizontal_velocity.testResult();
         write_vertical_velocity.testResult();

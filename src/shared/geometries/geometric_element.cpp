@@ -89,8 +89,8 @@ BoundingBoxd GeometricBall::findBounds()
     return BoundingBoxd(-shift, shift);
 }
 //=================================================================================================//
-GeometricCylinder::GeometricCylinder(const Vecd &axis, Real radius, Real halflength)
-    : axis_(axis.normalized()), radius_(radius), halflength_(halflength)
+GeometricCylinder::GeometricCylinder(Real radius, Real halflength)
+    : radius_(radius), halflength_(halflength)
 {
     if (radius < 0.0)
     {
@@ -106,97 +106,59 @@ GeometricCylinder::GeometricCylinder(const Vecd &axis, Real radius, Real halflen
     }
 }
 //=================================================================================================//
-bool GeometricCylinder::checkContain(const Vecd &probe_point)
-{
-    Real axial_projection = probe_point.dot(axis_);
-    if (ABS(axial_projection) > halflength_)
-    {
-        return false;
-    }
-    Vecd radial_vector = probe_point - axial_projection * axis_;
-    return radial_vector.norm() <= radius_;
-}
-//=================================================================================================//
 Vecd GeometricCylinder::findClosestPoint(const Vecd &probe_point)
 {
-    // Decompose probe point into axial and radial components
-    Real axial_projection = probe_point.dot(axis_);
-    Vecd radial_vector = probe_point - axial_projection * axis_;
-    Real radial_distance = radial_vector.norm();
-    
-    // Compute signed distance components
-    // dh: signed distance along the axis (positive if outside caps)
-    Real dh = ABS(axial_projection) - halflength_;
-    // dr: signed distance normal to the axis (positive if outside cylinder surface)
+    Real axial = probe_point[0];
+    Real radial_distance = probe_point.tail(Dimensions - 1).norm();
+
+    Real dh = ABS(axial) - halflength_;
     Real dr = radial_distance - radius_;
-    
-    // Clamp axial projection to cylinder caps using clamp function
-    Real clamped_axial = clamp(axial_projection, -halflength_, halflength_);
-    
-    // Normalize radial vector and scale to radius
-    Vecd normalized_radial;
+    Real clamped_axial = clamp(axial, -halflength_, halflength_);
+
+    Vecd result;
+    result[0] = clamped_axial;
     if (radial_distance > Eps)
-        normalized_radial = radius_ * radial_vector / radial_distance;
+        result.tail(Dimensions - 1) = (radius_ / radial_distance) * probe_point.tail(Dimensions - 1);
     else
     {
-        // Point on axis - choose arbitrary radial direction
-        normalized_radial = Vecd::Zero();
-        normalized_radial[0] = radius_;
+        result.tail(Dimensions - 1).setZero();
+        result.tail(Dimensions - 1)[0] = radius_;
     }
-    
-    // Determine closest point based on signed distances using SMAX
-    Real max_dist = SMAX(dr, dh);
-    if (max_dist <= 0.0)
+
+    if (SMAX(dr, dh) <= 0.0)
     {
-        // Point inside cylinder - project to nearest surface
+        // Point inside: project to nearest surface
         if (dr >= dh)
-        {
-            // Closer to cylindrical surface (or equal distance - choose surface)
-            return axial_projection * axis_ + normalized_radial;
-        }
+            result[0] = axial; // closer to cylindrical surface
+        else if (radial_distance > Eps)
+            result.tail(Dimensions - 1) = probe_point.tail(Dimensions - 1); // closer to end cap
         else
-        {
-            // Closer to end cap
-            return clamped_axial * axis_ + radial_vector;
-        }
+            result.tail(Dimensions - 1).setZero();
+    }
+    else if (dh > 0.0 && dr <= 0.0)
+    {
+        // Outside axially, inside radially: project to cap
+        if (radial_distance > Eps)
+            result.tail(Dimensions - 1) = probe_point.tail(Dimensions - 1);
+        else
+            result.tail(Dimensions - 1).setZero();
     }
     else if (dr > 0.0 && dh <= 0.0)
     {
-        // Outside radially, inside axially
-        return axial_projection * axis_ + normalized_radial;
+        // Outside radially, inside axially: project to cylindrical surface
+        result[0] = axial;
     }
-    else if (dr <= 0.0 && dh > 0.0)
-    {
-        // Inside radially, outside axially
-        return clamped_axial * axis_ + radial_vector;
-    }
-    else
-    {
-        // Outside both axially and radially
-        return clamped_axial * axis_ + normalized_radial;
-    }
+    // else: outside both, result already holds (clamped_axial, normalized_radial)
+
+    return result;
 }
 //=================================================================================================//
 BoundingBoxd GeometricCylinder::findBounds()
 {
-    // Create bounding box that encompasses the cylinder
-    // For each dimension i, the extent is:
-    // halflength * |axis[i]| + radius * sqrt(1 - axis[i]^2)
-    // This accounts for the cylinder extending halflength along the axis
-    // and radius in directions perpendicular to the axis
-    
-    Vecd min_corner = Vecd::Zero();
-    Vecd max_corner = Vecd::Zero();
-    
-    for (int i = 0; i < Dimensions; ++i)
-    {
-        Real axis_component = ABS(axis_[i]);
-        Real perpendicular_factor = std::sqrt(1.0 - axis_component * axis_component);
-        Real extent = halflength_ * axis_component + radius_ * perpendicular_factor;
-        min_corner[i] = -extent;
-        max_corner[i] = extent;
-    }
-    
+    Vecd min_corner = Vecd::Constant(-radius_);
+    Vecd max_corner = Vecd::Constant(radius_);
+    min_corner[0] = -halflength_;
+    max_corner[0] = halflength_;
     return BoundingBoxd(min_corner, max_corner);
 }
 //=================================================================================================//

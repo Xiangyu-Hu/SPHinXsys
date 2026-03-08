@@ -29,8 +29,8 @@ Real DL1 = 4 * DH;
 Real DL2 = 2 * DH;
 Real DL3 = 16 * DH;
 Real DL = DL1 + DL2 + DL3;
-Real resolution_ref = DH / 12.0; 
-Real BW = resolution_ref * 4.0; 
+Real resolution_ref = DH / 12.0;
+Real BW = resolution_ref * 4.0;
 Real max_narrowing = 0.3; // chage to 0.5 or 0.7 for other stenosis cases
 Real interpolationNum = 100;
 BoundingBoxd system_domain_bounds(Vec2d(-DL1 - 0.5 * DL2 - BW, -0.5 * DH - BW), Vec2d(0.5 * DL2 + DL3, 0.5 * DH + BW));
@@ -128,11 +128,11 @@ class OutletPressureCSV
         {
             if (period_override > Real(0))
             {
-                period = period_override; 
+                period = period_override;
             }
             else
             {
-                period = times.back() - times.front(); 
+                period = times.back() - times.front();
             }
         }
 
@@ -193,9 +193,9 @@ struct RightInflowPressure
 class WomersleyProfileCSV
 {
   public:
-    std::vector<Real> times;                   
-    std::vector<Real> radii;                   
-    std::vector<std::vector<Real>> velocities; 
+    std::vector<Real> times;
+    std::vector<Real> radii;
+    std::vector<std::vector<Real>> velocities;
     Real period{0.0};
 
     explicit WomersleyProfileCSV(const std::string &csv_file, Real period_override = -1.0)
@@ -212,7 +212,7 @@ class WomersleyProfileCSV
         std::getline(file, line);
         {
             std::stringstream ss(line);
-            std::getline(ss, token, ','); 
+            std::getline(ss, token, ',');
             while (std::getline(ss, token, ','))
                 radii.push_back(static_cast<Real>(std::stod(token)));
         }
@@ -235,7 +235,7 @@ class WomersleyProfileCSV
 
         if (period_override > 0.0)
         {
-            period = period_override; 
+            period = period_override;
         }
         else if (!times.empty())
         {
@@ -289,7 +289,7 @@ struct InflowVelocity
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &,
                    const std::string &csv_path = womersley_velocity_profile_csv,
-                   Real T_override = 0.8) 
+                   Real T_override = 0.8)
         : profile(csv_path, T_override) {}
 
     Vecd operator()(Vecd &position, Vecd &, Real current_time)
@@ -322,7 +322,7 @@ std::vector<Vecd> createStenosisUpper(Real a,
                                       Real D, // diam of normal section
                                       int N)  // numbers of iteration
 {
-    Real dx = (2.0 * X0) / N; 
+    Real dx = (2.0 * X0) / N;
     std::vector<Vecd> stenosis_upper;
     stenosis_upper.reserve(N + 1);
 
@@ -398,9 +398,9 @@ std::vector<Vecd> createOuterWallShape()
     return outer_wall_shape;
 }
 std::vector<Vecd> createCompleteInnerWallShape(Real a,
-                                      Real X0,
-                                      Real D, // diam of normal section
-                                      int N)  // numbers of iteration
+                                               Real X0,
+                                               Real D, // diam of normal section
+                                               int N)  // numbers of iteration
 {
     std::vector<Vecd> lumen;
     lumen.push_back(Vecd(-DL1 - 0.5 * DL2, -0.5 * D));
@@ -464,7 +464,7 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody blood(sph_system, makeShared<Blood>("WaterBody"));
-    blood.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet();
+    blood.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
     blood.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(6.0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -472,14 +472,14 @@ int main(int ac, char *av[])
         : blood.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet();
+    wall_boundary.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
     wall_boundary.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
         : wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody velocity_axial_observer(sph_system, "VelocityAxialObserver");
-    velocity_axial_observer.defineAdaptationRatios(0.25, 1.0); 
+    velocity_axial_observer.defineAdaptationRatios(0.25, 1.0);
     velocity_axial_observer.generateParticles<ObserverParticles>(createAxialObservationPoints());
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -588,7 +588,6 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<int>(blood, "Indicator");
     body_states_recording.addToWrite<Real>(blood, "Density");
     body_states_recording.addToWrite<int>(blood, "BufferIndicator");
-    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_centerline_velocity_axial("Velocity", velocity_observer_contact_axial);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -602,25 +601,14 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec();
     wall_boundary_corrected_configuration.exec();
     //----------------------------------------------------------------------
-    //	Load restart file if necessary.
+    //	Setup for time-stepping control
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
-    if (sph_system.RestartStep() != 0)
-    {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        blood.updateCellLinkedList();
-        blood_complex.updateConfiguration();
-        velocity_observer_contact_axial.updateConfiguration();
-    }
-    //----------------------------------------------------------------------
-    //	Setup for time-stepping control   
-    //----------------------------------------------------------------------
-    size_t number_of_iterations = sph_system.RestartStep();
+    size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    int restart_output_interval = screen_output_interval * 10;
-    Real end_time = 1.61;  
-    Real Output_Time = 0.01; 
-    Real dt = 0.0;       
+    Real end_time = 1.61;
+    Real Output_Time = 0.01;
+    Real dt = 0.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -662,14 +650,12 @@ int main(int ac, char *av[])
                 integration_time += dt;
                 physical_time += dt;
             }
-            /** screen output, write body observables and restart files  */
+            /** screen output, write body observables  */
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
 
@@ -708,9 +694,9 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_centerline_velocity_axial.generateDataBase(0.05); 
+        write_centerline_velocity_axial.generateDataBase(0.05);
     }
-    else if (sph_system.RestartStep() == 0)
+    else
     {
         write_centerline_velocity_axial.testResult();
     }

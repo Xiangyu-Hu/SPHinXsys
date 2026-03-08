@@ -87,18 +87,18 @@ int main(int ac, char *av[])
 #endif //----------------------------------------------------------------------
        //	Creating body, materials and particles.
        //----------------------------------------------------------------------
-    ComplexShape beam_shape("BeamBody");
+    auto &beam_shape = sph_system.addShape<ComplexShape>("BeamBody");
     beam_shape.add(&beam_base_shape);
     beam_shape.add(&beam_column);
-    SolidBody beam_body(sph_system, beam_shape);
-    auto *beam_material = beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    auto &beam_body = sph_system.addBody<SolidBody>(beam_shape);
+    auto &beam_material = beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, Lattice>();
-    ComplexShape beam_constrain_shape("BeamConstrain");
+    auto &beam_constrain_shape = sph_system.addShape<ComplexShape>("BeamConstrain");
     beam_constrain_shape.add(&beam_base_shape);
     beam_constrain_shape.subtract(&beam_column);
-    BodyRegionByParticle beam_base(beam_body, beam_constrain_shape);
+    auto &beam_base = beam_body.addBodyPart<BodyRegionByParticle>(beam_constrain_shape);
 
-    ObserverBody beam_observer(sph_system, "BeamObserver");
+    auto &beam_observer = sph_system.addBody<ObserverBody>("BeamObserver");
     beam_observer.defineAdaptationRatios(1.15, 2.0);
     beam_observer.generateParticles<ObserverParticles>(observation_location);
     //----------------------------------------------------------------------
@@ -127,25 +127,29 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
     host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(
-                    beam_body, "Velocity", beam_material->ReferenceSoundSpeed())
+                    beam_body, "Velocity", beam_material.ReferenceSoundSpeed())
         .exec();
     //-----------------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+
     ParticleDynamicsGroup lagrangian_configuration;
     lagrangian_configuration.add(&main_methods.addCellLinkedListDynamics(beam_body));
     lagrangian_configuration.add(&main_methods.addRelationDynamics(beam_body_inner));
     lagrangian_configuration.add(&main_methods.addRelationDynamics(beam_observer_contact));
+    lagrangian_configuration.add(&main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(beam_body_inner));
 
-    auto &beam_corrected_configuration = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(beam_body_inner);
-    auto &beam_acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
-        solid_dynamics::StructureIntegration1stHalf, SaintVenantKirchhoffSolid, NoKernelCorrectionCK>(beam_body_inner);
-    auto &beam_acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
-        solid_dynamics::StructureIntegration2ndHalf>(beam_body_inner);
+    ParticleDynamicsGroup beam_acoustic_integration;
+    beam_acoustic_integration.add(&main_methods.addInteractionDynamicsWithUpdate<
+                                   solid_dynamics::StructureNumericalDamping, SaintVenantKirchhoffSolid>(beam_body_inner));
+    beam_acoustic_integration.add(&main_methods.addInteractionDynamicsOneLevel<
+                                   solid_dynamics::StructureIntegration1stHalfPK2, SaintVenantKirchhoffSolid>(beam_body_inner));
+    beam_acoustic_integration.add(&main_methods.addStateDynamics<FixBodyPartConstraintCK>(beam_base));
+    beam_acoustic_integration.add(&main_methods.addInteractionDynamicsOneLevel<
+                                   solid_dynamics::StructureIntegration2ndHalf>(beam_body_inner));
 
-    auto &computing_time_step_size = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(beam_body);
-    auto &constraint_beam_base = main_methods.addStateDynamics<FixBodyPartConstraintCK>(beam_base);
+    auto &acoustic_time_step = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(beam_body);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -160,7 +164,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for advection-step based time-stepping control
     //----------------------------------------------------------------------
-    size_t acoustic_steps = 1;
+    size_t time_steps = 1;
     int screening_interval = 500;
     int observation_interval = screening_interval;
     auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
@@ -168,7 +172,6 @@ int main(int ac, char *av[])
     //	Prepare for the time integration loop.
     //----------------------------------------------------------------------
     lagrangian_configuration.exec();
-    beam_corrected_configuration.exec();
     //----------------------------------------------------------------------
     //	Statistics for the computing time information
     //----------------------------------------------------------------------
@@ -178,7 +181,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_state_recorder.writeToFile();
-    write_displacement.writeToFile(acoustic_steps);
+    write_displacement.writeToFile(time_steps);
     //----------------------------------------------------------------------
     // Main time-stepping loop.
     //----------------------------------------------------------------------
@@ -192,25 +195,23 @@ int main(int ac, char *av[])
         //	the fastest and most frequent acostic time stepping.
         //----------------------------------------------------------------------
         TickCount time_instance = TickCount::now();
-        Real acoustic_dt = time_stepper.incrementPhysicalTime(computing_time_step_size);
-        beam_acoustic_step_1st_half.exec(acoustic_dt);
-        constraint_beam_base.exec();
-        beam_acoustic_step_2nd_half.exec(acoustic_dt);
+        Real acoustic_dt = time_stepper.incrementPhysicalTime(acoustic_time_step);
+        beam_acoustic_integration.exec(acoustic_dt);
         interval_acoustic_step += TickCount::now() - time_instance;
 
         /** Output body state during the simulation according output_interval. */
         time_instance = TickCount::now();
         /** screen output, write body observables and restart files  */
-        if (acoustic_steps == 1 || acoustic_steps % screening_interval == 0)
+        if (time_steps == 1 || time_steps % screening_interval == 0)
         {
-            std::cout << std::fixed << std::setprecision(9) << "N=" << acoustic_steps
+            std::cout << std::fixed << std::setprecision(9) << "N=" << time_steps
                       << "	Time = " << time_stepper.getPhysicalTime() << "	"
                       << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
         }
 
-        if (acoustic_steps % observation_interval == 0)
+        if (time_steps % observation_interval == 0)
         {
-            write_displacement.writeToFile(acoustic_steps);
+            write_displacement.writeToFile(time_steps);
         }
 
         if (state_recording())
@@ -219,7 +220,7 @@ int main(int ac, char *av[])
         }
         interval_output += TickCount::now() - time_instance;
 
-        acoustic_steps++;
+        time_steps++;
     }
     //----------------------------------------------------------------------
     // Summary for wall time used for the simulation.

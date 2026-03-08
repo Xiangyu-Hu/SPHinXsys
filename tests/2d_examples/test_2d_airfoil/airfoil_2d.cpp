@@ -51,9 +51,9 @@ int main(int ac, char *av[])
     RealBody airfoil(sph_system, makeShared<ImportModel>("AirFoil"));
     airfoil.defineAdaptation<AdaptiveNearSurface>(1.15, 1.0, 3);
     airfoil.defineBodyLevelSetShape()
-        ->cleanLevelSet()
-        ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
-        ->writeLevelSet();
+        .cleanLevelSet()
+        .addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
+        .writeLevelSet();
     airfoil.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define outputs functions.

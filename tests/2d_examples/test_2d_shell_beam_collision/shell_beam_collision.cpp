@@ -9,8 +9,8 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 4.0;                        /**< box length. */
-Real DH = 4.0;                        /**< box height. */
+Real DL = 4.0;                           /**< box length. */
+Real DH = 4.0;                           /**< box height. */
 Real global_resolution = 0.025;          /**< reference resolution. */
 Real BW = global_resolution * 4.;        /**< wall width for BCs. */
 Real thickness = global_resolution * 1.; /**< shell thickness. */
@@ -100,7 +100,7 @@ int main(int ac, char *av[])
     else
     {
         shell.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
-            ->writeLevelSet();
+            .writeLevelSet();
         shell.generateParticles<SurfaceParticles, Lattice>(thickness);
     }
 

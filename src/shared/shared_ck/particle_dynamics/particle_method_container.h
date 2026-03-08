@@ -54,17 +54,19 @@ class ParticleDynamicsGroup : public BaseDynamics<void>
         : BaseDynamics<void>(), particle_dynamics_(particle_dynamics) {}
     ~ParticleDynamicsGroup() {};
 
-    void add(BaseDynamics<void> *dynamics)
+    ParticleDynamicsGroup &add(BaseDynamics<void> *dynamics)
     {
         particle_dynamics_.push_back(dynamics);
+        return *this;
     }
 
-    void add(const ParticleDynamicsGroup &dynamics)
+    ParticleDynamicsGroup &add(const ParticleDynamicsGroup &dynamics)
     {
         for (auto *dynamics : dynamics.getAllDynamics())
         {
             particle_dynamics_.push_back(dynamics);
         }
+        return *this;
     }
 
     ParticleDynamicsGroup operator+(const ParticleDynamicsGroup &other) const
@@ -106,26 +108,29 @@ class ReduceDynamicsGroup : public BaseDynamics<typename Operation::ReturnType>
           operation_(operation), reduce_dynamics_(reduce_dynamics) {}
     ~ReduceDynamicsGroup() = default;
 
-    void add(BaseDynamics<ReturnType> *dynamics)
+    ReduceDynamicsGroup<Operation> &add(BaseDynamics<ReturnType> *dynamics)
     {
         reduce_dynamics_.push_back(dynamics);
+        return *this;
     }
 
-    void add(const ReduceDynamicsGroup<Operation> &dynamics)
+    ReduceDynamicsGroup<Operation> &add(const ReduceDynamicsGroup<Operation> &dynamics)
     {
         for (auto *dynamics : dynamics.getAllDynamics())
         {
             reduce_dynamics_.push_back(dynamics);
         }
+        return *this;
     }
 
     template <class DerivedReduceDynamicsType>
-    void add(const StdVec<DerivedReduceDynamicsType *> &dynamics)
+    ReduceDynamicsGroup<Operation> &add(const StdVec<DerivedReduceDynamicsType *> &dynamics)
     {
         for (auto *dynamics : dynamics)
         {
             reduce_dynamics_.push_back(dynamics);
         }
+        return *this;
     }
 
     StdVec<BaseDynamics<ReturnType> *> getAllDynamics() const

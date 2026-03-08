@@ -176,7 +176,7 @@ class BaseParticles
     void writeParticlesToXmlForReload(const std::string &filefullpath);
     void readReloadXmlFile(const std::string &filefullpath);
     template <typename DataType>
-    BaseParticles *reloadExtraVariable(const std::string &name);
+    BaseParticles &reloadExtraVariable(const std::string &name);
     //----------------------------------------------------------------------
     // Function related to geometric variables and their relations
     //----------------------------------------------------------------------

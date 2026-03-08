@@ -61,20 +61,12 @@ class GeometricShapeBall : public GeometricBall, public Shape
     virtual BoundingBoxd findBounds() override;
 };
 
-class GeometricShapeCylinder : public GeometricCylinder, public Shape
+class GeometricShapeCylinder : public TransformShape<GeometricCylinder>
 {
-    Vecd center_;
-
   public:
-    explicit GeometricShapeCylinder(const Vecd &center, const Vecd &axis, Real radius, Real halflength,
-                                    const std::string &name = "GeometricShapeCylinder");
+    GeometricShapeCylinder(const Transform &transform, Real radius, Real halflength,
+                           const std::string &name = "GeometricShapeCylinder");
     virtual ~GeometricShapeCylinder() {};
-
-    virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
-    virtual Vecd findClosestPoint(const Vecd &probe_point) override;
-
-  protected:
-    virtual BoundingBoxd findBounds() override;
 };
 } // namespace SPH
 

@@ -18,9 +18,9 @@ std::string input_body = "./input/SPHinXsys-2d.dat";
 //----------------------------------------------------------------------
 //	Basic geometry parameters
 //----------------------------------------------------------------------
-Real DL = 2.5;                          /**< InputBody length right part. */
-Real DL1 = 2.5;                         /**< InputBody length left part. */
-Real DH = 5.0;                          /**< InputBody height. */
+Real DL = 2.5;                             /**< InputBody length right part. */
+Real DL1 = 2.5;                            /**< InputBody length left part. */
+Real DH = 5.0;                             /**< InputBody height. */
 Real global_resolution = (DL + DL1) / 120; /**< Reference resolution. */
 BoundingBoxd system_domain_bounds(Vec2d(-DL1, -0.5), Vec2d(DL, DH));
 //----------------------------------------------------------------------
@@ -51,7 +51,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody input_body(sph_system, makeShared<InputBody>("SPHInXsysLogo"));
-    input_body.defineBodyLevelSetShape(2.0)->writeLevelSet();
+    input_body.defineBodyLevelSetShape(2.0).writeLevelSet();
     input_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

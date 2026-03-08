@@ -75,24 +75,24 @@ class LevelSetShape : public Shape
     Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
     Matd computeKernelSecondGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
     /** small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing */
-    LevelSetShape *cleanLevelSet(UnsignedInt repeat_times = 1);
+    LevelSetShape &cleanLevelSet(UnsignedInt repeat_times = 1);
     /** required to build level set from triangular mesh in stl file format. */
-    LevelSetShape *correctLevelSetSign();
-    LevelSetShape *writeLevelSet();
+    LevelSetShape &correctLevelSetSign();
+    LevelSetShape &writeLevelSet();
     LevelSet &getLevelSet() { return level_set_; }
 
     template <typename DataType>
-    LevelSetShape *addPackageVariableToWrite(const std::string &variable_name)
+    LevelSetShape &addPackageVariableToWrite(const std::string &variable_name)
     {
         level_set_.addPackageVariableToWrite<DataType>(variable_name);
-        return this;
+        return *this;
     };
 
     template <typename DataType>
-    LevelSetShape *addCellVariableToWrite(const std::string &variable_name)
+    LevelSetShape &addCellVariableToWrite(const std::string &variable_name)
     {
         level_set_.addCellVariableToWrite<DataType>(variable_name);
-        return this;
+        return *this;
     };
 
   protected:

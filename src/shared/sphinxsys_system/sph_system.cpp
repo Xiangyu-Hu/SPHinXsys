@@ -1,7 +1,6 @@
 #include "sph_system.hpp"
 
 #include "all_body_relations.h"
-#include "elastic_dynamics.h"
 #include "io_log.h"
 #include "predefined_bodies.h"
 
@@ -41,23 +40,13 @@ void SPHSystem::setLogLevel(size_t log_level)
 //=================================================================================================//
 IOEnvironment &SPHSystem::getIOEnvironment()
 {
-    if (io_environment_ == nullptr)
-    {
-        std::cout << "\n Error: IO Environment not setup yet! \n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
+    checkPointer(io_environment_, "io_environment_", "SPHSystem");
     return *io_environment_;
 }
 //=================================================================================================//
 void SPHSystem::addRealBody(RealBody *real_body)
 {
     real_bodies_.push_back(real_body);
-}
-//=================================================================================================//
-void SPHSystem::addSolidBody(SolidBody *solid_body)
-{
-    solid_bodies_.push_back(solid_body);
 }
 //=================================================================================================//
 
@@ -79,19 +68,6 @@ void SPHSystem::initializeSystemConfigurations()
             body_relations[i]->updateConfiguration();
         }
     }
-}
-//=================================================================================================//
-Real SPHSystem::getSmallestTimeStepAmongSolidBodies(Real CFL)
-{
-    Real dt = MaxReal;
-    for (size_t i = 0; i < solid_bodies_.size(); i++)
-    {
-        ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(*solid_bodies_[i], CFL);
-        Real dt_temp = computing_time_step_size.exec();
-        if (dt_temp < dt)
-            dt = dt_temp;
-    }
-    return dt;
 }
 //=================================================================================================//
 #ifdef BOOST_AVAILABLE

@@ -135,6 +135,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size_myocardium(myocardium_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size_plate(moving_plate);
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -174,7 +176,7 @@ int main(int ac, char *av[])
             stress_relaxation_second_half_2.exec(dt);
 
             ite++;
-            dt = sph_system.getSmallestTimeStepAmongSolidBodies();
+            dt = SMIN(computing_time_step_size_myocardium.exec(), computing_time_step_size_plate.exec());
             integration_time += dt;
             physical_time += dt;
 

@@ -78,15 +78,20 @@ class GeometricBall
 class GeometricCylinder
 {
   public:
-    explicit GeometricCylinder(const Vecd &axis, Real radius, Real halflength);
+    explicit GeometricCylinder(Real radius, Real halflength);
     ~GeometricCylinder() {};
 
-    bool checkContain(const Vecd &probe_point);
+    bool checkContain(const Vecd &probe_point)
+    {
+        if (ABS(probe_point[0]) > halflength_)
+            return false;
+        return probe_point.tail(Dimensions - 1).norm() <= radius_;
+    };
+
     Vecd findClosestPoint(const Vecd &probe_point);
     BoundingBoxd findBounds();
 
   protected:
-    Vecd axis_;
     Real radius_;
     Real halflength_;
 };

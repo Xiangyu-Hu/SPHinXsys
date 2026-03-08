@@ -217,11 +217,9 @@ TEST(test_optimization, test_problem1_optimized)
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    RestartIO restart_io(sph_system);
     //----------------------------------------------------------------------
     //	Setup parameter for optimization control
     //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;                  /* define the loop of all operations for optimization. */
     int ite_T = 0;                /* define loop index for temperature splitting iteration. */
     int ite_k = 0;                /* define loop index for parameter splitting iteration. */
@@ -231,7 +229,6 @@ TEST(test_optimization, test_problem1_optimized)
     int ite_loop = 0;             /* define loop index for optimization cycle. */
     int ite_T_comparison_opt = 0; /* define the real step for splitting temperature by solving PDE. */
     int ite_output = 50;          /* define the interval for state output. */
-    int ite_restart = 50;         /* define the interval for restart output. */
     int dt_ratio_k = 1;           /* ratio for adjusting the time step for parameter evolution. */
     int dt_ratio_rg = 1;          /* ratio for adjusting the time step for regularization. */
 
@@ -305,15 +302,6 @@ TEST(test_optimization, test_problem1_optimized)
     setup_diffusion_initial_condition.exec();
     setup_diffusion_boundary_condition.exec();
     thermal_diffusivity_random_initialization.exec();
-    //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        diffusion_body.updateCellLinkedList();
-        diffusion_body_complex.updateConfiguration();
-    }
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -479,10 +467,6 @@ TEST(test_optimization, test_problem1_optimized)
         relative_temperature_difference = abs(current_averaged_temperature - last_averaged_temperature) / last_averaged_temperature;
         relative_average_variation_difference = abs(averaged_variation_current_global - averaged_variation_last_global) / abs(averaged_variation_last_global);
         averaged_variation_last_global = averaged_variation_current_global;
-        if (ite_loop % ite_restart == 0)
-        {
-            restart_io.writeToFile(ite_loop);
-        }
     }
     out_file_opt_temperature.close();
     out_file_nonopt_temperature.close();

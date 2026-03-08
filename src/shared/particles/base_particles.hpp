@@ -10,12 +10,7 @@ template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::getVariableByName(const std::string &name)
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);
-    if (variable == nullptr)
-    {
-        std::cout << "\nError: the " << type_name<DiscreteVariable<DataType>>() << " variable '"
-                  << name << "' in body " << getBodyName() << " is not registered!\n";
-        exit(1);
-    }
+    checkPointer(variable, name, type_name<DiscreteVariable<DataType>>());
     return variable;
 }
 //=================================================================================================//
@@ -135,12 +130,7 @@ template <typename DataType>
 SingularVariable<DataType> *BaseParticles::getSingularVariableByName(const std::string &name)
 {
     SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
-    if (variable == nullptr)
-    {
-        std::cout << "\nError: the " << type_name<SingularVariable<DataType>>() << " variable '"
-                  << name << "' in body " << getBodyName() << " is not registered!\n";
-        exit(1);
-    }
+    checkPointer(variable, name, type_name<SingularVariable<DataType>>());
     return variable;
 }
 //=================================================================================================//
@@ -206,11 +196,11 @@ void BaseParticles::addVariableToWrite(DiscreteVariableArray<DataType> *variable
 }
 //===============================================================================
 template <typename DataType>
-BaseParticles *BaseParticles::reloadExtraVariable(const std::string &name)
+BaseParticles &BaseParticles::reloadExtraVariable(const std::string &name)
 {
     registerStateVariableFromReload<DataType>(name);
     addEvolvingVariable<DataType>(name);
-    return this;
+    return *this;
 }
 //=================================================================================================//
 template <typename DataType>

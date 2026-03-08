@@ -33,9 +33,8 @@ int main(int ac, char *av[])
 #endif
 
     Heart triangle_mesh_heart_model("HeartModel");
-    SharedPtr<LevelSetShape> level_set_heart_model =
-        makeShared<LevelSetShape>(par_ck, sph_system, SPHAdaptation(dp_0), triangle_mesh_heart_model);
-    level_set_heart_model->correctLevelSetSign()->writeLevelSet();
+    LevelSetShape level_set_heart_model(par_ck, sph_system, SPHAdaptation(dp_0), triangle_mesh_heart_model);
+    level_set_heart_model.correctLevelSetSign().writeLevelSet();
     std::cout << "I am here 0! " << "\n";
     //----------------------------------------------------------------------
     //	SPH Particle relaxation section

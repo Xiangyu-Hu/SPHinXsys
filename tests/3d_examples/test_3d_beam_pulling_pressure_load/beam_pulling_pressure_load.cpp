@@ -209,7 +209,7 @@ int main(int ac, char *av[])
             stress_relaxation_second_half.exec(dt);
 
             ite++;
-            dt = sph_system.getSmallestTimeStepAmongSolidBodies();
+            dt = computing_time_step_size.exec();
             integration_time += dt;
             physical_time += dt;
         }

@@ -272,7 +272,8 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     Real dt = 0.0;
     TickCount t1 = TickCount::now();
     TimeInterval time_damping;
-    const Real dt_ref = system.getSmallestTimeStepAmongSolidBodies();
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
+    const Real dt_ref = computing_time_step_size.exec();
     std::cout << "dt_ref: " << dt_ref << std::endl;
 
     auto run_simulation = [&]()
@@ -289,7 +290,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
                               << dt << "\n";
                 }
 
-                dt = system.getSmallestTimeStepAmongSolidBodies();
+                dt = computing_time_step_size.exec();
                 if (dt < dt_ref / 1e2)
                     throw std::runtime_error("time step decreased too much");
 

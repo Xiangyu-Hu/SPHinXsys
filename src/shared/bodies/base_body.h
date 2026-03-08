@@ -94,7 +94,7 @@ class SPHBody
     SPHBody &getSPHBody() { return *this; };
     Shape &getInitialShape() { return *initial_shape_; };
     void assignBaseParticles(BaseParticles *base_particles) { base_particles_ = base_particles; };
-    SPHAdaptation &getSPHAdaptation() { return *sph_adaptation_; };
+    SPHAdaptation &getSPHAdaptation();
     BaseParticles &getBaseParticles();
     BaseMaterial &getBaseMaterial();
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
@@ -144,46 +144,42 @@ class SPHBody
     };
 
     template <typename... Args>
-    LevelSetShape *defineComponentLevelSetShape(const std::string &shape_name, Args &&...args)
+    LevelSetShape &defineComponentLevelSetShape(const std::string &shape_name, Args &&...args)
     {
         ComplexShape *complex_shape = DynamicCast<ComplexShape>(this, initial_shape_);
         return complex_shape->defineLevelSetShape(*this, shape_name, std::forward<Args>(args)...);
     };
 
     template <typename... Args>
-    LevelSetShape *defineBodyLevelSetShape(Args &&...args)
+    LevelSetShape &defineBodyLevelSetShape(Args &&...args)
     {
-        LevelSetShape *level_set_shape =
-            shape_keeper_.resetPtr<LevelSetShape>(*this, *initial_shape_, std::forward<Args>(args)...);
-        initial_shape_ = level_set_shape;
-        return level_set_shape;
+        initial_shape_ = shape_keeper_.resetPtr<LevelSetShape>(
+            *this, *initial_shape_, std::forward<Args>(args)...);
+        return *static_cast<LevelSetShape *>(initial_shape_);
     }
 
     template <typename ExecutionPolicy, typename... Args>
-    LevelSetShape *defineBodyLevelSetShape(const ExecutionPolicy &ex_policy, Args &&...args)
+    LevelSetShape &defineBodyLevelSetShape(const ExecutionPolicy &ex_policy, Args &&...args)
     {
-        LevelSetShape *level_set_shape =
-            shape_keeper_.resetPtr<LevelSetShape>(
-                ex_policy, sph_system_, *sph_adaptation_, *initial_shape_, std::forward<Args>(args)...);
-        initial_shape_ = level_set_shape;
-        return level_set_shape;
+        initial_shape_ = shape_keeper_.resetPtr<LevelSetShape>(
+            ex_policy, sph_system_, *sph_adaptation_, *initial_shape_, std::forward<Args>(args)...);
+        return *static_cast<LevelSetShape *>(initial_shape_);
     };
 
     template <class MaterialType = BaseMaterial, typename... Args>
-    MaterialType *defineMaterial(Args &&...args)
+    MaterialType &defineMaterial(Args &&...args)
     {
-        MaterialType *material = base_material_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
-        base_material_ = material;
-        return material;
+        base_material_ = base_material_keeper_.createPtr<MaterialType>(
+            std::forward<Args>(args)...);
+        return *static_cast<MaterialType *>(base_material_);
     };
 
     template <class BaseModel, typename... AuxiliaryModels, typename... Args>
-    Closure<BaseModel, AuxiliaryModels...> *defineClosure(Args &&...args)
+    Closure<BaseModel, AuxiliaryModels...> &defineClosure(Args &&...args)
     {
-        Closure<BaseModel, AuxiliaryModels...> *closure =
-            base_material_keeper_.createPtr<Closure<BaseModel, AuxiliaryModels...>>(std::forward<Args>(args)...);
-        base_material_ = closure;
-        return closure;
+        base_material_ = base_material_keeper_.createPtr<Closure<BaseModel, AuxiliaryModels...>>(
+            std::forward<Args>(args)...);
+        return *static_cast<Closure<BaseModel, AuxiliaryModels...> *>(base_material_);
     };
     //----------------------------------------------------------------------
     // Particle generating methods
@@ -191,7 +187,7 @@ class SPHBody
     // The local material parameters are also initialized.
     //----------------------------------------------------------------------
     template <class ParticleType, class... Parameters, typename... Args>
-    ParticleType *generateParticles(Args &&...args)
+    ParticleType &generateParticles(Args &&...args)
     {
         ParticleType *particles = base_particles_keeper_.createPtr<ParticleType>(*this, base_material_);
         ParticleGenerator<ParticleType, Parameters...> particle_generator(*this, *particles, std::forward<Args>(args)...);
@@ -199,12 +195,12 @@ class SPHBody
         particles->initializeBasicParticleVariables();
         sph_adaptation_->initializeAdaptationVariables(*particles);
         base_material_->setLocalParameters(sph_system_, particles);
-        return particles;
+        return *particles;
     };
 
     // Buffer or ghost particles can be generated together with real particles
     template <class ParticleType, typename... Parameters, class ReserveType, typename... Args>
-    ParticleType *generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
+    ParticleType &generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
     {
         return generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };

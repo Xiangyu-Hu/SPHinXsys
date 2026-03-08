@@ -251,13 +251,14 @@ class AlignedBoxPart
     UniquePtrKeeper<SingularVariable<AlignedBox>> sv_aligned_box_keeper_;
 
   public:
-    AlignedBoxPart(const std::string &part_name, const AlignedBox &aligned_box);
+    AlignedBoxPart(SPHSystem &sph_system, const std::string &part_name, const AlignedBox &aligned_box);
     virtual ~AlignedBoxPart() {};
     SingularVariable<AlignedBox> *svAlignedBox() { return sv_aligned_box_keeper_.getPtr(); };
     AlignedBox &getAlignedBox() { return aligned_box_; };
-    void writeShapeProxy(SPHSystem &sph_system);
+    void writeShapeProxy();
 
   protected:
+    SPHSystem &sph_system_;
     AlignedBox &aligned_box_;
 };
 
