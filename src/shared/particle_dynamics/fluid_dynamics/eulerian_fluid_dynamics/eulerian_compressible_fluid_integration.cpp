@@ -71,13 +71,6 @@ void EulerianCompressibleIntegration1stHalfMUSCL<Inner<>>::interaction(size_t in
         Vecd grad_u_j = row_to_vecd(vg_j, 0);
         Vecd grad_v_i = row_to_vecd(vg_i, 1);
         Vecd grad_v_j = row_to_vecd(vg_j, 1);
-#if SPH_NDIM == 3
-        Vecd grad_w_i = row_to_vecd(vg_i, 2);
-        Vecd grad_w_j = row_to_vecd(vg_j, 2);
-#else
-        Vecd grad_w_i = Vecd::Zero();
-        Vecd grad_w_j = Vecd::Zero();
-#endif
         Vecd grad_p_i = p_grad_[index_i];
         Vecd grad_p_j = p_grad_[index_j];
 
@@ -85,17 +78,19 @@ void EulerianCompressibleIntegration1stHalfMUSCL<Inner<>>::interaction(size_t in
         const Vecd &xj = pos_[index_j];
         Vecd xf = 0.5 * (xi + xj);
 
-        CompressibleFluidStarState interface_state = bridge_.getInterfaceState(state_i, state_j, xi, xj, xf, e_ij,
-                                                                              grad_rho_i, grad_rho_j,
-                                                                              grad_u_i, grad_u_j,
-                                                                              grad_v_i, grad_v_j,
+        CompressibleFluidStarState interface_state = bridge_.getInterfaceState(
+            state_i, state_j, xi, xj, xf, e_ij,
+            grad_rho_i, grad_rho_j,
+            grad_u_i, grad_u_j,
+            grad_v_i, grad_v_j,
 #if SPH_NDIM == 3
-                                                                              grad_w_i, grad_w_j,
+            row_to_vecd(vg_i, 2), row_to_vecd(vg_j, 2),
 #endif
-                                                                              grad_p_i, grad_p_j);
+            grad_p_i, grad_p_j);
 
         Matd convect_flux = interface_state.rho_ * interface_state.vel_ * interface_state.vel_.transpose();
-        momentum_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j * (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij;
+        momentum_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j *
+                                (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij;
     }
     force_[index_i] = momentum_change_rate;
 }
@@ -145,13 +140,6 @@ void EulerianCompressibleIntegration2ndHalfMUSCL<Inner<>>::interaction(size_t in
         Vecd grad_u_j = row_to_vecd(vg_j, 0);
         Vecd grad_v_i = row_to_vecd(vg_i, 1);
         Vecd grad_v_j = row_to_vecd(vg_j, 1);
-#if SPH_NDIM == 3
-        Vecd grad_w_i = row_to_vecd(vg_i, 2);
-        Vecd grad_w_j = row_to_vecd(vg_j, 2);
-#else
-        Vecd grad_w_i = Vecd::Zero();
-        Vecd grad_w_j = Vecd::Zero();
-#endif
         Vecd grad_p_i = p_grad_[index_i];
         Vecd grad_p_j = p_grad_[index_j];
 
@@ -159,17 +147,20 @@ void EulerianCompressibleIntegration2ndHalfMUSCL<Inner<>>::interaction(size_t in
         const Vecd &xj = pos_[index_j];
         Vecd xf = 0.5 * (xi + xj);
 
-        CompressibleFluidStarState interface_state = bridge_.getInterfaceState(state_i, state_j, xi, xj, xf, e_ij,
-                                                                              grad_rho_i, grad_rho_j,
-                                                                              grad_u_i, grad_u_j,
-                                                                              grad_v_i, grad_v_j,
+        CompressibleFluidStarState interface_state = bridge_.getInterfaceState(
+            state_i, state_j, xi, xj, xf, e_ij,
+            grad_rho_i, grad_rho_j,
+            grad_u_i, grad_u_j,
+            grad_v_i, grad_v_j,
 #if SPH_NDIM == 3
-                                                                              grad_w_i, grad_w_j,
+            row_to_vecd(vg_i, 2), row_to_vecd(vg_j, 2),
 #endif
-                                                                              grad_p_i, grad_p_j);
+            grad_p_i, grad_p_j);
 
-        mass_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j * (interface_state.rho_ * interface_state.vel_).dot(e_ij);
-        energy_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j * ((interface_state.E_ + interface_state.p_) * interface_state.vel_).dot(e_ij);
+        mass_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j *
+                            (interface_state.rho_ * interface_state.vel_).dot(e_ij);
+        energy_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j *
+                              ((interface_state.E_ + interface_state.p_) * interface_state.vel_).dot(e_ij);
     }
     dmass_dt_[index_i] = mass_change_rate;
     dE_dt_[index_i] = energy_change_rate;
@@ -221,13 +212,6 @@ void EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>>::interaction(siz
             Matd vg_i = vel_grad_[index_i];
             Vecd grad_u_i = row_to_vecd(vg_i, 0);
             Vecd grad_v_i = row_to_vecd(vg_i, 1);
-#if SPH_NDIM == 3
-            Vecd grad_w_i = row_to_vecd(vg_i, 2);
-            Vecd grad_w_g = grad_w_i;
-#else
-            Vecd grad_w_i = Vecd::Zero();
-            Vecd grad_w_g = grad_w_i;
-#endif
             Vecd grad_u_g = grad_u_i;
             Vecd grad_v_g = grad_v_i;
             Vecd grad_p_i = p_grad_[index_i];
@@ -237,17 +221,19 @@ void EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>>::interaction(siz
             Vecd xj = xi - contact_neighborhood.r_ij_[n] * e_ij;
             Vecd xf = 0.5 * (xi + xj);
 
-            CompressibleFluidStarState interface_state = bridge_.getInterfaceState(state_i, state_g, xi, xj, xf, e_ij,
-                                                                                  grad_rho_i, grad_rho_g,
-                                                                                  grad_u_i, grad_u_g,
-                                                                                  grad_v_i, grad_v_g,
+            CompressibleFluidStarState interface_state = bridge_.getInterfaceState(
+                state_i, state_g, xi, xj, xf, e_ij,
+                grad_rho_i, grad_rho_g,
+                grad_u_i, grad_u_g,
+                grad_v_i, grad_v_g,
 #if SPH_NDIM == 3
-                                                                                  grad_w_i, grad_w_g,
+                row_to_vecd(vg_i, 2), row_to_vecd(vg_i, 2),
 #endif
-                                                                                  grad_p_i, grad_p_g);
+                grad_p_i, grad_p_g);
 
             Matd convect_flux = interface_state.rho_ * interface_state.vel_ * interface_state.vel_.transpose();
-            momentum_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j * (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij;
+            momentum_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j *
+                                    (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij;
         }
     }
     force_[index_i] += momentum_change_rate;
@@ -291,13 +277,6 @@ void EulerianCompressibleIntegration2ndHalfMUSCL<Contact<Wall>>::interaction(siz
             Matd vg_i = vel_grad_[index_i];
             Vecd grad_u_i = row_to_vecd(vg_i, 0);
             Vecd grad_v_i = row_to_vecd(vg_i, 1);
-#if SPH_NDIM == 3
-            Vecd grad_w_i = row_to_vecd(vg_i, 2);
-            Vecd grad_w_g = grad_w_i;
-#else
-            Vecd grad_w_i = Vecd::Zero();
-            Vecd grad_w_g = grad_w_i;
-#endif
             Vecd grad_u_g = grad_u_i;
             Vecd grad_v_g = grad_v_i;
             Vecd grad_p_i = p_grad_[index_i];
@@ -307,17 +286,20 @@ void EulerianCompressibleIntegration2ndHalfMUSCL<Contact<Wall>>::interaction(siz
             Vecd xj = xi - contact_neighborhood.r_ij_[n] * e_ij;
             Vecd xf = 0.5 * (xi + xj);
 
-            CompressibleFluidStarState interface_state = bridge_.getInterfaceState(state_i, state_g, xi, xj, xf, e_ij,
-                                                                                  grad_rho_i, grad_rho_g,
-                                                                                  grad_u_i, grad_u_g,
-                                                                                  grad_v_i, grad_v_g,
+            CompressibleFluidStarState interface_state = bridge_.getInterfaceState(
+                state_i, state_g, xi, xj, xf, e_ij,
+                grad_rho_i, grad_rho_g,
+                grad_u_i, grad_u_g,
+                grad_v_i, grad_v_g,
 #if SPH_NDIM == 3
-                                                                                  grad_w_i, grad_w_g,
+                row_to_vecd(vg_i, 2), row_to_vecd(vg_i, 2),
 #endif
-                                                                                  grad_p_i, grad_p_g);
+                grad_p_i, grad_p_g);
 
-            mass_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j * (interface_state.rho_ * interface_state.vel_).dot(e_ij);
-            energy_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j * ((interface_state.E_ + interface_state.p_) * interface_state.vel_).dot(e_ij);
+            mass_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j *
+                                (interface_state.rho_ * interface_state.vel_).dot(e_ij);
+            energy_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j *
+                                  ((interface_state.E_ + interface_state.p_) * interface_state.vel_).dot(e_ij);
         }
     }
     dmass_dt_[index_i] += mass_change_rate;

@@ -133,8 +133,8 @@ class EulerianCompressibleIntegration1stHalfMUSCL<Inner<>> : public BaseIntegrat
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    MUSCL_HLLC_Bridge bridge_;
     MUSCLHLLCBridgeConfig bridge_cfg_;
+    MUSCL_HLLC_Bridge bridge_;
     Vecd *rho_grad_;
     Matd *vel_grad_;
     Vecd *p_grad_;
@@ -153,8 +153,8 @@ class EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>> : public Intera
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    MUSCL_HLLC_Bridge bridge_;
     MUSCLHLLCBridgeConfig bridge_cfg_;
+    MUSCL_HLLC_Bridge bridge_;
     Vecd *rho_grad_;
     Matd *vel_grad_;
     Vecd *p_grad_;
@@ -178,8 +178,8 @@ class EulerianCompressibleIntegration2ndHalfMUSCL<Inner<>> : public BaseIntegrat
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    MUSCL_HLLC_Bridge bridge_;
     MUSCLHLLCBridgeConfig bridge_cfg_;
+    MUSCL_HLLC_Bridge bridge_;
     Vecd *rho_grad_;
     Matd *vel_grad_;
     Vecd *p_grad_;
@@ -198,8 +198,8 @@ class EulerianCompressibleIntegration2ndHalfMUSCL<Contact<Wall>> : public Intera
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
-    MUSCL_HLLC_Bridge bridge_;
     MUSCLHLLCBridgeConfig bridge_cfg_;
+    MUSCL_HLLC_Bridge bridge_;
     Vecd *rho_grad_;
     Matd *vel_grad_;
     Vecd *p_grad_;
