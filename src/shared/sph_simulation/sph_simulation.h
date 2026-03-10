@@ -34,6 +34,7 @@
 
 #include "base_data_type_package.h"
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -114,6 +115,114 @@ class WallBuilder
 };
 
 /**
+ * @enum SolidMaterialType
+ * @brief Selects the elastic material model for a solid body.
+ *        The choice also determines which first-half integration method is used:
+ *        - SaintVenantKirchhoff → StructureIntegration1stHalfPK2 (PK2 stress)
+ *        - NeoHookean           → StructureIntegration1stHalf with NoKernelCorrectionCK
+ */
+enum class SolidMaterialType
+{
+    SaintVenantKirchhoff,
+    NeoHookean,
+};
+
+/**
+ * @class SolidBlockBuilder
+ * @brief Builder for configuring an elastic solid body in a 2D or 3D simulation.
+ *
+ * The body geometry is constructed by union of axis-aligned boxes.
+ * An optional constrained (holder) region can further be narrowed by subtracting
+ * a second box (useful for the clamped-base pattern in beam tests).
+ *
+ * Fluent interface example (2D oscillating beam):
+ * @code
+ *   auto &beam = sim.addSolidBlock("BeamBody")
+ *       .addBox(base_halfsize, base_translation)
+ *       .addBox(column_halfsize, column_translation)
+ *       .materialSVK(rho0_s, Youngs_modulus, poisson)
+ *       .constrainBox(base_halfsize, base_translation)
+ *       .subtractFromConstraint(column_halfsize, column_translation)
+ *       .withNumericalDamping();
+ *   beam.initialVelocity(LinearProfile(beam.getReferenceSoundSpeed()));
+ * @endcode
+ *
+ * Fluent interface example (3D twisting column):
+ * @code
+ *   sim.addSolidBlock("Column")
+ *       .addBox(halfsize_column, translation_column)
+ *       .addBox(halfsize_holder, translation_holder)
+ *       .materialNeoHookean(rho0_s, Youngs_modulus, poisson)
+ *       .constrainBox(halfsize_holder, translation_holder)
+ *       .initialVelocity(VelocityProfile());
+ * @endcode
+ */
+class SolidBlockBuilder
+{
+  public:
+    explicit SolidBlockBuilder(const std::string &name);
+
+    /** Add a box (halfsize + translation) to the solid body ComplexShape. */
+    SolidBlockBuilder &addBox(VecdRef halfsize, VecdRef translation = Vecd::Zero());
+
+    /** Set SaintVenantKirchhoff elastic material. */
+    SolidBlockBuilder &materialSVK(Real rho0, Real youngs_modulus, Real poisson);
+
+    /** Set NeoHookean elastic material. */
+    SolidBlockBuilder &materialNeoHookean(Real rho0, Real youngs_modulus, Real poisson);
+
+    /** Specify a box region that will be kinematically constrained (fixed). */
+    SolidBlockBuilder &constrainBox(VecdRef halfsize, VecdRef translation = Vecd::Zero());
+
+    /** Subtract a box from the constrained region (e.g. to create a clamped-base strip). */
+    SolidBlockBuilder &subtractFromConstraint(VecdRef halfsize, VecdRef translation = Vecd::Zero());
+
+    /** Set an initial particle velocity field via a spatial function.
+     *  The callable must accept @c const Vecd & and return @c Vecd. */
+    SolidBlockBuilder &initialVelocity(std::function<Vecd(const Vecd &)> vel_func);
+
+    /** Enable numerical damping during acoustic integration. */
+    SolidBlockBuilder &withNumericalDamping();
+
+    /** Compute the reference (bulk) sound speed from material parameters.
+     *  Useful for constructing velocity profiles that scale with c0. */
+    Real getReferenceSoundSpeed() const;
+
+    const std::string &getName() const { return name_; }
+    const std::vector<std::pair<Vecd, Vecd>> &getBoxes() const { return boxes_; }
+    Real getRho0() const { return rho0_; }
+    Real getYoungsModulus() const { return youngs_modulus_; }
+    Real getPoissonRatio() const { return poisson_; }
+    SolidMaterialType getMaterialType() const { return mat_type_; }
+    bool hasConstraint() const { return has_constraint_; }
+    const Vecd &getConstraintHalfsize() const { return constraint_halfsize_; }
+    const Vecd &getConstraintTranslation() const { return constraint_translation_; }
+    bool hasConstraintSubtract() const { return has_constraint_subtract_; }
+    const Vecd &getConstraintSubtractHalfsize() const { return constraint_subtract_halfsize_; }
+    const Vecd &getConstraintSubtractTranslation() const { return constraint_subtract_translation_; }
+    bool hasInitialVelocity() const { return has_initial_velocity_; }
+    const std::function<Vecd(const Vecd &)> &getInitialVelocityFunc() const { return initial_velocity_func_; }
+    bool hasNumericalDamping() const { return numerical_damping_; }
+
+  private:
+    std::string name_;
+    std::vector<std::pair<Vecd, Vecd>> boxes_; /**< (halfsize, translation) pairs */
+    Real rho0_{1.0e3};
+    Real youngs_modulus_{1.0e6};
+    Real poisson_{0.3};
+    SolidMaterialType mat_type_{SolidMaterialType::SaintVenantKirchhoff};
+    bool has_constraint_{false};
+    Vecd constraint_halfsize_{Vecd::Zero()};
+    Vecd constraint_translation_{Vecd::Zero()};
+    bool has_constraint_subtract_{false};
+    Vecd constraint_subtract_halfsize_{Vecd::Zero()};
+    Vecd constraint_subtract_translation_{Vecd::Zero()};
+    bool has_initial_velocity_{false};
+    std::function<Vecd(const Vecd &)> initial_velocity_func_;
+    bool numerical_damping_{false};
+};
+
+/**
  * @class SolverConfig
  * @brief Fluent configuration object for the SPH solver algorithm choices.
  *        Supports: useSolver().dualTimeStepping().freeSurfaceCorrection()
@@ -140,7 +249,7 @@ class SolverConfig
  * @class SPHSimulation
  * @brief High-level facade for a 2D or 3D SPH simulation using the CK execution backend.
  *
- * Typical 2D usage:
+ * Typical 2D fluid usage:
  * @code
  *   SPHSimulation sim;
  *   sim.createDomain(Vec2d(DL, DH), dp_ref);
@@ -152,16 +261,20 @@ class SolverConfig
  *   sim.run(20.0);
  * @endcode
  *
- * Typical 3D usage:
+ * Typical 2D solid usage:
  * @code
  *   SPHSimulation sim;
- *   sim.createDomain(Vec3d(DL, DH, DW), dp_ref);
- *   sim.addFluidBlock("Water").block(Vec3d(LL, LH, LW)).material(rho0_f, c_f);
- *   sim.addWall("Tank").hollowBox(Vec3d(DL, DH, DW), BW);
- *   sim.enableGravity(Vec3d(0.0, -gravity_g, 0.0));
- *   sim.addObserver("Probe", {Vec3d(DL, 0.2, 0.5*DW), Vec3d(DL, 0.1, 0.5*DW)});
- *   sim.useSolver().dualTimeStepping().freeSurfaceCorrection();
- *   sim.run(20.0);
+ *   sim.defineDomain(Vec2d(lower_x, lower_y), Vec2d(upper_x, upper_y), dp_ref);
+ *   auto &beam = sim.addSolidBlock("BeamBody")
+ *       .addBox(base_halfsize, base_translation)
+ *       .addBox(column_halfsize, column_translation)
+ *       .materialSVK(rho0_s, Youngs_modulus, poisson)
+ *       .constrainBox(base_halfsize, base_translation)
+ *       .subtractFromConstraint(column_halfsize, column_translation)
+ *       .withNumericalDamping();
+ *   beam.initialVelocity(MyProfile(beam.getReferenceSoundSpeed()));
+ *   sim.addObserver("TipObserver", Vec2d(PL, 0.0));
+ *   sim.run(1.0);
  * @endcode
  */
 class SPHSimulation
@@ -174,6 +287,12 @@ class SPHSimulation
      *  Use Vec2d for 2D or Vec3d for 3D builds. */
     void defineDomain(VecdRef domain_dimensions, Real particle_spacing);
 
+    /** Set explicit domain lower/upper bounds and reference particle spacing.
+     *  Use this overload for solid-dynamics simulations whose domain is not
+     *  origin-aligned (e.g. oscillating beam, twisting column).
+     *  Use Vec2d for 2D or Vec3d for 3D builds. */
+    void defineDomain(VecdRef lower_bound, VecdRef upper_bound, Real particle_spacing);
+
     /** Set the domain dimensions and reference particle spacing.
      *  Use Vec2d for 2D or Vec3d for 3D builds. */
     void createDomain(VecdRef domain_dimensions, Real particle_spacing);
@@ -183,6 +302,9 @@ class SPHSimulation
 
     /** Add a named solid wall; configure it with the returned builder. */
     WallBuilder &addWall(const std::string &name);
+
+    /** Add a named elastic solid body; configure it with the returned builder. */
+    SolidBlockBuilder &addSolidBlock(const std::string &name);
 
     /** Enable uniform gravitational acceleration.
      *  Use Vec2d for 2D or Vec3d for 3D builds. */
@@ -205,9 +327,12 @@ class SPHSimulation
     Real dp_ref_{0.0};
     Vecd gravity_{Vecd::Zero()};
     bool gravity_enabled_{false};
+    bool explicit_domain_bounds_{false};
+    Vecd domain_lower_bound_{Vecd::Zero()};
 
     std::vector<std::unique_ptr<FluidBlockBuilder>> fluid_blocks_;
     std::vector<std::unique_ptr<WallBuilder>> walls_;
+    std::vector<std::unique_ptr<SolidBlockBuilder>> solid_blocks_;
 
     struct ObserverEntry
     {
@@ -218,6 +343,11 @@ class SPHSimulation
 
     std::unique_ptr<SolverConfig> solver_config_;
     std::unique_ptr<SPHSystem> sph_system_;
+
+    /** Run a fluid-only simulation (internal dispatch from run()). */
+    void runFluid(Real end_time);
+    /** Run a solid-only simulation (internal dispatch from run()). */
+    void runSolid(Real end_time);
 };
 
 } // namespace SPH

@@ -32,6 +32,29 @@
 
 namespace SPH
 {
+
+namespace
+{
+/**
+ * @class LambdaVelocityDistribution
+ * @brief Wraps a std::function<Vecd(const Vecd&)> into a SpatialDistribution-compatible
+ *        distribution type, enabling arbitrary callable velocity profiles to be used
+ *        with VariableAssignment<SpatialDistribution<...>> on the host.
+ */
+class LambdaVelocityDistribution
+{
+  public:
+    using ReturnType = Vecd;
+
+    explicit LambdaVelocityDistribution(std::function<Vecd(const Vecd &)> func)
+        : func_(std::move(func)) {}
+
+    Vecd operator()(const Vecd &pos) const { return func_(pos); }
+
+  private:
+    std::function<Vecd(const Vecd &)> func_;
+};
+} // namespace
 //=================================================================================================//
 SPHSimulation::~SPHSimulation() = default;
 //=================================================================================================//
@@ -62,6 +85,69 @@ WallBuilder &WallBuilder::hollowBox(VecdRef domain_dimensions, Real wall_width)
     return *this;
 }
 //=================================================================================================//
+SolidBlockBuilder::SolidBlockBuilder(const std::string &name)
+    : name_(name) {}
+//=================================================================================================//
+SolidBlockBuilder &SolidBlockBuilder::addBox(VecdRef halfsize, VecdRef translation)
+{
+    boxes_.emplace_back(halfsize, translation);
+    return *this;
+}
+//=================================================================================================//
+SolidBlockBuilder &SolidBlockBuilder::materialSVK(Real rho0, Real youngs_modulus, Real poisson)
+{
+    rho0_ = rho0;
+    youngs_modulus_ = youngs_modulus;
+    poisson_ = poisson;
+    mat_type_ = SolidMaterialType::SaintVenantKirchhoff;
+    return *this;
+}
+//=================================================================================================//
+SolidBlockBuilder &SolidBlockBuilder::materialNeoHookean(Real rho0, Real youngs_modulus, Real poisson)
+{
+    rho0_ = rho0;
+    youngs_modulus_ = youngs_modulus;
+    poisson_ = poisson;
+    mat_type_ = SolidMaterialType::NeoHookean;
+    return *this;
+}
+//=================================================================================================//
+SolidBlockBuilder &SolidBlockBuilder::constrainBox(VecdRef halfsize, VecdRef translation)
+{
+    has_constraint_ = true;
+    constraint_halfsize_ = halfsize;
+    constraint_translation_ = translation;
+    return *this;
+}
+//=================================================================================================//
+SolidBlockBuilder &SolidBlockBuilder::subtractFromConstraint(VecdRef halfsize, VecdRef translation)
+{
+    has_constraint_subtract_ = true;
+    constraint_subtract_halfsize_ = halfsize;
+    constraint_subtract_translation_ = translation;
+    return *this;
+}
+//=================================================================================================//
+SolidBlockBuilder &SolidBlockBuilder::initialVelocity(std::function<Vecd(const Vecd &)> vel_func)
+{
+    has_initial_velocity_ = true;
+    initial_velocity_func_ = std::move(vel_func);
+    return *this;
+}
+//=================================================================================================//
+SolidBlockBuilder &SolidBlockBuilder::withNumericalDamping()
+{
+    numerical_damping_ = true;
+    return *this;
+}
+//=================================================================================================//
+Real SolidBlockBuilder::getReferenceSoundSpeed() const
+{
+    // Bulk modulus K = E / (3 * (1 - 2*nu)), reference sound speed c0 = sqrt(K / rho0)
+    Real K = youngs_modulus_ / (3.0 * (1.0 - 2.0 * poisson_));
+    return std::sqrt(K / rho0_);
+}
+//=================================================================================================//
 SolverConfig &SolverConfig::dualTimeStepping()
 {
     dual_time_stepping_ = true;
@@ -85,6 +171,14 @@ void SPHSimulation::defineDomain(VecdRef domain_dimensions, Real particle_spacin
     dp_ref_ = particle_spacing;
 }
 //=================================================================================================//
+void SPHSimulation::defineDomain(VecdRef lower_bound, VecdRef upper_bound, Real particle_spacing)
+{
+    explicit_domain_bounds_ = true;
+    domain_lower_bound_ = lower_bound;
+    domain_dims_ = upper_bound;
+    dp_ref_ = particle_spacing;
+}
+//=================================================================================================//
 FluidBlockBuilder &SPHSimulation::addFluidBlock(const std::string &name)
 {
     fluid_blocks_.push_back(std::make_unique<FluidBlockBuilder>(name));
@@ -95,6 +189,12 @@ WallBuilder &SPHSimulation::addWall(const std::string &name)
 {
     walls_.push_back(std::make_unique<WallBuilder>(name));
     return *walls_.back();
+}
+//=================================================================================================//
+SolidBlockBuilder &SPHSimulation::addSolidBlock(const std::string &name)
+{
+    solid_blocks_.push_back(std::make_unique<SolidBlockBuilder>(name));
+    return *solid_blocks_.back();
 }
 //=================================================================================================//
 void SPHSimulation::enableGravity(VecdRef gravity)
@@ -122,22 +222,41 @@ SolverConfig &SPHSimulation::useSolver()
 //=================================================================================================//
 void SPHSimulation::run(Real end_time)
 {
+    if (dp_ref_ <= 0.0)
+    {
+        std::cerr << "SPHSimulation::run: domain is not defined. "
+                     "Call defineDomain() or createDomain() first.\n";
+        return;
+    }
+
+    if (!solid_blocks_.empty() && fluid_blocks_.empty())
+    {
+        runSolid(end_time);
+        return;
+    }
+
+    if (!fluid_blocks_.empty() && solid_blocks_.empty())
+    {
+        runFluid(end_time);
+        return;
+    }
+
+    std::cerr << "SPHSimulation::run: configure at least one solid or fluid block.\n";
+}
+//=================================================================================================//
+void SPHSimulation::runFluid(Real end_time)
+{
     //----------------------------------------------------------------------
     // Validate configuration
     //----------------------------------------------------------------------
     if (fluid_blocks_.empty())
     {
-        std::cerr << "SPHSimulation::run: no fluid block defined.\n";
+        std::cerr << "SPHSimulation::runFluid: no fluid block defined.\n";
         return;
     }
     if (walls_.empty())
     {
-        std::cerr << "SPHSimulation::run: no wall defined.\n";
-        return;
-    }
-    if (dp_ref_ <= 0.0)
-    {
-        std::cerr << "SPHSimulation::run: domain is not defined. Call defineDomain() or createDomain() first.\n";
+        std::cerr << "SPHSimulation::runFluid: no wall defined.\n";
         return;
     }
 
@@ -403,6 +522,234 @@ void SPHSimulation::run(Real end_time)
               << "interval_acoustic_step = " << interval_acoustic_step.seconds() << "\n"
               << "interval_updating_configuration = "
               << interval_updating_configuration.seconds() << "\n";
+}
+//=================================================================================================//
+void SPHSimulation::runSolid(Real end_time)
+{
+    const SolidBlockBuilder &solid_cfg = *solid_blocks_[0];
+
+    //----------------------------------------------------------------------
+    // Build the SPH system
+    //----------------------------------------------------------------------
+    BoundingBoxd domain_bounds = explicit_domain_bounds_
+                                     ? BoundingBoxd(domain_lower_bound_, domain_dims_)
+                                     : BoundingBoxd(-dp_ref_ * Vecd::Ones(), domain_dims_ + dp_ref_ * Vecd::Ones());
+    sph_system_ = std::make_unique<SPHSystem>(domain_bounds, dp_ref_);
+    SPHSystem &sph_system = *sph_system_;
+
+    //----------------------------------------------------------------------
+    // Build solid body ComplexShape from the configured boxes
+    //----------------------------------------------------------------------
+    auto &solid_shape = sph_system.addShape<ComplexShape>(solid_cfg.getName());
+    for (const auto &[hs, trans] : solid_cfg.getBoxes())
+        solid_shape.add<GeometricShapeBox>(Transform(trans), hs);
+
+    //----------------------------------------------------------------------
+    // Create solid body and define material (compile-time dispatch)
+    //----------------------------------------------------------------------
+    auto &solid_body = sph_system.addBody<SolidBody>(solid_shape);
+    const SolidMaterialType mat_type = solid_cfg.getMaterialType();
+    if (mat_type == SolidMaterialType::SaintVenantKirchhoff)
+        solid_body.defineMaterial<SaintVenantKirchhoffSolid>(
+            solid_cfg.getRho0(), solid_cfg.getYoungsModulus(), solid_cfg.getPoissonRatio());
+    else
+        solid_body.defineMaterial<NeoHookeanSolid>(
+            solid_cfg.getRho0(), solid_cfg.getYoungsModulus(), solid_cfg.getPoissonRatio());
+    solid_body.generateParticles<BaseParticles, Lattice>();
+
+    //----------------------------------------------------------------------
+    // Build constrained (holder) region if configured
+    //----------------------------------------------------------------------
+    std::unique_ptr<BodyRegionByParticle> holder_ptr;
+    if (solid_cfg.hasConstraint())
+    {
+        SharedPtr<Shape> constraint_shape;
+        if (solid_cfg.hasConstraintSubtract())
+        {
+            auto cs = std::make_shared<ComplexShape>(solid_cfg.getName() + "Constrain");
+            cs->add<GeometricShapeBox>(
+                Transform(solid_cfg.getConstraintTranslation()), solid_cfg.getConstraintHalfsize());
+            cs->subtract<GeometricShapeBox>(
+                Transform(solid_cfg.getConstraintSubtractTranslation()),
+                solid_cfg.getConstraintSubtractHalfsize());
+            constraint_shape = cs;
+        }
+        else
+        {
+            constraint_shape = std::make_shared<GeometricShapeBox>(
+                Transform(solid_cfg.getConstraintTranslation()),
+                solid_cfg.getConstraintHalfsize(),
+                solid_cfg.getName() + "Constrain");
+        }
+        holder_ptr = std::make_unique<BodyRegionByParticle>(solid_body, constraint_shape);
+    }
+
+    //----------------------------------------------------------------------
+    // Create observer bodies and contact relations (owned by SPHSystem)
+    //----------------------------------------------------------------------
+    std::vector<BaseDynamics<void> *> observer_relation_dynamics;
+    std::vector<BaseIO *> observer_position_outputs;
+
+    //----------------------------------------------------------------------
+    // Define the Lagrangian inner relation
+    //----------------------------------------------------------------------
+    auto &solid_inner = sph_system.addInnerRelation(solid_body, ConfigType::Lagrangian);
+
+    //----------------------------------------------------------------------
+    // Build solver and particle method containers
+    //----------------------------------------------------------------------
+    SPHSolver sph_solver(sph_system);
+    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+
+    //----------------------------------------------------------------------
+    // Apply initial velocity on the host before particle dynamics are set up
+    //----------------------------------------------------------------------
+    if (solid_cfg.hasInitialVelocity())
+    {
+        host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LambdaVelocityDistribution>>(
+                        solid_body, "Velocity", solid_cfg.getInitialVelocityFunc())
+            .exec();
+    }
+
+    //----------------------------------------------------------------------
+    // Observer setup (contact relations + relation-dynamics + recorders)
+    //----------------------------------------------------------------------
+    for (const auto &obs : observers_)
+    {
+        auto &obs_body = sph_system.addBody<ObserverBody>(obs.name);
+        obs_body.generateParticles<ObserverParticles>(obs.positions);
+        auto &obs_contact = sph_system.addContactRelation(obs_body, solid_body, ConfigType::Lagrangian);
+        observer_relation_dynamics.push_back(&main_methods.addRelationDynamics(obs_contact));
+        observer_position_outputs.push_back(
+            &main_methods.addObserveRecorder<Vecd>("Position", obs_contact));
+    }
+
+    //----------------------------------------------------------------------
+    // Lagrangian configuration group (cell linked list, relations, correction matrix)
+    //----------------------------------------------------------------------
+    ParticleDynamicsGroup lagrangian_config;
+    lagrangian_config.add(&main_methods.addCellLinkedListDynamics(solid_body));
+    lagrangian_config.add(&main_methods.addRelationDynamics(solid_inner));
+    for (auto *rel : observer_relation_dynamics)
+        lagrangian_config.add(rel);
+    lagrangian_config.add(
+        &main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(solid_inner));
+
+    //----------------------------------------------------------------------
+    // Material-specific dynamics (compile-time template dispatch at runtime)
+    //----------------------------------------------------------------------
+    BaseDynamics<void> *damping_ptr = nullptr;
+    BaseDynamics<void> *step_1st_ptr = nullptr;
+
+    if (mat_type == SolidMaterialType::SaintVenantKirchhoff)
+    {
+        if (solid_cfg.hasNumericalDamping())
+            damping_ptr = &main_methods.addInteractionDynamicsWithUpdate<
+                solid_dynamics::StructureNumericalDamping, SaintVenantKirchhoffSolid>(solid_inner);
+        step_1st_ptr = &main_methods.addInteractionDynamicsOneLevel<
+            solid_dynamics::StructureIntegration1stHalfPK2, SaintVenantKirchhoffSolid>(solid_inner);
+    }
+    else
+    {
+        if (solid_cfg.hasNumericalDamping())
+            damping_ptr = &main_methods.addInteractionDynamicsWithUpdate<
+                solid_dynamics::StructureNumericalDamping, NeoHookeanSolid>(solid_inner);
+        step_1st_ptr = &main_methods.addInteractionDynamicsOneLevel<
+            solid_dynamics::StructureIntegration1stHalf, NeoHookeanSolid, NoKernelCorrectionCK>(solid_inner);
+    }
+
+    auto &step_2nd = main_methods.addInteractionDynamicsOneLevel<
+        solid_dynamics::StructureIntegration2ndHalf>(solid_inner);
+
+    auto &acoustic_time_step =
+        main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(solid_body);
+
+    //----------------------------------------------------------------------
+    // Constraint dynamics (optional)
+    //----------------------------------------------------------------------
+    BaseDynamics<void> *constraint_ptr = nullptr;
+    if (holder_ptr)
+        constraint_ptr = &main_methods.addStateDynamics<FixBodyPartConstraintCK>(*holder_ptr);
+
+    //----------------------------------------------------------------------
+    // I/O
+    //----------------------------------------------------------------------
+    auto &body_state_recorder =
+        main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+
+    //----------------------------------------------------------------------
+    // Time stepper
+    //----------------------------------------------------------------------
+    TimeStepper &time_stepper = sph_solver.defineTimeStepper(end_time);
+    size_t acoustic_steps = 1;
+    const int screening_interval = 100;
+    const int observation_interval = screening_interval;
+    auto &state_recording = time_stepper.addTriggerByInterval(end_time / 100.0);
+
+    //----------------------------------------------------------------------
+    // Initialise Lagrangian configuration
+    //----------------------------------------------------------------------
+    lagrangian_config.exec();
+
+    //----------------------------------------------------------------------
+    // First output before the main loop
+    //----------------------------------------------------------------------
+    body_state_recorder.writeToFile();
+    for (auto *obs_out : observer_position_outputs)
+        obs_out->writeToFile(acoustic_steps);
+
+    //----------------------------------------------------------------------
+    // Timing
+    //----------------------------------------------------------------------
+    TimeInterval interval_output;
+    TimeInterval interval_acoustic_step;
+
+    //----------------------------------------------------------------------
+    // Time integration loop (single acoustic time-stepping)
+    //----------------------------------------------------------------------
+    TickCount t0 = TickCount::now();
+    while (!time_stepper.isEndTime())
+    {
+        TickCount time_instance = TickCount::now();
+        Real acoustic_dt = time_stepper.incrementPhysicalTime(acoustic_time_step);
+        if (damping_ptr)
+            damping_ptr->exec(acoustic_dt);
+        step_1st_ptr->exec(acoustic_dt);
+        if (constraint_ptr)
+            constraint_ptr->exec();
+        step_2nd.exec(acoustic_dt);
+        interval_acoustic_step += TickCount::now() - time_instance;
+
+        time_instance = TickCount::now();
+        if (acoustic_steps == 1 || acoustic_steps % screening_interval == 0)
+        {
+            std::cout << std::fixed << std::setprecision(9)
+                      << "N=" << acoustic_steps
+                      << "  Time = " << time_stepper.getPhysicalTime()
+                      << "  acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
+        }
+
+        if (acoustic_steps % observation_interval == 0)
+        {
+            for (auto *obs_out : observer_position_outputs)
+                obs_out->writeToFile(acoustic_steps);
+        }
+
+        if (state_recording())
+            body_state_recorder.writeToFile();
+
+        interval_output += TickCount::now() - time_instance;
+        acoustic_steps++;
+    }
+
+    //----------------------------------------------------------------------
+    // Summary
+    //----------------------------------------------------------------------
+    TimeInterval tt = TickCount::now() - t0 - interval_output;
+    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds.\n";
+    std::cout << std::fixed << std::setprecision(9)
+              << "interval_acoustic_step = " << interval_acoustic_step.seconds() << "\n";
 }
 //=================================================================================================//
 } // namespace SPH
