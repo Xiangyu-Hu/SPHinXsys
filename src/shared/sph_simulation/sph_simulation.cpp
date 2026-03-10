@@ -224,8 +224,7 @@ void SPHSimulation::run(Real end_time)
 {
     if (dp_ref_ <= 0.0)
     {
-        std::cerr << "SPHSimulation::run: domain is not defined. "
-                     "Call defineDomain() or createDomain() first.\n";
+        std::cerr << "SPHSimulation::run: domain is not defined. Call defineDomain() or createDomain() first.\n";
         return;
     }
 
@@ -607,8 +606,9 @@ void SPHSimulation::runSolid(Real end_time)
     //----------------------------------------------------------------------
     if (solid_cfg.hasInitialVelocity())
     {
-        host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LambdaVelocityDistribution>>(
-                        solid_body, "Velocity", solid_cfg.getInitialVelocityFunc())
+        host_methods
+            .addStateDynamics<VariableAssignment, SpatialDistribution<LambdaVelocityDistribution>>(
+                solid_body, "Velocity", solid_cfg.getInitialVelocityFunc())
             .exec();
     }
 
