@@ -559,28 +559,27 @@ void SPHSimulation::runSolid(Real end_time)
     //----------------------------------------------------------------------
     // Build constrained (holder) region if configured
     //----------------------------------------------------------------------
-    std::unique_ptr<BodyRegionByParticle> holder_ptr;
+    BodyRegionByParticle *holder_ptr = nullptr;
     if (solid_cfg.hasConstraint())
     {
-        SharedPtr<Shape> constraint_shape;
         if (solid_cfg.hasConstraintSubtract())
         {
-            auto cs = std::make_shared<ComplexShape>(solid_cfg.getName() + "Constrain");
-            cs->add<GeometricShapeBox>(
+            auto &cs = sph_system.addShape<ComplexShape>(solid_cfg.getName() + "Constrain");
+            cs.add<GeometricShapeBox>(
                 Transform(solid_cfg.getConstraintTranslation()), solid_cfg.getConstraintHalfsize());
-            cs->subtract<GeometricShapeBox>(
+            cs.subtract<GeometricShapeBox>(
                 Transform(solid_cfg.getConstraintSubtractTranslation()),
                 solid_cfg.getConstraintSubtractHalfsize());
-            constraint_shape = cs;
+            holder_ptr = &solid_body.addBodyPart<BodyRegionByParticle>(cs);
         }
         else
         {
-            constraint_shape = std::make_shared<GeometricShapeBox>(
+            auto &cs = sph_system.addShape<GeometricShapeBox>(
                 Transform(solid_cfg.getConstraintTranslation()),
                 solid_cfg.getConstraintHalfsize(),
                 solid_cfg.getName() + "Constrain");
+            holder_ptr = &solid_body.addBodyPart<BodyRegionByParticle>(cs);
         }
-        holder_ptr = std::make_unique<BodyRegionByParticle>(solid_body, constraint_shape);
     }
 
     //----------------------------------------------------------------------
