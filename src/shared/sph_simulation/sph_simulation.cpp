@@ -30,16 +30,16 @@
 
 #include "sphinxsys.h"
 
-#include <iomanip>
-#include <iostream>
-
 namespace SPH
 {
+//=================================================================================================//
+SPHSimulation::~SPHSimulation() = default;
+//=================================================================================================//
 //=================================================================================================//
 FluidBlockBuilder::FluidBlockBuilder(const std::string &name)
     : name_(name) {}
 //=================================================================================================//
-FluidBlockBuilder &FluidBlockBuilder::block(Vecd dimensions)
+FluidBlockBuilder &FluidBlockBuilder::block(VecdRef dimensions)
 {
     dimensions_ = dimensions;
     return *this;
@@ -55,7 +55,7 @@ FluidBlockBuilder &FluidBlockBuilder::material(Real rho0, Real c)
 WallBuilder::WallBuilder(const std::string &name)
     : name_(name) {}
 //=================================================================================================//
-WallBuilder &WallBuilder::hollowBox(Vecd domain_dimensions, Real wall_width)
+WallBuilder &WallBuilder::hollowBox(VecdRef domain_dimensions, Real wall_width)
 {
     domain_dims_ = domain_dimensions;
     BW_ = wall_width;
@@ -74,7 +74,12 @@ SolverConfig &SolverConfig::freeSurfaceCorrection()
     return *this;
 }
 //=================================================================================================//
-void SPHSimulation::createDomain(Vecd domain_dimensions, Real particle_spacing)
+void SPHSimulation::createDomain(VecdRef domain_dimensions, Real particle_spacing)
+{
+    defineDomain(domain_dimensions, particle_spacing);
+}
+//=================================================================================================//
+void SPHSimulation::defineDomain(VecdRef domain_dimensions, Real particle_spacing)
 {
     domain_dims_ = domain_dimensions;
     dp_ref_ = particle_spacing;
@@ -92,13 +97,13 @@ WallBuilder &SPHSimulation::addWall(const std::string &name)
     return *walls_.back();
 }
 //=================================================================================================//
-void SPHSimulation::enableGravity(Vecd gravity)
+void SPHSimulation::enableGravity(VecdRef gravity)
 {
     gravity_ = gravity;
     gravity_enabled_ = true;
 }
 //=================================================================================================//
-void SPHSimulation::addObserver(const std::string &name, const Vecd &position)
+void SPHSimulation::addObserver(const std::string &name, VecdRef position)
 {
     observers_.push_back({name, {position}});
 }
@@ -130,6 +135,11 @@ void SPHSimulation::run(Real end_time)
         std::cerr << "SPHSimulation::run: no wall defined.\n";
         return;
     }
+    if (dp_ref_ <= 0.0)
+    {
+        std::cerr << "SPHSimulation::run: domain is not defined. Call defineDomain() or createDomain() first.\n";
+        return;
+    }
 
     //----------------------------------------------------------------------
     // Derive geometry parameters
@@ -142,7 +152,8 @@ void SPHSimulation::run(Real end_time)
     // Build the SPH system
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(-BW * Vecd::Ones(), domain_dims_ + BW * Vecd::Ones());
-    SPHSystem sph_system(system_domain_bounds, dp_ref_);
+    sph_system_ = std::make_unique<SPHSystem>(system_domain_bounds, dp_ref_);
+    SPHSystem &sph_system = *sph_system_;
 
     //----------------------------------------------------------------------
     // Create fluid body (rectangular block starting at the coordinate origin)
