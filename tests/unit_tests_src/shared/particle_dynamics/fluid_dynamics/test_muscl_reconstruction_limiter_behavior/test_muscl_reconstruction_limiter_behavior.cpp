@@ -47,7 +47,6 @@ TEST(MUSCL_LimiterSuite, LinearReproductionScalar_Unlimited)
     const Vecd xi = V(0.0, 0.0);
     const Vecd xj = V(1.0, 0.5);
     const Vecd xf = V(0.6, 0.2);
-    const Vecd nh = unit(xj - xi);
 
     const Real Ui = U_lin(a, b, xi);
     const Real Uj = U_lin(a, b, xj);
@@ -72,7 +71,6 @@ TEST(MUSCL_LimiterSuite, LinearReproductionScalar_Minmod)
     const Vecd xi = V(0.0, 0.0);
     const Vecd xj = V(1.0, 0.5);
     const Vecd xf = V(0.6, 0.2);
-    const Vecd nh = unit(xj - xi);
 
     const Real Ui = U_lin(a, b, xi);
     const Real Uj = U_lin(a, b, xj);
@@ -96,7 +94,6 @@ TEST(MUSCL_LimiterSuite, LinearReproductionScalar_MC)
     const Vecd xi = V(0.0, 0.0);
     const Vecd xj = V(1.0, 0.5);
     const Vecd xf = V(0.6, 0.2);
-    const Vecd nh = unit(xj - xi);
 
     const Real Ui = U_lin(a, b, xi);
     const Real Uj = U_lin(a, b, xj);
@@ -120,7 +117,6 @@ TEST(MUSCL_LimiterSuite, LinearReproductionScalar_VanLeer)
     const Vecd xi = V(0.0, 0.0);
     const Vecd xj = V(1.0, 0.5);
     const Vecd xf = V(0.6, 0.2);
-    const Vecd nh = unit(xj - xi);
 
     const Real Ui = U_lin(a, b, xi);
     const Real Uj = U_lin(a, b, xj);
@@ -139,7 +135,6 @@ TEST(MUSCL_LimiterSuite, DiscontinuityScalar_OvershootControl_Minmod)
     const Vecd xi = V(0.0, 0.0);
     const Vecd xj = V(1.0, 0.0);
     const Vecd xf = V(0.5, 0.0);
-    const Vecd nh = unit(xj - xi);
 
     const Real Ui = 10.0;
     const Real Uj = 1.0;
@@ -173,7 +168,6 @@ TEST(MUSCL_LimiterSuite, DiscontinuityScalar_OvershootControl_MC_VanLeer)
     const Vecd xi = V(0.0, 0.0);
     const Vecd xj = V(1.0, 0.0);
     const Vecd xf = V(0.5, 0.0);
-    const Vecd nh = unit(xj - xi);
 
     const Real Ui = 10.0, Uj = 1.0;
     const Vecd gi = V(6.0, 0.0), gj = V(-6.0, 0.0);
@@ -216,7 +210,6 @@ TEST(MUSCL_LimiterSuite, MonotoneSmooth_Profile_NoExcessCut)
     const Vecd xj = V( 1.1, 0.7, 0.2);
     const Vecd xf = V( 0.3, 0.6, 0.1);
 #endif
-    const Vecd nh = unit(xj - xi);
 
     const Real Ui = U_lin(a, b, xi);
     const Real Uj = U_lin(a, b, xj);
@@ -247,7 +240,6 @@ TEST(MUSCL_LimiterSuite, PrimitivesLinear_WithLimiter)
     const Vecd xi = V(0.1, -0.2);
     const Vecd xj = V(1.1, 0.7);
     const Vecd xf = V(0.4, 0.1);
-    const Vecd nh = unit(xj - xi);
 
     //  coefficients
     const Real ar = 1.2, ap = 4.0;      Vecd br = V(0.1, -0.05), bp = V(0.2, 0.15);
@@ -305,7 +297,6 @@ TEST(MUSCL_LimiterSuite, PositivityClipping_RhoAndP)
     const Vecd xi = V(0.0, 0.0);
     const Vecd xj = V(1.0, 0.0);
     const Vecd xf = V(0.5, 0.0);
-    const Vecd nh = unit(xj - xi);
 
     LR lr = reconstruct_primitives_muscl(
         Pi, Pj, g0, g0, g0, g0, g0, g0, g0, g0, xi, xj, xf, cfg
@@ -335,7 +326,6 @@ TEST(MUSCL_LimiterSuite, DiscontinuityScalar_ZeroGrad_DropsToFirstOrder)
     const Vecd xi = V(0.0, 0.0);
     const Vecd xj = V(1.0, 0.0);
     const Vecd xf = V(0.5, 0.0);
-    const Vecd nh = unit(xj - xi);
 
     auto lr = reconstruct_scalar_muscl(Ui, gi, Uj, gj, xi, xj, xf, cfg);
 

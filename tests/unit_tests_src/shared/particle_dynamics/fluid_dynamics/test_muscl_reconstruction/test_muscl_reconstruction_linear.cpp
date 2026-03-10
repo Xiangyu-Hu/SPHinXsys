@@ -21,8 +21,7 @@ TEST(MUSCL, LinearReproductionScalar)
     const Vecd xi(0.0, 0.0);
     const Vecd xj(1.0, 0.5);
     const Vecd x_iface(0.6, 0.2);
-    Vecd nhat = (xj - xi);
-    nhat /= nhat.norm();
+   
 
     const Real Ui = U(xi), Uj = U(xj);
 

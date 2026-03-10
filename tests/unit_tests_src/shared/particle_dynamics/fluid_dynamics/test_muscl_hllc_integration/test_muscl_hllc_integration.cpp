@@ -120,7 +120,6 @@ TEST_F(BridgeFixture, UniformState_NoChange) {
                                          gr_p_i, gr_p_j);
 #endif
 
-    std::cout << "UniformState Debug:" << std::endl;
     std::cout << "  Input: rho=" << rho << ", p=" << p << ", vel=" << vel.transpose() << std::endl;
     std::cout << "  Output: rho=" << star.rho_ << ", p=" << star.p_ << ", vel=" << star.vel_.transpose() << std::endl;
     
