@@ -191,7 +191,6 @@ void EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>>::interaction(siz
     Vecd momentum_change_rate = force_prior_[index_i];
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        Vecd *n_k = wall_n_[k];
         Real *Vol_k = wall_Vol_[k];
         Vecd *vel_ave_k = wall_vel_ave_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -256,7 +255,6 @@ void EulerianCompressibleIntegration2ndHalfMUSCL<Contact<Wall>>::interaction(siz
     Real energy_change_rate = force_prior_[index_i].dot(vel_[index_i]);
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
-        Vecd *n_k = wall_n_[k];
         Real *Vol_k = wall_Vol_[k];
         Vecd *vel_ave_k = wall_vel_ave_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
