@@ -419,9 +419,7 @@ void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
     Vecd force = Vecd::Zero();
     Vecd e_j_n = Vecd::Zero();
     Vecd e_j_tau = Vecd::Zero();
-    Matd WSS_j_tn = Matd::Zero();
     Matd WSS_j = Matd::Zero();
-    Matd Q = Matd::Zero();
     for (size_t k = 0; k < contact_configuration_.size(); ++k)
     {
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -430,12 +428,9 @@ void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
         {
             size_t index_j = contact_neighborhood.j_[n];
             Vecd &e_ij = contact_neighborhood.e_ij_[n];
-
             e_j_n = n_k[index_j];
-            Q = getTransformationMatrix(e_j_n);
-
-            e_j_tau[0] = e_j_n[1];
-            e_j_tau[1] = e_j_n[0] * (-1.0);
+            Vecd vel_tau = vel_i - vel_i.dot(e_j_n) * e_j_n;
+            e_j_tau = vel_tau / (vel_tau.norm() + TinyReal);
 
             Real vel_i_tau_mag = abs(vel_i.dot(e_j_tau));
 
@@ -443,17 +438,10 @@ void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
             Real y_star_j = rho_i * C_mu_25_ * turbu_k_i_05 * y_p_j / molecular_viscosity_;
             Real u_star_j = get_dimensionless_velocity(y_star_j, current_time);
             Real fric_vel_mag_j = sqrt(C_mu_25_ * turbu_k_i_05 * vel_i_tau_mag / u_star_j);
-
             Real WSS_tn_mag_j = rho_i * fric_vel_mag_j * fric_vel_mag_j * boost::qvm::sign(vel_i.dot(e_j_tau));
-
-            WSS_j_tn(0, 0) = 0.0;
-            WSS_j_tn(0, 1) = WSS_tn_mag_j;
-            WSS_j_tn(1, 0) = 0.0;
-            WSS_j_tn(1, 1) = 0.0;
-
-            WSS_j = Q.transpose() * WSS_j_tn * Q;
+            
+            WSS_j = WSS_tn_mag_j * (e_j_tau * e_j_n.transpose());
             Vecd force_j = 2.0 * mass_[index_i] * WSS_j * e_ij * contact_neighborhood.dW_ij_[n] * this->Vol_[index_j] / rho_i;
-
             force += force_j;
         }
     }
@@ -780,9 +768,11 @@ void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
         Real turbu_k_i_05 = pow(turbu_k_[index_i], 0.5);
         Real turbu_k_i_15 = pow(turbu_k_[index_i], 1.5);
 
-        Vecd e_i_nearest_tau = e_nearest_tau_[index_i];
         Vecd e_i_nearest_n = e_nearest_normal_[index_i];
         const Vecd &vel_i = vel_[index_i];
+        Vecd vel_tau = vel_i - vel_i.dot(e_i_nearest_n) * e_i_nearest_n;
+        Vecd e_i_nearest_tau = vel_tau / (vel_tau.norm() + TinyReal);
+
         Real rho_i = rho_[index_i];
         Real nu_i = molecular_viscosity_ / rho_i;
 
@@ -804,8 +794,6 @@ void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
 
         if (is_near_wall_P1_[index_i] == 1)
         {
-            Matd vel_grad_i_tn = Matd::Zero();
-            Matd Q = Matd::Zero();
             Real total_weight = 0.0;
 
             Real epsilon_p_weighted_sum = 0.0;
@@ -866,16 +854,7 @@ void StandardWallFunctionCorrection::interaction(size_t index_i, Real dt)
                 }
             }
             turbu_epsilon_[index_i] = epsilon_p_weighted_sum / total_weight;
-
-            vel_grad_i_tn(0, 0) = 0.0;
-            vel_grad_i_tn(0, 1) = dudn_p_weighted_sum / total_weight;
-            vel_grad_i_tn(1, 0) = 0.0;
-            vel_grad_i_tn(1, 1) = 0.0;
-
-            Q = getTransformationMatrix(e_i_nearest_n);
-
-            velocity_gradient_[index_i] = Q.transpose() * vel_grad_i_tn * Q;
-
+            velocity_gradient_[index_i] = (dudn_p_weighted_sum / total_weight) * (e_i_nearest_tau * e_i_nearest_n.transpose());
             k_production_[index_i] = G_k_p_weighted_sum / total_weight;
         }
     }
