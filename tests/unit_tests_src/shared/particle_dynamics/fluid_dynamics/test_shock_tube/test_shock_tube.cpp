@@ -220,7 +220,6 @@ TEST(ShockTubeMUSCL, Sod_Limiter_Comparison)
                 Real xi = x0 + (il+0.5)*dx;
                 Real xj = x0 + (ir+0.5)*dx;
                 Real xf = x0 + (i)*dx;
-                Real nh = +1.0; // 1D
 
                 // Primitives
                 Primitives Pi{P[il].rho, Vecd(P[il].u, 0.0), P[il].p, P[il].E};
@@ -300,7 +299,6 @@ TEST(ShockTubeMUSCL, Sod_Limiter_Comparison)
     // 4) Monotonicity: check for new extreme values
     auto minrho = [](const std::vector<Cell>& P){ Real m=P[0].rho; for(auto& c:P) m=std::min(m,c.rho); return m; };
     auto maxrho = [](const std::vector<Cell>& P){ Real m=P[0].rho; for(auto& c:P) m=std::max(m,c.rho); return m; };
-    Real global_min = std::min(L0.rho, R0.rho);
     Real global_max = std::max(L0.rho, R0.rho);
     EXPECT_GE(minrho(P_minmod), 0.0);
     EXPECT_GE(minrho(P_mc),     0.0);
