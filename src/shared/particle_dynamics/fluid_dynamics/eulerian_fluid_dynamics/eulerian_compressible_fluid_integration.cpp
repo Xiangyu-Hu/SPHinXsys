@@ -177,7 +177,7 @@ void EulerianCompressibleIntegration2ndHalfMUSCL<Inner<>>::update(size_t index_i
 //-------------------------------------------------------------------------------------------------//
 EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>>::EulerianCompressibleIntegration1stHalfMUSCL(
     BaseContactRelation &contact_relation, const MUSCLHLLCBridgeConfig &bridge_cfg)
-    : InteractionWithWall<BaseIntegrationInCompressibleType>(contact_relation),
+    : InteractionWithWall<BaseIntegrationInCompressible>(contact_relation),
       bridge_cfg_(make_default_bridge_config(compressible_fluid_, bridge_cfg)),
       bridge_(compressible_fluid_, compressible_fluid_, bridge_cfg_),
       rho_grad_(particles_->getVariableDataByName<Vecd>("DensityGradient")),
@@ -240,7 +240,7 @@ void EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>>::interaction(siz
 //-------------------------------------------------------------------------------------------------//
 EulerianCompressibleIntegration2ndHalfMUSCL<Contact<Wall>>::EulerianCompressibleIntegration2ndHalfMUSCL(
     BaseContactRelation &contact_relation, const MUSCLHLLCBridgeConfig &bridge_cfg)
-    : InteractionWithWall<BaseIntegrationInCompressibleType>(contact_relation),
+    : InteractionWithWall<BaseIntegrationInCompressible>(contact_relation),
       bridge_cfg_(make_default_bridge_config(compressible_fluid_, bridge_cfg)),
       bridge_(compressible_fluid_, compressible_fluid_, bridge_cfg_),
       rho_grad_(particles_->getVariableDataByName<Vecd>("DensityGradient")),
