@@ -213,7 +213,10 @@ inline Matd polarRotation(const Matd &F)
 {
     Eigen::JacobiSVD<Matd> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
     Matd R = svd.matrixU() * svd.matrixV().transpose();
-    assert(R.determinant() > 0.0);
+    if (R.determinant() <= 0.0)
+    {
+        throw std::runtime_error("polarDecomposition failed: det(R) <= 0 from SVD-based polar decomposition.");
+    }
     return R;
 };
 
@@ -223,7 +226,10 @@ inline void polarDecomposition(const Matd &F, Matd &R, Matd &S)
     const Matd &U = svd.matrixU();
     const Matd &V = svd.matrixV();
     R = U * V.transpose();
-    assert(R.determinant() > 0.0);
+    if (R.determinant() <= 0.0)
+    {
+        throw std::runtime_error("polarDecomposition failed: det(R) <= 0 from SVD-based polar decomposition.");
+    }
     S = V * svd.singularValues().asDiagonal() * V.transpose();
 }
 } // namespace SPH
