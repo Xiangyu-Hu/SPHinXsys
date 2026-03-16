@@ -40,8 +40,8 @@ RepulsionForce<Contact<>>::RepulsionForce(BaseContactRelation &solid_body_contac
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_solids_.push_back(&DynamicCast<Solid>(this, contact_bodies_[k]->getBaseMaterial()));
-        contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
-        contact_repulsion_factor_.push_back(contact_particles_[k]->getVariableDataByName<Real>("RepulsionFactor"));
+        contact_Vol_.push_back(contact_particles_[k]->registerStateVariableData<Real>("VolumetricMeasure"));
+        contact_repulsion_factor_.push_back(contact_particles_[k]->registerStateVariableData<Real>("RepulsionFactor"));
 
         const Real contact_stiffness_k = contact_solids_[k]->ContactStiffness();
         contact_stiffness_ave_.push_back(2 * contact_stiffness_1 * contact_stiffness_k / (contact_stiffness_1 + contact_stiffness_k));
@@ -111,8 +111,8 @@ RepulsionForce<Wall, Contact<>>::RepulsionForce(BaseContactRelation &solid_body_
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_solids_.push_back(&DynamicCast<Solid>(this, contact_bodies_[k]->getBaseMaterial()));
-        contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
-        contact_repulsion_factor_.push_back(contact_particles_[k]->getVariableDataByName<Real>("RepulsionFactor"));
+        contact_Vol_.push_back(contact_particles_[k]->registerStateVariableData<Real>("VolumetricMeasure"));
+        contact_repulsion_factor_.push_back(contact_particles_[k]->registerStateVariableData<Real>("RepulsionFactor"));
     }
 }
 //=================================================================================================//

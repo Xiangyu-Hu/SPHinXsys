@@ -48,7 +48,7 @@ class DensitySummationPressure<Base, DataDelegationType>
     virtual ~DensitySummationPressure() {};
 
   protected:
-    Real *rho_, *mass_, *rho_sum_;
+    Real *rho_, *mass_, *rho_sum_, *Vol_;
     Real rho0_, inv_sigma0_, W0_;
 };
 
@@ -76,7 +76,10 @@ class DensitySummationPressure<Inner<>> : public DensitySummationPressure<Inner<
     void update(size_t index_i, Real dt = 0.0)
     {
         if (buffer_indicator_[index_i] == 0)
+        {
             assignDensity(index_i);
+            Vol_[index_i] = mass_[index_i] / rho_[index_i];
+        }
     };
 
   protected:
