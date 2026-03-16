@@ -14,7 +14,9 @@ option(SPHINXSYS_DEVELOPER_MODE "Developer mode has more flags active for code q
 option(SPHINXSYS_USE_FLOAT "Build using float (single-precision floating-point format) as primary type" OFF)
 option(SPHINXSYS_USE_SIMD "Build using SIMD instructions" OFF)
 option(SPHINXSYS_MODULE_OPENCASCADE "Build extension relying on OpenCASCADE" OFF)
+option(SPHINXSYS_USE_VTK "Build using VTK library for writing VTP/VTU files" OFF)
 option(SPHINXSYS_USE_SYCL "Build using SYCL acceleration or not" OFF)
+option(SPHINXSYS_USE_ONEDPL_SORTING "Build One DPL for particle sorting" ON)
 
 # ------ Global properties (Some cannot be set on INTERFACE targets)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
@@ -65,6 +67,7 @@ endif()
 
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_SYCL=$<BOOL:${SPHINXSYS_USE_SYCL}>)
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_FLOAT=$<BOOL:${SPHINXSYS_USE_FLOAT}>)
+target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_ONEDPL_SORTING=$<BOOL:${SPHINXSYS_USE_ONEDPL_SORTING}>)
 
 # ------ Dependencies
 # ## SIMD flags
@@ -115,6 +118,13 @@ endif()
 
 find_package(spdlog CONFIG REQUIRED)
 target_link_libraries(sphinxsys_core INTERFACE spdlog::spdlog_header_only)
+
+# ## VTK (optional)
+if(SPHINXSYS_USE_VTK)
+    find_package(VTK REQUIRED COMPONENTS CommonCore CommonDataModel IOXML)
+    target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_VTK)
+    target_link_libraries(sphinxsys_core INTERFACE VTK::CommonCore VTK::CommonDataModel VTK::IOXML)
+endif()
 
 if(SPHINXSYS_USE_SYCL)
     set(SPHINXSYS_USE_SYCL ON)

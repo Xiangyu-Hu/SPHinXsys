@@ -531,7 +531,7 @@ NeighborBuilderSplitInnerAdaptive::
     NeighborBuilderSplitInnerAdaptive(SPHBody &body)
     : NeighborBuilder(body.getSPHAdaptation().getKernel()),
       h_ratio_(body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")),
-      level_(body.getBaseParticles().getVariableDataByName<int>("ParticleMeshLevel")) {}
+      level_(body.getBaseParticles().getVariableDataByName<int>("SmoothingLengthLevel")) {}
 //=================================================================================================//
 void NeighborBuilderSplitInnerAdaptive::
 operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const ListData &list_data_j)
@@ -557,6 +557,16 @@ operator()(Neighborhood &neighborhood, const Vecd &pos_i, size_t index_i, const 
         neighborhood.current_size_++;
     }
 };
+//=================================================================================================//
+MaxSmoothingLengthNeighborBuilder::MaxSmoothingLengthNeighborBuilder(SPHBody &body, SPHBody &contact_body, Real factor)
+    : NeighborBuilderContact(body, contact_body)
+{
+    // create a kernel with a cut-off radius of factor * dp_max
+    Real h_max = SMAX(body.getSPHAdaptation().ReferenceSmoothingLength(), contact_body.getSPHAdaptation().ReferenceSmoothingLength());
+    Real h = factor * h_max;
+    // smoothing length: cut_off_radius/2.0
+    kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(h);
+}
 //=================================================================================================//
 } // namespace SPH
 //=================================================================================================//

@@ -54,17 +54,19 @@ class ParticleDynamicsGroup : public BaseDynamics<void>
         : BaseDynamics<void>(), particle_dynamics_(particle_dynamics) {}
     ~ParticleDynamicsGroup() {};
 
-    void add(BaseDynamics<void> *dynamics)
+    ParticleDynamicsGroup &add(BaseDynamics<void> *dynamics)
     {
         particle_dynamics_.push_back(dynamics);
+        return *this;
     }
 
-    void add(const ParticleDynamicsGroup &dynamics)
+    ParticleDynamicsGroup &add(const ParticleDynamicsGroup &dynamics)
     {
         for (auto *dynamics : dynamics.getAllDynamics())
         {
             particle_dynamics_.push_back(dynamics);
         }
+        return *this;
     }
 
     ParticleDynamicsGroup operator+(const ParticleDynamicsGroup &other) const
@@ -106,26 +108,29 @@ class ReduceDynamicsGroup : public BaseDynamics<typename Operation::ReturnType>
           operation_(operation), reduce_dynamics_(reduce_dynamics) {}
     ~ReduceDynamicsGroup() = default;
 
-    void add(BaseDynamics<ReturnType> *dynamics)
+    ReduceDynamicsGroup<Operation> &add(BaseDynamics<ReturnType> *dynamics)
     {
         reduce_dynamics_.push_back(dynamics);
+        return *this;
     }
 
-    void add(const ReduceDynamicsGroup<Operation> &dynamics)
+    ReduceDynamicsGroup<Operation> &add(const ReduceDynamicsGroup<Operation> &dynamics)
     {
         for (auto *dynamics : dynamics.getAllDynamics())
         {
             reduce_dynamics_.push_back(dynamics);
         }
+        return *this;
     }
 
     template <class DerivedReduceDynamicsType>
-    void add(const StdVec<DerivedReduceDynamicsType *> &dynamics)
+    ReduceDynamicsGroup<Operation> &add(const StdVec<DerivedReduceDynamicsType *> &dynamics)
     {
         for (auto *dynamics : dynamics)
         {
             reduce_dynamics_.push_back(dynamics);
         }
+        return *this;
     }
 
     StdVec<BaseDynamics<ReturnType> *> getAllDynamics() const
@@ -263,7 +268,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     auto &addStateDynamics(DynamicsIdentifier &dynamics_identifier, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
-            StateDynamics<ExecutionPolicy, UpdateType<ControlParameters..., DynamicsIdentifier>>>(
+            StateDynamics<ExecutionPolicy, UpdateType<DynamicsIdentifier, ControlParameters...>>>(
             dynamics_identifier, std::forward<Args>(args)...);
     };
 
@@ -367,11 +372,20 @@ class ParticleMethodContainer : public BaseMethodContainer
         return *state_recorders_keeper_.createPtr<RecorderType<ExecutionPolicy>>(std::forward<Args>(args)...);
     };
 
-    template <template <typename...> class RegressionType, typename... Parameters, typename... Args>
-    auto &addObserveRegression(Args &&...args)
+    template <template <typename...> class RegressionType, typename... ControlParameters, typename... RelationParameters>
+    auto &addObserveRegression(const std::string &variable_name, Contact<RelationParameters...> &contact_relation)
     {
         return *other_io_keeper_.createPtr<
-            RegressionType<ObservedQuantityRecording<ExecutionPolicy, Parameters...>>>(std::forward<Args>(args)...);
+            RegressionType<ObservedQuantityRecording<ExecutionPolicy, ControlParameters..., RelationParameters...>>>(
+            variable_name, contact_relation);
+    };
+
+    template <typename... ControlParameters, typename... RelationParameters>
+    auto &addObserveRecorder(const std::string &variable_name, Contact<RelationParameters...> &contact_relation)
+    {
+        return *other_io_keeper_.createPtr<
+            ObservedQuantityRecording<ExecutionPolicy, ControlParameters..., RelationParameters...>>(
+            variable_name, contact_relation);
     };
 
     template <template <typename...> class RegressionType, template <typename...> class LocalReduceMethodType,

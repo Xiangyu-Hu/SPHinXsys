@@ -13,8 +13,8 @@ using namespace SPH;
 Real PL = 0.2;  // beam length
 Real PH = 0.01; // for thick plate; 0.01 for thin plate
 Real SL = 0.04; // depth of the insert
-Real resolution_ref = PH / 10.0;
-Real BW = resolution_ref * 4; // boundary width, at least three particles
+Real global_resolution = PH / 10.0;
+Real BW = global_resolution * 4; // boundary width, at least three particles
 //----------------------------------------------------------------------
 //	Global parameters for material properties.
 //----------------------------------------------------------------------
@@ -64,8 +64,8 @@ class Beam : public MultiPolygonShape
   public:
     explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createBeamBaseShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createBeamShape(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createBeamBaseShape(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createBeamShape(), GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -74,8 +74,8 @@ class Beam : public MultiPolygonShape
 MultiPolygon createBeamConstrainShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(createBeamBaseShape(), ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(createBeamShape(), ShapeBooleanOps::sub);
+    multi_polygon.addAPolygon(createBeamBaseShape(), GeometricOps::add);
+    multi_polygon.addAPolygon(createBeamShape(), GeometricOps::sub);
     return multi_polygon;
 };
 //----------------------------------------------------------------------
@@ -112,7 +112,7 @@ int main(int ac, char *av[])
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0), Vec2d(PL + 3.0 * BW, PL / 2.0));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);

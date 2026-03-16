@@ -21,7 +21,7 @@ Real BC = PL * 0.15;
 
 int num = 8;
 // reference particle spacing
-Real resolution_ref = PH / num;
+Real global_resolution = PH / num;
 
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d(-PL, -PL),
@@ -48,8 +48,8 @@ Real refer_density_energy = 0.5 * water_pressure_constant_;
 // a membrane base shape
 
 std::vector<Vecd> beam_base_shape{
-    Vecd(-resolution_ref * 3.0, -PH / 2.0), Vecd(-resolution_ref * 3.0, PH / 2.0), Vecd(0.0, PH / 2.0),
-    Vecd(0.0, -PH / 2.0), Vecd(-resolution_ref * 3.0, -PH / 2.0)};
+    Vecd(-global_resolution * 3.0, -PH / 2.0), Vecd(-global_resolution * 3.0, PH / 2.0), Vecd(0.0, PH / 2.0),
+    Vecd(0.0, -PH / 2.0), Vecd(-global_resolution * 3.0, -PH / 2.0)};
 
 // a membrane shape
 std::vector<Vecd> beam_shape{Vecd(0.0, -PH / 2.0), Vecd(0.0, PH / 2.0),
@@ -58,7 +58,7 @@ std::vector<Vecd> beam_shape{Vecd(0.0, -PH / 2.0), Vecd(0.0, PH / 2.0),
 // a membrane end shape
 std::vector<Vecd> beam_end_shape{
     Vecd(PL, -PH / 2.0), Vecd(PL, PH / 2.0),
-    Vecd(PL + 4.0 * resolution_ref, PH / 2.0), Vecd(PL + 4.0 * resolution_ref, -PH / 2.0),
+    Vecd(PL + 4.0 * global_resolution, PH / 2.0), Vecd(PL + 4.0 * global_resolution, -PH / 2.0),
     Vecd(PL, -PH / 2.0)};
 
 // a membrane saturation shape
@@ -77,9 +77,9 @@ class Beam : public MultiPolygonShape
   public:
     explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(beam_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(beam_end_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(beam_base_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(beam_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(beam_end_shape, GeometricOps::add);
     }
 };
 
@@ -89,16 +89,16 @@ class Beam : public MultiPolygonShape
 MultiPolygon createBeamConstrainShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(beam_shape, ShapeBooleanOps::sub);
-    multi_polygon.addAPolygon(beam_end_shape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(beam_base_shape, GeometricOps::add);
+    multi_polygon.addAPolygon(beam_shape, GeometricOps::sub);
+    multi_polygon.addAPolygon(beam_end_shape, GeometricOps::add);
     return multi_polygon;
 };
 
 MultiPolygon createSaturationConstrainShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_saturation_shape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(beam_saturation_shape, GeometricOps::add);
     return multi_polygon;
 };
 
@@ -130,7 +130,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
 #ifdef BOOST_AVAILABLE
     // handle command line arguments
     sph_system.handleCommandlineOptions(ac, av);

@@ -11,8 +11,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real L = 0.04;
 Real PL = 0.1;
-Real resolution_ref = L / 12.0;
-Real BW = resolution_ref * 4;
+Real global_resolution = L / 12.0;
+Real BW = global_resolution * 4;
 Vecd halfsize_myocardium(0.5 * L, 0.5 * L, 0.5 * L);
 Vecd translation_myocardium(0.5 * L, 0.0, 0.0);
 Vecd halfsize_stationary_plate(0.5 * BW, 0.5 * L + BW, 0.5 * L + BW);
@@ -57,7 +57,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
@@ -135,6 +135,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size_myocardium(myocardium_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size_plate(moving_plate);
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -174,7 +176,7 @@ int main(int ac, char *av[])
             stress_relaxation_second_half_2.exec(dt);
 
             ite++;
-            dt = sph_system.getSmallestTimeStepAmongSolidBodies();
+            dt = SMIN(computing_time_step_size_myocardium.exec(), computing_time_step_size_plate.exec());
             integration_time += dt;
             physical_time += dt;
 

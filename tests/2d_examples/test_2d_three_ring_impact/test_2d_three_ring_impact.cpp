@@ -41,8 +41,8 @@ class Ring : public MultiPolygonShape
   public:
     explicit Ring(const std::string &shape_name, const Vec2d &center, Real radius_inner, Real radius_outer) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(center, radius_outer, 100, ShapeBooleanOps::add);
-        multi_polygon_.addACircle(center, radius_inner, 100, ShapeBooleanOps::sub);
+        multi_polygon_.addACircle(center, radius_outer, 100, GeometricOps::add);
+        multi_polygon_.addACircle(center, radius_inner, 100, GeometricOps::sub);
     }
 };
 

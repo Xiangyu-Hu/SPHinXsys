@@ -38,7 +38,6 @@ namespace SPH
 {
 namespace solid_dynamics
 {
-
 template <class DynamicsIdentifier>
 class ConstraintBySimBodyCK : public BaseLocalDynamics<DynamicsIdentifier>
 {

@@ -113,7 +113,7 @@ class RegressionTestBase : public ObserveMethodType
     };
 
   private:
-    size_t last_iteration_step_ = MaxSize_t;
+    size_t last_iteration_step_ = MaxUnsignedInt;
 
     bool isIterationStepChanged(size_t iteration_step)
     {

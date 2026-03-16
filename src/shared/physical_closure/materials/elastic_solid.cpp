@@ -55,7 +55,7 @@ LinearElasticSolid::
     K0_ = getBulkModulus(youngs_modulus, poisson_ratio);
     lambda0_ = getLambda(youngs_modulus, poisson_ratio);
     setSoundSpeeds();
-    setContactStiffness(c0_);
+    setContactStiffness(rho0_, c0_);
 }
 //=================================================================================================//
 Real LinearElasticSolid::getBulkModulus(Real youngs_modulus, Real poisson_ratio)

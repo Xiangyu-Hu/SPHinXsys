@@ -11,8 +11,8 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 Real DL = 6.0;                   /**< Tank length. */
 Real DH = 1.0;                   /**< Tank height. */
-Real resolution_ref = DH / 20.0; /**< Initial reference particle spacing. */
-Real BW = resolution_ref * 4;    /**< Extending width for BCs. */
+Real global_resolution = DH / 20.0; /**< Initial reference particle spacing. */
+Real BW = global_resolution * 4;    /**< Extending width for BCs. */
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
 //	Material parameters.
@@ -38,7 +38,7 @@ class WaterBlock : public MultiPolygonShape
         water_block_shape.push_back(Vecd(DL, DH));
         water_block_shape.push_back(Vecd(DL, 0.0));
         water_block_shape.push_back(Vecd(0.0, 0.0));
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
     }
 };
 
@@ -61,8 +61,8 @@ class WallBoundary : public MultiPolygonShape
         inner_wall_shape.push_back(Vecd(DL + 2.0 * BW, 0.0));
         inner_wall_shape.push_back(Vecd(-2.0 * BW, 0.0));
 
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -73,7 +73,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.

@@ -9,9 +9,9 @@ namespace SPH
 //=================================================================================================//
 template <typename FunctionOnData>
 void package_for(const ParallelDevicePolicy &par_device, UnsignedInt start_index,
-                 UnsignedInt num_grid_pkgs, const FunctionOnData &function)
+                 UnsignedInt end_index, const FunctionOnData &function)
 {
-    UnsignedInt operations = num_grid_pkgs - start_index;
+    UnsignedInt operations = end_index - start_index;
     auto &sycl_queue = execution_instance.getQueue();
     sycl_queue.submit([&](sycl::handler &cgh)
                       { cgh.parallel_for(execution_instance.getUniformNdRange(operations),

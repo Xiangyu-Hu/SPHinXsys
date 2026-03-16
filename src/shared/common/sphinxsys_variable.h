@@ -33,6 +33,7 @@
 #include "base_data_type_package.h"
 #include "execution_policy.h"
 #include "ownership.h"
+#include "sphinxsys_entity.h"
 
 namespace SPH
 {
@@ -43,17 +44,6 @@ class SingularVariable;
 
 template <typename DataType>
 class DiscreteVariable;
-
-class Entity
-{
-  public:
-    explicit Entity(const std::string &name) : name_(name) {};
-    ~Entity() {};
-    std::string Name() const { return name_; };
-
-  protected:
-    const std::string name_;
-};
 
 template <typename DataType>
 class DeviceSharedSingularVariable : public Entity
@@ -159,6 +149,21 @@ class DiscreteVariable : public Entity
     DataType *Data() { return data_field_; };
     void setValue(size_t index, const DataType &value) { data_field_[index] = value; };
     DataType getValue(size_t index) { return data_field_[index]; };
+
+    template <class FillFunction>
+    void fill(UnsignedInt begin_index, UnsignedInt end_index, const FillFunction &fill_function)
+    {
+        if (end_index > data_size_)
+        {
+            std::cout << "\n Error: trying to fill data out of range in DiscreteVariable '"
+                      << name_ << "'!" << std::endl;
+            exit(1);
+        }
+        for (UnsignedInt i = begin_index; i < end_index; ++i)
+        {
+            data_field_[i] = fill_function(i);
+        }
+    };
 
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return data_field_; };

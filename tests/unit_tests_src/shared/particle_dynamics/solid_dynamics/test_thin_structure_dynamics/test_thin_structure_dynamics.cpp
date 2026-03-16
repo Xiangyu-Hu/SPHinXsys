@@ -18,12 +18,12 @@ Real PH = 10.0;                                   /** Width of the square plate.
 Real PT = 1.0;                                    /** Thickness of the square plate. */
 Vec3d n_0 = Vec3d(0.0, 0.0, 1.0);                 /** Pseudo-normal. */
 int particle_number = 40;                         /** Particle number in the direction of the length */
-Real resolution_ref = PL / (Real)particle_number; /** Initial reference particle spacing. */
+Real global_resolution = PL / (Real)particle_number; /** Initial reference particle spacing. */
 int BWD = 1;                                      /** Width of the boundary layer measured by number of particles. */
-Real BW = resolution_ref * (Real)BWD;             /** Boundary width, determined by specific layer of boundary particles. */
+Real BW = global_resolution * (Real)BWD;             /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
-BoundingBoxd system_domain_bounds(Vec3d(-BW, -BW, -0.5 * resolution_ref),
-                                 Vec3d(PL + BW, PH + BW, 0.5 * resolution_ref));
+BoundingBoxd system_domain_bounds(Vec3d(-BW, -BW, -0.5 * global_resolution),
+                                 Vec3d(PL + BW, PH + BW, 0.5 * global_resolution));
 
 /** For material properties of the solid. */
 Real rho0_s = 1.0;                 /** Normalized density. */
@@ -66,9 +66,9 @@ class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<Surf
         {
             for (int j = 0; j < (particle_number + 2 * BWD); j++)
             {
-                Real x = resolution_ref * i - BW + resolution_ref * 0.5 - PL * 0.5;
-                Real y = resolution_ref * j - BW + resolution_ref * 0.5 - PH * 0.5;
-                addPositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
+                Real x = global_resolution * i - BW + global_resolution * 0.5 - PL * 0.5;
+                Real y = global_resolution * j - BW + global_resolution * 0.5 - PH * 0.5;
+                addPositionAndVolumetricMeasure(Vecd(x, y, 0.0), global_resolution * global_resolution);
                 addSurfaceProperties(n_0, PT);
             }
         }
@@ -129,7 +129,7 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
 int main(int ac, char *av[])
 {
     /** Setup the system. */
-    SPHSystem system(system_domain_bounds, resolution_ref);
+    SPHSystem system(system_domain_bounds, global_resolution);
 
     /** create a plate body. */
     SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));

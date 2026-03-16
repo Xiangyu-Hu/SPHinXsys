@@ -8,20 +8,7 @@ namespace SPH
 bool ImageShape::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
 {
     Real value = image_->findValueAtPoint(probe_point);
-    if (BOUNDARY_INCLUDED == true)
-    {
-        if (value > 0.0)
-            return false;
-        else
-            return true;
-    }
-    else
-    {
-        if (value >= 0.0)
-            return false;
-        else
-            return true;
-    }
+    return BOUNDARY_INCLUDED ? value <= 0.0 : value < 0.0;
 }
 //=================================================================================================//
 Vecd ImageShape::findClosestPoint(const Vecd &probe_point)

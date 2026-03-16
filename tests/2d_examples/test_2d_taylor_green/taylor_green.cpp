@@ -11,7 +11,7 @@ using namespace SPH;   // SPHinXsys namespace.
 //----------------------------------------------------------------------
 Real DL = 1.0;                     /**< box length. */
 Real DH = 1.0;                     /**< box height. */
-Real resolution_ref = 1.0 / 100.0; /**< Global reference resolution. */
+Real global_resolution = 1.0 / 100.0; /**< Global reference resolution. */
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
@@ -34,7 +34,7 @@ class WaterBlock : public MultiPolygonShape
         water_block_shape.push_back(Vecd(DL, DH));
         water_block_shape.push_back(Vecd(DL, 0.0));
         water_block_shape.push_back(Vecd(0.0, 0.0));
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -65,7 +65,7 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     /** Tag for computation start with relaxed body fitted particles distribution. */
     sph_system.setReloadParticles(false);
     // handle command line arguments

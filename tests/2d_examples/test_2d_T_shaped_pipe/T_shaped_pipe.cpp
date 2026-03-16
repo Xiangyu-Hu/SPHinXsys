@@ -13,9 +13,9 @@ using namespace SPH;
 Real DL = 5.0;                        /**< Reference length. */
 Real DH = 3.0;                        /**< Reference and the height of main channel. */
 Real DL1 = 0.7 * DL;                  /**< The length of the main channel. */
-Real resolution_ref = 0.15;           /**< Initial reference particle spacing. */
-Real BW = resolution_ref * 4;         /**< Reference size of the emitter. */
-Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
+Real global_resolution = 0.15;           /**< Initial reference particle spacing. */
+Real BW = global_resolution * 4;         /**< Reference size of the emitter. */
+Real DL_sponge = global_resolution * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
 //-------------------------------------------------------
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
@@ -49,7 +49,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
     }
 };
 
@@ -58,8 +58,8 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -94,7 +94,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.cd

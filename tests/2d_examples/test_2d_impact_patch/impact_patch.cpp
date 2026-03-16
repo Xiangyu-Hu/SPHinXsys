@@ -46,7 +46,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createWaterBlockShape(), GeometricOps::add);
     }
 };
 
@@ -87,7 +87,7 @@ MultiPolygon createWaveProbeShape()
     pnts.push_back(Vecd(1.0 - h, 0.0));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(pnts, GeometricOps::add);
     return multi_polygon;
 }
 //----------------------------------------------------------------------

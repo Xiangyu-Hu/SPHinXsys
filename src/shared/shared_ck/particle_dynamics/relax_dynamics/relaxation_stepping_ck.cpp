@@ -16,9 +16,4 @@ Real RelaxationScalingCK::FinishDynamics::Result(Real reduced_value)
     return 0.0625 * h_ref_ / (reduced_value + TinyReal);
 }
 //=================================================================================================//
-PositionRelaxationCK::PositionRelaxationCK(SPHBody &sph_body)
-    : LocalDynamics(sph_body),
-      pos_(particles_->getVariableByName<Vecd>("Position")),
-      residual_(particles_->getVariableByName<Vecd>("KernelGradientIntegral")) {}
-//=================================================================================================//
 } // namespace SPH

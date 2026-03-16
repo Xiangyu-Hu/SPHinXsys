@@ -42,13 +42,13 @@ class InnerRelation : public BaseInnerRelation
   protected:
     SearchDepthSingleResolution get_single_search_depth_;
     NeighborBuilderInner get_inner_neighbor_;
-    CellLinkedList &cell_linked_list_;
+    CellLinkedList<SPHAdaptation> &cell_linked_list_;
 
   public:
     explicit InnerRelation(RealBody &real_body);
     virtual ~InnerRelation() {};
 
-    CellLinkedList &getCellLinkedList() { return cell_linked_list_; };
+    CellLinkedList<SPHAdaptation> &getCellLinkedList() { return cell_linked_list_; };
     virtual void updateConfiguration() override;
 };
 
@@ -64,7 +64,7 @@ class AdaptiveInnerRelation : public BaseInnerRelation
   protected:
     StdVec<SearchDepthAdaptive *> get_multi_level_search_depth_;
     NeighborBuilderInnerAdaptive get_adaptive_inner_neighbor_;
-    MultilevelCellLinkedList &multi_level_cell_linked_list_;
+    CellLinkedList<AdaptiveSmoothingLength> &multi_level_cell_linked_list_;
 
   public:
     explicit AdaptiveInnerRelation(RealBody &real_body);
@@ -90,7 +90,7 @@ class SelfSurfaceContactRelation : public BaseInnerRelation
     IndexVector &body_part_particles_;
     SearchDepthSingleResolution get_single_search_depth_;
     NeighborBuilderSelfContact get_self_contact_neighbor_;
-    CellLinkedList &cell_linked_list_;
+    CellLinkedList<SPHAdaptation> &cell_linked_list_;
 
     virtual void resetNeighborhoodCurrentSize() override;
 };
@@ -120,7 +120,7 @@ class TreeInnerRelation : public InnerRelation
 class ShellInnerRelationWithContactKernel : public BaseInnerRelation
 {
   private:
-    CellLinkedList &cell_linked_list_;
+    CellLinkedList<SPHAdaptation> &cell_linked_list_;
     SearchDepthContact get_contact_search_depth_;
     ShellNeighborBuilderInnerWithContactKernel get_inner_neighbor_with_contact_kernel_;
 
@@ -142,7 +142,7 @@ class ShellSelfContactRelation : public BaseInnerRelation
   private:
     SearchDepthSingleResolution get_single_search_depth_;
     NeighborBuilderShellSelfContact get_shell_self_contact_neighbor_;
-    CellLinkedList &cell_linked_list_;
+    CellLinkedList<SPHAdaptation> &cell_linked_list_;
 };
 
 /**

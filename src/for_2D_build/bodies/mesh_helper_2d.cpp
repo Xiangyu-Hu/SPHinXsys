@@ -110,7 +110,7 @@ void MeshFileHelpers::dataStruct(StdVec<StdVec<StdVec<size_t>>> &mesh_topology_,
             mesh_topology_[a][b].resize(dimension + 2);
             for (std::size_t c = 0; c != mesh_topology_[a][b].size(); ++c)
             {
-                mesh_topology_[a][b][c] = MaxSize_t;
+                mesh_topology_[a][b][c] = MaxUnsignedInt;
             }
         }
     }
@@ -122,7 +122,7 @@ void MeshFileHelpers::dataStruct(StdVec<StdVec<StdVec<size_t>>> &mesh_topology_,
         elements_nodes_connection_[element].resize(3);
         for (std::size_t node = 0; node != elements_nodes_connection_[element].size(); ++node)
         {
-            elements_nodes_connection_[element][node] = MaxSize_t;
+            elements_nodes_connection_[element][node] = MaxUnsignedInt;
         }
     }
 }

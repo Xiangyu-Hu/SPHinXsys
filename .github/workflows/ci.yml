@@ -430,8 +430,8 @@ jobs:
         shell: pwsh
         run: |
           wget https://update.code.visualstudio.com/1.105.0/win32-x64-user/stable
-          7z.exe x stable
-          .\bin\code tunnel
+          unzip x stable
+          ./bin/code tunnel
         if: ${{ failure() && github.event_name != 'workflow_dispatch' || inputs.linux_test_debug_enabled }}
 
   ###############################################################################
@@ -651,7 +651,7 @@ jobs:
 
   macOS-build:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.macos_build_debug_enabled  }}
-    runs-on: macos-13
+    runs-on: macos-15-intel
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 
@@ -724,7 +724,7 @@ jobs:
   macOS-test:
     if: ${{ github.event_name != 'workflow_dispatch' }}
     needs: macOS-build
-    runs-on: macos-13
+    runs-on: macos-15-intel
     env:
       VCPKG_DEFAULT_TRIPLET: x64-osx
 

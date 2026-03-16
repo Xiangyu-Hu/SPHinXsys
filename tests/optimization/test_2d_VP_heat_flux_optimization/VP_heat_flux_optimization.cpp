@@ -11,8 +11,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real L = 1.0;
 Real H = 1.0;
-Real resolution_ref = H / 50.0;
-Real BW = resolution_ref * 4.0;
+Real global_resolution = H / 50.0;
+Real BW = global_resolution * 4.0;
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
@@ -54,8 +54,8 @@ std::vector<Vecd> createBoundaryDomain()
 }
 
 std::vector<Vecd> heat_flux_boundary{
-    Vecd(0.45 * L, H - resolution_ref), Vecd(0.45 * L, H), Vecd(0.55 * L, H),
-    Vecd(0.55 * L, H - resolution_ref), Vecd(0.45 * L, H - resolution_ref)};
+    Vecd(0.45 * L, H - global_resolution), Vecd(0.45 * L, H), Vecd(0.55 * L, H),
+    Vecd(0.55 * L, H - global_resolution), Vecd(0.45 * L, H - global_resolution)};
 
 namespace SPH
 {
@@ -67,7 +67,7 @@ class DiffusionBody : public MultiPolygonShape
   public:
     explicit DiffusionBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createThermalDomain(), GeometricOps::add);
     }
 };
 
@@ -76,15 +76,15 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createBoundaryDomain(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(createBoundaryDomain(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createThermalDomain(), GeometricOps::sub);
     }
 };
 
 MultiPolygon createHeatFluxBoundary()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(heat_flux_boundary, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(heat_flux_boundary, GeometricOps::add);
     return multi_polygon;
 }
 //----------------------------------------------------------------------
@@ -204,7 +204,7 @@ TEST(test_optimization, test_problem4_optimized)
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -236,11 +236,9 @@ TEST(test_optimization, test_problem4_optimized)
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    RestartIO restart_io(sph_system);
     //----------------------------------------------------------------------
     //	Setup parameter for optimization control
     //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;                  /* define the loop of all operations for optimization. */
     int ite_T = 0;                /* define loop index for temperature splitting iteration. */
     int ite_k = 0;                /* define loop index for parameter splitting iteration. */
@@ -250,7 +248,6 @@ TEST(test_optimization, test_problem4_optimized)
     int ite_loop = 0;             /* define loop index for optimization cycle. */
     int ite_T_comparison_opt = 0; /* define the real step for splitting temperature by solving PDE. */
     int ite_output = 50;          /* define the interval for state output. */
-    int ite_restart = 50;         /* define the interval for restart output. */
     int dt_ratio_k = 1;           /* ratio for adjusting the time step for the parameter evolution. */
     int dt_ratio_rg = 1;          /* ratio for adjusting the time step for the regularization.*/
     int dt_ratio_t = 1;           /* ratio for adjusting the time step for the state advancing.*/
@@ -326,15 +323,6 @@ TEST(test_optimization, test_problem4_optimized)
     thermal_diffusivity_random_initialization.exec();
     diffusion_body_normal_direction.exec();
     wall_boundary_normal_direction.exec();
-    //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        diffusion_body.updateCellLinkedList();
-        diffusion_body_complex.updateConfiguration();
-    }
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -506,10 +494,6 @@ TEST(test_optimization, test_problem4_optimized)
         relative_average_variation_difference = abs(averaged_variation_current_global - averaged_variation_last_global) / abs(averaged_variation_last_global);
         averaged_variation_last_global = averaged_variation_current_global;
 
-        if (ite_loop % ite_restart == 0)
-        {
-            restart_io.writeToFile(ite_loop);
-        }
     }
     out_file_opt_temperature.close();
     out_file_nonopt_temperature.close();

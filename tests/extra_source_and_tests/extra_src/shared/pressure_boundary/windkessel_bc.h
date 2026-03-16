@@ -168,29 +168,26 @@ class BidirectionalBufferWindkessel
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            if (!aligned_box_.checkInBounds(pos_[index_i]))
-            {
-                if (aligned_box_.checkUpperBound(pos_[index_i], upper_bound_fringe_) &&
-                    buffer_indicator_[index_i] == part_id_ &&
-                    index_i < particles_->TotalRealParticles())
-                {
-                    mutex_switch.lock();
-                    particle_buffer_.checkEnoughBuffer(*particles_);
-                    size_t new_particle_index = particles_->createRealParticleFrom(index_i);
-                    buffer_indicator_[new_particle_index] = 0;
+          if (aligned_box_.checkUpperBound(pos_[index_i], upper_bound_fringe_) &&
+              buffer_indicator_[index_i] == part_id_ &&
+              index_i < particles_->TotalRealParticles())
+          {
+              mutex_switch.lock();
+              particle_buffer_.checkEnoughBuffer(*particles_);
+              size_t new_particle_index = particles_->createRealParticleFrom(index_i);
+              buffer_indicator_[new_particle_index] = 0;
 
-                    /** Periodic bounding. */
-                    pos_[index_i] = aligned_box_.getUpperPeriodic(pos_[index_i]);
-                    Real sound_speed = fluid_.getSoundSpeed(rho_[index_i]);
-                    p_[index_i] = target_pressure_(p_[index_i], *physical_time_);
-                    rho_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
-                    previous_surface_indicator_[index_i] = 1;
-                    mutex_switch.unlock();
+              /** Periodic bounding. */
+              pos_[index_i] = aligned_box_.getUpperPeriodic(pos_[index_i]);
+              Real sound_speed = fluid_.getSoundSpeed(rho_[index_i]);
+              p_[index_i] = target_pressure_(p_[index_i], *physical_time_);
+              rho_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
+              previous_surface_indicator_[index_i] = 1;
+              mutex_switch.unlock();
 
-                    flow_rate_ -= Vol_[index_i];
-                    acc_mass_flow_rate_ -= Vol_[index_i] * rho_[index_i];
-                }
-            }
+              flow_rate_ -= Vol_[index_i];
+              acc_mass_flow_rate_ -= Vol_[index_i] * rho_[index_i];
+          }
         }
 
       protected:

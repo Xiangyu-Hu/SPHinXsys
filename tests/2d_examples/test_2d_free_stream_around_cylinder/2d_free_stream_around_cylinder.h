@@ -51,8 +51,8 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
+        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::sub);
     }
 };
 class Cylinder : public MultiPolygonShape
@@ -60,7 +60,7 @@ class Cylinder : public MultiPolygonShape
   public:
     explicit Cylinder(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------

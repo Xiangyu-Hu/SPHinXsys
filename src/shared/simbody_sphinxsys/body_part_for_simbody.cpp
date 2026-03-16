@@ -1,6 +1,8 @@
 #include "body_part_for_simbody.h"
 
 #include "base_particles.hpp"
+#include "base_material.h"
+#include "base_body.h"
 
 namespace SPH
 {

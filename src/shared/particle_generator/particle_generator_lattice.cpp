@@ -8,9 +8,8 @@ namespace SPH
 {
 //=================================================================================================//
 GeneratingMethod<Lattice>::GeneratingMethod(SPHBody &sph_body)
-    : lattice_spacing_(sph_body.getSPHAdaptation().ReferenceSpacing()),
-      domain_bounds_(sph_body.getSPHSystemBounds()),
-      initial_shape_(sph_body.getInitialShape())
+    : sph_adaptation_(sph_body.getSPHAdaptation()), lattice_spacing_(sph_adaptation_.MinimumSpacing()),
+      domain_bounds_(sph_body.getSPHSystemBounds()), initial_shape_(sph_body.getInitialShape())
 {
     if (!initial_shape_.isValid())
     {
@@ -21,28 +20,18 @@ GeneratingMethod<Lattice>::GeneratingMethod(SPHBody &sph_body)
 }
 //=================================================================================================//
 ParticleGenerator<BaseParticles, Lattice>::
-    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
-    : ParticleGenerator<BaseParticles>(sph_body, base_particles),
-      GeneratingMethod<Lattice>(sph_body) {}
-//=================================================================================================//
-ParticleGenerator<BaseParticles, Lattice, AdaptiveByShape>::
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape)
-    : ParticleGenerator<BaseParticles, Lattice>(sph_body, base_particles),
-      target_shape_(target_shape),
-      particle_adaptation_(DynamicCast<AdaptiveByShape>(this, &sph_body.getSPHAdaptation()))
-{
-    lattice_spacing_ = particle_adaptation_->MinimumSpacing();
-}
+    : ParticleGenerator<BaseParticles>(sph_body, base_particles),
+      GeneratingMethod<Lattice>(sph_body), target_shape_(target_shape) {}
 //=================================================================================================//
-ParticleGenerator<BaseParticles, Lattice, AdaptiveByShape>::
+ParticleGenerator<BaseParticles, Lattice>::
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
-    : ParticleGenerator<BaseParticles, Lattice, AdaptiveByShape>(
-          sph_body, base_particles, sph_body.getInitialShape()) {}
+    : ParticleGenerator(sph_body, base_particles, sph_body.getInitialShape()) {}
 //=================================================================================================//
-void ParticleGenerator<BaseParticles, Lattice, AdaptiveByShape>::
+void ParticleGenerator<BaseParticles, Lattice>::
     addPositionAndVolumetricMeasure(const Vecd &position, Real volume)
 {
-    Real local_particle_spacing = particle_adaptation_->getLocalSpacing(target_shape_, position);
+    Real local_particle_spacing = sph_adaptation_.getLocalSpacing(target_shape_, position);
     Real local_particle_volume_ratio = pow(lattice_spacing_ / local_particle_spacing, Dimensions);
     if (rand_uniform(0.0, 1.0) < local_particle_volume_ratio)
     {

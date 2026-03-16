@@ -59,7 +59,7 @@ class WettingFluidBody : public MultiPolygonShape
   public:
     explicit WettingFluidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createWaterBlockShape(), GeometricOps::add);
     }
 };
 
@@ -110,8 +110,8 @@ class WettingWallBody : public MultiPolygonShape
   public:
     explicit WettingWallBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(createOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createInnerWallShape(), GeometricOps::sub);
     }
 };
 class WettingWallBodyInitialCondition : public LocalDynamics
@@ -139,7 +139,7 @@ class WettingCylinderBody : public MultiPolygonShape
   public:
     explicit WettingCylinderBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, GeometricOps::add);
     }
 };
 class WettingCylinderBodyInitialCondition : public LocalDynamics
@@ -171,7 +171,7 @@ using CylinderFluidDiffusionDirichlet =
 MultiPolygon createSimbodyConstrainShape(SPHBody &sph_body)
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
+    multi_polygon.addACircle(cylinder_center, cylinder_radius, 100, GeometricOps::add);
     return multi_polygon;
 };
 //----------------------------------------------------------------------
@@ -358,7 +358,6 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<Real>(water_block, "Density");           // output for debug
     body_states_recording.addToWrite<int>(water_block, "Indicator");          // output for debug
     body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection"); // output for debug
-    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_cylinder_displacement("Position", cylinder_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_cylinder_wetting("Phi", wetting_observer_contact);
     //----------------------------------------------------------------------
@@ -382,7 +381,6 @@ int main(int ac, char *av[])
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
-    int restart_output_interval = screen_output_interval * 10;
     Real end_time = 1.0;
     Real output_interval = end_time / 70.0;
     //----------------------------------------------------------------------
@@ -443,20 +441,18 @@ int main(int ac, char *av[])
             }
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
-            /** screen output, write body reduced values and restart files  */
+            /** screen output, write body reduced values  */
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
 
-                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != 0)
                 {
                     write_cylinder_displacement.writeToFile(number_of_iterations);
                     write_cylinder_wetting.writeToFile(number_of_iterations);
                 }
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
 

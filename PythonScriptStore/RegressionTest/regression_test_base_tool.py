@@ -51,6 +51,14 @@ class SphinxsysRegressionTestByCTest:
         os.system(command)
         print('Simulating case is finished...')
 
+    def run_case_with_relax_reload(self) -> None:
+        print('Start case simulation with particle relax and reload...')
+        print(self.enter_sphinxsys_exec_folder)
+        command = f".{os.sep}{self.sphinxsys_case_name} --relax=true --reload=true --regression=true --state_recording=false"
+        os.system(self.enter_sphinxsys_exec_folder)
+        os.system(command)
+        print('Simulating case is finished...')    
+
     def read_dat_file(self):
         file = open(self.condition_file_path)
         ifconverged = file.readline(4)

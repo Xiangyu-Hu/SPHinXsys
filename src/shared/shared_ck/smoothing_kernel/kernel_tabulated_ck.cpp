@@ -5,10 +5,10 @@ namespace SPH
 //=================================================================================================//
 KernelTabulatedCK::KernelTabulatedCK(Kernel &kernel)
 {
+    kernel_size_ = kernel.KernelSize();
     dimension_factor_1D_ = kernel.DimensionFactor1D();
     dimension_factor_2D_ = kernel.DimensionFactor2D();
     dimension_factor_3D_ = kernel.DimensionFactor3D();
-    kernel_size_ = kernel.KernelSize();
 
     dq_ = kernel_size_ / Real(kernel_resolution_);
     for (int i = 0; i < tabulated_size_; i++)

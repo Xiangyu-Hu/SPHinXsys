@@ -37,6 +37,7 @@
 
 #include "adaptation.h"
 #include "all_geometries.h"
+#include "base_body_part.h"
 #include "base_data_type_package.h"
 #include "base_implementation.h"
 #include "base_material.h"
@@ -45,8 +46,6 @@
 #include "cell_linked_list.h"
 #include "closure_wrapper.h"
 #include "sphinxsys_containers.h"
-
-#include <string>
 
 namespace SPH
 {
@@ -63,10 +62,10 @@ class BodySurface;
 class SPHBody
 {
   private:
-    SharedPtrKeeper<Shape> shape_ptr_keeper_;
-    UniquePtrKeeper<SPHAdaptation> sph_adaptation_ptr_keeper_;
-    UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
-    UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
+    SharedPtrKeeper<Shape> shape_keeper_;
+    UniquePtrKeeper<SPHAdaptation> sph_adaptation_keeper_;
+    UniquePtrKeeper<BaseParticles> base_particles_keeper_;
+    UniquePtrKeeper<BaseMaterial> base_material_keeper_;
 
   protected:
     SPHSystem &sph_system_;
@@ -74,14 +73,15 @@ class SPHBody
     bool newly_updated_;                   /**< whether this body is in a newly updated state */
     BaseParticles *base_particles_;        /**< Base particles for dynamic cast DataDelegate  */
     bool is_bound_set_;                    /**< whether the bounding box is set */
-    BoundingBoxd bound_;                    /**< bounding box of the body */
+    BoundingBoxd bound_;                   /**< bounding box of the body */
     Shape *initial_shape_;                 /**< initial volumetric geometry enclosing the body */
     SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
     BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
     StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
 
   public:
-    typedef SPHBody BaseIdentifier;
+    typedef SPHBody RangeIdentifier;
+    typedef SPHAdaptation Adaptation;
     SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name);
     SPHBody(SPHSystem &sph_system, Shape &shape);
     SPHBody(SPHSystem &sph_system, const std::string &name);
@@ -94,7 +94,7 @@ class SPHBody
     SPHBody &getSPHBody() { return *this; };
     Shape &getInitialShape() { return *initial_shape_; };
     void assignBaseParticles(BaseParticles *base_particles) { base_particles_ = base_particles; };
-    SPHAdaptation &getSPHAdaptation() { return *sph_adaptation_; };
+    SPHAdaptation &getSPHAdaptation();
     BaseParticles &getBaseParticles();
     BaseMaterial &getBaseMaterial();
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
@@ -133,56 +133,53 @@ class SPHBody
     //----------------------------------------------------------------------
     //		Object factory template functions
     //----------------------------------------------------------------------
-    virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
+    virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_refinement_to_global = 1.0);
 
     template <class AdaptationType, typename... Args>
     void defineAdaptation(Args &&...args)
     {
         sph_adaptation_ =
-            sph_adaptation_ptr_keeper_.createPtr<AdaptationType>(
-                sph_system_, std::forward<Args>(args)...);
+            sph_adaptation_keeper_.createPtr<AdaptationType>(
+                sph_adaptation_->GlobalResolution(), std::forward<Args>(args)...);
     };
 
     template <typename... Args>
-    LevelSetShape *defineComponentLevelSetShape(const std::string &shape_name, Args &&...args)
+    LevelSetShape &defineComponentLevelSetShape(const std::string &shape_name, Args &&...args)
     {
         ComplexShape *complex_shape = DynamicCast<ComplexShape>(this, initial_shape_);
         return complex_shape->defineLevelSetShape(*this, shape_name, std::forward<Args>(args)...);
     };
 
     template <typename... Args>
-    LevelSetShape *defineBodyLevelSetShape(Args &&...args)
+    LevelSetShape &defineBodyLevelSetShape(Args &&...args)
     {
-        LevelSetShape *level_set_shape =
-            shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *initial_shape_, std::forward<Args>(args)...);
-        initial_shape_ = level_set_shape;
-        return level_set_shape;
+        initial_shape_ = shape_keeper_.resetPtr<LevelSetShape>(
+            *this, *initial_shape_, std::forward<Args>(args)...);
+        return *static_cast<LevelSetShape *>(initial_shape_);
     }
 
     template <typename ExecutionPolicy, typename... Args>
-    LevelSetShape *defineBodyLevelSetShape(const ExecutionPolicy &ex_policy, Args &&...args)
+    LevelSetShape &defineBodyLevelSetShape(const ExecutionPolicy &ex_policy, Args &&...args)
     {
-        LevelSetShape *level_set_shape =
-            shape_ptr_keeper_.resetPtr<LevelSetShape>(ex_policy, *this, *initial_shape_, std::forward<Args>(args)...);
-        initial_shape_ = level_set_shape;
-        return level_set_shape;
+        initial_shape_ = shape_keeper_.resetPtr<LevelSetShape>(
+            ex_policy, sph_system_, *sph_adaptation_, *initial_shape_, std::forward<Args>(args)...);
+        return *static_cast<LevelSetShape *>(initial_shape_);
     };
 
     template <class MaterialType = BaseMaterial, typename... Args>
-    MaterialType *defineMaterial(Args &&...args)
+    MaterialType &defineMaterial(Args &&...args)
     {
-        MaterialType *material = base_material_ptr_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
-        base_material_ = material;
-        return material;
+        base_material_ = base_material_keeper_.createPtr<MaterialType>(
+            std::forward<Args>(args)...);
+        return *static_cast<MaterialType *>(base_material_);
     };
 
     template <class BaseModel, typename... AuxiliaryModels, typename... Args>
-    Closure<BaseModel, AuxiliaryModels...> *defineClosure(Args &&...args)
+    Closure<BaseModel, AuxiliaryModels...> &defineClosure(Args &&...args)
     {
-        Closure<BaseModel, AuxiliaryModels...> *closure =
-            base_material_ptr_keeper_.createPtr<Closure<BaseModel, AuxiliaryModels...>>(std::forward<Args>(args)...);
-        base_material_ = closure;
-        return closure;
+        base_material_ = base_material_keeper_.createPtr<Closure<BaseModel, AuxiliaryModels...>>(
+            std::forward<Args>(args)...);
+        return *static_cast<Closure<BaseModel, AuxiliaryModels...> *>(base_material_);
     };
     //----------------------------------------------------------------------
     // Particle generating methods
@@ -190,20 +187,20 @@ class SPHBody
     // The local material parameters are also initialized.
     //----------------------------------------------------------------------
     template <class ParticleType, class... Parameters, typename... Args>
-    ParticleType *generateParticles(Args &&...args)
+    ParticleType &generateParticles(Args &&...args)
     {
-        ParticleType *particles = base_particles_ptr_keeper_.createPtr<ParticleType>(*this, base_material_);
+        ParticleType *particles = base_particles_keeper_.createPtr<ParticleType>(*this, base_material_);
         ParticleGenerator<ParticleType, Parameters...> particle_generator(*this, *particles, std::forward<Args>(args)...);
         particle_generator.generateParticlesWithGeometricVariables();
         particles->initializeBasicParticleVariables();
         sph_adaptation_->initializeAdaptationVariables(*particles);
         base_material_->setLocalParameters(sph_system_, particles);
-        return particles;
+        return *particles;
     };
 
     // Buffer or ghost particles can be generated together with real particles
     template <class ParticleType, typename... Parameters, class ReserveType, typename... Args>
-    ParticleType *generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
+    ParticleType &generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args)
     {
         return generateParticles<ParticleType, ReserveType, Parameters...>(particle_reserve, std::forward<Args>(args)...);
     };
@@ -216,16 +213,10 @@ class SPHBody
  */
 class RealBody : public SPHBody
 {
-  private:
-    UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
-    bool cell_linked_list_created_;
-    void addRealBodyToSPHSystem();
-
   public:
     template <typename... Args>
     RealBody(Args &&...args)
-        : SPHBody(std::forward<Args>(args)...),
-          cell_linked_list_created_(false)
+        : SPHBody(std::forward<Args>(args)...), cell_linked_list_created_(false)
     {
         addRealBodyToSPHSystem();
     };
@@ -233,6 +224,20 @@ class RealBody : public SPHBody
     BaseCellLinkedList &getCellLinkedList();
     void updateCellLinkedList();
     using ListedParticleMask = typename SPHBody::SourceParticleMask;
+
+    template <class BodyPartType, typename... Args>
+    BodyPartType &addBodyPart(Args &&...args)
+    {
+        return *body_parts_keeper_.createPtr<BodyPartType>(*this, std::forward<Args>(args)...);
+    };
+
+  protected:
+    UniquePtr<BaseCellLinkedList> cell_linked_list_ptr_;
+    UniquePtrsKeeper<BodyPart> body_parts_keeper_;
+    bool cell_linked_list_created_;
+
+  private:
+    void addRealBodyToSPHSystem();
 };
 } // namespace SPH
 #endif // BASE_BODY_H

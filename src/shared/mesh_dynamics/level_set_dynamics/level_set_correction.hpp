@@ -1,7 +1,7 @@
-#include "level_set_correction.h"
-
 #ifndef LEVEL_SET_CORRECTION_HPP
 #define LEVEL_SET_CORRECTION_HPP
+
+#include "level_set_correction.h"
 
 namespace SPH
 {
@@ -10,8 +10,8 @@ template <class ExecutionPolicy, class EncloserType>
 ReinitializeLevelSet::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : data_spacing_(encloser.index_handler_.DataSpacing()),
-      phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-      near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
+      phi_(encloser.pmv_phi_.DelegatedData(ex_policy)),
+      near_interface_id_(encloser.pmv_near_interface_id_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 inline Real ReinitializeLevelSet::UpdateKernel::upwindDifference(Real sign, Real df_p, Real df_n)
@@ -49,8 +49,8 @@ inline void ReinitializeLevelSet::UpdateKernel::update(const UnsignedInt &packag
                 Real phi_0 = phi_pkg(index);
                 Real sign = phi_0 / sqrt(phi_0 * phi_0 + data_spacing_ * data_spacing_);
 
-                Vecd difference = regularizedCentralDifference(
-                    phi_, neighborhood, index,
+                Vecd difference = neighborhood.regularizedCentralDifference(
+                    phi_, index,
                     [&](Real dp, Real dm)
                     {
                         return upwindDifference(sign, dp, dm);
@@ -67,8 +67,8 @@ MarkCutInterfaces::UpdateKernel::
     : index_handler_(encloser.index_handler_),
       threshold_(index_handler_.DataSpacing() * sqrt(Dimensions)),
       perturbation_(threshold_ * encloser.perturbation_ratio_),
-      phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-      near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
+      phi_(encloser.pmv_phi_.DelegatedData(ex_policy)),
+      near_interface_id_(encloser.pmv_near_interface_id_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)) {}
 //=============================================================================================//
 inline void MarkCutInterfaces::UpdateKernel::update(const UnsignedInt &package_index, Real dt)
@@ -77,14 +77,13 @@ inline void MarkCutInterfaces::UpdateKernel::update(const UnsignedInt &package_i
     auto &near_interface_id_addrs = near_interface_id_[package_index];
 
     // corner averages, note that the first row and first column are not used
-    PackageData<Real, 5> corner_averages;
+    PackageData<Real, 5> corner_averages{};
     mesh_for_each(
         Arrayi::Zero(), Arrayi::Constant(5),
         [&](const Arrayi &index)
         {
-            corner_averages(index) =
-                CornerAverage(phi_, index, Arrayi::Constant(-1),
-                              cell_neighborhood_[package_index], (Real)0);
+            corner_averages(index) = cell_neighborhood_[package_index]
+                                         .CornerAverage(phi_, index, Arrayi::Constant(-1), (Real)0);
         });
 
     mesh_for_each(Arrayi::Zero(), Arrayi::Constant(pkg_size),
@@ -127,9 +126,9 @@ template <class ExecutionPolicy, class EncloserType>
 MarkNearInterface::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : index_handler_(encloser.index_handler_),
-      threshold_(index_handler_.GridSpacing() * sqrt(Dimensions)),
-      phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-      near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
+      threshold_(index_handler_.DataSpacing() * sqrt(Dimensions)),
+      phi_(encloser.pmv_phi_.DelegatedData(ex_policy)),
+      near_interface_id_(encloser.pmv_near_interface_id_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)) {}
 //=============================================================================================//
 inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_index, Real dt)
@@ -140,21 +139,19 @@ inline void MarkNearInterface::UpdateKernel::update(const UnsignedInt &package_i
         {
             near_interface_id_[package_index](index) = 3; // undetermined
             Real phi0 = phi_[package_index](index);
-            if (ABS(phi0) < 2.0 * threshold_) // only consider data close to the interface
+            if (ABS(phi0) < threshold_) // only consider data close to the interface
             {
                 bool is_sign_changed = mesh_any_of(
                     Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
                     [&](const Arrayi &shift) -> bool
                     {
-                        DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
-                            index + shift, cell_neighborhood_[package_index]);
-
-                        return phi0 * phi_[neighbour_index.first](neighbour_index.second) < 0.0;
+                        Real neighbor_phi = cell_neighborhood_[package_index].DataFromIndex(phi_, index + shift);
+                        return phi0 * neighbor_phi < 0.0;
                     });
 
                 if (is_sign_changed)
                 {
-                    if (ABS(phi0) < threshold_)
+                    if (ABS(phi0) < 0.5 * threshold_)
                     {
                         near_interface_id_[package_index](index) = 0; // cut cell
                     }
@@ -171,9 +168,9 @@ template <class ExecutionPolicy, class EncloserType>
 RedistanceInterface::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : data_spacing_(encloser.index_handler_.DataSpacing()),
-      phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-      phi_gradient_(encloser.mv_phi_gradient_.DelegatedData(ex_policy)),
-      near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
+      phi_(encloser.pmv_phi_.DelegatedData(ex_policy)),
+      phi_gradient_(encloser.pmv_phi_gradient_.DelegatedData(ex_policy)),
+      near_interface_id_(encloser.pmv_near_interface_id_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)) {}
 //=============================================================================================//
 inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package_index)
@@ -191,10 +188,8 @@ inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package
                     Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
                     [&](const Arrayi &shift)
                     {
-                        DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
-                            index + shift, cell_neighborhood_[package_index]);
                         int neighbor_near_interface_id =
-                            near_interface_id_[neighbour_index.first](neighbour_index.second);
+                            cell_neighborhood_[package_index].DataFromIndex(near_interface_id_, index + shift);
                         if (neighbor_near_interface_id >= 1)
                             positive_band = true;
                         if (neighbor_near_interface_id <= -1)
@@ -207,8 +202,8 @@ inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package
                         Arrayi::Constant(-4), Arrayi::Constant(5), // check in the 4x4x4 neighborhood
                         [&](const Arrayi &shift)
                         {
-                            DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
-                                index + shift, cell_neighborhood_[package_index]);
+                            PackageDataPair neighbour_index =
+                                cell_neighborhood_[package_index].IndexShift<pkg_size>(index + shift);
                             auto &neighbor_phi = phi_[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
                             auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
@@ -235,8 +230,8 @@ inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package
                         Arrayi::Constant(-4), Arrayi::Constant(5), // check in the 4x4x4 neighborhood
                         [&](const Arrayi &shift)
                         {
-                            DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
-                                index + shift, cell_neighborhood_[package_index]);
+                            PackageDataPair neighbour_index =
+                                cell_neighborhood_[package_index].IndexShift<pkg_size>(index + shift);
                             auto &neighbor_phi = phi_[neighbour_index.first];
                             auto &neighbor_phi_gradient = phi_gradient_[neighbour_index.first];
                             auto &neighbor_near_interface_id = near_interface_id_[neighbour_index.first];
@@ -263,8 +258,8 @@ inline void RedistanceInterface::UpdateKernel::update(const UnsignedInt &package
 template <class ExecutionPolicy, class EncloserType>
 DiffuseLevelSetSign::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : phi_(encloser.mv_phi_.DelegatedData(ex_policy)),
-      near_interface_id_(encloser.mv_near_interface_id_.DelegatedData(ex_policy)),
+    : phi_(encloser.pmv_phi_.DelegatedData(ex_policy)),
+      near_interface_id_(encloser.pmv_near_interface_id_.DelegatedData(ex_policy)),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
       count_modified_(encloser.sv_count_modified_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -281,9 +276,8 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package
                         Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
                         [&](const Arrayi &shift) -> bool
                         {
-                            DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
-                                index + shift, cell_neighborhood_[package_index]);
-                            return near_interface_id_[neighbour_index.first](neighbour_index.second) == 1;
+                            return cell_neighborhood_[package_index]
+                                       .DataFromIndex(near_interface_id_, index + shift) == 1;
                         }))
                 {
                     phi_[package_index](index) = ABS(phi);
@@ -295,9 +289,8 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package
                              Arrayi::Constant(-1), Arrayi::Constant(2), // check in the 3x3x3 neighborhood
                              [&](const Arrayi &shift) -> bool
                              {
-                                 DataPackagePair neighbour_index = NeighbourIndexShift<pkg_size>(
-                                     index + shift, cell_neighborhood_[package_index]);
-                                 return near_interface_id_[neighbour_index.first](neighbour_index.second) == -1;
+                                 return cell_neighborhood_[package_index]
+                                            .DataFromIndex(near_interface_id_, index + shift) == -1;
                              }))
                 {
                     phi_[package_index](index) = -ABS(phi);
@@ -307,6 +300,78 @@ inline void DiffuseLevelSetSign::UpdateKernel::update(const UnsignedInt &package
                 }
             }
         });
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+LevelSetSignFromFine::UpdateKernel::
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : phi_(encloser.pmv_phi_.DelegatedData(ex_policy)),
+      pkg_1d_cell_index_(encloser.dv_pkg_1d_cell_index_.DelegatedData(ex_policy)),
+      index_handler_(encloser.index_handler_),
+      fine_index_handler_(
+          encloser.data_mesh_.getMesh(encloser.fine_resolution_level_)),
+      probe_fine_phi_(ex_policy, encloser.data_mesh_, "LevelSet") {}
+//=============================================================================================//
+inline void LevelSetSignFromFine::UpdateKernel::update(const UnsignedInt &package_index)
+{
+    auto &phi_addrs = phi_[package_index];
+    mesh_for_each(
+        Arrayi::Zero(), Arrayi::Constant(pkg_size),
+        [&](const Arrayi &index)
+        {
+            Arrayi cell_index = index_handler_.DimensionalCellIndex(pkg_1d_cell_index_[package_index]);
+            Vecd data_poistion = index_handler_.DataPositionFromIndex(cell_index, index);
+            Real phi = probe_fine_phi_(fine_index_handler_, data_poistion);
+            phi_addrs(index) = SGN(phi) * ABS(phi_addrs(index));
+        });
+}
+//=============================================================================================//
+template <class ExecutionPolicy>
+CleanInterface<ExecutionPolicy>::CleanInterface(
+    SparseMeshField<4> &mesh_data, UnsignedInt resolution_level,
+    Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method, Real refinement)
+    : RepeatTimes(), BaseDynamics<void>(),
+      neighbor_method_(neighbor_method),
+      update_level_set_gradient{mesh_data, resolution_level},
+      update_kernel_integrals{mesh_data, resolution_level, neighbor_method_},
+      mark_cut_interfaces{mesh_data, resolution_level, 0.5 * refinement},
+      redistance_interface{mesh_data, resolution_level},
+      reinitialize_level_set{mesh_data, resolution_level} {}
+//=============================================================================================//
+template <class ExecutionPolicy>
+CorrectFinestLevelSetSign<ExecutionPolicy>::CorrectFinestLevelSetSign(
+    SparseMeshField<4> &mesh_data, UnsignedInt finest_level)
+    : BaseDynamics<void>(),
+      mark_near_interface(mesh_data, finest_level),
+      diffuse_level_set_sign(mesh_data, finest_level, sv_count_modified_) {}
+//=============================================================================================//
+template <class ExecutionPolicy>
+CorrectTopology<ExecutionPolicy>::CorrectTopology(
+    SparseMeshField<4> &mesh_data,
+    StdVec<Neighbor<SPHAdaptation, SPHAdaptation> *> neighbor_method_set)
+    : BaseDynamics<void>(), resolution_levels_(mesh_data.ResolutionLevels()),
+      neighbor_method_set_(neighbor_method_set)
+{
+    for (UnsignedInt resolution_level = 0; resolution_level != resolution_levels_; resolution_level++)
+    {
+        if (resolution_level != resolution_levels_ - 1)
+        {
+            level_set_sign_correction_set_.push_back(
+                base_dynamics_keeper_.createPtr<MeshInnerDynamics<ExecutionPolicy, LevelSetSignFromFine>>(
+                    mesh_data, resolution_level));
+        }
+
+        update_level_set_gradient_set_.push_back(
+            base_dynamics_keeper_.createPtr<MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient>>(
+                mesh_data, resolution_level));
+        update_kernel_integrals_set.push_back(
+            base_dynamics_keeper_.createPtr<MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals>>(
+                mesh_data, resolution_level, *neighbor_method_set[resolution_level]));
+    }
+
+    level_set_sign_correction_set_.push_back(
+        base_dynamics_keeper_.createPtr<CorrectFinestLevelSetSign<ExecutionPolicy>>(
+            mesh_data, resolution_levels_ - 1));
 }
 //=================================================================================================//
 } // namespace SPH

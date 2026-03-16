@@ -14,8 +14,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 Real L = 1.0;
 Real H = 1.0;
-Real resolution_ref = H / 100.0;
-Real BW = resolution_ref * 2.0;
+Real global_resolution = H / 100.0;
+Real BW = global_resolution * 2.0;
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
@@ -70,7 +70,7 @@ class DiffusionBody : public MultiPolygonShape
   public:
     explicit DiffusionBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createThermalDomain(), GeometricOps::add);
     }
 };
 
@@ -79,8 +79,8 @@ class DirichletWallBoundary : public MultiPolygonShape
   public:
     explicit DirichletWallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(left_temperature_region, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(right_temperature_region, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(left_temperature_region, GeometricOps::add);
+        multi_polygon_.addAPolygon(right_temperature_region, GeometricOps::add);
     }
 };
 
@@ -89,7 +89,7 @@ class NeumannWallBoundary : public MultiPolygonShape
   public:
     explicit NeumannWallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(heat_flux_region, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(heat_flux_region, GeometricOps::add);
     }
 };
 

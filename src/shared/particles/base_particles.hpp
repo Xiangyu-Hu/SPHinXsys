@@ -10,12 +10,7 @@ template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::getVariableByName(const std::string &name)
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);
-    if (variable == nullptr)
-    {
-        std::cout << "\nError: the" << type_name<DiscreteVariable<DataType>>() << " variable '"
-                  << name << "' in body " << getBodyName() << "is not registered!\n";
-        exit(1);
-    }
+    checkPointer(variable, name, type_name<DiscreteVariable<DataType>>());
     return variable;
 }
 //=================================================================================================//
@@ -135,12 +130,7 @@ template <typename DataType>
 SingularVariable<DataType> *BaseParticles::getSingularVariableByName(const std::string &name)
 {
     SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
-    if (variable == nullptr)
-    {
-        std::cout << "\nError: the" << type_name<SingularVariable<DataType>>() << " variable '"
-                  << name << "' in body " << getBodyName() << "is not registered!\n";
-        exit(1);
-    }
+    checkPointer(variable, name, type_name<SingularVariable<DataType>>());
     return variable;
 }
 //=================================================================================================//
@@ -206,11 +196,11 @@ void BaseParticles::addVariableToWrite(DiscreteVariableArray<DataType> *variable
 }
 //===============================================================================
 template <typename DataType>
-BaseParticles *BaseParticles::reloadExtraVariable(const std::string &name)
+BaseParticles &BaseParticles::reloadExtraVariable(const std::string &name)
 {
     registerStateVariableFromReload<DataType>(name);
     addEvolvingVariable<DataType>(name);
-    return this;
+    return *this;
 }
 //=================================================================================================//
 template <typename DataType>
@@ -249,6 +239,39 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
         size_t index = 0;
         DataType *data_field = variables[i]->Data();
         for (auto child = xml_parser.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        {
+            xml_parser.queryAttributeValue(child, variables[i]->Name(), data_field[index]);
+            index++;
+        }
+    }
+}
+//=================================================================================================//
+template <typename DataType>
+void BaseParticles::WriteAParticleVariableToXmlElement::
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser)
+{
+    for (size_t i = 0; i != variables.size(); ++i)
+    {
+        size_t index = 0;
+        DataType *data_field = variables[i]->Data();
+        for (auto child = element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        {
+            xml_parser.setAttributeToElement(child, variables[i]->Name(), data_field[index]);
+            index++;
+        }
+    }
+}
+//=================================================================================================//
+template <typename DataType>
+void BaseParticles::ReadAParticleVariableFromXmlElement::
+operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
+           BaseParticles *base_particles, XmlParser &xml_parser)
+{
+    for (size_t i = 0; i != variables.size(); ++i)
+    {
+        size_t index = 0;
+        DataType *data_field = variables[i]->Data();
+        for (auto child = element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
             xml_parser.queryAttributeValue(child, variables[i]->Name(), data_field[index]);
             index++;

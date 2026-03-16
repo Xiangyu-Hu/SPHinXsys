@@ -35,22 +35,22 @@
 namespace SPH
 {
 template <class ExecutionPolicy>
-class PackageSort : public BaseMeshDynamics
+class PackageSort : public BaseDynamics<void>
 {
     using SortMethodType = typename SortMethod<ExecutionPolicy>::type;
 
   public:
-    explicit PackageSort(MeshWithGridDataPackagesType &data_mesh)
-        : BaseMeshDynamics(data_mesh),
-          ex_policy_(ExecutionPolicy{}),
-          sv_num_grid_pkgs_(data_mesh.svNumGridPackages()),
+    explicit PackageSort(SparseMeshField<4> &mesh_data, UnsignedInt resolution_level)
+        : BaseDynamics<void>(), ex_policy_(ExecutionPolicy{}),
+          mesh_data_(mesh_data), resolution_level_(resolution_level),
+          num_pkgs_offsets_(mesh_data.getNumPackageOffsets()),
           kernel_implementation_(*this),
-          dv_sequence_(data_mesh.registerMetaVariable<UnsignedInt>("Sequence")),
-          dv_index_permutation_(data_mesh.registerMetaVariable<UnsignedInt>("IndexPermutation")),
-          dv_pkg_1d_cell_index_(&data_mesh.getPackage1DCellIndex()),
-          bmv_cell_pkg_index_(&data_mesh.getCellPackageIndex()),
-          update_meta_variables_to_sort_(data_mesh.PackageBound()),
-          update_mesh_variables_to_sort_(data_mesh.PackageBound()),
+          dv_sequence_(mesh_data.registerMetaVariable<UnsignedInt>("Sequence")),
+          dv_index_permutation_(mesh_data.registerMetaVariable<UnsignedInt>("IndexPermutation")),
+          dv_pkg_1d_cell_index_(&mesh_data.getPackage1DCellIndex()),
+          mcv_cell_pkg_index_(&mesh_data.getCellPackageIndex()),
+          update_meta_variables_to_sort_(mesh_data.PackageBound()),
+          update_mesh_variables_to_sort_(mesh_data.PackageBound()),
           sort_method_(ExecutionPolicy{}, dv_sequence_, dv_index_permutation_) {};
     virtual ~PackageSort() {};
 
@@ -74,26 +74,27 @@ class PackageSort : public BaseMeshDynamics
 
     void exec(Real dt = 0.0)
     {
-        UnsignedInt num_grid_pkgs = sv_num_grid_pkgs_.getValue();
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        package_for(ex_policy_, 0, num_grid_pkgs,
+        UnsignedInt start_pkg_index = num_pkgs_offsets_[this->resolution_level_];
+        UnsignedInt end_pkg_index = num_pkgs_offsets_[this->resolution_level_ + 1];
+        package_for(ex_policy_, start_pkg_index, end_pkg_index,
                     [=](UnsignedInt package_index)
                     {
                         update_kernel->update(package_index);
                     });
 
-        UnsignedInt sortable_size = num_grid_pkgs - num_singular_pkgs_;
-        sort_method_.sort(ex_policy_, sortable_size, num_singular_pkgs_);
+        UnsignedInt sortable_size = end_pkg_index - start_pkg_index;
+        sort_method_.sort(ex_policy_, sortable_size, start_pkg_index);
         update_meta_variables_to_sort_(
-            mesh_data_.getEvolvingMetaVariables(),
-            ex_policy_, num_grid_pkgs, dv_index_permutation_);
+            mesh_data_.getEvolvingMetaVariables(), ex_policy_,
+            start_pkg_index, end_pkg_index, dv_index_permutation_);
         update_mesh_variables_to_sort_(
-            mesh_data_.getEvolvingMeshVariables(),
-            ex_policy_, num_grid_pkgs, dv_index_permutation_);
+            mesh_data_.getEvolvingPackageVariables(), ex_policy_,
+            start_pkg_index, end_pkg_index, dv_index_permutation_);
 
         UnsignedInt *pkg_1d_cell_index = dv_pkg_1d_cell_index_->DelegatedData(ex_policy_);
-        UnsignedInt *cell_pkg_index = bmv_cell_pkg_index_->DelegatedData(ex_policy_);
-        package_for(ex_policy_, num_singular_pkgs_, num_grid_pkgs,
+        UnsignedInt *cell_pkg_index = mcv_cell_pkg_index_->DelegatedData(ex_policy_);
+        package_for(ex_policy_, start_pkg_index, end_pkg_index,
                     [=](UnsignedInt package_index)
                     {
                         UnsignedInt sort_index = pkg_1d_cell_index[package_index];
@@ -103,15 +104,17 @@ class PackageSort : public BaseMeshDynamics
 
   private:
     ExecutionPolicy ex_policy_;
-    SingularVariable<UnsignedInt> &sv_num_grid_pkgs_;
+    SparseMeshField<4> &mesh_data_;
+    UnsignedInt resolution_level_;
+    StdVec<UnsignedInt> &num_pkgs_offsets_;
     using KernelImplementation = Implementation<ExecutionPolicy, PackageSort<ExecutionPolicy>, UpdateKernel>;
     KernelImplementation kernel_implementation_;
     DiscreteVariable<UnsignedInt> *dv_sequence_;
     DiscreteVariable<UnsignedInt> *dv_index_permutation_;
     MetaVariable<UnsignedInt> *dv_pkg_1d_cell_index_;
-    BKGMeshVariable<UnsignedInt> *bmv_cell_pkg_index_;
+    CellVariable<UnsignedInt> *mcv_cell_pkg_index_;
     OperationOnDataAssemble<MetaVariableAssemble, UpdateSortableVariables<MetaVariable>> update_meta_variables_to_sort_;
-    OperationOnDataAssemble<MeshVariableAssemble, UpdateSortableVariables<MeshVariable>> update_mesh_variables_to_sort_;
+    OperationOnDataAssemble<PackageVariableAssemble, UpdateSortableVariables<PackageVariable>> update_mesh_variables_to_sort_;
     SortMethodType sort_method_;
 };
 } // namespace SPH

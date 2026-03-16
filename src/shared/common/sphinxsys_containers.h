@@ -48,7 +48,6 @@ class UnstructuredMesh; // Indicating with unstructured mesh
 class BaseMaterial;
 class SPHBody;
 class RealBody;
-class SolidBody;
 class BodyPart;
 class BaseParticles;
 class UserDefined; // Indicating with user defined type in apps
@@ -89,7 +88,6 @@ class SpatialTemporal;
 //----------------------------------------------------------------------
 using MaterialVector = StdVec<BaseMaterial *>;
 using SPHBodyVector = StdVec<SPHBody *>;
-using SolidBodyVector = StdVec<SolidBody *>;
 using RealBodyVector = StdVec<RealBody *>;
 using BodyPartVector = StdVec<BodyPart *>;
 

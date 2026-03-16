@@ -63,7 +63,7 @@ class Cylinder : public MultiPolygonShape
   public:
     explicit Cylinder(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------

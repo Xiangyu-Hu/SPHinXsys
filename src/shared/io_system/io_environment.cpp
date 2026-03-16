@@ -86,10 +86,38 @@ void IOEnvironment::resetOutputFolder(const std::string &new_name)
         fs::create_directory(output_folder_);
     }
 }
+//=================================================================================================//
+void IOEnvironment::resetRestartFolder(const std::string &new_name)
+{
+    restart_folder_ = new_name;
+    if (!fs::exists(restart_folder_))
+    {
+        fs::create_directory(restart_folder_);
+    }
+    else
+    {
+        fs::remove_all(restart_folder_);
+        fs::create_directory(restart_folder_);
+    }
+}
+//=================================================================================================//
+void IOEnvironment::resetReloadFolder(const std::string &new_name)
+{
+    reload_folder_ = new_name;
+    if (!fs::exists(reload_folder_))
+    {
+        fs::create_directory(reload_folder_);
+    }
+    else
+    {
+        fs::remove_all(reload_folder_);
+        fs::create_directory(reload_folder_);
+    }
+}
 //=============================================================================================//
 ParameterizationIO *IOEnvironment::defineParameterizationIO()
 {
-    return parameterization_io_ptr_keeper_.createPtr<ParameterizationIO>(input_folder_);
+    return parameterization_io_keeper_.createPtr<ParameterizationIO>(input_folder_);
 }
 //=================================================================================================//
 } // namespace SPH

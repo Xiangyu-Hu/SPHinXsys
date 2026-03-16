@@ -13,13 +13,6 @@ GeometricShapeBox::GeometricShapeBox(const BoundingBoxd &bounding_box, const std
           Transform(0.5 * (bounding_box.lower_ + bounding_box.upper_)),
           0.5 * (bounding_box.upper_ - bounding_box.lower_)) {}
 //=================================================================================================//
-GeometricShapeBox::GeometricShapeBox(
-    const Vecd &lower_bound, const Vecd &upper_bound, const std::string &name)
-    : TransformShape<GeometricBox>(
-          name,
-          Transform(0.5 * (lower_bound + upper_bound)),
-          0.5 * (upper_bound - lower_bound)) {}
-//=================================================================================================//
 GeometricShapeBall::GeometricShapeBall(const Vecd &center, Real radius,
                                        const std::string &name)
     : GeometricBall(radius), Shape(name), center_(center) {}
@@ -39,5 +32,9 @@ BoundingBoxd GeometricShapeBall::findBounds()
     Vecd shift = radius_ * Vecd::Ones();
     return BoundingBoxd(center_ - shift, center_ + shift);
 }
+//=================================================================================================//
+GeometricShapeCylinder::GeometricShapeCylinder(const Transform &transform, Real radius, Real halflength,
+                                               const std::string &name)
+    : TransformShape<GeometricCylinder>(name, transform, radius, halflength) {}
 //=================================================================================================//
 } // namespace SPH

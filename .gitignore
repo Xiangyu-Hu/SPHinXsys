@@ -1048,3 +1048,6 @@ dkms.conf
 # wasm build
 build_wasm_release
 build_wasm_debug
+
+# CodeQL
+_codeql_detected_source_root

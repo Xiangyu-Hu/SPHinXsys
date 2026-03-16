@@ -35,6 +35,41 @@
 namespace SPH
 {
 using namespace execution;
+template <class DataType>
+class DeviceRadixSort
+{
+    using SortablePair = std::pair<UnsignedInt, DataType>;
+
+  public:
+    /** Get the number of bits corresponding to the d-th digit of key,
+     *  with each digit composed of a number of bits equal to radix_bits */
+    static inline UnsignedInt get_digit(UnsignedInt key, UnsignedInt d, UnsignedInt radix_bits);
+
+    /** Get the b-th bit of key */
+    static inline UnsignedInt get_bit(UnsignedInt key, UnsignedInt b);
+
+    /** Group operation to compute rank, i.e. sorted position, of each work-item based on one bit.
+     *  All work-items with bit = 0 will be on the first half of the ranking, while work-items with
+     *  bit = 1 will be placed on the second half. */
+    static UnsignedInt split_count(bool bit, sycl::nd_item<1> &item);
+
+    UnsignedInt find_max_element(const UnsignedInt *data, UnsignedInt size, UnsignedInt identity);
+
+    void resize(UnsignedInt data_size, UnsignedInt radix_bits, UnsignedInt workgroup_size);
+
+    sycl::event sort_by_key(
+        UnsignedInt *keys, DataType *data, UnsignedInt data_size, sycl::queue &queue,
+        UnsignedInt workgroup_size = 256, UnsignedInt radix_bits = 4);
+
+  private:
+    bool uniform_case_masking_;
+    UnsignedInt data_size_ = 0;
+    UnsignedInt radix_bits_, workgroup_size_, uniform_global_size_, workgroups_, radix_;
+    sycl::nd_range<1> kernel_range_{0, 0};
+    std::unique_ptr<sycl::buffer<UnsignedInt, 2>> global_buckets_, global_buckets_offsets_;
+    std::unique_ptr<sycl::buffer<UnsignedInt, 1>> local_buckets_offsets_buffer_;
+    std::unique_ptr<sycl::buffer<SortablePair>> data_swap_buffer_, uniform_extra_swap_buffer_;
+};
 
 class RadixSort
 {
@@ -49,6 +84,7 @@ class RadixSort
   protected:
     DiscreteVariable<UnsignedInt> *dv_sequence_;
     DiscreteVariable<UnsignedInt> *dv_index_permutation_;
+    DeviceRadixSort<UnsignedInt> device_radix_sorting;
 };
 
 template <typename T, typename Op>

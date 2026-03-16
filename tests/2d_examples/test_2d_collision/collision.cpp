@@ -12,8 +12,8 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 Real DL = 8.0;                /**< box length. */
 Real DH = 4.0;                /**< box height. */
-Real resolution_ref = 0.025;  /**< reference resolution. */
-Real BW = resolution_ref * 4; /**< wall width for BCs. */
+Real global_resolution = 0.025;  /**< reference resolution. */
+Real BW = global_resolution * 4; /**< wall width for BCs. */
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Vec2d ball_center_1(2.0, 2.0);
 Vec2d ball_center_2(6.0, 2.0);
@@ -51,8 +51,8 @@ class WallBoundary : public MultiPolygonShape
         inner_wall_shape.push_back(Vecd(DL, 0.0));
         inner_wall_shape.push_back(Vecd(0.0, 0.0));
 
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 class FreeBall : public MultiPolygonShape
@@ -60,7 +60,7 @@ class FreeBall : public MultiPolygonShape
   public:
     explicit FreeBall(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(ball_center_1, ball_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addACircle(ball_center_1, ball_radius, 100, GeometricOps::add);
     }
 };
 class DampingBall : public MultiPolygonShape
@@ -68,7 +68,7 @@ class DampingBall : public MultiPolygonShape
   public:
     explicit DampingBall(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(ball_center_2, ball_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addACircle(ball_center_2, ball_radius, 100, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -79,7 +79,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     sph_system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */

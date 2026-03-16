@@ -218,10 +218,12 @@ void Integration2ndHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t in
             Vecd &e_ij = wall_neighborhood.e_ij_[n];
             Real dW_ijV_j = wall_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
 
+            Vecd face_to_fluid_n = SGN(e_ij.dot(n_k[index_j])) * n_k[index_j];
+
             Vecd vel_j_in_wall = 2.0 * vel_ave_k[index_j] - vel_[index_i];
             density_change_rate += (vel_[index_i] - vel_j_in_wall).dot(e_ij) * dW_ijV_j;
-            Real u_jump = 2.0 * (vel_[index_i] - vel_ave_k[index_j]).dot(n_k[index_j]);
-            p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * n_k[index_j];
+            Real u_jump = 2.0 * (vel_[index_i] - vel_ave_k[index_j]).dot(face_to_fluid_n);
+            p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * face_to_fluid_n;
         }
     }
     drho_dt_[index_i] += density_change_rate * this->rho_[index_i];

@@ -50,7 +50,7 @@ class SPHSystem;
 class IOEnvironment
 {
   private:
-    UniquePtrKeeper<ParameterizationIO> parameterization_io_ptr_keeper_;
+    UniquePtrKeeper<ParameterizationIO> parameterization_io_keeper_;
 
   public:
     explicit IOEnvironment(SPHSystem &sph_system);
@@ -59,6 +59,8 @@ class IOEnvironment
     ParameterizationIO *defineParameterizationIO();
     void appendOutputFolder(const std::string &append_name);
     void resetOutputFolder(const std::string &new_name);
+    void resetRestartFolder(const std::string &new_name);
+    void resetReloadFolder(const std::string &new_name);
     void reinitializeReloadFolder();
     std::string InputFolder() const { return input_folder_; }
     std::string OutputFolder() const { return output_folder_; }

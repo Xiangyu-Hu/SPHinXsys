@@ -188,7 +188,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     beam_body.defineBodyLevelSetShape();
     beam_body.defineMaterial<NeoHookeanSolid>(*material.get());
     if (refinement_level > 0)
-        beam_body.generateParticles<BaseParticles, Lattice, AdaptiveByShape>(*refinement_region);
+        beam_body.generateParticles<BaseParticles, Lattice>(*refinement_region);
     else
         beam_body.generateParticles<BaseParticles, Lattice>();
 
@@ -242,7 +242,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     if (refinement_level > 0)
     {
         beam_body.getBaseParticles().addVariableToWrite<Real>("SmoothingLengthRatio");
-        beam_body.getBaseParticles().addVariableToWrite<int>("ParticleMeshLevel");
+        beam_body.getBaseParticles().addVariableToWrite<int>("SmoothingLengthLevel");
     }
     BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(beam_body);
@@ -272,7 +272,8 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     Real dt = 0.0;
     TickCount t1 = TickCount::now();
     TimeInterval time_damping;
-    const Real dt_ref = system.getSmallestTimeStepAmongSolidBodies();
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size(beam_body);
+    const Real dt_ref = computing_time_step_size.exec();
     std::cout << "dt_ref: " << dt_ref << std::endl;
 
     auto run_simulation = [&]()
@@ -289,7 +290,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
                               << dt << "\n";
                 }
 
-                dt = system.getSmallestTimeStepAmongSolidBodies();
+                dt = computing_time_step_size.exec();
                 if (dt < dt_ref / 1e2)
                     throw std::runtime_error("time step decreased too much");
 

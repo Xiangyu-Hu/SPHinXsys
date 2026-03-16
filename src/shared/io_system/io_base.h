@@ -35,6 +35,7 @@
 #include "parameterization.h"
 #include "sphinxsys_containers.h"
 #include "xml_engine.h"
+#include "xml_parser.h"
 
 #include <filesystem>
 #include <fstream>
@@ -84,6 +85,8 @@ class BaseIO
  */
 class BodyStatesRecording : public BaseIO
 {
+  protected:
+    UniquePtrsKeeper<BaseDynamics<void>> derived_variables_keeper_;
 
   public:
     BodyStatesRecording(SPHSystem &sph_system);
@@ -136,9 +139,6 @@ class BodyStatesRecording : public BaseIO
     StdVec<BaseDynamics<void> *> derived_variables_;
     bool state_recording_;
     virtual void writeWithFileName(const std::string &sequence) = 0;
-
-  private:
-    UniquePtrsKeeper<BaseDynamics<void>> derived_variables_keeper_;
 };
 
 /**
@@ -148,7 +148,7 @@ class BodyStatesRecording : public BaseIO
 class RestartIO : public BaseIO
 {
   protected:
-    SPHBodyVector bodies_;
+    SPHBodyVector real_bodies_;
     std::string overall_file_path_;
     StdVec<std::string> file_names_;
 
@@ -158,8 +158,8 @@ class RestartIO : public BaseIO
     RestartIO(SPHSystem &sph_system);
     virtual ~RestartIO() {};
 
-    virtual void writeToFile(size_t iteration_step = 0) override;
-    virtual void readFromFile(size_t iteration_step = 0);
+    virtual void writeToFile(size_t iteration_step) override;
+    virtual void readFromFile(size_t iteration_step);
 
     virtual Real readRestartFiles(size_t restart_step)
     {

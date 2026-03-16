@@ -17,7 +17,7 @@ class UdfSinusoidMotionImplementation
         return copy;
     };
 
-    void calcPrescribedPosition(const SimTK::State &s, int nq, double *q) const
+    void calcPrescribedPosition(const SimTK::State &s, int nq, double *q) const override
     {
         const double t = s.getTime();
         double out = defAmplitude * std::sin(defRate * t + defPhase);
@@ -30,7 +30,7 @@ class UdfSinusoidMotionImplementation
             q[i] = out;
     };
 
-    void calcPrescribedPositionDot(const SimTK::State &s, int nq, double *qdot) const
+    void calcPrescribedPositionDot(const SimTK::State &s, int nq, double *qdot) const override
     {
         const double t = s.getTime();
         double outd = defAmplitude * defRate * std::cos(defRate * t + defPhase);
@@ -45,7 +45,7 @@ class UdfSinusoidMotionImplementation
             qdot[i] = outd;
     };
 
-    void calcPrescribedPositionDotDot(const SimTK::State &s, int nq, double *qdotdot) const
+    void calcPrescribedPositionDotDot(const SimTK::State &s, int nq, double *qdotdot) const override
     {
         const double t = s.getTime();
         double outdd = -defAmplitude * defRate * defRate * std::sin(defRate * t + defPhase);
@@ -65,7 +65,7 @@ class UdfSinusoidMotionImplementation
             qdotdot[i] = outdd;
     };
 
-    SimTK::Motion::Level getLevel(const SimTK::State &) const
+    SimTK::Motion::Level getLevel(const SimTK::State &) const  override
     {
         return SimTK::Motion::Level::Position;
     };

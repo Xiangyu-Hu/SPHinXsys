@@ -6,7 +6,7 @@ int main(int ac, char *av[])
     /**
      * @brief Build up -- a SPHSystem --
      */
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
 
     /** Tag for run particle relaxation for the initial body fitted distribution. */
     sph_system.setRunParticleRelaxation(false);

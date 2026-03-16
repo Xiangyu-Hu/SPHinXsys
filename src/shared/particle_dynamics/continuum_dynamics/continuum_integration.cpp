@@ -145,7 +145,7 @@ void ShearStressRelaxationHourglassControl2ndHalf::interaction(size_t index_i, R
         Vecd v_ij = vel_[index_i] - vel_[index_j];
         Real r_ij = inner_neighborhood.r_ij_[n];
         Vecd v_ij_correction = v_ij - 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_j]) * r_ij * e_ij;
-        Real penalty_scale = 0.5 * (scale_penalty_force_[index_i] + scale_penalty_force_[index_j]); 
+        Real penalty_scale = 0.5 * (scale_penalty_force_[index_i] + scale_penalty_force_[index_j]);
         acceleration_hourglass += penalty_scale * G_ * v_ij_correction.dot(e_ij) * e_ij * dW_ijV_j * dt / (rho_i * r_ij);
     }
     Matd spin_rate = 0.5 * (velocity_gradient_[index_i] - velocity_gradient_[index_i].transpose());
@@ -175,5 +175,6 @@ void ShearStressRelaxationHourglassControl1stHalfJ2Plasticity::update(size_t ind
     Matd strain_rate = 0.5 * (velocity_gradient_[index_i] + velocity_gradient_[index_i].transpose());
     strain_tensor_[index_i] += strain_rate * dt;
 }
+//====================================================================================//
 } // namespace continuum_dynamics
 } // namespace SPH
