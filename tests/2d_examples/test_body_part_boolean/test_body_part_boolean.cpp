@@ -85,4 +85,4 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp body_states_recording(sph_system);
     body_states_recording.writeToFile();
     return 0;
-};
+}
