@@ -36,7 +36,7 @@ namespace SPH
 {
 /**
  * @class VariableNorm
- * @brief  obtained the maximum norm of a variable
+ * @brief Reduce the norm of a variable
  */
 template <typename DataType, typename NormType, class DynamicsIdentifier = SPHBody>
 class VariableNorm : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>

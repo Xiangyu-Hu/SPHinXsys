@@ -20,6 +20,62 @@ Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 Vec2d water_block_halfsize = Vec2d(0.5 * LL, 0.5 * LH); // local center at origin
 Vec2d water_block_translation = water_block_halfsize;   // translation to global coordinates
 //----------------------------------------------------------------------
+//	Customized criteria
+//----------------------------------------------------------------------
+class UnionCriteria
+{
+  public:
+    UnionCriteria(BaseParticles &base_particles)
+        : x_plus_2y_(base_particles.getVariableDataByName<Real>("XPlus2Y")),
+          x_multiply_y_(base_particles.getVariableDataByName<Real>("XMultiplyY")) {}
+
+    bool operator()(size_t index_i) const
+    {
+        return (0.5 <= x_plus_2y_[index_i] && x_plus_2y_[index_i] <= 1.5) ||
+               (0.1 <= x_multiply_y_[index_i] && x_multiply_y_[index_i] <= 0.4);
+    }
+
+  private:
+    Real *x_plus_2y_;
+    Real *x_multiply_y_;
+};
+
+class IntersectionCriteria
+{
+  public:
+    IntersectionCriteria(BaseParticles &base_particles)
+        : x_plus_2y_(base_particles.getVariableDataByName<Real>("XPlus2Y")),
+          x_multiply_y_(base_particles.getVariableDataByName<Real>("XMultiplyY")) {}
+
+    bool operator()(size_t particle_index) const
+    {
+        return (0.5 <= x_plus_2y_[particle_index] && x_plus_2y_[particle_index] <= 1.5) &&
+               (0.1 <= x_multiply_y_[particle_index] && x_multiply_y_[particle_index] <= 0.4);
+    }
+
+  private:
+    Real *x_plus_2y_;
+    Real *x_multiply_y_;
+};
+
+class DifferenceCriteria
+{
+  public:
+    DifferenceCriteria(BaseParticles &base_particles)
+        : x_plus_2y_(base_particles.getVariableDataByName<Real>("XPlus2Y")),
+          x_multiply_y_(base_particles.getVariableDataByName<Real>("XMultiplyY")) {}
+
+    bool operator()(size_t particle_index) const
+    {
+        return (0.5 <= x_plus_2y_[particle_index] && x_plus_2y_[particle_index] <= 1.5) &&
+               !(0.1 <= x_multiply_y_[particle_index] && x_multiply_y_[particle_index] <= 0.4);
+    }
+
+  private:
+    Real *x_plus_2y_;
+    Real *x_multiply_y_;
+};
+//----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
@@ -48,11 +104,13 @@ int main(int ac, char *av[])
         x_plus_2y[index_i] = pos[index_i][0] + 2.0 * pos[index_i][1];
         x_multiply[index_i] = pos[index_i][0] * pos[index_i][1];
     }
-    BodyPartByParticleRealVariableRange part_x_plus_2y(water_block, "PartXPlus2Y", "XPlus2Y", 0.5, 1.5);
-    BodyPartByParticleRealVariableRange part_x_multiply(water_block, "PartXMultiplyY", "XMultiplyY", 0.1, 0.4);
-    BodyPartByParticleUnion part_union(water_block, "Union", {&part_x_plus_2y, &part_x_multiply});
-    BodyPartByParticleIntersection part_intersection(water_block, "Intersection", {&part_x_plus_2y, &part_x_multiply});
-    BodyPartByParticleDifference part_difference(water_block, "Difference", {&part_x_plus_2y, &part_x_multiply});
+    BodyPartByRealVar part_x_plus_2y(water_block, "PartXPlus2Y", "XPlus2Y", 0.5, 1.5);
+    BodyPartByRealVar part_x_multiply(water_block, "PartXMultiplyY", "XMultiplyY", 0.1, 0.4);
+
+    // Demonstrate replacing hand-written boolean body-part subclasses with custom TagCriteria.
+    BodyPartByParticleCustom<UnionCriteria> part_union(water_block, "UnionCriteria");
+    BodyPartByParticleCustom<IntersectionCriteria> part_intersection(water_block, "IntersectionCriteria");
+    BodyPartByParticleCustom<DifferenceCriteria> part_difference(water_block, "DifferenceCriteria");
     const size_t count_x_plus_2y = part_x_plus_2y.SizeOfLoopRange();
     const size_t count_x_multiply = part_x_multiply.SizeOfLoopRange();
     const size_t count_union = part_union.SizeOfLoopRange();
