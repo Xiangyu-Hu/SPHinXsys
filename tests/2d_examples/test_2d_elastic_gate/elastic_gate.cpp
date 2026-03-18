@@ -69,7 +69,7 @@ class WaterBlock : public MultiPolygonShape
         water_block_shape.push_back(DamP_rt);
         water_block_shape.push_back(DamP_rb);
         water_block_shape.push_back(DamP_lb);
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -95,8 +95,8 @@ class WallBoundary : public MultiPolygonShape
         inner_wall_shape.push_back(Vecd(DL, 0.0));
         inner_wall_shape.push_back(Vecd(0.0, 0.0));
 
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -112,7 +112,7 @@ MultiPolygon createGateShape()
     gate_shape.push_back(GateP_lb);
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(gate_shape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(gate_shape, GeometricOps::add);
     return multi_polygon;
 }
 //----------------------------------------------------------------------
@@ -129,7 +129,7 @@ MultiPolygon createGateConstrainShape()
     gate_constraint_shape.push_back(ConstrainP_lb);
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(gate_constraint_shape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(gate_constraint_shape, GeometricOps::add);
     return multi_polygon;
 }
 //----------------------------------------------------------------------

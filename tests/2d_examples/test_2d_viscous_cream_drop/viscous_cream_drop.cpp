@@ -62,15 +62,15 @@ class Cream : public MultiPolygonShape
   public:
     explicit Cream(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createPlatformShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createCreamUpperShape(), ShapeBooleanOps::add);
-        multi_polygon_.addACircle(cream_center, cream_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createPlatformShape(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createCreamUpperShape(), GeometricOps::add);
+        multi_polygon_.addACircle(cream_center, cream_radius, 100, GeometricOps::add);
     }
 };
 MultiPolygon createPlatformConstraint()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(createPlatformShape(), ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(createPlatformShape(), GeometricOps::add);
     return multi_polygon;
 };
 //----------------------------------------------------------------------

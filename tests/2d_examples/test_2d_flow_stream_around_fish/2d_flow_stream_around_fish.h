@@ -56,7 +56,7 @@ class FishBody : public MultiPolygonShape
     explicit FishBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, fish_shape_resolution);
-        multi_polygon_.addAPolygon(fish_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(fish_shape, GeometricOps::add);
     }
 };
 std::vector<Vecd> createWaterBlockShape()

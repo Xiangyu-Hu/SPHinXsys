@@ -1,4 +1,4 @@
-#include "density_correciton.hpp"
+#include "density_correction.hpp"
 
 namespace SPH
 {

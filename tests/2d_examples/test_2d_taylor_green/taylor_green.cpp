@@ -34,7 +34,7 @@ class WaterBlock : public MultiPolygonShape
         water_block_shape.push_back(Vecd(DL, DH));
         water_block_shape.push_back(Vecd(DL, 0.0));
         water_block_shape.push_back(Vecd(0.0, 0.0));
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------

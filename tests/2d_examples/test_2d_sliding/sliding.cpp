@@ -38,7 +38,7 @@ class WallBoundary : public MultiPolygonShape
     {
         /** Geometry definition. */
         std::vector<Vecd> wall_shape{Vecd(0, 0), Vecd(0, slop_h), Vecd(DL, slop_h), Vecd(0, 0)};
-        multi_polygon_.addAPolygon(wall_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(wall_shape, GeometricOps::add);
     }
 };
 
@@ -54,7 +54,7 @@ class Cube : public MultiPolygonShape
         cubic_shape.push_back(Vecd(BW + L, slop_h + L + global_resolution));
         cubic_shape.push_back(Vecd(BW + L, slop_h + global_resolution));
         cubic_shape.push_back(Vecd(BW, slop_h + global_resolution));
-        multi_polygon_.addAPolygon(cubic_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(cubic_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------

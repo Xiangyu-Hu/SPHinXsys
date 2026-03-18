@@ -5,8 +5,8 @@
  * @author 	Minhui Zhou, Dong Wu
  */
 #include "bidirectional_buffer.h"
-#include "density_correciton.h"
-#include "density_correciton.hpp"
+#include "density_correction.h"
+#include "density_correction.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"

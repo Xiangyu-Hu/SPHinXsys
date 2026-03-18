@@ -60,7 +60,7 @@ class DiffusionBody : public MultiPolygonShape
   public:
     explicit DiffusionBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createThermalDomain(), GeometricOps::add);
     }
 };
 
@@ -69,8 +69,8 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createBoundaryDomain(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(createBoundaryDomain(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createThermalDomain(), GeometricOps::sub);
     }
 };
 

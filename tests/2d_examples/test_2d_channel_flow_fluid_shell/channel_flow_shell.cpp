@@ -31,7 +31,7 @@ class WaterBlock : public MultiPolygonShape
     class FluidAxialObserver;
     explicit WaterBlock(const std::vector<Vecd> &shape, const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(shape, GeometricOps::add);
     }
 };
 

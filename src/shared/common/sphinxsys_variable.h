@@ -33,6 +33,7 @@
 #include "base_data_type_package.h"
 #include "execution_policy.h"
 #include "ownership.h"
+#include "sphinxsys_entity.h"
 
 namespace SPH
 {
@@ -43,17 +44,6 @@ class SingularVariable;
 
 template <typename DataType>
 class DiscreteVariable;
-
-class Entity
-{
-  public:
-    explicit Entity(const std::string &name) : name_(name) {};
-    ~Entity() {};
-    std::string Name() const { return name_; };
-
-  protected:
-    const std::string name_;
-};
 
 template <typename DataType>
 class DeviceSharedSingularVariable : public Entity

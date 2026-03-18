@@ -239,10 +239,10 @@ MultiPolygon createStructureShape()
 
     MultiPolygon multi_polygon_;
 
-    multi_polygon_.addAPolygon(sructure_bp, ShapeBooleanOps::add);
-    multi_polygon_.addAPolygon(sructure_ssp, ShapeBooleanOps::add);
-    multi_polygon_.addAPolygon(sructure_psp, ShapeBooleanOps::add);
-    multi_polygon_.addAPolygon(sructure_tp, ShapeBooleanOps::add);
+    multi_polygon_.addAPolygon(sructure_bp, GeometricOps::add);
+    multi_polygon_.addAPolygon(sructure_ssp, GeometricOps::add);
+    multi_polygon_.addAPolygon(sructure_psp, GeometricOps::add);
+    multi_polygon_.addAPolygon(sructure_tp, GeometricOps::add);
 
     return multi_polygon_;
 }
@@ -281,10 +281,10 @@ class FloatingStructure : public MultiPolygonShape
         sructure_tp.push_back(tp_rb);
         sructure_tp.push_back(tp_lb);
 
-        multi_polygon_.addAPolygon(sructure_bp, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(sructure_ssp, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(sructure_psp, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(sructure_tp, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(sructure_bp, GeometricOps::add);
+        multi_polygon_.addAPolygon(sructure_ssp, GeometricOps::add);
+        multi_polygon_.addAPolygon(sructure_psp, GeometricOps::add);
+        multi_polygon_.addAPolygon(sructure_tp, GeometricOps::add);
     }
 };
 
@@ -353,12 +353,12 @@ class WaterBlock : public MultiPolygonShape
         sructure_mdp.push_back(psp_lb);
         sructure_mdp.push_back(ssp_rb);
 
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(sructure_bp, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(sructure_ssp, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(sructure_psp, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(sructure_tp, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(sructure_mdp, ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(sructure_bp, GeometricOps::sub);
+        multi_polygon_.addAPolygon(sructure_ssp, GeometricOps::sub);
+        multi_polygon_.addAPolygon(sructure_psp, GeometricOps::sub);
+        multi_polygon_.addAPolygon(sructure_tp, GeometricOps::sub);
+        multi_polygon_.addAPolygon(sructure_mdp, GeometricOps::sub);
     }
 };
 
@@ -396,9 +396,9 @@ class WallBoundary : public MultiPolygonShape
         Wmak_shape.push_back(Wmak_rb);
         Wmak_shape.push_back(Wmak_lb);
 
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(Wmak_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
+        multi_polygon_.addAPolygon(Wmak_shape, GeometricOps::add);
     }
 };
 
@@ -415,7 +415,7 @@ MultiPolygon createWaveMakerShape()
     Wmak_shape.push_back(Wmak_lb);
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(Wmak_shape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(Wmak_shape, GeometricOps::add);
     return multi_polygon;
 }
 
@@ -575,6 +575,6 @@ MultiPolygon createWaveGauge()
     pnts.push_back(Vecd(10.848 - h, 0.0));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(pnts, GeometricOps::add);
     return multi_polygon;
 }

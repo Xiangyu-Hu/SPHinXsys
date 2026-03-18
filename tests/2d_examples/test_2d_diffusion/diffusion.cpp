@@ -40,7 +40,7 @@ class DiffusionBlock : public MultiPolygonShape
         shape.push_back(Vecd(L, H));
         shape.push_back(Vecd(L, 0.0));
         shape.push_back(Vecd(0.0, 0.0));
-        multi_polygon_.addAPolygon(shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------

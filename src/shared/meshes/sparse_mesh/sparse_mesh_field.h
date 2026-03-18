@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    spares_mesh_field.h
+ * @file    sparse_mesh_field.h
  * @brief   This class is designed to save memory and increase computational efficiency on mesh.
  * @author  Chi Zhang and Xiangyu Hu
  */

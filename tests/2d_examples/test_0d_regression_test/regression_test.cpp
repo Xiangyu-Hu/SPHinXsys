@@ -40,7 +40,7 @@ MultiPolygon createDiffusionDomain()
     diffusion_domain.push_back(Vecd(-BW, -BW));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(diffusion_domain, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(diffusion_domain, GeometricOps::add);
     return multi_polygon;
 }
 
@@ -55,7 +55,7 @@ MultiPolygon createInnerDomain()
     inner_domain.push_back(Vecd(0.0, 0.0));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(inner_domain, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(inner_domain, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -71,7 +71,7 @@ MultiPolygon createLeftSideBoundary()
     left_boundary.push_back(Vecd(-BW, -BW));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(left_boundary, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(left_boundary, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -91,7 +91,7 @@ MultiPolygon createOtherSideBoundary()
     other_boundaries.push_back(Vecd(-BW, -BW));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(other_boundaries, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(other_boundaries, GeometricOps::add);
 
     return multi_polygon;
 }

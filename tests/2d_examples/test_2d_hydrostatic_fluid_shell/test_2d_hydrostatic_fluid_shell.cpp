@@ -16,7 +16,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::vector<Vecd> &shape, const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -152,8 +152,8 @@ void hydrostatic_fsi(const Real particle_spacing_gate, const Real particle_spaci
         gate_constraint_shape_right.push_back(ConstrainRP_lb);
 
         MultiPolygon multi_polygon;
-        multi_polygon.addAPolygon(gate_constraint_shape_left, ShapeBooleanOps::add);
-        multi_polygon.addAPolygon(gate_constraint_shape_right, ShapeBooleanOps::add);
+        multi_polygon.addAPolygon(gate_constraint_shape_left, GeometricOps::add);
+        multi_polygon.addAPolygon(gate_constraint_shape_right, GeometricOps::add);
         return multi_polygon;
     };
     //----------------------------------------------------------------------

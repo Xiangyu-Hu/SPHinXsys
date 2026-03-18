@@ -81,7 +81,7 @@ class ThermofluidBody : public MultiPolygonShape
   public:
     explicit ThermofluidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createShape(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createShape(), GeometricOps::add);
     }
 };
 class ThermosolidBody : public MultiPolygonShape
@@ -89,8 +89,8 @@ class ThermosolidBody : public MultiPolygonShape
   public:
     explicit ThermosolidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(createOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createInnerWallShape(), GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------

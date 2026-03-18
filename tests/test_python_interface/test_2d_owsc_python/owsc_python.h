@@ -122,7 +122,7 @@ class SphBasicGeometrySetting
         pnts.push_back(Vecd(DL - 5.0, 0.356 - BW));
 
         MultiPolygon multi_polygon;
-        multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
+        multi_polygon.addAPolygon(pnts, GeometricOps::add);
         return multi_polygon;
     }
 
@@ -184,7 +184,7 @@ class SphBasicGeometrySetting
         wave_make_shape.push_back(Vecd(-BW, 0.0));
 
         MultiPolygon multi_polygon;
-        multi_polygon.addAPolygon(wave_make_shape, ShapeBooleanOps::add);
+        multi_polygon.addAPolygon(wave_make_shape, GeometricOps::add);
         return multi_polygon;
     }
 
@@ -196,7 +196,7 @@ class SphBasicGeometrySetting
     MultiPolygon createFlapSimbodyConstrainShape()
     {
         MultiPolygon multi_polygon;
-        multi_polygon.addAPolygon(createFlapShape(), ShapeBooleanOps::add);
+        multi_polygon.addAPolygon(createFlapShape(), GeometricOps::add);
         return multi_polygon;
     }
 
@@ -210,7 +210,7 @@ class SphBasicGeometrySetting
         pnts.push_back(Vecd(x - h, 0.0));
 
         MultiPolygon multi_polygon;
-        multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
+        multi_polygon.addAPolygon(pnts, GeometricOps::add);
         return multi_polygon;
     }
 
@@ -240,9 +240,9 @@ class WaterBlock : public MultiPolygonShape, public SphBasicGeometrySetting
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createFlapShape(), ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(createFlapConstrainShape(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(createWaterBlockShape(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createFlapShape(), GeometricOps::sub);
+        multi_polygon_.addAPolygon(createFlapConstrainShape(), GeometricOps::sub);
     }
 };
 
@@ -251,10 +251,10 @@ class WallBoundary : public MultiPolygonShape, public SphBasicGeometrySetting
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createFlapConstrainShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createInnerWallShape01(), ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(createInnerWallShape02(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(createOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createFlapConstrainShape(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createInnerWallShape01(), GeometricOps::sub);
+        multi_polygon_.addAPolygon(createInnerWallShape02(), GeometricOps::sub);
     }
 };
 
@@ -263,7 +263,7 @@ class Flap : public MultiPolygonShape, public SphBasicGeometrySetting
   public:
     explicit Flap(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createFlapShape(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createFlapShape(), GeometricOps::add);
     }
 };
 

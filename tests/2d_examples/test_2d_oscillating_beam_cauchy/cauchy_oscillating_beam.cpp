@@ -56,8 +56,8 @@ class Beam : public MultiPolygonShape
   public:
     explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(beam_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(beam_base_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(beam_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -91,8 +91,8 @@ class BeamInitialCondition
 MultiPolygon createBeamConstrainShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(beam_shape, ShapeBooleanOps::sub);
+    multi_polygon.addAPolygon(beam_base_shape, GeometricOps::add);
+    multi_polygon.addAPolygon(beam_shape, GeometricOps::sub);
     return multi_polygon;
 };
 //------------------------------------------------------------------------------

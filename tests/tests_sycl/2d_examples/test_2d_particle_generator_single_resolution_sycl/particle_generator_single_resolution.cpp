@@ -37,7 +37,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &input_shape = sph_system.addShape<ComplexShape>("SPHInXsysLogo");
     MultiPolygon original_logo;
-    original_logo.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
+    original_logo.addAPolygonFromFile(input_body, GeometricOps::add);
     input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * global_resolution, original_logo);
     input_shape.subtract<MultiPolygonShape>(original_logo);
     auto &input_body = sph_system.addBody<RealBody>(input_shape);

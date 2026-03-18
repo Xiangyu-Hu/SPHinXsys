@@ -32,7 +32,7 @@ class InputBody : public ComplexShape
     explicit InputBody(const std::string &shape_name) : ComplexShape(shape_name)
     {
         MultiPolygon original_logo;
-        original_logo.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
+        original_logo.addAPolygonFromFile(input_body, GeometricOps::add);
         add<ExtrudeShape<MultiPolygonShape>>(4.0 * global_resolution, original_logo);
         subtract<MultiPolygonShape>(original_logo);
     }

@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 
 /**
- * @file    particle_functors.h
+ * @file    particle_functors_ck.h
  * @brief 	TBD.
  * @author	Xiangyu Hu
  */

@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	bidirectional_buffer.h
- * @brief 	Here, we define the algorithm classes for bidirectiontal buffer.
+ * @brief 	Here, we define the algorithm classes for bidirectional buffer.
  * @details The buffer particle index is periodically updated at each time step.
             The bidirectional buffer can serve for unidirectional, bidirectional and mixed flows.
  * @author	Shuoguo Zhang and Xiangyu Hu

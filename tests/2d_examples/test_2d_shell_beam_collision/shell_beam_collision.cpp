@@ -40,7 +40,7 @@ class Beam : public MultiPolygonShape
         outer_beam_shape.push_back(Vecd(0.0, -BW));
         outer_beam_shape.push_back(Vecd(-BW, -BW));
 
-        multi_polygon_.addAPolygon(outer_beam_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(outer_beam_shape, GeometricOps::add);
     }
 };
 class Shell : public ComplexShape
@@ -69,8 +69,8 @@ MultiPolygon createBeamConstrainShape()
         Vecd(0.5 * global_resolution, DH - 0.5 * global_resolution), Vecd(-1.5 * BW, DH - 0.5 * global_resolution)};
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(bottom_beam_base_shape, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(top_beam_base_shape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(bottom_beam_base_shape, GeometricOps::add);
+    multi_polygon.addAPolygon(top_beam_base_shape, GeometricOps::add);
     return multi_polygon;
 };
 //----------------------------------------------------------------------

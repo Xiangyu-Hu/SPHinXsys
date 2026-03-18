@@ -44,9 +44,9 @@ class FluidBlock : public MultiPolygonShape
   public:
     explicit FluidBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(calculation_circle_center, calculation_circle_radius, 100, ShapeBooleanOps::add);
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(Creatrightsqureshape(), ShapeBooleanOps::sub);
+        multi_polygon_.addACircle(calculation_circle_center, calculation_circle_radius, 100, GeometricOps::add);
+        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::sub);
+        multi_polygon_.addAPolygon(Creatrightsqureshape(), GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------

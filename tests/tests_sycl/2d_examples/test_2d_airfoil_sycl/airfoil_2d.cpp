@@ -29,9 +29,9 @@ class ImportModel : public MultiPolygonShape
   public:
     explicit ImportModel(const std::string &import_model_name) : MultiPolygonShape(import_model_name)
     {
-        multi_polygon_.addAPolygonFromFile(airfoil_flap_front, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygonFromFile(airfoil_wing, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygonFromFile(airfoil_flap_rear, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygonFromFile(airfoil_flap_front, GeometricOps::add);
+        multi_polygon_.addAPolygonFromFile(airfoil_wing, GeometricOps::add);
+        multi_polygon_.addAPolygonFromFile(airfoil_flap_rear, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------

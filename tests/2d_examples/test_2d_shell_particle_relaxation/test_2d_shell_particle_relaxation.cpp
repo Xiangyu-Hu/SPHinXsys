@@ -26,8 +26,8 @@ class Pipe : public MultiPolygonShape
   public:
     explicit Pipe(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(pipe_center, radius + thickness, 100, ShapeBooleanOps::add);
-        multi_polygon_.addACircle(pipe_center, radius, 100, ShapeBooleanOps::sub);
+        multi_polygon_.addACircle(pipe_center, radius + thickness, 100, GeometricOps::add);
+        multi_polygon_.addACircle(pipe_center, radius, 100, GeometricOps::sub);
     }
 };
 //--------------------------------------------------------------------------

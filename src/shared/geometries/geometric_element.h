@@ -96,5 +96,4 @@ class GeometricCylinder
     Real halflength_;
 };
 } // namespace SPH
-
 #endif // GEOMETRIC_ELEMENT_H

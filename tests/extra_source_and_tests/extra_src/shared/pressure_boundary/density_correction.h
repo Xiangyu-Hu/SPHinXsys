@@ -113,4 +113,4 @@ using DensitySummationPressureComplex = BaseDensitySummationPressureComplex<Inne
 
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // DENSITY_SUMMATION_INNER_H
+#endif // DENSITY_CORRECTION_H

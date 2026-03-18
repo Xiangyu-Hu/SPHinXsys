@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	riemann_solvers.h
+ * @file 	riemann_solver.h
  * @brief 	This is the collection of Riemann solvers.
  * @author	Chi Zhang and Xiangyu Hu
  */

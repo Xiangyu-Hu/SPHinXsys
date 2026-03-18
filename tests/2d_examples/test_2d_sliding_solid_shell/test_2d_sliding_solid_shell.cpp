@@ -42,7 +42,7 @@ class Cube : public MultiPolygonShape
     {
         Vec2d halfsize_cube(0.5 * L, 0.5 * L);
         Transform translation_cube(halfsize_cube + 0.65 * (global_resolution + resolution_shell) * Vec2d::UnitY());
-        multi_polygon_.addABox(translation_cube, halfsize_cube, ShapeBooleanOps::add);
+        multi_polygon_.addABox(translation_cube, halfsize_cube, GeometricOps::add);
     }
 };
 namespace SPH

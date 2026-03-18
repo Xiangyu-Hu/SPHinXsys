@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	slender_structure_dynamics.h
+ * @file 	slender_structure_math.h
  * @brief 	Here, we define the math operation for slender structure dynamics.
  * @details We consider here a weakly compressible solids.
  * @author	Dong Wu, Chi Zhang and Xiangyu Hu

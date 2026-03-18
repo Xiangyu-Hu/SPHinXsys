@@ -8,18 +8,18 @@ namespace SPH
 MultiPolygon::MultiPolygon(const std::vector<Vecd> &points)
     : MultiPolygon()
 {
-    addAPolygon(points, ShapeBooleanOps::add);
+    addAPolygon(points, GeometricOps::add);
 }
 //=================================================================================================//
 MultiPolygon::MultiPolygon(const Vecd &center, Real radius, int resolution)
     : MultiPolygon()
 {
-    addACircle(center, radius, resolution, ShapeBooleanOps::add);
+    addACircle(center, radius, resolution, GeometricOps::add);
 }
 //=================================================================================================//
 boost_multi_poly MultiPolygon::
     MultiPolygonByBooleanOps(boost_multi_poly multi_poly_in,
-                             boost_multi_poly multi_poly_op, ShapeBooleanOps boolean_op)
+                             boost_multi_poly multi_poly_op, GeometricOps boolean_op)
 {
     boost_multi_poly multi_poly_tmp_in = multi_poly_in;
     /**
@@ -30,23 +30,23 @@ boost_multi_poly MultiPolygon::
 
     switch (boolean_op)
     {
-    case ShapeBooleanOps::add:
+    case GeometricOps::add:
     {
         bg::union_(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
         break;
     }
 
-    case ShapeBooleanOps::sub:
+    case GeometricOps::sub:
     {
         bg::difference(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
         break;
     }
-    case ShapeBooleanOps::sym_diff:
+    case GeometricOps::sym_diff:
     {
         bg::sym_difference(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
         break;
     }
-    case ShapeBooleanOps::intersect:
+    case GeometricOps::intersect:
     {
         bg::intersection(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
         break;
@@ -62,17 +62,17 @@ boost_multi_poly MultiPolygon::
     return multi_poly_tmp_out;
 }
 //=================================================================================================//
-void MultiPolygon::addAMultiPolygon(MultiPolygon &multi_polygon_op, ShapeBooleanOps op)
+void MultiPolygon::addAMultiPolygon(MultiPolygon &multi_polygon_op, GeometricOps op)
 {
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_polygon_op.getBoostMultiPoly(), op);
 }
 //=================================================================================================//
-void MultiPolygon::addABoostMultiPoly(boost_multi_poly &boost_multi_poly_op, ShapeBooleanOps op)
+void MultiPolygon::addABoostMultiPoly(boost_multi_poly &boost_multi_poly_op, GeometricOps op)
 {
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, boost_multi_poly_op, op);
 }
 //=================================================================================================//
-void MultiPolygon::addABox(Transform transform, const Vecd &halfsize, ShapeBooleanOps op)
+void MultiPolygon::addABox(Transform transform, const Vecd &halfsize, GeometricOps op)
 {
     Vecd point0 = transform.shiftFrameStationToBase(-halfsize);
     Vecd point1 = transform.shiftFrameStationToBase(Vecd(-halfsize[0], halfsize[1]));
@@ -83,7 +83,7 @@ void MultiPolygon::addABox(Transform transform, const Vecd &halfsize, ShapeBoole
     addAPolygon(points, op);
 }
 //=================================================================================================//
-void MultiPolygon::addACircle(const Vecd &center, Real radius, int resolution, ShapeBooleanOps op)
+void MultiPolygon::addACircle(const Vecd &center, Real radius, int resolution, GeometricOps op)
 {
     Vecd buffer_center = center;
     Real buffer_radius = radius;
@@ -118,7 +118,7 @@ void MultiPolygon::addACircle(const Vecd &center, Real radius, int resolution, S
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_circle, op);
 }
 //=================================================================================================//
-void MultiPolygon::addAPolygon(const std::vector<Vecd> &points, ShapeBooleanOps op)
+void MultiPolygon::addAPolygon(const std::vector<Vecd> &points, GeometricOps op)
 {
     std::vector<boost_point> pts;
     for (const Vecd &pnt : points)
@@ -149,7 +149,7 @@ void MultiPolygon::addAPolygon(const std::vector<Vecd> &points, ShapeBooleanOps 
 }
 //=================================================================================================//
 void MultiPolygon::
-    addAPolygonFromFile(std::string file_path_name, ShapeBooleanOps op, Vecd translation, Real scale_factor)
+    addAPolygonFromFile(std::string file_path_name, GeometricOps op, Vecd translation, Real scale_factor)
 {
     std::fstream dataFile(file_path_name);
     Vecd temp_point;

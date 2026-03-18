@@ -28,7 +28,7 @@ NormalDirectionFromSubShapeAndOp::
     : LocalDynamics(sph_body),
       shape_and_op_(DynamicCast<ComplexShape>(this, sph_body.getInitialShape()).getSubShapeAndOpByName(shape_name)),
       shape_(shape_and_op_->first),
-      switch_sign_(shape_and_op_->second == ShapeBooleanOps::add ? 1.0 : -1.0),
+      switch_sign_(shape_and_op_->second == GeometricOps::add ? 1.0 : -1.0),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       n_(particles_->registerStateVariableData<Vecd>("NormalDirection")),
       n0_(particles_->registerStateVariableDataFrom<Vecd>("InitialNormalDirection", "NormalDirection")),

@@ -51,8 +51,8 @@ class WallBoundary : public MultiPolygonShape
         inner_wall_shape.push_back(Vecd(DL, 0.0));
         inner_wall_shape.push_back(Vecd(0.0, 0.0));
 
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 class FreeBall : public MultiPolygonShape
@@ -60,7 +60,7 @@ class FreeBall : public MultiPolygonShape
   public:
     explicit FreeBall(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(ball_center_1, ball_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addACircle(ball_center_1, ball_radius, 100, GeometricOps::add);
     }
 };
 class DampingBall : public MultiPolygonShape
@@ -68,7 +68,7 @@ class DampingBall : public MultiPolygonShape
   public:
     explicit DampingBall(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(ball_center_2, ball_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addACircle(ball_center_2, ball_radius, 100, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------

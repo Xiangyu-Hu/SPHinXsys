@@ -89,16 +89,16 @@ bool BinaryShapes::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED)
     for (auto &sub_shape_and_op : sub_shapes_and_ops_)
     {
         Shape *geometry = sub_shape_and_op.first;
-        ShapeBooleanOps operation_string = sub_shape_and_op.second;
+        GeometricOps operation_string = sub_shape_and_op.second;
         switch (operation_string)
         {
-        case ShapeBooleanOps::add:
+        case GeometricOps::add:
         {
             inside = geometry->checkContain(pnt);
             exist = exist || inside;
             break;
         }
-        case ShapeBooleanOps::sub:
+        case GeometricOps::sub:
         {
             inside = geometry->checkContain(pnt);
             exist = exist && (!inside);

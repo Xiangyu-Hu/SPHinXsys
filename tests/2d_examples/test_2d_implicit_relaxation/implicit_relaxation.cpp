@@ -26,7 +26,7 @@ class InputBody : public ComplexShape
     explicit InputBody(const std::string &shape_name) : ComplexShape(shape_name)
     {
         MultiPolygon turbine_blade;
-        turbine_blade.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
+        turbine_blade.addAPolygonFromFile(input_body, GeometricOps::add);
         add<MultiPolygonShape>(turbine_blade);
     }
 };

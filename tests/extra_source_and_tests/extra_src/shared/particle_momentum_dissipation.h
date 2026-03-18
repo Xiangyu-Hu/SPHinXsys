@@ -21,11 +21,11 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	particle_dynamics_dissipation.h
+ * @file 	particle_momentum_dissipation.h
  * @brief 	Here are the classes for damping the magnitude of
  * 			any variables.
- * 			Note that, currently, these classes works only in single resolution.
- * @author	Chi ZHang and Xiangyu Hu
+ * 			Note that, currently, these classes work only in single resolution.
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef PARTICLE_MOMENTUM_DISSIPATION_H

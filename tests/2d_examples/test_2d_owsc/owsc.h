@@ -131,7 +131,7 @@ MultiPolygon createDampingBufferShape()
     pnts.push_back(Vecd(DL - 5.0, 0.356 - BW));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(pnts, GeometricOps::add);
     return multi_polygon;
 }
 
@@ -193,7 +193,7 @@ MultiPolygon createWaveMakerShape()
     wave_make_shape.push_back(Vecd(-BW, 0.0));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(wave_make_shape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(wave_make_shape, GeometricOps::add);
     return multi_polygon;
 }
 //------------------------------------------------------------------------------
@@ -204,9 +204,9 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createFlapShape(), ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(createFlapConstrainShape(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(createWaterBlockShape(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createFlapShape(), GeometricOps::sub);
+        multi_polygon_.addAPolygon(createFlapConstrainShape(), GeometricOps::sub);
     }
 };
 
@@ -215,10 +215,10 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createFlapConstrainShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createInnerWallShape01(), ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(createInnerWallShape02(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(createOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createFlapConstrainShape(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createInnerWallShape01(), GeometricOps::sub);
+        multi_polygon_.addAPolygon(createInnerWallShape02(), GeometricOps::sub);
     }
 };
 
@@ -227,7 +227,7 @@ class Flap : public MultiPolygonShape
   public:
     explicit Flap(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createFlapShape(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createFlapShape(), GeometricOps::add);
     }
 };
 //------------------------------------------------------------------------------
@@ -236,7 +236,7 @@ class Flap : public MultiPolygonShape
 MultiPolygon createFlapSimbodyConstrainShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(createFlapShape(), ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(createFlapShape(), GeometricOps::add);
     return multi_polygon;
 };
 
@@ -358,7 +358,7 @@ MultiPolygon createWaveProbeShape4()
     pnts.push_back(Vecd(3.99 - h, 0.0));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(pnts, GeometricOps::add);
     return multi_polygon;
 }
 MultiPolygon createWaveProbeShape5()
@@ -371,7 +371,7 @@ MultiPolygon createWaveProbeShape5()
     pnts.push_back(Vecd(7.02 - h, 0.155));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(pnts, GeometricOps::add);
     return multi_polygon;
 }
 
@@ -385,7 +385,7 @@ MultiPolygon createWaveProbeShape12()
     pnts.push_back(Vecd(8.82 - h, 0.155));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(pnts, GeometricOps::add);
     return multi_polygon;
 }
 

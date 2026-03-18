@@ -6,8 +6,8 @@
  */
 #include "sphinxsys.h"
 #include "bidirectional_buffer.h"
-#include "density_correciton.h"
-#include "density_correciton.hpp"
+#include "density_correction.h"
+#include "density_correction.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"
@@ -53,7 +53,7 @@ class WaterBlock : public MultiPolygonShape
         water_block_shape.push_back(Vecd(DL, DH));
         water_block_shape.push_back(Vecd(DL, 0.0));
         water_block_shape.push_back(Vecd(0.0, 0.0));
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
