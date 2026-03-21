@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file    milling_2d_dat_cutter_planar.cpp
  * @brief   2D milling demo with a .dat-profile cutter:
  *          - rigid cutter imported from a single 2D .dat contour
@@ -78,7 +78,7 @@ class CutterImportModel : public MultiPolygonShape
     explicit CutterImportModel(const std::string &name)
         : MultiPolygonShape(name)
     {
-        multi_polygon_.addAPolygonFromFile(cutter_dat_file, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygonFromFile(cutter_dat_file, GeometricOps::add);
     }
 };
 
@@ -119,15 +119,15 @@ int main(int ac, char *av[])
         auto &cutter_relax = relaxation_system.addBody<SolidBody>(cutter_shape);
 
         // Level-set definitions
-        LevelSetShape *plate_level_set =
-            plate_relax.defineBodyLevelSetShape(par_ck)
-                ->correctLevelSetSign()
-                ->writeLevelSet();
+       LevelSetShape &plate_level_set =
+          plate_relax.defineBodyLevelSetShape(par_ck)
+            .correctLevelSetSign()
+            .writeLevelSet();
 
-        LevelSetShape *cutter_level_set =
-            cutter_relax.defineBodyLevelSetShape(par_ck)
-                ->correctLevelSetSign()
-                ->writeLevelSet();
+       LevelSetShape &cutter_level_set =
+          cutter_relax.defineBodyLevelSetShape(par_ck)
+            .correctLevelSetSign()
+            .writeLevelSet();
 
         // Generate lattice particles
         plate_relax.generateParticles<BaseParticles, Lattice>();
@@ -166,11 +166,11 @@ int main(int ac, char *av[])
         // Relaxation residuals
         auto &plate_relaxation_residual =
             relax_main.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(plate_inner_rel)
-                .addPostStateDynamics<LevelsetKernelGradientIntegral>(plate_relax, *plate_level_set);
+                .addPostStateDynamics<LevelsetKernelGradientIntegral>(plate_relax, plate_level_set);
 
         auto &cutter_relaxation_residual =
             relax_main.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(cutter_inner_rel)
-                .addPostStateDynamics<LevelsetKernelGradientIntegral>(cutter_relax, *cutter_level_set);
+                .addPostStateDynamics<LevelsetKernelGradientIntegral>(cutter_relax, cutter_level_set);
 
         // Particle position updates
         auto &update_plate_particle_position =
@@ -265,7 +265,7 @@ int main(int ac, char *av[])
     // Cutter: reload relaxed particles + normals
     cutter.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Young_plate, poisson);
     cutter.generateParticles<BaseParticles, Reload>(cutter.getName())
-        ->reloadExtraVariable<Vecd>("NormalDirection");
+     .reloadExtraVariable<Vecd>("NormalDirection");
 
     // Plate: reload relaxed particles as well
     plate.defineMaterial<J2Plasticity>(rho0_s, c0, Young_plate, poisson, yield_plate);
