@@ -52,7 +52,6 @@ namespace SPH
  */
 class SPHSystem
 {
-    UniquePtrKeeper<IOEnvironment> io_keeper_;
     DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
     UniquePtrsKeeper<SPHBody> sph_bodies_keeper_;
@@ -67,7 +66,6 @@ class SPHSystem
 #ifdef BOOST_AVAILABLE
     SPHSystem *handleCommandlineOptions(int ac, char *av[]);
 #endif
-    IOEnvironment &getIOEnvironment();
     bool isPhysical() { return is_physical_; };
     void setRunParticleRelaxation(bool run_particle_relaxation) { run_particle_relaxation_ = run_particle_relaxation; };
     bool RunParticleRelaxation() { return run_particle_relaxation_; };

@@ -9,7 +9,7 @@ SimbodyStateEngine::
     : simbody_xml_engine_("state_xml", "mbsystem")
 {
     mbsystem_ = system;
-    restart_folder_ = sph_system.getIOEnvironment().RestartFolder();
+    restart_folder_ = IO::get().RestartFolder();
     if (!fs::exists(restart_folder_))
     {
         fs::create_directory(restart_folder_);

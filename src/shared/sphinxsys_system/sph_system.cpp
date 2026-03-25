@@ -15,11 +15,10 @@ SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
     : system_domain_bounds_(system_domain_bounds),
       global_resolution_(global_resolution),
       tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
-      is_physical_(is_physical),
-      io_environment_(io_keeper_.createPtr<IOEnvironment>(*this)),
-      run_particle_relaxation_(false), reload_particles_(false),
+      is_physical_(is_physical), run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true)
 {
+    IO::init();
     Log::init();
     spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
     sv_physical_time_ = registerSystemVariable<Real>("PhysicalTime", 0.0);
@@ -36,12 +35,6 @@ void SPHSystem::setLogLevel(size_t log_level)
 
     log_level_ = log_level;
     spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
-}
-//=================================================================================================//
-IOEnvironment &SPHSystem::getIOEnvironment()
-{
-    checkPointer(io_environment_, "io_environment_", "SPHSystem");
-    return *io_environment_;
 }
 //=================================================================================================//
 void SPHSystem::addRealBody(RealBody *real_body)

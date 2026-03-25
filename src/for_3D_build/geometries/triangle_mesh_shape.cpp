@@ -8,7 +8,7 @@ TriangleMeshShape::TriangleMeshShape(const std::string &shape_name) : Shape(shap
 //=================================================================================================//
 void TriangleMeshShape::writeMeshToFile(SPHSystem &sph_system, Transform transform)
 {
-    std::string filefullpath = sph_system.getIOEnvironment().OutputFolder() + "/" + name_ + ".vtp";
+    std::string filefullpath = IO::get().OutputFolder() + "/" + name_ + ".vtp";
 
     if (fs::exists(filefullpath))
     {

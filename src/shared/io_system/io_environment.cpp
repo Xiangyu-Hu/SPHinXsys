@@ -6,9 +6,8 @@
 namespace SPH
 {
 //=============================================================================================//
-IOEnvironment::IOEnvironment(SPHSystem &sph_system)
-    : sph_system_(sph_system),
-      input_folder_("./input"), output_folder_("./output"),
+IOEnvironment::IOEnvironment()
+    : input_folder_("./input"), output_folder_("./output"),
       restart_folder_("./restart"), reload_folder_("./reload")
 {
     if (!fs::exists(output_folder_))
@@ -38,8 +37,6 @@ IOEnvironment::IOEnvironment(SPHSystem &sph_system)
     {
         fs::create_directory(reload_folder_);
     }
-
-    sph_system.io_environment_ = this;
 }
 //=================================================================================================//
 void IOEnvironment::resetForRestart()
@@ -129,5 +126,28 @@ ParameterizationIO *IOEnvironment::defineParameterizationIO()
 {
     return parameterization_io_keeper_.createPtr<ParameterizationIO>(input_folder_);
 }
+//=============================================================================================//
+namespace IO
+{
+//=============================================================================================//
+SharedPtr<IOEnvironment> io_environment; // Global pointer to the IO environment
+//=============================================================================================//
+void init()
+{
+    if (!io_environment)
+    {
+        io_environment = makeShared<IOEnvironment>();
+    }
+}
+//=============================================================================================//
+IOEnvironment &get()
+{
+    if (!io_environment)
+    {
+        throw std::runtime_error("IOEnvironment not initialized. Call IO::init() first.");
+    }
+    return *io_environment.get();
+}
 //=================================================================================================//
+} // namespace IO
 } // namespace SPH

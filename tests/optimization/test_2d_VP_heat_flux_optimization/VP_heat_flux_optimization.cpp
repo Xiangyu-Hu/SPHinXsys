@@ -332,11 +332,11 @@ TEST(test_optimization, test_problem4_optimized)
     //	Main loop starts here.
     //----------------------------------------------------------------------
     std::string filefullpath_opt_temperature =
-        sph_system.getIOEnvironment().OutputFolder() + "/" + "opt_temperature.dat";
+        IO::get().OutputFolder() + "/" + "opt_temperature.dat";
     std::ofstream out_file_opt_temperature(filefullpath_opt_temperature.c_str(), std::ios::app); // record the temperature with modifing parameter.
 
     std::string filefullpath_nonopt_temperature =
-        sph_system.getIOEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
+        IO::get().OutputFolder() + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app); // record the temperature without modifing parameter.
     //----------------------------------------------------------------------
     //	Initial States update.
