@@ -163,6 +163,9 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
     Matd resultant_moment = Matd::Zero();
     Vecd resultant_shear_stress = Vecd::Zero();
 
+    /** correct out-plane numerical damping. */
+    numerical_damping_scaling_matrix_(Dimensions - 1, Dimensions - 1) = thickness_[index_i] < smoothing_length_ ? thickness_[index_i] : smoothing_length_;
+    
     for (int i = 0; i != number_of_gaussian_points_; ++i)
     {
         Matd F_gaussian_point = F_[index_i] + gaussian_point_[i] * F_bending_[index_i] * thickness_[index_i] * 0.5;
@@ -175,8 +178,6 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
         /** correct Almansi strain tensor according to plane stress problem. */
         current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
 
-        /** correct out-plane numerical damping. */
-        numerical_damping_scaling_matrix_(Dimensions - 1, Dimensions - 1) = thickness_[i] < smoothing_length_ ? thickness_[i] : smoothing_length_;
         Matd cauchy_stress = elastic_solid_.StressCauchy(current_local_almansi_strain, index_i) +
                              transformation_matrix_0_to_current * F_gaussian_point *
                                  elastic_solid_.NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, numerical_damping_scaling_matrix_, index_i) *
