@@ -193,7 +193,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(20.0);
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
     size_t iteration_steps = 0;
     auto &state_recording = time_stepper.addTriggerByInterval(0.2);
     //----------------------------------------------------------------------
@@ -216,7 +216,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (!time_stepper.isEndTime())
+    while (!time_stepper.isEndTime(20.0))
     {
         Real dt = time_stepper.incrementPhysicalTime(get_time_step_size);
         diffusion_relaxation_rk2.exec(dt);

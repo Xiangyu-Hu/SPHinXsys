@@ -132,13 +132,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(20.0);
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
-        time_stepper.setPhysicalTime(restart_io.readRestartFiles(sph_system.RestartStep()));
+        restart_io.readRestartFiles(sph_system.RestartStep());
     }
     //----------------------------------------------------------------------
     //	Setup for advection-step based time-stepping control
@@ -180,7 +180,7 @@ int main(int ac, char *av[])
     //	Single time stepping loop is used for multi-time stepping.
     //----------------------------------------------------------------------
     TickCount t0 = TickCount::now();
-    while (!time_stepper.isEndTime())
+    while (!time_stepper.isEndTime(20.0))
     {
         //----------------------------------------------------------------------
         //	the fastest and most frequent acostic time stepping.
