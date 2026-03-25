@@ -6,7 +6,7 @@ namespace SPH
 //=================================================================================================//
 TriangleMeshShape::TriangleMeshShape(const std::string &shape_name) : Shape(shape_name) {}
 //=================================================================================================//
-void TriangleMeshShape::writeMeshToFile(SPHSystem &sph_system, Transform transform)
+void TriangleMeshShape::writeMeshToFile(Transform transform)
 {
     std::string filefullpath = IO::get().OutputFolder() + "/" + name_ + ".vtp";
 

@@ -5,7 +5,7 @@ namespace SPH
 {
 //=================================================================================================//
 SimbodyStateEngine::
-    SimbodyStateEngine(SPHSystem &sph_system, SimTK::MultibodySystem &system)
+    SimbodyStateEngine(SimTK::MultibodySystem &system)
     : simbody_xml_engine_("state_xml", "mbsystem")
 {
     mbsystem_ = system;
