@@ -30,7 +30,6 @@
 #ifndef PARTICLE_METHOD_CONTAINER_H
 #define PARTICLE_METHOD_CONTAINER_H
 
-#include "base_particle_dynamics.h"
 #include "complex_algorithms_ck.h"
 #include "interaction_algorithms_ck.h"
 #include "io_base.h"

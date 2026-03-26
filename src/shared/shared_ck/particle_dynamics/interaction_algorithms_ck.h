@@ -29,7 +29,6 @@
 #ifndef INTERACTION_ALGORITHMS_CK_H
 #define INTERACTION_ALGORITHMS_CK_H
 
-#include "base_particle_dynamics.h"
 #include "interaction_ck.hpp"
 #include "simple_algorithms_ck.h"
 
