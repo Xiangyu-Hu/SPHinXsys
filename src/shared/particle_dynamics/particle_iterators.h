@@ -33,6 +33,9 @@
 #include "implementation.h"
 #include "sphinxsys_containers.h"
 
+#include <cstdlib>
+#include <iostream>
+
 namespace SPH
 {
 using namespace execution;

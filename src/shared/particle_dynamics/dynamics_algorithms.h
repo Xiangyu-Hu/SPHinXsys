@@ -56,7 +56,9 @@
 #include "cell_linked_list.hpp"
 #include "particle_iterators.h"
 
+#include <string>
 #include <type_traits>
+#include <utility>
 
 namespace SPH
 {
