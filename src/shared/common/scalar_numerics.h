@@ -30,6 +30,9 @@
 
 #include "base_data_type.h"
 
+#include <ostream>
+#include <type_traits>
+
 namespace SPH
 {
 template <typename T>

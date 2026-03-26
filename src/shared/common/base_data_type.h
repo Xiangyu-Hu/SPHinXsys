@@ -29,16 +29,9 @@
 #ifndef BASE_DATA_TYPE_H
 #define BASE_DATA_TYPE_H
 
-#include <algorithm>
-#include <cassert>
-#include <climits>
 #include <cmath>
-#include <iostream>
 #include <limits>
-#include <map>
-#include <memory>
-#include <typeinfo>
-#include <vector>
+#include <utility>
 
 #if SPHINXSYS_USE_SYCL
 #include <CL/sycl.hpp>
@@ -47,11 +40,8 @@
 #include <boost/atomic/atomic_ref.hpp>
 #endif // SPHINXSYS_USE_SYCL
 
-#include <Eigen/Cholesky>
 #include <Eigen/Core>
-#include <Eigen/Dense>
-#include <Eigen/Eigenvalues>
-#include <Eigen/Geometry>
+#include <Eigen/LU>
 
 namespace SPH
 {

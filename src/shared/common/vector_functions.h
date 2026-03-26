@@ -30,6 +30,9 @@
 
 #include "data_type.h"
 
+#include <Eigen/Geometry>
+#include <Eigen/SVD>
+
 namespace SPH
 {
 Vec2d FirstAxisVector(const Vec2d &zero_vector);
