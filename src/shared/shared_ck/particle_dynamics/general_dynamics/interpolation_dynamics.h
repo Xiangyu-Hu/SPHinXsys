@@ -32,6 +32,10 @@
 #include "interaction_algorithms_ck.hpp"
 #include "scalar_numerics.h"
 
+#include <string>
+#include <tuple>
+#include <utility>
+
 namespace SPH
 {
 

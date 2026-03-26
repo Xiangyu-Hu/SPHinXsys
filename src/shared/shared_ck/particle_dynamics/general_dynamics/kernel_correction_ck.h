@@ -34,6 +34,8 @@
 #include "base_general_dynamics.h"
 #include "interaction_ck.h"
 
+#include <tuple>
+
 namespace SPH
 {
 template <typename... RelationTypes>
