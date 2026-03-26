@@ -117,7 +117,6 @@ class DisplacementMatrixGradient<Contact<Parameters...>>
       protected:
         Real *contact_Vol_;
     };
-
 };
 
 template <typename... Parameters>
