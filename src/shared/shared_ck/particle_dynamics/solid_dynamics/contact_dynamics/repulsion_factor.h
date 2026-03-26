@@ -32,6 +32,8 @@
 
 #include "interaction_ck.hpp"
 
+#include <string>
+
 namespace SPH
 {
 namespace solid_dynamics
