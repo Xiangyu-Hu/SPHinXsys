@@ -35,6 +35,9 @@
 #include "execution_policy.h"
 #include "ownership.h"
 
+#include <cstdlib>
+#include <utility>
+
 namespace SPH
 {
 namespace execution

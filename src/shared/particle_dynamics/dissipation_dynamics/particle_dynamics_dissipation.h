@@ -36,6 +36,10 @@
 
 #include "all_particle_dynamics.h"
 
+#include <string>
+#include <tuple>
+#include <utility>
+
 namespace SPH
 {
 

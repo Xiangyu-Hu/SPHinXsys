@@ -36,6 +36,8 @@
 #include "base_kernel.h"
 #include "elastic_solid.h"
 
+#include <vector>
+
 namespace SPH
 {
 namespace solid_dynamics

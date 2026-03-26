@@ -37,6 +37,9 @@
 #include "elastic_solid.h"
 #include "force_prior.hpp"
 
+#include <array>
+#include <string>
+
 namespace SPH
 {
 namespace solid_dynamics

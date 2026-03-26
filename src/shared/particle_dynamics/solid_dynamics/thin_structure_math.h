@@ -35,6 +35,8 @@
 #include "elastic_solid.h"
 #include "weakly_compressible_fluid.h"
 
+#include <tuple>
+
 namespace SPH
 {
 namespace thin_structure_dynamics

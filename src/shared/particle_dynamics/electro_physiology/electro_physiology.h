@@ -32,6 +32,8 @@
 
 #include "all_diffusion_reaction_dynamics.h"
 
+#include <tuple>
+
 namespace SPH
 {
 class ElectroPhysiologyReaction : public BaseReactionModel<3>
