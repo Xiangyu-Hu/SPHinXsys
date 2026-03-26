@@ -29,10 +29,12 @@
 #ifndef PARTICLE_SORTING_H
 #define PARTICLE_SORTING_H
 
+#include "algorithm_primitive.h"
 #include "all_particle_dynamics.h"
 #include "base_body.h"
 #include "base_particles.hpp"
-#include "algorithm_primitive.h"
+
+#include <utility>
 
 namespace SPH
 {

@@ -33,6 +33,8 @@
 #include "diffusion_reaction.h"
 #include "particle_dynamics_dissipation.h"
 
+#include <string>
+
 namespace SPH
 {
 /**
