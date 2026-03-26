@@ -29,12 +29,8 @@
 #ifndef UPDATE_BODY_RELATION_H
 #define UPDATE_BODY_RELATION_H
 
-#include "all_body_relations.h"
-#include "all_particle_dynamics.h"
-#include "base_body.h"
 #include "base_configuration_dynamics.h"
 #include "base_local_dynamics.h"
-#include "base_particles.hpp"
 #include "relation_ck.hpp"
 
 namespace SPH
