@@ -35,6 +35,9 @@
 #include "io_log.h"
 #include "particle_iterators_ck.h"
 
+#include <string>
+#include <utility>
+
 namespace SPH
 {
 template <class ExecutionPolicy, class UpdateType>

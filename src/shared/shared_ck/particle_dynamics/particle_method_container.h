@@ -41,6 +41,9 @@
 #include "update_body_relation.h"
 #include "update_cell_linked_list.h"
 
+#include <string>
+#include <utility>
+
 namespace SPH
 {
 
