@@ -33,6 +33,9 @@
 #include "base_data_type_package.h"
 #include "execution_policy.h"
 
+#include <functional>
+#include <tuple>
+
 namespace SPH
 {
 using namespace execution;
