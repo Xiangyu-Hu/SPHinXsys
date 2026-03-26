@@ -32,10 +32,8 @@
 
 #include "base_continuum_dynamics.h"
 #include "constraint_dynamics.h"
-#include "continuum_integration_1st_ck.h"
 #include "continuum_integration_1st_ck.hpp"
 #include "fluid_integration.hpp"
-#include "general_continuum.h"
 #include "general_continuum.hpp"
 namespace SPH
 {

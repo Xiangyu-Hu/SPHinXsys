@@ -42,7 +42,6 @@
 #include "diffusion_optimization.h"
 #include "electro_physiology.h"
 #include "external_force.h"
-#include "particle_dynamics_dissipation.h"
 #include "particle_dynamics_dissipation.hpp"
 
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_H

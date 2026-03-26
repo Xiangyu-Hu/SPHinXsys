@@ -30,7 +30,6 @@
 #ifndef IMPLEMENTATION_H
 #define IMPLEMENTATION_H
 
-#include "base_data_type.h"
 #include "base_implementation.h"
 #include "execution_policy.h"
 #include "ownership.h"

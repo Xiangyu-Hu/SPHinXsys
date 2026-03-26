@@ -29,7 +29,6 @@
 #ifndef PARTICLE_ITERATORS_H
 #define PARTICLE_ITERATORS_H
 
-#include "base_data_type_package.h"
 #include "implementation.h"
 #include "sphinxsys_containers.h"
 
