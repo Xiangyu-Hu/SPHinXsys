@@ -36,7 +36,6 @@
 #include "io_observation_ck.h"
 #include "ownership.h"
 #include "particle_sort_ck.h"
-#include "simple_algorithms_ck.h"
 #include "update_body_relation.h"
 #include "update_cell_linked_list.h"
 
