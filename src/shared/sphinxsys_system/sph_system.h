@@ -122,14 +122,12 @@ class SPHSystem
     auto &addContactRelation(SourceIdentifier &src_identifier, TargetIdentifier &tar_identifiers, Args &&...args);
 
   protected:
-    friend class IOEnvironment;
     BoundingBoxd system_domain_bounds_;      /**< Lower and Upper domain bounds. */
     Real global_resolution_;                 /**< reference resolution of the SPH system */
     tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
     bool is_physical_;                       /**< flag for physical or non-physical system. */
     SPHBodyVector sph_bodies_;               /**< All sph bodies. */
     SPHBodyVector observation_bodies_;       /**< The bodies without inner particle configuration. */
-    IOEnvironment *io_environment_;          /**< io environment */
     SPHBodyVector real_bodies_;              /**< The bodies with inner particle configuration. */
     bool run_particle_relaxation_;           /**< run particle relaxation for body fitted particle distribution */
     bool reload_particles_;                  /**< start the simulation with relaxed particles. */

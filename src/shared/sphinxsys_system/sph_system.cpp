@@ -103,7 +103,7 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
 
         if (run_particle_relaxation_)
         {
-            io_environment_->reinitializeReloadFolder();
+            IO::get().reinitializeReloadFolder();
         }
 
         if (vm.count("reload"))
