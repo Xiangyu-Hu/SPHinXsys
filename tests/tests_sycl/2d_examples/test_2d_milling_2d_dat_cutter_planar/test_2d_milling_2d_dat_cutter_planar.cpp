@@ -282,7 +282,7 @@ int main(int ac, char *av[])
     //------------------------------------------------------------------
     // Relations
     //------------------------------------------------------------------
-    auto &cutter_inner = system.addInnerRelation(cutter);
+    //auto &cutter_inner = system.addInnerRelation(cutter);
     auto &plate_inner  = system.addInnerRelation(plate);
     auto &plate_cutter_contact = system.addContactRelation(plate, cutter);
     auto &observer_plate_contact = system.addContactRelation(observer, plate);
