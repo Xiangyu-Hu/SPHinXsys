@@ -39,4 +39,3 @@
 #include "solid_dynamics_variable.h"
 #include "solid_to_shell_coupling.hpp"
 #include "thin_structure_dynamics.h"
-#include "thin_structure_math.h"

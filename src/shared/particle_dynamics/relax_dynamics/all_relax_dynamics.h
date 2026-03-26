@@ -29,5 +29,4 @@
 
 #pragma once
 
-#include "relax_stepping.hpp"
 #include "relax_thick_shell.h"

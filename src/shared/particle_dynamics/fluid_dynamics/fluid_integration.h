@@ -35,7 +35,6 @@
 #include "base_fluid_dynamics.h"
 #include "base_local_dynamics.h"
 #include "riemann_solver.h"
-#include "weakly_compressible_fluid.h"
 
 namespace SPH
 {
