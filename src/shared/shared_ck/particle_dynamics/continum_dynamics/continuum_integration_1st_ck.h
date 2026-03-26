@@ -31,7 +31,6 @@
 
 #include "acoustic_step_1st_half.h"
 #include "constraint_dynamics.h"
-#include "general_continuum.h"
 #include "general_continuum.hpp"
 namespace SPH
 {
