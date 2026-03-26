@@ -30,7 +30,6 @@
 #ifndef BASE_LOCAL_DYNAMICS_H
 #define BASE_LOCAL_DYNAMICS_H
 
-#include "base_data_type_package.h"
 #include "base_particle_dynamics.h"
 #include "io_log.h"
 #include "reduce_functors.h"

@@ -38,11 +38,9 @@ namespace po = boost::program_options;
 #endif
 
 #include "all_bodies.h"
-#include "base_data_type_package.h"
 #include "base_geometry.h"
 #include "io_environment.h"
 #include "relation_ck.h"
-#include "sphinxsys_containers.h"
 
 namespace SPH
 {

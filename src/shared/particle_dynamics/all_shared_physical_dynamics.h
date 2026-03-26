@@ -34,7 +34,6 @@
 #include "active_muscle_dynamics.h"
 #include "all_configuration_dynamics.h"
 #include "all_continuum_dynamics.h"
-#include "all_diffusion_reaction_dynamics.h"
 #include "all_fluid_dynamics.h"
 #include "all_general_dynamics.h"
 #include "all_relax_dynamics.h"
