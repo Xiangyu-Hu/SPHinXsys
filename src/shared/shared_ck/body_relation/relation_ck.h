@@ -31,7 +31,6 @@
 
 #include "base_body.h"
 #include "base_particles.h"
-#include "implementation.h"
 #include "neighbor_method.hpp"
 
 namespace SPH
