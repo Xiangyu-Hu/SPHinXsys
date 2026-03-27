@@ -31,8 +31,8 @@
 #define CONSTRAINT_DYNAMICS_H
 
 #include "all_particle_dynamics.h"
-#include "all_simbody.h"
 #include "base_kernel.h"
+#include "body_part_for_simbody.h"
 #include "elastic_solid.h"
 #include "general_constraint.h"
 #include "general_reduce.h"
