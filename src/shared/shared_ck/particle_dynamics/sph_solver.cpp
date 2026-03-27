@@ -5,11 +5,10 @@
 namespace SPH
 {
 //=================================================================================================//
-TimeStepper::TimeStepper(SPHSystem &sph_system, Real end_time, Real start_time)
-    : end_time_(end_time), global_dt_(0.0)
+TimeStepper::TimeStepper(SPHSystem &sph_system)
+    : global_dt_(0.0)
 {
     sv_physical_time_ = sph_system.getSystemVariableByName<Real>("PhysicalTime");
-    sv_physical_time_->setValue(start_time);
 }
 //=================================================================================================//
 TimeStepper::TriggerByPhysicalTime::
@@ -106,9 +105,9 @@ TimeStepper::TriggerByPhysicalTime &TimeStepper::addTriggerByPhysicalTime(Real t
     return *executor;
 }
 //=================================================================================================//
-bool TimeStepper::isEndTime()
+bool TimeStepper::isEndTime(Real end_time)
 {
-    return (sv_physical_time_->getValue() >= end_time_);
+    return (sv_physical_time_->getValue() >= end_time);
 }
 //=================================================================================================//
 void TimeStepper::setPhysicalTime(Real time)
