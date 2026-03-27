@@ -29,7 +29,7 @@
 #ifndef RELAXATION_STEPPING_CK_H
 #define RELAXATION_STEPPING_CK_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
 
 #include <utility>
 

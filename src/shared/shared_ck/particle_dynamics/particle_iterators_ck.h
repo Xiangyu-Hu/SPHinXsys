@@ -29,7 +29,6 @@
 #ifndef PARTICLE_ITERATORS_CK_H
 #define PARTICLE_ITERATORS_CK_H
 
-#include "implementation.h"
 #include "loop_range.h"
 
 namespace SPH
