@@ -38,7 +38,6 @@
 #include "tbb/parallel_reduce.h"
 #include "tbb/parallel_scan.h"
 #include "tbb/scalable_allocator.h"
-#include "tbb/tick_count.h"
 
 #define TBB_PARALLEL true
 
@@ -49,9 +48,6 @@ static tbb::affinity_partitioner ap;
 typedef tbb::blocked_range<size_t> IndexRange;
 typedef tbb::blocked_range2d<size_t> IndexRange2d;
 typedef tbb::blocked_range3d<size_t> IndexRange3d;
-
-typedef tbb::tick_count TickCount;
-typedef tbb::tick_count::interval_t TimeInterval;
 
 template <typename T>
 using ConcurrentVec = tbb::concurrent_vector<T>;
