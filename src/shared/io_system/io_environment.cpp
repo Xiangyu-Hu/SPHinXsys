@@ -1,10 +1,13 @@
 
 #include "io_environment.h"
 
+#include "parameterization.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 
 namespace SPH
 {
+//=============================================================================================//
+IOEnvironment::~IOEnvironment() = default;
 //=============================================================================================//
 IOEnvironment::IOEnvironment()
     : input_folder_("./input"), output_folder_("./output"),

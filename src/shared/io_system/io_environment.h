@@ -30,7 +30,6 @@
 #define IO_ENVIRONMENT_H
 
 #include "ownership.h"
-#include "parameterization.h"
 
 #include <spdlog/spdlog.h>
 
@@ -44,6 +43,7 @@ namespace fs = std::filesystem;
 namespace SPH
 {
 class SPHSystem;
+class ParameterizationIO;
 
 /**
  * @class IOEnvironment
@@ -57,7 +57,7 @@ class IOEnvironment
 
   public:
     explicit IOEnvironment();
-    virtual ~IOEnvironment() {};
+    virtual ~IOEnvironment();
     void resetForRestart();
     ParameterizationIO *defineParameterizationIO();
     void appendOutputFolder(const std::string &append_name);
