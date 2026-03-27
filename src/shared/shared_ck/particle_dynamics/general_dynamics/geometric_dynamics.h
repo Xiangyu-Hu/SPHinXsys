@@ -29,7 +29,7 @@
 #ifndef GEOMETRIC_DYNAMICS_H
 #define GEOMETRIC_DYNAMICS_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
 
 #include <string>
 #include <type_traits>

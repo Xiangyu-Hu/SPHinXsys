@@ -31,7 +31,7 @@
 #ifndef KERNEL_CORRECTION_CK_H
 #define KERNEL_CORRECTION_CK_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
 #include "interaction_ck.h"
 
 #include <tuple>

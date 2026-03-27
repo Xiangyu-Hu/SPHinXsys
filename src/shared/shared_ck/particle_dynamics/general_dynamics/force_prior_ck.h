@@ -30,7 +30,7 @@
 #ifndef FORCE_PRIOR_CK_H
 #define FORCE_PRIOR_CK_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
 
 #include <string>
 

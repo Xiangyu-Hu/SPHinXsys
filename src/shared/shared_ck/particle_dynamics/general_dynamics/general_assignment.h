@@ -29,7 +29,7 @@
 #ifndef GENERAL_ASSIGNMENT_H
 #define GENERAL_ASSIGNMENT_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
 
 #include <string>
 #include <utility>
