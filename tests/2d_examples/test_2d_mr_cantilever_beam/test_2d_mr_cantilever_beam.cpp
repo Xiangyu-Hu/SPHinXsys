@@ -4,9 +4,7 @@
  * @author  Weiyi Kong, Xiangyu Hu
  */
 
-#include "base_data_type.h"
 #include "sphinxsys.h"
-#include "sphinxsys_tbb.h"
 #include <gtest/gtest.h>
 using namespace SPH;
 

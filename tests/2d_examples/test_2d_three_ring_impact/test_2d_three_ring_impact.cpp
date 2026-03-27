@@ -4,9 +4,7 @@
  * @author  Weiyi Kong, Xiangyu Hu
  */
 
-#include "base_data_type.h"
 #include "sphinxsys.h"
-#include "sphinxsys_tbb.h"
 using namespace SPH;
 
 void relax_solid(RealBody &body, InnerRelation &inner)
