@@ -32,9 +32,12 @@
 #include "ownership.h"
 #include "parameterization.h"
 
+#include <spdlog/spdlog.h>
+
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <memory>
 #include <sstream>
 namespace fs = std::filesystem;
 
@@ -76,8 +79,11 @@ class IOEnvironment
 
 namespace IO
 {
-void init();
-IOEnvironment& get();
+void initEnvironment();
+IOEnvironment &getEnvironment();
+std::shared_ptr<spdlog::logger> initLogger(); // Call once at startup
+std::shared_ptr<spdlog::logger> getLogger();  // Access logger
 } // namespace IO
+
 } // namespace SPH
 #endif // IO_ENVIRONMENT_H

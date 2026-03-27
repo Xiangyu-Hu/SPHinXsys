@@ -15,7 +15,7 @@ ParticleGenerator<ParticlesType, Reload>::
     ParticleGenerator(SPHBody &sph_body, ParticlesType &particles, const std::string &reload_body_name)
     : ParticleGenerator<ParticlesType>(sph_body, particles)
 {
-    std::string reload_folder = IO::get().ReloadFolder();
+    std::string reload_folder = IO::getEnvironment().ReloadFolder();
     if (!fs::exists(reload_folder))
     {
         std::cout << "\n Error: the particle reload folder:" << reload_folder << " is not exists" << std::endl;

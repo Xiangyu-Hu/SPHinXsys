@@ -1,7 +1,7 @@
 
 #include "io_environment.h"
 
-#include "sph_system.h"
+#include "spdlog/sinks/rotating_file_sink.h"
 
 namespace SPH
 {
@@ -132,7 +132,7 @@ namespace IO
 //=============================================================================================//
 SharedPtr<IOEnvironment> io_environment; // Global pointer to the IO environment
 //=============================================================================================//
-void init()
+void initEnvironment()
 {
     if (!io_environment)
     {
@@ -140,14 +140,42 @@ void init()
     }
 }
 //=============================================================================================//
-IOEnvironment &get()
+IOEnvironment &getEnvironment()
 {
     if (!io_environment)
     {
-        throw std::runtime_error("IOEnvironment not initialized. Call IO::init() first.");
+        throw std::runtime_error("IOEnvironment not initialized. Call IO::initEnvironment() first.");
     }
     return *io_environment.get();
 }
 //=================================================================================================//
+std::shared_ptr<spdlog::logger> logger; // Global logger pointer
+//=================================================================================================//
+std::shared_ptr<spdlog::logger> initLogger()
+{
+    if (!logger) // Create a logger with a file sink
+    {
+        // Create a file rotating logger with 5 MB size max and 3 rotated files
+        auto max_size = 1048576 * 5;
+        auto max_files = 3;
+        logger = spdlog::rotating_logger_mt("sphinxsys_logger", "sphinxsys.log", max_size, max_files);
+        logger->flush_on(spdlog::level::info);                          // Flush logs on info level
+        spdlog::set_default_logger(logger);                             // Set the default logger to the created logger
+        spdlog::set_pattern("[%Y-%m-%d %H:%M:%S] [%l] [thread %t] %v"); // Set the log format
+        spdlog::flush_every(std::chrono::seconds(1));                   // Flush logs every second
+    }
+    return logger;
+}
+//=================================================================================================//
+std::shared_ptr<spdlog::logger> getLogger()
+{
+    if (!logger)
+    {
+        throw std::runtime_error("Logger not initialized. Call IO::initLogger() first.");
+    }
+    return logger;
+}
+//=================================================================================================//
 } // namespace IO
+//=================================================================================================//
 } // namespace SPH

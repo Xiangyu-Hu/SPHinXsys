@@ -31,7 +31,7 @@
 #define SIMPLE_ALGORITHMS_CK_H
 
 #include "base_particle_dynamics.h"
-#include "io_log.h"
+#include "io_environment.h"
 #include "particle_iterators_ck.h"
 
 #include <string>

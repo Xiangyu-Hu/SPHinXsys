@@ -31,7 +31,7 @@
 #define BASE_LOCAL_DYNAMICS_H
 
 #include "base_particle_dynamics.h"
-#include "io_log.h"
+#include "io_environment.h"
 #include "reduce_functors.h"
 
 #include <memory>
@@ -61,7 +61,7 @@ class BaseLocalDynamics
           sph_body_(&identifier.getSPHBody()),
           sph_adaptation_(&sph_body_->getSPHAdaptation()),
           particles_(&sph_body_->getBaseParticles()),
-          logger_(Log::get()) {};
+          logger_(IO::getLogger()) {};
     virtual ~BaseLocalDynamics() {};
     using RangeIdentifier = typename DynamicsIdentifier::RangeIdentifier;
     SPHBody &getSPHBody() { return *sph_body_; };

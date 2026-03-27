@@ -7,7 +7,7 @@ namespace SPH
 //=================================================================================================//
 void AlignedBoxPart::writeShapeProxy()
 {
-    std::string filefullpath = IO::get().OutputFolder() + "/" + svAlignedBox()->Name() + "Proxy.vtp";
+    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/" + svAlignedBox()->Name() + "Proxy.vtp";
 
     if (fs::exists(filefullpath))
     {

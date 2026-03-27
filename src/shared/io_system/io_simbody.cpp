@@ -139,7 +139,7 @@ WriteSimBodyFreeRotationMatrix::
     WriteSimBodyFreeRotationMatrix(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                                    SimTK::MobilizedBody::Free &free_body)
     : WriteSimBodyStates<SimTK::MobilizedBody::Free>(sph_system, integ, free_body),
-      filefullpath_(IO::get().OutputFolder() + "/RotationMatrix.dat") {}
+      filefullpath_(IO::getEnvironment().OutputFolder() + "/RotationMatrix.dat") {}
 //=============================================================================================//
 void WriteSimBodyFreeRotationMatrix::writeToFile(size_t iteration_step)
 {
@@ -204,7 +204,7 @@ WriteSimBodyVelocity::
     WriteSimBodyVelocity(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                          SimTK::MobilizedBody::Free &free_body)
     : WriteSimBodyStates<SimTK::MobilizedBody::Free>(sph_system, integ, free_body),
-      filefullpath_(IO::get().OutputFolder() + "/BodyVelocity.dat") {};
+      filefullpath_(IO::getEnvironment().OutputFolder() + "/BodyVelocity.dat") {};
 //=============================================================================================//
 void WriteSimBodyVelocity::writeToFile(size_t iteration_step)
 {

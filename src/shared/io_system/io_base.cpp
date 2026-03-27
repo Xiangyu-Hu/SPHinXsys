@@ -6,7 +6,7 @@ namespace SPH
 {
 //=============================================================================================//
 BaseIO::BaseIO(SPHSystem &sph_system)
-    : sph_system_(sph_system), io_environment_(IO::get()),
+    : sph_system_(sph_system), io_environment_(IO::getEnvironment()),
       sv_physical_time_(sph_system_.getSystemVariableByName<Real>("PhysicalTime")) {}
 //=============================================================================================//
 std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream)

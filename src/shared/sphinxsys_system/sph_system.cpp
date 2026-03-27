@@ -1,7 +1,7 @@
 #include "sph_system.hpp"
 
 #include "all_body_relations.h"
-#include "io_log.h"
+#include "io_environment.h"
 #include "predefined_bodies.h"
 
 namespace SPH
@@ -18,11 +18,11 @@ SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
       is_physical_(is_physical), run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true)
 {
-    IO::init();
-    Log::init();
+    IO::initEnvironment();
+    IO::initLogger();
     spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
     sv_physical_time_ = registerSystemVariable<Real>("PhysicalTime", 0.0);
-    Log::get()->info("The reference resolution of the SPHSystem is {}.", global_resolution_);
+    IO::getLogger()->info("The reference resolution of the SPHSystem is {}.", global_resolution_);
 }
 //=================================================================================================//
 void SPHSystem::setLogLevel(size_t log_level)
@@ -103,7 +103,7 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
 
         if (run_particle_relaxation_)
         {
-            IO::get().reinitializeReloadFolder();
+            IO::getEnvironment().reinitializeReloadFolder();
         }
 
         if (vm.count("reload"))
