@@ -30,7 +30,7 @@
 #ifndef SLENDER_STRUCTURE_MATH_H
 #define SLENDER_STRUCTURE_MATH_H
 
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
 #include "weakly_compressible_fluid.h"

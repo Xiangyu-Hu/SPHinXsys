@@ -34,6 +34,7 @@
 
 #include "base_fluid_dynamics.h"
 #include "base_local_dynamics.h"
+#include "particle_functors.h"
 #include "riemann_solver.h"
 
 namespace SPH

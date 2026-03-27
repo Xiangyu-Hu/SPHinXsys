@@ -31,6 +31,7 @@
 #define SHAPE_CONFINEMENT_H
 
 #include "base_fluid_dynamics.h"
+#include "dynamics_algorithms.h"
 #include "general_constraint.h"
 #include "riemann_solver.h"
 

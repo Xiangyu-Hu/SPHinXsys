@@ -1,7 +1,7 @@
 #ifndef RANS_DYNAMICS_H
 #define RANS_DYNAMICS_H
 #include "eulerian_fluid_integration.h"
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "riemann_solver.h"
 #include "fluid_integration.hpp"
 

@@ -34,7 +34,7 @@
 #ifndef PARTICLE_DYNAMICS_DISSIPATION_H
 #define PARTICLE_DYNAMICS_DISSIPATION_H
 
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 
 #include <string>
 #include <tuple>

@@ -31,7 +31,7 @@
 #define SLENDER_STRUCTURE_DYNAMICS_H
 
 #include "all_body_relations.h"
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
 #include "slender_structure_math.h"

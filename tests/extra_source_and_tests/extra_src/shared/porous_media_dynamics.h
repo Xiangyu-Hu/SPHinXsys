@@ -30,7 +30,7 @@
 #ifndef POROUS_ELASTIC_DYNAMICS_H
 #define POROUS_ELASTIC_DYNAMICS_H
 
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "elastic_dynamics.h"
 #include "porous_media_solid.h"
 

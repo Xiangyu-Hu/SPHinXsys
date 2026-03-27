@@ -29,7 +29,7 @@
 #ifndef DIFFUSION_SPLITTING_BASE_H
 #define DIFFUSION_SPLITTING_BASE_H
 
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "diffusion_reaction.h"
 #include "particle_dynamics_dissipation.h"
 

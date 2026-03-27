@@ -31,7 +31,7 @@
 #ifndef BASE_PARTICLE_DYNAMICS_H
 #define BASE_PARTICLE_DYNAMICS_H
 
-#include "all_body_relations.h"
+#include "base_body_relation.h"
 #include "base_body.h"
 #include "neighborhood.h"
 

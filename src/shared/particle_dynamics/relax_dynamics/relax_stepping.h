@@ -31,6 +31,7 @@
 #define RELAX_STEPPING_H
 
 #include "base_relax_dynamics.h"
+#include "dynamics_algorithms.h"
 #include "general_constraint.h"
 
 #include <string>

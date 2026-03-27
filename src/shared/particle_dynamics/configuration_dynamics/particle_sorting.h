@@ -30,9 +30,10 @@
 #define PARTICLE_SORTING_H
 
 #include "algorithm_primitive.h"
-#include "all_particle_dynamics.h"
 #include "base_body.h"
+#include "base_local_dynamics.h"
 #include "base_particles.hpp"
+#include "dynamics_algorithms.h"
 
 #include <utility>
 

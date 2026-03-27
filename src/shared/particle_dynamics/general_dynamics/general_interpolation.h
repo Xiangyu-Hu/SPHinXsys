@@ -31,6 +31,8 @@
 
 #include "base_general_dynamics.h"
 
+#include "dynamics_algorithms.h"
+
 #include <string>
 
 namespace SPH
