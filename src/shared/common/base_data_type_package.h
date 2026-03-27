@@ -34,8 +34,6 @@
 #include "sphinxsys_tbb.h"
 #include "vector_functions.h"
 
-#define TBB_PARALLEL true
-
 namespace SPH
 {
 constexpr Real OneOverDimensions = 1.0 / (Real)Dimensions;

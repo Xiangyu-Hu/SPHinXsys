@@ -40,6 +40,8 @@
 #include "tbb/scalable_allocator.h"
 #include "tbb/tick_count.h"
 
+#define TBB_PARALLEL true
+
 namespace SPH
 {
 
