@@ -39,7 +39,6 @@ namespace po = boost::program_options;
 
 #include "all_bodies.h"
 #include "base_geometry.h"
-#include "io_environment.h"
 #include "relation_ck.h"
 
 namespace SPH

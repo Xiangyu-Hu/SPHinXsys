@@ -1,5 +1,6 @@
 #include "io_base.h"
 
+#include "io_environment.h"
 #include "sph_system.hpp"
 
 namespace SPH

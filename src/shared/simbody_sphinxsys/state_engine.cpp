@@ -1,5 +1,6 @@
 #include "state_engine.h"
 
+#include "io_environment.h"
 #include "sph_system.h"
 namespace SPH
 {

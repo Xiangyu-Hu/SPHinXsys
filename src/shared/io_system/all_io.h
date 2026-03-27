@@ -31,7 +31,6 @@
 #define ALL_IO_H
 
 #include "io_base_ck.h"
-#include "io_environment.h"
 #include "io_observation_ck.h"
 #include "io_plt.hpp"
 #include "io_simbody.h"

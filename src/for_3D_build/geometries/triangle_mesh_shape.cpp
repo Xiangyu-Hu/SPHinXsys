@@ -1,5 +1,6 @@
 #include "triangle_mesh_shape.h"
 
+#include "io_environment.h"
 #include "sph_system.h"
 namespace SPH
 {
