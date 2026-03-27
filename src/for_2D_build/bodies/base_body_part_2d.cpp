@@ -1,5 +1,6 @@
 #include "base_body_part.h"
 
+#include "io_environment.h"
 #include "sph_system.h"
 
 namespace SPH
