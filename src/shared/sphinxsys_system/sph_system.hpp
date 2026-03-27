@@ -3,7 +3,7 @@
 
 #include "sph_system.h"
 
-#include "sphinxsys_variable.h"
+#include "adaptive_body.h"
 
 namespace SPH
 {

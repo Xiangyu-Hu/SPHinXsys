@@ -37,7 +37,7 @@
 namespace po = boost::program_options;
 #endif
 
-#include "all_bodies.h"
+#include "base_body.h"
 #include "base_geometry.h"
 #include "relation_ck.h"
 
