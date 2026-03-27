@@ -1,7 +1,7 @@
 #include "io_vtk.hpp"
 
-#include "io_environment.h"
 #include "sph_system.h"
+#include "vector_functions.h"
 
 namespace SPH
 {

@@ -2,6 +2,7 @@
 #include "io_plt.h"
 
 #include "io_environment.h"
+#include "vector_functions.h"
 
 namespace SPH
 {

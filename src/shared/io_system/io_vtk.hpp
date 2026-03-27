@@ -2,6 +2,7 @@
 #define IO_VTK_HPP
 
 #include "io_vtk.h"
+#include "vector_functions.h"
 
 namespace SPH
 {

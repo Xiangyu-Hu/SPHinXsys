@@ -33,6 +33,7 @@
 
 #include "base_data_type_package.h"
 #include "particle_functors.h"
+#include "vector_functions.h"
 
 #include <functional>
 #include <map>

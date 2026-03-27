@@ -1,5 +1,7 @@
 #include "loading_dynamics.h"
+
 #include "base_general_dynamics.h"
+#include "vector_functions.h"
 
 #include <numeric>
 

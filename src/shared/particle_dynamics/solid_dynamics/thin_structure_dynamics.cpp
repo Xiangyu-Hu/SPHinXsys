@@ -1,5 +1,7 @@
 #include "thin_structure_dynamics.h"
+
 #include "base_particles.hpp"
+#include "vector_functions.h"
 
 namespace SPH
 {

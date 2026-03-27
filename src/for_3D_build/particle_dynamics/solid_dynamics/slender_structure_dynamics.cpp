@@ -1,6 +1,8 @@
 #include "slender_structure_dynamics.h"
 
 #include "base_particles.hpp"
+#include "vector_functions.h"
+
 namespace SPH
 {
 namespace slender_structure_dynamics

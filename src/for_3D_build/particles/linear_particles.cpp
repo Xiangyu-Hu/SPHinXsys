@@ -1,5 +1,7 @@
 #include "linear_particles.h"
 
+#include "vector_functions.h"
+
 namespace SPH
 {
 //=============================================================================================//

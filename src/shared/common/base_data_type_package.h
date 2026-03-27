@@ -32,7 +32,6 @@
 #include "data_type.h"
 #include "ownership.h"
 #include "sphinxsys_tbb.h"
-#include "vector_functions.h"
 
 namespace SPH
 {

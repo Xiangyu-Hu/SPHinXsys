@@ -1,6 +1,7 @@
 #include "surface_particles.h"
 
 #include "base_body.h"
+#include "vector_functions.h"
 
 namespace SPH
 {
