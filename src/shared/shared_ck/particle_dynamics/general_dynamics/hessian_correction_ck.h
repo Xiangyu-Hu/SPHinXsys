@@ -33,6 +33,8 @@
 
 #include "base_general_dynamics.h"
 
+#include <tuple>
+
 namespace SPH
 {
 template <typename... RelationTypes>
@@ -115,7 +117,6 @@ class DisplacementMatrixGradient<Contact<Parameters...>>
       protected:
         Real *contact_Vol_;
     };
-
 };
 
 template <typename... Parameters>

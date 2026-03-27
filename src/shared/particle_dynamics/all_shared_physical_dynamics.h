@@ -34,7 +34,6 @@
 #include "active_muscle_dynamics.h"
 #include "all_configuration_dynamics.h"
 #include "all_continuum_dynamics.h"
-#include "all_diffusion_reaction_dynamics.h"
 #include "all_fluid_dynamics.h"
 #include "all_general_dynamics.h"
 #include "all_relax_dynamics.h"
@@ -42,7 +41,6 @@
 #include "diffusion_optimization.h"
 #include "electro_physiology.h"
 #include "external_force.h"
-#include "particle_dynamics_dissipation.h"
 #include "particle_dynamics_dissipation.hpp"
 
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_H

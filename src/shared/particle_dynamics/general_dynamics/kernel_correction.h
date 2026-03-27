@@ -33,6 +33,8 @@
 
 #include "base_general_dynamics.h"
 
+#include <tuple>
+
 namespace SPH
 {
 template <typename... InteractionTypes>

@@ -33,6 +33,10 @@
 
 #include "base_general_dynamics.h"
 
+#include <string>
+#include <tuple>
+#include <utility>
+
 namespace SPH
 {
 template <typename...>

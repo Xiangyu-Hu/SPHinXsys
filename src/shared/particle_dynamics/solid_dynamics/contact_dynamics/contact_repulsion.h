@@ -33,6 +33,8 @@
 #include "base_contact_dynamics.h"
 #include "force_prior.hpp"
 
+#include <string>
+
 namespace SPH
 {
 namespace solid_dynamics

@@ -31,6 +31,8 @@
 
 #include "base_general_dynamics.h"
 
+#include <utility>
+
 namespace SPH
 {
 class RelaxationScalingCK : public LocalDynamicsReduce<ReduceMax>

@@ -4,8 +4,6 @@
  * @author  Weiyi Kong, Xiangyu Hu
  */
 
-#include "base_data_type.h"
-#include "large_data_containers.h"
 #include "sphinxsys.h"
 using namespace SPH;
 
@@ -180,7 +178,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
 
     // Bounding box
     BoundingBoxd bb_system(center_l - 0.5 * diameter_outer_l * Vec2d::Ones(),
-                          center_l + 0.5 * diameter_outer_l * Vec2d::Ones());
+                           center_l + 0.5 * diameter_outer_l * Vec2d::Ones());
 
     // System
     SPHSystem system(bb_system, dp_l);

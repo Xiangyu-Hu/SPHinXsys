@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	large_data_containers.h
+ * @file 	sphinxsys_tbb.h
  * @brief 	Data container for large vector, e.g. particle data.
  * @author	Chi Zhang and Xiangyu Hu
  */
@@ -56,12 +56,6 @@ using ConcurrentVec = tbb::concurrent_vector<T>;
 
 template <typename T>
 using StdVec = std::vector<T>;
-
-template <typename T>
-using BiVector = std::vector<std::vector<T>>;
-
-template <typename T>
-using TriVector = std::vector<std::vector<std::vector<T>>>;
 } // namespace SPH
 
 #endif // LARGE_DATA_CONTAINERS_H

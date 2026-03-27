@@ -28,11 +28,7 @@
  */
 #pragma once
 
-#include "diffusion_optimization_common.h"
 #include "diffusion_optimization_common.hpp"
-#include "diffusion_splitting_base.h"
 #include "diffusion_splitting_base.hpp"
-#include "diffusion_splitting_parameter.h"
 #include "diffusion_splitting_parameter.hpp"
-#include "diffusion_splitting_state.h"
 #include "diffusion_splitting_state.hpp"

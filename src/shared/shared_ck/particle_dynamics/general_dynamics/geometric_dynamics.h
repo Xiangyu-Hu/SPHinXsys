@@ -31,6 +31,9 @@
 
 #include "base_general_dynamics.h"
 
+#include <string>
+#include <type_traits>
+
 namespace SPH
 {
 class HostKernel

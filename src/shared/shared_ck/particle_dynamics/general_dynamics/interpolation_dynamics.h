@@ -32,6 +32,10 @@
 #include "interaction_algorithms_ck.hpp"
 #include "scalar_numerics.h"
 
+#include <string>
+#include <tuple>
+#include <utility>
+
 namespace SPH
 {
 
@@ -66,8 +70,8 @@ class Interpolation<Contact<DataType, Parameters...>> : public Interpolation<Con
     using BaseDynamicsType = Interpolation<Contact<Base, DataType, Parameters...>>;
 
   public:
-    Interpolation(Contact<Parameters...> &pair_contact_relation, const std::string &variable_name) 
-    : BaseDynamicsType(pair_contact_relation, variable_name){};
+    Interpolation(Contact<Parameters...> &pair_contact_relation, const std::string &variable_name)
+        : BaseDynamicsType(pair_contact_relation, variable_name) {};
     template <typename BodyRelationType, typename FirstArg>
     explicit Interpolation(DynamicsArgs<BodyRelationType, FirstArg> parameters)
         : BaseDynamicsType(parameters.identifier_, std::get<0>(parameters.others_)){};
@@ -104,8 +108,8 @@ class Interpolation<Contact<DataType, RestoringCorrection, Parameters...>> : pub
     using PredictVecd = ScalarVec<DataType, RestoringSize>;
 
   public:
-    Interpolation(Contact<Parameters...> &pair_contact_relation, const std::string &variable_name) 
-    : BaseDynamicsType(pair_contact_relation, variable_name){};
+    Interpolation(Contact<Parameters...> &pair_contact_relation, const std::string &variable_name)
+        : BaseDynamicsType(pair_contact_relation, variable_name) {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {

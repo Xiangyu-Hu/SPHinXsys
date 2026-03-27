@@ -35,6 +35,8 @@
 #include "force_prior.hpp"
 #include "riemann_solver.h"
 
+#include <string>
+
 namespace SPH
 {
 namespace solid_dynamics

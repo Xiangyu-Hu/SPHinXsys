@@ -85,7 +85,7 @@ int main(int ac, char *av[])
 
     host_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies).exec(); // host method able to run immediately
 
-    ParticleDynamicsGroup update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
+    ParticleDynamicsGroup &update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
     ParticleDynamicsGroup update_relation;
     update_relation.add(&main_methods.addRelationDynamics(input_body_inner));
     update_relation.add(&main_methods.addRelationDynamics(filler_inner, filler_contact));

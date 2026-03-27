@@ -30,7 +30,6 @@
 #define PARTICLE_FUNCTORS_H
 
 #include "base_particles.hpp"
-#include "reduce_functors.h"
 
 namespace SPH
 {

@@ -30,9 +30,7 @@
 #define LOOP_RANGE_H
 
 #include "base_body.h"
-#include "base_body_part.h"
 #include "base_particles.hpp"
-#include "reduce_functors.h"
 
 namespace SPH
 {

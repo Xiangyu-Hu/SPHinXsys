@@ -30,14 +30,14 @@
 #ifndef BASE_LOCAL_DYNAMICS_H
 #define BASE_LOCAL_DYNAMICS_H
 
-#include "base_data_type_package.h"
 #include "base_particle_dynamics.h"
-#include "execution_policy.h"
 #include "io_log.h"
 #include "reduce_functors.h"
-#include "sphinxsys_containers.h"
 
-#include <type_traits>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <utility>
 
 namespace SPH
 {

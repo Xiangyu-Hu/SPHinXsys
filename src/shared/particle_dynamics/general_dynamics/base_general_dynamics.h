@@ -35,6 +35,7 @@
 #include "external_force.h"
 
 #include <limits>
+#include <string>
 
 namespace SPH
 {
