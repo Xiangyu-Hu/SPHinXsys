@@ -29,7 +29,7 @@ BaseInnerRelation::BaseInnerRelation(RealBody &real_body)
 //=================================================================================================//
 void BaseInnerRelation::resetNeighborhoodCurrentSize()
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, base_particles_.TotalRealParticles()),
         [&](const IndexRange &r)
         {
@@ -59,7 +59,7 @@ void BaseContactRelation::resetNeighborhoodCurrentSize()
 {
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
-        parallel_for(
+        tbb::parallel_for(
             IndexRange(0, base_particles_.TotalRealParticles()),
             [&](const IndexRange &r)
             {

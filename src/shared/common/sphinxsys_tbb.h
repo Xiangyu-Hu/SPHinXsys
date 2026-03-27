@@ -25,31 +25,22 @@
  * @brief 	Data container for large vector, e.g. particle data.
  * @author	Chi Zhang and Xiangyu Hu
  */
-#ifndef LARGE_DATA_CONTAINERS_H
-#define LARGE_DATA_CONTAINERS_H
+#ifndef SPHINXSYS_TBB_H
+#define SPHINXSYS_TBB_H
 
 #include "tbb/blocked_range.h"
-#include "tbb/blocked_range2d.h"
-#include "tbb/blocked_range3d.h"
 #include "tbb/concurrent_vector.h"
 #include "tbb/parallel_for.h"
-#include "tbb/parallel_reduce.h"
 
 #define TBB_PARALLEL true
 
 namespace SPH
 {
-
 static tbb::affinity_partitioner ap;
 typedef tbb::blocked_range<size_t> IndexRange;
-typedef tbb::blocked_range2d<size_t> IndexRange2d;
-typedef tbb::blocked_range3d<size_t> IndexRange3d;
 
 template <typename T>
 using ConcurrentVec = tbb::concurrent_vector<T>;
-
-template <typename T>
-using StdVec = std::vector<T>;
 } // namespace SPH
 
-#endif // LARGE_DATA_CONTAINERS_H
+#endif // SPHINXSYS_TBB_H

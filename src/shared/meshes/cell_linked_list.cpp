@@ -21,7 +21,7 @@ BaseCellLinkedList::BaseCellLinkedList(
 //=================================================================================================//
 void BaseCellLinkedList::clearCellLists()
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, total_number_of_cells_),
         [&](const IndexRange &r)
         {
@@ -36,7 +36,7 @@ void BaseCellLinkedList::clearCellLists()
 void BaseCellLinkedList::UpdateCellListData(BaseParticles &base_particles)
 {
     Vecd *pos = base_particles.ParticlePositions();
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, total_number_of_cells_),
         [&](const IndexRange &r)
         {
@@ -86,7 +86,7 @@ void BaseCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     clearCellLists();
     Vecd *pos_n = base_particles.ParticlePositions();
     UnsignedInt total_real_particles = base_particles.TotalRealParticles();
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, total_real_particles),
         [&](const IndexRange &r)
         {

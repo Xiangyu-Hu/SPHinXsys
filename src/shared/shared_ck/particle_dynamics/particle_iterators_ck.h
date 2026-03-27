@@ -31,6 +31,8 @@
 
 #include "loop_range.h"
 
+#include "tbb/parallel_reduce.h"
+
 namespace SPH
 {
 using namespace execution;
@@ -47,7 +49,7 @@ template <class Identifier, class UnaryFunc>
 void particle_for(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
                   const UnaryFunc &unary_func)
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, loop_range.LoopBound()),
         [&](const IndexRange &r)
         {
@@ -77,7 +79,7 @@ ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, Identifier> &loop_r
                            ReturnType temp, const UnaryFunc &unary_func)
 {
     Operation operation;
-    return parallel_reduce(
+    return tbb::parallel_reduce(
         IndexRange(0, loop_range.LoopBound()), temp,
         [&](const IndexRange &r, ReturnType temp0) -> ReturnType
         {

@@ -85,7 +85,7 @@ template <typename FunctionOnData>
 void package_for(const execution::ParallelPolicy &par_host, UnsignedInt start_index,
                  UnsignedInt end_index, const FunctionOnData &function)
 {
-    parallel_for(IndexRange(start_index, end_index), [&](const IndexRange &r)
+    tbb::parallel_for(IndexRange(start_index, end_index), [&](const IndexRange &r)
                  {
                     for (size_t i = r.begin(); i != r.end(); ++i)
                     {
