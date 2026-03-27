@@ -41,7 +41,6 @@
 #endif // SPHINXSYS_USE_SYCL
 
 #include <Eigen/Core>
-#include <Eigen/LU>
 
 namespace SPH
 {

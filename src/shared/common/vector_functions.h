@@ -32,6 +32,7 @@
 
 #include <Eigen/Geometry>
 #include <Eigen/SVD>
+#include <Eigen/LU>
 
 namespace SPH
 {
