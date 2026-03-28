@@ -35,10 +35,11 @@
 #ifndef BASE_PARTICLE_GENERATOR_H
 #define BASE_PARTICLE_GENERATOR_H
 
-#include "all_particles.h"
+#include "base_particles.h"
 #include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
-#include "sphinxsys_tbb.h"
+#include "surface_particles.h"
+#include "observer_particles.h"
 
 namespace SPH
 {

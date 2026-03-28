@@ -30,6 +30,7 @@
 #define LINE_PARTICLE_GENERATOR_H
 
 #include "base_particle_generator.h"
+#include "linear_particles.h"
 
 namespace SPH
 {

@@ -1,6 +1,6 @@
 #include "base_body_part.h"
 
-#include "sph_system.h"
+#include "triangle_mesh_shape.h"
 
 namespace SPH
 {

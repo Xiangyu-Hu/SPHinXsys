@@ -30,8 +30,8 @@
 #ifndef BASE_BODY_PART_H
 #define BASE_BODY_PART_H
 
-#include "all_geometries.h"
 #include "base_data_type_package.h"
+#include "complex_geometry.h"
 #include "sphinxsys_containers.h"
 
 #include <optional>
