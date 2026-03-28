@@ -34,9 +34,6 @@
 #include "base_geometry.h"
 #include "relation_ck.h"
 
-#define TBB_PREVIEW_GLOBAL_CONTROL 1
-#include <tbb/global_control.h>
-
 namespace SPH
 {
 /**
@@ -117,7 +114,6 @@ class SPHSystem
   protected:
     BoundingBoxd system_domain_bounds_;      /**< Lower and Upper domain bounds. */
     Real global_resolution_;                 /**< reference resolution of the SPH system */
-    tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
     bool is_physical_;                       /**< flag for physical or non-physical system. */
     SPHBodyVector sph_bodies_;               /**< All sph bodies. */
     SPHBodyVector observation_bodies_;       /**< The bodies without inner particle configuration. */

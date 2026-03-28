@@ -4,6 +4,8 @@
 #include "io_environment.h"
 #include "predefined_bodies.h"
 
+#define TBB_PREVIEW_GLOBAL_CONTROL 1
+#include <tbb/global_control.h>
 #ifdef BOOST_AVAILABLE
 #include "boost/program_options.hpp"
 namespace po = boost::program_options;
@@ -12,6 +14,8 @@ namespace po = boost::program_options;
 namespace SPH
 {
 //=================================================================================================//
+SharedPtr<tbb::global_control> tbb_global_control; /**< global controlling on the total number parallel threads */
+//=================================================================================================//
 SPHSystem::SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution, size_t number_of_threads)
     : SPHSystem(true, system_domain_bounds, global_resolution, number_of_threads) {}
 //=================================================================================================//
@@ -19,7 +23,6 @@ SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
                      Real global_resolution, size_t number_of_threads)
     : system_domain_bounds_(system_domain_bounds),
       global_resolution_(global_resolution),
-      tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
       is_physical_(is_physical), run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true)
 {
@@ -28,6 +31,8 @@ SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
     spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
     sv_physical_time_ = registerSystemVariable<Real>("PhysicalTime", 0.0);
     IO::getLogger()->info("The reference resolution of the SPHSystem is {}.", global_resolution_);
+    tbb_global_control = std::make_shared<tbb::global_control>(
+        tbb::global_control::max_allowed_parallelism, number_of_threads);
 }
 //=================================================================================================//
 void SPHSystem::setLogLevel(size_t log_level)
