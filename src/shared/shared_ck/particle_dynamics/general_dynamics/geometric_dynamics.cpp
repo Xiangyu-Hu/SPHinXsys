@@ -1,5 +1,7 @@
 #include "geometric_dynamics.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 //=================================================================================================//

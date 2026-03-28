@@ -1,5 +1,7 @@
 #include "diffusion_dynamics.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 //=================================================================================================//

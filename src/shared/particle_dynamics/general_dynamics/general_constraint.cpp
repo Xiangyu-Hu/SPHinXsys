@@ -1,5 +1,7 @@
 #include "general_constraint.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 //=================================================================================================//

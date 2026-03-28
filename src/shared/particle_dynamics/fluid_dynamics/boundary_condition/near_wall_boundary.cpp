@@ -1,5 +1,7 @@
 #include "near_wall_boundary.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 namespace fluid_dynamics

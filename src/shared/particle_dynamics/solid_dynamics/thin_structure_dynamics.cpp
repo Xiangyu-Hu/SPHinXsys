@@ -1,5 +1,6 @@
 #include "thin_structure_dynamics.h"
 
+#include "adaptation.h"
 #include "base_particles.hpp"
 #include "vector_functions.h"
 
@@ -117,6 +118,7 @@ ShellStressRelaxationFirstHalf::
       nu_(elastic_solid_.PoissonRatio()),
       hourglass_control_factor_(hourglass_control_factor),
       hourglass_control_(hourglass_control),
+      inv_W0_(1.0 / getSPHAdaptation().getKernel()->W0(ZeroVecd)),
       number_of_gaussian_points_(number_of_gaussian_points)
 {
     /** Note that, only three-point and five-point Gaussian quadrature rules are defined. */

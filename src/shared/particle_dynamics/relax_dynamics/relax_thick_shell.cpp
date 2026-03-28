@@ -1,5 +1,7 @@
 #include "relax_thick_shell.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 namespace relax_dynamics

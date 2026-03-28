@@ -1,5 +1,7 @@
 #include "eulerian_compressible_fluid_integration.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 namespace fluid_dynamics

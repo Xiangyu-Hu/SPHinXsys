@@ -1,6 +1,8 @@
 #include "eulerian_ghost_boundary.h"
 
+#include "adaptation.h"
 #include "base_particles.hpp"
+
 namespace SPH
 {
 //=================================================================================================//

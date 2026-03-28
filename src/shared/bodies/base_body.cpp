@@ -1,7 +1,7 @@
 #include "base_body.h"
 
 #include "base_body_part.h"
-#include "base_body_relation.h"
+#include "base_geometry.h"
 #include "base_particles.hpp"
 #include "sph_system.h"
 
@@ -43,6 +43,11 @@ SPHSystem &SPHBody::getSPHSystem()
 {
     return sph_system_;
 }
+//=================================================================================================//
+Real SPHBody::getSPHBodyResolutionRef()
+{
+    return sph_adaptation_->ReferenceSpacing();
+};
 //=================================================================================================//
 SPHAdaptation &SPHBody::getSPHAdaptation()
 {

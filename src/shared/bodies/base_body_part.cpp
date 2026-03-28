@@ -1,5 +1,6 @@
 #include "base_body_part.h"
 
+#include "adaptation.h"
 #include "base_body.h"
 #include "base_particles.hpp"
 #include "cell_linked_list.hpp"

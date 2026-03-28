@@ -1,9 +1,36 @@
 #include "base_body_relation.h"
 
+#include "adaptation.h"
 #include "base_particle_dynamics.h"
 #include "base_particles.hpp"
+
 namespace SPH
 {
+//=================================================================================================//
+SearchDepthContact::SearchDepthContact(SPHBody &sph_body, Mesh &target_mesh)
+    : search_depth_(1)
+{
+    Real inv_grid_spacing_ = 1.0 / target_mesh.GridSpacing();
+    Kernel *kernel_ = sph_body.getSPHAdaptation().getKernel();
+    search_depth_ = 1 + (int)floor(kernel_->CutOffRadius() * inv_grid_spacing_);
+}
+//=================================================================================================//
+SearchDepthAdaptive::SearchDepthAdaptive(SPHBody &sph_body, Mesh &target_mesh)
+    : inv_grid_spacing_(1.0 / target_mesh.GridSpacing()),
+      kernel_(sph_body.getSPHAdaptation().getKernel()),
+      h_ratio_(sph_body.getBaseParticles().getVariableDataByName<Real>("SmoothingLengthRatio")) {}
+//=================================================================================================//
+SearchDepthAdaptiveContact::SearchDepthAdaptiveContact(SPHBody &sph_body, Mesh &target_mesh)
+    : inv_grid_spacing_(1.0 / target_mesh.GridSpacing()),
+      sph_adaptation_(sph_body.getSPHAdaptation()),
+      kernel_(*sph_adaptation_.getKernel()) {};
+//=================================================================================================//
+int SearchDepthAdaptiveContact::operator()(size_t particle_index) const
+{
+    return 1 + (int)floor(
+                   kernel_.CutOffRadius(sph_adaptation_.SmoothingLengthRatio(particle_index)) *
+                   inv_grid_spacing_);
+}
 //=================================================================================================//
 RealBodyVector BodyPartsToRealBodies(BodyPartVector body_parts)
 {

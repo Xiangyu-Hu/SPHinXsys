@@ -34,6 +34,8 @@
 #include "dynamics_algorithms.h"
 #include "particle_functors.h"
 
+#include "adaptation.h"
+
 #include <mutex>
 
 namespace SPH

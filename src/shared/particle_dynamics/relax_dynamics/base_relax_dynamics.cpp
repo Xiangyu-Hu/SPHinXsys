@@ -1,5 +1,7 @@
 #include "base_relax_dynamics.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 namespace relax_dynamics

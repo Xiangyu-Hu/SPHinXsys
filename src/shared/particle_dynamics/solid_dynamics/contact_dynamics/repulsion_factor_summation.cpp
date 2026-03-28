@@ -1,5 +1,7 @@
 #include "repulsion_factor_summation.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 namespace solid_dynamics

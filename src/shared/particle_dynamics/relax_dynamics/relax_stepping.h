@@ -41,6 +41,7 @@ namespace SPH
 {
 class GeometryShape;
 class LevelSetShape;
+class AdaptiveByShape;
 
 namespace relax_dynamics
 {

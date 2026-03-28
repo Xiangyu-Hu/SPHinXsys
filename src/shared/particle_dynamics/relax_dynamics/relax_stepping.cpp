@@ -1,5 +1,7 @@
 #include "relax_stepping.hpp"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 namespace relax_dynamics

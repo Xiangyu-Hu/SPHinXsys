@@ -1,5 +1,6 @@
 #include "base_particle_generator.h"
 
+#include "adaptation.h"
 #include "all_io.h"
 #include "base_body.h"
 #include "base_particles.h"

@@ -2,6 +2,7 @@
 
 #include "base_body.h"
 #include "vector_functions.h"
+#include "adaptation.h"
 
 namespace SPH
 {
