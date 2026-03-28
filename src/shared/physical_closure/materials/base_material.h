@@ -36,12 +36,14 @@
 #define BASE_MATERIAL_H
 
 #include "base_data_type_package.h"
-#include "sphinxsys_containers.h"
 
 namespace SPH
 {
 class BaseParticles;
 class SPHSystem;
+
+template <typename T>
+class DiscreteVariable;
 
 /** @class  BaseMaterial
  *  @brief Base of all materials

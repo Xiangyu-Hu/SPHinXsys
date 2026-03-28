@@ -44,6 +44,13 @@ class SPHAdaptation;
 class BaseMaterial;
 class BodyPartByParticle;
 
+/** Generalized particle data type */
+typedef DataContainerAssemble<AllocatedData> ParticleData;
+/** Generalized particle variable type*/
+typedef DataContainerAddressAssemble<DiscreteVariable> ParticleVariables;
+/** Generalized particle variable type*/
+typedef DataContainerAddressAssemble<SingularVariable> SingularVariables;
+
 /**
  * @class BaseParticles
  * @brief Particles with essential (geometric and matter) data.

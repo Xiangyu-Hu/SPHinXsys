@@ -30,9 +30,6 @@
 #define SPHINXSYS_CONTAINERS_H
 
 #include "base_data_type_package.h"
-#include "base_data_type.h"
-#include "sphinxsys_constant.h"
-#include "sphinxsys_variable.h"
 
 namespace SPH
 {
@@ -102,12 +99,5 @@ using DataListsInCells = StdVec<ListDataVector *>;
 using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
 /** Cell list for periodic boundary condition algorithms. */
 using CellLists = std::pair<ConcurrentCellLists, DataListsInCells>;
-
-/** Generalized particle data type */
-typedef DataContainerAssemble<AllocatedData> ParticleData;
-/** Generalized particle variable type*/
-typedef DataContainerAddressAssemble<DiscreteVariable> ParticleVariables;
-/** Generalized particle variable type*/
-typedef DataContainerAddressAssemble<SingularVariable> SingularVariables;
 } // namespace SPH
 #endif // SPHINXSYS_CONTAINERS_H
