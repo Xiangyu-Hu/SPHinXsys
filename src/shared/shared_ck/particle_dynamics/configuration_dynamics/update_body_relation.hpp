@@ -5,6 +5,7 @@
 
 #include "cell_linked_list.hpp"
 #include "particle_iterators_ck.h"
+#include "sphinxsys_atom_ref.h"
 
 namespace SPH
 {

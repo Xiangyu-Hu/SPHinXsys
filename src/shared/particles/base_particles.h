@@ -32,8 +32,6 @@
 #ifndef BASE_PARTICLES_H
 #define BASE_PARTICLES_H
 
-#include "sphinxsys_containers.h"
-#include "sphinxsys_variable.h"
 #include "sphinxsys_variable_array.h"
 #include "xml_parser.h"
 

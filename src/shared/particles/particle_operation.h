@@ -30,6 +30,7 @@
 #define PARTICLE_OPERATION_H
 
 #include "base_particles.hpp"
+#include "sphinxsys_atom_ref.h"
 #include "sphinxsys_variable_array.h"
 
 namespace SPH
