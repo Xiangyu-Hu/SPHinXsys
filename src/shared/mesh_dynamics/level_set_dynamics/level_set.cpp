@@ -1,6 +1,7 @@
 #include "level_set.hpp"
 
 #include "adaptation.h"
+#include "base_geometry.h"
 #include "base_kernel.h"
 #include "level_set_initialization.hpp"
 
@@ -25,7 +26,7 @@ LevelSet::LevelSet(
             sph_adaptation.getKernelPtr(), smoothing_length, data_spacing));
 
     initializeLevel(0, coarse_data, coarse_data->ResolutionLevels() - 1);
-    ca_global_h_ratio_ = createUniqueEnity<Real, ConstantArray>("GlobalHRatio", global_h_ratio_vec);
+    ca_global_h_ratio_ = createUniqueEntity<Real, ConstantArray>("GlobalHRatio", global_h_ratio_vec);
 }
 //=================================================================================================//
 LevelSet::LevelSet(
@@ -57,7 +58,7 @@ LevelSet::LevelSet(
 
         initializeLevel(level, this, level - 1);
     }
-    ca_global_h_ratio_ = createUniqueEnity<Real, ConstantArray>("GlobalHRatioi", global_h_ratio_vec);
+    ca_global_h_ratio_ = createUniqueEntity<Real, ConstantArray>("GlobalHRatios", global_h_ratio_vec);
 }
 //=================================================================================================//
 void LevelSet::initializeLevel(

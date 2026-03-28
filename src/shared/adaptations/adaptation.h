@@ -31,10 +31,7 @@
 
 #include "base_data_type_package.h"
 #include "base_kernel.h"
-#include "base_mesh.hpp"
-#include "execution_policy.h"
 #include "level_set.h"
-#include "sphinxsys_containers.h"
 
 namespace SPH
 {
