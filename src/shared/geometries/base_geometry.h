@@ -33,8 +33,12 @@
 #include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
 
-#include <spdlog/spdlog.h>
 #include <string>
+
+namespace spdlog
+{
+class logger;
+}
 
 namespace SPH
 {

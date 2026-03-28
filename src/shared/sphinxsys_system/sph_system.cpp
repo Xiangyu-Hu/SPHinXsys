@@ -1,8 +1,13 @@
 #include "sph_system.hpp"
 
-#include "all_body_relations.h"
+#include "base_body_relation.h"
 #include "io_environment.h"
 #include "predefined_bodies.h"
+
+#ifdef BOOST_AVAILABLE
+#include "boost/program_options.hpp"
+namespace po = boost::program_options;
+#endif
 
 namespace SPH
 {

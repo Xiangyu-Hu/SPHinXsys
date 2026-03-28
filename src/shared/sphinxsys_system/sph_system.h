@@ -30,16 +30,12 @@
 #ifndef SPH_SYSTEM_H
 #define SPH_SYSTEM_H
 
-#define TBB_PREVIEW_GLOBAL_CONTROL 1
-#include <tbb/global_control.h>
-#ifdef BOOST_AVAILABLE
-#include "boost/program_options.hpp"
-namespace po = boost::program_options;
-#endif
-
 #include "base_body.h"
 #include "base_geometry.h"
 #include "relation_ck.h"
+
+#define TBB_PREVIEW_GLOBAL_CONTROL 1
+#include <tbb/global_control.h>
 
 namespace SPH
 {
