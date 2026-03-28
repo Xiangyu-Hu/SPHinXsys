@@ -34,6 +34,8 @@
 #include "complex_geometry.h"
 #include "sphinxsys_containers.h"
 
+#include "tbb/concurrent_vector.h"
+
 #include <optional>
 
 namespace SPH
@@ -130,6 +132,11 @@ class BodyPartByParticle : public BodyPart
  */
 class BodyPartByCell : public BodyPart
 {
+    template <typename T>
+    using ConcurrentVec = tbb::concurrent_vector<T>;
+    using ConcurrentIndexVector = ConcurrentVec<size_t>;
+    using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
+
   public:
     typedef BodyPartByCell RangeIdentifier;
     ConcurrentCellLists body_part_cells_; /**< Collection of cells to indicate the body part. */

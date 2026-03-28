@@ -29,18 +29,13 @@
 #define SPHINXSYS_TBB_H
 
 #include "tbb/blocked_range.h"
-#include "tbb/concurrent_vector.h"
 #include "tbb/parallel_for.h"
-
-#define TBB_PARALLEL true
 
 namespace SPH
 {
 static tbb::affinity_partitioner ap;
 typedef tbb::blocked_range<size_t> IndexRange;
 
-template <typename T>
-using ConcurrentVec = tbb::concurrent_vector<T>;
 } // namespace SPH
 
 #endif // SPHINXSYS_TBB_H

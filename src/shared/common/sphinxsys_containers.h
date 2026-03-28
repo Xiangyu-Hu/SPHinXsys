@@ -89,15 +89,11 @@ using RealBodyVector = StdVec<RealBody *>;
 using BodyPartVector = StdVec<BodyPart *>;
 
 using IndexVector = StdVec<size_t>;
-using ConcurrentIndexVector = ConcurrentVec<size_t>;
 using ParticlesBound = std::pair<size_t, size_t>;
 
 /** List data pair: first for indexes, second for particle position. */
 using ListData = std::pair<size_t, Vecd>;
 using ListDataVector = StdVec<ListData>;
 using DataListsInCells = StdVec<ListDataVector *>;
-using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
-/** Cell list for periodic boundary condition algorithms. */
-using CellLists = std::pair<ConcurrentCellLists, DataListsInCells>;
 } // namespace SPH
 #endif // SPHINXSYS_CONTAINERS_H

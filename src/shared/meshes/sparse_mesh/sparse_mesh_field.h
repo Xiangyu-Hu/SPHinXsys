@@ -30,12 +30,16 @@
 #define MESH_WITH_DATA_PACKAGES_H
 
 #include "base_mesh.hpp"
-
 #include "data_package_utility.hpp"
 #include "execution_policy.h"
 
+#include "tbb/concurrent_vector.h"
+
 namespace SPH
 {
+template <typename T>
+using ConcurrentVec = tbb::concurrent_vector<T>;
+
 template <int PKG_SIZE>
 class PackageMesh : public Mesh
 {
