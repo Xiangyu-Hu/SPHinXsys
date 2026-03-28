@@ -36,8 +36,7 @@
 #define BASE_BODY_H
 
 #include "adaptation.h"
-#include "base_geometry.h"
-#include "base_body_part.h"
+#include "complex_geometry.h"
 #include "base_data_type_package.h"
 #include "base_implementation.h"
 #include "base_material.h"
@@ -50,7 +49,9 @@
 namespace SPH
 {
 class SPHRelation;
-class BodySurface;
+class BodyPart;
+class ComplexShape;
+
 
 /**
  * @class SPHBody
@@ -87,7 +88,7 @@ class SPHBody
     SPHBody(SPHSystem &sph_system, const std::string &name);
     SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::string &name);
     SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
-    virtual ~SPHBody() {};
+    virtual ~SPHBody();
 
     std::string getName() { return body_name_; };
     SPHSystem &getSPHSystem();
@@ -220,7 +221,7 @@ class RealBody : public SPHBody
     {
         addRealBodyToSPHSystem();
     };
-    virtual ~RealBody() {};
+    virtual ~RealBody();
     BaseCellLinkedList &getCellLinkedList();
     void updateCellLinkedList();
     using ListedParticleMask = typename SPHBody::SourceParticleMask;

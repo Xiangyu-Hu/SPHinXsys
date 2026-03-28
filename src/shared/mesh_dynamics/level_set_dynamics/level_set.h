@@ -30,9 +30,9 @@
 #define LEVEL_SET_H
 
 #include "kernel_tabulated_ck.h"
-#include "mesh_data_package_sort.h"
-#include "mesh_dynamics_algorithm.h"
 #include "neighbor_method.h"
+#include "sparse_mesh_field.h"
+#include "base_dynamics.h"
 
 namespace SPH
 {

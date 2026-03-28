@@ -1,5 +1,6 @@
 #include "base_body.h"
 
+#include "base_body_part.h"
 #include "base_body_relation.h"
 #include "base_particles.hpp"
 #include "sph_system.h"
@@ -15,6 +16,8 @@ SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
 {
     sph_system_.addSPHBody(this);
 }
+//=================================================================================================//
+SPHBody::~SPHBody() = default;
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape)
     : SPHBody(sph_system, shape, shape.getName()) {}
@@ -86,6 +89,8 @@ BaseCellLinkedList &RealBody::getCellLinkedList()
     }
     return *cell_linked_list_ptr_.get();
 }
+//=================================================================================================//
+RealBody::~RealBody() = default;
 //=================================================================================================//
 void RealBody::updateCellLinkedList()
 {

@@ -40,6 +40,7 @@
 
 namespace SPH
 {
+class BaseCellLinkedList;
 /**
  * @class BodyPart
  * @brief An auxiliary class for SPHBody to indicate a part of the body.

@@ -32,13 +32,11 @@
 
 #include "base_geometry.h"
 #include "geometric_shape.h"
-#include "level_set_shape.h"
+#include "level_set_shape.hpp"
 #include "transform_geometry.h"
 
 namespace SPH
 {
-class LevelSetShape;
-
 /**
  * @class ComplexShape
  * @brief  For now, if the level set shape (for particle relaxation)
