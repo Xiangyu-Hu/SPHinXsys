@@ -32,7 +32,7 @@
 
 #include "base_geometry.h"
 #include "geometric_shape.h"
-#include "level_set_shape.hpp"
+#include "level_set_shape.h"
 #include "transform_geometry.h"
 
 namespace SPH

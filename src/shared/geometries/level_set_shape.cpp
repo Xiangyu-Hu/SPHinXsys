@@ -1,4 +1,4 @@
-#include "level_set_shape.h"
+#include "level_set_shape.hpp"
 
 #include "all_io.h"
 #include "base_body.h"
