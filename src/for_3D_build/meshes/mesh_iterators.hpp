@@ -8,6 +8,7 @@
 
 #include "mesh_iterators.h"
 
+#include "sphinxsys_tbb.h"
 #include "tbb/blocked_range3d.h"
 
 namespace SPH

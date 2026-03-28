@@ -31,6 +31,7 @@
 
 #include "sphinxsys_variable.h"
 
+#include "sphinxsys_tbb.h"
 #include "tbb/parallel_scan.h"
 
 #include <numeric>

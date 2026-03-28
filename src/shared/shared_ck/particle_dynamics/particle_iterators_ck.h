@@ -30,7 +30,7 @@
 #define PARTICLE_ITERATORS_CK_H
 
 #include "loop_range.h"
-
+#include "sphinxsys_tbb.h"
 #include "tbb/parallel_reduce.h"
 
 namespace SPH

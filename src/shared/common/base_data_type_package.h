@@ -31,7 +31,6 @@
 #include "common_functors.h"
 #include "data_type.h"
 #include "ownership.h"
-#include "sphinxsys_tbb.h"
 
 namespace SPH
 {

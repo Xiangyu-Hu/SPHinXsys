@@ -32,6 +32,7 @@
 #include "implementation.h"
 #include "sphinxsys_containers.h"
 
+#include "sphinxsys_tbb.h"
 #include "tbb/parallel_reduce.h"
 
 #include <cstdlib>
