@@ -30,10 +30,11 @@
 #define IO_BASE_H
 
 #include "base_body.h"
-#include "base_particle_dynamics.h"
+#include "base_dynamics.h"
 #include "parameterization.h"
 #include "xml_engine.h"
 #include "xml_parser.h"
+#include "base_particles.hpp"
 
 #include <filesystem>
 #include <fstream>

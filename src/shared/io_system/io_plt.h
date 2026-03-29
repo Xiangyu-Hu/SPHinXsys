@@ -33,6 +33,8 @@
 
 namespace SPH
 {
+class BaseMeshField;
+
 /**
  * @class PltEngine
  * @brief The base class which defines Tecplot file related operation.

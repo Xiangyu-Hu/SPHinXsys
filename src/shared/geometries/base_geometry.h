@@ -149,6 +149,8 @@ class BinaryShapes : public Shape
     StdVec<SubShapeAndOp> sub_shapes_and_ops_;
 };
 
+using DefaultShape = BinaryShapes;
+
 /**
  * @class Edge
  * @brief template base class of linear structure only with topology information.

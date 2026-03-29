@@ -3,6 +3,7 @@
 
 #include "io_environment.h"
 #include "vector_functions.h"
+#include "base_mesh.h"
 
 namespace SPH
 {

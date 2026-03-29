@@ -1,6 +1,7 @@
 #include "base_body_part.h"
 
 #include "triangle_mesh_shape.h"
+#include "complex_geometry.h"
 
 namespace SPH
 {

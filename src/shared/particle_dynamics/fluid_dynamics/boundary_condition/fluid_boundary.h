@@ -31,6 +31,7 @@
 #define FLUID_BOUNDARY_H
 
 #include "base_fluid_dynamics.h"
+#include "complex_geometry.h"
 #include "particle_reserve.h"
 #include "sph_system.h"
 

@@ -64,8 +64,6 @@ class ComplexShape : public BinaryShapes
     };
 };
 
-using DefaultShape = ComplexShape;
-
 /**
  * @class AlignedBox
  * @brief Used to describe a bounding box in which

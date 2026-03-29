@@ -31,8 +31,7 @@
 #define BASE_BODY_PART_H
 
 #include "base_data_type_package.h"
-#include "complex_geometry.h"
-#include "sphinxsys_containers.h"
+#include "sphinxsys_variable.h"
 
 #include "tbb/concurrent_vector.h"
 
@@ -41,6 +40,19 @@
 namespace SPH
 {
 class BaseCellLinkedList;
+class LevelSetShape;
+class AlignedBox;
+class Entity;
+class SPHAdaptation;
+class SPHBody;
+class RealBody;
+class Shape;
+class SPHSystem;
+class BaseParticles;
+
+template <typename T>
+using ConcurrentVec = tbb::concurrent_vector<T>; 
+using IndexVector = StdVec<size_t>;
 /**
  * @class BodyPart
  * @brief An auxiliary class for SPHBody to indicate a part of the body.
@@ -54,7 +66,7 @@ class BodyPart
   public:
     typedef SPHAdaptation Adaptation;
     BodyPart(SPHBody &sph_body);
-    virtual ~BodyPart() {};
+    virtual ~BodyPart();
     SPHBody &getSPHBody() { return sph_body_; };
     SPHSystem &getSPHSystem();
     std::string getName() const { return alias_.value_or(part_name_); };
@@ -112,7 +124,7 @@ class BodyPartByID : public BodyPart
 class BodyPartByParticle : public BodyPart
 {
   public:
-    typedef BodyPartByParticle RangeIdentifier;    
+    typedef BodyPartByParticle RangeIdentifier;
     IndexVector body_part_particles_; /**< Collection particle in this body part. */
     BaseParticles &getBaseParticles() { return base_particles_; };
     DiscreteVariable<UnsignedInt> *dvParticleList() { return dv_particle_list_; };
@@ -133,8 +145,6 @@ class BodyPartByParticle : public BodyPart
  */
 class BodyPartByCell : public BodyPart
 {
-    template <typename T>
-    using ConcurrentVec = tbb::concurrent_vector<T>;
     using ConcurrentIndexVector = ConcurrentVec<size_t>;
     using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
 
@@ -171,7 +181,7 @@ class BodyRegionByParticle : public BodyPartByParticle
   public:
     BodyRegionByParticle(SPHBody &sph_body, Shape &body_part_shape);
     BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr);
-    virtual ~BodyRegionByParticle() {};
+    virtual ~BodyRegionByParticle();
     Shape &getBodyPartShape() { return body_part_shape_; };
 
   protected:
@@ -221,7 +231,7 @@ class BodyRegionByCell : public BodyPartByCell
   public:
     BodyRegionByCell(RealBody &real_body, Shape &body_part_shape);
     BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr);
-    virtual ~BodyRegionByCell() {};
+    virtual ~BodyRegionByCell();
     Shape &getBodyPartShape() { return body_part_shape_; };
 
   private:
@@ -246,7 +256,7 @@ class NearShapeSurface : public BodyPartByCell
     NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape);
     explicit NearShapeSurface(RealBody &real_body);
     NearShapeSurface(RealBody &real_body, const std::string &sub_shape_name);
-    virtual ~NearShapeSurface() {};
+    virtual ~NearShapeSurface();
     LevelSetShape &getLevelSetShape() { return level_set_shape_; };
 
   private:
@@ -260,7 +270,7 @@ class AlignedBoxPart
 
   public:
     AlignedBoxPart(const std::string &part_name, const AlignedBox &aligned_box);
-    virtual ~AlignedBoxPart() {};
+    virtual ~AlignedBoxPart();
     SingularVariable<AlignedBox> *svAlignedBox() { return sv_aligned_box_keeper_.getPtr(); };
     AlignedBox &getAlignedBox() { return aligned_box_; };
     void writeShapeProxy();

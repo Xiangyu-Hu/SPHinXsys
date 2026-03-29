@@ -1,6 +1,7 @@
 #include "relax_thick_shell.h"
 
 #include "adaptation.h"
+#include "complex_geometry.h"
 
 namespace SPH
 {
