@@ -40,7 +40,7 @@ LevelSetShape &SPHBody::defineBodyLevelSetShape(const ExecutionPolicy &ex_policy
     return *static_cast<LevelSetShape *>(initial_shape_);
 }
 //=================================================================================================//
-template <class MaterialType = BaseMaterial, typename... Args>
+template <class MaterialType, typename... Args>
 MaterialType &SPHBody::defineMaterial(Args &&...args)
 {
     base_material_ = base_material_keeper_.createPtr<MaterialType>(

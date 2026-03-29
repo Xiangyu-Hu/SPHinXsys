@@ -30,8 +30,8 @@
 #define ALGORITHM_PRIMITIVE_SYCL_H
 
 #include "implementation_sycl.h"
+#include "sphinxsys_tbb.h"
 #include "sphinxsys_variable.h"
-
 namespace SPH
 {
 using namespace execution;
