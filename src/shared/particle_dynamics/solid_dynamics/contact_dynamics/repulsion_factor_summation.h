@@ -36,6 +36,8 @@
 
 namespace SPH
 {
+class Solid;
+
 namespace solid_dynamics
 {
 

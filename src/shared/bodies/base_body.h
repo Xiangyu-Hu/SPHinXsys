@@ -36,10 +36,7 @@
 #define BASE_BODY_H
 
 #include "base_data_type_package.h"
-#include "base_implementation.h"
-#include "base_material.h"
 #include "base_particle_generator.h"
-#include "base_particles.h"
 #include "cell_linked_list.h"
 #include "closure_wrapper.h"
 #include "sphinxsys_containers.h"
@@ -52,6 +49,9 @@ class Shape;
 class ComplexShape;
 class LevelSetShape;
 class SPHAdaptation;
+class BaseParticles;
+class BaseMaterial;
+class SPHSystem;
 
 /**
  * @class SPHBody
@@ -99,8 +99,8 @@ class SPHBody
     BaseParticles &getBaseParticles();
     BaseMaterial &getBaseMaterial();
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
-    IndexRange LoopRange() { return IndexRange(0, base_particles_->TotalRealParticles()); };
-    size_t SizeOfLoopRange() { return base_particles_->TotalRealParticles(); };
+    IndexRange LoopRange();
+    size_t SizeOfLoopRange();
     Real getSPHBodyResolutionRef();
     void setNewlyUpdated() { newly_updated_ = true; };
     void setNotNewlyUpdated() { newly_updated_ = false; };

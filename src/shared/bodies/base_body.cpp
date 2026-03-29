@@ -2,6 +2,8 @@
 
 #include "base_body_part.h"
 #include "base_geometry.h"
+#include "base_material.h"
+#include "base_particles.h"
 #include "base_particles.hpp"
 #include "sph_system.h"
 
@@ -38,6 +40,16 @@ BoundingBoxd SPHBody::getSPHSystemBounds()
 {
     return sph_system_.getSystemDomainBounds();
 }
+//=================================================================================================//
+IndexRange SPHBody::LoopRange()
+{
+    return IndexRange(0, base_particles_->TotalRealParticles());
+};
+//=================================================================================================//
+size_t SPHBody::SizeOfLoopRange()
+{
+    return base_particles_->TotalRealParticles();
+};
 //=================================================================================================//
 SPHSystem &SPHBody::getSPHSystem()
 {

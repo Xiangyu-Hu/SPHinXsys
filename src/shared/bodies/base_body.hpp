@@ -4,6 +4,7 @@
 #include "base_body.h"
 
 #include "adaptation.h"
+#include "base_material.h"
 #include "complex_geometry.h"
 
 namespace SPH

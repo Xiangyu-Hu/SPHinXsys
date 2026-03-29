@@ -30,6 +30,7 @@
 #define RELATION_CK_H
 
 #include "base_body.h"
+#include "base_implementation.h"
 #include "base_particles.h"
 #include "neighbor_method.hpp"
 

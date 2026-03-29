@@ -31,6 +31,7 @@
 
 #include "all_body_relations.h"
 #include "base_local_dynamics.h"
+#include "base_material.h"
 #include "base_particles.hpp"
 
 namespace SPH

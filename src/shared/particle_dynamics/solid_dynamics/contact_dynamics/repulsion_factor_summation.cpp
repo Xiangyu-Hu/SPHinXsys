@@ -1,6 +1,7 @@
 #include "repulsion_factor_summation.h"
 
 #include "adaptation.h"
+#include "base_material.h"
 
 namespace SPH
 {
