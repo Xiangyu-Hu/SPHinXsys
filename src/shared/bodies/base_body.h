@@ -36,10 +36,8 @@
 #define BASE_BODY_H
 
 #include "base_data_type_package.h"
-#include "base_particle_generator.h"
-#include "cell_linked_list.h"
 #include "closure_wrapper.h"
-#include "sphinxsys_containers.h"
+#include "sphinxsys_tbb.h"
 
 namespace SPH
 {
@@ -52,6 +50,7 @@ class SPHAdaptation;
 class BaseParticles;
 class BaseMaterial;
 class SPHSystem;
+class BaseCellLinkedList;
 
 /**
  * @class SPHBody

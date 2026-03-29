@@ -5,6 +5,7 @@
 
 #include "adaptation.h"
 #include "base_material.h"
+#include "base_particle_generator.h"
 #include "complex_geometry.h"
 
 namespace SPH
