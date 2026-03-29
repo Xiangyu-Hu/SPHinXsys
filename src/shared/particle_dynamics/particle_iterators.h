@@ -41,6 +41,8 @@
 namespace SPH
 {
 using namespace execution;
+using ConcurrentIndexVector = ConcurrentVec<size_t>;
+using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
 
 template <class ExecutionPolicy, typename DynamicsRange, class LocalDynamicsFunction>
 void particle_for(const ExecutionPolicy &execution_policy, const DynamicsRange &dynamics_range,
