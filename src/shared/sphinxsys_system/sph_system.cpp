@@ -15,7 +15,16 @@ namespace po = boost::program_options;
 namespace SPH
 {
 //=================================================================================================//
-SharedPtr<tbb::global_control> tbb_global_control; /**< global controlling on the total number parallel threads */
+namespace
+{
+SharedPtr<tbb::global_control> &getTbbGlobalControlHolder()
+{
+    // Intentionally keep this alive until process termination to avoid
+    // static destruction-order issues inside oneTBB global control teardown.
+    static SharedPtr<tbb::global_control> *holder = new SharedPtr<tbb::global_control>();
+    return *holder;
+}
+} // namespace
 //=================================================================================================//
 SPHSystem::SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution, size_t number_of_threads)
     : SPHSystem(true, system_domain_bounds, global_resolution, number_of_threads) {}
@@ -32,7 +41,7 @@ SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
     spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
     sv_physical_time_ = registerSystemVariable<Real>("PhysicalTime", 0.0);
     IO::getLogger()->info("The reference resolution of the SPHSystem is {}.", global_resolution_);
-    tbb_global_control = std::make_shared<tbb::global_control>(
+    getTbbGlobalControlHolder() = std::make_shared<tbb::global_control>(
         tbb::global_control::max_allowed_parallelism, number_of_threads);
 }
 //=================================================================================================//
