@@ -30,12 +30,19 @@
 #ifndef SPH_SYSTEM_H
 #define SPH_SYSTEM_H
 
-#include "base_body.h"
-#include "base_geometry.h"
-#include "relation_ck.h"
+#include "base_data_type_package.h"
+#include "sphinxsys_variable.h"
+
+#include <thread>
 
 namespace SPH
 {
+class SPHBody;
+class RealBody;
+class RelationBase;
+class Shape;
+class Entity;
+using SPHBodyVector = StdVec<SPHBody *>;
 /**
  * @class SPHSystem
  * @brief The SPH system managing objects in the system level.
@@ -51,7 +58,7 @@ class SPHSystem
   public:
     SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution,
               size_t number_of_threads = std::thread::hardware_concurrency());
-    virtual ~SPHSystem() {};
+    virtual ~SPHSystem();
 
 #ifdef BOOST_AVAILABLE
     SPHSystem *handleCommandlineOptions(int ac, char *av[]);

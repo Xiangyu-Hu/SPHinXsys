@@ -23,7 +23,7 @@ void ParticleGenerator<BaseParticles>::generateParticlesWithGeometricVariables()
 {
     prepareGeometricData();
     setAllParticleBounds();
-    initializeParticleVariables();
+    initializeDiscreteVariables();
 }
 //=================================================================================================//
 void ParticleGenerator<BaseParticles>::setAllParticleBounds()
@@ -38,12 +38,12 @@ void ParticleGenerator<BaseParticles>::addPositionAndVolumetricMeasure(
     volumetric_measure_.push_back(volumetric_measure);
 }
 //=================================================================================================//
-void ParticleGenerator<BaseParticles>::initializeParticleVariables()
+void ParticleGenerator<BaseParticles>::initializeDiscreteVariables()
 {
     base_particles_.registerPositionAndVolumetricMeasure(position_, volumetric_measure_);
 }
 //=================================================================================================//
-void ParticleGenerator<BaseParticles>::initializeParticleVariablesFromReload()
+void ParticleGenerator<BaseParticles>::initializeDiscreteVariablesFromReload()
 {
     base_particles_.registerPositionAndVolumetricMeasureFromReload();
 }
@@ -59,15 +59,15 @@ void ParticleGenerator<SurfaceParticles>::addSurfaceProperties(const Vecd &surfa
     surface_thickness_.push_back(thickness);
 }
 //=================================================================================================//
-void ParticleGenerator<SurfaceParticles>::initializeParticleVariables()
+void ParticleGenerator<SurfaceParticles>::initializeDiscreteVariables()
 {
-    ParticleGenerator<BaseParticles>::initializeParticleVariables();
+    ParticleGenerator<BaseParticles>::initializeDiscreteVariables();
     surface_particles_.registerSurfaceProperties(surface_normal_, surface_thickness_);
 }
 //=================================================================================================//
-void ParticleGenerator<SurfaceParticles>::initializeParticleVariablesFromReload()
+void ParticleGenerator<SurfaceParticles>::initializeDiscreteVariablesFromReload()
 {
-    ParticleGenerator<BaseParticles>::initializeParticleVariablesFromReload();
+    ParticleGenerator<BaseParticles>::initializeDiscreteVariablesFromReload();
     surface_particles_.registerSurfacePropertiesFromReload();
 }
 //=================================================================================================//

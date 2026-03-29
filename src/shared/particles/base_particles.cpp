@@ -30,7 +30,7 @@ std::string BaseParticles::getBodyName()
     return sph_body_.getName();
 };
 //=================================================================================================//
-void BaseParticles::initializeBasicParticleVariables()
+void BaseParticles::initializeBasicDiscreteVariables()
 {
     addEvolvingVariable<Vecd>("Position");
     addEvolvingVariable<Real>("VolumetricMeasure");
@@ -195,7 +195,7 @@ void BaseParticles::writeParticlesToXmlForRestart(XmlParser &xml_parser, tinyxml
     }
     
     // Write all evolving variables to the body element's particle children
-    OperationOnDataAssemble<ParticleVariables, WriteAParticleVariableToXmlElement> 
+    OperationOnDataAssemble<DiscreteVariables, WriteAParticleVariableToXmlElement> 
         write_variable_to_element(body_element);
     write_variable_to_element(evolving_variables_, xml_parser);
 }
@@ -206,7 +206,7 @@ void BaseParticles::readParticlesFromXmlForRestart(XmlParser &xml_parser, tinyxm
     sv_total_real_particles_->setValue(xml_parser.Size(body_element));
     
     // Read all evolving variables from the body element's particle children
-    OperationOnDataAssemble<ParticleVariables, ReadAParticleVariableFromXmlElement> 
+    OperationOnDataAssemble<DiscreteVariables, ReadAParticleVariableFromXmlElement> 
         read_variable_from_element(body_element);
     read_variable_from_element(evolving_variables_, this, xml_parser);
 }

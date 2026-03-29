@@ -51,8 +51,8 @@ class ParticleGenerator<LinearParticles> : public ParticleGenerator<BaseParticle
     LinearParticles &linear_particles_;
     virtual void addLineProperties(
         const Vecd &line_normal, const Vecd &line_binormal, Real thickness, Real width);
-    virtual void initializeParticleVariables() override;
-    virtual void initializeParticleVariablesFromReload() override;
+    virtual void initializeDiscreteVariables() override;
+    virtual void initializeDiscreteVariablesFromReload() override;
 };
 } // namespace SPH
 #endif // LINE_PARTICLE_GENERATOR_H

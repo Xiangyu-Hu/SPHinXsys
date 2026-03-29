@@ -71,7 +71,7 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
 void BodyStatesRecordingToVtp::addParticlesToVtkPolyData(vtkPolyData *polydata, BaseParticles &particles)
 {
     size_t total_real_particles = particles.TotalRealParticles();
-    ParticleVariables &variables_to_write = particles.VariablesToWrite();
+    DiscreteVariables &variables_to_write = particles.VariablesToWrite();
 
     // Write sorted particle IDs
     vtkNew<vtkIntArray> sorted_id_array;

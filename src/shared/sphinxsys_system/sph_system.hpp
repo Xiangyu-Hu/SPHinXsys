@@ -4,6 +4,7 @@
 #include "sph_system.h"
 
 #include "adaptive_body.h"
+#include "relation_ck.h"
 
 namespace SPH
 {

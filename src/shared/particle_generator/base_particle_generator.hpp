@@ -39,9 +39,9 @@ void ParticleGenerator<ParticlesType, Reload>::setAllParticleBounds()
 };
 //=================================================================================================//
 template <typename ParticlesType>
-void ParticleGenerator<ParticlesType, Reload>::initializeParticleVariables()
+void ParticleGenerator<ParticlesType, Reload>::initializeDiscreteVariables()
 {
-    ParticleGenerator<ParticlesType>::initializeParticleVariablesFromReload();
+    ParticleGenerator<ParticlesType>::initializeDiscreteVariablesFromReload();
 }
 //=================================================================================================//
 } // namespace SPH

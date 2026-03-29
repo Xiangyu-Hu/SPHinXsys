@@ -1,5 +1,6 @@
 #include "base_body.h"
 
+#include "adaptation.h"
 #include "base_body_part.h"
 #include "base_geometry.h"
 #include "base_material.h"

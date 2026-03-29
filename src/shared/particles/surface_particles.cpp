@@ -17,9 +17,9 @@ SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_materia
     sph_body.getSPHAdaptation().getKernel()->reduceOnce();
 }
 //=================================================================================================//
-void SurfaceParticles::initializeBasicParticleVariables()
+void SurfaceParticles::initializeBasicDiscreteVariables()
 {
-    BaseParticles::initializeBasicParticleVariables();
+    BaseParticles::initializeBasicDiscreteVariables();
     registerTransformationMatrix();
 }
 //=================================================================================================//

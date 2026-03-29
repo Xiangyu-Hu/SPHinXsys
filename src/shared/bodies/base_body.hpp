@@ -64,7 +64,7 @@ ParticleType &SPHBody::generateParticles(Args &&...args)
     ParticleType *particles = base_particles_keeper_.createPtr<ParticleType>(*this, base_material_);
     ParticleGenerator<ParticleType, Parameters...> particle_generator(*this, *particles, std::forward<Args>(args)...);
     particle_generator.generateParticlesWithGeometricVariables();
-    particles->initializeBasicParticleVariables();
+    particles->initializeBasicDiscreteVariables();
     sph_adaptation_->initializeAdaptationVariables(*particles);
     base_material_->setLocalParameters(sph_system_, particles);
     return *particles;

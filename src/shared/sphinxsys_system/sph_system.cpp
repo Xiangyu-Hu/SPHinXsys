@@ -45,6 +45,8 @@ SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
         tbb::global_control::max_allowed_parallelism, number_of_threads);
 }
 //=================================================================================================//
+SPHSystem::~SPHSystem() = default;
+//=================================================================================================//
 void SPHSystem::setLogLevel(size_t log_level)
 {
     if (log_level < 0 || log_level > 6)

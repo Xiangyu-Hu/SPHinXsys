@@ -136,7 +136,7 @@ SingularVariable<DataType> *BaseParticles::getSingularVariableByName(const std::
 //=================================================================================================//
 template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::
-    addDiscreteVariableToList(ParticleVariables &variable_set, const std::string &name)
+    addDiscreteVariableToList(DiscreteVariables &variable_set, const std::string &name)
 {
     DiscreteVariable<DataType> *variable = getVariableByName<DataType>(name);
     if (variable->getDataSize() < particles_bound_)
@@ -151,7 +151,7 @@ DiscreteVariable<DataType> *BaseParticles::
 //=================================================================================================//
 template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::
-    addDiscreteVariableToList(ParticleVariables &variable_set, DiscreteVariable<DataType> *variable)
+    addDiscreteVariableToList(DiscreteVariables &variable_set, DiscreteVariable<DataType> *variable)
 {
     return addDiscreteVariableToList<DataType>(variable_set, variable->Name());
 }
