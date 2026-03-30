@@ -34,7 +34,11 @@
 
 #include "base_data_type_package.h"
 #include "sphinxsys_variable_array.h"
-#include "xml_parser.h"
+
+namespace tinyxml2
+{
+class XMLElement; // forward declaration
+}
 
 namespace SPH
 {
@@ -42,6 +46,9 @@ class SPHBody;
 class SPHAdaptation;
 class BaseMaterial;
 class BodyPartByParticle;
+class XmlParser;
+using TinyXMLElement = tinyxml2::XMLElement;
+;
 
 /** Generalized particle data type */
 typedef DataContainerAssemble<AllocatedData> ParticleData;
@@ -77,10 +84,11 @@ class BaseParticles
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<SingularVariable> all_singular_variable_ptrs_;
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
+    UniquePtrsKeeper<XmlParser> xml_parser_ptrs_;
 
   public:
     explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
-    virtual ~BaseParticles() {};
+    virtual ~BaseParticles();
     SPHBody &getSPHBody() { return sph_body_; };
     BaseMaterial &getBaseMaterial() { return base_material_; };
     SPHAdaptation &getSPHAdaptation();
@@ -171,8 +179,8 @@ class BaseParticles
     void writeParticlesToXmlForRestart(const std::string &filefullpath);
     void readParticlesFromXmlForRestart(const std::string &filefullpath);
     // New methods for writing/reading to/from XML element (for consolidated restart file)
-    void writeParticlesToXmlForRestart(XmlParser &xml_parser, tinyxml2::XMLElement *body_element);
-    void readParticlesFromXmlForRestart(XmlParser &xml_parser, tinyxml2::XMLElement *body_element);
+    void writeParticlesToXmlForRestart(XmlParser &xml_parser, TinyXMLElement *body_element);
+    void readParticlesFromXmlForRestart(XmlParser &xml_parser, TinyXMLElement *body_element);
     void writeParticlesToXmlForReload(const std::string &filefullpath);
     void readReloadXmlFile(const std::string &filefullpath);
     template <typename DataType>
@@ -193,8 +201,8 @@ class BaseParticles
     SPHBody &sph_body_;
     std::string body_name_;
     BaseMaterial &base_material_;
-    XmlParser restart_xml_parser_;
-    XmlParser reload_xml_parser_;
+    XmlParser &restart_xml_parser_;
+    XmlParser &reload_xml_parser_;
     DiscreteVariables all_discrete_variables_;
     SingularVariables all_singular_variables_;
     DiscreteVariables variables_to_write_;
@@ -233,16 +241,16 @@ class BaseParticles
 
     struct WriteAParticleVariableToXmlElement
     {
-        tinyxml2::XMLElement *element_;
-        WriteAParticleVariableToXmlElement(tinyxml2::XMLElement *element) : element_(element) {}
+        TinyXMLElement *element_;
+        WriteAParticleVariableToXmlElement(TinyXMLElement *element) : element_(element) {}
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser);
     };
 
     struct ReadAParticleVariableFromXmlElement
     {
-        tinyxml2::XMLElement *element_;
-        ReadAParticleVariableFromXmlElement(tinyxml2::XMLElement *element) : element_(element) {}
+        TinyXMLElement *element_;
+        ReadAParticleVariableFromXmlElement(TinyXMLElement *element) : element_(element) {}
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles, XmlParser &xml_parser);
     };

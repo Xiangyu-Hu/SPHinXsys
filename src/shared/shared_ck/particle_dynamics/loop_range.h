@@ -31,7 +31,7 @@
 
 #include "base_body.h"
 #include "base_body_part.h"
-#include "base_particles.hpp"
+#include "base_particles.h"
 
 namespace SPH
 {
