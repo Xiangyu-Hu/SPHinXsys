@@ -1,6 +1,6 @@
 #include "sph_solver.h"
 
-#include "sph_system.hpp"
+#include "sph_system.h"
 
 namespace SPH
 {
