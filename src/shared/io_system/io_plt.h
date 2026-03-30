@@ -30,6 +30,8 @@
 #define IO_PLT_H
 
 #include "io_base.h"
+#include "simtk_wrapper.h"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {

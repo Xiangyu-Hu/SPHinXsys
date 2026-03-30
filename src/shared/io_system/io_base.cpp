@@ -1,5 +1,6 @@
-#include "io_base.h"
+#include "io_base.hpp"
 
+#include "base_dynamics.h"
 #include "io_environment.h"
 #include "sph_system.hpp"
 
@@ -31,6 +32,8 @@ BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)
 BodyStatesRecording::BodyStatesRecording(SPHBody &body)
     : BaseIO(body.getSPHSystem()), bodies_({&body}),
       state_recording_(sph_system_.StateRecording()) {}
+//=============================================================================================//
+BodyStatesRecording::~BodyStatesRecording() = default;
 //=============================================================================================//
 void BodyStatesRecording::writeToFile()
 {

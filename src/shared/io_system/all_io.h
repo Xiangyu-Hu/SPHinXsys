@@ -30,6 +30,7 @@
 #ifndef ALL_IO_H
 #define ALL_IO_H
 
+#include "io_base.hpp"
 #include "io_base_ck.h"
 #include "io_observation_ck.h"
 #include "io_plt.hpp"
