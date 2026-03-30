@@ -94,7 +94,7 @@ class InflowVelocityCondition : public BaseFlowBoundaryCondition
           relaxation_rate_(relaxation_rate), aligned_box_(aligned_box_part.getAlignedBox()),
           transform_(aligned_box_.getTransform()), halfsize_(aligned_box_.HalfSize()),
           target_velocity(*this),
-          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
+          physical_time_(sph_system_->svPhysicalTime().Data()) {};
     virtual ~InflowVelocityCondition() {};
     AlignedBox &getAlignedBox() { return aligned_box_; };
 
@@ -146,7 +146,7 @@ class FreeStreamVelocityCorrection : public LocalDynamics
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
           indicator_(particles_->getVariableDataByName<int>("Indicator")),
           target_velocity(*this),
-          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
+          physical_time_(sph_system_->svPhysicalTime().Data()) {};
     virtual ~FreeStreamVelocityCorrection() {};
 
     void update(size_t index_i, Real dt = 0.0)
