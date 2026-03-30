@@ -5,6 +5,7 @@
 #include "base_particles.hpp"
 #include "cell_linked_list.hpp"
 #include "complex_geometry.h"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {

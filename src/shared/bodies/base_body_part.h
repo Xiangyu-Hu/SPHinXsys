@@ -31,7 +31,6 @@
 #define BASE_BODY_PART_H
 
 #include "base_data_type_package.h"
-#include "sphinxsys_variable.h"
 
 #include "tbb/concurrent_vector.h"
 
@@ -49,9 +48,13 @@ class RealBody;
 class Shape;
 class SPHSystem;
 class BaseParticles;
+template <typename T>
+class DiscreteVariable;
+template <typename T>
+class SingularVariable;
 
 template <typename T>
-using ConcurrentVec = tbb::concurrent_vector<T>; 
+using ConcurrentVec = tbb::concurrent_vector<T>;
 using IndexVector = StdVec<size_t>;
 /**
  * @class BodyPart

@@ -31,7 +31,6 @@
 
 #include "base_data_type_package.h"
 #include "base_kernel.h"
-#include "sphinxsys_variable.h"
 
 namespace SPH
 {
@@ -41,6 +40,8 @@ class BaseParticles;
 class BaseCellLinkedList;
 class LevelSet;
 class LevelSetShape;
+template <typename T>
+class DiscreteVariable;
 
 /**
  * @class SPHAdaptation
