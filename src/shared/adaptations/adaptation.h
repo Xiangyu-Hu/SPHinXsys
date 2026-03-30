@@ -31,7 +31,7 @@
 
 #include "base_data_type_package.h"
 #include "base_kernel.h"
-#include "level_set.h"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {
@@ -39,6 +39,7 @@ namespace SPH
 class Shape;
 class BaseParticles;
 class BaseCellLinkedList;
+class LevelSet;
 class LevelSetShape;
 
 /**
@@ -145,32 +146,9 @@ class AdaptiveSmoothingLength : public SPHAdaptation
     Real MaxCutOffRadius() const { return max_cut_off_radius_; };
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override = 0;
 
-    class ContinuousSmoothingLengthRatio : public UnitSmoothingLengthRatio
-    {
-        Real *h_ratio_;
-
-      public:
-        explicit ContinuousSmoothingLengthRatio(AdaptiveSmoothingLength &adaptation)
-            : UnitSmoothingLengthRatio(adaptation), h_ratio_(adaptation.h_ratio_) {};
-        template <class ExecutionPolicy>
-        ContinuousSmoothingLengthRatio(const ExecutionPolicy &ex_policy, AdaptiveSmoothingLength &adaptation)
-            : UnitSmoothingLengthRatio(adaptation), h_ratio_(adaptation.dv_h_ratio_->DelegatedData(ex_policy)){};
-        Real operator()(UnsignedInt index_i) const { return h_ratio_[index_i]; };
-    };
-
+    class ContinuousSmoothingLengthRatio;
     typedef ContinuousSmoothingLengthRatio SmoothingLengthRatioType;
-
-    class SmoothedSpacing
-    {
-        KernelTabulatedCK smoothing_kernel_;
-        Real kernel_size_, inv_w0_;
-        Real finest_spacing_bound_, coarsest_spacing_bound_;
-
-      public:
-        SmoothedSpacing(AdaptiveSmoothingLength &encloser);
-        Real operator()(const Real &measure, const Real &transition_thickness);
-        Real FinestSpacingBound() const { return finest_spacing_bound_; };
-    };
+    class SmoothedSpacing;
 
   protected:
     DiscreteVariable<Real> *dv_h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
@@ -212,28 +190,7 @@ class AdaptiveNearSurface : public AdaptiveByShape
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
 
-    class LocalSpacing
-    {
-        using ProbeSignedDistance = LevelSet::ProbeLevelSet<Real>;
-        SmoothedSpacing smoothed_spacing_;
-        LevelSet &level_set_;
-        Real spacing_ref_;
-
-      public:
-        LocalSpacing(AdaptiveNearSurface &encloser, LevelSetShape &level_set_shape);
-
-        class ComputingKernel
-        {
-            SmoothedSpacing smoothed_spacing_;
-            ProbeSignedDistance signed_distance_;
-            Real spacing_ref_;
-
-          public:
-            template <class ExecutionPolicy, class EncloserType>
-            ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-            Real operator()(const Vecd &position);
-        };
-    };
+    class LocalSpacing;
 };
 
 /**
@@ -250,28 +207,7 @@ class AdaptiveWithinShape : public AdaptiveByShape
 
     virtual Real getLocalSpacing(Shape &shape, const Vecd &position) override;
 
-    class LocalSpacing
-    {
-        using ProbeSignedDistance = LevelSet::ProbeLevelSet<Real>;
-        SmoothedSpacing smoothed_spacing_;
-        LevelSet &level_set_;
-        Real spacing_ref_;
-
-      public:
-        LocalSpacing(AdaptiveWithinShape &encloser, LevelSetShape &level_set_shape);
-
-        class ComputingKernel
-        {
-            SmoothedSpacing smoothed_spacing_;
-            ProbeSignedDistance signed_distance_;
-            Real spacing_ref_;
-
-          public:
-            template <class ExecutionPolicy, class EncloserType>
-            ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-            Real operator()(const Vecd &position);
-        };
-    };
+    class LocalSpacing;
 };
 
 class AnisotropicAdaptation : public AdaptiveSmoothingLength
@@ -281,20 +217,7 @@ class AnisotropicAdaptation : public AdaptiveSmoothingLength
     virtual ~AnisotropicAdaptation() {};
     virtual void initializeAdaptationVariables(BaseParticles &base_particles) override;
 
-    class AnisotropicSmoothingLengthRatio : public ContinuousSmoothingLengthRatio
-    {
-        Matd *deformation_matrix_;
-        Real *deformation_det_;
-
-      public:
-        template <class ExecutionPolicy>
-        AnisotropicSmoothingLengthRatio(const ExecutionPolicy &ex_policy, AnisotropicAdaptation &adaptation);
-        Vecd transform(const Vecd &original, UnsignedInt index_i) const;
-        Vecd inverseTransform(const Vecd &original, UnsignedInt index_i) const;
-        Real KernelTransform(UnsignedInt index_i) const;
-        Matd GradientTransform(UnsignedInt index_i) const;
-    };
-
+    class AnisotropicSmoothingLengthRatio;
     typedef AnisotropicSmoothingLengthRatio SmoothingLengthRatioType;
 
   protected:
