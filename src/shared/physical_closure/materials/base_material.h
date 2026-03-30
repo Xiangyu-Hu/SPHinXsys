@@ -35,7 +35,7 @@
 #ifndef BASE_MATERIAL_H
 #define BASE_MATERIAL_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 
 namespace SPH
 {

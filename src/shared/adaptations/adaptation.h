@@ -29,8 +29,8 @@
 #ifndef ADAPTATION_H
 #define ADAPTATION_H
 
-#include "base_data_type_package.h"
 #include "base_kernel.h"
+#include "data_type.h"
 
 namespace SPH
 {

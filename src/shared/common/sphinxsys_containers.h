@@ -29,11 +29,11 @@
 #ifndef SPHINXSYS_CONTAINERS_H
 #define SPHINXSYS_CONTAINERS_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 
 namespace SPH
 {
-class Base;  // Indicating base class
+class Base; // Indicating base class
 class SingleValued
 {
 };

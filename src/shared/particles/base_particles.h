@@ -32,6 +32,7 @@
 #ifndef BASE_PARTICLES_H
 #define BASE_PARTICLES_H
 
+#include "base_data_type_package.h"
 #include "sphinxsys_variable_array.h"
 #include "xml_parser.h"
 

@@ -32,6 +32,7 @@
 #include <cmath>
 #include <limits>
 #include <utility>
+#include <vector>
 
 #if SPHINXSYS_USE_SYCL
 #include <CL/sycl.hpp>
@@ -60,6 +61,8 @@ using Real = double;
 using UnsignedInt = size_t;
 #endif // SPHINXSYS_USE_FLOAT
 
+template <typename T>
+using StdVec = std::vector<T>;
 /** Vector with integers. */
 using Array2i = Eigen::Array<int, 2, 1>;
 using Array3i = Eigen::Array<int, 3, 1>;
