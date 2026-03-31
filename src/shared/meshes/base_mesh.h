@@ -34,7 +34,7 @@
 #ifndef BASE_MESH_H
 #define BASE_MESH_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 #include "sphinxsys_constant.h"
 #include "sphinxsys_variable.h"
 
@@ -152,7 +152,7 @@ class MultiResolutionMeshField : public BaseMeshField
     template <typename DataType>
     CellVariable<DataType> *getCellVariable(const std::string &variable_name);
     template <typename DataType, template <typename> class EntityType, typename... Args>
-    EntityType<DataType> *createUniqueEnity(Args &&...args);
+    EntityType<DataType> *createUniqueEntity(Args &&...args);
 
     template <typename DataType>
     void addCellVariableToWrite(const std::string &variable_name);

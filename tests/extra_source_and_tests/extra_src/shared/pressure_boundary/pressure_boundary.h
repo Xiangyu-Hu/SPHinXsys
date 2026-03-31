@@ -31,6 +31,7 @@
 #define PRESSURE_BOUNDARY_H
 
 #include "fluid_boundary.h"
+#include "particle_functors.h"
 
 namespace SPH
 {
@@ -50,7 +51,7 @@ class PressureBoundaryCondition : public BaseFlowBoundaryCondition
           target_pressure_(TargetPressure(aligned_box_part), std::forward<Args>(args)...),
           kernel_sum_(particles_->getVariableDataByName<Vecd>("KernelSummation")),
           kernel_correction_(this->particles_),
-          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")){};
+          physical_time_(sph_system_->svPhysicalTime().Data()){};
     virtual ~PressureBoundaryCondition() {};
     AlignedBox &getAlignedBox() { return aligned_box_; };
 

@@ -29,14 +29,11 @@
 #ifndef SPHINXSYS_CONTAINERS_H
 #define SPHINXSYS_CONTAINERS_H
 
-#include "base_data_type_package.h"
-#include "base_data_type.h"
-#include "sphinxsys_constant.h"
-#include "sphinxsys_variable.h"
+#include "data_type.h"
 
 namespace SPH
 {
-class Base;  // Indicating base class
+class Base; // Indicating base class
 class SingleValued
 {
 };
@@ -92,22 +89,11 @@ using RealBodyVector = StdVec<RealBody *>;
 using BodyPartVector = StdVec<BodyPart *>;
 
 using IndexVector = StdVec<size_t>;
-using ConcurrentIndexVector = ConcurrentVec<size_t>;
 using ParticlesBound = std::pair<size_t, size_t>;
 
 /** List data pair: first for indexes, second for particle position. */
 using ListData = std::pair<size_t, Vecd>;
 using ListDataVector = StdVec<ListData>;
 using DataListsInCells = StdVec<ListDataVector *>;
-using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
-/** Cell list for periodic boundary condition algorithms. */
-using CellLists = std::pair<ConcurrentCellLists, DataListsInCells>;
-
-/** Generalized particle data type */
-typedef DataContainerAssemble<AllocatedData> ParticleData;
-/** Generalized particle variable type*/
-typedef DataContainerAddressAssemble<DiscreteVariable> ParticleVariables;
-/** Generalized particle variable type*/
-typedef DataContainerAddressAssemble<SingularVariable> SingularVariables;
 } // namespace SPH
 #endif // SPHINXSYS_CONTAINERS_H

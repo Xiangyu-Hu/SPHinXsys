@@ -37,8 +37,6 @@
 
 namespace SPH
 {
-class LevelSetShape;
-
 /**
  * @class ComplexShape
  * @brief  For now, if the level set shape (for particle relaxation)
@@ -65,8 +63,6 @@ class ComplexShape : public BinaryShapes
         return *level_set_shape;
     };
 };
-
-using DefaultShape = ComplexShape;
 
 /**
  * @class AlignedBox

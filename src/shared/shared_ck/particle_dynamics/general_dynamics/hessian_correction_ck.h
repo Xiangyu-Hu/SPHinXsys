@@ -31,7 +31,9 @@
 #ifndef HESSIAN_CORRECTION_CK_H
 #define HESSIAN_CORRECTION_CK_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include <tuple>
 
 namespace SPH
 {
@@ -115,7 +117,6 @@ class DisplacementMatrixGradient<Contact<Parameters...>>
       protected:
         Real *contact_Vol_;
     };
-
 };
 
 template <typename... Parameters>

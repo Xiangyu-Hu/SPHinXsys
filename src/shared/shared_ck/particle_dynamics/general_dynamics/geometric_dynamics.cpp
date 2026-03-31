@@ -1,5 +1,9 @@
 #include "geometric_dynamics.h"
 
+#include "adaptation.h"
+#include "base_particles.hpp"
+#include "complex_geometry.h"
+
 namespace SPH
 {
 //=================================================================================================//

@@ -30,9 +30,10 @@
 #ifndef CONSTRAINT_DYNAMICS_H
 #define CONSTRAINT_DYNAMICS_H
 
-#include "all_particle_dynamics.h"
-#include "all_simbody.h"
 #include "base_kernel.h"
+#include "base_local_dynamics.h"
+#include "body_part_for_simbody.h"
+#include "dynamics_algorithms.h"
 #include "elastic_solid.h"
 #include "general_constraint.h"
 #include "general_reduce.h"

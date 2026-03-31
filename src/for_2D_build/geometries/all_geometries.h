@@ -32,7 +32,7 @@
 
 #include "complex_geometry.h"
 #include "geometric_shape.h"
-#include "level_set_shape.h"
+#include "level_set_shape.hpp"
 #include "mapping_shape.h"
 #include "multi_polygon_shape.h"
 #include "transform_geometry.h"

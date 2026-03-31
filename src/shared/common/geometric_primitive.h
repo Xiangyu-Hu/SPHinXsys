@@ -31,6 +31,9 @@
 
 #include <base_data_type.h>
 
+#include <Eigen/Geometry>
+#include <iostream>
+
 namespace SPH
 {
 template <int N>

@@ -15,7 +15,7 @@ ParticleGenerator<ParticlesType, Reload>::
     ParticleGenerator(SPHBody &sph_body, ParticlesType &particles, const std::string &reload_body_name)
     : ParticleGenerator<ParticlesType>(sph_body, particles)
 {
-    std::string reload_folder = sph_body.getSPHSystem().getIOEnvironment().ReloadFolder();
+    std::string reload_folder = IO::getEnvironment().ReloadFolder();
     if (!fs::exists(reload_folder))
     {
         std::cout << "\n Error: the particle reload folder:" << reload_folder << " is not exists" << std::endl;
@@ -39,9 +39,9 @@ void ParticleGenerator<ParticlesType, Reload>::setAllParticleBounds()
 };
 //=================================================================================================//
 template <typename ParticlesType>
-void ParticleGenerator<ParticlesType, Reload>::initializeParticleVariables()
+void ParticleGenerator<ParticlesType, Reload>::initializeDiscreteVariables()
 {
-    ParticleGenerator<ParticlesType>::initializeParticleVariablesFromReload();
+    ParticleGenerator<ParticlesType>::initializeDiscreteVariablesFromReload();
 }
 //=================================================================================================//
 } // namespace SPH

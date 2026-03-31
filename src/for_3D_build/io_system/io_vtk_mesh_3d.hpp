@@ -9,7 +9,7 @@ namespace SPH
 template <typename OutStreamType>
 void BodyStatesRecordingToTriangleMeshVtp::writeCellsToVtk(OutStreamType &output_stream, BaseParticles &particles)
 {
-    ParticleVariables &variables_to_write = particles.VariablesToWrite();
+    DiscreteVariables &variables_to_write = particles.VariablesToWrite();
 
     // write scalars
     constexpr int type_index_Real = DataTypeIndex<Real>::value;

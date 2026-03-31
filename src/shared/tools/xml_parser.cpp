@@ -8,7 +8,7 @@ void XmlParser::addNewElement(const std::string &element_name)
     xml_doc_->InsertEndChild(xml_doc_->NewElement(element_name.c_str()));
 }
 //=================================================================================================//
-void XmlParser::addNewElement(tinyxml2::XMLElement *element, const std::string &child_name)
+void XmlParser::addNewElement(TinyXMLElement *element, const std::string &child_name)
 {
     element->InsertNewChildElement(child_name.c_str());
 }
@@ -16,7 +16,7 @@ void XmlParser::addNewElement(tinyxml2::XMLElement *element, const std::string &
 size_t XmlParser::Size()
 {
     size_t num = 0;
-    for (const tinyxml2::XMLElement *child = xml_doc_->FirstChildElement();
+    for (const TinyXMLElement *child = xml_doc_->FirstChildElement();
          child;
          child = child->NextSiblingElement())
         ++num;
@@ -24,10 +24,10 @@ size_t XmlParser::Size()
     return num;
 }
 //=================================================================================================//
-size_t XmlParser::Size(tinyxml2::XMLElement *base)
+size_t XmlParser::Size(TinyXMLElement *base)
 {
     size_t num = 0;
-    for (const tinyxml2::XMLElement *child = base->FirstChildElement();
+    for (const TinyXMLElement *child = base->FirstChildElement();
          child;
          child = child->NextSiblingElement())
         ++num;
@@ -35,15 +35,15 @@ size_t XmlParser::Size(tinyxml2::XMLElement *base)
     return num;
 }
 //=================================================================================================//
-tinyxml2::XMLElement *XmlParser::findElement(const std::string &element_tag)
+TinyXMLElement *XmlParser::findElement(const std::string &element_tag)
 {
-    tinyxml2::XMLElement *child_element = xml_doc_->FirstChildElement(element_tag.c_str());
+    TinyXMLElement *child_element = xml_doc_->FirstChildElement(element_tag.c_str());
     return child_element;
 }
 //=================================================================================================//
-tinyxml2::XMLElement *XmlParser::findElement(tinyxml2::XMLElement *base, const std::string &element_tag)
+TinyXMLElement *XmlParser::findElement(TinyXMLElement *base, const std::string &element_tag)
 {
-    tinyxml2::XMLElement *child_element = base->FirstChildElement(element_tag.c_str());
+    TinyXMLElement *child_element = base->FirstChildElement(element_tag.c_str());
     return child_element;
 }
 //=================================================================================================//
@@ -67,7 +67,7 @@ void XmlParser::resize(const size_t input_size, const std::string name)
     }
 }
 //=================================================================================================//
-void XmlParser::resize(tinyxml2::XMLElement *element, const size_t input_size, const std::string name)
+void XmlParser::resize(TinyXMLElement *element, const size_t input_size, const std::string name)
 {
     size_t total_elements = XmlParser::Size(element);
 

@@ -1,5 +1,7 @@
 #include "non_newtonian_dynamics.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 namespace fluid_dynamics

@@ -35,10 +35,11 @@
 #ifndef BASE_PARTICLE_GENERATOR_H
 #define BASE_PARTICLE_GENERATOR_H
 
-#include "all_particles.h"
-#include "base_data_type_package.h"
-#include "large_data_containers.h"
+#include "base_particles.h"
+#include "data_type.h"
+#include "observer_particles.h"
 #include "sphinxsys_containers.h"
+#include "surface_particles.h"
 
 namespace SPH
 {
@@ -69,8 +70,8 @@ class ParticleGenerator<BaseParticles>
     virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
     virtual void prepareGeometricData() = 0;    // first step of particle generation
     virtual void setAllParticleBounds();        // second step of particle generation
-    virtual void initializeParticleVariables(); // third step of particle generation
-    virtual void initializeParticleVariablesFromReload();
+    virtual void initializeDiscreteVariables(); // third step of particle generation
+    virtual void initializeDiscreteVariablesFromReload();
 };
 
 template <> // generate surface particles
@@ -86,8 +87,8 @@ class ParticleGenerator<SurfaceParticles> : public ParticleGenerator<BaseParticl
   protected:
     SurfaceParticles &surface_particles_;
     virtual void addSurfaceProperties(const Vecd &surface_normal, Real thickness);
-    virtual void initializeParticleVariables() override;
-    virtual void initializeParticleVariablesFromReload() override;
+    virtual void initializeDiscreteVariables() override;
+    virtual void initializeDiscreteVariablesFromReload() override;
 };
 
 class TriangleMeshShape;
@@ -115,7 +116,7 @@ class ParticleGenerator<ParticlesType, Reload> : public ParticleGenerator<Partic
     virtual ~ParticleGenerator() {};
     virtual void prepareGeometricData() override;
     virtual void setAllParticleBounds() override;
-    virtual void initializeParticleVariables() override;
+    virtual void initializeDiscreteVariables() override;
 };
 } // namespace SPH
 #endif // BASE_PARTICLE_GENERATOR_H

@@ -199,7 +199,7 @@ void ANSYSMesh::getMinimumDistanceBetweenNodes()
 //=================================================================================================//
 void BaseInnerRelationInFVM::resetNeighborhoodCurrentSize()
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, base_particles_.TotalRealParticles()),
         [&](const IndexRange &r)
         {
@@ -240,7 +240,7 @@ void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, Base
                                                     ParticleConfiguration &particle_configuration,
                                                     GetParticleIndex &get_particle_index, GetNeighborRelation &get_neighbor_relation)
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, base_particles_.TotalRealParticles()),
         [&](const IndexRange &r)
         {

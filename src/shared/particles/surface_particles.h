@@ -51,7 +51,7 @@ class SurfaceParticles : public BaseParticles
     void registerSurfacePropertiesFromReload();
     virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i]; }
     virtual void registerTransformationMatrix();
-    virtual void initializeBasicParticleVariables() override;
+    virtual void initializeBasicDiscreteVariables() override;
 };
 
 } // namespace SPH

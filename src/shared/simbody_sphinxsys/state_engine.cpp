@@ -1,15 +1,16 @@
 #include "state_engine.h"
 
+#include "io_environment.h"
 #include "sph_system.h"
 namespace SPH
 {
 //=================================================================================================//
 SimbodyStateEngine::
-    SimbodyStateEngine(SPHSystem &sph_system, SimTK::MultibodySystem &system)
+    SimbodyStateEngine(SimTK::MultibodySystem &system)
     : simbody_xml_engine_("state_xml", "mbsystem")
 {
     mbsystem_ = system;
-    restart_folder_ = sph_system.getIOEnvironment().RestartFolder();
+    restart_folder_ = IO::getEnvironment().RestartFolder();
     if (!fs::exists(restart_folder_))
     {
         fs::create_directory(restart_folder_);

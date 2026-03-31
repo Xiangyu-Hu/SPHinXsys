@@ -1,14 +1,15 @@
 #include "triangle_mesh_shape.h"
 
+#include "io_environment.h"
 #include "sph_system.h"
 namespace SPH
 {
 //=================================================================================================//
 TriangleMeshShape::TriangleMeshShape(const std::string &shape_name) : Shape(shape_name) {}
 //=================================================================================================//
-void TriangleMeshShape::writeMeshToFile(SPHSystem &sph_system, Transform transform)
+void TriangleMeshShape::writeMeshToFile(Transform transform)
 {
-    std::string filefullpath = sph_system.getIOEnvironment().OutputFolder() + "/" + name_ + ".vtp";
+    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/" + name_ + ".vtp";
 
     if (fs::exists(filefullpath))
     {

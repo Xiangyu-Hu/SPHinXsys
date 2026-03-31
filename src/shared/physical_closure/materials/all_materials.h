@@ -29,12 +29,10 @@
 #pragma once
 
 #include "base_material.h"
-#include "complex_solid.h"
 #include "complex_solid.hpp"
 #include "compressible_fluid.h"
 #include "diffusion_reaction.h"
 #include "elastic_solid.h"
-#include "general_continuum.h"
 #include "general_continuum.hpp"
 #include "inelastic_solid.hpp"
 #include "viscosity.h"

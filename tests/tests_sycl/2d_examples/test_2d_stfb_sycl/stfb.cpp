@@ -217,7 +217,7 @@ int main(int ac, char *av[])
     SimTK::MultibodySystem MBsystem;
     SimTK::SimbodyMatterSubsystem matter(MBsystem);                // the bodies or matter of the system
     SimTK::GeneralForceSubsystem forces(MBsystem);                 // the forces of the system
-    SimbodyStateEngine simbody_state_engine(sph_system, MBsystem); // the state engine of the system
+    SimbodyStateEngine simbody_state_engine(MBsystem); // the state engine of the system
 
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
     /** Mass properties of the constrained spot.

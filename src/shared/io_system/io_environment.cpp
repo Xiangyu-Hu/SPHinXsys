@@ -1,14 +1,16 @@
 
 #include "io_environment.h"
 
-#include "sph_system.h"
+#include "parameterization.h"
+#include "spdlog/sinks/rotating_file_sink.h"
 
 namespace SPH
 {
 //=============================================================================================//
-IOEnvironment::IOEnvironment(SPHSystem &sph_system)
-    : sph_system_(sph_system),
-      input_folder_("./input"), output_folder_("./output"),
+IOEnvironment::~IOEnvironment() = default;
+//=============================================================================================//
+IOEnvironment::IOEnvironment()
+    : input_folder_("./input"), output_folder_("./output"),
       restart_folder_("./restart"), reload_folder_("./reload")
 {
     if (!fs::exists(output_folder_))
@@ -38,8 +40,6 @@ IOEnvironment::IOEnvironment(SPHSystem &sph_system)
     {
         fs::create_directory(reload_folder_);
     }
-
-    sph_system.io_environment_ = this;
 }
 //=================================================================================================//
 void IOEnvironment::resetForRestart()
@@ -129,5 +129,56 @@ ParameterizationIO *IOEnvironment::defineParameterizationIO()
 {
     return parameterization_io_keeper_.createPtr<ParameterizationIO>(input_folder_);
 }
+//=============================================================================================//
+namespace IO
+{
+//=============================================================================================//
+SharedPtr<IOEnvironment> io_environment; // Global pointer to the IO environment
+//=============================================================================================//
+void initEnvironment()
+{
+    if (!io_environment)
+    {
+        io_environment = makeShared<IOEnvironment>();
+    }
+}
+//=============================================================================================//
+IOEnvironment &getEnvironment()
+{
+    if (!io_environment)
+    {
+        throw std::runtime_error("IOEnvironment not initialized. Call IO::initEnvironment() first.");
+    }
+    return *io_environment.get();
+}
+//=================================================================================================//
+std::shared_ptr<spdlog::logger> logger; // Global logger pointer
+//=================================================================================================//
+std::shared_ptr<spdlog::logger> initLogger()
+{
+    if (!logger) // Create a logger with a file sink
+    {
+        // Create a file rotating logger with 5 MB size max and 3 rotated files
+        auto max_size = 1048576 * 5;
+        auto max_files = 3;
+        logger = spdlog::rotating_logger_mt("sphinxsys_logger", "sphinxsys.log", max_size, max_files);
+        logger->flush_on(spdlog::level::info);                          // Flush logs on info level
+        spdlog::set_default_logger(logger);                             // Set the default logger to the created logger
+        spdlog::set_pattern("[%Y-%m-%d %H:%M:%S] [%l] [thread %t] %v"); // Set the log format
+        spdlog::flush_every(std::chrono::seconds(1));                   // Flush logs every second
+    }
+    return logger;
+}
+//=================================================================================================//
+std::shared_ptr<spdlog::logger> getLogger()
+{
+    if (!logger)
+    {
+        throw std::runtime_error("Logger not initialized. Call IO::initLogger() first.");
+    }
+    return logger;
+}
+//=================================================================================================//
+} // namespace IO
 //=================================================================================================//
 } // namespace SPH

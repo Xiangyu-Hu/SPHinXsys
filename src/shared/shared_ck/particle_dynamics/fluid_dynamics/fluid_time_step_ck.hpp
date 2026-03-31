@@ -1,6 +1,7 @@
 #ifndef FLUID_TIME_STEP_CK_HPP
 #define FLUID_TIME_STEP_CK_HPP
 
+#include "adaptation.h"
 #include "fluid_time_step_ck.h"
 
 namespace SPH

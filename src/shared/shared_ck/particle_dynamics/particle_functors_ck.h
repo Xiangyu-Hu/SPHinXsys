@@ -30,6 +30,8 @@
 #ifndef PARTICLE_FUNCTORS_CK_H
 #define PARTICLE_FUNCTORS_CK_H
 
+#include "particle_functors.h"
+
 namespace SPH
 {
 /*

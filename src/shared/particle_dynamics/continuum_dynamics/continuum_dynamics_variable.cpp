@@ -1,5 +1,6 @@
 #include "continuum_dynamics_variable.h"
 
+#include "vector_functions.h"
 namespace SPH
 {
 namespace continuum_dynamics

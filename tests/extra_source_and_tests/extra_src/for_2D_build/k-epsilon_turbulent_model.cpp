@@ -400,7 +400,7 @@ TurbuViscousForce<Contact<Wall>>::TurbuViscousForce(BaseContactRelation &wall_co
     : BaseTurbuViscousForceWithWall(wall_contact_relation),
       wall_particle_spacing_(wall_contact_relation.getSPHBody().getSPHAdaptation().ReferenceSpacing()),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-      physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {}
+      physical_time_(sph_system_->svPhysicalTime().Data()) {}
 //=================================================================================================//
 void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
@@ -439,7 +439,7 @@ void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
             Real u_star_j = get_dimensionless_velocity(y_star_j, current_time);
             Real fric_vel_mag_j = sqrt(C_mu_25_ * turbu_k_i_05 * vel_i_tau_mag / u_star_j);
             Real WSS_tn_mag_j = rho_i * fric_vel_mag_j * fric_vel_mag_j * boost::qvm::sign(vel_i.dot(e_j_tau));
-            
+
             WSS_j = WSS_tn_mag_j * (e_j_tau * e_j_n.transpose());
             Vecd force_j = 2.0 * mass_[index_i] * WSS_j * e_ij * contact_neighborhood.dW_ij_[n] * this->Vol_[index_j] / rho_i;
             force += force_j;
@@ -738,7 +738,7 @@ StandardWallFunctionCorrection::
       index_nearest(particles_->getVariableDataByName<int>("NearestIndex")),
       e_nearest_tau_(particles_->getVariableDataByName<Vecd>("WallNearestTangentialUnitVector")),
       e_nearest_normal_(particles_->getVariableDataByName<Vecd>("WallNearestNormalUnitVector")),
-      physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime"))
+      physical_time_(sph_system_->svPhysicalTime().Data())
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {

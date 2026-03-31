@@ -306,14 +306,12 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
 
     // System
     SPHSystem system(bb_system, dp_solid);
-    IOEnvironment io_environment(system);
-
     // change output path
     {
         std::string path = "./output_resv_x" + std::to_string(res_factor_solid) + "_ress_x" + std::to_string(res_factor_shell) + "_relax" + std::to_string(run_relax);
         fs::remove_all(path);
         fs::create_directory(path);
-        io_environment.resetOutputFolder(path);
+        IO::getEnvironment().resetOutputFolder(path);
     }
 
     // Create objects
@@ -534,14 +532,12 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
 
     // System
     SPHSystem system(bb_system, dp);
-    IOEnvironment io_environment(system);
-
     // change output path
     {
         std::string path = "./single_output_resv_x" + std::to_string(res_factor) + "_relax" + std::to_string(run_relax);
         fs::remove_all(path);
         fs::create_directory(path);
-        io_environment.resetOutputFolder(path);
+        IO::getEnvironment().resetOutputFolder(path);
     }
 
     // Create objects

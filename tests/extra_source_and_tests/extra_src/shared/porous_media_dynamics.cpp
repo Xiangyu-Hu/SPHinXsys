@@ -1,6 +1,8 @@
 
 #include "porous_media_dynamics.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 namespace multi_species_continuum
@@ -48,7 +50,8 @@ PorousMediaStressRelaxationFirstHalf::
       Stress_(particles_->registerStateVariableData<Matd>("Stress")),
       diffusivity_constant_(porous_solid_.getDiffusivityConstant()),
       fluid_initial_density_(porous_solid_.getFluidInitialDensity()),
-      water_pressure_constant_(porous_solid_.getWaterPressureConstant()) {}
+      water_pressure_constant_(porous_solid_.getWaterPressureConstant()),
+      inv_W0_(1.0 / getSPHAdaptation().getKernel()->W0(ZeroVecd)) {}
 //=================================================================================================//
 void PorousMediaStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 {

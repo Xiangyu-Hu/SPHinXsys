@@ -30,7 +30,6 @@
 #define EULERIAN_COMPRESSIBLE_FLUID_INTEGRATION_H
 
 #include "base_general_dynamics.h"
-#include "compressible_fluid.h"
 #include "eulerian_riemann_solver.h"
 #include "fluid_integration.hpp"
 #include "fluid_time_step.h"

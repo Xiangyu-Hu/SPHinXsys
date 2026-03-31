@@ -29,9 +29,7 @@
 #ifndef INTERACTION_ALGORITHMS_CK_H
 #define INTERACTION_ALGORITHMS_CK_H
 
-#include "base_particle_dynamics.h"
 #include "interaction_ck.hpp"
-#include "particle_iterators_ck.h"
 #include "simple_algorithms_ck.h"
 
 namespace SPH
@@ -111,11 +109,11 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>
 
     template <class UpdateType, typename... Args>
     auto &addPostStateDynamics(Args &&...args);
-    
+
     template <template <typename...> class UpdateType, typename... ControlParameters,
               class DynamicsIdentifier, typename... Args>
-    auto &addPostStateDynamics(DynamicsIdentifier &dynamics_identifier, Args &&...args);          
-    
+    auto &addPostStateDynamics(DynamicsIdentifier &dynamics_identifier, Args &&...args);
+
     auto &addPostStateDynamics(BaseDynamics<void> &state_dynamics);
 
     template <class UpdateType, typename... Args>

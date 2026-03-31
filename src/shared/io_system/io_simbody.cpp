@@ -1,6 +1,6 @@
 #include "io_simbody.h"
 #include "io_environment.h"
-#include "sph_system.hpp"
+#include "sph_system.h"
 
 namespace SPH
 {
@@ -139,7 +139,7 @@ WriteSimBodyFreeRotationMatrix::
     WriteSimBodyFreeRotationMatrix(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                                    SimTK::MobilizedBody::Free &free_body)
     : WriteSimBodyStates<SimTK::MobilizedBody::Free>(sph_system, integ, free_body),
-      filefullpath_(sph_system.getIOEnvironment().OutputFolder() + "/RotationMatrix.dat") {}
+      filefullpath_(IO::getEnvironment().OutputFolder() + "/RotationMatrix.dat") {}
 //=============================================================================================//
 void WriteSimBodyFreeRotationMatrix::writeToFile(size_t iteration_step)
 {
@@ -204,7 +204,7 @@ WriteSimBodyVelocity::
     WriteSimBodyVelocity(SPHSystem &sph_system, SimTK::RungeKuttaMersonIntegrator &integ,
                          SimTK::MobilizedBody::Free &free_body)
     : WriteSimBodyStates<SimTK::MobilizedBody::Free>(sph_system, integ, free_body),
-      filefullpath_(sph_system.getIOEnvironment().OutputFolder() + "/BodyVelocity.dat") {};
+      filefullpath_(IO::getEnvironment().OutputFolder() + "/BodyVelocity.dat") {};
 //=============================================================================================//
 void WriteSimBodyVelocity::writeToFile(size_t iteration_step)
 {

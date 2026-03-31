@@ -1,13 +1,15 @@
-#include "io_base.h"
+#include "io_base.hpp"
 
-#include "sph_system.hpp"
+#include "base_dynamics.h"
+#include "io_environment.h"
+#include "sph_system.h"
 
 namespace SPH
 {
 //=============================================================================================//
 BaseIO::BaseIO(SPHSystem &sph_system)
-    : sph_system_(sph_system), io_environment_(sph_system.getIOEnvironment()),
-      sv_physical_time_(sph_system_.getSystemVariableByName<Real>("PhysicalTime")) {}
+    : sph_system_(sph_system), io_environment_(IO::getEnvironment()),
+      sv_physical_time_(&sph_system.svPhysicalTime()) {}
 //=============================================================================================//
 std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream)
 {
@@ -30,6 +32,8 @@ BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)
 BodyStatesRecording::BodyStatesRecording(SPHBody &body)
     : BaseIO(body.getSPHSystem()), bodies_({&body}),
       state_recording_(sph_system_.StateRecording()) {}
+//=============================================================================================//
+BodyStatesRecording::~BodyStatesRecording() = default;
 //=============================================================================================//
 void BodyStatesRecording::writeToFile()
 {
