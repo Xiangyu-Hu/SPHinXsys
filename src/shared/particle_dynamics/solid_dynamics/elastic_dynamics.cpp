@@ -66,7 +66,12 @@ BaseElasticIntegration::
       force_(particles_->registerStateVariableData<Vecd>("Force")),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
       F_(particles_->registerStateVariableData<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
-      dF_dt_(particles_->registerStateVariableData<Matd>("DeformationRate")) {}
+      dF_dt_(particles_->registerStateVariableData<Matd>("DeformationRate"))
+      {
+        particles_->addEvolvingVariable<Vecd>("Velocity");
+        particles_->addEvolvingVariable<Matd>("DeformationGradient");
+        particles_->addEvolvingVariable<Matd>("DeformationRate");
+      }
 //=================================================================================================//
 BaseIntegration1stHalf::
     BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
