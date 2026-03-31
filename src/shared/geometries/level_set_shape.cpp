@@ -1,5 +1,6 @@
-#include "level_set_shape.h"
+#include "level_set_shape.hpp"
 
+#include "adaptation.h"
 #include "all_io.h"
 #include "base_body.h"
 #include "sph_system.h"

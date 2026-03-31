@@ -3,6 +3,8 @@
 #include "base_particles.hpp"
 #include "cell_linked_list.h"
 #include "level_set_shape.h"
+#include "sphinxsys_variable.h"
+#include "vector_functions.h"
 
 namespace SPH
 {

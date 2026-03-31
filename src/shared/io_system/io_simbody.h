@@ -30,6 +30,7 @@
 #define IO_SIMBODY_H
 
 #include "io_base.h"
+#include "simbody_middle.h"
 
 namespace SPH
 {

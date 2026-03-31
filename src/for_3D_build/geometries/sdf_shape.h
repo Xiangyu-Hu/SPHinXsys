@@ -34,6 +34,7 @@
 #include "sdf_extension.hpp"
 #include "sdf_operation.hpp"
 #include "sdf_primitive.h"
+#include "sphinxsys_entity.h"
 
 namespace SPH
 {
@@ -95,7 +96,7 @@ class SDFShape : public Shape
     StdVec<SDFPrimitiveAndOp> primitives_and_ops_;
 
     Real probeSignedDistance(const Vec3d &probe_point);
-    Vecd probeNormalDirection(const Vec3d &probe_point);
+    Vec3d probeNormalDirection(const Vec3d &probe_point);
 };
 } // namespace SPH
 #endif // SDF_SHAPE_H

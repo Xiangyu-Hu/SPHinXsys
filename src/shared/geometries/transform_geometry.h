@@ -29,8 +29,8 @@
 #ifndef TRANSFORM_SHAPE_H
 #define TRANSFORM_SHAPE_H
 
-#include "base_data_type_package.h"
 #include "base_geometry.h"
+#include "data_type.h"
 
 namespace SPH
 {

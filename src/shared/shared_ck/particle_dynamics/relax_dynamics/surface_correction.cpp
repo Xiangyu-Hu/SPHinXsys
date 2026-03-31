@@ -1,5 +1,7 @@
 #include "surface_correction.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 //=================================================================================================//

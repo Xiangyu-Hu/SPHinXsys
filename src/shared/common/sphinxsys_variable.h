@@ -297,5 +297,10 @@ struct FinalizeVariablesAfterRead
         }
     };
 };
+
+/** Generalized particle variable type*/
+typedef DataContainerAddressAssemble<DiscreteVariable> DiscreteVariables;
+/** Generalized particle variable type*/
+typedef DataContainerAddressAssemble<SingularVariable> SingularVariables;
 } // namespace SPH
 #endif // SPHINXSYS_VARIABLE_H

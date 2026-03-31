@@ -30,7 +30,9 @@
 #ifndef GENERAL_CONSTRAINT_CK_H
 #define GENERAL_CONSTRAINT_CK_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include <string>
 
 namespace SPH
 {

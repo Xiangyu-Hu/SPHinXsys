@@ -1,8 +1,8 @@
 #ifndef WINDKESSEL_BC_H
 #define WINDKESSEL_BC_H
 
-#include "sphinxsys.h"
 #include "pressure_boundary.h"
+#include "sphinxsys.h"
 
 namespace SPH
 {
@@ -11,18 +11,17 @@ namespace fluid_dynamics
 class TargetOutletPressureWindkessel : public BaseLocalDynamics<BodyPartByCell>
 {
   public:
-    explicit TargetOutletPressureWindkessel(AlignedBoxByCell& aligned_box_part)
+    explicit TargetOutletPressureWindkessel(AlignedBoxByCell &aligned_box_part)
         : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
           part_id_(aligned_box_part.getPartID()),
-          Rp_(0.0), C_(0.0), Rd_(0.0), delta_t_(0.0), 
-          Q_n_(0.0), Q_0_(0.0), p_n_(80*133.32), p_0_(80*133.32),
+          Rp_(0.0), C_(0.0), Rd_(0.0), delta_t_(0.0),
+          Q_n_(0.0), Q_0_(0.0), p_n_(80 * 133.32), p_0_(80 * 133.32),
           flow_rate_(*(this->particles_->registerSingularVariable<Real>("FlowRate" + std::to_string(part_id_ - 1))->Data())),
           current_flow_rate_(0.0), previous_flow_rate_(0.0),
           M_n_(0.0), current_mass_flow_rate_(0.0), previous_mass_flow_rate_(0.0),
           acc_mass_flow_rate_(*(this->particles_->registerSingularVariable<Real>("AccMassFlowRate" + std::to_string(part_id_ - 1))->Data())),
-          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime"))
-    {};
-    virtual ~TargetOutletPressureWindkessel(){};
+          physical_time_(sph_system_->svPhysicalTime().Data()) {};
+    virtual ~TargetOutletPressureWindkessel() {};
 
     void setWindkesselParams(Real Rp, Real C, Real Rd, Real dt)
     {
@@ -39,9 +38,9 @@ class TargetOutletPressureWindkessel : public BaseLocalDynamics<BodyPartByCell>
         Q_n_ = current_flow_rate_ / delta_t_;
         M_n_ = current_mass_flow_rate_ / delta_t_;
 
-        Real dp_dt = - p_0_ / (C_ * Rd_) + (Rp_ + Rd_) * Q_n_ / (C_ * Rd_) + Rp_ * (Q_n_ - Q_0_) / (delta_t_ + TinyReal);
+        Real dp_dt = -p_0_ / (C_ * Rd_) + (Rp_ + Rd_) * Q_n_ / (C_ * Rd_) + Rp_ * (Q_n_ - Q_0_) / (delta_t_ + TinyReal);
         Real p_star = p_0_ + dp_dt * delta_t_;
-        Real dp_dt_star = - p_star / (C_ * Rd_) + (Rp_ + Rd_) * Q_n_ / (C_ * Rd_) + Rp_ * (Q_n_ - Q_0_) / (delta_t_ + TinyReal);
+        Real dp_dt_star = -p_star / (C_ * Rd_) + (Rp_ + Rd_) * Q_n_ / (C_ * Rd_) + Rp_ * (Q_n_ - Q_0_) / (delta_t_ + TinyReal);
         p_n_ = p_0_ + 0.5 * delta_t_ * (dp_dt + dp_dt_star);
 
         std::cout << "p_n_ = " << p_n_ / 133.32 << " mmHg" << std::endl;
@@ -52,7 +51,7 @@ class TargetOutletPressureWindkessel : public BaseLocalDynamics<BodyPartByCell>
 
     Real operator()(Real p, Real current_time)
     {
-        return p_n_ - 80*133.32;
+        return p_n_ - 80 * 133.32;
     }
 
   protected:
@@ -81,7 +80,7 @@ class TargetOutletPressureWindkessel : public BaseLocalDynamics<BodyPartByCell>
         std::string output_folder = "./output";
         std::string filefullpath = output_folder + "/" + std::to_string(part_id_ - 1) + "_windkessel_outlet_pressure.dat";
         std::ofstream out_file(filefullpath.c_str(), std::ios::app);
-        out_file << *physical_time_ << "   " << p_n_ <<  "\n";
+        out_file << *physical_time_ << "   " << p_n_ << "\n";
         out_file.close();
     }
 
@@ -90,12 +89,12 @@ class TargetOutletPressureWindkessel : public BaseLocalDynamics<BodyPartByCell>
         std::string output_folder = "./output";
         std::string filefullpath = output_folder + "/" + std::to_string(part_id_ - 1) + "_volume_flow_rate.dat";
         std::ofstream out_file(filefullpath.c_str(), std::ios::app);
-        out_file << *physical_time_ << "   " << Q_n_ <<  "\n";
+        out_file << *physical_time_ << "   " << Q_n_ << "\n";
         out_file.close();
 
         std::string filefullpath_mass = output_folder + "/" + std::to_string(part_id_ - 1) + "_mass_flow_rate.dat";
         std::ofstream out_file_mass(filefullpath_mass.c_str(), std::ios::app);
-        out_file_mass << *physical_time_ << "   " << M_n_ <<  "\n";
+        out_file_mass << *physical_time_ << "   " << M_n_ << "\n";
         out_file_mass.close();
     }
 };
@@ -157,37 +156,37 @@ class BidirectionalBufferWindkessel
               previous_surface_indicator_(particles_->getVariableDataByName<int>("PreviousSurfaceIndicator")),
               buffer_indicator_(particles_->getVariableDataByName<int>("BufferIndicator")),
               upper_bound_fringe_(0.5 * sph_body_->getSPHBodyResolutionRef()),
-              physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")),
+              physical_time_(sph_system_->svPhysicalTime().Data()),
               flow_rate_(*(this->particles_->template getSingularVariableByName<Real>("FlowRate" + std::to_string(part_id_ - 1))->Data())),
               acc_mass_flow_rate_(*(this->particles_->template getSingularVariableByName<Real>("AccMassFlowRate" + std::to_string(part_id_ - 1))->Data())),
               target_pressure_(target_pressure)
-              {
+        {
             particle_buffer_.checkParticlesReserved();
         };
         virtual ~Injection() {};
 
         void update(size_t index_i, Real dt = 0.0)
         {
-          if (aligned_box_.checkUpperBound(pos_[index_i], upper_bound_fringe_) &&
-              buffer_indicator_[index_i] == part_id_ &&
-              index_i < particles_->TotalRealParticles())
-          {
-              mutex_switch.lock();
-              particle_buffer_.checkEnoughBuffer(*particles_);
-              size_t new_particle_index = particles_->createRealParticleFrom(index_i);
-              buffer_indicator_[new_particle_index] = 0;
+            if (aligned_box_.checkUpperBound(pos_[index_i], upper_bound_fringe_) &&
+                buffer_indicator_[index_i] == part_id_ &&
+                index_i < particles_->TotalRealParticles())
+            {
+                mutex_switch.lock();
+                particle_buffer_.checkEnoughBuffer(*particles_);
+                size_t new_particle_index = particles_->createRealParticleFrom(index_i);
+                buffer_indicator_[new_particle_index] = 0;
 
-              /** Periodic bounding. */
-              pos_[index_i] = aligned_box_.getUpperPeriodic(pos_[index_i]);
-              Real sound_speed = fluid_.getSoundSpeed(rho_[index_i]);
-              p_[index_i] = target_pressure_(p_[index_i], *physical_time_);
-              rho_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
-              previous_surface_indicator_[index_i] = 1;
-              mutex_switch.unlock();
+                /** Periodic bounding. */
+                pos_[index_i] = aligned_box_.getUpperPeriodic(pos_[index_i]);
+                Real sound_speed = fluid_.getSoundSpeed(rho_[index_i]);
+                p_[index_i] = target_pressure_(p_[index_i], *physical_time_);
+                rho_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
+                previous_surface_indicator_[index_i] = 1;
+                mutex_switch.unlock();
 
-              flow_rate_ -= Vol_[index_i];
-              acc_mass_flow_rate_ -= Vol_[index_i] * rho_[index_i];
-          }
+                flow_rate_ -= Vol_[index_i];
+                acc_mass_flow_rate_ -= Vol_[index_i] * rho_[index_i];
+            }
         }
 
       protected:
@@ -274,14 +273,14 @@ class TotalVelocityNormVal
     Transform &transform_;
 
   public:
-      explicit TotalVelocityNormVal(AlignedBoxByCell& aligned_box_part)
-          : BaseLocalDynamicsReduce<ReduceSum<Real>, BodyPartByCell>(aligned_box_part),
+    explicit TotalVelocityNormVal(AlignedBoxByCell &aligned_box_part)
+        : BaseLocalDynamicsReduce<ReduceSum<Real>, BodyPartByCell>(aligned_box_part),
           vel_(this->particles_->template getVariableDataByName<Vecd>("Velocity")),
           aligned_box_(aligned_box_part.getAlignedBox()),
           alignment_axis_(aligned_box_.AlignmentAxis()),
           transform_(aligned_box_.getTransform()) {};
 
-    virtual ~TotalVelocityNormVal(){};
+    virtual ~TotalVelocityNormVal() {};
 
     Real reduce(size_t index_i, Real dt = 0.0)
     {
@@ -296,12 +295,12 @@ class AreaAverageFlowRate : public ReduceSumType
 {
   public:
     template <class DynamicsIdentifier, typename... Args>
-    explicit AreaAverageFlowRate(DynamicsIdentifier &identifier, Real outlet_area,  Args &&...args)
-          : ReduceSumType(identifier, std::forward<Args>(args)...),
-            part_id_(identifier.getPartID()),
-            tansient_flow_rate_(*(this->particles_->template registerSingularVariable<Real>("TransientVolumeFlowRate" + std::to_string(part_id_ - 1))->Data())),
-            outlet_area_(outlet_area), physical_time_(this->sph_system_->template getSystemVariableDataByName<Real>("PhysicalTime")) {};
-    virtual ~AreaAverageFlowRate(){};
+    explicit AreaAverageFlowRate(DynamicsIdentifier &identifier, Real outlet_area, Args &&...args)
+        : ReduceSumType(identifier, std::forward<Args>(args)...),
+          part_id_(identifier.getPartID()),
+          tansient_flow_rate_(*(this->particles_->template registerSingularVariable<Real>("TransientVolumeFlowRate" + std::to_string(part_id_ - 1))->Data())),
+          outlet_area_(outlet_area), physical_time_(this->sph_system_->template getSystemVariableDataByName<Real>("PhysicalTime")){};
+    virtual ~AreaAverageFlowRate() {};
 
     virtual Real outputResult(Real reduced_value) override
     {
@@ -311,7 +310,7 @@ class AreaAverageFlowRate : public ReduceSumType
         std::string output_folder = "./output";
         std::string filefullpath = output_folder + "/" + std::to_string(part_id_ - 1) + "_transient_VolumeFlowRate.dat";
         std::ofstream out_file(filefullpath.c_str(), std::ios::app);
-        out_file << *physical_time_ << "   " << tansient_flow_rate_ <<  "\n";
+        out_file << *physical_time_ << "   " << tansient_flow_rate_ << "\n";
         out_file.close();
 
         return tansient_flow_rate_;

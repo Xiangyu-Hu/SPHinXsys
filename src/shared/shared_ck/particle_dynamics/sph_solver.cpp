@@ -1,6 +1,6 @@
 #include "sph_solver.h"
 
-#include "sph_system.hpp"
+#include "sph_system.h"
 
 namespace SPH
 {
@@ -8,7 +8,7 @@ namespace SPH
 TimeStepper::TimeStepper(SPHSystem &sph_system)
     : global_dt_(0.0)
 {
-    sv_physical_time_ = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    sv_physical_time_ = &sph_system.svPhysicalTime();
 }
 //=================================================================================================//
 TimeStepper::TriggerByPhysicalTime::

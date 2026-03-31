@@ -226,7 +226,7 @@ TEST(test_optimization, test_problem1_non_optimized)
     //	Main loop starts here.
     //----------------------------------------------------------------------
     std::string filefullpath_nonopt_temperature =
-        sph_system.getIOEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
+        IO::getEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app);
 
     while (physical_time < End_Time)
@@ -247,7 +247,6 @@ TEST(test_optimization, test_problem1_non_optimized)
         temperature_splitting.exec(dt);
         ite++;
         physical_time += dt;
-
     }
     TickCount t4 = TickCount::now();
     TickCount::interval_t tt;

@@ -29,41 +29,23 @@
 #ifndef BASE_DATA_TYPE_H
 #define BASE_DATA_TYPE_H
 
-#include <algorithm>
-#include <cassert>
-#include <climits>
 #include <cmath>
-#include <iostream>
 #include <limits>
-#include <map>
-#include <memory>
-#include <typeinfo>
+#include <utility>
 #include <vector>
 
 #if SPHINXSYS_USE_SYCL
 #include <CL/sycl.hpp>
 #define SYCL_DEVICE_ONLY
-#else
-#include <boost/atomic/atomic_ref.hpp>
 #endif // SPHINXSYS_USE_SYCL
 
-#include <Eigen/Cholesky>
 #include <Eigen/Core>
-#include <Eigen/Dense>
-#include <Eigen/Eigenvalues>
-#include <Eigen/Geometry>
 
 namespace SPH
 {
 #if SPHINXSYS_USE_SYCL
-template <typename T>
-using AtomicRef = sycl::atomic_ref<
-    T, sycl::memory_order_relaxed, sycl::memory_scope_device,
-    sycl::access::address_space::global_space>;
 namespace math = sycl;
 #else
-template <typename T>
-using AtomicRef = boost::atomic_ref<T>;
 namespace math = std;
 #endif // SPHINXSYS_USE_SYCL
 
@@ -79,6 +61,8 @@ using Real = double;
 using UnsignedInt = size_t;
 #endif // SPHINXSYS_USE_FLOAT
 
+template <typename T>
+using StdVec = std::vector<T>;
 /** Vector with integers. */
 using Array2i = Eigen::Array<int, 2, 1>;
 using Array3i = Eigen::Array<int, 3, 1>;

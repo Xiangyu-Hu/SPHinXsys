@@ -22,8 +22,8 @@ const Real DH = 0.4;                                        // tank height
 const Real DL = 0.8;                                        // tank length
 const Real DW = 0.2;                                        // tank width
 const Real resolution_shell = t;                            // shell particle spacing
-const Real global_resolution = 2 * resolution_shell;           // system particle spacing
-const Real BW = global_resolution * 4;                         // boundary width
+const Real global_resolution = 2 * resolution_shell;        // system particle spacing
+const Real BW = global_resolution * 4;                      // boundary width
 const Real plate_x_pos = DL - 0.2 + 0.5 * resolution_shell; // center x coordinate of plate
 
 const Real marker_h = 0.0875; // height of marker
@@ -134,7 +134,7 @@ class GateMotionConstraint : public MotionConstraint<SPHBody>
   public:
     GateMotionConstraint(SPHBody &body)
         : MotionConstraint<SPHBody>(body),
-          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
+          physical_time_(sph_system_->svPhysicalTime().Data()) {};
     virtual ~GateMotionConstraint() {};
     void update(size_t index_i, Real dt)
     {

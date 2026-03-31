@@ -42,7 +42,10 @@
 
 #include "base_data_type.h"
 
+#include <iostream>
+#include <memory>
 #include <string_view>
+#include <vector>
 
 template <typename T>
 constexpr std::string_view type_name()
@@ -69,7 +72,6 @@ constexpr std::string_view type_name()
 
 namespace SPH
 {
-
 inline void checkPointer(void *ptr, std::string_view pointer_name, std::string_view owner_name)
 {
     if (ptr == nullptr)
@@ -184,7 +186,7 @@ class UniquePtrsKeeper
     }
 
   private:
-    std::vector<UniquePtrKeeper<BaseType>> ptr_keepers_;
+    StdVec<UniquePtrKeeper<BaseType>> ptr_keepers_;
 };
 
 template <class T>
@@ -275,7 +277,7 @@ class SharedPtrsKeeper
     }
 
   private:
-    std::vector<SharedPtrKeeper<BaseType>> ptr_keepers_;
+    StdVec<SharedPtrKeeper<BaseType>> ptr_keepers_;
 };
 
 } // namespace SPH

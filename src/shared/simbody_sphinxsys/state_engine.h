@@ -37,11 +37,13 @@
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 #include "exception.h"
+#include "ownership.h"
 
 #include <cstdio>
 #include <iostream>
+#include <map>
 #include <stdexcept>
 #include <string>
 
@@ -260,7 +262,7 @@ class SimbodyStateEngine
     mutable SimTK::ReferencePtr<SimTK::System> statesassociatedsystem_;
 
     /** Default constructor **/
-    SimbodyStateEngine(SPHSystem &sph_system, SimTK::MultibodySystem &system);
+    SimbodyStateEngine(SimTK::MultibodySystem &system);
 
     /** Reference pointer to the system that this engine manage. */
     SimTK::ReferencePtr<SimTK::MultibodySystem> mbsystem_;

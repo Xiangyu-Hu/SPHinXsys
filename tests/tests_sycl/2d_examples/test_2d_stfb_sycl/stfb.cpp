@@ -217,7 +217,7 @@ int main(int ac, char *av[])
     SimTK::MultibodySystem MBsystem;
     SimTK::SimbodyMatterSubsystem matter(MBsystem);                // the bodies or matter of the system
     SimTK::GeneralForceSubsystem forces(MBsystem);                 // the forces of the system
-    SimbodyStateEngine simbody_state_engine(sph_system, MBsystem); // the state engine of the system
+    SimbodyStateEngine simbody_state_engine(MBsystem); // the state engine of the system
 
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
     /** Mass properties of the constrained spot.
@@ -302,14 +302,25 @@ int main(int ac, char *av[])
     structure_cell_linked_list.exec();
     observer_update_contact_relation.exec();
     //----------------------------------------------------------------------
+    //	Define time stepper with end and start time.
+    //----------------------------------------------------------------------
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
+    auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
+    auto &trigger_FSI = time_stepper.addTriggerByPhysicalTime(1.0);
+    size_t advection_steps = 0;
+    int screening_interval = 100;
+    int restart_interval = 1000;
+    int observation_interval = screening_interval / 2;
+    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
+    //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
-    Real restart_time = 0.0;
     size_t restart_step = sph_system.RestartStep();
     if (restart_step != 0)
     {
-        restart_time = restart_io.readRestartFiles(restart_step);
+        Real restart_time = restart_io.readRestartFiles(restart_step);
         structure_cell_linked_list.exec();
+        advection_steps = restart_step;
 
         simbody_state_engine.readStateFromXml(restart_step, simbody_state);
         simbody_state.setTime(Real(restart_time));
@@ -317,17 +328,6 @@ int main(int ac, char *av[])
     integ.setAccuracy(1e-3);
     integ.setAllowInterpolation(false);
     integ.initialize(simbody_state);
-    //----------------------------------------------------------------------
-    //	Define time stepper with end and start time.
-    //----------------------------------------------------------------------
-    TimeStepper time_stepper(sph_system, total_physical_time, restart_time);
-    auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
-    auto &trigger_FSI = time_stepper.addTriggerByPhysicalTime(1.0);
-    size_t advection_steps = restart_step;
-    int screening_interval = 100;
-    int restart_interval = 1000;
-    int observation_interval = screening_interval / 2;
-    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -353,7 +353,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
-    while (!time_stepper.isEndTime())
+    while (!time_stepper.isEndTime(total_physical_time))
     {
         //----------------------------------------------------------------------
         //	the fastest and most frequent acostic time stepping.

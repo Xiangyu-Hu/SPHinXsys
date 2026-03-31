@@ -29,7 +29,7 @@
 
 #include "tinyxml2.h"
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 #include "sphinxsys_containers.h"
 
 #include <cassert>
@@ -51,6 +51,7 @@ namespace SPH
 // Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
 // Eigen::IOFormat HeavyFmt(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]");
 
+using TinyXMLElement = tinyxml2::XMLElement;
 constexpr int OutputPrecision = std::numeric_limits<Real>::digits10;
 
 template <typename DataType>
@@ -155,7 +156,7 @@ class XmlParser
      * Functions & Parameters
      */
     /** First element of the xml doc, also noted as root element in tinyxml-1. */
-    tinyxml2::XMLElement *first_element_;
+    TinyXMLElement *first_element_;
 
     /** Write to XML file */
     void writeToXmlFile(const std::string &filefullpath)
@@ -201,14 +202,14 @@ class XmlParser
     };
 
     /** Get the Tag of a element as a string */
-    std::string getElementTag(tinyxml2::XMLElement *element)
+    std::string getElementTag(TinyXMLElement *element)
     {
         const char *element_name = element->Name();
         return std::string(element_name);
     };
 
     /** Get a reference to a child element */
-    tinyxml2::XMLElement *getChildElement(const std::string &tag)
+    TinyXMLElement *getChildElement(const std::string &tag)
     {
         return findElement(tag);
     };
@@ -217,44 +218,44 @@ class XmlParser
     void addNewElement(const std::string &element_name);
 
     /**Add child element to a given element. */
-    void addNewElement(tinyxml2::XMLElement *father_element, const std::string &child_name);
+    void addNewElement(TinyXMLElement *father_element, const std::string &child_name);
 
     /** Get the size of Xml doc */
     size_t Size();
 
     /** Get the size of Xml Element */
-    size_t Size(tinyxml2::XMLElement *base);
+    size_t Size(TinyXMLElement *base);
 
     /** Find optional element in root element */
-    tinyxml2::XMLElement *findElement(const std::string &element_tag);
+    TinyXMLElement *findElement(const std::string &element_tag);
 
     /** Find optional element in optional element */
-    tinyxml2::XMLElement *findElement(tinyxml2::XMLElement *base, const std::string &element_tag);
+    TinyXMLElement *findElement(TinyXMLElement *base, const std::string &element_tag);
 
     /** resize of Xml doc */
     void resize(const size_t input_size, const std::string name);
 
     /** resize of an element */
-    void resize(tinyxml2::XMLElement *element, const size_t input_size, const std::string name);
+    void resize(TinyXMLElement *element, const size_t input_size, const std::string name);
 
     //----------------------------------------------------------------------
     //	Add an attribute of type string to an xml element.
     //----------------------------------------------------------------------
     template <typename T>
-    void setAttributeToElement(tinyxml2::XMLElement *base_ele, const std::string &attrib_name, const T &value)
+    void setAttributeToElement(TinyXMLElement *base_ele, const std::string &attrib_name, const T &value)
     {
         base_ele->SetAttribute(attrib_name.c_str(), DataToString(value).c_str());
     };
 
     template <int DIMENSION, auto... Rest>
-    void setAttributeToElement(tinyxml2::XMLElement *base_ele, const std::string &attrib_name,
+    void setAttributeToElement(TinyXMLElement *base_ele, const std::string &attrib_name,
                                const Eigen::Matrix<Real, DIMENSION, 1, Rest...> &value)
     {
         base_ele->SetAttribute(attrib_name.c_str(), DataToString(value).c_str());
     };
 
     template <int DIMENSION, auto... Rest>
-    void setAttributeToElement(tinyxml2::XMLElement *base_ele, const std::string &attrib_name,
+    void setAttributeToElement(TinyXMLElement *base_ele, const std::string &attrib_name,
                                const Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
     {
         base_ele->SetAttribute(attrib_name.c_str(), DataToString(value).c_str());
@@ -264,7 +265,7 @@ class XmlParser
     //	Get the required attribute value of an element.
     //----------------------------------------------------------------------
     template <typename T>
-    void queryAttributeValue(tinyxml2::XMLElement *base_ele, const std::string &attrib_name, T &value)
+    void queryAttributeValue(TinyXMLElement *base_ele, const std::string &attrib_name, T &value)
     {
         const char *value_char = 0;
         base_ele->QueryAttribute(attrib_name.c_str(), &value_char);
@@ -274,7 +275,7 @@ class XmlParser
     };
 
     template <int DIMENSION, auto... Rest>
-    void queryAttributeValue(tinyxml2::XMLElement *base_ele, const std::string &attrib_name,
+    void queryAttributeValue(TinyXMLElement *base_ele, const std::string &attrib_name,
                              Eigen::Matrix<Real, DIMENSION, 1, Rest...> &value)
     {
         const char *value_char = 0;
@@ -285,7 +286,7 @@ class XmlParser
     };
 
     template <int DIMENSION, auto... Rest>
-    void queryAttributeValue(tinyxml2::XMLElement *base_ele, const std::string &attrib_name,
+    void queryAttributeValue(TinyXMLElement *base_ele, const std::string &attrib_name,
                              Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
     {
         const char *value_char = 0;

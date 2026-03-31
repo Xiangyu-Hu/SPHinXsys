@@ -38,6 +38,8 @@
 
 #include "base_fluid_dynamics.h"
 
+#include <tuple>
+
 namespace SPH
 {
 namespace fluid_dynamics

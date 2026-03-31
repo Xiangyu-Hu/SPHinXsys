@@ -52,11 +52,12 @@
 
 #include "base_dynamics.h"
 #include "base_local_dynamics.h"
-#include "base_particle_dynamics.h"
 #include "cell_linked_list.hpp"
 #include "particle_iterators.h"
 
+#include <string>
 #include <type_traits>
+#include <utility>
 
 namespace SPH
 {

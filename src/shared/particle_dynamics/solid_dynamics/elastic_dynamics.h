@@ -31,7 +31,6 @@
 #define ELASTIC_DYNAMICS_H
 
 #include "all_body_relations.h"
-#include "all_particle_dynamics.h"
 #include "base_general_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
@@ -204,7 +203,7 @@ class Integration1stHalf : public BaseIntegration1stHalf
   protected:
     Matd *stress_PK1_B_;
     Real numerical_dissipation_factor_;
-    Real inv_W0_ = 1.0 / getSPHAdaptation().getKernel()->W0(ZeroVecd);
+    Real inv_W0_;
 };
 
 /**

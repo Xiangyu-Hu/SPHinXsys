@@ -1,6 +1,10 @@
 #pragma once
-#include "base_particles.hpp"
+
 #include "continuum_integration.h"
+
+#include "base_particles.hpp"
+#include "vector_functions.h"
+
 namespace SPH
 {
 namespace continuum_dynamics

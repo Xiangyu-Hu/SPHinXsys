@@ -33,7 +33,4 @@
 #include "simtk_wrapper.h"
 #include "state_engine.h"
 #include "xml_engine.h"
-
-#include "base_data_type.h"
-#include "body_part_for_simbody.h"
 #endif // ALL_SIMBODY_H

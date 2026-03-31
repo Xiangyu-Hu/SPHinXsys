@@ -2,6 +2,7 @@
 #define IO_VTK_HPP
 
 #include "io_vtk.h"
+#include "vector_functions.h"
 
 namespace SPH
 {
@@ -10,7 +11,7 @@ template <typename OutStreamType>
 void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream, BaseParticles &particles)
 {
     size_t total_real_particles = particles.TotalRealParticles();
-    ParticleVariables &variables_to_write = particles.VariablesToWrite();
+    DiscreteVariables &variables_to_write = particles.VariablesToWrite();
 
     // write sorted particles ID
     output_stream

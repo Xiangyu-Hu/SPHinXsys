@@ -17,6 +17,7 @@ Use your best judgment, and feel free to propose changes to this document in a p
 * [Reporting Bugs](#reporting-bugs)
 * [Suggesting Enhancements](#suggesting-enhancements)
 * [Your First Code Contribution](#your-first-code-contribution)
+* [Adding New Feature](#adding-new-feature)
 * [Pull Requests](#pull-requests)
 
 [Styleguides](#styleguides)
@@ -64,7 +65,7 @@ There are a few conventions that have developed over time around SPHinXsys:
 
 ## How Can I Contribute?
 
-### Reporting Bugs or Issues
+### Reporting Bugs
 
 When you are creating a bug or issue report, please include as many details as possible.
 
@@ -82,6 +83,18 @@ You can start by looking through these `good first` and `help-wanted` issues:
 * [Help wanted issues] - issues which should be a bit more involved than `beginner` issues.
 
 Both issue lists are sorted by total number of comments.
+
+### Adding New Feature
+
+In order to be more effective, we may need to follow some proved good practice on contributing a new feature. One thing that discussing or issue first then change the code after the discussion settled. Since SPHinXsys is already quite finished and big, the most concern on adding new feature is to avoid increasing technical debts, which troubles the maintenance greatly.
+So, adding new features would usually follow the pipeline of generalization first and new feature second for minimum impact and easy testing. That also means that we first think how the new feature is related to the old code.  As SPHinXsys has a lot of classes and methods defined already, in most cases, the new feature and some old features can be generalized under a same new concept.
+
+Therefore, the suggested practice is first doing a conservative modification, that is, reproduce the old functionality of the code by introduce the new concept using template. Then test the entire library, for this you can use draft pull request, Github will test for you automatically. After this is done, you can add you new feature as an incremental change, and then test your new feature with new test case.
+
+In this way, we introduce minimum technical debt for more sustained development.
+Certainly, this will be less straightforward as the simple feature adding approach, but much better in long term.
+
+In summarize, you first introduce a new concept, implement the new concept to the old code and then add new feature using the same concept. In this way, you are contributing the library in design concept level other than simply add something.
 
 ### Pull Requests
 

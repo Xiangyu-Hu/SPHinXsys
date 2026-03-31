@@ -131,7 +131,7 @@ int main(int ac, char *av[])
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     if (sph_system.RestartStep() != 0)
     {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
+        restart_io.readRestartFiles(sph_system.RestartStep());
         water_block.updateCellLinkedList();
         water_wall_complex.updateConfiguration();
         fluid_observer_contact.updateConfiguration();

@@ -31,7 +31,11 @@
 #ifndef GENERAL_GRADIENT_H
 #define GENERAL_GRADIENT_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include <string>
+#include <tuple>
+#include <utility>
 
 namespace SPH
 {

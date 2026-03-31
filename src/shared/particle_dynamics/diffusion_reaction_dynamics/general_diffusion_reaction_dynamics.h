@@ -29,7 +29,7 @@
 #ifndef GENERAL_DIFFUSION_REACTION_DYNAMICS_H
 #define GENERAL_DIFFUSION_REACTION_DYNAMICS_H
 
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "diffusion_reaction.h"
 
 namespace SPH

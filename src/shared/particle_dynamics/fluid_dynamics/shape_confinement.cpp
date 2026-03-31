@@ -1,5 +1,8 @@
 #include "shape_confinement.h"
 
+#include "adaptation.h"
+#include "complex_geometry.h"
+
 namespace SPH
 {
 namespace fluid_dynamics

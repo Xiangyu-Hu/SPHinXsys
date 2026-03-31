@@ -13,17 +13,17 @@ using namespace SPH;
 /**
  * @brief Basic geometry parameters and numerical setup.
  */
-Real PL = 10.0;                                   /** Length of the square plate. */
-Real PH = 10.0;                                   /** Width of the square plate. */
-Real PT = 1.0;                                    /** Thickness of the square plate. */
-Vec3d n_0 = Vec3d(0.0, 0.0, 1.0);                 /** Pseudo-normal. */
-int particle_number = 40;                         /** Particle number in the direction of the length */
+Real PL = 10.0;                                      /** Length of the square plate. */
+Real PH = 10.0;                                      /** Width of the square plate. */
+Real PT = 1.0;                                       /** Thickness of the square plate. */
+Vec3d n_0 = Vec3d(0.0, 0.0, 1.0);                    /** Pseudo-normal. */
+int particle_number = 40;                            /** Particle number in the direction of the length */
 Real global_resolution = PL / (Real)particle_number; /** Initial reference particle spacing. */
-int BWD = 1;                                      /** Width of the boundary layer measured by number of particles. */
+int BWD = 1;                                         /** Width of the boundary layer measured by number of particles. */
 Real BW = global_resolution * (Real)BWD;             /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec3d(-BW, -BW, -0.5 * global_resolution),
-                                 Vec3d(PL + BW, PH + BW, 0.5 * global_resolution));
+                                  Vec3d(PL + BW, PH + BW, 0.5 * global_resolution));
 
 /** For material properties of the solid. */
 Real rho0_s = 1.0;                 /** Normalized density. */
@@ -100,7 +100,7 @@ class ControlledRotation : public thin_structure_dynamics::ConstrainShellBodyReg
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
           angular_vel_(particles_->getVariableDataByName<Vecd>("AngularVelocity")),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
+          physical_time_(sph_system_->svPhysicalTime().Data()) {};
     virtual ~ControlledRotation() {};
 
   protected:

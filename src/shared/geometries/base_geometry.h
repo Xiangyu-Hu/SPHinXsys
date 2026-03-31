@@ -33,8 +33,12 @@
 #include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
 
-#include <spdlog/spdlog.h>
 #include <string>
+
+namespace spdlog
+{
+class logger;
+}
 
 namespace SPH
 {
@@ -144,6 +148,8 @@ class BinaryShapes : public Shape
     UniquePtrsKeeper<Shape> sub_shapes_keeper_;
     StdVec<SubShapeAndOp> sub_shapes_and_ops_;
 };
+
+using DefaultShape = BinaryShapes;
 
 /**
  * @class Edge

@@ -31,6 +31,8 @@
 
 #include "io_base.h"
 
+#include <map>
+
 #include "dynamics_algorithms.h"
 #include "general_reduce.h"
 

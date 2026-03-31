@@ -1,5 +1,8 @@
 #include "structure_dynamics.h"
 
+#include "adaptation.h"
+#include "base_particles.hpp"
+
 namespace SPH
 {
 namespace solid_dynamics
