@@ -62,7 +62,7 @@ boost_multi_poly MultiPolygon::
     return multi_poly_tmp_out;
 }
 //=================================================================================================//
-void MultiPolygon::addMultiPolygon(MultiPolygon &multi_polygon_op, GeometricOps op)
+void MultiPolygon::addMultiPolygon(const MultiPolygon &multi_polygon_op, GeometricOps op)
 {
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_polygon_op.getBoostMultiPoly(), op);
 }
