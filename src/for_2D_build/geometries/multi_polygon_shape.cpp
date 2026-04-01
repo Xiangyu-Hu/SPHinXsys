@@ -83,7 +83,7 @@ void MultiPolygon::addBox(Transform transform, const Vecd &halfsize, GeometricOp
     addPolygon(points, op);
 }
 //=================================================================================================//
-void MultiPolygon::addBox(BoundingBox2d bounding_box, GeometricOps op)
+void MultiPolygon::addBox(const BoundingBox2d &bounding_box, GeometricOps op)
 {
     Vecd point0 = bounding_box.lower_;
     Vecd point1 = Vecd(bounding_box.lower_[0], bounding_box.upper_[1]);
@@ -92,6 +92,15 @@ void MultiPolygon::addBox(BoundingBox2d bounding_box, GeometricOps op)
 
     std::vector<Vecd> points = {point0, point1, point2, point3, point0};
     addPolygon(points, op);
+}
+//=================================================================================================//
+void MultiPolygon::addContainerBox(const BoundingBox2d &bounding_box, Real thickness, GeometricOps op)
+{
+    BoundingBox2d outer_box = bounding_box.expand(thickness);
+    MultiPolygon container_box;
+    container_box.addBox(outer_box, GeometricOps::add);
+    container_box.addBox(bounding_box, GeometricOps::sub);
+    addMultiPolygon(container_box, op);
 }
 //=================================================================================================//
 void MultiPolygon::addCircle(const Vecd &center, Real radius, int resolution, GeometricOps op)

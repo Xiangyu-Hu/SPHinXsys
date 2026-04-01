@@ -93,7 +93,8 @@ class MultiPolygon
     void addBoostMultiPoly(boost_multi_poly &boost_multi_poly, GeometricOps op);
     void addPolygon(const std::vector<Vecd> &points, GeometricOps op);
     void addBox(Transform transform, const Vecd &halfsize, GeometricOps op);
-    void addBox(BoundingBox2d bounding_box, GeometricOps op);
+    void addBox(const BoundingBox2d &bounding_box, GeometricOps op);
+    void addContainerBox(const BoundingBox2d &bounding_box, Real thickness, GeometricOps op);
     void addCircle(const Vecd &center, Real radius, int resolution, GeometricOps op);
     void addPolygonFromFile(std::string file_path_name, GeometricOps op, Vecd translation = Vecd::Zero(), Real scale_factor = 1.0);
 
