@@ -20,7 +20,7 @@ Real global_resolution = PH / 10.0;
 Real BW = global_resolution * 4; // boundary width, at least three particles
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
-                                 Vec2d(PL + 3.0 * BW, PL / 2.0));
+                                  Vec2d(PL + 3.0 * BW, PL / 2.0));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -56,8 +56,8 @@ class Beam : public MultiPolygonShape
   public:
     explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(beam_base_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(beam_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_base_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -91,8 +91,8 @@ class BeamInitialCondition
 MultiPolygon createBeamConstrainShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_base_shape, GeometricOps::add);
-    multi_polygon.addAPolygon(beam_shape, GeometricOps::sub);
+    multi_polygon.addPolygon(beam_base_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_shape, GeometricOps::sub);
     return multi_polygon;
 };
 //------------------------------------------------------------------------------

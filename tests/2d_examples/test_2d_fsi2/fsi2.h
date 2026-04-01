@@ -13,15 +13,15 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 11.0;                         /**< Channel length. */
-Real DH = 4.1;                          /**< Channel height. */
+Real DL = 11.0;                            /**< Channel length. */
+Real DH = 4.1;                             /**< Channel height. */
 Real global_resolution = 0.1;              /**< Global reference resolution. */
 Real DL_sponge = global_resolution * 20.0; /**< Sponge region to impose inflow condition. */
 Real BW = global_resolution * 4.0;         /**< Boundary width, determined by specific layer of boundary particles. */
-Vec2d insert_circle_center(2.0, 2.0);   /**< Location of the cylinder center. */
-Real insert_circle_radius = 0.5;        /**< Radius of the cylinder. */
-Real bh = 0.4 * insert_circle_radius;   /**< Height of the beam. */
-Real bl = 7.0 * insert_circle_radius;   /**< Length of the beam. */
+Vec2d insert_circle_center(2.0, 2.0);      /**< Location of the cylinder center. */
+Real insert_circle_radius = 0.5;           /**< Radius of the cylinder. */
+Real bh = 0.4 * insert_circle_radius;      /**< Height of the beam. */
+Real bl = 7.0 * insert_circle_radius;      /**< Length of the beam. */
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
@@ -108,9 +108,9 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), GeometricOps::add);
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::sub);
-        multi_polygon_.addAPolygon(createBeamShape(), GeometricOps::sub);
+        multi_polygon_.addPolygon(createWaterBlockShape(), GeometricOps::add);
+        multi_polygon_.addCircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::sub);
+        multi_polygon_.addPolygon(createBeamShape(), GeometricOps::sub);
     }
 };
 class WallBoundary : public MultiPolygonShape
@@ -118,8 +118,8 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createOuterWallShape(), GeometricOps::add);
-        multi_polygon_.addAPolygon(createInnerWallShape(), GeometricOps::sub);
+        multi_polygon_.addPolygon(createOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createInnerWallShape(), GeometricOps::sub);
     }
 };
 class Insert : public MultiPolygonShape
@@ -127,16 +127,16 @@ class Insert : public MultiPolygonShape
   public:
     explicit Insert(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::add);
-        multi_polygon_.addAPolygon(createBeamShape(), GeometricOps::add);
+        multi_polygon_.addCircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::add);
+        multi_polygon_.addPolygon(createBeamShape(), GeometricOps::add);
     }
 };
 /** create the beam base as constrain shape. */
 MultiPolygon createBeamBaseShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::add);
-    multi_polygon.addAPolygon(createBeamShape(), GeometricOps::sub);
+    multi_polygon.addCircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::add);
+    multi_polygon.addPolygon(createBeamShape(), GeometricOps::sub);
     return multi_polygon;
 }
 //----------------------------------------------------------------------

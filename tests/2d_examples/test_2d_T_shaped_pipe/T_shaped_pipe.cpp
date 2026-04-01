@@ -10,9 +10,9 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.0;                        /**< Reference length. */
-Real DH = 3.0;                        /**< Reference and the height of main channel. */
-Real DL1 = 0.7 * DL;                  /**< The length of the main channel. */
+Real DL = 5.0;                           /**< Reference length. */
+Real DH = 3.0;                           /**< Reference and the height of main channel. */
+Real DL1 = 0.7 * DL;                     /**< The length of the main channel. */
 Real global_resolution = 0.15;           /**< Initial reference particle spacing. */
 Real BW = global_resolution * 4;         /**< Reference size of the emitter. */
 Real DL_sponge = global_resolution * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
@@ -49,7 +49,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(water_block_shape, GeometricOps::add);
     }
 };
 
@@ -58,8 +58,8 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
+        multi_polygon_.addPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------

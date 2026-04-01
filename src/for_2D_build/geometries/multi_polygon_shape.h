@@ -89,12 +89,12 @@ class MultiPolygon
     bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true);
     Vecd findClosestPoint(const Vecd &probe_point);
 
-    void addAMultiPolygon(MultiPolygon &multi_polygon, GeometricOps op);
-    void addABoostMultiPoly(boost_multi_poly &boost_multi_poly, GeometricOps op);
-    void addAPolygon(const std::vector<Vecd> &points, GeometricOps op);
-    void addABox(Transform transform, const Vecd &halfsize, GeometricOps op);
-    void addACircle(const Vecd &center, Real radius, int resolution, GeometricOps op);
-    void addAPolygonFromFile(std::string file_path_name, GeometricOps op, Vecd translation = Vecd::Zero(), Real scale_factor = 1.0);
+    void addMultiPolygon(MultiPolygon &multi_polygon, GeometricOps op);
+    void addBoostMultiPoly(boost_multi_poly &boost_multi_poly, GeometricOps op);
+    void addPolygon(const std::vector<Vecd> &points, GeometricOps op);
+    void addBox(Transform transform, const Vecd &halfsize, GeometricOps op);
+    void addCircle(const Vecd &center, Real radius, int resolution, GeometricOps op);
+    void addPolygonFromFile(std::string file_path_name, GeometricOps op, Vecd translation = Vecd::Zero(), Real scale_factor = 1.0);
 
   protected:
     boost_multi_poly multi_poly_;

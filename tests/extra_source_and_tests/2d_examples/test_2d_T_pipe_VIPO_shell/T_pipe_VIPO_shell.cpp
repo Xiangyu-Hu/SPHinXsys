@@ -67,7 +67,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(water_block_shape, GeometricOps::add);
     }
 };
 
@@ -76,8 +76,8 @@ class ShellShape : public MultiPolygonShape
   public:
     explicit ShellShape(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
+        multi_polygon_.addPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------

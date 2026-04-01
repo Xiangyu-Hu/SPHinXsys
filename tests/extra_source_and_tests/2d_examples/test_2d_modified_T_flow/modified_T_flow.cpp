@@ -20,9 +20,9 @@ using namespace SPH;
 Real DL = 0.2;                                               /**< Reference length. */
 Real DH = 0.1;                                               /**< Reference and the height of main channel. */
 Real DL1 = 0.75 * DL;                                        /**< The length of the main channel. */
-Real global_resolution = 0.005;                                 /**< Initial reference particle spacing. */
-Real BW = global_resolution * 4;                                /**< Reference size of the emitter. */
-Real DL_sponge = global_resolution * 20;                        /**< Reference size of the emitter buffer to impose inflow condition. */
+Real global_resolution = 0.005;                              /**< Initial reference particle spacing. */
+Real BW = global_resolution * 4;                             /**< Reference size of the emitter. */
+Real DL_sponge = global_resolution * 20;                     /**< Reference size of the emitter buffer to impose inflow condition. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
 
 //----------------------------------------------------------------------
@@ -121,7 +121,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(water_block_shape, GeometricOps::add);
     }
 };
 
@@ -130,8 +130,8 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
+        multi_polygon_.addPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 

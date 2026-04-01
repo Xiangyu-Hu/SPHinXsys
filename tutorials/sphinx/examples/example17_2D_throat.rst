@@ -96,9 +96,9 @@ Here, we create the fluid and wall bodies.
 			pnts2.push_back(Vecd(DL / 6.0, -0.5 * DH));
 
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(pnts1, ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(pnts2, ShapeBooleanOps::add);
+			multi_polygon.addPolygon(pnts, ShapeBooleanOps::add);
+			multi_polygon.addPolygon(pnts1, ShapeBooleanOps::add);
+			multi_polygon.addPolygon(pnts2, ShapeBooleanOps::add);
 
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}
@@ -142,10 +142,10 @@ Here, we create the fluid and wall bodies.
 			pnts2.push_back(Vecd(DL / 6.0, -0.5 * DH));
 
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(pnts3, ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(pnts, ShapeBooleanOps::sub);
-			multi_polygon.addAPolygon(pnts1, ShapeBooleanOps::sub);
-			multi_polygon.addAPolygon(pnts2, ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(pnts3, ShapeBooleanOps::add);
+			multi_polygon.addPolygon(pnts, ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(pnts1, ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(pnts2, ShapeBooleanOps::sub);
 
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}

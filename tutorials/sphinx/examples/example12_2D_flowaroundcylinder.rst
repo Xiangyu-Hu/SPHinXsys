@@ -95,8 +95,8 @@ After that, the water body and the buffer region are defined by class inheritanc
 			/** Geometry definition. */
 			std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
 			body_shape_ = new ComplexShape(body_name);
-			body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
-			body_shape_->addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
+			body_shape_->addPolygon(water_block_shape, ShapeBooleanOps::add);
+			body_shape_->addCircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
 		}
 	};
 	/** Case-dependent material properties. */
@@ -126,7 +126,7 @@ And similar to the rigid cylinder.
 		{
 			/** Geomtry definition. */
 			ComplexShape original_body_shape;
-			original_body_shape.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+			original_body_shape.addCircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
 			body_shape_ = new LevelSetComplexShape(this, original_body_shape);
 		}
 	};
@@ -146,7 +146,7 @@ using velocity relaxation as follows,
 			/** Geomtry definition. */
 			std::vector<Vecd> inflow_buffer_shape = CreatBufferShape();
 			body_part_shape_ = new ComplexShape(constrained_region_name);
-			body_part_shape_->addAPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
+			body_part_shape_->addPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
 
 			//tag the constrained particle
 			tagBodyPart();

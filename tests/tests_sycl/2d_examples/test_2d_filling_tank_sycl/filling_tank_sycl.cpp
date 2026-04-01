@@ -62,9 +62,9 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(CreateOuterWallShape(), GeometricOps::add);
-        multi_polygon_.addAPolygon(CreateInnerWallShape(), GeometricOps::sub);
-        multi_polygon_.addABox(Transform(inlet_translation), inlet_halfsize, GeometricOps::sub);
+        multi_polygon_.addPolygon(CreateOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(CreateInnerWallShape(), GeometricOps::sub);
+        multi_polygon_.addBox(Transform(inlet_translation), inlet_halfsize, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------

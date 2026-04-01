@@ -8,8 +8,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 2.0;                          /**< Channel length. */
-Real DH = 0.4;                          /**< Channel height. */
+Real DL = 2.0;                             /**< Channel length. */
+Real DH = 0.4;                             /**< Channel height. */
 Real global_resolution = DH / 25.0;        /**< Global reference resolution. */
 Real DL_sponge = global_resolution * 20.0; /**< Sponge region to impose inflow condition. */
 /** Boundary width, determined by specific layer of boundary particles. */
@@ -81,7 +81,7 @@ class ThermofluidBody : public MultiPolygonShape
   public:
     explicit ThermofluidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createShape(), GeometricOps::add);
     }
 };
 class ThermosolidBody : public MultiPolygonShape
@@ -89,8 +89,8 @@ class ThermosolidBody : public MultiPolygonShape
   public:
     explicit ThermosolidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createOuterWallShape(), GeometricOps::add);
-        multi_polygon_.addAPolygon(createInnerWallShape(), GeometricOps::sub);
+        multi_polygon_.addPolygon(createOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createInnerWallShape(), GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------

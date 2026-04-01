@@ -8,13 +8,13 @@ namespace SPH
 MultiPolygon::MultiPolygon(const std::vector<Vecd> &points)
     : MultiPolygon()
 {
-    addAPolygon(points, GeometricOps::add);
+    addPolygon(points, GeometricOps::add);
 }
 //=================================================================================================//
 MultiPolygon::MultiPolygon(const Vecd &center, Real radius, int resolution)
     : MultiPolygon()
 {
-    addACircle(center, radius, resolution, GeometricOps::add);
+    addCircle(center, radius, resolution, GeometricOps::add);
 }
 //=================================================================================================//
 boost_multi_poly MultiPolygon::
@@ -62,17 +62,17 @@ boost_multi_poly MultiPolygon::
     return multi_poly_tmp_out;
 }
 //=================================================================================================//
-void MultiPolygon::addAMultiPolygon(MultiPolygon &multi_polygon_op, GeometricOps op)
+void MultiPolygon::addMultiPolygon(MultiPolygon &multi_polygon_op, GeometricOps op)
 {
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_polygon_op.getBoostMultiPoly(), op);
 }
 //=================================================================================================//
-void MultiPolygon::addABoostMultiPoly(boost_multi_poly &boost_multi_poly_op, GeometricOps op)
+void MultiPolygon::addBoostMultiPoly(boost_multi_poly &boost_multi_poly_op, GeometricOps op)
 {
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, boost_multi_poly_op, op);
 }
 //=================================================================================================//
-void MultiPolygon::addABox(Transform transform, const Vecd &halfsize, GeometricOps op)
+void MultiPolygon::addBox(Transform transform, const Vecd &halfsize, GeometricOps op)
 {
     Vecd point0 = transform.shiftFrameStationToBase(-halfsize);
     Vecd point1 = transform.shiftFrameStationToBase(Vecd(-halfsize[0], halfsize[1]));
@@ -80,10 +80,10 @@ void MultiPolygon::addABox(Transform transform, const Vecd &halfsize, GeometricO
     Vecd point3 = transform.shiftFrameStationToBase(Vecd(halfsize[0], -halfsize[1]));
 
     std::vector<Vecd> points = {point0, point1, point2, point3, point0};
-    addAPolygon(points, op);
+    addPolygon(points, op);
 }
 //=================================================================================================//
-void MultiPolygon::addACircle(const Vecd &center, Real radius, int resolution, GeometricOps op)
+void MultiPolygon::addCircle(const Vecd &center, Real radius, int resolution, GeometricOps op)
 {
     Vecd buffer_center = center;
     Real buffer_radius = radius;
@@ -118,7 +118,7 @@ void MultiPolygon::addACircle(const Vecd &center, Real radius, int resolution, G
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_circle, op);
 }
 //=================================================================================================//
-void MultiPolygon::addAPolygon(const std::vector<Vecd> &points, GeometricOps op)
+void MultiPolygon::addPolygon(const std::vector<Vecd> &points, GeometricOps op)
 {
     std::vector<boost_point> pts;
     for (const Vecd &pnt : points)
@@ -149,7 +149,7 @@ void MultiPolygon::addAPolygon(const std::vector<Vecd> &points, GeometricOps op)
 }
 //=================================================================================================//
 void MultiPolygon::
-    addAPolygonFromFile(std::string file_path_name, GeometricOps op, Vecd translation, Real scale_factor)
+    addPolygonFromFile(std::string file_path_name, GeometricOps op, Vecd translation, Real scale_factor)
 {
     std::fstream dataFile(file_path_name);
     Vecd temp_point;
@@ -171,7 +171,7 @@ void MultiPolygon::
     }
     dataFile.close();
 
-    addAPolygon(coordinates, op);
+    addPolygon(coordinates, op);
 }
 //=================================================================================================//
 bool MultiPolygon::checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED /*= true*/)

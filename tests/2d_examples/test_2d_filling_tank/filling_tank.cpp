@@ -10,14 +10,14 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Global geometry, material parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.366;              /**< Tank length. */
-Real DH = 5.366;              /**< Tank height. */
+Real DL = 5.366;                 /**< Tank length. */
+Real DH = 5.366;                 /**< Tank height. */
 Real global_resolution = 0.025;  /**< Initial reference particle spacing. */
 Real BW = global_resolution * 4; /**< Extending width for wall boundary. */
-Real LL = 2.0 * BW;           /**< Inflow region length. */
-Real LH = 0.125;              /**< Inflows region height. */
-Real inlet_height = 1.0;      /**< Inflow location height */
-Real inlet_distance = -BW;    /**< Inflow location distance */
+Real LL = 2.0 * BW;              /**< Inflow region length. */
+Real LH = 0.125;                 /**< Inflows region height. */
+Real inlet_height = 1.0;         /**< Inflow location height */
+Real inlet_distance = -BW;       /**< Inflow location distance */
 Vec2d inlet_halfsize = Vec2d(0.5 * LL, 0.5 * LH);
 Vec2d inlet_translation = Vec2d(inlet_distance, inlet_height) + inlet_halfsize;
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
@@ -62,9 +62,9 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(CreateOuterWallShape(), GeometricOps::add);
-        multi_polygon_.addAPolygon(CreateInnerWallShape(), GeometricOps::sub);
-        multi_polygon_.addABox(Transform(inlet_translation), inlet_halfsize, GeometricOps::sub);
+        multi_polygon_.addPolygon(CreateOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(CreateInnerWallShape(), GeometricOps::sub);
+        multi_polygon_.addBox(Transform(inlet_translation), inlet_halfsize, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
