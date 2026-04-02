@@ -21,10 +21,10 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	POROUS_ELASTIC_DYNAMICS_H.h
- * @brief 	Here, we define the algorithm classes for elastic solid dynamics.
+ * @file 	porous_media_dynamics.h
+ * @brief 	Here, we define the algorithm classes for porous media dynamics.
  * @details 	We consider here a weakly compressible solids.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef POROUS_ELASTIC_DYNAMICS_H

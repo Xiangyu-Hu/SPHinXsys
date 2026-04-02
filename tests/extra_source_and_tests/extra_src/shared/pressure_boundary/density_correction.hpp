@@ -1,5 +1,5 @@
 #pragma once
-#include "density_correciton.h"
+#include "density_correction.h"
 
 namespace SPH
 {

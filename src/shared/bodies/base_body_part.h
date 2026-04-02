@@ -33,6 +33,7 @@
 #include "all_geometries.h"
 #include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
+#include "base_particles.h"
 
 #include <optional>
 
@@ -125,116 +126,63 @@ class BodyPartByParticle : public BodyPart
 };
 
 /**
- * @class BodyPartByParticleVariableRange
- * @brief Tag particles whose scalar variable value stays inside [lower_bound, upper_bound].
+ * @class BodyPartByParticleCustom
+ * @brief A body part defined by the customized criteria
+ */
+template <typename TagCriteria>
+class BodyPartByParticleCustom : public BodyPartByParticle
+{
+  public:
+    template <typename... Args>
+    BodyPartByParticleCustom(SPHBody &sph_body, const std::string &name, Args &&...args)
+        : BodyPartByParticle(sph_body)
+    {
+        static_assert(
+            std::is_invocable_r_v<bool, const TagCriteria &, size_t>,
+            "TagCriteria must be callable as bool(size_t) const.");
+
+        alias_ = name;
+
+        TaggingParticleMethod criteria = TagCriteria(base_particles_, std::forward<Args>(args)...);
+        tagParticles(criteria);
+    }
+    virtual ~BodyPartByParticleCustom() = default;
+};
+
+/**
+ * @class VariableRangeTagCriteria
+ * @brief A common criteria defined by the range of one variable
  */
 template <typename DataType>
-class BodyPartByParticleVariableRange : public BodyPartByParticle
+class VariableRangeTagCriteria
 {
   public:
-	BodyPartByParticleVariableRange(
-		SPHBody &sph_body, const std::string &name, const std::string &variable_name,
-		DataType lower_bound, DataType upper_bound);
-	virtual ~BodyPartByParticleVariableRange() {};
+    VariableRangeTagCriteria(
+        BaseParticles &base_particles, const std::string &variable_name,
+        DataType lower_bound, DataType upper_bound)
+        : variable_(base_particles.template getVariableDataByName<DataType>(variable_name)),
+          lower_bound_(lower_bound), upper_bound_(upper_bound)
+    {
+        if (lower_bound_ > upper_bound_)
+        {
+            throw std::invalid_argument("Lower bound must be less than or equal to upper bound.");
+        }
+    }
 
-	const std::string &getVariableName() const { return variable_name_; };
-	DataType getUpperBound() const { return upper_bound_; };
-	DataType getLowerBound() const { return lower_bound_; };
+    bool operator()(size_t index_i) const
+    {
+        return (lower_bound_ <= variable_[index_i]) &&
+               (variable_[index_i] <= upper_bound_);
+    }
 
-  protected:
-	DataType *variable_;
-	std::string variable_name_;
-	DataType lower_bound_;
-	DataType upper_bound_;
-
-	bool tagByRange(size_t particle_index) const;
+  private:
+    DataType *variable_;
+    DataType lower_bound_;
+    DataType upper_bound_;
 };
 
-using BodyPartByParticleRealVariableRange = BodyPartByParticleVariableRange<Real>;
-using BodyPartByParticleIntVariableRange = BodyPartByParticleVariableRange<int>;
-
-/**
- * @class BodyPartByParticleBoolean
- * @brief Base class for boolean combinations of BodyPartByParticle objects.
- */
-class BodyPartByParticleBoolean : public BodyPartByParticle
-{
-  protected:
-	BodyPartByParticleBoolean(SPHBody &sph_body);
-
-	void initializeBooleanBodyPart(
-		const std::string &name, TaggingParticleMethod &tagging_particle_method);
-	void validateBodyPartsInput(
-		const StdVec<BodyPartByParticle *> &body_parts,
-		const std::string &operation_name) const;
-	void countParticleInclusions(
-		const StdVec<BodyPartByParticle *> &body_parts,
-		StdVec<int> &inclusion_mask) const;
-};
-
-/**
- * @class BodyPartByParticleUnion
- * @brief Build a body part as the union of any number of BodyPartByParticle objects.
- */
-class BodyPartByParticleUnion : public BodyPartByParticleBoolean
-{
-  public:
-	BodyPartByParticleUnion(
-		SPHBody &sph_body, const std::string &name,
-		const StdVec<BodyPartByParticle *> &body_parts);
-	BodyPartByParticleUnion(
-		SPHBody &sph_body, const std::string &name,
-		std::initializer_list<BodyPartByParticle *> body_parts);
-	virtual ~BodyPartByParticleUnion() {};
-
-  protected:
-	StdVec<int> inclusion_mask_;
-	bool tagByUnion(size_t particle_index) const;
-};
-
-/**
- * @class BodyPartByParticleIntersection
- * @brief Build a body part as the intersection of any number of BodyPartByParticle objects.
- */
-class BodyPartByParticleIntersection : public BodyPartByParticleBoolean
-{
-  public:
-	BodyPartByParticleIntersection(
-		SPHBody &sph_body, const std::string &name,
-		const StdVec<BodyPartByParticle *> &body_parts);
-	BodyPartByParticleIntersection(
-		SPHBody &sph_body, const std::string &name,
-		std::initializer_list<BodyPartByParticle *> body_parts);
-	virtual ~BodyPartByParticleIntersection() {};
-
-  protected:
-	StdVec<int> inclusion_mask_;
-	size_t required_hits_;
-	bool tagByIntersection(size_t particle_index) const;
-};
-
-/**
- * @class BodyPartByParticleDifference
- * @brief Build a body part as set difference: first body part minus all remaining body parts.
- */
-class BodyPartByParticleDifference : public BodyPartByParticleBoolean
-{
-  public:
-	BodyPartByParticleDifference(
-		SPHBody &sph_body, const std::string &name,
-		const StdVec<BodyPartByParticle *> &body_parts);
-	BodyPartByParticleDifference(
-		SPHBody &sph_body, const std::string &name,
-		std::initializer_list<BodyPartByParticle *> body_parts);
-	virtual ~BodyPartByParticleDifference() {};
-
-  protected:
-	StdVec<int> minuend_mask_; // particles included in the first body part
-	StdVec<int> exclusion_mask_; // particles included in any of the other body parts
-	void buildDifferenceMasks(
-		const StdVec<BodyPartByParticle *> &body_parts);
-	bool tagByDifference(size_t particle_index) const;
-};
+using BodyPartByRealVar = BodyPartByParticleCustom<VariableRangeTagCriteria<Real>>;
+using BodyPartByIntVar = BodyPartByParticleCustom<VariableRangeTagCriteria<int>>;
 
 /**
  * @class BodyPartByCell

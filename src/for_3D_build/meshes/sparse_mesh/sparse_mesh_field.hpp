@@ -1,7 +1,7 @@
 #ifndef SPARSE_MESH_FIELD_3D_HPP
 #define SPARSE_MESH_FIELD_3D_HPP
 
-#include "spares_mesh_field.hxx"
+#include "sparse_mesh_field.hxx"
 
 #include "block_cluster_3d.h"
 

@@ -22,11 +22,11 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	porous_media_solid.h
- * @brief 	These are classes for define properties of elastic solid materials.
+ * @brief 	These are classes for defining properties of elastic solid materials.
  *			These classes are based on isotropic linear elastic solid.
  * 			Several more complex materials, including neo-Hookean, FENE neo-Hookean
  *			and anisotropic muscle, are derived from the basic elastic solid class.
- * @author	Chi ZHang and Xiangyu Hu
+ * @author	Chi Zhang and Xiangyu Hu
  */
 
 #ifndef POROUS_SOLID_H

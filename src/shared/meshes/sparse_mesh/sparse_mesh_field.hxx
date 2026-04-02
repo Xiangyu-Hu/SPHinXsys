@@ -1,7 +1,7 @@
 #ifndef SPARSE_MESH_FIELD_HXX
 #define SPARSE_MESH_FIELD_HXX
 
-#include "spares_mesh_field.h"
+#include "sparse_mesh_field.h"
 
 namespace SPH
 {

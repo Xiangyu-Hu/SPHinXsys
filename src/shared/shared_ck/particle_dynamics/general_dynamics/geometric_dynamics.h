@@ -39,7 +39,7 @@ class HostKernel
     template <class ExecutionPolicy, class EncloserType>
     HostKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     {
-        // not implemented for device policy due to virtual function call in inital_shape_,
+        // not implemented for device policy due to virtual function call in initial_shape_,
         // which is not allowed in device code
         static_assert(!std::is_base_of<execution::DeviceExecution<>, ExecutionPolicy>::value,
                       "This compute kernel is not designed for execution on device!");
