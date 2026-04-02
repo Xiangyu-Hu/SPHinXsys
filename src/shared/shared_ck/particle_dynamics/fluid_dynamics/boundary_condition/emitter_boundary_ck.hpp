@@ -45,27 +45,27 @@ void EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>::
 //=================================================================================================//
 template <typename AlignedBoxPartType>
 EmitterInflowInjectionCK<AlignedBoxPartType>::
-    EmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer)
+    EmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part)
     : BaseLocalDynamics<AlignedBoxPartType>(aligned_box_part),
-      buffer_(buffer), sv_aligned_box_(aligned_box_part.svAlignedBox()),
+      sv_aligned_box_(aligned_box_part.svAlignedBox()),
       spawn_real_particle_method_(this->particles_),
       rho0_(this->particles_->getBaseMaterial().ReferenceDensity()),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_p_(this->particles_->template getVariableByName<Real>("Pressure"))
 {
-    buffer_.checkParticlesReserved();
+    this->particles_->checkEnoughReserve();
 }
 //=================================================================================================//
 template <typename AlignedBoxPartType>
 EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::
     FinishDynamics(EmitterInflowInjectionCK<AlignedBoxPartType> &encloser)
-    : particles_(encloser.particles_), buffer_(encloser.buffer_) {}
+    : particles_(encloser.particles_) {}
 //=================================================================================================//
 template <typename AlignedBoxPartType>
 void EmitterInflowInjectionCK<AlignedBoxPartType>::FinishDynamics::operator()()
 {
-    buffer_.checkEnoughBuffer(*particles_);
+    particles_->checkEnoughReserve();
 }
 //=================================================================================================//
 template <typename AlignedBoxPartType>

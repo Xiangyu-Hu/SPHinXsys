@@ -75,7 +75,7 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
     using SpawnRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
 
   public:
-    EmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer);
+    EmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part);
     virtual ~EmitterInflowInjectionCK() {};
 
     class UpdateKernel
@@ -96,7 +96,6 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
     class FinishDynamics
     {
         BaseParticles *particles_;
-        ParticleBuffer<Base> &buffer_;
 
       public:
         FinishDynamics(EmitterInflowInjectionCK &encloser);
@@ -104,7 +103,6 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
     };
 
   protected:
-    ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
     SpawnRealParticle spawn_real_particle_method_;
     Real rho0_;

@@ -78,5 +78,15 @@ struct VelocityPrescribed
     // to be implemented in derived class
 };
 
+struct ConstantInflowVelocity
+{
+    Real speed_;
+    ConstantInflowVelocity(Real speed) {};
+
+    Real getAxisVelocity(const Vecd &, const Real &, Real)
+    {
+        return speed_;
+    };
+};
 } // namespace SPH
 #endif // FLUID_BOUNDARY_STATE_H

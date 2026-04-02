@@ -44,7 +44,6 @@ using AngularVecd = Vec3d;
 using Rotation = Rotation3d;
 using BoundingBoxd = BoundingBox3d;
 using BoundingBoxi = BoundingBox3i;
-using Rotationd = Rotation3d;
 using Transform = Transform3d;
 
 /** only works for smoothing length ratio less or equal than 1.3*/
