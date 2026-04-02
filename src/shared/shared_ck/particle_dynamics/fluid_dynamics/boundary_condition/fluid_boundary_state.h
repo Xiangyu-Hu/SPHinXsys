@@ -81,7 +81,7 @@ struct VelocityPrescribed
 struct ConstantInflowVelocity
 {
     Real speed_;
-    ConstantInflowVelocity(Real speed) {};
+    ConstantInflowVelocity(Real speed) : speed_(speed) {};
 
     Real getAxisVelocity(const Vecd &, const Real &, Real)
     {
