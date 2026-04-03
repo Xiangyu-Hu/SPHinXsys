@@ -32,13 +32,20 @@
 
 #include "all_geometries.h"
 #include "base_data_type_package.h"
-#include "sphinxsys_containers.h"
 #include "base_particles.h"
+#include "sphinxsys_containers.h"
 
 #include <optional>
+#include <type_traits>
 
 namespace SPH
 {
+template <typename T, typename = void>
+struct has_setupBaseParticles : std::false_type {};
+
+template <typename T>
+struct has_setupBaseParticles<T, std::void_t<decltype(&T::setupBaseParticles)>> : std::true_type {};
+
 /**
  * @class BodyPart
  * @brief An auxiliary class for SPHBody to indicate a part of the body.
@@ -110,43 +117,33 @@ class BodyPartByID : public BodyPart
 class BodyPartByParticle : public BodyPart
 {
   public:
-    typedef BodyPartByParticle RangeIdentifier;    
+    typedef BodyPartByParticle RangeIdentifier;
     IndexVector body_part_particles_; /**< Collection particle in this body part. */
     BaseParticles &getBaseParticles() { return base_particles_; };
     DiscreteVariable<UnsignedInt> *dvParticleList() { return dv_particle_list_; };
     IndexVector &LoopRange() { return body_part_particles_; };
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
+
     BodyPartByParticle(SPHBody &sph_body);
+
+    template <typename TagCriteria>
+    BodyPartByParticle(SPHBody &sph_body, TagCriteria criteria)
+        : BodyPartByParticle(sph_body)
+    {
+        if constexpr (has_setupBaseParticles<TagCriteria>::value)
+        {
+            criteria.setupBaseParticles(base_particles_);
+        }
+        TaggingParticleMethod tagging_method = criteria;
+        tagParticles(tagging_method);
+    }
+
     virtual ~BodyPartByParticle() {};
 
   protected:
     DiscreteVariable<UnsignedInt> *dv_particle_list_;
     typedef std::function<bool(size_t)> TaggingParticleMethod;
     void tagParticles(TaggingParticleMethod &tagging_particle_method);
-};
-
-/**
- * @class BodyPartByParticleCustom
- * @brief A body part defined by the customized criteria
- */
-template <typename TagCriteria>
-class BodyPartByParticleCustom : public BodyPartByParticle
-{
-  public:
-    template <typename... Args>
-    BodyPartByParticleCustom(SPHBody &sph_body, const std::string &name, Args &&...args)
-        : BodyPartByParticle(sph_body)
-    {
-        static_assert(
-            std::is_invocable_r_v<bool, const TagCriteria &, size_t>,
-            "TagCriteria must be callable as bool(size_t) const.");
-
-        alias_ = name;
-
-        TaggingParticleMethod criteria = TagCriteria(base_particles_, std::forward<Args>(args)...);
-        tagParticles(criteria);
-    }
-    virtual ~BodyPartByParticleCustom() = default;
 };
 
 /**
@@ -158,15 +155,18 @@ class VariableRangeTagCriteria
 {
   public:
     VariableRangeTagCriteria(
-        BaseParticles &base_particles, const std::string &variable_name,
-        DataType lower_bound, DataType upper_bound)
-        : variable_(base_particles.template getVariableDataByName<DataType>(variable_name)),
-          lower_bound_(lower_bound), upper_bound_(upper_bound)
+        const std::string &variable_name, DataType lower_bound, DataType upper_bound)
+        : variable_name_(variable_name), lower_bound_(lower_bound), upper_bound_(upper_bound), variable_(nullptr)
     {
         if (lower_bound_ > upper_bound_)
         {
             throw std::invalid_argument("Lower bound must be less than or equal to upper bound.");
         }
+    }
+
+    void setupBaseParticles(BaseParticles &base_particles)
+    {
+        variable_ = base_particles.template getVariableDataByName<DataType>(variable_name_);
     }
 
     bool operator()(size_t index_i) const
@@ -176,13 +176,35 @@ class VariableRangeTagCriteria
     }
 
   private:
-    DataType *variable_;
+    std::string variable_name_;
     DataType lower_bound_;
     DataType upper_bound_;
+    DataType *variable_;
 };
 
-using BodyPartByRealVar = BodyPartByParticleCustom<VariableRangeTagCriteria<Real>>;
-using BodyPartByIntVar = BodyPartByParticleCustom<VariableRangeTagCriteria<int>>;
+class BodyPartByRealVar : public BodyPartByParticle
+{
+  public:
+    template <typename... Args>
+    BodyPartByRealVar(SPHBody &sph_body, Args &&...args)
+        : BodyPartByParticle(
+              sph_body,
+              VariableRangeTagCriteria<Real>(std::forward<Args>(args)...))
+    {
+    }
+};
+
+class BodyPartByIntVar : public BodyPartByParticle
+{
+  public:
+    template <typename... Args>
+    BodyPartByIntVar(SPHBody &sph_body, Args &&...args)
+        : BodyPartByParticle(
+              sph_body,
+              VariableRangeTagCriteria<int>(std::forward<Args>(args)...))
+    {
+    }
+};
 
 /**
  * @class BodyPartByCell
