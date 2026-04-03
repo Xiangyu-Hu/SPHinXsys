@@ -10,7 +10,6 @@ add_executable(test_2d_pressure_gradient
     2d_pressure_gradient.cpp
 )
 
-# Link to SPHinXsys (2D) and portable GTest targets. SPHinXsys should transitively provide its deps.
 target_link_libraries(test_2d_pressure_gradient
     PRIVATE sphinxsys_2d
     PRIVATE GTest::gtest_main

@@ -32,7 +32,6 @@
  #include "base_general_dynamics.h"
  #include "compressible_fluid.h"
  #include "eulerian_riemann_solver.h"
- // #include "fluid_body.h"
  #include "predefined_bodies.h"
  #include "fluid_integration.hpp"
  #include "fluid_time_step.h"
@@ -86,6 +85,23 @@
      CompressibleFluid compressible_fluid_;
      Real *Vol_, *E_, *dE_dt_, *dmass_dt_;
      Vecd *mom_, *force_, *force_prior_;
+ };
+
+ /**
+  * @brief MSVC-friendly adapter for InteractionWithWall.
+  * @details InteractionWithWall requires a template-template parameter of the form
+  *          `template <typename...> class`. A template with a single type parameter
+  *          (`template <class T> class X`) does not match on MSVC (C3200). This
+  *          variadic wrapper forwards to BaseIntegrationInCompressibleType<DataDelegateContact>.
+  */
+ template <typename...>
+ class BaseIntegrationInCompressibleForWall : public BaseIntegrationInCompressibleType<DataDelegateContact>
+ {
+   public:
+     explicit BaseIntegrationInCompressibleForWall(BaseContactRelation &wall_contact_relation)
+         : BaseIntegrationInCompressibleType<DataDelegateContact>(wall_contact_relation)
+     {
+     }
  };
  
  template <class RiemannSolverType>
@@ -174,7 +190,7 @@
  
  template <>
  class EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>>
-     : public InteractionWithWall<BaseIntegrationInCompressibleType>
+     : public InteractionWithWall<BaseIntegrationInCompressibleForWall>
  {
    public:
      explicit EulerianCompressibleIntegration1stHalfMUSCL(
@@ -239,7 +255,7 @@
  
  template <>
  class EulerianCompressibleIntegration2ndHalfMUSCL<Contact<Wall>>
-     : public InteractionWithWall<BaseIntegrationInCompressibleType>
+     : public InteractionWithWall<BaseIntegrationInCompressibleForWall>
  {
    public:
      explicit EulerianCompressibleIntegration2ndHalfMUSCL(
