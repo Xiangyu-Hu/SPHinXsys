@@ -79,7 +79,7 @@ class IOEnvironment
 
 namespace IO
 {
-void initEnvironment();
+IOEnvironment &initEnvironment();
 IOEnvironment &getEnvironment();
 std::shared_ptr<spdlog::logger> initLogger(); // Call once at startup
 std::shared_ptr<spdlog::logger> getLogger();  // Access logger

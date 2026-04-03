@@ -135,12 +135,13 @@ namespace IO
 //=============================================================================================//
 SharedPtr<IOEnvironment> io_environment; // Global pointer to the IO environment
 //=============================================================================================//
-void initEnvironment()
+IOEnvironment &initEnvironment()
 {
     if (!io_environment)
     {
         io_environment = makeShared<IOEnvironment>();
     }
+    return *io_environment.get();
 }
 //=============================================================================================//
 IOEnvironment &getEnvironment()
