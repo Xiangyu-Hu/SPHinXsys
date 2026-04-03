@@ -35,8 +35,6 @@
 #ifndef MULTI_POLYGON_SHAPE_H
 #define MULTI_POLYGON_SHAPE_H
 
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-
 #ifdef __linux__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
