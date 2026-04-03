@@ -11,33 +11,30 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //  Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 1.5; /**< Water tank length. */
-Real DW = 1.0; /**< Water tank width. */
-Real DH = 1.0; /**< Water tank height. */
-Real LL = 1.5; /**< Water column length. */
-Real LW = 1; /**< Water column width. */
+Real DL = 1.2; /**< Water tank length. */
+Real DW = 0.8; /**< Water tank width. */
+Real DH = 1.5; /**< Water tank height. */
+Real LL = 1.2; /**< Water column length. */
+Real LW = 0.8; /**< Water column width. */
 Real LH = 0.5; /**< Water column height. */
 
 Real particle_spacing_ref = 0.02;   /**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
-
-//Vecd object_center(0.5 * DL, LH + 0.2, 0.5 * DW); /**< Location of the object center. */
-Vecd object_center(0.46, 0.528, 0.5); /**< Location of the object center. */
+// 3D物体中心位置
+Vecd object_center(0.46, LH+0.028 , 0.5); /**< Location of the object center. */
 // 初始速度参数
 Real initial_speed = 70.0;                     /**< Initial velocity magnitude (m/s). */
 Real initial_angle = -20.0 * Pi / 180.0;       /**< Initial velocity angle (radians, negative = downward). */
 Real initial_pitch_angle = -20.0 * Pi / 180.0; /**< Initial pitch angle about Z-axis(radians). */
-
 //----------------------------------------------------------------------
 //  Material parameters.
 //----------------------------------------------------------------------
 Real rho0_f = 1000.0;                         /**< Fluid density (water). */
 Real rho0_s = 2063.0;                         /**< Object density. */
 Real gravity_g = 9.81;                        /**< Gravity. */
-Real U_max = 2.0 * sqrt(gravity_g * LH) * 10; /**< Characteristic velocity. */
+Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_max;                      /**< Reference sound speed. */
 Real mu_f = 8.9e-4;                           /**< Water dynamics viscosity (Pa·s). */
-
 //----------------------------------------------------------------------
 //  Wetting parameters
 //----------------------------------------------------------------------
@@ -46,45 +43,35 @@ Real diffusion_coeff = 100.0 * pow(particle_spacing_ref, 2); /**< Wetting coeffi
 Real fluid_moisture = 1.0;                                   /**< fluid moisture. */
 Real object_moisture = 0.0;                                  /**< object moisture. */
 Real wall_moisture = 1.0;                                    /**< wall moisture. */
-
 //----------------------------------------------------------------------
 //  计算初始速度分量
 //----------------------------------------------------------------------
 Vecd calculateInitialVelocity()
 {
-    // 在XZ平面内的初始速度（Y方向为垂直方向）
     Real horizontal_velocity = initial_speed * cos(initial_angle);
     Real vertical_velocity = initial_speed * sin(initial_angle);
-
     return Vecd(horizontal_velocity, vertical_velocity, 0.0);
 }
-
 //----------------------------------------------------------------------
-//  全局力到局部坐标系的转换（3D版本）
+//  全局力到局部坐标系的转换
 //----------------------------------------------------------------------
 Vec3d transformGlobalForceToLocal(const Vec3d &global_force, Real rotation_angle_z)
 {
-
     Real cos_theta = cos(rotation_angle_z);
     Real sin_theta = sin(rotation_angle_z);
-
     Vec3d local_force;
     local_force[0] = global_force[0] * cos_theta + global_force[1] * sin_theta;  // X方向
     local_force[1] = -global_force[0] * sin_theta + global_force[1] * cos_theta; // Y方向
     local_force[2] = global_force[2];
-
     return local_force;
 }
-
 //----------------------------------------------------------------------
 //   观测点定义
 //----------------------------------------------------------------------
 StdVec<Vecd> observer_location = {object_center}; /**< Displacement observation point. */
 StdVec<Vecd> wetting_observer_location =
     {object_center - Vecd(0.0, 0.05, 0.0)}; /**< wetting observation point. */
-// 前缘观测点（入水点）
 StdVec<Vecd> leading_edge_location = {object_center}; /**< Leading edge observation point. */
-
 //----------------------------------------------------------------------
 //  汇总输出类（3D版本）
 //----------------------------------------------------------------------
@@ -121,7 +108,6 @@ class SummaryOutput3D
                      << total_force_local[0] << " " << total_force_local[1] << " " << total_force_local[2] << "\n"; // 新增
         output_file_.flush();
     }
-
   private:
     std::ofstream output_file_;
 };
@@ -133,11 +119,9 @@ class WaterBlock : public ComplexShape
   public:
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        // 创建水体长方体
-        add<GeometricShapeBox>(Transform(Vecd(LL / 2, LH / 2, LW / 2)), Vecd(LL / 2, LH / 2, LW / 2));
+        add<GeometricShapeBox>(Transform(Vecd(LL / 2, LH / 2, LW / 2)), Vecd(LL / 2, LH / 2, LW / 2));// 创建水体长方体
     }
 };
-
 //----------------------------------------------------------------------
 //  Definition for wall body (3D)
 //----------------------------------------------------------------------
@@ -160,7 +144,6 @@ explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
 int runParticleRelaxation(SolidBody &floating_object)
 {
     std::cout << "Starting 3D particle relaxation..." << std::endl;
-
     InnerRelation object_inner(floating_object); // 创建内部关系
 
     // 松弛方法
@@ -169,14 +152,12 @@ int runParticleRelaxation(SolidBody &floating_object)
     BodyStatesRecordingToVtp write_inserted_body_to_vtp(floating_object); // 写入Vtp文件
     ReloadParticleIO write_particle_reload_files(floating_object); // 写入粒子重启文件
     RelaxationStepInner relaxation_step_inner(object_inner);// 物理松弛步骤（3D版本）
-
     //----------------------------------------------------------------------
     // 粒子松弛开始
     //----------------------------------------------------------------------
     random_inserted_body_particles.exec(0.25); // 随机初始化粒子位置
     relaxation_step_inner.SurfaceBounding().exec(); // 表面约束（确保粒子在表面内）
     write_inserted_body_to_vtp.writeToFile(0); // 输出初始状态
-
     //----------------------------------------------------------------------
     // 松弛浮体粒子
     //----------------------------------------------------------------------
@@ -194,24 +175,19 @@ int runParticleRelaxation(SolidBody &floating_object)
                       << "Relaxation steps for the 3D object N = " << ite_p << "\n";
             write_inserted_body_to_vtp.writeToFile(ite_p);
         }
-
         // 3D中可能需要额外的检查
         if (ite_p % 500 == 0)
         {
-            // 更新邻居列表
-            floating_object.updateCellLinkedList();
+            floating_object.updateCellLinkedList();// 更新邻居列表
             object_inner.updateConfiguration();
         }
     }
-
     std::cout << "3D physics relaxation process finished!" << std::endl;
 
-    // 输出结果
-    write_particle_reload_files.writeToFile(0);
+    write_particle_reload_files.writeToFile(0); // 输出结果
 
     return 0;
 }
-
 //----------------------------------------------------------------------
 //  Definition for object body using STL 
 //----------------------------------------------------------------------
@@ -222,7 +198,6 @@ class FloatingObject : public ComplexShape
     {
         std::string full_path_to_file = "./input/M1TR3.stl";
         Vecd translation(0.0, 0.0, 0.0);
-
         add<TriangleMeshShapeSTL>(full_path_to_file, translation, 1.0);
     }
 };
@@ -232,16 +207,11 @@ class FloatingObject : public ComplexShape
 std::shared_ptr<ComplexShape> createSimbodyConstrainShape3D()
 {
     auto constrain_shape = makeShared<ComplexShape>("SimbodyConstrainShape");
-
     std::string full_path_to_file = "./input/M1TR3.stl";
-
     Vecd translation(0.0, 0.0, 0.0);
-
     constrain_shape->add<TriangleMeshShapeSTL>(full_path_to_file, translation, 1.0);
-
     return constrain_shape;
 }
-
 //----------------------------------------------------------------------
 //  湿表面初始化模板类
 //----------------------------------------------------------------------
@@ -262,7 +232,6 @@ class WettingBodyInitialCondition : public LocalDynamics
     Real *phi_;
     Real moisture_;
 };
-
 //----------------------------------------------------------------------
 // 获取物体的旋转角度
 //----------------------------------------------------------------------
@@ -270,20 +239,15 @@ Real getObjectRotationAngle(SimTK::MobilizedBody &mob, const SimTK::State &state
 {
     SimTK::Rotation rot = mob.getBodyRotation(state);
     SimTK::Vec3 angles = rot.convertRotationToBodyFixedXYZ();
-    // 在XZ平面运动，我们关注绕Y轴的旋转（pitch）
-    // 根据欧拉角顺序，angles[1]对应绕Y轴的旋转
-    // 2 z轴旋转
-    return angles[2];
+    return angles[2];// 根据欧拉角顺序，angles[2]对应绕Z轴的旋转
 }
-
 //----------------------------------------------------------------------
 // 物体初始速度设置类（3D完整版本）
 //----------------------------------------------------------------------
 class ObjectInitialVelocity : public LocalDynamics
 {
   public:
-    explicit ObjectInitialVelocity(SPHBody &sph_body,
-                                   const Vec3d &initial_vel,
+    explicit ObjectInitialVelocity(SPHBody &sph_body, const Vec3d &initial_vel,
                                    const Vec3d &initial_angular_vel = Vec3d(0.0, 0.0, 0.0))
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vec3d>("Position")),
@@ -314,19 +278,14 @@ class ObjectInitialVelocity : public LocalDynamics
     void update(size_t index_i, Real dt)
     {
         Vec3d r = pos_[index_i] - centroid_;
-
-        // 设置平动速度
         vel_[index_i] = initial_vel_;
 
-        // 添加绕质心的旋转速度（3D版本）
-        if (initial_angular_vel_.norm() > 1e-9)
+        if (initial_angular_vel_.norm() > 1e-9)// 添加绕质心的旋转速度
         {
-            // 角速度 × 位置向量 = 切向速度
-            Vec3d tangential_vel = initial_angular_vel_.cross(r);
+            Vec3d tangential_vel = initial_angular_vel_.cross(r);// 角速度 × 位置向量 = 切向速度
             vel_[index_i] += tangential_vel;
         }
     }
-
   protected:
     Vec3d *pos_;
     Vec3d *vel_;
@@ -341,13 +300,11 @@ class ObjectInitialVelocity : public LocalDynamics
 using WettingFluidBodyInitialCondition = WettingBodyInitialCondition<FluidBody>;
 using WettingWallBodyInitialCondition = WettingBodyInitialCondition<SolidBody>;
 using WettingObjectBodyInitialCondition = WettingBodyInitialCondition<SolidBody>;
-
 //----------------------------------------------------------------------
 //  Main program
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
-
     //----------------------------------------------------------------------
     //  Build up an SPHSystem
     //----------------------------------------------------------------------
@@ -359,7 +316,6 @@ int main(int ac, char *av[])
      sph_system.setReloadParticles(true);
     //sph_system.setRunParticleRelaxation(true);
     //sph_system.setReloadParticles(false);
-
     sph_system.handleCommandlineOptions(ac, av);
 
     if (sph_system.RunParticleRelaxation())
@@ -410,8 +366,7 @@ int main(int ac, char *av[])
     BaseParticles &object_particles = floating_object.getBaseParticles();
     object_particles.registerStateVariableData<Vecd>("ViscousForceFromFluid");
     object_particles.registerStateVariableData<Vecd>("PressureForceFromFluid");
-    // 确保Velocity也注册
-    object_particles.registerStateVariableData<Vecd>("Velocity");
+    object_particles.registerStateVariableData<Vecd>("Velocity");// 确保Velocity也注册
 
     auto viscous_force_data = object_particles.getVariableDataByName<Vecd>("ViscousForceFromFluid");
     auto pressure_force_data = object_particles.getVariableDataByName<Vecd>("PressureForceFromFluid");
@@ -436,9 +391,7 @@ int main(int ac, char *av[])
     ContactRelation object_observer_contact(object_observer, {&floating_object});
     ContactRelation wetting_observer_contact(wetting_observer, {&floating_object});
     ContactRelation leading_edge_observer_contact(leading_edge_observer, {&floating_object});
-
     ComplexRelation water_block_complex(water_block_inner, water_block_contact);
-
     //----------------------------------------------------------------------
     //  Define the fluid dynamics
     //----------------------------------------------------------------------
@@ -481,11 +434,9 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall>viscous_force(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>>transport_velocity_correction(water_block_inner, water_block_contact);
 
-
     // 时间步控制
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep>fluid_acoustic_time_step(water_block);
-
     //----------------------------------------------------------------------
     //  Algorithms of FSI
     //----------------------------------------------------------------------
@@ -511,32 +462,22 @@ int main(int ac, char *av[])
     SimTK::GeneralForceSubsystem forces(MBsystem);
 
     // 创建约束区域（使用与物体相同的形状）
-    SolidBodyPartForSimbody structure_system(floating_object,
-                                             createSimbodyConstrainShape3D());
+    SolidBodyPartForSimbody structure_system(floating_object,createSimbodyConstrainShape3D());
 
     SimTK::Body::Rigid fixed_spot_info(*structure_system.body_part_mass_properties_);
 
-
     // 使用正确的系留点
-    //Vecd tethering_point = object_center; // 使用物体中心作为系留点
     Vecd actual_centroid = structure_system.initial_mass_center_;
     Vecd tethering_point = actual_centroid; // 使用实际质心
     SimTK::MobilizedBody::Planar structure_mob(matter.Ground(),
                                                SimTK::Transform(SimTKVec3(tethering_point[0], tethering_point[1], tethering_point[2])),
                                                fixed_spot_info, SimTK::Transform(SimTKVec3(0)));
 
-    // 质量属性
-    SimTK::Body::Rigid structure_info(*structure_system.body_part_mass_properties_);
+    SimTK::Body::Rigid structure_info(*structure_system.body_part_mass_properties_); // 质量属性
+    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(0.0, 0.0, -gravity_g), 0.0); // 重力
+    SimTK::Force::DiscreteForces force_on_bodies(forces, matter); // 离散力
 
-    // 重力
-    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(0.0, 0.0, -gravity_g), 0.0);
-
-    // 离散力
-    SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
-
-    // 初始化状态
-    SimTK::State state = MBsystem.realizeTopology();
-
+    SimTK::State state = MBsystem.realizeTopology(); // 初始化状态
 
     SimTK::Vec3 mobilizer_vel(0.0, initial_velocity[0], initial_velocity[1]);
     structure_mob.setU(state, mobilizer_vel);
@@ -546,7 +487,6 @@ int main(int ac, char *av[])
     integ.setAllowInterpolation(false);
     integ.initialize(state);
 
-
     // 输出Simbody状态
     std::cout << "Debug: Simbody initialized successfully" << std::endl;
     std::cout << "Debug: Joint U = ("
@@ -555,13 +495,11 @@ int main(int ac, char *av[])
               << structure_mob.getU(state)[2] << ")" << std::endl;
     std::cout << "Mass: " << structure_system.body_part_mass_properties_->getMass() << std::endl;
     std::cout << "Center of mass: " << structure_system.initial_mass_center_.transpose() << std::endl;
-
     //----------------------------------------------------------------------
     //  Coupling between SimBody and SPH
     //----------------------------------------------------------------------
     ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody> force_on_structure(structure_system, MBsystem, structure_mob, integ);
     SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody> constraint_on_structure(structure_system, MBsystem, structure_mob, integ);
-
     //----------------------------------------------------------------------
     //  I/O operations and observations
     //----------------------------------------------------------------------
@@ -595,7 +533,6 @@ int main(int ac, char *av[])
     Real dt_thermal = get_diffusion_time_step.exec();
     free_stream_surface_indicator.exec();
     constant_gravity.exec();
-
     //----------------------------------------------------------------------
     //  Time-stepping control
     //----------------------------------------------------------------------
@@ -636,7 +573,6 @@ int main(int ac, char *av[])
 
         while (integration_time < output_interval)
         {
-
             time_instance = TickCount::now();
             Real Dt = fluid_advection_time_step.exec();
             fluid_density_by_summation.exec();
@@ -682,8 +618,7 @@ int main(int ac, char *av[])
                 // --- 再执行约束更新，把刚体新位姿同步回 SPH 颗粒（在步进之后）
                 constraint_on_structure.exec();
 
-                // 更新前缘点位置（或其它需基于新位姿的 SPH 操作）
-                interpolation_leading_edge_position.exec();
+                interpolation_leading_edge_position.exec(); // 更新前缘点位置（或其它需基于新位姿的 SPH 操作）
 
                 relaxation_time += dt;
                 integration_time += dt;
@@ -700,11 +635,9 @@ int main(int ac, char *av[])
                           << " integration_time = " << integration_time
                           << " output_interval = " << output_interval << "\n";
 
-                // 执行插值以更新前缘观测点的值
-                interpolation_leading_edge_position.exec();
+                interpolation_leading_edge_position.exec(); // 执行插值以更新前缘观测点的值
 
-                // 获取前缘观测点数据
-                auto &leading_edge_particles = leading_edge_observer.getBaseParticles();
+                auto &leading_edge_particles = leading_edge_observer.getBaseParticles(); // 获取前缘观测点数据
 
                 Vecd leading_edge_pos = leading_edge_particles.getVariableDataByName<Vecd>("Position")[0];
                 //SimTK::State &output_state = integ.updAdvancedState();
@@ -727,20 +660,15 @@ int main(int ac, char *av[])
                     total_pressure_force_global += pressure_force_data[i];
                 }
 
-
                 SimTK::State current_state = integ.getAdvancedState(); // 获取当前物体的旋转角度（从Simbody状态）
-
 
                 MBsystem.realize(current_state, SimTK::Stage::Velocity); // 确保状态已实现
 
-                //Real rotation_angle_z = getObjectRotationAngle(structure_mob, current_state);
                 Real rotation_angle_z = initial_pitch_angle+getObjectRotationAngle(structure_mob, current_state);
 
                 // 将全局力转换到局部坐标系
                 Vecd viscous_force_local = transformGlobalForceToLocal(total_viscous_force_global, rotation_angle_z);
                 Vecd pressure_force_local = transformGlobalForceToLocal(total_pressure_force_global, rotation_angle_z);
-
-
 
                 Vecd total_force_local = viscous_force_local + pressure_force_local;
 
@@ -772,13 +700,11 @@ int main(int ac, char *av[])
                 water_block.updateCellLinkedList();
                 wall_boundary.updateCellLinkedList();
                 floating_object.updateCellLinkedList();
-
                 water_block_inner.updateConfiguration();
                 object_inner.updateConfiguration();
                 object_contact.updateConfiguration();
                 water_block_complex.updateConfiguration();
                 leading_edge_observer_contact.updateConfiguration();
-
                 free_stream_surface_indicator.exec();
                 interval_updating_configuration += TickCount::now() - time_instance;
         }
