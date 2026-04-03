@@ -1,5 +1,7 @@
 #include "base_body_part.h"
 
+#include "complex_geometry.h"
+#include "io_environment.h"
 #include "sph_system.h"
 
 namespace SPH
@@ -7,8 +9,7 @@ namespace SPH
 //=================================================================================================//
 void AlignedBoxPart::writeShapeProxy()
 {
-    std::string filefullpath = sph_system_.getIOEnvironment().OutputFolder() + "/" +
-                               svAlignedBox()->Name() + "Proxy.vtp";
+    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/" + svAlignedBox()->Name() + "Proxy.vtp";
 
     if (fs::exists(filefullpath))
     {

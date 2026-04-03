@@ -29,9 +29,9 @@ class ImportModel : public MultiPolygonShape
   public:
     explicit ImportModel(const std::string &import_model_name) : MultiPolygonShape(import_model_name)
     {
-        multi_polygon_.addAPolygonFromFile(airfoil_flap_front, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygonFromFile(airfoil_wing, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygonFromFile(airfoil_flap_rear, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygonFromFile(airfoil_flap_front, GeometricOps::add);
+        multi_polygon_.addAPolygonFromFile(airfoil_wing, GeometricOps::add);
+        multi_polygon_.addAPolygonFromFile(airfoil_flap_rear, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -51,9 +51,9 @@ int main(int ac, char *av[])
     RealBody airfoil(sph_system, makeShared<ImportModel>("AirFoil"));
     airfoil.defineAdaptation<AdaptiveNearSurface>(1.15, 1.0, 3);
     airfoil.defineBodyLevelSetShape()
-        ->cleanLevelSet()
-        ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
-        ->writeLevelSet();
+        .cleanLevelSet()
+        .addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
+        .writeLevelSet();
     airfoil.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define outputs functions.

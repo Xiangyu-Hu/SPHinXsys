@@ -37,15 +37,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &input_shape = sph_system.addShape<ComplexShape>("SPHInXsysLogo");
     MultiPolygon original_logo;
-    original_logo.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
+    original_logo.addAPolygonFromFile(input_body, GeometricOps::add);
     input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * global_resolution, original_logo);
     input_shape.subtract<MultiPolygonShape>(original_logo);
     auto &input_body = sph_system.addBody<RealBody>(input_shape);
-    LevelSetShape *level_set_shape = input_body.defineBodyLevelSetShape(par_ck, 2.0)
-                                         ->addPackageVariableToWrite<Real>("KernelWeight")
-                                         ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
-                                         ->addCellVariableToWrite<int>("CellContainID")
-                                         ->writeLevelSet();
+    LevelSetShape &level_set_shape = input_body.defineBodyLevelSetShape(par_ck, 2.0)
+                                         .addPackageVariableToWrite<Real>("KernelWeight")
+                                         .addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
+                                         .addCellVariableToWrite<int>("CellContainID")
+                                         .writeLevelSet();
     input_body.generateParticles<BaseParticles, Lattice>();
     auto &near_body_surface = input_body.addBodyPart<NearShapeSurface>();
 
@@ -85,7 +85,7 @@ int main(int ac, char *av[])
 
     host_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies).exec(); // host method able to run immediately
 
-    ParticleDynamicsGroup update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
+    ParticleDynamicsGroup &update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
     ParticleDynamicsGroup update_relation;
     update_relation.add(&main_methods.addRelationDynamics(input_body_inner));
     update_relation.add(&main_methods.addRelationDynamics(filler_inner, filler_contact));
@@ -93,7 +93,7 @@ int main(int ac, char *av[])
 
     ParticleDynamicsGroup relaxation_residual;
     relaxation_residual.add(&main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(input_body_inner)
-                                 .addPostStateDynamics<LevelsetKernelGradientIntegral>(input_body, *level_set_shape));
+                                 .addPostStateDynamics<LevelsetKernelGradientIntegral>(input_body, level_set_shape));
     relaxation_residual.add(&main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(filler_inner)
                                  .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(filler_contact));
 

@@ -1,5 +1,7 @@
 #include "elastic_solid.h"
+
 #include "base_particles.hpp"
+#include "vector_functions.h"
 
 #ifdef max
 #undef max

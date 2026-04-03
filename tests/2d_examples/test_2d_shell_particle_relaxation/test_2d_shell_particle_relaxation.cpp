@@ -12,12 +12,12 @@ using namespace SPH;
 Real radius = 24.5;                                 /** Inner radius of a 2D thin pipe. */
 Real thickness = 1.0;                               /** Thickness of the pipe. */
 Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid circle. */
-Real global_resolution = 0.5;                          // Global reference resolution
+Real global_resolution = 0.5;                       // Global reference resolution
 Real level_set_refinement = global_resolution / (0.1 * thickness);
 Vec2d pipe_center(0.0, 0.0); /** Location of the pipe center. */
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d(-radius - thickness, -radius - thickness),
-                                 Vec2d(radius + thickness, radius + thickness));
+                                  Vec2d(radius + thickness, radius + thickness));
 /**
  * @brief define geometry of SPH bodies
  */
@@ -26,8 +26,8 @@ class Pipe : public MultiPolygonShape
   public:
     explicit Pipe(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(pipe_center, radius + thickness, 100, ShapeBooleanOps::add);
-        multi_polygon_.addACircle(pipe_center, radius, 100, ShapeBooleanOps::sub);
+        multi_polygon_.addACircle(pipe_center, radius + thickness, 100, GeometricOps::add);
+        multi_polygon_.addACircle(pipe_center, radius, 100, GeometricOps::sub);
     }
 };
 //--------------------------------------------------------------------------
@@ -43,7 +43,7 @@ int main(int ac, char *av[])
     SolidBody pipe_body(sph_system, makeShared<Pipe>("PipeBody"));
     pipe_body.defineAdaptation<SPHAdaptation>(1.15, 1.0);
     pipe_body.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
-        ->writeLevelSet();
+        .writeLevelSet();
     pipe_body.generateParticles<SurfaceParticles, Lattice>(thickness);
 
     InnerRelation pipe_body_inner(pipe_body);

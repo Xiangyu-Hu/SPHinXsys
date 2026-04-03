@@ -523,9 +523,9 @@ SPH discretization for the anisotropic diffusion equation
 ---------------------------------------------------------
 
 In SPHinXsys, 
-the diffusion equation is discretized by an anisotropic SPH dicretization scheme modified from the work of Tran-Duc2016_. 
+the diffusion equation is discretized by an anisotropic SPH discretization scheme modified from the work of Tran-Duc2016_. 
 Different from the previous strategies for the discretization of diffusion equation (Biriukov2018_ and Rezavand2019_), 
-we employ and modify the anisotropic SPH dicretization proposed by Tran-Duc2016_. 
+we employ and modify the anisotropic SPH discretization proposed by Tran-Duc2016_. 
 Following Tran-Duc2016_,  
 the diffusion tensor :math:`\mathbb{D}` is considered to be a symmetric positive-definite matrix and can be decomposed by Cholesky decomposition as 
 
@@ -635,7 +635,7 @@ where :math:`\mathbb{D}` is the diffusion tensor and :math:`I(V)` a nonlinear fu
 For :math:`I(V)  = V - V^3`, 
 Eq. :eq:`eq:diffusion-reaction` becomes the Allen-Cahn equation, which describes the mixture of two incompressible fluids. 
 When the FitzHugh1961_ model is applied, 
-Eq. :eq:`eq:diffusion-reaction` becomes the well-known monodomain equation (Quarteroni2017_) which describes the cell electrophysiological dynamics. 
+Eq. :eq:`eq:diffusion-reaction` becomes the well-known mono-domain equation (Quarteroni2017_) which describes the cell electrophysiological dynamics. 
 Electrophysiological dynamics of the heart describe how electrical currents flow through the heart, 
 controlling its contractions, and are used to ascertain the effects of certain drugs designed to treat, for example, arrhythmia. 
 
@@ -1037,7 +1037,7 @@ the phase shift :math:`\overline{V}_m` and the transition slope :math:`\xi` will
 Coupling with multi-body dynamics
 ===================================
 
-Multi-body dynamics or fluid interaction with multi-body objects are present in daily life or scientific appliations. 
+Multi-body dynamics or fluid interaction with multi-body objects are present in daily life or scientific applications. 
 One notable example would be wave interaction with Wave Energy Converters (WECs) which have been developed to harvest electrical power from ocean waves. 
 SPHinXsys presents efficient, accurate and fully Lagrangian numerical solver for modeling wave interaction with oscillating wave surge converter (OWSC). 
 The key idea is to couple SPHinXsys, 

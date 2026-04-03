@@ -29,12 +29,13 @@
 #ifndef BASE_GENERAL_DYNAMICS_H
 #define BASE_GENERAL_DYNAMICS_H
 
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "base_body.h"
 #include "base_particles.hpp"
 #include "external_force.h"
 
 #include <limits>
+#include <string>
 
 namespace SPH
 {

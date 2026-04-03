@@ -53,7 +53,7 @@ class DiffusionBody : public MultiPolygonShape
   public:
     explicit DiffusionBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(thermal_domain_edge_points, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(thermal_domain_edge_points, GeometricOps::add);
     }
 };
 
@@ -62,8 +62,8 @@ class DirichletWallBoundary : public MultiPolygonShape
   public:
     explicit DirichletWallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(left_region_edge_points, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(right_region_edge_points, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(left_region_edge_points, GeometricOps::add);
+        multi_polygon_.addAPolygon(right_region_edge_points, GeometricOps::add);
     }
 };
 
@@ -72,7 +72,7 @@ class NeumannWallBoundary : public MultiPolygonShape
   public:
     explicit NeumannWallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(heat_flux_region_edge_points, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(heat_flux_region_edge_points, GeometricOps::add);
     }
 };
 

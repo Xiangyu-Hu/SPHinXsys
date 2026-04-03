@@ -33,10 +33,8 @@ int main(int ac, char *av[])
 #endif
 
     Heart triangle_mesh_heart_model("HeartModel");
-    SharedPtr<LevelSetShape> level_set_heart_model =
-        makeShared<LevelSetShape>(par_ck, sph_system, SPHAdaptation(dp_0), triangle_mesh_heart_model);
-    level_set_heart_model->correctLevelSetSign()->writeLevelSet();
-    std::cout << "I am here 0! " << "\n";
+    LevelSetShape level_set_heart_model(par_ck, sph_system, SPHAdaptation(dp_0), triangle_mesh_heart_model);
+    level_set_heart_model.correctLevelSetSign().writeLevelSet();
     //----------------------------------------------------------------------
     //	SPH Particle relaxation section
     //----------------------------------------------------------------------
@@ -44,7 +42,6 @@ int main(int ac, char *av[])
     if (sph_system.RunParticleRelaxation())
     {
         SolidBody heart_model(sph_system, level_set_heart_model);
-        std::cout << "I am here 1! " << "\n";
         heart_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
             ConstructArgs(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0),
             ConstructArgs(diffusion_species_name, diffusion_coeff));
@@ -67,7 +64,6 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         // From here the time stepping begins.
         //----------------------------------------------------------------------
-        std::cout << "I am here 2! " << "\n";
         int ite = 0;
         int relax_step = 1000;
         while (ite < relax_step)
@@ -80,15 +76,16 @@ int main(int ac, char *av[])
                 write_heart_model_state_to_vtp.writeToFile(ite);
             }
         }
-        std::cout << "I am here 3! " << "\n";
         //----------------------------------------------------------------------
         //	Diffusion process to initialize fiber direction
         //----------------------------------------------------------------------
         GetDiffusionTimeStepSize get_time_step_size(heart_model);
         FiberDirectionDiffusionRelaxation diffusion_relaxation(heart_model_inner);
+        SimpleDynamics<NormalDirectionFromBodyShape> heart_model_normal(heart_model);
         SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(heart_model, diffusion_species_name);
         BodySurface surface_part(heart_model);
         SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, diffusion_species_name);
+        heart_model_normal.exec();
         impose_diffusion_bc.exec();
         write_heart_model_state_to_vtp.addToWrite<Real>(heart_model, diffusion_species_name);
         write_heart_model_state_to_vtp.writeToFile(ite);
@@ -208,7 +205,8 @@ int main(int ac, char *av[])
     write_states.addToWrite<Real>(physiology_heart, "ActiveContractionStress");
     write_states.addToWrite<Real>(mechanics_heart, "ActiveContractionStress");
     ObservedQuantityRecording<Real> write_voltage("Voltage", voltage_observer_contact);
-    ObservedQuantityRecording<Vecd> write_displacement("Position", myocardium_observer_contact);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
+        write_displacement("Position", myocardium_observer_contact);
     /**
      * Pre-simulation.
      */
@@ -218,10 +216,9 @@ int main(int ac, char *av[])
     correct_configuration_contraction.exec();
     correct_kernel_weights_for_interpolation.exec();
     /**Output global basic parameters. */
-    write_states.writeToFile(0);
+    write_states.writeToFile();
     write_voltage.writeToFile(0);
     write_displacement.writeToFile(0);
-    write_states.writeToFile(0);
     /**
      * main loop.
      */
@@ -351,6 +348,15 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+    if (sph_system.GenerateRegressionData())
+    {
+        write_displacement.generateDataBase(1.0e-2);
+    }
+    else
+    {
+        write_displacement.testResult();
+    }
 
     return 0;
 }

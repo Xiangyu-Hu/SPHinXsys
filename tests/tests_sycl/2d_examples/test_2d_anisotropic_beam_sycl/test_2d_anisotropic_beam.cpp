@@ -122,7 +122,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     auto &beam_body = sph_system.addAdaptiveBody<RealBody, PrescribedAnisotropy>(y_refinement, beam_shape);
-    auto *beam_material = beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    auto &beam_material = beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, UserDefined>();
     auto &beam_base = beam_body.addBodyPart<BodyRegionByParticle>(beam_base_shape);
 
@@ -154,7 +154,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
     host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(
-                    beam_body, "Velocity", beam_material->ReferenceSoundSpeed())
+                    beam_body, "Velocity", beam_material.ReferenceSoundSpeed())
         .exec();
 
     auto &main_methods = sph_solver.addParticleMethodContainer(seq);
@@ -183,7 +183,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(total_physical_time);
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
     //----------------------------------------------------------------------
     //	Setup for advection-step based time-stepping control
     //----------------------------------------------------------------------
@@ -213,7 +213,7 @@ int main(int ac, char *av[])
     //	Single time stepping loop is used for multi-time stepping.
     //----------------------------------------------------------------------
     TickCount t0 = TickCount::now();
-    while (!time_stepper.isEndTime())
+    while (!time_stepper.isEndTime(total_physical_time))
     {
         //----------------------------------------------------------------------
         //	the fastest and most frequent acostic time stepping.

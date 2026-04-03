@@ -1,7 +1,7 @@
 // pressure_gradient.h
 #ifndef PRESSURE_GRADIENT_H
 #define PRESSURE_GRADIENT_H
-
+#include "particle_functors.h"
 #include "base_fluid_dynamics.h"
 
 namespace SPH

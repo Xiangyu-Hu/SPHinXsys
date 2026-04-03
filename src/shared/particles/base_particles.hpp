@@ -2,6 +2,7 @@
 #define BASE_PARTICLES_HPP
 
 #include "base_particles.h"
+#include "xml_parser.h"
 
 namespace SPH
 {
@@ -10,12 +11,7 @@ template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::getVariableByName(const std::string &name)
 {
     DiscreteVariable<DataType> *variable = findVariableByName<DataType>(all_discrete_variables_, name);
-    if (variable == nullptr)
-    {
-        std::cout << "\nError: the " << type_name<DiscreteVariable<DataType>>() << " variable '"
-                  << name << "' in body " << getBodyName() << " is not registered!\n";
-        exit(1);
-    }
+    checkPointer(variable, name, type_name<DiscreteVariable<DataType>>());
     return variable;
 }
 //=================================================================================================//
@@ -135,18 +131,13 @@ template <typename DataType>
 SingularVariable<DataType> *BaseParticles::getSingularVariableByName(const std::string &name)
 {
     SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
-    if (variable == nullptr)
-    {
-        std::cout << "\nError: the " << type_name<SingularVariable<DataType>>() << " variable '"
-                  << name << "' in body " << getBodyName() << " is not registered!\n";
-        exit(1);
-    }
+    checkPointer(variable, name, type_name<SingularVariable<DataType>>());
     return variable;
 }
 //=================================================================================================//
 template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::
-    addDiscreteVariableToList(ParticleVariables &variable_set, const std::string &name)
+    addDiscreteVariableToList(DiscreteVariables &variable_set, const std::string &name)
 {
     DiscreteVariable<DataType> *variable = getVariableByName<DataType>(name);
     if (variable->getDataSize() < particles_bound_)
@@ -161,7 +152,7 @@ DiscreteVariable<DataType> *BaseParticles::
 //=================================================================================================//
 template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::
-    addDiscreteVariableToList(ParticleVariables &variable_set, DiscreteVariable<DataType> *variable)
+    addDiscreteVariableToList(DiscreteVariables &variable_set, DiscreteVariable<DataType> *variable)
 {
     return addDiscreteVariableToList<DataType>(variable_set, variable->Name());
 }
@@ -206,11 +197,11 @@ void BaseParticles::addVariableToWrite(DiscreteVariableArray<DataType> *variable
 }
 //===============================================================================
 template <typename DataType>
-BaseParticles *BaseParticles::reloadExtraVariable(const std::string &name)
+BaseParticles &BaseParticles::reloadExtraVariable(const std::string &name)
 {
     registerStateVariableFromReload<DataType>(name);
     addEvolvingVariable<DataType>(name);
-    return this;
+    return *this;
 }
 //=================================================================================================//
 template <typename DataType>

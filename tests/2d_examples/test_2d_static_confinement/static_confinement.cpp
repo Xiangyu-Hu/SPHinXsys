@@ -70,7 +70,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createWaterBlockShape(), GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -81,7 +81,7 @@ class WallShape : public MultiPolygonShape
   public:
     explicit WallShape(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWallShape(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createWallShape(), GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -92,7 +92,7 @@ class Triangle : public MultiPolygonShape
   public:
     explicit Triangle(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createStructureShape(), GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------

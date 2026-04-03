@@ -41,7 +41,7 @@ class Square : public MultiPolygonShape
   public:
     explicit Square(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(square_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(square_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------

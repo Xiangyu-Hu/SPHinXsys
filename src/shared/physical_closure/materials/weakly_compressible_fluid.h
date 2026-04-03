@@ -32,6 +32,7 @@
 #define WEAKLY_COMPRESSIBLE_FLUID_H
 
 #include "base_material.h"
+#include "common_functors.h"
 
 namespace SPH
 {

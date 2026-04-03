@@ -8,8 +8,12 @@
 
 #include "mesh_iterators.h"
 
+#include "sphinxsys_tbb.h"
+#include "tbb/blocked_range3d.h"
+
 namespace SPH
 {
+typedef tbb::blocked_range3d<size_t> IndexRange3d;
 //=================================================================================================//
 template <typename FunctionOnEach>
 void mesh_for_each(const Array3i &lower, const Array3i &upper, const FunctionOnEach &function)
@@ -60,7 +64,7 @@ void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, 
 template <typename LocalFunction, typename... Args>
 void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args)
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange3d((mesh_range.first)[0], (mesh_range.second)[0],
                      (mesh_range.first)[1], (mesh_range.second)[1],
                      (mesh_range.first)[2], (mesh_range.second)[2]),

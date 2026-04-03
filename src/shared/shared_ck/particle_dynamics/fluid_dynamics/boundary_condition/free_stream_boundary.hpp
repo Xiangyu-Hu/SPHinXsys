@@ -18,7 +18,7 @@ FreeStreamCondition<ConditionFunction>::FreeStreamCondition(
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_vel_(particles_->getVariableByName<Vecd>("Velocity")),
       dv_indicator_(particles_->getVariableByName<int>("Indicator")),
-      sv_physical_time_(sph_system_->getSystemVariableByName<Real>("PhysicalTime")){};
+      sv_physical_time_(&sph_system_->svPhysicalTime()){};
 //=================================================================================================//
 template <typename ConditionFunction>
 template <class ExecutionPolicy, class EncloserType>

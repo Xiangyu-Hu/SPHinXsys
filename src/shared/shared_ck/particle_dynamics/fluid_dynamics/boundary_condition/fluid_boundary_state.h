@@ -29,8 +29,8 @@
 #ifndef FLUID_BOUNDARY_STATE_H
 #define FLUID_BOUNDARY_STATE_H
 
-#include "base_data_type_package.h"
 #include "base_particles.hpp"
+#include "data_type.h"
 #include "weakly_compressible_fluid.h"
 namespace SPH
 {

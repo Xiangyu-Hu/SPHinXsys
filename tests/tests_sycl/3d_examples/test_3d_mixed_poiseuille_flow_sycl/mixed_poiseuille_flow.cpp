@@ -214,13 +214,13 @@ int main(int ac, char *av[])
 
         SolidBody wall(relaxation_system, wall_body_shape);
         wall.generateParticles<BaseParticles, Lattice>();
-        LevelSetShape *outer_level_set_shape = wall.defineComponentLevelSetShape("OuterBoundary", 2.0)
-                                                   ->writeLevelSet();
+        LevelSetShape &outer_level_set_shape = wall.defineComponentLevelSetShape("OuterBoundary", 2.0)
+                                                   .writeLevelSet();
         NearShapeSurface near_wall_outer_surface(wall, "OuterBoundary");
 
         FluidBody water_body(relaxation_system, water_body_shape);
-        LevelSetShape *water_level_set_shape = water_body.defineBodyLevelSetShape(2.0)
-                                                   ->writeLevelSet();
+        LevelSetShape &water_level_set_shape = water_body.defineBodyLevelSetShape(2.0)
+                                                   .writeLevelSet();
         water_body.generateParticles<BaseParticles, Lattice>();
         NearShapeSurface near_water_surface(water_body);
 
@@ -244,7 +244,7 @@ int main(int ac, char *av[])
 
         auto &water_relaxation_residual =
             main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(water_inner)
-                .addPostStateDynamics<LevelsetKernelGradientIntegral>(water_body, *water_level_set_shape);
+                .addPostStateDynamics<LevelsetKernelGradientIntegral>(water_body, water_level_set_shape);
         auto &water_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(water_body);
         auto &water_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(water_body);
         auto &water_level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_water_surface);
@@ -252,7 +252,7 @@ int main(int ac, char *av[])
         auto &wall_relaxation_residual =
             main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(wall_inner)
                 .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(wall_contact)
-                .addPostStateDynamics<LevelsetKernelGradientIntegral>(wall, *outer_level_set_shape);
+                .addPostStateDynamics<LevelsetKernelGradientIntegral>(wall, outer_level_set_shape);
         auto &wall_relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(wall);
         auto &wall_update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(wall);
         auto &wall_level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_wall_outer_surface);
@@ -326,7 +326,7 @@ int main(int ac, char *av[])
     SolidBody wall(sph_system, wall_body_shape);
     wall.defineMaterial<Solid>();
     wall.generateParticles<BaseParticles, Reload>(wall.getName())
-        ->reloadExtraVariable<Vecd>("NormalDirection");
+        .reloadExtraVariable<Vecd>("NormalDirection");
     // Add observer
     {
         int num_points = 15;

@@ -128,7 +128,7 @@ class WaterBlock : public MultiPolygonShape
         water_body_shape.emplace_back(DL, 0.0);
         water_body_shape.emplace_back(0.0, 0.0);
 
-        multi_polygon_.addAPolygon(water_body_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(water_body_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -156,8 +156,8 @@ class WallBoundary : public MultiPolygonShape
         inner_wall_shape.emplace_back(DL + BW, 0.0);
         inner_wall_shape.emplace_back(-BW, 0.0);
 
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------

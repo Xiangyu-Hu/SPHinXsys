@@ -31,8 +31,9 @@
 #ifndef DIFFUSION_REACTION_H
 #define DIFFUSION_REACTION_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 #include "particle_functors.h"
+#include "vector_functions.h"
 
 #include <functional>
 #include <map>

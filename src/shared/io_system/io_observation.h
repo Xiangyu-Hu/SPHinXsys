@@ -48,6 +48,7 @@ class BaseQuantityRecording : public BaseIO
     std::string quantity_name_;
     std::string dynamics_identifier_name_;
     std::string filefullpath_output_;
+    bool header_written_{false};
 };
 
 template <typename...>
@@ -77,21 +78,25 @@ class ObservedQuantityRecording<DataType> : public BaseQuantityRecording
           number_of_observe_(base_particles_.TotalRealParticles())
     {
         setFullPath(quantity_name);
-        std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
-        out_file << "run_time" << "   ";
-        DataType *interpolated_quantities = getObservedQuantity();
-        for (size_t i = 0; i != number_of_observe_; ++i)
-        {
-            std::string quantity_name_i = quantity_name + "[" + std::to_string(i) + "]";
-            plt_engine_.writeAQuantityHeader(out_file, interpolated_quantities[i], quantity_name_i);
-        }
-        out_file << "\n";
-        out_file.close();
     };
     virtual ~ObservedQuantityRecording() {};
 
     virtual void writeToFile(size_t iteration_step = 0) override
     {
+        if (!header_written_)
+        {
+          std::ofstream out_file(filefullpath_output_.c_str(), std::ios::out);
+          out_file << "run_time" << "   ";
+          DataType *interpolated_quantities = getObservedQuantity();
+          for (size_t i = 0; i != number_of_observe_; ++i)
+          {
+            std::string quantity_name_i = quantity_name_ + "[" + std::to_string(i) + "]";
+            plt_engine_.writeAQuantityHeader(out_file, interpolated_quantities[i], quantity_name_i);
+          }
+          out_file << "\n";
+          out_file.close();
+          header_written_ = true;
+        }
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_->getValue() << "   ";
         observation_method_.exec();
@@ -142,16 +147,20 @@ class ReducedQuantityRecording<LocalReduceMethodType> : public BaseQuantityRecor
     {
         quantity_name_ = reduce_method_.QuantityName();
         setFullPath(quantity_name_);
-        std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
-        out_file << "\"run_time\"" << "   ";
-        plt_engine_.writeAQuantityHeader(out_file, reduced_quantity_, quantity_name_);
-        out_file << "\n";
-        out_file.close();
     };
     virtual ~ReducedQuantityRecording() {};
 
     virtual void writeToFile(size_t iteration_step = 0) override
     {
+      if (!header_written_)
+      {
+        std::ofstream out_file(filefullpath_output_.c_str(), std::ios::out);
+        out_file << "\"run_time\"" << "   ";
+        plt_engine_.writeAQuantityHeader(out_file, reduced_quantity_, quantity_name_);
+        out_file << "\n";
+        out_file.close();
+        header_written_ = true;
+      }
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_->getValue() << "   ";
         reduced_quantity_ = reduce_method_.exec();
@@ -187,17 +196,21 @@ class SingularVariableRecording : public BaseQuantityRecording
           variable_(variable)
     {
         setFullPath(variable->Name());
-        std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
-        out_file << "\"run_time\"" << "   ";
-        plt_engine_.writeAQuantityHeader(out_file, variable_->getValue(), quantity_name_);
-        out_file << "\n";
-        out_file.close();
     };
 
     virtual ~SingularVariableRecording() {};
 
     virtual void writeToFile(size_t iteration_step = 0) override
     {
+        if (!header_written_)
+        {
+          std::ofstream out_file(filefullpath_output_.c_str(), std::ios::out);
+          out_file << "\"run_time\"" << "   ";
+          plt_engine_.writeAQuantityHeader(out_file, variable_->getValue(), quantity_name_);
+          out_file << "\n";
+          out_file.close();
+          header_written_ = true;
+        }
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_->getValue() << "   ";
         plt_engine_.writeAQuantity(out_file, variable_->getValue());

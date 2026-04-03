@@ -1,8 +1,7 @@
 #ifndef SURFACE_INDICATION_CK_H
 #define SURFACE_INDICATION_CK_H
 
-#include "base_fluid_dynamics.h"
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
 #include "interaction_ck.hpp"
 
 namespace SPH

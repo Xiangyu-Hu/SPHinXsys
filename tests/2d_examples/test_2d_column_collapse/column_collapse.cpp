@@ -55,7 +55,7 @@ class Soil : public MultiPolygonShape
   public:
     explicit Soil(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(soil_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(soil_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------

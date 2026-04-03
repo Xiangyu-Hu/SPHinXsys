@@ -32,7 +32,7 @@
 #define NEIGHBORHOOD_H
 
 #include "all_kernels.h"
-#include "base_data_type_package.h"
+#include "data_type.h"
 #include "sphinxsys_containers.h"
 
 namespace SPH
@@ -348,6 +348,19 @@ class NeighborBuilderSplitInnerAdaptive : public NeighborBuilder
   private:
     Real *h_ratio_;
     int *level_;
+};
+
+/**
+ * @class MaxSmoothingLengthNeighborBuilder
+ * @brief A contact neighbor builder functor, where the cut-off radius is set as factor * 2h_max
+ */
+class MaxSmoothingLengthNeighborBuilder : public NeighborBuilderContact
+{
+  private:
+    UniquePtrKeeper<Kernel> kernel_keeper_;
+
+  public:
+    MaxSmoothingLengthNeighborBuilder(SPHBody &body, SPHBody &contact_body, Real factor = 1.0);
 };
 } // namespace SPH
 #endif // NEIGHBORHOOD_H

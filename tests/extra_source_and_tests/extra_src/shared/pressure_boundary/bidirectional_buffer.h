@@ -22,7 +22,7 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	bidirectional_buffer.h
- * @brief 	Here, we define the algorithm classes for bidirectiontal buffer.
+ * @brief 	Here, we define the algorithm classes for bidirectional buffer.
  * @details The buffer particle index is periodically updated at each time step.
             The bidirectional buffer can serve for unidirectional, bidirectional and mixed flows.
  * @author	Shuoguo Zhang and Xiangyu Hu
@@ -99,7 +99,7 @@ class BidirectionalBuffer
               previous_surface_indicator_(particles_->getVariableDataByName<int>("PreviousSurfaceIndicator")),
               buffer_indicator_(particles_->getVariableDataByName<int>("BufferIndicator")),
               upper_bound_fringe_(0.5 * sph_body_->getSPHBodyResolutionRef()),
-              physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")),
+              physical_time_(sph_system_->svPhysicalTime().Data()),
               target_pressure_(target_pressure)
         {
             particle_buffer_.checkParticlesReserved();
@@ -108,23 +108,23 @@ class BidirectionalBuffer
 
         void update(size_t index_i, Real dt = 0.0)
         {
-          if (aligned_box_.checkUpperBound(pos_[index_i], upper_bound_fringe_) &&
-              buffer_indicator_[index_i] == part_id_ &&
-              index_i < particles_->TotalRealParticles())
-          {
-              mutex_switch.lock();
-              particle_buffer_.checkEnoughBuffer(*particles_);
-              size_t new_particle_index = particles_->createRealParticleFrom(index_i);
-              buffer_indicator_[new_particle_index] = 0;
+            if (aligned_box_.checkUpperBound(pos_[index_i], upper_bound_fringe_) &&
+                buffer_indicator_[index_i] == part_id_ &&
+                index_i < particles_->TotalRealParticles())
+            {
+                mutex_switch.lock();
+                particle_buffer_.checkEnoughBuffer(*particles_);
+                size_t new_particle_index = particles_->createRealParticleFrom(index_i);
+                buffer_indicator_[new_particle_index] = 0;
 
-              /** Periodic bounding. */
-              pos_[index_i] = aligned_box_.getUpperPeriodic(pos_[index_i]);
-              Real sound_speed = fluid_.getSoundSpeed(rho_[index_i]);
-              p_[index_i] = target_pressure_(p_[index_i], *physical_time_);
-              rho_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
-              previous_surface_indicator_[index_i] = 1;
-              mutex_switch.unlock();
-          }
+                /** Periodic bounding. */
+                pos_[index_i] = aligned_box_.getUpperPeriodic(pos_[index_i]);
+                Real sound_speed = fluid_.getSoundSpeed(rho_[index_i]);
+                p_[index_i] = target_pressure_(p_[index_i], *physical_time_);
+                rho_[index_i] = p_[index_i] / pow(sound_speed, 2.0) + fluid_.ReferenceDensity();
+                previous_surface_indicator_[index_i] = 1;
+                mutex_switch.unlock();
+            }
         }
 
       protected:

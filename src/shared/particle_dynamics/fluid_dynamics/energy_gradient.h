@@ -1,6 +1,6 @@
 #ifndef ENERGY_GRADIENT_H
 #define ENERGY_GRADIENT_H
-
+#include "particle_functors.h"
 #include "base_fluid_dynamics.h"
 
 namespace SPH

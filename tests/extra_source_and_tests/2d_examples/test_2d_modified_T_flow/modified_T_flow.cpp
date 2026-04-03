@@ -6,8 +6,8 @@
  */
 
 #include "bidirectional_buffer.h"
-#include "density_correciton.h"
-#include "density_correciton.hpp"
+#include "density_correction.h"
+#include "density_correction.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"
@@ -121,7 +121,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
     }
 };
 
@@ -130,8 +130,8 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 

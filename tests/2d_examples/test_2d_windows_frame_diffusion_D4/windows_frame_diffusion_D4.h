@@ -109,7 +109,7 @@ MultiPolygon createOverallStructureBody()
     overallStructureDomainShape.push_back(Vecd(0.0, 0.005));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(overallStructureDomainShape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(overallStructureDomainShape, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -131,7 +131,7 @@ MultiPolygon createInternalAirBody()
     internalAirDomainShape.push_back(Vecd(0.0, 0.071));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(internalAirDomainShape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(internalAirDomainShape, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -150,8 +150,8 @@ MultiPolygon createDecreasedInternalConvectionBody()
     decreasedInternalConvectionDomainShape2.push_back(Vecd(0.110, 0.051));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(decreasedInternalConvectionDomainShape1, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(decreasedInternalConvectionDomainShape2, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(decreasedInternalConvectionDomainShape1, GeometricOps::add);
+    multi_polygon.addAPolygon(decreasedInternalConvectionDomainShape2, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -169,7 +169,7 @@ MultiPolygon createExternalAirBody()
     externalAirDomainShape.push_back(Vecd(0.0, 0.0));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(externalAirDomainShape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(externalAirDomainShape, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -200,8 +200,8 @@ MultiPolygon createWoodBody()
     woodDomainShape2.push_back(Vecd(0.068, 0.005));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(woodDomainShape1, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(woodDomainShape2, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(woodDomainShape1, GeometricOps::add);
+    multi_polygon.addAPolygon(woodDomainShape2, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -236,10 +236,10 @@ MultiPolygon createEPDMBody()
     epdmDomainShape4.push_back(Vecd(0.095, 0.020));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(epdmDomainShape1, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(epdmDomainShape2, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(epdmDomainShape3, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(epdmDomainShape4, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(epdmDomainShape1, GeometricOps::add);
+    multi_polygon.addAPolygon(epdmDomainShape2, GeometricOps::add);
+    multi_polygon.addAPolygon(epdmDomainShape3, GeometricOps::add);
+    multi_polygon.addAPolygon(epdmDomainShape4, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -253,7 +253,7 @@ MultiPolygon createPanelBody()
     panelDomainShape.push_back(Vecd(0.095, 0.023));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(panelDomainShape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(panelDomainShape, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -267,7 +267,7 @@ MultiPolygon createACBody1()
     acDomainShape1.push_back(Vecd(0.042, 0.020));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(acDomainShape1, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(acDomainShape1, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -281,7 +281,7 @@ MultiPolygon createACBody2()
     acDomainShape2.push_back(Vecd(0.090, 0.020));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(acDomainShape2, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(acDomainShape2, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -295,7 +295,7 @@ MultiPolygon createACOpenBody1()
     acOpenDomainShape1.push_back(Vecd(0.063, 0.005));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(acOpenDomainShape1, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(acOpenDomainShape1, GeometricOps::add);
 
     return multi_polygon;
 }

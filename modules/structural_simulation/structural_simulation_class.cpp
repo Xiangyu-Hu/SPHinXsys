@@ -23,7 +23,7 @@ SolidBodyFromMesh::SolidBodyFromMesh(
     : SolidBody(system, triangle_mesh_shape)
 {
     defineAdaptationRatios(1.15, system.GlobalResolution() / resolution);
-    defineBodyLevelSetShape()->cleanLevelSet();
+    defineBodyLevelSetShape().cleanLevelSet();
     defineMaterial<SaintVenantKirchhoffSolid>(*material_model.get());
     generateParticles<BaseParticles, Lattice>();
 }
@@ -108,7 +108,7 @@ std::tuple<Vecd *, Real *> generateAndRelaxParticlesFromMesh(
     BoundingBoxd bb = triangle_mesh_shape->getBounds();
     SPHSystem system(bb, resolution);
     SolidBody model(system, triangle_mesh_shape);
-    model.defineBodyLevelSetShape()->cleanLevelSet();
+    model.defineBodyLevelSetShape().cleanLevelSet();
     model.defineMaterial<Solid>();
     model.generateParticles<BaseParticles, Lattice>();
 

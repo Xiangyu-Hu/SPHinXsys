@@ -10,8 +10,8 @@ using namespace SPH;
 // general parameters for geometry
 Real radius = 0.1;                                         // Soil column length
 Real height = 0.1;                                         // Soil column height
-Real global_resolution = radius / 10;                         // particle spacing
-Real BW = global_resolution * 4;                              // boundary width
+Real global_resolution = radius / 10;                      // particle spacing
+Real BW = global_resolution * 4;                           // boundary width
 Real DL = 2 * radius * (1 + 1.24 * height / radius) + 0.1; // tank length
 Real DH = height + 0.02;                                   // tank height
 Real DW = DL;                                              // tank width
@@ -85,7 +85,7 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     RealBody soil_block(sph_system, makeShared<SoilBlock>("GranularBody"));
-    soil_block.defineBodyLevelSetShape()->writeLevelSet();
+    soil_block.defineBodyLevelSetShape().writeLevelSet();
     soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? soil_block.generateParticles<BaseParticles, Reload>(soil_block.getName())

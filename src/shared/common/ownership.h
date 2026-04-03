@@ -42,7 +42,10 @@
 
 #include "base_data_type.h"
 
+#include <iostream>
+#include <memory>
 #include <string_view>
+#include <vector>
 
 template <typename T>
 constexpr std::string_view type_name()
@@ -69,16 +72,21 @@ constexpr std::string_view type_name()
 
 namespace SPH
 {
+inline void checkPointer(void *ptr, std::string_view pointer_name, std::string_view owner_name)
+{
+    if (ptr == nullptr)
+    {
+        std::cout << "\n Error: pointer " << pointer_name << " is nullptr! \n";
+        std::cout << "\n This error locates in " << owner_name << '\n';
+        exit(1);
+    }
+}
+
 template <class CastingType, class OwnerType, class CastedType>
 CastingType *DynamicCast(OwnerType *owner, CastedType *casted)
 {
     CastingType *tmp = dynamic_cast<CastingType *>(casted);
-    if (tmp == nullptr)
-    {
-        std::cout << "\n Error: pointer DynamicCasting " << type_name<CastedType>() << " leads to nullptr! \n";
-        std::cout << "\n This error locates in " << type_name<OwnerType>() << '\n';
-        exit(1);
-    }
+    checkPointer(tmp, type_name<CastedType>(), type_name<OwnerType>());
     return tmp;
 }
 
@@ -86,12 +94,7 @@ template <class CastingType, class OwnerType, class CastedType>
 CastingType &DynamicCast(OwnerType *owner, CastedType &casted)
 {
     CastingType *tmp = dynamic_cast<CastingType *>(&casted);
-    if (tmp == nullptr)
-    {
-        std::cout << "\n Error: reference DynamicCasting " << type_name<CastedType>() << " leads to nullptr! \n";
-        std::cout << "\n This error locates in " << type_name<OwnerType>() << '\n';
-        exit(1);
-    }
+    checkPointer(tmp, type_name<CastedType>(), type_name<OwnerType>());
     return *tmp;
 }
 
@@ -183,7 +186,7 @@ class UniquePtrsKeeper
     }
 
   private:
-    std::vector<UniquePtrKeeper<BaseType>> ptr_keepers_;
+    StdVec<UniquePtrKeeper<BaseType>> ptr_keepers_;
 };
 
 template <class T>
@@ -274,7 +277,7 @@ class SharedPtrsKeeper
     }
 
   private:
-    std::vector<SharedPtrKeeper<BaseType>> ptr_keepers_;
+    StdVec<SharedPtrKeeper<BaseType>> ptr_keepers_;
 };
 
 } // namespace SPH

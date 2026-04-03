@@ -1,5 +1,6 @@
 #include "fluid_time_step_ck.h"
 
+#include "adaptation.h"
 #include "viscosity.h"
 
 namespace SPH

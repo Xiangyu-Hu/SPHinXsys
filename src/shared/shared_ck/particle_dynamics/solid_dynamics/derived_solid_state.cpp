@@ -1,5 +1,7 @@
 #include "derived_solid_state.h"
 
+#include "base_particles.hpp"
+
 namespace SPH
 {
 namespace solid_dynamics

@@ -108,9 +108,9 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(createBeamShape(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(createWaterBlockShape(), GeometricOps::add);
+        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::sub);
+        multi_polygon_.addAPolygon(createBeamShape(), GeometricOps::sub);
     }
 };
 class WallBoundary : public MultiPolygonShape
@@ -118,8 +118,8 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(createOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createInnerWallShape(), GeometricOps::sub);
     }
 };
 class Insert : public MultiPolygonShape
@@ -127,16 +127,16 @@ class Insert : public MultiPolygonShape
   public:
     explicit Insert(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createBeamShape(), ShapeBooleanOps::add);
+        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::add);
+        multi_polygon_.addAPolygon(createBeamShape(), GeometricOps::add);
     }
 };
 /** create the beam base as constrain shape. */
 MultiPolygon createBeamBaseShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(createBeamShape(), ShapeBooleanOps::sub);
+    multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::add);
+    multi_polygon.addAPolygon(createBeamShape(), GeometricOps::sub);
     return multi_polygon;
 }
 //----------------------------------------------------------------------

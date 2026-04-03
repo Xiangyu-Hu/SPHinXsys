@@ -97,17 +97,17 @@ int main(int ac, char *av[])
         // setup a sub-system for particle relaxation and delete it after particle relaxation.
         RelaxationSystem relaxation_system(system_domain_bounds, particle_spacing_ref);
         auto &water_body = relaxation_system.addAdaptiveBody<FluidBody>(water_body_adaptation, water_body_shape);
-        LevelSetShape *outer_boundary_level_set_shape =
-            water_body.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet();
-        LevelSetShape *refinement_region_level_set_shape =
+        LevelSetShape &outer_boundary_level_set_shape =
+            water_body.defineComponentLevelSetShape("OuterBoundary").writeLevelSet();
+        LevelSetShape &refinement_region_level_set_shape =
             relaxation_system.addShape<LevelSetShape>(water_body, refinement_region).writeLevelSet();
-        water_body.generateParticles<BaseParticles, Lattice>(*refinement_region_level_set_shape);
+        water_body.generateParticles<BaseParticles, Lattice>(refinement_region_level_set_shape);
 
         auto &cylinder = relaxation_system.addAdaptiveBody<SolidBody>(cylinder_adaptation, cylinder_shape);
-        LevelSetShape *cylinder_level_set_shape = cylinder.defineBodyLevelSetShape()->writeLevelSet();
+        LevelSetShape &cylinder_level_set_shape = cylinder.defineBodyLevelSetShape().writeLevelSet();
         cylinder.generateParticles<BaseParticles, Lattice>();
 
-        auto &near_water_body_surface = water_body.addBodyPart<NearShapeSurface>(*outer_boundary_level_set_shape);
+        auto &near_water_body_surface = water_body.addBodyPart<NearShapeSurface>(outer_boundary_level_set_shape);
         auto &near_cylinder_surface = cylinder.addBodyPart<NearShapeSurface>();
         StdVec<NearShapeSurface *> near_body_surfaces = {&near_water_body_surface, &near_cylinder_surface};
         StdVec<RealBody *> real_bodies = {&water_body, &cylinder};
@@ -155,14 +155,14 @@ int main(int ac, char *av[])
         ParticleDynamicsGroup relaxation_residual;
         relaxation_residual.add(&main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(water_body_inner)
                                      .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(water_body_contact)
-                                     .addPostStateDynamics<LevelsetKernelGradientIntegral>(water_body, *outer_boundary_level_set_shape));
+                                     .addPostStateDynamics<LevelsetKernelGradientIntegral>(water_body, outer_boundary_level_set_shape));
         relaxation_residual.add(&main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(cylinder_inner)
-                                     .addPostStateDynamics<LevelsetKernelGradientIntegral>(cylinder, *cylinder_level_set_shape));
+                                     .addPostStateDynamics<LevelsetKernelGradientIntegral>(cylinder, cylinder_level_set_shape));
 
         ReduceDynamicsGroup relaxation_scaling = main_methods.addReduceDynamics<ReduceMin, RelaxationScalingCK>(real_bodies);
         ParticleDynamicsGroup update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(real_bodies);
         ParticleDynamicsGroup level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_body_surfaces);
-        auto &update_smoothing_length_ratio = main_methods.addStateDynamics<UpdateSmoothingLengthRatio>(water_body, *refinement_region_level_set_shape);
+        auto &update_smoothing_length_ratio = main_methods.addStateDynamics<UpdateSmoothingLengthRatio>(water_body, refinement_region_level_set_shape);
         //----------------------------------------------------------------------
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------
@@ -212,12 +212,12 @@ int main(int ac, char *av[])
         }
     }
     auto &water_body = sph_system.addAdaptiveBody<FluidBody>(water_body_adaptation, water_body_shape);
-    water_body.defineComponentLevelSetShape("OuterBoundary")->writeLevelSet();
+    water_body.defineComponentLevelSetShape("OuterBoundary").writeLevelSet();
     sph_system.addShape<LevelSetShape>(water_body, refinement_region).writeLevelSet();
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_body.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_body.getName())
-        ->reloadExtraVariable<Real>("SmoothingLengthRatio");
+        .reloadExtraVariable<Real>("SmoothingLengthRatio");
     // //----------------------------------------------------------------------
     // //	Creating body parts.
     // //----------------------------------------------------------------------
@@ -227,10 +227,10 @@ int main(int ac, char *av[])
     disposer.writeShapeProxy();
 
     auto &cylinder = sph_system.addAdaptiveBody<SolidBody>(cylinder_adaptation, cylinder_shape);
-    cylinder.defineBodyLevelSetShape()->writeLevelSet();
+    cylinder.defineBodyLevelSetShape().writeLevelSet();
     cylinder.defineMaterial<Solid>();
     cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
-        ->reloadExtraVariable<Vecd>("NormalDirection");
+        .reloadExtraVariable<Vecd>("NormalDirection");
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     fluid_observer.generateParticles<ObserverParticles>(observation_locations);
@@ -323,7 +323,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper time_stepper(sph_system, total_physical_time);
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
     auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
     size_t advection_steps = 0;
     int screening_interval = 100;
@@ -355,7 +355,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
-    while (!time_stepper.isEndTime())
+    while (!time_stepper.isEndTime(total_physical_time))
     {
         //----------------------------------------------------------------------
         //	the fastest and most frequent acostic time stepping.

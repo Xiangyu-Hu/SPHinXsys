@@ -1,6 +1,8 @@
 #include "eulerian_compressible_fluid_integration.h"
 #include "muscl_reconstruction.hpp"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 namespace fluid_dynamics

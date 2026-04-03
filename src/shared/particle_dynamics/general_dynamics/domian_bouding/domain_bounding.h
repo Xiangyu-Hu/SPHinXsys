@@ -31,6 +31,13 @@
 
 #include "base_general_dynamics.h"
 
+#include "dynamics_algorithms.h"
+#include "particle_functors.h"
+
+#include "adaptation.h"
+
+#include <mutex>
+
 namespace SPH
 {
 /**
@@ -55,7 +62,7 @@ struct PeriodicAlongAxis
 
   protected:
     BoundingBoxd bounding_bounds_; /**< lower and upper bound for checking. */
-    const int axis_;              /**< the axis directions for bounding*/
+    const int axis_;               /**< the axis directions for bounding*/
     Vecd periodic_translation_;
 };
 

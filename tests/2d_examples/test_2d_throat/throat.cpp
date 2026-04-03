@@ -68,9 +68,9 @@ class FluidBlock : public MultiPolygonShape
         pnts2.push_back(Vecd(0.5 * DL, -0.5 * DH));
         pnts2.push_back(Vecd(DL / 6.0, -0.5 * DH));
 
-        multi_polygon_.addAPolygon(pnts, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(pnts1, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(pnts2, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(pnts, GeometricOps::add);
+        multi_polygon_.addAPolygon(pnts1, GeometricOps::add);
+        multi_polygon_.addAPolygon(pnts2, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -109,10 +109,10 @@ class WallBoundary : public MultiPolygonShape
         pnts2.push_back(Vecd(0.5 * DL + 2.0 * BW, -0.5 * DH));
         pnts2.push_back(Vecd(DL / 6.0, -0.5 * DH));
 
-        multi_polygon_.addAPolygon(pnts3, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(pnts, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(pnts1, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(pnts2, ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(pnts3, GeometricOps::add);
+        multi_polygon_.addAPolygon(pnts, GeometricOps::sub);
+        multi_polygon_.addAPolygon(pnts1, GeometricOps::sub);
+        multi_polygon_.addAPolygon(pnts2, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------

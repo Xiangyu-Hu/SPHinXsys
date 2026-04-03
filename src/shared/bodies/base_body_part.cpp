@@ -1,8 +1,11 @@
 #include "base_body_part.h"
 
+#include "adaptation.h"
 #include "base_body.h"
 #include "base_particles.hpp"
 #include "cell_linked_list.hpp"
+#include "complex_geometry.h"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {
@@ -15,6 +18,8 @@ BodyPart::BodyPart(SPHBody &sph_body)
       sv_range_size_(nullptr),
       dv_body_part_id_(base_particles_.registerStateVariable<int>(part_name_ + "ID")),
       pos_(base_particles_.getVariableDataByName<Vecd>("Position")) {}
+//=================================================================================================//
+BodyPart::~BodyPart() = default;
 //=================================================================================================//
 BaseCellLinkedList &BodyPart::getCellLinkedList()
 {
@@ -35,6 +40,8 @@ BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body)
     base_particles_.addBodyPartByParticle(this);
     base_particles_.addEvolvingVariable<int>(dv_body_part_id_);
 }
+//=================================================================================================//
+BodyRegionByParticle::~BodyRegionByParticle() = default;
 //=================================================================================================//
 void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
 {
@@ -98,6 +105,8 @@ BodyRegionByParticle::
     TaggingParticleMethod tagging_particle_method = std::bind(&BodyRegionByParticle::tagByContain, this, _1);
     tagParticles(tagging_particle_method);
 }
+//=================================================================================================//
+BodyRegionByCell::~BodyRegionByCell() = default;
 //=================================================================================================//
 BodyRegionByParticle::BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr)
     : BodyRegionByParticle(sph_body, *shape_ptr.get())
@@ -197,14 +206,15 @@ NearShapeSurface::NearShapeSurface(RealBody &real_body, const std::string &sub_s
     tagCells(tagging_cell_method);
 }
 //=================================================================================================//
+NearShapeSurface::~NearShapeSurface() = default;
+//=================================================================================================//
 bool NearShapeSurface::checkNearSurface(Vecd cell_position, Real threshold)
 {
     return level_set_shape_.checkNearSurface(cell_position, threshold);
 }
 //=================================================================================================//
-AlignedBoxPart::AlignedBoxPart(SPHSystem &sph_system, const std::string &part_name, const AlignedBox &aligned_box)
-    : sph_system_(sph_system),
-      aligned_box_(*sv_aligned_box_keeper_
+AlignedBoxPart::AlignedBoxPart(const std::string &part_name, const AlignedBox &aligned_box)
+    : aligned_box_(*sv_aligned_box_keeper_
                         .createPtr<SingularVariable<AlignedBox>>(part_name, aligned_box)
                         ->Data())
 {
@@ -212,8 +222,10 @@ AlignedBoxPart::AlignedBoxPart(SPHSystem &sph_system, const std::string &part_na
               << aligned_box_.getTransform().xformFrameVecToBase(Vecd::UnitX()) << std::endl;
 }
 //=================================================================================================//
+AlignedBoxPart::~AlignedBoxPart() = default;
+//=================================================================================================//
 AlignedBoxByParticle::AlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box)
-    : BodyPartByParticle(real_body), AlignedBoxPart(real_body.getSPHSystem(), part_name_, aligned_box)
+    : BodyPartByParticle(real_body), AlignedBoxPart(part_name_, aligned_box)
 {
     TaggingParticleMethod tagging_particle_method =
         std::bind(&AlignedBoxByParticle::tagByContain, this, _1);
@@ -226,7 +238,7 @@ bool AlignedBoxByParticle::tagByContain(size_t particle_index)
 }
 //=================================================================================================//
 AlignedBoxByCell::AlignedBoxByCell(RealBody &real_body, const AlignedBox &aligned_box)
-    : BodyPartByCell(real_body), AlignedBoxPart(real_body.getSPHSystem(), part_name_, aligned_box)
+    : BodyPartByCell(real_body), AlignedBoxPart(part_name_, aligned_box)
 {
     TaggingCellMethod tagging_cell_method =
         std::bind(&AlignedBoxByCell::checkNotFar, this, _1, _2);

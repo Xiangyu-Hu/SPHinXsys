@@ -3,7 +3,8 @@
 
 #include "sph_system.h"
 
-#include "sphinxsys_variable.h"
+#include "adaptive_body.h"
+#include "relation_ck.h"
 
 namespace SPH
 {
@@ -25,13 +26,7 @@ SingularVariable<DataType> *SPHSystem::getSystemVariableByName(const std::string
 {
     SingularVariable<DataType> *variable =
         findVariableByName<DataType>(all_system_variables_, name);
-
-    if (variable == nullptr)
-    {
-        std::cout << "\nError: the system variable '" << name << "' is not registered!\n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    }
-
+    checkPointer(variable, name, "system variable");
     return variable;
 }
 //=================================================================================================//
@@ -40,13 +35,7 @@ DataType *SPHSystem::getSystemVariableDataByName(const std::string &name)
 {
     SingularVariable<DataType> *variable =
         findVariableByName<DataType>(all_system_variables_, name);
-
-    if (variable == nullptr)
-    {
-        std::cout << "\nError: the system variable '" << name << "' is not registered!\n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-    }
-
+    checkPointer(variable, name, "system variable");
     return variable->Data();
 }
 //=================================================================================================//

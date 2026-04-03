@@ -1,7 +1,12 @@
 #include "base_body.h"
 
-#include "base_body_relation.h"
+#include "adaptation.h"
+#include "base_body_part.h"
+#include "base_geometry.h"
+#include "base_material.h"
+#include "base_particles.h"
 #include "base_particles.hpp"
+#include "cell_linked_list.h"
 #include "sph_system.h"
 
 namespace SPH
@@ -15,6 +20,8 @@ SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
 {
     sph_system_.addSPHBody(this);
 }
+//=================================================================================================//
+SPHBody::~SPHBody() = default;
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape)
     : SPHBody(sph_system, shape, shape.getName()) {}
@@ -36,30 +43,41 @@ BoundingBoxd SPHBody::getSPHSystemBounds()
     return sph_system_.getSystemDomainBounds();
 }
 //=================================================================================================//
+IndexRange SPHBody::LoopRange()
+{
+    return IndexRange(0, base_particles_->TotalRealParticles());
+};
+//=================================================================================================//
+size_t SPHBody::SizeOfLoopRange()
+{
+    return base_particles_->TotalRealParticles();
+};
+//=================================================================================================//
 SPHSystem &SPHBody::getSPHSystem()
 {
     return sph_system_;
 }
 //=================================================================================================//
+Real SPHBody::getSPHBodyResolutionRef()
+{
+    return sph_adaptation_->ReferenceSpacing();
+};
+//=================================================================================================//
+SPHAdaptation &SPHBody::getSPHAdaptation()
+{
+    checkPointer(sph_adaptation_, "sph_adaptation_", body_name_);
+    return *sph_adaptation_;
+}
+//=================================================================================================//
 BaseParticles &SPHBody::getBaseParticles()
 {
-    if (base_particles_ == nullptr)
-    {
-        std::cout << "\n Error: BaseParticle not generated yet! \n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
+    checkPointer(base_particles_, "base_particles_", body_name_);
     return *base_particles_;
 };
 //=================================================================================================//
 BaseMaterial &SPHBody::getBaseMaterial()
 {
-    if (base_material_ == nullptr)
-    {
-        std::cout << "\n Error: BaseMaterial not generated yet! \n";
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
+    checkPointer(base_material_, "base_material_", body_name_);
     return *base_material_;
 };
 //=================================================================================================//
@@ -90,6 +108,8 @@ BaseCellLinkedList &RealBody::getCellLinkedList()
     }
     return *cell_linked_list_ptr_.get();
 }
+//=================================================================================================//
+RealBody::~RealBody() = default;
 //=================================================================================================//
 void RealBody::updateCellLinkedList()
 {

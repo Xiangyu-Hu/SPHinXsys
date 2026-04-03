@@ -95,7 +95,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody imported_model(sph_system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
     // level set shape is used for particle relaxation
-    imported_model.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet();
+    imported_model.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
     imported_model.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define simple file input and outputs functions.
@@ -124,7 +124,7 @@ int main(int ac, char *av[])
     relaxation_step_inner.SurfaceBounding().exec();
     write_imported_model_to_vtp.writeToFile(0.0);
     imported_model.updateCellLinkedList();
-     //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
     //	Particle relaxation time stepping start here.
     //----------------------------------------------------------------------
     int ite_p = 0;

@@ -23,7 +23,7 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);
 #endif
-    ParameterizationIO *parameterization_io = sph_system.getIOEnvironment().defineParameterizationIO();
+    ParameterizationIO *parameterization_io = IO::getEnvironment().defineParameterizationIO();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------

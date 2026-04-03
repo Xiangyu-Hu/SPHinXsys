@@ -1,5 +1,7 @@
 #include "relaxation_stepping_ck.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 //=================================================================================================//

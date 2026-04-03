@@ -6,8 +6,8 @@
  */
 
 #include "bidirectional_buffer.h"
-#include "density_correciton.h"
-#include "density_correciton.hpp"
+#include "density_correction.h"
+#include "density_correction.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"
@@ -17,14 +17,14 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.2;               /**< Reference length. */
-Real DH = 0.1;               /**< Reference and the height of main channel. */
-Real DL1 = 0.75 * DL;        /**< The length of the main channel. */
+Real DL = 0.2;                  /**< Reference length. */
+Real DH = 0.1;                  /**< Reference and the height of main channel. */
+Real DL1 = 0.75 * DL;           /**< The length of the main channel. */
 Real global_resolution = 0.005; /**< Initial reference particle spacing. */
 Real resolution_shell = global_resolution;
 Real BW = resolution_shell * 1.0;
-Real buffer_width = global_resolution * 4.0;                    /**< Reference size of the emitter. */
-Real DL_sponge = global_resolution * 20;                        /**< Reference size of the emitter buffer to impose inflow condition. */
+Real buffer_width = global_resolution * 4.0;                 /**< Reference size of the emitter. */
+Real DL_sponge = global_resolution * 20;                     /**< Reference size of the emitter buffer to impose inflow condition. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
 Real level_set_refinement = global_resolution / (0.1 * BW);
 //----------------------------------------------------------------------
@@ -67,7 +67,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
     }
 };
 
@@ -76,8 +76,8 @@ class ShellShape : public MultiPolygonShape
   public:
     explicit ShellShape(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -261,7 +261,7 @@ int main(int ac, char *av[])
     SolidBody shell_body(sph_system, makeShared<ShellShape>("ShellBody"));
     shell_body.defineAdaptation<SPHAdaptation>(1.15, global_resolution / resolution_shell);
     shell_body.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
-        ->writeLevelSet();
+        .writeLevelSet();
     shell_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     shell_body.generateParticles<SurfaceParticles, WallBoundary>(resolution_shell, BW);
 

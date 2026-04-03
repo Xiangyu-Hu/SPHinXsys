@@ -9,14 +9,14 @@ namespace SPH
 template <typename OutStreamType>
 void BodyStatesRecordingToTriangleMeshVtp::writeCellsToVtk(OutStreamType &output_stream, BaseParticles &particles)
 {
-    ParticleVariables &variables_to_write = particles.VariablesToWrite();
+    DiscreteVariables &variables_to_write = particles.VariablesToWrite();
 
     // write scalars
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
     for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write))
     {
         Real *data_field = variable->Data();
-        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\" Format=\"ascii\">\n";
+        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\" format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != faces_.size(); ++i)
         {
@@ -37,7 +37,7 @@ void BodyStatesRecordingToTriangleMeshVtp::writeCellsToVtk(OutStreamType &output
     for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write))
     {
         Vecd *data_field = variable->Data();
-        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"3\" format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != faces_.size(); ++i)
         {
@@ -59,7 +59,7 @@ void BodyStatesRecordingToTriangleMeshVtp::writeCellsToVtk(OutStreamType &output
     for (DiscreteVariable<Matd> *variable : std::get<type_index_Matd>(variables_to_write))
     {
         Matd *data_field = variable->Data();
-        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type= \"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
+        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"9\" format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != faces_.size(); ++i)
         {

@@ -21,7 +21,7 @@ NormalFromBodyShapeCK::UpdateKernel::
 template <class ExecutionPolicy, class Encloser>
 NormalFromSubShapeAndOpCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, Encloser &encloser)
     : HostKernel(ex_policy, encloser), shape_(encloser.shape_and_op_->first),
-      switch_sign_(encloser.shape_and_op_->second == ShapeBooleanOps::add ? 1.0 : -1.0),
+      switch_sign_(encloser.shape_and_op_->second == GeometricOps::add ? 1.0 : -1.0),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       n_(encloser.dv_n_->DelegatedData(ex_policy)),
       n0_(encloser.dv_n0_->DelegatedData(ex_policy)),

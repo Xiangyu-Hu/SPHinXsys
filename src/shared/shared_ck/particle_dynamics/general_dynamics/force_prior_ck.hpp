@@ -20,7 +20,7 @@ template <typename... Args>
 GravityForceCK<GravityType>::GravityForceCK(SPHBody &sph_body, Args &&...args)
     : LocalDynamics(sph_body), ForcePriorCK(this->particles_, "GravityForceCK"),
       gravity_(std::forward<Args>(args)...),
-      sv_physical_time_(sph_system_->getSystemVariableByName<Real>("PhysicalTime")),
+      sv_physical_time_(&sph_system_->svPhysicalTime()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_mass_(particles_->getVariableByName<Real>("Mass")) {}
 //=================================================================================================//

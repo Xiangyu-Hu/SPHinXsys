@@ -76,9 +76,9 @@ class Beam : public MultiPolygonShape
   public:
     explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(beam_right_stretch_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(beam_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(beam_left_stretch_shape, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(beam_right_stretch_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(beam_shape, GeometricOps::add);
+        multi_polygon_.addAPolygon(beam_left_stretch_shape, GeometricOps::add);
     }
 };
 
@@ -125,22 +125,22 @@ class RightStretchSolidBodyRegion : public BodyPartMotionConstraint
 MultiPolygon createBeamRightStretchShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_right_stretch_shape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(beam_right_stretch_shape, GeometricOps::add);
     return multi_polygon;
 };
 
 MultiPolygon createBeamLeftStretchShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_left_stretch_shape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(beam_left_stretch_shape, GeometricOps::add);
     return multi_polygon;
 };
 
 MultiPolygon createConstrainBeamShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_left_stretch_shape, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(beam_right_stretch_shape, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(beam_left_stretch_shape, GeometricOps::add);
+    multi_polygon.addAPolygon(beam_right_stretch_shape, GeometricOps::add);
 
     return multi_polygon;
 };

@@ -24,7 +24,7 @@ SpawnRealParticle::ComputingKernel::
       particles_bound_(encloser.particles_bound_),
       original_id_(encloser.dv_original_id_->DelegatedData(ex_policy))
 {
-    OperationBetweenDataAssembles<ParticleVariables, DiscreteVariableArrayAssemble, DiscreteVariableArrayAssembleInitialization>
+    OperationBetweenDataAssembles<DiscreteVariables, DiscreteVariableArrayAssemble, DiscreteVariableArrayAssembleInitialization>
         initialize_discrete_variable_array;
     initialize_discrete_variable_array(encloser.evolving_variables_, encloser.copyable_states_);
     OperationBetweenDataAssembles<DiscreteVariableArrayAssemble, VariableDataArrayAssemble, VariableDataArrayAssembleInitialization>
@@ -38,7 +38,7 @@ RemoveRealParticle::ComputingKernel::
     : total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       original_id_(encloser.dv_original_id_->DelegatedData(ex_policy))
 {
-    OperationBetweenDataAssembles<ParticleVariables, DiscreteVariableArrayAssemble, DiscreteVariableArrayAssembleInitialization>
+    OperationBetweenDataAssembles<DiscreteVariables, DiscreteVariableArrayAssemble, DiscreteVariableArrayAssembleInitialization>
         initialize_discrete_variable_array;
     initialize_discrete_variable_array(encloser.evolving_variables_, encloser.copyable_states_);
     OperationBetweenDataAssembles<DiscreteVariableArrayAssemble, VariableDataArrayAssemble, VariableDataArrayAssembleInitialization>

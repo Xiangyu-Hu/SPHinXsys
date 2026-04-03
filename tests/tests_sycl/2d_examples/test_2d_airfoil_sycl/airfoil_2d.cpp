@@ -29,9 +29,9 @@ class ImportModel : public MultiPolygonShape
   public:
     explicit ImportModel(const std::string &import_model_name) : MultiPolygonShape(import_model_name)
     {
-        multi_polygon_.addAPolygonFromFile(airfoil_flap_front, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygonFromFile(airfoil_wing, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygonFromFile(airfoil_flap_rear, ShapeBooleanOps::add);
+        multi_polygon_.addAPolygonFromFile(airfoil_flap_front, GeometricOps::add);
+        multi_polygon_.addAPolygonFromFile(airfoil_wing, GeometricOps::add);
+        multi_polygon_.addAPolygonFromFile(airfoil_flap_rear, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -49,10 +49,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &airfoil = sph_system.addAdaptiveBody<RealBody>(
         AdaptiveNearSurface(global_resolution, 1.15, 1.0, 3), makeShared<ImportModel>("AirFoil"));
-    LevelSetShape *level_set_shape = airfoil.defineBodyLevelSetShape()
-                                         ->cleanLevelSet()
-                                         ->addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
-                                         ->writeLevelSet();
+    LevelSetShape &level_set_shape = airfoil.defineBodyLevelSetShape()
+                                         .cleanLevelSet()
+                                         .addCellVariableToWrite<UnsignedInt>("CellPackageIndex")
+                                         .writeLevelSet();
     airfoil.generateParticles<BaseParticles, Lattice>();
     auto &near_body_surface = airfoil.addBodyPart<NearShapeSurface>();
     //----------------------------------------------------------------------
@@ -88,11 +88,11 @@ int main(int ac, char *av[])
 
     auto &relaxation_residual =
         main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(airfoil_inner)
-            .addPostStateDynamics<LevelsetKernelGradientIntegral>(airfoil, *level_set_shape);
+            .addPostStateDynamics<LevelsetKernelGradientIntegral>(airfoil, level_set_shape);
 
     auto &update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(airfoil);
     auto &level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_body_surface);
-    auto &update_smoothing_length_ratio = main_methods.addStateDynamics<UpdateSmoothingLengthRatio>(airfoil, *level_set_shape);
+    auto &update_smoothing_length_ratio = main_methods.addStateDynamics<UpdateSmoothingLengthRatio>(airfoil, level_set_shape);
 
     auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(airfoil);
     //----------------------------------------------------------------------

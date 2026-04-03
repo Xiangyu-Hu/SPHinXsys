@@ -29,7 +29,7 @@
 #ifndef GEOMETRIC_ELEMENT_H
 #define GEOMETRIC_ELEMENT_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 
 namespace SPH
 {
@@ -96,5 +96,4 @@ class GeometricCylinder
     Real halflength_;
 };
 } // namespace SPH
-
 #endif // GEOMETRIC_ELEMENT_H

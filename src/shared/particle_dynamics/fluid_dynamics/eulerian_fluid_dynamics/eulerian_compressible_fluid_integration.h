@@ -86,7 +86,7 @@
      Real *Vol_, *E_, *dE_dt_, *dmass_dt_;
      Vecd *mom_, *force_, *force_prior_;
  };
-
+ 
  /**
   * @brief MSVC-friendly adapter for InteractionWithWall.
   * @details InteractionWithWall requires a template-template parameter of the form

@@ -67,7 +67,7 @@ class DiffusionBody : public MultiPolygonShape
   public:
     explicit DiffusionBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::add);
+        multi_polygon_.addAPolygon(createThermalDomain(), GeometricOps::add);
     }
 };
 
@@ -76,15 +76,15 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createBoundaryDomain(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::sub);
+        multi_polygon_.addAPolygon(createBoundaryDomain(), GeometricOps::add);
+        multi_polygon_.addAPolygon(createThermalDomain(), GeometricOps::sub);
     }
 };
 
 MultiPolygon createHeatFluxBoundary()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(heat_flux_boundary, ShapeBooleanOps::add);
+    multi_polygon.addAPolygon(heat_flux_boundary, GeometricOps::add);
     return multi_polygon;
 }
 //----------------------------------------------------------------------
@@ -332,11 +332,11 @@ TEST(test_optimization, test_problem4_optimized)
     //	Main loop starts here.
     //----------------------------------------------------------------------
     std::string filefullpath_opt_temperature =
-        sph_system.getIOEnvironment().OutputFolder() + "/" + "opt_temperature.dat";
+        IO::getEnvironment().OutputFolder() + "/" + "opt_temperature.dat";
     std::ofstream out_file_opt_temperature(filefullpath_opt_temperature.c_str(), std::ios::app); // record the temperature with modifing parameter.
 
     std::string filefullpath_nonopt_temperature =
-        sph_system.getIOEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
+        IO::getEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app); // record the temperature without modifing parameter.
     //----------------------------------------------------------------------
     //	Initial States update.
@@ -493,7 +493,6 @@ TEST(test_optimization, test_problem4_optimized)
         relative_temperature_difference = abs(current_averaged_temperature - last_averaged_temperature) / last_averaged_temperature;
         relative_average_variation_difference = abs(averaged_variation_current_global - averaged_variation_last_global) / abs(averaged_variation_last_global);
         averaged_variation_last_global = averaged_variation_current_global;
-
     }
     out_file_opt_temperature.close();
     out_file_nonopt_temperature.close();

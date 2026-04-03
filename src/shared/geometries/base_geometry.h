@@ -33,20 +33,24 @@
 #include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
 
-#include <spdlog/spdlog.h>
 #include <string>
+
+namespace spdlog
+{
+class logger;
+}
 
 namespace SPH
 {
 /**
- * @class 	ShapeBooleanOps
+ * @class 	GeometricOps
  * @brief 	Boolean operation for generate complex shapes
  * @details Note that, for 2d multi polygons, all four operations are implemented.
  * But for binary shapes and complex shapes,
  * only add and sub boolean operation have been defined for right now.
  * Also after operations all surfaces of all shapes should be still surfaces.
  */
-enum class ShapeBooleanOps
+enum class GeometricOps
 {
     add,
     sub,
@@ -91,7 +95,7 @@ class Shape
     std::shared_ptr<spdlog::logger> logger_;
 };
 
-using SubShapeAndOp = std::pair<Shape *, ShapeBooleanOps>;
+using SubShapeAndOp = std::pair<Shape *, GeometricOps>;
 /**
  * @class BinaryShapes
  * @brief A collections of shapes with binary operations.
@@ -108,7 +112,7 @@ class BinaryShapes : public Shape
 
     void add(Shape *sub_shape)
     {
-        SubShapeAndOp sub_shape_and_op(sub_shape, ShapeBooleanOps::add);
+        SubShapeAndOp sub_shape_and_op(sub_shape, GeometricOps::add);
         sub_shapes_and_ops_.push_back(sub_shape_and_op);
     };
 
@@ -121,7 +125,7 @@ class BinaryShapes : public Shape
 
     void subtract(Shape *sub_shape)
     {
-        SubShapeAndOp sub_shape_and_op(sub_shape, ShapeBooleanOps::sub);
+        SubShapeAndOp sub_shape_and_op(sub_shape, GeometricOps::sub);
         sub_shapes_and_ops_.push_back(sub_shape_and_op);
     };
 
@@ -144,6 +148,8 @@ class BinaryShapes : public Shape
     UniquePtrsKeeper<Shape> sub_shapes_keeper_;
     StdVec<SubShapeAndOp> sub_shapes_and_ops_;
 };
+
+using DefaultShape = BinaryShapes;
 
 /**
  * @class Edge

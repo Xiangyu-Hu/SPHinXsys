@@ -57,7 +57,7 @@ int main(int ac, char *av[])
         RelaxationSystem relaxation_system(system_domain_bounds, particle_spacing_ref);
 
         auto &column = relaxation_system.addBody<RealBody>(column_shape);
-        LevelSetShape *level_set_shape = column.defineBodyLevelSetShape(par_ck, 2.0)->writeLevelSet();
+        LevelSetShape &level_set_shape = column.defineBodyLevelSetShape(par_ck, 2.0).writeLevelSet();
         column.generateParticles<BaseParticles, Lattice>();
 
         auto &wall_boundary = relaxation_system.addBody<SolidBody>(wall_shape);
@@ -76,7 +76,7 @@ int main(int ac, char *av[])
         auto &random_input_body_particles = host_methods.addStateDynamics<RandomizeParticlePositionCK>(column);
         auto &relaxation_residual =
             main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(column_inner)
-                .addPostStateDynamics<LevelsetKernelGradientIntegral>(column, *level_set_shape);
+                .addPostStateDynamics<LevelsetKernelGradientIntegral>(column, level_set_shape);
         auto &relaxation_scaling = main_methods.addReduceDynamics<RelaxationScalingCK>(column);
         auto &update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(column);
         auto &level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_body_surface);
@@ -141,7 +141,7 @@ int main(int ac, char *av[])
     auto &wall_boundary = sph_system.addBody<SolidBody>(wall_shape);
     wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
-        ->reloadExtraVariable<Vecd>("NormalDirection");
+        .reloadExtraVariable<Vecd>("NormalDirection");
 
     auto &column_observer = sph_system.addBody<ObserverBody>("ColumnObserver");
     column_observer.generateParticles<ObserverParticles>(observation_location);
@@ -209,7 +209,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(total_physical_time);
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
     //----------------------------------------------------------------------
     //	Setup for advection-step based time-stepping control
     //----------------------------------------------------------------------
@@ -243,7 +243,7 @@ int main(int ac, char *av[])
     //	Single time stepping loop is used for multi-time stepping.
     //----------------------------------------------------------------------
     TickCount t0 = TickCount::now();
-    while (!time_stepper.isEndTime())
+    while (!time_stepper.isEndTime(total_physical_time))
     {
         //----------------------------------------------------------------------
         //	the fastest and most frequent acostic time stepping.

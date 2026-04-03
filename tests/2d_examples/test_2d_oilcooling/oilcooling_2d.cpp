@@ -28,7 +28,7 @@ Real angle_increment = 2 * Pi / Wnum;
 Real WD = 0.5 * DRO + AG + 0.5 * WH;     /**< Distance from center point to the center of a winding. */
 Real ZW = 0.5 * DRO + AG;                /**< Distance from center point to the site of a winding. */
 int resolution_circle = 60;              /**<Approximate the circle as the number of sides of the polygon. */
-Real global_resolution = 0.00075;           /**< Initial reference particle spacing. */
+Real global_resolution = 0.00075;        /**< Initial reference particle spacing. */
 Real BW = 0.5 * (DMO - DM);              /**< Extending width for wall boundary. */
 Real OH = LH;                            /**< Outflows region height. */
 Real Lnum = 5;                           /**< Inflows number. */
@@ -145,14 +145,14 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(center, (RM + BW), resolution_circle, ShapeBooleanOps::add); /**< Outer wall of motor hausing. */
-        multi_polygon_.addACircle(center, RM, resolution_circle, ShapeBooleanOps::sub);        /**< Inner wall of motor hausing. */
-        multi_polygon_.addABox(inlet_transform, inlet_halfsize, ShapeBooleanOps::sub);         /**< Top Inlets. */
-        multi_polygon_.addABox(outlet_transform, outlet_halfsize, ShapeBooleanOps::sub);       /**< Outlets. */
-        multi_polygon_.addABox(inlet2_transform, inlet_halfsize, ShapeBooleanOps::sub);
-        multi_polygon_.addABox(inlet3_transform, inlet_halfsize, ShapeBooleanOps::sub);
-        multi_polygon_.addABox(inlet4_transform, inlet_halfsize, ShapeBooleanOps::sub);
-        multi_polygon_.addABox(inlet5_transform, inlet_halfsize, ShapeBooleanOps::sub);
+        multi_polygon_.addACircle(center, (RM + BW), resolution_circle, GeometricOps::add); /**< Outer wall of motor hausing. */
+        multi_polygon_.addACircle(center, RM, resolution_circle, GeometricOps::sub);        /**< Inner wall of motor hausing. */
+        multi_polygon_.addABox(inlet_transform, inlet_halfsize, GeometricOps::sub);         /**< Top Inlets. */
+        multi_polygon_.addABox(outlet_transform, outlet_halfsize, GeometricOps::sub);       /**< Outlets. */
+        multi_polygon_.addABox(inlet2_transform, inlet_halfsize, GeometricOps::sub);
+        multi_polygon_.addABox(inlet3_transform, inlet_halfsize, GeometricOps::sub);
+        multi_polygon_.addABox(inlet4_transform, inlet_halfsize, GeometricOps::sub);
+        multi_polygon_.addABox(inlet5_transform, inlet_halfsize, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -163,7 +163,7 @@ class RotorBoundary : public MultiPolygonShape
   public:
     explicit RotorBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(center, RR, resolution_circle, ShapeBooleanOps::add); /**< Rotor */
+        multi_polygon_.addACircle(center, RR, resolution_circle, GeometricOps::add); /**< Rotor */
     }
 };
 //----------------------------------------------------------------------
@@ -183,7 +183,7 @@ class WindingBoundary : public MultiPolygonShape
             Vec2d winding_translation(center_x, center_y);
             Vec2d winding_halfsize(WL / 2, WH / 2);
             Transform winding_transform(Rotation2d(theta - (Pi / 2)), winding_translation);
-            multi_polygon_.addABox(winding_transform, winding_halfsize, ShapeBooleanOps::add);
+            multi_polygon_.addABox(winding_transform, winding_halfsize, GeometricOps::add);
         }
     }
 };
@@ -195,11 +195,11 @@ class FluidBoundary : public MultiPolygonShape
   public:
     explicit FluidBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addABox(inlet_transform, inlet_halfsize, ShapeBooleanOps::add); /**< Top Inlets. */
-        multi_polygon_.addABox(inlet2_transform, inlet_halfsize, ShapeBooleanOps::add);
-        multi_polygon_.addABox(inlet3_transform, inlet_halfsize, ShapeBooleanOps::add);
-        multi_polygon_.addABox(inlet4_transform, inlet_halfsize, ShapeBooleanOps::add);
-        multi_polygon_.addABox(inlet5_transform, inlet_halfsize, ShapeBooleanOps::add);
+        multi_polygon_.addABox(inlet_transform, inlet_halfsize, GeometricOps::add); /**< Top Inlets. */
+        multi_polygon_.addABox(inlet2_transform, inlet_halfsize, GeometricOps::add);
+        multi_polygon_.addABox(inlet3_transform, inlet_halfsize, GeometricOps::add);
+        multi_polygon_.addABox(inlet4_transform, inlet_halfsize, GeometricOps::add);
+        multi_polygon_.addABox(inlet5_transform, inlet_halfsize, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -297,21 +297,21 @@ int main(int ac, char *av[])
     oil_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
-    wall.defineBodyLevelSetShape()->writeLevelSet();
+    wall.defineBodyLevelSetShape().writeLevelSet();
     wall.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? wall.generateParticles<BaseParticles, Reload>(wall.getName())
         : wall.generateParticles<BaseParticles, Lattice>();
 
     SolidBody rotor(sph_system, makeShared<RotorBoundary>("Rotor"));
-    rotor.defineBodyLevelSetShape()->writeLevelSet();
+    rotor.defineBodyLevelSetShape().writeLevelSet();
     rotor.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? rotor.generateParticles<BaseParticles, Reload>(rotor.getName())
         : rotor.generateParticles<BaseParticles, Lattice>();
 
     SolidBody winding(sph_system, makeShared<WindingBoundary>("Winding"));
-    winding.defineBodyLevelSetShape()->writeLevelSet();
+    winding.defineBodyLevelSetShape().writeLevelSet();
     winding.defineClosure<Solid, IsotropicDiffusion>(
         Solid(), ConstructArgs(temperature_species_name, k_winding));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
