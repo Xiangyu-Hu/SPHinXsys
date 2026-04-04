@@ -177,34 +177,36 @@ void EulerianCompressibleIntegration2ndHalfMUSCL<Inner<>>::update(size_t index_i
     p_[index_i] = compressible_fluid_.getPressure(rho_[index_i], rho_e);
 }
 //-------------------------------------------------------------------------------------------------//
+using MUSCLWallBase = InteractionWithWall<BaseIntegrationInCompressibleForWall>;
+//-------------------------------------------------------------------------------------------------//
 EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>>::EulerianCompressibleIntegration1stHalfMUSCL(
     BaseContactRelation &contact_relation, const MUSCLHLLCBridgeConfig &bridge_cfg)
-    : InteractionWithWall<BaseIntegrationInCompressibleForWall>(contact_relation),
-      bridge_cfg_(make_default_bridge_config(compressible_fluid_, bridge_cfg)),
-      bridge_(compressible_fluid_, compressible_fluid_, bridge_cfg_),
-      rho_grad_(particles_->getVariableDataByName<Vecd>("DensityGradient")),
-      vel_grad_(particles_->getVariableDataByName<Matd>("VelocityGradient")),
-      p_grad_(particles_->getVariableDataByName<Vecd>("PressureGradient")) {}
+    : MUSCLWallBase(contact_relation),
+      bridge_cfg_(make_default_bridge_config(this->compressible_fluid_, bridge_cfg)),
+      bridge_(this->compressible_fluid_, this->compressible_fluid_, bridge_cfg_),
+      rho_grad_(this->particles_->getVariableDataByName<Vecd>("DensityGradient")),
+      vel_grad_(this->particles_->getVariableDataByName<Matd>("VelocityGradient")),
+      p_grad_(this->particles_->getVariableDataByName<Vecd>("PressureGradient")) {}
 //-------------------------------------------------------------------------------------------------//
 void EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
-    Real energy_per_volume_i = E_[index_i] / Vol_[index_i];
-    CompressibleFluidState state_i(rho_[index_i], vel_[index_i], p_[index_i], energy_per_volume_i);
-    Vecd momentum_change_rate = force_prior_[index_i];
-    for (size_t k = 0; k < contact_configuration_.size(); ++k)
+    Real energy_per_volume_i = this->E_[index_i] / this->Vol_[index_i];
+    CompressibleFluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i], energy_per_volume_i);
+    Vecd momentum_change_rate = this->force_prior_[index_i];
+    for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        Real *Vol_k = wall_Vol_[k];
-        Vecd *vel_ave_k = wall_vel_ave_[k];
-        Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+        Real *Vol_k = this->wall_Vol_[k];
+        Vecd *vel_ave_k = this->wall_vel_ave_[k];
+        Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
             Vecd e_ij = contact_neighborhood.e_ij_[n];
             Real dW_ijV_j = contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
 
-            Vecd vel_reflect = 2.0 * vel_ave_k[index_j] - vel_[index_i];
-            Real rho_g = rho_[index_i];
-            Real p_g = p_[index_i];
+            Vecd vel_reflect = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
+            Real rho_g = this->rho_[index_i];
+            Real p_g = this->p_[index_i];
             Real energy_per_volume_g = energy_per_volume_i;
             CompressibleFluidState state_g(rho_g, vel_reflect, p_g, energy_per_volume_g);
 
@@ -218,7 +220,7 @@ void EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>>::interaction(siz
             Vecd grad_p_i = p_grad_[index_i];
             Vecd grad_p_g = grad_p_i;
 
-            const Vecd &xi = pos_[index_i];
+            const Vecd &xi = this->pos_[index_i];
             Vecd xj = xi - contact_neighborhood.r_ij_[n] * e_ij;
             Vecd xf = 0.5 * (xi + xj);
 
@@ -233,42 +235,42 @@ void EulerianCompressibleIntegration1stHalfMUSCL<Contact<Wall>>::interaction(siz
                 grad_p_i, grad_p_g);
 
             Matd convect_flux = interface_state.rho_ * interface_state.vel_ * interface_state.vel_.transpose();
-            momentum_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j *
+            momentum_change_rate -= 2.0 * this->Vol_[index_i] * dW_ijV_j *
                                     (convect_flux + interface_state.p_ * Matd::Identity()) * e_ij;
         }
     }
-    force_[index_i] += momentum_change_rate;
+    this->force_[index_i] += momentum_change_rate;
 }
 //-------------------------------------------------------------------------------------------------//
 EulerianCompressibleIntegration2ndHalfMUSCL<Contact<Wall>>::EulerianCompressibleIntegration2ndHalfMUSCL(
     BaseContactRelation &contact_relation, const MUSCLHLLCBridgeConfig &bridge_cfg)
-    : InteractionWithWall<BaseIntegrationInCompressibleForWall>(contact_relation),
-      bridge_cfg_(make_default_bridge_config(compressible_fluid_, bridge_cfg)),
-      bridge_(compressible_fluid_, compressible_fluid_, bridge_cfg_),
-      rho_grad_(particles_->getVariableDataByName<Vecd>("DensityGradient")),
-      vel_grad_(particles_->getVariableDataByName<Matd>("VelocityGradient")),
-      p_grad_(particles_->getVariableDataByName<Vecd>("PressureGradient")) {}
+    : MUSCLWallBase(contact_relation),
+      bridge_cfg_(make_default_bridge_config(this->compressible_fluid_, bridge_cfg)),
+      bridge_(this->compressible_fluid_, this->compressible_fluid_, bridge_cfg_),
+      rho_grad_(this->particles_->getVariableDataByName<Vecd>("DensityGradient")),
+      vel_grad_(this->particles_->getVariableDataByName<Matd>("VelocityGradient")),
+      p_grad_(this->particles_->getVariableDataByName<Vecd>("PressureGradient")) {}
 //-------------------------------------------------------------------------------------------------//
 void EulerianCompressibleIntegration2ndHalfMUSCL<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
-    Real energy_per_volume_i = E_[index_i] / Vol_[index_i];
-    CompressibleFluidState state_i(rho_[index_i], vel_[index_i], p_[index_i], energy_per_volume_i);
+    Real energy_per_volume_i = this->E_[index_i] / this->Vol_[index_i];
+    CompressibleFluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i], energy_per_volume_i);
     Real mass_change_rate = 0.0;
-    Real energy_change_rate = force_prior_[index_i].dot(vel_[index_i]);
-    for (size_t k = 0; k < contact_configuration_.size(); ++k)
+    Real energy_change_rate = this->force_prior_[index_i].dot(this->vel_[index_i]);
+    for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
     {
-        Real *Vol_k = wall_Vol_[k];
-        Vecd *vel_ave_k = wall_vel_ave_[k];
-        Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+        Real *Vol_k = this->wall_Vol_[k];
+        Vecd *vel_ave_k = this->wall_vel_ave_[k];
+        Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
         for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
         {
             size_t index_j = contact_neighborhood.j_[n];
             Vecd e_ij = contact_neighborhood.e_ij_[n];
             Real dW_ijV_j = contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
 
-            Vecd vel_reflect = 2.0 * vel_ave_k[index_j] - vel_[index_i];
-            Real rho_g = rho_[index_i];
-            Real p_g = p_[index_i];
+            Vecd vel_reflect = 2.0 * vel_ave_k[index_j] - this->vel_[index_i];
+            Real rho_g = this->rho_[index_i];
+            Real p_g = this->p_[index_i];
             Real energy_per_volume_g = energy_per_volume_i;
             CompressibleFluidState state_g(rho_g, vel_reflect, p_g, energy_per_volume_g);
 
@@ -282,7 +284,7 @@ void EulerianCompressibleIntegration2ndHalfMUSCL<Contact<Wall>>::interaction(siz
             Vecd grad_p_i = p_grad_[index_i];
             Vecd grad_p_g = grad_p_i;
 
-            const Vecd &xi = pos_[index_i];
+            const Vecd &xi = this->pos_[index_i];
             Vecd xj = xi - contact_neighborhood.r_ij_[n] * e_ij;
             Vecd xf = 0.5 * (xi + xj);
 
@@ -296,14 +298,14 @@ void EulerianCompressibleIntegration2ndHalfMUSCL<Contact<Wall>>::interaction(siz
 #endif
                 grad_p_i, grad_p_g);
 
-            mass_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j *
+            mass_change_rate -= 2.0 * this->Vol_[index_i] * dW_ijV_j *
                                 (interface_state.rho_ * interface_state.vel_).dot(e_ij);
-            energy_change_rate -= 2.0 * Vol_[index_i] * dW_ijV_j *
+            energy_change_rate -= 2.0 * this->Vol_[index_i] * dW_ijV_j *
                                   ((interface_state.E_ + interface_state.p_) * interface_state.vel_).dot(e_ij);
         }
     }
-    dmass_dt_[index_i] += mass_change_rate;
-    dE_dt_[index_i] += energy_change_rate;
+    this->dmass_dt_[index_i] += mass_change_rate;
+    this->dE_dt_[index_i] += energy_change_rate;
 }
 //=================================================================================================//
 CompressibleFluidInitialCondition::CompressibleFluidInitialCondition(SPHBody &sph_body)
