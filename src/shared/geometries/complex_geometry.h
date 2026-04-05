@@ -49,7 +49,7 @@ namespace SPH
 class ComplexShape : public BinaryShapes
 {
   public:
-    explicit ComplexShape(const std::string &shape_name)
+    explicit ComplexShape(const std::string &shape_name = "ComplexShape")
         : BinaryShapes(shape_name) {};
     virtual ~ComplexShape() {};
 
