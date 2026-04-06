@@ -43,6 +43,7 @@ class GeometricShapeBox : public TransformShape<GeometricBox>
     explicit GeometricShapeBox(const BoundingBoxd &bounding_box,
                                const std::string &name = "GeometricShapeBox");
     virtual ~GeometricShapeBox() {};
+    void writeProxy();
 };
 
 class GeometricShapeBall : public GeometricBall, public Shape

@@ -1,15 +1,13 @@
-#include "base_body_part.h"
+#include "geometric_shape.h"
 
-#include "complex_geometry.h"
 #include "io_environment.h"
-#include "sph_system.h"
 
 namespace SPH
 {
 //=================================================================================================//
-void AlignedBoxPart::writeShapeProxy()
+void GeometricShapeBox::writeProxy()
 {
-    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/" + svAlignedBox()->Name() + "Proxy.vtp";
+    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/" + getName() + "Proxy.vtp";
 
     if (fs::exists(filefullpath))
     {
@@ -17,8 +15,8 @@ void AlignedBoxPart::writeShapeProxy()
     }
     std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
 
-    Vecd halfsize = aligned_box_.HalfSize();
-    Transform transform = aligned_box_.getTransform();
+    Vecd halfsize = HalfSize();
+    Transform transform = getTransform();
 
     // 4 corners in local frame (z=0 for 2D)
     Vecd local_corners[4] = {

@@ -5,6 +5,7 @@
 #include "base_particles.hpp"
 #include "cell_linked_list.hpp"
 #include "complex_geometry.h"
+#include "geometric_shape.h"
 #include "sphinxsys_variable.h"
 
 namespace SPH
@@ -223,6 +224,13 @@ AlignedBoxPart::AlignedBoxPart(const std::string &part_name, const AlignedBox &a
 }
 //=================================================================================================//
 AlignedBoxPart::~AlignedBoxPart() = default;
+//=================================================================================================//
+void AlignedBoxPart::writeShapeProxy()
+{
+    GeometricShapeBox domain_shape(
+        aligned_box_.getTransform(), aligned_box_.HalfSize(), svAlignedBox()->Name());
+    domain_shape.writeProxy();
+}
 //=================================================================================================//
 AlignedBoxByParticle::AlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box)
     : BodyPartByParticle(real_body), AlignedBoxPart(part_name_, aligned_box)

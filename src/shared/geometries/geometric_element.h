@@ -56,6 +56,7 @@ class GeometricBox
 
     Vecd findClosestPoint(const Vecd &probe_point);
     BoundingBoxd findBounds();
+    Vecd HalfSize() { return halfsize_; }
 
   protected:
     Vecd halfsize_;

@@ -1,6 +1,7 @@
 #include "sph_system.hpp"
 
 #include "base_body_relation.h"
+#include "geometric_shape.h"
 #include "io_environment.h"
 #include "predefined_bodies.h"
 
@@ -27,11 +28,15 @@ SharedPtr<tbb::global_control> &getTbbGlobalControlHolder()
 } // namespace
 //=================================================================================================//
 SPHSystem::SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution, size_t number_of_threads)
-    : SPHSystem(true, system_domain_bounds, global_resolution, number_of_threads) {}
+    : SPHSystem(true, system_domain_bounds, global_resolution, number_of_threads)
+{
+    writeSystemDomainShape();
+}
 //=================================================================================================//
 SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
                      Real global_resolution, size_t number_of_threads)
-    : system_domain_bounds_(system_domain_bounds),
+    : system_name_("SPHSystem"),
+      system_domain_bounds_(system_domain_bounds),
       global_resolution_(global_resolution),
       is_physical_(is_physical), run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true)
@@ -46,6 +51,12 @@ SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
 }
 //=================================================================================================//
 SPHSystem::~SPHSystem() = default;
+//=================================================================================================//
+void SPHSystem::writeSystemDomainShape()
+{
+    GeometricShapeBox domain_shape(system_domain_bounds_, system_name_ + "Domain");
+    domain_shape.writeProxy();
+}
 //=================================================================================================//
 void SPHSystem::setLogLevel(size_t log_level)
 {
@@ -205,5 +216,13 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
     return this;
 }
 #endif
+//=================================================================================================//
+RelaxationSystem::RelaxationSystem(
+    BoundingBoxd system_domain_bounds, Real global_resolution, size_t number_of_threads)
+    : SPHSystem(false, system_domain_bounds, global_resolution, number_of_threads)
+{
+    system_name_ = "RelaxationSystem";
+    writeSystemDomainShape();
+}
 //=================================================================================================//
 } // namespace SPH
