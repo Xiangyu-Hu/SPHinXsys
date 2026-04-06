@@ -13,23 +13,7 @@ IOEnvironment::IOEnvironment()
     : input_folder_("./input"), output_folder_("./output"),
       restart_folder_("./restart"), reload_folder_("./reload")
 {
-    if (!fs::exists(output_folder_))
-    {
-        fs::create_directory(output_folder_);
-    }
-    else
-    {
-        std::string backup_name = output_folder_ + "_backup";
-        fs::path output_dir = output_folder_;
-        fs::path backup_path = output_dir.parent_path() / backup_name;
-        if (fs::exists(backup_path))
-        {
-            fs::remove_all(backup_path);
-        }
-        fs::rename(output_dir, backup_path);
-        std::cout << "Moved existing output to: " << backup_path << std::endl;
-        fs::create_directory(output_folder_);
-    }
+    setOutputFolder(output_folder_);
 
     if (!fs::exists(restart_folder_))
     {
@@ -39,6 +23,27 @@ IOEnvironment::IOEnvironment()
     if (!fs::exists(reload_folder_))
     {
         fs::create_directory(reload_folder_);
+    }
+}
+//=================================================================================================//
+void IOEnvironment::setOutputFolder(const std::string &folder_name)
+{
+    if (!fs::exists(folder_name))
+    {
+        fs::create_directory(folder_name);
+    }
+    else
+    {
+        std::string backup_folder = folder_name + "_backup";
+        fs::path output_dir = output_folder_;
+        fs::path backup_dir = backup_folder;
+        if (fs::exists(backup_dir))
+        {
+            fs::remove_all(backup_dir);
+        }
+        fs::rename(output_dir, backup_dir);
+        std::cout << "Moved existing output to: " << backup_dir << std::endl;
+        fs::create_directory(folder_name);
     }
 }
 //=================================================================================================//
@@ -68,28 +73,20 @@ void IOEnvironment::appendOutputFolder(const std::string &append_name)
     }
 }
 //=================================================================================================//
-void IOEnvironment::resetOutputFolder(const std::string &new_name)
+void IOEnvironment::resetOutputFolder(const std::string &new_name, bool keep_existing)
 {
-    if (fs::exists(output_folder_))
+    if (fs::exists(output_folder_) && !keep_existing)
     {
         fs::remove_all(output_folder_);
     }
 
     output_folder_ = new_name;
-    if (!fs::exists(output_folder_))
-    {
-        fs::create_directory(output_folder_);
-    }
-    else
-    {
-        fs::remove_all(output_folder_);
-        fs::create_directory(output_folder_);
-    }
+    setOutputFolder(output_folder_);
 }
 //=================================================================================================//
-void IOEnvironment::resetRestartFolder(const std::string &new_name)
+void IOEnvironment::resetRestartFolder(const std::string &new_name, bool keep_existing)
 {
-    if (fs::exists(restart_folder_))
+    if (fs::exists(restart_folder_) && !keep_existing)
     {
         fs::remove_all(restart_folder_);
     }
@@ -106,9 +103,9 @@ void IOEnvironment::resetRestartFolder(const std::string &new_name)
     }
 }
 //=================================================================================================//
-void IOEnvironment::resetReloadFolder(const std::string &new_name)
+void IOEnvironment::resetReloadFolder(const std::string &new_name, bool keep_existing)
 {
-    if (fs::exists(reload_folder_))
+    if (fs::exists(reload_folder_) && !keep_existing)
     {
         fs::remove_all(reload_folder_);
     }
