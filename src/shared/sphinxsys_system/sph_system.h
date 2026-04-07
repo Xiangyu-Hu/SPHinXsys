@@ -85,6 +85,7 @@ class SPHSystem
     void setGlobalResolution(Real global_resolution) { global_resolution_ = global_resolution; };
     SPHBodyVector getSPHBodies() { return sph_bodies_; };
     SPHBodyVector getRealBodies() { return real_bodies_; };
+    RealBody &getRealBodyByName(const std::string &name);
     void addSPHBody(SPHBody *sph_body) { sph_bodies_.push_back(sph_body); };
     void addRealBody(RealBody *real_body);
     void addObservationBody(SPHBody *sph_body) { observation_bodies_.push_back(sph_body); };
