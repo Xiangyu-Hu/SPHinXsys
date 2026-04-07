@@ -7,6 +7,10 @@ GeometricShapeBox::GeometricShapeBox(
     const Transform &transform, const Vecd &halfsize, const std::string &name)
     : TransformShape<GeometricBox>(name, transform, halfsize) {}
 //=================================================================================================//
+GeometricShapeBox::GeometricShapeBox(
+    const TransformGeometryBox &transformed_box, const std::string &name)
+    : GeometricShapeBox(Transform(transformed_box.initialTransform()), transformed_box.HalfSize(), name) {}
+//=================================================================================================//
 GeometricShapeBox::GeometricShapeBox(const BoundingBoxd &bounding_box, const std::string &name)
     : TransformShape<GeometricBox>(
           name,

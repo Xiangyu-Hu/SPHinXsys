@@ -40,6 +40,8 @@ class GeometricShapeBox : public TransformShape<GeometricBox>
   public:
     GeometricShapeBox(const Transform &transform, const Vecd &halfsize,
                       const std::string &name = "GeometricShapeBox");
+    GeometricShapeBox(const TransformGeometryBox &transformed_box,
+                      const std::string &name = "GeometricShapeBox");
     explicit GeometricShapeBox(const BoundingBoxd &bounding_box,
                                const std::string &name = "GeometricShapeBox");
     virtual ~GeometricShapeBox() {};

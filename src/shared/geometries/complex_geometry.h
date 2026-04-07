@@ -76,8 +76,8 @@ class AlignedBox : public TransformGeometry<GeometricBox>
   public:
     /** construct directly */
     template <typename... Args>
-    explicit AlignedBox(int upper_bound_axis, const Transform &transform, Args &&...args)
-        : TransformGeometry<GeometricBox>(transform, std::forward<Args>(args)...),
+    explicit AlignedBox(int upper_bound_axis, Args &&...args)
+        : TransformGeometry<GeometricBox>(std::forward<Args>(args)...),
           alignment_axis_(upper_bound_axis){};
     /** construct from a shape already has aligned boundaries */
     template <typename... Args>

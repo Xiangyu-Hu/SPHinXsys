@@ -41,11 +41,13 @@ class TransformGeometry : public GeometryType
   public:
     template <typename... Args>
     explicit TransformGeometry(const Transform &transform, Args &&...args)
-        : GeometryType(std::forward<Args>(args)...), transform_(transform){};
+        : GeometryType(std::forward<Args>(args)...),
+          initial_transform_(transform), transform_(transform){};
     ~TransformGeometry() {};
 
     /** variable transform is introduced here */
     Transform &getTransform() { return transform_; };
+    Transform initialTransform() const { return initial_transform_; };
     void setTransform(const Transform &transform) { transform_ = transform; };
 
     bool checkContain(const Vecd &probe_point)
@@ -92,8 +94,12 @@ class TransformGeometry : public GeometryType
     };
 
   protected:
+    Transform initial_transform_;
     Transform transform_;
 };
+
+using TransformGeometryBox = TransformGeometry<GeometricBox>;
+using TransformGeometryCylinder = TransformGeometry<GeometricCylinder>;
 
 /**
  * @class TransformShape
