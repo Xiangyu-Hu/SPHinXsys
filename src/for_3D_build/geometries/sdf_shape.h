@@ -33,8 +33,8 @@
 #include "base_geometry.h"
 #include "sdf_extension.hpp"
 #include "sdf_operation.hpp"
-#include "sphinxsys_entity.h"
 #include "sdf_primitive.h"
+#include "sphinxsys_entity.h"
 
 namespace SPH
 {

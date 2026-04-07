@@ -35,8 +35,6 @@
 #ifndef MULTI_POLYGON_SHAPE_H
 #define MULTI_POLYGON_SHAPE_H
 
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-
 #ifdef __linux__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
@@ -83,18 +81,20 @@ class MultiPolygon
     MultiPolygon() {};
     explicit MultiPolygon(const std::vector<Vecd> &points);
     explicit MultiPolygon(const Vecd &center, Real radius, int resolution);
-    boost_multi_poly &getBoostMultiPoly() { return multi_poly_; };
+    const boost_multi_poly &getBoostMultiPoly() const { return multi_poly_; };
 
     BoundingBoxd findBounds();
     bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true);
     Vecd findClosestPoint(const Vecd &probe_point);
 
-    void addAMultiPolygon(MultiPolygon &multi_polygon, GeometricOps op);
-    void addABoostMultiPoly(boost_multi_poly &boost_multi_poly, GeometricOps op);
-    void addAPolygon(const std::vector<Vecd> &points, GeometricOps op);
-    void addABox(Transform transform, const Vecd &halfsize, GeometricOps op);
-    void addACircle(const Vecd &center, Real radius, int resolution, GeometricOps op);
-    void addAPolygonFromFile(std::string file_path_name, GeometricOps op, Vecd translation = Vecd::Zero(), Real scale_factor = 1.0);
+    void addMultiPolygon(const MultiPolygon &multi_polygon, GeometricOps op);
+    void addBoostMultiPoly(boost_multi_poly &boost_multi_poly, GeometricOps op);
+    void addPolygon(const std::vector<Vecd> &points, GeometricOps op);
+    void addBox(Transform transform, const Vecd &halfsize, GeometricOps op);
+    void addBox(const BoundingBox2d &bounding_box, GeometricOps op);
+    void addContainerBox(const BoundingBox2d &bounding_box, Real thickness, GeometricOps op);
+    void addCircle(const Vecd &center, Real radius, int resolution, GeometricOps op);
+    void addPolygonFromFile(std::string file_path_name, GeometricOps op, Vecd translation = Vecd::Zero(), Real scale_factor = 1.0);
 
   protected:
     boost_multi_poly multi_poly_;

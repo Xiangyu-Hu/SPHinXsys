@@ -25,7 +25,7 @@ Real global_resolution = PH / num;
 
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d(-PL, -PL),
-                                 Vec2d(2.0 * PL, PL));
+                                  Vec2d(2.0 * PL, PL));
 
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
@@ -77,9 +77,9 @@ class Beam : public MultiPolygonShape
   public:
     explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(beam_base_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(beam_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(beam_end_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_base_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_end_shape, GeometricOps::add);
     }
 };
 
@@ -89,16 +89,16 @@ class Beam : public MultiPolygonShape
 MultiPolygon createBeamConstrainShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_base_shape, GeometricOps::add);
-    multi_polygon.addAPolygon(beam_shape, GeometricOps::sub);
-    multi_polygon.addAPolygon(beam_end_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_base_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_shape, GeometricOps::sub);
+    multi_polygon.addPolygon(beam_end_shape, GeometricOps::add);
     return multi_polygon;
 };
 
 MultiPolygon createSaturationConstrainShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_saturation_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_saturation_shape, GeometricOps::add);
     return multi_polygon;
 };
 

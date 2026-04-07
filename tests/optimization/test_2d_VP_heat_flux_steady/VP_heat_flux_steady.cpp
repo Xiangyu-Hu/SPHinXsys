@@ -66,7 +66,7 @@ class DiffusionBody : public MultiPolygonShape
   public:
     explicit DiffusionBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createThermalDomain(), GeometricOps::add);
+        multi_polygon_.addPolygon(createThermalDomain(), GeometricOps::add);
     }
 };
 
@@ -75,15 +75,15 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createBoundaryDomain(), GeometricOps::add);
-        multi_polygon_.addAPolygon(createThermalDomain(), GeometricOps::sub);
+        multi_polygon_.addPolygon(createBoundaryDomain(), GeometricOps::add);
+        multi_polygon_.addPolygon(createThermalDomain(), GeometricOps::sub);
     }
 };
 
 MultiPolygon createHeatFluxBoundary()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(heat_flux_boundary, GeometricOps::add);
+    multi_polygon.addPolygon(heat_flux_boundary, GeometricOps::add);
     return multi_polygon;
 }
 //----------------------------------------------------------------------

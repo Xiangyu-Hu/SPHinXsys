@@ -19,7 +19,7 @@ Real BW = global_resolution * 4.0; // boundary width, at least three particles
 
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d(-PL / 2.0, -PL / 2.0),
-                                 Vec2d(2.0 * PL, PL / 2.0));
+                                  Vec2d(2.0 * PL, PL / 2.0));
 // two dimensional should be circle smooth between two parts.
 //----------------------------------------------------------------------
 Real rho0_s = 7850.0;           /**< Reference density. */
@@ -76,9 +76,9 @@ class Beam : public MultiPolygonShape
   public:
     explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(beam_right_stretch_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(beam_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(beam_left_stretch_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_right_stretch_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_left_stretch_shape, GeometricOps::add);
     }
 };
 
@@ -125,22 +125,22 @@ class RightStretchSolidBodyRegion : public BodyPartMotionConstraint
 MultiPolygon createBeamRightStretchShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_right_stretch_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_right_stretch_shape, GeometricOps::add);
     return multi_polygon;
 };
 
 MultiPolygon createBeamLeftStretchShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_left_stretch_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_left_stretch_shape, GeometricOps::add);
     return multi_polygon;
 };
 
 MultiPolygon createConstrainBeamShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_left_stretch_shape, GeometricOps::add);
-    multi_polygon.addAPolygon(beam_right_stretch_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_left_stretch_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_right_stretch_shape, GeometricOps::add);
 
     return multi_polygon;
 };

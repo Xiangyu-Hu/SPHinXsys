@@ -109,7 +109,7 @@ First, we provide the following program to create a system for this problem.
 		inflow_buffer_shape.push_back(Vecd(-DL_sponge, -0.5 * DH));
 
 		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
+		multi_polygon.addPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
 		return multi_polygon;
 	}
 	/** create outer wall shape */
@@ -172,10 +172,10 @@ First, we provide the following program to create a system for this problem.
 		{
 			/** Geomtry definition. */
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(createWaterBlockShape1(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createWaterBlockShape2(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createWaterBlockShape3(), ShapeBooleanOps::add);
-			multi_polygon.addACircle(insert_circle_center, R, 100, ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createWaterBlockShape1(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createWaterBlockShape2(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createWaterBlockShape3(), ShapeBooleanOps::add);
+			multi_polygon.addCircle(insert_circle_center, R, 100, ShapeBooleanOps::sub);
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}
 	};
@@ -188,14 +188,14 @@ First, we provide the following program to create a system for this problem.
 		{
 			/** Geomtry definition. */
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(createOuterWallShape1(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createOuterWallShape2(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createOuterWallShape3(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
-			multi_polygon.addAPolygon(createWaterBlockShape2(), ShapeBooleanOps::sub);
-			multi_polygon.addAPolygon(createWaterBlockShape3(), ShapeBooleanOps::sub);
-			multi_polygon.addACircle(insert_circle_center, R, 100, ShapeBooleanOps::add);
-			multi_polygon.addACircle(insert_circle_center, R - BW, 100, ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createOuterWallShape1(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createOuterWallShape2(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createOuterWallShape3(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createWaterBlockShape2(), ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createWaterBlockShape3(), ShapeBooleanOps::sub);
+			multi_polygon.addCircle(insert_circle_center, R, 100, ShapeBooleanOps::add);
+			multi_polygon.addCircle(insert_circle_center, R - BW, 100, ShapeBooleanOps::sub);
 			MultiPolygonShape multi_polygon_shape(multi_polygon);
 			body_shape_.add<LevelSetShape>(this, multi_polygon_shape);
 		}
@@ -617,7 +617,7 @@ are difined.
 		inflow_buffer_shape.push_back(Vecd(-DL_sponge, -0.5 * DH));
 
 		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
+		multi_polygon.addPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
 		return multi_polygon;
 	}
 	/** create outer wall shape */
@@ -687,10 +687,10 @@ After that, we define the fluid body and wall boundary.
 		{
 			/** Geomtry definition. */
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(createWaterBlockShape1(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createWaterBlockShape2(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createWaterBlockShape3(), ShapeBooleanOps::add);
-			multi_polygon.addACircle(insert_circle_center, R, 100, ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createWaterBlockShape1(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createWaterBlockShape2(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createWaterBlockShape3(), ShapeBooleanOps::add);
+			multi_polygon.addCircle(insert_circle_center, R, 100, ShapeBooleanOps::sub);
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}
 	};
@@ -703,14 +703,14 @@ After that, we define the fluid body and wall boundary.
 		{
 			/** Geomtry definition. */
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(createOuterWallShape1(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createOuterWallShape2(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createOuterWallShape3(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
-			multi_polygon.addAPolygon(createWaterBlockShape2(), ShapeBooleanOps::sub);
-			multi_polygon.addAPolygon(createWaterBlockShape3(), ShapeBooleanOps::sub);
-			multi_polygon.addACircle(insert_circle_center, R, 100, ShapeBooleanOps::add);
-			multi_polygon.addACircle(insert_circle_center, R - BW, 100, ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createOuterWallShape1(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createOuterWallShape2(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createOuterWallShape3(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createWaterBlockShape2(), ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createWaterBlockShape3(), ShapeBooleanOps::sub);
+			multi_polygon.addCircle(insert_circle_center, R, 100, ShapeBooleanOps::add);
+			multi_polygon.addCircle(insert_circle_center, R - BW, 100, ShapeBooleanOps::sub);
 			MultiPolygonShape multi_polygon_shape(multi_polygon);
 			body_shape_.add<LevelSetShape>(this, multi_polygon_shape);
 		}

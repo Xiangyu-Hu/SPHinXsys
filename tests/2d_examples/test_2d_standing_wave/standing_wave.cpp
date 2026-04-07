@@ -95,7 +95,7 @@ MultiPolygon createWaveProbeShape()
     pnts.push_back(Vecd(1.0 - h, 0.0));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(pnts, GeometricOps::add);
+    multi_polygon.addPolygon(pnts, GeometricOps::add);
     return multi_polygon;
 }
 //----------------------------------------------------------------------
