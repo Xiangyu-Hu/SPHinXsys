@@ -35,8 +35,6 @@
 #ifndef STATE_ENGINE_SIMBODY_H
 #define STATE_ENGINE_SIMBODY_H
 
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-
 #include "data_type.h"
 #include "exception.h"
 #include "ownership.h"

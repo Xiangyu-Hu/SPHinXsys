@@ -78,14 +78,28 @@ struct VelocityPrescribed
     // to be implemented in derived class
 };
 
-struct ConstantInflowVelocity
+struct ConstantInflowSpeed
 {
     Real speed_;
-    ConstantInflowVelocity(Real speed) : speed_(speed) {};
+    ConstantInflowSpeed(Real speed) : speed_(speed) {};
 
     Real getAxisVelocity(const Vecd &, const Real &, Real)
     {
         return speed_;
+    };
+};
+
+struct StartupToConstantInflowSpeed
+{
+    Real speed_, startup_time_;
+
+    StartupToConstantInflowSpeed(Real speed, Real startup_time)
+        : speed_(speed), startup_time_(startup_time) {};
+    Real getAxisVelocity(const Vecd &, const Real &, Real time)
+    {
+        return time < startup_time_
+                   ? 0.5 * speed_ * (1.0 - cos(Pi * time / startup_time_))
+                   : speed_;
     };
 };
 } // namespace SPH
