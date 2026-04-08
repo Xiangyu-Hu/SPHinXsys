@@ -39,6 +39,7 @@ Real initial_speed =70;                         /**< Initial velocity magnitude 
 Real initial_angle =-20 * Pi / 180.0;          /**< Initial velocity angle (radians, negative = downward). */
 Real initial_rotation_angle = -20 * Pi / 180.0; /**< Initial body rotation (radians). */
 Real initial_angular_velocity = 0.0; // 可选：初始角速度（rad/s）（如果需要旋转入水，可设置）
+Vecd InitialVelocity(initial_speed *cos(initial_angle), initial_speed *sin(initial_angle));
 //----------------------------------------------------------------------
 //	Material parameters.
 //----------------------------------------------------------------------
@@ -51,19 +52,13 @@ Real mu_f = 8.9e-7;      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
-std::string diffusion_species_name = "Phi";
-Real diffusion_coeff = 0 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
-Real fluid_moisture = 1.0;                                   /**< fluid moisture. */
-Real cylinder_moisture = 0.0;                                /**< cylinder moisture. */
-Real wall_moisture = 1.0;                                    /**< wall moisture. */
+//std::string diffusion_species_name = "Phi";
+//Real diffusion_coeff = 780 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
+//Real fluid_moisture = 1.0;                                   /**< fluid moisture. */
+//Real cylinder_moisture = 0.0;                                /**< cylinder moisture. */
+//Real wall_moisture = 1.0;                                    /**< wall moisture. */
 
-Vecd InitialVelocity(initial_speed *cos(initial_angle),  initial_speed * sin(initial_angle)
 
-Vecd calculateInitialVelocity()// 计算初始速度分量
-{
-    return Vecd(initial_speed * cos(initial_angle),
-                initial_speed * sin(initial_angle));
-}
 //----------------------------------------------------------------------
 // 辅助函数：计算2D多边形的质心（面积加权法）
 //----------------------------------------------------------------------
@@ -91,7 +86,6 @@ Vecd calculatePolygonCentroid(const std::vector<Vecd> &vertices)
     centroid /= (6.0 * area);
     return centroid;
 }
-
 //----------------------------------------------------------------------
 // 辅助函数：获取缩放后的原始多边形点
 //----------------------------------------------------------------------
@@ -241,23 +235,23 @@ class WettingFluidBody : public MultiPolygonShape
     }
 };
 
-class WettingFluidBodyInitialCondition : public LocalDynamics
-{
-  public:
-    explicit WettingFluidBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
-
-    void update(size_t index_i, Real dt)
-    {
-        phi_[index_i] = fluid_moisture;
-    };
-
-  protected:
-    Vecd *pos_;
-    Real *phi_;
-};
+//class WettingFluidBodyInitialCondition : public LocalDynamics
+//{
+//  public:
+//    explicit WettingFluidBodyInitialCondition(SPHBody &sph_body)
+//        : LocalDynamics(sph_body),
+//          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+//          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+//
+//    void update(size_t index_i, Real dt)
+//    {
+//        phi_[index_i] = fluid_moisture;
+//    };
+//
+//  protected:
+//    Vecd *pos_;
+//    Real *phi_;
+//};
 //----------------------------------------------------------------------
 //	Definition for wall body
 //----------------------------------------------------------------------
@@ -292,23 +286,23 @@ class WettingWallBody : public MultiPolygonShape
         multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
     }
 };
-class WettingWallBodyInitialCondition : public LocalDynamics
-{
-  public:
-    explicit WettingWallBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
-
-    void update(size_t index_i, Real dt)
-    {
-        phi_[index_i] = wall_moisture;
-    };
-
-  protected:
-    Vecd *pos_;
-    Real *phi_;
-};
+//class WettingWallBodyInitialCondition : public LocalDynamics
+//{
+//  public:
+//    explicit WettingWallBodyInitialCondition(SPHBody &sph_body)
+//        : LocalDynamics(sph_body),
+//          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+//          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+//
+//    void update(size_t index_i, Real dt)
+//    {
+//        phi_[index_i] = wall_moisture;
+//    };
+//
+//  protected:
+//    Vecd *pos_;
+//    Real *phi_;
+//};
 
 //----------------------------------------------------------------------
 //	Definition for cylinder body
@@ -337,23 +331,23 @@ class WettingCylinderBody : public MultiPolygonShape
     }
 };
 
-class WettingCylinderBodyInitialCondition : public LocalDynamics
-{
-  public:
-    explicit WettingCylinderBodyInitialCondition(SPHBody &sph_body)
-        : LocalDynamics(sph_body),
-          pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
-
-    void update(size_t index_i, Real dt)
-    {
-        phi_[index_i] = cylinder_moisture;
-    };
-
-  protected:
-    Vecd *pos_;
-    Real *phi_;
-};
+//class WettingCylinderBodyInitialCondition : public LocalDynamics
+//{
+//  public:
+//    explicit WettingCylinderBodyInitialCondition(SPHBody &sph_body)
+//        : LocalDynamics(sph_body),
+//          pos_(particles_->getVariableDataByName<Vecd>("Position")),
+//          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+//
+//    void update(size_t index_i, Real dt)
+//    {
+//        phi_[index_i] = cylinder_moisture;
+//    };
+//
+//  protected:
+//    Vecd *pos_;
+//    Real *phi_;
+//};
 
 //----------------------------------------------------------------------
 //	The diffusion model of wetting
@@ -474,8 +468,9 @@ int main(int ac, char *av[])
     cylinder.defineAdaptationRatios(1.15, 1.0);
     cylinder.defineBodyLevelSetShape();
 
-    cylinder.defineClosure<Solid, IsotropicDiffusion>(
-        rho0_s, ConstructArgs(diffusion_species_name, diffusion_coeff)); 
+    //cylinder.defineClosure<Solid, IsotropicDiffusion>(
+    //    rho0_s, ConstructArgs(diffusion_species_name, diffusion_coeff)); 
+    cylinder.defineClosure<Solid>(rho0_s);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
         : cylinder.generateParticles<BaseParticles, Lattice>();
@@ -561,27 +556,31 @@ int main(int ac, char *av[])
     //	Define the fluid dynamics used in the simulation.
     //	Note that there may be data dependence on the sequence of constructions.
     //----------------------------------------------------------------------
-    GetDiffusionTimeStepSize get_thermal_time_step(cylinder);
-    CylinderFluidDiffusionDirichlet cylinder_wetting(cylinder_contact);
-    SimpleDynamics<WettingFluidBodyInitialCondition> wetting_water_initial_condition(water_block);
-    SimpleDynamics<WettingWallBodyInitialCondition> wetting_wall_initial_condition(wall_boundary);
-    SimpleDynamics<WettingCylinderBodyInitialCondition> wetting_cylinder_initial_condition(cylinder);
+    //GetDiffusionTimeStepSize get_thermal_time_step(cylinder);
+    //CylinderFluidDiffusionDirichlet cylinder_wetting(cylinder_contact);
+    //SimpleDynamics<WettingFluidBodyInitialCondition> wetting_water_initial_condition(water_block);
+    //SimpleDynamics<WettingWallBodyInitialCondition> wetting_wall_initial_condition(wall_boundary);
+    //SimpleDynamics<WettingCylinderBodyInitialCondition> wetting_cylinder_initial_condition(cylinder);
 
  // 修正：创建圆柱初始速度设置的动力学对象
-    Vecd cylinder_initial_vel = calculateInitialVelocity();
-    SimpleDynamics<CylinderInitialVelocity> cylinder_set_initial_velocity(cylinder, cylinder_initial_vel, initial_angular_velocity);
+    SimpleDynamics<CylinderInitialVelocity> cylinder_set_initial_velocity(cylinder, InitialVelocity, initial_angular_velocity);
 
     Gravity gravity(Vecd(0.0, -gravity_g));
     SimpleDynamics<GravityForce<Gravity>> constant_gravity(water_block, gravity);
-    InteractionWithUpdate<WettingCoupledSpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_block_contact);
+    /*InteractionWithUpdate<WettingCoupledSpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_block_contact);*/
+    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> free_stream_surface_indicator(water_block_inner, water_block_contact); // 移除湿润相关的复杂自由表面指示器，使用原始版本
     SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
 
+    /** Kernel correction matrix and transport velocity formulation. */
+    //InteractionWithUpdate<LinearGradientCorrectionMatrixComplex> kernel_correction_complex(DynamicsArgs(water_block_inner, 0.9), water_block_contact);
+
     Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> fluid_pressure_relaxation(water_block_inner, water_block_contact);
+    //Dynamics1Level<fluid_dynamics::Integration1stHalfCorrectionWithWallRiemann> fluid_pressure_relaxation(water_block_inner, water_block_contact);//修正
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> fluid_density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> fluid_density_by_summation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
-    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
+    InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);//修正
 
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> fluid_advection_time_step(water_block, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> fluid_acoustic_time_step(water_block);
@@ -647,8 +646,8 @@ int main(int ac, char *av[])
 
     SimTK::Vec3 mobilizer_vel(
         0.0,                     // 绕Z轴角速度设为0
-        cylinder_initial_vel[0], // X方向平移速度（全局坐标系）
-        cylinder_initial_vel[1]); // Y方向平移速度（全局坐标系）             
+        InitialVelocity[0], // X方向平移速度（全局坐标系）
+        InitialVelocity[1]); // Y方向平移速度（全局坐标系）             
     tethered_spot.setU(state, mobilizer_vel);// 设置初始速度（U）：通过Mobilizer的setU方法
 
     // 设置完Q/U后，需要让Simbody重新感知状态
@@ -688,7 +687,7 @@ int main(int ac, char *av[])
     RestartIO restart_io(sph_system);
 
     ObservedQuantityRecording<Vecd> write_cylinder_displacement("Position", cylinder_observer_contact);
-    ObservedQuantityRecording<Real> write_cylinder_wetting("Phi", wetting_observer_contact);
+    //ObservedQuantityRecording<Real> write_cylinder_wetting("Phi", wetting_observer_contact);
     ObservedQuantityRecording<Vecd> write_front_center_position("Position", front_center_observer_contact);// 记录前段中心观测点的位置
 
     //----------------------------------------------------------------------
@@ -699,10 +698,10 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     wall_boundary_normal_direction.exec();
     cylinder_normal_direction.exec();
-    wetting_water_initial_condition.exec();
-    wetting_wall_initial_condition.exec();
-    wetting_cylinder_initial_condition.exec();
-    Real dt_thermal = get_thermal_time_step.exec();
+    //wetting_water_initial_condition.exec();
+    //wetting_wall_initial_condition.exec();
+    //wetting_cylinder_initial_condition.exec();
+    //Real dt_thermal = get_thermal_time_step.exec();
     free_stream_surface_indicator.exec();
     constant_gravity.exec();
     cylinder_set_initial_velocity.exec(); // 执行圆柱初始速度设置
@@ -731,7 +730,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
     write_cylinder_displacement.writeToFile(number_of_iterations);
-    write_cylinder_wetting.writeToFile(number_of_iterations);
+    //write_cylinder_wetting.writeToFile(number_of_iterations);
     write_front_center_position.writeToFile(number_of_iterations); // 初始时刻输出前段中心位置
     SummaryOutput summary_output("./output/SummaryOutput.dat"); // 创建自定义的汇总输出对象
     //----------------------------------------------------------------------
@@ -750,6 +749,7 @@ int main(int ac, char *av[])
 
             fluid_density_by_summation.exec();
             viscous_force.exec();
+            //kernel_correction_complex.exec();
             transport_velocity_correction.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
@@ -762,12 +762,13 @@ int main(int ac, char *av[])
             while (relaxation_time < Dt)
             {
                 /** inner loop for dual-time criteria time-stepping.  */
-                dt = SMIN(SMIN(dt_thermal, fluid_acoustic_time_step.exec()), Dt);
+                //dt = SMIN(SMIN(dt_thermal, fluid_acoustic_time_step.exec()), Dt);
+                dt = SMIN( fluid_acoustic_time_step.exec(), Dt);//移除wetting
                 fluid_pressure_relaxation.exec(dt);
                 pressure_force_from_fluid.exec();// 计算压力力
                 viscous_force_from_fluid.exec(); // 计算粘性力
                 fluid_density_relaxation.exec(dt);
-                cylinder_wetting.exec(dt);
+                //cylinder_wetting.exec(dt);
 
                 integ.stepBy(dt);
                 SimTK::State &state_for_update = integ.updAdvancedState();
@@ -842,7 +843,7 @@ int main(int ac, char *av[])
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
                     write_cylinder_displacement.writeToFile(number_of_iterations);
-                    write_cylinder_wetting.writeToFile(number_of_iterations);
+                    //write_cylinder_wetting.writeToFile(number_of_iterations);
                     write_front_center_position.writeToFile(number_of_iterations);// 输出前段中心位置
                     write_total_viscous_force_global.writeToFile(number_of_iterations);// 输出全局坐标系力
                     write_total_pressure_force_global.writeToFile(number_of_iterations);
