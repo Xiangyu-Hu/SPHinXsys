@@ -306,7 +306,7 @@ int main(int ac, char *av[])
                         fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(water_body_inner)
             .addPostContactInteraction<Wall, Viscosity, NoKernelCorrectionCK>(water_body_contact);
 
-    auto &emitter_injection = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitter, inlet_particle_buffer);
+    auto &emitter_injection = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitter);
     auto &inflow_condition = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK, FreeStreamVelocity>(emitter);
     auto &disposer_indication = main_methods.addStateDynamics<fluid_dynamics::WithinDisposerIndication>(disposer);
     auto &particle_deletion = main_methods.addStateDynamics<fluid_dynamics::OutflowParticleDeletion>(water_body);
