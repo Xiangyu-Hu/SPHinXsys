@@ -66,8 +66,12 @@ class GeneralContinuum : public WeaklyCompressibleFluid, public SolidContact
         inline Matd ShearStressRate(UnsignedInt index_i, const Matd &velocity_gradient, const Matd &shear_stress);
         inline Matd updateShearStress(UnsignedInt index_i, const Matd &try_shear_stress) { return try_shear_stress; };
         inline Real ScalePenaltyForce(UnsignedInt index_i, const Matd &try_shear_stress) { return 1.0; };
+        template <typename ScalingType>
+        Matd NumericalDampingStress(const Matd &deformation, const Matd &deformation_rate,
+                                    const ScalingType &scaling, size_t particle_index_i);
 
       protected:
+        Real c0_;                /* reference sound  speed */
         Real E_;                 /* Youngs or tensile modules  */
         Real G_;                 /* shear modules  */
         Real K_;                 /* bulk modules  */

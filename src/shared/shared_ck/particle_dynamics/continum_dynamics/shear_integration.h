@@ -47,6 +47,8 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
     : public Interaction<Inner<Parameters...>>, public ForcePriorCK
 {
     using BaseInteraction = Interaction<Inner<Parameters...>>;
+    using Adaptation = typename Inner<Parameters...>::SourceType::Adaptation;
+    using SmoothingLengthRatioType = typename Adaptation::SmoothingLengthRatioType;
     using ConstituteKernel = typename MaterialType::ConstituteKernel;
 
   public:
@@ -62,7 +64,8 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
 
       protected:
         ConstituteKernel constitute_;
-        Real xi_;
+        SmoothingLengthRatioType h_ratio_;
+        Real h_ref_, numerical_damping_factor_, xi_;
         Matd *vel_gradient_, *strain_tensor_, *shear_stress_;
         Real *scale_penalty_force_;
     };
@@ -83,7 +86,8 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
 
   protected:
     MaterialType &material_;
-    Real xi_;
+    Adaptation &adaptation_;
+    Real h_ref_, numerical_damping_factor_, xi_;
     DiscreteVariable<Vecd> *dv_shear_force_, *dv_vel_, *dv_hourglass_force_;
     DiscreteVariable<Matd> *dv_vel_gradient_, *dv_strain_tensor_, *dv_shear_stress_;
     DiscreteVariable<Real> *dv_Vol_, *dv_scale_penalty_force_;

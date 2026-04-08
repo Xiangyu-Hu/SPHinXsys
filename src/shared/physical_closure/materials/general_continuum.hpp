@@ -9,7 +9,7 @@ namespace SPH
 template <typename ExecutionPolicy>
 GeneralContinuum::ConstituteKernel::
     ConstituteKernel(const ExecutionPolicy &ex_policy, GeneralContinuum &encloser)
-    : E_(encloser.E_), G_(encloser.G_), K_(encloser.K_),
+    : c0_(encloser.c0_), E_(encloser.E_), G_(encloser.G_), K_(encloser.K_),
       nu_(encloser.nu_), contact_stiffness_(encloser.contact_stiffness_),
       rho0_(encloser.rho0_) {}
 //=================================================================================================//
@@ -36,6 +36,14 @@ Matd GeneralContinuum::ConstituteKernel::ShearStressRate(
     Matd spin_rate = 0.5 * (velocity_gradient - velocity_gradient.transpose());
     return 2.0 * G_ * deviatoric_strain_rate + shear_stress * (spin_rate.transpose()) + spin_rate * shear_stress;
 };
+//=================================================================================================//
+template <typename ScalingType>
+Matd GeneralContinuum::ConstituteKernel::NumericalDampingStress(
+    const Matd &deformation, const Matd &deformation_rate, const ScalingType &scaling, size_t particle_index_i)
+{
+    Matd strain_rate = 0.5 * (deformation_rate * deformation.transpose() + deformation * deformation_rate.transpose());
+    return 0.5 * rho0_ * c0_ * strain_rate * scaling;
+}
 //=================================================================================================//
 template <typename ExecutionPolicy>
 PlasticContinuum::ConstituteKernel::
