@@ -28,7 +28,6 @@ ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
       dv_scale_penalty_force_(this->particles_->template registerStateVariable<Real>("ScalePenaltyForce"))
 {
     this->particles_->template addEvolvingVariable<Matd>(dv_strain_tensor_);
-    this->particles_->template addEvolvingVariable<Matd>(dv_shear_stress_);
     this->particles_->template addEvolvingVariable<Vecd>(dv_hourglass_force_);
 }
 //====================================================================================//
