@@ -53,7 +53,7 @@ class WeaklyCompressibleFluid : public Fluid
     virtual Real DensityFromPressure(Real p) override;
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
 
-    class EosKernel : Fluid::EosKernel
+    class EosKernel : public Fluid::EosKernel
     {
       public:
         EosKernel(WeaklyCompressibleFluid &encloser);

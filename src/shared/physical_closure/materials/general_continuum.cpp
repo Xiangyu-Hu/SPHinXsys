@@ -104,7 +104,8 @@ J2Plasticity::J2Plasticity(Real rho0, Real c0, Real youngs_modulus, Real poisson
                            Real yield_stress, Real hardening_modulus)
     : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),
       yield_stress_(yield_stress), hardening_modulus_(hardening_modulus),
-      dv_hardening_factor_(nullptr)
+      dv_hardening_factor_(nullptr), dv_intact_factor_(nullptr), dv_p_(nullptr),
+      failure_tension_(0.02 * youngs_modulus)
 {
     material_type_name_ = "J2Plasticity";
 }
@@ -157,6 +158,10 @@ void J2Plasticity::initializeLocalParameters(BaseParticles *base_particles)
     GeneralContinuum::initializeLocalParameters(base_particles);
     dv_hardening_factor_ = base_particles->registerStateVariable<Real>("HardeningFactor");
     base_particles->addEvolvingVariable<Real>(dv_hardening_factor_);
+    dv_p_ = base_particles->registerStateVariable<Real>("Pressure");
+    base_particles->addEvolvingVariable<Real>(dv_p_);
+    dv_intact_factor_ = base_particles->registerStateVariable<Real>("IntactFactor", 1.0);
+    base_particles->addEvolvingVariable<Real>(dv_intact_factor_);
 }
 //=================================================================================================//
 } // namespace SPH

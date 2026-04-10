@@ -17,7 +17,7 @@ ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
       material_(DynamicCast<MaterialType>(this, this->sph_body_->getBaseMaterial())),
       adaptation_(DynamicCast<Adaptation>(this, this->sph_body_->getSPHAdaptation())),
       h_ref_(adaptation_.ReferenceSmoothingLength()),
-      numerical_damping_factor_(0.25),
+      numerical_damping_factor_(0.0),
       xi_(xi), dv_shear_force_(this->getCurrentForce()),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_hourglass_force_(this->particles_->template registerStateVariable<Vecd>("HourglassForce")),
@@ -28,6 +28,7 @@ ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
       dv_scale_penalty_force_(this->particles_->template registerStateVariable<Real>("ScalePenaltyForce"))
 {
     this->particles_->template addEvolvingVariable<Matd>(dv_strain_tensor_);
+    this->particles_->template addEvolvingVariable<Matd>(dv_shear_stress_);
     this->particles_->template addEvolvingVariable<Vecd>(dv_hourglass_force_);
 }
 //====================================================================================//
@@ -54,12 +55,12 @@ void ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
     Matd shear_stress_rate =
         constitute_.ShearStressRate(index_i, vel_gradient_[index_i], shear_stress_[index_i]);
     Matd shear_stress_try = shear_stress_[index_i] + shear_stress_rate * dt;
+    constitute_.updateIntactFactor(index_i);
     scale_penalty_force_[index_i] = xi_ * constitute_.ScalePenaltyForce(index_i, shear_stress_try);
     shear_stress_[index_i] =
         constitute_.updateShearStress(index_i, shear_stress_try) +
         numerical_damping_factor_ *
-            constitute_.NumericalDampingStress(
-                strain_tensor_[index_i], strain_rate, h_ref_ / h_ratio_(index_i), index_i);
+            constitute_.NumericalDampingStress(strain_tensor_[index_i], strain_rate, h_ref_ / h_ratio_(index_i), index_i);
 }
 //====================================================================================//
 template <class MaterialType, typename... Parameters>

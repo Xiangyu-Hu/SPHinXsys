@@ -37,6 +37,7 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
+#include <unistd.h>
 
 #include <filesystem>
 #include <fstream>
@@ -172,6 +173,11 @@ class XmlParser
     /**  Load XML file using XML parser. */
     void loadXmlFile(const std::string &filefullpath)
     {
+        char cwd[1024];
+        if (getcwd(cwd, sizeof(cwd)) != NULL)
+        {
+            std::cout << "Current working dir: " << cwd << std::endl;
+        }
         xml_doc_->LoadFile(filefullpath.c_str());
         if (xml_doc_->Error())
         {
