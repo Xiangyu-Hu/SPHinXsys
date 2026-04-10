@@ -1,20 +1,42 @@
 cmake_minimum_required(VERSION 3.10)
-project(test_2d_pressure_gradient LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(SPHINXSYS_2D AND SPHINXSYS_BUILD_2D_EXAMPLES)
 
-find_package(GTest REQUIRED)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake)
 
-add_executable(test_2d_pressure_gradient
+set(CMAKE_VERBOSE_MAKEFILE ON)
+string(REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
+
+project(${CURRENT_FOLDER} LANGUAGES CXX)
+
+set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
+
+set(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
+set(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
+
+file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
+execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
+
+add_executable(${PROJECT_NAME}
     2d_pressure_gradient.cpp
 )
 
-target_link_libraries(test_2d_pressure_gradient
+target_link_libraries(${PROJECT_NAME}
     PRIVATE sphinxsys_2d
     PRIVATE GTest::gtest_main
     PRIVATE GTest::gtest
 )
 
-add_test(NAME test_2d_pressure_gradient COMMAND test_2d_pressure_gradient)
+add_test(
+    NAME ${PROJECT_NAME}
+    COMMAND ${PROJECT_NAME} --state_recording=${TEST_STATE_RECORDING}
+    WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}
+)
 
+set_target_properties(${PROJECT_NAME}
+    PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}"
+)
+
+endif()
