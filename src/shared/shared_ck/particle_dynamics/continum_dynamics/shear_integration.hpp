@@ -12,12 +12,11 @@ namespace continuum_dynamics
 //====================================================================================//
 template <class MaterialType, typename... Parameters>
 ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
-    ShearIntegration(Inner<Parameters...> &inner_relation, Real xi)
+    ShearIntegration(Inner<Parameters...> &inner_relation, Real xi, Real shear_stress_damping)
     : BaseInteraction(inner_relation), ForcePriorCK(this->particles_, "ShearForce"),
       material_(DynamicCast<MaterialType>(this, this->sph_body_->getBaseMaterial())),
       adaptation_(DynamicCast<Adaptation>(this, this->sph_body_->getSPHAdaptation())),
-      h_ref_(adaptation_.ReferenceSmoothingLength()),
-      numerical_damping_factor_(0.0),
+      h_ref_(adaptation_.ReferenceSmoothingLength()), shear_stress_damping_(shear_stress_damping),
       xi_(xi), dv_shear_force_(this->getCurrentForce()),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_hourglass_force_(this->particles_->template registerStateVariable<Vecd>("HourglassForce")),
@@ -38,8 +37,7 @@ ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::InitializeKernel
     InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : constitute_(ex_policy, encloser.material_),
       h_ratio_(ex_policy, encloser.adaptation_), h_ref_(encloser.h_ref_),
-      numerical_damping_factor_(encloser.numerical_damping_factor_),
-      xi_(encloser.xi_),
+      shear_stress_damping_(encloser.shear_stress_damping_), xi_(encloser.xi_),
       vel_gradient_(encloser.dv_vel_gradient_->DelegatedData(ex_policy)),
       strain_tensor_(encloser.dv_strain_tensor_->DelegatedData(ex_policy)),
       shear_stress_(encloser.dv_shear_stress_->DelegatedData(ex_policy)),
@@ -59,8 +57,9 @@ void ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
     scale_penalty_force_[index_i] = xi_ * constitute_.ScalePenaltyForce(index_i, shear_stress_try);
     shear_stress_[index_i] =
         constitute_.updateShearStress(index_i, shear_stress_try) +
-        numerical_damping_factor_ *
-            constitute_.NumericalDampingStress(strain_tensor_[index_i], strain_rate, h_ref_ / h_ratio_(index_i), index_i);
+        shear_stress_damping_ * constitute_.NumericalDampingStress(
+                                    strain_tensor_[index_i],
+                                    strain_rate, h_ref_ / h_ratio_(index_i), index_i);
 }
 //====================================================================================//
 template <class MaterialType, typename... Parameters>

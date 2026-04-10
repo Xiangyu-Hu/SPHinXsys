@@ -52,7 +52,7 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
     using ConstituteKernel = typename MaterialType::ConstituteKernel;
 
   public:
-    explicit ShearIntegration(Inner<Parameters...> &inner_relation, Real xi = 2.0);
+    explicit ShearIntegration(Inner<Parameters...> &inner_relation, Real xi = 2.0, Real shear_stress_damping = 0.0);
     virtual ~ShearIntegration() {};
 
     class InitializeKernel
@@ -65,7 +65,7 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
       protected:
         ConstituteKernel constitute_;
         SmoothingLengthRatioType h_ratio_;
-        Real h_ref_, numerical_damping_factor_, xi_;
+        Real h_ref_, shear_stress_damping_, xi_;
         Matd *vel_gradient_, *strain_tensor_, *shear_stress_;
         Real *scale_penalty_force_;
     };
@@ -87,7 +87,7 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
   protected:
     MaterialType &material_;
     Adaptation &adaptation_;
-    Real h_ref_, numerical_damping_factor_, xi_;
+    Real h_ref_, shear_stress_damping_, xi_;
     DiscreteVariable<Vecd> *dv_shear_force_, *dv_vel_, *dv_hourglass_force_;
     DiscreteVariable<Matd> *dv_vel_gradient_, *dv_strain_tensor_, *dv_shear_stress_;
     DiscreteVariable<Real> *dv_Vol_, *dv_scale_penalty_force_;
