@@ -116,6 +116,7 @@ class BodyStatesRecording : public BaseIO
 class RestartIO : public BaseIO
 {
   protected:
+    bool summary_enabled_{false};
     SPHBodyVector real_bodies_;
     std::string overall_file_path_;
     StdVec<std::string> file_names_;
@@ -123,8 +124,9 @@ class RestartIO : public BaseIO
     Real readRestartTime(size_t restart_step);
 
   public:
-    RestartIO(SPHSystem &sph_system);
+    RestartIO(SPHSystem &sph_system, bool summary_enabled = false);
     virtual ~RestartIO() {};
+    void setReportSummary(bool summary_enabled) { summary_enabled_ = summary_enabled; };
 
     virtual void writeToFile(size_t iteration_step) override;
     virtual void readFromFile(size_t iteration_step);
@@ -134,6 +136,8 @@ class RestartIO : public BaseIO
         readFromFile(restart_step);
         return readRestartTime(restart_step);
     };
+
+    virtual void reportRestartSummary(size_t restart_step);
 };
 
 /**
