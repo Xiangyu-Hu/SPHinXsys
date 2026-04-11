@@ -11,6 +11,12 @@ TimeStepper::TimeStepper(SPHSystem &sph_system)
     sv_physical_time_ = &sph_system.svPhysicalTime();
 }
 //=================================================================================================//
+void TimeStepper::setRestartStep(UnsignedInt restart_step)
+{
+    first_computing_step_ = restart_step;
+    iteration_step_ = restart_step;
+}
+//=================================================================================================//
 TimeStepper::TriggerByPhysicalTime::
     TriggerByPhysicalTime(TimeStepper &time_stepper, Real trigger_time)
     : sv_physical_time_(time_stepper.sv_physical_time_),
