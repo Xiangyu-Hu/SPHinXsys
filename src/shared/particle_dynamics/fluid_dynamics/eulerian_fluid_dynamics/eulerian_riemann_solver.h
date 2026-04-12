@@ -74,6 +74,8 @@ class HLLCRiemannSolver
   public:
     HLLCRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j, Real limiter_parameter = 0.0);
     CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
+    /** Stub dissipation jump for interfaces that expect it (FSI pressure force). */
+    Real DissipativePJump(Real) { return 0.0; }
 };
 /**
  * @struct HLLCWithLimiterRiemannSolver
@@ -87,6 +89,18 @@ class HLLCWithLimiterRiemannSolver
   public:
     HLLCWithLimiterRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j, Real limiter_parameter = 1.0);
     CompressibleFluidStarState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &e_ij);
+    /** Stub dissipation jump for interfaces that expect it (FSI pressure force). */
+    Real DissipativePJump(Real) { return 0.0; }
+};
+
+/**
+ * @brief Minimal Riemann solver interface for FSI pressure force (uses Fluid&, provides DissipativePJump).
+ */
+class HLLCFSIRiemannSolver
+{
+  public:
+    HLLCFSIRiemannSolver(Fluid &, Fluid &, Real = 0.0) {}
+    Real DissipativePJump(Real) { return 0.0; }
 };
 } // namespace SPH
 #endif // EULERIAN_RIEMANN_SOLVER_H

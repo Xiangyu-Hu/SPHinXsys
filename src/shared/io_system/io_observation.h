@@ -31,6 +31,7 @@
 
 #include "general_interpolation.h"
 #include "io_plt.hpp"
+#include "general_dynamics/general_interpolation.h"
 
 namespace SPH
 {
