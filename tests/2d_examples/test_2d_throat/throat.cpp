@@ -123,8 +123,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBoxd system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
-                                      Vec2d(0.5 * DL + BW, 0.5 * DH + BW));
+    BoundingBoxd system_domain_bounds(
+        Vec2d(-0.5 * DL, -0.5 * DH), Vec2d(0.5 * DL, 0.5 * DH));
     SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
