@@ -64,6 +64,7 @@ class SPHSystem
     SPHSystem *handleCommandlineOptions(int ac, char *av[]);
 #endif
     bool isPhysical() { return is_physical_; };
+    void writeSystemDomainShape();
     void setRunParticleRelaxation(bool run_particle_relaxation) { run_particle_relaxation_ = run_particle_relaxation; };
     bool RunParticleRelaxation() { return run_particle_relaxation_; };
     void setReloadParticles(bool reload_particles) { reload_particles_ = reload_particles; };
@@ -84,6 +85,7 @@ class SPHSystem
     void setGlobalResolution(Real global_resolution) { global_resolution_ = global_resolution; };
     SPHBodyVector getSPHBodies() { return sph_bodies_; };
     SPHBodyVector getRealBodies() { return real_bodies_; };
+    RealBody &getRealBodyByName(const std::string &name);
     void addSPHBody(SPHBody *sph_body) { sph_bodies_.push_back(sph_body); };
     void addRealBody(RealBody *real_body);
     void addObservationBody(SPHBody *sph_body) { observation_bodies_.push_back(sph_body); };
@@ -119,6 +121,7 @@ class SPHSystem
     auto &addContactRelation(SourceIdentifier &src_identifier, TargetIdentifier &tar_identifiers, Args &&...args);
 
   protected:
+    std::string system_name_;           /**< name of the system. */
     BoundingBoxd system_domain_bounds_; /**< Lower and Upper domain bounds. */
     Real global_resolution_;            /**< reference resolution of the SPH system */
     bool is_physical_;                  /**< flag for physical or non-physical system. */
@@ -142,8 +145,7 @@ class RelaxationSystem : public SPHSystem
 {
   public:
     RelaxationSystem(BoundingBoxd system_domain_bounds, Real global_resolution,
-                     size_t number_of_threads = std::thread::hardware_concurrency())
-        : SPHSystem(false, system_domain_bounds, global_resolution, number_of_threads) {};
+                     size_t number_of_threads = std::thread::hardware_concurrency());
 };
 } // namespace SPH
 #endif // SPH_SYSTEM_H

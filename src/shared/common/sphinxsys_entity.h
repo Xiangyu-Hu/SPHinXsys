@@ -33,10 +33,11 @@
 #include "base_data_type.h"
 #include "ownership.h"
 
-#include <memory>
 #include <algorithm>
+#include <memory>
 #include <typeindex>
 #include <unordered_map>
+#include <utility>
 
 namespace SPH
 {
@@ -55,13 +56,18 @@ class Entity
 class EntityManager
 {
     std::unordered_map<std::type_index, std::unordered_map<std::string, void *>> all_entities_;
+    std::unordered_map<std::type_index, std::unordered_map<std::string, SharedPtr<void>>> owned_entities_;
 
   public:
     EntityManager() = default;
     ~EntityManager() {};
 
-    /** Remove all registered entities (non-owning registry reset). */
-    void clear() { all_entities_.clear(); }
+    /** Remove all registered entities and release manager-owned entities. */
+    void clear()
+    {
+        all_entities_.clear();
+        owned_entities_.clear();
+    }
 
     template <typename T>
     T *addEntity(const std::string &name, T *entity)
@@ -88,13 +94,84 @@ class EntityManager
     }
 
     template <typename T>
+    T *addEntity(const std::string &name, SharedPtr<T> entity)
+    {
+        T *existing_entity = findEntityByName<T>(name);
+        if (existing_entity == nullptr)
+        {
+            all_entities_[typeid(T)][name] = entity.get();
+            owned_entities_[typeid(T)][name] = std::static_pointer_cast<void>(std::move(entity));
+            return static_cast<T *>(all_entities_[typeid(T)][name]);
+        }
+        return existing_entity;
+    }
+
+    template <typename T>
+    T *addEntityOrThrow(const std::string &name, SharedPtr<T> entity)
+    {
+        T *existing_entity = findEntityByName<T>(name);
+        if (existing_entity != nullptr)
+        {
+            throw std::runtime_error(std::string(type_name<T>()) + ": duplicated entity name '" + name + "'");
+        }
+        all_entities_[typeid(T)][name] = entity.get();
+        owned_entities_[typeid(T)][name] = std::static_pointer_cast<void>(std::move(entity));
+        return static_cast<T *>(all_entities_[typeid(T)][name]);
+    }
+
+    template <typename T, typename... Args>
+    T *emplaceEntity(const std::string &name, Args &&...args)
+    {
+        T *existing_entity = findEntityByName<T>(name);
+        if (existing_entity == nullptr)
+        {
+            SharedPtr<T> entity = makeShared<T>(std::forward<Args>(args)...);
+            all_entities_[typeid(T)][name] = entity.get();
+            owned_entities_[typeid(T)][name] = std::static_pointer_cast<void>(std::move(entity));
+            return static_cast<T *>(all_entities_[typeid(T)][name]);
+        }
+        return existing_entity;
+    }
+
+    template <typename T, typename... Args>
+    T *emplaceEntityOrThrow(const std::string &name, Args &&...args)
+    {
+        T *existing_entity = findEntityByName<T>(name);
+        if (existing_entity != nullptr)
+        {
+            throw std::runtime_error(std::string(type_name<T>()) + ": duplicated entity name '" + name + "'");
+        }
+        SharedPtr<T> entity = makeShared<T>(std::forward<Args>(args)...);
+        all_entities_[typeid(T)][name] = entity.get();
+        owned_entities_[typeid(T)][name] = std::static_pointer_cast<void>(std::move(entity));
+        return static_cast<T *>(all_entities_[typeid(T)][name]);
+    }
+
+    template <typename T>
     bool removeEntity(const std::string &name)
     {
         auto type_it = all_entities_.find(typeid(T));
         if (type_it == all_entities_.end())
             return false;
 
-        return type_it->second.erase(name) > 0;
+        bool removed = type_it->second.erase(name) > 0;
+
+        auto owned_type_it = owned_entities_.find(typeid(T));
+        if (owned_type_it != owned_entities_.end())
+        {
+            owned_type_it->second.erase(name);
+            if (owned_type_it->second.empty())
+            {
+                owned_entities_.erase(owned_type_it);
+            }
+        }
+
+        if (type_it->second.empty())
+        {
+            all_entities_.erase(type_it);
+        }
+
+        return removed;
     }
 
     template <typename T>
@@ -156,7 +233,8 @@ class EntityManager
         }
 
         std::sort(named_entities.begin(), named_entities.end(),
-                  [](const auto &a, const auto &b) { return a.first < b.first; });
+                  [](const auto &a, const auto &b)
+                  { return a.first < b.first; });
 
         std::vector<T *> result;
         result.reserve(named_entities.size());

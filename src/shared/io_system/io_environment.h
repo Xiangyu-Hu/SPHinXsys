@@ -61,9 +61,9 @@ class IOEnvironment
     void resetForRestart();
     ParameterizationIO *defineParameterizationIO();
     void appendOutputFolder(const std::string &append_name);
-    void resetOutputFolder(const std::string &new_name);
-    void resetRestartFolder(const std::string &new_name);
-    void resetReloadFolder(const std::string &new_name);
+    void resetOutputFolder(const std::string &new_name, bool keep_existing = false);
+    void resetRestartFolder(const std::string &new_name, bool keep_existing = false);
+    void resetReloadFolder(const std::string &new_name, bool keep_existing = false);
     void reinitializeReloadFolder();
     std::string InputFolder() const { return input_folder_; }
     std::string OutputFolder() const { return output_folder_; }
@@ -75,11 +75,13 @@ class IOEnvironment
     std::string output_folder_;
     std::string restart_folder_;
     std::string reload_folder_;
+
+    void setOutputFolder(const std::string &folder_name);
 };
 
 namespace IO
 {
-void initEnvironment();
+IOEnvironment &initEnvironment();
 IOEnvironment &getEnvironment();
 std::shared_ptr<spdlog::logger> initLogger(); // Call once at startup
 std::shared_ptr<spdlog::logger> getLogger();  // Access logger

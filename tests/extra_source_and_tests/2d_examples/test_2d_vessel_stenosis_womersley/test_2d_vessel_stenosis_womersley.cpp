@@ -33,7 +33,7 @@ Real resolution_ref = DH / 12.0;
 Real BW = resolution_ref * 4.0;
 Real max_narrowing = 0.3; // chage to 0.5 or 0.7 for other stenosis cases
 Real interpolationNum = 100;
-BoundingBoxd system_domain_bounds(Vec2d(-DL1 - 0.5 * DL2 - BW, -0.5 * DH - BW), Vec2d(0.5 * DL2 + DL3, 0.5 * DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL1 - 0.5 * DL2, -0.5 * DH), Vec2d(0.5 * DL2 + DL3, 0.5 * DH));
 //----------------------------------------------------------------------
 //	Observation points
 //----------------------------------------------------------------------
