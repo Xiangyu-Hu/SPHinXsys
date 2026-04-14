@@ -57,7 +57,7 @@ class ElasticDynamicsInitialCondition : public LocalDynamics, public ElasticSoli
 {
   public:
     explicit ElasticDynamicsInitialCondition(SPHBody &sph_body);
-    virtual ~ElasticDynamicsInitialCondition(){};
+    virtual ~ElasticDynamicsInitialCondition() {};
 
   protected:
     StdLargeVec<Vecd> &pos_, &vel_;
@@ -75,7 +75,7 @@ class UpdateElasticNormalDirection : public LocalDynamics, public ElasticSolidDa
 
   public:
     explicit UpdateElasticNormalDirection(SPHBody &sph_body);
-    virtual ~UpdateElasticNormalDirection(){};
+    virtual ~UpdateElasticNormalDirection() {};
 
     void update(size_t index_i, Real dt = 0.0);
 };
@@ -95,7 +95,7 @@ class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
 
   public:
     explicit AcousticTimeStepSize(SPHBody &sph_body, Real CFL = 0.6);
-    virtual ~AcousticTimeStepSize(){};
+    virtual ~AcousticTimeStepSize() {};
 
     Real reduce(size_t index_i, Real dt = 0.0);
 };
@@ -108,7 +108,7 @@ class DeformationGradientBySummation : public LocalDynamics, public ElasticSolid
 {
   public:
     explicit DeformationGradientBySummation(BaseInnerRelation &inner_relation);
-    virtual ~DeformationGradientBySummation(){};
+    virtual ~DeformationGradientBySummation() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -140,7 +140,7 @@ class BaseElasticIntegration : public LocalDynamics, public ElasticSolidDataInne
 {
   public:
     explicit BaseElasticIntegration(BaseInnerRelation &inner_relation);
-    virtual ~BaseElasticIntegration(){};
+    virtual ~BaseElasticIntegration() {};
 
   protected:
     StdLargeVec<Real> &rho_, &mass_;
@@ -157,7 +157,7 @@ class BaseIntegration1stHalf : public BaseElasticIntegration
 {
   public:
     explicit BaseIntegration1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~BaseIntegration1stHalf(){};
+    virtual ~BaseIntegration1stHalf() {};
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -175,8 +175,11 @@ class BaseIntegration1stHalf : public BaseElasticIntegration
 class Integration1stHalf : public BaseIntegration1stHalf
 {
   public:
-    explicit Integration1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~Integration1stHalf(){};
+    // The numerical dissipation factor is used to increase the numerical stability of the solid, which is between 0 and 1
+    // The default value is set to 0.25, which is a common choice in practice.
+    // For soft solids in FSI simulations, a larger numerical dissipation factor may be needed to maintain stability
+    explicit Integration1stHalf(BaseInnerRelation &inner_relation, Real numerical_dissipation_factor);
+    virtual ~Integration1stHalf() {};
 
     inline void interaction(size_t index_i, Real dt = 0.0)
     {
@@ -217,8 +220,8 @@ class Integration1stHalf : public BaseIntegration1stHalf
 class Integration1stHalfPK2 : public Integration1stHalf
 {
   public:
-    explicit Integration1stHalfPK2(BaseInnerRelation &inner_relation);
-    virtual ~Integration1stHalfPK2(){};
+    explicit Integration1stHalfPK2(BaseInnerRelation &inner_relation, Real numerical_dissipation_factor = 0.25);
+    virtual ~Integration1stHalfPK2() {};
     void initialization(size_t index_i, Real dt = 0.0);
 };
 
@@ -228,8 +231,8 @@ class Integration1stHalfPK2 : public Integration1stHalf
 class Integration1stHalfCauchy : public Integration1stHalf
 {
   public:
-    explicit Integration1stHalfCauchy(BaseInnerRelation &inner_relation);
-    virtual ~Integration1stHalfCauchy(){};
+    explicit Integration1stHalfCauchy(BaseInnerRelation &inner_relation, Real numerical_dissipation_factor = 0.25);
+    virtual ~Integration1stHalfCauchy() {};
     void initialization(size_t index_i, Real dt = 0.0);
 };
 
@@ -240,8 +243,8 @@ class Integration1stHalfCauchy : public Integration1stHalf
 class Integration1stHalfKirchhoff : public Integration1stHalf
 {
   public:
-    explicit Integration1stHalfKirchhoff(BaseInnerRelation &inner_relation);
-    virtual ~Integration1stHalfKirchhoff(){};
+    explicit Integration1stHalfKirchhoff(BaseInnerRelation &inner_relation, Real numerical_dissipation_factor = 0.25);
+    virtual ~Integration1stHalfKirchhoff() {};
     void initialization(size_t index_i, Real dt = 0.0);
 };
 
@@ -264,7 +267,7 @@ class DecomposedIntegration1stHalf : public BaseIntegration1stHalf
 {
   public:
     explicit DecomposedIntegration1stHalf(BaseInnerRelation &inner_relation);
-    virtual ~DecomposedIntegration1stHalf(){};
+    virtual ~DecomposedIntegration1stHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
 
     inline void interaction(size_t index_i, Real dt = 0.0)
@@ -299,8 +302,8 @@ class Integration2ndHalf : public BaseElasticIntegration
 {
   public:
     explicit Integration2ndHalf(BaseInnerRelation &inner_relation)
-        : BaseElasticIntegration(inner_relation){};
-    virtual ~Integration2ndHalf(){};
+        : BaseElasticIntegration(inner_relation) {};
+    virtual ~Integration2ndHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
 
     inline void interaction(size_t index_i, Real dt = 0.0)
