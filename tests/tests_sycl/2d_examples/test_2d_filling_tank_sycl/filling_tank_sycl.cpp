@@ -68,18 +68,6 @@ class WallBoundary : public MultiPolygonShape
     }
 };
 //----------------------------------------------------------------------
-//	Inlet inflow condition
-//----------------------------------------------------------------------
-struct ConstantInflowVelocity
-{
-    ConstantInflowVelocity() {};
-
-    Real getAxisVelocity(const Vecd &, const Real &, Real)
-    {
-        return 2.0;
-    };
-};
-//----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
 int main(int ac, char *av[])
@@ -151,8 +139,8 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
 
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowConditionCK<AlignedBoxByParticle, ConstantInflowVelocity>> inflow_condition(emitter);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxByParticle>> emitter_injection(emitter, inlet_buffer);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowConditionCK<AlignedBoxByParticle, ConstantInflowSpeed>> inflow_condition(emitter, 2.0);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxByParticle>> emitter_injection(emitter);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

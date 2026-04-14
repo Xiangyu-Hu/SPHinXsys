@@ -245,7 +245,8 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
-    SPHSystem sph_system(system_domain_bounds, global_resolution);
+    SPHSystem sph_system( // cancel the default extension in constructor to keep original system domain bounds.
+        system_domain_bounds.expand(-4.0 * global_resolution), global_resolution);
     sph_system.setGenerateRegressionData(false);
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments

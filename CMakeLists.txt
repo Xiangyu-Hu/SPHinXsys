@@ -109,6 +109,7 @@ if(NOT BOOST_INCLUDE_DIR)
 endif()
 
 target_link_libraries(sphinxsys_core INTERFACE Boost::boost)
+target_include_directories(sphinxsys_core INTERFACE ${Boost_INCLUDE_DIRS})
 find_package(Boost QUIET COMPONENTS program_options)
 
 if(TARGET Boost::program_options)
