@@ -23,6 +23,44 @@ using namespace bg;
 
 namespace SPH
 {
+namespace
+{
+struct TriangulatedPolygon
+{
+    NRings rings;
+    std::vector<uint32_t> indices;
+};
+
+TriangulatedPolygon triangulatePolygon(const boost_poly &poly)
+{
+    TriangulatedPolygon triangulated;
+
+    // 1. Add Outer Ring
+    std::vector<NPoint> outer_ring;
+    for (auto const &p : poly.outer())
+    {
+        outer_ring.push_back({bg::get<0>(p), bg::get<1>(p)});
+    }
+    triangulated.rings.push_back(outer_ring);
+
+    // 2. Add Interior Rings (Holes)
+    for (auto const &hole : poly.inners())
+    {
+        std::vector<NPoint> inner_ring;
+        for (auto const &p : hole)
+        {
+            inner_ring.push_back({bg::get<0>(p), bg::get<1>(p)});
+        }
+        triangulated.rings.push_back(inner_ring);
+    }
+
+    // 3. Run triangulation (3 indices per triangle)
+    triangulated.indices = mapbox::earcut<uint32_t>(triangulated.rings);
+
+    return triangulated;
+}
+} // namespace
+
 //=================================================================================================//
 MultiPolygon::MultiPolygon(const std::vector<Vecd> &points)
     : MultiPolygon()
@@ -314,35 +352,12 @@ void MultiPolygonShape::writeMultiPolygonShapeToVtp()
 
     for (const auto &poly : multi_poly)
     {
-        NRings earcut_input;
-
-        // 1. Add Outer Ring
-        std::vector<NPoint> outer_ring;
-        for (auto const &p : poly.outer())
-        {
-            outer_ring.push_back({bg::get<0>(p), bg::get<1>(p)});
-        }
-        earcut_input.push_back(outer_ring);
-
-        // 2. Add Interior Rings (Holes)
-        for (auto const &hole : poly.inners())
-        {
-            std::vector<NPoint> inner_ring;
-            for (auto const &p : hole)
-            {
-                inner_ring.push_back({bg::get<0>(p), bg::get<1>(p)});
-            }
-            earcut_input.push_back(inner_ring);
-        }
-
-        // 3. Run Triangulation
-        // Returns a flat vector of indices (3 per triangle)
-        std::vector<uint32_t> indices = mapbox::earcut<uint32_t>(earcut_input);
+        TriangulatedPolygon triangulated = triangulatePolygon(poly);
 
         // 4. Add points to VTK and create Triangle Cells
         // We add all points from all rings of THIS polygon
         vtkIdType poly_start_offset = global_point_offset;
-        for (const auto &ring : earcut_input)
+        for (const auto &ring : triangulated.rings)
         {
             for (const auto &p : ring)
             {
@@ -352,12 +367,12 @@ void MultiPolygonShape::writeMultiPolygonShapeToVtp()
         }
 
         // 5. Create the VTK triangles using the indices
-        for (size_t i = 0; i < indices.size(); i += 3)
+        for (size_t i = 0; i < triangulated.indices.size(); i += 3)
         {
             vtkNew<vtkTriangle> vtk_tri;
-            vtk_tri->GetPointIds()->SetId(0, poly_start_offset + indices[i]);
-            vtk_tri->GetPointIds()->SetId(1, poly_start_offset + indices[i + 1]);
-            vtk_tri->GetPointIds()->SetId(2, poly_start_offset + indices[i + 2]);
+            vtk_tri->GetPointIds()->SetId(0, poly_start_offset + triangulated.indices[i]);
+            vtk_tri->GetPointIds()->SetId(1, poly_start_offset + triangulated.indices[i + 1]);
+            vtk_tri->GetPointIds()->SetId(2, poly_start_offset + triangulated.indices[i + 2]);
             vtk_cells->InsertNextCell(vtk_tri);
         }
     }
@@ -387,35 +402,12 @@ void MultiPolygonShape::writeMultiPolygonShapeToVtp()
 
     for (const auto &poly : multi_poly)
     {
-        NRings earcut_input;
-
-        // 1. Add Outer Ring
-        std::vector<NPoint> outer_ring;
-        for (auto const &p : poly.outer())
-        {
-            outer_ring.push_back({bg::get<0>(p), bg::get<1>(p)});
-        }
-        earcut_input.push_back(outer_ring);
-
-        // 2. Add Interior Rings (Holes)
-        for (auto const &hole : poly.inners())
-        {
-            std::vector<NPoint> inner_ring;
-            for (auto const &p : hole)
-            {
-                inner_ring.push_back({bg::get<0>(p), bg::get<1>(p)});
-            }
-            earcut_input.push_back(inner_ring);
-        }
-
-        // 3. Run Triangulation
-        // Returns a flat vector of indices (3 per triangle)
-        std::vector<uint32_t> indices = mapbox::earcut<uint32_t>(earcut_input);
+        TriangulatedPolygon triangulated = triangulatePolygon(poly);
 
         // 4. Add points and create triangle connectivity
         // We add all points from all rings of THIS polygon
         int poly_start_offset = global_point_offset;
-        for (const auto &ring : earcut_input)
+        for (const auto &ring : triangulated.rings)
         {
             for (const auto &p : ring)
             {
@@ -425,11 +417,11 @@ void MultiPolygonShape::writeMultiPolygonShapeToVtp()
         }
 
         // 5. Create triangle cells from the earcut indices
-        for (size_t i = 0; i < indices.size(); i += 3)
+        for (size_t i = 0; i < triangulated.indices.size(); i += 3)
         {
-            connectivity.push_back(poly_start_offset + static_cast<int>(indices[i]));
-            connectivity.push_back(poly_start_offset + static_cast<int>(indices[i + 1]));
-            connectivity.push_back(poly_start_offset + static_cast<int>(indices[i + 2]));
+            connectivity.push_back(poly_start_offset + static_cast<int>(triangulated.indices[i]));
+            connectivity.push_back(poly_start_offset + static_cast<int>(triangulated.indices[i + 1]));
+            connectivity.push_back(poly_start_offset + static_cast<int>(triangulated.indices[i + 2]));
             offsets.push_back(static_cast<int>(connectivity.size()));
         }
     }
