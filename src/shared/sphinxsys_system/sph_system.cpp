@@ -30,7 +30,7 @@ SharedPtr<tbb::global_control> &getTbbGlobalControlHolder()
 SPHSystem::SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution, size_t number_of_threads)
     : SPHSystem(true, system_domain_bounds, global_resolution, number_of_threads)
 {
-    writeSystemDomainShape();
+    writeSystemDomainShapeToVtp();
 }
 //=================================================================================================//
 SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
@@ -52,10 +52,10 @@ SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
 //=================================================================================================//
 SPHSystem::~SPHSystem() = default;
 //=================================================================================================//
-void SPHSystem::writeSystemDomainShape()
+void SPHSystem::writeSystemDomainShapeToVtp()
 {
     GeometricShapeBox domain_shape(system_domain_bounds_, system_name_ + "Domain");
-    domain_shape.writeProxy();
+    domain_shape.writeGeometricShapeBoxToVtp();
 }
 //=================================================================================================//
 void SPHSystem::setLogLevel(size_t log_level)
@@ -234,7 +234,7 @@ RelaxationSystem::RelaxationSystem(
     : SPHSystem(false, system_domain_bounds, global_resolution, number_of_threads)
 {
     system_name_ = "RelaxationSystem";
-    writeSystemDomainShape();
+    writeSystemDomainShapeToVtp();
 }
 //=================================================================================================//
 } // namespace SPH

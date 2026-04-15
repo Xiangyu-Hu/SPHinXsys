@@ -5,9 +5,9 @@
 namespace SPH
 {
 //=================================================================================================//
-void GeometricShapeBox::writeProxy()
+void GeometricShapeBox::writeGeometricShapeBoxToVtp()
 {
-    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/" + getName() + "Proxy.vtp";
+    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/" + getName() + ".vtp";
 
     if (fs::exists(filefullpath))
     {

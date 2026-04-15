@@ -1,6 +1,25 @@
 #include "multi_polygon_shape.h"
 
+#include "io_environment.h"
+
 using namespace bg;
+
+#include "earcut.hpp"
+
+#ifdef SPHINXSYS_USE_VTK
+#include <vtkCellArray.h>
+#include <vtkDoubleArray.h>
+#include <vtkFieldData.h>
+#include <vtkFloatArray.h>
+#include <vtkIntArray.h>
+#include <vtkNew.h>
+#include <vtkPointData.h>
+#include <vtkPoints.h>
+#include <vtkPolyData.h>
+#include <vtkTriangle.h>
+#include <vtkUnsignedIntArray.h>
+#include <vtkXMLPolyDataWriter.h>
+#endif
 
 namespace SPH
 {
@@ -281,6 +300,79 @@ BoundingBoxd MultiPolygon::findBounds()
     upper_bound[1] = bg::return_envelope<box>(multi_poly_).max_corner().get<1>();
     return BoundingBoxd(lower_bound, upper_bound);
 }
+//=================================================================================================//
+#ifdef SPHINXSYS_USE_VTK
+void MultiPolygonShape::writeMultiPolygonShapeToVtp()
+{
+    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/" + getName() + "Proxy.vtp";
+
+    vtkNew<vtkPoints> vtk_points;
+    vtkNew<vtkCellArray> vtk_cells;
+
+    vtkIdType global_point_offset = 0;
+    auto &multi_poly = multi_polygon_.getBoostMultiPoly();
+
+    for (const auto &poly : multi_poly)
+    {
+        NRings earcut_input;
+
+        // 1. Add Outer Ring
+        std::vector<NPoint> outer_ring;
+        for (auto const &p : poly.outer())
+        {
+            outer_ring.push_back({bg::get<0>(p), bg::get<1>(p)});
+        }
+        earcut_input.push_back(outer_ring);
+
+        // 2. Add Interior Rings (Holes)
+        for (auto const &hole : poly.inners())
+        {
+            std::vector<NPoint> inner_ring;
+            for (auto const &p : hole)
+            {
+                inner_ring.push_back({bg::get<0>(p), bg::get<1>(p)});
+            }
+            earcut_input.push_back(inner_ring);
+        }
+
+        // 3. Run Triangulation
+        // Returns a flat vector of indices (3 per triangle)
+        std::vector<uint32_t> indices = mapbox::earcut<uint32_t>(earcut_input);
+
+        // 4. Add points to VTK and create Triangle Cells
+        // We add all points from all rings of THIS polygon
+        vtkIdType poly_start_offset = global_point_offset;
+        for (const auto &ring : earcut_input)
+        {
+            for (const auto &p : ring)
+            {
+                vtk_points->InsertNextPoint(p[0], p[1], 0.0);
+                global_point_offset++;
+            }
+        }
+
+        // 5. Create the VTK triangles using the indices
+        for (size_t i = 0; i < indices.size(); i += 3)
+        {
+            vtkNew<vtkTriangle> vtk_tri;
+            vtk_tri->GetPointIds()->SetId(0, poly_start_offset + indices[i]);
+            vtk_tri->GetPointIds()->SetId(1, poly_start_offset + indices[i + 1]);
+            vtk_tri->GetPointIds()->SetId(2, poly_start_offset + indices[i + 2]);
+            vtk_cells->InsertNextCell(vtk_tri);
+        }
+    }
+
+    vtkNew<vtkPolyData> polyData;
+    polyData->SetPoints(vtk_points);
+    polyData->SetPolys(vtk_cells);
+
+    vtkNew<vtkXMLPolyDataWriter> writer;
+    writer->SetInputData(polyData);
+    writer->SetFileName(filefullpath.c_str());
+    writer->SetDataModeToAscii();
+    writer->Write();
+}
+#endif
 //=================================================================================================//
 bool MultiPolygonShape::isValid()
 {

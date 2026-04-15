@@ -225,11 +225,11 @@ AlignedBoxPart::AlignedBoxPart(const std::string &part_name, const AlignedBox &a
 //=================================================================================================//
 AlignedBoxPart::~AlignedBoxPart() = default;
 //=================================================================================================//
-void AlignedBoxPart::writeShapeProxy()
+void AlignedBoxPart::writeAlignedBoxToVtp()
 {
     GeometricShapeBox domain_shape(
         aligned_box_.getTransform(), aligned_box_.HalfSize(), svAlignedBox()->Name());
-    domain_shape.writeProxy();
+    domain_shape.writeGeometricShapeBoxToVtp();
 }
 //=================================================================================================//
 AlignedBoxByParticle::AlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box)
