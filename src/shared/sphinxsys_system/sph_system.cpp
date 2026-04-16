@@ -75,18 +75,6 @@ void SPHSystem::addRealBody(RealBody *real_body)
     real_bodies_.push_back(real_body);
 }
 //=================================================================================================//
-RealBody &SPHSystem::getRealBodyByName(const std::string &name)
-{
-    for (auto &real_body : real_bodies_)
-    {
-        if (real_body->getName() == name)
-        {
-            return *DynamicCast<RealBody>(this, real_body);
-        }
-    }
-    throw std::runtime_error("Real body with name " + name + " not found in SPHSystem.");
-}
-//=================================================================================================//
 
 void SPHSystem::initializeSystemCellLinkedLists()
 {

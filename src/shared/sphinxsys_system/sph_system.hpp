@@ -81,5 +81,32 @@ auto &SPHSystem::addContactRelation(
                               std::forward<Args>(args)...);
 }
 //=================================================================================================//
+template <typename DerivedBodyType>
+DerivedBodyType &SPHSystem::getBodyByName(const std::string &name)
+{
+    for (auto &real_body : real_bodies_)
+    {
+        if (real_body->getName() == name)
+        {
+            return *DynamicCast<DerivedBodyType>(this, real_body);
+        }
+    }
+    throw std::runtime_error("Real body with name " + name + " not found in SPHSystem.");
+}
+//=================================================================================================//
+template <typename DerivedBodyType>
+StdVec<DerivedBodyType *> SPHSystem::collectBodies()
+{
+    StdVec<DerivedBodyType *> collected_bodies;
+    for (auto &real_body : real_bodies_)
+    {
+        if (auto casted_body = dynamic_cast<DerivedBodyType *>(real_body))
+        {
+            collected_bodies.push_back(casted_body);
+        }
+    }
+    return collected_bodies;
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // SPH_SYSTEM_HPP
