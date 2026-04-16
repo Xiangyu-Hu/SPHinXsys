@@ -84,11 +84,12 @@ auto &SPHSystem::addContactRelation(
 template <typename DerivedBodyType>
 DerivedBodyType &SPHSystem::getBodyByName(const std::string &name)
 {
-    for (auto &real_body : real_bodies_)
+    StdVec<DerivedBodyType *> collected_bodies = collectBodies<DerivedBodyType>();
+    for (auto &body : collected_bodies)
     {
-        if (real_body->getName() == name)
+        if (body->getName() == name)
         {
-            return *DynamicCast<DerivedBodyType>(this, real_body);
+            return *DynamicCast<DerivedBodyType>(this, body);
         }
     }
     throw std::runtime_error("Real body with name " + name + " not found in SPHSystem.");
@@ -98,9 +99,9 @@ template <typename DerivedBodyType>
 StdVec<DerivedBodyType *> SPHSystem::collectBodies()
 {
     StdVec<DerivedBodyType *> collected_bodies;
-    for (auto &real_body : real_bodies_)
+    for (auto &sph_body : sph_bodies_)
     {
-        if (auto casted_body = dynamic_cast<DerivedBodyType *>(real_body))
+        if (auto casted_body = dynamic_cast<DerivedBodyType *>(sph_body))
         {
             collected_bodies.push_back(casted_body);
         }
