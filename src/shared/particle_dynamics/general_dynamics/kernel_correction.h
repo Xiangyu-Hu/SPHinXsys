@@ -29,20 +29,20 @@
  */
 
 #ifndef KERNEL_CORRECTION_H
-#define KERNEL_CORRECTION_H
+#define KERNEL_CORRECTION_H //防止头文件被多次包含
 
 #include "base_general_dynamics.h"
 
 namespace SPH
 {
-template <typename... InteractionTypes>
-class LinearGradientCorrectionMatrix;
+template <typename... InteractionTypes>//可变参数模板 ... 表示可以接受任意多个类型参数，比如 <Inner<>, Contact<>> 或 <Inner<>> 等
+class LinearGradientCorrectionMatrix;//主模板声明（只有声明，没有定义）
 
 // WKGC1 will be used for calculate the KGC matrix.
 // The difference between WKGC1 and WKGC2 can refer to https://doi.org/10.1016/j.cma.2023.116460
 
-template <class DataDelegationType>
-class LinearGradientCorrectionMatrix<DataDelegationType>
+template <class DataDelegationType>//部分特化：处理一种交互类型
+class LinearGradientCorrectionMatrix<DataDelegationType>//当用户只给一个模板参数时，使用这个版本
     : public LocalDynamics, public DataDelegationType
 {
   public:
@@ -55,8 +55,8 @@ class LinearGradientCorrectionMatrix<DataDelegationType>
     Matd *B_;
 };
 
-template <>
-class LinearGradientCorrectionMatrix<Inner<>>
+template <>//表示这是一个完全特化，模板参数列表为空
+class LinearGradientCorrectionMatrix<Inner<>>//只处理内部粒子
     : public LinearGradientCorrectionMatrix<DataDelegateInner>
 {
     Real alpha_;
@@ -71,7 +71,7 @@ class LinearGradientCorrectionMatrix<Inner<>>
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 };
-using LinearGradientCorrectionMatrixInner = LinearGradientCorrectionMatrix<Inner<>>;
+using LinearGradientCorrectionMatrixInner = LinearGradientCorrectionMatrix<Inner<>>;//定义别名，这样以后写 LinearGradientCorrectionMatrixInner 就等价于这个特化类
 
 template <>
 class LinearGradientCorrectionMatrix<Contact<>>
@@ -87,7 +87,7 @@ class LinearGradientCorrectionMatrix<Contact<>>
     StdVec<Real *> contact_mass_;
 };
 
-using LinearGradientCorrectionMatrixComplex = ComplexInteraction<LinearGradientCorrectionMatrix<Inner<>, Contact<>>>;
+using LinearGradientCorrectionMatrixComplex = ComplexInteraction<LinearGradientCorrectionMatrix<Inner<>, Contact<>>>;//ComplexInteraction 是一个辅助模板，把内部和接触的修正组合起来，一次调用就能同时处理内部和边界邻居。
 
 template <typename... InteractionTypes>
 class KernelGradientCorrection;
@@ -110,7 +110,7 @@ template <>
 class KernelGradientCorrection<Inner<>>
     : public KernelGradientCorrection<DataDelegateInner>
 {
-    PairAverageVariable<Matd> average_correction_matrix_;
+    PairAverageVariable<Matd> average_correction_matrix_;//它是每个粒子对的平均修正矩阵 (B_i + B_j)/2。
 
   public:
     explicit KernelGradientCorrection(BaseInnerRelation &inner_relation);

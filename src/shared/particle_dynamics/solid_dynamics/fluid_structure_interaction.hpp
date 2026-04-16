@@ -32,7 +32,7 @@ template <class FluidIntegration2ndHalfType>
 void PressureForceFromFluid<FluidIntegration2ndHalfType>::interaction(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
-    for (size_t k = 0; k < contact_configuration_.size(); ++k)
+    for (size_t k = 0; k < contact_configuration_.size(); ++k)//遍历所有接触物体
     {
         Real *Vol_k = contact_Vol_[k];
         Real *rho_k = contact_rho_[k];
@@ -42,16 +42,16 @@ void PressureForceFromFluid<FluidIntegration2ndHalfType>::interaction(size_t ind
         Vecd *force_prior_k = contact_force_prior_[k];
         RiemannSolverType &riemann_solvers_k = riemann_solvers_[k];
         Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+        for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)//遍历该流体块中所有邻居流体粒子
         {
             size_t index_j = contact_neighborhood.j_[n];
             Vecd e_ij = contact_neighborhood.e_ij_[n];
             Real r_ij = contact_neighborhood.r_ij_[n];
-            Real face_wall_external_acceleration =
+            Real face_wall_external_acceleration =//计算壁面法向加速度差（用于外推压力）
                 (force_prior_k[index_j] / mass_k[index_j] - acc_ave_[index_i]).dot(e_ij);
-            Real p_j_in_wall = p_k[index_j] + rho_k[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-            Vecd face_to_fluid_n = -SGN(e_ij.dot(n_[index_i])) * n_[index_i];
-            Real u_jump = 2.0 * (vel_k[index_j] - vel_ave_[index_i]).dot(face_to_fluid_n);
+            Real p_j_in_wall = p_k[index_j] + rho_k[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);// 外推流体压力到壁面位置
+            Vecd face_to_fluid_n = -SGN(e_ij.dot(n_[index_i])) * n_[index_i];//确定壁面法向
+            Real u_jump = 2.0 * (vel_k[index_j] - vel_ave_[index_i]).dot(face_to_fluid_n);//法向速度跳跃
             force -= (riemann_solvers_k.DissipativePJump(u_jump) * face_to_fluid_n + (p_j_in_wall + p_k[index_j]) * e_ij) *
                      contact_neighborhood.dW_ij_[n] * Vol_k[index_j];
         }
