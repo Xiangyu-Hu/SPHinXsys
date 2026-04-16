@@ -8,7 +8,7 @@ namespace SPH
 //=================================================================================================//
 void GeometricShapeBox::writeGeometricShapeBoxToVtp()
 {
-    TriangleMeshShapeBrick shape_proxy(HalfSize(), 1, Vecd::Zero(), getName());
+    TriangleMeshShapeBrick shape_proxy(HalfSize(), 1, Vecd::Zero(), "Shape" + getName());
     shape_proxy.writeMeshToFile(getTransform());
 }
 //=================================================================================================//

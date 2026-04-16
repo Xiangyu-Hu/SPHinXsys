@@ -341,7 +341,7 @@ BoundingBoxd MultiPolygon::findBounds()
 //=================================================================================================//
 void MultiPolygonShape::writeMultiPolygonShapeToVtp()
 {
-    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/" + getName() + ".vtp";
+    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/Shape" + getName() + ".vtp";
 
 #ifdef SPHINXSYS_USE_VTK
     vtkNew<vtkPoints> vtk_points;
