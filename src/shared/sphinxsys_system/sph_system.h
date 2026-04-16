@@ -125,6 +125,9 @@ class SPHSystem
     template <typename DerivedBodyType>
     StdVec<DerivedBodyType *> collectBodies();
 
+    template <typename RelationType>
+    RelationType &getRelationByName(const std::string &name);
+
   protected:
     std::string system_name_;           /**< name of the system. */
     BoundingBoxd system_domain_bounds_; /**< Lower and Upper domain bounds. */
@@ -133,6 +136,7 @@ class SPHSystem
     SPHBodyVector sph_bodies_;          /**< All sph bodies. */
     SPHBodyVector observation_bodies_;  /**< The bodies without inner particle configuration. */
     SPHBodyVector real_bodies_;         /**< The bodies with inner particle configuration. */
+    StdVec<RelationBase *> relations_;  /**< All inner relations. */
     bool run_particle_relaxation_;      /**< run particle relaxation for body fitted particle distribution */
     bool reload_particles_;             /**< start the simulation with relaxed particles. */
     size_t restart_step_;               /**< restart step */

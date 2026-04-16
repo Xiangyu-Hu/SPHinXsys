@@ -62,16 +62,21 @@ auto &SPHSystem::addShape(Args &&...args)
 template <class DynamicIdentifier, typename... Args>
 auto &SPHSystem::addInnerRelation(DynamicIdentifier &identifier, Args &&...args)
 {
-    return *relations_keeper_.createPtr<Inner<Relation<DynamicIdentifier>>>(
-        identifier, std::forward<Args>(args)...);
+    Inner<Relation<DynamicIdentifier>> *relation = relations_keeper_.createPtr<
+        Inner<Relation<DynamicIdentifier>>>(identifier, std::forward<Args>(args)...);
+    relations_.push_back(relation);
+    return *relation;
 }
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier, typename... Args>
 auto &SPHSystem::addContactRelation(
     SourceIdentifier &src_identifier, StdVec<TargetIdentifier *> tar_identifiers, Args &&...args)
 {
-    return *relations_keeper_.createPtr<Contact<Relation<SourceIdentifier, TargetIdentifier>>>(
-        src_identifier, tar_identifiers, std::forward<Args>(args)...);
+    Contact<Relation<SourceIdentifier, TargetIdentifier>> *relation =
+        relations_keeper_.createPtr<Contact<Relation<SourceIdentifier, TargetIdentifier>>>(
+            src_identifier, tar_identifiers, std::forward<Args>(args)...);
+    relations_.push_back(relation);
+    return *relation;
 }
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier, typename... Args>
@@ -109,6 +114,20 @@ StdVec<DerivedBodyType *> SPHSystem::collectBodies()
         }
     }
     return collected_bodies;
+}
+//=================================================================================================//
+template <typename RelationType>
+RelationType &SPHSystem::getRelationByName(const std::string &name)
+{
+    for (auto &relation : relations_)
+    {
+        if (relation->getSPHBody()->getName() == name)
+        {
+            return *DynamicCast<RelationType>(this, relation);
+        }
+    }
+    throw std::runtime_error(
+        std::string(type_name<RelationType>()) + ": " + name + " not found in SPHSystem.");
 }
 //=================================================================================================//
 } // namespace SPH
