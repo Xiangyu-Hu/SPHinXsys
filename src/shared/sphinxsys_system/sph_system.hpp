@@ -4,6 +4,7 @@
 #include "sph_system.h"
 
 #include "adaptive_body.h"
+#include "ownership.h"
 #include "relation_ck.h"
 
 namespace SPH
@@ -92,7 +93,8 @@ DerivedBodyType &SPHSystem::getBodyByName(const std::string &name)
             return *DynamicCast<DerivedBodyType>(this, body);
         }
     }
-    throw std::runtime_error("Real body with name " + name + " not found in SPHSystem.");
+    throw std::runtime_error(
+        std::string(type_name<DerivedBodyType>()) + ": " + name + " not found in SPHSystem.");
 }
 //=================================================================================================//
 template <typename DerivedBodyType>
