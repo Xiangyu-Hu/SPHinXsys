@@ -121,7 +121,7 @@ RelationType *SPHSystem::getRelationByName(const std::string &name)
 {
     for (auto &relation : relations_)
     {
-        if (relation->getSPHBody()->getName() == name)
+        if (relation->getName() == name)
         {
             return DynamicCast<RelationType>(this, relation);
         }

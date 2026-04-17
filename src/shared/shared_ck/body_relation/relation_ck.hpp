@@ -9,21 +9,20 @@ namespace SPH
 template <class SourceIdentifier, class TargetIdentifier>
 Relation<SourceIdentifier, TargetIdentifier>::Relation(
     SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, ConfigType config_type)
-    : sph_body_(&source_identifier.getSPHBody()),
+    : RelationBase(source_identifier.getName()), sph_body_(&source_identifier.getSPHBody()),
       particles_(&sph_body_->getBaseParticles()),
       dv_source_pos_(this->assignConfigPosition(*particles_, config_type)),
       dv_neighbor_size_(particles_->registerDiscreteVariable<UnsignedInt>(
           "NeighborSize", particles_->ParticlesBound())),
       offset_list_size_(particles_->ParticlesBound() + 1)
 {
-    std::string source_name = source_identifier.getName();
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
     {
         SPHBody &contact_body = contact_identifiers[k]->getSPHBody();
         std::string target_name = contact_identifiers[k]->getName();
-        std::string name = source_name == target_name
-                               ? source_name + "Inner"
-                               : source_name + "To" + target_name;
+        std::string name = source_name_ == target_name
+                               ? source_name_ + "Inner"
+                               : source_name_ + "To" + target_name;
         BaseParticles &contact_particles = contact_body.getBaseParticles();
         dv_target_pos_.push_back(assignConfigPosition(contact_particles, config_type));
         dv_target_neighbor_index_.push_back(addRelationVariable<UnsignedInt>(

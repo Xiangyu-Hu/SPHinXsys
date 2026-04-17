@@ -48,7 +48,12 @@ class Relation;
 class RelationBase
 {
   public:
+    RelationBase(std::string name) : source_name_(name) {}
     virtual ~RelationBase() {};
+    const std::string &getName() const { return source_name_; }
+
+  protected:
+    std::string source_name_;
 };
 
 template <typename SourceIdentifier, typename TargetIdentifier>
