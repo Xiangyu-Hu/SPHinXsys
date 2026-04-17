@@ -88,8 +88,8 @@ class SPHSystem
     void addSPHBody(SPHBody *sph_body) { sph_bodies_.push_back(sph_body); };
     void addRealBody(RealBody *real_body);
     void addObservationBody(SPHBody *sph_body) { observation_bodies_.push_back(sph_body); };
-    BoundingBoxd getSystemDomainBounds() { return system_domain_bounds_; };
-    void setSystemDomainBounds(const BoundingBoxd &domain_bounds) { system_domain_bounds_ = domain_bounds; };
+    BoundingBoxd getSystemDomainBounds() { return system_bounds_; };
+    void setSystemDomainBounds(const BoundingBoxd &domain_bounds) { system_bounds_ = domain_bounds; };
 
     template <typename DataType>
     SingularVariable<DataType> *registerSystemVariable(
@@ -130,7 +130,7 @@ class SPHSystem
 
   protected:
     std::string system_name_;           /**< name of the system. */
-    BoundingBoxd system_domain_bounds_; /**< Lower and Upper domain bounds. */
+    BoundingBoxd system_bounds_; /**< Lower and Upper domain bounds. */
     Real global_resolution_;            /**< reference resolution of the SPH system */
     bool is_physical_;                  /**< flag for physical or non-physical system. */
     SPHBodyVector sph_bodies_;          /**< All sph bodies. */

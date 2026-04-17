@@ -36,7 +36,7 @@ SPHSystem::SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution, 
 SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
                      Real global_resolution, size_t number_of_threads)
     : system_name_("SPHSystem"),
-      system_domain_bounds_(system_domain_bounds.expand(global_resolution * 4)),
+      system_bounds_(system_domain_bounds.expand(global_resolution * 4)),
       global_resolution_(global_resolution),
       is_physical_(is_physical), run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true)
@@ -54,7 +54,7 @@ SPHSystem::~SPHSystem() = default;
 //=================================================================================================//
 void SPHSystem::writeSystemDomainShapeToVtp()
 {
-    GeometricShapeBox domain_shape(system_domain_bounds_, system_name_ + "Domain");
+    GeometricShapeBox domain_shape(system_bounds_, system_name_ + "Domain");
     domain_shape.writeGeometricShapeBoxToVtp();
 }
 //=================================================================================================//
