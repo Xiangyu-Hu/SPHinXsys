@@ -126,7 +126,7 @@ class SPHSystem
     StdVec<DerivedBodyType *> collectBodies();
 
     template <typename RelationType>
-    RelationType *getRelationByName(const std::string &name);
+    RelationType &getRelationByName(const std::string &name);
 
   protected:
     std::string system_name_;           /**< name of the system. */

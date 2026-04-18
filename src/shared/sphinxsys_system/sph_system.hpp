@@ -117,16 +117,17 @@ StdVec<DerivedBodyType *> SPHSystem::collectBodies()
 }
 //=================================================================================================//
 template <typename RelationType>
-RelationType *SPHSystem::getRelationByName(const std::string &name)
+RelationType &SPHSystem::getRelationByName(const std::string &name)
 {
     for (auto &relation : relations_)
     {
         if (relation->getName() == name)
         {
-            return DynamicCast<RelationType>(this, relation);
+            return *DynamicCast<RelationType>(this, relation);
         }
     }
-    return nullptr;
+    throw std::runtime_error(
+        std::string(type_name<RelationType>()) + ": " + name + " not found in SPHSystem.");
 }
 //=================================================================================================//
 } // namespace SPH
