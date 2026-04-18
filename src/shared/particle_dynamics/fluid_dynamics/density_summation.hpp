@@ -2,6 +2,7 @@
 
 #include "density_summation.h"
 
+#include "adaptation.h"
 namespace SPH
 {
 namespace fluid_dynamics

@@ -29,7 +29,7 @@
 #ifndef GEOMETRIC_ELEMENT_H
 #define GEOMETRIC_ELEMENT_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 
 namespace SPH
 {
@@ -56,6 +56,7 @@ class GeometricBox
 
     Vecd findClosestPoint(const Vecd &probe_point);
     BoundingBoxd findBounds();
+    Vecd HalfSize() const { return halfsize_; }
 
   protected:
     Vecd halfsize_;
@@ -74,6 +75,26 @@ class GeometricBall
   protected:
     Real radius_;
 };
-} // namespace SPH
 
+class GeometricCylinder
+{
+  public:
+    explicit GeometricCylinder(Real radius, Real halflength);
+    ~GeometricCylinder() {};
+
+    bool checkContain(const Vecd &probe_point)
+    {
+        if (ABS(probe_point[0]) > halflength_)
+            return false;
+        return probe_point.tail(Dimensions - 1).norm() <= radius_;
+    };
+
+    Vecd findClosestPoint(const Vecd &probe_point);
+    BoundingBoxd findBounds();
+
+  protected:
+    Real radius_;
+    Real halflength_;
+};
+} // namespace SPH
 #endif // GEOMETRIC_ELEMENT_H

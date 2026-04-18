@@ -1,6 +1,9 @@
 #include "slender_structure_dynamics.h"
 
+#include "adaptation.h"
 #include "base_particles.hpp"
+#include "vector_functions.h"
+
 namespace SPH
 {
 namespace slender_structure_dynamics
@@ -113,6 +116,7 @@ BarStressRelaxationFirstHalf::
       G0_(elastic_solid_.ShearModulus()),
       nu_(elastic_solid_.PoissonRatio()),
       hourglass_control_(hourglass_control),
+      inv_W0_(1.0 / getSPHAdaptation().getKernel()->W0(ZeroVecd)),
       number_of_gaussian_points_(number_of_gaussian_points),
       global_b_stress_(particles_->registerStateVariableData<Matd>("GlobalBinormalStress")),
       global_b_moment_(particles_->registerStateVariableData<Matd>("GlobalBinormalMoment")),

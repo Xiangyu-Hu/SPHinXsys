@@ -1,15 +1,16 @@
 #include "state_engine.h"
 
+#include "io_environment.h"
 #include "sph_system.h"
 namespace SPH
 {
 //=================================================================================================//
 SimbodyStateEngine::
-    SimbodyStateEngine(SPHSystem &sph_system, SimTK::MultibodySystem &system)
+    SimbodyStateEngine(SimTK::MultibodySystem &system)
     : simbody_xml_engine_("state_xml", "mbsystem")
 {
     mbsystem_ = system;
-    restart_folder_ = sph_system.getIOEnvironment().RestartFolder();
+    restart_folder_ = IO::getEnvironment().RestartFolder();
     if (!fs::exists(restart_folder_))
     {
         fs::create_directory(restart_folder_);
@@ -60,7 +61,7 @@ void SimbodyStateEngine::addStateVariable(std::string statevariablename,
     }
     /** Allocate space for a new state variable. */
     AddedStateVariable *asv =
-        added_state_variable_ptr_keeper_
+        added_state_variable_keeper_
             .createPtr<AddedStateVariable>(statevariablename, *this, invalidatestage);
     // Add it to the Component and let it take ownership
     addStateVariable(asv);

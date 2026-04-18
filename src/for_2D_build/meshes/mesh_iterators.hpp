@@ -8,8 +8,11 @@
 
 #include "mesh_iterators.h"
 
+#include "tbb/blocked_range2d.h"
+
 namespace SPH
 {
+typedef tbb::blocked_range2d<size_t> IndexRange2d;
 //=================================================================================================//
 template <typename FunctionOnEach>
 void mesh_for_each(const Array2i &lower, const Array2i &upper, const FunctionOnEach &function)
@@ -56,7 +59,7 @@ void mesh_for(const MeshRange &mesh_range, const LocalFunction &local_function, 
 template <typename LocalFunction, typename... Args>
 void mesh_parallel_for(const MeshRange &mesh_range, const LocalFunction &local_function, Args &&...args)
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange2d((mesh_range.first)[0], (mesh_range.second)[0],
                      (mesh_range.first)[1], (mesh_range.second)[1]),
         [&](const IndexRange2d &r)

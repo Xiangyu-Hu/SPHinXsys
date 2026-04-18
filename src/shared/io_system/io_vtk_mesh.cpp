@@ -1,7 +1,7 @@
 #include "io_vtk_mesh.h"
 
-#include "io_environment.h"
 #include "io_vtk.hpp"
+#include "vector_functions.h"
 namespace SPH
 {
 //=================================================================================================//

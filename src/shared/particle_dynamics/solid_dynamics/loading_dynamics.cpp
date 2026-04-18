@@ -1,5 +1,7 @@
 #include "loading_dynamics.h"
+
 #include "base_general_dynamics.h"
+#include "vector_functions.h"
 
 #include <numeric>
 
@@ -184,7 +186,7 @@ ForceInBodyRegion::
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       pos0_(particles_->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
       force_vector_(Vecd::Zero()), end_time_(end_time),
-      physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime"))
+      physical_time_(sph_system_->svPhysicalTime().Data())
 {
     Real total_mass_in_region(0);
     for (size_t index_i : body_part.body_part_particles_)
@@ -210,7 +212,7 @@ SurfacePressureFromSource::
       pressure_over_time_(pressure_over_time),
       is_pressure_applied_(particles_->addUniqueDiscreteVariableData<bool>(
           "isPressureApplied", particles_->ParticlesBound(), false)),
-      physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime"))
+      physical_time_(sph_system_->svPhysicalTime().Data())
 {
     BodySurface surface_layer(body_part.getSPHBody());
 

@@ -31,6 +31,7 @@
 #define VELOCITY_GRADIENT_H
 
 #include "base_fluid_dynamics.h"
+#include "particle_functors.h"
 
 namespace SPH
 {

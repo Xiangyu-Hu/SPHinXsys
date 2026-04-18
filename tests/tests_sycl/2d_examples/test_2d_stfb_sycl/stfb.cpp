@@ -15,7 +15,7 @@ Real WH = 2.0;                   /**< Water block height. */
 Real L = 1.0;                    /**< Base of the floating body. */
 Real particle_spacing_ref = L / 20;
 Real BW = particle_spacing_ref * 4.0; /**< Extending width for BCs. */
-BoundingBoxd system_domain_bounds(Vec2d(-DL - BW, -DH - BW), Vec2d(DL + BW, DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL, -DH), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -69,7 +69,7 @@ class StructureSystemForSimbody : public SolidBodyPartForSimbody
         // Vec2d mass_center(G[0], G[1]);
         // initial_mass_center_ = SimTKVec3(mass_center[0], mass_center[1], 0.0);
         body_part_mass_properties_ =
-            mass_properties_ptr_keeper_
+            mass_properties_keeper_
                 .createPtr<SimTK::MassProperties>(StructureMass, SimTKVec3(0.0), SimTK::UnitInertia(Ix, Iy, Iz));
     }
 };
@@ -155,7 +155,7 @@ int main(int ac, char *av[])
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
@@ -192,9 +192,9 @@ int main(int ac, char *av[])
     fluid_acoustic_step_2nd_half.addPostContactInteraction(fluid_acoustic_step_2nd_half_with_wall);
 
     auto &fluid_density_regularization =
-        main_methods.addInteractionDynamicsWithUpdate<
-                        fluid_dynamics::DensityRegularization, FreeSurface, AllParticles>(water_block_inner)
-            .addPostContactInteraction(water_block_contact);
+        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(water_block_inner)
+            .addPostContactInteraction(water_block_contact)
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(water_block);
 
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_f);
     auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_block);
@@ -217,7 +217,7 @@ int main(int ac, char *av[])
     SimTK::MultibodySystem MBsystem;
     SimTK::SimbodyMatterSubsystem matter(MBsystem);                // the bodies or matter of the system
     SimTK::GeneralForceSubsystem forces(MBsystem);                 // the forces of the system
-    SimbodyStateEngine simbody_state_engine(sph_system, MBsystem); // the state engine of the system
+    SimbodyStateEngine simbody_state_engine(MBsystem); // the state engine of the system
 
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
     /** Mass properties of the constrained spot.
@@ -302,14 +302,25 @@ int main(int ac, char *av[])
     structure_cell_linked_list.exec();
     observer_update_contact_relation.exec();
     //----------------------------------------------------------------------
+    //	Define time stepper with end and start time.
+    //----------------------------------------------------------------------
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
+    auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
+    auto &trigger_FSI = time_stepper.addTriggerByPhysicalTime(1.0);
+    size_t advection_steps = 0;
+    int screening_interval = 100;
+    int restart_interval = 1000;
+    int observation_interval = screening_interval / 2;
+    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
+    //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
-    Real restart_time = 0.0;
     size_t restart_step = sph_system.RestartStep();
     if (restart_step != 0)
     {
-        restart_time = restart_io.readRestartFiles(restart_step);
+        Real restart_time = restart_io.readRestartFiles(restart_step);
         structure_cell_linked_list.exec();
+        advection_steps = restart_step;
 
         simbody_state_engine.readStateFromXml(restart_step, simbody_state);
         simbody_state.setTime(Real(restart_time));
@@ -317,17 +328,6 @@ int main(int ac, char *av[])
     integ.setAccuracy(1e-3);
     integ.setAllowInterpolation(false);
     integ.initialize(simbody_state);
-    //----------------------------------------------------------------------
-    //	Define time stepper with end and start time.
-    //----------------------------------------------------------------------
-    TimeStepper time_stepper(sph_system, total_physical_time, restart_time);
-    auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
-    auto &trigger_FSI = time_stepper.addTriggerByPhysicalTime(1.0);
-    size_t advection_steps = restart_step;
-    int screening_interval = 100;
-    int restart_interval = 1000;
-    int observation_interval = screening_interval / 2;
-    auto &state_recording = time_stepper.addTriggerByInterval(total_physical_time / 100.0);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -353,7 +353,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
-    while (!time_stepper.isEndTime())
+    while (!time_stepper.isEndTime(total_physical_time))
     {
         //----------------------------------------------------------------------
         //	the fastest and most frequent acostic time stepping.

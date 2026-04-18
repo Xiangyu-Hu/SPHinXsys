@@ -32,6 +32,9 @@
 #include "domain_bounding.h"
 #include "particle_reserve.h"
 
+#include <mutex>
+#include <utility>
+
 namespace SPH
 {
 template <>

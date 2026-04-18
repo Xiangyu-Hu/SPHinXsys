@@ -1,4 +1,6 @@
 #include "elastic_dynamics.h"
+
+#include "adaptation.h"
 #include "base_general_dynamics.h"
 
 namespace SPH
@@ -86,7 +88,8 @@ void BaseIntegration1stHalf::update(size_t index_i, Real dt)
 Integration1stHalf::Integration1stHalf(BaseInnerRelation &inner_relation)
     : BaseIntegration1stHalf(inner_relation),
       stress_PK1_B_(particles_->registerStateVariableData<Matd>("StressPK1OnParticle")),
-      numerical_dissipation_factor_(0.25) {}
+      numerical_dissipation_factor_(0.25),
+      inv_W0_(1.0 / getSPHAdaptation().getKernel()->W0(ZeroVecd)) {}
 //=================================================================================================//
 Integration1stHalfPK2::Integration1stHalfPK2(BaseInnerRelation &inner_relation)
     : Integration1stHalf(inner_relation) {};

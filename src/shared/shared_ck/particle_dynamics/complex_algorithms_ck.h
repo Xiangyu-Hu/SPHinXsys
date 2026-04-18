@@ -30,8 +30,9 @@
 #ifndef COMPLEX_ALGORITHMS_CK_H
 #define COMPLEX_ALGORITHMS_CK_H
 
-#include "base_local_dynamics.h"
-#include "base_particle_dynamics.h"
+#include "base_dynamics.h"
+
+#include <utility>
 
 namespace SPH
 {

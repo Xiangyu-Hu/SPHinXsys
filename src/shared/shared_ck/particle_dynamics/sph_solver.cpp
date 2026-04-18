@@ -1,15 +1,14 @@
 #include "sph_solver.h"
 
-#include "sph_system.hpp"
+#include "sph_system.h"
 
 namespace SPH
 {
 //=================================================================================================//
-TimeStepper::TimeStepper(SPHSystem &sph_system, Real end_time, Real start_time)
-    : end_time_(end_time), global_dt_(0.0)
+TimeStepper::TimeStepper(SPHSystem &sph_system)
+    : global_dt_(0.0)
 {
-    sv_physical_time_ = sph_system.getSystemVariableByName<Real>("PhysicalTime");
-    sv_physical_time_->setValue(start_time);
+    sv_physical_time_ = &sph_system.svPhysicalTime();
 }
 //=================================================================================================//
 TimeStepper::TriggerByPhysicalTime::
@@ -19,11 +18,7 @@ TimeStepper::TriggerByPhysicalTime::
 //=================================================================================================//
 bool TimeStepper::TriggerByPhysicalTime::operator()()
 {
-    if (sv_physical_time_->getValue() > trigger_time_)
-    {
-        return true;
-    }
-    return false;
+    return sv_physical_time_->getValue() > trigger_time_;
 }
 //=================================================================================================//
 TimeStepper::TriggerByInterval::TriggerByInterval(Real initial_interval)
@@ -110,9 +105,9 @@ TimeStepper::TriggerByPhysicalTime &TimeStepper::addTriggerByPhysicalTime(Real t
     return *executor;
 }
 //=================================================================================================//
-bool TimeStepper::isEndTime()
+bool TimeStepper::isEndTime(Real end_time)
 {
-    return (sv_physical_time_->getValue() >= end_time_);
+    return (sv_physical_time_->getValue() >= end_time);
 }
 //=================================================================================================//
 void TimeStepper::setPhysicalTime(Real time)

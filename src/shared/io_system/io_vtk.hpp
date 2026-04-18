@@ -2,6 +2,7 @@
 #define IO_VTK_HPP
 
 #include "io_vtk.h"
+#include "vector_functions.h"
 
 namespace SPH
 {
@@ -10,11 +11,11 @@ template <typename OutStreamType>
 void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream, BaseParticles &particles)
 {
     size_t total_real_particles = particles.TotalRealParticles();
-    ParticleVariables &variables_to_write = particles.VariablesToWrite();
+    DiscreteVariables &variables_to_write = particles.VariablesToWrite();
 
     // write sorted particles ID
     output_stream
-        << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+        << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" format=\"ascii\">\n";
     output_stream << "    ";
     for (size_t i = 0; i != total_real_particles; ++i)
     {
@@ -28,7 +29,7 @@ void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream,
     for (DiscreteVariable<UnsignedInt> *variable : std::get<type_index_UnsignedInt>(variables_to_write))
     {
         UnsignedInt *data_field = variable->Data();
-        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Int32\" Format=\"ascii\">\n";
+        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Int32\" format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {
@@ -43,7 +44,7 @@ void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream,
     for (DiscreteVariable<int> *variable : std::get<type_index_int>(variables_to_write))
     {
         int *data_field = variable->Data();
-        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Int32\" Format=\"ascii\">\n";
+        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Int32\" format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {
@@ -58,7 +59,7 @@ void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream,
     for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write))
     {
         Real *data_field = variable->Data();
-        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\" Format=\"ascii\">\n";
+        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\" format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {
@@ -73,7 +74,7 @@ void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream,
     for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write))
     {
         Vecd *data_field = variable->Data();
-        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"3\" format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {
@@ -89,7 +90,7 @@ void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream,
     for (DiscreteVariable<Matd> *variable : std::get<type_index_Matd>(variables_to_write))
     {
         Matd *data_field = variable->Data();
-        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type= \"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
+        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"9\" format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {

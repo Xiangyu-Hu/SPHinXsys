@@ -34,6 +34,10 @@
 #include "sphinxsys_constant.h"
 #include "sphinxsys_variable_array.h"
 
+#include <string>
+#include <tuple>
+#include <utility>
+
 namespace SPH
 {
 template <typename... InteractionTypes>
@@ -130,8 +134,8 @@ template <class DiffusionType, template <typename...> class BoundaryType, class 
 class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType>>
     : public DiffusionRelaxationCK<DiffusionType, Interaction<Contact<>>>
 {
-    UniquePtrsKeeper<DiscreteVariableArray<Real>> contact_transfer_array_ptrs_keeper_;
-    UniquePtrsKeeper<BoundaryType<DiffusionType>> boundary_ptrs_keeper_;
+    UniquePtrsKeeper<DiscreteVariableArray<Real>> contact_transfer_arrays_keeper_;
+    UniquePtrsKeeper<BoundaryType<DiffusionType>> boundaries_keeper_;
     using BaseInteraction = DiffusionRelaxationCK<DiffusionType, Interaction<Contact<>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
     using BoundaryKernel = typename BoundaryType<DiffusionType>::ComputingKernel;

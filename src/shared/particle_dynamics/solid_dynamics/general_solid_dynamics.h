@@ -31,10 +31,9 @@
 #define GENERAL_SOLID_DYNAMICS_H
 
 #include "all_body_relations.h"
-#include "all_particle_dynamics.h"
 #include "base_general_dynamics.h"
-#include "base_kernel.h"
-#include "elastic_solid.h"
+
+#include <vector>
 
 namespace SPH
 {

@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	all_particle_generator.h
+ * @file 	all_particle_generators.h
  * @brief 	Head file for all particle generator.
  * @author	Chi Zhang and Xiangyu Hu
  */

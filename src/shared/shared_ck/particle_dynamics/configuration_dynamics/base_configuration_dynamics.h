@@ -30,8 +30,11 @@
 #define BASE_CONFIGURATION_DYNAMICS_H
 
 #include "algorithm_primitive.h"
-#include "base_data_type_package.h"
+#include "data_type.h"
 #include "execution_policy.h"
+
+#include <functional>
+#include <tuple>
 
 namespace SPH
 {
@@ -93,7 +96,7 @@ class UpdateSortableVariables
 
     template <class ExecutionPolicy, typename DataType>
     void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables,
-                    ExecutionPolicy &ex_policy, UnsignedInt sorted_size,
+                    ExecutionPolicy &ex_policy, UnsignedInt start_index, UnsignedInt end_index,
                     DiscreteVariable<UnsignedInt> *dv_index_permutation)
     {
         using ContainedDataType = typename ContainerType<DataType>::ContainedDataType;
@@ -105,10 +108,10 @@ class UpdateSortableVariables
         for (size_t k = 0; k != variables.size(); ++k)
         {
             ContainedDataType *sorted_data_field = variables[k]->DelegatedData(ex_policy);
-            generic_for(ex_policy, IndexRange(0, sorted_size),
+            generic_for(ex_policy, IndexRange(start_index, end_index),
                         [=](size_t i)
                         { temp_data_field[i] = sorted_data_field[i]; });
-            generic_for(ex_policy, IndexRange(0, sorted_size),
+            generic_for(ex_policy, IndexRange(start_index, end_index),
                         [=](size_t i)
                         { sorted_data_field[i] = temp_data_field[index_permutation[i]]; });
         }

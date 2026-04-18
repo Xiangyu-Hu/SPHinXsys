@@ -29,7 +29,7 @@
 #ifndef ACTIVE_MUSCLE_DYNAMICS_H
 #define ACTIVE_MUSCLE_DYNAMICS_H
 
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
 

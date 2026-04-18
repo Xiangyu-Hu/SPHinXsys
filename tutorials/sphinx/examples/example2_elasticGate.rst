@@ -24,14 +24,14 @@ We give the geometry and material parameters for modeling the elastic gate.
 .. code-block:: cpp
 
 		/**
-	* @brief 	Define the corner point of gate base geomerty.
+	* @brief 	Define the corner point of gate base geometry.
 	*/
 	Vec2d BaseP_lb(DL - Dam_L - Rubber_width, Base_bottom_position); 	/**< Left bottom. */
 	Vec2d BaseP_lt(DL - Dam_L - Rubber_width, DH); 						/**< Left top. */
 	Vec2d BaseP_rt(DL - Dam_L, DH); 									/**< Right top. */
 	Vec2d BaseP_rb(DL - Dam_L, Base_bottom_position); 					/**< Right bottom. */
 	/**
-	* @brief 	Define the corner point of gate geomerty.
+	* @brief 	Define the corner point of gate geometry.
 	*/
 	Vec2d GateP_lb(DL - Dam_L - Rubber_width, 0.0); 					/**< Left bottom. */
 	Vec2d GateP_lt(DL - Dam_L - Rubber_width, Base_bottom_position); 	/**< Left top. */
@@ -93,7 +93,7 @@ and define gate bodies and their initial with following code piece.
 			: ElasticBody(system, body_name, material, elastic_particles,
 				refinement_level, op)
 		{
-			/** Geomerty definition. */
+			/** Geometry definition. */
 			std::vector<Point> gate_shape;
 			gate_shape.push_back(GateP_lb);
 			gate_shape.push_back(GateP_lt);
@@ -143,8 +143,8 @@ Then, the topological relation of all bodies is defined by
 
 		/**
 	* @brief 	Body contact map.
-	* @details The contact map gives the data conntections between the bodies.
-	* 			Basically the the rang of bidies to build neighbor particle lists.
+	* @details The contact map gives the data connections between the bodies.
+	* 			Basically the the rang of bodies to build neighbor particle lists.
 	*/
 	SPHBodyTopology body_topology = { { water_block, { wall_boundary, gate_base, gate } },
 		{ wall_boundary, { } },{ gate_base, { gate } },
@@ -184,9 +184,9 @@ Then the methods which will be used multiple times for solid dynamics are define
 	solid_dynamics::ElasticSolidTimeStepSize 	gate_computing_time_step_size(gate);
 	/** Stress relaxation stepping for the elastic gate. */
 	solid_dynamics::StressRelaxation 			gate_stress_relaxation(gate, { gate_base });
-	/** Stress update for contrained wall body(gate base). */
-	solid_dynamics::StressInConstrinedElasticBodyFirstHalf 	gate_base_stress_update_first_half(gate_base, { gate });
-	solid_dynamics::StressInConstrinedElasticBodySecondHalf gate_base_stress_update_second_half(gate_base, { gate });
+	/** Stress update for constrained wall body(gate base). */
+	solid_dynamics::StressInConstrainedElasticBodyFirstHalf 	gate_base_stress_update_first_half(gate_base, { gate });
+	solid_dynamics::StressInConstrainedElasticBodySecondHalf gate_base_stress_update_second_half(gate_base, { gate });
 	/** Update the norm of elastic gate. */
 	solid_dynamics::UpdateElasticNormalDirection 	gate_update_normal(gate);
 	/** Compute the average velocity of gate. */
@@ -212,12 +212,12 @@ The main loops are defined in the following piece of code.
 	*/
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
-		Real integeral_time = 0.0;
+		Real integral_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integeral_time < D_Time)
+		while (integral_time < D_Time)
 		{
-			Dt = get_fluid_adevction_time_step_size.parallel_exec();
-			update_fluid_desnity.parallel_exec();
+			Dt = get_fluid_advection_time_step_size.parallel_exec();
+			update_fluid_density.parallel_exec();
 			/** Acceleration due to viscous force and gravity. */
 			initialize_fluid_acceleration.parallel_exec();
 			add_fluid_gravity.parallel_exec();
@@ -231,7 +231,7 @@ The main loops are defined in the following piece of code.
 					<< GlobalStaticVariables::physical_time_ << "	dt: "
 					<< dt << "\n";
 				}
-				/** Fluid relaxation and force computaton. */
+				/** Fluid relaxation and force computation. */
 				pressure_relaxation.parallel_exec(dt);
 				fluid_pressure_force_on_gate.parallel_exec();
 				/** Solid dynamics time stepping. */
@@ -256,7 +256,7 @@ The main loops are defined in the following piece of code.
 				ite++;
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
-				integeral_time += dt;
+				integral_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
 			/** Update cell linked list and configuration. */

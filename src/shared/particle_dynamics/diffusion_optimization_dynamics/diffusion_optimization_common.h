@@ -31,10 +31,12 @@
 #ifndef DIFFUSION_OPTIMIZATION_COMMON_H
 #define DIFFUSION_OPTIMIZATION_COMMON_H
 
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "diffusion_splitting_base.h"
 #include "diffusion_splitting_parameter.h"
 #include "diffusion_splitting_state.h"
+
+#include <string>
 
 namespace SPH
 {

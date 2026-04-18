@@ -30,7 +30,6 @@
 #define EMITTER_BOUNDARY_CK_H
 
 #include "base_body_part.h"
-#include "base_data_type_package.h"
 #include "base_fluid_dynamics.h"
 #include "fluid_boundary_state.hpp"
 #include "particle_operation.hpp"
@@ -42,17 +41,12 @@ namespace SPH
 namespace fluid_dynamics
 {
 
-template <typename... T>
-class EmitterInflowConditionCK;
-
 template <class AlignedBoxPartType, class ConditionFunction>
-class EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>
-    : public BaseLocalDynamics<AlignedBoxPartType>
+class EmitterInflowConditionCK : public BaseLocalDynamics<AlignedBoxPartType>
 {
-    using ConditionKernel = typename ConditionFunction::ComputingKernel;
-
   public:
-    EmitterInflowConditionCK(AlignedBoxPartType &aligned_box_part);
+    template <typename... Args>
+    EmitterInflowConditionCK(AlignedBoxPartType &aligned_box_part, Args &&...args);
 
     class UpdateKernel
     {
@@ -62,15 +56,17 @@ class EmitterInflowConditionCK<AlignedBoxPartType, ConditionFunction>
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
-        Real *physical_time_;
         AlignedBox *aligned_box_;
-        ConditionKernel condition_;
+        ConditionFunction inflow_velocity_;
+        Vecd *pos_, *vel_;
+        Real *physical_time_;
     };
 
   protected:
-    SingularVariable<Real> *sv_physical_time_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
-    ConditionFunction condition_function_;
+    ConditionFunction inflow_velocity_;
+    DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
+    SingularVariable<Real> *sv_physical_time_;
 };
 
 template <typename AlignedBoxPartType>
@@ -79,7 +75,7 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
     using SpawnRealParticleKernel = typename SpawnRealParticle::ComputingKernel;
 
   public:
-    EmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part, ParticleBuffer<Base> &buffer);
+    EmitterInflowInjectionCK(AlignedBoxPartType &aligned_box_part);
     virtual ~EmitterInflowInjectionCK() {};
 
     class UpdateKernel
@@ -100,7 +96,6 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
     class FinishDynamics
     {
         BaseParticles *particles_;
-        ParticleBuffer<Base> &buffer_;
 
       public:
         FinishDynamics(EmitterInflowInjectionCK &encloser);
@@ -108,12 +103,38 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
     };
 
   protected:
-    ParticleBuffer<Base> &buffer_;
     SingularVariable<AlignedBox> *sv_aligned_box_;
     SpawnRealParticle spawn_real_particle_method_;
     Real rho0_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_rho_, *dv_p_;
+};
+
+class WithinDisposerIndication : public BaseLocalDynamics<AlignedBoxByCell>
+{
+  public:
+    WithinDisposerIndication(AlignedBoxByCell &aligned_box_part);
+    virtual ~WithinDisposerIndication() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        AlignedBox *aligned_box_;
+        Vecd *pos_;
+        int *life_status_;
+        UnsignedInt *total_real_particles_;
+    };
+
+  protected:
+    SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<int> *dv_life_status_; // 0: alive, 1: to delete
 };
 } // namespace fluid_dynamics
 } // namespace SPH

@@ -47,6 +47,7 @@ if(SPHINXSYS_2D)
     target_include_directories(sphinxsys_2d PUBLIC $<INSTALL_INTERFACE:include/sphinxsys_2d>)
 
     target_link_libraries(sphinxsys_2d PUBLIC sphinxsys_core)
+    target_compile_definitions(sphinxsys_2d PUBLIC SPH_NDIM=2)
 endif()
 
 if(SPHINXSYS_3D)
@@ -90,4 +91,5 @@ if(SPHINXSYS_3D)
     target_include_directories(sphinxsys_3d PUBLIC $<INSTALL_INTERFACE:include/sphinxsys_3d>)
 
     target_link_libraries(sphinxsys_3d PUBLIC sphinxsys_core)
+    target_compile_definitions(sphinxsys_3d PUBLIC SPH_NDIM=3)
 endif()

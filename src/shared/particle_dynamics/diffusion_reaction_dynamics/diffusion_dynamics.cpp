@@ -1,5 +1,8 @@
 #include "diffusion_dynamics.h"
 
+#include "adaptation.h"
+#include "base_material.h"
+
 namespace SPH
 {
 //=================================================================================================//

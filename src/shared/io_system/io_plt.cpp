@@ -1,7 +1,11 @@
 
 #include "io_plt.h"
 
+#include "base_body.h"
+#include "base_mesh.h"
+#include "base_particles.hpp"
 #include "io_environment.h"
+#include "vector_functions.h"
 
 namespace SPH
 {
@@ -39,7 +43,7 @@ void PltEngine::writeAQuantity(std::ofstream &out_file, const SimTK::SpatialVec 
 
 //=================================================================================================//
 void BodyStatesRecordingToPlt::writePltFileHeader(
-    std::ofstream &output_file, ParticleVariables &variables_to_write)
+    std::ofstream &output_file, DiscreteVariables &variables_to_write)
 {
     output_file << " VARIABLES = \"x\",\"y\",\"z\",\"ID\"";
 
@@ -66,7 +70,7 @@ void BodyStatesRecordingToPlt::writePltFileHeader(
 }
 //=================================================================================================//
 void BodyStatesRecordingToPlt::writePltFileParticleData(
-    std::ofstream &output_file, ParticleVariables &variables_to_write, Vecd *position, size_t index)
+    std::ofstream &output_file, DiscreteVariables &variables_to_write, Vecd *position, size_t index)
 {
     // write particle positions and index first
     Vec3d particle_position = upgradeToVec3d(position[index]);
@@ -101,7 +105,7 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
     for (SPHBody *body : bodies_)
     {
         BaseParticles &particles = body->getBaseParticles();
-        ParticleVariables &variables_to_write = particles.VariablesToWrite();
+        DiscreteVariables &variables_to_write = particles.VariablesToWrite();
         if (body->checkNewlyUpdated())
         {
             if (state_recording_)
@@ -137,12 +141,6 @@ void MeshRecordingToPlt::writeToFile(size_t iteration_step)
 {
     std::string extended_name = partial_file_name_;
     mesh_field_.writeMeshFieldToPlt(extended_name, iteration_step);
-}
-//=============================================================================================//
-void MeshRecordingToPlt::writeBKGMeshVariableToFile(size_t iteration_step)
-{
-    std::string extended_name = partial_file_name_ + "_background_" + std::to_string(iteration_step);
-    mesh_field_.writeBKGMeshToPlt(extended_name);
 }
 //=================================================================================================//
 } // namespace SPH

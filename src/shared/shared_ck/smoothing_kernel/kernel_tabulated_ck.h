@@ -57,26 +57,16 @@ class KernelTabulatedCK
                (fraction_0 * fraction_1 * fraction_2) / delta_q_3_ * data[i + 2];
     };
 
-    inline Real normalized_W(Real normalized_distance) const
-    {
-        return interpolateCubic(w_1d, normalized_distance);
-    };
-
-    inline Real normalized_dW(Real normalized_distance) const
-    {
-        return interpolateCubic(dw_1d, normalized_distance);
-    };
-
-    inline Real normalized_d2W(Real normalized_distance) const
-    {
-        return interpolateCubic(d2w_1d, normalized_distance);
-    };
+    inline Real normalized_W(Real normalized_distance) const { return interpolateCubic(w_1d, normalized_distance); };
+    inline Real normalized_dW(Real normalized_distance) const { return interpolateCubic(dw_1d, normalized_distance); };
+    inline Real normalized_d2W(Real normalized_distance) const { return interpolateCubic(d2w_1d, normalized_distance); };
+    inline Real KernelSize() const { return kernel_size_; };
 
   protected:
+    Real kernel_size_;
     Real dimension_factor_1D_, dimension_factor_2D_, dimension_factor_3D_;
 
   private:
-    Real kernel_size_;
     Real dq_, delta_q_0_, delta_q_1_, delta_q_2_, delta_q_3_;
     Real w_1d[tabulated_size_], dw_1d[tabulated_size_], d2w_1d[tabulated_size_];
 };

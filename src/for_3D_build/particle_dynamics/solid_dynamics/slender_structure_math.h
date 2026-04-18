@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	slender_structure_dynamics.h
+ * @file 	slender_structure_math.h
  * @brief 	Here, we define the math operation for slender structure dynamics.
  * @details We consider here a weakly compressible solids.
  * @author	Dong Wu, Chi Zhang and Xiangyu Hu
@@ -30,7 +30,7 @@
 #ifndef SLENDER_STRUCTURE_MATH_H
 #define SLENDER_STRUCTURE_MATH_H
 
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
 #include "weakly_compressible_fluid.h"

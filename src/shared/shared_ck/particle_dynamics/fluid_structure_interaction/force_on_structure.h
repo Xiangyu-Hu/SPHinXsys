@@ -35,6 +35,8 @@
 #include "riemann_solver_ck.hpp"
 #include "viscosity.h"
 
+#include <string>
+
 namespace SPH
 {
 namespace FSI

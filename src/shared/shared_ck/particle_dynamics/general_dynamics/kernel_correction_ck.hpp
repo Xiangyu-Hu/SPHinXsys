@@ -40,8 +40,8 @@ void LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Vecd gradW_ij = this->dW_ij(index_i, index_j) * this->Vol_[index_j] * this->e_ij(index_i, index_j);
-        local_configuration -= this->vec_r_ij(index_i, index_j) * gradW_ij.transpose();
+        Vecd nablaW_ijV_j = this->nablaW_ij(index_i, index_j) * this->Vol_[index_j];
+        local_configuration -= this->vec_r_ij(index_i, index_j) * nablaW_ijV_j.transpose();
     }
     this->B_[index_i] = local_configuration;
 }
@@ -60,8 +60,7 @@ void LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
 {
     Real determinant = this->B_[index_i].determinant();
     Real det_sqr = SMAX(alpha_ - determinant, Real(0));
-    Matd B_T = this->B_[index_i].transpose(); // for Tikhonov regularization
-    Matd inverse = (B_T * this->B_[index_i] + SqrtEps * Matd::Identity()).inverse() * B_T;
+    Matd inverse = inverseTikhonov(this->B_[index_i], SqrtEps);
     Real weight = determinant / (determinant + det_sqr);
     this->B_[index_i] = weight * inverse + (1.0 - weight) * Matd::Identity();
 }
@@ -69,7 +68,7 @@ void LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
 template <typename... Parameters>
 LinearCorrectionMatrix<Contact<Parameters...>>::
     LinearCorrectionMatrix(Contact<Parameters...> &contact_relation)
-    : LinearCorrectionMatrix<Base, Contact<Parameters...>>(contact_relation){}
+    : LinearCorrectionMatrix<Base, Contact<Parameters...>>(contact_relation) {}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>

@@ -35,6 +35,9 @@
 #include "diffusion_splitting_base.h"
 #include "diffusion_splitting_state.h"
 
+#include <string>
+#include <utility>
+
 namespace SPH
 {
 /**

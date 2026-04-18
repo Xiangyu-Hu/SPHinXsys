@@ -3,6 +3,8 @@
 
 #include "bidirectional_boundary_ck.h"
 
+#include "complex_geometry.h"
+
 namespace SPH
 {
 namespace fluid_dynamics
@@ -87,6 +89,12 @@ BufferOutflowIndication::UpdateKernel::
       is_deltable_(encloser.part_id_, aligned_box_, pos_,
                    encloser.dv_buffer_indicator_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+inline bool BufferOutflowIndication::UpdateKernel::IsDeletable::operator()(size_t index_i) const
+{
+    return buffer_indicator_[index_i] == part_id_ &&
+           aligned_box_->checkLowerBound(pos_[index_i]);
+}
 //=================================================================================================//
 inline void BufferOutflowIndication::UpdateKernel::update(size_t index_i, Real dt)
 {

@@ -105,7 +105,7 @@ The :code:`ThermofluidBody` is inherited from :code:`FluidBody`, while :code:`Th
 		{	
 			std::vector<Vecd> body_shape = CreatShape();	
 			body_shape_ = new ComplexShape(body_name);
-			body_shape_->addAPolygon(body_shape, ShapeBooleanOps::add);
+			body_shape_->addPolygon(body_shape, ShapeBooleanOps::add);
 		}
 	};
 
@@ -119,8 +119,8 @@ The :code:`ThermofluidBody` is inherited from :code:`FluidBody`, while :code:`Th
 			std::vector<Vecd>  outer_wall_shape = CreatOuterWallShape();
 			std::vector<Vecd> inner_wall_shape = CreatInnerWallShape();
 			body_shape_ = new ComplexShape(body_name);
-			body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-			body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+			body_shape_->addPolygon(outer_wall_shape, ShapeBooleanOps::add);
+			body_shape_->addPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 
 		}
 	};

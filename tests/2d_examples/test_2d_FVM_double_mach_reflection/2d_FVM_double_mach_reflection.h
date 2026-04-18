@@ -65,8 +65,8 @@ class DMFInitialCondition : public fluid_dynamics::CompressibleFluidInitialCondi
 {
   public:
     explicit DMFInitialCondition(SPHBody &sph_body)
-        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
-    virtual ~DMFInitialCondition(){};
+        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body) {};
+    virtual ~DMFInitialCondition() {};
 
     void update(size_t index_i, Real dt)
     {
@@ -108,8 +108,8 @@ class DMFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
     DMFBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
         : BoundaryConditionSetupInFVM(inner_relation, ghost_creation),
           E_(particles_->getVariableDataByName<Real>("TotalEnergy")),
-          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")){};
-    virtual ~DMFBoundaryConditionSetup(){};
+          physical_time_(sph_system_->svPhysicalTime().Data()) {};
+    virtual ~DMFBoundaryConditionSetup() {};
 
     // Override these methods to define the specific boundary conditions
     void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) override

@@ -30,4 +30,5 @@
 #include "continuum_integration_1st_ck.hpp"
 #include "continuum_integration_2nd_ck.hpp"
 #include "initialization_dynamics_ck.hpp"
+#include "shear_integration.hpp"
 #include "stress_diffusion_ck.hpp"

@@ -3,6 +3,8 @@
 
 #include "particle_smoothing.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 //=================================================================================================//

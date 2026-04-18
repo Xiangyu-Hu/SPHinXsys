@@ -8,18 +8,18 @@ namespace SPH
 MultiPolygon::MultiPolygon(const std::vector<Vecd> &points)
     : MultiPolygon()
 {
-    addAPolygon(points, ShapeBooleanOps::add);
+    addPolygon(points, GeometricOps::add);
 }
 //=================================================================================================//
 MultiPolygon::MultiPolygon(const Vecd &center, Real radius, int resolution)
     : MultiPolygon()
 {
-    addACircle(center, radius, resolution, ShapeBooleanOps::add);
+    addCircle(center, radius, resolution, GeometricOps::add);
 }
 //=================================================================================================//
 boost_multi_poly MultiPolygon::
     MultiPolygonByBooleanOps(boost_multi_poly multi_poly_in,
-                             boost_multi_poly multi_poly_op, ShapeBooleanOps boolean_op)
+                             boost_multi_poly multi_poly_op, GeometricOps boolean_op)
 {
     boost_multi_poly multi_poly_tmp_in = multi_poly_in;
     /**
@@ -30,23 +30,23 @@ boost_multi_poly MultiPolygon::
 
     switch (boolean_op)
     {
-    case ShapeBooleanOps::add:
+    case GeometricOps::add:
     {
         bg::union_(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
         break;
     }
 
-    case ShapeBooleanOps::sub:
+    case GeometricOps::sub:
     {
         bg::difference(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
         break;
     }
-    case ShapeBooleanOps::sym_diff:
+    case GeometricOps::sym_diff:
     {
         bg::sym_difference(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
         break;
     }
-    case ShapeBooleanOps::intersect:
+    case GeometricOps::intersect:
     {
         bg::intersection(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
         break;
@@ -62,17 +62,17 @@ boost_multi_poly MultiPolygon::
     return multi_poly_tmp_out;
 }
 //=================================================================================================//
-void MultiPolygon::addAMultiPolygon(MultiPolygon &multi_polygon_op, ShapeBooleanOps op)
+void MultiPolygon::addMultiPolygon(const MultiPolygon &multi_polygon_op, GeometricOps op)
 {
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_polygon_op.getBoostMultiPoly(), op);
 }
 //=================================================================================================//
-void MultiPolygon::addABoostMultiPoly(boost_multi_poly &boost_multi_poly_op, ShapeBooleanOps op)
+void MultiPolygon::addBoostMultiPoly(boost_multi_poly &boost_multi_poly_op, GeometricOps op)
 {
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, boost_multi_poly_op, op);
 }
 //=================================================================================================//
-void MultiPolygon::addABox(Transform transform, const Vecd &halfsize, ShapeBooleanOps op)
+void MultiPolygon::addBox(Transform transform, const Vecd &halfsize, GeometricOps op)
 {
     Vecd point0 = transform.shiftFrameStationToBase(-halfsize);
     Vecd point1 = transform.shiftFrameStationToBase(Vecd(-halfsize[0], halfsize[1]));
@@ -80,10 +80,30 @@ void MultiPolygon::addABox(Transform transform, const Vecd &halfsize, ShapeBoole
     Vecd point3 = transform.shiftFrameStationToBase(Vecd(halfsize[0], -halfsize[1]));
 
     std::vector<Vecd> points = {point0, point1, point2, point3, point0};
-    addAPolygon(points, op);
+    addPolygon(points, op);
 }
 //=================================================================================================//
-void MultiPolygon::addACircle(const Vecd &center, Real radius, int resolution, ShapeBooleanOps op)
+void MultiPolygon::addBox(const BoundingBox2d &bounding_box, GeometricOps op)
+{
+    Vecd point0 = bounding_box.lower_;
+    Vecd point1 = Vecd(bounding_box.lower_[0], bounding_box.upper_[1]);
+    Vecd point2 = bounding_box.upper_;
+    Vecd point3 = Vecd(bounding_box.upper_[0], bounding_box.lower_[1]);
+
+    std::vector<Vecd> points = {point0, point1, point2, point3, point0};
+    addPolygon(points, op);
+}
+//=================================================================================================//
+void MultiPolygon::addContainerBox(const BoundingBox2d &bounding_box, Real thickness, GeometricOps op)
+{
+    BoundingBox2d outer_box = bounding_box.expand(thickness);
+    MultiPolygon container_box;
+    container_box.addBox(outer_box, GeometricOps::add);
+    container_box.addBox(bounding_box, GeometricOps::sub);
+    addMultiPolygon(container_box, op);
+}
+//=================================================================================================//
+void MultiPolygon::addCircle(const Vecd &center, Real radius, int resolution, GeometricOps op)
 {
     Vecd buffer_center = center;
     Real buffer_radius = radius;
@@ -118,7 +138,7 @@ void MultiPolygon::addACircle(const Vecd &center, Real radius, int resolution, S
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_circle, op);
 }
 //=================================================================================================//
-void MultiPolygon::addAPolygon(const std::vector<Vecd> &points, ShapeBooleanOps op)
+void MultiPolygon::addPolygon(const std::vector<Vecd> &points, GeometricOps op)
 {
     std::vector<boost_point> pts;
     for (const Vecd &pnt : points)
@@ -149,7 +169,7 @@ void MultiPolygon::addAPolygon(const std::vector<Vecd> &points, ShapeBooleanOps 
 }
 //=================================================================================================//
 void MultiPolygon::
-    addAPolygonFromFile(std::string file_path_name, ShapeBooleanOps op, Vecd translation, Real scale_factor)
+    addPolygonFromFile(std::string file_path_name, GeometricOps op, Vecd translation, Real scale_factor)
 {
     std::fstream dataFile(file_path_name);
     Vecd temp_point;
@@ -171,7 +191,7 @@ void MultiPolygon::
     }
     dataFile.close();
 
-    addAPolygon(coordinates, op);
+    addPolygon(coordinates, op);
 }
 //=================================================================================================//
 bool MultiPolygon::checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED /*= true*/)
@@ -264,7 +284,7 @@ BoundingBoxd MultiPolygon::findBounds()
 //=================================================================================================//
 bool MultiPolygonShape::isValid()
 {
-    return multi_polygon_.getBoostMultiPoly().size() == 0 ? false : true;
+    return !multi_polygon_.getBoostMultiPoly().empty();
 }
 //=================================================================================================//
 bool MultiPolygonShape::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)

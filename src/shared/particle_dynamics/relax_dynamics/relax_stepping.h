@@ -31,12 +31,17 @@
 #define RELAX_STEPPING_H
 
 #include "base_relax_dynamics.h"
+#include "dynamics_algorithms.h"
 #include "general_constraint.h"
+
+#include <string>
+#include <tuple>
 
 namespace SPH
 {
 class GeometryShape;
 class LevelSetShape;
+class AdaptiveByShape;
 
 namespace relax_dynamics
 {

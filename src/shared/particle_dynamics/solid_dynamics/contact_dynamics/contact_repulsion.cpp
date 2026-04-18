@@ -1,5 +1,6 @@
 #include "contact_repulsion.h"
 
+#include "base_material.h"
 namespace SPH
 {
 namespace solid_dynamics

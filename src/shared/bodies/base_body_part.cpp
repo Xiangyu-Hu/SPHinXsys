@@ -1,7 +1,13 @@
 #include "base_body_part.h"
 
+#include "adaptation.h"
+#include "base_body.h"
 #include "base_particles.hpp"
 #include "cell_linked_list.hpp"
+#include "complex_geometry.h"
+#include "geometric_shape.h"
+#include "sphinxsys_variable.h"
+
 namespace SPH
 {
 //=================================================================================================//
@@ -14,11 +20,15 @@ BodyPart::BodyPart(SPHBody &sph_body)
       dv_body_part_id_(base_particles_.registerStateVariable<int>(part_name_ + "ID")),
       pos_(base_particles_.getVariableDataByName<Vecd>("Position")) {}
 //=================================================================================================//
+BodyPart::~BodyPart() = default;
+//=================================================================================================//
 BaseCellLinkedList &BodyPart::getCellLinkedList()
 {
     RealBody &real_body = DynamicCast<RealBody>(this, sph_body_);
     return real_body.getCellLinkedList();
 }
+//=================================================================================================//
+SPHSystem &BodyPart::getSPHSystem() { return sph_body_.getSPHSystem(); }
 //=================================================================================================//
 BodyPartByID::BodyPartByID(SPHBody &sph_body) : BodyPart(sph_body)
 {
@@ -26,25 +36,13 @@ BodyPartByID::BodyPartByID(SPHBody &sph_body) : BodyPart(sph_body)
 }
 //=================================================================================================//
 BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body)
-    : BodyPart(sph_body), body_part_bounds_(Vecd::Zero(), Vecd::Zero()),
-      body_part_bounds_set_(false)
+    : BodyPart(sph_body)
 {
     base_particles_.addBodyPartByParticle(this);
     base_particles_.addEvolvingVariable<int>(dv_body_part_id_);
 }
 //=================================================================================================//
-void BodyPartByParticle::setBodyPartBounds(BoundingBoxd bbox)
-{
-    body_part_bounds_ = bbox;
-    body_part_bounds_set_ = true;
-}
-//=================================================================================================//
-BoundingBoxd BodyPartByParticle::getBodyPartBounds()
-{
-    if (!body_part_bounds_set_)
-        std::cout << "WARNING: the body part bounds are not set for BodyPartByParticle." << std::endl;
-    return body_part_bounds_;
-}
+BodyRegionByParticle::~BodyRegionByParticle() = default;
 //=================================================================================================//
 void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
 {
@@ -109,10 +107,12 @@ BodyRegionByParticle::
     tagParticles(tagging_particle_method);
 }
 //=================================================================================================//
+BodyRegionByCell::~BodyRegionByCell() = default;
+//=================================================================================================//
 BodyRegionByParticle::BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr)
     : BodyRegionByParticle(sph_body, *shape_ptr.get())
 {
-    shape_ptr_keeper_.assignRef(shape_ptr);
+    shape_keeper_.assignRef(shape_ptr);
 }
 //=================================================================================================//
 bool BodyRegionByParticle::tagByContain(size_t particle_index)
@@ -163,7 +163,7 @@ BodyRegionByCell::BodyRegionByCell(RealBody &real_body, Shape &body_part_shape)
 BodyRegionByCell::BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr)
     : BodyRegionByCell(real_body, *shape_ptr.get())
 {
-    shape_ptr_keeper_.assignRef(shape_ptr);
+    shape_keeper_.assignRef(shape_ptr);
 }
 //=================================================================================================//
 bool BodyRegionByCell::checkNotFar(Vecd cell_position, Real threshold)
@@ -207,6 +207,8 @@ NearShapeSurface::NearShapeSurface(RealBody &real_body, const std::string &sub_s
     tagCells(tagging_cell_method);
 }
 //=================================================================================================//
+NearShapeSurface::~NearShapeSurface() = default;
+//=================================================================================================//
 bool NearShapeSurface::checkNearSurface(Vecd cell_position, Real threshold)
 {
     return level_set_shape_.checkNearSurface(cell_position, threshold);
@@ -219,6 +221,15 @@ AlignedBoxPart::AlignedBoxPart(const std::string &part_name, const AlignedBox &a
 {
     std::cout << part_name << " direction facing to fluid domain: "
               << aligned_box_.getTransform().xformFrameVecToBase(Vecd::UnitX()) << std::endl;
+}
+//=================================================================================================//
+AlignedBoxPart::~AlignedBoxPart() = default;
+//=================================================================================================//
+void AlignedBoxPart::writeShapeProxy()
+{
+    GeometricShapeBox domain_shape(
+        aligned_box_.getTransform(), aligned_box_.HalfSize(), svAlignedBox()->Name());
+    domain_shape.writeProxy();
 }
 //=================================================================================================//
 AlignedBoxByParticle::AlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box)

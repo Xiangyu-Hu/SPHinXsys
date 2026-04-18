@@ -35,6 +35,12 @@
 
 namespace SPH
 {
+template <typename T>
+using BiVector = std::vector<std::vector<T>>;
+
+template <typename T>
+using TriVector = std::vector<std::vector<std::vector<T>>>;
+
 /**
  * @class 	RegressionTestBase
  * @brief 	The base of regression test for various method (time-averaged, ensemble-averaged, dynamic time warping)
@@ -113,7 +119,7 @@ class RegressionTestBase : public ObserveMethodType
     };
 
   private:
-    size_t last_iteration_step_ = MaxSize_t;
+    size_t last_iteration_step_ = MaxUnsignedInt;
 
     bool isIterationStepChanged(size_t iteration_step)
     {

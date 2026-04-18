@@ -31,6 +31,10 @@
 #include "base_general_dynamics.h"
 #include "particle_reserve.h"
 #include "unstructured_mesh.h"
+
+#include <mutex>
+#include <utility>
+#include <vector>
 namespace SPH
 {
 struct RealAndGhostParticleData

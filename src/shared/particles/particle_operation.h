@@ -30,6 +30,7 @@
 #define PARTICLE_OPERATION_H
 
 #include "base_particles.hpp"
+#include "sphinxsys_atom_ref.h"
 #include "sphinxsys_variable_array.h"
 
 namespace SPH
@@ -44,7 +45,7 @@ struct CopyParticleStateCK
 
 class SpawnRealParticle
 {
-    ParticleVariables &evolving_variables_;
+    DiscreteVariables &evolving_variables_;
     DiscreteVariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;
@@ -82,7 +83,7 @@ class SpawnRealParticle
 
 class RemoveRealParticle
 {
-    ParticleVariables &evolving_variables_;
+    DiscreteVariables &evolving_variables_;
     DiscreteVariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
     SingularVariable<UnsignedInt> *sv_total_real_particles_;

@@ -60,7 +60,7 @@ class TriangleMeshShape : public Shape
     virtual BoundingBoxd findBounds() override;
     StdVec<std::array<Real, 3>> &getVertices() { return vertices_; }
     StdVec<std::array<int, 3>> &getFaces() { return faces_; }
-    void writeMeshToFile(SPHSystem &sph_system, Transform transform = Transform());
+    void writeMeshToFile(Transform transform = Transform());
 
   protected:
     StdVec<std::array<Real, 3>> vertices_;
@@ -111,7 +111,7 @@ class TriangleMeshShapeSphere : public TriangleMeshShape
 class TriangleMeshShapeCylinder : public TriangleMeshShape
 {
   public:
-    explicit TriangleMeshShapeCylinder(SimTK::UnitVec3 axis, Real radius,
+    explicit TriangleMeshShapeCylinder(Vec3d axis, Real radius,
                                        Real halflength, int resolution, Vec3d translation,
                                        const std::string &shape_name = "TriangleMeshShapeCylinder");
     virtual ~TriangleMeshShapeCylinder() {};

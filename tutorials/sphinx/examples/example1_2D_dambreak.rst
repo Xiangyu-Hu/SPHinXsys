@@ -59,7 +59,7 @@ in which the water wave impacts the tank wall and produces splashes.
 			: FluidBody(sph_system, body_name)
 		{
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+			multi_polygon.addPolygon(water_block_shape, ShapeBooleanOps::add);
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}
 	};
@@ -73,8 +73,8 @@ in which the water wave impacts the tank wall and produces splashes.
 			: SolidBody(sph_system, body_name)
 		{
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(outer_wall_shape, ShapeBooleanOps::add);
+			multi_polygon.addPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}
@@ -368,7 +368,7 @@ are defined form the coordinates based on the geometric parameters.
 			: FluidBody(sph_system, body_name)
 		{
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+			multi_polygon.addPolygon(water_block_shape, ShapeBooleanOps::add);
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}
 	};
@@ -382,8 +382,8 @@ are defined form the coordinates based on the geometric parameters.
 			: SolidBody(sph_system, body_name)
 		{
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(outer_wall_shape, ShapeBooleanOps::add);
+			multi_polygon.addPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}

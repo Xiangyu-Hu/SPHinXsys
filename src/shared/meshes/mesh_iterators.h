@@ -32,9 +32,9 @@
 #ifndef MESH_ITERATORS_H
 #define MESH_ITERATORS_H
 
-#include "base_data_type_package.h"
-
+#include "data_type.h"
 #include "execution_policy.h"
+#include "sphinxsys_tbb.h"
 
 namespace SPH
 {
@@ -75,18 +75,18 @@ void mesh_for(const execution::ParallelPolicy &par_host, const MeshRange &mesh_r
 
 template <typename FunctionOnData>
 void package_for(const execution::SequencedPolicy &seq, UnsignedInt start_index,
-                 UnsignedInt num_grid_pkgs, const FunctionOnData &function)
+                 UnsignedInt end_index, const FunctionOnData &function)
 {
-    for (size_t i = start_index; i != num_grid_pkgs; ++i)
+    for (size_t i = start_index; i != end_index; ++i)
         function(i);
 }
 
 template <typename FunctionOnData>
 void package_for(const execution::ParallelPolicy &par_host, UnsignedInt start_index,
-                 UnsignedInt num_grid_pkgs, const FunctionOnData &function)
+                 UnsignedInt end_index, const FunctionOnData &function)
 {
-    parallel_for(IndexRange(start_index, num_grid_pkgs), [&](const IndexRange &r)
-                 {
+    tbb::parallel_for(IndexRange(start_index, end_index), [&](const IndexRange &r)
+                      {
                     for (size_t i = r.begin(); i != r.end(); ++i)
                     {
                         function(i);
@@ -95,7 +95,7 @@ void package_for(const execution::ParallelPolicy &par_host, UnsignedInt start_in
 
 template <typename FunctionOnData>
 void package_for(const execution::ParallelDevicePolicy &par_device,
-                 UnsignedInt start_index, UnsignedInt num_grid_pkgs,
+                 UnsignedInt start_index, UnsignedInt end_index,
                  const FunctionOnData &function);
 } // namespace SPH
 #endif // MESH_ITERATORS_H

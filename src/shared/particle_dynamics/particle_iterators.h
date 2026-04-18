@@ -29,13 +29,20 @@
 #ifndef PARTICLE_ITERATORS_H
 #define PARTICLE_ITERATORS_H
 
-#include "base_data_type_package.h"
 #include "implementation.h"
 #include "sphinxsys_containers.h"
+
+#include "sphinxsys_tbb.h"
+#include "tbb/parallel_reduce.h"
+
+#include <cstdlib>
+#include <iostream>
 
 namespace SPH
 {
 using namespace execution;
+using ConcurrentIndexVector = ConcurrentVec<size_t>;
+using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
 
 template <class ExecutionPolicy, typename DynamicsRange, class LocalDynamicsFunction>
 void particle_for(const ExecutionPolicy &execution_policy, const DynamicsRange &dynamics_range,
@@ -62,7 +69,7 @@ template <class LocalDynamicsFunction>
 inline void particle_for(const ParallelPolicy &par_host, const IndexRange &particles_range,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
-    parallel_for(
+    tbb::parallel_for(
         particles_range,
         [&](const IndexRange &r)
         {
@@ -89,7 +96,7 @@ template <class LocalDynamicsFunction>
 inline void particle_for(const ParallelPolicy &par_host, const IndexVector &body_part_particles,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, body_part_particles.size()),
         [&](const IndexRange &r)
         {
@@ -121,7 +128,7 @@ template <class LocalDynamicsFunction>
 inline void particle_for(const ParallelPolicy &par_host, const ConcurrentCellLists &body_part_cells,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, body_part_cells.size()),
         [&](const IndexRange &r)
         {
@@ -151,7 +158,7 @@ template <class LocalDynamicsFunction>
 inline void particle_for(const ParallelPolicy &par_host, const DataListsInCells &body_part_cells,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, body_part_cells.size()),
         [&](const IndexRange &r)
         {
@@ -193,7 +200,7 @@ inline ReturnType particle_reduce(const ParallelPolicy &par_host, const IndexRan
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {
-    return parallel_reduce(
+    return tbb::parallel_reduce(
         particles_range,
         temp, [&](const IndexRange &r, ReturnType temp0) -> ReturnType
         {
@@ -227,7 +234,7 @@ inline ReturnType particle_reduce(const ParallelPolicy &par_host, const IndexVec
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {
-    return parallel_reduce(
+    return tbb::parallel_reduce(
         IndexRange(0, body_part_particles.size()),
         temp,
         [&](const IndexRange &r, ReturnType temp0) -> ReturnType
@@ -269,7 +276,7 @@ inline ReturnType particle_reduce(const ParallelPolicy &par_host, const Concurre
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {
-    return parallel_reduce(
+    return tbb::parallel_reduce(
         IndexRange(0, body_part_cells.size()),
         temp,
         [&](const IndexRange &r, ReturnType temp0) -> ReturnType

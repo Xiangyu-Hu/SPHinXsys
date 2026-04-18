@@ -8,11 +8,11 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real PL = 1.0;                   /**< Length of the myocardium body. */
-Real PH = 1.0;                   /**< Thickness of the myocardium body. */
-Real PW = 1.0;                   /**< Width of the myocardium body. */
-Real resolution_ref = PH / 25.0; /**< Initial particle spacing. */
-Real SL = 4.0 * resolution_ref;  /**< Extension for holder. */
+Real PL = 1.0;                      /**< Length of the myocardium body. */
+Real PH = 1.0;                      /**< Thickness of the myocardium body. */
+Real PW = 1.0;                      /**< Width of the myocardium body. */
+Real global_resolution = PH / 25.0; /**< Initial particle spacing. */
+Real SL = 4.0 * global_resolution;  /**< Extension for holder. */
 Vecd halfsize_myocardium(0.5 * (PL + SL), 0.5 * PH, 0.5 * PW);
 Vecd translation_myocardium(0.5 * (PL - SL), 0.5 * PH, 0.5 * PW);
 Vecd halfsize_holder(0.5 * SL, 0.5 * PH, 0.5 * PW);
@@ -38,7 +38,7 @@ class MyocardiumActivation
   public:
     explicit MyocardiumActivation(SPHBody &sph_body)
         : active_muscle_dynamics::MuscleActivation(sph_body),
-          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
+          physical_time_(sph_system_->svPhysicalTime().Data()) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -60,7 +60,7 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vecd(-SL, -SL, -SL), Vecd(PL + SL, PH + SL, PW + SL));
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.

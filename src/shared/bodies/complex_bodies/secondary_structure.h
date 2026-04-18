@@ -35,6 +35,7 @@
 #include "base_body.h"
 #include "base_body_part.h"
 #include "base_geometry.h"
+#include "neighborhood.h"
 
 namespace SPH
 {

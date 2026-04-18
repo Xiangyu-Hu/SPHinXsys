@@ -30,11 +30,7 @@
 
 #include "common_functors.h"
 #include "data_type.h"
-#include "large_data_containers.h"
 #include "ownership.h"
-#include "vector_functions.h"
-
-#define TBB_PARALLEL true
 
 namespace SPH
 {

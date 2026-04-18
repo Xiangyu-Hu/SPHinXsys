@@ -43,14 +43,11 @@ class FluidBody : public RealBody
 
 class SolidBody : public RealBody
 {
-    void addSolidBodyToSPHSystem();
-
   public:
     template <typename... Args>
     SolidBody(Args &&...args)
         : RealBody(std::forward<Args>(args)...)
     {
-        addSolidBodyToSPHSystem();
         defineAdaptation<SPHAdaptation>(1.15);
     };
     virtual ~SolidBody() {};

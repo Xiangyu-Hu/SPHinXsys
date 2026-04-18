@@ -29,11 +29,14 @@
 #ifndef GENERAL_ASSIGNMENT_H
 #define GENERAL_ASSIGNMENT_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include <string>
+#include <utility>
 
 namespace SPH
 {
-template <typename AssignmentFunctionType, class DynamicsIdentifier>
+template <class DynamicsIdentifier, typename AssignmentFunctionType>
 class VariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
 {
     using DataType = typename AssignmentFunctionType::ReturnType;

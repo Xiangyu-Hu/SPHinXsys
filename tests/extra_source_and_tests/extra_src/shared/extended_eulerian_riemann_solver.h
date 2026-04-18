@@ -21,15 +21,15 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file extended_eulerian_riemann_solvers.h
- * @brief This file make changes to the eulerian_riemann_solver.h in order to
-    accomodate the turbulence variables in riemann solver .
+ * @file extended_eulerian_riemann_solver.h
+ * @brief This file makes changes to the eulerian_riemann_solver.h in order to
+    accommodate the turbulence variables in riemann solver.
  */
 
 #ifndef EXTENDED_EULERIAN_RIEMANN_SOLVER_H
 #define EXTENDED_EULERIAN_RIEMANN_SOLVER_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 #include "fluid_integration.hpp"
 #include "riemann_solver.h"
 

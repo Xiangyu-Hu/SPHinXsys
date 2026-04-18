@@ -29,7 +29,7 @@
 #ifndef DERIVED_SOLID_STATE_H
 #define DERIVED_SOLID_STATE_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
 
 namespace SPH
 {

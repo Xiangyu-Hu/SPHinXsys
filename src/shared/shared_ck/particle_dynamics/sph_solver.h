@@ -37,14 +37,13 @@ namespace SPH
 class TimeStepper
 {
   public:
-    TimeStepper(SPHSystem &sph_system, Real end_time, Real start_time = 0.0);
+    TimeStepper(SPHSystem &sph_system);
     ~TimeStepper() {};
 
-    bool isEndTime();
+    bool isEndTime(Real end_time);
     void setPhysicalTime(Real time);
     Real getPhysicalTime();
     Real getGlobalTimeStepSize();
-    Real getEndTime() { return end_time_; };
     Real incrementPhysicalTime(Real global_time_step);
     Real incrementPhysicalTime(BaseDynamics<Real> &step_evaluator);
 
@@ -130,7 +129,6 @@ class TimeStepper
   protected:
     StdVec<TriggerByInterval *> interval_executers_;
     StdVec<TriggerByPhysicalTime *> physical_time_executers_;
-    Real end_time_, start_time_;
     Real global_dt_;
     SingularVariable<Real> *sv_physical_time_;
 };
@@ -138,10 +136,9 @@ class TimeStepper
 class SPHSolver
 {
     UniquePtrsKeeper<BaseMethodContainer> methods_keeper_;
-    UniquePtrKeeper<TimeStepper> time_stepper_keeper_;
 
   public:
-    SPHSolver(SPHSystem &sph_system) : sph_system_(sph_system) {};
+    SPHSolver(SPHSystem &sph_system) : sph_system_(sph_system), time_stepper_(sph_system) {};
     virtual ~SPHSolver() {};
 
     template <typename ExecutionPolicy>
@@ -150,13 +147,11 @@ class SPHSolver
         return *methods_keeper_.createPtr<ParticleMethodContainer<ExecutionPolicy>>(ex_policy);
     };
 
-    auto &defineTimeStepper(Real end_time, Real start_time = 0.0)
-    {
-        return *time_stepper_keeper_.createPtr<TimeStepper>(sph_system_, end_time, start_time);
-    };
+    TimeStepper &getTimeStepper() { return time_stepper_; };
 
   protected:
     SPHSystem &sph_system_;
+    TimeStepper time_stepper_;
 };
 } // namespace SPH
 #endif // SPH_SOLVER_H

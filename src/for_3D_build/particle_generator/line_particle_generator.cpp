@@ -20,16 +20,16 @@ void ParticleGenerator<LinearParticles>::addLineProperties(
     line_width_.push_back(width);
 }
 //=================================================================================================//
-void ParticleGenerator<LinearParticles>::initializeParticleVariables()
+void ParticleGenerator<LinearParticles>::initializeDiscreteVariables()
 {
-    ParticleGenerator<BaseParticles>::initializeParticleVariables();
+    ParticleGenerator<BaseParticles>::initializeDiscreteVariables();
     linear_particles_.registerSurfaceProperties(line_normal_, line_thickness_);
     linear_particles_.registerLineProperties(line_binormal_, line_width_);
 }
 //=================================================================================================//
-void ParticleGenerator<LinearParticles>::initializeParticleVariablesFromReload()
+void ParticleGenerator<LinearParticles>::initializeDiscreteVariablesFromReload()
 {
-    ParticleGenerator<BaseParticles>::initializeParticleVariablesFromReload();
+    ParticleGenerator<BaseParticles>::initializeDiscreteVariablesFromReload();
     linear_particles_.registerSurfacePropertiesFromReload();
     linear_particles_.registerLinePropertiesFromReload();
 }

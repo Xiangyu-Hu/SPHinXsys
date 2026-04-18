@@ -44,7 +44,7 @@ class TreeBody : public SecondaryStructure, public RealBody
     class Branch;
 
   private:
-    UniquePtrsKeeper<Branch> branches_ptr_keeper_;
+    UniquePtrsKeeper<Branch> branches_keeper_;
 
   public:
     StdVec<Branch *> branches_;    /**< Container of all branches */
@@ -56,13 +56,13 @@ class TreeBody : public SecondaryStructure, public RealBody
     TreeBody(Args &&...args)
         : SecondaryStructure(), RealBody(std::forward<Args>(args)...), last_branch_id_(0)
     {
-        root_ = branches_ptr_keeper_.createPtr<Branch>(this);
+        root_ = branches_keeper_.createPtr<Branch>(this);
     };
     virtual ~TreeBody() {};
 
     Branch *createANewBranch(size_t parent_id)
     {
-        return branches_ptr_keeper_.createPtr<Branch>(parent_id, this);
+        return branches_keeper_.createPtr<Branch>(parent_id, this);
     };
     size_t BranchLocation(size_t total_particles, size_t particle_idx);
     Branch *LastBranch() { return branches_[last_branch_id_]; };

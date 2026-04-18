@@ -29,7 +29,9 @@
 #ifndef REDUCE_FUNCTORS_H
 #define REDUCE_FUNCTORS_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
+
+#include <utility>
 
 namespace SPH
 {

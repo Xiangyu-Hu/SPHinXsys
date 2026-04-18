@@ -30,7 +30,9 @@
 #ifndef FORCE_PRIOR_CK_H
 #define FORCE_PRIOR_CK_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include <string>
 
 namespace SPH
 {
@@ -65,7 +67,8 @@ template <class GravityType>
 class GravityForceCK : public LocalDynamics, public ForcePriorCK
 {
   public:
-    GravityForceCK(SPHBody &sph_body, const GravityType &gravity);
+    template <typename... Args>
+    GravityForceCK(SPHBody &sph_body, Args &&...args);
     virtual ~GravityForceCK() {};
 
     class UpdateKernel : public ForcePriorCK::UpdateKernel

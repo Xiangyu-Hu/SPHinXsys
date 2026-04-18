@@ -16,10 +16,10 @@ Real PL = 10.0;                                   /** Length of the square plate
 Vec2d n_0 = Vec2d(0.0, 1.0);                      /** Pseudo-normal. */
 Real thickness = 1.0;                             /** Thickness of the square plate. */
 int particle_number = 40;                         /** Particle number in the direction of the length */
-Real resolution_ref = PL / (Real)particle_number; /** Initial reference particle spacing. */
+Real global_resolution = PL / (Real)particle_number; /** Initial reference particle spacing. */
 int BWD = 1;                                      /** number of boundary particles layers . */
-Real BW = resolution_ref * (Real)BWD;             /** Boundary width, determined by specific layer of boundary particles. */
-BoundingBoxd system_domain_bounds(Vec2d(-BW, -0.5 * resolution_ref), Vec2d(PL + BW, 0.5 * resolution_ref));
+Real BW = global_resolution * (Real)BWD;             /** Boundary width, determined by specific layer of boundary particles. */
+BoundingBoxd system_domain_bounds(Vec2d(-BW, -0.5 * global_resolution), Vec2d(PL + BW, 0.5 * global_resolution));
 StdVec<Vecd> observation_location = {Vecd(0.5 * PL, 0.0)};
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
@@ -52,8 +52,8 @@ class ParticleGenerator<SurfaceParticles, Plate> : public ParticleGenerator<Surf
         // the plate and boundary
         for (int i = 0; i < (particle_number + 2 * BWD); i++)
         {
-            Real x = resolution_ref * i - BW + resolution_ref * 0.5;
-            addPositionAndVolumetricMeasure(Vecd(x, 0.0), resolution_ref);
+            Real x = global_resolution * i - BW + global_resolution * 0.5;
+            addPositionAndVolumetricMeasure(Vecd(x, 0.0), global_resolution);
             addSurfaceProperties(n_0, thickness);
         }
     };
@@ -85,7 +85,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up -- a SPHSystem
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
@@ -115,7 +115,7 @@ int main(int ac, char *av[])
 
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
     SimpleDynamics<solid_dynamics::DistributingPointForces>
-        apply_point_force(plate_body, point_force, reference_position, time_to_full_external_force, resolution_ref);
+        apply_point_force(plate_body, point_force, reference_position, time_to_full_external_force, global_resolution);
     /** Constrain the Boundary. */
     BoundaryGeometry boundary_geometry(plate_body);
     SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> constrain_holder(boundary_geometry);

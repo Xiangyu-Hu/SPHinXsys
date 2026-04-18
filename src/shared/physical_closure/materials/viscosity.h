@@ -29,7 +29,7 @@
 #ifndef VISCOSITY_H
 #define VISCOSITY_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 #include "particle_functors.h"
 
 namespace SPH

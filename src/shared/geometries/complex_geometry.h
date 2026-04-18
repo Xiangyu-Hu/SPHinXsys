@@ -37,8 +37,6 @@
 
 namespace SPH
 {
-class LevelSetShape;
-
 /**
  * @class ComplexShape
  * @brief  For now, if the level set shape (for particle relaxation)
@@ -51,22 +49,20 @@ class LevelSetShape;
 class ComplexShape : public BinaryShapes
 {
   public:
-    explicit ComplexShape(const std::string &shape_name)
+    explicit ComplexShape(const std::string &shape_name = "ComplexShape")
         : BinaryShapes(shape_name) {};
     virtual ~ComplexShape() {};
 
     template <typename... Args>
-    LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
+    LevelSetShape &defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
     {
         size_t index = getSubShapeIndexByName(shape_name);
-        LevelSetShape *level_set_shape = sub_shape_ptrs_keeper_[index].createPtr<LevelSetShape>(
+        LevelSetShape *level_set_shape = sub_shapes_keeper_.createPtr<LevelSetShape>(
             sph_body, *sub_shapes_and_ops_[index].first, std::forward<Args>(args)...);
         sub_shapes_and_ops_[index].first = DynamicCast<Shape>(this, level_set_shape);
-        return level_set_shape;
+        return *level_set_shape;
     };
 };
-
-using DefaultShape = ComplexShape;
 
 /**
  * @class AlignedBox
@@ -80,8 +76,8 @@ class AlignedBox : public TransformGeometry<GeometricBox>
   public:
     /** construct directly */
     template <typename... Args>
-    explicit AlignedBox(int upper_bound_axis, const Transform &transform, Args &&...args)
-        : TransformGeometry<GeometricBox>(transform, std::forward<Args>(args)...),
+    explicit AlignedBox(int upper_bound_axis, Args &&...args)
+        : TransformGeometry<GeometricBox>(std::forward<Args>(args)...),
           alignment_axis_(upper_bound_axis){};
     /** construct from a shape already has aligned boundaries */
     template <typename... Args>
@@ -106,12 +102,12 @@ class AlignedBox : public TransformGeometry<GeometricBox>
     bool checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe = 0.0)
     {
         Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-        return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] + upper_bound_fringe ? true : false;
+        return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] + upper_bound_fringe;
     };
     bool checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe = 0.0)
     {
         Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-        return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] - lower_bound_fringe ? true : false;
+        return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] - lower_bound_fringe;
     }
     bool checkNearUpperBound(const Vecd &probe_point, Real threshold);
     bool checkNearLowerBound(const Vecd &probe_point, Real threshold);

@@ -32,6 +32,7 @@
 #include "execution_policy.h"
 #include "io_base.h"
 #include "io_vtk.h"
+#include "simple_algorithms_ck.h"
 
 namespace SPH
 {
@@ -40,7 +41,7 @@ template <class ExecutionPolicy>
 class BodyStatesRecordingToVtpCK : public BodyStatesRecordingToVtp
 {
   protected:
-    OperationOnDataAssemble<ParticleVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
+    OperationOnDataAssemble<DiscreteVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
 
     void prepareToWrite()
     {
@@ -77,6 +78,26 @@ class BodyStatesRecordingToVtpCK : public BodyStatesRecordingToVtp
             BodyStatesRecordingToVtp::writeToFile(iteration_step);
         }
     }
+
+    template <typename DerivedVariableMethod, typename DynamicsIdentifier, typename... Args>
+    BodyStatesRecording &addDerivedVariableToWrite(DynamicsIdentifier &identifier, Args &&...args)
+    {
+        SPHBody &sph_body = identifier.getSPHBody();
+        if (isBodyIncluded(bodies_, &sph_body))
+        {
+            derived_variables_.push_back(
+                derived_variables_keeper_.createPtr<StateDynamics<ParallelPolicy, DerivedVariableMethod>>(
+                    identifier, std::forward<Args>(args)...));
+        }
+        else
+        {
+            std::cout << "\n Error: the body:" << sph_body.getName()
+                      << " is not in the recording body list" << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+        return *this;
+    };
 };
 
 template <class ExecutionPolicy>
@@ -87,30 +108,30 @@ class RestartIOCK : public RestartIO
     RestartIOCK(Args &&...args) : RestartIO(std::forward<Args>(args)...){};
     virtual ~RestartIOCK() {};
 
-    virtual void writeToFile(size_t iteration_step = 0) override
+    virtual void writeToFile(size_t iteration_step) override
     {
-        for (size_t i = 0; i < bodies_.size(); ++i)
+        for (size_t i = 0; i < real_bodies_.size(); ++i)
         {
-            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+            BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
             prepare_variable_to_write_(base_particles.EvolvingVariables(), ExecutionPolicy{});
         }
         RestartIO::writeToFile(iteration_step);
     };
 
-    virtual void readFromFile(size_t iteration_step = 0) override
+    virtual void readFromFile(size_t iteration_step) override
     {
         RestartIO::readFromFile(iteration_step);
 
-        for (size_t i = 0; i < bodies_.size(); ++i)
+        for (size_t i = 0; i < real_bodies_.size(); ++i)
         {
-            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+            BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
             finalize_variables_after_read_(base_particles.EvolvingVariables(), ExecutionPolicy{});
         }
     };
 
   protected:
-    OperationOnDataAssemble<ParticleVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
-    OperationOnDataAssemble<ParticleVariables, FinalizeVariablesAfterRead<DiscreteVariable>> finalize_variables_after_read_;
+    OperationOnDataAssemble<DiscreteVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
+    OperationOnDataAssemble<DiscreteVariables, FinalizeVariablesAfterRead<DiscreteVariable>> finalize_variables_after_read_;
 };
 
 template <class ExecutionPolicy>
@@ -132,7 +153,7 @@ class ReloadParticleIOCK : public ReloadParticleIO
     };
 
   protected:
-    OperationOnDataAssemble<ParticleVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_reload_;
+    OperationOnDataAssemble<DiscreteVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_reload_;
 };
 } // namespace SPH
 #endif // IO_BASE_CK_H

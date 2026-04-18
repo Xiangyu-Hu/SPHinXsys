@@ -1,5 +1,7 @@
 #include "force_prior_ck.h"
 
+#include "base_particles.hpp"
+
 namespace SPH
 {
 //=================================================================================================//

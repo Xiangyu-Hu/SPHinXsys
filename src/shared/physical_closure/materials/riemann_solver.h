@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	riemann_solvers.h
+ * @file 	riemann_solver.h
  * @brief 	This is the collection of Riemann solvers.
  * @author	Chi Zhang and Xiangyu Hu
  */
@@ -29,7 +29,7 @@
 #ifndef RIEMANN_SOLVER_H
 #define RIEMANN_SOLVER_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 #include "weakly_compressible_fluid.h"
 
 namespace SPH

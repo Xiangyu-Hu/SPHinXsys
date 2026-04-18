@@ -33,5 +33,6 @@
 
 #include "bidirectional_boundary_ck.hpp"
 #include "emitter_boundary_ck.hpp"
+#include "free_stream_boundary.hpp"
 
 #endif // ALL_FLUID_BOUNDARY_CONDITION_CK_H

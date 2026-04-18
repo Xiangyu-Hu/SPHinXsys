@@ -30,12 +30,32 @@
 #ifndef BASE_BODY_PART_H
 #define BASE_BODY_PART_H
 
-#include "base_body.h"
+#include "base_data_type_package.h"
+
+#include "tbb/concurrent_vector.h"
 
 #include <optional>
 
 namespace SPH
 {
+class BaseCellLinkedList;
+class LevelSetShape;
+class AlignedBox;
+class Entity;
+class SPHAdaptation;
+class SPHBody;
+class RealBody;
+class Shape;
+class SPHSystem;
+class BaseParticles;
+template <typename T>
+class DiscreteVariable;
+template <typename T>
+class SingularVariable;
+
+template <typename T>
+using ConcurrentVec = tbb::concurrent_vector<T>;
+using IndexVector = StdVec<size_t>;
 /**
  * @class BodyPart
  * @brief An auxiliary class for SPHBody to indicate a part of the body.
@@ -47,10 +67,11 @@ class BodyPart
     UniquePtrsKeeper<Entity> unique_variable_ptrs_;
 
   public:
+    typedef SPHAdaptation Adaptation;
     BodyPart(SPHBody &sph_body);
-    virtual ~BodyPart() {};
+    virtual ~BodyPart();
     SPHBody &getSPHBody() { return sph_body_; };
-    SPHSystem &getSPHSystem() { return sph_body_.getSPHSystem(); };
+    SPHSystem &getSPHSystem();
     std::string getName() const { return alias_.value_or(part_name_); };
     int getPartID() { return part_id_; };
     SingularVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
@@ -94,7 +115,7 @@ class BodyPart
 class BodyPartByID : public BodyPart
 {
   public:
-    typedef BodyPartByID BaseIdentifier;
+    typedef BodyPartByID RangeIdentifier;
     BodyPartByID(SPHBody &sph_body);
     virtual ~BodyPartByID() {};
 };
@@ -106,7 +127,7 @@ class BodyPartByID : public BodyPart
 class BodyPartByParticle : public BodyPart
 {
   public:
-    typedef BodyPartByParticle BaseIdentifier;
+    typedef BodyPartByParticle RangeIdentifier;
     IndexVector body_part_particles_; /**< Collection particle in this body part. */
     BaseParticles &getBaseParticles() { return base_particles_; };
     DiscreteVariable<UnsignedInt> *dvParticleList() { return dv_particle_list_; };
@@ -114,13 +135,9 @@ class BodyPartByParticle : public BodyPart
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
     BodyPartByParticle(SPHBody &sph_body);
     virtual ~BodyPartByParticle() {};
-    void setBodyPartBounds(BoundingBoxd bbox);
-    BoundingBoxd getBodyPartBounds();
 
   protected:
     DiscreteVariable<UnsignedInt> *dv_particle_list_;
-    BoundingBoxd body_part_bounds_;
-    bool body_part_bounds_set_;
     typedef std::function<bool(size_t)> TaggingParticleMethod;
     void tagParticles(TaggingParticleMethod &tagging_particle_method);
 };
@@ -131,8 +148,11 @@ class BodyPartByParticle : public BodyPart
  */
 class BodyPartByCell : public BodyPart
 {
+    using ConcurrentIndexVector = ConcurrentVec<size_t>;
+    using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
+
   public:
-    typedef BodyPartByCell BaseIdentifier;
+    typedef BodyPartByCell RangeIdentifier;
     ConcurrentCellLists body_part_cells_; /**< Collection of cells to indicate the body part. */
     ConcurrentCellLists &LoopRange() { return body_part_cells_; };
     size_t SizeOfLoopRange();
@@ -159,12 +179,12 @@ class BodyPartByCell : public BodyPart
 class BodyRegionByParticle : public BodyPartByParticle
 {
   private:
-    SharedPtrKeeper<Shape> shape_ptr_keeper_;
+    SharedPtrKeeper<Shape> shape_keeper_;
 
   public:
     BodyRegionByParticle(SPHBody &sph_body, Shape &body_part_shape);
     BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr);
-    virtual ~BodyRegionByParticle() {};
+    virtual ~BodyRegionByParticle();
     Shape &getBodyPartShape() { return body_part_shape_; };
 
   protected:
@@ -209,12 +229,12 @@ class BodySurfaceLayer : public BodyPartByParticle
 class BodyRegionByCell : public BodyPartByCell
 {
   private:
-    SharedPtrKeeper<Shape> shape_ptr_keeper_;
+    SharedPtrKeeper<Shape> shape_keeper_;
 
   public:
     BodyRegionByCell(RealBody &real_body, Shape &body_part_shape);
     BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr);
-    virtual ~BodyRegionByCell() {};
+    virtual ~BodyRegionByCell();
     Shape &getBodyPartShape() { return body_part_shape_; };
 
   private:
@@ -239,7 +259,7 @@ class NearShapeSurface : public BodyPartByCell
     NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape);
     explicit NearShapeSurface(RealBody &real_body);
     NearShapeSurface(RealBody &real_body, const std::string &sub_shape_name);
-    virtual ~NearShapeSurface() {};
+    virtual ~NearShapeSurface();
     LevelSetShape &getLevelSetShape() { return level_set_shape_; };
 
   private:
@@ -253,10 +273,10 @@ class AlignedBoxPart
 
   public:
     AlignedBoxPart(const std::string &part_name, const AlignedBox &aligned_box);
-    virtual ~AlignedBoxPart() {};
+    virtual ~AlignedBoxPart();
     SingularVariable<AlignedBox> *svAlignedBox() { return sv_aligned_box_keeper_.getPtr(); };
     AlignedBox &getAlignedBox() { return aligned_box_; };
-    void writeShapeProxy(SPHSystem &sph_system);
+    void writeShapeProxy();
 
   protected:
     AlignedBox &aligned_box_;

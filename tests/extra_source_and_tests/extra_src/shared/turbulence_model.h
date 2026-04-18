@@ -28,7 +28,7 @@
 
 #ifndef TURBULENCEMODEL_H
 #define TURBULENCEMODEL_H
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "extended_eulerian_riemann_solver.h"
 #include "fluid_integration.hpp"
 #include "fvm_ghost_boundary.h"

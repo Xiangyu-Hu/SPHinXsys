@@ -29,9 +29,10 @@
 #ifndef ALL_BODIES_H
 #define ALL_BODIES_H
 
+#include "adaptive_body.h"
 #include "all_complex_bodies.h"
+#include "base_body.hpp"
 #include "base_body_part.h"
-#include "body_partition.h"
 #include "predefined_bodies.h"
 
 #endif // ALL_BODIES_H

@@ -11,8 +11,8 @@ using namespace SPH; // Namespace cite here
 //----------------------------------------------------------------------
 Real L = 1.0;
 Real H = 1.0;
-Real resolution_ref = H / 50.0;
-Real BW = resolution_ref * 4.0;
+Real global_resolution = H / 50.0;
+Real BW = global_resolution * 4.0;
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
@@ -63,7 +63,7 @@ class DiffusionBody : public MultiPolygonShape
   public:
     explicit DiffusionBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createThermalDomain(), GeometricOps::add);
     }
 };
 
@@ -72,8 +72,8 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createBoundaryDomain(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(createBoundaryDomain(), GeometricOps::add);
+        multi_polygon_.addPolygon(createThermalDomain(), GeometricOps::sub);
     }
 };
 
@@ -152,7 +152,7 @@ TEST(test_optimization, test_problem1_non_optimized)
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    SPHSystem sph_system(system_domain_bounds, resolution_ref);
+    SPHSystem sph_system(system_domain_bounds, global_resolution);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -197,7 +197,6 @@ TEST(test_optimization, test_problem1_non_optimized)
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    RestartIO restart_io(sph_system);
     ObservedQuantityRecording<Real> write_solid_temperature(diffusion_species_name, temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -216,7 +215,6 @@ TEST(test_optimization, test_problem1_non_optimized)
     int ite = 0;
     Real T0 = 10;
     Real End_Time = T0;
-    int restart_output_interval = 1000;
     Real dt = 0.0;
     Real current_averaged_temperature = 0.0;
     //----------------------------------------------------------------------
@@ -228,7 +226,7 @@ TEST(test_optimization, test_problem1_non_optimized)
     //	Main loop starts here.
     //----------------------------------------------------------------------
     std::string filefullpath_nonopt_temperature =
-        sph_system.getIOEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
+        IO::getEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app);
 
     while (physical_time < End_Time)
@@ -249,11 +247,6 @@ TEST(test_optimization, test_problem1_non_optimized)
         temperature_splitting.exec(dt);
         ite++;
         physical_time += dt;
-
-        if (ite % restart_output_interval == 0)
-        {
-            restart_io.writeToFile(ite);
-        }
     }
     TickCount t4 = TickCount::now();
     TickCount::interval_t tt;

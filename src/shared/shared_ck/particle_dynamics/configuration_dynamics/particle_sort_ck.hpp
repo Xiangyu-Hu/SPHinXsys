@@ -10,7 +10,7 @@ template <class ExecutionPolicy>
 ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
     : LocalDynamics(real_body), BaseDynamics<void>(),
       ex_policy_(ExecutionPolicy{}),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())),
+      cell_linked_list_(real_body.getCellLinkedList()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_sequence_(particles_->registerDiscreteVariable<UnsignedInt>(
           "Sequence", particles_->ParticlesBound())),
@@ -49,7 +49,7 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
 template <class ExecutionPolicy>
 ParticleSortCK<ExecutionPolicy>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, ParticleSortCK<ExecutionPolicy> &encloser)
-    : mesh_(encloser.cell_linked_list_.getMesh()),
+    : mesh_(encloser.cell_linked_list_.getSortSequenceMesh()),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       sequence_(encloser.dv_sequence_->DelegatedData(ex_policy)),
       index_permutation_(encloser.dv_index_permutation_->DelegatedData(ex_policy)),
@@ -82,7 +82,8 @@ void ParticleSortCK<ExecutionPolicy>::exec(Real dt)
                  { computing_kernel->prepareSequence(i); });
 
     sort_method_.sort(ex_policy_, total_real_particles);
-    update_variables_to_sort_(particles_->EvolvingVariables(), ex_policy_, total_real_particles, dv_index_permutation_);
+    update_variables_to_sort_(particles_->EvolvingVariables(), ex_policy_,
+                              0, total_real_particles, dv_index_permutation_);
 
     particle_for(ex_policy_, IndexRange(0, total_real_particles),
                  [=](size_t i)

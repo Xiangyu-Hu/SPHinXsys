@@ -31,6 +31,10 @@
 
 #include "general_diffusion_reaction_dynamics.h"
 
+#include <array>
+#include <string>
+#include <utility>
+
 namespace SPH
 {
 /**

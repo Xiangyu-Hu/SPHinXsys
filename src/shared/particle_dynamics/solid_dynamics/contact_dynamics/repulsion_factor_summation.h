@@ -32,8 +32,12 @@
 
 #include "base_contact_dynamics.h"
 
+#include <string>
+
 namespace SPH
 {
+class Solid;
+
 namespace solid_dynamics
 {
 

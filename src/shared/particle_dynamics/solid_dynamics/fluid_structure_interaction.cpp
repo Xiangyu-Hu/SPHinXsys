@@ -1,5 +1,6 @@
 #include "fluid_structure_interaction.hpp"
 
+#include "adaptation.h"
 #include "viscosity.h"
 
 namespace SPH

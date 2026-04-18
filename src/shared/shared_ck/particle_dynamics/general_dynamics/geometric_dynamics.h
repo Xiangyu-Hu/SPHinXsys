@@ -29,7 +29,10 @@
 #ifndef GEOMETRIC_DYNAMICS_H
 #define GEOMETRIC_DYNAMICS_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include <string>
+#include <type_traits>
 
 namespace SPH
 {
@@ -39,7 +42,7 @@ class HostKernel
     template <class ExecutionPolicy, class EncloserType>
     HostKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     {
-        // not implemented for device policy due to virtual function call in inital_shape_,
+        // not implemented for device policy due to virtual function call in initial_shape_,
         // which is not allowed in device code
         static_assert(!std::is_base_of<execution::DeviceExecution<>, ExecutionPolicy>::value,
                       "This compute kernel is not designed for execution on device!");
@@ -68,6 +71,33 @@ class NormalFromBodyShapeCK : public LocalDynamics
 
   protected:
     Shape *initial_shape_;
+    DiscreteVariable<Vecd> *dv_pos_, *dv_n_, *dv_n0_;
+    DiscreteVariable<Real> *dv_phi_, *dv_phi0_;
+};
+
+class NormalFromSubShapeAndOpCK : public LocalDynamics
+{
+  public:
+    NormalFromSubShapeAndOpCK(SPHBody &sph_body, ComplexShape &complex_shape, const std::string &shape_name);
+    NormalFromSubShapeAndOpCK(SPHBody &sph_body, const std::string &shape_name);
+    virtual ~NormalFromSubShapeAndOpCK() {};
+
+    class UpdateKernel : public HostKernel
+    {
+      public:
+        template <class ExecutionPolicy, class Encloser>
+        UpdateKernel(const ExecutionPolicy &ex_policy, Encloser &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Shape *shape_;
+        Real switch_sign_;
+        Vecd *pos_, *n_, *n0_;
+        Real *phi_, *phi0_;
+    };
+
+  protected:
+    SubShapeAndOp *shape_and_op_;
     DiscreteVariable<Vecd> *dv_pos_, *dv_n_, *dv_n0_;
     DiscreteVariable<Real> *dv_phi_, *dv_phi0_;
 };

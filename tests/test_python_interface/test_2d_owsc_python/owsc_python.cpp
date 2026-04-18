@@ -23,7 +23,7 @@ class SphBasicSystemSetting : public SphBasicGeometrySetting
         : system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH + BW)),
           sph_system(system_domain_bounds, particle_spacing_ref)
     {
-        sph_system.getIOEnvironment().appendOutputFolder(
+        IO::getEnvironment().appendOutputFolder(
             "env_" + std::to_string(parallel_env) + "_episode_" + std::to_string(episode_env));
     }
 };
