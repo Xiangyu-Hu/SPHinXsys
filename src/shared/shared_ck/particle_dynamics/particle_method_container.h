@@ -181,9 +181,9 @@ class ParticleMethodContainer : public BaseMethodContainer
     };
 
     template <typename Operation>
-    ReduceDynamicsGroup<Operation> &addReduceDynamicsGroup(const Operation &operation = Operation())
+    ReduceDynamicsGroup<Operation> &addReduceDynamicsGroup()
     {
-        return *particle_dynamics_keeper_.createPtr<ReduceDynamicsGroup<Operation>>(operation);
+        return *particle_dynamics_keeper_.createPtr<ReduceDynamicsGroup<Operation>>();
     };
 
     template <template <typename...> class GeneralDynamicsType, typename... Parameters, class DynamicsIdentifier, typename... Args>
@@ -302,14 +302,14 @@ class ParticleMethodContainer : public BaseMethodContainer
     };
 
     template <typename Operation, class ReduceType, typename DynamicsIdentifier, typename... Args>
-    ReduceDynamicsGroup<Operation> addReduceDynamics(const StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
+    ReduceDynamicsGroup<Operation> &addReduceDynamics(const StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
     {
-        StdVec<BaseDynamics<typename Operation::ReturnType> *> reduce_dynamics;
+        auto &reduce_dynamics_group = addReduceDynamicsGroup<Operation>();
         for (auto &identifier : identifiers)
         {
-            reduce_dynamics.push_back(&addReduceDynamics<ReduceType>(*identifier, std::forward<Args>(args)...));
+            reduce_dynamics_group.add(&addReduceDynamics<ReduceType>(*identifier, std::forward<Args>(args)...));
         }
-        return ReduceDynamicsGroup<Operation>(Operation(), reduce_dynamics);
+        return reduce_dynamics_group;
     };
 
     template <class InteractionType, typename... Args>

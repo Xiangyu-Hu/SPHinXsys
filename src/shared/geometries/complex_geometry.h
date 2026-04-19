@@ -88,7 +88,7 @@ class AlignedBox : public TransformGeometry<GeometricBox>
           alignment_axis_(upper_bound_axis){};
     ~AlignedBox() {};
 
-    Vecd HalfSize() { return halfsize_; }
+    Vecd HalfSize() const { return halfsize_; }
     bool checkNearSurface(const Vecd &probe_point, Real threshold);
     bool checkNotFar(const Vecd &probe_point, Real threshold);
     bool checkInBounds(const Vecd &probe_point, Real lower_bound_fringe = 0.0, Real upper_bound_fringe = 0.0)
