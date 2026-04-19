@@ -135,7 +135,6 @@ void RestartIOCK<ExecutionPolicy>::reportEvolvingVariablesBounds(size_t restart_
 {
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
-        BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
         std::string body_name = real_bodies_[i]->getName();
 
         std::cout << "Evolving Variables Summary for " << body_name << ":\n";
