@@ -128,6 +128,9 @@ class SPHSystem
     template <typename RelationType>
     RelationType &getRelationByName(const std::string &name);
 
+    template <typename RelationType>
+    StdVec<RelationType *> collectRelations();
+
   protected:
     std::string system_name_;           /**< name of the system. */
     BoundingBoxd system_bounds_; /**< Lower and Upper domain bounds. */
