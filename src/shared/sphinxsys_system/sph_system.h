@@ -132,20 +132,20 @@ class SPHSystem
     StdVec<RelationType *> collectRelations();
 
   protected:
-    std::string system_name_;           /**< name of the system. */
-    BoundingBoxd system_bounds_; /**< Lower and Upper domain bounds. */
-    Real global_resolution_;            /**< reference resolution of the SPH system */
-    bool is_physical_;                  /**< flag for physical or non-physical system. */
-    SPHBodyVector sph_bodies_;          /**< All sph bodies. */
-    SPHBodyVector observation_bodies_;  /**< The bodies without inner particle configuration. */
-    SPHBodyVector real_bodies_;         /**< The bodies with inner particle configuration. */
-    StdVec<RelationBase *> relations_;  /**< All inner relations. */
-    bool run_particle_relaxation_;      /**< run particle relaxation for body fitted particle distribution */
-    bool reload_particles_;             /**< start the simulation with relaxed particles. */
-    size_t restart_step_;               /**< restart step */
-    bool generate_regression_data_;     /**< run and generate or enhance the regression test data set. */
-    bool state_recording_;              /**< Record state in output folder. */
-    int log_level_ = 2;                 /**< Log level, 0: trace, 1: debug, 2: info, 3: warning, 4: error, 5: critical, 6: off */
+    std::string system_name_;          /**< name of the system. */
+    BoundingBoxd system_bounds_;       /**< Lower and Upper domain bounds. */
+    Real global_resolution_;           /**< reference resolution of the SPH system */
+    bool is_physical_;                 /**< flag for physical or non-physical system. */
+    SPHBodyVector sph_bodies_;         /**< All sph bodies. */
+    SPHBodyVector observation_bodies_; /**< The bodies without inner particle configuration. */
+    SPHBodyVector real_bodies_;        /**< The bodies with inner particle configuration. */
+    StdVec<RelationBase *> relations_; /**< All inner relations. */
+    bool run_particle_relaxation_;     /**< run particle relaxation for body fitted particle distribution */
+    bool reload_particles_;            /**< start the simulation with relaxed particles. */
+    size_t restart_step_;              /**< restart step */
+    bool generate_regression_data_;    /**< run and generate or enhance the regression test data set. */
+    bool state_recording_;             /**< Record state in output folder. */
+    int log_level_ = 2;                /**< Log level, 0: trace, 1: debug, 2: info, 3: warning, 4: error, 5: critical, 6: off */
     SingularVariables all_system_variables_;
     SingularVariable<Real> *sv_physical_time_; /**< global physical time of the SPH system. */
 
