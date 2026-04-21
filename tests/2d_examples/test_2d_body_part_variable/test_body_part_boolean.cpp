@@ -1,5 +1,5 @@
 /** @file 	test_body_part_boolean.cpp
- *  @brief 	Tests for BodyPartByParticleBoolean, BodyPartByParticleUnion, and BodyPartByParticleIntersection.
+ *  @brief 	Tests for BodyPartByParticle with custom variable tagging criteria.
  *          The geometry is copied from test_2d_dambreak.
  *  @author Hong Zhu
  */
@@ -119,7 +119,7 @@ int main(int ac, char *av[])
     BodyPartByRealVar part_x_plus_2y(water_block, "XPlus2Y", 0.5, 1.5);
     BodyPartByRealVar part_x_multiply(water_block, "XMultiplyY", 0.1, 0.4);
 
-    // Demonstrate replacing hand-written boolean body-part subclasses with custom TagCriteria.
+    // Demonstrate custom TagCriteria through the generalized BodyPartByParticle constructor.
     BodyPartByParticle part_union(water_block, UnionCriteria());
     BodyPartByParticle part_intersection(water_block, IntersectionCriteria());
     BodyPartByParticle part_difference(water_block, DifferenceCriteria());
