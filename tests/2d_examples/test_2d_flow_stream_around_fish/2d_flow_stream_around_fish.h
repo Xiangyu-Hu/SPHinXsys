@@ -172,7 +172,16 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
           material_id_(particles_->getVariableDataByName<int>("MaterialID")),
           pos0_(particles_->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
           active_strain_(particles_->getVariableDataByName<Matd>("ActiveStrain")),
-          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
+          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) 
+        {
+            /** Register as evolving variables for restart file saving/restoring. */
+            particles_->addEvolvingVariable<Matd>("ActiveStrain");
+            particles_->addEvolvingVariable<int>("MaterialID");
+            particles_->addEvolvingVariable<Vecd>("InitialPosition");
+            /** Now get pointers after registration. */
+            material_id_ = particles_->getVariableDataByName<int>("MaterialID");
+            active_strain_ = particles_->getVariableDataByName<Matd>("ActiveStrain");
+        };
     virtual void update(size_t index_i, Real dt = 0.0)
     {
         if (material_id_[index_i] == 0)
@@ -201,4 +210,4 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
     Vecd *pos0_;
     Matd *active_strain_;
     Real *physical_time_;
-};
+    };

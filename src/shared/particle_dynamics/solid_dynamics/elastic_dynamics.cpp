@@ -69,8 +69,10 @@ BaseElasticIntegration::
       dF_dt_(particles_->registerStateVariableData<Matd>("DeformationRate"))
       {
         particles_->addEvolvingVariable<Vecd>("Velocity");
+        particles_->addEvolvingVariable<Vecd>("Force");
         particles_->addEvolvingVariable<Matd>("DeformationGradient");
         particles_->addEvolvingVariable<Matd>("DeformationRate");
+        particles_->addEvolvingVariable<Matd>("LinearGradientCorrectionMatrix");
       }
 //=================================================================================================//
 BaseIntegration1stHalf::
@@ -81,7 +83,10 @@ BaseIntegration1stHalf::
       rho_(particles_->getVariableDataByName<Real>("Density")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       force_prior_(particles_->registerStateVariableData<Vecd>("ForcePrior")),
-      smoothing_length_(getSPHAdaptation().ReferenceSmoothingLength()) {}
+      smoothing_length_(getSPHAdaptation().ReferenceSmoothingLength())
+{
+    particles_->addEvolvingVariable<Vecd>("ForcePrior");
+}
 //=================================================================================================//
 void BaseIntegration1stHalf::update(size_t index_i, Real dt)
 {

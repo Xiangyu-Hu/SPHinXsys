@@ -24,6 +24,7 @@ ViscousForceFromFluid::ViscousForceFromFluid(BaseContactRelation &contact_relati
     : BaseForceFromFluid(contact_relation, "ViscousForceFromFluid"),
       vel_ave_(solid_.AverageVelocity(particles_))
 {
+    particles_->addEvolvingVariable<Vecd>("AverageVelocity");
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_vel_.push_back(contact_particles_[k]->getVariableDataByName<Vecd>("Velocity"));

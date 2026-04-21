@@ -16,6 +16,8 @@ PressureForceFromFluid<FluidIntegration2ndHalfType>::
       acc_ave_(solid_.AverageAcceleration(particles_)),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection"))
 {
+    particles_->addEvolvingVariable<Vecd>("AverageVelocity");
+    particles_->addEvolvingVariable<Vecd>("AverageAcceleration");
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
         contact_rho_.push_back(contact_particles_[k]->template getVariableDataByName<Real>("Density"));
