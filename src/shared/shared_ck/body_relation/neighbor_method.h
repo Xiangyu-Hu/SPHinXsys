@@ -30,10 +30,11 @@
 #define NEIGHBOR_METHOD_H
 
 #include "kernel_tabulated_ck.h"
-#include "sphinxsys_containers.h"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {
+class Base;
 class SPHAdaptation;
 class AnisotropicAdaptation;
 

@@ -30,9 +30,13 @@
 #define IO_PLT_H
 
 #include "io_base.h"
+#include "simtk_wrapper.h"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {
+class BaseMeshField;
+
 /**
  * @class PltEngine
  * @brief The base class which defines Tecplot file related operation.
@@ -70,8 +74,8 @@ class BodyStatesRecordingToPlt : public BodyStatesRecording
     virtual ~BodyStatesRecordingToPlt() {};
 
   protected:
-    void writePltFileHeader(std::ofstream &output_file, ParticleVariables &variables_to_write);
-    void writePltFileParticleData(std::ofstream &output_file, ParticleVariables &variables_to_write, Vecd *position, size_t index);
+    void writePltFileHeader(std::ofstream &output_file, DiscreteVariables &variables_to_write);
+    void writePltFileParticleData(std::ofstream &output_file, DiscreteVariables &variables_to_write, Vecd *position, size_t index);
     virtual void writeWithFileName(const std::string &sequence) override;
 };
 

@@ -30,14 +30,14 @@
 #ifndef BASE_LOCAL_DYNAMICS_H
 #define BASE_LOCAL_DYNAMICS_H
 
-#include "base_data_type_package.h"
 #include "base_particle_dynamics.h"
-#include "execution_policy.h"
-#include "io_log.h"
+#include "io_environment.h"
 #include "reduce_functors.h"
-#include "sphinxsys_containers.h"
 
-#include <type_traits>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <utility>
 
 namespace SPH
 {
@@ -61,7 +61,7 @@ class BaseLocalDynamics
           sph_body_(&identifier.getSPHBody()),
           sph_adaptation_(&sph_body_->getSPHAdaptation()),
           particles_(&sph_body_->getBaseParticles()),
-          logger_(Log::get()) {};
+          logger_(IO::getLogger()) {};
     virtual ~BaseLocalDynamics() {};
     using RangeIdentifier = typename DynamicsIdentifier::RangeIdentifier;
     SPHBody &getSPHBody() { return *sph_body_; };

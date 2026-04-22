@@ -1,29 +1,61 @@
 #include "sph_system.hpp"
 
-#include "all_body_relations.h"
-#include "io_log.h"
+#include "base_body_relation.h"
+#include "geometric_shape.h"
+#include "io_environment.h"
 #include "predefined_bodies.h"
+
+#define TBB_PREVIEW_GLOBAL_CONTROL 1
+#include <tbb/global_control.h>
+#define TBB_PARALLEL true
+#ifdef BOOST_AVAILABLE
+#include "boost/program_options.hpp"
+namespace po = boost::program_options;
+#endif
 
 namespace SPH
 {
 //=================================================================================================//
+namespace
+{
+SharedPtr<tbb::global_control> &getTbbGlobalControlHolder()
+{
+    // Intentionally keep this alive until process termination to avoid
+    // static destruction-order issues inside oneTBB global control teardown.
+    static SharedPtr<tbb::global_control> *holder = new SharedPtr<tbb::global_control>();
+    return *holder;
+}
+} // namespace
+//=================================================================================================//
 SPHSystem::SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution, size_t number_of_threads)
-    : SPHSystem(true, system_domain_bounds, global_resolution, number_of_threads) {}
+    : SPHSystem(true, system_domain_bounds, global_resolution, number_of_threads)
+{
+    writeSystemDomainShape();
+}
 //=================================================================================================//
 SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
                      Real global_resolution, size_t number_of_threads)
-    : system_domain_bounds_(system_domain_bounds),
+    : system_name_("SPHSystem"),
+      system_domain_bounds_(system_domain_bounds.expand(global_resolution * 4)),
       global_resolution_(global_resolution),
-      tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
-      is_physical_(is_physical),
-      io_environment_(io_keeper_.createPtr<IOEnvironment>(*this)),
-      run_particle_relaxation_(false), reload_particles_(false),
+      is_physical_(is_physical), run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true)
 {
-    Log::init();
+    IO::initEnvironment();
+    IO::initLogger();
     spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
     sv_physical_time_ = registerSystemVariable<Real>("PhysicalTime", 0.0);
-    Log::get()->info("The reference resolution of the SPHSystem is {}.", global_resolution_);
+    IO::getLogger()->info("The reference resolution of the SPHSystem is {}.", global_resolution_);
+    getTbbGlobalControlHolder() = std::make_shared<tbb::global_control>(
+        tbb::global_control::max_allowed_parallelism, number_of_threads);
+}
+//=================================================================================================//
+SPHSystem::~SPHSystem() = default;
+//=================================================================================================//
+void SPHSystem::writeSystemDomainShape()
+{
+    GeometricShapeBox domain_shape(system_domain_bounds_, system_name_ + "Domain");
+    domain_shape.writeProxy();
 }
 //=================================================================================================//
 void SPHSystem::setLogLevel(size_t log_level)
@@ -38,15 +70,21 @@ void SPHSystem::setLogLevel(size_t log_level)
     spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
 }
 //=================================================================================================//
-IOEnvironment &SPHSystem::getIOEnvironment()
-{
-    checkPointer(io_environment_, "io_environment_", "SPHSystem");
-    return *io_environment_;
-}
-//=================================================================================================//
 void SPHSystem::addRealBody(RealBody *real_body)
 {
     real_bodies_.push_back(real_body);
+}
+//=================================================================================================//
+RealBody &SPHSystem::getRealBodyByName(const std::string &name)
+{
+    for (auto &real_body : real_bodies_)
+    {
+        if (real_body->getName() == name)
+        {
+            return *DynamicCast<RealBody>(this, real_body);
+        }
+    }
+    throw std::runtime_error("Real body with name " + name + " not found in SPHSystem.");
 }
 //=================================================================================================//
 
@@ -110,7 +148,7 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
 
         if (run_particle_relaxation_)
         {
-            io_environment_->reinitializeReloadFolder();
+            IO::getEnvironment().reinitializeReloadFolder();
         }
 
         if (vm.count("reload"))
@@ -190,5 +228,13 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
     return this;
 }
 #endif
+//=================================================================================================//
+RelaxationSystem::RelaxationSystem(
+    BoundingBoxd system_domain_bounds, Real global_resolution, size_t number_of_threads)
+    : SPHSystem(false, system_domain_bounds, global_resolution, number_of_threads)
+{
+    system_name_ = "RelaxationSystem";
+    writeSystemDomainShape();
+}
 //=================================================================================================//
 } // namespace SPH

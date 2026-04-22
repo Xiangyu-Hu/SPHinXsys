@@ -44,9 +44,9 @@ class FluidBlock : public MultiPolygonShape
   public:
     explicit FluidBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(calculation_circle_center, calculation_circle_radius, 100, GeometricOps::add);
-        multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::sub);
-        multi_polygon_.addAPolygon(Creatrightsqureshape(), GeometricOps::sub);
+        multi_polygon_.addCircle(calculation_circle_center, calculation_circle_radius, 100, GeometricOps::add);
+        multi_polygon_.addCircle(insert_circle_center, insert_circle_radius, 100, GeometricOps::sub);
+        multi_polygon_.addPolygon(Creatrightsqureshape(), GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -56,7 +56,7 @@ class SupersonicFlowInitialCondition : public fluid_dynamics::CompressibleFluidI
 {
   public:
     explicit SupersonicFlowInitialCondition(SPHBody &sph_body)
-        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
+        : fluid_dynamics::CompressibleFluidInitialCondition(sph_body) {};
     void update(size_t index_i, Real dt)
     {
         p_[index_i] = p_farfield;
@@ -87,7 +87,7 @@ class SupersonicFlowBoundaryConditionSetup : public GhostBoundaryConditionSetupI
     {
         setupBoundaryTypes();
     };
-    virtual ~SupersonicFlowBoundaryConditionSetup(){};
+    virtual ~SupersonicFlowBoundaryConditionSetup() {};
 
     // Here, we follow the FVM labelling different boundary conditions with different number
     void setupBoundaryTypes() override

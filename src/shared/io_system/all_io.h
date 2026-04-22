@@ -30,15 +30,12 @@
 #ifndef ALL_IO_H
 #define ALL_IO_H
 
-#include "io_base.h"
+#include "io_base.hpp"
 #include "io_base_ck.h"
-#include "io_log.h"
-#include "io_observation.h"
 #include "io_observation_ck.h"
 #include "io_plt.hpp"
 #include "io_simbody.h"
 #include "io_vtk.h"
-#include "io_vtk_mesh.h"
 #include "io_vtk_mesh_ck.h"
 
 #endif // ALL_IO_H

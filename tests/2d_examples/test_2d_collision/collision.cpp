@@ -10,8 +10,8 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 8.0;                /**< box length. */
-Real DH = 4.0;                /**< box height. */
+Real DL = 8.0;                   /**< box length. */
+Real DH = 4.0;                   /**< box height. */
 Real global_resolution = 0.025;  /**< reference resolution. */
 Real BW = global_resolution * 4; /**< wall width for BCs. */
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
@@ -51,8 +51,8 @@ class WallBoundary : public MultiPolygonShape
         inner_wall_shape.push_back(Vecd(DL, 0.0));
         inner_wall_shape.push_back(Vecd(0.0, 0.0));
 
-        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
+        multi_polygon_.addPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 class FreeBall : public MultiPolygonShape
@@ -60,7 +60,7 @@ class FreeBall : public MultiPolygonShape
   public:
     explicit FreeBall(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(ball_center_1, ball_radius, 100, GeometricOps::add);
+        multi_polygon_.addCircle(ball_center_1, ball_radius, 100, GeometricOps::add);
     }
 };
 class DampingBall : public MultiPolygonShape
@@ -68,7 +68,7 @@ class DampingBall : public MultiPolygonShape
   public:
     explicit DampingBall(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(ball_center_2, ball_radius, 100, GeometricOps::add);
+        multi_polygon_.addCircle(ball_center_2, ball_radius, 100, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------

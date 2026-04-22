@@ -34,6 +34,10 @@
 #include "sphinxsys_constant.h"
 #include "sphinxsys_variable_array.h"
 
+#include <string>
+#include <tuple>
+#include <utility>
+
 namespace SPH
 {
 template <typename... InteractionTypes>

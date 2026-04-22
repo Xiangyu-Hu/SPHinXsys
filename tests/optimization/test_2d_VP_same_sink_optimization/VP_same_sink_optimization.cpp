@@ -60,7 +60,7 @@ class DiffusionBody : public MultiPolygonShape
   public:
     explicit DiffusionBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createThermalDomain(), GeometricOps::add);
+        multi_polygon_.addPolygon(createThermalDomain(), GeometricOps::add);
     }
 };
 
@@ -69,8 +69,8 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createBoundaryDomain(), GeometricOps::add);
-        multi_polygon_.addAPolygon(createThermalDomain(), GeometricOps::sub);
+        multi_polygon_.addPolygon(createBoundaryDomain(), GeometricOps::add);
+        multi_polygon_.addPolygon(createThermalDomain(), GeometricOps::sub);
     }
 };
 
@@ -312,12 +312,12 @@ TEST(test_optimization, test_problem1_optimized)
     //----------------------------------------------------------------------
     // record the temperature with modified design variable.
     std::string filefullpath_opt_temperature =
-        sph_system.getIOEnvironment().OutputFolder() + "/" + "opt_temperature.dat";
+        IO::getEnvironment().OutputFolder() + "/" + "opt_temperature.dat";
     std::ofstream out_file_opt_temperature(filefullpath_opt_temperature.c_str(), std::ios::app);
 
     // record the temperature without modified design variable.
     std::string filefullpath_nonopt_temperature =
-        sph_system.getIOEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
+        IO::getEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app);
     //----------------------------------------------------------------------
     //	Initial States update.

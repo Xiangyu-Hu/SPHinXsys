@@ -31,7 +31,7 @@
 #ifndef PARTICLE_MOMENTUM_DISSIPATION_H
 #define PARTICLE_MOMENTUM_DISSIPATION_H
 
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "porous_media_dynamics.h"
 
 namespace SPH

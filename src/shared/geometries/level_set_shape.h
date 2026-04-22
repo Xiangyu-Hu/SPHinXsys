@@ -30,7 +30,7 @@
 #define LEVEL_SET_SHAPE_H
 
 #include "base_geometry.h"
-#include "level_set.hpp"
+#include "level_set.h"
 
 namespace SPH
 {
@@ -53,23 +53,16 @@ class LevelSetShape : public Shape
 
     template <class ExecutionPolicy>
     LevelSetShape(const ExecutionPolicy &ex_policy, SPHSystem &sph_system, const SPHAdaptation &sph_adaptation,
-                  Shape &shape, Real refinement = 1.0, UsageType usage_type = UsageType::Volumetric)
-        : LevelSetShape(sph_system, sph_adaptation, shape, refinement)
-    {
-        finishInitialization(ex_policy, usage_type);
-    };
+                  Shape &shape, Real refinement = 1.0, UsageType usage_type = UsageType::Volumetric);
 
     virtual ~LevelSetShape() {};
-
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
     virtual BoundingBoxd findBounds() override;
-
+    
     template <class ExecutionPolicy>
-    void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type)
-    {
-        level_set_.finishInitialization(ex_policy, usage_type);
-    };
+    void finishInitialization(const ExecutionPolicy &ex_policy, UsageType usage_type);
+    
     Vecd findLevelSetGradient(const Vecd &probe_point);
     Real computeKernelIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
     Vecd computeKernelGradientIntegral(const Vecd &probe_point, Real h_ratio = 1.0);
@@ -80,20 +73,12 @@ class LevelSetShape : public Shape
     LevelSetShape &correctLevelSetSign();
     LevelSetShape &writeLevelSet();
     LevelSet &getLevelSet() { return level_set_; }
-
+    
     template <typename DataType>
-    LevelSetShape &addPackageVariableToWrite(const std::string &variable_name)
-    {
-        level_set_.addPackageVariableToWrite<DataType>(variable_name);
-        return *this;
-    };
-
+    LevelSetShape &addPackageVariableToWrite(const std::string &variable_name);
+    
     template <typename DataType>
-    LevelSetShape &addCellVariableToWrite(const std::string &variable_name)
-    {
-        level_set_.addCellVariableToWrite<DataType>(variable_name);
-        return *this;
-    };
+    LevelSetShape &addCellVariableToWrite(const std::string &variable_name);
 
   protected:
     LevelSetShape(SPHSystem &sph_system, const SPHAdaptation &sph_adaptation, Shape &shape, Real refinement);

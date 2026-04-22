@@ -1,5 +1,7 @@
 #include "continuum_integration.hpp"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 //=================================================================================================//

@@ -29,7 +29,7 @@
 #ifndef GEOMETRIC_ELEMENT_H
 #define GEOMETRIC_ELEMENT_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 
 namespace SPH
 {
@@ -56,6 +56,7 @@ class GeometricBox
 
     Vecd findClosestPoint(const Vecd &probe_point);
     BoundingBoxd findBounds();
+    Vecd HalfSize() const { return halfsize_; }
 
   protected:
     Vecd halfsize_;

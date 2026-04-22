@@ -40,7 +40,7 @@ MultiPolygon createDiffusionDomain()
     diffusion_domain.push_back(Vecd(-BW, -BW));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(diffusion_domain, GeometricOps::add);
+    multi_polygon.addPolygon(diffusion_domain, GeometricOps::add);
     return multi_polygon;
 }
 
@@ -55,7 +55,7 @@ MultiPolygon createInnerDomain()
     inner_domain.push_back(Vecd(0.0, 0.0));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(inner_domain, GeometricOps::add);
+    multi_polygon.addPolygon(inner_domain, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -71,7 +71,7 @@ MultiPolygon createLeftSideBoundary()
     left_boundary.push_back(Vecd(-BW, -BW));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(left_boundary, GeometricOps::add);
+    multi_polygon.addPolygon(left_boundary, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -91,7 +91,7 @@ MultiPolygon createOtherSideBoundary()
     other_boundaries.push_back(Vecd(-BW, -BW));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(other_boundaries, GeometricOps::add);
+    multi_polygon.addPolygon(other_boundaries, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -193,7 +193,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(20.0);
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
     size_t iteration_steps = 0;
     auto &state_recording = time_stepper.addTriggerByInterval(0.2);
     //----------------------------------------------------------------------
@@ -216,7 +216,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (!time_stepper.isEndTime())
+    while (!time_stepper.isEndTime(20.0))
     {
         Real dt = time_stepper.incrementPhysicalTime(get_time_step_size);
         diffusion_relaxation_rk2.exec(dt);

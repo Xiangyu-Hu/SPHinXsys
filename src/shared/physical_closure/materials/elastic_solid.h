@@ -33,6 +33,8 @@
 #define ELASTIC_SOLID_H
 
 #include "base_material.h"
+#include "common_functors.h"
+
 #include <fstream>
 
 namespace SPH

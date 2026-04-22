@@ -31,6 +31,7 @@
 
 #include "base_body_part.h"
 #include "base_general_dynamics.h"
+#include "level_set_shape.h"
 
 namespace SPH
 {

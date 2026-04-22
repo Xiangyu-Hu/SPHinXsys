@@ -7,6 +7,7 @@
 #include "base_particles.hpp"
 #include "mesh_iterators.hpp"
 #include "particle_iterators_ck.h"
+#include "sphinxsys_atom_ref.h"
 
 namespace SPH
 {

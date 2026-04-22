@@ -9,8 +9,8 @@ using namespace SPH; //	Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 1.0;                    /**< box length. */
-Real DH = 1.0;                    /**< box height. */
+Real DL = 1.0;                       /**< box length. */
+Real DH = 1.0;                       /**< box height. */
 Real global_resolution = 1.0 / 50.0; /**< Global reference resolution. */
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
@@ -38,7 +38,7 @@ class WaterBlock : public MultiPolygonShape
         water_body_shape.push_back(Vecd(DL, DH));
         water_body_shape.push_back(Vecd(DL, 0.0));
         water_body_shape.push_back(Vecd(0.0, 0.0));
-        multi_polygon_.addAPolygon(water_body_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(water_body_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------

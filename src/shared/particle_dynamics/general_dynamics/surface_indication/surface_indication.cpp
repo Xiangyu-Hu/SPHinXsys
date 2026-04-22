@@ -1,5 +1,7 @@
 #include "surface_indication.hpp"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 //=================================================================================================//

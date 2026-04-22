@@ -15,8 +15,8 @@ using namespace SPH;
 /**
  * @brief Basic geometry parameters and numerical setup.
  */
-Real DL = 11.0;                         /**< Channel length. */
-Real DH = 8.0;                          /**< Channel height. */
+Real DL = 11.0;                            /**< Channel length. */
+Real DH = 8.0;                             /**< Channel height. */
 Real global_resolution = 0.1;              /** Initial particle spacing. */
 Real DL_sponge = global_resolution * 20.0; /**< Sponge region to impose inflow condition. */
 Real BW = global_resolution * 4.0;         /**< Extending width for BCs. */
@@ -115,10 +115,10 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createWaterBlockShape(), GeometricOps::add);
         /** Exclude the fish body. */
         std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, fish_shape_resolution);
-        multi_polygon_.addAPolygon(fish_shape, GeometricOps::sub);
+        multi_polygon_.addPolygon(fish_shape, GeometricOps::sub);
     }
 };
 /**
@@ -131,8 +131,8 @@ class WallBoundary : public MultiPolygonShape
     {
         std::vector<Vecd> outer_shape = createOuterWallShape();
         std::vector<Vecd> inner_shape = createInnerWallShape();
-        multi_polygon_.addAPolygon(outer_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(inner_shape, GeometricOps::sub);
+        multi_polygon_.addPolygon(outer_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_shape, GeometricOps::sub);
     }
 };
 /**
@@ -144,7 +144,7 @@ class FishBody : public MultiPolygonShape
     explicit FishBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, fish_shape_resolution);
-        multi_polygon_.addAPolygon(fish_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(fish_shape, GeometricOps::add);
     }
 };
 /**
@@ -154,8 +154,8 @@ MultiPolygon createFishHeadShape(SPHBody &sph_body)
 {
     std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, sph_body.getSPHAdaptation().ReferenceSpacing());
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(fish_shape, GeometricOps::add);
-    multi_polygon.addAPolygon(createFishBlockingShape(), GeometricOps::sub);
+    multi_polygon.addPolygon(fish_shape, GeometricOps::add);
+    multi_polygon.addPolygon(createFishBlockingShape(), GeometricOps::sub);
     return multi_polygon;
 };
 

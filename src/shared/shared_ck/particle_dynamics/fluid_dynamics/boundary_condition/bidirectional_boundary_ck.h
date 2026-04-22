@@ -140,13 +140,9 @@ class BufferOutflowIndication : public BaseLocalDynamics<AlignedBoxByCell>
             AlignedBox *aligned_box_;
             Vecd *pos_;
             int *buffer_indicator_;
-            IsDeletable(int part_id, AlignedBox *aligned_box, Vecd *pos, int *buffer_particle_indicator);
 
-            bool operator()(size_t index_i) const
-            {
-                return buffer_indicator_[index_i] == part_id_ &&
-                       aligned_box_->checkLowerBound(pos_[index_i]);
-            };
+            IsDeletable(int part_id, AlignedBox *aligned_box, Vecd *pos, int *buffer_particle_indicator);
+            bool operator()(size_t index_i) const;
         };
 
       public:
@@ -188,7 +184,7 @@ class OutflowParticleDeletion : public LocalDynamics
       protected:
         RemoveRealParticleKernel remove_real_particle_;
         int *life_status_;
-      };
+    };
 
   protected:
     RemoveRealParticle remove_real_particle_method_;

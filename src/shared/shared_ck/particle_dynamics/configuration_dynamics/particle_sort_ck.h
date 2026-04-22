@@ -88,7 +88,7 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
     DiscreteVariable<UnsignedInt> *dv_index_permutation_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
     DiscreteVariable<UnsignedInt> *dv_sorted_id_;
-    OperationOnDataAssemble<ParticleVariables, UpdateSortableVariables<DiscreteVariable>> update_variables_to_sort_;
+    OperationOnDataAssemble<DiscreteVariables, UpdateSortableVariables<DiscreteVariable>> update_variables_to_sort_;
     SortMethodType sort_method_;
     Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel> kernel_implementation_;
 
