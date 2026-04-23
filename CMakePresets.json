@@ -64,7 +64,7 @@
                 "CMAKE_C_COMPILER": "icx",
                 "CMAKE_CXX_COMPILER": "icpx",
                 "SPHINXSYS_USE_SYCL": "ON",
-                "CMAKE_TOOLCHAIN_FILE": "'${env:HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake'",
+                "CMAKE_TOOLCHAIN_FILE": "'${sourceDir}/../vcpkg/scripts/buildsystems/vcpkg.cmake'",
                 "CMAKE_C_COMPILER_LAUNCHER": "ccache",
                 "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
             }
@@ -106,7 +106,7 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
-                "CMAKE_TOOLCHAIN_FILE": "'${env:HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake'",
+                "CMAKE_TOOLCHAIN_FILE": "'${sourceDir}/../vcpkg/scripts/buildsystems/vcpkg.cmake'",
                 "CMAKE_C_COMPILER_LAUNCHER": "ccache",
                 "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
             }
@@ -126,7 +126,7 @@
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
-                "CMAKE_TOOLCHAIN_FILE": "'${env:HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake'",
+                "CMAKE_TOOLCHAIN_FILE": "'${sourceDir}/../vcpkg/scripts/buildsystems/vcpkg.cmake'",
                 "CMAKE_C_COMPILER_LAUNCHER": "ccache",
                 "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
             }
