@@ -31,7 +31,7 @@
 #define BASE_BODY_PART_H
 
 #include "base_data_type_package.h"
-
+#include "base_particles.h"
 #include "tbb/concurrent_vector.h"
 
 #include <optional>
