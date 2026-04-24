@@ -11,6 +11,8 @@
 namespace SPH
 {
 //=================================================================================================//
+Eigen::IOFormat fmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", " (", ");");
+//=================================================================================================//
 BodyPart::BodyPart(SPHBody &sph_body)
     : sph_body_(sph_body), base_particles_(sph_body.getBaseParticles()),
       part_id_(base_particles_.getNewBodyPartID()),
@@ -219,8 +221,10 @@ AlignedBoxPart::AlignedBoxPart(const std::string &part_name, const AlignedBox &a
                         .createPtr<SingularVariable<AlignedBox>>(part_name, aligned_box)
                         ->Data())
 {
+    std::cout << "\n-------------------------------------------------------------" << std::endl;
     std::cout << part_name << " direction facing to fluid domain: "
-              << aligned_box_.getTransform().xformFrameVecToBase(Vecd::UnitX()) << std::endl;
+              << aligned_box_.getTransform().xformFrameVecToBase(Vecd::UnitX()).format(fmt) << std::endl;
+    std::cout << "-------------------------------------------------------------" << std::endl;
 }
 //=================================================================================================//
 AlignedBoxPart::~AlignedBoxPart() = default;
