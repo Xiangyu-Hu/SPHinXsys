@@ -222,7 +222,7 @@ AlignedBoxPart::AlignedBoxPart(const std::string &part_name, const AlignedBox &a
                         ->Data())
 {
     std::cout << "\n-------------------------------------------------------------" << std::endl;
-    std::cout << part_name << " direction facing to fluid domain: "
+    std::cout << "AlignedBox '" << part_name << "' direction facing to fluid domain: "
               << aligned_box_.getTransform().xformFrameVecToBase(Vecd::UnitX()).format(fmt) << std::endl;
     std::cout << "-------------------------------------------------------------" << std::endl;
 }
