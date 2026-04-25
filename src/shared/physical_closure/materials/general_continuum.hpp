@@ -179,7 +179,7 @@ inline J2Plasticity::EosKernel::EosKernel(J2Plasticity &encloser)
 //=================================================================================================//
 inline Real J2Plasticity::EosKernel::getPressure(Real rho)
 {
-    return SMAX(p0_ * (rho / rho0_ - 1.0), -failure_tension_);
+    return SMAX(p0_ * (rho / rho0_ - Real(1.0)), -failure_tension_);
 }
 //=================================================================================================//
 } // namespace SPH
