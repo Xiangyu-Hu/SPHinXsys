@@ -441,12 +441,12 @@ jobs:
           ctest --rerun-failed --output-on-failure --timeout 1000
 
       - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
-        shell: pwsh
+        shell: bash
         run: |
-          wget https://update.code.visualstudio.com/1.105.0/win32-x64-user/stable
-          unzip x stable
-          ./bin/code tunnel
-        if: ${{ failure() && github.event_name != 'workflow_dispatch' || inputs.linux_test_debug_enabled }}
+          wget -O vscode_cli.tar.gz "https://update.code.visualstudio.com/latest/cli-linux-x64/stable"
+          tar -xzf vscode_cli.tar.gz
+          ./code tunnel --accept-server-license-terms
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.linux_test_debug_enabled }}
 
   ###############################################################################
   Windows-build:
