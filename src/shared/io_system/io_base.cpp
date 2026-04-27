@@ -53,18 +53,14 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
     writeWithFileName("ite_" + padValueWithZeros(iteration_step));
 };
 //=============================================================================================//
-RestartIO::RestartIO(SPHSystem &sph_system)
-    : BaseIO(sph_system), real_bodies_(sph_system.getRealBodies()),
+RestartIO::RestartIO(SPHSystem &sph_system, bool summary_enabled)
+    : BaseIO(sph_system), summary_enabled_(summary_enabled),
+      real_bodies_(sph_system.getRealBodies()),
       overall_file_path_(io_environment_.RestartFolder() + "/Restart_")
 {
     if (sph_system_.RestartStep() == 0)
     {
         io_environment_.resetForRestart();
-    }
-
-    for (size_t i = 0; i < real_bodies_.size(); ++i)
-    {
-        file_names_.push_back(io_environment_.RestartFolder() + "/" + real_bodies_[i]->getName() + "_rst_");
     }
 }
 //=============================================================================================//
@@ -88,9 +84,6 @@ void RestartIO::writeToFile(size_t iteration_step)
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
         std::string body_name = real_bodies_[i]->getName();
 
-        std::cout << "\n Total real particles of body " << body_name
-                  << " written to restart: " << base_particles.TotalRealParticles() << "\n";
-
         // Add a body element
         restart_xml.addNewElement(restart_xml.first_element_, "body");
 
@@ -106,6 +99,26 @@ void RestartIO::writeToFile(size_t iteration_step)
 
     // Write the consolidated XML file
     restart_xml.writeToXmlFile(overall_filefullpath);
+
+    if (summary_enabled_)
+    {
+        reportRestartSummary(iteration_step);
+    }
+}
+//=============================================================================================//
+void RestartIO::reportRestartSummary(size_t restart_step)
+{
+    for (size_t i = 0; i < real_bodies_.size(); ++i)
+    {
+        BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
+        std::string body_name = real_bodies_[i]->getName();
+
+        std::cout << "Restart Information Summary:\n";
+        std::cout << "---------------------------------------------\n";
+        std::cout << "Total real particles of body " << body_name
+                  << " written to restart: " << base_particles.TotalRealParticles() << "\n";
+        std::cout << "---------------------------------------------\n";
+    }
 }
 //=============================================================================================//
 Real RestartIO::readRestartTime(size_t restart_step)

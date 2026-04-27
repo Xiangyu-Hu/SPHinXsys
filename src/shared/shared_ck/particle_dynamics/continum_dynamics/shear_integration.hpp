@@ -12,9 +12,11 @@ namespace continuum_dynamics
 //====================================================================================//
 template <class MaterialType, typename... Parameters>
 ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
-    ShearIntegration(Inner<Parameters...> &inner_relation, Real xi)
+    ShearIntegration(Inner<Parameters...> &inner_relation, Real xi, Real shear_stress_damping)
     : BaseInteraction(inner_relation), ForcePriorCK(this->particles_, "ShearForce"),
       material_(DynamicCast<MaterialType>(this, this->sph_body_->getBaseMaterial())),
+      adaptation_(DynamicCast<Adaptation>(this, this->sph_body_->getSPHAdaptation())),
+      h_ref_(adaptation_.ReferenceSmoothingLength()), shear_stress_damping_(shear_stress_damping),
       xi_(xi), dv_shear_force_(this->getCurrentForce()),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_hourglass_force_(this->particles_->template registerStateVariable<Vecd>("HourglassForce")),
@@ -33,7 +35,9 @@ template <class MaterialType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::InitializeKernel::
     InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : constitute_(ex_policy, encloser.material_), xi_(encloser.xi_),
+    : constitute_(ex_policy, encloser.material_),
+      h_ratio_(ex_policy, encloser.adaptation_), h_ref_(encloser.h_ref_),
+      shear_stress_damping_(encloser.shear_stress_damping_), xi_(encloser.xi_),
       vel_gradient_(encloser.dv_vel_gradient_->DelegatedData(ex_policy)),
       strain_tensor_(encloser.dv_strain_tensor_->DelegatedData(ex_policy)),
       shear_stress_(encloser.dv_shear_stress_->DelegatedData(ex_policy)),
@@ -49,8 +53,13 @@ void ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
     Matd shear_stress_rate =
         constitute_.ShearStressRate(index_i, vel_gradient_[index_i], shear_stress_[index_i]);
     Matd shear_stress_try = shear_stress_[index_i] + shear_stress_rate * dt;
+    constitute_.updateIntactFactor(index_i);
     scale_penalty_force_[index_i] = xi_ * constitute_.ScalePenaltyForce(index_i, shear_stress_try);
-    shear_stress_[index_i] = constitute_.updateShearStress(index_i, shear_stress_try);
+    shear_stress_[index_i] =
+        constitute_.updateShearStress(index_i, shear_stress_try) +
+        shear_stress_damping_ * constitute_.NumericalDampingStress(
+                                    strain_tensor_[index_i],
+                                    strain_rate, h_ref_ / h_ratio_(index_i), index_i);
 }
 //====================================================================================//
 template <class MaterialType, typename... Parameters>
@@ -85,10 +94,10 @@ void ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
                                0.5 * (vel_gradient_[index_i] + vel_gradient_[index_j]) * vec_r_ij;
         Real penalty_scale = 0.5 * (scale_penalty_force_[index_i] + scale_penalty_force_[index_j]);
         sum_hourglass += penalty_scale * G_ * v_ij_correction.dot(e_ij) * vec_r_ij *
-                                   dW_ijV_j  / vec_r_ij.squaredNorm();
+                         dW_ijV_j / vec_r_ij.squaredNorm();
     }
     hourglass_force_[index_i] += sum_hourglass * Vol_[index_i] * dt;
-    shear_force_[index_i] = sum_shear * Vol_[index_i] + hourglass_force_[index_i] ;
+    shear_force_[index_i] = sum_shear * Vol_[index_i] + hourglass_force_[index_i];
 }
 //=================================================================================================//
 } // namespace continuum_dynamics

@@ -9,7 +9,7 @@ namespace SPH
 template <typename ExecutionPolicy>
 GeneralContinuum::ConstituteKernel::
     ConstituteKernel(const ExecutionPolicy &ex_policy, GeneralContinuum &encloser)
-    : E_(encloser.E_), G_(encloser.G_), K_(encloser.K_),
+    : c0_(encloser.c0_), E_(encloser.E_), G_(encloser.G_), K_(encloser.K_),
       nu_(encloser.nu_), contact_stiffness_(encloser.contact_stiffness_),
       rho0_(encloser.rho0_) {}
 //=================================================================================================//
@@ -36,6 +36,14 @@ Matd GeneralContinuum::ConstituteKernel::ShearStressRate(
     Matd spin_rate = 0.5 * (velocity_gradient - velocity_gradient.transpose());
     return 2.0 * G_ * deviatoric_strain_rate + shear_stress * (spin_rate.transpose()) + spin_rate * shear_stress;
 };
+//=================================================================================================//
+template <typename ScalingType>
+Matd GeneralContinuum::ConstituteKernel::NumericalDampingStress(
+    const Matd &deformation, const Matd &deformation_rate, const ScalingType &scaling, size_t particle_index_i)
+{
+    Matd strain_rate = 0.5 * (deformation_rate + deformation_rate.transpose());
+    return 0.5 * rho0_ * c0_ * strain_rate * scaling;
+}
 //=================================================================================================//
 template <typename ExecutionPolicy>
 PlasticContinuum::ConstituteKernel::
@@ -101,8 +109,10 @@ J2Plasticity::ConstituteKernel::
     : GeneralContinuum::ConstituteKernel(ex_policy, encloser),
       yield_stress_(encloser.yield_stress_),
       hardening_modulus_(encloser.hardening_modulus_),
-      sqrt_2_over_3_(encloser.sqrt_2_over_3_),
-      hardening_factor_(encloser.dv_hardening_factor_->DelegatedData(ex_policy)) {}
+      sqrt_2_over_3_(encloser.sqrt_2_over_3_), failure_tension_(encloser.failure_tension_),
+      hardening_factor_(encloser.dv_hardening_factor_->DelegatedData(ex_policy)),
+      intact_factor_(encloser.dv_intact_factor_->DelegatedData(ex_policy)),
+      p_(encloser.dv_p_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 Matd J2Plasticity::ConstituteKernel::ShearStressRate(
     UnsignedInt index_i, const Matd &velocity_gradient, const Matd &shear_stress)
@@ -134,11 +144,21 @@ Real J2Plasticity::ConstituteKernel::ScalePenaltyForce(UnsignedInt index_i, cons
 {
     Real stress_tensor_J2 = 0.5 * (try_shear_stress.cwiseProduct(try_shear_stress.transpose())).sum();
     Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor_[index_i] + yield_stress_);
-    return (f > TinyReal)
-               ? (sqrt_2_over_3_ *
-                  (hardening_modulus_ * hardening_factor_[index_i] + yield_stress_)) /
-                     (sqrt(2.0 * stress_tensor_J2) + TinyReal)
-               : 1.0;
+    Real scale = 1.0;
+    if (f > TinyReal)
+    {
+        scale = 1.0 / (sqrt(2.0 * stress_tensor_J2) + TinyReal) *
+                (sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor_[index_i] + yield_stress_));
+    }
+    return scale * intact_factor_[index_i];
+}
+//=================================================================================================//
+void J2Plasticity::ConstituteKernel::updateIntactFactor(UnsignedInt index_i)
+{
+    Real alpha = 0.8;
+    Real p_diff = p_[index_i] + alpha * failure_tension_;
+    Real try_intact_factor = SMAX(1.0 + p_diff / ((1.0 - alpha) * failure_tension_), 0.0);
+    intact_factor_[index_i] = SMIN(intact_factor_[index_i], try_intact_factor); // damage is irreversible
 }
 //=================================================================================================//
 Matd J2Plasticity::ConstituteKernel::ReturnMapping(UnsignedInt index_i, Matd try_shear_stress)
@@ -152,6 +172,14 @@ Real J2Plasticity::ConstituteKernel::HardeningFactorRate(
     Real stress_tensor_J2 = 0.5 * (shear_stress.cwiseProduct(shear_stress.transpose())).sum();
     Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_);
     return (f > TinyReal) ? 0.5 * f / (G_ + hardening_modulus_ / 3.0) : 0.0;
+}
+//=================================================================================================//
+inline J2Plasticity::EosKernel::EosKernel(J2Plasticity &encloser)
+    : GeneralContinuum::EosKernel(encloser), failure_tension_(encloser.failure_tension_) {}
+//=================================================================================================//
+inline Real J2Plasticity::EosKernel::getPressure(Real rho)
+{
+    return SMAX(p0_ * (rho / rho0_ - Real(1.0)), -failure_tension_);
 }
 //=================================================================================================//
 } // namespace SPH

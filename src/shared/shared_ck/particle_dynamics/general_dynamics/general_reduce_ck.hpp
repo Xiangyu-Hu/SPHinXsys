@@ -49,6 +49,21 @@ QuantityAverage<DataType, DynamicsIdentifier>::ReduceKernel::
     ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : variable_(encloser.dv_variable_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
+template <typename DataType, class DynamicsIdentifier>
+MaximumNorm<DataType, DynamicsIdentifier>::
+    MaximumNorm(DynamicsIdentifier &identifier, const std::string &variable_name)
+    : BaseDynamicsType(identifier),
+      dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name))
+{
+    this->quantity_name_ = variable_name + "MaximumNorm";
+}
+//=================================================================================================//
+template <typename DataType, class DynamicsIdentifier>
+template <class ExecutionPolicy, class EncloserType>
+MaximumNorm<DataType, DynamicsIdentifier>::ReduceKernel::
+    ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : variable_(encloser.dv_variable_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
 template <class DynamicsIdentifier>
 UpperFrontInAxisDirectionCK<DynamicsIdentifier>::UpperFrontInAxisDirectionCK(
     DynamicsIdentifier &identifier, const std::string &name, int axis)

@@ -247,6 +247,8 @@ void SimbodyStateEngine::writeStateToXml(int ite_rst, SimTK::RungeKuttaMersonInt
     const SimTK::State &state = integ.getState();
     const SimTK::SimbodyMatterSubsystem &matter = getMultibodySystem().getMatterSubsystem();
     resizeXmlDocForSimbody(matter.getNumBodies());
+    /** Write the simulation time to xml root element. */
+    simbody_xml_engine_.root_element_.setAttributeValue("time", SimTK::String(state.getTime()));
     SimTK::Xml::element_iterator ele_ite = simbody_xml_engine_.root_element_.element_begin();
     for (SimTK::MobilizedBodyIndex mbx(0); mbx != matter.getNumBodies(); ++mbx)
     {
@@ -287,6 +289,17 @@ void SimbodyStateEngine::readStateFromXml(int ite_rst, SimTK::State &state)
     {
         int num_mobod = 0;
         simbody_xml_engine_.loadXmlFile(filefullpath);
+        /** Read the simulation time from xml root element. */
+        try
+        {
+            Real time_value = SimTK::convertStringTo<Real>(
+                simbody_xml_engine_.root_element_.getRequiredAttributeValue("time"));
+            state.setTime(time_value);
+        }
+        catch (const std::exception &)
+        {
+            /** For backward compatibility with older restart files without time attribute. */
+        }
         SimTK::Xml::element_iterator ele_ite_ = simbody_xml_engine_.root_element_.element_begin();
         for (; ele_ite_ != simbody_xml_engine_.root_element_.element_end(); ++ele_ite_)
         {
