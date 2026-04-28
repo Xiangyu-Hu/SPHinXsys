@@ -37,8 +37,6 @@
 
 namespace SPH
 {
-class LevelSetShape;
-
 /**
  * @class ComplexShape
  * @brief  For now, if the level set shape (for particle relaxation)
@@ -51,7 +49,7 @@ class LevelSetShape;
 class ComplexShape : public BinaryShapes
 {
   public:
-    explicit ComplexShape(const std::string &shape_name)
+    explicit ComplexShape(const std::string &shape_name = "ComplexShape")
         : BinaryShapes(shape_name) {};
     virtual ~ComplexShape() {};
 
@@ -66,8 +64,6 @@ class ComplexShape : public BinaryShapes
     };
 };
 
-using DefaultShape = ComplexShape;
-
 /**
  * @class AlignedBox
  * @brief Used to describe a bounding box in which
@@ -80,8 +76,8 @@ class AlignedBox : public TransformGeometry<GeometricBox>
   public:
     /** construct directly */
     template <typename... Args>
-    explicit AlignedBox(int upper_bound_axis, const Transform &transform, Args &&...args)
-        : TransformGeometry<GeometricBox>(transform, std::forward<Args>(args)...),
+    explicit AlignedBox(int upper_bound_axis, Args &&...args)
+        : TransformGeometry<GeometricBox>(std::forward<Args>(args)...),
           alignment_axis_(upper_bound_axis){};
     /** construct from a shape already has aligned boundaries */
     template <typename... Args>

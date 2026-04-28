@@ -30,7 +30,7 @@
 #ifndef POROUS_ELASTIC_DYNAMICS_H
 #define POROUS_ELASTIC_DYNAMICS_H
 
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "elastic_dynamics.h"
 #include "porous_media_solid.h"
 
@@ -116,7 +116,7 @@ class PorousMediaStressRelaxationFirstHalf
 
     const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
     Real numerical_dissipation_factor_ = 0.25;
-    Real inv_W0_ = 1.0 / getSPHAdaptation().getKernel()->W0(ZeroVecd);
+    Real inv_W0_;
 
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0)

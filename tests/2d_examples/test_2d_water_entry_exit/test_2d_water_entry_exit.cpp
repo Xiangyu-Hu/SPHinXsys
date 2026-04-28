@@ -59,7 +59,7 @@ class WettingFluidBody : public MultiPolygonShape
   public:
     explicit WettingFluidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createWaterBlockShape(), GeometricOps::add);
     }
 };
 
@@ -110,8 +110,8 @@ class WettingWallBody : public MultiPolygonShape
   public:
     explicit WettingWallBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createOuterWallShape(), GeometricOps::add);
-        multi_polygon_.addAPolygon(createInnerWallShape(), GeometricOps::sub);
+        multi_polygon_.addPolygon(createOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createInnerWallShape(), GeometricOps::sub);
     }
 };
 class WettingWallBodyInitialCondition : public LocalDynamics
@@ -139,7 +139,7 @@ class WettingCylinderBody : public MultiPolygonShape
   public:
     explicit WettingCylinderBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, GeometricOps::add);
+        multi_polygon_.addCircle(cylinder_center, cylinder_radius, 100, GeometricOps::add);
     }
 };
 class WettingCylinderBodyInitialCondition : public LocalDynamics
@@ -171,7 +171,7 @@ using CylinderFluidDiffusionDirichlet =
 MultiPolygon createSimbodyConstrainShape(SPHBody &sph_body)
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addACircle(cylinder_center, cylinder_radius, 100, GeometricOps::add);
+    multi_polygon.addCircle(cylinder_center, cylinder_radius, 100, GeometricOps::add);
     return multi_polygon;
 };
 //----------------------------------------------------------------------

@@ -1,16 +1,16 @@
 /**
  * @file 	channel_windkessel_rigid_shell.cpp
- * @brief 
+ * @brief
  * @details Case study for windkessel model.
  * @author  Chenxi Zhao
  */
-#include "sphinxsys.h"
 #include "bidirectional_buffer.h"
 #include "density_correction.h"
 #include "density_correction.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"
+#include "sphinxsys.h"
 #include "windkessel_bc.h"
 
 using namespace SPH;
@@ -18,11 +18,11 @@ using namespace SPH;
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real scale = 0.001;
-Real DH = 6.35 * scale;          /**< Channel height. */
-Real DL = 10 * DH/2;               /**< Channel length. */
+Real DH = 6.35 * scale;             /**< Channel height. */
+Real DL = 10 * DH / 2;              /**< Channel length. */
 Real global_resolution = DH / 30.0; /**< Initial reference particle spacing. */
 Real resolution_shell = global_resolution;
-Real wall_thickness = global_resolution * 4;                    /**< Extending width for BCs. */
+Real wall_thickness = global_resolution * 4;                 /**< Extending width for BCs. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
 BoundingBoxd system_domain_bounds(Vecd(-wall_thickness, -wall_thickness), Vecd(DL + wall_thickness, DH + wall_thickness));
 //----------------------------------------------------------------------
@@ -53,7 +53,7 @@ class WaterBlock : public MultiPolygonShape
         water_block_shape.push_back(Vecd(DL, DH));
         water_block_shape.push_back(Vecd(DL, 0.0));
         water_block_shape.push_back(Vecd(0.0, 0.0));
-        multi_polygon_.addAPolygon(water_block_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(water_block_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -70,7 +70,7 @@ class ParticleGenerator<SurfaceParticles, ShellBoundary> : public ParticleGenera
     explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
                                Real resolution_shell, Real shell_thickness)
         : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
-          resolution_shell_(resolution_shell), shell_thickness_(shell_thickness){};
+          resolution_shell_(resolution_shell), shell_thickness_(shell_thickness) {};
     void prepareGeometricData() override
     {
         auto particle_number_mid_surface = int(DL / resolution_shell_);
@@ -112,7 +112,7 @@ struct InflowVelocity
         for (size_t i = 0; i < 8; i++)
         {
             Real theta = w * Real(i + 1) * current_time;
-            Real term  = a[i] * cos(theta) + b[i] * sin(theta);
+            Real term = a[i] * cos(theta) + b[i] * sin(theta);
             u_ave = SMAX(u_ave + term, Real(0));
         }
 
@@ -253,9 +253,9 @@ int main(int ac, char *av[])
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
-    Real end_time = 5.0;               /**< End time. */
+    Real end_time = 5.0;     /**< End time. */
     Real Output_Time = 0.01; /**< Time stamps for output of body states. */
-    Real dt = 0.0;                     /**< Default acoustic time step sizes. */
+    Real dt = 0.0;           /**< Default acoustic time step sizes. */
     Real accumulated_time = 0.02;
     int updateP_n = 0;
     //----------------------------------------------------------------------
@@ -320,7 +320,7 @@ int main(int ac, char *av[])
             }
 
             interval_computing_pressure_relaxation += TickCount::now() - time_instance;
-            
+
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
@@ -331,7 +331,6 @@ int main(int ac, char *av[])
                 {
                     write_radial_velocity.writeToFile(number_of_iterations);
                 }
-
             }
             number_of_iterations++;
 
@@ -356,13 +355,13 @@ int main(int ac, char *av[])
 
             interval_updating_configuration += TickCount::now() - time_instance;
             boundary_indicator.exec();
-            
+
             left_bidirection_buffer.tag_buffer_particles.exec();
             right_bidirection_buffer.tag_buffer_particles.exec();
         }
         TickCount t2 = TickCount::now();
         body_states_recording.writeToFile();
-        
+
         /** Update observer and write output of observer. */
         fluid_observer_contact_radial.updateConfiguration();
 

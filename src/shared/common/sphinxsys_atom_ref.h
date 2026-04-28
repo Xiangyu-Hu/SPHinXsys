@@ -21,47 +21,28 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	large_data_containers.h
- * @brief 	Data container for large vector, e.g. particle data.
+ * @file 	sphinxsys_atom_ref.h
+ * @brief 	This is the date type definition for SPHinXsys.
  * @author	Chi Zhang and Xiangyu Hu
  */
-#ifndef LARGE_DATA_CONTAINERS_H
-#define LARGE_DATA_CONTAINERS_H
 
-#include "tbb/blocked_range.h"
-#include "tbb/blocked_range2d.h"
-#include "tbb/blocked_range3d.h"
-#include "tbb/cache_aligned_allocator.h"
-#include "tbb/concurrent_unordered_set.h"
-#include "tbb/concurrent_vector.h"
-#include "tbb/parallel_for.h"
-#include "tbb/parallel_reduce.h"
-#include "tbb/parallel_scan.h"
-#include "tbb/scalable_allocator.h"
-#include "tbb/tick_count.h"
+#ifndef SPHINXSYS_ATOM_REF_H
+#define SPHINXSYS_ATOM_REF_H
+
+#if !SPHINXSYS_USE_SYCL
+#include <boost/atomic/atomic_ref.hpp>
+#endif // !SPHINXSYS_USE_SYCL
 
 namespace SPH
 {
-
-static tbb::affinity_partitioner ap;
-typedef tbb::blocked_range<size_t> IndexRange;
-typedef tbb::blocked_range2d<size_t> IndexRange2d;
-typedef tbb::blocked_range3d<size_t> IndexRange3d;
-
-typedef tbb::tick_count TickCount;
-typedef tbb::tick_count::interval_t TimeInterval;
-
+#if SPHINXSYS_USE_SYCL
 template <typename T>
-using ConcurrentVec = tbb::concurrent_vector<T>;
-
+using AtomicRef = sycl::atomic_ref<
+    T, sycl::memory_order_relaxed, sycl::memory_scope_device,
+    sycl::access::address_space::global_space>;
+#else
 template <typename T>
-using StdVec = std::vector<T>;
-
-template <typename T>
-using BiVector = std::vector<std::vector<T>>;
-
-template <typename T>
-using TriVector = std::vector<std::vector<std::vector<T>>>;
+using AtomicRef = boost::atomic_ref<T>;
+#endif // SPHINXSYS_USE_SYCL
 } // namespace SPH
-
-#endif // LARGE_DATA_CONTAINERS_H
+#endif // SPHINXSYS_ATOM_REF_H

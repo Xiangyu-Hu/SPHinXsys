@@ -37,7 +37,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &input_shape = sph_system.addShape<ComplexShape>("SPHInXsysLogo");
     MultiPolygon original_logo;
-    original_logo.addAPolygonFromFile(input_body, GeometricOps::add);
+    original_logo.addPolygonFromFile(input_body, GeometricOps::add);
     input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * global_resolution, original_logo);
     input_shape.subtract<MultiPolygonShape>(original_logo);
     auto &input_body = sph_system.addBody<RealBody>(input_shape);
@@ -85,7 +85,7 @@ int main(int ac, char *av[])
 
     host_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies).exec(); // host method able to run immediately
 
-    ParticleDynamicsGroup update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
+    ParticleDynamicsGroup &update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
     ParticleDynamicsGroup update_relation;
     update_relation.add(&main_methods.addRelationDynamics(input_body_inner));
     update_relation.add(&main_methods.addRelationDynamics(filler_inner, filler_contact));

@@ -21,25 +21,21 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	io_log.h
- * @brief 	base classes for io functions.
- * @author	Chi Zhang, Shuoguo Zhang, Zhenxi Zhao and Xiangyu Hu
+ * @file 	sphinxsys_tbb.h
+ * @brief 	Data container for large vector, e.g. particle data.
+ * @author	Chi Zhang and Xiangyu Hu
  */
+#ifndef SPHINXSYS_TBB_H
+#define SPHINXSYS_TBB_H
 
-#ifndef IO_LOG_H
-#define IO_LOG_H
-
-#include "io_base.h"
-
-#include <memory>
-#include <spdlog/spdlog.h>
+#include "tbb/blocked_range.h"
+#include "tbb/parallel_for.h"
 
 namespace SPH
 {
-namespace Log
-{
-std::shared_ptr<spdlog::logger> init(); // Call once at startup
-std::shared_ptr<spdlog::logger> get();  // Access logger
-} // namespace Log
+static tbb::affinity_partitioner ap;
+typedef tbb::blocked_range<size_t> IndexRange;
+
 } // namespace SPH
-#endif // IO_LOG_H
+
+#endif // SPHINXSYS_TBB_H

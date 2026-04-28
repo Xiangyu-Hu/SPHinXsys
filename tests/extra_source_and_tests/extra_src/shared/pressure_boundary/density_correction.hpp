@@ -1,6 +1,8 @@
 #pragma once
 #include "density_correction.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 namespace fluid_dynamics

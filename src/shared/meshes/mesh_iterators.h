@@ -32,9 +32,9 @@
 #ifndef MESH_ITERATORS_H
 #define MESH_ITERATORS_H
 
-#include "base_data_type_package.h"
-
+#include "data_type.h"
 #include "execution_policy.h"
+#include "sphinxsys_tbb.h"
 
 namespace SPH
 {
@@ -85,8 +85,8 @@ template <typename FunctionOnData>
 void package_for(const execution::ParallelPolicy &par_host, UnsignedInt start_index,
                  UnsignedInt end_index, const FunctionOnData &function)
 {
-    parallel_for(IndexRange(start_index, end_index), [&](const IndexRange &r)
-                 {
+    tbb::parallel_for(IndexRange(start_index, end_index), [&](const IndexRange &r)
+                      {
                     for (size_t i = r.begin(); i != r.end(); ++i)
                     {
                         function(i);

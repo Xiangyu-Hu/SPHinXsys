@@ -30,14 +30,39 @@
 #ifndef BASE_BODY_PART_H
 #define BASE_BODY_PART_H
 
-#include "all_geometries.h"
 #include "base_data_type_package.h"
-#include "sphinxsys_containers.h"
+#include "base_particles.h"
+#include "tbb/concurrent_vector.h"
 
 #include <optional>
+#include <type_traits>
 
 namespace SPH
 {
+template <typename T, typename = void>
+struct has_setupBaseParticles : std::false_type {};
+
+template <typename T>
+struct has_setupBaseParticles<T, std::void_t<decltype(&T::setupBaseParticles)>> : std::true_type {};
+
+class BaseCellLinkedList;
+class LevelSetShape;
+class AlignedBox;
+class Entity;
+class SPHAdaptation;
+class SPHBody;
+class RealBody;
+class Shape;
+class SPHSystem;
+class BaseParticles;
+template <typename T>
+class DiscreteVariable;
+template <typename T>
+class SingularVariable;
+
+template <typename T>
+using ConcurrentVec = tbb::concurrent_vector<T>;
+using IndexVector = StdVec<size_t>;
 /**
  * @class BodyPart
  * @brief An auxiliary class for SPHBody to indicate a part of the body.
@@ -51,7 +76,7 @@ class BodyPart
   public:
     typedef SPHAdaptation Adaptation;
     BodyPart(SPHBody &sph_body);
-    virtual ~BodyPart() {};
+    virtual ~BodyPart();
     SPHBody &getSPHBody() { return sph_body_; };
     SPHSystem &getSPHSystem();
     std::string getName() const { return alias_.value_or(part_name_); };
@@ -109,13 +134,27 @@ class BodyPartByID : public BodyPart
 class BodyPartByParticle : public BodyPart
 {
   public:
-    typedef BodyPartByParticle RangeIdentifier;    
+    typedef BodyPartByParticle RangeIdentifier;
     IndexVector body_part_particles_; /**< Collection particle in this body part. */
     BaseParticles &getBaseParticles() { return base_particles_; };
     DiscreteVariable<UnsignedInt> *dvParticleList() { return dv_particle_list_; };
     IndexVector &LoopRange() { return body_part_particles_; };
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
+
     BodyPartByParticle(SPHBody &sph_body);
+
+    template <typename TagCriteria>
+    BodyPartByParticle(SPHBody &sph_body, TagCriteria criteria)
+        : BodyPartByParticle(sph_body)
+    {
+        if constexpr (has_setupBaseParticles<TagCriteria>::value)
+        {
+            criteria.setupBaseParticles(base_particles_);
+        }
+        TaggingParticleMethod tagging_method = criteria;
+        tagParticles(tagging_method);
+    }
+
     virtual ~BodyPartByParticle() {};
 
   protected:
@@ -125,11 +164,74 @@ class BodyPartByParticle : public BodyPart
 };
 
 /**
+ * @class VariableRangeTagCriteria
+ * @brief A common criteria defined by the range of one variable
+ */
+template <typename DataType>
+class VariableRangeTagCriteria
+{
+  public:
+    VariableRangeTagCriteria(
+        const std::string &variable_name, DataType lower_bound, DataType upper_bound)
+        : variable_name_(variable_name), lower_bound_(lower_bound), upper_bound_(upper_bound), variable_(nullptr)
+    {
+        if (lower_bound_ > upper_bound_)
+        {
+            throw std::invalid_argument("Lower bound must be less than or equal to upper bound.");
+        }
+    }
+
+    void setupBaseParticles(BaseParticles &base_particles)
+    {
+        variable_ = base_particles.template getVariableDataByName<DataType>(variable_name_);
+    }
+
+    bool operator()(size_t index_i) const
+    {
+        return (lower_bound_ <= variable_[index_i]) &&
+               (variable_[index_i] <= upper_bound_);
+    }
+
+  private:
+    std::string variable_name_;
+    DataType lower_bound_;
+    DataType upper_bound_;
+    DataType *variable_;
+};
+
+class BodyPartByRealVar : public BodyPartByParticle
+{
+  public:
+    template <typename... Args>
+    BodyPartByRealVar(SPHBody &sph_body, Args &&...args)
+        : BodyPartByParticle(
+              sph_body,
+              VariableRangeTagCriteria<Real>(std::forward<Args>(args)...))
+    {
+    }
+};
+
+class BodyPartByIntVar : public BodyPartByParticle
+{
+  public:
+    template <typename... Args>
+    BodyPartByIntVar(SPHBody &sph_body, Args &&...args)
+        : BodyPartByParticle(
+              sph_body,
+              VariableRangeTagCriteria<int>(std::forward<Args>(args)...))
+    {
+    }
+};
+
+/**
  * @class BodyPartByCell
  * @brief A body part with a collection of cell lists.
  */
 class BodyPartByCell : public BodyPart
 {
+    using ConcurrentIndexVector = ConcurrentVec<size_t>;
+    using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
+
   public:
     typedef BodyPartByCell RangeIdentifier;
     ConcurrentCellLists body_part_cells_; /**< Collection of cells to indicate the body part. */
@@ -163,7 +265,7 @@ class BodyRegionByParticle : public BodyPartByParticle
   public:
     BodyRegionByParticle(SPHBody &sph_body, Shape &body_part_shape);
     BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr);
-    virtual ~BodyRegionByParticle() {};
+    virtual ~BodyRegionByParticle();
     Shape &getBodyPartShape() { return body_part_shape_; };
 
   protected:
@@ -213,7 +315,7 @@ class BodyRegionByCell : public BodyPartByCell
   public:
     BodyRegionByCell(RealBody &real_body, Shape &body_part_shape);
     BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr);
-    virtual ~BodyRegionByCell() {};
+    virtual ~BodyRegionByCell();
     Shape &getBodyPartShape() { return body_part_shape_; };
 
   private:
@@ -238,7 +340,7 @@ class NearShapeSurface : public BodyPartByCell
     NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape);
     explicit NearShapeSurface(RealBody &real_body);
     NearShapeSurface(RealBody &real_body, const std::string &sub_shape_name);
-    virtual ~NearShapeSurface() {};
+    virtual ~NearShapeSurface();
     LevelSetShape &getLevelSetShape() { return level_set_shape_; };
 
   private:
@@ -251,14 +353,13 @@ class AlignedBoxPart
     UniquePtrKeeper<SingularVariable<AlignedBox>> sv_aligned_box_keeper_;
 
   public:
-    AlignedBoxPart(SPHSystem &sph_system, const std::string &part_name, const AlignedBox &aligned_box);
-    virtual ~AlignedBoxPart() {};
+    AlignedBoxPart(const std::string &part_name, const AlignedBox &aligned_box);
+    virtual ~AlignedBoxPart();
     SingularVariable<AlignedBox> *svAlignedBox() { return sv_aligned_box_keeper_.getPtr(); };
     AlignedBox &getAlignedBox() { return aligned_box_; };
     void writeShapeProxy();
 
   protected:
-    SPHSystem &sph_system_;
     AlignedBox &aligned_box_;
 };
 

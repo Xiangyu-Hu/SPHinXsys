@@ -31,7 +31,7 @@
 #define SLENDER_STRUCTURE_DYNAMICS_H
 
 #include "all_body_relations.h"
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "base_kernel.h"
 #include "elastic_solid.h"
 #include "slender_structure_math.h"
@@ -231,7 +231,7 @@ class BarStressRelaxationFirstHalf : public BaseBarRelaxation
 
     Real E0_, G0_, nu_, hourglass_control_factor_;
     bool hourglass_control_;
-    const Real inv_W0_ = 1.0 / getSPHAdaptation().getKernel()->W0(ZeroVecd);
+    const Real inv_W0_;
     const Real shear_correction_factor_ = 5.0 / 6.0;
 
     Real gpt = sqrt(3.0 / 5.0);

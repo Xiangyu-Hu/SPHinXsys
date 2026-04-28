@@ -30,16 +30,16 @@
 #ifndef PARTICLE_METHOD_CONTAINER_H
 #define PARTICLE_METHOD_CONTAINER_H
 
-#include "base_particle_dynamics.h"
 #include "complex_algorithms_ck.h"
 #include "interaction_algorithms_ck.h"
 #include "io_base.h"
 #include "io_observation_ck.h"
-#include "ownership.h"
 #include "particle_sort_ck.h"
-#include "simple_algorithms_ck.h"
 #include "update_body_relation.h"
 #include "update_cell_linked_list.h"
+
+#include <string>
+#include <utility>
 
 namespace SPH
 {
@@ -172,9 +172,19 @@ class ParticleMethodContainer : public BaseMethodContainer
     UniquePtrsKeeper<BaseIO> other_io_keeper_;
 
   public:
-    ParticleMethodContainer(const ExecutionPolicy &ex_policy)
-        : BaseMethodContainer() {};
+    ParticleMethodContainer(const ExecutionPolicy &ex_policy) : BaseMethodContainer() {};
     virtual ~ParticleMethodContainer() {};
+
+    ParticleDynamicsGroup &addParticleDynamicsGroup()
+    {
+        return *particle_dynamics_keeper_.createPtr<ParticleDynamicsGroup>();
+    };
+
+    template <typename Operation>
+    ReduceDynamicsGroup<Operation> &addReduceDynamicsGroup(const Operation &operation = Operation())
+    {
+        return *particle_dynamics_keeper_.createPtr<ReduceDynamicsGroup<Operation>>(operation);
+    };
 
     template <template <typename...> class GeneralDynamicsType, typename... Parameters, class DynamicsIdentifier, typename... Args>
     auto &addGeneralDynamics(DynamicsIdentifier &identifier, Args &&...args)
@@ -209,9 +219,9 @@ class ParticleMethodContainer : public BaseMethodContainer
     };
 
     template <class DynamicsIdentifier>
-    ParticleDynamicsGroup addCellLinkedListDynamics(StdVec<DynamicsIdentifier *> &identifiers)
+    ParticleDynamicsGroup &addCellLinkedListDynamics(StdVec<DynamicsIdentifier *> &identifiers)
     {
-        ParticleDynamicsGroup group;
+        ParticleDynamicsGroup &group = addParticleDynamicsGroup();
         for (auto *identifier : identifiers)
         {
             group.add(&addCellLinkedListDynamics(*identifier));
@@ -235,9 +245,9 @@ class ParticleMethodContainer : public BaseMethodContainer
     };
 
     template <class DynamicsIdentifier>
-    ParticleDynamicsGroup addSortDynamics(StdVec<DynamicsIdentifier *> &identifiers)
+    ParticleDynamicsGroup &addSortDynamics(StdVec<DynamicsIdentifier *> &identifiers)
     {
-        ParticleDynamicsGroup group;
+        ParticleDynamicsGroup &group = addParticleDynamicsGroup();
         for (auto *identifier : identifiers)
         {
             group.add(&addSortDynamics(*identifier));
@@ -253,9 +263,9 @@ class ParticleMethodContainer : public BaseMethodContainer
     };
 
     template <class UpdateType, class DynamicsIdentifier, typename... Args>
-    ParticleDynamicsGroup addStateDynamics(StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
+    ParticleDynamicsGroup &addStateDynamics(StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
     {
-        ParticleDynamicsGroup group;
+        ParticleDynamicsGroup &group = addParticleDynamicsGroup();
         for (auto &identifier : identifiers)
         {
             group.add(&addStateDynamics<UpdateType>(*identifier, std::forward<Args>(args)...));
@@ -274,9 +284,9 @@ class ParticleMethodContainer : public BaseMethodContainer
 
     template <template <typename...> class UpdateType, typename... ControlParameters,
               class DynamicsIdentifier, typename... Args>
-    ParticleDynamicsGroup addStateDynamics(StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
+    ParticleDynamicsGroup &addStateDynamics(StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
     {
-        ParticleDynamicsGroup group;
+        ParticleDynamicsGroup &group = addParticleDynamicsGroup();
         for (auto &identifier : identifiers)
         {
             group.add(&addStateDynamics<UpdateType, ControlParameters...>(*identifier, std::forward<Args>(args)...));

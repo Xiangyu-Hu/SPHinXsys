@@ -144,7 +144,7 @@ are defined form the coordinates based on the geometric parameters.
 		{
 			/** Geomtry definition. */
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}
 	};
@@ -159,8 +159,8 @@ are defined form the coordinates based on the geometric parameters.
 		{
 			/** Geomtry definition. */
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(createInnerWallShape(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createInnerWallShape(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createWaterBlockShape(), ShapeBooleanOps::sub);
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}
 	};
@@ -177,8 +177,8 @@ are defined form the coordinates based on the geometric parameters.
 			std::vector<Vecd> outer_shape = createOuterWallShape();
 			std::vector<Vecd> inner_shape = createInnerWallShape();
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(outer_shape, ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(inner_shape, ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(outer_shape, ShapeBooleanOps::add);
+			multi_polygon.addPolygon(inner_shape, ShapeBooleanOps::sub);
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}
 	};

@@ -29,7 +29,12 @@
 #ifndef GENERAL_REDUCE_CK_H
 #define GENERAL_REDUCE_CK_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include "external_force.h"
+
+#include <string>
+#include <utility>
 
 namespace SPH
 {

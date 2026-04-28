@@ -26,16 +26,20 @@
  * @author  Chi Zhang and Xiangyu Hu
  */
 
-#ifndef MESH_WITH_DATA_PACKAGES_H
-#define MESH_WITH_DATA_PACKAGES_H
+#ifndef SPARES_MESH_FIELD_H
+#define SPARES_MESH_FIELD_H
 
 #include "base_mesh.hpp"
-
 #include "data_package_utility.hpp"
 #include "execution_policy.h"
 
+#include "tbb/concurrent_vector.h"
+
 namespace SPH
 {
+template <typename T>
+using ConcurrentVec = tbb::concurrent_vector<T>;
+
 template <int PKG_SIZE>
 class PackageMesh : public Mesh
 {
@@ -176,4 +180,4 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
     void writePackageVariablesToPltByMesh(UnsignedInt resolution_level, std::ofstream &output_file);
 };
 } // namespace SPH
-#endif // MESH_WITH_DATA_PACKAGES_H
+#endif // SPARES_MESH_FIELD_H

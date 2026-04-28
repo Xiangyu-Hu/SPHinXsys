@@ -30,17 +30,20 @@
 #define IO_ENVIRONMENT_H
 
 #include "ownership.h"
-#include "parameterization.h"
+
+#include <spdlog/spdlog.h>
 
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <memory>
 #include <sstream>
 namespace fs = std::filesystem;
 
 namespace SPH
 {
 class SPHSystem;
+class ParameterizationIO;
 
 /**
  * @class IOEnvironment
@@ -53,14 +56,14 @@ class IOEnvironment
     UniquePtrKeeper<ParameterizationIO> parameterization_io_keeper_;
 
   public:
-    explicit IOEnvironment(SPHSystem &sph_system);
-    virtual ~IOEnvironment() {};
+    explicit IOEnvironment();
+    virtual ~IOEnvironment();
     void resetForRestart();
     ParameterizationIO *defineParameterizationIO();
     void appendOutputFolder(const std::string &append_name);
-    void resetOutputFolder(const std::string &new_name);
-    void resetRestartFolder(const std::string &new_name);
-    void resetReloadFolder(const std::string &new_name);
+    void resetOutputFolder(const std::string &new_name, bool keep_existing = false);
+    void resetRestartFolder(const std::string &new_name, bool keep_existing = false);
+    void resetReloadFolder(const std::string &new_name, bool keep_existing = false);
     void reinitializeReloadFolder();
     std::string InputFolder() const { return input_folder_; }
     std::string OutputFolder() const { return output_folder_; }
@@ -68,11 +71,21 @@ class IOEnvironment
     std::string ReloadFolder() const { return reload_folder_; }
 
   protected:
-    SPHSystem &sph_system_;
     std::string input_folder_;
     std::string output_folder_;
     std::string restart_folder_;
     std::string reload_folder_;
+
+    void setOutputFolder(const std::string &folder_name);
 };
+
+namespace IO
+{
+IOEnvironment &initEnvironment();
+IOEnvironment &getEnvironment();
+std::shared_ptr<spdlog::logger> initLogger(); // Call once at startup
+std::shared_ptr<spdlog::logger> getLogger();  // Access logger
+} // namespace IO
+
 } // namespace SPH
 #endif // IO_ENVIRONMENT_H

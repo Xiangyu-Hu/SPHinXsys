@@ -30,7 +30,7 @@
 #ifndef SOLID_CONSTRAINT_H
 #define SOLID_CONSTRAINT_H
 
-#include "all_simbody.h"
+#include "body_part_for_simbody.h"
 #include "general_constraint_ck.h"
 #include "general_reduce_ck.h"
 

@@ -108,7 +108,7 @@ The fluid body is created and the water block is defined.
 			/** Geomerty definition. */
 			std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
 			body_shape_ = new ComplexShape(body_name);
-			body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
+			body_shape_->addPolygon(water_block_shape, ShapeBooleanOps::add);
 		}
 	};
 	/**
@@ -166,8 +166,8 @@ The shape of the wall is created and the wall boundary is defined.
 			std::vector<Vecd> outer_wall_shape = CreatOuterWallShape();
 			std::vector<Vecd> inner_wall_shape = CreatInnerWallShape();
 			body_shape_ = new ComplexShape(body_name);
-			body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-			body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::add);
+			body_shape_->addPolygon(outer_wall_shape, ShapeBooleanOps::add);
+			body_shape_->addPolygon(inner_wall_shape, ShapeBooleanOps::add);
 		}
 	};
 
@@ -201,7 +201,7 @@ Then creat the gate shape and define the gate body.
 			/** Geomerty definition. */
 			std::vector<Vecd> gate_shape = CreatGateShape();
 			body_shape_ = new ComplexShape(body_name);
-			body_shape_->addAPolygon(gate_shape, ShapeBooleanOps::add);
+			body_shape_->addPolygon(gate_shape, ShapeBooleanOps::add);
 		}
 	};
 
@@ -252,11 +252,11 @@ Thus, the gate constrain needs to be defined.
 			/* Geometry defination */
 			std::vector<Vecd> gate_constrain_shape_left = CreatGateConstrainShapeLeft();
 			body_part_shape_ = new ComplexShape(constrianed_region_name);
-			body_part_shape_->addAPolygon(gate_constrain_shape_left, ShapeBooleanOps::add);
+			body_part_shape_->addPolygon(gate_constrain_shape_left, ShapeBooleanOps::add);
 	
 			/* Geometry defination */
 			std::vector<Vecd> gate_constrain_shape_right = CreatGateConstrainShapeRight();
-			body_part_shape_->addAPolygon(gate_constrain_shape_right, ShapeBooleanOps::add);
+			body_part_shape_->addPolygon(gate_constrain_shape_right, ShapeBooleanOps::add);
 
 			//tag the constrained particle
 			tagBodyPart();

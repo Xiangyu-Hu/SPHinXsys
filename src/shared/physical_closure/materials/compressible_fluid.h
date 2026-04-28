@@ -30,6 +30,7 @@
 #pragma once
 
 #include "base_material.h"
+#include "common_functors.h"
 
 namespace SPH
 {

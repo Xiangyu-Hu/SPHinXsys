@@ -21,7 +21,7 @@ BaseCellLinkedList::BaseCellLinkedList(
 //=================================================================================================//
 void BaseCellLinkedList::clearCellLists()
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, total_number_of_cells_),
         [&](const IndexRange &r)
         {
@@ -36,7 +36,7 @@ void BaseCellLinkedList::clearCellLists()
 void BaseCellLinkedList::UpdateCellListData(BaseParticles &base_particles)
 {
     Vecd *pos = base_particles.ParticlePositions();
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, total_number_of_cells_),
         [&](const IndexRange &r)
         {
@@ -86,7 +86,7 @@ void BaseCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     clearCellLists();
     Vecd *pos_n = base_particles.ParticlePositions();
     UnsignedInt total_real_particles = base_particles.TotalRealParticles();
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, total_real_particles),
         [&](const IndexRange &r)
         {
@@ -170,8 +170,8 @@ CellLinkedList<SPHAdaptation>::CellLinkedList(BoundingBoxd tentative_bounds, Rea
       mesh_(&getCoarsestMesh())
 {
     UnsignedInt index_list_size = SMAX(base_particles.ParticlesBound(), total_number_of_cells_);
-    dv_particle_index_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size);
-    dv_cell_offset_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("CellOffset", total_number_of_cells_ + 1);
+    dv_particle_index_ = createUniqueEntity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size);
+    dv_cell_offset_ = createUniqueEntity<UnsignedInt, DiscreteVariable>("CellOffset", total_number_of_cells_ + 1);
 }
 //=================================================================================================//
 CellLinkedList<SPHAdaptation>::CellLinkedListMesh::CellLinkedListMesh(
@@ -228,8 +228,8 @@ CellLinkedList<AdaptiveSmoothingLength>::CellLinkedList(
       h_level_(adaptation_.dvSmoothingLengthLevel()->Data())
 {
     UnsignedInt index_list_size = SMAX(base_particles.ParticlesBound(), total_number_of_cells_);
-    dv_particle_index_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size);
-    dv_cell_offset_ = createUniqueEnity<UnsignedInt, DiscreteVariable>("CellOffset", total_number_of_cells_ + 1);
+    dv_particle_index_ = createUniqueEntity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size);
+    dv_cell_offset_ = createUniqueEntity<UnsignedInt, DiscreteVariable>("CellOffset", total_number_of_cells_ + 1);
 }
 //=================================================================================================//
 UnsignedInt CellLinkedList<AdaptiveSmoothingLength>::getMeshLevel(Real particle_cutoff_radius)

@@ -5,6 +5,7 @@
 
 #include "neighborhood.h"
 
+#include "adaptation.h"
 #include "all_complex_bodies.h"
 #include "base_particle_dynamics.h"
 #include "base_particles.hpp"

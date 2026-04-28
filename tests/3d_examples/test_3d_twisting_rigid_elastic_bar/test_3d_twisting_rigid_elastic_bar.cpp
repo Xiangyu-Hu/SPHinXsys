@@ -261,7 +261,7 @@ void run_rigid_elastic_coupling(int res_factor)
         std::string path = "./output_res_x" + std::to_string(res_factor);
         fs::remove_all(path);
         fs::create_directory(path);
-        system.getIOEnvironment().resetOutputFolder(path);
+        IO::getEnvironment().resetOutputFolder(path);
     }
 
     // Create objects
