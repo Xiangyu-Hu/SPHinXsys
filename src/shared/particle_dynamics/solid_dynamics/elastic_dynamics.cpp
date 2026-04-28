@@ -68,6 +68,9 @@ BaseElasticIntegration::
       F_(particles_->registerStateVariableData<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
       dF_dt_(particles_->registerStateVariableData<Matd>("DeformationRate"))
       {
+        // Kinematic and stress state required for restart — cannot be recomputed from position alone.
+        // DeformationRate needed for Verlet half-step predictor (dF/dt × dt/2).
+        // LinearGradientCorrectionMatrix B0 computed from reference configuration — preserved for consistency.
         particles_->addEvolvingVariable<Vecd>("Velocity");
         particles_->addEvolvingVariable<Vecd>("Force");
         particles_->addEvolvingVariable<Matd>("DeformationGradient");

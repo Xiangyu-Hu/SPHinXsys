@@ -177,12 +177,16 @@ int main(int ac, char *av[])
     size_t number_of_iterations = sph_system.RestartStep();
     if (sph_system.RestartStep() != 0)
     {
+        // Restore physical time and all evolving particle variables from XML restart file
         physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
+        // Rebuild spatial hash from restored positions (required before neighbor search)
         water_block.updateCellLinkedList();
         fish_body.updateCellLinkedList();
+        // Re-sort particles for cache locality; invalidates CLL so rebuild immediately after
         particle_sorting.exec();
-        water_block.updateCellLinkedList();
+        water_block.updateCellLinkedList();  // rebuild CLL after sorting — sort invalidates it
         fish_body.updateCellLinkedList();
+        // Reconstruct neighbor lists from restored + sorted particle positions
         water_block_complex.updateConfiguration();
         fish_contact.updateConfiguration();
     }
@@ -212,9 +216,9 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < D_Time)
         {
-            // Write restart at START of step (pre-physics positions) so that
-            // update_fluid_density on restart sees normal particle spacing near
-            // the fish surface, not the post-acoustic compressed/rarefied state.
+            // Write restart at start of step before any physics — captures pre-acoustic positions.
+            // Writing after pressure_relaxation half-steps would shift particle positions near
+            // the fish surface, causing density overcounting on reload and a pressure spike.
             if (number_of_iterations % 500 == 0 && number_of_iterations != sph_system.RestartStep())
             {
                 restart_io.writeToFile(number_of_iterations);
@@ -308,10 +312,12 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_water_mechanical_energy.generateDataBase(0.3);
+        // Build DTW reference database from current run (use --regression 1 flag)
+        write_water_mechanical_energy.generateDataBase(0.3);  // 0.3 = DTW threshold
     }
     else if (sph_system.RestartStep() == 0)
     {
+        // Verify current full run matches reference database — fails if physics changed
         write_water_mechanical_energy.testResult();
     }
 

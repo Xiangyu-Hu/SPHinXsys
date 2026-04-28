@@ -16,6 +16,8 @@ PressureForceFromFluid<FluidIntegration2ndHalfType>::
       acc_ave_(solid_.AverageAcceleration(particles_)),
       n_(particles_->getVariableDataByName<Vecd>("NormalDirection"))
 {
+    // AverageVelocity used in FSI dummy particle BC: v_dummy = 2*vel_ave - v_fluid.
+    // Must be restored on restart to ensure correct FSI coupling from the first acoustic step.
     particles_->addEvolvingVariable<Vecd>("AverageVelocity");
     particles_->addEvolvingVariable<Vecd>("AverageAcceleration");
     for (size_t k = 0; k != contact_particles_.size(); ++k)

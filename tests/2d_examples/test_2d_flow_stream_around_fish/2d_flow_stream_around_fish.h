@@ -174,11 +174,14 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
           active_strain_(particles_->getVariableDataByName<Matd>("ActiveStrain")),
           physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) 
         {
-            /** Register as evolving variables for restart file saving/restoring. */
+            // Register as evolving so restart files save/restore muscle and material state.
+            // MaterialID assigned at t=0 from undeformed positions — must persist across restart
+            // since deformed positions at restart time would give wrong material assignments.
+            // InitialPosition (pos0) needed for muscle wave formula and Total Lagrangian B0.
             particles_->addEvolvingVariable<Matd>("ActiveStrain");
             particles_->addEvolvingVariable<int>("MaterialID");
             particles_->addEvolvingVariable<Vecd>("InitialPosition");
-            /** Now get pointers after registration. */
+            // Re-fetch variable data after registering them as evolving variables.
             material_id_ = particles_->getVariableDataByName<int>("MaterialID");
             active_strain_ = particles_->getVariableDataByName<Matd>("ActiveStrain");
         };
