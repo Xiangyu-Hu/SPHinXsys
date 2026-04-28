@@ -3,6 +3,8 @@
 #include "adaptation.h"
 #include "base_general_dynamics.h"
 
+#include <cmath>
+
 namespace SPH
 {
 //=========================================================================================================//
@@ -68,7 +70,13 @@ BaseElasticIntegration::
       force_(particles_->registerStateVariableData<Vecd>("Force")),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
       F_(particles_->registerStateVariableData<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
-      dF_dt_(particles_->registerStateVariableData<Matd>("DeformationRate")) {}
+      dF_dt_(particles_->registerStateVariableData<Matd>("DeformationRate")),
+      deformation_gradient_determinant_check_(inner_relation.getSPHBody()) {}
+//=================================================================================================//
+void BaseElasticIntegration::setupDynamics(Real dt)
+{
+    deformation_gradient_determinant_check_.exec(dt);
+}
 //=================================================================================================//
 BaseIntegration1stHalf::
     BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
@@ -141,7 +149,7 @@ void Integration1stHalfCauchy::initialization(size_t index_i, Real dt)
     rho_[index_i] = rho0_ / J;
     Matd inverse_F_T = F_T.inverse();
     Matd almansi_strain = 0.5 * (Matd::Identity() - (F_[index_i] * F_T).inverse());
-    // obtain the first Piola-Kirchhoff stress from the  Cauchy stress
+    // obtain the first Piola-Kirchhoff stress from the Cauchy stress
     stress_PK1_B_[index_i] = J * elastic_solid_.StressCauchy(almansi_strain, index_i) *
                              inverse_F_T * B_[index_i];
 }
@@ -186,6 +194,46 @@ void Integration1stHalfPK2RightCauchy::initialization(size_t index_i, Real dt)
     // add damping stress
     const Matd numerical_damping_stress = elastic_solid_.NumericalDampingRightCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_ / h_ratio_[index_i], index_i);
     stress_PK1_B_[index_i] += F_[index_i] * 0.5 * numerical_dissipation_factor_ * numerical_damping_stress;
+}
+//=================================================================================================//
+DeformationGradientDeterminantCheck::
+    DeformationGradientDeterminantCheck(SPHBody &sph_body, Real lower_bound)
+    : LocalDynamicsReduce<ReduceOR>(sph_body),
+      F_(particles_->getVariableDataByName<Matd>("DeformationGradient")),
+      lower_bound_(lower_bound)
+{
+    quantity_name_ = "DeformationGradientDeterminantCheck";
+}
+//=================================================================================================//
+bool DeformationGradientDeterminantCheck::reduce(size_t index_i, Real dt)
+{
+    Real determinant = F_[index_i].determinant();
+    return !std::isfinite(determinant) || determinant <= lower_bound_;
+}
+//=================================================================================================//
+bool DeformationGradientDeterminantCheck::outputResult(bool reduced_value)
+{
+    if (!reduced_value)
+    {
+        return false;
+    }
+
+    UnsignedInt total_real_particles = particles_->TotalRealParticles();
+    UnsignedInt first_bad_particle = total_real_particles;
+    UnsignedInt worst_particle = 0;
+    Real first_bad_det = Real(0);
+    Real min_det = MaxReal;
+
+    for (UnsignedInt i = 0; i < total_real_particles; ++i)
+    {
+        Real J = F_[i].determinant();
+        if (!std::isfinite(J) || J <= lower_bound_)
+        {
+            std::cerr << "Deformation gradient determinant check failed at particle " << i 
+                      << " with determinant " << J << std::endl;
+            return true;
+        }
+    }
 }
 //=================================================================================================//
 } // namespace solid_dynamics

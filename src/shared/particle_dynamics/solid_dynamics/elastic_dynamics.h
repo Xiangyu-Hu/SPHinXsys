@@ -128,6 +128,25 @@ class DeformationGradientBySummation : public LocalDynamics, public DataDelegate
 };
 
 /**
+ * @class DeformationGradientDeterminantCheck
+ * @brief Check whether deformation gradient determinant remains above a lower bound.
+ * The class is designed as a standalone monitor and can also be used internally.
+ */
+class DeformationGradientDeterminantCheck : public LocalDynamicsReduce<ReduceOR>
+{
+  public:
+    explicit DeformationGradientDeterminantCheck(SPHBody &sph_body, Real lower_bound = 0.0);
+    virtual ~DeformationGradientDeterminantCheck() {};
+
+    bool reduce(size_t index_i, Real dt = 0.0);
+    virtual bool outputResult(bool reduced_value) override;
+
+  protected:
+    Matd *F_;
+    Real lower_bound_;
+};
+
+/**
  * @class BaseElasticIntegration
  * @brief base class for elastic relaxation
  */
@@ -136,11 +155,13 @@ class BaseElasticIntegration : public LocalDynamics, public DataDelegateInner
   public:
     explicit BaseElasticIntegration(BaseInnerRelation &inner_relation);
     virtual ~BaseElasticIntegration() {};
+    virtual void setupDynamics(Real dt = 0.0) override;
 
   protected:
     Real *Vol_;
     Vecd *pos_, *vel_, *force_;
     Matd *B_, *F_, *dF_dt_;
+    ReduceDynamics<DeformationGradientDeterminantCheck> deformation_gradient_determinant_check_;
 };
 
 /**
@@ -349,6 +370,7 @@ class Integration2ndHalf : public BaseElasticIntegration
 
     void update(size_t index_i, Real dt = 0.0);
 };
+
 } // namespace solid_dynamics
 } // namespace SPH
 #endif // ELASTIC_DYNAMICS_H
