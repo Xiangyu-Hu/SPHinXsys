@@ -17,7 +17,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
       total_body_parts_(0)
 {
     sph_body.assignBaseParticles(this);
-    sv_total_real_particles_ = registerSingularVariable<UnsignedInt>("TotalRealParticles");
+    sv_total_real_particles_ = registerSingleVariable<UnsignedInt>("TotalRealParticles");
 }
 //=================================================================================================//
 BaseParticles::~BaseParticles() = default;

@@ -43,7 +43,7 @@ class SPHSystem;
 class IOEnvironment;
 class SPHBody;
 template <typename T>
-class SingularVariable;
+class SingleVariable;
 template <typename ReturnType>
 class BaseDynamics;
 using SPHBodyVector = StdVec<SPHBody *>;
@@ -64,7 +64,7 @@ class BaseIO
   protected:
     SPHSystem &sph_system_;
     IOEnvironment &io_environment_;
-    SingularVariable<Real> *sv_physical_time_;
+    SingleVariable<Real> *sv_physical_time_;
 
     std::string convertPhysicalTimeToString(Real physical_time);
 

@@ -157,7 +157,7 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
   public:
     explicit DiffuseLevelSetSign(
         SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
-        SingularVariable<UnsignedInt> &sv_count_modified);
+        SingleVariable<UnsignedInt> &sv_count_modified);
     virtual ~DiffuseLevelSetSign() {};
 
     class UpdateKernel
@@ -178,7 +178,7 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
     PackageVariable<Real> &pmv_phi_;
     PackageVariable<int> &pmv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
-    SingularVariable<UnsignedInt> &sv_count_modified_;
+    SingleVariable<UnsignedInt> &sv_count_modified_;
 };
 
 class LevelSetSignFromFine : public BaseMeshLocalDynamics
@@ -276,7 +276,7 @@ class CorrectFinestLevelSetSign : public BaseDynamics<void>
     }
 
   private:
-    SingularVariable<UnsignedInt> sv_count_modified_{"CountModifiedData", 1};
+    SingleVariable<UnsignedInt> sv_count_modified_{"CountModifiedData", 1};
     MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface;
     MeshInnerDynamics<ExecutionPolicy, DiffuseLevelSetSign> diffuse_level_set_sign;
 };

@@ -24,7 +24,7 @@ template <class PolicyType>
 DeviceOnlyVariableArray<DataType, VariableType>::
     DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
                             VariableArray<DataType, VariableType> *host_variable_array)
-    : Entity(host_variable_array->Name()), device_only_data_array_(nullptr)
+    : Quantity(host_variable_array->Name()), device_only_data_array_(nullptr)
 {
     StdVec<VariableType<DataType> *> host_variables = host_variable_array->getVariables();
     size_t data_size = host_variable_array->getArraySize();

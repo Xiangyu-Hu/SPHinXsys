@@ -11,7 +11,7 @@ SurfaceTensionStress::
       color_gradient_(particles_->registerStateVariableData<Vecd>("ColorGradient")),
       norm_direction_(particles_->registerStateVariableData<Vecd>("NormDirection")),
       surface_tension_stress_(particles_->registerStateVariableData<Matd>("SurfaceTensionStress")),
-      surface_tension_coeff_(*(particles_->registerSingularVariable<Real>("SurfaceTensionCoef", surface_tension_coeff)->Data()))
+      surface_tension_coeff_(*(particles_->registerSingleVariable<Real>("SurfaceTensionCoef", surface_tension_coeff)->Data()))
 {
     particles_->addEvolvingVariable<Vecd>("ColorGradient");
     particles_->addVariableToWrite<Vecd>("ColorGradient");

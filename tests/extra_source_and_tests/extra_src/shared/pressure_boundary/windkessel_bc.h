@@ -16,10 +16,10 @@ class TargetOutletPressureWindkessel : public BaseLocalDynamics<BodyPartByCell>
           part_id_(aligned_box_part.getPartID()),
           Rp_(0.0), C_(0.0), Rd_(0.0), delta_t_(0.0),
           Q_n_(0.0), Q_0_(0.0), p_n_(80 * 133.32), p_0_(80 * 133.32),
-          flow_rate_(*(this->particles_->registerSingularVariable<Real>("FlowRate" + std::to_string(part_id_ - 1))->Data())),
+          flow_rate_(*(this->particles_->registerSingleVariable<Real>("FlowRate" + std::to_string(part_id_ - 1))->Data())),
           current_flow_rate_(0.0), previous_flow_rate_(0.0),
           M_n_(0.0), current_mass_flow_rate_(0.0), previous_mass_flow_rate_(0.0),
-          acc_mass_flow_rate_(*(this->particles_->registerSingularVariable<Real>("AccMassFlowRate" + std::to_string(part_id_ - 1))->Data())),
+          acc_mass_flow_rate_(*(this->particles_->registerSingleVariable<Real>("AccMassFlowRate" + std::to_string(part_id_ - 1))->Data())),
           physical_time_(sph_system_->svPhysicalTime().Data()) {};
     virtual ~TargetOutletPressureWindkessel() {};
 
@@ -157,8 +157,8 @@ class BidirectionalBufferWindkessel
               buffer_indicator_(particles_->getVariableDataByName<int>("BufferIndicator")),
               upper_bound_fringe_(0.5 * sph_body_->getSPHBodyResolutionRef()),
               physical_time_(sph_system_->svPhysicalTime().Data()),
-              flow_rate_(*(this->particles_->template getSingularVariableByName<Real>("FlowRate" + std::to_string(part_id_ - 1))->Data())),
-              acc_mass_flow_rate_(*(this->particles_->template getSingularVariableByName<Real>("AccMassFlowRate" + std::to_string(part_id_ - 1))->Data())),
+              flow_rate_(*(this->particles_->template getSingleVariableByName<Real>("FlowRate" + std::to_string(part_id_ - 1))->Data())),
+              acc_mass_flow_rate_(*(this->particles_->template getSingleVariableByName<Real>("AccMassFlowRate" + std::to_string(part_id_ - 1))->Data())),
               target_pressure_(target_pressure)
         {
             particle_buffer_.checkParticlesReserved();
@@ -217,8 +217,8 @@ class BidirectionalBufferWindkessel
               rho_(particles_->getVariableDataByName<Real>("Density")),
               Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
               buffer_indicator_(particles_->getVariableDataByName<int>("BufferIndicator")),
-              flow_rate_(*(this->particles_->template getSingularVariableByName<Real>("FlowRate" + std::to_string(part_id_ - 1))->Data())),
-              acc_mass_flow_rate_(*(this->particles_->template getSingularVariableByName<Real>("AccMassFlowRate" + std::to_string(part_id_ - 1))->Data())) {};
+              flow_rate_(*(this->particles_->template getSingleVariableByName<Real>("FlowRate" + std::to_string(part_id_ - 1))->Data())),
+              acc_mass_flow_rate_(*(this->particles_->template getSingleVariableByName<Real>("AccMassFlowRate" + std::to_string(part_id_ - 1))->Data())) {};
         virtual ~Deletion() {};
 
         void update(size_t index_i, Real dt = 0.0)
@@ -298,7 +298,7 @@ class AreaAverageFlowRate : public ReduceSumType
     explicit AreaAverageFlowRate(DynamicsIdentifier &identifier, Real outlet_area, Args &&...args)
         : ReduceSumType(identifier, std::forward<Args>(args)...),
           part_id_(identifier.getPartID()),
-          tansient_flow_rate_(*(this->particles_->template registerSingularVariable<Real>("TransientVolumeFlowRate" + std::to_string(part_id_ - 1))->Data())),
+          tansient_flow_rate_(*(this->particles_->template registerSingleVariable<Real>("TransientVolumeFlowRate" + std::to_string(part_id_ - 1))->Data())),
           outlet_area_(outlet_area), physical_time_(this->sph_system_->template getSystemVariableDataByName<Real>("PhysicalTime")){};
     virtual ~AreaAverageFlowRate() {};
 

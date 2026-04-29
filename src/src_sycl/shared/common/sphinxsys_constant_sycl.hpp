@@ -23,7 +23,7 @@ template <typename DataType>
 template <class PolicyType>
 DeviceOnlyConstantArray<DataType>::DeviceOnlyConstantArray(
     const DeviceExecution<PolicyType> &ex_policy, ConstantArray<DataType> *host_constant)
-    : Entity(host_constant->Name()), device_only_data_(nullptr)
+    : Quantity(host_constant->Name()), device_only_data_(nullptr)
 {
     size_t data_size = host_constant->getDataSize();
     DataType *host_data = host_constant->Data();

@@ -47,7 +47,7 @@ On lines 120 and 121 there are 4 explicit type conversions:
 and 2 from `Vec3d` to `SimTKVec3`.
 On line 121, beside two conversions,
 it involves another value pointed by a device-shared USM pointer for
-`SingularVariable<SimTKVec3>`.
+`SingleVariable<SimTKVec3>`.
 On line 122, there is an operation (cross production) for `SimTKVec3`.
 On line 123, the constructor of type `SimTK::SpatialVec` is called.
 

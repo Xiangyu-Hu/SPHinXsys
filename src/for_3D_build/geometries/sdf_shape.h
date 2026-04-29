@@ -39,13 +39,17 @@
 namespace SPH
 {
 
-class SDFBase : public Entity
+class SDFBase
 {
   public:
-    explicit SDFBase(const std::string &name) : Entity(name) {};
+    explicit SDFBase(const std::string &name) : name_(name) {};
     virtual ~SDFBase() {};
     virtual Real operator()(const Vec3d &point) const = 0;
     virtual BoundingBoxd findBounds() const = 0;
+    std::string getName() { return name_; };
+
+  protected:
+    std::string name_;
 };
 
 template <typename SDFPrimitive>

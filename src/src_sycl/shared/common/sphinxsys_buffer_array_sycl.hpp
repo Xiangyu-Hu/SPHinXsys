@@ -37,7 +37,7 @@ template <class PolicyType>
 DeviceVariableBufferArray<DataType>::
     DeviceVariableBufferArray(const DeviceExecution<PolicyType> &ex_policy,
                               VariableBufferArray<DataType> *host_buffer_array)
-    : Entity(host_buffer_array->Name()),
+    : Quantity(host_buffer_array->Name()),
       array_size_(host_buffer_array->getArraySize()),
       buffer_size_(host_buffer_array->getBufferSize()),
       device_only_buffer_array_(allocateDeviceOnly<DataArray<DataType>>(array_size_)),

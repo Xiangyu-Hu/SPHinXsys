@@ -387,7 +387,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     TimeInterval interval_computing_time_step;

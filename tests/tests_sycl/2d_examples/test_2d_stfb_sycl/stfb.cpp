@@ -215,8 +215,8 @@ int main(int ac, char *av[])
     //	Define the multi-body system
     //----------------------------------------------------------------------
     SimTK::MultibodySystem MBsystem;
-    SimTK::SimbodyMatterSubsystem matter(MBsystem);                // the bodies or matter of the system
-    SimTK::GeneralForceSubsystem forces(MBsystem);                 // the forces of the system
+    SimTK::SimbodyMatterSubsystem matter(MBsystem);    // the bodies or matter of the system
+    SimTK::GeneralForceSubsystem forces(MBsystem);     // the forces of the system
     SimbodyStateEngine simbody_state_engine(MBsystem); // the state engine of the system
 
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
@@ -283,8 +283,8 @@ int main(int ac, char *av[])
     auto &write_structure_position = main_methods.addObserveRegression<
         RegressionTestDynamicTimeWarping, Vecd>("Position", observer_contact);
 
-    SingularVariable<SimTK::SpatialVec> sv_action_on_structure("ActionOnStructure", SimTK::SpatialVec(0));
-    SingularVariableRecording<SimTK::SpatialVec> action_on_structure_recording(sph_system, &sv_action_on_structure);
+    SingleVariable<SimTK::SpatialVec> sv_action_on_structure("ActionOnStructure", SimTK::SpatialVec(0));
+    SingleVariableRecording<SimTK::SpatialVec> action_on_structure_recording(sph_system, &sv_action_on_structure);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

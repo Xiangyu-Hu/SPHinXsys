@@ -29,9 +29,9 @@
 #ifndef IO_OBSERVATION_H
 #define IO_OBSERVATION_H
 
+#include "general_dynamics/general_interpolation.h"
 #include "general_interpolation.h"
 #include "io_plt.hpp"
-#include "general_dynamics/general_interpolation.h"
 
 namespace SPH
 {
@@ -85,17 +85,17 @@ class ObservedQuantityRecording<DataType> : public BaseQuantityRecording
     {
         if (!header_written_)
         {
-          std::ofstream out_file(filefullpath_output_.c_str(), std::ios::out);
-          out_file << "run_time" << "   ";
-          DataType *interpolated_quantities = getObservedQuantity();
-          for (size_t i = 0; i != number_of_observe_; ++i)
-          {
-            std::string quantity_name_i = quantity_name_ + "[" + std::to_string(i) + "]";
-            plt_engine_.writeAQuantityHeader(out_file, interpolated_quantities[i], quantity_name_i);
-          }
-          out_file << "\n";
-          out_file.close();
-          header_written_ = true;
+            std::ofstream out_file(filefullpath_output_.c_str(), std::ios::out);
+            out_file << "run_time" << "   ";
+            DataType *interpolated_quantities = getObservedQuantity();
+            for (size_t i = 0; i != number_of_observe_; ++i)
+            {
+                std::string quantity_name_i = quantity_name_ + "[" + std::to_string(i) + "]";
+                plt_engine_.writeAQuantityHeader(out_file, interpolated_quantities[i], quantity_name_i);
+            }
+            out_file << "\n";
+            out_file.close();
+            header_written_ = true;
         }
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_->getValue() << "   ";
@@ -152,15 +152,15 @@ class ReducedQuantityRecording<LocalReduceMethodType> : public BaseQuantityRecor
 
     virtual void writeToFile(size_t iteration_step = 0) override
     {
-      if (!header_written_)
-      {
-        std::ofstream out_file(filefullpath_output_.c_str(), std::ios::out);
-        out_file << "\"run_time\"" << "   ";
-        plt_engine_.writeAQuantityHeader(out_file, reduced_quantity_, quantity_name_);
-        out_file << "\n";
-        out_file.close();
-        header_written_ = true;
-      }
+        if (!header_written_)
+        {
+            std::ofstream out_file(filefullpath_output_.c_str(), std::ios::out);
+            out_file << "\"run_time\"" << "   ";
+            plt_engine_.writeAQuantityHeader(out_file, reduced_quantity_, quantity_name_);
+            out_file << "\n";
+            out_file.close();
+            header_written_ = true;
+        }
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_->getValue() << "   ";
         reduced_quantity_ = reduce_method_.exec();
@@ -181,35 +181,35 @@ class ReducedQuantityRecording<LocalReduceMethodType> : public BaseQuantityRecor
 };
 
 template <typename DataType>
-class SingularVariableRecording : public BaseQuantityRecording
+class SingleVariableRecording : public BaseQuantityRecording
 {
   protected:
-    SingularVariable<DataType> *variable_;
+    SingleVariable<DataType> *variable_;
 
   public:
     typedef DataType VariableType;
     VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
-    SingularVariableRecording(SPHSystem &sph_system, SingularVariable<DataType> *variable)
-        : BaseQuantityRecording(sph_system, "SingularVariable"),
+    SingleVariableRecording(SPHSystem &sph_system, SingleVariable<DataType> *variable)
+        : BaseQuantityRecording(sph_system, "SingleVariable"),
           variable_(variable)
     {
         setFullPath(variable->Name());
     };
 
-    virtual ~SingularVariableRecording() {};
+    virtual ~SingleVariableRecording() {};
 
     virtual void writeToFile(size_t iteration_step = 0) override
     {
         if (!header_written_)
         {
-          std::ofstream out_file(filefullpath_output_.c_str(), std::ios::out);
-          out_file << "\"run_time\"" << "   ";
-          plt_engine_.writeAQuantityHeader(out_file, variable_->getValue(), quantity_name_);
-          out_file << "\n";
-          out_file.close();
-          header_written_ = true;
+            std::ofstream out_file(filefullpath_output_.c_str(), std::ios::out);
+            out_file << "\"run_time\"" << "   ";
+            plt_engine_.writeAQuantityHeader(out_file, variable_->getValue(), quantity_name_);
+            out_file << "\n";
+            out_file.close();
+            header_written_ = true;
         }
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_->getValue() << "   ";

@@ -88,7 +88,7 @@ struct BoundaryPressurePrescribed
 class ResetBufferCorrectionMatrixCK : public BaseLocalDynamics<AlignedBoxByCell>
 {
   private:
-    SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingleVariable<AlignedBox> *sv_aligned_box_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Matd> *dv_B_;
     Real radius_;
@@ -398,7 +398,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
 
     // --- Section 17: Main Simulation Loop to Find Baseline ---
     {
-        SingularVariable<Real> *sv_physical_time =
+        SingleVariable<Real> *sv_physical_time =
             sph_system.getSystemVariableByName<Real>("PhysicalTime");
         // ─────────────────────────────────────────────────────────────────────────────
         // ─── BEGIN INSERTION: BASELINE PID (PRESSURE-DRIVEN) SECTION

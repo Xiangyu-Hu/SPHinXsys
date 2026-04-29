@@ -41,18 +41,6 @@
 
 namespace SPH
 {
-
-class Entity
-{
-  public:
-    explicit Entity(const std::string &name) : name_(name) {};
-    ~Entity() {};
-    std::string Name() const { return name_; };
-
-  protected:
-    const std::string name_;
-};
-
 class EntityManager
 {
     std::unordered_map<std::type_index, std::unordered_map<std::string, void *>> all_entities_;

@@ -37,13 +37,13 @@ template <typename DataType>
 using DataArray = DataType *;
 
 template <typename DataType, template <typename> class VariableType>
-class VariableArray : public Entity
+class VariableArray : public Quantity
 {
-    UniquePtrKeeper<Entity> device_only_variable_array_keeper_;
+    UniquePtrKeeper<Quantity> device_only_variable_array_keeper_;
 
   public:
     VariableArray(StdVec<VariableType<DataType> *> variables)
-        : Entity("VariableArray"), variables_(variables),
+        : Quantity("VariableArray"), variables_(variables),
           array_size_(variables.size()),
           data_array_(nullptr), delegated_data_array_(nullptr)
     {
@@ -87,7 +87,7 @@ class VariableArray : public Entity
 };
 
 template <typename DataType, template <typename> class VariableType>
-class DeviceOnlyVariableArray : public Entity
+class DeviceOnlyVariableArray : public Quantity
 {
   public:
     template <class PolicyType>

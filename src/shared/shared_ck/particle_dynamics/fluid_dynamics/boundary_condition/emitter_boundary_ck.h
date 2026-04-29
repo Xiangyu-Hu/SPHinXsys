@@ -63,10 +63,10 @@ class EmitterInflowConditionCK : public BaseLocalDynamics<AlignedBoxPartType>
     };
 
   protected:
-    SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingleVariable<AlignedBox> *sv_aligned_box_;
     ConditionFunction inflow_velocity_;
     DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
-    SingularVariable<Real> *sv_physical_time_;
+    SingleVariable<Real> *sv_physical_time_;
 };
 
 template <typename AlignedBoxPartType>
@@ -103,7 +103,7 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<AlignedBoxPartType>
     };
 
   protected:
-    SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingleVariable<AlignedBox> *sv_aligned_box_;
     SpawnRealParticle spawn_real_particle_method_;
     Real rho0_;
     DiscreteVariable<Vecd> *dv_pos_;
@@ -131,8 +131,8 @@ class WithinDisposerIndication : public BaseLocalDynamics<AlignedBoxByCell>
     };
 
   protected:
-    SingularVariable<AlignedBox> *sv_aligned_box_;
-    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    SingleVariable<AlignedBox> *sv_aligned_box_;
+    SingleVariable<UnsignedInt> *sv_total_real_particles_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<int> *dv_life_status_; // 0: alive, 1: to delete
 };

@@ -35,7 +35,7 @@ RedistanceInterface::RedistanceInterface(
 //=============================================================================================//
 DiffuseLevelSetSign::DiffuseLevelSetSign(
     SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
-    SingularVariable<UnsignedInt> &sv_count_modified)
+    SingleVariable<UnsignedInt> &sv_count_modified)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       pmv_phi_(*data_mesh.getPackageVariable<Real>("LevelSet")),
       pmv_near_interface_id_(*data_mesh.getPackageVariable<int>("NearInterfaceID")),

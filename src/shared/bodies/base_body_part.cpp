@@ -60,7 +60,7 @@ void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_me
     dv_particle_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
         part_name_, body_part_particles_.size(), [&](size_t i)
         { return body_part_particles_[i]; });
-    sv_range_size_ = unique_variable_ptrs_.createPtr<SingularVariable<UnsignedInt>>(
+    sv_range_size_ = unique_variable_ptrs_.createPtr<SingleVariable<UnsignedInt>>(
         part_name_ + "_Size", body_part_particles_.size());
 }
 //=================================================================================================//
@@ -96,7 +96,7 @@ void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
     dv_cell_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
         part_name_, cell_indexes.size(), [&](size_t i)
         { return cell_indexes[i]; });
-    sv_range_size_ = unique_variable_ptrs_.createPtr<SingularVariable<UnsignedInt>>(
+    sv_range_size_ = unique_variable_ptrs_.createPtr<SingleVariable<UnsignedInt>>(
         part_name_ + "_Size", cell_indexes.size());
 }
 //=================================================================================================//
@@ -218,7 +218,7 @@ bool NearShapeSurface::checkNearSurface(Vecd cell_position, Real threshold)
 //=================================================================================================//
 AlignedBoxPart::AlignedBoxPart(const std::string &part_name, const AlignedBox &aligned_box)
     : aligned_box_(*sv_aligned_box_keeper_
-                        .createPtr<SingularVariable<AlignedBox>>(part_name, aligned_box)
+                        .createPtr<SingleVariable<AlignedBox>>(part_name, aligned_box)
                         ->Data())
 {
     std::cout << "\n-------------------------------------------------------------" << std::endl;

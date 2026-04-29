@@ -40,15 +40,19 @@
 namespace SPH
 {
 template <typename T, typename = void>
-struct has_setupBaseParticles : std::false_type {};
+struct has_setupBaseParticles : std::false_type
+{
+};
 
 template <typename T>
-struct has_setupBaseParticles<T, std::void_t<decltype(&T::setupBaseParticles)>> : std::true_type {};
+struct has_setupBaseParticles<T, std::void_t<decltype(&T::setupBaseParticles)>> : std::true_type
+{
+};
 
 class BaseCellLinkedList;
 class LevelSetShape;
 class AlignedBox;
-class Entity;
+class Quantity;
 class SPHAdaptation;
 class SPHBody;
 class RealBody;
@@ -58,7 +62,7 @@ class BaseParticles;
 template <typename T>
 class DiscreteVariable;
 template <typename T>
-class SingularVariable;
+class SingleVariable;
 
 template <typename T>
 using ConcurrentVec = tbb::concurrent_vector<T>;
@@ -71,7 +75,7 @@ using namespace std::placeholders;
 class BodyPart
 {
   protected:
-    UniquePtrsKeeper<Entity> unique_variable_ptrs_;
+    UniquePtrsKeeper<Quantity> unique_variable_ptrs_;
 
   public:
     typedef SPHAdaptation Adaptation;
@@ -81,7 +85,7 @@ class BodyPart
     SPHSystem &getSPHSystem();
     std::string getName() const { return alias_.value_or(part_name_); };
     int getPartID() { return part_id_; };
-    SingularVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
+    SingleVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
     SPHAdaptation &getSPHAdaptation() { return sph_adaptation_; };
     BaseCellLinkedList &getCellLinkedList();
 
@@ -114,7 +118,7 @@ class BodyPart
     std::string part_name_;
     std::optional<std::string> alias_;
     SPHAdaptation &sph_adaptation_;
-    SingularVariable<UnsignedInt> *sv_range_size_;
+    SingleVariable<UnsignedInt> *sv_range_size_;
     DiscreteVariable<int> *dv_body_part_id_;
     Vecd *pos_;
 };
@@ -350,12 +354,12 @@ class NearShapeSurface : public BodyPartByCell
 
 class AlignedBoxPart
 {
-    UniquePtrKeeper<SingularVariable<AlignedBox>> sv_aligned_box_keeper_;
+    UniquePtrKeeper<SingleVariable<AlignedBox>> sv_aligned_box_keeper_;
 
   public:
     AlignedBoxPart(const std::string &part_name, const AlignedBox &aligned_box);
     virtual ~AlignedBoxPart();
-    SingularVariable<AlignedBox> *svAlignedBox() { return sv_aligned_box_keeper_.getPtr(); };
+    SingleVariable<AlignedBox> *svAlignedBox() { return sv_aligned_box_keeper_.getPtr(); };
     AlignedBox &getAlignedBox() { return aligned_box_; };
     void writeAlignedBoxToVtp();
 

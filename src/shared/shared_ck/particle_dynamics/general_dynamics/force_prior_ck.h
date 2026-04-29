@@ -87,7 +87,7 @@ class GravityForceCK : public LocalDynamics, public ForcePriorCK
 
   protected:
     const GravityType gravity_;
-    SingularVariable<Real> *sv_physical_time_;
+    SingleVariable<Real> *sv_physical_time_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_mass_;
 };
