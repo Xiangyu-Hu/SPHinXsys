@@ -169,7 +169,7 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 
     /** correct out-plane numerical damping. */
     numerical_damping_scaling_matrix_(Dimensions - 1, Dimensions - 1) = thickness_[index_i] < smoothing_length_ ? thickness_[index_i] : smoothing_length_;
-    
+
     for (int i = 0; i != number_of_gaussian_points_; ++i)
     {
         Matd F_gaussian_point = F_[index_i] + gaussian_point_[i] * F_bending_[index_i] * thickness_[index_i] * 0.5;

@@ -58,7 +58,7 @@ UpdateElasticNormalDirectionCK::UpdateElasticNormalDirectionCK(SPHBody &sph_body
       dv_n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       dv_phi_(particles_->getVariableByName<Real>("SignedDistance")),
       dv_phi0_(particles_->getVariableByName<Real>("InitialSignedDistance")),
-      dv_F_(particles_->getVariableByName<Matd>("DeformationGradient")){}
+      dv_F_(particles_->getVariableByName<Matd>("DeformationGradient")) {}
 //=================================================================================================//
 UpdateAnisotropicMeasure::UpdateAnisotropicMeasure(SPHBody &sph_body)
     : LocalDynamics(sph_body),

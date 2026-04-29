@@ -50,9 +50,12 @@ class Quantity
     explicit Quantity(const std::string &name) : name_(name) {};
     ~Quantity() {};
     std::string Name() const { return name_; };
+    Real getScalingRef() const { return scaling_ref_; };
+    void setScalingRef(Real scaling_ref) { scaling_ref_ = scaling_ref; };
 
   protected:
     const std::string name_;
+    Real scaling_ref_ = Real(1);
 };
 
 template <typename DataType>
@@ -166,7 +169,7 @@ class DiscreteVariable : public Quantity
         if (end_index > data_size_)
         {
             std::cout << "\n Error: trying to fill data out of range in DiscreteVariable '"
-                      << name_ << "'!" << std::endl;
+                      << this->name_ << "'!" << std::endl;
             exit(1);
         }
         for (UnsignedInt i = begin_index; i < end_index; ++i)
