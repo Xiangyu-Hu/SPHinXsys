@@ -60,7 +60,7 @@ class EntityManager
     template <typename T>
     T *addEntity(const std::string &name, T *entity)
     {
-        T *existing_entity = findEntityByName<T>(name);
+        T *existing_entity = findEntity<T>(name);
         if (existing_entity == nullptr)
         {
             all_entities_[typeid(T)][name] = entity;
@@ -72,7 +72,7 @@ class EntityManager
     template <typename T>
     T *addEntityOrThrow(const std::string &name, T *entity)
     {
-        T *existing_entity = findEntityByName<T>(name);
+        T *existing_entity = findEntity<T>(name);
         if (existing_entity != nullptr)
         {
             throw std::runtime_error(std::string(type_name<T>()) + ": duplicated entity name '" + name + "'");
@@ -84,7 +84,7 @@ class EntityManager
     template <typename T>
     T *addEntity(const std::string &name, SharedPtr<T> entity)
     {
-        T *existing_entity = findEntityByName<T>(name);
+        T *existing_entity = findEntity<T>(name);
         if (existing_entity == nullptr)
         {
             all_entities_[typeid(T)][name] = entity.get();
@@ -97,7 +97,7 @@ class EntityManager
     template <typename T>
     T *addEntityOrThrow(const std::string &name, SharedPtr<T> entity)
     {
-        T *existing_entity = findEntityByName<T>(name);
+        T *existing_entity = findEntity<T>(name);
         if (existing_entity != nullptr)
         {
             throw std::runtime_error(std::string(type_name<T>()) + ": duplicated entity name '" + name + "'");
@@ -110,7 +110,7 @@ class EntityManager
     template <typename T, typename... Args>
     T *emplaceEntity(const std::string &name, Args &&...args)
     {
-        T *existing_entity = findEntityByName<T>(name);
+        T *existing_entity = findEntity<T>(name);
         if (existing_entity == nullptr)
         {
             SharedPtr<T> entity = makeShared<T>(std::forward<Args>(args)...);
@@ -124,7 +124,7 @@ class EntityManager
     template <typename T, typename... Args>
     T *emplaceEntityOrThrow(const std::string &name, Args &&...args)
     {
-        T *existing_entity = findEntityByName<T>(name);
+        T *existing_entity = findEntity<T>(name);
         if (existing_entity != nullptr)
         {
             throw std::runtime_error(std::string(type_name<T>()) + ": duplicated entity name '" + name + "'");
@@ -165,25 +165,25 @@ class EntityManager
     template <typename T>
     bool hasEntity(const std::string &name) const
     {
-        return findEntityByName<T>(name) != nullptr;
+        return findEntity<T>(name) != nullptr;
     }
 
     template <typename T>
-    T *tryGetEntityByName(const std::string &name)
+    T *tryGetEntity(const std::string &name)
     {
-        return findEntityByName<T>(name);
+        return findEntity<T>(name);
     }
 
     template <typename T>
-    const T *tryGetEntityByName(const std::string &name) const
+    const T *tryGetEntity(const std::string &name) const
     {
-        return findEntityByName<T>(name);
+        return findEntity<T>(name);
     }
 
     template <typename T>
-    T &getEntityByName(const std::string &name)
+    T &getEntity(const std::string &name)
     {
-        T *entity = tryGetEntityByName<T>(name);
+        T *entity = tryGetEntity<T>(name);
         if (entity != nullptr)
         {
             return *entity;
@@ -235,7 +235,7 @@ class EntityManager
 
   protected:
     template <typename T>
-    T *findEntityByName(const std::string &name)
+    T *findEntity(const std::string &name)
     {
         auto type_it = all_entities_.find(typeid(T));
         if (type_it == all_entities_.end())
@@ -249,7 +249,7 @@ class EntityManager
     }
 
     template <typename T>
-    const T *findEntityByName(const std::string &name) const
+    const T *findEntity(const std::string &name) const
     {
         auto type_it = all_entities_.find(typeid(T));
         if (type_it == all_entities_.end())
