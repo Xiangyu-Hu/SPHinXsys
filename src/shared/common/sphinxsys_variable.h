@@ -48,7 +48,7 @@ class Quantity
 {
   public:
     explicit Quantity(const std::string &name) : name_(name) {};
-    ~Quantity() {};
+    virtual ~Quantity() {};
     std::string Name() const { return name_; };
     Real getScalingRef() const { return scaling_ref_; };
     void setScalingRef(Real scaling_ref) { scaling_ref_ = scaling_ref; };
