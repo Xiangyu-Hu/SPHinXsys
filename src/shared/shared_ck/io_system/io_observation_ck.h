@@ -71,24 +71,24 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
         {
             std::ofstream out_file(filefullpath_output_.c_str(), std::ios::out);
             out_file << "run_time" << "   ";
-            DataType *interpolated_quantities = getObservedQuantity();
             for (size_t i = 0; i != number_of_observe_; ++i)
             {
                 std::string quantity_name_i = quantity_name_ + "[" + std::to_string(i) + "]";
-                plt_engine_.writeAQuantityHeader(out_file, interpolated_quantities[i], quantity_name_i);
+                plt_engine_.writeAQuantityHeader(
+                    out_file, dv_interpolated_quantities_->getValueWithScalingRef(i), quantity_name_i);
             }
             out_file << "\n";
             out_file.close();
             header_written_ = true;
         }
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
-        out_file << sv_physical_time_->getValue() << "   ";
+        out_file << sv_physical_time_->getValueWithScalingRef() << "   ";
         observation_method_.exec();
         dv_interpolated_quantities_->prepareForOutput(ExecutionPolicy{});
-        DataType *interpolated_quantities = getObservedQuantity();
         for (size_t i = 0; i != number_of_observe_; ++i)
         {
-            plt_engine_.writeAQuantity(out_file, interpolated_quantities[i]);
+            plt_engine_.writeAQuantity(
+                out_file, dv_interpolated_quantities_->getValueWithScalingRef(i));
         }
         out_file << "\n";
         out_file.close();
@@ -102,6 +102,11 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
     size_t NumberOfObservedQuantity()
     {
         return number_of_observe_;
+    };
+
+    DiscreteVariable<DataType> &getObservedVariable()
+    {
+        return *dv_interpolated_quantities_;
     };
 };
 

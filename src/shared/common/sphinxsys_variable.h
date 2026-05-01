@@ -88,6 +88,7 @@ class SingleVariable : public Quantity
     DataType *Data() { return delegated_; };
     void setValue(const DataType &value) { *delegated_ = value; };
     DataType getValue() const { return *delegated_; };
+    DataType getValueWithScalingRef() const { return *delegated_ * scaling_ref_; };
     void incrementValue(const DataType &value) { *delegated_ += value; };
 
     template <class ExecutionPolicy>
@@ -162,6 +163,7 @@ class DiscreteVariable : public Quantity
     DataType *Data() { return data_field_; };
     void setValue(size_t index, const DataType &value) { data_field_[index] = value; };
     DataType getValue(size_t index) { return data_field_[index]; };
+    DataType getValueWithScalingRef(UnsignedInt index) const { return data_field_[index] * scaling_ref_; };
 
     template <class FillFunction>
     void fill(UnsignedInt begin_index, UnsignedInt end_index, const FillFunction &fill_function)

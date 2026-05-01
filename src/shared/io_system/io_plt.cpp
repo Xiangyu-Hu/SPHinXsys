@@ -70,10 +70,10 @@ void BodyStatesRecordingToPlt::writePltFileHeader(
 }
 //=================================================================================================//
 void BodyStatesRecordingToPlt::writePltFileParticleData(
-    std::ofstream &output_file, DiscreteVariables &variables_to_write, Vecd *position, size_t index)
+    std::ofstream &output_file, DiscreteVariables &variables_to_write, const Vecd &position, size_t index)
 {
     // write particle positions and index first
-    Vec3d particle_position = upgradeToVec3d(position[index]);
+    Vec3d particle_position = upgradeToVec3d(position);
     output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
                 << index << " ";
 
@@ -87,16 +87,14 @@ void BodyStatesRecordingToPlt::writePltFileParticleData(
     constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
     for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write))
     {
-        Vecd *data_field = variable->Data();
-        Vec3d vector_value = upgradeToVec3d(data_field[index]);
+        Vec3d vector_value = upgradeToVec3d(variable->getValueWithScalingRef(index));
         output_file << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
     };
 
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
     for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write))
     {
-        Real *data_field = variable->Data();
-        output_file << data_field[index] << " ";
+        output_file << variable->getValueWithScalingRef(index) << " ";
     };
 }
 //=============================================================================================//
@@ -120,10 +118,10 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
                 writePltFileHeader(out_file, variables_to_write);
                 out_file << "\n";
 
-                Vecd *position = particles.ParticlePositions();
+                DiscreteVariable<Vecd> *position = particles.dvParticlePosition();
                 for (size_t i = 0; i != particles.TotalRealParticles(); ++i)
                 {
-                    writePltFileParticleData(out_file, variables_to_write, position, i);
+                    writePltFileParticleData(out_file, variables_to_write, position->getValueWithScalingRef(i), i);
                     out_file << "\n";
                 };
                 out_file.close();
