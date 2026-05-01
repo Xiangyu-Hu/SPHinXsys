@@ -81,9 +81,6 @@ void TriangleMeshShape::initializeFromPolygonalMesh(const SimTK::PolygonalMesh &
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         throw;
     }
-    std::cout << "TriangleMesh:" << name_ << std::endl;
-    std::cout << "num of vertices:" << triangle_mesh.getNumVertices() << std::endl;
-    std::cout << "num of faces:" << triangle_mesh.getNumFaces() << std::endl;
 
     vertices_.reserve(triangle_mesh.getNumVertices());
     for (int i = 0; i < triangle_mesh.getNumVertices(); i++)
