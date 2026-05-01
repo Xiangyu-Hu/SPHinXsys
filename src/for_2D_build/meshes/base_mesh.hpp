@@ -72,13 +72,13 @@ void MultiResolutionMeshField<MeshType>::writeCellVariablesToPltByMesh(
 
             for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(cell_variables_to_write_))
             {
-                Vecd value = variable->getValueWithScalingRef(linear_index);
+                Vecd value = variable->Data()[linear_index];
                 output_file << value[0] << " " << value[1] << " ";
             };
 
             for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(cell_variables_to_write_))
             {
-                Real value = variable->getValueWithScalingRef(linear_index);
+                Real value = variable->Data()[linear_index];
                 output_file << value << " ";
             };
             output_file << " \n";
