@@ -361,7 +361,7 @@ class AlignedBoxPart
     virtual ~AlignedBoxPart();
     SingleVariable<AlignedBox> *svAlignedBox() { return sv_aligned_box_keeper_.getPtr(); };
     AlignedBox &getAlignedBox() { return aligned_box_; };
-    void writeAlignedBoxToVtp();
+    void writeAlignedBoxToVtp(Real scale_factor = 1.0);
 
   protected:
     AlignedBox &aligned_box_;

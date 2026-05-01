@@ -52,10 +52,10 @@ SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
 //=================================================================================================//
 SPHSystem::~SPHSystem() = default;
 //=================================================================================================//
-void SPHSystem::writeSystemDomainShapeToVtp()
+void SPHSystem::writeSystemDomainShapeToVtp(Real scale_factor)
 {
     GeometricShapeBox domain_shape(system_bounds_, system_name_ + "Domain");
-    domain_shape.writeGeometricShapeBoxToVtp();
+    domain_shape.writeGeometricShapeBoxToVtp(scale_factor);
 }
 //=================================================================================================//
 void SPHSystem::setLogLevel(size_t log_level)

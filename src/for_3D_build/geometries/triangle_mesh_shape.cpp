@@ -7,7 +7,7 @@ namespace SPH
 //=================================================================================================//
 TriangleMeshShape::TriangleMeshShape(const std::string &shape_name) : Shape(shape_name) {}
 //=================================================================================================//
-void TriangleMeshShape::writTriangleMeshShapeToVtp(Transform transform)
+void TriangleMeshShape::writTriangleMeshShapeToVtp(Transform transform, Real scale_factor)
 {
     std::string filefullpath = IO::getEnvironment().OutputFolder() + "/Shape" + name_ + ".vtp";
 
@@ -32,7 +32,9 @@ void TriangleMeshShape::writTriangleMeshShapeToVtp(Transform transform)
     for (const auto &vertex : vertices_)
     {
         Vecd transformed_vertex = transform.shiftFrameStationToBase(Vecd(vertex[0], vertex[1], vertex[2]));
-        out_file << transformed_vertex[0] << " " << transformed_vertex[1] << " " << transformed_vertex[2] << "\n";
+        out_file << transformed_vertex[0] * scale_factor << " "
+                 << transformed_vertex[1] * scale_factor << " "
+                 << transformed_vertex[2] * scale_factor << "\n";
     }
 
     out_file << "</DataArray>\n";

@@ -5,7 +5,7 @@
 namespace SPH
 {
 //=================================================================================================//
-void GeometricShapeBox::writeGeometricShapeBoxToVtp()
+void GeometricShapeBox::writeGeometricShapeBoxToVtp(Real scale_factor)
 {
     std::string filefullpath = IO::getEnvironment().OutputFolder() + "/Shape" + getName() + ".vtp";
 
@@ -38,7 +38,8 @@ void GeometricShapeBox::writeGeometricShapeBoxToVtp()
     for (int i = 0; i < 4; ++i)
     {
         Vecd global_point = transform.shiftFrameStationToBase(local_corners[i]);
-        out_file << global_point[0] << " " << global_point[1] << " 0\n";
+        out_file << global_point[0] * scale_factor << " "
+                 << global_point[1] * scale_factor << " 0\n";
     }
 
     out_file << "</DataArray>\n";

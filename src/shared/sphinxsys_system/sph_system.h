@@ -64,7 +64,7 @@ class SPHSystem
     SPHSystem *handleCommandlineOptions(int ac, char *av[]);
 #endif
     bool isPhysical() { return is_physical_; };
-    void writeSystemDomainShapeToVtp();
+    void writeSystemDomainShapeToVtp(Real scale_factor = 1.0);
     void setRunParticleRelaxation(bool run_particle_relaxation) { run_particle_relaxation_ = run_particle_relaxation; };
     bool RunParticleRelaxation() { return run_particle_relaxation_; };
     void setReloadParticles(bool reload_particles) { reload_particles_ = reload_particles; };
