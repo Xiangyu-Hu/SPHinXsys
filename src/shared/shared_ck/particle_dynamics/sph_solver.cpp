@@ -135,7 +135,7 @@ Real TimeStepper::getGlobalTimeStepSize()
 //=================================================================================================//
 Real TimeStepper::getPhysicalTimeWithScalingRef()
 {
-    return getGlobalTimeStepSize() * sv_physical_time_->getScalingRef();
+    return sv_physical_time_->getValueWithScalingRef();
 }
 //=================================================================================================//
 Real TimeStepper::getGlobalTimeStepSizeWithScalingRef()
