@@ -29,12 +29,16 @@ Matd ElasticSolid::DeviatoricKirchhoff(const Matd &deviatoric_be)
 //=================================================================================================//
 Vecd *ElasticSolid::AverageVelocity(BaseParticles *base_particles)
 {
-    return base_particles->registerStateVariableData<Vecd>("AverageVelocity");
+    Vecd *vel_ave = base_particles->registerStateVariableData<Vecd>("AverageVelocity");
+    base_particles->addEvolvingVariable<Vecd>("AverageVelocity");
+    return vel_ave;
 }
 //=================================================================================================//
 Vecd *ElasticSolid::AverageAcceleration(BaseParticles *base_particles)
 {
-    return base_particles->registerStateVariableData<Vecd>("AverageAcceleration");
+    Vecd *acc_ave = base_particles->registerStateVariableData<Vecd>("AverageAcceleration");
+    base_particles->addEvolvingVariable<Vecd>("AverageAcceleration");
+    return acc_ave;
 }
 //=================================================================================================//
 DiscreteVariable<Vecd> *ElasticSolid::AverageVelocityVariable(BaseParticles *base_particles)
