@@ -1,9 +1,66 @@
 #include "multi_polygon_shape.h"
 
+#include "io_environment.h"
+
 using namespace bg;
+
+#include "earcut.hpp"
+
+#ifdef SPHINXSYS_USE_VTK
+#include <vtkCellArray.h>
+#include <vtkDoubleArray.h>
+#include <vtkFieldData.h>
+#include <vtkFloatArray.h>
+#include <vtkIntArray.h>
+#include <vtkNew.h>
+#include <vtkPointData.h>
+#include <vtkPoints.h>
+#include <vtkPolyData.h>
+#include <vtkTriangle.h>
+#include <vtkUnsignedIntArray.h>
+#include <vtkXMLPolyDataWriter.h>
+#endif
 
 namespace SPH
 {
+namespace
+{
+struct TriangulatedPolygon
+{
+    NRings rings;
+    std::vector<uint32_t> indices;
+};
+
+TriangulatedPolygon triangulatePolygon(const boost_poly &poly)
+{
+    TriangulatedPolygon triangulated;
+
+    // 1. Add Outer Ring
+    std::vector<NPoint> outer_ring;
+    for (auto const &p : poly.outer())
+    {
+        outer_ring.push_back({bg::get<0>(p), bg::get<1>(p)});
+    }
+    triangulated.rings.push_back(outer_ring);
+
+    // 2. Add Interior Rings (Holes)
+    for (auto const &hole : poly.inners())
+    {
+        std::vector<NPoint> inner_ring;
+        for (auto const &p : hole)
+        {
+            inner_ring.push_back({bg::get<0>(p), bg::get<1>(p)});
+        }
+        triangulated.rings.push_back(inner_ring);
+    }
+
+    // 3. Run triangulation (3 indices per triangle)
+    triangulated.indices = mapbox::earcut<uint32_t>(triangulated.rings);
+
+    return triangulated;
+}
+} // namespace
+
 //=================================================================================================//
 MultiPolygon::MultiPolygon(const std::vector<Vecd> &points)
     : MultiPolygon()
@@ -280,6 +337,132 @@ BoundingBoxd MultiPolygon::findBounds()
     upper_bound[0] = bg::return_envelope<box>(multi_poly_).max_corner().get<0>();
     upper_bound[1] = bg::return_envelope<box>(multi_poly_).max_corner().get<1>();
     return BoundingBoxd(lower_bound, upper_bound);
+}
+//=================================================================================================//
+void MultiPolygonShape::writeMultiPolygonShapeToVtp()
+{
+    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/Shape" + getName() + ".vtp";
+
+#ifdef SPHINXSYS_USE_VTK
+    vtkNew<vtkPoints> vtk_points;
+    vtkNew<vtkCellArray> vtk_cells;
+
+    vtkIdType global_point_offset = 0;
+    const auto &multi_poly = multi_polygon_.getBoostMultiPoly();
+
+    for (const auto &poly : multi_poly)
+    {
+        TriangulatedPolygon triangulated = triangulatePolygon(poly);
+
+        // 4. Add points to VTK and create Triangle Cells
+        // We add all points from all rings of THIS polygon
+        vtkIdType poly_start_offset = global_point_offset;
+        for (const auto &ring : triangulated.rings)
+        {
+            for (const auto &p : ring)
+            {
+                vtk_points->InsertNextPoint(p[0], p[1], 0.0);
+                global_point_offset++;
+            }
+        }
+
+        // 5. Create the VTK triangles using the indices
+        for (size_t i = 0; i < triangulated.indices.size(); i += 3)
+        {
+            vtkNew<vtkTriangle> vtk_tri;
+            vtk_tri->GetPointIds()->SetId(0, poly_start_offset + triangulated.indices[i]);
+            vtk_tri->GetPointIds()->SetId(1, poly_start_offset + triangulated.indices[i + 1]);
+            vtk_tri->GetPointIds()->SetId(2, poly_start_offset + triangulated.indices[i + 2]);
+            vtk_cells->InsertNextCell(vtk_tri);
+        }
+    }
+
+    vtkNew<vtkPolyData> polyData;
+    polyData->SetPoints(vtk_points);
+    polyData->SetPolys(vtk_cells);
+
+    vtkNew<vtkXMLPolyDataWriter> writer;
+    writer->SetInputData(polyData);
+    writer->SetFileName(filefullpath.c_str());
+    writer->SetDataModeToAscii();
+    writer->Write();
+#else
+    if (fs::exists(filefullpath))
+    {
+        fs::remove(filefullpath);
+    }
+    std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
+
+    std::vector<NPoint> vtk_points;
+    std::vector<int> connectivity;
+    std::vector<int> offsets;
+
+    int global_point_offset = 0;
+    const auto &multi_poly = multi_polygon_.getBoostMultiPoly();
+
+    for (const auto &poly : multi_poly)
+    {
+        TriangulatedPolygon triangulated = triangulatePolygon(poly);
+
+        // 4. Add points and create triangle connectivity
+        // We add all points from all rings of THIS polygon
+        int poly_start_offset = global_point_offset;
+        for (const auto &ring : triangulated.rings)
+        {
+            for (const auto &p : ring)
+            {
+                vtk_points.push_back(p);
+                global_point_offset++;
+            }
+        }
+
+        // 5. Create triangle cells from the earcut indices
+        for (size_t i = 0; i < triangulated.indices.size(); i += 3)
+        {
+            connectivity.push_back(poly_start_offset + static_cast<int>(triangulated.indices[i]));
+            connectivity.push_back(poly_start_offset + static_cast<int>(triangulated.indices[i + 1]));
+            connectivity.push_back(poly_start_offset + static_cast<int>(triangulated.indices[i + 2]));
+            offsets.push_back(static_cast<int>(connectivity.size()));
+        }
+    }
+
+    out_file << "<?xml version=\"1.0\"?>\n";
+    out_file << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">\n";
+    out_file << "<PolyData>\n";
+    out_file << "<Piece NumberOfPoints=\"" << vtk_points.size() << "\" NumberOfVerts=\"0\" NumberOfLines=\"0\" "
+             << "NumberOfStrips=\"0\" NumberOfPolys=\"" << offsets.size() << "\">\n";
+
+    out_file << "<Points>\n";
+    out_file << "<DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+    for (const auto &p : vtk_points)
+    {
+        out_file << p[0] << " " << p[1] << " 0\n";
+    }
+    out_file << "</DataArray>\n";
+    out_file << "</Points>\n";
+
+    out_file << "<Polys>\n";
+    out_file << "<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n";
+    for (size_t i = 0; i < connectivity.size(); ++i)
+    {
+        out_file << connectivity[i] << ((i + 1 < connectivity.size()) ? " " : "\n");
+    }
+    out_file << "</DataArray>\n";
+
+    out_file << "<DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n";
+    for (size_t i = 0; i < offsets.size(); ++i)
+    {
+        out_file << offsets[i] << ((i + 1 < offsets.size()) ? " " : "\n");
+    }
+    out_file << "</DataArray>\n";
+    out_file << "</Polys>\n";
+
+    out_file << "</Piece>\n";
+    out_file << "</PolyData>\n";
+    out_file << "</VTKFile>\n";
+
+    out_file.close();
+#endif
 }
 //=================================================================================================//
 bool MultiPolygonShape::isValid()

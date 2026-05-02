@@ -1,10 +1,5 @@
 // pressure_gradient.cpp
 #include "pressure_gradient.hpp"
-#include "data_type.h"
-#pragma message(".cpp is compiled")
-
-template class SPH::fluid_dynamics::PressureGradient<
-    SPH::Inner<SPH::LinearGradientCorrection>>;
 
 namespace SPH
 {

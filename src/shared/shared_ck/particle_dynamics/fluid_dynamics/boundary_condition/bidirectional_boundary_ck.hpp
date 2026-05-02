@@ -167,7 +167,7 @@ template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionT
 template <typename... Args>
 BidirectionalBoundaryCK<ExecutionPolicy, KernelCorrectionType, ConditionType>::
     BidirectionalBoundaryCK(AlignedBoxByCell &aligned_box_part, Args &&...args)
-    : AbstractDynamics(), tag_buffer_particles_(aligned_box_part),
+    : AbstractBidirectionalBoundary(), tag_buffer_particles_(aligned_box_part),
       boundary_condition_(aligned_box_part, std::forward<Args>(args)...),
       inflow_injection_(aligned_box_part, std::forward<Args>(args)...),
       outflow_indication_(aligned_box_part) {}

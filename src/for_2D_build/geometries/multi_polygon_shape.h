@@ -70,6 +70,10 @@ typedef bg::model::d2::point_xy<Real> boost_point;
 typedef bg::model::polygon<boost_point> boost_poly;
 typedef bg::model::multi_polygon<boost_poly> boost_multi_poly;
 typedef bg::model::referring_segment<boost_point> boost_seg;
+typedef bg::model::ring<boost_point> boost_ring;
+
+using NPoint = std::array<double, 2>;
+using NRings = std::vector<std::vector<NPoint>>;
 
 /**
  * @class MultiPolygon
@@ -121,6 +125,7 @@ class MultiPolygonShape : public Shape
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
     virtual BoundingBoxd findBounds() override;
+    void writeMultiPolygonShapeToVtp();
 
   protected:
     MultiPolygon multi_polygon_;

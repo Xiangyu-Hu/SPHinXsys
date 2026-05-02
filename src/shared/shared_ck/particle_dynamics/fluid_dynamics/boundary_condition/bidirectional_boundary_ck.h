@@ -226,8 +226,18 @@ class PressureVelocityCondition : public BaseLocalDynamics<AlignedBoxByCell>,
     DiscreteVariable<Vecd> *dv_kernel_gradient_integral_;
 };
 
+class AbstractBidirectionalBoundary : public AbstractDynamics
+{
+  public:
+    AbstractBidirectionalBoundary() : AbstractDynamics() {};
+    virtual void tagBufferParticles() = 0;
+    virtual void applyBoundaryCondition(Real dt) = 0;
+    virtual void injectParticles() = 0;
+    virtual void indicateOutFlowParticles() = 0;
+};
+
 template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>
-class BidirectionalBoundaryCK : public AbstractDynamics
+class BidirectionalBoundaryCK : public AbstractBidirectionalBoundary
 {
     StateDynamics<ExecutionPolicy, BufferIndicationCK> tag_buffer_particles_;
     StateDynamics<ExecutionPolicy, PressureVelocityCondition<KernelCorrectionType, ConditionType>> boundary_condition_;
@@ -237,10 +247,10 @@ class BidirectionalBoundaryCK : public AbstractDynamics
   public:
     template <typename... Args>
     BidirectionalBoundaryCK(AlignedBoxByCell &aligned_box_part, Args &&...args);
-    void tagBufferParticles() { tag_buffer_particles_.exec(); }
-    void applyBoundaryCondition(Real dt) { boundary_condition_.exec(dt); }
-    void injectParticles() { inflow_injection_.exec(); }
-    void indicateOutFlowParticles() { outflow_indication_.exec(); }
+    virtual void tagBufferParticles() override { tag_buffer_particles_.exec(); }
+    virtual void applyBoundaryCondition(Real dt) override { boundary_condition_.exec(dt); }
+    virtual void injectParticles() override { inflow_injection_.exec(); }
+    virtual void indicateOutFlowParticles() override { outflow_indication_.exec(); }
 };
 } // namespace fluid_dynamics
 } // namespace SPH

@@ -200,7 +200,6 @@ template <typename DataType>
 BaseParticles &BaseParticles::reloadExtraVariable(const std::string &name)
 {
     registerStateVariableFromReload<DataType>(name);
-    addEvolvingVariable<DataType>(name);
     return *this;
 }
 //=================================================================================================//
