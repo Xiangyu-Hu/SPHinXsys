@@ -6,10 +6,7 @@ namespace SPH
 {
 //=================================================================================================//
 TimeStepper::TimeStepper(SPHSystem &sph_system)
-    : global_dt_(0.0)
-{
-    sv_physical_time_ = &sph_system.svPhysicalTime();
-}
+    : global_dt_(0.0), sv_physical_time_(&sph_system.svPhysicalTime()){}
 //=================================================================================================//
 void TimeStepper::setRestartStep(UnsignedInt restart_step)
 {
@@ -27,8 +24,9 @@ bool TimeStepper::TriggerByPhysicalTime::operator()()
     return sv_physical_time_->getValue() > trigger_time_;
 }
 //=================================================================================================//
-TimeStepper::TriggerByInterval::TriggerByInterval(Real initial_interval)
-    : present_time_(0.0), interval_(initial_interval) {}
+TimeStepper::TriggerByInterval::TriggerByInterval(TimeStepper &time_stepper, Real initial_interval)
+    : sv_physical_time_(time_stepper.sv_physical_time_),
+      present_time_(0.0), interval_(initial_interval) {}
 //=================================================================================================//
 bool TimeStepper::TriggerByInterval::operator()(BaseDynamics<Real> &interval_evaluator)
 {
@@ -54,6 +52,10 @@ bool TimeStepper::TriggerByInterval::operator()()
 Real TimeStepper::TriggerByInterval::getInterval() const
 {
     return interval_;
+}
+Real TimeStepper::TriggerByInterval::getIntervalWithScalingRef() const
+{
+    return getInterval() * sv_physical_time_->getScalingRef();
 }
 //=================================================================================================//
 void TimeStepper::TriggerByInterval::incrementPresentTime(Real dt)
@@ -97,7 +99,7 @@ TimeStepper::TriggerByInterval &TimeStepper::addTriggerByInterval(Real initial_i
 {
 
     TriggerByInterval *interval_executor =
-        execution_by_interval_keeper_.createPtr<TriggerByInterval>(initial_interval);
+        execution_by_interval_keeper_.createPtr<TriggerByInterval>(*this, initial_interval);
     interval_executers_.push_back(interval_executor);
     return *interval_executor;
 }
@@ -129,6 +131,16 @@ Real TimeStepper::getPhysicalTime()
 Real TimeStepper::getGlobalTimeStepSize()
 {
     return global_dt_;
+}
+//=================================================================================================//
+Real TimeStepper::getPhysicalTimeWithScalingRef()
+{
+    return getGlobalTimeStepSize() * sv_physical_time_->getScalingRef();
+}
+//=================================================================================================//
+Real TimeStepper::getGlobalTimeStepSizeWithScalingRef()
+{
+    return getGlobalTimeStepSize() * sv_physical_time_->getScalingRef();
 }
 //=================================================================================================//
 } // namespace SPH
