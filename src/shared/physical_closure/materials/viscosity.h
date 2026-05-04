@@ -41,6 +41,7 @@ class Viscosity
   protected:
     Real mu_; /**< reference viscosity. */
   public:
+    typedef Vecd TransportDataType;
     explicit Viscosity(Real mu) : mu_(mu) {};
     virtual ~Viscosity() {};
     Real ReferenceViscosity() { return mu_; };
@@ -49,17 +50,19 @@ class Viscosity
     virtual void initializeLocalParameters(BaseParticles *base_particles) {};
 
     typedef ParameterFixed<Real> OneSideViscosity;
+    typedef OneSideViscosity OneSideTransportCoeff;
 
     template <typename ExecutionPolicy>
-    ParameterFixed<Real> getOneSideViscosity(const ExecutionPolicy &ex_policy)
+    ParameterFixed<Real> getOneSideCoeff(const ExecutionPolicy &ex_policy)
     {
         return ParameterFixed<Real>(mu_);
     };
 
     typedef PairGeomAverageFixed<Real> InterParticleViscosity;
+    typedef InterParticleViscosity InterParticleCoeff;
 
     template <typename ExecutionPolicy>
-    PairGeomAverageFixed<Real> getInterParticleViscosity(const ExecutionPolicy &ex_policy, Viscosity &other_viscosity)
+    PairGeomAverageFixed<Real> getInterParticleCoeff(const ExecutionPolicy &ex_policy, Viscosity &other_viscosity)
     {
         return PairGeomAverageFixed<Real>(mu_, other_viscosity.ReferenceViscosity());
     };

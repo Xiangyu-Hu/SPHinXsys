@@ -31,8 +31,8 @@
 #include "data_type.h"
 
 #include <Eigen/Geometry>
-#include <Eigen/SVD>
 #include <Eigen/LU>
+#include <Eigen/SVD>
 
 namespace SPH
 {
@@ -230,5 +230,17 @@ inline void polarDecomposition(const Matd &F, Matd &R, Matd &S)
     assert(R.determinant() > 0.0);
     S = V * svd.singularValues().asDiagonal() * V.transpose();
 }
+
+inline Vec3d skewSymmetric(const Mat3d &A)
+{
+    Mat3d skew_symmetric = A - A.transpose();
+    return Vec3d(skew_symmetric(1, 2), skew_symmetric(2, 0), skew_symmetric(0, 1));
+};
+
+inline Real skewSymmetric(const Mat2d &A)
+{
+    Mat2d skew_symmetric = A - A.transpose();
+    return skew_symmetric(0, 1);
+};
 } // namespace SPH
 #endif // VECTOR_FUNCTIONS_H

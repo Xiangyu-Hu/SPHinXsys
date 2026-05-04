@@ -24,7 +24,8 @@
  * @file general_gradient.h
  * @brief This the methods related on the corrections of SPH smoothing kernel.
  * @details The corrections aim to increase the numerical consistency
- * or accuracy for kernel approximations.
+ * or accuracy for kernel approximations. Note that the formulation is
+ * not conservative (for divergence) but to achieve better accuracy.
  * @author Xiangyu Hu
  */
 
@@ -56,6 +57,27 @@ struct GradHelper<Real>
 
 template <typename T>
 using Grad = typename GradHelper<T>::type;
+
+template <typename...>
+struct HessHelper;
+
+template <>
+struct HessHelper<Vecd>
+{
+    using type = VecMatGrad;
+};
+
+template <>
+struct HessHelper<Real>
+{
+    using type = VecMatd;
+};
+
+template <typename T>
+using Hess = typename HessHelper<T>::type;
+
+template <typename... RelationTypes>
+class Hessian;
 
 template <typename... RelationTypes>
 class Gradient;
@@ -93,22 +115,19 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
     DiscreteVariable<Matd> *dv_B_;
 };
 
-template <typename... RelationTypes>
-class LinearGradient;
-
 template <typename DataType, typename... Parameters>
-class LinearGradient<Inner<DataType, Parameters...>>
+class Gradient<Inner<DataType, Parameters...>>
     : public Gradient<Base, DataType, Inner<Parameters...>>
 {
     using BaseDynamicsType = Gradient<Base, DataType, Inner<Parameters...>>;
 
   public:
-    explicit LinearGradient(Inner<Parameters...> &inner_relation, const std::string &variable_name)
+    explicit Gradient(Inner<Parameters...> &inner_relation, const std::string &variable_name)
         : BaseDynamicsType(inner_relation, variable_name) {};
     template <typename FirstArg>
-    explicit LinearGradient(DynamicsArgs<Inner<Parameters...>, FirstArg> parameters)
-        : LinearGradient(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~LinearGradient() {};
+    explicit Gradient(DynamicsArgs<Inner<Parameters...>, FirstArg> parameters)
+        : Gradient(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~Gradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -121,17 +140,17 @@ class LinearGradient<Inner<DataType, Parameters...>>
 };
 
 template <typename DataType, typename... Parameters>
-class LinearGradient<Contact<DataType, Parameters...>>
+class Gradient<Contact<DataType, Parameters...>>
     : public Gradient<Base, DataType, Contact<Parameters...>>
 {
     using BaseDynamicsType = Gradient<Base, DataType, Contact<Parameters...>>;
 
   public:
-    explicit LinearGradient(Contact<Parameters...> &contact_relation, const std::string &variable_name);
+    explicit Gradient(Contact<Parameters...> &contact_relation, const std::string &variable_name);
     template <typename FirstArg>
-    explicit LinearGradient(DynamicsArgs<Contact<Parameters...>, FirstArg> parameters)
-        : LinearGradient(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~LinearGradient() {};
+    explicit Gradient(DynamicsArgs<Contact<Parameters...>, FirstArg> parameters)
+        : Gradient(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~Gradient() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -149,31 +168,11 @@ class LinearGradient<Contact<DataType, Parameters...>>
     StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
 };
 
-template <typename...>
-struct HessHelper;
-
-template <>
-struct HessHelper<Vecd>
+template <typename TransportType, template <typename...> class RelationType, typename... Parameters>
+class Hessian<Base, TransportType, RelationType<Parameters...>>
+    : public Gradient<Base, typename TransportType::TransportDataType, RelationType<Parameters...>>
 {
-    using type = VecMatGrad;
-};
-
-template <>
-struct HessHelper<Real>
-{
-    using type = VecMatd;
-};
-
-template <typename T>
-using Hess = typename HessHelper<T>::type;
-
-template <typename... RelationTypes>
-class Hessian;
-
-template <typename DataType, template <typename...> class RelationType, typename... Parameters>
-class Hessian<Base, DataType, RelationType<Parameters...>>
-    : public Gradient<Base, DataType, RelationType<Parameters...>>
-{
+    using DataType = typename TransportType::TransportDataType;
     using BaseDynamicsType = Gradient<Base, DataType, RelationType<Parameters...>>;
 
   public:
@@ -181,27 +180,19 @@ class Hessian<Base, DataType, RelationType<Parameters...>>
     explicit Hessian(Args &&...args);
     virtual ~Hessian() {};
 
-    class InteractKernel : public BaseDynamicsType::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType, typename... Args>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args);
-
-      protected:
-        MatTend *M_;
-        Hess<DataType> *hessian_;
-    };
-
   protected:
+    TransportType &transport_;
     DiscreteVariable<MatTend> *dv_M_;
     DiscreteVariable<Hess<DataType>> *dv_hessian_;
 };
 
-template <typename DataType, typename... Parameters>
-class Hessian<Inner<DataType, Parameters...>>
-    : public Hessian<Base, DataType, Inner<Parameters...>>
+template <typename TransportType, typename... Parameters>
+class Hessian<Inner<TransportType, Parameters...>>
+    : public Hessian<Base, TransportType, Inner<Parameters...>>
 {
-    using BaseDynamicsType = Hessian<Base, DataType, Inner<Parameters...>>;
+    using DataType = typename TransportType::TransportDataType;
+    using BaseDynamicsType = Hessian<Base, TransportType, Inner<Parameters...>>;
+    using InterParticleCoeff = typename TransportType::InterParticleCoeff;
 
   public:
     template <typename... Args>
@@ -212,21 +203,29 @@ class Hessian<Inner<DataType, Parameters...>>
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseDynamicsType::InteractKernel(ex_policy, encloser){};
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        InterParticleCoeff inter_particle_coeff_;
+        MatTend *M_;
+        Hess<DataType> *hessian_;
     };
 };
 
-template <typename DataType, typename... Parameters>
-class Hessian<Contact<DataType, Parameters...>>
-    : public Hessian<Base, DataType, Contact<Parameters...>>
+template <typename TransportType, typename... OtherTransportType,
+          template <typename...> class InterfaceType, typename... Parameters>
+class Hessian<Contact<InterfaceType<TransportType, OtherTransportType...>, Parameters...>>
+    : public Hessian<Base, TransportType, Contact<Parameters...>>
 {
-    using BaseDynamicsType = Hessian<Base, DataType, Contact<Parameters...>>;
+    using DataType = typename TransportType::TransportDataType;
+    using BaseDynamicsType = Hessian<Base, TransportType, Contact<Parameters...>>;
+    using InterfaceModel = InterfaceType<TransportType, OtherTransportType...>;
+    using InterfaceCoeff = typename InterfaceModel::Coefficient;
 
   public:
-    template <typename... Args>
-    explicit Hessian(Args &&...args);
+    Hessian(Contact<Parameters...> &contact_relation, std::string &variable_name,
+            StdVec<InterfaceType<TransportType, OtherTransportType...> *> interface_models);
     virtual ~Hessian() {};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
@@ -237,11 +236,15 @@ class Hessian<Contact<DataType, Parameters...>>
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
+        InterfaceCoeff interface_coeff_;
+        MatTend *M_;
+        Hess<DataType> *hessian_;
         Real *contact_Vol_;
         DataType *contact_variable_;
     };
 
   protected:
+    StdVec<InterfaceModel *> interface_models_;
     StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
 };
 
@@ -311,19 +314,19 @@ struct CurlHelper<Vec3d>
     using type = Vec3d;
 };
 
+using Curl = typename CurlHelper<Vecd>::type;
+
 template <typename...>
 class LinearCurl;
 
-template <typename DataType, typename... Parameters>
-class LinearCurl<Inner<WithUpdate, DataType, Parameters...>>
-    : public LinearGradient<Inner<DataType, Parameters...>>
+template <typename... Parameters>
+class LinearCurl<Inner<WithUpdate, Parameters...>>
+    : public Gradient<Inner<Vecd, Parameters...>>
 {
-    using BaseDynamicsType = LinearGradient<Inner<DataType, Parameters...>>;
-    using CurlType = typename CurlHelper<DataType>::type;
+    using BaseDynamicsType = Gradient<Inner<Vecd, Parameters...>>;
 
   public:
-    explicit LinearCurl(Inner<Parameters...> &inner_relation, const std::string &variable_name)
-        : BaseDynamicsType(inner_relation, variable_name) {};
+    LinearCurl(Inner<Parameters...> &inner_relation, const std::string &variable_name);
     virtual ~LinearCurl() {};
 
     class UpdateKernel
@@ -333,13 +336,52 @@ class LinearCurl<Inner<WithUpdate, DataType, Parameters...>>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(size_t index_i, Real dt = 0.0);
 
-      private:
-        Real skewSymmetry(Mat2d &matrix);
-        Vec3d skewSymmetry(Mat3d &matrix);
+      protected:
+        Curl *curl_;
     };
 
   protected:
-    DiscreteVariable<CurlType> *dv_curl_;
+    DiscreteVariable<Curl> *dv_curl_;
+};
+
+template <typename... Parameters>
+class LinearCurl<Contact<Parameters...>>
+    : public Gradient<Contact<Vecd, Parameters...>>
+{
+  public:
+    LinearCurl(Contact<Parameters...> &contact_relation, const std::string &variable_name)
+        : Gradient<Contact<Vecd, Parameters...>>(contact_relation, variable_name) {};
+    virtual ~LinearCurl() {};
+};
+
+template <typename...>
+class DoubleCurl;
+
+template <typename TransportType, typename... Parameters>
+class DoubleCurl<Inner<TransportType, Parameters...>>
+    : public Hessian<Inner<TransportType, Parameters...>>
+{
+    using BaseDynamicsType = Hessian<Inner<TransportType, Parameters...>>;
+
+  public:
+    DoubleCurl(Inner<Parameters...> &inner_relation, const std::string &variable_name);
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Vecd *double_curl_;
+
+        Vec2d computeDoubleCurl(Hess<Vec2d> &hessian);
+        Vec3d computeDoubleCurl(Hess<Vec3d> &hessian);
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_double_curl_;
 };
 
 } // namespace SPH

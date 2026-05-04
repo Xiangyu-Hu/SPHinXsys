@@ -31,7 +31,7 @@ ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Parameters
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseViscousForceType::InteractKernel(ex_policy, encloser),
       inter_particle_viscosity_(
-          encloser.viscosity_model_.getInterParticleViscosity(ex_policy, encloser.viscosity_model_)),
+          encloser.viscosity_model_.getInterParticleCoeff(ex_policy, encloser.viscosity_model_)),
       correction_(ex_policy, encloser.kernel_correction_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
@@ -69,7 +69,7 @@ template <class ExecutionPolicy, class EncloserType>
 ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
     : BaseViscousForceType::InteractKernel(ex_policy, encloser, contact_index),
-      one_side_viscosity_(encloser.viscosity_model_.getOneSideViscosity(ex_policy)),
+      one_side_viscosity_(encloser.viscosity_model_.getOneSideCoeff(ex_policy)),
       correction_(ex_policy, encloser.kernel_correction_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),

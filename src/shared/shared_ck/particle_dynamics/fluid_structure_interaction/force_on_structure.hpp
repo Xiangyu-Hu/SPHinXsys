@@ -55,7 +55,7 @@ template <class ExecutionPolicy, class EncloserType>
 ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
-      one_side_viscosity_(encloser.contact_viscosity_model_[contact_index]->getOneSideViscosity(ex_policy)),
+      one_side_viscosity_(encloser.contact_viscosity_model_[contact_index]->getOneSideCoeff(ex_policy)),
       smoothing_length_sq_(encloser.contact_smoothing_length_sq_[contact_index]) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>

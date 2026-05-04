@@ -96,6 +96,17 @@ Certainly, this will be less straightforward as the simple feature adding approa
 
 In summarize, you first introduce a new concept, implement the new concept to the old code and then add new feature using the same concept. In this way, you are contributing the library in design concept level other than simply add something.
 
+#### Usage of resources already in SPHinXsys
+
+Before adding new code, please check if the resources already in SPHinXsys can be used for your purpose. 
+
+For example, if you want to add a new material model, please check if the existing material models can be used by simply changing some parameters. 
+If not, you can check if the existing material models can be generalized to include your new material model. 
+In this way, we can avoid adding redundant code and keep the library clean and efficient.
+
+Another example is the mathematical functions. When you want to add a new mathematical function, 
+please check if there is something already defined in `scalar_functions.h` or `vector_functions.h`. We encourage to use the existing functions as much as possible, and only add new functions when there is no existing function can be used or generalized to be used.
+
 ### Pull Requests
 
 The process described here has several goals:
