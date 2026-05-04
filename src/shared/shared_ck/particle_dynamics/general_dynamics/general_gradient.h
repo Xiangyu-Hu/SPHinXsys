@@ -57,24 +57,6 @@ struct GradHelper<Real>
 template <typename T>
 using Grad = typename GradHelper<T>::type;
 
-template <typename...>
-struct HessHelper;
-
-template <>
-struct HessHelper<Vecd>
-{
-    using type = VecMatGrad;
-};
-
-template <>
-struct HessHelper<Real>
-{
-    using type = VecMatd;
-};
-
-template <typename T>
-using Hess = typename HessHelper<T>::type;
-
 template <typename... RelationTypes>
 class Gradient;
 
@@ -166,6 +148,24 @@ class LinearGradient<Contact<DataType, Parameters...>>
   protected:
     StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
 };
+
+template <typename...>
+struct HessHelper;
+
+template <>
+struct HessHelper<Vecd>
+{
+    using type = VecMatGrad;
+};
+
+template <>
+struct HessHelper<Real>
+{
+    using type = VecMatd;
+};
+
+template <typename T>
+using Hess = typename HessHelper<T>::type;
 
 template <typename... RelationTypes>
 class Hessian;
@@ -295,5 +295,52 @@ class SecondOrderGradient<Contact<DataType, Parameters...>>
   protected:
     StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
 };
+
+template <typename...>
+struct CurlHelper;
+
+template <>
+struct CurlHelper<Vec2d>
+{
+    using type = Real;
+};
+
+template <>
+struct CurlHelper<Vec3d>
+{
+    using type = Vec3d;
+};
+
+template <typename...>
+class LinearCurl;
+
+template <typename DataType, typename... Parameters>
+class LinearCurl<Inner<WithUpdate, DataType, Parameters...>>
+    : public LinearGradient<Inner<DataType, Parameters...>>
+{
+    using BaseDynamicsType = LinearGradient<Inner<DataType, Parameters...>>;
+    using CurlType = typename CurlHelper<DataType>::type;
+
+  public:
+    explicit LinearCurl(Inner<Parameters...> &inner_relation, const std::string &variable_name)
+        : BaseDynamicsType(inner_relation, variable_name) {};
+    virtual ~LinearCurl() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      private:
+        Real skewSymmetry(Mat2d &matrix);
+        Vec3d skewSymmetry(Mat3d &matrix);
+    };
+
+  protected:
+    DiscreteVariable<CurlType> *dv_curl_;
+};
+
 } // namespace SPH
 #endif // GENERAL_GRADIENT_H
