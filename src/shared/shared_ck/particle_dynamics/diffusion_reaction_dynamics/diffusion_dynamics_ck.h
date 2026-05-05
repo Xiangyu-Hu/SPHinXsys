@@ -103,7 +103,7 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrecti
 {
     using BaseInteraction = DiffusionRelaxationCK<DiffusionType, Interaction<Inner<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
-    using InterParticleDiffusionCoeff = typename DiffusionType::InterParticleDiffusionCoeff;
+    using InterParticleCoeff = typename DiffusionType::InterParticleCoeff;
 
   public:
     template <typename... Args>
@@ -119,14 +119,14 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrecti
 
       protected:
         CorrectionKernel correction_;
-        InterParticleDiffusionCoeff *inter_particle_diffusion_coeff_;
+        InterParticleCoeff *inter_particle_diffusion_coeff_;
         Real *Vol_;
         Real smoothing_length_sq_;
     };
 
   protected:
     KernelCorrectionType kernel_correction_method_;
-    ConstantArray<InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
+    ConstantArray<InterParticleCoeff> ca_inter_particle_diffusion_coeff_;
     Real smoothing_length_sq_;
 };
 
@@ -258,7 +258,7 @@ class DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta2ndStage, Interacti
 template <class DiffusionType>
 class Dirichlet<DiffusionType>
 {
-    using InterParticleDiffusionCoeff = typename DiffusionType::InterParticleDiffusionCoeff;
+    using InterParticleCoeff = typename DiffusionType::InterParticleCoeff;
 
   public:
     template <class DiffusionDynamics>
@@ -275,14 +275,14 @@ class Dirichlet<DiffusionType>
         Real smoothing_length_sq_;
         DataArray<Real> *gradient_species_;
         DataArray<Real> *contact_gradient_species_;
-        InterParticleDiffusionCoeff *inter_particle_diffusion_coeff_;
+        InterParticleCoeff *inter_particle_diffusion_coeff_;
     };
 
   protected:
     Real smoothing_length_sq_;
     DiscreteVariableArray<Real> &dv_gradient_species_array_;
     DiscreteVariableArray<Real> contact_dv_gradient_species_array_;
-    ConstantArray<InterParticleDiffusionCoeff> ca_inter_particle_diffusion_coeff_;
+    ConstantArray<InterParticleCoeff> ca_inter_particle_diffusion_coeff_;
 };
 
 template <class DiffusionType>
