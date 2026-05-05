@@ -468,14 +468,14 @@ int main(int ac, char *av[])
     blood.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(6.0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? blood.generateParticlesWithReserve<BaseParticles, Reload>(in_outlet_particle_buffer, blood.getName())
+        ? blood.generateParticlesWithReserve<BaseParticles, Reload>(in_outlet_particle_buffer, blood.Name())
         : blood.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
     wall_boundary.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
+        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.Name())
         : wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody velocity_axial_observer(sph_system, "VelocityAxialObserver");

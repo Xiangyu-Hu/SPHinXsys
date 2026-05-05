@@ -65,7 +65,7 @@ class FreeStreamCondition : public LocalDynamics
     DiscreteVariable<Real> *dv_rho_sum_;
     DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
     DiscreteVariable<int> *dv_indicator_;
-    SingularVariable<Real> *sv_physical_time_;
+    SingleVariable<Real> *sv_physical_time_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

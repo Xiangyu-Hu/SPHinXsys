@@ -43,7 +43,7 @@ class SPHSystem;
 class IOEnvironment;
 class SPHBody;
 template <typename T>
-class SingularVariable;
+class SingleVariable;
 template <typename ReturnType>
 class BaseDynamics;
 using SPHBodyVector = StdVec<SPHBody *>;
@@ -64,7 +64,7 @@ class BaseIO
   protected:
     SPHSystem &sph_system_;
     IOEnvironment &io_environment_;
-    SingularVariable<Real> *sv_physical_time_;
+    SingleVariable<Real> *sv_physical_time_;
 
     std::string convertPhysicalTimeToString(Real physical_time);
 
@@ -92,6 +92,7 @@ class BodyStatesRecording : public BaseIO
     BodyStatesRecording(SPHSystem &sph_system);
     BodyStatesRecording(SPHBody &body);
     virtual ~BodyStatesRecording();
+    SPHBodyVector getBodiesForRecording() { return bodies_; };
     /** write with filename indicated by physical time */
     virtual void writeToFile();
     virtual void writeToFile(size_t iteration_step) override;
@@ -102,7 +103,7 @@ class BodyStatesRecording : public BaseIO
     template <typename DerivedVariableMethod, typename DynamicsIdentifier, typename... Args>
     BodyStatesRecording &addDerivedVariableRecording(DynamicsIdentifier &identifier, Args &&...args);
 
-  protected:
+    protected:
     SPHBodyVector bodies_;
     StdVec<BaseDynamics<void> *> derived_variables_;
     bool state_recording_;

@@ -6,10 +6,10 @@
 namespace SPH
 {
 //=================================================================================================//
-void GeometricShapeBox::writeGeometricShapeBoxToVtp()
+void GeometricShapeBox::writeGeometricShapeBoxToVtp(Real scale_factor)
 {
-    TriangleMeshShapeBrick shape(HalfSize(), 1, Vecd::Zero(), getName());
-    shape.writTriangleMeshShapeToVtp(getTransform());
+    TriangleMeshShapeBrick shape(HalfSize(), 1, Vecd::Zero(), Name());
+    shape.writTriangleMeshShapeToVtp(getTransform(), scale_factor);
 }
 //=================================================================================================//
 } // namespace SPH

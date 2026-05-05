@@ -33,7 +33,7 @@ TEST(variable_buffer_array, test_sycl)
         [&](size_t i)
         { return int(ceil(rand_uniform(0.0, 1.0) * int(torques.size()))); });
 
-    SingularVariable<UnsignedInt> sv_buffer_particles("TotalBufferParticles", dv_copy_indexes.getDataSize());
+    SingleVariable<UnsignedInt> sv_buffer_particles("TotalBufferParticles", dv_copy_indexes.getDataSize());
 
     SimTKVec3 *torque = dv_torque.DelegatedData(ParallelPolicy{});
     SimTKVec3 *force = dv_force.DelegatedData(ParallelPolicy{});
@@ -52,7 +52,7 @@ TEST(variable_buffer_array, test_sycl)
     StdVec<DiscreteVariable<SimTKVec3> *> variables = {&dv_torque, &dv_force};
     VariableBufferArray<SimTKVec3> variable_buffer_array(variables, 200);
     using CopyVariableToBuffer = VariableBufferArray<SimTKVec3>::CopyVariableToBuffer;
-    SingularVariable<CopyVariableToBuffer> sv_copy_variable_to_buffer(
+    SingleVariable<CopyVariableToBuffer> sv_copy_variable_to_buffer(
         "CopyVariableToBuffer", CopyVariableToBuffer(ParallelPolicy{}, variable_buffer_array));
     CopyVariableToBuffer *copy_variable_to_buffer = sv_copy_variable_to_buffer.DelegatedData(ParallelPolicy{});
 
@@ -76,7 +76,7 @@ TEST(variable_buffer_array, test_sycl)
         });
 
     CopyVariableToBuffer test(ParallelDevicePolicy{}, variable_buffer_array);
-    SingularVariable<CopyVariableToBuffer> sv_copy_variable_to_buffer_sycl(
+    SingleVariable<CopyVariableToBuffer> sv_copy_variable_to_buffer_sycl(
         "CopyVariableToBufferSYCL", CopyVariableToBuffer(ParallelDevicePolicy{}, variable_buffer_array));
     CopyVariableToBuffer *copy_variable_to_buffer_sycl = sv_copy_variable_to_buffer_sycl.DelegatedData(ParallelDevicePolicy{});
 

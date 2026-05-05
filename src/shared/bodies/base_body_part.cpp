@@ -16,7 +16,7 @@ Eigen::IOFormat fmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", ""
 BodyPart::BodyPart(SPHBody &sph_body)
     : sph_body_(sph_body), base_particles_(sph_body.getBaseParticles()),
       part_id_(base_particles_.getNewBodyPartID()),
-      part_name_(sph_body.getName() + "Part" + std::to_string(part_id_)),
+      part_name_(sph_body.Name() + "Part" + std::to_string(part_id_)),
       sph_adaptation_(sph_body.getSPHAdaptation()),
       sv_range_size_(nullptr),
       dv_body_part_id_(base_particles_.registerStateVariable<int>(part_name_ + "ID")),
@@ -60,7 +60,7 @@ void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_me
     dv_particle_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
         part_name_, body_part_particles_.size(), [&](size_t i)
         { return body_part_particles_[i]; });
-    sv_range_size_ = unique_variable_ptrs_.createPtr<SingularVariable<UnsignedInt>>(
+    sv_range_size_ = unique_variable_ptrs_.createPtr<SingleVariable<UnsignedInt>>(
         part_name_ + "_Size", body_part_particles_.size());
 }
 //=================================================================================================//
@@ -96,7 +96,7 @@ void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
     dv_cell_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
         part_name_, cell_indexes.size(), [&](size_t i)
         { return cell_indexes[i]; });
-    sv_range_size_ = unique_variable_ptrs_.createPtr<SingularVariable<UnsignedInt>>(
+    sv_range_size_ = unique_variable_ptrs_.createPtr<SingleVariable<UnsignedInt>>(
         part_name_ + "_Size", cell_indexes.size());
 }
 //=================================================================================================//
@@ -104,7 +104,7 @@ BodyRegionByParticle::
     BodyRegionByParticle(SPHBody &sph_body, Shape &body_part_shape)
     : BodyPartByParticle(sph_body), body_part_shape_(body_part_shape)
 {
-    alias_ = body_part_shape_.getName();
+    alias_ = body_part_shape_.Name();
     TaggingParticleMethod tagging_particle_method = std::bind(&BodyRegionByParticle::tagByContain, this, _1);
     tagParticles(tagging_particle_method);
 }
@@ -157,7 +157,7 @@ bool BodySurfaceLayer::tagSurfaceLayer(size_t particle_index)
 BodyRegionByCell::BodyRegionByCell(RealBody &real_body, Shape &body_part_shape)
     : BodyPartByCell(real_body), body_part_shape_(body_part_shape)
 {
-    alias_ = body_part_shape_.getName();
+    alias_ = body_part_shape_.Name();
     TaggingCellMethod tagging_cell_method = std::bind(&BodyRegionByCell::checkNotFar, this, _1, _2);
     tagCells(tagging_cell_method);
 }
@@ -176,7 +176,7 @@ bool BodyRegionByCell::checkNotFar(Vecd cell_position, Real threshold)
 NearShapeSurface::NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape)
     : BodyPartByCell(real_body), level_set_shape_(level_set_shape)
 {
-    alias_ = level_set_shape.getName();
+    alias_ = level_set_shape.Name();
     TaggingCellMethod tagging_cell_method = std::bind(&NearShapeSurface::checkNearSurface, this, _1, _2);
     tagCells(tagging_cell_method);
 }
@@ -185,7 +185,7 @@ NearShapeSurface::NearShapeSurface(RealBody &real_body, SharedPtr<Shape> shape_p
     : BodyPartByCell(real_body),
       level_set_shape_(level_set_shape_keeper_.createRef<LevelSetShape>(real_body, *shape_ptr.get(), true))
 {
-    alias_ = level_set_shape_.getName();
+    alias_ = level_set_shape_.Name();
     TaggingCellMethod tagging_cell_method = std::bind(&NearShapeSurface::checkNearSurface, this, _1, _2);
     tagCells(tagging_cell_method);
 }
@@ -218,7 +218,7 @@ bool NearShapeSurface::checkNearSurface(Vecd cell_position, Real threshold)
 //=================================================================================================//
 AlignedBoxPart::AlignedBoxPart(const std::string &part_name, const AlignedBox &aligned_box)
     : aligned_box_(*sv_aligned_box_keeper_
-                        .createPtr<SingularVariable<AlignedBox>>(part_name, aligned_box)
+                        .createPtr<SingleVariable<AlignedBox>>(part_name, aligned_box)
                         ->Data())
 {
     std::cout << "\n-------------------------------------------------------------" << std::endl;
@@ -229,11 +229,11 @@ AlignedBoxPart::AlignedBoxPart(const std::string &part_name, const AlignedBox &a
 //=================================================================================================//
 AlignedBoxPart::~AlignedBoxPart() = default;
 //=================================================================================================//
-void AlignedBoxPart::writeAlignedBoxToVtp()
+void AlignedBoxPart::writeAlignedBoxToVtp(Real scale_factor)
 {
     GeometricShapeBox domain_shape(
         aligned_box_.getTransform(), aligned_box_.HalfSize(), svAlignedBox()->Name());
-    domain_shape.writeGeometricShapeBoxToVtp();
+    domain_shape.writeGeometricShapeBoxToVtp(scale_factor);
 }
 //=================================================================================================//
 AlignedBoxByParticle::AlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box)

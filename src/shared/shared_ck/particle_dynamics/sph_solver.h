@@ -44,6 +44,8 @@ class TimeStepper
     void setPhysicalTime(Real time);
     Real getPhysicalTime();
     Real getGlobalTimeStepSize();
+    Real getPhysicalTimeWithScalingRef();
+    Real getGlobalTimeStepSizeWithScalingRef();
     Real incrementPhysicalTime(Real global_time_step);
     Real incrementPhysicalTime(BaseDynamics<Real> &step_evaluator);
     UnsignedInt getIterationStep() const { return iteration_step_; }
@@ -112,20 +114,22 @@ class TimeStepper
         bool operator()();
 
       private:
-        SingularVariable<Real> *sv_physical_time_;
+        SingleVariable<Real> *sv_physical_time_;
         Real trigger_time_;
     };
 
     class TriggerByInterval
     {
       public:
-        TriggerByInterval(Real initial_interval);
+        TriggerByInterval(TimeStepper &time_stepper, Real initial_interval);
         bool operator()(BaseDynamics<Real> &interval_evaluator);
         bool operator()();
         Real getInterval() const;
+        Real getIntervalWithScalingRef() const;
         void incrementPresentTime(Real dt);
 
       private:
+        SingleVariable<Real> *sv_physical_time_;
         Real present_time_, interval_;
     };
 
@@ -140,7 +144,7 @@ class TimeStepper
     StdVec<TriggerByInterval *> interval_executers_;
     StdVec<TriggerByPhysicalTime *> physical_time_executers_;
     Real global_dt_;
-    SingularVariable<Real> *sv_physical_time_;
+    SingleVariable<Real> *sv_physical_time_;
     UnsignedInt iteration_step_{0};
     UnsignedInt first_computing_step_{0};
     UnsignedInt screening_interval_{100};

@@ -11,9 +11,9 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType>
-SingularVariable<DataType> *SPHSystem::registerSystemVariable(const std::string &name, DataType initial_value)
+SingleVariable<DataType> *SPHSystem::registerSystemVariable(const std::string &name, DataType initial_value)
 {
-    SingularVariable<DataType> *variable =
+    SingleVariable<DataType> *variable =
         findVariableByName<DataType>(all_system_variables_, name);
 
     return variable != nullptr
@@ -23,9 +23,9 @@ SingularVariable<DataType> *SPHSystem::registerSystemVariable(const std::string 
 }
 //=================================================================================================//
 template <typename DataType>
-SingularVariable<DataType> *SPHSystem::getSystemVariableByName(const std::string &name)
+SingleVariable<DataType> *SPHSystem::getSystemVariableByName(const std::string &name)
 {
-    SingularVariable<DataType> *variable =
+    SingleVariable<DataType> *variable =
         findVariableByName<DataType>(all_system_variables_, name);
     checkPointer(variable, name, "system variable");
     return variable;
@@ -34,7 +34,7 @@ SingularVariable<DataType> *SPHSystem::getSystemVariableByName(const std::string
 template <typename DataType>
 DataType *SPHSystem::getSystemVariableDataByName(const std::string &name)
 {
-    SingularVariable<DataType> *variable =
+    SingleVariable<DataType> *variable =
         findVariableByName<DataType>(all_system_variables_, name);
     checkPointer(variable, name, "system variable");
     return variable->Data();
@@ -93,7 +93,7 @@ DerivedBodyType &SPHSystem::getBodyByName(const std::string &name)
     StdVec<DerivedBodyType *> collected_bodies = collectBodies<DerivedBodyType>();
     for (auto &body : collected_bodies)
     {
-        if (body->getName() == name)
+        if (body->Name() == name)
         {
             return *DynamicCast<DerivedBodyType>(this, body);
         }
@@ -122,7 +122,7 @@ RelationType &SPHSystem::getRelationByName(const std::string &name)
     StdVec<RelationType *> collected_relations = collectRelations<RelationType>();
     for (auto &relation : collected_relations)
     {
-        if (relation->getName() == name)
+        if (relation->Name() == name)
         {
             return *DynamicCast<RelationType>(this, relation);
         }

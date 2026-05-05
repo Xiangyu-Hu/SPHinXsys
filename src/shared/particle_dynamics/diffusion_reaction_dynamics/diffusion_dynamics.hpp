@@ -112,7 +112,7 @@ DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>::
         contact_kernel_gradients_.push_back(ContactKernelGradientType(this->particles_, contact_particles_k));
         contact_Vol_.push_back(contact_particles_k->template registerStateVariableData<Real>("VolumetricMeasure"));
 
-        std::string diffusion_direction = "From" + this->contact_bodies_[k]->getName();
+        std::string diffusion_direction = "From" + this->contact_bodies_[k]->Name();
         for (auto &diffusion : this->diffusions_)
         {
             std::string variable_name = diffusion->GradientSpeciesName() + "Transfer" + diffusion_direction;
@@ -286,7 +286,7 @@ DiffusionRelaxation<Robin<ContactKernelGradientType>, DiffusionType>::
             contact_convection_[k].push_back(
                 contact_particles_k->template registerStateVariableData<Real>(diffusion_species_name + "Convection"));
             contact_species_infinity_[k].push_back(
-                contact_particles_k->template registerSingularVariable<Real>(diffusion_species_name + "Infinity")->Data());
+                contact_particles_k->template registerSingleVariable<Real>(diffusion_species_name + "Infinity")->Data());
         }
     }
 }

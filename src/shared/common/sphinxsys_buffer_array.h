@@ -139,7 +139,7 @@ class VariableBufferArray : public DiscreteVariableArray<DataType>
 };
 
 template <typename DataType>
-class DeviceVariableBufferArray : public Entity
+class DeviceVariableBufferArray : public Quantity
 {
   public:
     template <class PolicyType>

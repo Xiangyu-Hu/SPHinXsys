@@ -46,7 +46,7 @@ class GeometricShapeBox : public TransformShape<GeometricBox>
                                const std::string &name = "GeometricShapeBox");
     virtual ~GeometricShapeBox() {};
     TransformGeometryBox getExpandedBox(Real expansion) const;
-    void writeGeometricShapeBoxToVtp();
+    void writeGeometricShapeBoxToVtp(Real scale_factor = 1.0);
 };
 
 class GeometricShapeBall : public GeometricBall, public Shape

@@ -23,7 +23,7 @@ int main(int ac, char *av[])
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_block.getName())
+        ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_block.Name())
         : water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
     /**
      * @brief 	Particle and body creation of wall boundary.
@@ -32,7 +32,7 @@ int main(int ac, char *av[])
     wall_boundary.defineBodyLevelSetShape();
     wall_boundary.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
+        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.Name())
         : wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody observer_center_point(sph_system, "ObserverCenterPoint");

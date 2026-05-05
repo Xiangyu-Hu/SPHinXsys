@@ -74,7 +74,7 @@ class Shape
     explicit Shape(const std::string &shape_name);
     virtual ~Shape() {};
 
-    std::string getName() { return name_; };
+    std::string Name() { return name_; };
     void setName(const std::string &name) { name_ = name; };
     BoundingBoxd getBounds();
     virtual bool isValid() { return true; };

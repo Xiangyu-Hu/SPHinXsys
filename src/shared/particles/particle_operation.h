@@ -48,7 +48,7 @@ class SpawnRealParticle
     DiscreteVariables &evolving_variables_;
     DiscreteVariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
-    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    SingleVariable<UnsignedInt> *sv_total_real_particles_;
     UnsignedInt particles_bound_;
 
   public:
@@ -86,7 +86,7 @@ class RemoveRealParticle
     DiscreteVariables &evolving_variables_;
     DiscreteVariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
-    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    SingleVariable<UnsignedInt> *sv_total_real_particles_;
 
   public:
     RemoveRealParticle(BaseParticles *particles);

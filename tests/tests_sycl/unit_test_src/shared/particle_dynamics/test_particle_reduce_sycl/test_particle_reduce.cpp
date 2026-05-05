@@ -42,7 +42,7 @@ TEST(particle_reduce, test_sycl)
         torque[i] = torques[i];
         force[i] = forces[i];
     }
-    SingularVariable<UnsignedInt> sv_total_particles("TotalParticles", dv_torque.getDataSize());
+    SingleVariable<UnsignedInt> sv_total_particles("TotalParticles", dv_torque.getDataSize());
 
     SimTKVec3 *torque_ck = dv_torque.DelegatedData(ParallelPolicy{});
     SimTKVec3 *force_ck = dv_force.DelegatedData(ParallelPolicy{});

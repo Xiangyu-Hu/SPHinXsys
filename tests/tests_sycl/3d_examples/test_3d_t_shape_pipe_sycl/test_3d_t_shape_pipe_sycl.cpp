@@ -88,7 +88,7 @@ struct BoundaryPressurePrescribed
 class ResetBufferCorrectionMatrixCK : public BaseLocalDynamics<AlignedBoxByCell>
 {
   private:
-    SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingleVariable<AlignedBox> *sv_aligned_box_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Matd> *dv_B_;
     Real radius_;
@@ -233,14 +233,14 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
     water_block.defineComponentLevelSetShape("OuterBoundary");
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(10.);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(in_outlet_particle_buffer, water_block.getName())
+        ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(in_outlet_particle_buffer, water_block.Name())
         : water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
     SolidBody wall_boundary(sph_system, wall_boundary_shape);
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.defineBodyLevelSetShape();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
+        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.Name())
         : wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     if (sph_system.RunParticleRelaxation())
@@ -398,7 +398,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
 
     // --- Section 17: Main Simulation Loop to Find Baseline ---
     {
-        SingularVariable<Real> *sv_physical_time =
+        SingleVariable<Real> *sv_physical_time =
             sph_system.getSystemVariableByName<Real>("PhysicalTime");
         // ─────────────────────────────────────────────────────────────────────────────
         // ─── BEGIN INSERTION: BASELINE PID (PRESSURE-DRIVEN) SECTION

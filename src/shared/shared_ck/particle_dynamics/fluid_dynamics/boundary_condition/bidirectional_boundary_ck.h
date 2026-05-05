@@ -63,7 +63,7 @@ class BufferIndicationCK : public BaseLocalDynamics<AlignedBoxByCell>
 
   protected:
     int part_id_;
-    SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingleVariable<AlignedBox> *sv_aligned_box_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<int> *dv_buffer_indicator_;
 };
@@ -116,12 +116,12 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<AlignedBoxByCell>
     int part_id_;
     FluidType &fluid_;
     ConditionType condition_;
-    SingularVariable<AlignedBox> *sv_aligned_box_;
-    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    SingleVariable<AlignedBox> *sv_aligned_box_;
+    SingleVariable<UnsignedInt> *sv_total_real_particles_;
     SpawnRealParticle spawn_real_particle_method_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<int> *dv_buffer_indicator_;
-    SingularVariable<Real> *sv_physical_time_;
+    SingleVariable<Real> *sv_physical_time_;
     DiscreteVariable<Real> *dv_p_, *dv_rho_;
     Real upper_bound_fringe_;
 };
@@ -160,8 +160,8 @@ class BufferOutflowIndication : public BaseLocalDynamics<AlignedBoxByCell>
 
   protected:
     int part_id_;
-    SingularVariable<AlignedBox> *sv_aligned_box_;
-    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    SingleVariable<AlignedBox> *sv_aligned_box_;
+    SingleVariable<UnsignedInt> *sv_total_real_particles_;
     DiscreteVariable<int> *dv_buffer_indicator_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<int> *dv_life_status_; // 0: alive, 1: to delete
@@ -219,10 +219,10 @@ class PressureVelocityCondition : public BaseLocalDynamics<AlignedBoxByCell>,
     };
 
   protected:
-    SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingleVariable<AlignedBox> *sv_aligned_box_;
     KernelCorrectionType kernel_correction_method_;
     ConditionType condition_;
-    SingularVariable<Real> *sv_physical_time_;
+    SingleVariable<Real> *sv_physical_time_;
     DiscreteVariable<Vecd> *dv_kernel_gradient_integral_;
 };
 

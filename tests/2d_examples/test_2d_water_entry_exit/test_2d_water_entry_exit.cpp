@@ -204,7 +204,7 @@ int main(int ac, char *av[])
     cylinder.defineClosure<Solid, IsotropicDiffusion>(
         rho0_s, ConstructArgs(diffusion_species_name, diffusion_coeff));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
+        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.Name())
         : cylinder.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");

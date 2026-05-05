@@ -41,6 +41,5 @@
 #include "interaction_algorithms_ck.hpp"
 #include "particle_functors_ck.h"
 #include "particle_sort_ck.hpp"
-#include "sph_solver.h"
 
 #endif // ALL_SHARED_PHYSICAL_DYNAMICS_CK_H

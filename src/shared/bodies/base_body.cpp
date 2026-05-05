@@ -23,7 +23,7 @@ SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
 SPHBody::~SPHBody() = default;
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape)
-    : SPHBody(sph_system, shape, shape.getName()) {}
+    : SPHBody(sph_system, shape, shape.Name()) {}
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, const std::string &name)
     : SPHBody(sph_system, makeShared<DefaultShape>(name)) {}
@@ -35,7 +35,7 @@ SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::s
 }
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
-    : SPHBody(sph_system, shape_ptr, shape_ptr->getName()) {}
+    : SPHBody(sph_system, shape_ptr, shape_ptr->Name()) {}
 //=================================================================================================//
 BoundingBoxd SPHBody::getSPHSystemBounds()
 {
@@ -103,7 +103,7 @@ BaseCellLinkedList &RealBody::getCellLinkedList()
         cell_linked_list_ptr_ = sph_adaptation_->createCellLinkedList(
             getSPHSystemBounds(), *base_particles_);
         cell_linked_list_created_ = true;
-        cell_linked_list_ptr_.get()->setName(getName() + "CellLinkedList<SPHAdaptation>");
+        cell_linked_list_ptr_.get()->setName(Name() + "CellLinkedList<SPHAdaptation>");
     }
     return *cell_linked_list_ptr_.get();
 }

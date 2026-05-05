@@ -111,27 +111,27 @@ StdVec<DiscreteVariable<DataType> *> BaseParticles::getVariablesByName(
 }
 //=================================================================================================//
 template <class DataType>
-SingularVariable<DataType> *BaseParticles::
-    addUniqueSingularVariable(const std::string &name, DataType initial_value)
+SingleVariable<DataType> *BaseParticles::
+    addUniqueSingleVariable(const std::string &name, DataType initial_value)
 {
-    SingularVariable<DataType> *variable =
-        unique_variable_ptrs_.createPtr<SingularVariable<DataType>>(name, initial_value);
+    SingleVariable<DataType> *variable =
+        unique_variable_ptrs_.createPtr<SingleVariable<DataType>>(name, initial_value);
     return variable;
 }
 //=================================================================================================//
 template <typename DataType>
-SingularVariable<DataType> *BaseParticles::
-    registerSingularVariable(const std::string &name, DataType initial_value)
+SingleVariable<DataType> *BaseParticles::
+    registerSingleVariable(const std::string &name, DataType initial_value)
 {
-    return registerVariable<SingularVariable, DataType>(
+    return registerVariable<SingleVariable, DataType>(
         all_singular_variables_, all_singular_variable_ptrs_, name, initial_value);
 }
 //=================================================================================================//
 template <typename DataType>
-SingularVariable<DataType> *BaseParticles::getSingularVariableByName(const std::string &name)
+SingleVariable<DataType> *BaseParticles::getSingleVariableByName(const std::string &name)
 {
-    SingularVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
-    checkPointer(variable, name, type_name<SingularVariable<DataType>>());
+    SingleVariable<DataType> *variable = findVariableByName<DataType>(all_singular_variables_, name);
+    checkPointer(variable, name, type_name<SingleVariable<DataType>>());
     return variable;
 }
 //=================================================================================================//
