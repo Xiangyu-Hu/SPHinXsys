@@ -100,6 +100,11 @@ class SingleVariable : public Quantity
         return DelegatedOnDevice();
     };
 
+  protected:
+    DataType *data_;
+    DataType *delegated_;
+    friend class DeviceSharedSingleVariable<DataType>;
+
     DataType *DelegatedOnDevice()
     {
         if (!isDataDelegated())
@@ -111,10 +116,6 @@ class SingleVariable : public Quantity
     };
     bool isDataDelegated() { return data_ != delegated_; };
     void setDelegateData(DataType *new_delegated) { delegated_ = new_delegated; };
-
-  protected:
-    DataType *data_;
-    DataType *delegated_;
 };
 
 template <typename DataType>
@@ -164,6 +165,7 @@ class DiscreteVariable : public Quantity
     void setValue(size_t index, const DataType &value) { data_field_[index] = value; };
     DataType getValue(size_t index) { return data_field_[index]; };
     DataType getValueWithScalingRef(UnsignedInt index) const { return data_field_[index] * scaling_ref_; };
+    size_t getDataSize() { return data_size_; }
 
     template <class FillFunction>
     void fill(UnsignedInt begin_index, UnsignedInt end_index, const FillFunction &fill_function)
@@ -184,10 +186,6 @@ class DiscreteVariable : public Quantity
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return data_field_; };
     template <class PolicyType>
     DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy) { return DelegatedOnDevice(); };
-    DataType *DelegatedOnDevice();
-    bool isDataDelegated() { return device_data_field_ != nullptr; };
-    size_t getDataSize() { return data_size_; }
-    void setDeviceData(DataType *data_field) { device_data_field_ = data_field; };
 
     template <class ExecutionPolicy>
     void reallocateData(const ExecutionPolicy &ex_policy, size_t tentative_size)
@@ -219,6 +217,11 @@ class DiscreteVariable : public Quantity
     DataType *data_field_;
     DeviceOnlyDiscreteVariable<DataType> *device_only_variable_;
     DataType *device_data_field_;
+    friend class DeviceOnlyDiscreteVariable<DataType>;
+
+    DataType *DelegatedOnDevice();
+    bool isDataDelegated() { return device_data_field_ != nullptr; };
+    void setDeviceData(DataType *data_field) { device_data_field_ = data_field; };
 
     void reallocateData(size_t tentative_size)
     {
