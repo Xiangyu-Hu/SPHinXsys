@@ -205,20 +205,20 @@ int main(int ac, char *av[])
     sph_system.addShape<LevelSetShape>(water_body, refinement_region).writeLevelSet();
     water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
-    water_body.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_body.getName())
+    water_body.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_body.Name())
         .reloadExtraVariable<Real>("SmoothingLengthRatio");
     // //----------------------------------------------------------------------
     // //	Creating body parts.
     // //----------------------------------------------------------------------
     auto &emitter = water_body.addBodyPart<AlignedBoxByParticle>(emitter_box);
-    emitter.writeShapeProxy();
+    emitter.writeAlignedBoxToVtp();
     auto &disposer = water_body.addBodyPart<AlignedBoxByCell>(disposer_box);
-    disposer.writeShapeProxy();
+    disposer.writeAlignedBoxToVtp();
 
     auto &cylinder = sph_system.addAdaptiveBody<SolidBody>(cylinder_adaptation, cylinder_shape);
     cylinder.defineBodyLevelSetShape().writeLevelSet();
     cylinder.defineMaterial<Solid>();
-    cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
+    cylinder.generateParticles<BaseParticles, Reload>(cylinder.Name())
         .reloadExtraVariable<Vecd>("NormalDirection");
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");

@@ -54,7 +54,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
     template <typename... RelationParameters>
     ObservedQuantityRecording(const std::string &quantity_name, Contact<RelationParameters...> &contact_relation)
         : BaseQuantityRecording(contact_relation.getSPHBody().getSPHSystem(),
-                                contact_relation.getSPHBody().getName()),
+                                contact_relation.getSPHBody().Name()),
           observer_(contact_relation.getSPHBody()),
           base_particles_(observer_.getBaseParticles()),
           observation_method_(contact_relation, quantity_name),
@@ -126,7 +126,7 @@ class ReducedQuantityRecording<ExecutionPolicy, LocalReduceMethodType> : public 
     template <class DynamicsIdentifier, typename... Args>
     ReducedQuantityRecording(DynamicsIdentifier &identifier, Args &&...args)
         : BaseQuantityRecording(identifier.getSPHBody().getSPHSystem(),
-                                identifier.getName()),
+                                identifier.Name()),
           reduce_method_(identifier, std::forward<Args>(args)...),
           reduced_quantity_(ZeroData<VariableType>::value)
     {

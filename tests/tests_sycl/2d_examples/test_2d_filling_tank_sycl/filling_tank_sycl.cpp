@@ -94,7 +94,7 @@ int main(int ac, char *av[])
     //	Creating body parts.
     //----------------------------------------------------------------------
     AlignedBoxByParticle emitter(water_body, AlignedBox(xAxis, Transform(inlet_translation), inlet_halfsize));
-    emitter.writeShapeProxy();
+    emitter.writeAlignedBoxToVtp();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.

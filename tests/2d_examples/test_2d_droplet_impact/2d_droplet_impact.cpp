@@ -23,14 +23,14 @@ int main(int ac, char *av[])
     water_block.defineBodyLevelSetShape();
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
+        ? water_block.generateParticles<BaseParticles, Reload>(water_block.Name())
         : water_block.generateParticles<BaseParticles, Lattice>();
 
     FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
     air_block.defineBodyLevelSetShape();
     air_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_a, c_f), mu_a);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? air_block.generateParticles<BaseParticles, Reload>(air_block.getName())
+        ? air_block.generateParticles<BaseParticles, Reload>(air_block.Name())
         : air_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));

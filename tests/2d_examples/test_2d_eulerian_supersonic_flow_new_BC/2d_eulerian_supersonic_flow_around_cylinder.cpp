@@ -31,7 +31,7 @@ int main(int ac, char *av[])
     fluid_block.defineMaterial<CompressibleFluid>(rho_reference, heat_capacity_ratio);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? fluid_block.generateParticlesWithReserve<BaseParticles, Reload>(ghost_boundary, fluid_block.getName())
+        ? fluid_block.generateParticlesWithReserve<BaseParticles, Reload>(ghost_boundary, fluid_block.Name())
         : fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_boundary);
     //----------------------------------------------------------------------
     //	Define body relation map.

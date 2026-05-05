@@ -233,14 +233,14 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
     water_block.defineComponentLevelSetShape("OuterBoundary");
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(10.);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(in_outlet_particle_buffer, water_block.getName())
+        ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(in_outlet_particle_buffer, water_block.Name())
         : water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
     SolidBody wall_boundary(sph_system, wall_boundary_shape);
     wall_boundary.defineMaterial<Solid>();
     wall_boundary.defineBodyLevelSetShape();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
+        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.Name())
         : wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     if (sph_system.RunParticleRelaxation())
@@ -343,7 +343,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
             std::make_unique<PressureBC<MainExecutionPolicy, LinearCorrectionCK>>(
                 water_block, boundary, params.t_ref));
     for (auto &bc : bidirectional_pressure_conditions)
-        bc->alignedbox_by_cell.writeShapeProxy();
+        bc->alignedbox_by_cell.writeAlignedBoxToVtp();
     StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> particle_deletion(water_block);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
         fluid_density_summation(water_body_inner, water_wall_contact);

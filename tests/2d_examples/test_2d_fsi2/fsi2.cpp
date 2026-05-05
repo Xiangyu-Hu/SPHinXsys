@@ -39,7 +39,7 @@ int main(int ac, char *av[])
     insert_body.defineBodyLevelSetShape().writeLevelSet();
     insert_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? insert_body.generateParticles<BaseParticles, Reload>(insert_body.getName())
+        ? insert_body.generateParticles<BaseParticles, Reload>(insert_body.Name())
         : insert_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");

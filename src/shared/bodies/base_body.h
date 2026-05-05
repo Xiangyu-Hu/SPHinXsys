@@ -89,7 +89,7 @@ class SPHBody
     SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
     virtual ~SPHBody();
 
-    std::string getName() { return body_name_; };
+    std::string Name() { return body_name_; };
     SPHSystem &getSPHSystem();
     SPHBody &getSPHBody() { return *this; };
     Shape &getInitialShape() { return *initial_shape_; };

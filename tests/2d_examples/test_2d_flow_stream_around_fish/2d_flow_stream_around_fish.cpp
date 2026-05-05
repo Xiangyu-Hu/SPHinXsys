@@ -34,7 +34,7 @@ int main(int ac, char *av[])
     fish_body.defineMaterial<FishBodyComposite>();
     //  Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? fish_body.generateParticles<BaseParticles, Reload>(fish_body.getName())
+        ? fish_body.generateParticles<BaseParticles, Reload>(fish_body.Name())
         : fish_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

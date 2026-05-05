@@ -75,7 +75,7 @@ BaseContactRelation::BaseContactRelation(SPHBody &sph_body, RealBodyVector conta
     contact_configuration_.resize(contact_bodies_.size());
     for (size_t k = 0; k != contact_bodies_.size(); ++k)
     {
-        const std::string name = contact_bodies_[k]->getName();
+        const std::string name = contact_bodies_[k]->Name();
         contact_particles_.push_back(&contact_bodies_[k]->getBaseParticles());
         contact_adaptations_.push_back(&contact_bodies_[k]->getSPHAdaptation());
         contact_configuration_[k].resize(base_particles_.ParticlesBound(), Neighborhood());

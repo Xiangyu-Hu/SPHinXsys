@@ -145,11 +145,11 @@ int main(int ac, char *av[])
     auto &column = sph_system.addBody<RealBody>(column_shape);
     column.defineMaterial<HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
-    column.generateParticles<BaseParticles, Reload>(column.getName());
+    column.generateParticles<BaseParticles, Reload>(column.Name());
 
     auto &wall = sph_system.addBody<RealBody>(wall_shape);
     wall.defineMaterial<Solid>();
-    wall.generateParticles<BaseParticles, Reload>(wall.getName())
+    wall.generateParticles<BaseParticles, Reload>(wall.Name())
         .reloadExtraVariable<Vecd>("NormalDirection");
 
     auto &my_observer = sph_system.addBody<ObserverBody>("MyObserver");

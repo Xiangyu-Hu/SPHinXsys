@@ -19,8 +19,8 @@ Relation<SourceIdentifier, TargetIdentifier>::Relation(
     for (size_t k = 0; k != contact_identifiers.size(); ++k)
     {
         SPHBody &contact_body = contact_identifiers[k]->getSPHBody();
-        std::string source_name = source_identifier.getName();
-        std::string target_name = contact_identifiers[k]->getName();
+        std::string source_name = source_identifier.Name();
+        std::string target_name = contact_identifiers[k]->Name();
         std::string name = source_name == target_name ? source_name : source_name + target_name;
         names_.push_back(name); // default name is the combination of source and target identifier names
         BaseParticles &contact_particles = contact_body.getBaseParticles();

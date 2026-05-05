@@ -93,7 +93,7 @@ DerivedBodyType &SPHSystem::getBodyByName(const std::string &name)
     StdVec<DerivedBodyType *> collected_bodies = collectBodies<DerivedBodyType>();
     for (auto &body : collected_bodies)
     {
-        if (body->getName() == name)
+        if (body->Name() == name)
         {
             return *DynamicCast<DerivedBodyType>(this, body);
         }
@@ -122,7 +122,7 @@ RelationType &SPHSystem::getRelationByName(const std::string &name)
     StdVec<RelationType *> collected_relations = collectRelations<RelationType>();
     for (auto &relation : collected_relations)
     {
-        if (relation->getName() == name)
+        if (relation->Name() == name)
         {
             return *DynamicCast<RelationType>(this, relation);
         }

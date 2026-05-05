@@ -109,7 +109,7 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
             if (state_recording_)
             {
                 std::string filefullpath = io_environment_.OutputFolder() +
-                                           "/SPHBody_" + body->getName() + "_" + sequence + ".plt";
+                                           "/SPHBody_" + body->Name() + "_" + sequence + ".plt";
                 if (fs::exists(filefullpath))
                 {
                     fs::remove(filefullpath);

@@ -57,7 +57,7 @@ int main(int ac, char *av[])
     ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        ball.generateParticles<BaseParticles, Reload>(ball.getName());
+        ball.generateParticles<BaseParticles, Reload>(ball.Name());
     }
     else
     {
@@ -70,7 +70,7 @@ int main(int ac, char *av[])
     rigid_shell.defineMaterial<Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        rigid_shell.generateParticles<SurfaceParticles, Reload>(rigid_shell.getName());
+        rigid_shell.generateParticles<SurfaceParticles, Reload>(rigid_shell.Name());
     }
     else if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
     {

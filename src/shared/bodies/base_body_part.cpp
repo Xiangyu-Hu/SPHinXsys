@@ -16,7 +16,7 @@ Eigen::IOFormat fmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", ""
 BodyPart::BodyPart(SPHBody &sph_body)
     : sph_body_(sph_body), base_particles_(sph_body.getBaseParticles()),
       part_id_(base_particles_.getNewBodyPartID()),
-      part_name_(sph_body.getName() + "Part" + std::to_string(part_id_)),
+      part_name_(sph_body.Name() + "Part" + std::to_string(part_id_)),
       sph_adaptation_(sph_body.getSPHAdaptation()),
       sv_range_size_(nullptr),
       dv_body_part_id_(base_particles_.registerStateVariable<int>(part_name_ + "ID")),
@@ -104,7 +104,7 @@ BodyRegionByParticle::
     BodyRegionByParticle(SPHBody &sph_body, Shape &body_part_shape)
     : BodyPartByParticle(sph_body), body_part_shape_(body_part_shape)
 {
-    alias_ = body_part_shape_.getName();
+    alias_ = body_part_shape_.Name();
     TaggingParticleMethod tagging_particle_method = std::bind(&BodyRegionByParticle::tagByContain, this, _1);
     tagParticles(tagging_particle_method);
 }
@@ -157,7 +157,7 @@ bool BodySurfaceLayer::tagSurfaceLayer(size_t particle_index)
 BodyRegionByCell::BodyRegionByCell(RealBody &real_body, Shape &body_part_shape)
     : BodyPartByCell(real_body), body_part_shape_(body_part_shape)
 {
-    alias_ = body_part_shape_.getName();
+    alias_ = body_part_shape_.Name();
     TaggingCellMethod tagging_cell_method = std::bind(&BodyRegionByCell::checkNotFar, this, _1, _2);
     tagCells(tagging_cell_method);
 }
@@ -176,7 +176,7 @@ bool BodyRegionByCell::checkNotFar(Vecd cell_position, Real threshold)
 NearShapeSurface::NearShapeSurface(RealBody &real_body, LevelSetShape &level_set_shape)
     : BodyPartByCell(real_body), level_set_shape_(level_set_shape)
 {
-    alias_ = level_set_shape.getName();
+    alias_ = level_set_shape.Name();
     TaggingCellMethod tagging_cell_method = std::bind(&NearShapeSurface::checkNearSurface, this, _1, _2);
     tagCells(tagging_cell_method);
 }
@@ -185,7 +185,7 @@ NearShapeSurface::NearShapeSurface(RealBody &real_body, SharedPtr<Shape> shape_p
     : BodyPartByCell(real_body),
       level_set_shape_(level_set_shape_keeper_.createRef<LevelSetShape>(real_body, *shape_ptr.get(), true))
 {
-    alias_ = level_set_shape_.getName();
+    alias_ = level_set_shape_.Name();
     TaggingCellMethod tagging_cell_method = std::bind(&NearShapeSurface::checkNearSurface, this, _1, _2);
     tagCells(tagging_cell_method);
 }

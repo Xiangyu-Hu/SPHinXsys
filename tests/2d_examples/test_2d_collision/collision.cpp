@@ -92,14 +92,14 @@ int main(int ac, char *av[])
     free_ball.defineBodyLevelSetShape();
     free_ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? free_ball.generateParticles<BaseParticles, Reload>(free_ball.getName())
+        ? free_ball.generateParticles<BaseParticles, Reload>(free_ball.Name())
         : free_ball.generateParticles<BaseParticles, Lattice>();
 
     SolidBody damping_ball(sph_system, makeShared<DampingBall>("DampingBall"));
     damping_ball.defineBodyLevelSetShape();
     damping_ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? damping_ball.generateParticles<BaseParticles, Reload>(damping_ball.getName())
+        ? damping_ball.generateParticles<BaseParticles, Reload>(damping_ball.Name())
         : damping_ball.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));

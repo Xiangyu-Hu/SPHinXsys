@@ -83,7 +83,7 @@ class BodyPart
     virtual ~BodyPart();
     SPHBody &getSPHBody() { return sph_body_; };
     SPHSystem &getSPHSystem();
-    std::string getName() const { return alias_.value_or(part_name_); };
+    std::string Name() const { return alias_.value_or(part_name_); };
     int getPartID() { return part_id_; };
     SingleVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
     SPHAdaptation &getSPHAdaptation() { return sph_adaptation_; };
