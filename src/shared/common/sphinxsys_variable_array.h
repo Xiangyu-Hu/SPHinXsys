@@ -98,7 +98,6 @@ class VariableArray : public Quantity
     };
     ~VariableArray() { delete[] data_ptr_; };
     StdVec<VariableType<DataType> *> getVariables() { return variables_; };
-    DataPtr<DataType> *Data() { return data_ptr_; };
     size_t getArraySize() { return array_size_; }
     bool isDataArrayDelegated() { return data_ptr_ != delegated_data_ptr_; };
 
