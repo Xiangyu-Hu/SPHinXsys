@@ -30,58 +30,24 @@
 #define SPHINXSYS_ARRAY_VARIABLE_H
 
 #include "sphinxsys_variable.h"
-
+#include "sphinxsys_variable_array.h"
 namespace SPH
 {
-template <typename DataType>
-class ArrayData
-{
-  public:
-    ArrayData(DataType *data, size_t array_size)
-        : data_(data), array_size_(array_size) {};
-
-    size_t ArraySize() { return array_size_; };
-
-    DataType *operator[](size_t particle_index)
-    {
-        return data_ + particle_index * array_size_;
-    }
-
-  protected
-    DataType *data_;
-    UnsignedInt array_size_;
-};
-
 template <typename DataType>
 class ArrayVariable : protected DiscreteVariable<DataType>
 {
   public:
-    ArrayVariable(const std::string &array_name, StdVec<std::string> names, UnsignedInt variable_size)
-        : DiscreteVariable<DataType>(array_name, names.size() * variable_size),
-          names_(names) {};
+    ArrayVariable(const std::string &name, UnsignedInt variable_size, UnsignedInt array_size)
+        : DiscreteVariable<DataType>(name, variable_size * array_size);
 
     template <class ExecutionPolicy>
     ArrayData<DataType> DelegatedArrayData(const ExecutionPolicy &ex_policy)
     {
         return ArrayData(DiscreteVariable<DataType>::DelegatedData(ex_policy), names_.size());
     };
-
-  protected:
-    StdVec<std::string> names_;
-
-    UnsignedInt getVariableIndex(const std::string &variable_name)
-    {
-        for (UnsignedInt i = 0; i < names_.size(); ++i)
-        {
-            if (names_[i] == variable_name)
-            {
-                return i;
-            }
-        }
-        std::cout << "\n Error: variable name '" << variable_name
-                  << "' is not found in ArrayVariable '" << this->Name() << "'!" << std::endl;
-        exit(1);
-    };
 };
+
+/** Generalized particle variable type*/
+typedef DataContainerAddressAssemble<ArrayVariable> ArrayVariables;
 } // namespace SPH
 #endif // SPHINXSYS_ARRAY_VARIABLE_H

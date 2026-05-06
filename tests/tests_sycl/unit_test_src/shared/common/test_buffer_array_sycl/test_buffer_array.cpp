@@ -63,7 +63,7 @@ TEST(variable_buffer_array, test_sycl)
                      (*copy_variable_to_buffer)(index, i);
                  });
 
-    DataArray<SimTKVec3> *buff_array = variable_buffer_array.DelegatedBufferArray(ParallelPolicy{});
+    DataPtr<SimTKVec3> *buff_array = variable_buffer_array.DelegatedBufferArray(ParallelPolicy{});
     SimTK::SpatialVec partial_sum_ck = particle_reduce<ReduceSum<SimTK::SpatialVec>>(
         LoopRangeCK<ParallelPolicy, SPHBody>(&sv_buffer_particles),
         ReduceReference<ReduceSum<SimTK::SpatialVec>>::value,
@@ -88,7 +88,7 @@ TEST(variable_buffer_array, test_sycl)
                      (*copy_variable_to_buffer_sycl)(index, i);
                  });
 
-    DataArray<SimTKVec3> *buff_array_sycl = variable_buffer_array.DelegatedBufferArray(ParallelDevicePolicy{});
+    DataPtr<SimTKVec3> *buff_array_sycl = variable_buffer_array.DelegatedBufferArray(ParallelDevicePolicy{});
     SimTK::SpatialVec partial_sum_sycl =
         particle_reduce<ReduceSum<SimTK::SpatialVec>>( // summation on device
             LoopRangeCK<ParallelDevicePolicy, SPHBody>(&sv_buffer_particles),
@@ -101,7 +101,7 @@ TEST(variable_buffer_array, test_sycl)
                 return SimTK::SpatialVec(a, buffer_force_sycl[i]);
             });
 
-    DataArray<SimTKVec3> *host_staging_buffer_array =
+    DataPtr<SimTKVec3> *host_staging_buffer_array =
         variable_buffer_array.synchronizeHostStagingBufferArray(ParallelDevicePolicy{}, sv_buffer_particles.getValue());
 
     SimTKVec3 *torque_host_staging = host_staging_buffer_array[0];

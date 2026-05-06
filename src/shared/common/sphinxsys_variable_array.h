@@ -34,7 +34,49 @@
 namespace SPH
 {
 template <typename DataType>
-using DataArray = DataType *;
+using DataPtr = DataType *;
+
+template <typename DataType>
+class DataArray; // transposed view of ArrayData
+template <typename DataType>
+class ArrayData; // transposed view of DataPtr
+
+template <typename DataType>
+class DataArray // transposed view of ArrayData
+{
+  public:
+    DataArray(DataPtr<DataType> *data_ptr, size_t array_size)
+        : data_ptr_(data_ptr) {};
+    size_t ArraySize() { return array_size_; };
+
+    DataType *operator[](size_t array_index)
+    {
+        return data_ptr_[array_index];
+    }
+
+  protected:
+    DataPtr<DataType> *data_ptr_;
+    UnsignedInt array_size_;
+};
+
+template <typename DataType>
+class ArrayData // transposed view of DataArray
+{
+  public:
+    ArrayData(DataType *transposed_data, size_t array_size)
+        : transposed_data_(transposed_data), array_size_(array_size) {};
+
+    size_t ArraySize() { return array_size_; };
+
+    DataType *operator[](size_t particle_index)
+    {
+        return transposed_data_ + particle_index * array_size_;
+    }
+
+  protected:
+    DataType *transposed_data_;
+    UnsignedInt array_size_;
+};
 
 template <typename DataType, template <typename> class VariableType>
 class VariableArray : public Quantity
@@ -45,45 +87,45 @@ class VariableArray : public Quantity
     VariableArray(StdVec<VariableType<DataType> *> variables)
         : Quantity("VariableArray"), variables_(variables),
           array_size_(variables.size()),
-          data_array_(nullptr), delegated_data_array_(nullptr)
+          data_ptr_(nullptr), delegated_data_ptr_(nullptr)
     {
-        data_array_ = new DataArray<DataType>[variables.size()];
+        data_ptr_ = new DataPtr<DataType>[variables.size()];
         for (size_t i = 0; i != variables.size(); ++i)
         {
-            data_array_[i] = variables[i]->Data();
+            data_ptr_[i] = variables[i]->Data();
         }
-        delegated_data_array_ = data_array_;
+        delegated_data_ptr_ = data_ptr_;
     };
-    ~VariableArray() { delete[] data_array_; };
+    ~VariableArray() { delete[] data_ptr_; };
     StdVec<VariableType<DataType> *> getVariables() { return variables_; };
-    DataArray<DataType> *Data() { return data_array_; };
+    DataPtr<DataType> *Data() { return data_ptr_; };
     size_t getArraySize() { return array_size_; }
-    bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
+    bool isDataArrayDelegated() { return data_ptr_ != delegated_data_ptr_; };
 
     template <class ExecutionPolicy>
-    DataArray<DataType> *DelegatedDataArray(const ExecutionPolicy &ex_policy)
+    DataPtr<DataType> *DelegatedDataArray(const ExecutionPolicy &ex_policy)
     {
-        return data_array_;
+        return data_ptr_;
     };
 
     template <class PolicyType>
-    DataArray<DataType> *DelegatedOnDevice();
+    DataPtr<DataType> *DelegatedOnDevice();
     template <class PolicyType>
-    DataArray<DataType> *DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy)
+    DataPtr<DataType> *DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy)
     {
         return DelegatedOnDevice<PolicyType>();
     };
 
-    void setDelegateDataArray(DataArray<DataType> *data_array_)
+    void setDelegateDataArray(DataPtr<DataType> *data_ptr_)
     {
-        delegated_data_array_ = data_array_;
+        delegated_data_ptr_ = data_ptr_;
     };
 
   protected:
     StdVec<VariableType<DataType> *> variables_;
     UnsignedInt array_size_;
-    DataArray<DataType> *data_array_;
-    DataArray<DataType> *delegated_data_array_;
+    DataPtr<DataType> *data_ptr_;
+    DataPtr<DataType> *delegated_data_ptr_;
 };
 
 template <typename DataType, template <typename> class VariableType>
@@ -96,14 +138,14 @@ class DeviceOnlyVariableArray : public Quantity
     ~DeviceOnlyVariableArray();
 
   protected:
-    DataArray<DataType> *device_only_data_array_;
+    DataPtr<DataType> *device_only_data_array_;
 };
 
 template <typename DataType>
 using DiscreteVariableArray = VariableArray<DataType, DiscreteVariable>;
 
 template <typename DataType>
-using AllocatedDataArray = DataArray<DataType> *;
+using AllocatedDataArray = DataPtr<DataType> *;
 
 template <typename AllocationType>
 using VariableAllocationSet = std::pair<AllocationType, UnsignedInt>;

@@ -73,7 +73,7 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args);
 
       protected:
-        DataArray<Real> *diffusion_species_, *gradient_species_, *diffusion_dt_;
+        DataPtr<Real> *diffusion_species_, *gradient_species_, *diffusion_dt_;
         UnsignedInt number_of_species_;
     };
 
@@ -156,7 +156,7 @@ class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>
       protected:
         CorrectionKernel correction_;
         Real *contact_Vol_;
-        DataArray<Real> *contact_transfer_;
+        DataPtr<Real> *contact_transfer_;
         BoundaryKernel boundary_flux_;
     };
 
@@ -185,7 +185,7 @@ class DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionPara
         void initialize(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
-        DataArray<Real> *diffusion_dt_;
+        DataPtr<Real> *diffusion_dt_;
         UnsignedInt number_of_species_;
     };
 
@@ -197,7 +197,7 @@ class DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionPara
         void update(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
-        DataArray<Real> *diffusion_species_, *diffusion_dt_;
+        DataPtr<Real> *diffusion_species_, *diffusion_dt_;
         UnsignedInt number_of_species_;
     };
 };
@@ -221,8 +221,8 @@ class DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta1stStage, Interacti
         void initialize(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
-        DataArray<Real> *diffusion_species_;
-        DataArray<Real> *diffusion_species_s_;
+        DataPtr<Real> *diffusion_species_;
+        DataPtr<Real> *diffusion_species_s_;
     };
 
   protected:
@@ -248,7 +248,7 @@ class DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta2ndStage, Interacti
         void update(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
-        DataArray<Real> *diffusion_species_s_;
+        DataPtr<Real> *diffusion_species_s_;
     };
 
   protected:
@@ -273,8 +273,8 @@ class Dirichlet<DiffusionType>
 
       protected:
         Real smoothing_length_sq_;
-        DataArray<Real> *gradient_species_;
-        DataArray<Real> *contact_gradient_species_;
+        DataPtr<Real> *gradient_species_;
+        DataPtr<Real> *contact_gradient_species_;
         InterParticleCoeff *inter_particle_diffusion_coeff_;
     };
 
@@ -301,7 +301,7 @@ class Neumann<DiffusionType>
 
       protected:
         Vecd *contact_n_;
-        DataArray<Real> *contact_species_flux_;
+        DataPtr<Real> *contact_species_flux_;
     };
 
   protected:
