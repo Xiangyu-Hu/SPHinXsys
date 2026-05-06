@@ -34,7 +34,9 @@
 namespace SPH
 {
 template <typename DataType, template <typename> class VariableType>
-class VariableArray;
+class VariableArray; // transpos of ArrayVariable
+template <typename DataType, template <typename> class VariableType>
+class ArrayVariable; // transpos of VariableArray
 
 template <typename DataType>
 using DataPtr = DataType *;
@@ -42,7 +44,7 @@ using DataPtr = DataType *;
 template <typename DataType>
 class DataArray; // transposed view of ArrayData
 template <typename DataType>
-class ArrayData; // transposed view of DataPtr
+class ArrayData; // transposed view of DataArray
 
 template <typename DataType>
 class DataArray // transposed view of ArrayData
