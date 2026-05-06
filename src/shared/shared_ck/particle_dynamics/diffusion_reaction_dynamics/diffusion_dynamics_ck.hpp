@@ -86,8 +86,7 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
     : BaseInteractionType::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
       diffusion_species_(encloser.dv_diffusion_species_array_.DelegatedDataArray(ex_policy)),
       gradient_species_(encloser.dv_gradient_species_array_.DelegatedDataArray(ex_policy)),
-      diffusion_dt_(encloser.dv_diffusion_dt_array_.DelegatedDataArray(ex_policy)),
-      number_of_species_(encloser.diffusions_.size()) {}
+      diffusion_dt_(encloser.dv_diffusion_dt_array_.DelegatedDataArray(ex_policy)) {}
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
 template <class ExecutionPolicy, class EncloserType>
@@ -118,7 +117,7 @@ template <class DiffusionType, class KernelCorrectionType, class... Parameters>
 void DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(UnsignedInt index_i, Real dt)
 {
-    for (UnsignedInt m = 0; m < this->number_of_species_; ++m)
+    for (UnsignedInt m = 0; m < this->diffusion_dt_.ArraySize(); ++m)
     {
         Real d_species = 0.0;
         for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -170,7 +169,7 @@ template <class DiffusionType, template <typename...> class BoundaryType, class 
 void DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType>>::
     InteractKernel::interact(UnsignedInt index_i, Real dt)
 {
-    for (UnsignedInt m = 0; m < this->number_of_species_; ++m)
+    for (UnsignedInt m = 0; m < this->diffusion_dt_.ArraySize(); ++m)
     {
         contact_transfer_[m][index_i] = 0.0;
         for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -191,14 +190,13 @@ template <template <typename...> class RelationType, class... InteractionParamet
 template <class ExecutionPolicy, class EncloserType>
 DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
     InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : diffusion_dt_(encloser.dv_diffusion_dt_array_.DelegatedDataArray(ex_policy)),
-      number_of_species_(encloser.diffusions_.size()) {}
+    : diffusion_dt_(encloser.dv_diffusion_dt_array_.DelegatedDataArray(ex_policy)) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 void DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
     InitializeKernel::initialize(UnsignedInt index_i, Real dt)
 {
-    for (UnsignedInt m = 0; m < number_of_species_; ++m)
+    for (UnsignedInt m = 0; m < diffusion_dt_.ArraySize(); ++m)
     {
         diffusion_dt_[m][index_i] = 0;
     }
@@ -210,14 +208,13 @@ DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseDynamicsType::UpdateKernel(ex_policy, encloser),
       diffusion_species_(encloser.dv_diffusion_species_array_.DelegatedDataArray(ex_policy)),
-      diffusion_dt_(encloser.dv_diffusion_dt_array_.DelegatedDataArray(ex_policy)),
-      number_of_species_(encloser.diffusions_.size()) {}
+      diffusion_dt_(encloser.dv_diffusion_dt_array_.DelegatedDataArray(ex_policy)) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 void DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
     UpdateKernel::update(UnsignedInt index_i, Real dt)
 {
-    for (UnsignedInt m = 0; m < number_of_species_; ++m)
+    for (UnsignedInt m = 0; m < diffusion_species_.ArraySize(); ++m)
     {
         diffusion_species_[m][index_i] += this->cv1_[m](index_i) * dt * diffusion_dt_[m][index_i];
     }
@@ -245,7 +242,7 @@ void DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta1stStage, Interactio
 {
     BaseDynamicsType::InitializeKernel::initialize(index_i, dt);
 
-    for (UnsignedInt m = 0; m < this->number_of_species_; ++m)
+    for (UnsignedInt m = 0; m < this->diffusion_species_.ArraySize(); ++m)
     {
         diffusion_species_s_[m][index_i] = diffusion_species_[m][index_i];
     }
@@ -271,7 +268,7 @@ void DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta2ndStage, Interactio
     UpdateKernel::update(UnsignedInt index_i, Real dt)
 {
     BaseDynamicsType::UpdateKernel::update(index_i, dt);
-    for (UnsignedInt m = 0; m < this->number_of_species_; ++m)
+    for (UnsignedInt m = 0; m < this->diffusion_species_.ArraySize(); ++m)
     {
         this->diffusion_species_[m][index_i] = 0.5 * diffusion_species_s_[m][index_i] +
                                                0.5 * this->diffusion_species_[m][index_i];

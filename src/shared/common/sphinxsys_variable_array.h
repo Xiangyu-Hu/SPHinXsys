@@ -33,6 +33,9 @@
 
 namespace SPH
 {
+template <typename DataType, template <typename> class VariableType>
+class VariableArray;
+
 template <typename DataType>
 using DataPtr = DataType *;
 
@@ -46,7 +49,7 @@ class DataArray // transposed view of ArrayData
 {
   public:
     DataArray(DataPtr<DataType> *data_ptr, size_t array_size)
-        : data_ptr_(data_ptr) {};
+        : data_ptr_(data_ptr), array_size_(array_size) {};
     size_t ArraySize() { return array_size_; };
 
     DataType *operator[](size_t array_index)
@@ -79,6 +82,19 @@ class ArrayData // transposed view of DataArray
 };
 
 template <typename DataType, template <typename> class VariableType>
+class DeviceOnlyVariableArray : public Quantity
+{
+  public:
+    template <class PolicyType>
+    DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
+                            VariableArray<DataType, VariableType> *host_variable_array);
+    ~DeviceOnlyVariableArray();
+
+  protected:
+    DataPtr<DataType> *device_only_data_array_;
+};
+
+template <typename DataType, template <typename> class VariableType>
 class VariableArray : public Quantity
 {
     UniquePtrKeeper<Quantity> device_only_variable_array_keeper_;
@@ -99,25 +115,17 @@ class VariableArray : public Quantity
     ~VariableArray() { delete[] data_ptr_; };
     StdVec<VariableType<DataType> *> getVariables() { return variables_; };
     size_t getArraySize() { return array_size_; }
-    bool isDataArrayDelegated() { return data_ptr_ != delegated_data_ptr_; };
 
     template <class ExecutionPolicy>
-    DataPtr<DataType> *DelegatedDataArray(const ExecutionPolicy &ex_policy)
+    DataArray<DataType> DelegatedDataArray(const ExecutionPolicy &ex_policy)
     {
-        return data_ptr_;
+        return DataArray<DataType>(data_ptr_, array_size_);
     };
 
     template <class PolicyType>
-    DataPtr<DataType> *DelegatedOnDevice();
-    template <class PolicyType>
-    DataPtr<DataType> *DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy)
+    DataArray<DataType> DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy)
     {
-        return DelegatedOnDevice<PolicyType>();
-    };
-
-    void setDelegateDataArray(DataPtr<DataType> *data_ptr_)
-    {
-        delegated_data_ptr_ = data_ptr_;
+        return DataArray<DataType>(DelegatedOnDevice<PolicyType>(), array_size_);
     };
 
   protected:
@@ -125,19 +133,17 @@ class VariableArray : public Quantity
     UnsignedInt array_size_;
     DataPtr<DataType> *data_ptr_;
     DataPtr<DataType> *delegated_data_ptr_;
-};
+    friend class DeviceOnlyVariableArray<DataType, VariableType>;
 
-template <typename DataType, template <typename> class VariableType>
-class DeviceOnlyVariableArray : public Quantity
-{
-  public:
     template <class PolicyType>
-    DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
-                            VariableArray<DataType, VariableType> *host_variable_array);
-    ~DeviceOnlyVariableArray();
+    DataPtr<DataType> *DelegatedOnDevice();
 
-  protected:
-    DataPtr<DataType> *device_only_data_array_;
+    void setDelegateDataArray(DataPtr<DataType> *data_ptr_)
+    {
+        delegated_data_ptr_ = data_ptr_;
+    };
+
+    bool isDataArrayDelegated() { return data_ptr_ != delegated_data_ptr_; };
 };
 
 template <typename DataType>
