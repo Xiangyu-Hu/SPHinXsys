@@ -37,18 +37,18 @@ template <typename DataType>
 class ArrayData
 {
   public:
-    ArrayData(DataType *data_array, size_t array_size)
-        : data_array_(data_array), array_size_(array_size) {};
+    ArrayData(DataType *data, size_t array_size)
+        : data_(data), array_size_(array_size) {};
 
-    size_t getArraySize() { return array_size_; };
+    size_t ArraySize() { return array_size_; };
 
     DataType *operator[](size_t particle_index)
     {
-        return data_array_ + particle_index * array_size_;
+        return data_ + particle_index * array_size_;
     }
 
   protected
-    DataType *data_array_;
+    DataType *data_;
     UnsignedInt array_size_;
 };
 
@@ -56,19 +56,32 @@ template <typename DataType>
 class ArrayVariable : protected DiscreteVariable<DataType>
 {
   public:
-    ArrayVariable(StdVec<DiscreteVariable<DataType> *> variables, const std::string &collective_name)
-        : DiscreteVariable<DataType>(collective_name, variables[0].getDataSize() * variables.size()),
-          variables_(variables), array_size_(variables_.size()) {};
+    ArrayVariable(const std::string &array_name, StdVec<std::string> names, UnsignedInt variable_size)
+        : DiscreteVariable<DataType>(array_name, names.size() * variable_size),
+          names_(names) {};
 
     template <class ExecutionPolicy>
     ArrayData<DataType> DelegatedArrayData(const ExecutionPolicy &ex_policy)
     {
-        return ArrayData(DiscreteVariable<DataType>::DelegatedData(ex_policy), array_size_);
+        return ArrayData(DiscreteVariable<DataType>::DelegatedData(ex_policy), names_.size());
     };
 
   protected:
-    StdVec<VariableType<DataType> *> variables_;
-    UnsignedInt array_size_;
+    StdVec<std::string> names_;
+
+    UnsignedInt getVariableIndex(const std::string &variable_name)
+    {
+        for (UnsignedInt i = 0; i < names_.size(); ++i)
+        {
+            if (names_[i] == variable_name)
+            {
+                return i;
+            }
+        }
+        std::cout << "\n Error: variable name '" << variable_name
+                  << "' is not found in ArrayVariable '" << this->Name() << "'!" << std::endl;
+        exit(1);
+    };
 };
 } // namespace SPH
 #endif // SPHINXSYS_ARRAY_VARIABLE_H
