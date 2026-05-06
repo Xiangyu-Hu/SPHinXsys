@@ -209,9 +209,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Boundary conditions.
     //----------------------------------------------------------------------
-    AlignedBoxByCell left_buffer(water_block, AlignedBox(xAxis, Transform(Vec2d(emitter_translation)), bidirectional_buffer_halfsize));
+    OrientedBoxByCell left_buffer(water_block, OrientedBox(xAxis, Transform(Vec2d(emitter_translation)), bidirectional_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<fluid_dynamics::NonPrescribedPressure> left_bidirection_buffer(left_buffer, in_outlet_particle_buffer);
-    AlignedBoxByCell right_buffer(water_block, AlignedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(disposer_translation)), bidirectional_buffer_halfsize));
+    OrientedBoxByCell right_buffer(water_block, OrientedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(disposer_translation)), bidirectional_buffer_halfsize));
     fluid_dynamics::WindkesselOutletBidirectionalBuffer right_bidirection_buffer(right_buffer, in_outlet_particle_buffer);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);
