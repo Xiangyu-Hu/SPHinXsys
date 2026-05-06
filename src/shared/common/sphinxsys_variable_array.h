@@ -95,7 +95,7 @@ class DeviceOnlyVariableArray : public Quantity
     ~DeviceOnlyVariableArray();
 
   protected:
-    DataPtr<DataType> *device_only_data_array_;
+    DataPtr<DataType> *device_only_data_ptr_;
 };
 
 template <typename DataType>

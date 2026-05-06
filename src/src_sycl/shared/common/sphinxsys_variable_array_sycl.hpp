@@ -16,7 +16,7 @@ DataPtr<DataType> *VariableArray<DataType>::DelegatedOnDevice()
         device_only_variable_array_keeper_
             .createPtr<DeviceOnlyVariableArray<DataType>>(DeviceExecution<PolicyType>{}, this);
     }
-    return delegated_data_array_;
+    return delegated_data_ptr_;
 }
 //=================================================================================================//
 template <typename DataType>
@@ -24,23 +24,23 @@ template <class PolicyType>
 DeviceOnlyVariableArray<DataType>::
     DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
                             VariableArray<DataType> *host_variable_array)
-    : Quantity(host_variable_array->Name()), device_only_data_array_(nullptr)
+    : Quantity(host_variable_array->Name()), device_only_data_ptr_(nullptr)
 {
     StdVec<DiscreteVariable<DataType> *> host_variables = host_variable_array->getVariables();
     size_t data_size = host_variable_array->getArraySize();
-    device_only_data_array_ = allocateDeviceOnly<DataPtr<DataType>>(data_size);
+    device_only_data_ptr_ = allocateDeviceOnly<DataPtr<DataType>>(data_size);
     for (size_t i = 0; i != data_size; ++i)
     {
         DataType *data = host_variables[i]->DelegatedData(ex_policy);
-        copyToDevice(data, device_only_data_array_ + i, 1);
+        copyToDevice(data, device_only_data_ptr_ + i, 1);
     }
-    host_variable_array->setDelegateDataArray(device_only_data_array_);
+    host_variable_array->setDelegateDataArray(device_only_data_ptr_);
 }
 //=================================================================================================//
 template <typename DataType>
 DeviceOnlyVariableArray<DataType>::~DeviceOnlyVariableArray()
 {
-    freeDeviceData(device_only_data_array_);
+    freeDeviceData(device_only_data_ptr_);
 }
 //=================================================================================================//
 } // namespace SPH
