@@ -8,12 +8,11 @@ namespace SPH
 //=================================================================================================//
 template <typename DataType>
 void CopyParticleStateCK::operator()(
-    VariableAllocationSet<AllocatedDataArray<DataType>> &variable_allocation_pair,
-    size_t index, size_t another_index)
+    DataArray<DataType> &variable_data_array, size_t index, size_t another_index)
 {
-    for (size_t i = 0; i != variable_allocation_pair.second; ++i)
+    for (size_t i = 0; i != variable_data_array.ArraySize(); ++i)
     {
-        variable_allocation_pair.first[i][index] = variable_allocation_pair.first[i][another_index];
+        variable_data_array[i][index] = variable_data_array[i][another_index];
     }
 }
 //=================================================================================================//

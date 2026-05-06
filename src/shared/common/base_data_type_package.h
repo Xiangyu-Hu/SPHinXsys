@@ -48,6 +48,9 @@ using DataContainerUniquePtrKeeper = UniquePtrsKeeper<ContainedDataType>;
 /** Generalized data container allocated data keeper */
 template <typename DataType>
 using AllocatedData = DataType *;
+/** Generalized data container alias data type */
+template <typename DataType>
+using TypeAlias = DataType;
 
 template <template <typename> typename KeeperType, template <typename> typename ContainerType>
 using DataAssemble = std::tuple<KeeperType<ContainerType<UnsignedInt>>,

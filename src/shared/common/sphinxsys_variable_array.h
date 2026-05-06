@@ -50,6 +50,7 @@ template <typename DataType>
 class DataArray // transposed view of ArrayData
 {
   public:
+    DataArray() : data_ptr_(nullptr), array_size_(0) {};
     DataArray(DataPtr<DataType> *data_ptr, size_t array_size)
         : data_ptr_(data_ptr), array_size_(array_size) {};
     size_t ArraySize() { return array_size_; };
@@ -68,6 +69,7 @@ template <typename DataType>
 class ArrayData // transposed view of DataArray
 {
   public:
+    ArrayData() : transposed_data_(nullptr), array_size_(0) {};
     ArrayData(DataType *transposed_data, size_t array_size)
         : transposed_data_(transposed_data), array_size_(array_size) {};
 
@@ -151,13 +153,7 @@ class VariableArray : public Quantity
 template <typename DataType>
 using DiscreteVariableArray = VariableArray<DataType, DiscreteVariable>;
 
-template <typename DataType>
-using AllocatedDataArray = DataPtr<DataType> *;
-
-template <typename AllocationType>
-using VariableAllocationSet = std::pair<AllocationType, UnsignedInt>;
-
-typedef DataAssemble<VariableAllocationSet, AllocatedDataArray> VariableDataArrayAssemble;
+typedef DataAssemble<TypeAlias, DataArray> VariableDataArrayAssemble;
 typedef DataAssemble<UniquePtr, DiscreteVariableArray> DiscreteVariableArrayAssemble;
 
 struct DiscreteVariableArrayAssembleInitialization
@@ -174,11 +170,10 @@ struct VariableDataArrayAssembleInitialization
 {
     template <typename DataType, class ExecutionPolicy>
     void operator()(const UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr,
-                    VariableAllocationSet<AllocatedDataArray<DataType>> &variable_allocation_size_pair,
+                    DataArray<DataType> &variable_data_array,
                     const ExecutionPolicy &ex_policy)
     {
-        variable_allocation_size_pair =
-            std::make_pair(variable_array_ptr->DelegatedDataArray(ex_policy), variable_array_ptr->getArraySize());
+        variable_data_array = variable_array_ptr->DelegatedDataArray(ex_policy);
     }
 };
 } // namespace SPH
