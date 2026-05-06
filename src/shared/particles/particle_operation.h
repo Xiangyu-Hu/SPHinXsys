@@ -45,7 +45,7 @@ struct CopyParticleStateCK
 class SpawnRealParticle
 {
     DiscreteVariables &evolving_variables_;
-    DiscreteVariableArrayAssemble copyable_states_;
+    VariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
     SingleVariable<UnsignedInt> *sv_total_real_particles_;
     UnsignedInt particles_bound_;
@@ -83,7 +83,7 @@ class SpawnRealParticle
 class RemoveRealParticle
 {
     DiscreteVariables &evolving_variables_;
-    DiscreteVariableArrayAssemble copyable_states_;
+    VariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
     SingleVariable<UnsignedInt> *sv_total_real_particles_;
 

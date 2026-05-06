@@ -12,7 +12,7 @@ template <typename DataType>
 template <class PolicyType>
 DataPtr<DataType> *VariableBufferArray<DataType>::DelegatedBufferArrayOnDevice()
 {
-    DiscreteVariableArray<DataType>::DelegatedDataArray(DeviceExecution<PolicyType>{}); // check variable array first
+    VariableArray<DataType>::DelegatedDataArray(DeviceExecution<PolicyType>{}); // check variable array first
     if (!isBufferArrayDelegated())
     {
         device_buffer_array_keeper_

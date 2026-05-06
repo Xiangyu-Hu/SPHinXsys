@@ -7,26 +7,26 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename DataType, template <typename> class VariableType>
+template <typename DataType>
 template <class PolicyType>
-DataPtr<DataType> *VariableArray<DataType, VariableType>::DelegatedOnDevice()
+DataPtr<DataType> *VariableArray<DataType>::DelegatedOnDevice()
 {
     if (!isDataArrayDelegated())
     {
         device_only_variable_array_keeper_
-            .createPtr<DeviceOnlyVariableArray<DataType, VariableType>>(DeviceExecution<PolicyType>{}, this);
+            .createPtr<DeviceOnlyVariableArray<DataType>>(DeviceExecution<PolicyType>{}, this);
     }
     return delegated_data_array_;
 }
 //=================================================================================================//
-template <typename DataType, template <typename> class VariableType>
+template <typename DataType>
 template <class PolicyType>
-DeviceOnlyVariableArray<DataType, VariableType>::
+DeviceOnlyVariableArray<DataType>::
     DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
-                            VariableArray<DataType, VariableType> *host_variable_array)
+                            VariableArray<DataType> *host_variable_array)
     : Quantity(host_variable_array->Name()), device_only_data_array_(nullptr)
 {
-    StdVec<VariableType<DataType> *> host_variables = host_variable_array->getVariables();
+    StdVec<DiscreteVariable<DataType> *> host_variables = host_variable_array->getVariables();
     size_t data_size = host_variable_array->getArraySize();
     device_only_data_array_ = allocateDeviceOnly<DataPtr<DataType>>(data_size);
     for (size_t i = 0; i != data_size; ++i)
@@ -37,8 +37,8 @@ DeviceOnlyVariableArray<DataType, VariableType>::
     host_variable_array->setDelegateDataArray(device_only_data_array_);
 }
 //=================================================================================================//
-template <typename DataType, template <typename> class VariableType>
-DeviceOnlyVariableArray<DataType, VariableType>::~DeviceOnlyVariableArray()
+template <typename DataType>
+DeviceOnlyVariableArray<DataType>::~DeviceOnlyVariableArray()
 {
     freeDeviceData(device_only_data_array_);
 }

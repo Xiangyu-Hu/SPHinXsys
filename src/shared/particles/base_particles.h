@@ -155,7 +155,7 @@ class BaseParticles
     template <typename DataType, typename... Args>
     void addVariableToWrite(Args &&...args);
     template <typename DataType>
-    void addVariableToWrite(DiscreteVariableArray<DataType> *variable_array);
+    void addVariableToWrite(VariableArray<DataType> *variable_array);
     //----------------------------------------------------------------------
     // Particle data for sorting
     //----------------------------------------------------------------------
@@ -168,7 +168,7 @@ class BaseParticles
     template <typename DataType, typename... Args>
     void addEvolvingVariable(Args &&...args);
     template <typename DataType>
-    void addEvolvingVariable(DiscreteVariableArray<DataType> *variable_array);
+    void addEvolvingVariable(VariableArray<DataType> *variable_array);
     DiscreteVariables &VariablesToWrite() { return variables_to_write_; };
     DiscreteVariables &EvolvingVariables() { return evolving_variables_; };
     //----------------------------------------------------------------------

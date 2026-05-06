@@ -39,13 +39,13 @@ template <typename DataType>
 class DeviceVariableBufferArray;
 
 template <typename DataType>
-class VariableBufferArray : public DiscreteVariableArray<DataType>
+class VariableBufferArray : public VariableArray<DataType>
 {
     UniquePtrKeeper<DeviceVariableBufferArray<DataType>> device_buffer_array_keeper_;
 
   public:
     VariableBufferArray(StdVec<DiscreteVariable<DataType> *> variables, UnsignedInt buffer_size)
-        : DiscreteVariableArray<DataType>(variables), buffer_size_(buffer_size),
+        : VariableArray<DataType>(variables), buffer_size_(buffer_size),
           buffer_data_ptr_(new DataType[buffer_size * this->array_size_]),
           buffer_array_(new DataPtr<DataType>[this->array_size_]),
           delegated_buffer_array_(nullptr), host_staging_buffer_array_(nullptr)

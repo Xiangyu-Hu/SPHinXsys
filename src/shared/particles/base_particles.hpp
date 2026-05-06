@@ -171,7 +171,7 @@ void BaseParticles::addEvolvingVariable(Args &&...args)
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::addEvolvingVariable(DiscreteVariableArray<DataType> *variable_array)
+void BaseParticles::addEvolvingVariable(VariableArray<DataType> *variable_array)
 {
     StdVec<DiscreteVariable<DataType> *> variables = variable_array->getVariables();
     for (size_t i = 0; i != variables.size(); ++i)
@@ -187,7 +187,7 @@ void BaseParticles::addVariableToWrite(Args &&...args)
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::addVariableToWrite(DiscreteVariableArray<DataType> *variable_array)
+void BaseParticles::addVariableToWrite(VariableArray<DataType> *variable_array)
 {
     StdVec<DiscreteVariable<DataType> *> variables = variable_array->getVariables();
     for (size_t i = 0; i != variables.size(); ++i)

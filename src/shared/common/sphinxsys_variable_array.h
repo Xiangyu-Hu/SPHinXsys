@@ -33,10 +33,10 @@
 
 namespace SPH
 {
-template <typename DataType, template <typename> class VariableType>
-class VariableArray; // transpos of ArrayVariable
-template <typename DataType, template <typename> class VariableType>
-class ArrayVariable; // transpos of VariableArray
+template <typename DataType>
+class VariableArray; // transpose of ArrayVariable
+template <typename DataType>
+class ArrayVariable; // transpose of VariableArray
 
 template <typename DataType>
 using DataPtr = DataType *;
@@ -85,26 +85,26 @@ class ArrayData // transposed view of DataArray
     UnsignedInt array_size_;
 };
 
-template <typename DataType, template <typename> class VariableType>
+template <typename DataType>
 class DeviceOnlyVariableArray : public Quantity
 {
   public:
     template <class PolicyType>
     DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
-                            VariableArray<DataType, VariableType> *host_variable_array);
+                            VariableArray<DataType> *host_variable_array);
     ~DeviceOnlyVariableArray();
 
   protected:
     DataPtr<DataType> *device_only_data_array_;
 };
 
-template <typename DataType, template <typename> class VariableType>
+template <typename DataType>
 class VariableArray : public Quantity
 {
     UniquePtrKeeper<Quantity> device_only_variable_array_keeper_;
 
   public:
-    VariableArray(StdVec<VariableType<DataType> *> variables)
+    VariableArray(StdVec<DiscreteVariable<DataType> *> variables)
         : Quantity("VariableArray"), variables_(variables),
           array_size_(variables.size()),
           data_ptr_(nullptr), delegated_data_ptr_(nullptr)
@@ -117,7 +117,7 @@ class VariableArray : public Quantity
         delegated_data_ptr_ = data_ptr_;
     };
     ~VariableArray() { delete[] data_ptr_; };
-    StdVec<VariableType<DataType> *> getVariables() { return variables_; };
+    StdVec<DiscreteVariable<DataType> *> getVariables() { return variables_; };
     size_t getArraySize() { return array_size_; }
 
     template <class ExecutionPolicy>
@@ -133,11 +133,11 @@ class VariableArray : public Quantity
     };
 
   protected:
-    StdVec<VariableType<DataType> *> variables_;
+    StdVec<DiscreteVariable<DataType> *> variables_;
     UnsignedInt array_size_;
     DataPtr<DataType> *data_ptr_;
     DataPtr<DataType> *delegated_data_ptr_;
-    friend class DeviceOnlyVariableArray<DataType, VariableType>;
+    friend class DeviceOnlyVariableArray<DataType>;
 
     template <class PolicyType>
     DataPtr<DataType> *DelegatedOnDevice();
@@ -150,26 +150,23 @@ class VariableArray : public Quantity
     bool isDataArrayDelegated() { return data_ptr_ != delegated_data_ptr_; };
 };
 
-template <typename DataType>
-using DiscreteVariableArray = VariableArray<DataType, DiscreteVariable>;
-
 typedef DataAssemble<TypeAlias, DataArray> VariableDataArrayAssemble;
-typedef DataAssemble<UniquePtr, DiscreteVariableArray> DiscreteVariableArrayAssemble;
+typedef DataAssemble<UniquePtr, VariableArray> VariableArrayAssemble;
 
-struct DiscreteVariableArrayAssembleInitialization
+struct VariableArrayAssembleInitialization
 {
     template <typename DataType>
     void operator()(const StdVec<DiscreteVariable<DataType> *> &variables,
-                    UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr)
+                    UniquePtr<VariableArray<DataType>> &variable_array_ptr)
     {
-        variable_array_ptr = std::make_unique<DiscreteVariableArray<DataType>>(variables);
+        variable_array_ptr = std::make_unique<VariableArray<DataType>>(variables);
     }
 };
 
 struct VariableDataArrayAssembleInitialization
 {
     template <typename DataType, class ExecutionPolicy>
-    void operator()(const UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr,
+    void operator()(const UniquePtr<VariableArray<DataType>> &variable_array_ptr,
                     DataArray<DataType> &variable_data_array,
                     const ExecutionPolicy &ex_policy)
     {
