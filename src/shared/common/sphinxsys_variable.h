@@ -138,23 +138,23 @@ class DiscreteVariable : public Quantity
   public:
     typedef DataType ContainedDataType;
     template <class InitializationFunction>
-    DiscreteVariable(const std::string &name, size_t data_size,
+    DiscreteVariable(const std::string &name, UnsignedInt data_size,
                      const InitializationFunction &initialization)
         : Quantity(name), data_size_(data_size), data_field_(new DataType[data_size]),
           device_only_variable_(nullptr), device_data_field_(nullptr)
     {
-        for (size_t i = 0; i < data_size; ++i)
+        for (UnsignedInt i = 0; i < data_size; ++i)
         {
             data_field_[i] = initialization(i);
         }
     };
 
-    DiscreteVariable(const std::string &name, size_t data_size,
+    DiscreteVariable(const std::string &name, UnsignedInt data_size,
                      DataType initial_value = ZeroData<DataType>::value)
         : DiscreteVariable(name, data_size, [&](UnsignedInt index)
                            { return initial_value; }) {};
 
-    DiscreteVariable(const std::string &name, size_t data_size,
+    DiscreteVariable(const std::string &name, UnsignedInt data_size,
                      DiscreteVariable<DataType> *origin_variable)
         : DiscreteVariable(name, SMAX(origin_variable->getDataSize(), data_size),
                            [&](UnsignedInt index)
@@ -162,10 +162,10 @@ class DiscreteVariable : public Quantity
 
     ~DiscreteVariable() { delete[] data_field_; };
     DataType *Data() { return data_field_; };
-    void setValue(size_t index, const DataType &value) { data_field_[index] = value; };
-    DataType getValue(size_t index) { return data_field_[index]; };
+    void setValue(UnsignedInt index, const DataType &value) { data_field_[index] = value; };
+    DataType getValue(UnsignedInt index) { return data_field_[index]; };
     DataType getValueWithScalingRef(UnsignedInt index) const { return data_field_[index] * scaling_ref_; };
-    size_t getDataSize() { return data_size_; }
+    UnsignedInt getDataSize() { return data_size_; }
 
     template <class FillFunction>
     void fill(UnsignedInt begin_index, UnsignedInt end_index, const FillFunction &fill_function)
@@ -188,7 +188,7 @@ class DiscreteVariable : public Quantity
     DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy) { return DelegatedOnDevice(); };
 
     template <class ExecutionPolicy>
-    void reallocateData(const ExecutionPolicy &ex_policy, size_t tentative_size)
+    void reallocateData(const ExecutionPolicy &ex_policy, UnsignedInt tentative_size)
     {
         if (data_size_ < tentative_size)
         {
@@ -196,7 +196,7 @@ class DiscreteVariable : public Quantity
         }
     };
 
-    void reallocateData(const ParallelDevicePolicy &par_device, size_t tentative_size)
+    void reallocateData(const ParallelDevicePolicy &par_device, UnsignedInt tentative_size)
     {
         if (data_size_ < tentative_size)
         {
@@ -213,7 +213,7 @@ class DiscreteVariable : public Quantity
     void finalizeLoadIn(const ParallelDevicePolicy &ex_policy) { synchronizeToDevice(); };
 
   private:
-    size_t data_size_;
+    UnsignedInt data_size_;
     DataType *data_field_;
     DeviceOnlyDiscreteVariable<DataType> *device_only_variable_;
     DataType *device_data_field_;
@@ -223,14 +223,14 @@ class DiscreteVariable : public Quantity
     bool isDataDelegated() { return device_data_field_ != nullptr; };
     void setDeviceData(DataType *data_field) { device_data_field_ = data_field; };
 
-    void reallocateData(size_t tentative_size)
+    void reallocateData(UnsignedInt tentative_size)
     {
         delete[] data_field_;
         data_size_ = tentative_size + tentative_size / 4;
         data_field_ = new DataType[data_size_];
     };
 
-    void reallocateDataOnDevice(size_t tentative_size);
+    void reallocateDataOnDevice(UnsignedInt tentative_size);
     void synchronizeWithDevice();
     void synchronizeToDevice();
 };
@@ -295,7 +295,7 @@ struct PrepareVariablesToWrite
     void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables,
                     const ExecutionPolicy &ex_policy)
     {
-        for (size_t i = 0; i != variables.size(); ++i)
+        for (UnsignedInt i = 0; i != variables.size(); ++i)
         {
             variables[i]->prepareForOutput(ex_policy);
         }
@@ -309,7 +309,7 @@ struct FinalizeVariablesAfterRead
     void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables,
                     const ExecutionPolicy &ex_policy)
     {
-        for (size_t i = 0; i != variables.size(); ++i)
+        for (UnsignedInt i = 0; i != variables.size(); ++i)
         {
             variables[i]->finalizeLoadIn(ex_policy);
         }
