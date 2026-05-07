@@ -115,7 +115,7 @@ class VariableArray : public Quantity
             data_ptr_[i] = variables[i]->Data();
         }
     };
-    
+
     ~VariableArray() { delete[] data_ptr_; };
     StdVec<DiscreteVariable<DataType> *> getVariables() { return variables_; };
     size_t getArraySize() { return array_size_; }
