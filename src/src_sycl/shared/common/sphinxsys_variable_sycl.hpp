@@ -28,7 +28,7 @@ void DiscreteVariable<DataType>::synchronizeWithDevice()
 {
     if (isDataDelegated())
     {
-        copyFromDevice(data_field_, device_data_field_, data_size_);
+        copyFromDevice(data_field_, device_only_variable_->DeviceOnlyDataField(), data_size_);
     }
 }
 //=================================================================================================//
@@ -37,7 +37,7 @@ void DiscreteVariable<DataType>::synchronizeToDevice()
 {
     if (isDataDelegated())
     {
-        copyToDevice(data_field_, device_data_field_, data_size_);
+        copyToDevice(data_field_, device_only_variable_->DeviceOnlyDataField(), data_size_);
     }
 }
 //=================================================================================================//
@@ -49,7 +49,6 @@ DeviceOnlyDiscreteVariable<DataType>::
     UnsignedInt data_size = host_variable->getDataSize();
     device_only_data_field_ = allocateDeviceOnly<DataType>(data_size);
     copyToDevice(host_variable->Data(), device_only_data_field_, data_size);
-    host_variable->setDeviceData(device_only_data_field_);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -65,7 +64,6 @@ void DeviceOnlyDiscreteVariable<DataType>::
     freeDeviceData(device_only_data_field_);
     UnsignedInt new_host_variable_size = host_variable->getDataSize();
     device_only_data_field_ = allocateDeviceOnly<DataType>(new_host_variable_size);
-    host_variable->setDeviceData(device_only_data_field_);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -77,7 +75,7 @@ DataType *DiscreteVariable<DataType>::DelegatedOnDevice()
             device_only_variable_keeper_
                 .createPtr<DeviceOnlyDiscreteVariable<DataType>>(this);
     }
-    return device_data_field_;
+    return device_only_variable_->DeviceOnlyDataField();
 }
 //=================================================================================================//
 template <typename DataType>

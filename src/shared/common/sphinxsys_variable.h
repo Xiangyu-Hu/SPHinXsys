@@ -125,6 +125,7 @@ class DeviceOnlyDiscreteVariable : public Quantity
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable);
     ~DeviceOnlyDiscreteVariable();
     void reallocateData(DiscreteVariable<DataType> *host_variable);
+    DataType *DeviceOnlyDataField() { return device_only_data_field_; };
 
   protected:
     DataType *device_only_data_field_;
@@ -141,7 +142,7 @@ class DiscreteVariable : public Quantity
     DiscreteVariable(const std::string &name, UnsignedInt data_size,
                      const InitializationFunction &initialization)
         : Quantity(name), data_size_(data_size), data_field_(new DataType[data_size]),
-          device_only_variable_(nullptr), device_data_field_(nullptr)
+          device_only_variable_(nullptr)
     {
         for (UnsignedInt i = 0; i < data_size; ++i)
         {
@@ -215,13 +216,11 @@ class DiscreteVariable : public Quantity
   private:
     UnsignedInt data_size_;
     DataType *data_field_;
-    DeviceOnlyDiscreteVariable<DataType> *device_only_variable_;
-    DataType *device_data_field_;
+    DeviceOnlyDiscreteVariable<DataType> *device_only_variable_ = nullptr;
     friend class DeviceOnlyDiscreteVariable<DataType>;
 
     DataType *DelegatedOnDevice();
-    bool isDataDelegated() { return device_data_field_ != nullptr; };
-    void setDeviceData(DataType *data_field) { device_data_field_ = data_field; };
+    bool isDataDelegated() { return device_only_variable_ != nullptr; };
 
     void reallocateData(UnsignedInt tentative_size)
     {
