@@ -13,10 +13,10 @@ DataPtr<DataType> *VariableArray<DataType>::DelegatedOnDevice()
 {
     if (!isDataArrayDelegated())
     {
-        device_only_variable_array_keeper_
-            .createPtr<DeviceOnlyVariableArray<DataType>>(DeviceExecution<PolicyType>{}, this);
+        device_only_variable_array_ = device_only_variable_array_keeper_.createPtr<
+            DeviceOnlyVariableArray<DataType>>(DeviceExecution<PolicyType>{}, this);
     }
-    return delegated_data_ptr_;
+    return device_only_variable_array_->DeviceOnlyDataPtr();
 }
 //=================================================================================================//
 template <typename DataType>
@@ -34,7 +34,6 @@ DeviceOnlyVariableArray<DataType>::
         DataType *data = host_variables[i]->DelegatedData(ex_policy);
         copyToDevice(data, device_only_data_ptr_ + i, 1);
     }
-    host_variable_array->setDelegateDataArray(device_only_data_ptr_);
 }
 //=================================================================================================//
 template <typename DataType>

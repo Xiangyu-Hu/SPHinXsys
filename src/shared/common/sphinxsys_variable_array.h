@@ -93,6 +93,7 @@ class DeviceOnlyVariableArray : public Quantity
     DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
                             VariableArray<DataType> *host_variable_array);
     ~DeviceOnlyVariableArray();
+    DataPtr<DataType> *DeviceOnlyDataPtr() { return device_only_data_ptr_; };
 
   protected:
     DataPtr<DataType> *device_only_data_ptr_;
@@ -106,16 +107,15 @@ class VariableArray : public Quantity
   public:
     VariableArray(StdVec<DiscreteVariable<DataType> *> variables)
         : Quantity("VariableArray"), variables_(variables),
-          array_size_(variables.size()),
-          data_ptr_(nullptr), delegated_data_ptr_(nullptr)
+          array_size_(variables.size())
     {
         data_ptr_ = new DataPtr<DataType>[variables.size()];
         for (size_t i = 0; i != variables.size(); ++i)
         {
             data_ptr_[i] = variables[i]->Data();
         }
-        delegated_data_ptr_ = data_ptr_;
     };
+    
     ~VariableArray() { delete[] data_ptr_; };
     StdVec<DiscreteVariable<DataType> *> getVariables() { return variables_; };
     size_t getArraySize() { return array_size_; }
@@ -135,19 +135,13 @@ class VariableArray : public Quantity
   protected:
     StdVec<DiscreteVariable<DataType> *> variables_;
     UnsignedInt array_size_;
-    DataPtr<DataType> *data_ptr_;
-    DataPtr<DataType> *delegated_data_ptr_;
+    DataPtr<DataType> *data_ptr_ = nullptr;
+    DeviceOnlyVariableArray<DataType> *device_only_variable_array_ = nullptr;
     friend class DeviceOnlyVariableArray<DataType>;
 
     template <class PolicyType>
     DataPtr<DataType> *DelegatedOnDevice();
-
-    void setDelegateDataArray(DataPtr<DataType> *data_ptr_)
-    {
-        delegated_data_ptr_ = data_ptr_;
-    };
-
-    bool isDataArrayDelegated() { return data_ptr_ != delegated_data_ptr_; };
+    bool isDataArrayDelegated() { return device_only_variable_array_ != nullptr; };
 };
 
 typedef DataAssemble<TypeAlias, DataArray> VariableDataArrayAssemble;
