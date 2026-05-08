@@ -19,9 +19,8 @@ template <class DataType, typename... Args>
 DiscreteVariable<DataType> *BaseParticles::
     addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args)
 {
-    DiscreteVariable<DataType> *variable =
-        unique_variable_ptrs_.createPtr<DiscreteVariable<DataType>>(
-            name, data_size, std::forward<Args>(args)...);
+    DiscreteVariable<DataType> *variable = unique_variable_ptrs_.createPtr<
+        DiscreteVariable<DataType>>(name, data_size, std::forward<Args>(args)...);
     return variable;
 }
 //=================================================================================================//
@@ -53,8 +52,12 @@ template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::registerStateVariableFrom(
     const std::string &new_name, const std::string &old_name)
 {
+    DiscreteVariable<DataType> *variable = registerStateVariable<DataType>(new_name);
     DiscreteVariable<DataType> *old_variable = getVariableByName<DataType>(old_name);
-    return registerStateVariable<DataType>(new_name, old_variable);
+    variable->fill([&](UnsignedInt index)
+                   { return old_variable->getValue(index); }, 0, old_variable->getDataSize());
+
+    return variable;
 }
 //=================================================================================================//
 template <typename DataType>
@@ -62,11 +65,9 @@ DiscreteVariable<DataType> *BaseParticles::registerStateVariableFrom(
     const std::string &name, const StdVec<DataType> &geometric_data)
 {
     DiscreteVariable<DataType> *variable = registerStateVariable<DataType>(name);
-    DataType *data_field = variable->Data();
-    for (size_t i = 0; i != geometric_data.size(); ++i)
-    {
-        data_field[i] = geometric_data[i];
-    }
+    variable->fill([&](UnsignedInt index)
+                   { return geometric_data[index]; }, 0, geometric_data.size());
+
     return variable;
 }
 //=================================================================================================//
@@ -76,7 +77,8 @@ DiscreteVariable<DataType> *BaseParticles::registerStateVariableFromReload(const
     DiscreteVariable<DataType> *new_variable = registerStateVariable<DataType>(name);
     DataType *data_field = new_variable->Data();
     size_t index = 0;
-    for (auto child = reload_xml_parser_.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+    for (auto child = reload_xml_parser_.first_element_->FirstChildElement();
+         child; child = child->NextSiblingElement())
     {
         reload_xml_parser_.queryAttributeValue(child, name, data_field[index]);
         index++;
@@ -143,8 +145,10 @@ DiscreteVariable<DataType> *BaseParticles::
     if (variable->getDataSize() < particles_bound_)
     {
         std::cout << "\nError: the" << type_name<DiscreteVariable<DataType>>() << " variable '"
-                  << variable->Name() << "' in body " << getBodyName() << "' can not be treated as a particle variable," << std::endl;
-        std::cout << "\n because the data size " << variable->getDataSize() << " is too less!" << std::endl;
+                  << variable->Name() << "' in body " << getBodyName()
+                  << "' can not be treated as a particle variable," << std::endl;
+        std::cout << "\n because the data size " << variable->getDataSize()
+                  << " is too less!" << std::endl;
         exit(1);
     }
     return addVariableToList<DiscreteVariable, DataType>(variable_set, variable);
@@ -221,7 +225,8 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, Xm
     {
         size_t index = 0;
         DataType *data_field = variables[i]->Data();
-        for (auto child = xml_parser.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        for (auto child = xml_parser.first_element_->FirstChildElement();
+             child; child = child->NextSiblingElement())
         {
             xml_parser.setAttributeToElement(child, variables[i]->Name(), data_field[index]);
             index++;
@@ -238,7 +243,8 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
     {
         size_t index = 0;
         DataType *data_field = variables[i]->Data();
-        for (auto child = xml_parser.first_element_->FirstChildElement(); child; child = child->NextSiblingElement())
+        for (auto child = xml_parser.first_element_->FirstChildElement();
+             child; child = child->NextSiblingElement())
         {
             xml_parser.queryAttributeValue(child, variables[i]->Name(), data_field[index]);
             index++;

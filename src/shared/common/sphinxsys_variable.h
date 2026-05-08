@@ -141,13 +141,10 @@ class DiscreteVariable : public Quantity
     template <class InitializationFunction>
     DiscreteVariable(const std::string &name, UnsignedInt data_size,
                      const InitializationFunction &initialization)
-        : Quantity(name), data_size_(data_size), data_field_(new DataType[data_size]),
+        : Quantity(name), data_size_(data_size), data_(new DataType[data_size]),
           device_only_variable_(nullptr)
     {
-        for (UnsignedInt i = 0; i < data_size; ++i)
-        {
-            data_field_[i] = initialization(i);
-        }
+        fill(initialization, 0, data_size);
     };
 
     DiscreteVariable(const std::string &name, UnsignedInt data_size,
@@ -155,36 +152,31 @@ class DiscreteVariable : public Quantity
         : DiscreteVariable(name, data_size, [&](UnsignedInt index)
                            { return initial_value; }) {};
 
-    DiscreteVariable(const std::string &name, UnsignedInt data_size,
-                     DiscreteVariable<DataType> *origin_variable)
-        : DiscreteVariable(name, SMAX(origin_variable->getDataSize(), data_size),
-                           [&](UnsignedInt index)
-                           { return origin_variable->getValue(index); }) {};
-
-    ~DiscreteVariable() { delete[] data_field_; };
-    DataType *Data() { return data_field_; };
-    void setValue(UnsignedInt index, const DataType &value) { data_field_[index] = value; };
-    DataType getValue(UnsignedInt index) { return data_field_[index]; };
-    DataType getValueWithScalingRef(UnsignedInt index) const { return data_field_[index] * scaling_ref_; };
+    ~DiscreteVariable() { delete[] data_; };
+    DataType *Data() { return data_; };
+    void setValue(UnsignedInt index, const DataType &value) { data_[index] = value; };
+    DataType getValue(UnsignedInt index) { return data_[index]; };
+    DataType getValueWithScalingRef(UnsignedInt index) const { return data_[index] * scaling_ref_; };
     UnsignedInt getDataSize() { return data_size_; }
 
     template <class FillFunction>
     void fill(const FillFunction &fill_function, UnsignedInt begin_index, UnsignedInt size)
     {
-        if (end_index > data_size_)
+        if (begin_index + size > data_size_)
         {
             std::cout << "\n Error: trying to fill data out of range in DiscreteVariable '"
                       << this->name_ << "'!" << std::endl;
             exit(1);
         }
+
         for (UnsignedInt i = begin_index; i < begin_index + size; ++i)
         {
-            data_field_[i] = fill_function(i);
+            data_[i] = fill_function(i);
         }
     };
 
     template <class ExecutionPolicy>
-    DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return data_field_; };
+    DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return data_; };
     template <class PolicyType>
     DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy) { return DelegatedOnDevice(); };
 
@@ -215,7 +207,7 @@ class DiscreteVariable : public Quantity
 
   private:
     UnsignedInt data_size_;
-    DataType *data_field_;
+    DataType *data_;
     DeviceOnlyDiscreteVariable<DataType> *device_only_variable_ = nullptr;
     friend class DeviceOnlyDiscreteVariable<DataType>;
 
@@ -224,9 +216,9 @@ class DiscreteVariable : public Quantity
 
     void reallocateData(UnsignedInt tentative_size)
     {
-        delete[] data_field_;
+        delete[] data_;
         data_size_ = tentative_size + tentative_size / 4;
-        data_field_ = new DataType[data_size_];
+        data_ = new DataType[data_size_];
     };
 
     void reallocateDataOnDevice(UnsignedInt tentative_size);

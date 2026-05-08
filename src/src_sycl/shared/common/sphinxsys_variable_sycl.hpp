@@ -28,7 +28,7 @@ void DiscreteVariable<DataType>::synchronizeWithDevice()
 {
     if (isDataDelegated())
     {
-        copyFromDevice(data_field_, device_only_variable_->DeviceOnlyDataField(), data_size_);
+        copyFromDevice(data_, device_only_variable_->DeviceOnlyDataField(), data_size_);
     }
 }
 //=================================================================================================//
@@ -37,7 +37,7 @@ void DiscreteVariable<DataType>::synchronizeToDevice()
 {
     if (isDataDelegated())
     {
-        copyToDevice(data_field_, device_only_variable_->DeviceOnlyDataField(), data_size_);
+        copyToDevice(data_, device_only_variable_->DeviceOnlyDataField(), data_size_);
     }
 }
 //=================================================================================================//
