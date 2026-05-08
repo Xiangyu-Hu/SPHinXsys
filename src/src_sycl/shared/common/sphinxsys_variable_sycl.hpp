@@ -28,7 +28,7 @@ void DiscreteVariable<DataType>::synchronizeWithDevice()
 {
     if (isDataDelegated())
     {
-        copyFromDevice(data_, device_only_variable_->DeviceOnlyDataField(), size_);
+        copyFromDevice(data_, device_only_variable_->DeviceOnlyDataField(), getTotalSize());
     }
 }
 //=================================================================================================//
@@ -37,7 +37,7 @@ void DiscreteVariable<DataType>::synchronizeToDevice()
 {
     if (isDataDelegated())
     {
-        copyToDevice(data_, device_only_variable_->DeviceOnlyDataField(), size_);
+        copyToDevice(data_, device_only_variable_->DeviceOnlyDataField(), getTotalSize());
     }
 }
 //=================================================================================================//
@@ -46,9 +46,9 @@ DeviceOnlyDiscreteVariable<DataType>::
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable)
     : Quantity(host_variable->Name()), device_only_data_(nullptr)
 {
-    UnsignedInt size = host_variable->getSize();
-    device_only_data_ = allocateDeviceOnly<DataType>(size);
-    copyToDevice(host_variable->Data(), device_only_data_, size);
+    UnsignedInt total_size = host_variable->getTotalSize()();
+    device_only_data_ = allocateDeviceOnly<DataType>(total_size);
+    copyToDevice(host_variable->Data(), device_only_data_, total_size);
 }
 //=================================================================================================//
 template <typename DataType>

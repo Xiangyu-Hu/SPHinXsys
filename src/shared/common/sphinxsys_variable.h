@@ -44,6 +44,42 @@ class SingleVariable;
 template <typename DataType>
 class DiscreteVariable;
 
+template <typename DataType>
+class DataView
+{
+  public:
+    DataView() : data_(nullptr) {};
+    DataView(DataType *data) : data_(data) {};
+
+    DataType &operator[](size_t index)
+    {
+        return *(data_ + index);
+    }
+
+  protected:
+    DataType *data_;
+};
+
+template <typename DataType>
+class ComponentView
+{
+  public:
+    ComponentView() : data_(nullptr), width_(0) {};
+    ComponentView(DataType *data, size_t width)
+        : data_(data), width_(width) {};
+
+    size_t Width() { return width_; };
+
+    DataType *operator[](size_t index)
+    {
+        return data_ + index * width_;
+    }
+
+  protected:
+    DataType *data_;
+    UnsignedInt width_;
+};
+
 class Quantity
 {
   public:
@@ -141,7 +177,7 @@ class DiscreteVariable : public Quantity
     template <class InitializationFunction>
     DiscreteVariable(const std::string &name, UnsignedInt size,
                      const InitializationFunction &initialization)
-        : Quantity(name), size_(size), data_(new DataType[size]),
+        : Quantity(name), size_(size), width_(1), data_(new DataType[size]),
           device_only_variable_(nullptr)
     {
         fill(initialization, 0, size);
@@ -152,12 +188,22 @@ class DiscreteVariable : public Quantity
         : DiscreteVariable(name, size, [&](UnsignedInt index)
                            { return initial_value; }) {};
 
+    DiscreteVariable(UnsignedInt size, UnsignedInt width, const std::string &name)
+        : Quantity(name), size_(size), width_(width), data_(new DataType[size * width]),
+          device_only_variable_(nullptr)
+    {
+        fill([&](UnsignedInt index) // zero initialization
+             { return ZeroData<DataType>::value; }, 0, size * width);
+    };
+
     ~DiscreteVariable() { delete[] data_; };
     DataType *Data() { return data_; };
     void setValue(UnsignedInt index, const DataType &value) { data_[index] = value; };
     DataType getValue(UnsignedInt index) { return data_[index]; };
     DataType getValueWithScalingRef(UnsignedInt index) const { return data_[index] * scaling_ref_; };
     UnsignedInt getSize() { return size_; }
+    UnsignedInt getWidth() { return width_; }
+    UnsignedInt getTotalSize() { return size_ * width_; }
 
     template <class FillFunction>
     void fill(const FillFunction &fill_function, UnsignedInt begin_index, UnsignedInt fill_size)
@@ -177,8 +223,31 @@ class DiscreteVariable : public Quantity
 
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return data_; };
+
     template <class PolicyType>
-    DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy) { return DelegatedOnDevice(); };
+    DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy)
+    {
+        return DelegatedOnDevice();
+    };
+
+    template <class ExecutionPolicy>
+    DataView<DataType> DelegatedDataView(const ExecutionPolicy &ex_policy)
+    {
+        if (width_ != 1)
+        {
+            std::cout << "\n Error: the variable '" << this->name_
+                      << "' is not a single component variable!" << std::endl;
+            exit(1);
+        }
+
+        return DataView<DataType>(DelegatedData(ex_policy));
+    };
+
+    template <class ExecutionPolicy>
+    ComponentView<DataType> DelegatedComponentView(const ExecutionPolicy &ex_policy)
+    {
+        return ComponentView<DataType>(DelegatedData(ex_policy), width_);
+    };
 
     template <class ExecutionPolicy>
     void reallocateData(const ExecutionPolicy &ex_policy, UnsignedInt tentative_size)
@@ -206,7 +275,8 @@ class DiscreteVariable : public Quantity
     void finalizeLoadIn(const ParallelDevicePolicy &ex_policy) { synchronizeToDevice(); };
 
   private:
-    UnsignedInt size_;
+    UnsignedInt size_, width_;
+    StdVec<std::string> comparison_names_;
     DataType *data_;
     DeviceOnlyDiscreteVariable<DataType> *device_only_variable_ = nullptr;
     friend class DeviceOnlyDiscreteVariable<DataType>;
@@ -218,7 +288,7 @@ class DiscreteVariable : public Quantity
     {
         delete[] data_;
         size_ = tentative_size + tentative_size / 4;
-        data_ = new DataType[size_];
+        data_ = new DataType[size_ * width_];
     };
 
     void reallocateDataOnDevice(UnsignedInt tentative_size);
