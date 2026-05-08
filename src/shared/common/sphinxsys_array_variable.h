@@ -34,6 +34,26 @@
 namespace SPH
 {
 template <typename DataType>
+class ArrayData // transposed view of DataArray
+{
+  public:
+    ArrayData() : transposed_data_(nullptr), array_size_(0) {};
+    ArrayData(DataType *transposed_data, size_t array_size)
+        : transposed_data_(transposed_data), array_size_(array_size) {};
+
+    size_t ArraySize() { return array_size_; };
+
+    DataType *operator[](size_t particle_index)
+    {
+        return transposed_data_ + particle_index * array_size_;
+    }
+
+  protected:
+    DataType *transposed_data_;
+    UnsignedInt array_size_;
+};
+
+template <typename DataType>
 class ArrayVariable : protected DiscreteVariable<DataType>
 {
   public:

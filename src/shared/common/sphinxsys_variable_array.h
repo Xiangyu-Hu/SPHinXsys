@@ -22,7 +22,8 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file sphinxsys_variable_array.h
- * @brief tbd
+ * @brief Defines a collective view of several discrete variables
+ * as an array for convenient data access and management.
  * @author Xiangyu Hu
  */
 
@@ -34,20 +35,13 @@
 namespace SPH
 {
 template <typename DataType>
-class VariableArray; // transpose of ArrayVariable
-template <typename DataType>
-class ArrayVariable; // transpose of VariableArray
+class VariableArray;
 
 template <typename DataType>
 using DataPtr = DataType *;
 
 template <typename DataType>
-class DataArray; // transposed view of ArrayData
-template <typename DataType>
-class ArrayData; // transposed view of DataArray
-
-template <typename DataType>
-class DataArray // transposed view of ArrayData
+class DataArray
 {
   public:
     DataArray() : data_ptr_(nullptr), array_size_(0) {};
@@ -62,26 +56,6 @@ class DataArray // transposed view of ArrayData
 
   protected:
     DataPtr<DataType> *data_ptr_;
-    UnsignedInt array_size_;
-};
-
-template <typename DataType>
-class ArrayData // transposed view of DataArray
-{
-  public:
-    ArrayData() : transposed_data_(nullptr), array_size_(0) {};
-    ArrayData(DataType *transposed_data, size_t array_size)
-        : transposed_data_(transposed_data), array_size_(array_size) {};
-
-    size_t ArraySize() { return array_size_; };
-
-    DataType *operator[](size_t particle_index)
-    {
-        return transposed_data_ + particle_index * array_size_;
-    }
-
-  protected:
-    DataType *transposed_data_;
     UnsignedInt array_size_;
 };
 
