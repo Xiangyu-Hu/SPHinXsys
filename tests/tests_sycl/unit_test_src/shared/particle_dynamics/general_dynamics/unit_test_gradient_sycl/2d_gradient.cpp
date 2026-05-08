@@ -99,6 +99,70 @@ TEST(SecondOrderGradient, Error)
     std::cout << "Reference Second Order Gradient: " << reference_2nd_order_gradient << " and "
               << "Predicted Second Order Gradient: " << approximated_2nd_order_gradient << std::endl;
 };
+
+VecMat2d vector_x_second_coefficient{0.34, -0.27, 0.49};
+VecMat2d vector_y_second_coefficient{-0.42, 0.31, -0.23};
+class VectorXParabolicProfile : public ReturnFunction<Real>
+{
+    VecMat2d vector_x_second_coefficient_;
+
+  public:
+    VectorXParabolicProfile() : vector_x_second_coefficient_(vector_x_second_coefficient) {};
+
+    Real operator()(const Vec2d &position)
+    {
+        VecMat2d vectorized_position = vectorizeTensorSquare(position);
+        return vector_x_second_coefficient_.dot(vectorized_position);
+    }
+};
+
+class VectorYParabolicProfile : public ReturnFunction<Real>
+{
+    VecMat2d vector_y_second_coefficient_;
+
+  public:
+    VectorYParabolicProfile() : vector_y_second_coefficient_(vector_y_second_coefficient) {};
+
+    Real operator()(const Vec2d &position)
+    {
+        VecMat2d vectorized_position = vectorizeTensorSquare(position);
+        return vector_y_second_coefficient_.dot(vectorized_position);
+    }
+};
+
+Vec2d approximated_double_curl = Vec2d::Zero();
+Vec2d reference_double_curl =
+    Vec2d(vector_y_second_coefficient[2] - 2.0 * vector_x_second_coefficient[1],
+          -2.0 * vector_y_second_coefficient[0] + vector_x_second_coefficient[2]);
+TEST(DoubleCurl, Error)
+{
+    EXPECT_LT((reference_double_curl - approximated_double_curl).norm(), 1.0e-4);
+    std::cout << "Reference Double Curl: " << reference_double_curl << " and "
+              << "Predicted Double Curl: " << approximated_double_curl << std::endl;
+};
+
+Vec2d reference_double_curl_identity_rhs =
+    Vec2d(2.0 * vector_x_second_coefficient[0] + vector_y_second_coefficient[2] -
+              (2.0 * vector_x_second_coefficient[0] + 2.0 * vector_x_second_coefficient[1]),
+          vector_x_second_coefficient[2] + 2.0 * vector_y_second_coefficient[1] -
+              (2.0 * vector_y_second_coefficient[0] + 2.0 * vector_y_second_coefficient[1]));
+TEST(DoubleCurlIdentity, Error)
+{
+    EXPECT_LT((reference_double_curl_identity_rhs - approximated_double_curl).norm(), 1.0e-4);
+    std::cout << "Reference grad(div)-laplacian: " << reference_double_curl_identity_rhs << " and "
+              << "Predicted Double Curl: " << approximated_double_curl << std::endl;
+};
+
+Real interior_double_curl_rmse = 0.0;
+Real boundary_double_curl_rmse = 0.0;
+TEST(DoubleCurlBoundaryBand, Error)
+{
+    EXPECT_LT(interior_double_curl_rmse, 5.0e-4);
+    EXPECT_LT(boundary_double_curl_rmse, 2.0e-3);
+    EXPECT_LT(boundary_double_curl_rmse, 10.0 * interior_double_curl_rmse + 1.0e-6);
+    std::cout << "Interior RMSE: " << interior_double_curl_rmse << ", Boundary RMSE: " << boundary_double_curl_rmse
+              << std::endl;
+};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -127,6 +191,14 @@ int main(int ac, char *av[])
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vec2d> observation_location = {random_observation};
     fluid_observer.generateParticles<ObserverParticles>(observation_location);
+    ObserverBody profile_observer(sph_system, "ProfileObserver");
+    Real offset = 1.5 * particle_spacing;
+    StdVec<Vec2d> profile_points = {
+        Vec2d(0.25 * width, 0.25 * height), Vec2d(0.75 * width, 0.25 * height),
+        Vec2d(0.25 * width, 0.75 * height), Vec2d(0.75 * width, 0.75 * height),
+        Vec2d(offset, 0.5 * height),         Vec2d(width - offset, 0.5 * height),
+        Vec2d(0.5 * width, offset),          Vec2d(0.5 * width, height - offset)};
+    profile_observer.generateParticles<ObserverParticles>(profile_points);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -136,6 +208,7 @@ int main(int ac, char *av[])
     Inner<> water_block_inner(water_block);
     Contact<> water_wall_contact(water_block, {&wall});
     Contact<> fluid_observer_contact(fluid_observer, {&water_block});
+    Contact<> profile_observer_contact(profile_observer, {&water_block});
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -152,6 +225,7 @@ int main(int ac, char *av[])
     UpdateRelation<MainExecutionPolicy, Inner<>> update_water_block_inner(water_block_inner);
     UpdateRelation<MainExecutionPolicy, Contact<>> update_water_wall_contact(water_wall_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> update_fluid_observer_contact(fluid_observer_contact);
+    UpdateRelation<MainExecutionPolicy, Contact<>> update_profile_observer_contact(profile_observer_contact);
 
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
         linear_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
@@ -171,6 +245,14 @@ int main(int ac, char *av[])
         water_block_initial_condition(water_block, "Phi");
     StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<ParabolicProfile>>>
         wall_initial_condition(wall, "Phi");
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<VectorXParabolicProfile>>>
+        water_block_vector_x_initial_condition(water_block, "PhiX");
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<VectorXParabolicProfile>>>
+        wall_vector_x_initial_condition(wall, "PhiX");
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<VectorYParabolicProfile>>>
+        water_block_vector_y_initial_condition(water_block, "PhiY");
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<VectorYParabolicProfile>>>
+        wall_vector_y_initial_condition(wall, "PhiY");
     InteractionDynamicsCK<MainExecutionPolicy, LinearGradient<Inner<Real>, Contact<Real>>>
         variable_linear_gradient(
             DynamicsArgs(water_block_inner, std::string("Phi")),
@@ -188,6 +270,31 @@ int main(int ac, char *av[])
             DynamicsArgs(water_wall_contact, std::string("Phi")));
     ObservedQuantityRecording<MainExecutionPolicy, Vec2d, RestoringCorrection>
         observed_2nd_order_gradient("PhiGradient", fluid_observer_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, LinearGradient<Inner<Real>, Contact<Real>>>
+        variable_x_linear_gradient(
+            DynamicsArgs(water_block_inner, std::string("PhiX")),
+            DynamicsArgs(water_wall_contact, std::string("PhiX")));
+    InteractionDynamicsCK<MainExecutionPolicy, Hessian<Inner<Real>, Contact<Real>>>
+        variable_x_hessian(
+            DynamicsArgs(water_block_inner, std::string("PhiX")),
+            DynamicsArgs(water_wall_contact, std::string("PhiX")));
+    ObservedQuantityRecording<MainExecutionPolicy, VecMat2d, RestoringCorrection>
+        observed_hessian_x("PhiXHessian", fluid_observer_contact);
+
+    InteractionDynamicsCK<MainExecutionPolicy, LinearGradient<Inner<Real>, Contact<Real>>>
+        variable_y_linear_gradient(
+            DynamicsArgs(water_block_inner, std::string("PhiY")),
+            DynamicsArgs(water_wall_contact, std::string("PhiY")));
+    InteractionDynamicsCK<MainExecutionPolicy, Hessian<Inner<Real>, Contact<Real>>>
+        variable_y_hessian(
+            DynamicsArgs(water_block_inner, std::string("PhiY")),
+            DynamicsArgs(water_wall_contact, std::string("PhiY")));
+    ObservedQuantityRecording<MainExecutionPolicy, VecMat2d, RestoringCorrection>
+        observed_hessian_y("PhiYHessian", fluid_observer_contact);
+    ObservedQuantityRecording<MainExecutionPolicy, VecMat2d, RestoringCorrection>
+        observed_hessian_x_profile("PhiXHessian", profile_observer_contact);
+    ObservedQuantityRecording<MainExecutionPolicy, VecMat2d, RestoringCorrection>
+        observed_hessian_y_profile("PhiYHessian", profile_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -197,9 +304,14 @@ int main(int ac, char *av[])
     update_water_block_inner.exec();
     update_water_wall_contact.exec();
     update_fluid_observer_contact.exec();
+    update_profile_observer_contact.exec();
 
     water_block_initial_condition.exec();
     wall_initial_condition.exec();
+    water_block_vector_x_initial_condition.exec();
+    wall_vector_x_initial_condition.exec();
+    water_block_vector_y_initial_condition.exec();
+    wall_vector_y_initial_condition.exec();
 
     linear_correction_matrix.exec();
     position_linear_gradient.exec();
@@ -216,6 +328,42 @@ int main(int ac, char *av[])
     variable_2nd_order_gradient.exec();
     observed_2nd_order_gradient.writeToFile(0);
     approximated_2nd_order_gradient = *observed_2nd_order_gradient.getObservedQuantity();
+
+    variable_x_linear_gradient.exec();
+    variable_x_hessian.exec();
+    observed_hessian_x.writeToFile(0);
+    VecMat2d approximated_hessian_x = *observed_hessian_x.getObservedQuantity();
+
+    variable_y_linear_gradient.exec();
+    variable_y_hessian.exec();
+    observed_hessian_y.writeToFile(0);
+    VecMat2d approximated_hessian_y = *observed_hessian_y.getObservedQuantity();
+    observed_hessian_x_profile.writeToFile(0);
+    observed_hessian_y_profile.writeToFile(0);
+    approximated_double_curl =
+        Vec2d(0.5 * approximated_hessian_y[2] - approximated_hessian_x[1],
+              -approximated_hessian_y[0] + 0.5 * approximated_hessian_x[2]);
+
+    VecMat2d *hessian_x_profile = observed_hessian_x_profile.getObservedQuantity();
+    VecMat2d *hessian_y_profile = observed_hessian_y_profile.getObservedQuantity();
+    Real interior_error_acc = 0.0;
+    Real boundary_error_acc = 0.0;
+    for (size_t i = 0; i < profile_points.size(); ++i)
+    {
+        Vec2d profile_double_curl = Vec2d(0.5 * hessian_y_profile[i][2] - hessian_x_profile[i][1],
+                                          -hessian_y_profile[i][0] + 0.5 * hessian_x_profile[i][2]);
+        Real squared_error = (profile_double_curl - reference_double_curl).squaredNorm();
+        if (i < 4)
+        {
+            interior_error_acc += squared_error;
+        }
+        else
+        {
+            boundary_error_acc += squared_error;
+        }
+    }
+    interior_double_curl_rmse = std::sqrt(interior_error_acc / 4.0);
+    boundary_double_curl_rmse = std::sqrt(boundary_error_acc / 4.0);
     testing::InitGoogleTest(&ac, av);
     return RUN_ALL_TESTS();
 }

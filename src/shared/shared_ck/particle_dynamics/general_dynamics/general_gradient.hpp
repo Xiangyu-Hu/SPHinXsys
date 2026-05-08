@@ -80,19 +80,32 @@ template <typename TransportType, template <typename...> class RelationType, typ
 template <typename... Args>
 Hessian<Base, TransportType, RelationType<Parameters...>>::Hessian(Args &&...args)
     : BaseDynamicsType(std::forward<Args>(args)...),
-      transport_(DynamicsCast<TransportType>(this, this->sph_body_->getBaseMaterial())),
+      transport_(nullptr),
       dv_M_(this->particles_->template getVariableByName<MatTend>("HessianCorrectionMatrix")),
       dv_hessian_(this->particles_->template registerStateVariable<Hess<DataType>>(
-          this->variable_name_ + "Hessian")) {}
+          this->variable_name_ + "Hessian"))
+{
+    if constexpr (!std::is_same_v<DataType, TransportType>)
+    {
+        transport_ = &DynamicsCast<TransportType>(this, this->sph_body_->getBaseMaterial());
+    }
+}
 //=================================================================================================//
 template <typename TransportType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 Hessian<Inner<TransportType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseDynamicsType::InteractKernel(ex_policy, encloser),
-      inter_particle_coeff_(encloser.transport_.getInterParticleCoeff(ex_policy, encloser.transport_)),
+      inter_particle_coeff_(),
       M_(encloser.dv_M_->DelegatedData(ex_policy)),
-      hessian_(encloser.dv_hessian_->DelegatedData(ex_policy)) {}
+      hessian_(encloser.dv_hessian_->DelegatedData(ex_policy))
+{
+    if constexpr (!std::is_same_v<DataType, TransportType>)
+    {
+        inter_particle_coeff_ =
+            encloser.transport_->getInterParticleCoeff(ex_policy, *encloser.transport_);
+    }
+}
 //=================================================================================================//
 template <typename TransportType, typename... Parameters>
 void Hessian<Inner<TransportType, Parameters...>>::
@@ -168,6 +181,47 @@ void Hessian<Contact<InterfaceType<TransportType, OtherTransportType...>, Parame
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
+template <typename... Args>
+Hessian<Contact<DataType, Parameters...>>::Hessian(Args &&...args)
+    : BaseDynamicsType(std::forward<Args>(args)...)
+{
+    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        dv_contact_variable_.push_back(
+            this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
+    }
+}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+Hessian<Contact<DataType, Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
+      M_(encloser.dv_M_->DelegatedData(ex_policy)),
+      hessian_(encloser.dv_hessian_->DelegatedData(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_variable_(encloser.dv_contact_variable_[contact_index]->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+void Hessian<Contact<DataType, Parameters...>>::
+    InteractKernel::interact(size_t index_i, Real dt)
+{
+    Hess<DataType> summation = Hess<DataType>::Zero();
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Vecd r_ij = this->vec_r_ij(index_i, index_j);
+        Real corrected_dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
+                                  (this->B_[index_i] * this->e_ij(index_i, index_j)).dot(r_ij);
+        DataType corrected_difference = this->variable_[index_i] - contact_variable_[index_j] -
+                                        this->gradient_[index_i].dot(r_ij);
+        summation += 2.0 * corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), 2) *
+                     tensorProduct(vectorizeTensorSquare(r_ij), corrected_difference);
+    }
+    hessian_[index_i] += M_[index_i] * summation;
+}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
 void SecondOrderGradient<Inner<DataType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
@@ -189,13 +243,7 @@ template <typename DataType, typename... Parameters>
 template <typename... Args>
 SecondOrderGradient<Contact<DataType, Parameters...>>::SecondOrderGradient(Args &&...args)
     : BaseDynamicsType(std::forward<Args>(args)...)
-{
-    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        dv_contact_variable_.push_back(
-            this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
-    }
-}
+{}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -240,21 +288,21 @@ LinearCurl<Inner<WithUpdate, Parameters...>>::UpdateKernel::UpdateKernel(
 template <typename... Parameters>
 void LinearCurl<Inner<WithUpdate, Parameters...>>::UpdateKernel::update(size_t index_i, Real dt)
 {
-    curl_[index_i] = skewSymmetry(gradient_[index_i]);
+    curl_[index_i] = skewSymmetric(gradient_[index_i]);
 }
 //=================================================================================================//
 template <typename TransportType, typename... Parameters>
 DoubleCurl<Inner<TransportType, Parameters...>>::DoubleCurl(
     Inner<Parameters...> &inner_relation, const std::string &variable_name)
     : BaseDynamicsType(inner_relation, variable_name),
-      dv_double_curl_(this->particles_->template registerStateVariable<Vec3d>(
-          variable_name + "Curl", ZeroData<Vec3d>::value)) {}
+      dv_double_curl_(this->particles_->template registerStateVariable<Vecd>(
+          variable_name + "Curl", ZeroData<Vecd>::value)) {}
 //=================================================================================================//
 template <typename TransportType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 DoubleCurl<Inner<TransportType, Parameters...>>::UpdateKernel::UpdateKernel(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : gradient_(encloser.dv_gradient_->DelegatedData(ex_policy)),
+    : hessian_(encloser.dv_hessian_->DelegatedData(ex_policy)),
       double_curl_(encloser.dv_double_curl_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename TransportType, typename... Parameters>
@@ -269,7 +317,7 @@ Vec2d DoubleCurl<Inner<TransportType, Parameters...>>::UpdateKernel::
 {
     double C1 = hessian(1, 1) - hessian(2, 0);  // ∂_xy f2 - ∂_yy f1
     double C2 = -hessian(0, 1) + hessian(1, 0); // -∂_xx f2 + ∂_xy f1
-    return Vec2d(C1, C2)
+    return Vec2d(C1, C2);
 }
 //=================================================================================================//
 template <typename TransportType, typename... Parameters>

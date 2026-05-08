@@ -36,6 +36,7 @@
 
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 namespace SPH
@@ -68,6 +69,12 @@ struct HessHelper<Vecd>
 };
 
 template <>
+struct HessHelper<Vec3d>
+{
+    using type = VecMat3d;
+};
+
+template <>
 struct HessHelper<Real>
 {
     using type = VecMatd;
@@ -81,6 +88,36 @@ class Hessian;
 
 template <typename... RelationTypes>
 class Gradient;
+
+template <typename... RelationTypes>
+using LinearGradient = Gradient<RelationTypes...>;
+
+template <typename T, typename = void>
+struct TransportDataType
+{
+    using type = T;
+};
+
+template <typename T>
+struct TransportDataType<T, std::void_t<typename T::TransportDataType>>
+{
+    using type = typename T::TransportDataType;
+};
+
+template <typename TransportType, typename DataType, typename = void>
+struct InterParticleCoeffType
+{
+    struct type
+    {
+        DataType operator()(size_t, size_t) const { return DataType(1); }
+    };
+};
+
+template <typename TransportType, typename DataType>
+struct InterParticleCoeffType<TransportType, DataType, std::void_t<typename TransportType::InterParticleCoeff>>
+{
+    using type = typename TransportType::InterParticleCoeff;
+};
 
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>
 class Gradient<Base, DataType, RelationType<Parameters...>>
@@ -170,9 +207,9 @@ class Gradient<Contact<DataType, Parameters...>>
 
 template <typename TransportType, template <typename...> class RelationType, typename... Parameters>
 class Hessian<Base, TransportType, RelationType<Parameters...>>
-    : public Gradient<Base, typename TransportType::TransportDataType, RelationType<Parameters...>>
+    : public Gradient<Base, typename TransportDataType<TransportType>::type, RelationType<Parameters...>>
 {
-    using DataType = typename TransportType::TransportDataType;
+    using DataType = typename TransportDataType<TransportType>::type;
     using BaseDynamicsType = Gradient<Base, DataType, RelationType<Parameters...>>;
 
   public:
@@ -181,7 +218,7 @@ class Hessian<Base, TransportType, RelationType<Parameters...>>
     virtual ~Hessian() {};
 
   protected:
-    TransportType &transport_;
+    TransportType *transport_;
     DiscreteVariable<MatTend> *dv_M_;
     DiscreteVariable<Hess<DataType>> *dv_hessian_;
 };
@@ -190,9 +227,9 @@ template <typename TransportType, typename... Parameters>
 class Hessian<Inner<TransportType, Parameters...>>
     : public Hessian<Base, TransportType, Inner<Parameters...>>
 {
-    using DataType = typename TransportType::TransportDataType;
+    using DataType = typename TransportDataType<TransportType>::type;
     using BaseDynamicsType = Hessian<Base, TransportType, Inner<Parameters...>>;
-    using InterParticleCoeff = typename TransportType::InterParticleCoeff;
+    using InterParticleCoeff = typename InterParticleCoeffType<TransportType, DataType>::type;
 
   public:
     template <typename... Args>
@@ -213,12 +250,41 @@ class Hessian<Inner<TransportType, Parameters...>>
     };
 };
 
+template <typename DataType, typename... Parameters>
+class Hessian<Contact<DataType, Parameters...>>
+    : public Hessian<Base, DataType, Contact<Parameters...>>
+{
+    using BaseDynamicsType = Hessian<Base, DataType, Contact<Parameters...>>;
+
+  public:
+    template <typename... Args>
+    explicit Hessian(Args &&...args);
+    virtual ~Hessian() {};
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        MatTend *M_;
+        Hess<DataType> *hessian_;
+        Real *contact_Vol_;
+        DataType *contact_variable_;
+    };
+
+  protected:
+    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
+};
+
 template <typename TransportType, typename... OtherTransportType,
           template <typename...> class InterfaceType, typename... Parameters>
 class Hessian<Contact<InterfaceType<TransportType, OtherTransportType...>, Parameters...>>
     : public Hessian<Base, TransportType, Contact<Parameters...>>
 {
-    using DataType = typename TransportType::TransportDataType;
+    using DataType = typename TransportDataType<TransportType>::type;
     using BaseDynamicsType = Hessian<Base, TransportType, Contact<Parameters...>>;
     using InterfaceModel = InterfaceType<TransportType, OtherTransportType...>;
     using InterfaceCoeff = typename InterfaceModel::Coefficient;
@@ -253,9 +319,9 @@ class SecondOrderGradient;
 
 template <typename DataType, typename... Parameters>
 class SecondOrderGradient<Inner<DataType, Parameters...>>
-    : public Hessian<Base, DataType, Inner<Parameters...>>
+    : public Hessian<Inner<DataType, Parameters...>>
 {
-    using BaseDynamicsType = Hessian<Base, DataType, Inner<Parameters...>>;
+    using BaseDynamicsType = Hessian<Inner<DataType, Parameters...>>;
 
   public:
     template <typename... Args>
@@ -274,9 +340,9 @@ class SecondOrderGradient<Inner<DataType, Parameters...>>
 
 template <typename DataType, typename... Parameters>
 class SecondOrderGradient<Contact<DataType, Parameters...>>
-    : public Hessian<Base, DataType, Contact<Parameters...>>
+    : public Hessian<Contact<DataType, Parameters...>>
 {
-    using BaseDynamicsType = Hessian<Base, DataType, Contact<Parameters...>>;
+    using BaseDynamicsType = Hessian<Contact<DataType, Parameters...>>;
 
   public:
     template <typename... Args>
@@ -295,8 +361,6 @@ class SecondOrderGradient<Contact<DataType, Parameters...>>
         DataType *contact_variable_;
     };
 
-  protected:
-    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
 };
 
 template <typename...>
@@ -337,6 +401,7 @@ class LinearCurl<Inner<WithUpdate, Parameters...>>
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
+        Grad<Vecd> *gradient_;
         Curl *curl_;
     };
 
@@ -361,6 +426,7 @@ template <typename TransportType, typename... Parameters>
 class DoubleCurl<Inner<TransportType, Parameters...>>
     : public Hessian<Inner<TransportType, Parameters...>>
 {
+    using DataType = typename TransportDataType<TransportType>::type;
     using BaseDynamicsType = Hessian<Inner<TransportType, Parameters...>>;
 
   public:
@@ -374,6 +440,7 @@ class DoubleCurl<Inner<TransportType, Parameters...>>
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
+        Hess<DataType> *hessian_;
         Vecd *double_curl_;
 
         Vec2d computeDoubleCurl(Hess<Vec2d> &hessian);
