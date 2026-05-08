@@ -33,7 +33,7 @@ TEST(variable_buffer_array, test_sycl)
         [&](size_t i)
         { return int(ceil(rand_uniform(0.0, 1.0) * int(torques.size()))); });
 
-    SingleVariable<UnsignedInt> sv_buffer_particles("TotalBufferParticles", dv_copy_indexes.getDataSize());
+    SingleVariable<UnsignedInt> sv_buffer_particles("TotalBufferParticles", dv_copy_indexes.getSize());
 
     SimTKVec3 *torque = dv_torque.DelegatedData(ParallelPolicy{});
     SimTKVec3 *force = dv_force.DelegatedData(ParallelPolicy{});

@@ -32,10 +32,10 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
         dv_particle_lists_.push_back(dv_particle_list);
         DiscreteVariable<UnsignedInt> *original_id_list =
             particles_->addUniqueDiscreteVariable<UnsignedInt>(
-                dv_particle_list->Name() + "Initial", dv_particle_list->getDataSize());
+                dv_particle_list->Name() + "Initial", dv_particle_list->getSize());
         original_id_list->fill([&](UnsignedInt index)
                                { return dv_particle_list->getValue(index); },
-                               0, dv_particle_list->getDataSize());
+                               0, dv_particle_list->getSize());
         dv_original_id_lists_.push_back(original_id_list);
     }
 

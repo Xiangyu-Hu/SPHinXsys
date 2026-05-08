@@ -73,7 +73,7 @@ class ConstantArray : public Quantity
     };
 
     ~ConstantArray() { delete[] data_; };
-    size_t getDataSize() { return data_size_; }
+    size_t getSize() { return data_size_; }
     DataType *Data() { return data_; };
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };

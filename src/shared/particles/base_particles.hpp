@@ -55,7 +55,7 @@ DiscreteVariable<DataType> *BaseParticles::registerStateVariableFrom(
     DiscreteVariable<DataType> *variable = registerStateVariable<DataType>(new_name);
     DiscreteVariable<DataType> *old_variable = getVariableByName<DataType>(old_name);
     variable->fill([&](UnsignedInt index)
-                   { return old_variable->getValue(index); }, 0, old_variable->getDataSize());
+                   { return old_variable->getValue(index); }, 0, old_variable->getSize());
 
     return variable;
 }
@@ -142,12 +142,12 @@ DiscreteVariable<DataType> *BaseParticles::
     addDiscreteVariableToList(DiscreteVariables &variable_set, const std::string &name)
 {
     DiscreteVariable<DataType> *variable = getVariableByName<DataType>(name);
-    if (variable->getDataSize() < particles_bound_)
+    if (variable->getSize() < particles_bound_)
     {
         std::cout << "\nError: the" << type_name<DiscreteVariable<DataType>>() << " variable '"
                   << variable->Name() << "' in body " << getBodyName()
                   << "' can not be treated as a particle variable," << std::endl;
-        std::cout << "\n because the data size " << variable->getDataSize()
+        std::cout << "\n because the data size " << variable->getSize()
                   << " is too less!" << std::endl;
         exit(1);
     }

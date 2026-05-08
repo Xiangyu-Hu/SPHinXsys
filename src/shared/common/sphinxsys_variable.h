@@ -125,10 +125,10 @@ class DeviceOnlyDiscreteVariable : public Quantity
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable);
     ~DeviceOnlyDiscreteVariable();
     void reallocateData(DiscreteVariable<DataType> *host_variable);
-    DataType *DeviceOnlyDataField() { return device_only_data_field_; };
+    DataType *DeviceOnlyDataField() { return device_only_data_; };
 
   protected:
-    DataType *device_only_data_field_;
+    DataType *device_only_data_;
 };
 
 template <typename DataType>
@@ -139,17 +139,17 @@ class DiscreteVariable : public Quantity
   public:
     typedef DataType ContainedDataType;
     template <class InitializationFunction>
-    DiscreteVariable(const std::string &name, UnsignedInt data_size,
+    DiscreteVariable(const std::string &name, UnsignedInt size,
                      const InitializationFunction &initialization)
-        : Quantity(name), data_size_(data_size), data_(new DataType[data_size]),
+        : Quantity(name), size_(size), data_(new DataType[size]),
           device_only_variable_(nullptr)
     {
-        fill(initialization, 0, data_size);
+        fill(initialization, 0, size);
     };
 
-    DiscreteVariable(const std::string &name, UnsignedInt data_size,
+    DiscreteVariable(const std::string &name, UnsignedInt size,
                      DataType initial_value = ZeroData<DataType>::value)
-        : DiscreteVariable(name, data_size, [&](UnsignedInt index)
+        : DiscreteVariable(name, size, [&](UnsignedInt index)
                            { return initial_value; }) {};
 
     ~DiscreteVariable() { delete[] data_; };
@@ -157,19 +157,19 @@ class DiscreteVariable : public Quantity
     void setValue(UnsignedInt index, const DataType &value) { data_[index] = value; };
     DataType getValue(UnsignedInt index) { return data_[index]; };
     DataType getValueWithScalingRef(UnsignedInt index) const { return data_[index] * scaling_ref_; };
-    UnsignedInt getDataSize() { return data_size_; }
+    UnsignedInt getSize() { return size_; }
 
     template <class FillFunction>
-    void fill(const FillFunction &fill_function, UnsignedInt begin_index, UnsignedInt size)
+    void fill(const FillFunction &fill_function, UnsignedInt begin_index, UnsignedInt fill_size)
     {
-        if (begin_index + size > data_size_)
+        if (begin_index + fill_size > size_)
         {
             std::cout << "\n Error: trying to fill data out of range in DiscreteVariable '"
                       << this->name_ << "'!" << std::endl;
             exit(1);
         }
 
-        for (UnsignedInt i = begin_index; i < begin_index + size; ++i)
+        for (UnsignedInt i = begin_index; i < begin_index + fill_size; ++i)
         {
             data_[i] = fill_function(i);
         }
@@ -183,7 +183,7 @@ class DiscreteVariable : public Quantity
     template <class ExecutionPolicy>
     void reallocateData(const ExecutionPolicy &ex_policy, UnsignedInt tentative_size)
     {
-        if (data_size_ < tentative_size)
+        if (size_ < tentative_size)
         {
             reallocateData(tentative_size);
         }
@@ -191,7 +191,7 @@ class DiscreteVariable : public Quantity
 
     void reallocateData(const ParallelDevicePolicy &par_device, UnsignedInt tentative_size)
     {
-        if (data_size_ < tentative_size)
+        if (size_ < tentative_size)
         {
             reallocateDataOnDevice(tentative_size);
         }
@@ -206,7 +206,7 @@ class DiscreteVariable : public Quantity
     void finalizeLoadIn(const ParallelDevicePolicy &ex_policy) { synchronizeToDevice(); };
 
   private:
-    UnsignedInt data_size_;
+    UnsignedInt size_;
     DataType *data_;
     DeviceOnlyDiscreteVariable<DataType> *device_only_variable_ = nullptr;
     friend class DeviceOnlyDiscreteVariable<DataType>;
@@ -217,8 +217,8 @@ class DiscreteVariable : public Quantity
     void reallocateData(UnsignedInt tentative_size)
     {
         delete[] data_;
-        data_size_ = tentative_size + tentative_size / 4;
-        data_ = new DataType[data_size_];
+        size_ = tentative_size + tentative_size / 4;
+        data_ = new DataType[size_];
     };
 
     void reallocateDataOnDevice(UnsignedInt tentative_size);
