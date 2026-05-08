@@ -270,7 +270,7 @@ void SparseMeshField<PKG_SIZE>::organizeOccupiedPackages(UnsignedInt level)
     dv_pkg_type_->fill([&](UnsignedInt i)
                        { return occupied_data_pkgs_[i].second; },
                        num_pkgs_offsets_[level],
-                       num_pkgs_offsets_[level + 1] - num_pkgs_offsets_[level + 1]);
+                       num_pkgs_offsets_[level + 1] - num_pkgs_offsets_[level]);
 }
 //=============================================================================================//
 template <int PKG_SIZE>
