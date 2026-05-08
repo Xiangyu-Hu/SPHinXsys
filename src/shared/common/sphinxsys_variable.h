@@ -169,7 +169,7 @@ class DiscreteVariable : public Quantity
     UnsignedInt getDataSize() { return data_size_; }
 
     template <class FillFunction>
-    void fill(UnsignedInt begin_index, UnsignedInt end_index, const FillFunction &fill_function)
+    void fill(const FillFunction &fill_function, UnsignedInt begin_index, UnsignedInt size)
     {
         if (end_index > data_size_)
         {
@@ -177,7 +177,7 @@ class DiscreteVariable : public Quantity
                       << this->name_ << "'!" << std::endl;
             exit(1);
         }
-        for (UnsignedInt i = begin_index; i < end_index; ++i)
+        for (UnsignedInt i = begin_index; i < begin_index + size; ++i)
         {
             data_field_[i] = fill_function(i);
         }
