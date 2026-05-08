@@ -46,7 +46,7 @@ DeviceOnlyDiscreteVariable<DataType>::
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable)
     : Quantity(host_variable->Name()), device_only_data_(nullptr)
 {
-    UnsignedInt total_size = host_variable->getTotalSize()();
+    UnsignedInt total_size = host_variable->getTotalSize();
     device_only_data_ = allocateDeviceOnly<DataType>(total_size);
     copyToDevice(host_variable->Data(), device_only_data_, total_size);
 }
