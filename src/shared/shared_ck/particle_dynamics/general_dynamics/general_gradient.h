@@ -250,35 +250,6 @@ class Hessian<Inner<TransportType, Parameters...>>
     };
 };
 
-template <typename DataType, typename... Parameters>
-class Hessian<Contact<DataType, Parameters...>>
-    : public Hessian<Base, DataType, Contact<Parameters...>>
-{
-    using BaseDynamicsType = Hessian<Base, DataType, Contact<Parameters...>>;
-
-  public:
-    template <typename... Args>
-    explicit Hessian(Args &&...args);
-    virtual ~Hessian() {};
-
-    class InteractKernel : public BaseDynamicsType::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
-        void interact(size_t index_i, Real dt = 0.0);
-
-      protected:
-        MatTend *M_;
-        Hess<DataType> *hessian_;
-        Real *contact_Vol_;
-        DataType *contact_variable_;
-    };
-
-  protected:
-    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
-};
-
 template <typename TransportType, typename... OtherTransportType,
           template <typename...> class InterfaceType, typename... Parameters>
 class Hessian<Contact<InterfaceType<TransportType, OtherTransportType...>, Parameters...>>
@@ -290,6 +261,9 @@ class Hessian<Contact<InterfaceType<TransportType, OtherTransportType...>, Param
     using InterfaceCoeff = typename InterfaceModel::Coefficient;
 
   public:
+    template <typename FirstArg>
+    explicit Hessian(DynamicsArgs<Contact<Parameters...>, FirstArg,
+                                  StdVec<InterfaceType<TransportType, OtherTransportType...> *>> parameters);
     Hessian(Contact<Parameters...> &contact_relation, std::string &variable_name,
             StdVec<InterfaceType<TransportType, OtherTransportType...> *> interface_models);
     virtual ~Hessian() {};
@@ -340,9 +314,9 @@ class SecondOrderGradient<Inner<DataType, Parameters...>>
 
 template <typename DataType, typename... Parameters>
 class SecondOrderGradient<Contact<DataType, Parameters...>>
-    : public Hessian<Contact<DataType, Parameters...>>
+    : public Hessian<Base, DataType, Contact<Parameters...>>
 {
-    using BaseDynamicsType = Hessian<Contact<DataType, Parameters...>>;
+    using BaseDynamicsType = Hessian<Base, DataType, Contact<Parameters...>>;
 
   public:
     template <typename... Args>
@@ -361,6 +335,8 @@ class SecondOrderGradient<Contact<DataType, Parameters...>>
         DataType *contact_variable_;
     };
 
+  protected:
+    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
 };
 
 template <typename...>

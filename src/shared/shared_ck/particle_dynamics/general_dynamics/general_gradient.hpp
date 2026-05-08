@@ -129,6 +129,16 @@ void Hessian<Inner<TransportType, Parameters...>>::
 //=================================================================================================//
 template <typename TransportType, typename... OtherTransportType,
           template <typename...> class InterfaceType, typename... Parameters>
+template <typename FirstArg>
+Hessian<Contact<InterfaceType<TransportType, OtherTransportType...>, Parameters...>>::
+    Hessian(DynamicsArgs<Contact<Parameters...>, FirstArg,
+                         StdVec<InterfaceType<TransportType, OtherTransportType...> *>> parameters)
+    : Hessian(parameters.identifier_, std::get<0>(parameters.others_), std::get<1>(parameters.others_))
+{
+}
+//=================================================================================================//
+template <typename TransportType, typename... OtherTransportType,
+          template <typename...> class InterfaceType, typename... Parameters>
 Hessian<Contact<InterfaceType<TransportType, OtherTransportType...>, Parameters...>>::
     Hessian(Contact<Parameters...> &contact_relation, std::string &variable_name,
             StdVec<InterfaceType<TransportType, OtherTransportType...> *> interface_models)
@@ -181,47 +191,6 @@ void Hessian<Contact<InterfaceType<TransportType, OtherTransportType...>, Parame
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
-template <typename... Args>
-Hessian<Contact<DataType, Parameters...>>::Hessian(Args &&...args)
-    : BaseDynamicsType(std::forward<Args>(args)...)
-{
-    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        dv_contact_variable_.push_back(
-            this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
-    }
-}
-//=================================================================================================//
-template <typename DataType, typename... Parameters>
-template <class ExecutionPolicy, class EncloserType>
-Hessian<Contact<DataType, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
-    : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
-      M_(encloser.dv_M_->DelegatedData(ex_policy)),
-      hessian_(encloser.dv_hessian_->DelegatedData(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      contact_variable_(encloser.dv_contact_variable_[contact_index]->DelegatedData(ex_policy)) {}
-//=================================================================================================//
-template <typename DataType, typename... Parameters>
-void Hessian<Contact<DataType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
-{
-    Hess<DataType> summation = Hess<DataType>::Zero();
-    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
-    {
-        UnsignedInt index_j = this->neighbor_index_[n];
-        Vecd r_ij = this->vec_r_ij(index_i, index_j);
-        Real corrected_dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
-                                  (this->B_[index_i] * this->e_ij(index_i, index_j)).dot(r_ij);
-        DataType corrected_difference = this->variable_[index_i] - contact_variable_[index_j] -
-                                        this->gradient_[index_i].dot(r_ij);
-        summation += 2.0 * corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), 2) *
-                     tensorProduct(vectorizeTensorSquare(r_ij), corrected_difference);
-    }
-    hessian_[index_i] += M_[index_i] * summation;
-}
-//=================================================================================================//
-template <typename DataType, typename... Parameters>
 void SecondOrderGradient<Inner<DataType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
@@ -243,7 +212,13 @@ template <typename DataType, typename... Parameters>
 template <typename... Args>
 SecondOrderGradient<Contact<DataType, Parameters...>>::SecondOrderGradient(Args &&...args)
     : BaseDynamicsType(std::forward<Args>(args)...)
-{}
+{
+    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
+    {
+        this->dv_contact_variable_.push_back(
+            this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
+    }
+}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
