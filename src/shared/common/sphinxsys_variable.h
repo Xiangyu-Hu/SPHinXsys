@@ -198,7 +198,6 @@ class DiscreteVariable : public Quantity
 
     ~DiscreteVariable() { delete[] data_; };
     DataType *Data() { return data_; };
-    void setValue(UnsignedInt index, const DataType &value) { data_[index] = value; };
     DataType getValue(UnsignedInt index) { return data_[index]; };
     DataType getValueWithScalingRef(UnsignedInt index) const { return data_[index] * scaling_ref_; };
     UnsignedInt getSize() { return size_; }
@@ -248,6 +247,9 @@ class DiscreteVariable : public Quantity
     {
         return ComponentView<DataType>(DelegatedData(ex_policy), width_);
     };
+
+    DataView<DataType> getDataView() { return DelegatedDataView(ParallelPolicy{}); };
+    ComponentView<DataType> getComponentView() { return DelegatedComponentView(ParallelPolicy{}); };
 
     template <class ExecutionPolicy>
     void reallocateData(const ExecutionPolicy &ex_policy, UnsignedInt tentative_size)

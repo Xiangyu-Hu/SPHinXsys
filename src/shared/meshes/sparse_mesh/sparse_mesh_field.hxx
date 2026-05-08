@@ -234,10 +234,12 @@ void SparseMeshField<PKG_SIZE>::setBoundaryData(
     const BoundaryDataFunction &boundary_data_function)
 {
     using ContainedDataType = typename DiscreteVariableType::ContainedDataType;
+    DataView<ContainedDataType> variable_data = variable->getDataView();
     for (UnsignedInt k = 0; k != num_boundary_pkgs_; k++)
-        variable->setValue(
-            resolution_level * num_boundary_pkgs_ + k,
-            ContainedDataType(boundary_data_function(k)));
+    {
+        variable_data[resolution_level * num_boundary_pkgs_ + k] =
+            ContainedDataType(boundary_data_function(k));
+    }
 }
 //=============================================================================================//
 template <int PKG_SIZE>
