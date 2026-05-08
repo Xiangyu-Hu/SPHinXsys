@@ -111,9 +111,9 @@ class BaseParticles
     SingleVariable<UnsignedInt> *svTotalRealParticles() { return sv_total_real_particles_; };
     UnsignedInt TotalRealParticles() { return sv_total_real_particles_->getValue(); };
     UnsignedInt ParticlesBound() { return particles_bound_; };
-    void initializeAllParticlesBounds(size_t total_real_particles);
+    void initializeAllParticlesBounds(UnsignedInt total_real_particles);
     void initializeAllParticlesBoundsFromReloadXml();
-    void increaseParticlesBounds(size_t extra_size);
+    void increaseParticlesBounds(UnsignedInt extra_size);
     void checkEnoughReserve();
     //----------------------------------------------------------------------
     // Parameterized management on particle variables and data
@@ -122,9 +122,9 @@ class BaseParticles
     template <typename DataType>
     DiscreteVariable<DataType> *getVariableByName(const std::string &name);
     template <class DataType, typename... Args>
-    DiscreteVariable<DataType> *addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
+    DiscreteVariable<DataType> *addUniqueDiscreteVariable(const std::string &name, UnsignedInt size, Args &&...args);
     template <typename DataType, typename... Args>
-    DiscreteVariable<DataType> *registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args);
+    DiscreteVariable<DataType> *registerDiscreteVariable(const std::string &name, UnsignedInt size, Args &&...args);
     template <typename DataType, typename... Args>
     DiscreteVariable<DataType> *registerStateVariable(const std::string &name, Args &&...args);
     template <typename DataType>
@@ -224,7 +224,7 @@ class BaseParticles
     struct CopyParticleState
     {
         template <typename DataType>
-        void operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t index, size_t another_index);
+        void operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, UnsignedInt index, UnsignedInt another_index);
     };
 
     struct WriteAParticleVariableToXml
@@ -262,18 +262,18 @@ class BaseParticles
     // Functions for old CPU code compatibility
     //----------------------------------------------------------------------
   public:
-    void copyFromAnotherParticle(size_t index, size_t another_index);
-    size_t allocateGhostParticles(size_t ghost_size);
-    void updateGhostParticle(size_t ghost_index, size_t index);
-    void switchToBufferParticle(size_t index);
+    void copyFromAnotherParticle(UnsignedInt index, UnsignedInt another_index);
+    UnsignedInt allocateGhostParticles(UnsignedInt ghost_size);
+    void updateGhostParticle(UnsignedInt ghost_index, UnsignedInt index);
+    void switchToBufferParticle(UnsignedInt index);
     UnsignedInt createRealParticleFrom(UnsignedInt index);
 
     template <typename DataType>
     DataType *getVariableDataByName(const std::string &name);
     template <class DataType, typename... Args>
-    DataType *addUniqueDiscreteVariableData(const std::string &name, size_t data_size, Args &&...args);
+    DataType *addUniqueDiscreteVariableData(const std::string &name, UnsignedInt size, Args &&...args);
     template <typename DataType, typename... Args>
-    DataType *registerDiscreteVariableData(const std::string &name, size_t data_size, Args &&...args);
+    DataType *registerDiscreteVariableData(const std::string &name, UnsignedInt size, Args &&...args);
     template <typename DataType, typename... Args>
     DataType *registerStateVariableData(const std::string &name, Args &&...args);
     template <typename DataType, typename... Args>
@@ -287,8 +287,8 @@ class BaseParticles
 
     Vecd *ParticlePositions() { return dv_pos_->Data(); }
     Real *VolumetricMeasures() { return Vol_; }
-    virtual Real ParticleVolume(size_t index) { return Vol_[index]; }
-    virtual Real ParticleSpacing(size_t index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
+    virtual Real ParticleVolume(UnsignedInt index) { return Vol_[index]; }
+    virtual Real ParticleSpacing(UnsignedInt index) { return std::pow(Vol_[index], 1.0 / Real(Dimensions)); }
     UnsignedInt *ParticleOriginalIds() { return original_id_; };
     UnsignedInt *ParticleSortedIds() { return sorted_id_; };
 

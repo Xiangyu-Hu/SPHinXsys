@@ -167,6 +167,10 @@ class DeviceOnlyDiscreteVariable : public Quantity
     DataType *device_only_data_;
 };
 
+struct MultiComponentTag
+{
+};
+
 template <typename DataType>
 class DiscreteVariable : public Quantity
 {
@@ -188,12 +192,19 @@ class DiscreteVariable : public Quantity
         : DiscreteVariable(name, size, [&](UnsignedInt index)
                            { return initial_value; }) {};
 
-    DiscreteVariable(UnsignedInt size, UnsignedInt width, const std::string &name)
+    DiscreteVariable(const std::string &name, UnsignedInt size,
+                     const MultiComponentTag &tag, UnsignedInt width)
         : Quantity(name), size_(size), width_(width), data_(new DataType[size * width]),
           device_only_variable_(nullptr)
     {
         fill([&](UnsignedInt index) // zero initialization
              { return ZeroData<DataType>::value; }, 0, size * width);
+    };
+
+    DiscreteVariable(const std::string &name, UnsignedInt size, StdVec<std::string> component_names)
+        : DiscreteVariable(name, size, MultiComponentTag{}, component_names.size())
+    {
+        component_names_ = component_names;
     };
 
     ~DiscreteVariable() { delete[] data_; };
@@ -278,7 +289,7 @@ class DiscreteVariable : public Quantity
 
   private:
     UnsignedInt size_, width_;
-    StdVec<std::string> comparison_names_;
+    StdVec<std::string> component_names_;
     DataType *data_;
     DeviceOnlyDiscreteVariable<DataType> *device_only_variable_ = nullptr;
     friend class DeviceOnlyDiscreteVariable<DataType>;

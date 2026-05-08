@@ -44,7 +44,7 @@ class LinearParticles : public SurfaceParticles
     Real *width_;
 
     /** get particle volume. */
-    virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i] * width_[index_i]; }
+    virtual Real ParticleVolume(UnsignedInt index) override { return Vol_[index] * thickness_[index] * width_[index]; }
     void registerLineProperties(StdVec<Vecd> &b_n, StdVec<Real> &width);
     void registerLinePropertiesFromReload();
     virtual void registerTransformationMatrix() override;

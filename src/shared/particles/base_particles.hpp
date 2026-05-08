@@ -17,20 +17,20 @@ DiscreteVariable<DataType> *BaseParticles::getVariableByName(const std::string &
 //=================================================================================================//
 template <class DataType, typename... Args>
 DiscreteVariable<DataType> *BaseParticles::
-    addUniqueDiscreteVariable(const std::string &name, size_t data_size, Args &&...args)
+    addUniqueDiscreteVariable(const std::string &name, UnsignedInt size, Args &&...args)
 {
     DiscreteVariable<DataType> *variable = unique_variable_ptrs_.createPtr<
-        DiscreteVariable<DataType>>(name, data_size, std::forward<Args>(args)...);
+        DiscreteVariable<DataType>>(name, size, std::forward<Args>(args)...);
     return variable;
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
 DiscreteVariable<DataType> *BaseParticles::
-    registerDiscreteVariable(const std::string &name, size_t data_size, Args &&...args)
+    registerDiscreteVariable(const std::string &name, UnsignedInt size, Args &&...args)
 {
     return registerVariable<DiscreteVariable, DataType>(
         all_discrete_variables_, all_discrete_variable_ptrs_,
-        name, data_size, std::forward<Args>(args)...);
+        name, size, std::forward<Args>(args)...);
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
@@ -76,7 +76,7 @@ DiscreteVariable<DataType> *BaseParticles::registerStateVariableFromReload(const
 {
     DiscreteVariable<DataType> *new_variable = registerStateVariable<DataType>(name);
     DataType *data_field = new_variable->Data();
-    size_t index = 0;
+    UnsignedInt index = 0;
     for (auto child = reload_xml_parser_.first_element_->FirstChildElement();
          child; child = child->NextSiblingElement())
     {
@@ -178,7 +178,7 @@ template <typename DataType>
 void BaseParticles::addEvolvingVariable(VariableArray<DataType> *variable_array)
 {
     StdVec<DiscreteVariable<DataType> *> variables = variable_array->getVariables();
-    for (size_t i = 0; i != variables.size(); ++i)
+    for (UnsignedInt i = 0; i != variables.size(); ++i)
     {
         addEvolvingVariable<DataType>(variables[i]);
     }
@@ -194,7 +194,7 @@ template <typename DataType>
 void BaseParticles::addVariableToWrite(VariableArray<DataType> *variable_array)
 {
     StdVec<DiscreteVariable<DataType> *> variables = variable_array->getVariables();
-    for (size_t i = 0; i != variables.size(); ++i)
+    for (UnsignedInt i = 0; i != variables.size(); ++i)
     {
         addVariableToWrite<DataType>(variables[i]);
     }
@@ -209,9 +209,9 @@ BaseParticles &BaseParticles::reloadExtraVariable(const std::string &name)
 //=================================================================================================//
 template <typename DataType>
 void BaseParticles::CopyParticleState::
-operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, size_t index, size_t another_index)
+operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, UnsignedInt index, UnsignedInt another_index)
 {
-    for (size_t i = 0; i != data_keeper.size(); ++i)
+    for (UnsignedInt i = 0; i != data_keeper.size(); ++i)
     {
         data_keeper[i][index] = data_keeper[i][another_index];
     }
@@ -221,9 +221,9 @@ template <typename DataType>
 void BaseParticles::WriteAParticleVariableToXml::
 operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser)
 {
-    for (size_t i = 0; i != variables.size(); ++i)
+    for (UnsignedInt i = 0; i != variables.size(); ++i)
     {
-        size_t index = 0;
+        UnsignedInt index = 0;
         DataType *data_field = variables[i]->Data();
         for (auto child = xml_parser.first_element_->FirstChildElement();
              child; child = child->NextSiblingElement())
@@ -239,9 +239,9 @@ void BaseParticles::ReadAParticleVariableFromXml::
 operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
            BaseParticles *base_particles, XmlParser &xml_parser)
 {
-    for (size_t i = 0; i != variables.size(); ++i)
+    for (UnsignedInt i = 0; i != variables.size(); ++i)
     {
-        size_t index = 0;
+        UnsignedInt index = 0;
         DataType *data_field = variables[i]->Data();
         for (auto child = xml_parser.first_element_->FirstChildElement();
              child; child = child->NextSiblingElement())
@@ -256,9 +256,9 @@ template <typename DataType>
 void BaseParticles::WriteAParticleVariableToXmlElement::
 operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser)
 {
-    for (size_t i = 0; i != variables.size(); ++i)
+    for (UnsignedInt i = 0; i != variables.size(); ++i)
     {
-        size_t index = 0;
+        UnsignedInt index = 0;
         DataType *data_field = variables[i]->Data();
         for (auto child = element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
@@ -273,9 +273,9 @@ void BaseParticles::ReadAParticleVariableFromXmlElement::
 operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
            BaseParticles *base_particles, XmlParser &xml_parser)
 {
-    for (size_t i = 0; i != variables.size(); ++i)
+    for (UnsignedInt i = 0; i != variables.size(); ++i)
     {
-        size_t index = 0;
+        UnsignedInt index = 0;
         DataType *data_field = variables[i]->Data();
         for (auto child = element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
@@ -287,16 +287,16 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
 //=================================================================================================//
 template <class DataType, typename... Args>
 DataType *BaseParticles::
-    addUniqueDiscreteVariableData(const std::string &name, size_t data_size, Args &&...args)
+    addUniqueDiscreteVariableData(const std::string &name, UnsignedInt size, Args &&...args)
 {
-    return addUniqueDiscreteVariable<DataType>(name, data_size, std::forward<Args>(args)...)->Data();
+    return addUniqueDiscreteVariable<DataType>(name, size, std::forward<Args>(args)...)->Data();
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
 DataType *BaseParticles::registerDiscreteVariableData(
-    const std::string &name, size_t data_size, Args &&...args)
+    const std::string &name, UnsignedInt size, Args &&...args)
 {
-    return registerDiscreteVariable<DataType>(name, data_size, std::forward<Args>(args)...)->Data();
+    return registerDiscreteVariable<DataType>(name, size, std::forward<Args>(args)...)->Data();
 }
 //=================================================================================================//
 template <typename DataType>

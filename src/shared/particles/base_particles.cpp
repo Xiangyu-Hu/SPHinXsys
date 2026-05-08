@@ -41,7 +41,7 @@ void BaseParticles::initializeBasicDiscreteVariables()
     //----------------------------------------------------------------------
     rho_ = registerStateVariableData<Real>("Density", base_material_.ReferenceDensity());
     mass_ = registerStateVariableData<Real>("Mass",
-                                            [&](size_t i) -> Real
+                                            [&](UnsignedInt i) -> Real
                                             { return rho_[i] * ParticleVolume(i); });
     //----------------------------------------------------------------------
     //		unregistered variables and data
@@ -64,7 +64,7 @@ void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
     Vol_ = registerStateVariableDataFromReload<Real>("VolumetricMeasure");
 }
 //=================================================================================================//
-void BaseParticles::initializeAllParticlesBounds(size_t number_of_particles)
+void BaseParticles::initializeAllParticlesBounds(UnsignedInt number_of_particles)
 {
     sv_total_real_particles_->setValue(number_of_particles);
     particles_bound_ = number_of_particles;
@@ -75,7 +75,7 @@ void BaseParticles::initializeAllParticlesBoundsFromReloadXml()
     initializeAllParticlesBounds(reload_xml_parser_.Size(reload_xml_parser_.first_element_));
 }
 //=================================================================================================//
-void BaseParticles::increaseParticlesBounds(size_t extra_size)
+void BaseParticles::increaseParticlesBounds(UnsignedInt extra_size)
 {
     particles_bound_ += extra_size;
 }
@@ -90,28 +90,28 @@ void BaseParticles::checkEnoughReserve()
     }
 }
 //=================================================================================================//
-void BaseParticles::copyFromAnotherParticle(size_t index, size_t another_index)
+void BaseParticles::copyFromAnotherParticle(UnsignedInt index, UnsignedInt another_index)
 {
     copy_particle_state_(all_state_data_, index, another_index);
 }
 //=================================================================================================//
-size_t BaseParticles::allocateGhostParticles(size_t ghost_size)
+UnsignedInt BaseParticles::allocateGhostParticles(UnsignedInt ghost_size)
 {
-    size_t ghost_lower_bound = particles_bound_;
+    UnsignedInt ghost_lower_bound = particles_bound_;
     particles_bound_ += ghost_size;
     return ghost_lower_bound;
 }
 //=================================================================================================//
-void BaseParticles::updateGhostParticle(size_t ghost_index, size_t index)
+void BaseParticles::updateGhostParticle(UnsignedInt ghost_index, UnsignedInt index)
 {
     copyFromAnotherParticle(ghost_index, index);
     /** For a ghost particle, its sorted id is that of corresponding real particle. */
     sorted_id_[ghost_index] = index;
 }
 //=================================================================================================//
-void BaseParticles::switchToBufferParticle(size_t index)
+void BaseParticles::switchToBufferParticle(UnsignedInt index)
 {
-    size_t last_real_particle_index = TotalRealParticles() - 1;
+    UnsignedInt last_real_particle_index = TotalRealParticles() - 1;
     if (index < last_real_particle_index)
     {
         copyFromAnotherParticle(index, last_real_particle_index);
@@ -124,7 +124,7 @@ void BaseParticles::switchToBufferParticle(size_t index)
 //=================================================================================================//
 UnsignedInt BaseParticles::createRealParticleFrom(UnsignedInt index)
 {
-    size_t new_original_id = TotalRealParticles();
+    UnsignedInt new_original_id = TotalRealParticles();
     original_id_[new_original_id] = new_original_id;
     /** Buffer Particle state copied from real particle. */
     copyFromAnotherParticle(new_original_id, index);
@@ -141,7 +141,7 @@ int BaseParticles::getNewBodyPartID()
 //=================================================================================================//
 void BaseParticles::resizeXmlDocForParticles(XmlParser &xml_parser)
 {
-    size_t total_elements = xml_parser.Size(xml_parser.first_element_);
+    UnsignedInt total_elements = xml_parser.Size(xml_parser.first_element_);
 
     UnsignedInt total_real_particles = TotalRealParticles();
     if (total_elements != total_real_particles)
@@ -189,7 +189,7 @@ void BaseParticles::writeParticlesToXmlForRestart(XmlParser &xml_parser, TinyXML
 {
     // Resize the body element to have the correct number of particle children
     UnsignedInt total_real_particles = TotalRealParticles();
-    size_t total_elements = xml_parser.Size(body_element);
+    UnsignedInt total_elements = xml_parser.Size(body_element);
 
     if (total_elements != total_real_particles)
     {
