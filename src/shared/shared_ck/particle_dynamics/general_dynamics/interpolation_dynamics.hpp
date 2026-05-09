@@ -22,6 +22,15 @@ Interpolation<Contact<Base, DataType, Parameters...>>::Interpolation(
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
+Interpolation<Contact<Base, DataType, Parameters...>>::Interpolation(
+    Contact<Parameters...> &pair_contact_relation, const std::string &variable_name, const std::string &entry_name)
+    : Interpolation(pair_contact_relation, variable_name)
+{
+    dv_interpolated_quantities_->setName(variable_name + entry_name);
+    entry_ = this->contact_particles_[0]->getEntryIndexByName(entry_name);
+}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 Interpolation<Contact<DataType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
@@ -29,7 +38,7 @@ Interpolation<Contact<DataType, Parameters...>>::InteractKernel::
       zero_value_(ZeroData<DataType>::value),
       interpolated_quantities_(encloser.dv_interpolated_quantities_->DelegatedData(ex_policy)),
       contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      contact_data_(encloser.dv_contact_data_[contact_index]->DelegatedData(ex_policy)) {}
+      contact_data_(encloser.dv_contact_data_[contact_index]->DelegatedEntryView(ex_policy, encloser.entry_)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 void Interpolation<Contact<DataType, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
@@ -56,7 +65,7 @@ Interpolation<Contact<DataType, RestoringCorrection, Parameters...>>::InteractKe
       zero_prediction_(ZeroData<PredictVecd>::value),
       interpolated_quantities_(encloser.dv_interpolated_quantities_->DelegatedData(ex_policy)),
       contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      contact_data_(encloser.dv_contact_data_[contact_index]->DelegatedData(ex_policy)) {}
+      contact_data_(encloser.dv_contact_data_[contact_index]->DelegatedEntryView(ex_policy, encloser.entry_)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 void Interpolation<Contact<DataType, RestoringCorrection, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)

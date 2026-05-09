@@ -107,11 +107,12 @@ class Quantity
     explicit Quantity(const std::string &name) : name_(name) {};
     virtual ~Quantity() {};
     std::string Name() const { return name_; };
+    void setName(const std::string &name) { name_ = name; };
     Real getScalingRef() const { return scaling_ref_; };
     void setScalingRef(Real scaling_ref) { scaling_ref_ = scaling_ref; };
 
   protected:
-    const std::string name_;
+    std::string name_;
     Real scaling_ref_ = Real(1);
 };
 
