@@ -220,6 +220,11 @@ class DiscreteVariable : public Quantity
     {
         fill([&](UnsignedInt index) // zero initialization
              { return ZeroData<DataType>::value; }, 0, size * width);
+
+        for (size_t i = 0; i < width; i++)
+        {
+            entry_names_.push_back(std::to_string(i));
+        }
     };
 
     DiscreteVariable(const std::string &name, UnsignedInt size, StdVec<std::string> entry_names)
@@ -235,6 +240,7 @@ class DiscreteVariable : public Quantity
     UnsignedInt getSize() { return size_; }
     UnsignedInt getWidth() { return width_; }
     UnsignedInt getTotalSize() { return size_ * width_; }
+    std::string getEntryName(UnsignedInt entry) { return width_ != 1 ? entry_names_[entry] : ""; }
 
     template <class FillFunction>
     void fill(const FillFunction &fill_function, UnsignedInt begin_index, UnsignedInt fill_size)
@@ -290,7 +296,7 @@ class DiscreteVariable : public Quantity
     template <class ExecutionPolicy>
     EntryView<DataType> DelegatedEntryView(const ExecutionPolicy &ex_policy, std::string entry_name)
     {
-        return DelegatedEntryView(ex_policy, getComponentIndexByName(entry_name));
+        return DelegatedEntryView(ex_policy, getEntryIndexByName(entry_name));
     };
 
     template <class ExecutionPolicy>
@@ -335,7 +341,7 @@ class DiscreteVariable : public Quantity
     DeviceOnlyDiscreteVariable<DataType> *device_only_variable_ = nullptr;
     friend class DeviceOnlyDiscreteVariable<DataType>;
 
-    UnsignedInt getComponentIndexByName(std::string entry_name)
+    UnsignedInt getEntryIndexByName(std::string entry_name)
     {
         auto iter = std::find(entry_names_.begin(), entry_names_.end(), entry_name);
         if (iter != entry_names_.end())
@@ -349,6 +355,7 @@ class DiscreteVariable : public Quantity
             exit(1);
         }
     };
+
     DataType *DelegatedOnDevice();
     bool isDataDelegated() { return device_only_variable_ != nullptr; };
 

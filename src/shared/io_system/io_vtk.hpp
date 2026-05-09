@@ -58,14 +58,18 @@ void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream,
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
     for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write))
     {
-        output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\" format=\"ascii\">\n";
-        output_stream << "    ";
-        for (size_t i = 0; i != total_real_particles; ++i)
+        for (UnsignedInt i = 0; i != variable->getWidth(); ++i)
         {
-            output_stream << std::fixed << std::setprecision(9) << variable->getValueWithScalingRef(i) << " ";
+            std::string name = variable->Name() + variable->getEntryName(i);
+            output_stream << "    <DataArray Name=\"" << name << "\" type=\"Float32\" format=\"ascii\">\n";
+            output_stream << "    ";
+            for (size_t i = 0; i != total_real_particles; ++i)
+            {
+                output_stream << std::fixed << std::setprecision(9) << variable->getValueWithScalingRef(i) << " ";
+            }
+            output_stream << std::endl;
+            output_stream << "    </DataArray>\n";
         }
-        output_stream << std::endl;
-        output_stream << "    </DataArray>\n";
     }
 
     // write vectors
