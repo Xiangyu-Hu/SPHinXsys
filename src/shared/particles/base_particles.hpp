@@ -52,12 +52,17 @@ template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::registerStateVariableFrom(
     const std::string &new_name, const std::string &old_name)
 {
-    DiscreteVariable<DataType> *variable = registerStateVariable<DataType>(new_name);
     DiscreteVariable<DataType> *old_variable = getVariableByName<DataType>(old_name);
-    variable->fill([&](UnsignedInt index)
-                   { return old_variable->getValue(index); }, 0, old_variable->getSize());
-
-    return variable;
+    if (old_variable->getSize() != particles_bound_)
+    {
+        std::cout << "\nError: the" << type_name<DiscreteVariable<DataType>>() << " variable '"
+                  << old_variable->Name() << "' in body " << getBodyName()
+                  << "' can not be treated as a state variable," << std::endl;
+        std::cout << "\n because the data size is not particle_bound_!" << std::endl;
+        exit(1);
+    }
+    return registerStateVariable<DataType>(new_name, [&](UnsignedInt index)
+                                           { return old_variable->getValue(index); });
 }
 //=================================================================================================//
 template <typename DataType>
@@ -65,9 +70,8 @@ DiscreteVariable<DataType> *BaseParticles::registerStateVariableFrom(
     const std::string &name, const StdVec<DataType> &geometric_data)
 {
     DiscreteVariable<DataType> *variable = registerStateVariable<DataType>(name);
-    variable->fill([&](UnsignedInt index)
+    variable->fill([&](UnsignedInt index) // geometric data size may be less than particle bound
                    { return geometric_data[index]; }, 0, geometric_data.size());
-
     return variable;
 }
 //=================================================================================================//
