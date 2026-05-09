@@ -240,7 +240,12 @@ class DiscreteVariable : public Quantity
     UnsignedInt getSize() { return size_; }
     UnsignedInt getWidth() { return width_; }
     UnsignedInt getTotalSize() { return size_ * width_; }
-    std::string getEntryName(UnsignedInt entry) { return width_ != 1 ? entry_names_[entry] : ""; }
+    std::string getEntryName(UnsignedInt entry) { return !entry_names_.empty() ? entry_names_[entry] : ""; }
+
+    DataType getEntryValueWithScalingRef(UnsignedInt index, UnsignedInt entry) const
+    {
+        return data_[index * width_ + entry] * scaling_ref_;
+    };
 
     template <class FillFunction>
     void fill(const FillFunction &fill_function, UnsignedInt begin_index, UnsignedInt fill_size)
