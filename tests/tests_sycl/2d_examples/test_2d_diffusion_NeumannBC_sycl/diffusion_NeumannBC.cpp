@@ -195,7 +195,9 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_states(sph_system);
     write_states.addToWrite<Real>(diffusion_body, "Species");
     RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>>
-        write_solid_temperature(diffusion_species_name, temperature_observer_contact);
+        write_solid_temperature(temperature_observer_contact, diffusion_species_name);
+    ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>
+        observe_temperature(temperature_observer_contact, "Species", diffusion_species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -234,10 +236,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     write_states.writeToFile();
     write_solid_temperature.writeToFile(ite);
-    //----------------------------------------------------------------------
-    //	Main loop starts here.
-    //----------------------------------------------------------------------
-    while (sv_physical_time->getValue() < end_time)
+    observe_temperature.writeToFile(ite);
+        //----------------------------------------------------------------------
+        //	Main loop starts here.
+        //----------------------------------------------------------------------
+        while (sv_physical_time->getValue() < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < Output_Time)
@@ -265,6 +268,7 @@ int main(int ac, char *av[])
         TickCount t2 = TickCount::now();
         write_states.writeToFile();
         write_solid_temperature.writeToFile(ite);
+        observe_temperature.writeToFile(ite);
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }

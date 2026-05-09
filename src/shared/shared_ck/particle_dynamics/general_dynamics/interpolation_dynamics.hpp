@@ -27,7 +27,7 @@ Interpolation<Contact<Base, DataType, Parameters...>>::Interpolation(
     : Interpolation(pair_contact_relation, variable_name)
 {
     dv_interpolated_quantities_->setName(variable_name + entry_name);
-    entry_ = this->contact_particles_[0]->getEntryIndexByName(entry_name);
+    entry_ = dv_contact_data_[0]->getEntryIndexByName(entry_name);
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>

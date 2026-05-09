@@ -242,6 +242,21 @@ class DiscreteVariable : public Quantity
     UnsignedInt getWidth() { return width_; }
     UnsignedInt getTotalSize() { return size_ * width_; }
     std::string getEntryName(UnsignedInt entry) { return !entry_names_.empty() ? entry_names_[entry] : ""; }
+    
+    UnsignedInt getEntryIndexByName(std::string entry_name)
+    {
+        auto iter = std::find(entry_names_.begin(), entry_names_.end(), entry_name);
+        if (iter != entry_names_.end())
+        {
+            return std::distance(entry_names_.begin(), iter);
+        }
+        else
+        {
+            std::cout << "\n Error: the variable '" << this->name_
+                      << "' does not have a entry named '" << entry_name << "'!" << std::endl;
+            exit(1);
+        }
+    };
 
     DataType getEntryValueWithScalingRef(UnsignedInt index, UnsignedInt entry) const
     {
@@ -346,21 +361,6 @@ class DiscreteVariable : public Quantity
     DataType *data_;
     DeviceOnlyDiscreteVariable<DataType> *device_only_variable_ = nullptr;
     friend class DeviceOnlyDiscreteVariable<DataType>;
-
-    UnsignedInt getEntryIndexByName(std::string entry_name)
-    {
-        auto iter = std::find(entry_names_.begin(), entry_names_.end(), entry_name);
-        if (iter != entry_names_.end())
-        {
-            return std::distance(entry_names_.begin(), iter);
-        }
-        else
-        {
-            std::cout << "\n Error: the variable '" << this->name_
-                      << "' does not have a entry named '" << entry_name << "'!" << std::endl;
-            exit(1);
-        }
-    };
 
     DataType *DelegatedOnDevice();
     bool isDataDelegated() { return device_only_variable_ != nullptr; };
