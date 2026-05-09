@@ -178,25 +178,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Specify initial condition if necessary.
     //----------------------------------------------------------------------
-    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
-        diffusion_initial_condition(diffusion_body, diffusion_species_name, initial_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
-        left_initial_condition(wall_Dirichlet_left_region, diffusion_species_name, left_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
-        right_initial_condition(wall_Dirichlet_right_region, diffusion_species_name, right_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
-        wall_Neumann_initial_condition(wall_Neumann, diffusion_species_name + "Flux", heat_flux);
-
     StateDynamics<MainExecutionPolicy, VariableEntryAssignment<SPHBody, ConstantValue<Real>>>
-        assign_initial_temperature(diffusion_body, "Species", diffusion_species_name, initial_temperature);
+        diffusion_initial_condition(diffusion_body, "Species", diffusion_species_name, initial_temperature);
+    StateDynamics<MainExecutionPolicy, VariableEntryAssignment<BodyRegionByParticle, ConstantValue<Real>>>
+        left_initial_condition(wall_Dirichlet_left_region, "Species", diffusion_species_name, left_temperature);
+    StateDynamics<MainExecutionPolicy, VariableEntryAssignment<BodyRegionByParticle, ConstantValue<Real>>>
+        right_initial_condition(wall_Dirichlet_right_region, "Species", diffusion_species_name, right_temperature);
+    StateDynamics<MainExecutionPolicy, VariableEntryAssignment<SPHBody, ConstantValue<Real>>>
+        wall_Neumann_initial_condition(wall_Neumann, "SpeciesFlux", diffusion_species_name, heat_flux);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_states(sph_system);
     write_states.addToWrite<Real>(diffusion_body, "Species");
     RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>>
-        write_solid_temperature(temperature_observer_contact, diffusion_species_name);
-    ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>
         observe_temperature(temperature_observer_contact, "Species", diffusion_species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -215,7 +210,6 @@ int main(int ac, char *av[])
     left_initial_condition.exec();
     right_initial_condition.exec();
     wall_Neumann_initial_condition.exec();
-    assign_initial_temperature.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -235,12 +229,11 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_states.writeToFile();
-    write_solid_temperature.writeToFile(ite);
     observe_temperature.writeToFile(ite);
-        //----------------------------------------------------------------------
-        //	Main loop starts here.
-        //----------------------------------------------------------------------
-        while (sv_physical_time->getValue() < end_time)
+    //----------------------------------------------------------------------
+    //	Main loop starts here.
+    //----------------------------------------------------------------------
+    while (sv_physical_time->getValue() < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < Output_Time)
@@ -267,7 +260,6 @@ int main(int ac, char *av[])
 
         TickCount t2 = TickCount::now();
         write_states.writeToFile();
-        write_solid_temperature.writeToFile(ite);
         observe_temperature.writeToFile(ite);
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
@@ -282,11 +274,11 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_solid_temperature.generateDataBase(1.0e-3, 1.0e-3);
+        observe_temperature.generateDataBase(1.0e-3, 1.0e-3);
     }
     else if (sph_system.RestartStep() == 0)
     {
-        write_solid_temperature.testResult();
+        observe_temperature.testResult();
     }
 
     return 0;
