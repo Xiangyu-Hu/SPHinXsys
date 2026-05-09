@@ -1,4 +1,4 @@
-/**1
+/**
  * @file    milling_2d_dat_cutter_planar.cpp
  * @brief   2D milling demo with a .dat-profile cutter:
  *          - rigid cutter imported from a single 2D .dat contour
@@ -52,15 +52,68 @@ Vec2d translation_holder_plate(0.0, -0.051);
 
 // Clamp length at both plate ends
 Real clamp_len = 6.0 * dp_0;
+Real bottom_fix_thickness = 6.0 * dp_0;
 
 //----------------------------------------------------------------------
 // 2) Material
 //----------------------------------------------------------------------
 
+
+//1. aluminum block
 Real rho0_s = 2700.0;
 Real poisson = 0.30;
 Real Young_plate = 78.2e9;
 Real yield_plate = 0.29e9;
+
+// //2.mild steel block(TEST)
+// Real rho0_s = 7850.0;
+// Real poisson = 0.30;
+// Real Young_plate = 210.0e9;
+// Real yield_plate = 0.25e9;
+
+// //3.STAINLESS STEEL BLOCK(TEST)
+// Real rho0_s = 8000.0;
+// Real poisson = 0.29;
+// Real Young_plate = 193.0e9;
+// Real yield_plate = 0.30e9;
+
+// //4.COPPER BLOCK(TEST)
+// Real rho0_s = 8960.0;
+// Real poisson = 0.34;
+// Real Young_plate = 110.0e9;
+// Real yield_plate = 0.07e9;
+
+// //5.Brass
+// Real rho0_s = 8500.0;
+// Real poisson = 0.34;
+// Real Young_plate = 100.0e9;
+// Real yield_plate = 0.20e9;
+
+// // 6.Titanium alloy
+// Real rho0_s = 4430.0;
+// Real poisson = 0.34;
+// Real Young_plate = 114.0e9;
+// Real yield_plate = 0.88e9;
+
+// // 7. Magnesium alloy
+// Real rho0_s = 1800.0;
+// Real poisson = 0.35;
+// Real Young_plate = 45.0e9;
+// Real yield_plate = 0.16e9;
+
+// // 8. Lead
+// Real rho0_s = 11340.0;
+// Real poisson = 0.44;
+// Real Young_plate = 16.0e9;
+// Real yield_plate = 0.012e9;
+
+
+
+// // 9.
+// Real rho0_s = 1050.0;
+// Real poisson = 0.49;
+// Real Young_plate = 2.0e4;   
+// Real yield_plate = 0;   // 
 
 // Numerical sound speed
 Real c0 = sqrt(Young_plate / (3.0 * (1.0 - 2.0 * poisson) * rho0_s));
@@ -91,7 +144,7 @@ int main(int ac, char *av[])
     SPHSystem system(system_domain_bounds, dp_0);
 
     // The two-stage workflow can be controlled by command-line options
-    system.setRunParticleRelaxation(true);
+    system.setRunParticleRelaxation(true);////true//false
     system.handleCommandlineOptions(ac, av);
 
     // ------------------------------------------------------------
@@ -336,6 +389,16 @@ int main(int ac, char *av[])
     AlignedBox right_box(xAxis, Transform(right_center), right_halfsize);
     AlignedBoxByParticle right_part(plate, right_box);
 
+    // Bottom fixed region
+    Vec2d bottom_lower(x_min, y_min);
+    Vec2d bottom_upper(x_max, y_min + bottom_fix_thickness);
+    Vec2d bottom_halfsize = 0.5 * (bottom_upper - bottom_lower);
+    Vec2d bottom_center   = 0.5 * (bottom_upper + bottom_lower);
+    AlignedBox bottom_box(xAxis, Transform(bottom_center), bottom_halfsize);
+    AlignedBoxByParticle bottom_part(plate, bottom_box);
+
+   
+
     auto &fix_left_velocity =
         main_methods.addStateDynamics<ConstantConstraintCK<BodyPartByParticle, Vecd>>(
             left_part, "Velocity", Vec2d::Zero());
@@ -343,6 +406,10 @@ int main(int ac, char *av[])
     auto &fix_right_velocity =
         main_methods.addStateDynamics<ConstantConstraintCK<BodyPartByParticle, Vecd>>(
             right_part, "Velocity", Vec2d::Zero());
+
+    auto &fix_bottom_velocity =
+        main_methods.addStateDynamics<ConstantConstraintCK<BodyPartByParticle, Vecd>>(
+            bottom_part, "Velocity", Vec2d::Zero());
 
     //------------------------------------------------------------------
     // Configuration update group
@@ -396,11 +463,11 @@ int main(int ac, char *av[])
     //------------------------------------------------------------------
     // Simbody planar cutter driving
     //------------------------------------------------------------------
-    Real omega_z = 2.0 * Pi * 200.0;   // Angular velocity [rad/s]
+    Real omega_z = 2.0 * Pi * 2;   // Angular velocity [rad/s]   //200
     Real feed_vx = 0.0;
-    Real feed_vy = -0.030;             // Feed velocity in y
+    Real feed_vy = -0.03;             // Feed velocity in y  //0.030
 
-    Real end_time = 0.009;
+    Real end_time = 90.0;
 
     std::cout << "[Drive] omega_z=" << omega_z
               << " feed=(" << feed_vx << "," << feed_vy << ")"
@@ -460,7 +527,7 @@ int main(int ac, char *av[])
     int observation_interval = screening_interval * 2;
 
     auto &state_recording =
-        time_stepper.addTriggerByInterval(total_physical_time / 300.0);
+        time_stepper.addTriggerByInterval(total_physical_time / 10000);//original:300
 
     //------------------------------------------------------------------
     // Preparation before the main loop
@@ -475,6 +542,7 @@ int main(int ac, char *av[])
 
     fix_left_velocity.exec();
     fix_right_velocity.exec();
+    fix_bottom_velocity.exec();
 
     body_state_recorder.writeToFile();
     update_observer_contact.exec();
@@ -520,6 +588,7 @@ int main(int ac, char *av[])
 
         fix_left_velocity.exec();
         fix_right_velocity.exec();
+        fix_bottom_velocity.exec();
 
         interval_acoustic_step += TickCount::now() - time_instance;
 
@@ -531,6 +600,7 @@ int main(int ac, char *av[])
 
             fix_left_velocity.exec();
             fix_right_velocity.exec();
+            fix_bottom_velocity.exec();
 
             time_instance = TickCount::now();
 
