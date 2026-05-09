@@ -34,7 +34,6 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
     this->particles_->template addVariableToWrite<Real>(&dv_gradient_species_array_);
     this->particles_->template addEvolvingVariable<Real>(&dv_diffusion_species_array_);
     this->particles_->template addEvolvingVariable<Real>(&dv_gradient_species_array_);
-    this->particles_->template addVariableToWrite<Real>(dv_diffusion_species_);
 }
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
@@ -317,7 +316,7 @@ template <class DiffusionType>
 template <class DiffusionDynamics>
 Neumann<DiffusionType>::Neumann(DiffusionDynamics &diffusion_dynamics, BaseParticles *contact_particles)
     : dv_contact_n_(contact_particles->getVariableByName<Vecd>("NormalDirection")),
-      contact_dv_species_flux_array_(contact_particles->template getVariablesByName<Real>(
+      contact_dv_species_flux_array_(contact_particles->template registerStateVariables<Real>(
           diffusion_dynamics.getDiffusionSpeciesNames(), "Flux")) {}
 //=================================================================================================//
 template <class DiffusionType>
