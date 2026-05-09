@@ -467,7 +467,7 @@ int main(int ac, char *av[])
     Real feed_vx = 0.0;
     Real feed_vy = -0.03;             // Feed velocity in y  //0.030
 
-    Real end_time = 90.0;
+    Real end_time = 1.2;
 
     std::cout << "[Drive] omega_z=" << omega_z
               << " feed=(" << feed_vx << "," << feed_vy << ")"
