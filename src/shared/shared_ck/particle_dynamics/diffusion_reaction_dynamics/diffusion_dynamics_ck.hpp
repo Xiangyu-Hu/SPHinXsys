@@ -19,6 +19,8 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
     : BaseInteractionType(identifier),
       diffusions_(this->obtainConcreteDiffusions(*abstract_diffusion)),
       diffusion_species_names_(this->obtainDiffusionSpeciesNames(diffusions_)),
+      dv_diffusion_species_(
+          this->particles_->template registerStateVariable<Real>("Species", diffusion_species_names_)),
       gradient_species_names_(this->obtainGradientSpeciesNames(diffusions_)),
       dv_diffusion_species_array_(this->particles_->template registerStateVariables<Real>(
           diffusion_species_names_, "")),

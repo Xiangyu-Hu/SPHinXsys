@@ -89,6 +89,7 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
   protected:
     StdVec<DiffusionType *> diffusions_;
     StdVec<std::string> diffusion_species_names_;
+    DiscreteVariable<Real> *dv_diffusion_species_;
     StdVec<std::string> gradient_species_names_;
     VariableArray<Real> dv_diffusion_species_array_;
     VariableArray<Real> dv_gradient_species_array_;

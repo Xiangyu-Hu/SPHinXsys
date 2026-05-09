@@ -51,7 +51,7 @@ class DataView
     DataView() : data_(nullptr) {};
     DataView(DataType *data) : data_(data) {};
 
-    DataType &operator[](size_t index)
+    DataType &operator[](UnsignedInt index)
     {
         return *(data_ + index);
     }
@@ -61,16 +61,37 @@ class DataView
 };
 
 template <typename DataType>
-class ComponentView
+class EntryView
 {
   public:
-    ComponentView() : data_(nullptr), width_(0) {};
-    ComponentView(DataType *data, size_t width)
+    EntryView() : data_(nullptr), entry_(0), width_(0) {};
+    EntryView(DataType *data, UnsignedInt entry, UnsignedInt width)
+        : data_(data), entry_(entry), width_(width) {};
+
+    UnsignedInt Entry() { return entry_; };
+    UnsignedInt Width() { return width_; };
+
+    DataType &operator[](UnsignedInt index)
+    {
+        return *(data_ + entry_ + index * width_);
+    }
+
+  protected:
+    DataType *data_;
+    UnsignedInt entry_, width_;
+};
+
+template <typename DataType>
+class MultiEntryView
+{
+  public:
+    MultiEntryView() : data_(nullptr), width_(0) {};
+    MultiEntryView(DataType *data, UnsignedInt width)
         : data_(data), width_(width) {};
 
-    size_t Width() { return width_; };
+    UnsignedInt Width() { return width_; };
 
-    DataType *operator[](size_t index)
+    DataType *operator[](UnsignedInt index)
     {
         return data_ + index * width_;
     }
@@ -167,7 +188,7 @@ class DeviceOnlyDiscreteVariable : public Quantity
     DataType *device_only_data_;
 };
 
-struct MultiComponentTag
+struct MultiEntryTag
 {
 };
 
@@ -193,7 +214,7 @@ class DiscreteVariable : public Quantity
                            { return initial_value; }) {};
 
     DiscreteVariable(const std::string &name, UnsignedInt size,
-                     const MultiComponentTag &tag, UnsignedInt width)
+                     const MultiEntryTag &tag, UnsignedInt width)
         : Quantity(name), size_(size), width_(width), data_(new DataType[size * width]),
           device_only_variable_(nullptr)
     {
@@ -201,10 +222,10 @@ class DiscreteVariable : public Quantity
              { return ZeroData<DataType>::value; }, 0, size * width);
     };
 
-    DiscreteVariable(const std::string &name, UnsignedInt size, StdVec<std::string> component_names)
-        : DiscreteVariable(name, size, MultiComponentTag{}, component_names.size())
+    DiscreteVariable(const std::string &name, UnsignedInt size, StdVec<std::string> entry_names)
+        : DiscreteVariable(name, size, MultiEntryTag{}, entry_names.size())
     {
-        component_names_ = component_names;
+        entry_names_ = entry_names;
     };
 
     ~DiscreteVariable() { delete[] data_; };
@@ -246,7 +267,7 @@ class DiscreteVariable : public Quantity
         if (width_ != 1)
         {
             std::cout << "\n Error: the variable '" << this->name_
-                      << "' is not a single component variable!" << std::endl;
+                      << "' is not a single entry variable!" << std::endl;
             exit(1);
         }
 
@@ -254,13 +275,33 @@ class DiscreteVariable : public Quantity
     };
 
     template <class ExecutionPolicy>
-    ComponentView<DataType> DelegatedComponentView(const ExecutionPolicy &ex_policy)
+    EntryView<DataType> DelegatedEntryView(const ExecutionPolicy &ex_policy, UnsignedInt entry)
     {
-        return ComponentView<DataType>(DelegatedData(ex_policy), width_);
+        if (entry >= width_)
+        {
+            std::cout << "\n Error: entry index out of range in variable '"
+                      << this->name_ << "'!" << std::endl;
+            exit(1);
+        }
+
+        return EntryView<DataType>(DelegatedData(ex_policy), entry, width_);
+    };
+
+    template <class ExecutionPolicy>
+    EntryView<DataType> DelegatedEntryView(const ExecutionPolicy &ex_policy, std::string entry_name)
+    {
+        return DelegatedEntryView(ex_policy, getComponentIndexByName(entry_name));
+    };
+
+    template <class ExecutionPolicy>
+    MultiEntryView<DataType> DelegatedEntryView(const ExecutionPolicy &ex_policy)
+    {
+        return MultiEntryView<DataType>(DelegatedData(ex_policy), width_);
     };
 
     DataView<DataType> getDataView() { return DelegatedDataView(ParallelPolicy{}); };
-    ComponentView<DataType> getComponentView() { return DelegatedComponentView(ParallelPolicy{}); };
+    EntryView<DataType> getEntryView(UnsignedInt entry) { return DelegatedEntryView(ParallelPolicy{}, entry); };
+    MultiEntryView<DataType> getEntryView() { return DelegatedEntryView(ParallelPolicy{}); };
 
     template <class ExecutionPolicy>
     void reallocateData(const ExecutionPolicy &ex_policy, UnsignedInt tentative_size)
@@ -289,11 +330,25 @@ class DiscreteVariable : public Quantity
 
   private:
     UnsignedInt size_, width_;
-    StdVec<std::string> component_names_;
+    StdVec<std::string> entry_names_;
     DataType *data_;
     DeviceOnlyDiscreteVariable<DataType> *device_only_variable_ = nullptr;
     friend class DeviceOnlyDiscreteVariable<DataType>;
 
+    UnsignedInt getComponentIndexByName(std::string entry_name)
+    {
+        auto iter = std::find(entry_names_.begin(), entry_names_.end(), entry_name);
+        if (iter != entry_names_.end())
+        {
+            return std::distance(entry_names_.begin(), iter);
+        }
+        else
+        {
+            std::cout << "\n Error: the variable '" << this->name_
+                      << "' does not have a entry named '" << entry_name << "'!" << std::endl;
+            exit(1);
+        }
+    };
     DataType *DelegatedOnDevice();
     bool isDataDelegated() { return device_only_variable_ != nullptr; };
 
