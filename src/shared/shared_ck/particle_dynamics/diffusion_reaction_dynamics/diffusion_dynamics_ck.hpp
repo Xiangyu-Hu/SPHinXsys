@@ -157,8 +157,8 @@ void DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>,
         for (UnsignedInt m = 0; m < contact_transfer_.Width(); ++m)
         {
             Real flux = boundary_flux_(m, index_i, index_j, e_ij, vec_r_ij).dot(surface_area);
-            contact_transfer_[m][index_i] += flux;
-            species_dt_[m][index_i] += flux;
+            contact_transfer_[index_i][m] += flux;
+            species_dt_[index_i][m] += flux;
         }
     }
 }

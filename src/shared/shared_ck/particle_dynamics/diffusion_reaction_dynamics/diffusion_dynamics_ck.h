@@ -109,7 +109,6 @@ template <class DiffusionType, template <typename...> class BoundaryType, class 
 class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType>>
     : public DiffusionRelaxationCK<DiffusionType, Interaction<Contact<>>>
 {
-    UniquePtrsKeeper<DiscreteVariable<Real>> contact_transfer_keeper_;
     UniquePtrsKeeper<BoundaryType<DiffusionType>> boundaries_keeper_;
     using BaseInteraction = DiffusionRelaxationCK<DiffusionType, Interaction<Contact<>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;

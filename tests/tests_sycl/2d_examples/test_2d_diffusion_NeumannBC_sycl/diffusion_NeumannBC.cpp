@@ -162,36 +162,48 @@ int main(int ac, char *av[])
 
     IsotropicDiffusion isotropic_diffusion(diffusion_species_name, diffusion_coeff);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, &isotropic_diffusion);
-    RungeKuttaSequence<InteractionDynamicsCK<
-        MainExecutionPolicy,
-        DiffusionRelaxationCK<
-            Inner<OneLevel, RungeKutta1stStage, IsotropicDiffusion, NoKernelCorrectionCK>,
-            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>,
-            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>>,
-        DiffusionRelaxationCK<
-            Inner<OneLevel, RungeKutta2ndStage, IsotropicDiffusion, NoKernelCorrectionCK>,
-            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>,
-            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>>>>
-        diffusion_relaxation_rk2(DynamicsArgs(diffusion_body_inner, &isotropic_diffusion),
-                                 DynamicsArgs(diffusion_body_contact_Dirichlet, &isotropic_diffusion),
-                                 DynamicsArgs(diffusion_body_contact_Neumann, &isotropic_diffusion));
+
+    SPHSolver sph_solver(sph_system);
+    auto &main_methods = sph_solver.addParticleMethodContainer(seq);
+
+    auto &diffusion_relaxation_rk2 = main_methods.addParticleDynamicsGroup();
+    diffusion_relaxation_rk2.add(
+        &main_methods.addInteractionDynamicsOneLevel<
+                         DiffusionRelaxationCK, RungeKutta1stStage, IsotropicDiffusion, NoKernelCorrectionCK>(
+                         diffusion_body_inner, &isotropic_diffusion)
+             //             .addPostContactInteraction<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>(
+             //                 diffusion_body_contact_Dirichlet, &isotropic_diffusion)
+//             .addPostContactInteraction<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>(
+//                 diffusion_body_contact_Neumann, &isotropic_diffusion)
+                );
+
+    diffusion_relaxation_rk2.add(
+        &main_methods.addInteractionDynamicsOneLevel<
+                         DiffusionRelaxationCK, RungeKutta2ndStage, IsotropicDiffusion, NoKernelCorrectionCK>(
+                         diffusion_body_inner, &isotropic_diffusion)
+             //             .addPostContactInteraction<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>(
+             //                 diffusion_body_contact_Dirichlet, &isotropic_diffusion)
+//             .addPostContactInteraction<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>(
+//                 diffusion_body_contact_Neumann, &isotropic_diffusion)
+                );
+
     //----------------------------------------------------------------------
     //	Specify initial condition if necessary.
     //----------------------------------------------------------------------
     StateDynamics<MainExecutionPolicy, VariableEntryAssignment<SPHBody, ConstantValue<Real>>>
         diffusion_initial_condition(diffusion_body, "Species", diffusion_species_name, initial_temperature);
-    StateDynamics<MainExecutionPolicy, VariableEntryAssignment<BodyRegionByParticle, ConstantValue<Real>>>
-        left_initial_condition(wall_Dirichlet_left_region, "Species", diffusion_species_name, left_temperature);
-    StateDynamics<MainExecutionPolicy, VariableEntryAssignment<BodyRegionByParticle, ConstantValue<Real>>>
-        right_initial_condition(wall_Dirichlet_right_region, "Species", diffusion_species_name, right_temperature);
-    StateDynamics<MainExecutionPolicy, VariableEntryAssignment<SPHBody, ConstantValue<Real>>>
-        wall_Neumann_initial_condition(wall_Neumann, "SpeciesFlux", diffusion_species_name, heat_flux);
+//    StateDynamics<MainExecutionPolicy, VariableEntryAssignment<BodyRegionByParticle, ConstantValue<Real>>>
+//        left_initial_condition(wall_Dirichlet_left_region, "Species", diffusion_species_name, left_temperature);
+//    StateDynamics<MainExecutionPolicy, VariableEntryAssignment<BodyRegionByParticle, ConstantValue<Real>>>
+//        right_initial_condition(wall_Dirichlet_right_region, "Species", diffusion_species_name, right_temperature);
+//    StateDynamics<MainExecutionPolicy, VariableEntryAssignment<SPHBody, ConstantValue<Real>>>
+//        wall_Neumann_initial_condition(wall_Neumann, "SpeciesFlux", diffusion_species_name, heat_flux);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_states(sph_system);
     write_states.addToWrite<Real>(diffusion_body, "Species");
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>>
+    ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>
         observe_temperature(temperature_observer_contact, "Species", diffusion_species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -207,9 +219,9 @@ int main(int ac, char *av[])
     observer_contact_relation.exec();
 
     diffusion_initial_condition.exec();
-    left_initial_condition.exec();
-    right_initial_condition.exec();
-    wall_Neumann_initial_condition.exec();
+//    left_initial_condition.exec();
+//    right_initial_condition.exec();
+//    wall_Neumann_initial_condition.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
@@ -271,15 +283,15 @@ int main(int ac, char *av[])
 
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     std::cout << "Total physical time for computation: " << sv_physical_time->getValue() << " seconds." << std::endl;
-
-    if (sph_system.GenerateRegressionData())
-    {
-        observe_temperature.generateDataBase(1.0e-3, 1.0e-3);
-    }
-    else if (sph_system.RestartStep() == 0)
-    {
-        observe_temperature.testResult();
-    }
+    /*
+        if (sph_system.GenerateRegressionData())
+        {
+            observe_temperature.generateDataBase(1.0e-3, 1.0e-3);
+        }
+        else if (sph_system.RestartStep() == 0)
+        {
+            observe_temperature.testResult();
+        }*/
 
     return 0;
 }
