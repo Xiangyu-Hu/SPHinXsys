@@ -47,15 +47,18 @@ template <class DiffusionType, class BaseInteractionType>
 class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
     : public BaseInteractionType
 {
-    using InverseVolumetricCapacity = typename DiffusionType::InverseVolumetricCapacity;
     StdVec<DiffusionType *> obtainConcreteDiffusions(AbstractDiffusion &abstract_diffusion);
     StdVec<std::string> obtainSpeciesNames(StdVec<DiffusionType *> &diffusions);
 
   public:
-    template <class DynamicsIdentifier>
-    DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion *abstract_diffusion);
+    typedef DiffusionType Diffusion;
+        template <class DynamicsIdentifier>
+        DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion *abstract_diffusion);
     template <class DynamicsIdentifier>
     explicit DiffusionRelaxationCK(DynamicsIdentifier &identifier);
+    template <typename BodyRelationType, typename FirstArg>
+    DiffusionRelaxationCK(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : DiffusionRelaxationCK(parameters.identifier_, std::get<0>(parameters.others_)){};
     virtual ~DiffusionRelaxationCK() {};
     StdVec<DiffusionType *> &getDiffusions() { return diffusions_; };
     StdVec<std::string> &getSpeciesNames() { return species_names_; };
@@ -66,7 +69,6 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
     StdVec<std::string> species_names_;
     DiscreteVariable<Real> *dv_species_;
     DiscreteVariable<Real> *dv_species_dt_;
-    ConstantArray<InverseVolumetricCapacity> ca_inverse_volume_capacity_;
 };
 
 template <class DiffusionType, class KernelCorrectionType, class... Parameters>
@@ -145,10 +147,12 @@ class DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionPara
     : public DiffusionRelaxationCK<RelationType<InteractionOnly, InteractionParameters...>>
 {
     using BaseDynamicsType = DiffusionRelaxationCK<RelationType<InteractionOnly, InteractionParameters...>>;
+    using DiffusionType = typename BaseDynamicsType::Diffusion;
+    using InverseVolumetricCapacity = typename DiffusionType::InverseVolumetricCapacity;
 
   public:
     template <typename... Args>
-    DiffusionRelaxationCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
+    DiffusionRelaxationCK(Args &&...args);
     virtual ~DiffusionRelaxationCK() {};
 
     class InitializeKernel
@@ -159,10 +163,10 @@ class DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionPara
         void initialize(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
-        MultiEntryView<Real> diffusion_dt_;
+        MultiEntryView<Real> species_dt_;
     };
 
-    class UpdateKernel : public BaseDynamicsType::UpdateKernel
+    class UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
@@ -173,6 +177,9 @@ class DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionPara
         MultiEntryView<Real> species_, species_dt_;
         InverseVolumetricCapacity *cv1_;
     };
+
+  protected:
+    ConstantArray<InverseVolumetricCapacity> ca_inverse_volume_capacity_;
 };
 
 template <template <typename...> class RelationType, class... InteractionParameters>
@@ -272,7 +279,7 @@ class Neumann<DiffusionType>
 
       protected:
         Vecd *contact_n_;
-        DataArray<Real> contact_species_flux_;
+        MultiEntryView<Real> contact_species_flux_;
     };
 
   protected:

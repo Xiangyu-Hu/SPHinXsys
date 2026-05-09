@@ -48,7 +48,6 @@ template <typename DataType>
 class DataView
 {
   public:
-    DataView() : data_(nullptr) {};
     DataView(DataType *data) : data_(data) {};
 
     DataType &operator[](UnsignedInt index)
@@ -64,7 +63,6 @@ template <typename DataType>
 class EntryView
 {
   public:
-    EntryView() : data_(nullptr), entry_(0), width_(0) {};
     EntryView(DataType *data, UnsignedInt entry, UnsignedInt width)
         : data_(data), entry_(entry), width_(width) {};
 
@@ -85,7 +83,6 @@ template <typename DataType>
 class MultiEntryView
 {
   public:
-    MultiEntryView() : data_(nullptr), width_(0) {};
     MultiEntryView(DataType *data, UnsignedInt width)
         : data_(data), width_(width) {};
 
@@ -321,14 +318,14 @@ class DiscreteVariable : public Quantity
     };
 
     template <class ExecutionPolicy>
-    MultiEntryView<DataType> DelegatedEntryView(const ExecutionPolicy &ex_policy)
+    MultiEntryView<DataType> DelegatedMultiEntryView(const ExecutionPolicy &ex_policy)
     {
         return MultiEntryView<DataType>(DelegatedData(ex_policy), width_);
     };
 
     DataView<DataType> getDataView() { return DelegatedDataView(ParallelPolicy{}); };
     EntryView<DataType> getEntryView(UnsignedInt entry) { return DelegatedEntryView(ParallelPolicy{}, entry); };
-    MultiEntryView<DataType> getEntryView() { return DelegatedEntryView(ParallelPolicy{}); };
+    MultiEntryView<DataType> getMultiEntryView() { return DelegatedMultiEntryView(ParallelPolicy{}); };
 
     template <class ExecutionPolicy>
     void reallocateData(const ExecutionPolicy &ex_policy, UnsignedInt tentative_size)

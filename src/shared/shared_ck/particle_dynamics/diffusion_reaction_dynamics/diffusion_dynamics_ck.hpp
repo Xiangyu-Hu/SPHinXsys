@@ -20,11 +20,10 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
       diffusions_(this->obtainConcreteDiffusions(*abstract_diffusion)),
       species_names_(this->obtainSpeciesNames(diffusions_)),
       dv_species_(this->particles_->template registerStateVariable<Real>("Species", species_names_)),
-      dv_species_dt_(this->particles_->template registerStateVariable<Real>("SpeciesChangeRate", species_names_)),
-      ca_inverse_volume_capacity_(this->diffusions_)
+      dv_species_dt_(this->particles_->template registerStateVariable<Real>("SpeciesChangeRate", species_names_))
 {
     this->particles_->template addEvolvingVariable<Real>(dv_species_);
-    contact_particles->template addVariableToWrite<Real>(dv_species_);
+    this->particles_->template addVariableToWrite<Real>(dv_species_);
 }
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
@@ -74,8 +73,8 @@ DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrectionType
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_method_),
-      species_(encloser.dv_species_array_.DelegatedMultiEntryView(ex_policy)),
-      species_dt_(encloser.dv_species_dt_array_.DelegatedMultiEntryView(ex_policy)),
+      species_(encloser.dv_species_->DelegatedMultiEntryView(ex_policy)),
+      species_dt_(encloser.dv_species_dt_->DelegatedMultiEntryView(ex_policy)),
       inter_particle_diffusion_coeff_(encloser.ca_inter_particle_diffusion_coeff_.DelegatedData(ex_policy)),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       smoothing_length_sq_(encloser.smoothing_length_sq_) {}
@@ -117,9 +116,8 @@ DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, Kern
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
     {
         contact_dv_transfer_.push_back(
-            contact_transfer_keeper_.createPtr<DiscreteVariable<Real>>(
-                this->particles_->template registerStateVariable<Real>(
-                    "TransferWith" + this->sph_body_->Name(), this->species_names_)));
+            this->contact_particles_[k]->template registerStateVariable<Real>(
+                "TransferWith" + this->sph_body_->Name(), this->species_names_));
         contact_boundary_method_.push_back(
             boundaries_keeper_.template createPtr<BoundaryType<DiffusionType>>(
                 *this, this->contact_particles_[k]));
@@ -133,8 +131,8 @@ DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, Kern
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
       correction_(ex_policy, encloser.kernel_correction_method_),
-      species_(encloser.dv_species_array_.DelegatedMultiEntryView(ex_policy)),
-      species_dt_(encloser.dv_species_dt_array_.DelegatedMultiEntryView(ex_policy)),
+      species_(encloser.dv_species_->DelegatedMultiEntryView(ex_policy)),
+      species_dt_(encloser.dv_species_dt_->DelegatedMultiEntryView(ex_policy)),
       contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
       contact_transfer_(encloser.contact_dv_transfer_[contact_index]->DelegatedMultiEntryView(ex_policy)),
       boundary_flux_(ex_policy, *encloser.contact_boundary_method_[contact_index]) {}
@@ -166,10 +164,16 @@ void DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>,
 }
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
+template <typename... Args>
+DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
+    DiffusionRelaxationCK(Args &&...args)
+    : BaseDynamicsType(std::forward<Args>(args)...), ca_inverse_volume_capacity_(this->diffusions_) {}
+//=================================================================================================//
+template <template <typename...> class RelationType, class... InteractionParameters>
 template <class ExecutionPolicy, class EncloserType>
 DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
     InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : species_dt_(encloser.dv_species_dt_.DelegatedMultiEntryView(ex_policy)) {}
+    : species_dt_(encloser.dv_species_dt_->DelegatedMultiEntryView(ex_policy)) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 void DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
@@ -185,9 +189,8 @@ template <template <typename...> class RelationType, class... InteractionParamet
 template <class ExecutionPolicy, class EncloserType>
 DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : BaseDynamicsType::UpdateKernel(ex_policy, encloser),
-      species_(encloser.dv_species_array_.DelegatedMultiEntryView(ex_policy)),
-      species_dt_(encloser.dv_species_dt_.DelegatedMultiEntryView(ex_policy)),
+    : species_(encloser.dv_species_dt_->DelegatedMultiEntryView(ex_policy)),
+      species_dt_(encloser.dv_species_dt_->DelegatedMultiEntryView(ex_policy)),
       cv1_(encloser.ca_inverse_volume_capacity_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
@@ -213,8 +216,8 @@ template <class ExecutionPolicy, class EncloserType>
 DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta1stStage, InteractionParameters...>>::
     InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseDynamicsType::InitializeKernel(ex_policy, encloser),
-      species_(encloser.dv_species_array_.DelegatedMultiEntryView(ex_policy)),
-      species_s_(encloser.dv_species_s_.DelegatedMultiEntryView(ex_policy)) {}
+      species_(encloser.dv_species_->DelegatedMultiEntryView(ex_policy)),
+      species_s_(encloser.dv_species_s_->DelegatedMultiEntryView(ex_policy)) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 void DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta1stStage, InteractionParameters...>>::
@@ -233,15 +236,15 @@ template <typename... Args>
 DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta2ndStage, InteractionParameters...>>::
     DiffusionRelaxationCK(Args &&...args)
     : BaseDynamicsType(std::forward<Args>(args)...),
-      dv_species_s_(this->particles_->template getVariablesByName<Real>("SpeciesIntermediate")) {}
+      dv_species_s_(this->particles_->template getVariableByName<Real>("SpeciesIntermediate")) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 template <class ExecutionPolicy, class EncloserType>
 DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta2ndStage, InteractionParameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseDynamicsType::UpdateKernel(ex_policy, encloser),
-      species_(encloser.dv_species_array_.DelegatedMultiEntryView(ex_policy)),
-      species_s_(encloser.dv_species_s_.DelegatedMultiEntryView(ex_policy)) {}
+      species_(encloser.dv_species_->DelegatedMultiEntryView(ex_policy)),
+      species_s_(encloser.dv_species_s_->DelegatedMultiEntryView(ex_policy)) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 void DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta2ndStage, InteractionParameters...>>::
@@ -271,8 +274,8 @@ template <class ExecutionPolicy, class EncloserType>
 Dirichlet<DiffusionType>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : smoothing_length_sq_(encloser.smoothing_length_sq_),
-      species_(encloser.dv_species_array_.DelegatedMultiEntryView(ex_policy)),
-      contact_species_(encloser.dv_contact_species_.DelegatedMultiEntryView(ex_policy)),
+      species_(encloser.dv_species_->DelegatedMultiEntryView(ex_policy)),
+      contact_species_(encloser.dv_contact_species_->DelegatedMultiEntryView(ex_policy)),
       inter_particle_diffusion_coeff_(
           encloser.ca_inter_particle_diffusion_coeff_.DelegatedData(ex_policy)){};
 //=================================================================================================//
@@ -290,7 +293,7 @@ template <class DiffusionType>
 template <class DiffusionDynamics>
 Neumann<DiffusionType>::Neumann(DiffusionDynamics &diffusion_dynamics, BaseParticles *contact_particles)
     : dv_contact_n_(contact_particles->getVariableByName<Vecd>("NormalDirection")),
-      contact_dv_species_flux_(contact_particles->template registerStateVariable<Real>(
+      dv_contact_species_flux_(contact_particles->template registerStateVariable<Real>(
           "SpeciesFlux", diffusion_dynamics.getSpeciesNames())) {}
 //=================================================================================================//
 template <class DiffusionType>
@@ -298,7 +301,7 @@ template <class ExecutionPolicy, class EncloserType>
 Neumann<DiffusionType>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : contact_n_(encloser.dv_contact_n_->DelegatedData(ex_policy)),
-      contact_species_flux_(encloser.contact_dv_species_flux_.DelegatedMultiEntryView(ex_policy)) {}
+      contact_species_flux_(encloser.dv_contact_species_flux_->DelegatedMultiEntryView(ex_policy)) {}
 //=================================================================================================//
 template <class DiffusionType>
 Vecd Neumann<DiffusionType>::ComputingKernel::operator()(

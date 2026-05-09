@@ -156,7 +156,7 @@ int main(int ac, char *av[])
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_Neumann_cell_linked_list(wall_Neumann);
 
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>, Contact<>>
-        water_block_update_complex_relation(
+        diffusion_body_update_complex_relation(
             diffusion_body_inner, diffusion_body_contact_Dirichlet, diffusion_body_contact_Neumann);
     UpdateRelation<MainExecutionPolicy, Contact<>> observer_contact_relation(temperature_observer_contact);
 
@@ -203,7 +203,7 @@ int main(int ac, char *av[])
     wall_Dirichlet_cell_linked_list.exec();
     wall_Neumann_cell_linked_list.exec();
 
-    water_block_update_complex_relation.exec();
+    diffusion_body_update_complex_relation.exec();
     observer_contact_relation.exec();
 
     diffusion_initial_condition.exec();
