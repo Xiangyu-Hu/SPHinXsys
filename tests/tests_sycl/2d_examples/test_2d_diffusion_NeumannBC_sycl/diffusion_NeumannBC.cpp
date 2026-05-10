@@ -178,20 +178,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Specify initial condition if necessary.
     //----------------------------------------------------------------------
-    StateDynamics<MainExecutionPolicy, VariableEntryAssignment<SPHBody, ConstantValue<Real>>>
-        diffusion_initial_condition(diffusion_body, "Species", diffusion_species_name, initial_temperature);
-    StateDynamics<MainExecutionPolicy, VariableEntryAssignment<BodyRegionByParticle, ConstantValue<Real>>>
-        left_initial_condition(wall_Dirichlet_left_region, "Species", diffusion_species_name, left_temperature);
-    StateDynamics<MainExecutionPolicy, VariableEntryAssignment<BodyRegionByParticle, ConstantValue<Real>>>
-        right_initial_condition(wall_Dirichlet_right_region, "Species", diffusion_species_name, right_temperature);
-    StateDynamics<MainExecutionPolicy, VariableEntryAssignment<SPHBody, ConstantValue<Real>>>
-        wall_Neumann_initial_condition(wall_Neumann, "SpeciesFlux", diffusion_species_name, heat_flux);
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
+        diffusion_initial_condition(diffusion_body, diffusion_species_name, initial_temperature);
+    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
+        left_initial_condition(wall_Dirichlet_left_region, diffusion_species_name, left_temperature);
+    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
+        right_initial_condition(wall_Dirichlet_right_region, diffusion_species_name, right_temperature);
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
+        wall_Neumann_initial_condition(wall_Neumann, diffusion_species_name + "Flux", heat_flux);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>>
-        observe_temperature(temperature_observer_contact, "Species", diffusion_species_name);
+        observe_temperature(temperature_observer_contact, diffusion_species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

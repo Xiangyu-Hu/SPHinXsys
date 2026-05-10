@@ -52,8 +52,8 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
 
   public:
     typedef DiffusionType Diffusion;
-        template <class DynamicsIdentifier>
-        DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion *abstract_diffusion);
+    template <class DynamicsIdentifier>
+    DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion *abstract_diffusion);
     template <class DynamicsIdentifier>
     explicit DiffusionRelaxationCK(DynamicsIdentifier &identifier);
     template <typename BodyRelationType, typename FirstArg>
@@ -62,7 +62,10 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
     virtual ~DiffusionRelaxationCK() {};
     StdVec<DiffusionType *> &getDiffusions() { return diffusions_; };
     StdVec<std::string> &getSpeciesNames() { return species_names_; };
-    DiscreteVariable<Real> *dvSpecies() { return dv_species_; };
+    DiscreteVariable<Real> *registerSpecies(
+        BaseParticles *particles, StdVec<std::string> &species_names, std::string suffix = "");
+    DiscreteVariable<Real> *getSpeciesByName(
+        BaseParticles *particles, StdVec<std::string> &species_names, std::string suffix = "");
 
   protected:
     StdVec<DiffusionType *> diffusions_;

@@ -19,11 +19,33 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
     : BaseInteractionType(identifier),
       diffusions_(this->obtainConcreteDiffusions(*abstract_diffusion)),
       species_names_(this->obtainSpeciesNames(diffusions_)),
-      dv_species_(this->particles_->template registerStateVariable<Real>("Species", species_names_)),
-      dv_species_dt_(this->particles_->template registerStateVariable<Real>("SpeciesChangeRate", species_names_))
+      dv_species_(registerSpecies(this->particles_, species_names_)),
+      dv_species_dt_(registerSpecies(this->particles_, species_names_, "ChangeRate"))
 {
     this->particles_->template addEvolvingVariable<Real>(dv_species_);
     this->particles_->template addVariableToWrite<Real>(dv_species_);
+}
+//=================================================================================================//
+template <class DiffusionType, class BaseInteractionType>
+DiscreteVariable<Real> *DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::registerSpecies(
+    BaseParticles *particles, StdVec<std::string> &species_names, std::string suffix)
+{
+    if (species_names.size() == 1)
+    {
+        return particles->template registerStateVariable<Real>(species_names[0] + suffix);
+    }
+    return particles->template registerStateVariable<Real>("Species" + suffix, species_names);
+}
+//=================================================================================================//
+template <class DiffusionType, class BaseInteractionType>
+DiscreteVariable<Real> *DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::getSpeciesByName(
+    BaseParticles *particles, StdVec<std::string> &species_names, std::string suffix)
+{
+    if (species_names.size() == 1)
+    {
+        return particles->template getVariableByName<Real>(species_names[0] + suffix);
+    }
+    return particles->template getVariableByName<Real>("Species" + suffix);
 }
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
@@ -110,9 +132,9 @@ DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, Kern
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
     {
-        contact_dv_transfer_.push_back( // registered in source body particles
-            this->particles_->template registerStateVariable<Real>(
-                "TransferWith" + this->sph_body_->Name(), this->species_names_));
+        contact_dv_transfer_.push_back(
+            this->registerSpecies( // registered in source body particles
+                this->particles_, this->species_names_, "TransferWith" + this->sph_body_->Name()));
         contact_boundary_method_.push_back(
             boundaries_keeper_.template createPtr<BoundaryType<DiffusionType>>(
                 *this, this->contact_particles_[k]));
@@ -203,8 +225,7 @@ template <typename... Args>
 DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta1stStage, InteractionParameters...>>::
     DiffusionRelaxationCK(Args &&...args)
     : BaseDynamicsType(std::forward<Args>(args)...),
-      dv_species_s_(this->particles_->template registerStateVariable<Real>(
-          "SpeciesIntermediate", this->species_names_)) {}
+      dv_species_s_(this->registerSpecies(this->particles_, this->species_names_, "Intermediate")) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -231,7 +252,7 @@ template <typename... Args>
 DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta2ndStage, InteractionParameters...>>::
     DiffusionRelaxationCK(Args &&...args)
     : BaseDynamicsType(std::forward<Args>(args)...),
-      dv_species_s_(this->particles_->template getVariableByName<Real>("SpeciesIntermediate")) {}
+      dv_species_s_(this->getSpeciesByName(this->particles_, this->species_names_, "Intermediate")) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -256,9 +277,10 @@ template <class DiffusionType>
 template <class DiffusionDynamics>
 Dirichlet<DiffusionType>::Dirichlet(DiffusionDynamics &diffusion_dynamics, BaseParticles *contact_particles)
     : smoothing_length_sq_(pow(diffusion_dynamics.getSPHAdaptation().ReferenceSmoothingLength(), 2)),
-      dv_species_(diffusion_dynamics.dvSpecies()),
-      dv_contact_species_(contact_particles->template registerStateVariable<Real>(
-          "Species", diffusion_dynamics.getSpeciesNames())),
+      dv_species_(diffusion_dynamics.getSpeciesByName(
+          &diffusion_dynamics.getBaseParticles(), diffusion_dynamics.getSpeciesNames())),
+      dv_contact_species_(diffusion_dynamics.registerSpecies(
+          contact_particles, diffusion_dynamics.getSpeciesNames())),
       ca_inter_particle_diffusion_coeff_(diffusion_dynamics.getDiffusions())
 {
     contact_particles->template addVariableToWrite<Real>(dv_contact_species_);
@@ -287,8 +309,8 @@ template <class DiffusionType>
 template <class DiffusionDynamics>
 Neumann<DiffusionType>::Neumann(DiffusionDynamics &diffusion_dynamics, BaseParticles *contact_particles)
     : dv_contact_n_(contact_particles->getVariableByName<Vecd>("NormalDirection")),
-      dv_contact_species_flux_(contact_particles->template registerStateVariable<Real>(
-          "SpeciesFlux", diffusion_dynamics.getSpeciesNames())) {}
+      dv_contact_species_flux_(diffusion_dynamics.registerSpecies(
+          contact_particles, diffusion_dynamics.getSpeciesNames(), "Flux")) {}
 //=================================================================================================//
 template <class DiffusionType>
 template <class ExecutionPolicy, class EncloserType>
