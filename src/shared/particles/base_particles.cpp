@@ -155,24 +155,6 @@ void BaseParticles::resetTotalRealParticlesFromXmlDoc(XmlParser &xml_parser)
     sv_total_real_particles_->setValue(xml_parser.Size(xml_parser.first_element_));
 }
 //=================================================================================================//
-void BaseParticles::writeParticlesToXmlForRestart(const std::string &filefullpath)
-{
-    resizeXmlDocForParticles(restart_xml_parser_);
-    std::cout << "\n Total real particles of body" << sph_body_.Name()
-              << "write to restart is " << TotalRealParticles() << "\n";
-    write_restart_variable_to_xml_(evolving_variables_, restart_xml_parser_);
-    restart_xml_parser_.writeToXmlFile(filefullpath);
-}
-//=================================================================================================//
-void BaseParticles::readParticlesFromXmlForRestart(const std::string &filefullpath)
-{
-    restart_xml_parser_.loadXmlFile(filefullpath);
-    resetTotalRealParticlesFromXmlDoc(restart_xml_parser_);
-    std::cout << "\n Total real particles of body" << sph_body_.Name()
-              << "from restart is " << TotalRealParticles() << "\n";
-    read_restart_variable_from_xml_(evolving_variables_, this, restart_xml_parser_);
-}
-//=================================================================================================//
 void BaseParticles::writeParticlesToXmlForReload(const std::string &filefullpath)
 {
     resizeXmlDocForParticles(reload_xml_parser_);
@@ -197,7 +179,7 @@ void BaseParticles::writeParticlesToXmlForRestart(XmlParser &xml_parser, TinyXML
     }
 
     // Write all evolving variables to the body element's particle children
-    OperationOnDataAssemble<DiscreteVariables, WriteAParticleVariableToXmlElement>
+    OperationOnDataAssemble<DiscreteVariables, WriteParticleVariableToXmlElement>
         write_variable_to_element(body_element);
     write_variable_to_element(evolving_variables_, xml_parser);
 }
@@ -208,7 +190,7 @@ void BaseParticles::readParticlesFromXmlForRestart(XmlParser &xml_parser, TinyXM
     sv_total_real_particles_->setValue(xml_parser.Size(body_element));
 
     // Read all evolving variables from the body element's particle children
-    OperationOnDataAssemble<DiscreteVariables, ReadAParticleVariableFromXmlElement>
+    OperationOnDataAssemble<DiscreteVariables, ReadParticleVariableFromXmlElement>
         read_variable_from_element(body_element);
     read_variable_from_element(evolving_variables_, this, xml_parser);
 }
