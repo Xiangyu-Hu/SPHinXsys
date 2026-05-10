@@ -434,7 +434,7 @@ int main(int ac, char *av[])
         main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(plate);
 
     auto &plate_correction =
-        main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(plate_inner);
+        main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(plate_inner,0.5);
 
     ParticleDynamicsGroup plate_shear_force;
     plate_shear_force.add(
