@@ -33,7 +33,7 @@
 #define BASE_PARTICLES_H
 
 #include "base_data_type_package.h"
-#include "sphinxsys_variable_array.h"
+#include "sphinxsys_variable.h"
 
 namespace tinyxml2
 {
@@ -134,11 +134,6 @@ class BaseParticles
     template <typename DataType>
     DiscreteVariable<DataType> *registerStateVariableFromReload(const std::string &name);
     template <typename DataType>
-    StdVec<DiscreteVariable<DataType> *> registerStateVariables(const StdVec<std::string> &names, const std::string &suffix);
-    template <typename DataType>
-    StdVec<DiscreteVariable<DataType> *> getVariablesByName(const StdVec<std::string> &names, const std::string &suffix);
-
-    template <typename DataType>
     SingleVariable<DataType> *addUniqueSingleVariable(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
     SingleVariable<DataType> *registerSingleVariable(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
@@ -154,8 +149,6 @@ class BaseParticles
 
     template <typename DataType, typename... Args>
     void addVariableToWrite(Args &&...args);
-    template <typename DataType>
-    void addVariableToWrite(VariableArray<DataType> *variable_array);
     //----------------------------------------------------------------------
     // Particle data for sorting
     //----------------------------------------------------------------------
@@ -167,8 +160,6 @@ class BaseParticles
   public:
     template <typename DataType, typename... Args>
     void addEvolvingVariable(Args &&...args);
-    template <typename DataType>
-    void addEvolvingVariable(VariableArray<DataType> *variable_array);
     DiscreteVariables &VariablesToWrite() { return variables_to_write_; };
     DiscreteVariables &EvolvingVariables() { return evolving_variables_; };
     //----------------------------------------------------------------------

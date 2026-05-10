@@ -91,32 +91,6 @@ DiscreteVariable<DataType> *BaseParticles::registerStateVariableFromReload(const
     return new_variable;
 }
 //=================================================================================================//
-template <typename DataType>
-StdVec<DiscreteVariable<DataType> *> BaseParticles::registerStateVariables(
-    const StdVec<std::string> &names, const std::string &suffix)
-{
-    StdVec<DiscreteVariable<DataType> *> variables;
-    for (auto &name : names)
-    {
-        std::string variable_name = name + suffix;
-        variables.push_back(registerStateVariable<DataType>(variable_name));
-    }
-    return variables;
-}
-//=================================================================================================//
-template <typename DataType>
-StdVec<DiscreteVariable<DataType> *> BaseParticles::getVariablesByName(
-    const StdVec<std::string> &names, const std::string &suffix)
-{
-    StdVec<DiscreteVariable<DataType> *> variables;
-    for (auto &name : names)
-    {
-        std::string variable_name = name + suffix;
-        variables.push_back(getVariableByName<DataType>(variable_name));
-    }
-    return variables;
-}
-//=================================================================================================//
 template <class DataType>
 SingleVariable<DataType> *BaseParticles::
     addUniqueSingleVariable(const std::string &name, DataType initial_value)
@@ -179,30 +153,10 @@ void BaseParticles::addEvolvingVariable(Args &&...args)
     }
 }
 //=================================================================================================//
-template <typename DataType>
-void BaseParticles::addEvolvingVariable(VariableArray<DataType> *variable_array)
-{
-    StdVec<DiscreteVariable<DataType> *> variables = variable_array->getVariables();
-    for (UnsignedInt i = 0; i != variables.size(); ++i)
-    {
-        addEvolvingVariable<DataType>(variables[i]);
-    }
-}
-//=================================================================================================//
 template <typename DataType, typename... Args>
 void BaseParticles::addVariableToWrite(Args &&...args)
 {
     addDiscreteVariableToList<DataType>(variables_to_write_, std::forward<Args>(args)...);
-}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::addVariableToWrite(VariableArray<DataType> *variable_array)
-{
-    StdVec<DiscreteVariable<DataType> *> variables = variable_array->getVariables();
-    for (UnsignedInt i = 0; i != variables.size(); ++i)
-    {
-        addVariableToWrite<DataType>(variables[i]);
-    }
 }
 //===============================================================================
 template <typename DataType>

@@ -32,7 +32,6 @@
 #include "diffusion_reaction.h"
 #include "interaction_ck.hpp"
 #include "sphinxsys_constant.h"
-#include "sphinxsys_variable_array.h"
 
 #include <string>
 #include <tuple>
