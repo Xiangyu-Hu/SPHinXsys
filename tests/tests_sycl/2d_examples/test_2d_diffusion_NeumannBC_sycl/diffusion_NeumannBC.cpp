@@ -162,29 +162,19 @@ int main(int ac, char *av[])
 
     IsotropicDiffusion isotropic_diffusion(diffusion_species_name, diffusion_coeff);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, &isotropic_diffusion);
-
-    SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-
-    auto &diffusion_relaxation_rk2 = main_methods.addParticleDynamicsGroup();
-    diffusion_relaxation_rk2.add(
-        &main_methods.addInteractionDynamicsOneLevel<
-                         DiffusionRelaxationCK, RungeKutta1stStage, IsotropicDiffusion, NoKernelCorrectionCK>(
-                         diffusion_body_inner, &isotropic_diffusion)
-             .addPostContactInteraction<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>(
-                 diffusion_body_contact_Dirichlet, &isotropic_diffusion)
-             .addPostContactInteraction<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>(
-                 diffusion_body_contact_Neumann, &isotropic_diffusion));
-
-    diffusion_relaxation_rk2.add(
-        &main_methods.addInteractionDynamicsOneLevel<
-                         DiffusionRelaxationCK, RungeKutta2ndStage, IsotropicDiffusion, NoKernelCorrectionCK>(
-                         diffusion_body_inner, &isotropic_diffusion)
-             .addPostContactInteraction<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>(
-                 diffusion_body_contact_Dirichlet, &isotropic_diffusion)
-             .addPostContactInteraction<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>(
-                 diffusion_body_contact_Neumann, &isotropic_diffusion));
-
+    RungeKuttaSequence<InteractionDynamicsCK<
+        MainExecutionPolicy,
+        DiffusionRelaxationCK<
+            Inner<OneLevel, RungeKutta1stStage, IsotropicDiffusion, NoKernelCorrectionCK>,
+            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>,
+            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>>,
+        DiffusionRelaxationCK<
+            Inner<OneLevel, RungeKutta2ndStage, IsotropicDiffusion, NoKernelCorrectionCK>,
+            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>,
+            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>>>>
+        diffusion_relaxation_rk2(DynamicsArgs(diffusion_body_inner, &isotropic_diffusion),
+                                 DynamicsArgs(diffusion_body_contact_Dirichlet, &isotropic_diffusion),
+                                 DynamicsArgs(diffusion_body_contact_Neumann, &isotropic_diffusion));
     //----------------------------------------------------------------------
     //	Specify initial condition if necessary.
     //----------------------------------------------------------------------
