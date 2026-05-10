@@ -419,20 +419,21 @@ class ParticleMethodContainer : public BaseMethodContainer
         return *state_recorders_keeper_.createPtr<RecorderType<ExecutionPolicy>>(std::forward<Args>(args)...);
     };
 
-    template <template <typename...> class RegressionType, typename... ControlParameters, typename... RelationParameters>
-    auto &addObserveRegression(const std::string &variable_name, Contact<RelationParameters...> &contact_relation)
+    template <template <typename...> class RegressionType, typename... ControlParameters,
+              typename... RelationParameters, typename... Args>
+    auto &addObserveRegression(Contact<RelationParameters...> &contact_relation, Args &&...args)
     {
         return *other_io_keeper_.createPtr<
             RegressionType<ObservedQuantityRecording<ExecutionPolicy, ControlParameters..., RelationParameters...>>>(
-            variable_name, contact_relation);
+            contact_relation, std::forward<Args>(args)...);
     };
 
-    template <typename... ControlParameters, typename... RelationParameters>
-    auto &addObserveRecorder(const std::string &variable_name, Contact<RelationParameters...> &contact_relation)
+    template <typename... ControlParameters, typename... RelationParameters, typename... Args>
+    auto &addObserveRecorder(Contact<RelationParameters...> &contact_relation, Args &&...args)
     {
         return *other_io_keeper_.createPtr<
             ObservedQuantityRecording<ExecutionPolicy, ControlParameters..., RelationParameters...>>(
-            variable_name, contact_relation);
+            contact_relation, std::forward<Args>(args)...);
     };
 
     template <template <typename...> class RegressionType, template <typename...> class LocalReduceMethodType,

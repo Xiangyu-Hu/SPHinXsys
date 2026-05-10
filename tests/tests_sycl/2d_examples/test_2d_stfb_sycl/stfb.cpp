@@ -281,7 +281,7 @@ int main(int ac, char *av[])
     auto &wave_gauge = main_methods.addReduceRegression<
         RegressionTestDynamicTimeWarping, UpperFrontInAxisDirectionCK>(wave_probe_buffer, "FreeSurfaceHeight");
     auto &write_structure_position = main_methods.addObserveRegression<
-        RegressionTestDynamicTimeWarping, Vecd>("Position", observer_contact);
+        RegressionTestDynamicTimeWarping, Vecd>(observer_contact, "Position");
 
     SingleVariable<SimTK::SpatialVec> sv_action_on_structure("ActionOnStructure", SimTK::SpatialVec(0));
     SingleVariableRecording<SimTK::SpatialVec> action_on_structure_recording(sph_system, &sv_action_on_structure);

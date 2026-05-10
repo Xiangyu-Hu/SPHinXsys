@@ -51,7 +51,7 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2),
-                                     Vecd(width + boundary_width * 2, height + boundary_width * 2));
+                                      Vecd(width + boundary_width * 2, height + boundary_width * 2));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
@@ -95,7 +95,7 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     ObservedQuantityRecording<MainExecutionPolicy, Vecd, RestoringCorrection>
-        fluid_observer_position("Position", fluid_observer_contact);
+        fluid_observer_position(fluid_observer_contact, "Position");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

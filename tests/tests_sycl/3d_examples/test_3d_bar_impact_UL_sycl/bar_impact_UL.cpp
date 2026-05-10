@@ -205,7 +205,7 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Real>(column, "Density");
     auto &record_column_mechanical_energy = main_methods.addReduceRegression<
         RegressionTestDynamicTimeWarping, TotalKineticEnergyCK>(column);
-    auto &column_observer_position = main_methods.addObserveRecorder<Vecd>("Position", column_observer_contact);
+    auto &column_observer_position = main_methods.addObserveRecorder<Vecd>(column_observer_contact, "Position");
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
