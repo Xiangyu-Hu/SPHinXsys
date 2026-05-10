@@ -190,7 +190,7 @@ int main(int ac, char *av[])
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_states(sph_system);
-    ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>
+    RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>>
         observe_temperature(temperature_observer_contact, "Species", diffusion_species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
@@ -270,15 +270,15 @@ int main(int ac, char *av[])
 
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     std::cout << "Total physical time for computation: " << sv_physical_time->getValue() << " seconds." << std::endl;
-    /*
-        if (sph_system.GenerateRegressionData())
-        {
-            observe_temperature.generateDataBase(1.0e-3, 1.0e-3);
-        }
-        else if (sph_system.RestartStep() == 0)
-        {
-            observe_temperature.testResult();
-        }*/
+
+    if (sph_system.GenerateRegressionData())
+    {
+        observe_temperature.generateDataBase(1.0e-3, 1.0e-3);
+    }
+    else if (sph_system.RestartStep() == 0)
+    {
+        observe_temperature.testResult();
+    }
 
     return 0;
 }
