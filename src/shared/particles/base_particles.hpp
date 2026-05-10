@@ -218,11 +218,14 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, Xm
     for (UnsignedInt i = 0; i != variables.size(); ++i)
     {
         UnsignedInt index = 0;
-        DataType *data_field = variables[i]->Data();
+        MultiEntryView<DataType> view = variables[i]->getMultiEntryView();
         for (auto child = element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
-            xml_parser.setAttributeToElement(child, variables[i]->Name(), data_field[index]);
-            index++;
+            for (UnsignedInt entry = 0; entry != view.Width(); entry++)
+            {
+                xml_parser.setAttributeToElement(child, variables[i]->Name(), view[index][entry]);
+                index++;
+            }
         }
     }
 }
@@ -235,11 +238,14 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
     for (UnsignedInt i = 0; i != variables.size(); ++i)
     {
         UnsignedInt index = 0;
-        DataType *data_field = variables[i]->Data();
+        MultiEntryView<DataType> view = variables[i]->getMultiEntryView();
         for (auto child = element_->FirstChildElement(); child; child = child->NextSiblingElement())
         {
-            xml_parser.queryAttributeValue(child, variables[i]->Name(), data_field[index]);
-            index++;
+            for (UnsignedInt entry = 0; entry != view.Width(); entry++)
+            {
+                xml_parser.queryAttributeValue(child, variables[i]->Name(), view[index][entry]);
+                index++;
+            }
         }
     }
 }
