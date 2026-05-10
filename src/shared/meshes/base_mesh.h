@@ -37,6 +37,7 @@
 #include "data_type.h"
 #include "sphinxsys_constant.h"
 #include "sphinxsys_variable.h"
+#include "variable_functions.h"
 
 #include <fstream>
 

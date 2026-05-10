@@ -239,7 +239,7 @@ class DiscreteVariable : public Quantity
     UnsignedInt getWidth() { return width_; }
     UnsignedInt getTotalSize() { return size_ * width_; }
     std::string getEntryName(UnsignedInt entry) { return !entry_names_.empty() ? entry_names_[entry] : ""; }
-    
+
     UnsignedInt getEntryIndexByName(std::string entry_name)
     {
         auto iter = std::find(entry_names_.begin(), entry_names_.end(), entry_name);
@@ -372,87 +372,6 @@ class DiscreteVariable : public Quantity
     void reallocateDataOnDevice(UnsignedInt tentative_size);
     void synchronizeWithDevice();
     void synchronizeToDevice();
-};
-
-template <typename DataType, template <typename VariableDataType> class VariableType>
-VariableType<DataType> *findVariableByName(DataContainerAddressAssemble<VariableType> &assemble,
-                                           const std::string &name)
-{
-    constexpr int type_index = DataTypeIndex<DataType>::value;
-    auto &variables = std::get<type_index>(assemble);
-    auto result = std::find_if(variables.begin(), variables.end(),
-                               [&](auto &variable) -> bool
-                               { return variable->Name() == name; });
-
-    return result != variables.end() ? *result : nullptr;
-};
-
-template <typename DataType, template <typename VariableDataType> class VariableType, typename... Args>
-VariableType<DataType> *addVariableToAssemble(DataContainerAddressAssemble<VariableType> &assemble,
-                                              DataContainerUniquePtrAssemble<VariableType> &ptr_assemble, Args &&...args)
-{
-    constexpr int type_index = DataTypeIndex<DataType>::value;
-    UniquePtrsKeeper<VariableType<DataType>> &variable_ptrs = std::get<type_index>(ptr_assemble);
-    VariableType<DataType> *new_variable =
-        variable_ptrs.template createPtr<VariableType<DataType>>(std::forward<Args>(args)...);
-    std::get<type_index>(assemble).push_back(new_variable);
-    return new_variable;
-};
-
-template <template <typename> typename ContainerType, typename DataType, typename... Args>
-ContainerType<DataType> *registerVariable(DataContainerAddressAssemble<ContainerType> &all_variable_set,
-                                          DataContainerUniquePtrAssemble<ContainerType> &all_variable_ptrs_,
-                                          const std::string &name, Args &&...args)
-{
-    ContainerType<DataType> *variable = findVariableByName<DataType, ContainerType>(all_variable_set, name);
-    if (variable == nullptr)
-    {
-        return addVariableToAssemble<DataType, ContainerType>(
-            all_variable_set, all_variable_ptrs_, name, std::forward<Args>(args)...);
-    }
-    return variable;
-};
-
-template <template <typename> typename ContainerType, typename DataType>
-ContainerType<DataType> *addVariableToList(DataContainerAddressAssemble<ContainerType> &variable_set,
-                                           ContainerType<DataType> *variable)
-{
-    ContainerType<DataType> *listed_variable = findVariableByName<DataType, ContainerType>(variable_set, variable->Name());
-    if (listed_variable == nullptr)
-    {
-        constexpr int type_index = DataTypeIndex<DataType>::value;
-        std::get<type_index>(variable_set).push_back(variable);
-        return variable;
-    }
-    return nullptr; // no need to add
-};
-
-template <template <typename> class ContainerType>
-struct PrepareVariablesToWrite
-{
-    template <class ExecutionPolicy, typename DataType>
-    void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables,
-                    const ExecutionPolicy &ex_policy)
-    {
-        for (UnsignedInt i = 0; i != variables.size(); ++i)
-        {
-            variables[i]->prepareForOutput(ex_policy);
-        }
-    };
-};
-
-template <template <typename> class ContainerType>
-struct FinalizeVariablesAfterRead
-{
-    template <class ExecutionPolicy, typename DataType>
-    void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables,
-                    const ExecutionPolicy &ex_policy)
-    {
-        for (UnsignedInt i = 0; i != variables.size(); ++i)
-        {
-            variables[i]->finalizeLoadIn(ex_policy);
-        }
-    };
 };
 
 /** Generalized particle variable type*/

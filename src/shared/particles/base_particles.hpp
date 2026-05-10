@@ -2,6 +2,7 @@
 #define BASE_PARTICLES_HPP
 
 #include "base_particles.h"
+#include "variable_functions.h"
 #include "xml_parser.h"
 
 namespace SPH
