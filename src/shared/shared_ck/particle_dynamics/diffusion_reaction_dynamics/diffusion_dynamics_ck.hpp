@@ -83,11 +83,6 @@ template <class DiffusionType, class KernelCorrectionType, class... Parameters>
 void DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(UnsignedInt index_i, Real dt)
 {
-    for (UnsignedInt m = 0; m < this->species_dt_.Width(); ++m)
-    {
-        species_dt_[index_i][m] = 0.0;
-    }
-
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
@@ -115,8 +110,8 @@ DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, Kern
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
     {
-        contact_dv_transfer_.push_back(
-            this->contact_particles_[k]->template registerStateVariable<Real>(
+        contact_dv_transfer_.push_back( // registered in source body particles
+            this->particles_->template registerStateVariable<Real>(
                 "TransferWith" + this->sph_body_->Name(), this->species_names_));
         contact_boundary_method_.push_back(
             boundaries_keeper_.template createPtr<BoundaryType<DiffusionType>>(
@@ -181,7 +176,7 @@ void DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParam
 {
     for (UnsignedInt m = 0; m < species_dt_.Width(); ++m)
     {
-        species_dt_[index_i][m] = 0;
+        species_dt_[index_i][m] = 0.0;
     }
 }
 //=================================================================================================//
@@ -189,7 +184,7 @@ template <template <typename...> class RelationType, class... InteractionParamet
 template <class ExecutionPolicy, class EncloserType>
 DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : species_(encloser.dv_species_dt_->DelegatedMultiEntryView(ex_policy)),
+    : species_(encloser.dv_species_->DelegatedMultiEntryView(ex_policy)),
       species_dt_(encloser.dv_species_dt_->DelegatedMultiEntryView(ex_policy)),
       cv1_(encloser.ca_inverse_volume_capacity_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -199,7 +194,7 @@ void DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParam
 {
     for (UnsignedInt m = 0; m < species_.Width(); ++m)
     {
-        species_[index_i][m] += this->cv1_[m](index_i) * dt * species_dt_[index_i][m];
+        species_[index_i][m] += cv1_[m](index_i) * dt * species_dt_[index_i][m];
     }
 }
 //=================================================================================================//
@@ -281,8 +276,7 @@ Dirichlet<DiffusionType>::ComputingKernel::
 //=================================================================================================//
 template <class DiffusionType>
 Vecd Dirichlet<DiffusionType>::ComputingKernel::operator()(
-    UnsignedInt m, UnsignedInt index_i, UnsignedInt index_j,
-    const Vecd &e_ij, const Vecd &vec_r_ij)
+    UnsignedInt m, UnsignedInt index_i, UnsignedInt index_j, const Vecd &e_ij, const Vecd &vec_r_ij)
 {
     Real species_diff = species_[index_i][m] - contact_species_[index_j][m];
     return vec_r_ij * species_diff * inter_particle_diffusion_coeff_[m](index_i, index_j, e_ij) /
