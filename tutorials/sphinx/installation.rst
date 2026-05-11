@@ -14,7 +14,7 @@ SPHinXsys depends on the following:
 * CMake 3.16 or later but before 4.0
 * C++17 compliant compiler
 
-* Visual Studio 2017 15.7 or later (Windows)
+* Visual Studio 2017 15.7 or later (Windows) but not 2022 17.0 or later, which does not support C++17 standard library (Windows)
 * GCC 8 or later (Linux)
 * Python3
 * Git
@@ -286,7 +286,7 @@ Pre-requisites
 
 * Windows 7 or newer
 * `Git <https://git-scm.com/download/win>`_
-* `Visual Studio 2017 or newer <https://visualstudio.microsoft.com/vs/community/>`_ with C++ environment installed
+* `Visual Studio 2017 or newer but not later that 2022 17.0 <https://visualstudio.microsoft.com/vs/community/>`_ with C++ environment installed
 * `CMake <https://cmake.org/>`_ version 3.16 or later but before 4.0
 * `Python3 <https://www.python.org/>`_
 
