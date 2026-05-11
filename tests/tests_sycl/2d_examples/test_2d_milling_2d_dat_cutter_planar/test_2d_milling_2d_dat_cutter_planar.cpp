@@ -131,7 +131,7 @@ class CutterImportModel : public MultiPolygonShape
     explicit CutterImportModel(const std::string &name)
         : MultiPolygonShape(name)
     {
-        multi_polygon_.addAPolygonFromFile(cutter_dat_file, GeometricOps::add);
+        multi_polygon_.addPolygonFromFile(cutter_dat_file, GeometricOps::add);
     }
 };
 
@@ -434,7 +434,7 @@ int main(int ac, char *av[])
         main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(plate);
 
     auto &plate_correction =
-        main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(plate_inner,0.5);
+        main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(plate_inner);
 
     ParticleDynamicsGroup plate_shear_force;
     plate_shear_force.add(
@@ -511,7 +511,7 @@ int main(int ac, char *av[])
     // TimeStepper
     //------------------------------------------------------------------
     Real total_physical_time = end_time;
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(total_physical_time);
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
 
     auto &plate_advection_time_step =
         main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(plate, U_max, 0.2);
@@ -558,7 +558,7 @@ int main(int ac, char *av[])
     //------------------------------------------------------------------
     // Main time-stepping loop
     //------------------------------------------------------------------
-    while (!time_stepper.isEndTime())
+    while (!time_stepper.isEndTime(total_physical_time))
     {
         TickCount time_instance = TickCount::now();
 
