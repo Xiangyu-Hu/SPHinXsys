@@ -97,6 +97,7 @@ jobs:
           # Simbody depends on (open)blas implementation, which -march=native by default, conflicting with cache restore, hence dynamic-arch feature
           # Above problem might also be resolved by adding the hash of architecture in the cache key, esp. if more package do the same
           ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
+            --overlay-ports=${{github.workspace}}/vcpkg-overlay-ports \
             eigen3 \
             tbb \
             boost-program-options \
@@ -262,6 +263,7 @@ jobs:
           # Simbody depends on (open)blas implementation, which -march=native by default, conflicting with cache restore, hence dynamic-arch feature
           # Above problem might also be resolved by adding the hash of architecture in the cache key, esp. if more package do the same
           ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
+            --overlay-ports=${{github.workspace}}/vcpkg-overlay-ports \
             eigen3 \
             tbb \
             boost-program-options \
@@ -345,6 +347,7 @@ jobs:
           # Simbody depends on (open)blas implementation, which -march=native by default, conflicting with cache restore, hence dynamic-arch feature
           # Above problem might also be resolved by adding the hash of architecture in the cache key, esp. if more package do the same
           ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
+            --overlay-ports=${{github.workspace}}/vcpkg-overlay-ports \
             eigen3 \
             tbb \
             boost-program-options \
@@ -488,6 +491,7 @@ jobs:
       - name: Install dependencies
         run: |
           ${{github.workspace}}\vcpkg\vcpkg.exe install --clean-after-build `
+            --overlay-ports=${{github.workspace}}\vcpkg-overlay-ports `
             eigen3 `
             tbb `
             boost-program-options `
@@ -567,6 +571,7 @@ jobs:
       - name: Install dependencies
         run: |
           ${{github.workspace}}\vcpkg\vcpkg.exe install --clean-after-build `
+            --overlay-ports=${{github.workspace}}\vcpkg-overlay-ports `
             eigen3 `
             tbb `
             boost-program-options `
@@ -702,6 +707,7 @@ jobs:
       - name: Install dependencies
         run: |
           ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build \
+            --overlay-ports=${{github.workspace}}/vcpkg-overlay-ports \
             eigen3 \
             tbb \
             boost-program-options \
@@ -771,6 +777,7 @@ jobs:
       - name: Install dependencies
         run: |
           ${{github.workspace}}/vcpkg/vcpkg install --clean-after-build --allow-unsupported \
+            --overlay-ports=${{github.workspace}}/vcpkg-overlay-ports \
             eigen3 \
             tbb \
             boost-program-options \
@@ -906,6 +913,7 @@ jobs:
       - name: Install dependencies
         run: |
           ${{github.workspace}}\vcpkg\vcpkg.exe install --clean-after-build `
+            --overlay-ports=${{github.workspace}}\vcpkg-overlay-ports `
             eigen3 `
             tbb `
             boost-program-options `

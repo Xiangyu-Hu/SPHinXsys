@@ -1,0 +1,39 @@
+vcpkg_from_github(
+    OUT_SOURCE_PATH SOURCE_PATH
+    REPO simbody/simbody
+    REF 8a62e27882838708ae98e72c6902704f836aacb9
+    SHA512 c187a9aeaaf292edb29d0f475013313bea59c18242bef6acdfa6feee1340a54bece671699db830dcdf173658a5657dd05d3ec4650f16b82feb62889213f30fa1
+    HEAD_REF master
+)
+
+string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" BUILD_STATIC_LIBRARIES)
+string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "dynamic" BUILD_DYNAMIC_LIBRARIES)
+
+vcpkg_cmake_configure(
+    SOURCE_PATH "${SOURCE_PATH}"
+    OPTIONS
+        -DBUILD_DYNAMIC_LIBRARIES=${BUILD_DYNAMIC_LIBRARIES}
+        -DBUILD_STATIC_LIBRARIES=${BUILD_STATIC_LIBRARIES}
+        -DWINDOWS_USE_EXTERNAL_LIBS=ON
+        -DINSTALL_DOCS=OFF
+        -DBUILD_VISUALIZER=OFF
+        -DBUILD_EXAMPLES=OFF
+        -DBUILD_TESTING=OFF
+)
+
+vcpkg_cmake_install()
+
+if(VCPKG_TARGET_IS_WINDOWS)
+    vcpkg_cmake_config_fixup(CONFIG_PATH cmake)
+else()
+    vcpkg_cmake_config_fixup(CONFIG_PATH "lib/cmake/${PORT}")
+endif()
+
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share")
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/doc")
+
+vcpkg_fixup_pkgconfig()
+
+file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
+file(INSTALL "${SOURCE_PATH}/LICENSE.txt" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
