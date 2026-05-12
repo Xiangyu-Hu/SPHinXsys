@@ -562,12 +562,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //  Buffer
     //----------------------------------------------------------------------
-    AlignedBox left_emitter_shape(xAxis, Transform(Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize);
-    AlignedBoxByCell left_emitter(blood, left_emitter_shape);
+    OrientedBox left_emitter_shape(xAxis, Transform(Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize);
+    OrientedBoxByCell left_emitter(blood, left_emitter_shape);
     fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_bidirection_buffer(left_emitter, in_outlet_particle_buffer);
 
-    AlignedBox right_emitter_shape(xAxis, Transform(Rotation2d(Pi), Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize);
-    AlignedBoxByCell right_emitter(blood, right_emitter_shape);
+    OrientedBox right_emitter_shape(xAxis, Transform(Rotation2d(Pi), Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize);
+    OrientedBoxByCell right_emitter(blood, right_emitter_shape);
     fluid_dynamics::BidirectionalBuffer<RightInflowPressure> right_bidirection_buffer(right_emitter, in_outlet_particle_buffer);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(blood_inner, blood_contact);

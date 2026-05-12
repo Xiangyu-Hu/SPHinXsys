@@ -158,14 +158,14 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBox &aligned_box_;
+    OrientedBox &oriented_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_f), t_ref_(2.0),
-          aligned_box_(boundary_condition.getAlignedBox()),
-          halfsize_(aligned_box_.HalfSize()) {}
+          oriented_box_(boundary_condition.getOrientedBox()),
+          halfsize_(oriented_box_.HalfSize()) {}
 
     Vecd operator()(Vecd &position, Vecd &velocity, Real physical_time)
     {
@@ -317,17 +317,17 @@ int main(int ac, char *av[])
     // left buffer
     Vec2d left_buffer_halfsize = Vec2d(0.5 * buffer_width, 0.5 * DH);
     Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize;
-    AlignedBoxByCell left_emitter(water_block, AlignedBox(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
+    OrientedBoxByCell left_emitter(water_block, OrientedBox(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_bidirection_buffer(left_emitter, in_outlet_particle_buffer);
     // up buffer
     Vec2d up_buffer_halfsize = Vec2d(0.5 * buffer_width, 0.75);
     Vec2d up_buffer_translation = Vec2d(0.5 * (DL + DL1), 2.0 * DH - 0.5 * buffer_width);
-    AlignedBoxByCell up_emitter(water_block, AlignedBox(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
+    OrientedBoxByCell up_emitter(water_block, OrientedBox(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<UpOutflowPressure> right_up_bidirection_buffer(up_emitter, in_outlet_particle_buffer);
     // down buffer
     Vec2d down_buffer_halfsize = Vec2d(0.5 * buffer_width, 0.75);
     Vec2d down_buffer_translation = Vec2d(0.5 * (DL + DL1), -DH + 0.5 * buffer_width);
-    AlignedBoxByCell down_emitter(water_block, AlignedBox(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
+    OrientedBoxByCell down_emitter(water_block, OrientedBox(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<DownOutflowPressure> right_down_bidirection_buffer(down_emitter, in_outlet_particle_buffer);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_shell_contact);

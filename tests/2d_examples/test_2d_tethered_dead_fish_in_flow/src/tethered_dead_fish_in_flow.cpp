@@ -172,14 +172,14 @@ StdVec<Vecd> createObservationPoints()
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBox &aligned_box_;
+    OrientedBox &oriented_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_f), t_ref_(2.0),
-          aligned_box_(boundary_condition.getAlignedBox()),
-          halfsize_(aligned_box_.HalfSize()) {}
+          oriented_box_(boundary_condition.getOrientedBox()),
+          halfsize_(oriented_box_.HalfSize()) {}
 
     Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
@@ -317,8 +317,8 @@ int main(int ac, char *av[])
     /** Computing vorticity in the flow. */
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
     /** Inflow boundary condition. */
-    AlignedBoxByCell inflow_buffer(
-        water_block, AlignedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
+    OrientedBoxByCell inflow_buffer(
+        water_block, OrientedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
     /**

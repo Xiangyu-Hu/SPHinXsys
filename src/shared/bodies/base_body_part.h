@@ -51,7 +51,7 @@ struct has_setupBaseParticles<T, std::void_t<decltype(&T::setupBaseParticles)>> 
 
 class BaseCellLinkedList;
 class LevelSetShape;
-class AlignedBox;
+class OrientedBox;
 class Quantity;
 class SPHAdaptation;
 class SPHBody;
@@ -352,36 +352,36 @@ class NearShapeSurface : public BodyPartByCell
     bool checkNearSurface(Vecd cell_position, Real threshold);
 };
 
-class AlignedBoxPart
+class OrientedBoxPart
 {
-    UniquePtrKeeper<SingleVariable<AlignedBox>> sv_aligned_box_keeper_;
+    UniquePtrKeeper<SingleVariable<OrientedBox>> sv_oriented_box_keeper_;
 
   public:
-    AlignedBoxPart(const std::string &part_name, const AlignedBox &aligned_box);
-    virtual ~AlignedBoxPart();
-    SingleVariable<AlignedBox> *svAlignedBox() { return sv_aligned_box_keeper_.getPtr(); };
-    AlignedBox &getAlignedBox() { return aligned_box_; };
-    void writeAlignedBoxToVtp(Real scale_factor = 1.0);
+    OrientedBoxPart(const std::string &part_name, const OrientedBox &oriented_box);
+    virtual ~OrientedBoxPart();
+    SingleVariable<OrientedBox> *svOrientedBox() { return sv_oriented_box_keeper_.getPtr(); };
+    OrientedBox &getOrientedBox() { return oriented_box_; };
+    void writeOrientedBoxToVtp(Real scale_factor = 1.0);
 
   protected:
-    AlignedBox &aligned_box_;
+    OrientedBox &oriented_box_;
 };
 
-class AlignedBoxByParticle : public BodyPartByParticle, public AlignedBoxPart
+class OrientedBoxByParticle : public BodyPartByParticle, public OrientedBoxPart
 {
   public:
-    AlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box);
-    virtual ~AlignedBoxByParticle() {};
+    OrientedBoxByParticle(RealBody &real_body, const OrientedBox &oriented_box);
+    virtual ~OrientedBoxByParticle() {};
 
   protected:
     bool tagByContain(size_t particle_index);
 };
 
-class AlignedBoxByCell : public BodyPartByCell, public AlignedBoxPart
+class OrientedBoxByCell : public BodyPartByCell, public OrientedBoxPart
 {
   public:
-    AlignedBoxByCell(RealBody &real_body, const AlignedBox &aligned_box);
-    virtual ~AlignedBoxByCell() {};
+    OrientedBoxByCell(RealBody &real_body, const OrientedBox &oriented_box);
+    virtual ~OrientedBoxByCell() {};
 
   protected:
     bool checkNotFar(Vecd cell_position, Real threshold);

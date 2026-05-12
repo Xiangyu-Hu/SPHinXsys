@@ -349,16 +349,16 @@ int main(int ac, char *av[])
     // //----------------------------------------------------------------------
     // //	Creating body parts.
     // //----------------------------------------------------------------------
-    AlignedBoxByCell left_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
-    left_emitter_by_cell.writeAlignedBoxToVtp();
+    OrientedBoxByCell left_emitter_by_cell(water_body, OrientedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
+    left_emitter_by_cell.writeOrientedBoxToVtp();
 
     auto default_normal = Vec3d::UnitX();
     auto rotated_normal = -1 * Vec3d::UnitX();
     auto rotation_axis = Vec3d::UnitY();
     auto rot3d = Rotation3d(std::acos(default_normal.dot(rotated_normal)), rotation_axis);
-    AlignedBoxByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(rot3d, right_bidirectional_translation), bidirectional_buffer_halfsize));
-    right_emitter_by_cell.writeAlignedBoxToVtp();
-    // AlignedBoxByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
+    OrientedBoxByCell right_emitter_by_cell(water_body, OrientedBox(xAxis, Transform(rot3d, right_bidirectional_translation), bidirectional_buffer_halfsize));
+    right_emitter_by_cell.writeOrientedBoxToVtp();
+    // OrientedBoxByCell right_emitter_by_cell(water_body, OrientedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
