@@ -261,7 +261,8 @@ class DiscreteVariable : public Quantity
     };
 
     template <class FillFunction>
-    void fill(const FillFunction &fill_function, UnsignedInt begin_index, UnsignedInt fill_size)
+    void fill(const FillFunction &fill_function, UnsignedInt begin_index,
+              UnsignedInt fill_size, UnsignedInt entry = 0)
     {
         if (begin_index + fill_size > size_)
         {
@@ -272,7 +273,7 @@ class DiscreteVariable : public Quantity
 
         for (UnsignedInt i = begin_index; i < begin_index + fill_size; ++i)
         {
-            data_[i] = fill_function(i);
+            data_[i * width_ + entry] = fill_function(i);
         }
     };
 

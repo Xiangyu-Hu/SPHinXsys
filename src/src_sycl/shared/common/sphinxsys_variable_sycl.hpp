@@ -62,7 +62,7 @@ void DeviceOnlyDiscreteVariable<DataType>::
     reallocateData(DiscreteVariable<DataType> *host_variable)
 {
     freeDeviceData(device_only_data_);
-    UnsignedInt new_host_variable_size = host_variable->getSize();
+    UnsignedInt new_host_variable_size = host_variable->getTotalSize();
     device_only_data_ = allocateDeviceOnly<DataType>(new_host_variable_size);
 }
 //=================================================================================================//

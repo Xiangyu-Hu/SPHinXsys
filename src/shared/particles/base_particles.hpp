@@ -224,8 +224,8 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, Xm
             for (UnsignedInt entry = 0; entry != view.Width(); entry++)
             {
                 xml_parser.setAttributeToElement(child, variables[i]->Name(), view[index][entry]);
-                index++;
             }
+            index++;
         }
     }
 }
@@ -244,8 +244,8 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
             for (UnsignedInt entry = 0; entry != view.Width(); entry++)
             {
                 xml_parser.queryAttributeValue(child, variables[i]->Name(), view[index][entry]);
-                index++;
             }
+            index++;
         }
     }
 }

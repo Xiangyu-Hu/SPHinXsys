@@ -32,7 +32,6 @@
 #include <cmath>
 #include <limits>
 #include <utility>
-#include <vector>
 
 #if SPHINXSYS_USE_SYCL
 #include <CL/sycl.hpp>
