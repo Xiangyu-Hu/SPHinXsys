@@ -70,16 +70,16 @@ class VariableBufferArray : public VariableArray<DataType>
     bool isBufferArrayHostStaged() { return buffer_array_ != host_staging_buffer_array_; };
 
     template <class ExecutionPolicy>
-    DataPtr<DataType> *DelegatedBufferArray(const ExecutionPolicy &ex_policy)
+    DataArray<DataType> DelegatedBufferArray(const ExecutionPolicy &ex_policy)
     {
-        return buffer_array_;
+        return DataArray<DataType>(buffer_array_, this->array_size_);
     };
     template <class PolicyType>
     DataPtr<DataType> *DelegatedBufferArrayOnDevice();
     template <class PolicyType>
-    DataPtr<DataType> *DelegatedBufferArray(const DeviceExecution<PolicyType> &ex_policy)
+    DataArray<DataType> DelegatedBufferArray(const DeviceExecution<PolicyType> &ex_policy)
     {
-        return DelegatedBufferArrayOnDevice<PolicyType>();
+        return DataArray<DataType>(DelegatedBufferArrayOnDevice<PolicyType>(), this->array_size_);
     };
 
     void setDelegateBufferArray(DataPtr<DataType> *buffer_array_)
@@ -118,8 +118,8 @@ class VariableBufferArray : public VariableArray<DataType>
     class CopyVariableToBuffer
     {
         UnsignedInt array_size_;
-        DataPtr<DataType> *delegated_data_array_;
-        DataPtr<DataType> *delegated_buffer_array_;
+        DataArray<DataType> delegated_data_array_;
+        DataArray<DataType> delegated_buffer_array_;
 
       public:
         template <class ExecutionPolicy>

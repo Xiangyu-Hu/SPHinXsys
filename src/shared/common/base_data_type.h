@@ -31,7 +31,6 @@
 
 #include <cmath>
 #include <limits>
-#include <utility>
 
 #if SPHINXSYS_USE_SYCL
 #include <CL/sycl.hpp>

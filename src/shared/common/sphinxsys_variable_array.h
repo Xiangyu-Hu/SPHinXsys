@@ -49,7 +49,7 @@ class DataArray
         : data_ptr_(data_ptr), array_size_(array_size) {};
     size_t ArraySize() { return array_size_; };
 
-    DataType *operator[](size_t array_index)
+    DataType *operator[](size_t array_index) const
     {
         return data_ptr_[array_index];
     }

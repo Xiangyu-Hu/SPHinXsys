@@ -32,6 +32,8 @@
 
 #include "sphinxsys_variable.h"
 
+#include <utility>
+
 namespace SPH
 {
 template <typename DataType, template <typename VariableDataType> class VariableType>

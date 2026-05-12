@@ -34,6 +34,9 @@
 #include "execution_policy.h"
 #include "ownership.h"
 
+#include <algorithm>
+#include <iterator>
+
 namespace SPH
 {
 using namespace execution;
