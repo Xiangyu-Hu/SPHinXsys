@@ -12,7 +12,7 @@ include(GoogleTest)
 
 target_link_libraries(sphinxsys_core INTERFACE GTest::gtest GTest::gtest_main)
 
-if(NOT SPHINXSYS_SYCL)
+if(NOT SPHINXSYS_USE_SYCL)
 
     if(SPHINXSYS_2D AND SPHINXSYS_BUILD_2D_EXAMPLES)
         ADD_SUBDIRECTORY(2d_examples)
