@@ -41,7 +41,7 @@ class SPHBody;
 class RealBody;
 class RelationBase;
 class Shape;
-class Entity;
+class Quantity;
 using SPHBodyVector = StdVec<SPHBody *>;
 /**
  * @class SPHSystem
@@ -49,8 +49,8 @@ using SPHBodyVector = StdVec<SPHBody *>;
  */
 class SPHSystem
 {
-    DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
-    UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
+    DataContainerUniquePtrAssemble<SingleVariable> all_system_variable_ptrs_;
+    UniquePtrsKeeper<Quantity> unique_system_variable_ptrs_;
     UniquePtrsKeeper<SPHBody> sph_bodies_keeper_;
     UniquePtrsKeeper<Shape> shapes_keeper_;
     UniquePtrsKeeper<RelationBase> relations_keeper_;
@@ -64,7 +64,7 @@ class SPHSystem
     SPHSystem *handleCommandlineOptions(int ac, char *av[]);
 #endif
     bool isPhysical() { return is_physical_; };
-    void writeSystemDomainShapeToVtp();
+    void writeSystemDomainShapeToVtp(Real scale_factor = 1.0);
     void setRunParticleRelaxation(bool run_particle_relaxation) { run_particle_relaxation_ = run_particle_relaxation; };
     bool RunParticleRelaxation() { return run_particle_relaxation_; };
     void setReloadParticles(bool reload_particles) { reload_particles_ = reload_particles; };
@@ -76,7 +76,7 @@ class SPHSystem
     void setRestartStep(size_t restart_step) { restart_step_ = restart_step; };
     void setLogLevel(size_t log_level);
     size_t RestartStep() { return restart_step_; };
-    SingularVariable<Real> &svPhysicalTime() { return *sv_physical_time_; };
+    SingleVariable<Real> &svPhysicalTime() { return *sv_physical_time_; };
     /** Initialize cell linked list for the SPH system. */
     void initializeSystemCellLinkedLists();
     /** Initialize particle configuration for the SPH system. */
@@ -92,11 +92,11 @@ class SPHSystem
     void setSystemDomainBounds(const BoundingBoxd &domain_bounds) { system_bounds_ = domain_bounds; };
 
     template <typename DataType>
-    SingularVariable<DataType> *registerSystemVariable(
+    SingleVariable<DataType> *registerSystemVariable(
         const std::string &name, DataType initial_value = ZeroData<DataType>::value);
 
     template <typename DataType>
-    SingularVariable<DataType> *getSystemVariableByName(const std::string &name);
+    SingleVariable<DataType> *getSystemVariableByName(const std::string &name);
 
     template <typename DataType>
     DataType *getSystemVariableDataByName(const std::string &name);
@@ -146,8 +146,8 @@ class SPHSystem
     bool generate_regression_data_;    /**< run and generate or enhance the regression test data set. */
     bool state_recording_;             /**< Record state in output folder. */
     int log_level_ = 2;                /**< Log level, 0: trace, 1: debug, 2: info, 3: warning, 4: error, 5: critical, 6: off */
-    SingularVariables all_system_variables_;
-    SingularVariable<Real> *sv_physical_time_; /**< global physical time of the SPH system. */
+    SingleVariables all_system_variables_;
+    SingleVariable<Real> *sv_physical_time_; /**< global physical time of the SPH system. */
 
     SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds, Real global_resolution,
               size_t number_of_threads = std::thread::hardware_concurrency());

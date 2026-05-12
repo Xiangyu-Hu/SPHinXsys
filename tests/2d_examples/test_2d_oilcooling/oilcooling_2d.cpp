@@ -208,8 +208,8 @@ class FluidBoundary : public MultiPolygonShape
 class InletInflowCondition : public fluid_dynamics::EmitterInflowCondition
 {
   public:
-    InletInflowCondition(AlignedBoxByParticle &aligned_box_part)
-        : EmitterInflowCondition(aligned_box_part) {}
+    InletInflowCondition(OrientedBoxByParticle &oriented_box_part)
+        : EmitterInflowCondition(oriented_box_part) {}
 
   protected:
     virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
@@ -300,14 +300,14 @@ int main(int ac, char *av[])
     wall.defineBodyLevelSetShape().writeLevelSet();
     wall.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall.generateParticles<BaseParticles, Reload>(wall.getName())
+        ? wall.generateParticles<BaseParticles, Reload>(wall.Name())
         : wall.generateParticles<BaseParticles, Lattice>();
 
     SolidBody rotor(sph_system, makeShared<RotorBoundary>("Rotor"));
     rotor.defineBodyLevelSetShape().writeLevelSet();
     rotor.defineMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? rotor.generateParticles<BaseParticles, Reload>(rotor.getName())
+        ? rotor.generateParticles<BaseParticles, Reload>(rotor.Name())
         : rotor.generateParticles<BaseParticles, Lattice>();
 
     SolidBody winding(sph_system, makeShared<WindingBoundary>("Winding"));
@@ -315,7 +315,7 @@ int main(int ac, char *av[])
     winding.defineClosure<Solid, IsotropicDiffusion>(
         Solid(), ConstructArgs(temperature_species_name, k_winding));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? winding.generateParticles<BaseParticles, Reload>(winding.getName())
+        ? winding.generateParticles<BaseParticles, Reload>(winding.Name())
         : winding.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody slot_observer(sph_system, "ObserverSlot");
@@ -428,22 +428,22 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(oil_body);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(oil_body_inner, oil_body_contact);
 
-    AlignedBoxByParticle emitter(oil_body, AlignedBox(xAxis, inlet_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter(oil_body, OrientedBox(xAxis, inlet_transform, inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition(emitter);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, inlet_buffer);
-    AlignedBoxByParticle emitter2(oil_body, AlignedBox(xAxis, inlet2_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter2(oil_body, OrientedBox(xAxis, inlet2_transform, inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition2(emitter2);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection2(emitter2, inlet_buffer);
-    AlignedBoxByParticle emitter3(oil_body, AlignedBox(xAxis, inlet3_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter3(oil_body, OrientedBox(xAxis, inlet3_transform, inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition3(emitter3);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection3(emitter3, inlet_buffer);
-    AlignedBoxByParticle emitter4(oil_body, AlignedBox(xAxis, inlet4_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter4(oil_body, OrientedBox(xAxis, inlet4_transform, inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition4(emitter4);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection4(emitter4, inlet_buffer);
-    AlignedBoxByParticle emitter5(oil_body, AlignedBox(xAxis, inlet5_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter5(oil_body, OrientedBox(xAxis, inlet5_transform, inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition5(emitter5);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection5(emitter5, inlet_buffer);
-    AlignedBoxByCell outlet_disposer(oil_body, AlignedBox(xAxis, outlet_transform, outlet_halfsize));
+    OrientedBoxByCell outlet_disposer(oil_body, OrientedBox(xAxis, outlet_transform, outlet_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> outlet_disposer_outflow_deletion(outlet_disposer);
 
     GetDiffusionTimeStepSize get_thermal_time_step(oil_body);

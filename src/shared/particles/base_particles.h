@@ -82,8 +82,8 @@ class BaseParticles
 {
   private:
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
-    DataContainerUniquePtrAssemble<SingularVariable> all_singular_variable_ptrs_;
-    UniquePtrsKeeper<Entity> unique_variable_ptrs_;
+    DataContainerUniquePtrAssemble<SingleVariable> all_singular_variable_ptrs_;
+    UniquePtrsKeeper<Quantity> unique_variable_ptrs_;
     UniquePtrsKeeper<XmlParser> xml_parser_ptrs_;
 
   public:
@@ -99,7 +99,7 @@ class BaseParticles
     // particles_bound_ gives the total number of particles in all groups.
     //----------------------------------------------------------------------
   protected:
-    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    SingleVariable<UnsignedInt> *sv_total_real_particles_;
     UnsignedInt particles_bound_;
 
   public:
@@ -108,7 +108,7 @@ class BaseParticles
     //----------------------------------------------------------------------
     // Generalized particle manipulation
     //----------------------------------------------------------------------
-    SingularVariable<UnsignedInt> *svTotalRealParticles() { return sv_total_real_particles_; };
+    SingleVariable<UnsignedInt> *svTotalRealParticles() { return sv_total_real_particles_; };
     UnsignedInt TotalRealParticles() { return sv_total_real_particles_->getValue(); };
     UnsignedInt ParticlesBound() { return particles_bound_; };
     void initializeAllParticlesBounds(size_t total_real_particles);
@@ -139,11 +139,11 @@ class BaseParticles
     StdVec<DiscreteVariable<DataType> *> getVariablesByName(const StdVec<std::string> &names, const std::string &suffix);
 
     template <typename DataType>
-    SingularVariable<DataType> *addUniqueSingularVariable(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
+    SingleVariable<DataType> *addUniqueSingleVariable(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
-    SingularVariable<DataType> *registerSingularVariable(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
+    SingleVariable<DataType> *registerSingleVariable(const std::string &name, DataType initial_value = ZeroData<DataType>::value);
     template <typename DataType>
-    SingularVariable<DataType> *getSingularVariableByName(const std::string &name);
+    SingleVariable<DataType> *getSingleVariableByName(const std::string &name);
     //----------------------------------------------------------------------
     // Manage subsets of particle variables
     //----------------------------------------------------------------------
@@ -204,7 +204,7 @@ class BaseParticles
     XmlParser &restart_xml_parser_;
     XmlParser &reload_xml_parser_;
     DiscreteVariables all_discrete_variables_;
-    SingularVariables all_singular_variables_;
+    SingleVariables all_singular_variables_;
     DiscreteVariables variables_to_write_;
 
   protected:

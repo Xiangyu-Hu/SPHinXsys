@@ -16,7 +16,7 @@ int main(int ac, char *av[])
     column.defineBodyLevelSetShape().writeLevelSet();
     column.defineMaterial<J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? column.generateParticles<BaseParticles, Reload>(column.getName())
+        ? column.generateParticles<BaseParticles, Reload>(column.Name())
         : column.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));

@@ -5,20 +5,20 @@ namespace SPH
 namespace fluid_dynamics
 {
 //=================================================================================================//
-BufferIndicationCK::BufferIndicationCK(AlignedBoxByCell &aligned_box_part)
-    : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
-      part_id_(aligned_box_part.getPartID()),
-      sv_aligned_box_(aligned_box_part.svAlignedBox()),
+BufferIndicationCK::BufferIndicationCK(OrientedBoxByCell &oriented_box_part)
+    : BaseLocalDynamics<OrientedBoxByCell>(oriented_box_part),
+      part_id_(oriented_box_part.getPartID()),
+      sv_oriented_box_(oriented_box_part.svOrientedBox()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_buffer_indicator_(particles_->registerStateVariable<int>("BufferIndicator"))
 {
     particles_->addEvolvingVariable<int>("BufferIndicator");
 }
 //=================================================================================================//
-BufferOutflowIndication::BufferOutflowIndication(AlignedBoxByCell &aligned_box_part)
-    : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
-      part_id_(aligned_box_part.getPartID()),
-      sv_aligned_box_(aligned_box_part.svAlignedBox()),
+BufferOutflowIndication::BufferOutflowIndication(OrientedBoxByCell &oriented_box_part)
+    : BaseLocalDynamics<OrientedBoxByCell>(oriented_box_part),
+      part_id_(oriented_box_part.getPartID()),
+      sv_oriented_box_(oriented_box_part.svOrientedBox()),
       sv_total_real_particles_(particles_->svTotalRealParticles()),
       dv_buffer_indicator_(
           particles_->registerStateVariable<int>("BufferIndicator")),
@@ -26,9 +26,9 @@ BufferOutflowIndication::BufferOutflowIndication(AlignedBoxByCell &aligned_box_p
       dv_life_status_(particles_->registerStateVariable<int>("LifeStatus", 0)) {}
 //=================================================================================================//
 BufferOutflowIndication::UpdateKernel::
-    IsDeletable::IsDeletable(int part_id, AlignedBox *aligned_box,
+    IsDeletable::IsDeletable(int part_id, OrientedBox *oriented_box,
                              Vecd *pos, int *buffer_particle_indicator)
-    : part_id_(part_id), aligned_box_(aligned_box), pos_(pos),
+    : part_id_(part_id), oriented_box_(oriented_box), pos_(pos),
       buffer_indicator_(buffer_particle_indicator) {}
 //=================================================================================================//
 OutflowParticleDeletion::OutflowParticleDeletion(SPHBody &sph_body)

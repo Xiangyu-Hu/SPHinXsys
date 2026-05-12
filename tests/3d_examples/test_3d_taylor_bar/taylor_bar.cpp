@@ -28,7 +28,7 @@ int main(int ac, char *av[])
     column.defineMaterial<HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? column.generateParticles<BaseParticles, Reload>(column.getName())
+        ? column.generateParticles<BaseParticles, Reload>(column.Name())
         : column.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall(sph_system, makeShared<WallShape>("Wall"));

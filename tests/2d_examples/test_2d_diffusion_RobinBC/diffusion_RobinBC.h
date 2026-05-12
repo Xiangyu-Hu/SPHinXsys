@@ -147,7 +147,7 @@ class RobinBoundaryDefinition : public LocalDynamics
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)),
           phi_convection_(particles_->template getVariableDataByName<Real>(diffusion_species_name + "Convection")),
-          phi_infinity_(*(this->particles_->template getSingularVariableByName<Real>(diffusion_species_name + "Infinity")->Data())) {};
+          phi_infinity_(*(this->particles_->template getSingleVariableByName<Real>(diffusion_species_name + "Infinity")->Data())) {};
 
     void update(size_t index_i, Real dt)
     {

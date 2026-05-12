@@ -58,12 +58,11 @@ void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream,
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
     for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write))
     {
-        Real *data_field = variable->Data();
         output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\" format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {
-            output_stream << std::fixed << std::setprecision(9) << data_field[i] << " ";
+            output_stream << std::fixed << std::setprecision(9) << variable->getValueWithScalingRef(i) << " ";
         }
         output_stream << std::endl;
         output_stream << "    </DataArray>\n";
@@ -73,12 +72,11 @@ void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream,
     constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
     for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write))
     {
-        Vecd *data_field = variable->Data();
         output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"3\" format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {
-            Vec3d vector_value = upgradeToVec3d(data_field[i]);
+            Vec3d vector_value = upgradeToVec3d(variable->getValueWithScalingRef(i));
             output_stream << std::fixed << std::setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
         }
         output_stream << std::endl;
@@ -89,12 +87,11 @@ void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream,
     constexpr int type_index_Matd = DataTypeIndex<Matd>::value;
     for (DiscreteVariable<Matd> *variable : std::get<type_index_Matd>(variables_to_write))
     {
-        Matd *data_field = variable->Data();
         output_stream << "    <DataArray Name=\"" << variable->Name() << "\" type=\"Float32\"  NumberOfComponents=\"9\" format=\"ascii\">\n";
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {
-            Mat3d matrix_value = upgradeToMat3d(data_field[i]);
+            Mat3d matrix_value = upgradeToMat3d(variable->getValueWithScalingRef(i));
             for (int k = 0; k != 3; ++k)
             {
                 Vec3d col_vector = matrix_value.col(k);

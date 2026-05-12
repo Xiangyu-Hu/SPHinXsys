@@ -35,14 +35,14 @@
 namespace SPH
 {
 template <typename DataType>
-class ConstantArray : public Entity
+class ConstantArray : public Quantity
 {
-    UniquePtrKeeper<Entity> device_only_constant_array_keeper_;
+    UniquePtrKeeper<Quantity> device_only_constant_array_keeper_;
 
   public:
     template <typename GeneratorType>
     ConstantArray(StdVec<GeneratorType *> generators)
-        : Entity("ConstantArray"), data_size_(generators.size()),
+        : Quantity("ConstantArray"), data_size_(generators.size()),
           data_(new DataType[data_size_]), delegated_(data_)
     {
         for (size_t i = 0; i != data_size_; ++i)
@@ -52,7 +52,7 @@ class ConstantArray : public Entity
     };
 
     ConstantArray(const std::string &name, StdVec<DataType> constants)
-        : Entity(name), data_size_(constants.size()),
+        : Quantity(name), data_size_(constants.size()),
           data_(new DataType[data_size_]), delegated_(data_)
     {
         for (size_t i = 0; i != data_size_; ++i)
@@ -63,7 +63,7 @@ class ConstantArray : public Entity
 
     template <class InitializationFunction>
     ConstantArray(size_t data_size, const InitializationFunction &initialization)
-        : Entity("ConstantArray"), data_size_(data_size),
+        : Quantity("ConstantArray"), data_size_(data_size),
           data_(new DataType[data_size_]), delegated_(data_)
     {
         for (size_t i = 0; i != data_size_; ++i)
@@ -91,7 +91,7 @@ class ConstantArray : public Entity
 };
 
 template <typename DataType>
-class DeviceOnlyConstantArray : public Entity
+class DeviceOnlyConstantArray : public Quantity
 {
   public:
     template <class PolicyType>

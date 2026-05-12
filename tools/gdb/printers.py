@@ -140,7 +140,7 @@ def _iter_vector_elements(vec_val: gdb.Value):
 
 
 def _extract_entity_name(obj: gdb.Value):
-    """Try to extract SPH::Entity::name_ from a (possibly derived) object."""
+    """Try to extract SPH::Quantity::name_ from a (possibly derived) object."""
     # Prefer the public accessor; member name_ is protected and may not be
     # accessible depending on GDB settings / MI frontend.
     try:
@@ -153,7 +153,7 @@ def _extract_entity_name(obj: gdb.Value):
     except Exception:
         pass
 
-    # Search base classes (Entity may be a base).
+    # Search base classes (Quantity may be a base).
     t = obj.type
     try:
         fields = t.fields()
@@ -264,7 +264,7 @@ class SPHDiscreteVariablePtrPrinter:
         except Exception:
             return iter(())
 
-        # Expose name_ via Entity base when possible.
+        # Expose name_ via Quantity base when possible.
         try:
             yield ("name_", obj["name_"])
         except Exception:

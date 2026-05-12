@@ -260,10 +260,10 @@ int main(int ac, char *av[])
     // //----------------------------------------------------------------------
     // //	Creating body parts.
     // //----------------------------------------------------------------------
-    AlignedBoxByCell left_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
-    left_emitter_by_cell.writeAlignedBoxToVtp();
-    AlignedBoxByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
-    right_emitter_by_cell.writeAlignedBoxToVtp();
+    OrientedBoxByCell left_emitter_by_cell(water_body, OrientedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
+    left_emitter_by_cell.writeOrientedBoxToVtp();
+    OrientedBoxByCell right_emitter_by_cell(water_body, OrientedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
+    right_emitter_by_cell.writeOrientedBoxToVtp();
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -341,7 +341,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     size_t screen_output_interval = 100;
     size_t observation_sample_interval = screen_output_interval * 2;

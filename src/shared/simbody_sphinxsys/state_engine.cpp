@@ -69,7 +69,7 @@ void SimbodyStateEngine::addStateVariable(std::string statevariablename,
 //=============================================================================================//
 void SimbodyStateEngine::addStateVariable(SimbodyStateEngine::StateVariable *statevariable)
 {
-    std::string &statevariablename = statevariable->getName();
+    std::string &statevariablename = statevariable->Name();
     /** don't add state if there is another state variable with the same name. */
     std::map<std::string, StateVariableInfo>::const_iterator it;
     it = namedstatevariableinfo_.find(statevariablename);
@@ -171,7 +171,7 @@ Real SimbodyStateEngine::AddedStateVariable::getValue()
 
     std::stringstream msg;
     msg << "SimbodyStateEngine::AddedStateVariable::getValue: ERR- variable '"
-        << getName() << "' is invalid! " << __FILE__ << __LINE__;
+        << Name() << "' is invalid! " << __FILE__ << __LINE__;
     throw(msg.str());
     return SimTK::NaN;
 }
@@ -188,7 +188,7 @@ void SimbodyStateEngine::AddedStateVariable::setValue(Real value)
 
     std::stringstream msg;
     msg << "SimbodyStateEngine::AddedStateVariable::setValue: ERR- variable '"
-        << getName() << "' is invalid! " << __FILE__ << __LINE__;
+        << Name() << "' is invalid! " << __FILE__ << __LINE__;
     ;
     throw(msg.str());
 }
@@ -196,14 +196,14 @@ void SimbodyStateEngine::AddedStateVariable::setValue(Real value)
 Real SimbodyStateEngine::AddedStateVariable::
     getDerivative()
 {
-    // return getCacheVariableValue<Real>(state, getName()+"_deriv");
+    // return getCacheVariableValue<Real>(state, Name()+"_deriv");
     return 0.0;
 }
 //=============================================================================================//
 void SimbodyStateEngine::AddedStateVariable::
     setDerivative(Real deriv)
 {
-    // return setCacheVariableValue<Real>(state, getName()+"_deriv", deriv);
+    // return setCacheVariableValue<Real>(state, Name()+"_deriv", deriv);
 }
 //=============================================================================================//
 void SimbodyStateEngine::reporter(SimTK::State &state_)

@@ -130,7 +130,7 @@ template <class MeshType>
 class MultiResolutionMeshField : public BaseMeshField
 {
     DataContainerUniquePtrAssemble<DiscreteVariable> cell_variable_ptrs_;
-    UniquePtrsKeeper<Entity> unique_entity_ptrs_;
+    UniquePtrsKeeper<Quantity> unique_entity_ptrs_;
 
   public:
     MultiResolutionMeshField(

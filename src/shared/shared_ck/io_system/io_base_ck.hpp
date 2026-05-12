@@ -56,7 +56,7 @@ BodyStatesRecording &BodyStatesRecordingToVtpCK<ExecutionPolicy>::addDerivedVari
     }
     else
     {
-        std::cout << "\n Error: the body:" << sph_body.getName()
+        std::cout << "\n Error: the body:" << sph_body.Name()
                   << " is not in the recording body list" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
@@ -135,7 +135,7 @@ void RestartIOCK<ExecutionPolicy>::reportEvolvingVariablesBounds(size_t restart_
 {
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
-        std::string body_name = real_bodies_[i]->getName();
+        std::string body_name = real_bodies_[i]->Name();
 
         std::cout << "Evolving Variables Summary for " << body_name << ":\n";
         std::cout << "---------------------------------------------\n";

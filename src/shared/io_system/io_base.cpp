@@ -82,7 +82,7 @@ void RestartIO::writeToFile(size_t iteration_step)
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
-        std::string body_name = real_bodies_[i]->getName();
+        std::string body_name = real_bodies_[i]->Name();
 
         // Add a body element
         restart_xml.addNewElement(restart_xml.first_element_, "body");
@@ -111,7 +111,7 @@ void RestartIO::reportRestartSummary(size_t restart_step)
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
-        std::string body_name = real_bodies_[i]->getName();
+        std::string body_name = real_bodies_[i]->Name();
 
         std::cout << "Restart Information Summary:\n";
         std::cout << "---------------------------------------------\n";
@@ -144,7 +144,7 @@ void RestartIO::readFromFile(size_t restart_step)
     // Iterate through all body elements in the XML
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
-        std::string body_name = real_bodies_[i]->getName();
+        std::string body_name = real_bodies_[i]->Name();
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
 
         // Find the body element by iterating through child elements
@@ -182,7 +182,7 @@ ReloadParticleIO::ReloadParticleIO(SPHBodyVector bodies)
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
-        file_names_.push_back(io_environment_.ReloadFolder() + "/" + bodies_[i]->getName() + "_rld.xml");
+        file_names_.push_back(io_environment_.ReloadFolder() + "/" + bodies_[i]->Name() + "_rld.xml");
     }
 }
 //=============================================================================================//
@@ -196,7 +196,7 @@ ReloadParticleIO::ReloadParticleIO(SPHBody &sph_body, const std::string &given_b
 }
 //=============================================================================================//
 ReloadParticleIO::ReloadParticleIO(SPHBody &sph_body)
-    : ReloadParticleIO(sph_body, sph_body.getName()) {}
+    : ReloadParticleIO(sph_body, sph_body.Name()) {}
 //=============================================================================================//
 void ReloadParticleIO::writeToFile(size_t iteration_step)
 {

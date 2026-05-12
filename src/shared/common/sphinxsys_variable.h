@@ -33,48 +33,62 @@
 #include "base_data_type_package.h"
 #include "execution_policy.h"
 #include "ownership.h"
-#include "sphinxsys_entity.h"
 
 namespace SPH
 {
 using namespace execution;
 
 template <typename DataType>
-class SingularVariable;
+class SingleVariable;
 
 template <typename DataType>
 class DiscreteVariable;
 
-template <typename DataType>
-class DeviceSharedSingularVariable : public Entity
+class Quantity
 {
   public:
-    DeviceSharedSingularVariable(SingularVariable<DataType> *host_variable);
-    ~DeviceSharedSingularVariable();
+    explicit Quantity(const std::string &name) : name_(name) {};
+    virtual ~Quantity() {};
+    std::string Name() const { return name_; };
+    Real getScalingRef() const { return scaling_ref_; };
+    void setScalingRef(Real scaling_ref) { scaling_ref_ = scaling_ref; };
+
+  protected:
+    const std::string name_;
+    Real scaling_ref_ = Real(1);
+};
+
+template <typename DataType>
+class DeviceSharedSingleVariable : public Quantity
+{
+  public:
+    DeviceSharedSingleVariable(SingleVariable<DataType> *host_variable);
+    ~DeviceSharedSingleVariable();
 
   protected:
     DataType *device_shared_data_;
 };
 
 template <typename DataType>
-class SingularVariable : public Entity
+class SingleVariable : public Quantity
 {
-    UniquePtrKeeper<Entity> device_shared_singular_variable_keeper_;
+    UniquePtrKeeper<Quantity> device_shared_singular_variable_keeper_;
 
   public:
-    SingularVariable(const std::string &name, const DataType &value)
-        : Entity(name), data_(new DataType(value)), delegated_(data_) {};
+    SingleVariable(const std::string &name, const DataType &value)
+        : Quantity(name), data_(new DataType(value)), delegated_(data_) {};
 
     template <typename... Args>
-    SingularVariable(const std::string &name, Args &&...args)
-        : Entity(name), data_(new DataType(std::forward<Args>(args)...)),
+    SingleVariable(const std::string &name, Args &&...args)
+        : Quantity(name), data_(new DataType(std::forward<Args>(args)...)),
           delegated_(data_){};
 
-    ~SingularVariable() { delete data_; };
+    ~SingleVariable() { delete data_; };
 
     DataType *Data() { return delegated_; };
     void setValue(const DataType &value) { *delegated_ = value; };
     DataType getValue() const { return *delegated_; };
+    DataType getValueWithScalingRef() const { return *delegated_ * scaling_ref_; };
     void incrementValue(const DataType &value) { *delegated_ += value; };
 
     template <class ExecutionPolicy>
@@ -91,7 +105,7 @@ class SingularVariable : public Entity
         if (!isDataDelegated())
         {
             device_shared_singular_variable_keeper_
-                .createPtr<DeviceSharedSingularVariable<DataType>>(this);
+                .createPtr<DeviceSharedSingleVariable<DataType>>(this);
         }
         return delegated_;
     };
@@ -104,7 +118,7 @@ class SingularVariable : public Entity
 };
 
 template <typename DataType>
-class DeviceOnlyDiscreteVariable : public Entity
+class DeviceOnlyDiscreteVariable : public Quantity
 {
   public:
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable);
@@ -116,16 +130,16 @@ class DeviceOnlyDiscreteVariable : public Entity
 };
 
 template <typename DataType>
-class DiscreteVariable : public Entity
+class DiscreteVariable : public Quantity
 {
-    UniquePtrKeeper<Entity> device_only_variable_keeper_;
+    UniquePtrKeeper<Quantity> device_only_variable_keeper_;
 
   public:
     typedef DataType ContainedDataType;
     template <class InitializationFunction>
     DiscreteVariable(const std::string &name, size_t data_size,
                      const InitializationFunction &initialization)
-        : Entity(name), data_size_(data_size), data_field_(new DataType[data_size]),
+        : Quantity(name), data_size_(data_size), data_field_(new DataType[data_size]),
           device_only_variable_(nullptr), device_data_field_(nullptr)
     {
         for (size_t i = 0; i < data_size; ++i)
@@ -149,6 +163,7 @@ class DiscreteVariable : public Entity
     DataType *Data() { return data_field_; };
     void setValue(size_t index, const DataType &value) { data_field_[index] = value; };
     DataType getValue(size_t index) { return data_field_[index]; };
+    DataType getValueWithScalingRef(UnsignedInt index) const { return data_field_[index] * scaling_ref_; };
 
     template <class FillFunction>
     void fill(UnsignedInt begin_index, UnsignedInt end_index, const FillFunction &fill_function)
@@ -156,7 +171,7 @@ class DiscreteVariable : public Entity
         if (end_index > data_size_)
         {
             std::cout << "\n Error: trying to fill data out of range in DiscreteVariable '"
-                      << name_ << "'!" << std::endl;
+                      << this->name_ << "'!" << std::endl;
             exit(1);
         }
         for (UnsignedInt i = begin_index; i < end_index; ++i)
@@ -301,6 +316,6 @@ struct FinalizeVariablesAfterRead
 /** Generalized particle variable type*/
 typedef DataContainerAddressAssemble<DiscreteVariable> DiscreteVariables;
 /** Generalized particle variable type*/
-typedef DataContainerAddressAssemble<SingularVariable> SingularVariables;
+typedef DataContainerAddressAssemble<SingleVariable> SingleVariables;
 } // namespace SPH
 #endif // SPHINXSYS_VARIABLE_H

@@ -14,13 +14,13 @@ template <class ExecutionPolicy, class EncloserType>
 BufferIndicationCK::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : part_id_(encloser.part_id_),
-      aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+      oriented_box_(encloser.sv_oriented_box_->DelegatedData(ex_policy)),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       buffer_indicator_(encloser.dv_buffer_indicator_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 inline void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
 {
-    if (aligned_box_->checkContain(pos_[index_i]))
+    if (oriented_box_->checkContain(pos_[index_i]))
     {
         buffer_indicator_[index_i] = part_id_;
     }
@@ -29,12 +29,12 @@ inline void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
 template <class ConditionType>
 template <typename... Args>
 BufferInflowInjectionCK<ConditionType>::
-    BufferInflowInjectionCK(AlignedBoxByCell &aligned_box_part, Args &&...args)
-    : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
-      part_id_(aligned_box_part.getPartID()),
+    BufferInflowInjectionCK(OrientedBoxByCell &oriented_box_part, Args &&...args)
+    : BaseLocalDynamics<OrientedBoxByCell>(oriented_box_part),
+      part_id_(oriented_box_part.getPartID()),
       fluid_(DynamicCast<FluidType>(this, sph_body_->getBaseMaterial())),
       condition_(std::forward<Args>(args)...),
-      sv_aligned_box_(aligned_box_part.svAlignedBox()),
+      sv_oriented_box_(oriented_box_part.svOrientedBox()),
       sv_total_real_particles_(this->particles_->svTotalRealParticles()),
       spawn_real_particle_method_(this->particles_),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
@@ -52,7 +52,7 @@ template <class ExecutionPolicy, class EncloserType>
 BufferInflowInjectionCK<ConditionType>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : part_id_(encloser.part_id_), eos_(encloser.fluid_), condition_(encloser.condition_),
-      aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+      oriented_box_(encloser.sv_oriented_box_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       spawn_real_particle_(ex_policy, encloser.spawn_real_particle_method_),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
@@ -65,15 +65,15 @@ BufferInflowInjectionCK<ConditionType>::
 template <class ConditionType>
 void BufferInflowInjectionCK<ConditionType>::UpdateKernel::update(size_t index_i, Real dt)
 {
-    if (!aligned_box_->checkInBounds(pos_[index_i]))
+    if (!oriented_box_->checkInBounds(pos_[index_i]))
     {
-        if (aligned_box_->checkUpperBound(pos_[index_i], upper_bound_fringe_) &&
+        if (oriented_box_->checkUpperBound(pos_[index_i], upper_bound_fringe_) &&
             buffer_indicator_[index_i] == part_id_ &&
             index_i < *total_real_particles_)
         {
             UnsignedInt new_particle_index = spawn_real_particle_(index_i);
             buffer_indicator_[new_particle_index] = 0;
-            pos_[index_i] = aligned_box_->getUpperPeriodic(pos_[index_i]);
+            pos_[index_i] = oriented_box_->getUpperPeriodic(pos_[index_i]);
             p_[index_i] = condition_.getPressure(p_[index_i], *physical_time_);
             rho_[index_i] = eos_.DensityFromPressure(p_[index_i]);
         }
@@ -83,22 +83,22 @@ void BufferInflowInjectionCK<ConditionType>::UpdateKernel::update(size_t index_i
 template <class ExecutionPolicy, class EncloserType>
 BufferOutflowIndication::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+    : oriented_box_(encloser.sv_oriented_box_->DelegatedData(ex_policy)),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       life_status_(encloser.dv_life_status_->DelegatedData(ex_policy)),
-      is_deltable_(encloser.part_id_, aligned_box_, pos_,
+      is_deltable_(encloser.part_id_, oriented_box_, pos_,
                    encloser.dv_buffer_indicator_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 inline bool BufferOutflowIndication::UpdateKernel::IsDeletable::operator()(size_t index_i) const
 {
     return buffer_indicator_[index_i] == part_id_ &&
-           aligned_box_->checkLowerBound(pos_[index_i]);
+           oriented_box_->checkLowerBound(pos_[index_i]);
 }
 //=================================================================================================//
 inline void BufferOutflowIndication::UpdateKernel::update(size_t index_i, Real dt)
 {
-    if (!aligned_box_->checkInBounds(pos_[index_i]))
+    if (!oriented_box_->checkInBounds(pos_[index_i]))
     {
         if (is_deltable_(index_i) && index_i < *total_real_particles_)
         {
@@ -124,10 +124,10 @@ inline void OutflowParticleDeletion::UpdateKernel::update(UnsignedInt index_i, R
 template <class KernelCorrectionType, typename ConditionType>
 template <typename... Args>
 PressureVelocityCondition<KernelCorrectionType, ConditionType>::
-    PressureVelocityCondition(AlignedBoxByCell &aligned_box_part, Args &&...args)
-    : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
+    PressureVelocityCondition(OrientedBoxByCell &oriented_box_part, Args &&...args)
+    : BaseLocalDynamics<OrientedBoxByCell>(oriented_box_part),
       BaseStateCondition(this->particles_),
-      sv_aligned_box_(aligned_box_part.svAlignedBox()),
+      sv_oriented_box_(oriented_box_part.svOrientedBox()),
       kernel_correction_method_(this->particles_),
       condition_(std::forward<Args>(args)...),
       sv_physical_time_(this->sph_system_->template getSystemVariableByName<Real>("PhysicalTime")),
@@ -138,18 +138,18 @@ template <class ExecutionPolicy, class EncloserType>
 PressureVelocityCondition<KernelCorrectionType, ConditionType>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseStateCondition::ComputingKernel(ex_policy, encloser),
-      aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+      oriented_box_(encloser.sv_oriented_box_->DelegatedData(ex_policy)),
       correction_kernel_(ex_policy, encloser.kernel_correction_method_),
       condition_(encloser.condition_),
       physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
       kernel_gradient_integral_(encloser.dv_kernel_gradient_integral_->DelegatedData(ex_policy)),
-      axis_(aligned_box_->AlignmentAxis()), transform_(&aligned_box_->getTransform()) {}
+      axis_(oriented_box_->ReferenceAxis()), transform_(&oriented_box_->getTransform()) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename ConditionType>
 void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
-    if (aligned_box_->checkContain(pos_[index_i]))
+    if (oriented_box_->checkContain(pos_[index_i]))
     {
         Vecd corrected_residual = correction_kernel_(index_i) * kernel_gradient_integral_[index_i];
         vel_[index_i] -= dt * condition_.getPressure(p_[index_i], *physical_time_) /
@@ -166,11 +166,11 @@ void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
 template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>
 template <typename... Args>
 BidirectionalBoundaryCK<ExecutionPolicy, KernelCorrectionType, ConditionType>::
-    BidirectionalBoundaryCK(AlignedBoxByCell &aligned_box_part, Args &&...args)
-    : AbstractBidirectionalBoundary(), tag_buffer_particles_(aligned_box_part),
-      boundary_condition_(aligned_box_part, std::forward<Args>(args)...),
-      inflow_injection_(aligned_box_part, std::forward<Args>(args)...),
-      outflow_indication_(aligned_box_part) {}
+    BidirectionalBoundaryCK(OrientedBoxByCell &oriented_box_part, Args &&...args)
+    : AbstractBidirectionalBoundary(), tag_buffer_particles_(oriented_box_part),
+      boundary_condition_(oriented_box_part, std::forward<Args>(args)...),
+      inflow_injection_(oriented_box_part, std::forward<Args>(args)...),
+      outflow_indication_(oriented_box_part) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

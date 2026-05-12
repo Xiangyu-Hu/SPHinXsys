@@ -60,7 +60,7 @@ class TriangleMeshShape : public Shape
     virtual BoundingBoxd findBounds() override;
     StdVec<std::array<Real, 3>> &getVertices() { return vertices_; }
     StdVec<std::array<int, 3>> &getFaces() { return faces_; }
-    void writTriangleMeshShapeToVtp(Transform transform = Transform());
+    void writTriangleMeshShapeToVtp(Transform transform = Transform(), Real scale_factor = 1.0);
 
   protected:
     StdVec<std::array<Real, 3>> vertices_;
