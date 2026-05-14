@@ -131,8 +131,8 @@ struct PressureBC
     Vec3d center;
     Rotation3d rot;
     Vec3d buffer_halfsize;
-    OrientedBox alignedbox;
-    OrientedBoxByCell alignedbox_by_cell;
+    OrientedBox oriented_box;
+    OrientedBoxByCell oriented_box_by_cell;
     fluid_dynamics::BidirectionalBoundaryCK<ExecutionPolicy, CorrectionType, BoundaryPressurePrescribed> boundary_condition;
     StateDynamics<ExecutionPolicy, ResetBufferCorrectionMatrixCK> reset_buffer_correction_matrix;
 
@@ -143,10 +143,10 @@ struct PressureBC
           buffer_halfsize(params.L_emitter * 0.5,
                           params.diameter * 0.505,
                           params.diameter * 0.505),
-          alignedbox(xAxis, Transform(rot, center), buffer_halfsize),
-          alignedbox_by_cell(fluid_body, alignedbox),
-          boundary_condition(alignedbox_by_cell, params.pressure, t_ref),
-          reset_buffer_correction_matrix(alignedbox_by_cell) {}
+          oriented_box(xAxis, Transform(rot, center), buffer_halfsize),
+          oriented_box_by_cell(fluid_body, oriented_box),
+          boundary_condition(oriented_box_by_cell, params.pressure, t_ref),
+          reset_buffer_correction_matrix(oriented_box_by_cell) {}
 };
 
 void run_t_shape_pipe(Parameters &params, bool run_relaxation = false, bool reload_particles = true);
@@ -343,7 +343,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
             std::make_unique<PressureBC<MainExecutionPolicy, LinearCorrectionCK>>(
                 water_block, boundary, params.t_ref));
     for (auto &bc : bidirectional_pressure_conditions)
-        bc->alignedbox_by_cell.writeOrientedBoxToVtp();
+        bc->oriented_box_by_cell.writeOrientedBoxToVtp();
     StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> particle_deletion(water_block);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
         fluid_density_summation(water_body_inner, water_wall_contact);
