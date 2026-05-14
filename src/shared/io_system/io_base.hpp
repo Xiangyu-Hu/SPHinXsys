@@ -18,7 +18,7 @@ BodyStatesRecording &BodyStatesRecording::addToWrite(SPHBody &sph_body, const st
     }
     else
     {
-        std::cout << "\n Error: the body:" << sph_body.getName()
+        std::cout << "\n Error: the body:" << sph_body.Name()
                   << " is not in the recording list" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
@@ -39,7 +39,7 @@ BodyStatesRecording &BodyStatesRecording::addDerivedVariableRecording(
     }
     else
     {
-        std::cout << "\n Error: the body:" << sph_body.getName()
+        std::cout << "\n Error: the body:" << sph_body.Name()
                   << " is not in the recording body list" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);
@@ -56,7 +56,7 @@ void ReloadParticleIO::addToReload(SPHBody &sph_body, const std::string &name)
     }
     else
     {
-        std::cout << "\n Error: the body:" << sph_body.getName()
+        std::cout << "\n Error: the body:" << sph_body.Name()
                   << " is not in the recording list" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         exit(1);

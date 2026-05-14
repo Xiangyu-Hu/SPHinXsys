@@ -142,6 +142,7 @@ int main(int ac, char *av[])
     // outputs
     //-----------------------------------------------------------------------------
     BodyStatesRecordingToVtp write_beam_states(sph_system);
+    RestartIO restart_io(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>> write_beam_tip_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
@@ -150,12 +151,21 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     beam_initial_velocity.exec();
     beam_corrected_configuration.exec();
+    //----------------------------------------
+    //	Load restart file if necessary.
+    //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    if (sph_system.RestartStep() != 0)
+    {
+        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
+        beam_observer_contact.updateConfiguration();
+    }
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
     //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
-    int ite = 0;
-    Real T0 = 1.0;
+
+    int ite = sph_system.RestartStep();
+    Real T0 = 1.0; // total simulation time
     Real end_time = T0;
     // time step size for output file
     Real output_interval = 0.01 * T0;
@@ -168,9 +178,11 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // from here the time stepping begins
     //-----------------------------------------------------------------------------
-    write_beam_states.writeToFile(0);
-    write_beam_tip_displacement.writeToFile(0);
-
+    if (sph_system.RestartStep() == 0)
+    {
+        write_beam_states.writeToFile(0);
+        write_beam_tip_displacement.writeToFile(0);
+    }
     // computation loop starts
     while (physical_time < end_time)
     {
@@ -198,6 +210,10 @@ int main(int ac, char *av[])
                               << physical_time << "	dt: "
                               << dt << "\n";
                 }
+                if (ite % 1000 == 0)
+                {
+                    restart_io.writeToFile(ite);
+                }
             }
         }
 
@@ -219,7 +235,7 @@ int main(int ac, char *av[])
         // The lift force at the cylinder is very small and not important in this case.
         write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
     }
-    else
+    else if (sph_system.RestartStep() == 0)
     {
         write_beam_tip_displacement.testResult();
     }

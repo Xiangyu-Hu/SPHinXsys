@@ -17,7 +17,7 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
 
             if (state_recording_)
             {
-                std::string filefullpath = io_environment_.OutputFolder() + "/" + body->getName() + "_" + sequence + ".vtp";
+                std::string filefullpath = io_environment_.OutputFolder() + "/" + body->Name() + "_" + sequence + ".vtp";
 
                 size_t total_real_particles = base_particles.TotalRealParticles();
 
@@ -112,7 +112,7 @@ void BodyStatesRecordingToVtp::addParticlesToVtkPolyData(vtkPolyData *polydata, 
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
     for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write))
     {
-          vtkNew<vtkFloatArray> arr;
+        vtkNew<vtkFloatArray> arr;
         arr->SetName(variable->Name().c_str());
         arr->SetNumberOfValues(static_cast<vtkIdType>(total_real_particles));
         for (size_t i = 0; i < total_real_particles; ++i)
@@ -172,7 +172,7 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
 
             if (state_recording_)
             {
-                std::string filefullpath = io_environment_.OutputFolder() + "/" + body->getName() + "_" + sequence + ".vtp";
+                std::string filefullpath = io_environment_.OutputFolder() + "/" + body->Name() + "_" + sequence + ".vtp";
                 if (fs::exists(filefullpath))
                 {
                     fs::remove(filefullpath);
@@ -194,7 +194,7 @@ void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
                 }
 
                 size_t total_real_particles = base_particles.TotalRealParticles();
-                out_file << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles
+                out_file << "  <Piece Name =\"" << body->Name() << "\" NumberOfPoints=\"" << total_real_particles
                          << "\" NumberOfVerts=\"" << total_real_particles << "\">\n";
 
                 // write current/final particle positions first
@@ -256,7 +256,7 @@ void BodyStatesRecordingToVtpString::writeWithFileName(const std::string &sequen
         {
             if (state_recording_)
             {
-                const auto &vtuName = body->getName() + "_" + sequence + ".vtu";
+                const auto &vtuName = body->Name() + "_" + sequence + ".vtu";
                 std::stringstream sstream;
                 // begin of the XML file
                 writeVtu(sstream, body);
@@ -275,7 +275,7 @@ void BodyStatesRecordingToVtpString::writeVtu(std::ostream &stream, SPHBody *bod
 
     BaseParticles &base_particles = body->getBaseParticles();
     size_t total_real_particles = base_particles.TotalRealParticles();
-    stream << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfCells=\"0\">\n";
+    stream << "  <Piece Name =\"" << body->Name() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfCells=\"0\">\n";
 
     stream << "   <PointData  Vectors=\"vector\">\n";
     writeParticlesToVtk(stream, base_particles);
@@ -333,7 +333,7 @@ void ParticleGenerationRecordingToVtp::writeWithFileName(const std::string &sequ
 
     if (state_recording_)
     {
-        std::string filefullpath = io_environment_.OutputFolder() + "/" + sph_body_.getName() +
+        std::string filefullpath = io_environment_.OutputFolder() + "/" + sph_body_.Name() +
                                    "particle_generation_" + sequence + ".vtp";
         if (fs::exists(filefullpath))
         {
@@ -347,7 +347,7 @@ void ParticleGenerationRecordingToVtp::writeWithFileName(const std::string &sequ
         out_file << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">\n";
         out_file << " <PolyData>\n";
 
-        out_file << "  <Piece Name =\"" << sph_body_.getName() << "\" NumberOfPoints=\"" << total_generated_particles
+        out_file << "  <Piece Name =\"" << sph_body_.Name() << "\" NumberOfPoints=\"" << total_generated_particles
                  << "\" NumberOfVerts=\"" << total_generated_particles << "\">\n";
 
         // write current/final particle positions first

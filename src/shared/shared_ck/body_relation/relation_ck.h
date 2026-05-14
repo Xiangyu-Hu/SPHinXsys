@@ -50,7 +50,7 @@ class RelationBase
   public:
     RelationBase() {}
     virtual ~RelationBase() {};
-    const std::string &getName() const { return names_.front(); }
+    const std::string &Name() const { return names_.front(); }
 
   protected:
     StdVec<std::string> names_;

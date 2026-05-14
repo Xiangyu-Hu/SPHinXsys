@@ -43,36 +43,36 @@ class PressureBoundaryCondition : public BaseFlowBoundaryCondition
   public:
     /** default parameter indicates prescribe pressure */
     template <typename... Args>
-    explicit PressureBoundaryCondition(AlignedBoxByCell &aligned_box_part, Args &&...args)
-        : BaseFlowBoundaryCondition(aligned_box_part),
-          aligned_box_(aligned_box_part.getAlignedBox()),
-          alignment_axis_(aligned_box_.AlignmentAxis()),
-          transform_(aligned_box_.getTransform()),
-          target_pressure_(TargetPressure(aligned_box_part), std::forward<Args>(args)...),
+    explicit PressureBoundaryCondition(OrientedBoxByCell &oriented_box_part, Args &&...args)
+        : BaseFlowBoundaryCondition(oriented_box_part),
+          oriented_box_(oriented_box_part.getOrientedBox()),
+          axis_ref_(oriented_box_.ReferenceAxis()),
+          transform_(oriented_box_.getTransform()),
+          target_pressure_(TargetPressure(oriented_box_part), std::forward<Args>(args)...),
           kernel_sum_(particles_->getVariableDataByName<Vecd>("KernelSummation")),
           kernel_correction_(this->particles_),
           physical_time_(sph_system_->svPhysicalTime().Data()){};
     virtual ~PressureBoundaryCondition() {};
-    AlignedBox &getAlignedBox() { return aligned_box_; };
+    OrientedBox &getOrientedBox() { return oriented_box_; };
 
     TargetPressure *getTargetPressure() { return &target_pressure_; }
 
     void update(size_t index_i, Real dt = 0.0)
     {
-        if (aligned_box_.checkContain(pos_[index_i]))
+        if (oriented_box_.checkContain(pos_[index_i]))
         {
             // vel_[index_i] += 2.0 * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
             vel_[index_i] += 2.0 * kernel_correction_(index_i) * kernel_sum_[index_i] * target_pressure_(p_[index_i], *physical_time_) / rho_[index_i] * dt;
 
             Vecd frame_velocity = Vecd::Zero();
-            frame_velocity[alignment_axis_] = transform_.xformBaseVecToFrame(vel_[index_i])[alignment_axis_];
+            frame_velocity[axis_ref_] = transform_.xformBaseVecToFrame(vel_[index_i])[axis_ref_];
             vel_[index_i] = transform_.xformFrameVecToBase(frame_velocity);
         }
     };
 
   protected:
-    AlignedBox &aligned_box_;
-    const int alignment_axis_;
+    OrientedBox &oriented_box_;
+    const int axis_ref_;
     Transform &transform_;
     TargetPressure target_pressure_;
     Vecd *kernel_sum_;

@@ -46,7 +46,7 @@ class SDFBase
     virtual ~SDFBase() {};
     virtual Real operator()(const Vec3d &point) const = 0;
     virtual BoundingBoxd findBounds() const = 0;
-    std::string getName() { return name_; };
+    std::string Name() { return name_; };
 
   protected:
     std::string name_;

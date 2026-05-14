@@ -10,7 +10,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
     : sv_total_real_particles_(nullptr),
       particles_bound_(0), original_id_(nullptr), sorted_id_(nullptr),
       dv_pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
-      sph_body_(sph_body), body_name_(sph_body.getName()),
+      sph_body_(sph_body), body_name_(sph_body.Name()),
       base_material_(*base_material),
       restart_xml_parser_(*xml_parser_ptrs_.createPtr<XmlParser>("xml_restart", "particles")),
       reload_xml_parser_(*xml_parser_ptrs_.createPtr<XmlParser>("xml_particle_reload", "particles")),
@@ -29,7 +29,7 @@ SPHAdaptation &BaseParticles::getSPHAdaptation()
 //=================================================================================================//
 std::string BaseParticles::getBodyName()
 {
-    return sph_body_.getName();
+    return sph_body_.Name();
 };
 //=================================================================================================//
 void BaseParticles::initializeBasicDiscreteVariables()
@@ -158,7 +158,7 @@ void BaseParticles::resetTotalRealParticlesFromXmlDoc(XmlParser &xml_parser)
 void BaseParticles::writeParticlesToXmlForRestart(const std::string &filefullpath)
 {
     resizeXmlDocForParticles(restart_xml_parser_);
-    std::cout << "\n Total real particles of body" << sph_body_.getName()
+    std::cout << "\n Total real particles of body" << sph_body_.Name()
               << "write to restart is " << TotalRealParticles() << "\n";
     write_restart_variable_to_xml_(evolving_variables_, restart_xml_parser_);
     restart_xml_parser_.writeToXmlFile(filefullpath);
@@ -168,7 +168,7 @@ void BaseParticles::readParticlesFromXmlForRestart(const std::string &filefullpa
 {
     restart_xml_parser_.loadXmlFile(filefullpath);
     resetTotalRealParticlesFromXmlDoc(restart_xml_parser_);
-    std::cout << "\n Total real particles of body" << sph_body_.getName()
+    std::cout << "\n Total real particles of body" << sph_body_.Name()
               << "from restart is " << TotalRealParticles() << "\n";
     read_restart_variable_from_xml_(evolving_variables_, this, restart_xml_parser_);
 }

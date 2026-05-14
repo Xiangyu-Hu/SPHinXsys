@@ -7,7 +7,7 @@ namespace SPH
 //=================================================================================================//
 void GeometricShapeBox::writeGeometricShapeBoxToVtp(Real scale_factor)
 {
-    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/Shape" + getName() + ".vtp";
+    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/Shape" + Name() + ".vtp";
 
     if (fs::exists(filefullpath))
     {
