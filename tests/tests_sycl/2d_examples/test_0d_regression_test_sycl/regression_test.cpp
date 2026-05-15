@@ -186,7 +186,7 @@ int main(int ac, char *av[])
     auto &write_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     auto &write_solid_temperature =
         main_methods.addObserveRegression<RegressionTestEnsembleAverage, Real>(
-            diffusion_species_name, observer_contact);
+            observer_contact, diffusion_species_name);
     auto &write_solid_average_temperature_part =
         main_methods.addReduceRegression<RegressionTestDynamicTimeWarping, QuantityAverage, Real>(
             inner_domain, diffusion_species_name);

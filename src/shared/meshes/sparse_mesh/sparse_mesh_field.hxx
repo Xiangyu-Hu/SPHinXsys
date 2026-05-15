@@ -234,10 +234,12 @@ void SparseMeshField<PKG_SIZE>::setBoundaryData(
     const BoundaryDataFunction &boundary_data_function)
 {
     using ContainedDataType = typename DiscreteVariableType::ContainedDataType;
+    DataView<ContainedDataType> variable_data = variable->getDataView();
     for (UnsignedInt k = 0; k != num_boundary_pkgs_; k++)
-        variable->setValue(
-            resolution_level * num_boundary_pkgs_ + k,
-            ContainedDataType(boundary_data_function(k)));
+    {
+        variable_data[resolution_level * num_boundary_pkgs_ + k] =
+            ContainedDataType(boundary_data_function(k));
+    }
 }
 //=============================================================================================//
 template <int PKG_SIZE>
@@ -261,12 +263,14 @@ void SparseMeshField<PKG_SIZE>::organizeOccupiedPackages(UnsignedInt level)
         cell_neighborhood_ = unique_variable_ptrs_.createPtr<
             MetaVariable<CellNeighborhood>>("CellNeighborhood", pkgs_bound_);
     }
-    dv_pkg_1d_cell_index_->fill(num_pkgs_offsets_[level], num_pkgs_offsets_[level + 1],
-                                [&](UnsignedInt i)
-                                { return occupied_data_pkgs_[i].first; });
-    dv_pkg_type_->fill(num_pkgs_offsets_[level], num_pkgs_offsets_[level + 1],
-                       [&](UnsignedInt i)
-                       { return occupied_data_pkgs_[i].second; });
+    dv_pkg_1d_cell_index_->fill([&](UnsignedInt i)
+                                { return occupied_data_pkgs_[i].first; },
+                                num_pkgs_offsets_[level],
+                                num_pkgs_offsets_[level + 1] - num_pkgs_offsets_[level]);
+    dv_pkg_type_->fill([&](UnsignedInt i)
+                       { return occupied_data_pkgs_[i].second; },
+                       num_pkgs_offsets_[level],
+                       num_pkgs_offsets_[level + 1] - num_pkgs_offsets_[level]);
 }
 //=============================================================================================//
 template <int PKG_SIZE>

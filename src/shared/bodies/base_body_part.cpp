@@ -48,11 +48,12 @@ BodyRegionByParticle::~BodyRegionByParticle() = default;
 //=================================================================================================//
 void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
 {
+    DataView<int> body_part_id = dv_body_part_id_->getDataView();
     for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
     {
         if (tagging_particle_method(i))
         {
-            dv_body_part_id_->setValue(i, part_id_);
+            body_part_id[i] = part_id_;
             body_part_particles_.push_back(i);
         }
     }
@@ -85,14 +86,16 @@ void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
     ConcurrentIndexVector cell_indexes;
     cell_linked_list_.tagBodyPartByCell(body_part_cells_, cell_indexes, tagging_cell_method);
 
+    DataView<int> body_part_id = dv_body_part_id_->getDataView();
     for (size_t i = 0; i != body_part_cells_.size(); ++i)
     {
         ConcurrentIndexVector &particle_indexes = *body_part_cells_[i];
         for (size_t num = 0; num < particle_indexes.size(); ++num)
         {
-            dv_body_part_id_->setValue(particle_indexes[num], part_id_);
+            body_part_id[particle_indexes[num]] = part_id_;
         }
     }
+
     dv_cell_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
         part_name_, cell_indexes.size(), [&](size_t i)
         { return cell_indexes[i]; });

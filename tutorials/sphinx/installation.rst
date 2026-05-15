@@ -14,7 +14,7 @@ SPHinXsys depends on the following:
 * CMake 3.16 or later but before 4.0
 * C++17 compliant compiler
 
-* Visual Studio 2017 15.7 or later (Windows)
+* Visual Studio 2017 15.7 or later (Windows) but not 2022 17.0 or later, which is not compatible with the Simbody version used in SPHinXsys.
 * GCC 8 or later (Linux)
 * Python3
 * Git
@@ -45,7 +45,7 @@ In the terminal, install the required system dependencies
         sudo apt install -y ccache              # ccache is a compiler cache. It speeds up recompilation by caching previous compilations
         sudo apt install -y python3-dev
         sudo apt install -y gfortran
-        sudo apt-get install autoconf automake autoconf-archive
+        sudo apt-get install autoconf automake autoconf-archive libtool
 
 If you want a debugger for development purposes:
 
@@ -286,7 +286,7 @@ Pre-requisites
 
 * Windows 7 or newer
 * `Git <https://git-scm.com/download/win>`_
-* `Visual Studio 2017 or newer <https://visualstudio.microsoft.com/vs/community/>`_ with C++ environment installed
+* `Visual Studio from 2017 to 2022 17.0 <https://visualstudio.microsoft.com/vs/community/>`_ with C++ environment installed
 * `CMake <https://cmake.org/>`_ version 3.16 or later but before 4.0
 * `Python3 <https://www.python.org/>`_
 
@@ -403,7 +403,7 @@ Note that gfortran is essential for lapack_reference, which is needed for simbod
         brew install ccache
         brew install gfortran
         brew install ninja
-        brew install autoconf automake autoconf-archive
+        brew install autoconf automake autoconf-archive libtool
 
 From here, pick a workspace where the library and any dependent code will be downloaded. 
 The following block will install the direct dependencies required by SPHinXsys in user-space:

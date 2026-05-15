@@ -49,7 +49,7 @@ class SurfaceParticles : public BaseParticles
 
     void registerSurfaceProperties(StdVec<Vecd> &n, StdVec<Real> &thickness);
     void registerSurfacePropertiesFromReload();
-    virtual Real ParticleVolume(size_t index_i) override { return Vol_[index_i] * thickness_[index_i]; }
+    virtual Real ParticleVolume(UnsignedInt index) override { return Vol_[index] * thickness_[index]; }
     virtual void registerTransformationMatrix();
     virtual void initializeBasicDiscreteVariables() override;
 };

@@ -420,7 +420,7 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<int>(water_body, "BufferIndicator");
     body_states_recording.addToWrite<int>(water_body, "Indicator");
     body_states_recording.addToWrite<Vecd>(wall, "NormalDirection");
-    ObservedQuantityRecording<MainExecutionPolicy, Vec3d, RestoringCorrection> write_centerline_velocity("Velocity", velocity_observer_contact);
+    ObservedQuantityRecording<MainExecutionPolicy, Vec3d, RestoringCorrection> write_centerline_velocity(velocity_observer_contact, "Velocity");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

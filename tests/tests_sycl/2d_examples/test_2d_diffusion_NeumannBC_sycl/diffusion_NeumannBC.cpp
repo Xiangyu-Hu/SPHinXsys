@@ -26,7 +26,7 @@ std::string diffusion_species_name = "Phi";
 Real initial_temperature = 100.0;
 Real left_temperature = 300.0;
 Real right_temperature = 350.0;
-Real heat_flux = 900.0; // from the Nemann boundary
+Real heat_flux = 900.0; // from the Neumann boundary
 //----------------------------------------------------------------------
 //	Generate 2D geometrics used in the case.
 //----------------------------------------------------------------------
@@ -149,24 +149,16 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
+    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_Neumann);
+
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> diffusion_body_cell_linked_list(diffusion_body);
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_Dirichlet_cell_linked_list(wall_Dirichlet);
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_Neumann_cell_linked_list(wall_Neumann);
 
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>, Contact<>>
-        water_block_update_complex_relation(
+        diffusion_body_update_complex_relation(
             diffusion_body_inner, diffusion_body_contact_Dirichlet, diffusion_body_contact_Neumann);
     UpdateRelation<MainExecutionPolicy, Contact<>> observer_contact_relation(temperature_observer_contact);
-
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_Neumann);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
-        diffusion_initial_condition(diffusion_body, diffusion_species_name, initial_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
-        left_initial_condition(wall_Dirichlet_left_region, diffusion_species_name, left_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
-        right_initial_condition(wall_Dirichlet_right_region, diffusion_species_name, right_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
-        wall_Neumann_initial_condition(wall_Neumann, diffusion_species_name + "Flux", heat_flux);
 
     IsotropicDiffusion isotropic_diffusion(diffusion_species_name, diffusion_coeff);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, &isotropic_diffusion);
@@ -184,11 +176,22 @@ int main(int ac, char *av[])
                                  DynamicsArgs(diffusion_body_contact_Dirichlet, &isotropic_diffusion),
                                  DynamicsArgs(diffusion_body_contact_Neumann, &isotropic_diffusion));
     //----------------------------------------------------------------------
+    //	Specify initial condition if necessary.
+    //----------------------------------------------------------------------
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
+        diffusion_initial_condition(diffusion_body, diffusion_species_name, initial_temperature);
+    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
+        left_initial_condition(wall_Dirichlet_left_region, diffusion_species_name, left_temperature);
+    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
+        right_initial_condition(wall_Dirichlet_right_region, diffusion_species_name, right_temperature);
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
+        wall_Neumann_initial_condition(wall_Neumann, diffusion_species_name + "Flux", heat_flux);
+    //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>>
-        write_solid_temperature(diffusion_species_name, temperature_observer_contact);
+        observe_temperature(temperature_observer_contact, diffusion_species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -199,7 +202,7 @@ int main(int ac, char *av[])
     wall_Dirichlet_cell_linked_list.exec();
     wall_Neumann_cell_linked_list.exec();
 
-    water_block_update_complex_relation.exec();
+    diffusion_body_update_complex_relation.exec();
     observer_contact_relation.exec();
 
     diffusion_initial_condition.exec();
@@ -225,7 +228,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_states.writeToFile();
-    write_solid_temperature.writeToFile(ite);
+    observe_temperature.writeToFile(ite);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -256,7 +259,7 @@ int main(int ac, char *av[])
 
         TickCount t2 = TickCount::now();
         write_states.writeToFile();
-        write_solid_temperature.writeToFile(ite);
+        observe_temperature.writeToFile(ite);
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
@@ -270,11 +273,11 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_solid_temperature.generateDataBase(1.0e-3, 1.0e-3);
+        observe_temperature.generateDataBase(1.0e-3, 1.0e-3);
     }
     else if (sph_system.RestartStep() == 0)
     {
-        write_solid_temperature.testResult();
+        observe_temperature.testResult();
     }
 
     return 0;
