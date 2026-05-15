@@ -89,17 +89,27 @@ class WaterBlock : public ComplexShape
 struct FreeStreamVelocity
 {
     Real u_ref_, t_ref_;
-    Real *physical_time_;
 
+    // Default constructor for EmitterInflowConditionCK (passes no extra args).
+    FreeStreamVelocity() : u_ref_(U_f), t_ref_(2.0) {}
+
+    // Constructor required by old FreeStreamVelocityCorrection (passes *this as BoundaryConditionType).
     template <class BoundaryConditionType>
-    FreeStreamVelocity(BoundaryConditionType &boundary_condition)
-        : u_ref_(0.0), t_ref_(2.0) {}
+    explicit FreeStreamVelocity(BoundaryConditionType &) : u_ref_(U_f), t_ref_(2.0) {}
 
+    // Interface for EmitterInflowConditionCK: returns scalar axis velocity.
+    Real getAxisVelocity(const Vecd &position, const Real &current_axis_velocity, Real time)
+    {
+        Real time_factor = time / t_ref_;
+        return time_factor < 1.0 ? 0.5 * u_ref_ * (1.0 - std::cos(Pi * time_factor)) : u_ref_;
+    }
+
+    // Interface for FreeStreamVelocityCorrection: returns full velocity vector.
     Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
         Vecd target_velocity = Vecd::Zero();
         Real time_factor = current_time / t_ref_;
-        target_velocity[0] = time_factor < 1.0 ? 0.5 * u_ref_ * (1.0 - cos(Pi * time_factor)) : u_ref_;
+        target_velocity[0] = time_factor < 1.0 ? 0.5 * u_ref_ * (1.0 - std::cos(Pi * time_factor)) : u_ref_;
         return target_velocity;
     }
 };
@@ -204,6 +214,50 @@ class FishMaterialInitialization : public MaterialIdInitialization
             material_id_[index_i] = 1;
         }
     };
+
+    class UpdateKernel
+    {
+      public:
+        template <typename ExecutionPolicy>
+        UpdateKernel(const ExecutionPolicy &ex_policy, FishMaterialInitialization &encloser)
+            : material_id_(encloser.dv_material_id_->DelegatedData(ex_policy)),
+              pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+              cx_(cx), cy_(cy), fish_length_(fish_length), head_length_(head_length),
+              bone_thickness_(bone_thickness),
+              a1_(a1), a2_(a2), a3_(a3), a4_(a4), a5_(a5) {}
+
+        void update(size_t index_i, Real dt = 0.0)
+        {
+            Real x = pos_[index_i][0] - cx_;
+            Real y = pos_[index_i][1];
+
+            Real y1 = a1_ * math::pow(x, Real(1)) + a2_ * math::pow(x, Real(2)) +
+                      a3_ * math::pow(x, Real(3)) + a4_ * math::pow(x, Real(4)) +
+                      a5_ * math::pow(x, Real(5));
+            if (x <= (fish_length_ - head_length_) && y > (y1 - 0.004 + cy_) && y > (cy_ + bone_thickness_ / 2))
+            {
+                material_id_[index_i] = 0;
+            }
+            else if (x <= (fish_length_ - head_length_) && y < (-y1 + 0.004 + cy_) && y < (cy_ - bone_thickness_ / 2))
+            {
+                material_id_[index_i] = 0;
+            }
+            else if ((x > (fish_length_ - head_length_)) || ((y < (cy_ + bone_thickness_ / 2)) && (y > (cy_ - bone_thickness_ / 2))))
+            {
+                material_id_[index_i] = 2;
+            }
+            else
+            {
+                material_id_[index_i] = 1;
+            }
+        }
+
+      protected:
+        int *material_id_;
+        Vecd *pos_;
+        Real cx_, cy_, fish_length_, head_length_, bone_thickness_;
+        Real a1_, a2_, a3_, a4_, a5_;
+    };
 };
 //----------------------------------------------------------------------
 //	imposing active strain to fish muscle
@@ -225,28 +279,29 @@ class ImposingActiveStrain : public LocalDynamics
             : physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
               material_id_(encloser.dv_material_id_->DelegatedData(ex_policy)),
               pos0_(encloser.dv_pos0_->DelegatedData(ex_policy)),
-              active_strain_(encloser.dv_active_strain_->DelegatedData(ex_policy)) {}
+              active_strain_(encloser.dv_active_strain_->DelegatedData(ex_policy)),
+              cx_(cx), cy_(cy), fish_length_(fish_length), bone_thickness_(bone_thickness) {}
 
         void update(size_t index_i, Real dt = 0.0)
         {
             if (material_id_[index_i] == 0)
             {
-                Real x = pos0_[index_i][0] - cx;
+                Real x = pos0_[index_i][0] - cx_;
                 Real y = pos0_[index_i][1];
 
                 Real Am = 0.12;
                 Real frequency = 4.0;
                 Real w = 2 * Pi * frequency;
-                Real lambda = 3.0 * fish_length;
+                Real lambda = 3.0 * fish_length_;
                 Real wave_number = 2 * Pi / lambda;
-                Real hx = -(pow(x, 2) - pow(fish_length, 2)) / pow(fish_length, 2);
+                Real hx = -(math::pow(x, Real(2)) - math::pow(fish_length_, Real(2))) / math::pow(fish_length_, Real(2));
                 Real start_time = 0.2;
                 Real current_time = *physical_time_;
-                Real strength = 1 - exp(-current_time / start_time);
+                Real strength = 1 - math::exp(-current_time / start_time);
 
-                Real phase_shift = y > (cy + bone_thickness / 2) ? 0 : Pi / 2;
+                Real phase_shift = y > (cy_ + bone_thickness_ / 2) ? Real(0) : Pi / 2;
                 active_strain_[index_i](0, 0) =
-                    -Am * hx * strength * pow(sin(w * current_time / 2 + wave_number * x / 2 + phase_shift), 2);
+                    -Am * hx * strength * math::pow(math::sin(w * current_time / 2 + wave_number * x / 2 + phase_shift), Real(2));
             }
         }
 
@@ -255,6 +310,7 @@ class ImposingActiveStrain : public LocalDynamics
         int *material_id_;
         Vecd *pos0_;
         Matd *active_strain_;
+        Real cx_, cy_, fish_length_, bone_thickness_;
     };
 
   protected:

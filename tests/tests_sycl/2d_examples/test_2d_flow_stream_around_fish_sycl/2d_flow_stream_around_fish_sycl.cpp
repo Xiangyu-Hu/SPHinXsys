@@ -34,6 +34,9 @@ int main(int ac, char *av[])
     auto &water_block_inner = sph_system.addInnerRelation(water_block);
     auto &water_block_contact = sph_system.addContactRelation(water_block, fish_body);
     auto &fish_contact = sph_system.addContactRelation(fish_body, water_block);
+    // Plain Contact<> for FSI forces: ViscousForceOnStructure and PressureForceOnStructure
+    // require Contact<> (no body-type parameters) in their constructor.
+    Contact<> fish_fsi_contact(fish_body, {&water_block});
     //----------------------------------------------------------------------
     //	Define SPH solver with host (CPU) and main (GPU) method containers.
     //----------------------------------------------------------------------
@@ -58,20 +61,22 @@ int main(int ac, char *av[])
     update_fish_configuration.add(&main_methods.addCellLinkedListDynamics(fish_body));
     update_fish_configuration.add(&main_methods.addRelationDynamics(fish_inner));
     update_fish_configuration.add(&main_methods.addRelationDynamics(fish_contact));
+    update_fish_configuration.add(&main_methods.addRelationDynamics(fish_fsi_contact));
 
     // --- Solid initialisation (CPU: no CK versions needed for one-shot ops) ---
     auto &fish_body_normal_direction =
         host_methods.addStateDynamics<NormalFromBodyShapeCK>(fish_body);
     auto &composite_material_id =
-        host_methods.addStateDynamics<SimpleDynamics<FishMaterialInitialization>>(fish_body);
+        host_methods.addStateDynamics<FishMaterialInitialization>(fish_body);
 
     // --- Solid correction matrix (GPU, Lagrangian — built once, stays fixed) ---
     auto &fish_body_corrected_configuration =
         main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(fish_inner);
 
     // --- Free-stream surface indicator (GPU) ---
+    // Use template-template form so that the relation body types are embedded in the dynamics type.
     auto &free_stream_surface_indicator =
-        main_methods.addInteractionDynamics<fluid_dynamics::SpatialTemporalFreeSurfaceIndicationCK>(water_block_inner)
+        main_methods.addInteractionDynamics<fluid_dynamics::FreeSurfaceIndicationCK, WithUpdate>(water_block_inner)
             .addPostContactInteraction(water_block_contact);
 
     // --- Solid dynamics (GPU) ---
@@ -101,54 +106,68 @@ int main(int ac, char *av[])
             .addPostContactInteraction(water_block_contact)
             .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(water_block);
 
+    // Split viscous force into inner (WithUpdate) and wall-contact parts so that the wall-contact
+    // object can be passed to FSI::ViscousForceOnStructure by decltype().
     auto &viscous_force =
-        main_methods.addInteractionDynamics<fluid_dynamics::ViscousForce, WithUpdate>(water_block_inner)
-            .addPostContactInteraction<Wall>(water_block_contact);
+        main_methods.addInteractionDynamicsWithUpdate<fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(water_block_inner);
+    auto &viscous_force_wall =
+        main_methods.addInteractionDynamics<fluid_dynamics::ViscousForceCK, Wall, Viscosity, NoKernelCorrectionCK>(water_block_contact);
+    viscous_force.addPostContactInteraction(viscous_force_wall);
 
     auto &transport_velocity_correction =
-        main_methods.addInteractionDynamics<fluid_dynamics::TransportVelocityCorrectionCK, BulkParticles>(water_block_inner)
-            .addPostContactInteraction(water_block_contact);
+        main_methods.addStateDynamics<fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear, BulkParticles>>(water_block);
 
     auto &pressure_relaxation =
         main_methods.addInteractionDynamics<fluid_dynamics::AcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
             .addPostContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_contact);
 
+    // Split density_relaxation into inner (OneLevel) and wall-contact parts so that the wall-contact
+    // object can be passed to FSI::PressureForceOnStructure by decltype().
     auto &density_relaxation =
-        main_methods.addInteractionDynamics<fluid_dynamics::AcousticStep2ndHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
-            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_contact);
+        main_methods.addInteractionDynamicsOneLevel<fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner);
+    auto &density_relaxation_wall =
+        main_methods.addInteractionDynamics<fluid_dynamics::AcousticStep2ndHalf, Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_contact);
+    density_relaxation.addPostContactInteraction(density_relaxation_wall);
 
     auto &get_fluid_advection_time_step_size =
         main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_f);
     auto &get_fluid_time_step_size =
         main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_block);
 
-    // --- Free-stream boundary conditions (CPU — no CK versions available) ---
+    // --- Free-stream boundary conditions ---
+    // EmitterInflowInjectionCK does not take a ParticleBuffer — it manages its own buffer internally.
     AlignedBoxByParticle emitter(
         water_block, AlignedBox(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
     auto &emitter_inflow_injection =
-        host_methods.addStateDynamics<EmitterInflowInjectionCK>(emitter, inlet_particle_buffer);
+        host_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitter);
 
+    // EmitterInflowConditionCK<..., FreeStreamVelocity> is the CK replacement for InflowVelocityCondition.
     AlignedBoxByCell emitter_buffer(
         water_block, AlignedBox(xAxis, Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
     auto &emitter_buffer_inflow_condition =
-        host_methods.addStateDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>>(emitter_buffer);
+        host_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK, FreeStreamVelocity>(emitter_buffer);
 
+    // DisposerOutflowDeletion has no UpdateKernel — use old CPU SimpleDynamics API directly.
     AlignedBoxByCell disposer(
         water_block, AlignedBox(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize));
-    auto &disposer_outflow_deletion =
-        host_methods.addStateDynamics<fluid_dynamics::DisposerOutflowDeletion>(disposer);
+    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
 
-    // FreeStreamVelocityCorrection has no CK version — runs on CPU
-    auto &velocity_boundary_condition_constraint =
-        host_methods.addStateDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>>(water_block);
+    // FreeStreamVelocityCorrection has no CK version — use old CPU SimpleDynamics API directly.
+    SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>>
+        velocity_boundary_condition_constraint(water_block);
 
     // --- FSI (GPU) ---
-    // ViscousForceOnStructure and PressureForceOnStructure are CK versions from shared_ck/
+    // FSI forces use fish_fsi_contact (plain Contact<>) because ViscousForceOnStructure and
+    // PressureForceOnStructure constructors require Contact<> (no body-type parameters).
+    // Typed Contact<Relation<SolidBody,FluidBody>> from sph_system.addContactRelation
+    // triggers specialization ambiguity in ViscousForceFromFluid.
+    using VFWallType = std::remove_reference_t<decltype(viscous_force_wall)>;
     auto &viscous_force_from_fluid =
-        main_methods.addInteractionDynamics<FSI::ViscousForceOnStructure<decltype(viscous_force)>>(fish_contact);
+        main_methods.addInteractionDynamics<FSI::ViscousForceOnStructure<VFWallType>>(fish_fsi_contact);
 
+    using DRWallType = std::remove_reference_t<decltype(density_relaxation_wall)>;
     auto &pressure_force_from_fluid =
-        main_methods.addInteractionDynamics<FSI::PressureForceOnStructure<decltype(density_relaxation)>>(fish_contact);
+        main_methods.addInteractionDynamics<FSI::PressureForceOnStructure<DRWallType>>(fish_fsi_contact);
 
     // AverageVelocityAndAcceleration has no CK version — runs on CPU
     solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(fish_body);
@@ -163,17 +182,12 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Matd>(fish_body, "ActiveStrain");
 
     Gravity gravity(Vecd::Zero());
-    auto &write_water_mechanical_energy =
-        main_methods.addObserveRegression<RegressionTestDynamicTimeWarping, Real>(
-            "TotalMechanicalEnergy", water_block);
-
-    auto &write_total_viscous_force =
-        main_methods.addObserve<ReducedQuantityRecording<QuantitySummation<Vecd>>>(
-            fish_body, "ViscousForceFromFluid");
-
-    auto &write_total_pressure_force =
-        main_methods.addObserve<ReducedQuantityRecording<QuantitySummation<Vecd>>>(
-            fish_body, "PressureForceFromFluid");
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
+        write_water_mechanical_energy(water_block, gravity);
+    ReducedQuantityRecording<QuantitySummation<Vecd>>
+        write_total_viscous_force(fish_body, "ViscousForceFromFluid");
+    ReducedQuantityRecording<QuantitySummation<Vecd>>
+        write_total_pressure_force(fish_body, "PressureForceFromFluid");
     //----------------------------------------------------------------------
     //	Prepare the simulation.
     //----------------------------------------------------------------------
@@ -280,7 +294,7 @@ int main(int ac, char *av[])
         update_water_configuration.exec();
         update_fish_configuration.exec();
 
-        if (state_recording.exec())
+        if (state_recording())
         {
             body_state_recorder.writeToFile();
         }

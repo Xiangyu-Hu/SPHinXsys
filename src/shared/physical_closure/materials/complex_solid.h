@@ -103,6 +103,8 @@ class MaterialIdInitialization
     explicit MaterialIdInitialization(SPHBody &sph_body);
 
   protected:
+    DiscreteVariable<int> *dv_material_id_;
+    DiscreteVariable<Vecd> *dv_pos_;
     int *material_id_;
     Vecd *pos_;
 };

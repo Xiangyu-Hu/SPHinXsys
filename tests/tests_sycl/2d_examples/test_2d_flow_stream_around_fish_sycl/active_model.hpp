@@ -14,7 +14,14 @@ ActiveModelSolid::ConstituteKernel::ConstituteKernel(
 //=================================================================================================//
 inline Matd ActiveModelSolid::ConstituteKernel::StressPK1(const Matd &F, size_t index_i)
 {
-    Matd F0 = (2.0 * active_strain_[index_i] + Matd::Identity()).llt().matrixL();
+    // GPU-safe analytical Cholesky for 2x2 symmetric PD matrix A = I + 2*active_strain.
+    // Eigen's .llt() uses static panel-kernel variables forbidden in SYCL device code.
+    Matd A = 2.0 * active_strain_[index_i] + Matd::Identity();
+    Matd F0 = Matd::Zero();
+    F0(0, 0) = math::sqrt(A(0, 0));
+    F0(1, 0) = A(1, 0) / F0(0, 0);
+    F0(1, 1) = math::sqrt(A(1, 1) - F0(1, 0) * F0(1, 0));
+
     Matd F0_inv = F0.inverse();
     Matd F_e = F * F0_inv;
     Matd F0_star = F0.determinant() * F0_inv.transpose();
