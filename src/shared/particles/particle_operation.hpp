@@ -8,12 +8,11 @@ namespace SPH
 //=================================================================================================//
 template <typename DataType>
 void CopyParticleStateCK::operator()(
-    VariableAllocationSet<AllocatedDataArray<DataType>> &variable_allocation_pair,
-    size_t index, size_t another_index)
+    DataArray<DataType> &variable_data_array, size_t index, size_t another_index)
 {
-    for (size_t i = 0; i != variable_allocation_pair.second; ++i)
+    for (size_t i = 0; i != variable_data_array.ArraySize(); ++i)
     {
-        variable_allocation_pair.first[i][index] = variable_allocation_pair.first[i][another_index];
+        variable_data_array[i][index] = variable_data_array[i][another_index];
     }
 }
 //=================================================================================================//
@@ -24,10 +23,10 @@ SpawnRealParticle::ComputingKernel::
       particles_bound_(encloser.particles_bound_),
       original_id_(encloser.dv_original_id_->DelegatedData(ex_policy))
 {
-    OperationBetweenDataAssembles<DiscreteVariables, DiscreteVariableArrayAssemble, DiscreteVariableArrayAssembleInitialization>
+    OperationBetweenDataAssembles<DiscreteVariables, VariableArrayAssemble, VariableArrayAssembleInitialization>
         initialize_discrete_variable_array;
     initialize_discrete_variable_array(encloser.evolving_variables_, encloser.copyable_states_);
-    OperationBetweenDataAssembles<DiscreteVariableArrayAssemble, VariableDataArrayAssemble, VariableDataArrayAssembleInitialization>
+    OperationBetweenDataAssembles<VariableArrayAssemble, VariableDataArrayAssemble, VariableDataArrayAssembleInitialization>
         initialize_variable_data_array;
     initialize_variable_data_array(encloser.copyable_states_, copyable_state_data_arrays_, ex_policy);
 }
@@ -38,10 +37,10 @@ RemoveRealParticle::ComputingKernel::
     : total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       original_id_(encloser.dv_original_id_->DelegatedData(ex_policy))
 {
-    OperationBetweenDataAssembles<DiscreteVariables, DiscreteVariableArrayAssemble, DiscreteVariableArrayAssembleInitialization>
+    OperationBetweenDataAssembles<DiscreteVariables, VariableArrayAssemble, VariableArrayAssembleInitialization>
         initialize_discrete_variable_array;
     initialize_discrete_variable_array(encloser.evolving_variables_, encloser.copyable_states_);
-    OperationBetweenDataAssembles<DiscreteVariableArrayAssemble, VariableDataArrayAssemble, VariableDataArrayAssembleInitialization>
+    OperationBetweenDataAssembles<VariableArrayAssemble, VariableDataArrayAssemble, VariableDataArrayAssembleInitialization>
         initialize_variable_data_array;
     initialize_variable_data_array(encloser.copyable_states_, copyable_state_data_arrays_, ex_policy);
 }

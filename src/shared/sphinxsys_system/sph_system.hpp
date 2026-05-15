@@ -6,6 +6,7 @@
 #include "adaptive_body.h"
 #include "ownership.h"
 #include "relation_ck.h"
+#include "variable_functions.h"
 
 namespace SPH
 {

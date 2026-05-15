@@ -39,8 +39,7 @@ namespace SPH
 class BaseQuantityRecording : public BaseIO
 {
   public:
-    BaseQuantityRecording(SPHSystem &sph_system,
-                          const std::string &dynamics_identifier_name);
+    BaseQuantityRecording(SPHSystem &sph_system, const std::string &dynamics_identifier_name);
     void setFullPath(const std::string &quantity_name);
 
   protected:

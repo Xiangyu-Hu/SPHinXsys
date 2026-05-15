@@ -108,7 +108,7 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2),
-                                     Vecd(width + boundary_width * 2, height + boundary_width * 2));
+                                      Vecd(width + boundary_width * 2, height + boundary_width * 2));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
@@ -160,7 +160,7 @@ int main(int ac, char *av[])
             DynamicsArgs(water_block_inner, std::string("Position")),
             DynamicsArgs(water_wall_contact, std::string("Position")));
     ObservedQuantityRecording<MainExecutionPolicy, Matd, RestoringCorrection>
-        observed_position_gradient("PositionGradient", fluid_observer_contact);
+        observed_position_gradient(fluid_observer_contact, "PositionGradient");
 
     InteractionDynamicsCK<MainExecutionPolicy, DisplacementMatrixGradient<Inner<>, Contact<>>>
         displacement_matrix_gradient(water_block_inner, water_wall_contact);
@@ -180,14 +180,14 @@ int main(int ac, char *av[])
             DynamicsArgs(water_block_inner, std::string("Phi")),
             DynamicsArgs(water_wall_contact, std::string("Phi")));
     ObservedQuantityRecording<MainExecutionPolicy, VecMat2d, RestoringCorrection>
-        observed_hessian("PhiHessian", fluid_observer_contact);
+        observed_hessian(fluid_observer_contact, "PhiHessian");
 
     InteractionDynamicsCK<MainExecutionPolicy, SecondOrderGradient<Inner<Real>, Contact<Real>>>
         variable_2nd_order_gradient(
             DynamicsArgs(water_block_inner, std::string("Phi")),
             DynamicsArgs(water_wall_contact, std::string("Phi")));
     ObservedQuantityRecording<MainExecutionPolicy, Vec2d, RestoringCorrection>
-        observed_2nd_order_gradient("PhiGradient", fluid_observer_contact);
+        observed_2nd_order_gradient(fluid_observer_contact, "PhiGradient");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

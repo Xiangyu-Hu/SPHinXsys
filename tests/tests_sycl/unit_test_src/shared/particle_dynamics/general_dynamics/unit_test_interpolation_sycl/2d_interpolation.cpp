@@ -91,7 +91,7 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     ObservedQuantityRecording<MainExecutionPolicy, Vecd, RestoringCorrection>
-        fluid_observer_position("Position", fluid_observer_contact);
+        fluid_observer_position(fluid_observer_contact, "Position");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

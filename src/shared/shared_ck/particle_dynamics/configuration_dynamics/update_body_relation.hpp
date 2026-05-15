@@ -118,16 +118,16 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
         exclusive_scan(ex_policy_, neighbor_index, particle_offset, current_offset_list_size,
                        typename PlusUnsignedInt<ExecutionPolicy>::type());
 
-    if (current_neighbor_index_size > dv_neighbor_index->getDataSize())
+    if (current_neighbor_index_size > dv_neighbor_index->getSize())
     {
-        UnsignedInt old_size = dv_neighbor_index->getDataSize();
+        UnsignedInt old_size = dv_neighbor_index->getSize();
         dv_neighbor_index->reallocateData(ex_policy_, current_neighbor_index_size);
         this->inner_relation_.resetComputingKernelUpdated();
         kernel_implementation_.overwriteComputingKernel();
 
         this->logger_->info(
             "UpdateRelation: increase neighbor index size from {} to {} at {} .",
-            old_size, dv_neighbor_index->getDataSize(), this->sph_body_->Name());
+            old_size, dv_neighbor_index->getSize(), this->sph_body_->Name());
     }
 
     particle_for(ex_policy_,
@@ -237,16 +237,16 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
             exclusive_scan(ex_policy_, neighbor_index, particle_offset, current_offset_list_size,
                            typename PlusUnsignedInt<ExecutionPolicy>::type());
 
-        if (current_neighbor_index_size > dv_neighbor_index->getDataSize())
+        if (current_neighbor_index_size > dv_neighbor_index->getSize())
         {
-            UnsignedInt old_size = dv_neighbor_index->getDataSize();
+            UnsignedInt old_size = dv_neighbor_index->getSize();
             dv_neighbor_index->reallocateData(ex_policy_, current_neighbor_index_size);
             this->contact_relation_.resetComputingKernelUpdated(k);
             contact_kernel_implementation_[k]->overwriteComputingKernel(k);
 
             this->logger_->info(
                 "UpdateRelation: increase neighbor index size from {} to {} at .",
-                old_size, dv_neighbor_index->getDataSize(), this->sph_body_->Name());
+                old_size, dv_neighbor_index->getSize(), this->sph_body_->Name());
         }
 
         particle_for(ex_policy_,

@@ -28,7 +28,7 @@ void DiscreteVariable<DataType>::synchronizeWithDevice()
 {
     if (isDataDelegated())
     {
-        copyFromDevice(data_field_, device_data_field_, data_size_);
+        copyFromDevice(data_, device_only_variable_->DeviceOnlyDataField(), getTotalSize());
     }
 }
 //=================================================================================================//
@@ -37,35 +37,33 @@ void DiscreteVariable<DataType>::synchronizeToDevice()
 {
     if (isDataDelegated())
     {
-        copyToDevice(data_field_, device_data_field_, data_size_);
+        copyToDevice(data_, device_only_variable_->DeviceOnlyDataField(), getTotalSize());
     }
 }
 //=================================================================================================//
 template <typename DataType>
 DeviceOnlyDiscreteVariable<DataType>::
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable)
-    : Quantity(host_variable->Name()), device_only_data_field_(nullptr)
+    : Quantity(host_variable->Name()), device_only_data_(nullptr)
 {
-    size_t data_size = host_variable->getDataSize();
-    device_only_data_field_ = allocateDeviceOnly<DataType>(data_size);
-    copyToDevice(host_variable->Data(), device_only_data_field_, data_size);
-    host_variable->setDeviceData(device_only_data_field_);
+    UnsignedInt total_size = host_variable->getTotalSize();
+    device_only_data_ = allocateDeviceOnly<DataType>(total_size);
+    copyToDevice(host_variable->Data(), device_only_data_, total_size);
 }
 //=================================================================================================//
 template <typename DataType>
 DeviceOnlyDiscreteVariable<DataType>::~DeviceOnlyDiscreteVariable()
 {
-    freeDeviceData(device_only_data_field_);
+    freeDeviceData(device_only_data_);
 }
 //=================================================================================================//
 template <typename DataType>
 void DeviceOnlyDiscreteVariable<DataType>::
     reallocateData(DiscreteVariable<DataType> *host_variable)
 {
-    freeDeviceData(device_only_data_field_);
-    size_t new_host_variable_size = host_variable->getDataSize();
-    device_only_data_field_ = allocateDeviceOnly<DataType>(new_host_variable_size);
-    host_variable->setDeviceData(device_only_data_field_);
+    freeDeviceData(device_only_data_);
+    UnsignedInt new_host_variable_size = host_variable->getTotalSize();
+    device_only_data_ = allocateDeviceOnly<DataType>(new_host_variable_size);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -77,11 +75,11 @@ DataType *DiscreteVariable<DataType>::DelegatedOnDevice()
             device_only_variable_keeper_
                 .createPtr<DeviceOnlyDiscreteVariable<DataType>>(this);
     }
-    return device_data_field_;
+    return device_only_variable_->DeviceOnlyDataField();
 }
 //=================================================================================================//
 template <typename DataType>
-void DiscreteVariable<DataType>::reallocateDataOnDevice(size_t tentative_size)
+void DiscreteVariable<DataType>::reallocateDataOnDevice(UnsignedInt tentative_size)
 {
     reallocateData(tentative_size);
     device_only_variable_->reallocateData(this);

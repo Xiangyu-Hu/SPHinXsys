@@ -128,7 +128,7 @@ int main(int ac, char *av[])
     auto &record_water_mechanical_energy = main_methods.addReduceRegression<
         RegressionTestDynamicTimeWarping, TotalMechanicalEnergyCK>(water_block, gravity);
     auto &fluid_observer_pressure = main_methods.addObserveRegression<
-        RegressionTestDynamicTimeWarping, Real>("Pressure", fluid_observer_contact);
+        RegressionTestDynamicTimeWarping, Real>(fluid_observer_contact, "Pressure");
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------

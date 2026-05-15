@@ -203,7 +203,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     auto &write_displacement = main_methods.addObserveRegression<
-        RegressionTestDynamicTimeWarping, Vecd>("Position", my_observer_contact);
+        RegressionTestDynamicTimeWarping, Vecd>(my_observer_contact, "Position");
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------

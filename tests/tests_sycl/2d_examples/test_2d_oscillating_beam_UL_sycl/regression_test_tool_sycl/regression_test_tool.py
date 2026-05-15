@@ -62,14 +62,13 @@ try:
 except ImportError as e:
     print(f"Failed to import module: {e}")
 
-
 """
-case name: test_2d_diffusion_NeumannBC
+case name: test_2d_oscillating_beam_UL_sycl
 """
 
-case_name = "test_2d_diffusion_NeumannBC_sycl"
-body_name = "TemperatureObserver"
-parameter_name = "SpeciesPhi"
+case_name = "test_2d_oscillating_beam_UL_sycl"
+body_name = "BeamBody"
+parameter_name = "TotalKineticEnergy"
 
 number_of_run_times = 0
 converged = 0
@@ -83,7 +82,7 @@ while True:
     converged = sphinxsys.read_dat_file()
     print("Please note: This is the", number_of_run_times, "run!")
     if number_of_run_times <= 200:
-        if (converged == "true"):
+        if converged == "true":
             print("The tested parameters of all variables are converged, and the run will stop here!")
             break
         elif converged != "true":

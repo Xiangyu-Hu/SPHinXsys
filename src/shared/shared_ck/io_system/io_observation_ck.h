@@ -51,17 +51,17 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
     DataType type_indicator_; /*< this is an indicator to identify the variable type. */
 
   public:
-    template <typename... RelationParameters>
-    ObservedQuantityRecording(const std::string &quantity_name, Contact<RelationParameters...> &contact_relation)
-        : BaseQuantityRecording(contact_relation.getSPHBody().getSPHSystem(),
-                                contact_relation.getSPHBody().Name()),
+    template <typename... RelationParameters, typename... Args>
+    ObservedQuantityRecording(Contact<RelationParameters...> &contact_relation, Args &&...args)
+        : BaseQuantityRecording(
+              contact_relation.getSPHBody().getSPHSystem(), contact_relation.getSPHBody().Name()),
           observer_(contact_relation.getSPHBody()),
           base_particles_(observer_.getBaseParticles()),
-          observation_method_(contact_relation, quantity_name),
+          observation_method_(contact_relation, std::forward<Args>(args)...),
           dv_interpolated_quantities_(observation_method_.dvInterpolatedQuantities()),
           number_of_observe_(base_particles_.TotalRealParticles())
     {
-        setFullPath(quantity_name);
+        setFullPath(dv_interpolated_quantities_->Name());
     };
     virtual ~ObservedQuantityRecording() {};
 

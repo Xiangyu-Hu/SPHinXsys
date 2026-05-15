@@ -10,9 +10,9 @@ namespace SPH
 //=================================================================================================//
 template <typename DataType>
 template <class PolicyType>
-DataArray<DataType> *VariableBufferArray<DataType>::DelegatedBufferArrayOnDevice()
+DataPtr<DataType> *VariableBufferArray<DataType>::DelegatedBufferArrayOnDevice()
 {
-    DiscreteVariableArray<DataType>::DelegatedDataArray(DeviceExecution<PolicyType>{}); // check variable array first
+    VariableArray<DataType>::DelegatedDataArray(DeviceExecution<PolicyType>{}); // check variable array first
     if (!isBufferArrayDelegated())
     {
         device_buffer_array_keeper_
@@ -22,7 +22,7 @@ DataArray<DataType> *VariableBufferArray<DataType>::DelegatedBufferArrayOnDevice
 }
 //=================================================================================================//
 template <typename DataType>
-DataArray<DataType> *VariableBufferArray<DataType>::synchronizeBufferArrayFromDevice(UnsignedInt data_size)
+DataPtr<DataType> *VariableBufferArray<DataType>::synchronizeBufferArrayFromDevice(UnsignedInt data_size)
 {
     if (!isBufferArrayHostStaged())
     {
@@ -40,7 +40,7 @@ DeviceVariableBufferArray<DataType>::
     : Quantity(host_buffer_array->Name()),
       array_size_(host_buffer_array->getArraySize()),
       buffer_size_(host_buffer_array->getBufferSize()),
-      device_only_buffer_array_(allocateDeviceOnly<DataArray<DataType>>(array_size_)),
+      device_only_buffer_array_(allocateDeviceOnly<DataPtr<DataType>>(array_size_)),
       device_only_ptr_(nullptr), host_staging_ptr_(nullptr),
       host_staging_buffer_array_(nullptr)
 {
@@ -58,7 +58,7 @@ void DeviceVariableBufferArray<DataType>::
 {
     if (host_staging_buffer_array_ == nullptr)
     {
-        host_staging_buffer_array_ = allocateHostStaging<DataArray<DataType>>(array_size_);
+        host_staging_buffer_array_ = allocateHostStaging<DataPtr<DataType>>(array_size_);
         host_staging_ptr_ = allocateHostStaging<DataType>(buffer_size_ * array_size_);
         for (size_t i = 0; i != array_size_; ++i)
         {

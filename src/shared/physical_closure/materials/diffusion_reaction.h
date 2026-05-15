@@ -116,17 +116,17 @@ class IsotropicDiffusion : public BaseDiffusion
         return d_coeff_;
     };
 
-    class InterParticleDiffusionCoeff
+    class InterParticleCoeff
     {
         Real d_coeff_;
 
       public:
-        InterParticleDiffusionCoeff() : d_coeff_(0) {};
-        InterParticleDiffusionCoeff(IsotropicDiffusion &encloser)
+        InterParticleCoeff() : d_coeff_(0) {};
+        InterParticleCoeff(IsotropicDiffusion &encloser)
             : d_coeff_(encloser.d_coeff_) {};
         template <class ExecutionPolicy>
-        InterParticleDiffusionCoeff(const ExecutionPolicy &ex_policy, IsotropicDiffusion &encloser)
-            : InterParticleDiffusionCoeff(encloser){};
+        InterParticleCoeff(const ExecutionPolicy &ex_policy, IsotropicDiffusion &encloser)
+            : InterParticleCoeff(encloser){};
         Real operator()(size_t index_i, size_t index_j, const Vecd &e_ij) { return d_coeff_; };
         Real operator()(size_t index_i, size_t index_j) { return d_coeff_; };
     };
@@ -196,17 +196,17 @@ class DirectionalDiffusion : public IsotropicDiffusion
         return 1.0 / grad_ij.squaredNorm();
     };
 
-    class InterParticleDiffusionCoeff
+    class InterParticleCoeff
     {
         Matd transformed_diffusivity_;
 
       public:
-        InterParticleDiffusionCoeff() : transformed_diffusivity_(ZeroData<Matd>::value) {};
-        InterParticleDiffusionCoeff(DirectionalDiffusion &encloser)
+        InterParticleCoeff() : transformed_diffusivity_(ZeroData<Matd>::value) {};
+        InterParticleCoeff(DirectionalDiffusion &encloser)
             : transformed_diffusivity_(encloser.transformed_diffusivity_) {};
         template <class ExecutionPolicy>
-        InterParticleDiffusionCoeff(const ExecutionPolicy &ex_policy, DirectionalDiffusion &encloser)
-            : InterParticleDiffusionCoeff(encloser){};
+        InterParticleCoeff(const ExecutionPolicy &ex_policy, DirectionalDiffusion &encloser)
+            : InterParticleCoeff(encloser){};
         Real operator()(size_t index_i, size_t index_j, const Vecd &e_ij)
         {
             Vecd grad_ij = transformed_diffusivity_ * e_ij;
