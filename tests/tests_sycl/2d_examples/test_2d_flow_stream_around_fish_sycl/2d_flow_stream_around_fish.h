@@ -115,6 +115,50 @@ class FishBodyComposite : public CompositeSolid
         add<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus2, poisson);
         add<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus3, poisson);
     };
+
+    /**
+     * @class ConstituteKernel
+     * @brief GPU-safe stress dispatch for FishBodyComposite.
+     *
+     * Replaces the CPU runtime dispatch (virtual call through pointer vector)
+     * with compile-time if/else on material_id_[index_i].
+     * Each sub-kernel is already GPU-safe via its own ConstituteKernel.
+     *
+     * material_id == 0 -> ActiveModelSolid   (muscle)
+     * material_id == 1 -> SVK material 1     (bone)
+     * material_id == 2 -> SVK material 2     (tissue)
+     */
+    class ConstituteKernel
+    {
+      public:
+        template <typename ExecutionPolicy>
+        ConstituteKernel(const ExecutionPolicy &ex_policy, FishBodyComposite &encloser)
+            : material_id_(encloser.dv_material_id_->DelegatedData(ex_policy)),
+              active_kernel_(ex_policy,
+                  static_cast<ActiveModelSolid &>(*encloser.composite_materials_[0])),
+              svk1_kernel_(ex_policy,
+                  static_cast<SaintVenantKirchhoffSolid &>(*encloser.composite_materials_[1])),
+              svk2_kernel_(ex_policy,
+                  static_cast<SaintVenantKirchhoffSolid &>(*encloser.composite_materials_[2])) {}
+
+        inline Matd StressPK1(const Matd &F, size_t index_i)
+        {
+            if (material_id_[index_i] == 0)
+                return active_kernel_.StressPK1(F, index_i);
+            else if (material_id_[index_i] == 1)
+                return svk1_kernel_.StressPK1(F, index_i);
+            else
+                return svk2_kernel_.StressPK1(F, index_i);
+        }
+
+        inline Real VolumetricKirchhoff(Real J) { return 0.0; }
+
+      protected:
+        int *material_id_;
+        ActiveModelSolid::ConstituteKernel active_kernel_;
+        SaintVenantKirchhoffSolid::ConstituteKernel svk1_kernel_;
+        SaintVenantKirchhoffSolid::ConstituteKernel svk2_kernel_;
+    };
 };
 //----------------------------------------------------------------------
 //	Case dependent initialization material ids

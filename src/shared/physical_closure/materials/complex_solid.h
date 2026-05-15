@@ -62,6 +62,9 @@ class CompositeSolid : public ElasticSolid
 {
     int *material_id_;
 
+  public:
+    DiscreteVariable<int> *dv_material_id_;
+    
   protected:
     UniquePtrsKeeper<ElasticSolid> composites_keeper_;
     StdVec<ElasticSolid *> composite_materials_;

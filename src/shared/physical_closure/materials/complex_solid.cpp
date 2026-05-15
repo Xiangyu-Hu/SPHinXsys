@@ -11,7 +11,7 @@ namespace SPH
 {
 //=================================================================================================//
 CompositeSolid::CompositeSolid(Real rho0)
-    : ElasticSolid(rho0), material_id_(nullptr)
+    : ElasticSolid(rho0), material_id_(nullptr), dv_material_id_(nullptr)
 {
     material_type_name_ = "CompositeSolid";
 }
@@ -39,7 +39,8 @@ Real CompositeSolid::CompositeDensity(size_t index_i)
 void CompositeSolid::initializeLocalParameters(BaseParticles *base_particles)
 {
     ElasticSolid::initializeLocalParameters(base_particles);
-    material_id_ = base_particles->registerStateVariableData<int>("MaterialID");
+    dv_material_id_ = base_particles->registerStateVariable<int>("MaterialID");
+    material_id_ = dv_material_id_->Data();
 
     for (size_t i = 0; i < composite_materials_.size(); ++i)
     {
