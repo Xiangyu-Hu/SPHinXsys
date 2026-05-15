@@ -15,7 +15,11 @@ ActiveModelSolid::ActiveModelSolid(Real rho0, Real youngs_modulus, Real poisson_
 void ActiveModelSolid::initializeLocalParameters(BaseParticles *base_particles)
 {
     SaintVenantKirchhoffSolid::initializeLocalParameters(base_particles);
-    active_strain_ = base_particles->registerStateVariableData<Matd>("ActiveStrain");
+    dv_active_strain_ = base_particles->registerStateVariable<Matd>(
+        "ActiveStrain",
+        [&](size_t i) -> Matd { return Matd::Zero(); });
+    active_strain_ = dv_active_strain_->Data();
+    base_particles->addEvolvingVariable<Matd>(dv_active_strain_);
 }
 //=================================================================================================//
 Matd ActiveModelSolid::StressPK1(Matd &F, size_t index_i)
