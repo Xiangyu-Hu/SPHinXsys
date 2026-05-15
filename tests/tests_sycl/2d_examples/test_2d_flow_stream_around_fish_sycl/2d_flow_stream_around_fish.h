@@ -208,54 +208,58 @@ class FishMaterialInitialization : public MaterialIdInitialization
 //----------------------------------------------------------------------
 //	imposing active strain to fish muscle
 //----------------------------------------------------------------------
-class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondition
+class ImposingActiveStrain : public LocalDynamics
 {
   public:
     explicit ImposingActiveStrain(SolidBody &solid_body)
-        : solid_dynamics::ElasticDynamicsInitialCondition(solid_body),
-          material_id_(particles_->getVariableDataByName<int>("MaterialID")),
-          pos0_(particles_->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
-          active_strain_(particles_->getVariableDataByName<Matd>("ActiveStrain")),
-        physical_time_(sph_system_->svPhysicalTime().Data())
-        {
-            // Register as evolving so restart files save/restore muscle and material state.
-            // MaterialID assigned at t=0 from undeformed positions — must persist across restart
-            // since deformed positions at restart time would give wrong material assignments.
-            // InitialPosition (pos0) needed for muscle wave formula and Total Lagrangian B0.
-            particles_->addEvolvingVariable<Matd>("ActiveStrain");
-            particles_->addEvolvingVariable<int>("MaterialID");
-            particles_->addEvolvingVariable<Vecd>("InitialPosition");
+        : LocalDynamics(solid_body),
+          sv_physical_time_(&sph_system_->svPhysicalTime()),
+          dv_material_id_(particles_->getVariableByName<int>("MaterialID")),
+          dv_pos0_(particles_->getVariableByName<Vecd>("InitialPosition")),
+          dv_active_strain_(particles_->getVariableByName<Matd>("ActiveStrain")) {}
 
-            // Re-fetch variable data after registering them as evolving variables.
-            material_id_ = particles_->getVariableDataByName<int>("MaterialID");
-            active_strain_ = particles_->getVariableDataByName<Matd>("ActiveStrain");
-        };
-    virtual void update(size_t index_i, Real dt = 0.0)
+    struct UpdateKernel
     {
-        if (material_id_[index_i] == 0)
+        template <typename ExecutionPolicy>
+        UpdateKernel(const ExecutionPolicy &ex_policy, ImposingActiveStrain &encloser)
+            : physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)),
+              material_id_(encloser.dv_material_id_->DelegatedData(ex_policy)),
+              pos0_(encloser.dv_pos0_->DelegatedData(ex_policy)),
+              active_strain_(encloser.dv_active_strain_->DelegatedData(ex_policy)) {}
+
+        void update(size_t index_i, Real dt = 0.0)
         {
-            Real x = pos0_[index_i][0] - cx;
-            Real y = pos0_[index_i][1];
+            if (material_id_[index_i] == 0)
+            {
+                Real x = pos0_[index_i][0] - cx;
+                Real y = pos0_[index_i][1];
 
-            Real Am = 0.12;
-            Real frequency = 4.0;
-            Real w = 2 * Pi * frequency;
-            Real lambda = 3.0 * fish_length;
-            Real wave_number = 2 * Pi / lambda;
-            Real hx = -(pow(x, 2) - pow(fish_length, 2)) / pow(fish_length, 2);
-            Real start_time = 0.2;
-            Real current_time = *physical_time_;
-            Real strength = 1 - exp(-current_time / start_time);
+                Real Am = 0.12;
+                Real frequency = 4.0;
+                Real w = 2 * Pi * frequency;
+                Real lambda = 3.0 * fish_length;
+                Real wave_number = 2 * Pi / lambda;
+                Real hx = -(pow(x, 2) - pow(fish_length, 2)) / pow(fish_length, 2);
+                Real start_time = 0.2;
+                Real current_time = *physical_time_;
+                Real strength = 1 - exp(-current_time / start_time);
 
-            Real phase_shift = y > (cy + bone_thickness / 2) ? 0 : Pi / 2;
-            active_strain_[index_i](0, 0) =
-                -Am * hx * strength * pow(sin(w * current_time / 2 + wave_number * x / 2 + phase_shift), 2);
+                Real phase_shift = y > (cy + bone_thickness / 2) ? 0 : Pi / 2;
+                active_strain_[index_i](0, 0) =
+                    -Am * hx * strength * pow(sin(w * current_time / 2 + wave_number * x / 2 + phase_shift), 2);
+            }
         }
+
+      protected:
+        Real *physical_time_;
+        int *material_id_;
+        Vecd *pos0_;
+        Matd *active_strain_;
     };
 
   protected:
-    int *material_id_;
-    Vecd *pos0_;
-    Matd *active_strain_;
-    Real *physical_time_;
-    };
+    SingularVariable<Real> *sv_physical_time_;
+    DiscreteVariable<int> *dv_material_id_;
+    DiscreteVariable<Vecd> *dv_pos0_;
+    DiscreteVariable<Matd> *dv_active_strain_;
+};
