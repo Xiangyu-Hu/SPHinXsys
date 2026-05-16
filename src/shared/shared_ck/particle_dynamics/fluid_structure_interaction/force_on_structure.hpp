@@ -3,6 +3,8 @@
 
 #include "force_on_structure.h"
 
+#include "base_body.hpp"
+
 namespace SPH
 {
 namespace FSI
@@ -44,7 +46,7 @@ ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, P
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        ViscosityType *viscosity_model_k = DynamicCast<ViscosityType>(this, &this->contact_bodies_[k]->getBaseMaterial());
+        ViscosityType *viscosity_model_k = &this->contact_bodies_[k]->template getMaterialProperty<ViscosityType>();
         contact_viscosity_model_.push_back(viscosity_model_k);
         contact_smoothing_length_sq_.push_back(pow(this->contact_bodies_[k]->getSPHAdaptation().ReferenceSmoothingLength(), 2));
     }

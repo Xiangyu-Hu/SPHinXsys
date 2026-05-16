@@ -1,6 +1,7 @@
 
 #include "FVM_flow_around_cylinder_2d_def.h"
 
+#include "base_body.hpp"
 namespace SPH
 {
 namespace fluid_dynamics

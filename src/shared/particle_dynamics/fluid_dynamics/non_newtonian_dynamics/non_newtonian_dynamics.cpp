@@ -1,6 +1,7 @@
 #include "non_newtonian_dynamics.h"
 
 #include "adaptation.h"
+#include "base_body.hpp"
 
 namespace SPH
 {
@@ -77,7 +78,7 @@ Oldroyd_BIntegration2ndHalf<Inner<>>::
       tau_(particles_->getVariableDataByName<Matd>("ElasticStress")),
       dtau_dt_(particles_->getVariableDataByName<Matd>("ElasticStressChangeRate"))
 {
-    OldroydBViscosity &oldroyd_b = DynamicCast<OldroydBViscosity>(this, sph_body_->getBaseMaterial());
+    OldroydBViscosity &oldroyd_b = sph_body_->getMaterialProperty<OldroydBViscosity>();
     mu_p_ = oldroyd_b.ReferencePolymericViscosity();
     lambda_ = oldroyd_b.ReferenceRelaxationTime();
 }
@@ -113,7 +114,7 @@ Real SRDViscousTimeStepSize::reduce(size_t index_i, Real dt)
 ShearRateDependentViscosity::ShearRateDependentViscosity(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       vel_grad_(particles_->getVariableDataByName<Matd>("VelocityGradient")),
-      generalized_viscosity_(DynamicCast<GeneralizedNewtonianViscosity>(this, this->sph_body_->getBaseMaterial())),
+      generalized_viscosity_(sph_body_->getMaterialProperty<GeneralizedNewtonianViscosity>()),
       mu_srd_(particles_->registerStateVariableData<Real>("VariableViscosity"))
 {
     particles_->addVariableToWrite<Real>("VariableViscosity");

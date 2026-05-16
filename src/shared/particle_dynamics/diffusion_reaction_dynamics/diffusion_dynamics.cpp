@@ -2,6 +2,7 @@
 
 #include "adaptation.h"
 #include "base_material.h"
+#include "base_body.hpp"
 
 namespace SPH
 {
@@ -15,7 +16,6 @@ GetDiffusionTimeStepSize::GetDiffusionTimeStepSize(
 }
 //=================================================================================================//
 GetDiffusionTimeStepSize::GetDiffusionTimeStepSize(SPHBody &sph_body)
-    : GetDiffusionTimeStepSize(
-          sph_body, DynamicCast<AbstractDiffusion>(this, &sph_body.getBaseMaterial())) {}
+    : GetDiffusionTimeStepSize(sph_body, &sph_body.getMaterialProperty<AbstractDiffusion>()) {}
 //=================================================================================================//
 } // namespace SPH
