@@ -35,7 +35,7 @@ Real mu_f = 8.9e-7;                      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real diffusion_coeff = 100.0 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
 Real fluid_moisture = 1.0;                                   /**< fluid moisture. */
 Real cylinder_moisture = 0.0;                                /**< cylinder moisture. */
@@ -69,7 +69,7 @@ class WettingFluidBodyInitialCondition : public LocalDynamics
     explicit WettingFluidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -120,7 +120,7 @@ class WettingWallBodyInitialCondition : public LocalDynamics
     explicit WettingWallBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -148,7 +148,7 @@ class WettingCylinderBodyInitialCondition : public LocalDynamics
     explicit WettingCylinderBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -191,7 +191,8 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WettingFluidBody>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WettingWallBody>("WallBoundary"));
@@ -201,8 +202,8 @@ int main(int ac, char *av[])
     SolidBody cylinder(sph_system, makeShared<WettingCylinderBody>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 1.0);
     cylinder.defineBodyLevelSetShape();
-    cylinder.defineClosure<Solid, IsotropicDiffusion>(
-        rho0_s, ConstructArgs(diffusion_species_name, diffusion_coeff));
+    cylinder.defineMaterial<Solid>(rho0_s);
+    cylinder.addMaterialProperty<IsotropicDiffusion>(species_name, diffusion_coeff);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.Name())
         : cylinder.generateParticles<BaseParticles, Lattice>();

@@ -173,7 +173,8 @@ void poiseuille_flow(const Real global_resolution, const Real resolution_shell, 
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(system, water_block_shape);
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
 

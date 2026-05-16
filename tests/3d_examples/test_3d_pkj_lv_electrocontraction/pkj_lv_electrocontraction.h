@@ -67,7 +67,7 @@ Real acceleration_factor = 27.5; /** Acceleration factor for fast diffusion on p
 Real diffusion_coeff = 0.8;
 Real bias_coeff = 0.0;
 /** Electrophysiology parameters. */
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real c_m = 1.0;
 Real k = 8.0;
 Real a = 0.01;

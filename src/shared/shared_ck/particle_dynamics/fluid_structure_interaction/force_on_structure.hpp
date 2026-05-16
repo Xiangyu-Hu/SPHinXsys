@@ -44,7 +44,7 @@ ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, P
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        ViscosityType *viscosity_model_k = DynamicCast<ViscosityType>(this, &this->contact_particles_[k]->getBaseMaterial());
+        ViscosityType *viscosity_model_k = DynamicCast<ViscosityType>(this, &this->contact_bodies_[k]->getBaseMaterial());
         contact_viscosity_model_.push_back(viscosity_model_k);
         contact_smoothing_length_sq_.push_back(pow(this->contact_bodies_[k]->getSPHAdaptation().ReferenceSmoothingLength(), 2));
     }
@@ -89,7 +89,7 @@ PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrectionTy
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        FluidType &contact_fluid_k = DynamicCast<FluidType>(this, this->contact_particles_[k]->getBaseMaterial());
+        FluidType &contact_fluid_k = DynamicCast<FluidType>(this, this->contact_bodies_[k]->getBaseMaterial());
         contact_riemann_solver_.push_back(RiemannSolverType(contact_fluid_k, contact_fluid_k));
         dv_contact_rho_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Density"));
         dv_contact_mass_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Mass"));

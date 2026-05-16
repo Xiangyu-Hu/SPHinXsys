@@ -21,14 +21,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineBodyLevelSetShape();
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<BaseParticles, Reload>(water_block.Name())
         : water_block.generateParticles<BaseParticles, Lattice>();
 
     FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
     air_block.defineBodyLevelSetShape();
-    air_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_a, c_f), mu_a);
+    air_block.defineMaterial<WeaklyCompressibleFluid>(rho0_a, c_f);
+    air_block.addMaterialProperty<Viscosity>(mu_a);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? air_block.generateParticles<BaseParticles, Reload>(air_block.Name())
         : air_block.generateParticles<BaseParticles, Lattice>();

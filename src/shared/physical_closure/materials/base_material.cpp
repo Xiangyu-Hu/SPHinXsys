@@ -20,6 +20,15 @@ void BaseMaterial::setLocalParameters(SPHSystem &sph_system, BaseParticles *base
     initializeLocalParameters(base_particles);
 }
 //=================================================================================================//
+std::string BaseMaterial::Name()
+{
+    if (material_name_.empty())
+    {
+        return material_type_name_;
+    }
+    return material_name_;
+}
+//=================================================================================================//
 Fluid::Fluid(Real rho0, Real c0) : BaseMaterial(rho0), c0_(c0)
 {
     material_type_name_ = "Fluid";

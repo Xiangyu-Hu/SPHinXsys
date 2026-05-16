@@ -130,7 +130,7 @@ struct observer_point_shell
 
     void interpolate(SurfaceParticles &particles)
     {
-        ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getBaseMaterial());
+        ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getSPHBody().getBaseMaterial());
         pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
                                             { return (particles.getVariableDataByName<Vec3d>("Position"))[id]; });
         displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)

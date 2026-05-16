@@ -22,8 +22,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    diffusion_body.defineClosure<Solid, IsotropicDiffusion>(
-        Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff));
+    diffusion_body.defineMaterial<Solid>();
+    diffusion_body.addMaterialProperty<IsotropicDiffusion>(species_name, diffusion_coeff);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));

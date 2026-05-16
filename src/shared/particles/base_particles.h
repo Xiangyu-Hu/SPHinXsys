@@ -87,10 +87,9 @@ class BaseParticles
     UniquePtrsKeeper<XmlParser> xml_parser_ptrs_;
 
   public:
-    explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
+    explicit BaseParticles(SPHBody &sph_body);
     virtual ~BaseParticles();
     SPHBody &getSPHBody() { return sph_body_; };
-    BaseMaterial &getBaseMaterial() { return base_material_; };
     SPHAdaptation &getSPHAdaptation();
     std::string getBodyName();
     //----------------------------------------------------------------------
@@ -188,7 +187,6 @@ class BaseParticles
 
     SPHBody &sph_body_;
     std::string body_name_;
-    BaseMaterial &base_material_;
     XmlParser &restart_xml_parser_;
     XmlParser &reload_xml_parser_;
     DiscreteVariables all_discrete_variables_;

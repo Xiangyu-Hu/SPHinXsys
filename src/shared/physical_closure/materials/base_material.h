@@ -57,6 +57,8 @@ class BaseMaterial
         : material_type_name_("BaseMaterial"), rho0_(rho0) {};
     BaseMaterial() : BaseMaterial(1.0) {};
     virtual ~BaseMaterial() {};
+    std::string Name();
+    void setMaterialName(const std::string &name) { material_name_ = name; };
     std::string MaterialType() { return material_type_name_; }
     Real ReferenceDensity() { return rho0_; };
     /**
@@ -72,6 +74,7 @@ class BaseMaterial
 
   protected:
     std::string material_type_name_;
+    std::string material_name_;
     Real rho0_; /**< reference density. */
 };
 

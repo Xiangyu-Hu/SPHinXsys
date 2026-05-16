@@ -58,7 +58,7 @@ class FACBoundaryConditionSetup : public BoundaryConditionSetupInFVM
   public:
     FACBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
         : BoundaryConditionSetupInFVM(inner_relation, ghost_creation),
-          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())) {};
+          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, sph_body_->getBaseMaterial())) {};
     virtual ~FACBoundaryConditionSetup() {};
 
     void applyNonSlipWallBoundary(size_t ghost_index, size_t index_i) override
@@ -98,7 +98,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, ansys_mesh);
     GhostCreationFromMesh ghost_creation(water_block, ansys_mesh, ghost_boundary);

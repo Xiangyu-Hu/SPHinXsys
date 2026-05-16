@@ -20,7 +20,7 @@ StdVec<Vecd> observation_location = {Vecd(0.0, DH * 0.5)};
 //----------------------------------------------------------------------
 //	Global parameters on the material properties
 //----------------------------------------------------------------------
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real diffusion_coeff = 1.0e-3;
 Real rho0_f = 1.0;                  /**< Density. */
 Real U_f = 1.0;                     /**< Characteristic velocity. */
@@ -102,7 +102,7 @@ class ThermosolidBodyInitialCondition : public LocalDynamics
     explicit ThermosolidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -130,7 +130,7 @@ class ThermofluidBodyInitialCondition : public LocalDynamics
     explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -189,8 +189,9 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody thermofluid_body(sph_system, makeShared<ThermofluidBody>("ThermofluidBody"));
-    thermofluid_body.defineClosure<WeaklyCompressibleFluid, Viscosity, IsotropicDiffusion>(
-        ConstructArgs(rho0_f, c_f), mu_f, ConstructArgs(diffusion_species_name, diffusion_coeff));
+    thermofluid_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    thermofluid_body.addMaterialProperty<Viscosity>(mu_f);
+    thermofluid_body.addMaterialProperty<IsotropicDiffusion>(species_name, diffusion_coeff);
     thermofluid_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody thermosolid_body(sph_system, makeShared<ThermosolidBody>("ThermosolidBody"));

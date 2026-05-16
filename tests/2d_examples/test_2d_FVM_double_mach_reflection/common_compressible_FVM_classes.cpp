@@ -10,7 +10,7 @@ CompressibleAcousticTimeStepSizeInFVM::
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       min_distance_between_nodes_(min_distance_between_nodes),
-      compressible_fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+      compressible_fluid_(DynamicCast<Fluid>(this, sph_body_->getBaseMaterial())),
       acousticCFL_(acousticCFL){};
 //=================================================================================================//
 Real CompressibleAcousticTimeStepSizeInFVM::reduce(size_t index_i, Real dt)

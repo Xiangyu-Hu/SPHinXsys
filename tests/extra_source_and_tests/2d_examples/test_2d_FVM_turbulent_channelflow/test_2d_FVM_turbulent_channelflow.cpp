@@ -24,7 +24,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("TurbulentChannelFlow"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, read_mesh_data);
     GhostCreationFromMesh ghost_creation(water_block, read_mesh_data, ghost_boundary);

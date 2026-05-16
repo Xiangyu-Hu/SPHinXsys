@@ -229,7 +229,8 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
 
     // --- Section 7: Create Fluid and Solid Bodies ---
     FluidBody water_block(sph_system, water_block_shape);
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(params.rho0_f, params.c_f), params.mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(params.rho0_f, params.c_f);
+    water_block.addMaterialProperty<Viscosity>(params.mu_f);
     water_block.defineComponentLevelSetShape("OuterBoundary");
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(10.);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())

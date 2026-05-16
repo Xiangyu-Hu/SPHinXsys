@@ -122,7 +122,8 @@ int main(int ac, char *av[])
     sph_system.handleCommandlineOptions(ac, av);
     // Define the fluid body with its material properties
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
     water_block.getBaseParticles().registerStateVariable<Real>("Energy");
     water_block.getBaseParticles().registerStateVariable<Vecd>("EnergyGradient");

@@ -66,18 +66,22 @@ class SPHBody
     UniquePtrKeeper<SPHAdaptation> sph_adaptation_keeper_;
     UniquePtrKeeper<BaseParticles> base_particles_keeper_;
     UniquePtrKeeper<BaseMaterial> base_material_keeper_;
+    UniquePtrsKeeper<BaseMaterial> material_properties_keeper_;
 
   protected:
     SPHSystem &sph_system_;
     std::string body_name_;
-    bool newly_updated_;                   /**< whether this body is in a newly updated state */
-    BaseParticles *base_particles_;        /**< Base particles for dynamic cast DataDelegate  */
-    bool is_bound_set_;                    /**< whether the bounding box is set */
-    BoundingBoxd bound_;                   /**< bounding box of the body */
-    Shape *initial_shape_;                 /**< initial volumetric geometry enclosing the body */
-    SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
-    BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
+    bool newly_updated_;            /**< whether this body is in a newly updated state */
+    BaseParticles *base_particles_; /**< Base particles for dynamic cast DataDelegate  */
+    bool is_bound_set_;             /**< whether the bounding box is set */
+    BoundingBoxd bound_;            /**< bounding box of the body */
+    Shape *initial_shape_;          /**< initial volumetric geometry enclosing the body */
+    SPHAdaptation *sph_adaptation_; /**< numerical adaptation policy */
+    StdVec<BaseMaterial *> all_material_properties_;
     StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
+
+    template <typename MaterialType>
+    StdVec<MaterialType *> collectMaterialProperties();
 
   public:
     typedef SPHBody RangeIdentifier;
@@ -97,6 +101,8 @@ class SPHBody
     SPHAdaptation &getSPHAdaptation();
     BaseParticles &getBaseParticles();
     BaseMaterial &getBaseMaterial();
+    template <typename MaterialType>
+    MaterialType &getMaterialProperty(const std::string &name = ""); // name is optional for one material for a material type
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
     IndexRange LoopRange();
     size_t SizeOfLoopRange();
@@ -146,8 +152,8 @@ class SPHBody
     template <class MaterialType = BaseMaterial, typename... Args>
     MaterialType &defineMaterial(Args &&...args);
 
-    template <class BaseModel, typename... AuxiliaryModels, typename... Args>
-    Closure<BaseModel, AuxiliaryModels...> &defineClosure(Args &&...args);
+    template <class MaterialType = BaseMaterial, typename... Args>
+    MaterialType &addMaterialProperty(Args &&...args);
     //----------------------------------------------------------------------
     // Particle generating methods
     // Initialize particle data using a particle generator for geometric data.

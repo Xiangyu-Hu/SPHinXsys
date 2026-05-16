@@ -36,9 +36,8 @@ int main(int ac, char *av[])
     {
         SolidBody heart_model(sph_system, makeShared<Heart>("HeartModel"));
         heart_model.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
-        heart_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
-            ConstructArgs(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0),
-            ConstructArgs(diffusion_species_name, diffusion_coeff));
+        heart_model.defineMaterial<LocallyOrthotropicMuscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+        heart_model.addMaterialProperty<IsotropicDiffusion>(species_name, diffusion_coeff);
         heart_model.generateParticles<BaseParticles, Lattice>();
         /** topology */
         InnerRelation herat_model_inner(heart_model);
@@ -114,8 +113,9 @@ int main(int ac, char *av[])
 
     SolidBody physiology_heart(sph_system, makeShared<Heart>("PhysiologyHeart"));
     AlievPanfilowModel aliev_panfilow_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    physiology_heart.defineClosure<Solid, MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
-        Solid(), ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
+    physiology_heart.defineMaterial<Solid>();
+    physiology_heart.addMaterialProperty<MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
+        ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? physiology_heart.generateParticles<BaseParticles, Reload>("HeartModel")
         : physiology_heart.generateParticles<BaseParticles, Lattice>();

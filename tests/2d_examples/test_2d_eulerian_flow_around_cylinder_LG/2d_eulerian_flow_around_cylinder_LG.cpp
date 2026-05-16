@@ -93,7 +93,8 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
     water_block.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     water_block.defineComponentLevelSetShape("OuterBoundary");
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? water_block.generateParticles<BaseParticles, Reload>(water_block.Name())
         : water_block.generateParticles<BaseParticles, Lattice>();

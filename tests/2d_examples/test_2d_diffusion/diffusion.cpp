@@ -15,7 +15,7 @@ BoundingBoxd system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real diffusion_coeff = 1.0e-4;
 Real bias_coeff = 0.0;
 Real alpha = Pi / 6.0;
@@ -52,7 +52,7 @@ class DiffusionInitialCondition : public LocalDynamics
     explicit DiffusionInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -105,8 +105,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
-    diffusion_body.defineClosure<Solid, DirectionalDiffusion>(
-        Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff, bias_coeff, bias_direction));
+    diffusion_body.defineMaterial<Solid>();
+    diffusion_body.addMaterialProperty<DirectionalDiffusion>(species_name, diffusion_coeff, bias_coeff, bias_direction);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
@@ -140,7 +140,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_solid_temperature(diffusion_species_name, temperature_observer_contact);
+        write_solid_temperature(species_name, temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

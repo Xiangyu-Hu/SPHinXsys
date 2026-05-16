@@ -63,7 +63,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     GeometricShapeBox water_body_shape(Transform(water_body_translation), water_body_halfsize, "WaterBody");
     FluidBody water_body(sph_system, water_body_shape);
-    water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.addMaterialProperty<Viscosity>(mu_f);
     water_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("WallBoundary"));

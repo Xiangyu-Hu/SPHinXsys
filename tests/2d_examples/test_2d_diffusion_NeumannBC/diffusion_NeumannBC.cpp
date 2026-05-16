@@ -21,8 +21,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    diffusion_body.defineClosure<Solid, IsotropicDiffusion>(
-        Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff));
+    diffusion_body.defineMaterial<Solid>();
+    diffusion_body.addMaterialProperty<IsotropicDiffusion>(species_name, diffusion_coeff);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));
@@ -65,7 +65,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtp write_states(sph_system);
     // ObservedQuantityRecording<Real> write_solid_temperature("Phi", temperature_observer_contact);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_solid_temperature(diffusion_species_name, temperature_observer_contact);
+        write_solid_temperature(species_name, temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

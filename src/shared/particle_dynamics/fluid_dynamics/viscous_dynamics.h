@@ -44,8 +44,8 @@ class FixedViscosity : public PairGeomAverageFixed<Real>
   public:
     FixedViscosity(BaseParticles *particles1, BaseParticles *particles2)
         : PairGeomAverageFixed<Real>(
-              DynamicCast<Viscosity>(this, particles1->getBaseMaterial()).ReferenceViscosity(),
-              DynamicCast<Viscosity>(this, particles2->getBaseMaterial()).ReferenceViscosity()) {};
+              DynamicCast<Viscosity>(this, particles1->getSPHBody().getMaterialProperty<Viscosity>()).ReferenceViscosity(),
+              DynamicCast<Viscosity>(this, particles2->getSPHBody().getMaterialProperty<Viscosity>()).ReferenceViscosity()) {};
     explicit FixedViscosity(BaseParticles *particles)
         : FixedViscosity(particles, particles) {};
     virtual ~FixedViscosity() {};

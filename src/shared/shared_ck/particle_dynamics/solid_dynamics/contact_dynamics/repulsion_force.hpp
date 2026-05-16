@@ -14,7 +14,7 @@ RepulsionForceCK<Base, Contact<Parameters...>>::
     RepulsionForceCK(Contact<Parameters...> &contact_relation, Real numerical_damping)
     : Interaction<Contact<Parameters...>>(contact_relation),
       ForcePriorCK(this->particles_, "RepulsionForce"),
-      solid_contact_(DynamicCast<SolidContact>(this, this->particles_->getBaseMaterial())),
+      solid_contact_(DynamicCast<SolidContact>(this, this->sph_body_->getBaseMaterial())),
       numerical_damping_(numerical_damping),
       stiffness_(solid_contact_.ContactStiffness()),
       impedance_(sqrt(solid_contact_.ContactReferenceDensity() * stiffness_)),

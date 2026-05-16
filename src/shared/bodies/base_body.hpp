@@ -43,30 +43,66 @@ LevelSetShape &SPHBody::defineBodyLevelSetShape(const ExecutionPolicy &ex_policy
 }
 //=================================================================================================//
 template <class MaterialType, typename... Args>
-MaterialType &SPHBody::defineMaterial(Args &&...args)
+MaterialType &SPHBody::addMaterialProperty(Args &&...args)
 {
-    base_material_ = base_material_keeper_.createPtr<MaterialType>(
-        std::forward<Args>(args)...);
-    return *static_cast<MaterialType *>(base_material_);
+    MaterialType *material = material_properties_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
+    all_material_properties_.push_back(material);
+    return *material;
 }
 //=================================================================================================//
-template <class BaseModel, typename... AuxiliaryModels, typename... Args>
-Closure<BaseModel, AuxiliaryModels...> &SPHBody::defineClosure(Args &&...args)
+template <typename MaterialType>
+StdVec<MaterialType *> SPHBody::collectMaterialProperties()
 {
-    base_material_ = base_material_keeper_.createPtr<Closure<BaseModel, AuxiliaryModels...>>(
-        std::forward<Args>(args)...);
-    return *static_cast<Closure<BaseModel, AuxiliaryModels...> *>(base_material_);
+    StdVec<MaterialType *> materials;
+    for (auto *material : all_material_properties_)
+    {
+        if (auto *cast_material = dynamic_cast<MaterialType *>(material))
+        {
+            materials.push_back(cast_material);
+        }
+    }
+    return materials;
+}
+//=================================================================================================//
+template <class MaterialType>
+MaterialType &SPHBody::getMaterialProperty(const std::string &name)
+{
+    StdVec<MaterialType *> materials = collectMaterialProperties<MaterialType>();
+    if (materials.empty())
+    {
+        throw std::runtime_error(
+            std::string(type_name<MaterialType>()) + " not found in body: " + body_name_);
+    }
+    else if (materials.size() == 1)
+    {
+        return *materials[0];
+    }
+    else
+    {
+        for (auto *material : materials)
+        {
+            if (material->Name() == name)
+            {
+                return *material;
+            }
+        }
+        throw std::runtime_error(std::string(type_name<MaterialType>()) + ": " + name +
+                                 " not found in body: " + body_name_);
+    }
 }
 //=================================================================================================//
 template <class ParticleType, class... Parameters, typename... Args>
 ParticleType &SPHBody::generateParticles(Args &&...args)
 {
-    ParticleType *particles = base_particles_keeper_.createPtr<ParticleType>(*this, base_material_);
+    ParticleType *particles = base_particles_keeper_.createPtr<ParticleType>(*this);
     ParticleGenerator<ParticleType, Parameters...> particle_generator(*this, *particles, std::forward<Args>(args)...);
     particle_generator.generateParticlesWithGeometricVariables();
     particles->initializeBasicDiscreteVariables();
     sph_adaptation_->initializeAdaptationVariables(*particles);
-    base_material_->setLocalParameters(sph_system_, particles);
+    for (auto *material : all_material_properties_)
+    {
+        material->setLocalParameters(sph_system_, particles);
+    }
     return *particles;
 }
 //=================================================================================================//
@@ -75,6 +111,14 @@ ParticleType &SPHBody::generateParticlesWithReserve(ReserveType &particle_reserv
 {
     return generateParticles<ParticleType, ReserveType, Parameters...>(
         particle_reserve, std::forward<Args>(args)...);
+}
+//=================================================================================================//
+template <class MaterialType, typename... Args>
+MaterialType &SPHBody::defineMaterial(Args &&...args)
+{
+    MaterialType *material = base_material_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
+    all_material_properties_[0] = material; // set the first material as the default material for the body
+    return *material;
 }
 //=================================================================================================//
 template <typename... Args>

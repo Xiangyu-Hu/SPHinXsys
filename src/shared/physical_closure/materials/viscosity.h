@@ -31,17 +31,18 @@
 
 #include "data_type.h"
 #include "particle_functors.h"
+#include "base_material.h"
 
 namespace SPH
 {
 class BaseParticles;
 
-class Viscosity
+class Viscosity : public BaseMaterial
 {
   protected:
     Real mu_; /**< reference viscosity. */
   public:
-    explicit Viscosity(Real mu) : mu_(mu) {};
+    explicit Viscosity(Real mu) : BaseMaterial(), mu_(mu) {};
     virtual ~Viscosity() {};
     Real ReferenceViscosity() { return mu_; };
     virtual void registerLocalParameters(BaseParticles *base_particles) {};

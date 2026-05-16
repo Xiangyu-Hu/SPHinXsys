@@ -49,7 +49,7 @@ EmitterInflowInjectionCK<OrientedBoxPartType>::
     : BaseLocalDynamics<OrientedBoxPartType>(oriented_box_part),
       sv_oriented_box_(oriented_box_part.svOrientedBox()),
       spawn_real_particle_method_(this->particles_),
-      rho0_(this->particles_->getBaseMaterial().ReferenceDensity()),
+      rho0_(this->sph_body_->getBaseMaterial().ReferenceDensity()),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_p_(this->particles_->template getVariableByName<Real>("Pressure"))

@@ -203,7 +203,8 @@ int main(int ac, char *av[])
     auto &water_body = sph_system.addAdaptiveBody<FluidBody>(water_body_adaptation, water_body_shape);
     water_body.defineComponentLevelSetShape("OuterBoundary").writeLevelSet();
     sph_system.addShape<LevelSetShape>(water_body, refinement_region).writeLevelSet();
-    water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_body.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_body.Name())
         .reloadExtraVariable<Real>("SmoothingLengthRatio");

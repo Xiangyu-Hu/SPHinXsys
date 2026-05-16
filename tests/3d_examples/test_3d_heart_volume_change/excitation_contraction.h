@@ -38,7 +38,7 @@ std::array<Real, 4> b0 = {Real(7.209), Real(20.417), Real(11.176), Real(9.466)};
 Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
 /** Electrophysiology parameters. */
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real diffusion_coeff = 0.8;
 Real bias_coeff = 0.0;
 /** Electrophysiology parameters. */

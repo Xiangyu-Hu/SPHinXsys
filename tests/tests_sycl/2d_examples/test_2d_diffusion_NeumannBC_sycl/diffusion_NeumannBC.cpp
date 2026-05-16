@@ -19,7 +19,7 @@ BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //	Basic parameters for diffusion properties.
 //----------------------------------------------------------------------
 Real diffusion_coeff = 1;
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 //----------------------------------------------------------------------
 //	Initial and boundary conditions.
 //----------------------------------------------------------------------
@@ -160,7 +160,7 @@ int main(int ac, char *av[])
             diffusion_body_inner, diffusion_body_contact_Dirichlet, diffusion_body_contact_Neumann);
     UpdateRelation<MainExecutionPolicy, Contact<>> observer_contact_relation(temperature_observer_contact);
 
-    IsotropicDiffusion isotropic_diffusion(diffusion_species_name, diffusion_coeff);
+    IsotropicDiffusion isotropic_diffusion(species_name, diffusion_coeff);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, &isotropic_diffusion);
     RungeKuttaSequence<InteractionDynamicsCK<
         MainExecutionPolicy,
@@ -179,19 +179,19 @@ int main(int ac, char *av[])
     //	Specify initial condition if necessary.
     //----------------------------------------------------------------------
     StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
-        diffusion_initial_condition(diffusion_body, diffusion_species_name, initial_temperature);
+        diffusion_initial_condition(diffusion_body, species_name, initial_temperature);
     StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
-        left_initial_condition(wall_Dirichlet_left_region, diffusion_species_name, left_temperature);
+        left_initial_condition(wall_Dirichlet_left_region, species_name, left_temperature);
     StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
-        right_initial_condition(wall_Dirichlet_right_region, diffusion_species_name, right_temperature);
+        right_initial_condition(wall_Dirichlet_right_region, species_name, right_temperature);
     StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
-        wall_Neumann_initial_condition(wall_Neumann, diffusion_species_name + "Flux", heat_flux);
+        wall_Neumann_initial_condition(wall_Neumann, species_name + "Flux", heat_flux);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>>
-        observe_temperature(temperature_observer_contact, diffusion_species_name);
+        observe_temperature(temperature_observer_contact, species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

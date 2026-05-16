@@ -21,7 +21,7 @@ BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
 Real diffusion_coeff = 1;
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 //----------------------------------------------------------------------
 //	Initial and boundary conditions.
 //----------------------------------------------------------------------
@@ -101,7 +101,7 @@ class DiffusionInitialCondition : public LocalDynamics
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -118,7 +118,7 @@ class DirichletWallBoundaryInitialCondition : public LocalDynamics
     explicit DirichletWallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -145,9 +145,9 @@ class RobinBoundaryDefinition : public LocalDynamics
     explicit RobinBoundaryDefinition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)),
-          phi_convection_(particles_->template getVariableDataByName<Real>(diffusion_species_name + "Convection")),
-          phi_infinity_(*(this->particles_->template getSingleVariableByName<Real>(diffusion_species_name + "Infinity")->Data())) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)),
+          phi_convection_(particles_->template getVariableDataByName<Real>(species_name + "Convection")),
+          phi_infinity_(*(this->particles_->template getSingleVariableByName<Real>(species_name + "Infinity")->Data())) {};
 
     void update(size_t index_i, Real dt)
     {

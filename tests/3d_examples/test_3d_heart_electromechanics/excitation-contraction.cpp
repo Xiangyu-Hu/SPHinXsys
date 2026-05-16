@@ -35,7 +35,7 @@ std::array<Real, 4> b0 = {Real(7.209), Real(20.417), Real(11.176), Real(9.466)};
 Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
 /** Electrophysiology parameters. */
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real diffusion_coeff = 0.8;
 Real bias_coeff = 0.0;
 /** Electrophysiology parameters. */
@@ -257,9 +257,8 @@ int main(int ac, char *av[])
     {
         SolidBody heart_model(sph_system, makeShared<Heart>("HeartModel"));
         heart_model.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
-        heart_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
-            ConstructArgs(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0),
-            ConstructArgs(diffusion_species_name, diffusion_coeff));
+        heart_model.defineMaterial<LocallyOrthotropicMuscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+        heart_model.addMaterialProperty<IsotropicDiffusion>(species_name, diffusion_coeff);
         heart_model.generateParticles<BaseParticles, Lattice>();
         /** topology */
         InnerRelation herat_model_inner(heart_model);
@@ -299,11 +298,11 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         GetDiffusionTimeStepSize get_time_step_size(heart_model);
         FiberDirectionDiffusionRelaxation diffusion_relaxation(herat_model_inner);
-        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(heart_model, diffusion_species_name);
+        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(heart_model, species_name);
         BodySurface surface_part(heart_model);
-        SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, diffusion_species_name);
+        SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, species_name);
         impose_diffusion_bc.exec();
-        write_herat_model_state_to_vtp.addToWrite<Real>(heart_model, diffusion_species_name);
+        write_herat_model_state_to_vtp.addToWrite<Real>(heart_model, species_name);
         write_herat_model_state_to_vtp.writeToFile(ite);
 
         int diffusion_step = 100;
@@ -338,8 +337,9 @@ int main(int ac, char *av[])
 
     SolidBody physiology_heart(sph_system, makeShared<Heart>("PhysiologyHeart"));
     AlievPanfilowModel aliev_panfilow_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    physiology_heart.defineClosure<Solid, MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
-        Solid(), ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
+    physiology_heart.defineMaterial<Solid>();
+    physiology_heart.addMaterialProperty<MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
+        ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? physiology_heart.generateParticles<BaseParticles, Reload>("HeartModel")
         : physiology_heart.generateParticles<BaseParticles, Lattice>();

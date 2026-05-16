@@ -131,8 +131,9 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBody"));
-    fluid_block.defineClosure<WeaklyCompressibleFluid, OldroydBViscosity>(
-        ConstructArgs(rho0_f, c_f), ConstructArgs(mu_f, lambda_f, mu_p_f));
+
+    fluid_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    fluid_block.addMaterialProperty<OldroydBViscosity>(mu_f, lambda_f, mu_p_f);
     Ghost<PeriodicAlongAxis> ghost_along_x(fluid_block.getSPHBodyBounds(), xAxis);
     fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_along_x);
 

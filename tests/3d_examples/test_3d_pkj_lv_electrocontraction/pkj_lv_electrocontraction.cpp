@@ -42,9 +42,8 @@ int main(int ac, char *av[])
     if (sph_system.RunParticleRelaxation())
     {
         SolidBody heart_model(sph_system, level_set_heart_model);
-        heart_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
-            ConstructArgs(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0),
-            ConstructArgs(diffusion_species_name, diffusion_coeff));
+        heart_model.defineMaterial<LocallyOrthotropicMuscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+        heart_model.addMaterialProperty<IsotropicDiffusion>(species_name, diffusion_coeff);
         heart_model.generateParticles<BaseParticles, Lattice>();
         /** topology */
         InnerRelation heart_model_inner(heart_model);
@@ -82,12 +81,12 @@ int main(int ac, char *av[])
         GetDiffusionTimeStepSize get_time_step_size(heart_model);
         FiberDirectionDiffusionRelaxation diffusion_relaxation(heart_model_inner);
         SimpleDynamics<NormalDirectionFromBodyShape> heart_model_normal(heart_model);
-        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(heart_model, diffusion_species_name);
+        SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(heart_model, species_name);
         BodySurface surface_part(heart_model);
-        SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, diffusion_species_name);
+        SimpleDynamics<DiffusionBCs> impose_diffusion_bc(surface_part, species_name);
         heart_model_normal.exec();
         impose_diffusion_bc.exec();
-        write_heart_model_state_to_vtp.addToWrite<Real>(heart_model, diffusion_species_name);
+        write_heart_model_state_to_vtp.addToWrite<Real>(heart_model, species_name);
         write_heart_model_state_to_vtp.writeToFile(ite);
 
         int diffusion_step = 100;
@@ -117,8 +116,9 @@ int main(int ac, char *av[])
     /** create a SPH body, material and particles */
     SolidBody physiology_heart(sph_system, level_set_heart_model, "PhysiologyHeart");
     AlievPanfilowModel aliev_panfilow_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    physiology_heart.defineClosure<Solid, MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
-        Solid(), ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
+    physiology_heart.defineMaterial<Solid>();
+    physiology_heart.addMaterialProperty<MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
+        ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? physiology_heart.generateParticles<BaseParticles, Reload>("HeartModel")
         : physiology_heart.generateParticles<BaseParticles, Lattice>();
@@ -132,8 +132,9 @@ int main(int ac, char *av[])
 
     /** Creat a Purkinje network for fast diffusion, material and particles */
     TreeBody pkj_body(sph_system, level_set_heart_model, "Purkinje");
-    pkj_body.defineClosure<Solid, MonoFieldElectroPhysiology<IsotropicDiffusion>>(
-        Solid(), ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff * acceleration_factor)));
+    pkj_body.defineMaterial<Solid>();
+    pkj_body.addMaterialProperty<MonoFieldElectroPhysiology<IsotropicDiffusion>>(
+        ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff * acceleration_factor)));
     pkj_body.generateParticles<BaseParticles, NetworkWithExtraCheck>(starting_point, second_point, 50, 1.0);
     TreeTerminates pkj_leaves(pkj_body);
     //----------------------------------------------------------------------

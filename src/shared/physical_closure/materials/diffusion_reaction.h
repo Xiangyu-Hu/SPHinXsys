@@ -31,6 +31,7 @@
 #ifndef DIFFUSION_REACTION_H
 #define DIFFUSION_REACTION_H
 
+#include "base_material.h"
 #include "data_type.h"
 #include "particle_functors.h"
 #include "vector_functions.h"
@@ -43,11 +44,11 @@ namespace SPH
 {
 class BaseParticles;
 
-class AbstractDiffusion
+class AbstractDiffusion : public BaseMaterial
 {
   public:
     typedef Real DataType;
-    AbstractDiffusion() {};
+    AbstractDiffusion() : BaseMaterial() {};
     virtual ~AbstractDiffusion() {};
     virtual StdVec<AbstractDiffusion *> AllDiffusions() = 0;
     virtual Real getDiffusionTimeStepSize(Real smoothing_length) = 0;
@@ -59,7 +60,7 @@ class AbstractDiffusion
 class BaseDiffusion : public AbstractDiffusion
 {
   public:
-    BaseDiffusion(const std::string &diffusion_species_name,
+    BaseDiffusion(const std::string &species_name,
                   const std::string &gradient_species_name, Real cv);
     BaseDiffusion(const std::string &species_name, Real cv);
     virtual ~BaseDiffusion() {};
@@ -102,7 +103,7 @@ class IsotropicDiffusion : public BaseDiffusion
     Real d_coeff_; /**< diffusion coefficient. */
 
   public:
-    IsotropicDiffusion(const std::string &diffusion_species_name,
+    IsotropicDiffusion(const std::string &species_name,
                        const std::string &gradient_species_name,
                        Real d_coeff = 1.0, Real cv = 1.0);
     IsotropicDiffusion(const std::string &species_name, Real d_coeff = 1.0, Real cv = 1.0);
@@ -144,7 +145,7 @@ class LocalIsotropicDiffusion : public IsotropicDiffusion
     Real *local_diffusivity_;
 
   public:
-    LocalIsotropicDiffusion(const std::string &diffusion_species_name,
+    LocalIsotropicDiffusion(const std::string &species_name,
                             const std::string &gradient_species_name,
                             Real diff_background, Real diff_max, Real cv = 1.0);
     LocalIsotropicDiffusion(const std::string &species_name, Real diff_background, Real diff_max, Real cv = 1.0);
@@ -175,7 +176,7 @@ class DirectionalDiffusion : public IsotropicDiffusion
     void initializeDirectionalDiffusivity(Real d_coeff, Real bias_d_coeff_, Vecd bias_direction);
 
   public:
-    DirectionalDiffusion(const std::string &diffusion_species_name,
+    DirectionalDiffusion(const std::string &species_name,
                          const std::string &gradient_species_name,
                          Real d_coeff, Real bias_d_coeff_,
                          Vecd bias_direction, Real cv = 1.0);
@@ -226,7 +227,7 @@ class LocalDirectionalDiffusion : public DirectionalDiffusion
     Matd *local_transformed_diffusivity_;
 
   public:
-    LocalDirectionalDiffusion(const std::string &diffusion_species_name,
+    LocalDirectionalDiffusion(const std::string &species_name,
                               const std::string &gradient_species_name,
                               Real d_coeff, Real bias_d_coeff_,
                               Vecd bias_direction, Real cv = 1.0);
@@ -351,21 +352,21 @@ class ReactionDiffusion : public AbstractDiffusion
     };
 
     template <typename... Args>
-    void addDiffusion(const std::string &diffusion_species_name,
+    void addDiffusion(const std::string &species_name,
                       const std::string &gradient_species_name, Args &&...args)
     {
         auto species_names = reaction_model_->getSpeciesNames();
 
-        if (std::find(species_names.begin(), species_names.end(), diffusion_species_name) != std::end(species_names) &&
+        if (std::find(species_names.begin(), species_names.end(), species_name) != std::end(species_names) &&
             std::find(species_names.begin(), species_names.end(), gradient_species_name) != std::end(species_names))
         {
             all_diffusions_.push_back(
                 diffusions_keeper_.template createPtr<DiffusionType>(
-                    diffusion_species_name, gradient_species_name, std::forward<Args>(args)...));
+                    species_name, gradient_species_name, std::forward<Args>(args)...));
         }
         else
         {
-            std::cout << "\n Error: diffusion species '" << diffusion_species_name
+            std::cout << "\n Error: diffusion species '" << species_name
                       << "' or gradient species '" << gradient_species_name
                       << "' not defined!" << std::endl;
             std::cout << __FILE__ << ':' << __LINE__ << std::endl;

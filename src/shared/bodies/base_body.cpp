@@ -14,9 +14,9 @@ namespace SPH
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
     : sph_system_(sph_system), body_name_(name), newly_updated_(true),
       base_particles_(nullptr), is_bound_set_(false), initial_shape_(&shape),
-      sph_adaptation_(sph_adaptation_keeper_.createPtr<SPHAdaptation>(sph_system.GlobalResolution())),
-      base_material_(base_material_keeper_.createPtr<BaseMaterial>())
+      sph_adaptation_(sph_adaptation_keeper_.createPtr<SPHAdaptation>(sph_system.GlobalResolution()))
 {
+    all_material_properties_.push_back(base_material_keeper_.createPtr<BaseMaterial>());
     sph_system_.addSPHBody(this);
 }
 //=================================================================================================//
@@ -76,8 +76,7 @@ BaseParticles &SPHBody::getBaseParticles()
 //=================================================================================================//
 BaseMaterial &SPHBody::getBaseMaterial()
 {
-    checkPointer(base_material_, "base_material_", body_name_);
-    return *base_material_;
+    return *all_material_properties_[0]; // The first (or main) material in the list of all materials
 };
 //=================================================================================================//
 void SPHBody::setSPHBodyBounds(const BoundingBoxd &bound)

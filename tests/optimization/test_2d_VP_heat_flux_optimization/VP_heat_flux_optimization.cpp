@@ -17,7 +17,7 @@ BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real diffusion_coeff = 1.0;
 //----------------------------------------------------------------------
 //	Initial and boundary conditions.
@@ -96,7 +96,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -129,7 +129,7 @@ class WallBoundaryInitialCondition : public LocalDynamics
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)),
+          phi_(particles_->registerStateVariableData<Real>(species_name)),
           heat_flux_(particles_->getVariableDataByName<Real>("HeatFlux")) {};
 
     void update(size_t index_i, Real dt)
@@ -162,7 +162,7 @@ class ImposeObjectiveFunction : public LocalDynamics
   public:
     explicit ImposeObjectiveFunction(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)),
+          phi_(particles_->registerStateVariableData<Real>(species_name)),
           species_modified_(particles_->getVariableDataByName<Real>("SpeciesModified")),
           species_recovery_(particles_->getVariableDataByName<Real>("SpeciesRecovery")) {};
 
@@ -209,8 +209,8 @@ TEST(test_optimization, test_problem4_optimized)
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    diffusion_body.defineClosure<Solid, LocalIsotropicDiffusion>(
-        Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff, diffusion_coeff));
+    diffusion_body.defineMaterial<Solid>();
+    diffusion_body.addMaterialProperty<LocalIsotropicDiffusion>(species_name, diffusion_coeff, diffusion_coeff);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));

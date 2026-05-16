@@ -21,7 +21,7 @@ BaseTurbulence::BaseTurbulence(BaseInnerRelation &inner_relation, GhostCreationF
       Eps_(this->particles_->template getVariableDataByName<Real>("Dissipation")),
       mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
       ghost_creator_(ghost_creator),
-      viscosity_(DynamicCast<Viscosity>(this, particles_->getBaseMaterial()))
+      viscosity_(DynamicCast<Viscosity>(this, sph_body_->getBaseMaterial()))
 {
 }
 //=================================================================================================//

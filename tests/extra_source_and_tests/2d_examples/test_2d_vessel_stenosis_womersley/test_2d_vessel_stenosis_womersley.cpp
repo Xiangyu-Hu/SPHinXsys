@@ -465,7 +465,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody blood(sph_system, makeShared<Blood>("WaterBody"));
     blood.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
-    blood.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    blood.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    blood.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(6.0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? blood.generateParticlesWithReserve<BaseParticles, Reload>(in_outlet_particle_buffer, blood.Name())

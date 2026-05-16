@@ -10,7 +10,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real acousticCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+      fluid_(DynamicCast<Fluid>(this, sph_body_->getBaseMaterial())),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
@@ -66,8 +66,8 @@ Real AdvectionTimeStep::outputResult(Real reduced_value)
 AdvectionViscousTimeStep::AdvectionViscousTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL)
     : AdvectionTimeStep(sph_body, U_ref, advectionCFL)
 {
-    Fluid &fluid = DynamicCast<Fluid>(this, particles_->getBaseMaterial());
-    Viscosity &viscosity = DynamicCast<Viscosity>(this, particles_->getBaseMaterial());
+    Fluid &fluid = DynamicCast<Fluid>(this, sph_body_->getBaseMaterial());
+    Viscosity &viscosity = DynamicCast<Viscosity>(this, sph_body_->getBaseMaterial());
     Real viscous_speed = viscosity.ReferenceViscosity() / fluid.ReferenceDensity() / h_min_;
     speed_ref_ = SMAX(viscous_speed, speed_ref_);
 }
