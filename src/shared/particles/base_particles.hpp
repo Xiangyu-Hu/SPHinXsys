@@ -177,7 +177,7 @@ operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, UnsignedIn
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::WriteAParticleVariableToXml::
+void BaseParticles::WriteParticleVariableToXml::
 operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser)
 {
     for (UnsignedInt i = 0; i != variables.size(); ++i)
@@ -194,7 +194,7 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, Xm
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::ReadAParticleVariableFromXml::
+void BaseParticles::ReadParticleVariableFromXml::
 operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
            BaseParticles *base_particles, XmlParser &xml_parser)
 {

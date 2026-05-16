@@ -215,13 +215,13 @@ class BaseParticles
         void operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, UnsignedInt index, UnsignedInt another_index);
     };
 
-    struct WriteAParticleVariableToXml
+    struct WriteParticleVariableToXml
     {
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser);
     };
 
-    struct ReadAParticleVariableFromXml
+    struct ReadParticleVariableFromXml
     {
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles, XmlParser &xml_parser);
@@ -244,8 +244,8 @@ class BaseParticles
     };
 
     OperationOnDataAssemble<ParticleData, CopyParticleState> copy_particle_state_;
-    OperationOnDataAssemble<DiscreteVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
-    OperationOnDataAssemble<DiscreteVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_;
+    OperationOnDataAssemble<DiscreteVariables, WriteParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
+    OperationOnDataAssemble<DiscreteVariables, ReadParticleVariableFromXml> read_restart_variable_from_xml_;
     //----------------------------------------------------------------------
     // Functions for old CPU code compatibility
     //----------------------------------------------------------------------
