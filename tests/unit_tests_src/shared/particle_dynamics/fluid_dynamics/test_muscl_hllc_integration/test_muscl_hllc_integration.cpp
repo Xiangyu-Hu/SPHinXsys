@@ -3,7 +3,7 @@
 #include "muscl_reconstruction.hpp"
 #include "muscl_hllc_integration.h"
 #include "eulerian_fluid_dynamics/eulerian_riemann_solver.h"
-#include "materials/compressible_fluid.h"
+#include "compressible_fluid.h"
 
 using namespace SPH;
 using namespace SPH::fluid_dynamics;
