@@ -28,7 +28,7 @@ Real AdvectionTimeStepCK::FinishDynamics::Result(Real reduced_value)
 AdvectionViscousTimeStepCK::AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL)
     : AdvectionTimeStepCK(sph_body, U_ref, advectionCFL)
 {
-    BaseMaterial &material = sph_body_->getBaseMaterial();
+    auto &material = sph_body_->getMatterMaterial();
     Viscosity &viscosity = sph_body_->getMaterialProperty<Viscosity>();
     Real viscous_speed = viscosity.ReferenceViscosity() / material.ReferenceDensity() / h_min_;
     speed_ref_ = SMAX(viscous_speed, speed_ref_);

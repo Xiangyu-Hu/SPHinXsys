@@ -111,7 +111,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
   public:
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
         : LocalDynamics(sph_body),
-          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_->getBaseMaterial())),
+          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_->getMatterMaterial())),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerStateVariableData<Real>(species_name))
     {
@@ -257,7 +257,7 @@ int main(int ac, char *av[])
     {
         SolidBody heart_model(sph_system, makeShared<Heart>("HeartModel"));
         heart_model.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
-        heart_model.defineMaterial<LocallyOrthotropicMuscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+        heart_model.defineMatterMaterial<LocallyOrthotropicMuscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
         heart_model.addMaterialProperty<IsotropicDiffusion>(species_name, diffusion_coeff);
         heart_model.generateParticles<BaseParticles, Lattice>();
         /** topology */
@@ -330,14 +330,14 @@ int main(int ac, char *av[])
     //	SPH simulation section
     //----------------------------------------------------------------------
     SolidBody mechanics_heart(sph_system, makeShared<Heart>("MechanicalHeart"));
-    mechanics_heart.defineMaterial<ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+    mechanics_heart.defineMatterMaterial<ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? mechanics_heart.generateParticles<BaseParticles, Reload>("HeartModel")
         : mechanics_heart.generateParticles<BaseParticles, Lattice>();
 
     SolidBody physiology_heart(sph_system, makeShared<Heart>("PhysiologyHeart"));
     AlievPanfilowModel aliev_panfilow_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    physiology_heart.defineMaterial<Solid>();
+    physiology_heart.defineMatterMaterial<Solid>();
     physiology_heart.addMaterialProperty<MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
         ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())

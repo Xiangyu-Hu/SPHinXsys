@@ -209,7 +209,7 @@ TEST(test_optimization, test_problem4_optimized)
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    diffusion_body.defineMaterial<Solid>();
+    diffusion_body.defineMatterMaterial<Solid>();
     diffusion_body.addMaterialProperty<LocalIsotropicDiffusion>(species_name, diffusion_coeff, diffusion_coeff);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 

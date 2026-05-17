@@ -18,7 +18,7 @@ DensitySummationCK<Base, RelationType<Parameters...>>::
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_mass_(this->particles_->template getVariableByName<Real>("Mass")),
       dv_rho_sum_(this->particles_->template registerStateVariable<Real>("DensitySummation")),
-      rho0_(this->sph_body_->getBaseMaterial().ReferenceDensity()) {}
+      rho0_(this->sph_body_->getMatterMaterial().ReferenceDensity()) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
 template <class ExecutionPolicy, class Encloser, typename... Args>
@@ -63,7 +63,7 @@ DensitySummationCK<Contact<Parameters...>>::
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        Real rho0_k = this->contact_bodies_[k]->getBaseMaterial().ReferenceDensity();
+        Real rho0_k = this->contact_bodies_[k]->getMatterMaterial().ReferenceDensity();
         contact_inv_rho0_.push_back(1.0 / rho0_k);
         dv_contact_mass_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Mass"));
     }
@@ -95,7 +95,7 @@ template <class DynamicsIdentifier, class FlowType, typename... ParticleScopes>
 DensityRegularization<DynamicsIdentifier, FlowType, ParticleScopes...>::
     DensityRegularization(DynamicsIdentifier &identifier)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-      rho0_(this->sph_body_->getBaseMaterial().ReferenceDensity()),
+      rho0_(this->sph_body_->getMatterMaterial().ReferenceDensity()),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_rho_sum_(this->particles_->template getVariableByName<Real>("DensitySummation")),
       regularization_method_(this->particles_), within_scope_method_(this->particles_)

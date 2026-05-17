@@ -8,7 +8,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 NonReflectiveBoundaryCorrection::NonReflectiveBoundaryCorrection(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
-      fluid_(DynamicCast<WeaklyCompressibleFluid>(this, sph_body_->getBaseMaterial())),
+      fluid_(DynamicCast<WeaklyCompressibleFluid>(this, sph_body_->getMatterMaterial())),
       rho_farfield_(0.0), sound_speed_(0.0), vel_farfield_(Vecd::Zero()),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),

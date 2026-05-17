@@ -132,13 +132,13 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBody"));
 
-    fluid_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    fluid_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     fluid_block.addMaterialProperty<OldroydBViscosity>(mu_f, lambda_f, mu_p_f);
     Ghost<PeriodicAlongAxis> ghost_along_x(fluid_block.getSPHBodyBounds(), xAxis);
     fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_along_x);
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");

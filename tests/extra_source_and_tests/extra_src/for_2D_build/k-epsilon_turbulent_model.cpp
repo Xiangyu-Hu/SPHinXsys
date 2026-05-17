@@ -474,7 +474,7 @@ TurbulentAdvectionTimeStepSize::TurbulentAdvectionTimeStepSize(SPHBody &sph_body
       smoothing_length_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       speed_ref_turbu_(U_max), advectionCFL_(advectionCFL),
       turbu_mu_(particles_->getVariableDataByName<Real>("TurbulentViscosity")),
-      fluid_(DynamicCast<Fluid>(this, sph_body_->getBaseMaterial())),
+      fluid_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial())),
       viscosity_(sph_body_->getMaterialProperty<Viscosity>())
 {
     Real viscous_speed = viscosity_.ReferenceViscosity() / fluid_.ReferenceDensity() / smoothing_length_min_;

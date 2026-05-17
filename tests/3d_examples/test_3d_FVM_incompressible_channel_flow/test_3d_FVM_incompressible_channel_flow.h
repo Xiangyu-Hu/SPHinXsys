@@ -87,7 +87,7 @@ class InvCFBoundaryConditionSetup : public BoundaryConditionSetupInFVM
   public:
     InvCFBoundaryConditionSetup(BaseInnerRelationInFVM &inner_relation, GhostCreationFromMesh &ghost_creation)
         : BoundaryConditionSetupInFVM(inner_relation, ghost_creation),
-          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, sph_body_->getBaseMaterial())) {};
+          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, sph_body_->getMatterMaterial())) {};
     virtual ~InvCFBoundaryConditionSetup() {};
 
     void applyReflectiveWallBoundary(size_t ghost_index, size_t index_i, Vecd e_ij) override

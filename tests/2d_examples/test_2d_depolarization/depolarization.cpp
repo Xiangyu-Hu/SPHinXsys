@@ -81,7 +81,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody muscle_body(sph_system, makeShared<MuscleBlock>("MuscleBlock"));
     AlievPanfilowModel muscle_reaction_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    muscle_body.defineMaterial<Solid>();
+    muscle_body.defineMatterMaterial<Solid>();
     muscle_body.addMaterialProperty<MonoFieldElectroPhysiology<DirectionalDiffusion>>(
         ConstructArgs(&muscle_reaction_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
     muscle_body.generateParticles<BaseParticles, Lattice>();

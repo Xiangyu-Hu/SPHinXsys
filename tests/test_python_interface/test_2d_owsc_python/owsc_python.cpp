@@ -44,14 +44,14 @@ class SphFlapReloadEnvironment : public SphBasicSystemSetting
           flap_observer(sph_system, "FlapObserver"),
           wave_velocity_observer(sph_system, "WaveVelocityObserver")
     {
-        water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+        water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
         water_block.addMaterialProperty<Viscosity>(mu_f);
         water_block.generateParticles<BaseParticles, Lattice>();
 
-        wall_boundary.defineMaterial<Solid>();
+        wall_boundary.defineMatterMaterial<Solid>();
         wall_boundary.generateParticles<BaseParticles, Lattice>();
 
-        flap.defineMaterial<Solid>(rho0_s);
+        flap.defineMatterMaterial<Solid>(rho0_s);
         flap.generateParticles<BaseParticles, Lattice>();
 
         flap_observer.generateParticles<ObserverParticles>(createFlapObserver());

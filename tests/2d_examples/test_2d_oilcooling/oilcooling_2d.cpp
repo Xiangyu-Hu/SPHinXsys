@@ -291,7 +291,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody oil_body(sph_system, makeShared<FluidBoundary>("OilBody"));
     oil_body.getSPHAdaptation().resetKernel<KernelTabulated<KernelWendlandC2>>(20);
-    oil_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    oil_body.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     oil_body.addMaterialProperty<Viscosity>(mu_f);
     oil_body.addMaterialProperty<IsotropicDiffusion>(temperature_species_name, k_oil);
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(3500.0);
@@ -299,21 +299,21 @@ int main(int ac, char *av[])
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
     wall.defineBodyLevelSetShape().writeLevelSet();
-    wall.defineMaterial<Solid>();
+    wall.defineMatterMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? wall.generateParticles<BaseParticles, Reload>(wall.Name())
         : wall.generateParticles<BaseParticles, Lattice>();
 
     SolidBody rotor(sph_system, makeShared<RotorBoundary>("Rotor"));
     rotor.defineBodyLevelSetShape().writeLevelSet();
-    rotor.defineMaterial<Solid>();
+    rotor.defineMatterMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? rotor.generateParticles<BaseParticles, Reload>(rotor.Name())
         : rotor.generateParticles<BaseParticles, Lattice>();
 
     SolidBody winding(sph_system, makeShared<WindingBoundary>("Winding"));
     winding.defineBodyLevelSetShape().writeLevelSet();
-    winding.defineMaterial<Solid>();
+    winding.defineMatterMaterial<Solid>();
     winding.addMaterialProperty<IsotropicDiffusion>(temperature_species_name, k_winding);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? winding.generateParticles<BaseParticles, Reload>(winding.Name())

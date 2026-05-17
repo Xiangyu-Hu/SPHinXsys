@@ -12,7 +12,7 @@ WCAcousticTimeStepSizeInFVM::WCAcousticTimeStepSizeInFVM(SPHBody &sph_body, Real
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-      fluid_(DynamicCast<WeaklyCompressibleFluid>(this, sph_body_->getBaseMaterial())),
+      fluid_(DynamicCast<WeaklyCompressibleFluid>(this, sph_body_->getMatterMaterial())),
       min_distance_between_nodes_(min_distance_between_nodes), acousticCFL_(acousticCFL) {};
 //=================================================================================================//
 Real WCAcousticTimeStepSizeInFVM::outputResult(Real reduced_value)

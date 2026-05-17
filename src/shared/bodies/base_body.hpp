@@ -43,6 +43,14 @@ LevelSetShape &SPHBody::defineBodyLevelSetShape(const ExecutionPolicy &ex_policy
 }
 //=================================================================================================//
 template <class MaterialType, typename... Args>
+MaterialType &SPHBody::defineMatterMaterial(Args &&...args)
+{
+    MaterialType *material = matter_material_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
+    all_material_properties_[0] = material; // set the first material as the matter material for the body
+    return *material;
+}
+//=================================================================================================//
+template <class MaterialType, typename... Args>
 MaterialType &SPHBody::addMaterialProperty(Args &&...args)
 {
     MaterialType *material = material_properties_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
@@ -111,14 +119,6 @@ ParticleType &SPHBody::generateParticlesWithReserve(ReserveType &particle_reserv
 {
     return generateParticles<ParticleType, ReserveType, Parameters...>(
         particle_reserve, std::forward<Args>(args)...);
-}
-//=================================================================================================//
-template <class MaterialType, typename... Args>
-MaterialType &SPHBody::defineMaterial(Args &&...args)
-{
-    MaterialType *material = base_material_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
-    all_material_properties_[0] = material; // set the first material as the default material for the body
-    return *material;
 }
 //=================================================================================================//
 template <typename... Args>

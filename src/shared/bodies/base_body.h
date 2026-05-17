@@ -36,7 +36,6 @@
 #define BASE_BODY_H
 
 #include "base_data_type_package.h"
-#include "closure_wrapper.h"
 #include "sphinxsys_tbb.h"
 
 namespace SPH
@@ -49,6 +48,7 @@ class LevelSetShape;
 class SPHAdaptation;
 class BaseParticles;
 class BaseMaterial;
+class MatterMaterial;
 class SPHSystem;
 class BaseCellLinkedList;
 
@@ -65,7 +65,7 @@ class SPHBody
     SharedPtrKeeper<Shape> shape_keeper_;
     UniquePtrKeeper<SPHAdaptation> sph_adaptation_keeper_;
     UniquePtrKeeper<BaseParticles> base_particles_keeper_;
-    UniquePtrKeeper<BaseMaterial> base_material_keeper_;
+    UniquePtrKeeper<MatterMaterial> matter_material_keeper_;
     UniquePtrsKeeper<BaseMaterial> material_properties_keeper_;
 
   protected:
@@ -100,7 +100,7 @@ class SPHBody
     void assignBaseParticles(BaseParticles *base_particles) { base_particles_ = base_particles; };
     SPHAdaptation &getSPHAdaptation();
     BaseParticles &getBaseParticles();
-    BaseMaterial &getBaseMaterial();
+    MatterMaterial &getMatterMaterial();
     template <typename MaterialType>
     MaterialType &getMaterialProperty(const std::string &name = ""); // name is optional for one material for a material type
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
@@ -149,10 +149,10 @@ class SPHBody
     template <typename ExecutionPolicy, typename... Args>
     LevelSetShape &defineBodyLevelSetShape(const ExecutionPolicy &ex_policy, Args &&...args);
 
-    template <class MaterialType = BaseMaterial, typename... Args>
-    MaterialType &defineMaterial(Args &&...args);
+    template <class MaterialType = MatterMaterial, typename... Args>
+    MaterialType &defineMatterMaterial(Args &&...args);
 
-    template <class MaterialType = BaseMaterial, typename... Args>
+    template <class MaterialType, typename... Args>
     MaterialType &addMaterialProperty(Args &&...args);
     //----------------------------------------------------------------------
     // Particle generating methods

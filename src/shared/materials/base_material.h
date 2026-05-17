@@ -53,14 +53,11 @@ class DiscreteVariable;
 class BaseMaterial
 {
   public:
-    explicit BaseMaterial(Real rho0)
-        : material_type_name_("BaseMaterial"), rho0_(rho0) {};
-    BaseMaterial() : BaseMaterial(1.0) {};
+    BaseMaterial() : material_type_name_("BaseMaterial") {};
     virtual ~BaseMaterial() {};
     std::string Name();
-    void setMaterialName(const std::string &name) { material_name_ = name; };
+    void setName(const std::string &name) { material_name_ = name; };
     std::string MaterialType() { return material_type_name_; }
-    Real ReferenceDensity() { return rho0_; };
     /**
      * This will be called after particles generation
      * and is important because particles are not defined yet when material is constructed.
@@ -75,13 +72,23 @@ class BaseMaterial
   protected:
     std::string material_type_name_;
     std::string material_name_;
+};
+
+class MatterMaterial : public BaseMaterial
+{
+  public:
+    explicit MatterMaterial(Real rho0 = 1.0);
+    virtual ~MatterMaterial() {};
+    Real ReferenceDensity() { return rho0_; };
+
+  protected:
     Real rho0_; /**< reference density. */
 };
 
 /** @class  Fluid
  *  @brief  Base class of all fluids
  */
-class Fluid : public BaseMaterial
+class Fluid : public MatterMaterial
 {
   protected:
     Real c0_; /**< reference sound speed and pressure */
@@ -125,7 +132,7 @@ class SolidContact
 /** @class  Solid
  *  @brief Base class of all solid materials
  */
-class Solid : public BaseMaterial, public SolidContact
+class Solid : public MatterMaterial, public SolidContact
 {
   public:
     Solid(Real rho0, Real contact_stiffness, Real contact_friction = 0.0);

@@ -13,7 +13,7 @@ AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
     AcousticStep2ndHalf(Inner<Parameters...> &inner_relation)
     : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
       kernel_correction_(this->particles_),
-      fluid_(DynamicCast<FluidType>(this, this->sph_body_->getBaseMaterial())),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_->getMatterMaterial())),
       riemann_solver_(this->fluid_, this->fluid_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
@@ -86,7 +86,7 @@ AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
     AcousticStep2ndHalf(Contact<Parameters...> &wall_contact_relation)
     : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
       kernel_correction_(this->particles_),
-      fluid_(DynamicCast<FluidType>(this, this->sph_body_->getBaseMaterial())),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_->getMatterMaterial())),
       riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -134,11 +134,11 @@ AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters.
     : BaseInteraction(wall_contact_relation), kernel_correction_(this->particles_)
 {
     SourceFluidType &source_fluid =
-        DynamicCast<SourceFluidType>(this, this->sph_body_->getBaseMaterial());
+        DynamicCast<SourceFluidType>(this, this->sph_body_->getMatterMaterial());
     for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
     {
         TargetFluidType &target_fluid =
-            DynamicCast<TargetFluidType>(this, this->contact_bodies_[k]->getBaseMaterial());
+            DynamicCast<TargetFluidType>(this, this->contact_bodies_[k]->getMatterMaterial());
         riemann_solvers_.push_back(RiemannSolverType(source_fluid, target_fluid));
         dv_contact_vel_.push_back(
             this->contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));

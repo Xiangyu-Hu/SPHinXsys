@@ -203,7 +203,7 @@ int main(int ac, char *av[])
     auto &water_body = sph_system.addAdaptiveBody<FluidBody>(water_body_adaptation, water_body_shape);
     water_body.defineComponentLevelSetShape("OuterBoundary").writeLevelSet();
     sph_system.addShape<LevelSetShape>(water_body, refinement_region).writeLevelSet();
-    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     water_body.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_body.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_body.Name())
@@ -218,7 +218,7 @@ int main(int ac, char *av[])
 
     auto &cylinder = sph_system.addAdaptiveBody<SolidBody>(cylinder_adaptation, cylinder_shape);
     cylinder.defineBodyLevelSetShape().writeLevelSet();
-    cylinder.defineMaterial<Solid>();
+    cylinder.defineMatterMaterial<Solid>();
     cylinder.generateParticles<BaseParticles, Reload>(cylinder.Name())
         .reloadExtraVariable<Vecd>("NormalDirection");
 

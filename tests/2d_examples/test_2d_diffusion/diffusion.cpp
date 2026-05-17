@@ -105,7 +105,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
-    diffusion_body.defineMaterial<Solid>();
+    diffusion_body.defineMatterMaterial<Solid>();
     diffusion_body.addMaterialProperty<DirectionalDiffusion>(species_name, diffusion_coeff, bias_coeff, bias_direction);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------

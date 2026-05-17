@@ -465,7 +465,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody blood(sph_system, makeShared<Blood>("WaterBody"));
     blood.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
-    blood.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    blood.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     blood.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(6.0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
@@ -474,7 +474,7 @@ int main(int ac, char *av[])
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.Name())
         : wall_boundary.generateParticles<BaseParticles, Lattice>();

@@ -266,7 +266,7 @@ void run_rigid_elastic_coupling(int res_factor)
 
     // Create objects
     SolidBody body(system, mesh);
-    body.defineMaterial<NeoHookeanSolid>(*material.get());
+    body.defineMatterMaterial<NeoHookeanSolid>(*material.get());
     body.generateParticles<BaseParticles, Lattice>();
 
     // Methods

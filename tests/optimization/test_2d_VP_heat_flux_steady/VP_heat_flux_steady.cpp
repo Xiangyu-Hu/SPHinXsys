@@ -169,12 +169,12 @@ TEST(test_optimization, test_problem4_non_optimization)
     //----------------------------------------------------------------------
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    diffusion_body.defineMaterial<Solid>();
+    diffusion_body.defineMatterMaterial<Solid>();
     diffusion_body.addMaterialProperty<LocalIsotropicDiffusion>(species_name, diffusion_coeff, diffusion_coeff);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------  ------------------------------------------
     //	Particle and body creation of temperature observers.

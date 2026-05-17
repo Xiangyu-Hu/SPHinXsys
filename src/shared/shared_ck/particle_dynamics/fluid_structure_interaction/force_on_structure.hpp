@@ -15,7 +15,7 @@ template <class ContactRelationType>
 ForceFromFluid<KernelCorrectionType, Parameters...>::
     ForceFromFluid(ContactRelationType &contact_relation, const std::string &force_name)
     : Interaction<Contact<Parameters...>>(contact_relation), ForcePriorCK(this->particles_, force_name),
-      solid_(DynamicCast<Solid>(this, this->sph_body_->getBaseMaterial())),
+      solid_(DynamicCast<Solid>(this, this->sph_body_->getMatterMaterial())),
       dv_force_from_fluid_(ForcePriorCK::getCurrentForce()),
       dv_vel_ave_(solid_.AverageVelocityVariable(this->particles_))
 {
@@ -91,7 +91,7 @@ PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrectionTy
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        FluidType &contact_fluid_k = DynamicCast<FluidType>(this, this->contact_bodies_[k]->getBaseMaterial());
+        FluidType &contact_fluid_k = DynamicCast<FluidType>(this, this->contact_bodies_[k]->getMatterMaterial());
         contact_riemann_solver_.push_back(RiemannSolverType(contact_fluid_k, contact_fluid_k));
         dv_contact_rho_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Density"));
         dv_contact_mass_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Mass"));

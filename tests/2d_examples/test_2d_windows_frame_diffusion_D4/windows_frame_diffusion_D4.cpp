@@ -23,7 +23,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createOverallStructureBody(), "DiffusionBody"));
-    diffusion_body.defineMaterial<Solid>();
+    diffusion_body.defineMatterMaterial<Solid>();
     diffusion_body.addMaterialProperty<LocalIsotropicDiffusion>(species_name, wood_cond, epdm_cond);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 

@@ -115,7 +115,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
   public:
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
         : LocalDynamics(sph_body),
-          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_->getBaseMaterial())),
+          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_->getMatterMaterial())),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerStateVariableData<Real>(species_name))
     {

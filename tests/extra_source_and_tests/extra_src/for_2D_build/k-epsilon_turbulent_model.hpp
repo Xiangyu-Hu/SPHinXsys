@@ -90,7 +90,7 @@ TurbuViscousForce<DataDelegationType>::TurbuViscousForce(BaseRelationType &base_
       is_near_wall_P2_(this->particles_->template getVariableDataByName<int>("IsNearWallP2")),
       viscosity_(this->sph_body_->template getMaterialProperty<Viscosity>()),
       molecular_viscosity_(viscosity_.ReferenceViscosity()),
-      c0_(DynamicCast<Fluid>(this, this->sph_body_->getBaseMaterial()).ReferenceSoundSpeed()) {}
+      c0_(DynamicCast<Fluid>(this, this->sph_body_->getMatterMaterial()).ReferenceSoundSpeed()) {}
 //=================================================================================================//
 template <class DataDelegationType>
 template <class BaseRelationType>

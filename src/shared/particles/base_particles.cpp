@@ -38,7 +38,7 @@ void BaseParticles::initializeBasicDiscreteVariables()
     //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
-    rho_ = registerStateVariableData<Real>("Density", sph_body_.getBaseMaterial().ReferenceDensity());
+    rho_ = registerStateVariableData<Real>("Density", sph_body_.getMatterMaterial().ReferenceDensity());
     mass_ = registerStateVariableData<Real>("Mass",
                                             [&](UnsignedInt i) -> Real
                                             { return rho_[i] * ParticleVolume(i); });
