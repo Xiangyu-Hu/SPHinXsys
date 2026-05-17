@@ -348,9 +348,7 @@ int main(int ac, char *av[])
         BodyStatesRecordingToVtp write_wall_to_vtp(wall);
         BodyStatesRecordingToVtp write_rotor_to_vtp(rotor);
         BodyStatesRecordingToVtp write_winding_to_vtp(winding);
-        ReloadParticleIO write_wall_particle_reload_files(wall);
-        ReloadParticleIO write_rotor_particle_reload_files(rotor);
-        ReloadParticleIO write_winding_particle_reload_files(winding);
+        ReloadParticleIO particle_reload(SPHBodyVector{&wall, &rotor, &winding});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -383,9 +381,7 @@ int main(int ac, char *av[])
         }
         std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
         /** Output results. */
-        write_wall_particle_reload_files.writeToFile(0);
-        write_rotor_particle_reload_files.writeToFile(0);
-        write_winding_particle_reload_files.writeToFile(0);
+        particle_reload.writeToFile();
         return 0;
     }
     //----------------------------------------------------------------------

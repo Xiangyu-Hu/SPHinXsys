@@ -169,8 +169,7 @@ class BaseParticles
     void resetTotalRealParticlesFromXmlDoc(XmlParser &xml_parser);
     void writeParticlesToXmlForRestart(XmlParser &xml_parser, TinyXMLElement *body_element);
     void readParticlesFromXmlForRestart(XmlParser &xml_parser, TinyXMLElement *body_element);
-    void writeParticlesToXmlForReload(const std::string &filefullpath);
-    void readReloadXmlFile(const std::string &filefullpath);
+    void readReloadXmlFile(const std::string &filefullpath, const std::string &body_name);
     template <typename DataType>
     BaseParticles &reloadExtraVariable(const std::string &name);
     //----------------------------------------------------------------------
@@ -189,7 +188,6 @@ class BaseParticles
     SPHBody &sph_body_;
     std::string body_name_;
     BaseMaterial &base_material_;
-    XmlParser &restart_xml_parser_;
     XmlParser &reload_xml_parser_;
     DiscreteVariables all_discrete_variables_;
     SingleVariables all_singular_variables_;
@@ -215,18 +213,6 @@ class BaseParticles
         void operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, UnsignedInt index, UnsignedInt another_index);
     };
 
-    struct WriteAParticleVariableToXml
-    {
-        template <typename DataType>
-        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser);
-    };
-
-    struct ReadAParticleVariableFromXml
-    {
-        template <typename DataType>
-        void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles, XmlParser &xml_parser);
-    };
-
     struct WriteParticleVariableToXmlElement
     {
         TinyXMLElement *element_;
@@ -244,8 +230,6 @@ class BaseParticles
     };
 
     OperationOnDataAssemble<ParticleData, CopyParticleState> copy_particle_state_;
-    OperationOnDataAssemble<DiscreteVariables, WriteAParticleVariableToXml> write_restart_variable_to_xml_, write_reload_variable_to_xml_;
-    OperationOnDataAssemble<DiscreteVariables, ReadAParticleVariableFromXml> read_restart_variable_from_xml_;
     //----------------------------------------------------------------------
     // Functions for old CPU code compatibility
     //----------------------------------------------------------------------
