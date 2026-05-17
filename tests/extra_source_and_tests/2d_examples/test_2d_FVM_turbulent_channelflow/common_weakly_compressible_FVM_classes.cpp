@@ -27,7 +27,7 @@ BaseForceFromFluidInFVM::BaseForceFromFluidInFVM(BaseInnerRelation &inner_relati
 //=================================================================================================//
 ViscousForceFromFluidInFVM::ViscousForceFromFluidInFVM(BaseInnerRelation &inner_relation, StdVec<StdVec<size_t>> each_boundary_type_contact_real_index)
     : BaseForceFromFluidInFVM(inner_relation),
-      viscosity_(DynamicCast<Viscosity>(this, sph_body_->getMatterMaterial())),
+      viscosity_(sph_body_->getMaterialProperty<Viscosity>()),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       mu_(viscosity_.ReferenceViscosity()),
       each_boundary_type_contact_real_index_(each_boundary_type_contact_real_index)
