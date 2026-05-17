@@ -149,7 +149,8 @@ class ReloadParticleIO : public BaseIO
 {
   protected:
     SPHBodyVector bodies_;
-    StdVec<std::string> file_names_;
+    StdVec<std::string> body_names_;
+    std::string overall_file_path_;
 
   public:
     ReloadParticleIO(SPHSystem &sph_system);
