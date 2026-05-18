@@ -14,13 +14,13 @@ int main(int ac, char *av[])
 
     RealBody column(system, makeShared<Column>("Column"));
     column.defineBodyLevelSetShape().writeLevelSet();
-    column.defineMaterial<J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
+    column.defineMatterMaterial<J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
     (!system.RunParticleRelaxation() && system.ReloadParticles())
         ? column.generateParticles<BaseParticles, Reload>(column.Name())
         : column.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    wall_boundary.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody column_observer(system, "ColumnObserver");

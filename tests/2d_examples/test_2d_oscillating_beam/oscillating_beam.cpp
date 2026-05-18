@@ -68,7 +68,7 @@ class BeamInitialCondition
   public:
     explicit BeamInitialCondition(SPHBody &sph_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(sph_body),
-          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())) {};
+          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getMatterMaterial())) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -110,7 +110,7 @@ int main(int ac, char *av[])
        //	Creating body, materials and particles.
        //----------------------------------------------------------------------
     SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
-    beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    beam_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");

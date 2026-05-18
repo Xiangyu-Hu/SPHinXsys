@@ -317,12 +317,12 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     // Create objects
     SolidBody cube_body(system, cube_mesh, "Cube");
     cube_body.defineBodyLevelSetShape().cleanLevelSet();
-    cube_body.defineMaterial<NeoHookeanSolid>(rho, youngs_modulus_solid, poisson_ratio);
+    cube_body.defineMatterMaterial<NeoHookeanSolid>(rho, youngs_modulus_solid, poisson_ratio);
     cube_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody shell_body(system, makeShared<DefaultShape>("shell"));
     shell_body.defineAdaptationRatios(1.15, dp_solid / dp_shell);
-    shell_body.defineMaterial<NeoHookeanSolid>(rho, youngs_modulus_shell, poisson_ratio);
+    shell_body.defineMatterMaterial<NeoHookeanSolid>(rho, youngs_modulus_shell, poisson_ratio);
     shell_body.generateParticles<SurfaceParticles, ShellDirectGenerator>(shell_pos, shell_n, dp_shell, shell_thickness);
 
     // Algorithm
@@ -543,9 +543,9 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
     // Create objects
     SolidBody body(system, mesh, "solid");
     body.defineBodyLevelSetShape().cleanLevelSet();
-    body.defineMaterial<CompositeSolid>(rho);
+    body.defineMatterMaterial<CompositeSolid>(rho);
     body.generateParticles<BaseParticles, Lattice>();
-    auto &material = *dynamic_cast<CompositeSolid *>(&body.getBaseMaterial());
+    auto &material = *dynamic_cast<CompositeSolid *>(&body.getMatterMaterial());
     material.add<NeoHookeanSolid>(rho, youngs_modulus_solid, poisson_ratio);
     material.add<NeoHookeanSolid>(rho, youngs_modulus_shell, poisson_ratio);
 

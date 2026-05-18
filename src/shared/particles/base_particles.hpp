@@ -177,41 +177,6 @@ operator()(DataContainerKeeper<AllocatedData<DataType>> &data_keeper, UnsignedIn
 }
 //=================================================================================================//
 template <typename DataType>
-void BaseParticles::WriteAParticleVariableToXml::
-operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser)
-{
-    for (UnsignedInt i = 0; i != variables.size(); ++i)
-    {
-        UnsignedInt index = 0;
-        DataType *data_field = variables[i]->Data();
-        for (auto child = xml_parser.first_element_->FirstChildElement();
-             child; child = child->NextSiblingElement())
-        {
-            xml_parser.setAttributeToElement(child, variables[i]->Name(), data_field[index]);
-            index++;
-        }
-    }
-}
-//=================================================================================================//
-template <typename DataType>
-void BaseParticles::ReadAParticleVariableFromXml::
-operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
-           BaseParticles *base_particles, XmlParser &xml_parser)
-{
-    for (UnsignedInt i = 0; i != variables.size(); ++i)
-    {
-        UnsignedInt index = 0;
-        DataType *data_field = variables[i]->Data();
-        for (auto child = xml_parser.first_element_->FirstChildElement();
-             child; child = child->NextSiblingElement())
-        {
-            xml_parser.queryAttributeValue(child, variables[i]->Name(), data_field[index]);
-            index++;
-        }
-    }
-}
-//=================================================================================================//
-template <typename DataType>
 void BaseParticles::WriteParticleVariableToXmlElement::
 operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser)
 {

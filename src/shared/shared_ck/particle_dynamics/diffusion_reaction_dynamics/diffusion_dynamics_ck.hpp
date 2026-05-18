@@ -9,6 +9,8 @@
 
 #include "diffusion_dynamics_ck.h"
 
+#include "base_body.hpp"
+
 namespace SPH
 {
 //=================================================================================================//
@@ -53,7 +55,7 @@ template <class DynamicsIdentifier>
 DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
     DiffusionRelaxationCK(DynamicsIdentifier &identifier)
     : DiffusionRelaxationCK(
-          identifier, DynamicCast<AbstractDiffusion>(this, &identifier.getSPHBody().getBaseMaterial())) {}
+          identifier, &identifier.getSPHBody().template getMaterialProperty<AbstractDiffusion>()) {}
 //=================================================================================================//
 template <class DiffusionType, class BaseInteractionType>
 StdVec<DiffusionType *> DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::

@@ -86,7 +86,7 @@ int main(int ac, char *av[])
     // Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     auto &column = sph_system.addBody<SolidBody>(column_shape);
-    column.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    column.defineMatterMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     column.generateParticles<BaseParticles, Lattice>();
     BodyRegionByParticle holder(column, holder_shape);
 

@@ -34,7 +34,7 @@ void DampingBoundaryCondition::update(size_t index_i, Real dt)
 EmitterInflowCondition::
     EmitterInflowCondition(OrientedBoxByParticle &oriented_box_part)
     : BaseLocalDynamics<BodyPartByParticle>(oriented_box_part),
-      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+      fluid_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial())),
       sorted_id_(particles_->ParticleSortedIds()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
@@ -61,7 +61,7 @@ void EmitterInflowCondition ::update(size_t original_index_i, Real dt)
 EmitterInflowInjection::
     EmitterInflowInjection(OrientedBoxByParticle &oriented_box_part, ParticleBuffer<Base> &buffer)
     : BaseLocalDynamics<BodyPartByParticle>(oriented_box_part),
-      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+      fluid_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial())),
       original_id_(particles_->ParticleOriginalIds()),
       sorted_id_(particles_->ParticleSortedIds()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),

@@ -32,7 +32,7 @@ BufferInflowInjectionCK<ConditionType>::
     BufferInflowInjectionCK(OrientedBoxByCell &oriented_box_part, Args &&...args)
     : BaseLocalDynamics<OrientedBoxByCell>(oriented_box_part),
       part_id_(oriented_box_part.getPartID()),
-      fluid_(DynamicCast<FluidType>(this, sph_body_->getBaseMaterial())),
+      fluid_(DynamicCast<FluidType>(this, sph_body_->getMatterMaterial())),
       condition_(std::forward<Args>(args)...),
       sv_oriented_box_(oriented_box_part.svOrientedBox()),
       sv_total_real_particles_(this->particles_->svTotalRealParticles()),

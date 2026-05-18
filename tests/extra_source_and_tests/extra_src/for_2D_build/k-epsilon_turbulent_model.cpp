@@ -1,5 +1,8 @@
 // #pragma once
 #include "k-epsilon_turbulent_model.hpp"
+
+#include "base_body.hpp"
+
 namespace SPH
 {
 //=================================================================================================//
@@ -457,7 +460,7 @@ TurbulentEddyViscosity::
       turbu_epsilon_(particles_->getVariableDataByName<Real>("TurbulentDissipation")),
       wall_Y_plus_(particles_->getVariableDataByName<Real>("WallYplus")),
       wall_Y_star_(particles_->getVariableDataByName<Real>("WallYstar")),
-      viscosity_(DynamicCast<Viscosity>(this, particles_->getBaseMaterial())),
+      viscosity_(sph_body_->getMaterialProperty<Viscosity>()),
       mu_(viscosity_.ReferenceViscosity()) {}
 //=================================================================================================//
 void TurbulentEddyViscosity::update(size_t index_i, Real dt)
@@ -471,8 +474,8 @@ TurbulentAdvectionTimeStepSize::TurbulentAdvectionTimeStepSize(SPHBody &sph_body
       smoothing_length_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       speed_ref_turbu_(U_max), advectionCFL_(advectionCFL),
       turbu_mu_(particles_->getVariableDataByName<Real>("TurbulentViscosity")),
-      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-      viscosity_(DynamicCast<Viscosity>(this, particles_->getBaseMaterial()))
+      fluid_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial())),
+      viscosity_(sph_body_->getMaterialProperty<Viscosity>())
 {
     Real viscous_speed = viscosity_.ReferenceViscosity() / fluid_.ReferenceDensity() / smoothing_length_min_;
     speed_ref_turbu_ = SMAX(viscous_speed, speed_ref_turbu_);
@@ -723,8 +726,9 @@ StandardWallFunctionCorrection::
       wall_Y_star_(particles_->registerStateVariableData<Real>("WallYstar")),
       velo_tan_(particles_->registerStateVariableData<Real>("TangentialVelocity")),
       velo_friction_(particles_->registerStateVariableData<Vecd>("FrictionVelocity")),
-      vel_(particles_->getVariableDataByName<Vecd>("Velocity")), rho_(particles_->getVariableDataByName<Real>("Density")),
-      viscosity_(DynamicCast<Viscosity>(this, particles_->getBaseMaterial())),
+      vel_(particles_->getVariableDataByName<Vecd>("Velocity")), 
+      rho_(particles_->getVariableDataByName<Real>("Density")),
+      viscosity_(sph_body_->getMaterialProperty<Viscosity>()),
       molecular_viscosity_(viscosity_.ReferenceViscosity()),
       turbu_k_(particles_->getVariableDataByName<Real>("TurbulenceKineticEnergy")),
       turbu_epsilon_(particles_->getVariableDataByName<Real>("TurbulentDissipation")),

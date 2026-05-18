@@ -20,6 +20,10 @@ SPHinXsys depends on the following:
 * Git
 * vcpkg (please use the branch "2024.11.16", or the same one that we have used in CI: (line 29) https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/.github/workflows/ci.yml)
 
+Note that, for Visual Studio you can download the Community version, which is free for individual use and open source development
+from the link: https://www.junian.dev/tech/visual-studio-community-download-links/.
+
+
 Installing on Ubuntu
 ---------------------------------------
 
@@ -290,6 +294,9 @@ Pre-requisites
 * `CMake <https://cmake.org/>`_ version 3.16 or later but before 4.0
 * `Python3 <https://www.python.org/>`_
 
+Note that, for Visual Studio you can download the Community version, which is free for individual use and open source development
+from the link: https://www.junian.dev/tech/visual-studio-community-download-links/.
+
 Installing dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^
 Open Windows PowerShell or Git CMD, and then run the commands below one by one. 
@@ -481,8 +488,3 @@ are interested in. Also, please make sure that you are not using the full number
 otherwise, the building process may fail due to out of memory. 
 You can set the number of parallel compilation processes by changing the "parallel Jobs" 
 variable in the presets, or modify the VS Code settings on CMake parallel jobs.
-
-
-
-
-

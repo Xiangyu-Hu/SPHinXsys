@@ -140,7 +140,7 @@ class FreeStreamVelocityCorrection : public LocalDynamics
   public:
     explicit FreeStreamVelocityCorrection(SPHBody &sph_body, const Transform &transform = Transform())
         : LocalDynamics(sph_body),
-          transform_(transform), rho0_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceDensity()),
+          transform_(transform), rho0_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial()).ReferenceDensity()),
           rho_sum_(particles_->getVariableDataByName<Real>("DensitySummation")),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),

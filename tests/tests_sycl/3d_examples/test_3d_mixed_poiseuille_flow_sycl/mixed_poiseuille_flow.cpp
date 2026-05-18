@@ -319,12 +319,13 @@ int main(int ac, char *av[])
         }
     }
     FluidBody water_body(sph_system, water_body_shape);
-    water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_body.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> particle_buffer(0.5);
     water_body.generateParticlesWithReserve<BaseParticles, Reload>(particle_buffer, water_body.Name());
 
     SolidBody wall(sph_system, wall_body_shape);
-    wall.defineMaterial<Solid>();
+    wall.defineMatterMaterial<Solid>();
     wall.generateParticles<BaseParticles, Reload>(wall.Name())
         .reloadExtraVariable<Vecd>("NormalDirection");
     // Add observer

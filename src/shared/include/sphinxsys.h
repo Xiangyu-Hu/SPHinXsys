@@ -42,7 +42,7 @@
 #include "adaptation.hpp"
 #include "all_bodies.h"
 #include "all_body_relations.h"
-#include "all_closures.h"
+#include "all_materials.h"
 #include "all_geometries.h"
 #include "all_io.h"
 #include "all_kernels.h"

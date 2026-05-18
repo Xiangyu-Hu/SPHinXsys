@@ -84,7 +84,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_body.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
-    water_body.defineClosure<CompressibleFluid, Viscosity>(ConstructArgs(rho0_f, heat_capacity_ratio), mu_f);
+    water_body.defineMatterMaterial<CompressibleFluid>(rho0_f, heat_capacity_ratio);
+    water_body.addMaterialProperty<Viscosity>(mu_f);
     water_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "viscous_force.h"
+#include "base_body.hpp"
 
 namespace SPH
 {
@@ -13,7 +14,7 @@ template <class BaseRelationType>
 ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameters...>>::
     ViscousForceCK(BaseRelationType &base_relation)
     : Interaction<RelationType<Parameters...>>(base_relation),
-      viscosity_model_(DynamicCast<ViscosityType>(this, this->particles_->getBaseMaterial())),
+      viscosity_model_(this->sph_body_->template getMaterialProperty<ViscosityType>()),
       kernel_correction_(this->particles_),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_viscous_force_(this->particles_->template registerStateVariable<Vecd>("ViscousForce")),

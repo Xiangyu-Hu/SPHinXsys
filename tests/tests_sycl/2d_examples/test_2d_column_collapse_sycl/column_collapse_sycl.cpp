@@ -52,14 +52,14 @@ int main(int ac, char *av[])
     auto &initial_soil_block = sph_system.addShape<GeometricShapeBox>(
         Transform(soil_block_translation), soil_block_halfsize, "GranularBody");
     auto &soil_block = sph_system.addBody<RealBody>(initial_soil_block);
-    soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
+    soil_block.defineMatterMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     soil_block.generateParticles<BaseParticles, Lattice>();
 
     auto &wall_shape = sph_system.addShape<ComplexShape>("WallBoundary");
     wall_shape.add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
     wall_shape.subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
     auto &wall_boundary = sph_system.addBody<SolidBody>(wall_shape);
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

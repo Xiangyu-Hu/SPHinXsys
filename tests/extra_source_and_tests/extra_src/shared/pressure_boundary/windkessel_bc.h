@@ -148,7 +148,7 @@ class BidirectionalBufferWindkessel
               part_id_(oriented_box_part.getPartID()),
               particle_buffer_(particle_buffer),
               oriented_box_(oriented_box_part.getOrientedBox()),
-              fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+              fluid_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial())),
               pos_(particles_->getVariableDataByName<Vecd>("Position")),
               rho_(particles_->getVariableDataByName<Real>("Density")),
               p_(particles_->getVariableDataByName<Real>("Pressure")),

@@ -36,7 +36,6 @@
 #define BASE_BODY_H
 
 #include "base_data_type_package.h"
-#include "closure_wrapper.h"
 #include "sphinxsys_tbb.h"
 
 namespace SPH
@@ -49,6 +48,7 @@ class LevelSetShape;
 class SPHAdaptation;
 class BaseParticles;
 class BaseMaterial;
+class MatterMaterial;
 class SPHSystem;
 class BaseCellLinkedList;
 
@@ -65,19 +65,23 @@ class SPHBody
     SharedPtrKeeper<Shape> shape_keeper_;
     UniquePtrKeeper<SPHAdaptation> sph_adaptation_keeper_;
     UniquePtrKeeper<BaseParticles> base_particles_keeper_;
-    UniquePtrKeeper<BaseMaterial> base_material_keeper_;
+    UniquePtrKeeper<MatterMaterial> matter_material_keeper_;
+    UniquePtrsKeeper<BaseMaterial> material_properties_keeper_;
 
   protected:
     SPHSystem &sph_system_;
     std::string body_name_;
-    bool newly_updated_;                   /**< whether this body is in a newly updated state */
-    BaseParticles *base_particles_;        /**< Base particles for dynamic cast DataDelegate  */
-    bool is_bound_set_;                    /**< whether the bounding box is set */
-    BoundingBoxd bound_;                   /**< bounding box of the body */
-    Shape *initial_shape_;                 /**< initial volumetric geometry enclosing the body */
-    SPHAdaptation *sph_adaptation_;        /**< numerical adaptation policy */
-    BaseMaterial *base_material_;          /**< base material for dynamic cast in DataDelegate */
+    bool newly_updated_;            /**< whether this body is in a newly updated state */
+    BaseParticles *base_particles_; /**< Base particles for dynamic cast DataDelegate  */
+    bool is_bound_set_;             /**< whether the bounding box is set */
+    BoundingBoxd bound_;            /**< bounding box of the body */
+    Shape *initial_shape_;          /**< initial volumetric geometry enclosing the body */
+    SPHAdaptation *sph_adaptation_; /**< numerical adaptation policy */
+    StdVec<BaseMaterial *> all_material_properties_;
     StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
+
+    template <typename MaterialType>
+    StdVec<MaterialType *> collectMaterialProperties();
 
   public:
     typedef SPHBody RangeIdentifier;
@@ -96,7 +100,9 @@ class SPHBody
     void assignBaseParticles(BaseParticles *base_particles) { base_particles_ = base_particles; };
     SPHAdaptation &getSPHAdaptation();
     BaseParticles &getBaseParticles();
-    BaseMaterial &getBaseMaterial();
+    MatterMaterial &getMatterMaterial();
+    template <typename MaterialType>
+    MaterialType &getMaterialProperty(const std::string &name = ""); // name is optional for one material for a material type
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
     IndexRange LoopRange();
     size_t SizeOfLoopRange();
@@ -143,11 +149,11 @@ class SPHBody
     template <typename ExecutionPolicy, typename... Args>
     LevelSetShape &defineBodyLevelSetShape(const ExecutionPolicy &ex_policy, Args &&...args);
 
-    template <class MaterialType = BaseMaterial, typename... Args>
-    MaterialType &defineMaterial(Args &&...args);
+    template <class MaterialType = MatterMaterial, typename... Args>
+    MaterialType &defineMatterMaterial(Args &&...args);
 
-    template <class BaseModel, typename... AuxiliaryModels, typename... Args>
-    Closure<BaseModel, AuxiliaryModels...> &defineClosure(Args &&...args);
+    template <class MaterialType, typename... Args>
+    MaterialType &addMaterialProperty(Args &&...args);
     //----------------------------------------------------------------------
     // Particle generating methods
     // Initialize particle data using a particle generator for geometric data.

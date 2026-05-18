@@ -255,7 +255,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
@@ -263,7 +264,7 @@ int main(int ac, char *av[])
     shell_body.defineAdaptation<SPHAdaptation>(1.15, global_resolution / resolution_shell);
     shell_body.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
         .writeLevelSet();
-    shell_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    shell_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     shell_body.generateParticles<SurfaceParticles, WallBoundary>(resolution_shell, BW);
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");

@@ -28,7 +28,7 @@ int main(int ac, char *av[])
     FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBlock"));
     fluid_block.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     fluid_block.defineBodyLevelSetShape();
-    fluid_block.defineMaterial<CompressibleFluid>(rho_reference, heat_capacity_ratio);
+    fluid_block.defineMatterMaterial<CompressibleFluid>(rho_reference, heat_capacity_ratio);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? fluid_block.generateParticlesWithReserve<BaseParticles, Reload>(ghost_boundary, fluid_block.Name())

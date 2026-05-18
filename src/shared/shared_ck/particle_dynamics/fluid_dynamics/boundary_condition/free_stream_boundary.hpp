@@ -13,7 +13,7 @@ template <typename... Args>
 FreeStreamCondition<ConditionFunction>::FreeStreamCondition(
     SPHBody &sph_body, Args &&...args)
     : LocalDynamics(sph_body), free_stream_velocity_(std::forward<Args>(args)...),
-      rho0_(DynamicCast<Fluid>(this, particles_->getBaseMaterial()).ReferenceDensity()),
+      rho0_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial()).ReferenceDensity()),
       dv_rho_sum_(particles_->getVariableByName<Real>("DensitySummation")),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_vel_(particles_->getVariableByName<Vecd>("Velocity")),

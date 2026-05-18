@@ -76,9 +76,10 @@ template <class WallContactRelationType>
 Interaction<Wall>::Interaction(WallContactRelationType &wall_contact_relation)
 {
     StdVec<BaseParticles *> contact_particles = wall_contact_relation.getContactParticles();
+    StdVec<SPHBody *> contact_bodies = wall_contact_relation.getContactBodies();
     for (size_t k = 0; k != contact_particles.size(); ++k)
     {
-        Solid &solid_material = DynamicCast<Solid>(this, contact_particles[k]->getBaseMaterial());
+        Solid &solid_material = DynamicCast<Solid>(this, contact_bodies[k]->getMatterMaterial());
         dv_wall_vel_ave_.push_back(solid_material.AverageVelocityVariable(contact_particles[k]));
         dv_wall_acc_ave_.push_back(solid_material.AverageAccelerationVariable(contact_particles[k]));
         dv_wall_n_.push_back(contact_particles[k]->template getVariableByName<Vecd>("NormalDirection"));

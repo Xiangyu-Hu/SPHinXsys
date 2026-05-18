@@ -6,13 +6,11 @@
 namespace SPH
 {
 //=================================================================================================//
-BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
+BaseParticles::BaseParticles(SPHBody &sph_body)
     : sv_total_real_particles_(nullptr),
       particles_bound_(0), original_id_(nullptr), sorted_id_(nullptr),
       dv_pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.Name()),
-      base_material_(*base_material),
-      restart_xml_parser_(*xml_parser_ptrs_.createPtr<XmlParser>("xml_restart", "particles")),
       reload_xml_parser_(*xml_parser_ptrs_.createPtr<XmlParser>("xml_particle_reload", "particles")),
       total_body_parts_(0)
 {
@@ -39,7 +37,7 @@ void BaseParticles::initializeBasicDiscreteVariables()
     //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
-    rho_ = registerStateVariableData<Real>("Density", base_material_.ReferenceDensity());
+    rho_ = registerStateVariableData<Real>("Density", sph_body_.getMatterMaterial().ReferenceDensity());
     mass_ = registerStateVariableData<Real>("Mass",
                                             [&](UnsignedInt i) -> Real
                                             { return rho_[i] * ParticleVolume(i); });
@@ -155,16 +153,27 @@ void BaseParticles::resetTotalRealParticlesFromXmlDoc(XmlParser &xml_parser)
     sv_total_real_particles_->setValue(xml_parser.Size(xml_parser.first_element_));
 }
 //=================================================================================================//
-void BaseParticles::writeParticlesToXmlForReload(const std::string &filefullpath)
-{
-    resizeXmlDocForParticles(reload_xml_parser_);
-    write_reload_variable_to_xml_(evolving_variables_, reload_xml_parser_);
-    reload_xml_parser_.writeToXmlFile(filefullpath);
-}
-//=================================================================================================//
-void BaseParticles::readReloadXmlFile(const std::string &filefullpath)
+void BaseParticles::readReloadXmlFile(const std::string &filefullpath, const std::string &body_name)
 {
     reload_xml_parser_.loadXmlFile(filefullpath);
+    // Navigate first_element_ to the matching body element so that downstream
+    // functions (initializeAllParticlesBoundsFromReloadXml, registerStateVariableFromReload)
+    // continue to work unchanged by iterating its <particle> children directly.
+    tinyxml2::XMLElement *body_element = reload_xml_parser_.first_element_->FirstChildElement("body");
+    while (body_element != nullptr)
+    {
+        const char *name_attr = body_element->Attribute("name");
+        if (name_attr != nullptr && std::string(name_attr) == body_name)
+        {
+            reload_xml_parser_.first_element_ = body_element;
+            return;
+        }
+        body_element = body_element->NextSiblingElement("body");
+    }
+    std::cout << "\n Error: body " << body_name << " not found in reload file: "
+              << filefullpath << std::endl;
+    std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+    exit(1);
 }
 //=================================================================================================//
 void BaseParticles::writeParticlesToXmlForRestart(XmlParser &xml_parser, TinyXMLElement *body_element)

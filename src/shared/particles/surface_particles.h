@@ -40,7 +40,7 @@ namespace SPH
 class SurfaceParticles : public BaseParticles
 {
   public:
-    SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_material);
+    SurfaceParticles(SPHBody &sph_body);
     virtual ~SurfaceParticles() {};
 
     Vecd *n_;                      /**< normal direction */

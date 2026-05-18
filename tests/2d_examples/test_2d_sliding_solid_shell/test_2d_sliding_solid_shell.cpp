@@ -84,12 +84,12 @@ void run_simulation()
     //----------------------------------------------------------------------
     SolidBody free_cube(sph_system, makeShared<Cube>("FreeCube"));
     free_cube.defineBodyLevelSetShape();
-    free_cube.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    free_cube.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     free_cube.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, global_resolution / resolution_shell);
-    wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    wall_boundary.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<SurfaceParticles, WallBoundary>();
 
     ObserverBody cube_observer(sph_system, "CubeObserver");

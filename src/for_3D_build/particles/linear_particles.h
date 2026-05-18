@@ -37,7 +37,7 @@ namespace SPH
 class LinearParticles : public SurfaceParticles
 {
   public:
-    LinearParticles(SPHBody &sph_body, BaseMaterial *base_material);
+    LinearParticles(SPHBody &sph_body);
     virtual ~LinearParticles() {};
 
     Vecd *b_n_; /**< binormal direction */
