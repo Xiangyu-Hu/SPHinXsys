@@ -91,7 +91,7 @@ int main(int ac, char *av[])
     beam_shape.add(&beam_base_shape);
     beam_shape.add(&beam_column);
     auto &beam_body = sph_system.addBody<SolidBody>(beam_shape);
-    auto &beam_material = beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    auto &beam_material = beam_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, Lattice>();
     auto &beam_constrain_shape = sph_system.addShape<ComplexShape>("BeamConstrain");
     beam_constrain_shape.add(&beam_base_shape);

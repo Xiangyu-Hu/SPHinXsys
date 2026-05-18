@@ -142,7 +142,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
     SolidBody shell_body(system, shell_shape);
-    shell_body.defineMaterial<SaintVenantKirchhoffSolid>(rho, E, mu);
+    shell_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho, E, mu);
     shell_body.generateParticles<SurfaceParticles, ShellSphere>(obj_vertices, center, particle_area, thickness);
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
 

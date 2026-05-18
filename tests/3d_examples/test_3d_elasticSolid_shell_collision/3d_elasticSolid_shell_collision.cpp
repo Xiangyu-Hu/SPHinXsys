@@ -75,11 +75,11 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody shell(sph_system, makeShared<DefaultShape>("shell"));
-    shell.defineMaterial<Solid>();
+    shell.defineMatterMaterial<Solid>();
     shell.generateParticles<SurfaceParticles, Cylinder>();
 
     SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
-    ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    ball.defineMatterMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
         ball.generateParticles<BaseParticles, Reload>(ball.Name());

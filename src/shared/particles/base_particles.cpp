@@ -6,12 +6,11 @@
 namespace SPH
 {
 //=================================================================================================//
-BaseParticles::BaseParticles(SPHBody &sph_body, BaseMaterial *base_material)
+BaseParticles::BaseParticles(SPHBody &sph_body)
     : sv_total_real_particles_(nullptr),
       particles_bound_(0), original_id_(nullptr), sorted_id_(nullptr),
       dv_pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
       sph_body_(sph_body), body_name_(sph_body.Name()),
-      base_material_(*base_material),
       reload_xml_parser_(*xml_parser_ptrs_.createPtr<XmlParser>("xml_particle_reload", "particles")),
       total_body_parts_(0)
 {
@@ -38,7 +37,7 @@ void BaseParticles::initializeBasicDiscreteVariables()
     //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
-    rho_ = registerStateVariableData<Real>("Density", base_material_.ReferenceDensity());
+    rho_ = registerStateVariableData<Real>("Density", sph_body_.getMatterMaterial().ReferenceDensity());
     mass_ = registerStateVariableData<Real>("Mass",
                                             [&](UnsignedInt i) -> Real
                                             { return rho_[i] * ParticleVolume(i); });

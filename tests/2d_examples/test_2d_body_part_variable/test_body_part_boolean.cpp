@@ -103,7 +103,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     GeometricShapeBox initial_water_block(Transform(water_block_translation), water_block_halfsize, "WaterBody");
     FluidBody water_block(sph_system, initial_water_block);
-    // water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    // water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     BaseParticles &base_particles = water_block.getBaseParticles();

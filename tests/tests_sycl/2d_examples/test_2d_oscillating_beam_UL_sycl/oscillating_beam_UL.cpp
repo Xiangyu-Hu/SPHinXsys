@@ -92,7 +92,7 @@ int main(int ac, char *av[])
     beam_shape.add(&beam_base_shape);
     beam_shape.add(&beam_column);
     auto &beam = sph_system.addBody<RealBody>(beam_shape);
-    beam.defineMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
+    beam.defineMatterMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
     beam.generateParticles<BaseParticles, Lattice>();
     BodyRegionByParticle beam_base(beam, beam_base_shape);
 

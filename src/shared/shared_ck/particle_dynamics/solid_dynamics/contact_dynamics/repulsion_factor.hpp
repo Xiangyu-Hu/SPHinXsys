@@ -24,7 +24,7 @@ RepulsionFactor<Contact<Parameters...>>::
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        Real rho0 = this->contact_bodies_[k]->getBaseMaterial().ReferenceDensity();
+        Real rho0 = this->contact_bodies_[k]->getMatterMaterial().ReferenceDensity();
         contact_inv_rho0_.push_back(1.0 / rho0);
         dv_contact_mass_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Mass"));
     }

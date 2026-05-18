@@ -20,7 +20,19 @@ void BaseMaterial::setLocalParameters(SPHSystem &sph_system, BaseParticles *base
     initializeLocalParameters(base_particles);
 }
 //=================================================================================================//
-Fluid::Fluid(Real rho0, Real c0) : BaseMaterial(rho0), c0_(c0)
+std::string BaseMaterial::Name()
+{
+    if (material_name_.empty())
+    {
+        return material_type_name_;
+    }
+    return material_name_;
+}
+//=================================================================================================//
+MatterMaterial::MatterMaterial(Real rho0)
+    : BaseMaterial(), rho0_(rho0) { material_type_name_ = "MatterMaterial"; }
+//=================================================================================================//
+Fluid::Fluid(Real rho0, Real c0) : MatterMaterial(rho0), c0_(c0)
 {
     material_type_name_ = "Fluid";
 }
@@ -31,7 +43,7 @@ SolidContact::SolidContact(Real rho0, Real contact_stiffness, Real contact_frict
     : rho0_copy_(rho0), contact_stiffness_(contact_stiffness), contact_friction_(contact_friction) {}
 //=================================================================================================//
 Solid::Solid(Real rho0, Real contact_stiffness, Real contact_friction)
-    : BaseMaterial(rho0), SolidContact(rho0, contact_stiffness, contact_friction)
+    : MatterMaterial(rho0), SolidContact(rho0, contact_stiffness, contact_friction)
 {
     material_type_name_ = "Solid";
 }

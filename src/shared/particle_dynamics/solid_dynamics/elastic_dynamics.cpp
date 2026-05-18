@@ -12,7 +12,7 @@ namespace solid_dynamics
 AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
       CFL_(CFL),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getMatterMaterial())),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
       force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
@@ -83,7 +83,7 @@ BaseElasticIntegration::
 BaseIntegration1stHalf::
     BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
     : BaseElasticIntegration(inner_relation),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getMatterMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),

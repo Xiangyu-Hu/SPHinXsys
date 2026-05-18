@@ -25,7 +25,7 @@ void UpdateShellNormalDirection::update(size_t index_i, Real dt)
 ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
       CFL_(CFL),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getMatterMaterial())),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
       angular_vel_(particles_->getVariableDataByName<Vecd>("AngularVelocity")),
@@ -100,7 +100,7 @@ ShellStressRelaxationFirstHalf::
                                    int number_of_gaussian_points, bool hourglass_control,
                                    Real hourglass_control_factor)
     : BaseShellRelaxation(inner_relation),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getMatterMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()),
       inv_rho0_(1.0 / rho0_),
       smoothing_length_(getSPHAdaptation().ReferenceSmoothingLength()),

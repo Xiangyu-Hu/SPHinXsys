@@ -143,12 +143,12 @@ int main(int ac, char *av[])
     //	Simulation setup continues to define bodies.
     //----------------------------------------------------------------------
     auto &column = sph_system.addBody<RealBody>(column_shape);
-    column.defineMaterial<HardeningPlasticSolid>(
+    column.defineMatterMaterial<HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
     column.generateParticles<BaseParticles, Reload>(column.Name());
 
     auto &wall = sph_system.addBody<RealBody>(wall_shape);
-    wall.defineMaterial<Solid>();
+    wall.defineMatterMaterial<Solid>();
     wall.generateParticles<BaseParticles, Reload>(wall.Name())
         .reloadExtraVariable<Vecd>("NormalDirection");
 
