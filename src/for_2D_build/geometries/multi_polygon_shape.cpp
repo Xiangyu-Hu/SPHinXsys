@@ -339,7 +339,7 @@ BoundingBoxd MultiPolygon::findBounds()
     return BoundingBoxd(lower_bound, upper_bound);
 }
 //=================================================================================================//
-void MultiPolygonShape::writeMultiPolygonShapeToVtp()
+void MultiPolygonShape::writeMultiPolygonShapeToVtp(Real scaling_factor)
 {
     std::string filefullpath = IO::getEnvironment().OutputFolder() + "/Shape" + Name() + ".vtp";
 
@@ -361,7 +361,7 @@ void MultiPolygonShape::writeMultiPolygonShapeToVtp()
         {
             for (const auto &p : ring)
             {
-                vtk_points->InsertNextPoint(p[0], p[1], 0.0);
+                vtk_points->InsertNextPoint(p[0] * scaling_factor, p[1] * scaling_factor, 0.0);
                 global_point_offset++;
             }
         }
@@ -436,7 +436,7 @@ void MultiPolygonShape::writeMultiPolygonShapeToVtp()
     out_file << "<DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">\n";
     for (const auto &p : vtk_points)
     {
-        out_file << p[0] << " " << p[1] << " 0\n";
+        out_file << p[0] * scaling_factor << " " << p[1] * scaling_factor << " 0\n";
     }
     out_file << "</DataArray>\n";
     out_file << "</Points>\n";
