@@ -12,7 +12,7 @@
  */
 
 #include "sphinxsys.h"
-#include "electromagnetic_team7_aphi_frequency_dynamics.hpp"
+#include "aphi_case_support/electromagnetic_team7_aphi_frequency_dynamics.hpp"
 #include <fstream>
 #include <iomanip>
 #include <limits>

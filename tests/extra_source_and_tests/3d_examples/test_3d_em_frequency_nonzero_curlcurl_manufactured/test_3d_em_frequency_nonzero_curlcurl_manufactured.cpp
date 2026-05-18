@@ -11,7 +11,7 @@
  */
 
 #include "sphinxsys.h"
-#include "electromagnetic_team7_aphi_dynamics.hpp"
+#include "aphi_case_support/electromagnetic_team7_aphi_dynamics.hpp"
 #include <algorithm>
 #include <cmath>
 #include <fstream>

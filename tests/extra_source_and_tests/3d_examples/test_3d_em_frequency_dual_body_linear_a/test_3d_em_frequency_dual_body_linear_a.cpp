@@ -14,8 +14,8 @@
  */
 
 #include "sphinxsys.h"
-#include "electromagnetic_team7_aphi_dynamics.hpp"
-#include "electromagnetic_team7_aphi_frequency_dynamics.hpp"
+#include "aphi_case_support/electromagnetic_team7_aphi_dynamics.hpp"
+#include "aphi_case_support/electromagnetic_team7_aphi_frequency_dynamics.hpp"
 #include "em_matched_stencil_body_relations.h"
 #include <fstream>
 #include <iomanip>
