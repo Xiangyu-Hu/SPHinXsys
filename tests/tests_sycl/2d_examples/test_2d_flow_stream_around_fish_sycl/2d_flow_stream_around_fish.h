@@ -185,6 +185,94 @@ Real b3 = -15.73 * muscle_thickness / pow(fish_length, 3);
 Real b4 = 21.87 * muscle_thickness / pow(fish_length, 4);
 Real b5 = -10.55 * muscle_thickness / pow(fish_length, 5);
 
+class InitializeDisplacementCK : public LocalDynamics
+{
+  public:
+    explicit InitializeDisplacementCK(SolidBody &solid_body)
+        : LocalDynamics(solid_body),
+          dv_pos_(particles_->getVariableByName<Vecd>("Position")),
+          dv_pos_temp_(particles_->registerStateVariable<Vecd>("TemporaryPosition")) {}
+
+    struct UpdateKernel
+    {
+        template <typename ExecutionPolicy>
+        UpdateKernel(const ExecutionPolicy &ex_policy, InitializeDisplacementCK &encloser)
+            : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+              pos_temp_(encloser.dv_pos_temp_->DelegatedData(ex_policy)) {}
+
+        void update(size_t index_i, Real dt = 0.0) { pos_temp_[index_i] = pos_[index_i]; }
+
+      protected:
+        Vecd *pos_, *pos_temp_;
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_pos_, *dv_pos_temp_;
+};
+
+class UpdateAverageVelocityAndAccelerationCK : public LocalDynamics
+{
+  public:
+    explicit UpdateAverageVelocityAndAccelerationCK(SolidBody &solid_body)
+        : LocalDynamics(solid_body),
+          dv_pos_(particles_->getVariableByName<Vecd>("Position")),
+          dv_pos_temp_(particles_->getVariableByName<Vecd>("TemporaryPosition")),
+          dv_vel_ave_(particles_->registerStateVariable<Vecd>("AverageVelocity")),
+          dv_acc_ave_(particles_->registerStateVariable<Vecd>("AverageAcceleration")) {}
+
+    struct UpdateKernel
+    {
+        template <typename ExecutionPolicy>
+        UpdateKernel(const ExecutionPolicy &ex_policy, UpdateAverageVelocityAndAccelerationCK &encloser)
+            : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+              pos_temp_(encloser.dv_pos_temp_->DelegatedData(ex_policy)),
+              vel_ave_(encloser.dv_vel_ave_->DelegatedData(ex_policy)),
+              acc_ave_(encloser.dv_acc_ave_->DelegatedData(ex_policy)) {}
+
+        void update(size_t index_i, Real dt = 0.0)
+        {
+            Vecd updated_vel_ave = (pos_[index_i] - pos_temp_[index_i]) / (dt + Eps);
+            acc_ave_[index_i] = (updated_vel_ave - vel_ave_[index_i]) / (dt + Eps);
+            vel_ave_[index_i] = updated_vel_ave;
+        }
+
+      protected:
+        Vecd *pos_, *pos_temp_, *vel_ave_, *acc_ave_;
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_pos_, *dv_pos_temp_, *dv_vel_ave_, *dv_acc_ave_;
+};
+
+class ZeroForceCK : public LocalDynamics
+{
+  public:
+    explicit ZeroForceCK(SolidBody &solid_body)
+        : LocalDynamics(solid_body),
+          dv_force_(particles_->getVariableByName<Vecd>("Force")),
+          dv_force_prior_(particles_->getVariableByName<Vecd>("ForcePrior")) {}
+
+    struct UpdateKernel
+    {
+        template <typename ExecutionPolicy>
+        UpdateKernel(const ExecutionPolicy &ex_policy, ZeroForceCK &encloser)
+            : force_(encloser.dv_force_->DelegatedData(ex_policy)),
+              force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)) {}
+
+        void update(size_t index_i, Real dt = 0.0)
+        {
+            force_[index_i] = Vecd::Zero();
+            force_prior_[index_i] = Vecd::Zero();
+        }
+
+      protected:
+        Vecd *force_, *force_prior_;
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_force_, *dv_force_prior_;
+};
+
 class FishMaterialInitialization : public MaterialIdInitialization
 {
   public:

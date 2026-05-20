@@ -73,6 +73,12 @@ int main(int ac, char *av[])
     auto &fish_body_corrected_configuration =
         main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(fish_inner);
 
+    // --- GPU replacements for AverageVelocityAndAcceleration ---
+    auto &initialize_displacement =
+        main_methods.addStateDynamics<InitializeDisplacementCK>(fish_body);
+    auto &update_average_velocity =
+        main_methods.addStateDynamics<UpdateAverageVelocityAndAccelerationCK>(fish_body);
+
     // --- Free-stream surface indicator (GPU) ---
     // Use template-template form so that the relation body types are embedded in the dynamics type.
     auto &free_stream_surface_indicator =
@@ -91,6 +97,10 @@ int main(int ac, char *av[])
 
     auto &fish_body_computing_time_step_size =
         main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(fish_body);
+
+    // ZeroForceCK must come AFTER stress relaxation so "Force"/"ForcePrior" are already registered.
+    auto &zero_force =
+        main_methods.addStateDynamics<ZeroForceCK>(fish_body);
 
     auto &fish_body_update_normal =
         main_methods.addStateDynamics<solid_dynamics::UpdateElasticNormalDirectionCK>(fish_body);
@@ -228,9 +238,6 @@ int main(int ac, char *av[])
     fluid_linear_correction_matrix.exec();
     water_kernel_gradient_integral.exec();
 
-    // AverageVelocityAndAcceleration has no CK version — runs on CPU
-    // Construct after initialization so Velocity variable is registered
-    solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(fish_body);
     //----------------------------------------------------------------------
     //	Time-stepping setup.
     //----------------------------------------------------------------------
@@ -238,7 +245,7 @@ int main(int ac, char *av[])
     auto *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     Real End_Time = 1.7;
     Real D_Time = 0.01;
-    int screen_output_interval = 100;
+    int screen_output_interval = 1;
     size_t number_of_iterations = 0;
 
     auto &state_recording = time_stepper.addTriggerByInterval(D_Time);
@@ -293,9 +300,10 @@ int main(int ac, char *av[])
             /** Solid sub-stepping */
             inner_ite_dt_s = 0;
             Real dt_s_sum = 0.0;
-            average_velocity_and_acceleration.initialize_displacement_.exec();
+            initialize_displacement.exec();
             while (dt_s_sum < dt)
             {
+                zero_force.exec();
                 Real dt_s = SMIN(fish_body_computing_time_step_size.exec(), dt - dt_s_sum);
                 if (dt_s <= Real(0))
                     break;
@@ -305,7 +313,7 @@ int main(int ac, char *av[])
                 dt_s_sum += dt_s;
                 inner_ite_dt_s++;
             }
-            average_velocity_and_acceleration.update_averages_.exec(dt);
+            update_average_velocity.exec(dt);
 
             relaxation_time += dt;
             sv_physical_time->incrementValue(dt);
