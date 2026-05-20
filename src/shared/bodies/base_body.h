@@ -80,9 +80,6 @@ class SPHBody
     StdVec<BaseMaterial *> all_material_properties_;
     StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
 
-    template <typename MaterialType>
-    StdVec<MaterialType *> collectMaterialProperties();
-
   public:
     typedef SPHBody RangeIdentifier;
     typedef SPHAdaptation Adaptation;
@@ -101,8 +98,13 @@ class SPHBody
     SPHAdaptation &getSPHAdaptation();
     BaseParticles &getBaseParticles();
     MatterMaterial &getMatterMaterial();
+    
+    template <typename MaterialType>
+    StdVec<MaterialType *> collectMaterialProperties();
+    
     template <typename MaterialType>
     MaterialType &getMaterialProperty(const std::string &name = ""); // name is optional for one material for a material type
+    
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
     IndexRange LoopRange();
     size_t SizeOfLoopRange();
