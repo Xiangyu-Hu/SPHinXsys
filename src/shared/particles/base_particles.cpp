@@ -33,7 +33,6 @@ std::string BaseParticles::getBodyName()
 void BaseParticles::initializeBasicDiscreteVariables()
 {
     addEvolvingVariable<Vecd>("Position");
-    addEvolvingVariable<Real>("VolumetricMeasure");
     //----------------------------------------------------------------------
     //		register non-geometric variables
     //----------------------------------------------------------------------
