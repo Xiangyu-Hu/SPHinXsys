@@ -60,8 +60,11 @@ class BaseLocalDynamics
         : identifier_(&identifier), sph_system_(&identifier.getSPHSystem()),
           sph_body_(&identifier.getSPHBody()),
           sph_adaptation_(&sph_body_->getSPHAdaptation()),
-          particles_(&sph_body_->getBaseParticles()),
-          logger_(IO::getLogger()) {};
+          particles_(&sph_body_->getBaseParticles())
+#ifndef __SYCL_DEVICE_ONLY__
+          , logger_(IO::getLogger())
+#endif
+          {};
     virtual ~BaseLocalDynamics() {};
     using RangeIdentifier = typename DynamicsIdentifier::RangeIdentifier;
     SPHBody &getSPHBody() { return *sph_body_; };

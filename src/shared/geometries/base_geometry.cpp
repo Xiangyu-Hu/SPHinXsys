@@ -5,7 +5,11 @@ namespace SPH
 {
 //=================================================================================================//
 Shape::Shape(const std::string &shape_name)
-    : name_(shape_name), is_bounds_found_(false), logger_(IO::initLogger()) {}
+    : name_(shape_name), is_bounds_found_(false)
+#ifndef __SYCL_DEVICE_ONLY__
+      , logger_(IO::initLogger())
+#endif
+{}
 //=================================================================================================//
 BoundingBoxd Shape::getBounds()
 {

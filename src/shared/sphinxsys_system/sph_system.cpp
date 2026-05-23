@@ -42,10 +42,14 @@ SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
       restart_step_(0), generate_regression_data_(false), state_recording_(true)
 {
     IO::initEnvironment();
+#ifndef __SYCL_DEVICE_ONLY__
     IO::initLogger();
     spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
+#endif
     sv_physical_time_ = registerSystemVariable<Real>("PhysicalTime", 0.0);
+#ifndef __SYCL_DEVICE_ONLY__
     IO::getLogger()->info("The reference resolution of the SPHSystem is {}.", global_resolution_);
+#endif
     getTbbGlobalControlHolder() = std::make_shared<tbb::global_control>(
         tbb::global_control::max_allowed_parallelism, number_of_threads);
 }
@@ -67,7 +71,9 @@ void SPHSystem::setLogLevel(size_t log_level)
     }
 
     log_level_ = log_level;
+#ifndef __SYCL_DEVICE_ONLY__
     spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
+#endif
 }
 //=================================================================================================//
 void SPHSystem::addRealBody(RealBody *real_body)
@@ -196,7 +202,9 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
                 exit(1);
             }
             std::cout << "Log level was set to " << log_level_ << ".\n";
+#ifndef __SYCL_DEVICE_ONLY__
             spdlog::set_level(static_cast<spdlog::level::level_enum>(log_level_));
+#endif
         }
         else
         {

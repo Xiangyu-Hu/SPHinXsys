@@ -2,7 +2,9 @@
 #include "io_environment.h"
 
 #include "parameterization.h"
+#ifndef __SYCL_DEVICE_ONLY__
 #include "spdlog/sinks/rotating_file_sink.h"
+#endif
 
 namespace SPH
 {
@@ -140,6 +142,7 @@ IOEnvironment &getEnvironment()
     return *io_environment.get();
 }
 //=================================================================================================//
+#ifndef __SYCL_DEVICE_ONLY__
 std::shared_ptr<spdlog::logger> logger; // Global logger pointer
 //=================================================================================================//
 std::shared_ptr<spdlog::logger> initLogger()
@@ -166,6 +169,7 @@ std::shared_ptr<spdlog::logger> getLogger()
     }
     return logger;
 }
+#endif // __SYCL_DEVICE_ONLY__
 //=================================================================================================//
 } // namespace IO
 //=================================================================================================//

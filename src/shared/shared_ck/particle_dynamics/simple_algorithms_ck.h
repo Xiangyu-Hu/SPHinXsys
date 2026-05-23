@@ -67,10 +67,12 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
 
         finish_dynamics_();
 
+#ifndef __SYCL_DEVICE_ONLY__
         this->logger_->debug(
             "StateDynamics::exec() for {} at {}",
             type_name<UpdateType>(),
             this->sph_body_->getName());
+#endif
     };
 };
 
@@ -111,10 +113,12 @@ class ReduceDynamicsCK : public ReduceType,
             [=](size_t i)
             { return reduce_kernel->reduce(i, dt); });
 
+#ifndef __SYCL_DEVICE_ONLY__
         this->logger_->debug(
             "ReduceDynamicsCK::exec() for {} at {}",
             type_name<ReduceType>(),
             this->sph_body_->getName());
+#endif
 
         return finish_dynamics_.Result(reduced_value_);
     };

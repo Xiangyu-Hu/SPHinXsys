@@ -31,7 +31,10 @@
 
 #include "ownership.h"
 
+namespace spdlog { class logger; }
+#ifndef __SYCL_DEVICE_ONLY__
 #include <spdlog/spdlog.h>
+#endif
 
 #include <filesystem>
 #include <fstream>

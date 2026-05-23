@@ -103,10 +103,12 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Paramete
                  [=](size_t i)
                  { interact_kernel->interact(i, dt); });
 
+#ifndef __SYCL_DEVICE_ONLY__
     this->logger_->debug(
         "InteractionDynamicsCK::runInteraction() for {} at {}",
         type_name<InteractionType<Inner<Parameters...>>>(),
         this->sph_body_->getName());
+#endif
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
@@ -139,10 +141,12 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parame
                          interact_kernel->interact(i, dt);
                      });
 
+#ifndef __SYCL_DEVICE_ONLY__
         this->logger_->debug(
             "InteractionDynamicsCK::runInteraction() for {} at {}",
             type_name<InteractionType<Contact<Parameters...>>>(),
             this->sph_body_->getName());
+#endif
     }
 }
 //=================================================================================================//
@@ -219,10 +223,12 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpd
                  [=](size_t i)
                  { update_kernel->update(i, dt); });
 
+#ifndef __SYCL_DEVICE_ONLY__
     this->logger_->debug(
         "InteractionDynamicsCK::runUpdateStep() for {} at {}",
         type_name<InteractionType<RelationType<WithUpdate, OtherParameters...>>>(),
         this->sph_body_->getName());
+#endif
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
@@ -274,10 +280,12 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
                  [=](size_t i)
                  { initialize_kernel->initialize(i, dt); });
 
+#ifndef __SYCL_DEVICE_ONLY__
     this->logger_->debug(
         "InteractionDynamicsCK::runInitializationStep() for {} at {}",
         type_name<InteractionType<RelationType<OneLevel, OtherParameters...>>>(),
         this->sph_body_->getName());
+#endif
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
@@ -290,10 +298,12 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
                  [=](size_t i)
                  { update_kernel->update(i, dt); });
 
+#ifndef __SYCL_DEVICE_ONLY__
     this->logger_->debug(
         "InteractionDynamicsCK::runUpdateStep() for {} at {}",
         type_name<InteractionType<RelationType<OneLevel, OtherParameters...>>>(),
         this->sph_body_->getName());
+#endif
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
