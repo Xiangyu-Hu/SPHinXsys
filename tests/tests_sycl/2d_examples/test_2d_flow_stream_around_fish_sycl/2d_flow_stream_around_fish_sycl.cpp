@@ -111,20 +111,16 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup>
         water_advection_step_setup(water_block);
 
-    InteractionDynamicsCK<MainExecutionPolicy,
-                          fluid_dynamics::AcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>>>
-        pressure_relaxation(water_block_inner);
-    pressure_relaxation.addPostContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCK>
+    pressure_relaxation(water_block_inner, water_block_contact);
 
-    // Split density_relaxation so the wall-contact object can be passed to
-    // FSI::PressureForceOnStructure via DRWallType.
-    InteractionDynamicsCK<MainExecutionPolicy,
-                          fluid_dynamics::AcousticStep2ndHalf<Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>>>
-        density_relaxation(water_block_inner);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
+    density_relaxation(water_block_inner, water_block_contact);
+
+    // Wall-contact operator for FSI type extraction only — not called in time loop
     InteractionDynamicsCK<MainExecutionPolicy,
                           fluid_dynamics::AcousticStep2ndHalf<Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>>>
         density_relaxation_wall(water_block_contact);
-    density_relaxation.addPostContactInteraction(density_relaxation_wall);
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>>>
         update_fluid_density(water_block_inner);
@@ -132,15 +128,13 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
         fluid_density_regularization(water_block);
 
-    // Split viscous_force so the wall-contact object can be passed to
-    // FSI::ViscousForceOnStructure via VFWallType.
-    InteractionDynamicsCK<MainExecutionPolicy,
-                          fluid_dynamics::ViscousForceCK<Inner<WithUpdate, Viscosity, NoKernelCorrectionCK>>>
-        viscous_force(water_block_inner);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
+        viscous_force(water_block_inner, water_block_contact);
+
+    // Wall-contact operators for FSI type extraction only — not called in time loop
     InteractionDynamicsCK<MainExecutionPolicy,
                           fluid_dynamics::ViscousForceCK<Contact<Wall, Viscosity, NoKernelCorrectionCK>>>
         viscous_force_wall(water_block_contact);
-    viscous_force.addPostContactInteraction(viscous_force_wall);
 
     InteractionDynamicsCK<MainExecutionPolicy,
                           KernelGradientIntegral<Inner<NoKernelCorrectionCK>>>
