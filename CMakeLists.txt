@@ -55,6 +55,7 @@ target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compil
 if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
     set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
     target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES)
+    target_compile_options(sphinxsys_core INTERFACE /EHsc)
     if(NOT SPHINXSYS_USE_SYCL)
         target_compile_definitions(sphinxsys_core INTERFACE NOMINMAX)
         target_compile_options(sphinxsys_core INTERFACE /MP)
@@ -110,11 +111,15 @@ endif()
 
 target_link_libraries(sphinxsys_core INTERFACE Boost::boost)
 target_include_directories(sphinxsys_core INTERFACE ${Boost_INCLUDE_DIRS})
-find_package(Boost QUIET COMPONENTS program_options)
+find_package(Boost QUIET COMPONENTS program_options throw_exception)
 
 if(TARGET Boost::program_options)
     target_compile_definitions(sphinxsys_core INTERFACE BOOST_AVAILABLE)
     target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
+endif()
+
+if(TARGET Boost::throw_exception)
+    target_link_libraries(sphinxsys_core INTERFACE Boost::throw_exception)
 endif()
 
 find_package(spdlog CONFIG REQUIRED)
