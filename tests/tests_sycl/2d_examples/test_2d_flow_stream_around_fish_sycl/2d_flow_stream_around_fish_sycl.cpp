@@ -5,6 +5,7 @@
  */
 #include "2d_flow_stream_around_fish.h"
 #include "sphinxsys.h"
+#include "fluid_boundary_ck.h"
 using namespace SPH;
 
 int main(int ac, char *av[])
@@ -171,9 +172,8 @@ int main(int ac, char *av[])
         water_block, AlignedBox(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
 
-    // FreeStreamVelocityCorrection has no CK version — use CPU SimpleDynamics directly.
-    SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>>
-        velocity_boundary_condition_constraint(water_block);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::FreeStreamVelocityCorrectionCK<FreeStreamVelocity>>
+        freestream_condition(water_block);
     //----------------------------------------------------------------------
     //	FSI (GPU).
     //	Use fish_fsi_contact (plain Contact<>) because ViscousForceOnStructure
@@ -196,7 +196,7 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Matd>(fish_body, "ActiveStrain");
 
     Gravity gravity(Vecd::Zero());
-    ReducedQuantityRecording<TotalMechanicalEnergy>
+    ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>
         write_water_mechanical_energy(water_block, gravity);
     ReducedQuantityRecording<QuantitySummation<Vecd>>
         write_total_viscous_force(fish_body, "ViscousForceFromFluid");
@@ -250,6 +250,7 @@ int main(int ac, char *av[])
             viscous_force.exec();
             water_kernel_gradient_integral.exec();
             transport_velocity_correction.exec();
+            zero_force.exec();              // force zeroing before FSI force accumulation
             viscous_force_from_fluid.exec();
             fish_body_update_normal.exec();
 
@@ -262,9 +263,9 @@ int main(int ac, char *av[])
                 Real dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
 
                 pressure_relaxation.exec(dt);
-                pressure_force_from_fluid.exec(dt);
+                freestream_condition.exec();
+                pressure_force_from_fluid.exec();
                 density_relaxation.exec(dt);
-                velocity_boundary_condition_constraint.exec();
                 emitter_buffer_inflow_condition.exec(dt);
 
                 inner_ite_dt_s = 0;
@@ -272,7 +273,6 @@ int main(int ac, char *av[])
                 initialize_displacement.exec();
                 while (dt_s_sum < dt)
                 {
-                    zero_force.exec();
                     Real dt_s = SMIN(fish_body_computing_time_step_size.exec(), dt - dt_s_sum);
                     if (dt_s <= Real(0))
                         break;
