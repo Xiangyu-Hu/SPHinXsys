@@ -90,8 +90,6 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, solid_dynamics::AcousticTimeStepCK>
         fish_body_computing_time_step_size(fish_body);
 
-    StateDynamics<MainExecutionPolicy, ZeroForceCK> zero_force(fish_body);
-
     StateDynamics<MainExecutionPolicy, solid_dynamics::UpdateElasticNormalDirectionCK>
         fish_body_update_normal(fish_body);
     //----------------------------------------------------------------------
@@ -250,7 +248,6 @@ int main(int ac, char *av[])
             viscous_force.exec();
             water_kernel_gradient_integral.exec();
             transport_velocity_correction.exec();
-            zero_force.exec();              // force zeroing before FSI force accumulation
             viscous_force_from_fluid.exec();
             fish_body_update_normal.exec();
 
@@ -260,7 +257,8 @@ int main(int ac, char *av[])
             while (relaxation_time < Dt)
             {
                 TickCount time_instance = TickCount::now();
-                Real dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
+                Real dt_acoustic_raw = get_fluid_time_step_size.exec();
+                Real dt = SMIN(dt_acoustic_raw, Dt - relaxation_time);
 
                 pressure_relaxation.exec(dt);
                 freestream_condition.exec();
@@ -273,7 +271,8 @@ int main(int ac, char *av[])
                 initialize_displacement.exec();
                 while (dt_s_sum < dt)
                 {
-                    Real dt_s = SMIN(fish_body_computing_time_step_size.exec(), dt - dt_s_sum);
+                    Real dt_s_raw = fish_body_computing_time_step_size.exec();
+                    Real dt_s = SMIN(dt_s_raw, dt - dt_s_sum);
                     if (dt_s <= Real(0))
                         break;
                     imposing_active_strain.exec();
