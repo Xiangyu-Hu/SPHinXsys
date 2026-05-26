@@ -52,7 +52,7 @@ void ReloadParticleIO::addToReload(SPHBody &sph_body, const std::string &name)
 {
     if (isBodyIncluded(bodies_, &sph_body))
     {
-        sph_body.getBaseParticles().addEvolvingVariable<DataType>(name);
+        sph_body.getBaseParticles().addVariableToReload<DataType>(name);
     }
     else
     {

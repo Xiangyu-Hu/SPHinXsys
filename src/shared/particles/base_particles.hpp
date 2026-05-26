@@ -154,6 +154,12 @@ void BaseParticles::addEvolvingVariable(Args &&...args)
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>
+void BaseParticles::addVariableToReload(Args &&...args)
+{
+    addDiscreteVariableToList<DataType>(variables_to_reload_, std::forward<Args>(args)...);
+}
+//=================================================================================================//
+template <typename DataType, typename... Args>
 void BaseParticles::addVariableToWrite(Args &&...args)
 {
     addDiscreteVariableToList<DataType>(variables_to_write_, std::forward<Args>(args)...);

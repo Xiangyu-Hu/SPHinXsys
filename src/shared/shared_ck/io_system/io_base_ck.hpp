@@ -184,7 +184,7 @@ void ReloadParticleIOCK<ExecutionPolicy>::writeToFile(size_t iteration_step)
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-        prepare_variable_to_reload_(base_particles.EvolvingVariables(), ExecutionPolicy{});
+        prepare_variable_to_reload_(base_particles.VariablesToReload(), ExecutionPolicy{});
     }
     ReloadParticleIO::writeToFile(iteration_step);
 }
