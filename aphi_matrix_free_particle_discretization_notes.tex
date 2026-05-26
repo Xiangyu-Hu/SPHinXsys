@@ -1,0 +1,1087 @@
+\documentclass[UTF8,11pt]{ctexart}
+
+\usepackage[a4paper,margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible
+}
+
+\title{SPHinXsys 中 A--$\phi$ Matrix-free 求解器的粒子离散与迭代求解说明}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{先明确一个基本关系：Residual = RHS - LHS}
+
+在离散线性系统中，方程可以写成
+\begin{equation}
+    \mathcal{K} X = B .
+\end{equation}
+其中：
+\begin{itemize}
+    \item $X$ 是未知量，也就是当前要求解的粒子场；
+    \item $B$ 是右端项，即 RHS，通常来自外加源项、电流源、边界项等；
+    \item $\mathcal{K}$ 是离散后的 A--$\phi$ 线性算子；
+    \item $\mathcal{K}X$ 是把当前未知量 $X$ 代入方程左端以后得到的值，即 LHS。
+\end{itemize}
+
+因此残差定义为
+\begin{equation}
+    R = B - \mathcal{K}X .
+\end{equation}
+
+也就是说，程序里的
+\begin{lstlisting}
+Residual = RHS - LHS;
+\end{lstlisting}
+就是
+\begin{equation}
+    \mathrm{Residual} = \mathrm{RightHandSide} - \mathrm{LeftHandSide}.
+\end{equation}
+
+如果当前解已经满足离散方程，则
+\begin{equation}
+    \mathcal{K}X = B,
+\end{equation}
+所以
+\begin{equation}
+    R = 0 .
+\end{equation}
+
+这里特别注意：LHS 不是残差。LHS 是当前解代入方程左端得到的值，Residual 才是 RHS 与 LHS 之间的差值。
+
+\section{连续 A--$\phi$ 方程与实虚部分裂}
+
+这里采用频域 A--$\phi$ 方程的一种常用形式：
+\begin{equation}
+    -\nabla\cdot(\nu\nabla \bm A)
+    + j\omega\sigma \bm A
+    + \sigma\nabla \phi
+    = \bm J_s ,
+    \label{eq:continuous-a}
+\end{equation}
+\begin{equation}
+    -\nabla\cdot(\sigma\nabla \phi)
+    - j\omega\nabla\cdot(\sigma \bm A)
+    = 0 .
+    \label{eq:continuous-phi}
+\end{equation}
+
+其中：
+\begin{itemize}
+    \item $\bm A$ 是磁矢势；
+    \item $\phi$ 是电势；
+    \item $\nu = 1/\mu$ 是磁阻率；
+    \item $\sigma$ 是电导率；
+    \item $\omega$ 是角频率；
+    \item $\bm J_s$ 是外加源电流密度；
+    \item $j=\sqrt{-1}$。
+\end{itemize}
+
+由于 SPHinXsys 当前的粒子变量系统更自然地支持实数场和向量场，因此可以把复数变量拆成实部和虚部：
+\begin{equation}
+    \bm A = \bm A_{\mathrm{re}} + j\bm A_{\mathrm{im}},
+\end{equation}
+\begin{equation}
+    \phi = \phi_{\mathrm{re}} + j\phi_{\mathrm{im}},
+\end{equation}
+\begin{equation}
+    \bm J_s = \bm J_{s,\mathrm{re}} + j\bm J_{s,\mathrm{im}}.
+\end{equation}
+
+将
+\begin{equation}
+    j\omega\sigma\bm A
+    =
+    j\omega\sigma
+    \left(
+        \bm A_{\mathrm{re}} + j\bm A_{\mathrm{im}}
+    \right)
+    =
+    -\omega\sigma\bm A_{\mathrm{im}}
+    +
+    j\omega\sigma\bm A_{\mathrm{re}}
+\end{equation}
+代入方程，可得到四个实数方程。
+
+A 方程实部：
+\begin{equation}
+    -\nabla\cdot(\nu\nabla \bm A_{\mathrm{re}})
+    - \omega\sigma\bm A_{\mathrm{im}}
+    + \sigma\nabla\phi_{\mathrm{re}}
+    =
+    \bm J_{s,\mathrm{re}} .
+    \label{eq:a-real}
+\end{equation}
+
+A 方程虚部：
+\begin{equation}
+    -\nabla\cdot(\nu\nabla \bm A_{\mathrm{im}})
+    + \omega\sigma\bm A_{\mathrm{re}}
+    + \sigma\nabla\phi_{\mathrm{im}}
+    =
+    \bm J_{s,\mathrm{im}} .
+    \label{eq:a-imag}
+\end{equation}
+
+$\phi$ 方程实部：
+\begin{equation}
+    -\nabla\cdot(\sigma\nabla \phi_{\mathrm{re}})
+    + \omega\nabla\cdot(\sigma\bm A_{\mathrm{im}})
+    =
+    0 .
+    \label{eq:phi-real}
+\end{equation}
+
+$\phi$ 方程虚部：
+\begin{equation}
+    -\nabla\cdot(\sigma\nabla \phi_{\mathrm{im}})
+    - \omega\nabla\cdot(\sigma\bm A_{\mathrm{re}})
+    =
+    0 .
+    \label{eq:phi-imag}
+\end{equation}
+
+\section{粒子上的未知量组织}
+
+假设共有 $N$ 个粒子。对三维问题，每个粒子 $i$ 上的未知量为
+\begin{equation}
+    \bm A_{\mathrm{re},i}
+    =
+    \begin{bmatrix}
+    A^x_{\mathrm{re},i}\\
+    A^y_{\mathrm{re},i}\\
+    A^z_{\mathrm{re},i}
+    \end{bmatrix},
+    \qquad
+    \bm A_{\mathrm{im},i}
+    =
+    \begin{bmatrix}
+    A^x_{\mathrm{im},i}\\
+    A^y_{\mathrm{im},i}\\
+    A^z_{\mathrm{im},i}
+    \end{bmatrix},
+\end{equation}
+以及两个标量
+\begin{equation}
+    \phi_{\mathrm{re},i},
+    \qquad
+    \phi_{\mathrm{im},i}.
+\end{equation}
+
+因此每个粒子上有 $8$ 个自由度：
+\begin{equation}
+    X_i
+    =
+    \begin{bmatrix}
+    A^x_{\mathrm{re},i}\\
+    A^y_{\mathrm{re},i}\\
+    A^z_{\mathrm{re},i}\\
+    A^x_{\mathrm{im},i}\\
+    A^y_{\mathrm{im},i}\\
+    A^z_{\mathrm{im},i}\\
+    \phi_{\mathrm{re},i}\\
+    \phi_{\mathrm{im},i}
+    \end{bmatrix}.
+\end{equation}
+
+所有粒子的未知量合起来是
+\begin{equation}
+    X =
+    \begin{bmatrix}
+    X_1\\
+    X_2\\
+    \vdots\\
+    X_N
+    \end{bmatrix}.
+\end{equation}
+
+所以如果显式组装全局矩阵，那么矩阵规模大约是
+\begin{equation}
+    8N \times 8N.
+\end{equation}
+
+但是 matrix-free 方法不显式存储这个 $8N\times 8N$ 的全局稀疏矩阵，而是只实现一个粒子邻居计算过程，用来计算
+\begin{equation}
+    Y = \mathcal{K}X .
+\end{equation}
+
+\section{SPH 粒子几何与 kernel 记号}
+
+令粒子位置为 $\bm r_i$，邻居粒子为 $j\in\mathcal{N}(i)$。定义
+\begin{equation}
+    \bm r_{ij} = \bm r_i - \bm r_j,
+    \qquad
+    r_{ij} = |\bm r_{ij}|,
+    \qquad
+    \bm e_{ij} = \frac{\bm r_{ij}}{r_{ij}} .
+\end{equation}
+
+令
+\begin{equation}
+    W_{ij} = W(r_{ij},h),
+    \qquad
+    dW_{ij} = \frac{\partial W(r_{ij},h)}{\partial r_{ij}} .
+\end{equation}
+
+SPHinXsys 中还会使用：
+\begin{itemize}
+    \item $V_j$：邻居粒子体积；
+    \item $\bm B_i$：粒子 $i$ 上的 kernel 修正矩阵；
+    \item $\bm B_j$：粒子 $j$ 上的 kernel 修正矩阵。
+\end{itemize}
+
+为了表达简洁，定义一个梯度型权重向量：
+\begin{equation}
+    \bm G_{ij}
+    =
+    V_j \bm B_i \bm e_{ij} dW_{ij}.
+    \label{eq:gij}
+\end{equation}
+
+在 SPHinXsys 的实际代码中，$\bm e_{ij}$、$dW_{ij}$ 的符号约定要与库内部保持一致。本文档中的公式主要说明结构；实现时应以现有 \texttt{LinearGradient} 和 \texttt{diffusion\_dynamics\_ck} 的符号约定为准。
+
+对材料系数，建议即便单材料也按粒子数组存储：
+\begin{equation}
+    \sigma_i,
+    \qquad
+    \nu_i.
+\end{equation}
+
+多材料界面上可以使用调和平均，例如
+\begin{equation}
+    \nu_{ij}
+    =
+    \frac{2\nu_i\nu_j}{\nu_i+\nu_j+\epsilon},
+\end{equation}
+\begin{equation}
+    \sigma_{ij}
+    =
+    \frac{2\sigma_i\sigma_j}{\sigma_i+\sigma_j+\epsilon}.
+\end{equation}
+
+\section{粒子形式的梯度、散度与 Laplace 型算子}
+
+\subsection{梯度}
+
+对标量场 $\psi$，可以写成
+\begin{equation}
+    (\nabla\psi)_i
+    \approx
+    \sum_{j\in\mathcal{N}(i)}
+    \bm G_{ij}
+    \left(
+        \psi_i - \psi_j
+    \right).
+    \label{eq:grad-scalar}
+\end{equation}
+
+因此
+\begin{equation}
+    (\nabla\phi_{\mathrm{re}})_i
+    \approx
+    \sum_{j\in\mathcal{N}(i)}
+    \bm G_{ij}
+    \left(
+        \phi_{\mathrm{re},i}
+        -
+        \phi_{\mathrm{re},j}
+    \right),
+\end{equation}
+\begin{equation}
+    (\nabla\phi_{\mathrm{im}})_i
+    \approx
+    \sum_{j\in\mathcal{N}(i)}
+    \bm G_{ij}
+    \left(
+        \phi_{\mathrm{im},i}
+        -
+        \phi_{\mathrm{im},j}
+    \right).
+\end{equation}
+
+\subsection{散度}
+
+对向量场 $\bm q$，可以写成
+\begin{equation}
+    (\nabla\cdot\bm q)_i
+    \approx
+    \sum_{j\in\mathcal{N}(i)}
+    \bm G_{ij}\cdot
+    \left(
+        \bm q_i - \bm q_j
+    \right).
+    \label{eq:div-vector}
+\end{equation}
+
+对于 $\nabla\cdot(\sigma\bm A)$，可以把电导率放进 pairwise 系数中：
+\begin{equation}
+    \left[\nabla\cdot(\sigma\bm A)\right]_i
+    \approx
+    \sum_{j\in\mathcal{N}(i)}
+    \sigma_{ij}\bm G_{ij}\cdot
+    \left(
+        \bm A_i - \bm A_j
+    \right).
+    \label{eq:div-sigma-a}
+\end{equation}
+
+因此
+\begin{equation}
+    \left[\nabla\cdot(\sigma\bm A_{\mathrm{re}})\right]_i
+    \approx
+    \sum_{j\in\mathcal{N}(i)}
+    \sigma_{ij}\bm G_{ij}\cdot
+    \left(
+        \bm A_{\mathrm{re},i}
+        -
+        \bm A_{\mathrm{re},j}
+    \right),
+\end{equation}
+\begin{equation}
+    \left[\nabla\cdot(\sigma\bm A_{\mathrm{im}})\right]_i
+    \approx
+    \sum_{j\in\mathcal{N}(i)}
+    \sigma_{ij}\bm G_{ij}\cdot
+    \left(
+        \bm A_{\mathrm{im},i}
+        -
+        \bm A_{\mathrm{im},j}
+    \right).
+\end{equation}
+
+\subsection{Laplace 型算子}
+
+A--$\phi$ 方程中需要的主算子是
+\begin{equation}
+    -\nabla\cdot(\kappa\nabla u),
+\end{equation}
+其中 $\kappa$ 可以是 $\nu$ 或 $\sigma$。
+
+为了与 matrix-free 求解器配合，建议把它写成 pairwise 形式：
+\begin{equation}
+    \left(\mathcal{L}_{\kappa}u\right)_i
+    =
+    \left[-\nabla\cdot(\kappa\nabla u)\right]_i
+    \approx
+    \sum_{j\in\mathcal{N}(i)}
+    c_{ij}^{\kappa}
+    \left(
+        u_i - u_j
+    \right).
+    \label{eq:laplace-pairwise}
+\end{equation}
+
+其中 $c_{ij}^{\kappa}$ 是 Laplace/diffusion pairwise 权重。一个常见的 SPH 扩散形式可以抽象写成
+\begin{equation}
+    c_{ij}^{\kappa}
+    =
+    \kappa_{ij}
+    \frac{\bm r_{ij}}{r_{ij}^2+\eta h^2}
+    \cdot
+    \bm S_{ij},
+    \label{eq:laplace-weight-general}
+\end{equation}
+其中 $\eta$ 是小的正则化常数，$\bm S_{ij}$ 是与 kernel 梯度和粒子体积有关的面积型向量，例如可采用与 SPHinXsys diffusion 算子一致的形式：
+\begin{equation}
+    \bm S_{ij}
+    =
+    V_j
+    \left(\bm B_i+\bm B_j\right)
+    \bm e_{ij}dW_{ij}.
+    \label{eq:surface-area-like}
+\end{equation}
+
+实现中不一定要逐字使用上式，而是应该直接参考 SPHinXsys 中 \texttt{diffusion\_dynamics\_ck} 的 pairwise diffusion 公式。关键是最终形式应当保持为
+\begin{equation}
+    \left(\mathcal{L}_{\kappa}u\right)_i
+    =
+    \sum_j c_{ij}^{\kappa}(u_i-u_j),
+\end{equation}
+这样每个线程只计算并写入粒子 $i$ 的结果。
+
+对向量场 $\bm A$，可以对每个分量使用同一个 Laplace 型算子：
+\begin{equation}
+    \left(\mathcal{L}_{\nu}\bm A\right)_i^m
+    =
+    \sum_{j\in\mathcal{N}(i)}
+    c_{ij}^{\nu}
+    \left(
+        A_i^m-A_j^m
+    \right),
+    \qquad
+    m=x,y,z.
+\end{equation}
+
+\section{A--$\phi$ 左端项的粒子离散形式}
+
+定义
+\begin{equation}
+    \mathcal{L}_{\nu}\bm A
+    \approx
+    -\nabla\cdot(\nu\nabla \bm A),
+\end{equation}
+\begin{equation}
+    \mathcal{L}_{\sigma}\phi
+    \approx
+    -\nabla\cdot(\sigma\nabla \phi).
+\end{equation}
+
+对 $A$ 的第 $m$ 个分量，$m=x,y,z$，A 方程实部的左端项为
+\begin{align}
+    \mathrm{LhsAReal}_i^m
+    &=
+    \sum_{j\in\mathcal{N}(i)}
+    c_{ij}^{\nu}
+    \left(
+        A_{\mathrm{re},i}^m
+        -
+        A_{\mathrm{re},j}^m
+    \right)
+    -
+    \omega\sigma_i A_{\mathrm{im},i}^m
+    \nonumber\\
+    &\quad
+    +
+    \sigma_i
+    \sum_{j\in\mathcal{N}(i)}
+    G_{ij}^m
+    \left(
+        \phi_{\mathrm{re},i}
+        -
+        \phi_{\mathrm{re},j}
+    \right).
+    \label{eq:lhs-a-real-particle}
+\end{align}
+
+A 方程虚部的左端项为
+\begin{align}
+    \mathrm{LhsAImag}_i^m
+    &=
+    \sum_{j\in\mathcal{N}(i)}
+    c_{ij}^{\nu}
+    \left(
+        A_{\mathrm{im},i}^m
+        -
+        A_{\mathrm{im},j}^m
+    \right)
+    +
+    \omega\sigma_i A_{\mathrm{re},i}^m
+    \nonumber\\
+    &\quad
+    +
+    \sigma_i
+    \sum_{j\in\mathcal{N}(i)}
+    G_{ij}^m
+    \left(
+        \phi_{\mathrm{im},i}
+        -
+        \phi_{\mathrm{im},j}
+    \right).
+    \label{eq:lhs-a-imag-particle}
+\end{align}
+
+$\phi$ 方程实部的左端项为
+\begin{align}
+    \mathrm{LhsPhiReal}_i
+    &=
+    \sum_{j\in\mathcal{N}(i)}
+    c_{ij}^{\sigma}
+    \left(
+        \phi_{\mathrm{re},i}
+        -
+        \phi_{\mathrm{re},j}
+    \right)
+    \nonumber\\
+    &\quad
+    +
+    \omega
+    \sum_{j\in\mathcal{N}(i)}
+    \sigma_{ij}\bm G_{ij}\cdot
+    \left(
+        \bm A_{\mathrm{im},i}
+        -
+        \bm A_{\mathrm{im},j}
+    \right).
+    \label{eq:lhs-phi-real-particle}
+\end{align}
+
+$\phi$ 方程虚部的左端项为
+\begin{align}
+    \mathrm{LhsPhiImag}_i
+    &=
+    \sum_{j\in\mathcal{N}(i)}
+    c_{ij}^{\sigma}
+    \left(
+        \phi_{\mathrm{im},i}
+        -
+        \phi_{\mathrm{im},j}
+    \right)
+    \nonumber\\
+    &\quad
+    -
+    \omega
+    \sum_{j\in\mathcal{N}(i)}
+    \sigma_{ij}\bm G_{ij}\cdot
+    \left(
+        \bm A_{\mathrm{re},i}
+        -
+        \bm A_{\mathrm{re},j}
+    \right).
+    \label{eq:lhs-phi-imag-particle}
+\end{align}
+
+以上四组量就是程序中 \texttt{AphiApply} 要计算的内容。也就是
+\begin{equation}
+    \mathrm{LHS} = \mathcal{K}(X).
+\end{equation}
+
+\section{RHS 与残差的粒子形式}
+
+对粒子 $i$，右端项可以写成
+\begin{equation}
+    B_i
+    =
+    \begin{bmatrix}
+    J^x_{s,\mathrm{re},i}\\
+    J^y_{s,\mathrm{re},i}\\
+    J^z_{s,\mathrm{re},i}\\
+    J^x_{s,\mathrm{im},i}\\
+    J^y_{s,\mathrm{im},i}\\
+    J^z_{s,\mathrm{im},i}\\
+    B_{\phi,\mathrm{re},i}\\
+    B_{\phi,\mathrm{im},i}
+    \end{bmatrix}.
+\end{equation}
+
+一般情况下，$\phi$ 方程没有体源项，因此
+\begin{equation}
+    B_{\phi,\mathrm{re},i}=0,
+    \qquad
+    B_{\phi,\mathrm{im},i}=0.
+\end{equation}
+
+如果边界条件、约束项或特殊源项会进入 $\phi$ 方程右端，则这两个量可以不是零。
+
+左端项为
+\begin{equation}
+    (\mathcal{K}X)_i
+    =
+    \begin{bmatrix}
+    \mathrm{LhsAReal}_i^x\\
+    \mathrm{LhsAReal}_i^y\\
+    \mathrm{LhsAReal}_i^z\\
+    \mathrm{LhsAImag}_i^x\\
+    \mathrm{LhsAImag}_i^y\\
+    \mathrm{LhsAImag}_i^z\\
+    \mathrm{LhsPhiReal}_i\\
+    \mathrm{LhsPhiImag}_i
+    \end{bmatrix}.
+\end{equation}
+
+残差为
+\begin{equation}
+    R_i
+    =
+    B_i
+    -
+    (\mathcal{K}X)_i .
+\end{equation}
+
+展开为
+\begin{equation}
+    R_i
+    =
+    \begin{bmatrix}
+    J^x_{s,\mathrm{re},i} - \mathrm{LhsAReal}_i^x\\
+    J^y_{s,\mathrm{re},i} - \mathrm{LhsAReal}_i^y\\
+    J^z_{s,\mathrm{re},i} - \mathrm{LhsAReal}_i^z\\
+    J^x_{s,\mathrm{im},i} - \mathrm{LhsAImag}_i^x\\
+    J^y_{s,\mathrm{im},i} - \mathrm{LhsAImag}_i^y\\
+    J^z_{s,\mathrm{im},i} - \mathrm{LhsAImag}_i^z\\
+    B_{\phi,\mathrm{re},i} - \mathrm{LhsPhiReal}_i\\
+    B_{\phi,\mathrm{im},i} - \mathrm{LhsPhiImag}_i
+    \end{bmatrix}.
+\end{equation}
+
+程序中对应：
+\begin{lstlisting}
+ResidualAReal[i]   = RhsAReal[i]   - LhsAReal[i];
+ResidualAImag[i]   = RhsAImag[i]   - LhsAImag[i];
+ResidualPhiReal[i] = RhsPhiReal[i] - LhsPhiReal[i];
+ResidualPhiImag[i] = RhsPhiImag[i] - LhsPhiImag[i];
+\end{lstlisting}
+
+\section{如果显式组装矩阵，它大概长什么样？}
+
+如果把所有粒子的未知量都排成全局向量，可以抽象写成
+\begin{equation}
+\begin{bmatrix}
+L_{\nu} & -\omega\Sigma & \Sigma G & 0\\
+\omega\Sigma & L_{\nu} & 0 & \Sigma G\\
+0 & \omega D_{\sigma} & L_{\sigma} & 0\\
+-\omega D_{\sigma} & 0 & 0 & L_{\sigma}
+\end{bmatrix}
+\begin{bmatrix}
+A_{\mathrm{re}}\\
+A_{\mathrm{im}}\\
+\phi_{\mathrm{re}}\\
+\phi_{\mathrm{im}}
+\end{bmatrix}
+=
+\begin{bmatrix}
+J_{s,\mathrm{re}}\\
+J_{s,\mathrm{im}}\\
+B_{\phi,\mathrm{re}}\\
+B_{\phi,\mathrm{im}}
+\end{bmatrix}.
+\label{eq:block-global}
+\end{equation}
+
+这里：
+\begin{itemize}
+    \item $L_{\nu}$ 表示 $-\nabla\cdot(\nu\nabla \bm A)$ 对应的全局 Laplace 型稀疏矩阵；
+    \item $L_{\sigma}$ 表示 $-\nabla\cdot(\sigma\nabla\phi)$ 对应的全局 Laplace 型稀疏矩阵；
+    \item $\Sigma$ 是由 $\sigma_i$ 组成的对角矩阵；
+    \item $G$ 是 gradient 算子；
+    \item $D_{\sigma}$ 是 $\nabla\cdot(\sigma\bm A)$ 对应的 divergence 算子。
+\end{itemize}
+
+这里需要特别注意：$\phi$ 方程不是没有系数矩阵。$\phi$ 自身对应的系数矩阵是 $L_{\sigma}$。在式 \eqref{eq:block-global} 中，第三行第三列和第四行第四列的 $L_{\sigma}$ 就是 $\phi_{\mathrm{re}}$ 和 $\phi_{\mathrm{im}}$ 的主系数矩阵。
+
+$D_{\sigma}$ 只是 A 场进入 $\phi$ 方程的耦合项：
+\begin{equation}
+    \omega D_{\sigma}A_{\mathrm{im}},
+    \qquad
+    -\omega D_{\sigma}A_{\mathrm{re}}.
+\end{equation}
+
+因此 $\phi$ 方程的结构是
+\begin{equation}
+    L_{\sigma}\phi_{\mathrm{re}}
+    +
+    \omega D_{\sigma}A_{\mathrm{im}}
+    =
+    B_{\phi,\mathrm{re}},
+\end{equation}
+\begin{equation}
+    L_{\sigma}\phi_{\mathrm{im}}
+    -
+    \omega D_{\sigma}A_{\mathrm{re}}
+    =
+    B_{\phi,\mathrm{im}}.
+\end{equation}
+
+\section{不生成稀疏矩阵，为什么还能求解？}
+
+Matrix-free 的核心思想是：求解器不需要显式知道矩阵中每一个元素，只需要能计算
+\begin{equation}
+    Y = \mathcal{K}X .
+\end{equation}
+
+如果显式矩阵存在，那么第 $i$ 行的矩阵乘法是
+\begin{equation}
+    Y_i
+    =
+    \sum_j K_{ij}X_j .
+\end{equation}
+
+在 SPH 中，$K_{ij}$ 的非零项只来自粒子 $i$ 的邻居 $j\in\mathcal{N}(i)$。所以可以不存 $K_{ij}$，而是在每次需要 $Y=\mathcal{K}X$ 的时候，通过邻居循环直接计算：
+\begin{equation}
+    Y_i
+    =
+    \sum_{j\in\mathcal{N}(i)}
+    \text{pairwise contribution}(i,j;X_i,X_j).
+\end{equation}
+
+程序结构就是：
+\begin{lstlisting}
+parallel_for each particle i:
+    lhs_i = 0
+
+    for each neighbor j of i:
+        lhs_i += pairwise_laplace_terms(i, j)
+        lhs_i += pairwise_gradient_coupling(i, j)
+        lhs_i += pairwise_divergence_coupling(i, j)
+
+    lhs_i += local_reaction_terms(i)
+
+    LHS[i] = lhs_i
+\end{lstlisting}
+
+所以不是“不求矩阵乘法”，而是“不存矩阵，直接按粒子邻居公式计算矩阵乘法的结果”。
+
+Krylov / BiCGStab 等迭代方法只需要反复调用
+\begin{equation}
+    Y = \mathcal{K}X
+\end{equation}
+和做若干向量加法、内积、范数计算，因此非常适合 matrix-free 实现。
+
+\section{Krylov 搜索方向与 BiCGStab 中的变量含义}
+
+对于完整 A--$\phi$ 系统，由于实虚部耦合、A--$\phi$ 耦合和 gauge 约束，整体算子通常不是对称正定的，因此不建议直接使用普通 CG。更合适的第一选择是 BiCGStab。
+
+令
+\begin{equation}
+    X^k
+\end{equation}
+表示第 $k$ 次线性求解迭代时的当前解。它包含四组粒子场：
+\begin{equation}
+    X^k =
+    \left[
+    \bm A_{\mathrm{re}}^k,
+    \bm A_{\mathrm{im}}^k,
+    \phi_{\mathrm{re}}^k,
+    \phi_{\mathrm{im}}^k
+    \right]^T .
+\end{equation}
+
+残差为
+\begin{equation}
+    R^k = B - \mathcal{K}X^k .
+\end{equation}
+
+搜索方向 $P^k$ 可以理解为：当前迭代准备沿着哪个方向去修正解。初始时通常可以取
+\begin{equation}
+    P^0 = R^0 .
+\end{equation}
+
+但从第二步开始，搜索方向不再简单等于残差，而是结合当前残差和之前的搜索方向。BiCGStab 中有
+\begin{equation}
+    P^k
+    =
+    R^k
+    +
+    \beta_k
+    \left(
+        P^{k-1}
+        -
+        \omega_{k-1}V^{k-1}
+    \right),
+\end{equation}
+其中
+\begin{equation}
+    V^{k-1}
+    =
+    \mathcal{K}P^{k-1}.
+\end{equation}
+
+也就是说，$V$ 不是速度，也不是物理场，而是搜索方向 $P$ 经过 A--$\phi$ 线性算子作用后的结果。
+
+BiCGStab 的一个常用流程如下：
+
+\begin{align}
+    R^0 &= B-\mathcal{K}X^0,\\
+    \widehat{R} &= R^0,\\
+    \rho_k &= \langle \widehat{R},R^k\rangle,\\
+    \beta_k &=
+    \frac{\rho_k}{\rho_{k-1}}
+    \frac{\alpha_{k-1}}{\omega_{k-1}},\\
+    P^k &=
+    R^k+\beta_k(P^{k-1}-\omega_{k-1}V^{k-1}),\\
+    V^k &= \mathcal{K}P^k,\\
+    \alpha_k &=
+    \frac{\rho_k}{\langle \widehat{R},V^k\rangle},\\
+    S^k &= R^k-\alpha_k V^k,\\
+    T^k &= \mathcal{K}S^k,\\
+    \omega_k &=
+    \frac{\langle T^k,S^k\rangle}
+         {\langle T^k,T^k\rangle},\\
+    X^{k+1}
+    &=
+    X^k+\alpha_k P^k+\omega_k S^k,\\
+    R^{k+1}
+    &=
+    S^k-\omega_k T^k .
+\end{align}
+
+其中：
+\begin{itemize}
+    \item $\alpha_k$ 是沿搜索方向 $P^k$ 的步长；
+    \item $\omega_k$ 是对中间残差 $S^k$ 的进一步修正步长；
+    \item $\beta_k$ 用来混合当前残差和历史搜索方向；
+    \item $V^k=\mathcal{K}P^k$；
+    \item $T^k=\mathcal{K}S^k$。
+\end{itemize}
+
+\section{为什么有时可以写 $R^{k+1}=R^k-\alpha\mathcal{K}P^k$？}
+
+从残差定义出发：
+\begin{equation}
+    R^k = B-\mathcal{K}X^k.
+\end{equation}
+
+如果某一步只做简单更新
+\begin{equation}
+    X^{k+1}=X^k+\alpha P^k,
+\end{equation}
+那么
+\begin{align}
+    R^{k+1}
+    &=
+    B-\mathcal{K}X^{k+1}
+    \nonumber\\
+    &=
+    B-\mathcal{K}(X^k+\alpha P^k)
+    \nonumber\\
+    &=
+    B-\mathcal{K}X^k-\alpha\mathcal{K}P^k
+    \nonumber\\
+    &=
+    R^k-\alpha\mathcal{K}P^k.
+\end{align}
+
+所以
+\begin{equation}
+    R^{k+1}=R^k-\alpha\mathcal{K}P^k
+\end{equation}
+并不矛盾，它是由
+\begin{equation}
+    R^k = B-\mathcal{K}X^k
+\end{equation}
+推出来的。
+
+在 BiCGStab 中，由于还会引入 $S^k$ 和 $\omega_k$ 修正，因此最终残差更新写成
+\begin{equation}
+    R^{k+1}=S^k-\omega_k T^k.
+\end{equation}
+
+\section{A--$\phi$ 的粒子级 BiCGStab 操作展开}
+
+每一个 Krylov 向量都是一个 block 粒子场。例如
+\begin{equation}
+    P_i^k
+    =
+    \begin{bmatrix}
+    P^x_{A,\mathrm{re},i}\\
+    P^y_{A,\mathrm{re},i}\\
+    P^z_{A,\mathrm{re},i}\\
+    P^x_{A,\mathrm{im},i}\\
+    P^y_{A,\mathrm{im},i}\\
+    P^z_{A,\mathrm{im},i}\\
+    P_{\phi,\mathrm{re},i}\\
+    P_{\phi,\mathrm{im},i}
+    \end{bmatrix}^k.
+\end{equation}
+
+解更新
+\begin{equation}
+    X^{k+1}=X^k+\alpha_k P^k+\omega_k S^k
+\end{equation}
+在粒子 $i$ 上展开为
+\begin{align}
+    \bm A_{\mathrm{re},i}^{k+1}
+    &=
+    \bm A_{\mathrm{re},i}^{k}
+    +
+    \alpha_k \bm P_{A,\mathrm{re},i}^{k}
+    +
+    \omega_k \bm S_{A,\mathrm{re},i}^{k},
+    \\
+    \bm A_{\mathrm{im},i}^{k+1}
+    &=
+    \bm A_{\mathrm{im},i}^{k}
+    +
+    \alpha_k \bm P_{A,\mathrm{im},i}^{k}
+    +
+    \omega_k \bm S_{A,\mathrm{im},i}^{k},
+    \\
+    \phi_{\mathrm{re},i}^{k+1}
+    &=
+    \phi_{\mathrm{re},i}^{k}
+    +
+    \alpha_k P_{\phi,\mathrm{re},i}^{k}
+    +
+    \omega_k S_{\phi,\mathrm{re},i}^{k},
+    \\
+    \phi_{\mathrm{im},i}^{k+1}
+    &=
+    \phi_{\mathrm{im},i}^{k}
+    +
+    \alpha_k P_{\phi,\mathrm{im},i}^{k}
+    +
+    \omega_k S_{\phi,\mathrm{im},i}^{k}.
+\end{align}
+
+内积可以定义为粒子体积加权的 block 内积：
+\begin{align}
+    \langle X,Y\rangle
+    =
+    \sum_i V_i
+    \Big[
+    &\bm A_{\mathrm{re},X,i}\cdot\bm A_{\mathrm{re},Y,i}
+    +
+    \bm A_{\mathrm{im},X,i}\cdot\bm A_{\mathrm{im},Y,i}
+    \nonumber\\
+    &+
+    \phi_{\mathrm{re},X,i}\phi_{\mathrm{re},Y,i}
+    +
+    \phi_{\mathrm{im},X,i}\phi_{\mathrm{im},Y,i}
+    \Big].
+\end{align}
+
+残差范数为
+\begin{equation}
+    \|R\|
+    =
+    \sqrt{\langle R,R\rangle}.
+\end{equation}
+
+\section{程序实现上的建议}
+
+在 SPHinXsys 的 CK/SYCL 框架中，可以把核心实现分成以下部分：
+
+\subsection{AphiApply}
+
+输入：
+\begin{lstlisting}
+AReal, AImag, PhiReal, PhiImag
+\end{lstlisting}
+
+输出：
+\begin{lstlisting}
+LhsAReal, LhsAImag, LhsPhiReal, LhsPhiImag
+\end{lstlisting}
+
+粒子循环结构：
+\begin{lstlisting}
+parallel_for each particle i:
+    lhs_A_re = Vecd::Zero()
+    lhs_A_im = Vecd::Zero()
+    lhs_phi_re = 0
+    lhs_phi_im = 0
+
+    for each neighbor j:
+        compute c_nu_ij
+        compute c_sigma_ij
+        compute G_ij
+
+        lhs_A_re += Laplace(AReal)
+        lhs_A_im += Laplace(AImag)
+        lhs_phi_re += Laplace(PhiReal)
+        lhs_phi_im += Laplace(PhiImag)
+
+        lhs_A_re += sigma_i * grad(PhiReal)
+        lhs_A_im += sigma_i * grad(PhiImag)
+
+        lhs_phi_re += omega * div(sigma * AImag)
+        lhs_phi_im -= omega * div(sigma * AReal)
+
+    lhs_A_re += -omega * sigma_i * AImag[i]
+    lhs_A_im +=  omega * sigma_i * AReal[i]
+
+    LhsAReal[i] = lhs_A_re
+    LhsAImag[i] = lhs_A_im
+    LhsPhiReal[i] = lhs_phi_re
+    LhsPhiImag[i] = lhs_phi_im
+\end{lstlisting}
+
+\subsection{BlockResidual}
+
+\begin{lstlisting}
+ResidualAReal[i]   = RhsAReal[i]   - LhsAReal[i];
+ResidualAImag[i]   = RhsAImag[i]   - LhsAImag[i];
+ResidualPhiReal[i] = RhsPhiReal[i] - LhsPhiReal[i];
+ResidualPhiImag[i] = RhsPhiImag[i] - LhsPhiImag[i];
+\end{lstlisting}
+
+\subsection{BlockAXPY}
+
+实现
+\begin{equation}
+    X \leftarrow X+\alpha Y.
+\end{equation}
+
+粒子形式：
+\begin{lstlisting}
+ARealX[i]   += alpha * ARealY[i];
+AImagX[i]   += alpha * AImagY[i];
+PhiRealX[i] += alpha * PhiRealY[i];
+PhiImagX[i] += alpha * PhiImagY[i];
+\end{lstlisting}
+
+\subsection{BlockDot}
+
+实现
+\begin{equation}
+    \langle X,Y\rangle
+    =
+    \sum_i V_i
+    \left[
+        A_{\mathrm{re},X}\cdot A_{\mathrm{re},Y}
+        +
+        A_{\mathrm{im},X}\cdot A_{\mathrm{im},Y}
+        +
+        \phi_{\mathrm{re},X}\phi_{\mathrm{re},Y}
+        +
+        \phi_{\mathrm{im},X}\phi_{\mathrm{im},Y}
+    \right]_i.
+\end{equation}
+
+\subsection{BiCGStabSolver}
+
+主循环中只反复调用：
+\begin{lstlisting}
+AphiApply(P, V);  // V = K P
+AphiApply(S, T);  // T = K S
+\end{lstlisting}
+
+并通过 block 向量操作更新：
+\begin{lstlisting}
+P, S, X, R
+\end{lstlisting}
+
+\section{关于调试版与最终版}
+
+调试阶段可以直接使用 SPHinXsys 已有的
+\begin{lstlisting}
+LinearGradient<Real>
+LinearGradient<Vecd>
+\end{lstlisting}
+来显式计算
+\begin{equation}
+    \nabla\phi,
+    \qquad
+    \nabla\cdot\bm A.
+\end{equation}
+
+这样方便确认符号和耦合项是否正确。
+
+最终版建议把梯度、散度、Laplace 和耦合项都融合到 \texttt{AphiApply} 的邻居循环中，避免产生大量中间变量和多次 kernel launch。
+
+\section{一句话总结}
+
+A--$\phi$ 的 matrix-free 求解不是每个粒子独立求一个局部小矩阵，也不是显式组装一个 $8N\times 8N$ 的全局稀疏矩阵。它的核心是：
+
+\begin{equation}
+    \text{通过每个粒子的邻居循环直接计算 } \mathcal{K}X,
+\end{equation}
+
+然后用
+\begin{equation}
+    R = B-\mathcal{K}X
+\end{equation}
+构造残差，再用 BiCGStab 这类 Krylov 迭代方法不断更新
+\begin{equation}
+    X =
+    \left[
+    \bm A_{\mathrm{re}},
+    \bm A_{\mathrm{im}},
+    \phi_{\mathrm{re}},
+    \phi_{\mathrm{im}}
+    \right]^T,
+\end{equation}
+直到残差足够小。
+
+\end{document}

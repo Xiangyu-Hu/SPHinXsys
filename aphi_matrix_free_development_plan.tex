@@ -1,0 +1,1072 @@
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+
+\usepackage{amsmath,amssymb,bm,geometry,booktabs,longtable,array,enumitem,hyperref,xcolor,listings}
+\geometry{margin=2.2cm}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+\setlist[itemize]{topsep=3pt,itemsep=2pt,parsep=1pt}
+\setlist[enumerate]{topsep=3pt,itemsep=2pt,parsep=1pt}
+
+\lstdefinestyle{cppstyle}{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  keywordstyle=\color{blue!70!black},
+  commentstyle=\color{green!40!black},
+  stringstyle=\color{red!60!black}
+}
+\lstset{style=cppstyle}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\Are}{\bm A_{\mathrm{re}}}
+\newcommand{\Aim}{\bm A_{\mathrm{im}}}
+\newcommand{\phire}{\phi_{\mathrm{re}}}
+\newcommand{\phiim}{\phi_{\mathrm{im}}}
+\newcommand{\Kop}{\mathcal K}
+\newcommand{\Nset}{\mathcal N}
+\newcommand{\dd}{\mathrm d}
+
+\title{基于 SPHinXsys CK 框架的 A--\texorpdfstring{$\phi$}{phi} Matrix-free 求解器开发流程与验证计划}
+\author{开发说明草案：供 Codex / Cursor 执行与对照}
+\date{2026-05-20}
+
+\begin{document}
+\maketitle
+
+\section{目标和总体原则}
+
+本文档的目标是为 SPHinXsys 中的频域 A--$\phi$ 电磁方程建立一套可逐步验证的 matrix-free 求解器开发流程。核心要求如下：
+
+\begin{enumerate}
+  \item 必须基于 SPHinXsys 自身的粒子离散框架，通过粒子的 kernel、体积、邻居关系计算每个粒子上的算子值。
+  \item 必须支持 \code{Inner<>} 和 \code{Contact<>} 两类邻居关系。内部粒子通过 \code{Inner<>} 贡献，边界和多材料界面通过 \code{Contact<>} 贡献。
+  \item 必须采用 SYCL/CK 风格，即每个动力学类包含 \code{InteractKernel}、\code{UpdateKernel} 或 \code{ReduceKernel}，在 kernel 内通过 \code{DelegatedData(ex\_policy)} 获取数组指针。
+  \item 第一阶段可以调用现有梯度、散度诊断算子进行调试；最终求解器应实现融合式 \code{AphiApplyCK}，避免每次 Krylov 迭代产生过多中间变量和 kernel launch。
+  \item 不显式组装全局稀疏矩阵。数学上仍可写成 $\Kop X=B$，但程序中只实现 $Y=\Kop(X)$，即 matrix-free operator apply。
+  \item 完整 A--$\phi$ 频域系统一般不是对称正定系统，不应强行使用普通 CG。第一版完整耦合求解器建议使用 BiCGStab；CG 只用于 scalar/vector Helmholtz 诊断或正定子问题。
+\end{enumerate}
+
+\section{现有代码基础和复用边界}
+
+\subsection{推荐参考的 SPHinXsys 文件和类}
+
+\begin{longtable}{p{0.31\textwidth}p{0.29\textwidth}p{0.33\textwidth}}
+\toprule
+文件或模块 & 相关类/函数 & 在 A--$\phi$ 开发中的用途 \\
+\midrule
+\code{src/shared/shared\_ck/particle\_dynamics/general\_dynamics/general\_gradient.h/.hpp}
+& \code{LinearGradient<Inner<...>>}, \code{LinearGradient<Contact<...>>}, \code{Hessian}, \code{SecondOrderGradient}
+& 调试阶段可直接计算 $\nabla\phi$、$\nabla \bm A$、$\nabla\cdot\bm A$；也作为 CK 模板组织方式参考。 \\
+\midrule
+\code{src/shared/shared\_ck/particle\_dynamics/diffusion\_reaction\_dynamics/diffusion\_dynamics\_ck.h/.hpp}
+& \code{DiffusionRelaxationCK<Inner<InteractionOnly,...>>}, \code{DiffusionRelaxationCK<Contact<...>>}, \code{Dirichlet}, \code{Neumann}
+& 参考 pairwise diffusion/Laplace 形式，尤其是 \code{dW\_ij}、\code{Vol[j]}、\code{surface\_area}、\code{derivative} 的组合方式。 \\
+\midrule
+\code{src/shared/shared\_ck/particle\_dynamics/general\_dynamics/general\_reduce\_ck.h/.hpp}
+& \code{QuantityReduce}, \code{QuantityAverage}, \code{BaseLocalDynamicsReduce}
+& 实现 block dot product、残差范数、gauge norm、operator 线性误差等 reduction。 \\
+\midrule
+\code{src/shared/shared\_ck/particle\_dynamics/interaction\_ck.h}, \code{interaction\_algorithms\_ck.h}
+& \code{Interaction<Inner<...>>}, \code{Interaction<Contact<...>>}, \code{InteractionDynamicsCK} 等
+& 所有 A--$\phi$ pairwise 算子的基本继承和执行框架。 \\
+\midrule
+\code{tests/tests\_extra/extra\_src/shared/particle\_dynamics/dissipation\_dynamics/implicit\_dissipation.h/.hpp}
+& \code{DissipativeTransform}, \code{DissipationRHS}, \code{FullDissipationResidue}, \code{UpdateDissipationSearch}, \code{UpdateDissipationSolution}, \code{QuantityTensorProductAverage}, \code{ImplicitDissipation}
+& 不是直接依赖的生产模块，但非常适合参考 matrix-free transform、RHS、residual、search direction、solution update 的组织方式。 \\
+\bottomrule
+\end{longtable}
+
+\subsection{不建议的做法}
+
+\begin{itemize}
+  \item 不建议直接把完整 A--$\phi$ 系统塞进现有 \code{DiffusionRelaxationCK}。该类主要面向显式 diffusion-reaction，不适合完整 block 频域系统。
+  \item 不建议直接在 CK kernel 中使用 \code{std::complex<Real>}。建议使用四个实数/向量场：\code{AReal}、\code{AImag}、\code{PhiReal}、\code{PhiImag}。
+  \item 不建议在 pair 线程中同时写 $i$ 和 $j$ 粒子并依赖 atomic。第一版和最终版都应采用 gather 形式：每个粒子 $i$ 遍历邻居 $j$，只写自己的输出。
+  \item 不建议一开始就做 mixed saddle-point 主路线。优先实现 penalty gauge；mixed saddle-point 可作为独立实验分支。
+\end{itemize}
+
+\section{数学形式和程序变量约定}
+
+\subsection{连续方程}
+
+采用频域 A--$\phi$ 方程：
+\begin{align}
+-\nabla\cdot(\nu\nabla \bm A)
++j\omega\sigma\bm A
++\sigma\nabla\phi
+&=\bm J_s, \\
+-\nabla\cdot(\sigma\nabla\phi)
+-j\omega\nabla\cdot(\sigma\bm A)
+&=0.
+\end{align}
+
+复数变量拆分为：
+\begin{align}
+\bm A &= \Are+j\Aim, \\
+\phi &= \phire+j\phiim, \\
+\bm J_s &= \bm J_{s,\mathrm{re}}+j\bm J_{s,\mathrm{im}}.
+\end{align}
+
+则四个实值方程为：
+\begin{align}
+-\nabla\cdot(\nu\nabla \Are)
+-\omega\sigma\Aim
++\sigma\nabla\phire
+&=\bm J_{s,\mathrm{re}}, \\
+-\nabla\cdot(\nu\nabla \Aim)
++\omega\sigma\Are
++\sigma\nabla\phiim
+&=\bm J_{s,\mathrm{im}}, \\
+-\nabla\cdot(\sigma\nabla\phire)
++\omega\nabla\cdot(\sigma\Aim)
+&=B_{\phi,\mathrm{re}}, \\
+-\nabla\cdot(\sigma\nabla\phiim)
+-\omega\nabla\cdot(\sigma\Are)
+&=B_{\phi,\mathrm{im}}.
+\end{align}
+
+通常 $B_{\phi,\mathrm{re}}=0$，$B_{\phi,\mathrm{im}}=0$，除非加入额外源项、约束项或边界修正项。
+
+\subsection{每个粒子上的 block unknown}
+
+三维情况下，每个粒子 $i$ 上的未知量为：
+\begin{equation}
+q_i=
+\begin{bmatrix}
+A^x_{\mathrm{re},i}\\
+A^y_{\mathrm{re},i}\\
+A^z_{\mathrm{re},i}\\
+A^x_{\mathrm{im},i}\\
+A^y_{\mathrm{im},i}\\
+A^z_{\mathrm{im},i}\\
+\phi_{\mathrm{re},i}\\
+\phi_{\mathrm{im},i}
+\end{bmatrix}.
+\end{equation}
+
+所有粒子组合成全局未知量：
+\begin{equation}
+X=\begin{bmatrix}q_1&q_2&\cdots&q_N\end{bmatrix}^T.
+\end{equation}
+
+若显式组装矩阵，则全局系统大小约为 $8N\times 8N$。本项目不显式组装该矩阵，而是实现：
+\begin{equation}
+Y=\Kop(X).
+\end{equation}
+
+程序中对应：
+\begin{lstlisting}[language=C++]
+AphiApply(input_block, output_block); // output_block = K(input_block)
+\end{lstlisting}
+
+\subsection{RHS、LHS 和 residual}
+
+对每个粒子：
+\begin{equation}
+B_i=\begin{bmatrix}
+\bm J_{s,\mathrm{re},i}\\
+\bm J_{s,\mathrm{im},i}\\
+B_{\phi,\mathrm{re},i}\\
+B_{\phi,\mathrm{im},i}
+\end{bmatrix},
+\qquad
+(\Kop X)_i=\begin{bmatrix}
+\mathrm{LhsAReal}_i\\
+\mathrm{LhsAImag}_i\\
+\mathrm{LhsPhiReal}_i\\
+\mathrm{LhsPhiImag}_i
+\end{bmatrix}.
+\end{equation}
+
+残差定义为：
+\begin{equation}
+R_i=B_i-(\Kop X)_i.
+\end{equation}
+
+程序中即：
+\begin{lstlisting}[language=C++]
+ResidualAReal[i]   = RhsAReal[i]   - LhsAReal[i];
+ResidualAImag[i]   = RhsAImag[i]   - LhsAImag[i];
+ResidualPhiReal[i] = RhsPhiReal[i] - LhsPhiReal[i];
+ResidualPhiImag[i] = RhsPhiImag[i] - LhsPhiImag[i];
+\end{lstlisting}
+
+\section{SPH 离散权重和符号约定}
+
+对粒子 $i$，邻居集合为 $\Nset(i)$。定义：
+\begin{align}
+\bm r_{ij}&=\bm r_i-\bm r_j, &
+ r_{ij}&=\|\bm r_{ij}\|, &
+\bm e_{ij}&=\frac{\bm r_{ij}}{r_{ij}+\epsilon},\\
+W_{ij}&=W(r_{ij},h), &
+ dW_{ij}&=\frac{\partial W(r_{ij},h)}{\partial r_{ij}}.
+\end{align}
+
+\subsection{梯度权重}
+
+\code{general\_gradient.hpp} 中 \code{LinearGradient} 的核心形式为：
+\begin{lstlisting}[language=C++]
+Vecd corrected_gradW_ijV_j = dW_ij(index_i,index_j) * Vol[j]
+                              * B[i] * e_ij(index_i,index_j);
+DataType difference = variable[i] - variable[j];
+summation -= tensorProduct(corrected_gradW_ijV_j, difference);
+\end{lstlisting}
+
+因此可以定义：
+\begin{equation}
+\bm G_{ij}=\bm B_i\left(dW_{ij}\bm e_{ij}\right)V_j.
+\end{equation}
+
+则 SPHinXsys 当前符号约定下：
+\begin{equation}
+\nabla u_i \approx -\sum_{j\in\Nset(i)}\bm G_{ij}(u_i-u_j).
+\end{equation}
+
+为了让公式更紧凑，也可以定义：
+\begin{equation}
+\bm g_{ij}=-\bm G_{ij},
+\end{equation}
+于是：
+\begin{equation}
+\nabla u_i \approx \sum_{j\in\Nset(i)}\bm g_{ij}(u_i-u_j).
+\end{equation}
+
+后续公式统一采用 $\bm g_{ij}$，但代码实现时应注意它等价于 \code{-corrected\_gradW\_ijV\_j}。如果直接使用 \code{LinearGradient} 的中间结果，则不需要手工处理这个负号。
+
+\subsection{Laplace 型权重}
+
+参考 \code{diffusion\_dynamics\_ck.hpp}，内部 diffusion 的 pairwise 形式使用：
+\begin{lstlisting}[language=C++]
+Real dW_ijV_j = dW_ij(index_i, index_j) * Vol[j];
+Vecd surface_area = dW_ijV_j * (correction(i) + correction(j)) * e_ij;
+Vecd derivative = (u[i] - u[j]) * vec_r_ij
+                  / (vec_r_ij.squaredNorm() + 0.01 * h_ref * h_ref);
+du += (D_ij * derivative).dot(surface_area);
+\end{lstlisting}
+
+对 A--$\phi$，建议封装为正定号约定的 Laplace 型算子：
+\begin{equation}
+(L_k u)_i \equiv -\nabla\cdot(k\nabla u)_i
+\approx
+\sum_{j\in\Nset(i)} c^k_{ij}(u_i-u_j).
+\end{equation}
+
+其中 $c^k_{ij}$ 由 $k_{ij}$、$dW_{ij}$、$\bm e_{ij}$、$V_j$、kernel correction 和距离正则项共同确定。为了和 SPHinXsys diffusion 写法兼容，可先实现函数：
+\begin{lstlisting}[language=C++]
+Real computeLaplaceWeight(k_ij, dW_ij, e_ij, r_ij, Vol_j, correction_i, correction_j);
+\end{lstlisting}
+并通过单元测试确认 $L_k u=-\nabla\cdot(k\nabla u)$ 的符号。
+
+材料界面建议使用调和平均：
+\begin{align}
+\sigma_{ij}&=\frac{2\sigma_i\sigma_j}{\sigma_i+\sigma_j+\epsilon},\\
+\nu_{ij}&=\frac{2\nu_i\nu_j}{\nu_i+\nu_j+\epsilon}.
+\end{align}
+
+\section{A--$\phi$ 粒子离散目标形式}
+
+对 $\bm A$ 的第 $m$ 个分量，$m=x,y,z$，每个粒子 $i$ 的左端项为：
+
+\subsection{A 实部}
+\begin{equation}
+\mathrm{LhsAReal}^m_i
+=
+\sum_{j\in\Nset(i)}c^\nu_{ij}
+\left(A^m_{\mathrm{re},i}-A^m_{\mathrm{re},j}\right)
+-
+\omega\sigma_i A^m_{\mathrm{im},i}
++
+\sigma_i
+\sum_{j\in\Nset(i)}g^m_{ij}
+\left(\phi_{\mathrm{re},i}-\phi_{\mathrm{re},j}\right).
+\end{equation}
+
+\subsection{A 虚部}
+\begin{equation}
+\mathrm{LhsAImag}^m_i
+=
+\sum_{j\in\Nset(i)}c^\nu_{ij}
+\left(A^m_{\mathrm{im},i}-A^m_{\mathrm{im},j}\right)
++
+\omega\sigma_i A^m_{\mathrm{re},i}
++
+\sigma_i
+\sum_{j\in\Nset(i)}g^m_{ij}
+\left(\phi_{\mathrm{im},i}-\phi_{\mathrm{im},j}\right).
+\end{equation}
+
+\subsection{$\phi$ 实部}
+\begin{equation}
+\mathrm{LhsPhiReal}_i
+=
+\sum_{j\in\Nset(i)}c^\sigma_{ij}
+\left(\phi_{\mathrm{re},i}-\phi_{\mathrm{re},j}\right)
++
+\omega
+\sum_{j\in\Nset(i)}\sigma_{ij}\bm g_{ij}\cdot
+\left(\bm A_{\mathrm{im},i}-\bm A_{\mathrm{im},j}\right).
+\end{equation}
+
+\subsection{$\phi$ 虚部}
+\begin{equation}
+\mathrm{LhsPhiImag}_i
+=
+\sum_{j\in\Nset(i)}c^\sigma_{ij}
+\left(\phi_{\mathrm{im},i}-\phi_{\mathrm{im},j}\right)
+-
+\omega
+\sum_{j\in\Nset(i)}\sigma_{ij}\bm g_{ij}\cdot
+\left(\bm A_{\mathrm{re},i}-\bm A_{\mathrm{re},j}\right).
+\end{equation}
+
+\subsection{如果加入 penalty gauge}
+
+若采用 penalty gauge，在 A 方程中加入：
+\begin{equation}
+\gamma\nabla(\nabla\cdot\bm A).
+\end{equation}
+
+实部和虚部分别加入：
+\begin{align}
+\mathrm{LhsAReal}_i &\leftarrow \mathrm{LhsAReal}_i+
+\gamma\left[\nabla(\nabla\cdot\Are)\right]_i,\\
+\mathrm{LhsAImag}_i &\leftarrow \mathrm{LhsAImag}_i+
+\gamma\left[\nabla(\nabla\cdot\Aim)\right]_i.
+\end{align}
+
+第一版可用显式两步调试：
+\begin{enumerate}
+  \item 使用 \code{LinearGradient<Vecd>} 计算 $\nabla\Are$ 和 $\nabla\Aim$，取 trace 得到 $\nabla\cdot\Are$、$\nabla\cdot\Aim$。
+  \item 对 scalar divergence 场再使用 \code{LinearGradient<Real>} 得到 $\nabla(\nabla\cdot\bm A)$。
+\end{enumerate}
+
+最终版可将该项融合到 \code{AphiApplyCK} 或单独做成 \code{AphiPenaltyGaugeCK}。
+
+\section{建议新增文件结构}
+
+建议新增目录：
+\begin{lstlisting}
+src/shared/shared_ck/particle_dynamics/electromagnetic_dynamics/
+\end{lstlisting}
+
+建议文件：
+\begin{longtable}{p{0.34\textwidth}p{0.58\textwidth}}
+\toprule
+文件 & 职责 \\
+\midrule
+\code{all\_electromagnetic\_dynamics\_ck.h} & 对外统一 include。 \\
+\code{aphi\_field\_names\_ck.h} & 定义 block 变量名结构，例如 \code{AphiBlockNames}、\code{AphiMaterialNames}。 \\
+\code{aphi\_variables\_ck.h/.hpp} & 注册 \code{AReal}、\code{AImag}、\code{PhiReal}、\code{PhiImag}、RHS、LHS、Residual、Search、V、S、T 等变量。 \\
+\code{aphi\_material\_ck.h/.hpp} & 注册并初始化 \code{Sigma}、\code{Nu}、可选 \code{OmegaSigma}；实现调和平均函数。 \\
+\code{aphi\_matrix\_free\_operator\_ck.h/.hpp} & 实现 \code{AphiApplyCK<Inner<...>>} 和 \code{AphiApplyCK<Contact<...>>}。 \\
+\code{aphi\_block\_vector\_ck.h/.hpp} & 实现 block zero/copy/axpy/residual/dot/norm/combine 等线性代数操作。 \\
+\code{aphi\_bicgstab\_solver\_ck.h/.hpp} & 实现完整 matrix-free BiCGStab solver。 \\
+\code{aphi\_gauge\_ck.h/.hpp} & 实现 gauge 诊断、penalty gauge、后续 mixed saddle-point 试验接口。 \\
+\code{aphi\_boundary\_ck.h/.hpp} & 实现 Dirichlet/Neumann/interface contact 边界贡献。 \\
+\bottomrule
+\end{longtable}
+
+\section{核心类设计建议}
+
+\subsection{Block 变量名结构}
+
+\code{AphiApplyCK} 不能只写死输入为 \code{AReal}、\code{AImag}。因为 BiCGStab 中需要多次调用：
+\begin{align}
+V^k&=\Kop(P^k),\\
+T^k&=\Kop(S^k).
+\end{align}
+
+因此 operator 应允许指定输入 block 和输出 block：
+\begin{lstlisting}[language=C++]
+struct AphiBlockNames
+{
+    std::string a_real;
+    std::string a_imag;
+    std::string phi_real;
+    std::string phi_imag;
+};
+
+struct AphiMaterialNames
+{
+    std::string sigma = "Sigma";
+    std::string nu    = "Nu";
+};
+\end{lstlisting}
+
+构造示例：
+\begin{lstlisting}[language=C++]
+AphiApplyCK<Inner<...>> apply_solution(
+    inner_relation,
+    AphiBlockNames{"AReal", "AImag", "PhiReal", "PhiImag"},
+    AphiBlockNames{"LhsAReal", "LhsAImag", "LhsPhiReal", "LhsPhiImag"},
+    material_names,
+    omega);
+
+AphiApplyCK<Inner<...>> apply_search(
+    inner_relation,
+    AphiBlockNames{"SearchAReal", "SearchAImag", "SearchPhiReal", "SearchPhiImag"},
+    AphiBlockNames{"VAReal", "VAImag", "VPhiReal", "VPhiImag"},
+    material_names,
+    omega);
+\end{lstlisting}
+
+\subsection{AphiApplyCK 的基本结构}
+
+\begin{lstlisting}[language=C++]
+template <typename... RelationTypes>
+class AphiApplyCK;
+
+template <typename... Parameters>
+class AphiApplyCK<Inner<Parameters...>>
+    : public Interaction<Inner<Parameters...>>
+{
+    using BaseDynamicsType = Interaction<Inner<Parameters...>>;
+
+  public:
+    AphiApplyCK(Inner<Parameters...>& inner_relation,
+                const AphiBlockNames& input,
+                const AphiBlockNames& output,
+                const AphiMaterialNames& material,
+                Real omega);
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy& ex_policy, EncloserType& encloser);
+
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Vecd* in_A_re_;
+        Vecd* in_A_im_;
+        Real* in_phi_re_;
+        Real* in_phi_im_;
+
+        Vecd* out_A_re_;
+        Vecd* out_A_im_;
+        Real* out_phi_re_;
+        Real* out_phi_im_;
+
+        Real* sigma_;
+        Real* nu_;
+        Real* Vol_;
+        Matd* B_;
+        Real omega_;
+    };
+};
+\end{lstlisting}
+
+\subsection{AphiApplyCK 的核心 kernel 伪代码}
+
+\begin{lstlisting}[language=C++]
+void interact(size_t i, Real dt)
+{
+    Vecd lhs_A_re = Vecd::Zero();
+    Vecd lhs_A_im = Vecd::Zero();
+    Real lhs_phi_re = 0.0;
+    Real lhs_phi_im = 0.0;
+
+    for (UnsignedInt n = FirstNeighbor(i); n != LastNeighbor(i); ++n)
+    {
+        UnsignedInt j = neighbor_index_[n];
+
+        Vecd e_ij = e_ij(i, j);
+        Vecd r_ij = vec_r_ij(i, j);
+        Real dW = dW_ij(i, j);
+        Real V_j = Vol_[j];
+
+        Real nu_ij = harmonicAverage(nu_[i], nu_[j]);
+        Real sigma_ij = harmonicAverage(sigma_[i], sigma_[j]);
+
+        Vecd G_raw = dW * V_j * B_[i] * e_ij;
+        Vecd g_ij = -G_raw; // consistent with LinearGradient sign convention
+
+        Real c_nu = laplaceWeight(nu_ij, dW, r_ij, e_ij, V_j, B_[i], B_[j]);
+        Real c_sigma = laplaceWeight(sigma_ij, dW, r_ij, e_ij, V_j, B_[i], B_[j]);
+
+        lhs_A_re += c_nu * (in_A_re_[i] - in_A_re_[j]);
+        lhs_A_im += c_nu * (in_A_im_[i] - in_A_im_[j]);
+
+        lhs_phi_re += c_sigma * (in_phi_re_[i] - in_phi_re_[j]);
+        lhs_phi_im += c_sigma * (in_phi_im_[i] - in_phi_im_[j]);
+
+        lhs_A_re += sigma_[i] * g_ij * (in_phi_re_[i] - in_phi_re_[j]);
+        lhs_A_im += sigma_[i] * g_ij * (in_phi_im_[i] - in_phi_im_[j]);
+
+        lhs_phi_re += omega_ * sigma_ij * g_ij.dot(in_A_im_[i] - in_A_im_[j]);
+        lhs_phi_im -= omega_ * sigma_ij * g_ij.dot(in_A_re_[i] - in_A_re_[j]);
+    }
+
+    lhs_A_re += -omega_ * sigma_[i] * in_A_im_[i];
+    lhs_A_im +=  omega_ * sigma_[i] * in_A_re_[i];
+
+    out_A_re_[i] += lhs_A_re;
+    out_A_im_[i] += lhs_A_im;
+    out_phi_re_[i] += lhs_phi_re;
+    out_phi_im_[i] += lhs_phi_im;
+}
+\end{lstlisting}
+
+注意：如果 \code{AphiApplyCK} 的输出使用 \code{+=}，则每次 apply 前必须执行 \code{AphiBlockZero} 清零输出 block。如果使用 \code{=}，则 contact contribution 和多 kernel 组合时要小心覆盖问题。建议统一采用：
+\begin{enumerate}
+  \item \code{AphiBlockZero(output)}；
+  \item inner contribution \code{+=}；
+  \item contact contribution \code{+=}；
+  \item local reaction/gauge contribution \code{+=}。
+\end{enumerate}
+
+\section{分阶段开发流程和验证标准}
+
+\subsection{Stage 0：建立最小编译框架}
+
+\paragraph{任务}
+\begin{enumerate}
+  \item 新增 \code{electromagnetic\_dynamics} 目录。
+  \item 新增 \code{all\_electromagnetic\_dynamics\_ck.h}。
+  \item 在 CMake 中加入新目录和头文件。
+  \item 新增空的测试 case，例如 \code{test\_2d\_aphi\_matrix\_free\_ck} 或 \code{test\_3d\_aphi\_matrix\_free\_ck}。
+\end{enumerate}
+
+\paragraph{基于的 SPHinXsys 结构}
+\begin{itemize}
+  \item 参考现有 \code{general\_dynamics}、\code{diffusion\_reaction\_dynamics} 的 include 和 CMake 组织。
+  \item 不改动 \code{general\_gradient.h}，不破坏已有模块。
+\end{itemize}
+
+\paragraph{验证}
+\begin{itemize}
+  \item 编译通过。
+  \item 新测试能被 CTest 识别并执行。
+  \item 空 case 不产生运行时错误。
+\end{itemize}
+
+\paragraph{预期结果}
+\begin{itemize}
+  \item 新模块可以被 include。
+  \item 后续所有类都能放入该目录。
+\end{itemize}
+
+\subsection{Stage 1：注册 A--$\phi$ 变量和材料参数}
+
+\paragraph{任务}
+注册以下粒子变量：
+\begin{lstlisting}[language=C++]
+AReal, AImag                 // Vecd
+PhiReal, PhiImag             // Real
+RhsAReal, RhsAImag           // Vecd
+RhsPhiReal, RhsPhiImag       // Real
+LhsAReal, LhsAImag           // Vecd
+LhsPhiReal, LhsPhiImag       // Real
+ResidualAReal, ResidualAImag // Vecd
+ResidualPhiReal, ResidualPhiImag // Real
+SearchAReal, SearchAImag     // Vecd
+SearchPhiReal, SearchPhiImag // Real
+VAReal, VAImag, VPhiReal, VPhiImag
+SAReal, SAImag, SPhiReal, SPhiImag
+TAReal, TAImag, TPhiReal, TPhiImag
+Sigma, Nu                    // Real
+\end{lstlisting}
+
+\paragraph{实现建议}
+\begin{itemize}
+  \item 写 \code{AphiVariablesCK} 或 \code{AphiVariableRegisterCK}。
+  \item 写 \code{AphiMaterialInitializationCK}，即便单材料也逐粒子写入 \code{Sigma[i]} 和 \code{Nu[i]}。
+  \item 所有变量命名集中管理，避免字符串散落在 solver 中。
+\end{itemize}
+
+\paragraph{验证}
+\begin{enumerate}
+  \item 初始化后输出若干粒子的变量值。
+  \item 单材料情况下，所有 \code{Sigma[i]} 和 \code{Nu[i]} 应等于输入常数。
+  \item 所有 block vector 初始值应为零，或等于用户指定初值。
+\end{enumerate}
+
+\paragraph{预期结果}
+\begin{itemize}
+  \item 变量注册不重复、不缺失。
+  \item 可在 CK kernel 中通过 \code{getVariableByName} 和 \code{DelegatedData} 正确访问。
+\end{itemize}
+
+\subsection{Stage 2：显式调试版梯度、散度和 coupling}
+
+\paragraph{任务}
+先使用现有 \code{LinearGradient} 验证 gradient/divergence coupling 的符号：
+\begin{enumerate}
+  \item \code{LinearGradient<Real>}：计算 $\nabla\phire$、$\nabla\phiim$。
+  \item \code{LinearGradient<Vecd>}：计算 $\nabla\Are$、$\nabla\Aim$。
+  \item 通过 trace 得到 $\nabla\cdot\Are$ 和 $\nabla\cdot\Aim$。
+\end{enumerate}
+
+\paragraph{验证 case}
+\begin{enumerate}
+  \item 令 $\phi=x+y+z$，期望 $\nabla\phi=(1,1,1)^T$。
+  \item 令 $\bm A=(x,y,z)^T$，期望 $\nabla\cdot\bm A=3$。
+  \item 令 $\bm A=(y,z,x)^T$，期望 $\nabla\cdot\bm A=0$。
+\end{enumerate}
+
+\paragraph{预期结果}
+\begin{itemize}
+  \item 内部粒子区域误差随分辨率提高而下降。
+  \item 边界附近误差较大时要单独标记，不应和内部误差混淆。
+  \item 符号必须和 \code{general\_gradient.hpp} 一致。若手写 \code{g\_ij}，必须确认是否需要负号。
+\end{itemize}
+
+\paragraph{通过标准}
+\begin{itemize}
+  \item 内部区域相对 $L_2$ 误差达到可接受水平，例如 $10^{-2}$ 到 $10^{-1}$，具体视粒子分辨率和边界处理而定。
+  \item 对常数场，梯度和散度接近零。
+\end{itemize}
+
+\subsection{Stage 3：实现 A--$\phi$ 专用 pairwise Laplace 权重}
+
+\paragraph{任务}
+实现可供 A--$\phi$ 使用的 Laplace 型权重：
+\begin{equation}
+(L_k u)_i=\sum_j c^k_{ij}(u_i-u_j).
+\end{equation}
+
+\paragraph{实现建议}
+\begin{itemize}
+  \item 不直接继承 \code{LinearGradient}。
+  \item 参考 \code{DiffusionRelaxationCK<Inner<InteractionOnly,...>>} 中的 \code{surface\_area} 和 \code{derivative}。
+  \item 封装 \code{laplaceWeight(...)}，使 A 和 $\phi$ 可以共用。
+  \item $\nu_{ij}$ 和 $\sigma_{ij}$ 使用调和平均。
+\end{itemize}
+
+\paragraph{验证 case}
+\begin{enumerate}
+  \item $u=1$，期望 $L_k u=0$。
+  \item $u=x$，内部区域期望 $L_k u\approx 0$。
+  \item $u=x^2+y^2+z^2$，若 $k$ 为常数，期望 $-\nabla\cdot(k\nabla u)=-2dk$，其中 $d$ 是维度。若实现定义为正定 $L_k=-\nabla\cdot(k\nabla)$，则三维期望 $-6k$；如果代码得到 $+6k$，说明符号相反，需要统一修正。
+  \item $u=\sin(\pi x)\sin(\pi y)$，二维中 $-\nabla^2 u=2\pi^2u$。
+\end{enumerate}
+
+\paragraph{预期结果}
+\begin{itemize}
+  \item 常数场 Laplace 接近零。
+  \item manufactured solution 误差随分辨率提高下降。
+  \item 符号约定明确写入代码注释：\code{AphiLaplace} 到底表示 $-\nabla\cdot(k\nabla u)$ 还是 $\nabla\cdot(k\nabla u)$。
+\end{itemize}
+
+\subsection{Stage 4：实现显式组合版 AphiLHS}
+
+\paragraph{任务}
+在不写 BiCGStab 之前，先写一个组合左端项的 dynamics：
+\begin{lstlisting}[language=C++]
+AphiAssembleLhsDebugCK
+\end{lstlisting}
+输入：\code{AReal}、\code{AImag}、\code{PhiReal}、\code{PhiImag}。输出：\code{LhsAReal}、\code{LhsAImag}、\code{LhsPhiReal}、\code{LhsPhiImag}。
+
+该阶段允许使用中间变量：
+\begin{lstlisting}[language=C++]
+GradPhiReal, GradPhiImag
+GradAReal, GradAImag
+DivAReal, DivAImag
+LaplaceAReal, LaplaceAImag
+LaplacePhiReal, LaplacePhiImag
+\end{lstlisting}
+
+\paragraph{验证}
+\begin{enumerate}
+  \item reaction-only：关闭邻居项和 gradient/divergence coupling，仅保留
+  \begin{align}
+  \mathrm{LhsAReal}_i&=-\omega\sigma_i\bm A_{\mathrm{im},i},\\
+  \mathrm{LhsAImag}_i&=\omega\sigma_i\bm A_{\mathrm{re},i}.
+  \end{align}
+  检查实部/虚部符号。
+  \item gradient coupling-only：设置 $\phi=x$，$\bm A=0$，检查 $\sigma\nabla\phi$ 方向。
+  \item divergence coupling-only：设置 $\bm A=(x,y,z)^T$，$\phi=0$，检查 $\nabla\cdot(\sigma\bm A)$。
+  \item full LHS zero-source：若 $X=0$ 且 RHS 为零，LHS 和 residual 都应为零。
+\end{enumerate}
+
+\paragraph{预期结果}
+\begin{itemize}
+  \item 每一项可单独开关，便于定位符号错误。
+  \item Debug LHS 与手工计算或脚本计算结果一致。
+\end{itemize}
+
+\subsection{Stage 5：实现融合式 AphiApplyCK}
+
+\paragraph{任务}
+实现最终要被 Krylov solver 调用的 matrix-free operator：
+\begin{lstlisting}[language=C++]
+AphiApplyCK(input_block, output_block)
+\end{lstlisting}
+它应支持：
+\begin{itemize}
+  \item \code{input = Solution}, \code{output = LHS}；
+  \item \code{input = Search}, \code{output = V}；
+  \item \code{input = S}, \code{output = T}。
+\end{itemize}
+
+\paragraph{实现要求}
+\begin{enumerate}
+  \item 使用 gather 形式：每个粒子 $i$ 遍历邻居 $j$，只写自己的 output。
+  \item 不显式保存 \code{GradPhi}、\code{DivA} 等中间场。
+  \item 允许按开关启用/禁用每个物理项：LaplaceA、LaplacePhi、reaction、gradPhi、divSigmaA、penaltyGauge。
+  \item 内部版本和 contact 版本分开实现。
+\end{enumerate}
+
+\paragraph{验证}
+\begin{enumerate}
+  \item 与 Stage 4 的显式 Debug LHS 对比：同一输入场下，融合式 \code{AphiApplyCK} 输出应与 Debug LHS 一致。
+  \item 线性性验证：随机 block field $X$、$Y$ 和标量 $a,b$，检查
+  \begin{equation}
+  \Kop(aX+bY)\approx a\Kop(X)+b\Kop(Y).
+  \end{equation}
+  \item 小粒子数 debug：可在 CPU 侧显式组装一个小矩阵 $K_{\mathrm{debug}}$，比较 \code{AphiApply(X)} 与 $K_{\mathrm{debug}}X$。
+\end{enumerate}
+
+\paragraph{预期结果}
+\begin{itemize}
+  \item Debug 组合版和融合版误差接近 machine precision 或 GPU 浮点误差水平。
+  \item 线性性误差应足够小，双精度下通常应远小于 $10^{-8}$；GPU 单精或复杂边界下可放宽。
+\end{itemize}
+
+\subsection{Stage 6：实现 block vector 基础操作}
+
+\paragraph{任务}
+实现以下 block 操作：
+\begin{longtable}{p{0.22\textwidth}p{0.30\textwidth}p{0.36\textwidth}}
+\toprule
+操作 & 数学形式 & 用途 \\
+\midrule
+zero & $X=0$ & 清空 LHS、V、S、T 等输出。 \\
+copy & $X=Y$ & 例如 $\hat R=R^0$、$P^0=R^0$。 \\
+axpy & $X\leftarrow X+\alpha Y$ & 更新解、更新残差。 \\
+residual & $R=B-\Kop(X)$ & 计算当前方程残差。 \\
+dot & $\langle X,Y\rangle$ & 计算 BiCGStab 中的 $\rho$、$\alpha$、$\omega$。 \\
+norm & $\|R\|=\sqrt{\langle R,R\rangle}$ & 收敛判断。 \\
+combine & $P=R+\beta(P-\omega V)$ & BiCGStab 搜索方向更新。 \\
+\bottomrule
+\end{longtable}
+
+\paragraph{block 内积定义}
+\begin{equation}
+\langle X,Y\rangle
+=
+\sum_i V_i\left[
+\bm X_{A,\mathrm{re},i}\cdot\bm Y_{A,\mathrm{re},i}
++
+\bm X_{A,\mathrm{im},i}\cdot\bm Y_{A,\mathrm{im},i}
++
+X_{\phi,\mathrm{re},i}Y_{\phi,\mathrm{re},i}
++
+X_{\phi,\mathrm{im},i}Y_{\phi,\mathrm{im},i}
+\right].
+\end{equation}
+
+\paragraph{实现建议}
+\begin{itemize}
+  \item zero/copy/axpy/residual/combine 使用 \code{BaseLocalDynamics} + \code{UpdateKernel}。
+  \item dot/norm 使用 \code{BaseLocalDynamicsReduce}，参考 \code{QuantityReduce} 或 \code{QuantityTensorProductAverage}。
+  \item 调试阶段可以四个变量分别做；最终建议 fused block kernel 一次处理四个场。
+\end{itemize}
+
+\paragraph{验证}
+\begin{enumerate}
+  \item 构造已知数组，验证 copy/axpy 结果逐粒子正确。
+  \item dot product 与 CPU 端手工循环求和一致。
+  \item norm 满足 $\|X\|^2=\langle X,X\rangle$。
+\end{enumerate}
+
+\subsection{Stage 7：实现无预条件 BiCGStab}
+
+\paragraph{任务}
+实现 matrix-free BiCGStab：
+\begin{align}
+R^0&=B-\Kop(X^0),\\
+\hat R&=R^0,\\
+P^0&=R^0.
+\end{align}
+
+每次迭代：
+\begin{align}
+V^k&=\Kop(P^k),\\
+\rho_k&=\langle \hat R,R^k\rangle,\\
+\alpha_k&=\frac{\rho_k}{\langle \hat R,V^k\rangle},\\
+S^k&=R^k-\alpha_k V^k,\\
+T^k&=\Kop(S^k),\\
+\omega_k&=\frac{\langle T^k,S^k\rangle}{\langle T^k,T^k\rangle},\\
+X^{k+1}&=X^k+\alpha_kP^k+\omega_kS^k,\\
+R^{k+1}&=S^k-\omega_kT^k,\\
+\beta_k&=\frac{\rho_{k+1}}{\rho_k}\frac{\alpha_k}{\omega_k},\\
+P^{k+1}&=R^{k+1}+\beta_k(P^k-\omega_kV^k).
+\end{align}
+
+\paragraph{实现注意}
+\begin{itemize}
+  \item 如果 $\langle \hat R,V^k\rangle$、$\langle T^k,T^k\rangle$ 或 $\omega_k$ 接近零，应设置 breakdown 检查。
+  \item BiCGStab 残差不一定严格单调下降，但整体应收敛。
+  \item 每次调用 \code{AphiApply} 前必须清零输出 block。
+\end{itemize}
+
+\paragraph{验证}
+\begin{enumerate}
+  \item reaction-only 系统有解析局部解，可验证 BiCGStab 更新是否正确。
+  \item scalar Helmholtz 子问题：关闭 $\phi$ coupling 和实虚部 coupling，验证 residual 收敛。
+  \item complex split vector Helmholtz：开启 $\pm\omega\sigma A$，关闭 $\phi$，验证非 CG 情况下 BiCGStab 可收敛。
+  \item full A--$\phi$ manufactured solution：构造解析 $A$、$\phi$，由连续方程或离散算子生成 RHS，检查求解后误差。
+\end{enumerate}
+
+\paragraph{预期结果}
+\begin{itemize}
+  \item 对离散生成 RHS 的测试，最终 residual norm 应达到设定 tolerance，例如 $10^{-6}$ 或更低。
+  \item 对连续 manufactured RHS，解误差应随分辨率提高下降。
+\end{itemize}
+
+\subsection{Stage 8：加入 Jacobi / block Jacobi 预条件}
+
+\paragraph{任务}
+第一版可先实现 diagonal Jacobi：
+\begin{equation}
+Z_i=M_i^{-1}R_i.
+\end{equation}
+其中 $M_i$ 是隐含全局矩阵的局部对角近似。对 Laplace 型项：
+\begin{equation}
+D^\nu_i\approx \sum_j c^\nu_{ij},
+\qquad
+D^\sigma_i\approx \sum_j c^\sigma_{ij}.
+\end{equation}
+
+对 A 的实虚部 reaction 可进一步形成局部 $2\times2$ block：
+\begin{equation}
+\begin{bmatrix}
+D^\nu_i & -\omega\sigma_i\\
+\omega\sigma_i & D^\nu_i
+\end{bmatrix}.
+\end{equation}
+
+\paragraph{开发顺序}
+\begin{enumerate}
+  \item 先实现无预条件 BiCGStab。
+  \item 再实现 diagonal Jacobi。
+  \item 最后测试 A 实虚部 $2\times2$ block Jacobi。
+  \item 完整 $8\times8$ local block Jacobi 暂时作为后续优化。
+\end{enumerate}
+
+\paragraph{验证}
+\begin{itemize}
+  \item 比较无预条件、diagonal Jacobi、block Jacobi 的迭代步数。
+  \item 预条件不能改变最终收敛解，只应改变收敛速度。
+\end{itemize}
+
+\subsection{Stage 9：加入 penalty gauge}
+
+\paragraph{任务}
+实现：
+\begin{equation}
+\gamma\nabla(\nabla\cdot\bm A).
+\end{equation}
+
+\paragraph{开发路线}
+\begin{enumerate}
+  \item Debug 版本：用 \code{LinearGradient<Vecd>} 得到 $\nabla\bm A$，取 trace 得到 $\nabla\cdot\bm A$，再用 \code{LinearGradient<Real>} 得到 $\nabla(\nabla\cdot\bm A)$。
+  \item 融合版本：在 \code{AphiApplyCK} 或单独 \code{AphiPenaltyGaugeCK} 中直接计算。
+\end{enumerate}
+
+\paragraph{验证}
+\begin{enumerate}
+  \item 输出 $\|\nabla\cdot\Are\|$ 和 $\|\nabla\cdot\Aim\|$。
+  \item 比较 $\gamma=0$、小 $\gamma$、中等 $\gamma$、大 $\gamma$ 的 residual 和 divergence norm。
+  \item 确认 penalty 不导致 BiCGStab breakdown 或严重震荡。
+\end{enumerate}
+
+\paragraph{预期结果}
+\begin{itemize}
+  \item 合理 $\gamma$ 下，$\nabla\cdot\bm A$ 明显降低。
+  \item 过大 $\gamma$ 可能恶化条件数，应记录迭代步数和残差曲线。
+\end{itemize}
+
+\subsection{Stage 10：Contact 边界和多材料界面}
+
+\paragraph{任务}
+实现 \code{AphiApplyCK<Contact<...>>}：
+\begin{enumerate}
+  \item Dirichlet：接触粒子上给定 $A$ 或 $\phi$。
+  \item Neumann：将通量贡献加入 RHS 或 LHS。
+  \item Interface：不同材料间使用 $\nu_{ij}$、$\sigma_{ij}$ 调和平均。
+\end{enumerate}
+
+\paragraph{参考}
+\begin{itemize}
+  \item \code{LinearGradient<Contact<...>>} 的 contact variable 获取方式。
+  \item \code{DiffusionRelaxationCK<Contact<...>>} 中 \code{contact\_Vol\_}、\code{boundary\_flux\_}、\code{contact\_transfer\_} 的组织。
+\end{itemize}
+
+\paragraph{验证}
+\begin{enumerate}
+  \item 简单 Dirichlet Poisson/Helmholtz：解析边界值，检查内部解。
+  \item 两材料一维/二维界面：检查通量连续性。
+  \item 单材料 contact 和 inner 结果应一致或误差可解释。
+\end{enumerate}
+
+\paragraph{预期结果}
+\begin{itemize}
+  \item 接触边界不应覆盖 inner contribution，而应通过 \code{+=} 累加。
+  \item 材料跳跃下解不应出现明显非物理振荡。
+\end{itemize}
+
+\subsection{Stage 11：mixed saddle-point 试验分支}
+
+\paragraph{任务}
+如果 penalty gauge 仍不足，可测试 mixed saddle-point：
+\begin{equation}
+\begin{bmatrix}
+K_A & G\\
+D & 0
+\end{bmatrix}
+\begin{bmatrix}
+A\\
+\lambda
+\end{bmatrix}
+=
+\begin{bmatrix}
+f\\
+0
+\end{bmatrix}.
+\end{equation}
+
+\paragraph{实现建议}
+\begin{itemize}
+  \item 作为独立分支，不影响 penalty gauge 主线。
+  \item 新增 \code{LambdaReal}、\code{LambdaImag} 或按实际 gauge 形式定义乘子变量。
+  \item 求解器仍使用 BiCGStab 或 GMRES，不能使用普通 CG。
+\end{itemize}
+
+\paragraph{验证}
+\begin{itemize}
+  \item 检查 saddle-point 系统 residual。
+  \item 检查 $\nabla\cdot\bm A$ 是否比 penalty 更低。
+  \item 检查是否出现 null space 或 gauge 常数不定问题。
+\end{itemize}
+
+\section{总体验证矩阵}
+
+\begin{longtable}{p{0.17\textwidth}p{0.30\textwidth}p{0.24\textwidth}p{0.20\textwidth}}
+\toprule
+验证阶段 & 测试内容 & 预期结果 & 失败时优先检查 \\
+\midrule
+变量注册 & 所有 A--$\phi$ block 变量和材料变量 & 变量存在，初值正确 & 变量名、注册顺序、重复注册 \\
+梯度 & $\phi=x+y+z$ & $\nabla\phi=(1,1,1)^T$ & \code{LinearGradient} 符号、$B_i$、边界影响 \\
+散度 & $A=(x,y,z)$ & $\nabla\cdot A=3$ & trace 顺序、Vecd/Matd 排布 \\
+Laplace & $u=1$ & $Lu=0$ & pairwise 权重和边界 \\
+Laplace 符号 & $u=x^2+y^2+z^2$ & 符号符合定义 & $dW$ 符号、$c_{ij}$ 定义 \\
+Reaction & 只开 $\omega\sigma A$ & 实虚部符号正确 & $-\omega A_{im}$ 和 $+\omega A_{re}$ 是否写反 \\
+Gradient coupling & 只开 $\sigma\nabla\phi$ & 方向正确 & $g_{ij}$ 负号 \\
+Divergence coupling & 只开 $\nabla\cdot(\sigma A)$ & 符号正确 & dot 顺序、$\sigma_{ij}$ 使用 \\
+AphiApply & Debug LHS vs fused LHS & 两者一致 & 融合时漏项或重复项 \\
+线性性 & $K(aX+bY)$ & 等于 $aKX+bKY$ & output 未清零、非线性材料误用 \\
+BiCGStab & 离散 RHS 测试 & residual 达到 tolerance & dot/norm、alpha/omega、breakdown \\
+Gauge & 改变 $\gamma$ & divergence norm 降低 & gauge 符号、条件数恶化 \\
+Contact & Dirichlet/interface & 边界/通量合理 & contact 变量读取、Vol、累加方式 \\
+\bottomrule
+\end{longtable}
+
+\section{给 Codex/Cursor 的执行清单}
+
+\subsection*{任务 1：建立模块和变量系统}
+\begin{itemize}
+  \item 新建 \code{electromagnetic\_dynamics} 目录。
+  \item 添加 \code{AphiBlockNames}、\code{AphiMaterialNames}。
+  \item 实现变量注册类，注册解变量、RHS、LHS、Residual、Search、V、S、T、材料变量。
+  \item 添加最小测试，确认变量初始化和输出。
+\end{itemize}
+
+\subsection*{任务 2：实现并验证梯度/散度调试通路}
+\begin{itemize}
+  \item 使用 \code{LinearGradient<Real>} 和 \code{LinearGradient<Vecd>} 生成 \code{GradPhi}、\code{GradA}。
+  \item 实现 trace dynamics 得到 \code{DivAReal}、\code{DivAImag}。
+  \item 添加 manufactured field 测试。
+\end{itemize}
+
+\subsection*{任务 3：实现 A--$\phi$ 专用 Laplace 权重}
+\begin{itemize}
+  \item 参考 \code{diffusion\_dynamics\_ck.hpp} 实现 \code{laplaceWeight}。
+  \item 支持 $\nu_{ij}$、$\sigma_{ij}$ 调和平均。
+  \item 先实现 scalar 测试，再用于 Vecd component-wise。
+\end{itemize}
+
+\subsection*{任务 4：实现 Debug 版 LHS 组合}
+\begin{itemize}
+  \item 分项组合 LaplaceA、LaplacePhi、reaction、gradPhi、divSigmaA。
+  \item 每一项提供开关。
+  \item 完成 reaction-only、gradient-only、divergence-only 测试。
+\end{itemize}
+
+\subsection*{任务 5：实现融合式 \code{AphiApplyCK}}
+\begin{itemize}
+  \item 支持输入/输出 block 变量名参数化。
+  \item 实现 \code{Inner<>} 版本。
+  \item 实现 output 清零和多项累加规范。
+  \item 与 Debug LHS 对比验证。
+\end{itemize}
+
+\subsection*{任务 6：实现 block vector operations}
+\begin{itemize}
+  \item zero/copy/axpy/residual/combine：local update kernel。
+  \item dot/norm：reduce kernel。
+  \item 添加 CPU 手工数组对比测试。
+\end{itemize}
+
+\subsection*{任务 7：实现无预条件 BiCGStab}
+\begin{itemize}
+  \item 实现 $V=KP$、$S=R-\alpha V$、$T=KS$、$X=X+\alpha P+\omega S$、$R=S-\omega T$、$P=R+\beta(P-\omega V)$。
+  \item 添加 breakdown 检查和迭代日志。
+  \item 先做离散 RHS 测试，确保 residual 能收敛。
+\end{itemize}
+
+\subsection*{任务 8：加入 penalty gauge 和 contact}
+\begin{itemize}
+  \item 先实现显式 gauge 诊断。
+  \item 再将 penalty gauge 加入 LHS。
+  \item 最后实现 contact boundary/interface。
+\end{itemize}
+
+\section{开发中的关键风险}
+
+\begin{enumerate}
+  \item \textbf{符号风险：} $dW_{ij}$、$\bm e_{ij}$、\code{LinearGradient} 的负号、Laplace 正定号约定必须统一。
+  \item \textbf{输出未清零风险：} 若 \code{AphiApply} 用 \code{+=}，每次 apply 前必须 zero output。
+  \item \textbf{CG 误用风险：} 完整 A--$\phi$ 系统一般非正定，不应使用普通 CG 作为最终求解器。
+  \item \textbf{Contact 重复或漏加风险：} inner 和 contact contribution 必须清楚区分，contact 只能补充边界/界面贡献。
+  \item \textbf{Gauge 条件数风险：} penalty 参数过大可能使 BiCGStab 难收敛，必须记录 residual 和 divergence norm。
+  \item \textbf{Device kernel 风险：} CK kernel 内避免 \code{std::complex}、\code{std::vector}、\code{std::function} 和复杂虚函数调用。
+\end{enumerate}
+
+\section{建议的最小成功路径}
+
+建议按以下顺序推进，不要跳步：
+
+\begin{enumerate}
+  \item 变量注册和材料数组。
+  \item 梯度/散度 Debug 通路验证。
+  \item A--$\phi$ 专用 Laplace 权重验证。
+  \item Debug LHS 分项组合验证。
+  \item 融合式 \code{AphiApplyCK} 与 Debug LHS 对齐。
+  \item block vector operations 验证。
+  \item 无预条件 BiCGStab 求解离散 RHS。
+  \item 加入 penalty gauge。
+  \item 加入 Contact 和多材料界面。
+  \item 再考虑 Jacobi/block Jacobi、mixed saddle-point 和性能优化。
+\end{enumerate}
+
+\section{最终验收标准}
+
+第一阶段完成后，至少应满足：
+\begin{enumerate}
+  \item 所有变量注册、初始化、CK 访问稳定。
+  \item \code{AphiApplyCK} 对任意输入 block 能正确输出 $\Kop(X)$。
+  \item \code{AphiApplyCK} 与 Debug LHS 对齐。
+  \item block dot/norm 与 CPU 手工计算一致。
+  \item BiCGStab 能在离散 RHS 测试中收敛到给定 residual tolerance。
+  \item penalty gauge 能降低 $\|\nabla\cdot\bm A\|$，且不会导致求解器立即 breakdown。
+  \item 单材料和至少一个简单 contact boundary 测试通过。
+\end{enumerate}
+
+达到以上标准后，再进入真实电磁加热问题：线圈源项、导体/空气/磁轭多材料、真实边界条件、焦耳热 $Q=\frac12\sigma|\bm E|^2$ 或相应频域热源计算。
+
+\end{document}
