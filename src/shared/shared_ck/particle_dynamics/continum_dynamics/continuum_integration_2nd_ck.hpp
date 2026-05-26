@@ -61,7 +61,7 @@ void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
 
         Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
         density_change_rate += u_jump * dW_ijV_j;
-        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * e_ij;
+        p_dissipation += riemann_solver_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * e_ij;
         velocity_gradient -= (vel_[index_i] - vel_[index_j]) * dW_ijV_j * e_ij.transpose();
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
@@ -138,7 +138,7 @@ void PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectio
         Vecd vel_in_wall = 2.0 * wall_vel_ave_[index_j] - vel_[index_i];
         density_change_rate += (vel_i - vel_in_wall).dot(e_ij) * dW_ijV_j;
         Real u_jump = 2.0 * (vel_i - wall_vel_ave_[index_j]).dot(wall_n_[index_j]);
-        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * wall_n_[index_j];
+        p_dissipation += riemann_solver_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * wall_n_[index_j];
         velocity_gradient -= (vel_i - vel_in_wall) * dW_ijV_j * e_ij.transpose();
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];

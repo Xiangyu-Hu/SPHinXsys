@@ -34,6 +34,8 @@
 #include <Eigen/SVD>
 #include <Eigen/LU>
 
+#include <cassert>
+
 namespace SPH
 {
 Vec2d FirstAxisVector(const Vec2d &zero_vector);
@@ -154,7 +156,6 @@ template <int Dim1, int Dim2, typename ComponentFunction, typename... Args>
 void for_each_component(const Eigen::Matrix<Real, Dim1, Dim2> &input,
                         const ComponentFunction &function, Args &&...args)
 {
-    Eigen::Matrix<Real, Dim1, Dim2> output;
     for (int i = 0; i < Dim1; ++i)
         for (int j = 0; j < Dim2; ++j)
             function(input(i, j), std::forward<Args>(args)(i, j)...);
