@@ -5,7 +5,6 @@
  */
 #include "2d_flow_stream_around_fish.h"
 #include "sphinxsys.h"
-#include "fluid_boundary_ck.h"
 using namespace SPH;
 
 int main(int ac, char *av[])
@@ -90,6 +89,8 @@ int main(int ac, char *av[])
     ReduceDynamicsCK<MainExecutionPolicy, solid_dynamics::AcousticTimeStepCK>
         fish_body_computing_time_step_size(fish_body);
 
+    StateDynamics<MainExecutionPolicy, ZeroForceCK> zero_force(fish_body);
+
     StateDynamics<MainExecutionPolicy, solid_dynamics::UpdateElasticNormalDirectionCK>
         fish_body_update_normal(fish_body);
     //----------------------------------------------------------------------
@@ -170,8 +171,9 @@ int main(int ac, char *av[])
         water_block, AlignedBox(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
 
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::FreeStreamVelocityCorrectionCK<FreeStreamVelocity>>
-        freestream_condition(water_block);
+    // FreeStreamVelocityCorrection has no CK version — use CPU SimpleDynamics directly.
+    SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>>
+        velocity_boundary_condition_constraint(water_block);
     //----------------------------------------------------------------------
     //	FSI (GPU).
     //	Use fish_fsi_contact (plain Contact<>) because ViscousForceOnStructure
@@ -194,7 +196,7 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Matd>(fish_body, "ActiveStrain");
 
     Gravity gravity(Vecd::Zero());
-    ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>
+    ReducedQuantityRecording<TotalMechanicalEnergy>
         write_water_mechanical_energy(water_block, gravity);
     ReducedQuantityRecording<QuantitySummation<Vecd>>
         write_total_viscous_force(fish_body, "ViscousForceFromFluid");
@@ -257,13 +259,12 @@ int main(int ac, char *av[])
             while (relaxation_time < Dt)
             {
                 TickCount time_instance = TickCount::now();
-                Real dt_acoustic_raw = get_fluid_time_step_size.exec();
-                Real dt = SMIN(dt_acoustic_raw, Dt - relaxation_time);
+                Real dt = SMIN(get_fluid_time_step_size.exec(), Dt - relaxation_time);
 
                 pressure_relaxation.exec(dt);
-                freestream_condition.exec();
-                pressure_force_from_fluid.exec();
+                pressure_force_from_fluid.exec(dt);
                 density_relaxation.exec(dt);
+                velocity_boundary_condition_constraint.exec();
                 emitter_buffer_inflow_condition.exec(dt);
 
                 inner_ite_dt_s = 0;
@@ -271,8 +272,8 @@ int main(int ac, char *av[])
                 initialize_displacement.exec();
                 while (dt_s_sum < dt)
                 {
-                    Real dt_s_raw = fish_body_computing_time_step_size.exec();
-                    Real dt_s = SMIN(dt_s_raw, dt - dt_s_sum);
+                    zero_force.exec();
+                    Real dt_s = SMIN(fish_body_computing_time_step_size.exec(), dt - dt_s_sum);
                     if (dt_s <= Real(0))
                         break;
                     imposing_active_strain.exec();
