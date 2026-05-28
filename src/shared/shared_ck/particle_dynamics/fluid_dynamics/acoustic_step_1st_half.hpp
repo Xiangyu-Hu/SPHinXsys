@@ -94,7 +94,7 @@ void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
         Vecd e_ij = this->e_ij(index_i, index_j);
 
         force -= (p_[index_i] * correction_(index_j) + p_[index_j] * correction_(index_i)) * dW_ijV_j * e_ij;
-        rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
+        rho_dissipation += riemann_solver_.DissipativeUJump(index_i, index_j, p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
     force_[index_i] += force * Vol_[index_i];
     drho_dt_[index_i] = rho_dissipation * rho_[index_i];
@@ -158,7 +158,7 @@ void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
         Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_[index_j]).dot(-e_ij);
         Real p_j_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
         force -= (p_[index_i] + p_j_in_wall) * correction_(index_i) * dW_ijV_j * e_ij;
-        rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_j_in_wall) * dW_ijV_j;
+        rho_dissipation += riemann_solver_.DissipativeUJump(index_i, index_j, p_[index_i] - p_j_in_wall) * dW_ijV_j;
     }
     force_[index_i] += force * Vol_[index_i];
     drho_dt_[index_i] += rho_dissipation * rho_[index_i];
@@ -212,10 +212,11 @@ void AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Parame
         Vecd e_ij = this->e_ij(index_i, index_j);
 
         force -= riemann_solver_.AverageP(
+                     index_i, index_j,
                      static_cast<CorrectionDataType>(contact_correction_(index_j) * p_[index_i]),
                      static_cast<CorrectionDataType>(correction_(index_i) * contact_p_[index_j])) *
                  2.0 * dW_ijV_j * e_ij;
-        rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - contact_p_[index_j]) * dW_ijV_j;
+        rho_dissipation += riemann_solver_.DissipativeUJump(index_i, index_j, p_[index_i] - contact_p_[index_j]) * dW_ijV_j;
     }
     force_[index_i] += force * Vol_[index_i];
     drho_dt_[index_i] += rho_dissipation * rho_[index_i];

@@ -8,6 +8,7 @@
  * internal constrained subregion.                                             *
  * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu                              *
  * ----------------------------------------------------------------------------*/
+#include "all_continuum_dynamics_ck.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //------------------------------------------------------------------------------

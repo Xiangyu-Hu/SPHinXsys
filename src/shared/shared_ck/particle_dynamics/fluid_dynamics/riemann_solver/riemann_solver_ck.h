@@ -49,8 +49,8 @@ class RiemannSolver<Base, FluidI, FluidJ>
     RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j);
 
     template <typename T>
-    T AverageP(const T &p_i, const T &p_j) const;
-    Vecd AverageV(const Vecd &vel_i, const Vecd &vel_j);
+    T AverageP(UnsignedInt i, UnsignedInt j, const T &p_i, const T &p_j) const;
+    Vecd AverageV(UnsignedInt i, UnsignedInt j, const Vecd &vel_i, const Vecd &vel_j);
 
   protected:
     Real rho0_i_, rho0_j_;
@@ -64,8 +64,8 @@ class RiemannSolver<NotUsed, FluidI, FluidJ> : public RiemannSolver<Base, FluidI
   public:
     RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
         : RiemannSolver<Base, FluidI, FluidJ>(fluid_i, fluid_j) {};
-    Real DissipativePJump(const Real &u_jump) { return 0.0; };
-    Real DissipativeUJump(const Real &p_jump) { return 0.0; };
+    Real DissipativePJump(UnsignedInt i, UnsignedInt j, const Real &u_jump) { return 0.0; };
+    Real DissipativeUJump(UnsignedInt i, UnsignedInt j, const Real &p_jump) { return 0.0; };
 };
 using NoRiemannSolverCK = RiemannSolver<NotUsed, WeaklyCompressibleFluid, WeaklyCompressibleFluid>;
 
@@ -74,8 +74,8 @@ class RiemannSolver<FluidI, FluidJ, LimiterType> : public RiemannSolver<NotUsed,
 {
   public:
     RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j, Real limiter_coeff = 3.0);
-    Real DissipativePJump(const Real &u_jump);
-    Real DissipativeUJump(const Real &p_jump);
+    Real DissipativePJump(UnsignedInt i, UnsignedInt j, const Real &u_jump);
+    Real DissipativeUJump(UnsignedInt i, UnsignedInt j, const Real &p_jump);
 
   protected:
     Real inv_rho0c0_ave_, rho0c0_geo_ave_;

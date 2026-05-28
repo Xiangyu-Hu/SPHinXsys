@@ -15,13 +15,15 @@ RiemannSolver<Base, FluidI, FluidJ>::RiemannSolver(FluidI &fluid_i, FluidJ &flui
 //=================================================================================================//
 template <class FluidI, class FluidJ>
 template <typename T>
-T RiemannSolver<Base, FluidI, FluidJ>::AverageP(const T &p_i, const T &p_j) const
+T RiemannSolver<Base, FluidI, FluidJ>::AverageP(
+    UnsignedInt i, UnsignedInt j, const T &p_i, const T &p_j) const
 {
-    return (p_i * rho0c0_j_ + p_j * rho0c0_i_) * inv_rho0c0_sum_;
+    return inv_rho0c0_sum_ * (p_i * rho0c0_j_ + p_j * rho0c0_i_).eval();
 }
 //=================================================================================================//
 template <class FluidI, class FluidJ>
-Vecd RiemannSolver<Base, FluidI, FluidJ>::AverageV(const Vecd &vel_i, const Vecd &vel_j)
+Vecd RiemannSolver<Base, FluidI, FluidJ>::AverageV(
+    UnsignedInt i, UnsignedInt j, const Vecd &vel_i, const Vecd &vel_j)
 {
     return (vel_i * rho0c0_i_ + vel_j * rho0c0_j_) * inv_rho0c0_sum_;
 }
@@ -36,13 +38,15 @@ RiemannSolver<FluidI, FluidJ, LimiterType>::
       limiter_(0.5 * (this->rho0_i_ + this->rho0_j_) * inv_rho0c0_ave_, limiter_coeff) {}
 //=================================================================================================//
 template <class FluidI, class FluidJ, typename LimiterType>
-Real RiemannSolver<FluidI, FluidJ, LimiterType>::DissipativePJump(const Real &u_jump)
+Real RiemannSolver<FluidI, FluidJ, LimiterType>::DissipativePJump(
+    UnsignedInt i, UnsignedInt j, const Real &u_jump)
 {
     return rho0c0_geo_ave_ * u_jump * limiter_(SMAX(u_jump, Real(0))); // the factor 0.5 canceled
 }
 //=================================================================================================//
 template <class FluidI, class FluidJ, typename LimiterType>
-Real RiemannSolver<FluidI, FluidJ, LimiterType>::DissipativeUJump(const Real &p_jump)
+Real RiemannSolver<FluidI, FluidJ, LimiterType>::DissipativeUJump(
+    UnsignedInt i, UnsignedInt j, const Real &p_jump)
 {
     return p_jump * inv_rho0c0_ave_; // the factor 0.5 canceled with 2.0 in kernel approximation
 }

@@ -4,6 +4,7 @@
  * @details This is a fundamental GPU-accelerated test for soil dynamics.
  * @author SHuang Li, Xiangyu Hu and Shuaihao Zhang
  */
+#include "all_continuum_dynamics_ck.h"
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 // general parameters for geometry
