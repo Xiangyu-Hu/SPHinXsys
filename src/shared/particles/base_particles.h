@@ -166,8 +166,8 @@ class BaseParticles
     //----------------------------------------------------------------------
     void resizeXmlDocForParticles(XmlParser &xml_parser);
     void resetTotalRealParticlesFromXmlDoc(XmlParser &xml_parser);
-    void writeParticlesToXmlForRestart(XmlParser &xml_parser, TinyXMLElement *body_element);
-    void readParticlesFromXmlForRestart(XmlParser &xml_parser, TinyXMLElement *body_element);
+    void writeParticlesToXml(XmlParser &xml_parser, TinyXMLElement *body_element);
+    void readParticlesFromXml(XmlParser &xml_parser, TinyXMLElement *body_element);
     void readReloadXmlFile(const std::string &filefullpath, const std::string &body_name);
     template <typename DataType>
     BaseParticles &reloadExtraVariable(const std::string &name);
