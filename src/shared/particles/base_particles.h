@@ -148,6 +148,8 @@ class BaseParticles
 
     template <typename DataType, typename... Args>
     void addVariableToWrite(Args &&...args);
+    template <typename DataType, typename... Args>
+    void addVariableToReload(Args &&...args);
     //----------------------------------------------------------------------
     // Particle data for sorting
     //----------------------------------------------------------------------
@@ -160,14 +162,15 @@ class BaseParticles
     template <typename DataType, typename... Args>
     void addEvolvingVariable(Args &&...args);
     DiscreteVariables &VariablesToWrite() { return variables_to_write_; };
+    DiscreteVariables &VariablesToReload() { return variables_to_reload_; };
     DiscreteVariables &EvolvingVariables() { return evolving_variables_; };
     //----------------------------------------------------------------------
     // Particle data ouput functions
     //----------------------------------------------------------------------
     void resizeXmlDocForParticles(XmlParser &xml_parser);
     void resetTotalRealParticlesFromXmlDoc(XmlParser &xml_parser);
-    void writeParticlesToXmlForRestart(XmlParser &xml_parser, TinyXMLElement *body_element);
-    void readParticlesFromXmlForRestart(XmlParser &xml_parser, TinyXMLElement *body_element);
+    void writeParticlesToXml(DiscreteVariables &variables, XmlParser &xml_parser, TinyXMLElement *body_element);
+    void readParticlesFromXml(DiscreteVariables &variables, XmlParser &xml_parser, TinyXMLElement *body_element);
     void readReloadXmlFile(const std::string &filefullpath, const std::string &body_name);
     template <typename DataType>
     BaseParticles &reloadExtraVariable(const std::string &name);
@@ -190,6 +193,7 @@ class BaseParticles
     DiscreteVariables all_discrete_variables_;
     SingleVariables all_singular_variables_;
     DiscreteVariables variables_to_write_;
+    DiscreteVariables variables_to_reload_;
 
   protected:
     int total_body_parts_;                                /**< total number of body parts indicated particle groups*/

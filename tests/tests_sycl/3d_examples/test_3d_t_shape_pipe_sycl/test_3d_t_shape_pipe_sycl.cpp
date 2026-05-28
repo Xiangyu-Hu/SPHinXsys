@@ -131,7 +131,7 @@ struct PressureBC
     Vec3d center;
     Rotation3d rot;
     Vec3d buffer_halfsize;
-    OrientedBox alignedbox;
+    OrientedBox oriented_box;
     OrientedBoxByCell alignedbox_by_cell;
     fluid_dynamics::BidirectionalBoundaryCK<ExecutionPolicy, CorrectionType, BoundaryPressurePrescribed> boundary_condition;
     StateDynamics<ExecutionPolicy, ResetBufferCorrectionMatrixCK> reset_buffer_correction_matrix;
@@ -143,8 +143,8 @@ struct PressureBC
           buffer_halfsize(params.L_emitter * 0.5,
                           params.diameter * 0.505,
                           params.diameter * 0.505),
-          alignedbox(xAxis, Transform(rot, center), buffer_halfsize),
-          alignedbox_by_cell(fluid_body, alignedbox),
+          oriented_box(xAxis, Transform(rot, center), buffer_halfsize),
+          alignedbox_by_cell(fluid_body, oriented_box),
           boundary_condition(alignedbox_by_cell, params.pressure, t_ref),
           reset_buffer_correction_matrix(alignedbox_by_cell) {}
 };

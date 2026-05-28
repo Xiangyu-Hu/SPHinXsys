@@ -1,8 +1,8 @@
 #include "surface_particles.h"
 
+#include "adaptation.h"
 #include "base_body.h"
 #include "vector_functions.h"
-#include "adaptation.h"
 
 namespace SPH
 {
@@ -27,8 +27,8 @@ void SurfaceParticles::registerSurfaceProperties(StdVec<Vecd> &n, StdVec<Real> &
 {
     n_ = registerStateVariableDataFrom<Vecd>("NormalDirection", n);
     thickness_ = registerStateVariableDataFrom<Real>("Thickness", thickness);
-    addEvolvingVariable<Vecd>("NormalDirection");
-    addEvolvingVariable<Real>("Thickness");
+    addVariableToReload<Vecd>("NormalDirection");
+    addVariableToReload<Real>("Thickness");
 }
 //=================================================================================================//
 void SurfaceParticles::registerSurfacePropertiesFromReload()
