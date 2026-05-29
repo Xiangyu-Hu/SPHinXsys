@@ -67,7 +67,7 @@ class BaseDiffusion : public AbstractDiffusion
 
     std::string DiffusionSpeciesName() { return diffusion_species_name_; };
     std::string GradientSpeciesName() { return gradient_species_name_; };
-    Real getVolumeCapacity() { return cv_; };
+    Real getVolumetricCapacity() { return cv_; };
     virtual Real getDiffusionTimeStepSize(Real smoothing_length) override;
     virtual Real getReferenceDiffusivity() = 0;
     virtual Real getDiffusionCoeffWithBoundary(size_t index_i) = 0;
