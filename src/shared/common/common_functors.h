@@ -73,7 +73,7 @@ class NoLimiter : public Limiter
     NoLimiter(Args &&...args) : Limiter(){};
 
     template <typename... Args>
-    Real operator()(Args &&...args)
+    Real operator()(Args &&...args) const
     {
         return 1.0;
     };
@@ -87,7 +87,7 @@ class TruncatedLinear : public Limiter
     TruncatedLinear(Real slope = 100.0)
         : Limiter(), slope_(slope){};
 
-    Real operator()(Real dimensionless_measure)
+    Real operator()(Real dimensionless_measure) const
     {
         return SMIN(slope_ * dimensionless_measure, Real(1));
     };
