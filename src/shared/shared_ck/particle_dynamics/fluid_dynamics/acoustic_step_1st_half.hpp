@@ -97,7 +97,7 @@ void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
                      index_i, index_j,
                      static_cast<CorrectionDataType>(correction_(index_j) * p_[index_i]),
                      static_cast<CorrectionDataType>(correction_(index_i) * p_[index_j])) *
-                 dW_ijV_j * e_ij;
+                 2.0 * dW_ijV_j * e_ij;
         rho_dissipation += riemann_solver_.DissipativeUJump(index_i, index_j, p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
     force_[index_i] += force * Vol_[index_i];
