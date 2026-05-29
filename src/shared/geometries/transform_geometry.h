@@ -98,9 +98,6 @@ class TransformGeometry : public GeometryType
     Transform transform_;
 };
 
-using TransformGeometryBox = TransformGeometry<GeometricBox>;
-using TransformGeometryCylinder = TransformGeometry<GeometricCylinder>;
-
 /**
  * @class TransformShape
  * @brief A template shape in which coordinate transformation is applied
