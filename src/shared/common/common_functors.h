@@ -81,15 +81,15 @@ class NoLimiter : public Limiter
 
 class TruncatedLinear : public Limiter
 {
-    Real ref_, slope_;
+    Real slope_;
 
   public:
-    TruncatedLinear(Real ref, Real slope = 100.0)
-        : Limiter(), ref_(ref), slope_(slope) {};
-    Real operator()(Real measure)
+    TruncatedLinear(Real slope = 100.0)
+        : Limiter(), slope_(slope){};
+
+    Real operator()(Real dimensionless_measure)
     {
-        Real measure_scale = measure * ref_;
-        return SMIN(slope_ * measure_scale, Real(1));
+        return SMIN(slope_ * dimensionless_measure, Real(1));
     };
 };
 

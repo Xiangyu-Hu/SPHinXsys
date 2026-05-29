@@ -35,13 +35,14 @@ RiemannSolver<FluidI, FluidJ, LimiterType>::
       inv_rho0c0_ave_((this->rho0c0_i_ + this->rho0c0_j_) /
                       (math::pow(this->rho0c0_i_, 2) + math::pow(this->rho0c0_j_, 2))),
       rho0c0_geo_ave_(2.0 * this->rho0c0_i_ * this->rho0c0_j_ * this->inv_rho0c0_sum_),
-      limiter_(0.5 * (this->rho0_i_ + this->rho0_j_) * inv_rho0c0_ave_, limiter_coeff) {}
+      inv_c0_ave_(0.5 * (this->rho0_i_ + this->rho0_j_) * this->inv_rho0c0_ave_),
+      limiter_(limiter_coeff) {}
 //=================================================================================================//
 template <class FluidI, class FluidJ, typename LimiterType>
 Real RiemannSolver<FluidI, FluidJ, LimiterType>::DissipativePJump(
     UnsignedInt i, UnsignedInt j, const Real &u_jump)
 {
-    return rho0c0_geo_ave_ * u_jump * limiter_(SMAX(u_jump, Real(0))); // the factor 0.5 canceled
+    return rho0c0_geo_ave_ * u_jump * limiter_(inv_c0_ave_ * SMAX(u_jump, Real(0))); // the factor 0.5 canceled
 }
 //=================================================================================================//
 template <class FluidI, class FluidJ, typename LimiterType>

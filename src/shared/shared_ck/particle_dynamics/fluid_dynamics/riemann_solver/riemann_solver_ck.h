@@ -99,7 +99,7 @@ class RiemannSolver<FluidI, FluidJ, LimiterType> : public RiemannSolver<NotUsed,
     Real DissipativeUJump(UnsignedInt i, UnsignedInt j, const Real &p_jump);
 
   protected:
-    Real inv_rho0c0_ave_, rho0c0_geo_ave_;
+    Real inv_rho0c0_ave_, rho0c0_geo_ave_, inv_c0_ave_;
     LimiterType limiter_;
     Real limiter_coeff_;
 };
