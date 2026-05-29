@@ -18,7 +18,7 @@ template <typename T>
 T RiemannSolver<Base, FluidI, FluidJ>::AverageP(
     UnsignedInt i, UnsignedInt j, const T &p_i, const T &p_j) const
 {
-    return inv_rho0c0_sum_ * (p_i * rho0c0_j_ + p_j * rho0c0_i_).eval();
+    return inv_rho0c0_sum_ * (p_i * rho0c0_j_ + p_j * rho0c0_i_);
 }
 //=================================================================================================//
 template <class FluidI, class FluidJ>
