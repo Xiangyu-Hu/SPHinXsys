@@ -13,8 +13,7 @@ TransportVelocityCorrectionCK<DynamicsIdentifier, LimiterType, ParticleScopes...
     TransportVelocityCorrectionCK(DynamicsIdentifier &identifier, Real coefficient)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
       h_ref_(this->getSPHAdaptation().ReferenceSmoothingLength()),
-      correction_scaling_(coefficient * h_ref_ * h_ref_),
-      limiter_(h_ref_ * h_ref_), within_scope_method_(this->particles_),
+      coefficient_(coefficient), limiter_(), within_scope_method_(this->particles_),
       dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),
       dv_kernel_gradient_integral_(this->particles_->template getVariableByName<Vecd>("KernelGradientIntegral")),
       adaptation_(DynamicCast<Adaptation>(this, this->getSPHAdaptation()))
@@ -29,7 +28,8 @@ template <class DynamicsIdentifier, class LimiterType, typename... ParticleScope
 template <class ExecutionPolicy, class EncloserType>
 TransportVelocityCorrectionCK<DynamicsIdentifier, LimiterType, ParticleScopes...>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : correction_scaling_(encloser.correction_scaling_),
+    : squared_h_ref_(encloser.h_ref_ * encloser.h_ref_),
+      correction_scaling_(encloser.coefficient_ * squared_h_ref_),
       h_ratio_(ex_policy, encloser.adaptation_), limiter_(encloser.limiter_),
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
       kernel_gradient_integral_(encloser.dv_kernel_gradient_integral_->DelegatedData(ex_policy)),
@@ -44,7 +44,7 @@ void TransportVelocityCorrectionCK<DynamicsIdentifier, LimiterType, ParticleScop
         Real inv_h_ratio = 1.0 / h_ratio_(index_i);
         Vecd residual = this->kernel_gradient_integral_[index_i];
         Real squared_norm = residual.squaredNorm();
-        dpos_[index_i] += correction_scaling_ * limiter_(squared_norm) *
+        dpos_[index_i] += correction_scaling_ * limiter_(squared_h_ref_ * squared_norm) *
                           this->kernel_gradient_integral_[index_i] * inv_h_ratio * inv_h_ratio;
     }
 }

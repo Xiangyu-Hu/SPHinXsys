@@ -21,11 +21,12 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_continuum_dynamics.h
+ * @file    all_continuum_dynamics_ck.h
  */
 
 #pragma once
 
+#include "all_general_dynamics_ck.h"
 #include "continuum_dynamics_variable_ck.hpp"
 #include "continuum_integration_1st_ck.hpp"
 #include "continuum_integration_2nd_ck.hpp"

@@ -47,7 +47,7 @@ class AcousticStep : public BaseInteractionType
   public:
     template <class DynamicsIdentifier>
     explicit AcousticStep(DynamicsIdentifier &identifier);
-    virtual ~AcousticStep() {};
+    virtual ~AcousticStep(){};
 
   protected:
     DiscreteVariable<Real> *dv_rho_, *dv_mass_, *dv_p_, *dv_drho_dt_;
@@ -65,10 +65,11 @@ class AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
     using EosKernel = typename FluidType::EosKernel;
     using BaseInteraction = AcousticStep<Interaction<Inner<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+    using CorrectionDataType = typename KernelCorrectionType::CorrectionDataType;
 
   public:
     explicit AcousticStep1stHalf(Inner<Parameters...> &inner_relation);
-    virtual ~AcousticStep1stHalf() {};
+    virtual ~AcousticStep1stHalf(){};
 
     class InitializeKernel
     {
@@ -125,7 +126,7 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
 
   public:
     explicit AcousticStep1stHalf(Contact<Parameters...> &wall_contact_relation);
-    virtual ~AcousticStep1stHalf() {};
+    virtual ~AcousticStep1stHalf(){};
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
@@ -161,7 +162,7 @@ class AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
 
   public:
     explicit AcousticStep1stHalf(Contact<Parameters...> &wall_contact_relation);
-    virtual ~AcousticStep1stHalf() {};
+    virtual ~AcousticStep1stHalf(){};
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {

@@ -38,14 +38,14 @@ struct FluidStateIn
 {
     Vecd &vel_;
     Real &rho_, &p_;
-    FluidStateIn(Real &rho, Vecd &vel, Real &p) : vel_(vel), rho_(rho), p_(p) {};
+    FluidStateIn(Real &rho, Vecd &vel, Real &p) : vel_(vel), rho_(rho), p_(p){};
 };
 
 struct FluidStateOut
 {
     Vecd vel_;
     Real rho_, p_;
-    FluidStateOut(Real rho, Vecd vel, Real p) : vel_(vel), rho_(rho), p_(p) {};
+    FluidStateOut(Real rho, Vecd vel, Real p) : vel_(vel), rho_(rho), p_(p){};
 };
 
 /**
@@ -88,10 +88,11 @@ class BaseAcousticRiemannSolver : public NoRiemannSolver
         : NoRiemannSolver(fluid_i, fluid_j),
           inv_rho0c0_ave_((rho0c0_i_ + rho0c0_j_) / (math::pow(rho0c0_i_, 2) + math::pow(rho0c0_j_, 2))),
           rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
-          limiter_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_, limiter_coeff){};
+          inv_c0_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_),
+          limiter_(limiter_coeff){};
     Real DissipativePJump(const Real &u_jump)
     {
-        return rho0c0_geo_ave_ * u_jump * limiter_(SMAX(u_jump, Real(0)));
+        return rho0c0_geo_ave_ * u_jump * limiter_(inv_c0_ave_ * SMAX(u_jump, Real(0)));
     };
     Real DissipativeUJump(const Real &p_jump)
     {
@@ -105,7 +106,7 @@ class BaseAcousticRiemannSolver : public NoRiemannSolver
         Real ul = -e_ij.dot(state_i.vel_);
         Real ur = -e_ij.dot(state_j.vel_);
         Real u_jump = ul - ur;
-        Real limited_mach_number = limiter_(SMAX(u_jump, Real(0)));
+        Real limited_mach_number = limiter_(inv_c0_ave_ * SMAX(u_jump, Real(0)));
 
         Real p_star = average_state.p_ + 0.5 * rho0c0_geo_ave_ * u_jump * limited_mach_number;
         Real u_dissipative = 0.5 * (state_i.p_ - state_j.p_) * inv_rho0c0_ave_ * limited_mach_number * limited_mach_number;
@@ -115,7 +116,7 @@ class BaseAcousticRiemannSolver : public NoRiemannSolver
     };
 
   protected:
-    Real inv_rho0c0_ave_, rho0c0_geo_ave_;
+    Real inv_rho0c0_ave_, rho0c0_geo_ave_, inv_c0_ave_;
     LimiterType limiter_;
     Real limiter_coeff_;
 };

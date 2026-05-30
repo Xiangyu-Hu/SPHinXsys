@@ -176,7 +176,7 @@ void BaseParticles::readReloadXmlFile(const std::string &filefullpath, const std
     exit(1);
 }
 //=================================================================================================//
-void BaseParticles::writeParticlesToXmlForRestart(XmlParser &xml_parser, TinyXMLElement *body_element)
+void BaseParticles::writeParticlesToXml(XmlParser &xml_parser, TinyXMLElement *body_element)
 {
     // Resize the body element to have the correct number of particle children
     UnsignedInt total_real_particles = TotalRealParticles();
@@ -193,7 +193,7 @@ void BaseParticles::writeParticlesToXmlForRestart(XmlParser &xml_parser, TinyXML
     write_variable_to_element(evolving_variables_, xml_parser);
 }
 //=================================================================================================//
-void BaseParticles::readParticlesFromXmlForRestart(XmlParser &xml_parser, TinyXMLElement *body_element)
+void BaseParticles::readParticlesFromXml(XmlParser &xml_parser, TinyXMLElement *body_element)
 {
     // Reset total real particles from the body element's particle count
     sv_total_real_particles_->setValue(xml_parser.Size(body_element));

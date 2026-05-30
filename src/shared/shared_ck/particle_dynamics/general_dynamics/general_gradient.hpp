@@ -3,6 +3,8 @@
 
 #include "general_gradient.h"
 
+#include "vector_functions.h"
+
 namespace SPH
 {
 //=================================================================================================//
