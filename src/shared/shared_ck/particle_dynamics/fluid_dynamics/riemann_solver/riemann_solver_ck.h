@@ -37,14 +37,14 @@ namespace SPH
 template <typename...>
 class ImpedanceModel;
 
-template <>
-class ImpedanceModel<WeaklyCompressibleFluid, WeaklyCompressibleFluid>
+template <class FluidI, class FluidJ>
+class ImpedanceModel<FluidI, FluidJ>
 {
     Real rho0_i_, rho0_j_, rho0c0_i_, rho0c0_j_, inv_rho0c0_sum_;
     Real inv_rho0c0_ave_, rho0c0_geo_ave_, inv_c0_ave_;
 
   public:
-    ImpedanceModel(WeaklyCompressibleFluid &fluid_i, WeaklyCompressibleFluid &fluid_j);
+    ImpedanceModel(FluidI &fluid_i, FluidJ &fluid_j);
     Real Rho_i(UnsignedInt) const { return rho0_i_; };
     Real Rho_j(UnsignedInt) const { return rho0_j_; };
     Real Impedance_i(UnsignedInt) const { return rho0c0_i_; };
