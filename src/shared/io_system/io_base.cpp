@@ -94,7 +94,7 @@ void RestartIO::writeToFile(size_t iteration_step)
         restart_xml.setAttributeToElement(body_element, "name", body_name);
 
         // Write particles to this body element
-        base_particles.writeParticlesToXmlForRestart(restart_xml, body_element);
+        base_particles.writeParticlesToXml(restart_xml, body_element);
     }
 
     // Write the consolidated XML file
@@ -158,7 +158,7 @@ void RestartIO::readFromFile(size_t restart_step)
             if (name_attr != nullptr && std::string(name_attr) == body_name)
             {
                 found = true;
-                base_particles.readParticlesFromXmlForRestart(restart_xml, body_element);
+                base_particles.readParticlesFromXml(restart_xml, body_element);
                 std::cout << "\n Total real particles of body " << body_name
                           << " read from restart: " << base_particles.TotalRealParticles() << "\n";
                 break;
@@ -214,7 +214,7 @@ void ReloadParticleIO::writeToFile(size_t iteration_step)
         tinyxml2::XMLElement *body_element = reload_xml.first_element_->LastChildElement("body");
         reload_xml.setAttributeToElement(body_element, "name", body_name);
 
-        base_particles.writeParticlesToXmlForRestart(reload_xml, body_element);
+        base_particles.writeParticlesToXml(reload_xml, body_element);
     }
 
     reload_xml.writeToXmlFile(overall_file_path_);

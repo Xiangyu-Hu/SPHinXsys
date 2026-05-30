@@ -21,25 +21,48 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	all_geometries.h
- * @brief 	This is the header file that user code should include to pick up all
- *          geometry classes used in SPHinXsys.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file 	geometric_element_and_shape_3d.h
+ * @brief tbd.
+ * @author Xiangyu Hu
  */
 
-#ifndef ALL_GEOMETRIES_H
-#define ALL_GEOMETRIES_H
+#ifndef GEOMETRIC_ELEMENT_AND_SHAPE_3D_H
+#define GEOMETRIC_ELEMENT_AND_SHAPE_3D_H
 
-#include "complex_geometry.h"
-#include "geometric_element_and_shape_3d.h"
-#include "geometric_shape.h"
-#include "level_set_shape.hpp"
-#include "mapping_shape.h"
-#include "sdf_shape.h"
+#include "data_type.h"
 #include "transform_geometry.h"
-#include "triangle_mesh_shape.h"
 
 namespace SPH
 {
-}
-#endif // ALL_GEOMETRIES_H
+class GeometricCylinder
+{
+  public:
+    explicit GeometricCylinder(Real radius, Real halflength);
+    ~GeometricCylinder(){};
+
+    bool checkContain(const Vec3d &probe_point)
+    {
+        if (ABS(probe_point[0]) > halflength_)
+            return false;
+        return probe_point.tail(Dimensions - 1).norm() <= radius_;
+    };
+
+    Vec3d findClosestPoint(const Vec3d &probe_point);
+    BoundingBox3d findBounds();
+
+  protected:
+    Real radius_;
+    Real halflength_;
+};
+
+using TransformGeometryCylinder = TransformGeometry<GeometricCylinder>;
+
+class GeometricShapeCylinder : public TransformShape<GeometricCylinder>
+{
+  public:
+    GeometricShapeCylinder(const Transform &transform, Real radius, Real halflength,
+                           const std::string &name = "GeometricShapeCylinder");
+    virtual ~GeometricShapeCylinder(){};
+};
+} // namespace SPH
+#endif // GEOMETRIC_ELEMENT_AND_SHAPE_3D_H

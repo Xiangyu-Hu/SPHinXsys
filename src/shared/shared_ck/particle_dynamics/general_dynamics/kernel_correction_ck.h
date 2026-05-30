@@ -33,6 +33,7 @@
 
 #include "base_local_dynamics.h"
 #include "interaction_ck.h"
+#include "particle_functors.h"
 
 #include <tuple>
 

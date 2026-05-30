@@ -4,6 +4,7 @@
  * @details Column collapse using computing kernels.
  * @author Shuang Li, Xiangyu Hu and Shuaihao Zhang
  */
+#include "all_continuum_dynamics_ck.h"
 #include "sphinxsys.h"
 using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------

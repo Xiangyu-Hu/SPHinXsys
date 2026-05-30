@@ -34,14 +34,35 @@
 
 namespace SPH
 {
+template <typename...>
+class ImpedanceModel;
+
+template <>
+class ImpedanceModel<WeaklyCompressibleFluid, WeaklyCompressibleFluid>
+{
+    Real rho0_i_, rho0_j_, rho0c0_i_, rho0c0_j_, inv_rho0c0_sum_;
+    Real inv_rho0c0_ave_, rho0c0_geo_ave_, inv_c0_ave_;
+
+  public:
+    ImpedanceModel(WeaklyCompressibleFluid &fluid_i, WeaklyCompressibleFluid &fluid_j);
+    Real Rho_i(UnsignedInt) const { return rho0_i_; };
+    Real Rho_j(UnsignedInt) const { return rho0_j_; };
+    Real Impedance_i(UnsignedInt) const { return rho0c0_i_; };
+    Real Impedance_j(UnsignedInt) const { return rho0c0_j_; };
+    Real InvImpedanceSum(UnsignedInt, UnsignedInt) const { return inv_rho0c0_sum_; };
+    Real InvImpedanceAve(UnsignedInt, UnsignedInt) const { return inv_rho0c0_ave_; };
+    Real ImpedanceGeoAve(UnsignedInt, UnsignedInt) const { return rho0c0_geo_ave_; };
+    Real InvSoundSpeedAve(UnsignedInt, UnsignedInt) const { return inv_c0_ave_; };
+};
 
 class NotUsed;
+class Base;
 
 template <typename...>
 class RiemannSolver;
 
 template <class FluidI, class FluidJ>
-class RiemannSolver<Base, FluidI, FluidJ>
+class RiemannSolver<Base, FluidI, FluidJ> : public ImpedanceModel<FluidI, FluidJ>
 {
   public:
     typedef FluidI SourceFluid;
@@ -49,13 +70,8 @@ class RiemannSolver<Base, FluidI, FluidJ>
     RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j);
 
     template <typename T>
-    T AverageP(const T &p_i, const T &p_j) const;
-    Vecd AverageV(const Vecd &vel_i, const Vecd &vel_j);
-
-  protected:
-    Real rho0_i_, rho0_j_;
-    Real c0_i_, c0_j_;
-    Real rho0c0_i_, rho0c0_j_, inv_rho0c0_sum_;
+    T AverageP(UnsignedInt i, UnsignedInt j, const T &p_i, const T &p_j) const;
+    Vecd AverageV(UnsignedInt i, UnsignedInt j, const Vecd &vel_i, const Vecd &vel_j) const;
 };
 
 template <class FluidI, class FluidJ>
@@ -63,9 +79,9 @@ class RiemannSolver<NotUsed, FluidI, FluidJ> : public RiemannSolver<Base, FluidI
 {
   public:
     RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j)
-        : RiemannSolver<Base, FluidI, FluidJ>(fluid_i, fluid_j) {};
-    Real DissipativePJump(const Real &u_jump) { return 0.0; };
-    Real DissipativeUJump(const Real &p_jump) { return 0.0; };
+        : RiemannSolver<Base, FluidI, FluidJ>(fluid_i, fluid_j){};
+    Real DissipativePJump(UnsignedInt i, UnsignedInt j, const Real &u_jump) const { return 0.0; };
+    Real DissipativeUJump(UnsignedInt i, UnsignedInt j, const Real &p_jump) const { return 0.0; };
 };
 using NoRiemannSolverCK = RiemannSolver<NotUsed, WeaklyCompressibleFluid, WeaklyCompressibleFluid>;
 
@@ -74,11 +90,10 @@ class RiemannSolver<FluidI, FluidJ, LimiterType> : public RiemannSolver<NotUsed,
 {
   public:
     RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j, Real limiter_coeff = 3.0);
-    Real DissipativePJump(const Real &u_jump);
-    Real DissipativeUJump(const Real &p_jump);
+    Real DissipativePJump(UnsignedInt i, UnsignedInt j, const Real &u_jump) const;
+    Real DissipativeUJump(UnsignedInt i, UnsignedInt j, const Real &p_jump) const;
 
   protected:
-    Real inv_rho0c0_ave_, rho0c0_geo_ave_;
     LimiterType limiter_;
     Real limiter_coeff_;
 };
