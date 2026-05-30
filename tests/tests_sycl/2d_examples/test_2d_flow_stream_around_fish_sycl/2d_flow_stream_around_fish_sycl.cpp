@@ -166,10 +166,13 @@ int main(int ac, char *av[])
                   fluid_dynamics::EmitterInflowConditionCK<AlignedBoxByCell, FreeStreamVelocity>>
         emitter_buffer_inflow_condition(emitter_buffer);
 
-    // DisposerOutflowDeletion has no UpdateKernel — use CPU SimpleDynamics directly.
+    // Disposer: GPU-compatible outflow deletion (CK pattern)
     AlignedBoxByCell disposer(
         water_block, AlignedBox(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::WithinDisposerIndication>
+        disposer_indication(disposer);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion>
+        particle_deletion(water_block);
 
     // FreeStreamVelocityCorrection has no CK version — use CPU SimpleDynamics directly.
     SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>>
@@ -308,7 +311,8 @@ int main(int ac, char *av[])
             number_of_iterations++;
 
             emitter_inflow_injection.exec();
-            disposer_outflow_deletion.exec();
+            disposer_indication.exec();
+            particle_deletion.exec();
 
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
                 particle_sort.exec();
