@@ -10,9 +10,10 @@ namespace solid_dynamics
 {
 //=================================================================================================//
 template <typename... Parameters>
+template <class DynamicsIdentifier>
 RepulsionForceCK<Base, Contact<Parameters...>>::
-    RepulsionForceCK(Contact<Parameters...> &contact_relation, Real numerical_damping)
-    : Interaction<Contact<Parameters...>>(contact_relation),
+    RepulsionForceCK(DynamicsIdentifier &identifier, Real numerical_damping)
+    : Interaction<Contact<Parameters...>>(identifier),
       ForcePriorCK(this->particles_, "RepulsionForce"),
       solid_contact_(DynamicCast<SolidContact>(this, this->sph_body_->getMatterMaterial())),
       numerical_damping_(numerical_damping),
@@ -24,10 +25,10 @@ RepulsionForceCK<Base, Contact<Parameters...>>::
       dv_repulsion_force_(ForcePriorCK::getCurrentForce()) {}
 //=================================================================================================//
 template <typename... Parameters>
-template <typename... Args>
+template <class DynamicsIdentifier, typename... Args>
 RepulsionForceCK<Contact<WithUpdate, Parameters...>>::
-    RepulsionForceCK(Contact<Parameters...> &contact_relation, Args &&...args)
-    : BaseInteractionType(contact_relation, std::forward<Args>(args)...),
+    RepulsionForceCK(DynamicsIdentifier &identifier, Args &&...args)
+    : BaseInteractionType(identifier, std::forward<Args>(args)...),
       dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection"))
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -86,11 +87,11 @@ void RepulsionForceCK<Contact<WithUpdate, Parameters...>>::
 }
 //=================================================================================================//
 template <typename... Parameters>
-template <typename... Args>
+template <class DynamicsIdentifier, typename... Args>
 RepulsionForceCK<Contact<WithUpdate, Wall, Parameters...>>::
-    RepulsionForceCK(Contact<Parameters...> &contact_relation, Args &&...args)
-    : BaseInteractionType(contact_relation, std::forward<Args>(args)...),
-      Interaction<Wall>(contact_relation) {}
+    RepulsionForceCK(DynamicsIdentifier &identifier, Args &&...args)
+    : BaseInteractionType(identifier, std::forward<Args>(args)...),
+      Interaction<Wall>(identifier) {}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>

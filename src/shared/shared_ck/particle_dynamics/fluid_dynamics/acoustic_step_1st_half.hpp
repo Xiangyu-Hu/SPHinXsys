@@ -37,9 +37,10 @@ AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    AcousticStep1stHalf(Inner<Parameters...> &inner_relation)
-    : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
+    AcousticStep1stHalf(DynamicsIdentifier &identifier)
+    : AcousticStep<Interaction<Inner<Parameters...>>>(identifier),
       kernel_correction_(this->particles_),
       fluid_(DynamicCast<FluidType>(this, this->sph_body_->getMatterMaterial())),
       riemann_solver_(this->fluid_, this->fluid_)
@@ -121,9 +122,10 @@ void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    AcousticStep1stHalf(Contact<Parameters...> &wall_contact_relation)
-    : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
+    AcousticStep1stHalf(DynamicsIdentifier &identifier)
+    : BaseInteraction(identifier), Interaction<Wall>(identifier),
       kernel_correction_(this->particles_),
       fluid_(DynamicCast<FluidType>(this, this->sph_body_->getMatterMaterial())),
       riemann_solver_(this->fluid_, this->fluid_) {}
@@ -169,9 +171,10 @@ void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    AcousticStep1stHalf(Contact<Parameters...> &contact_relation)
-    : BaseInteraction(contact_relation), kernel_correction_(this->particles_)
+    AcousticStep1stHalf(DynamicsIdentifier &identifier)
+    : BaseInteraction(identifier), kernel_correction_(this->particles_)
 {
     SourceFluidType &source_fluid =
         DynamicCast<SourceFluidType>(this, this->sph_body_->getMatterMaterial());

@@ -44,7 +44,7 @@ class PlasticAcousticStep : public fluid_dynamics::AcousticStep<BaseInteractionT
   public:
     template <class DynamicsIdentifier>
     explicit PlasticAcousticStep(DynamicsIdentifier &identifier);
-    virtual ~PlasticAcousticStep() {};
+    virtual ~PlasticAcousticStep(){};
 
   protected:
     PlasticContinuum &plastic_continuum_;
@@ -63,8 +63,9 @@ class PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit PlasticAcousticStep1stHalf(Inner<Parameters...> &inner_relation);
-    virtual ~PlasticAcousticStep1stHalf() {};
+    template <class DynamicsIdentifier>
+    explicit PlasticAcousticStep1stHalf(DynamicsIdentifier &identifier);
+    virtual ~PlasticAcousticStep1stHalf(){};
 
     class InitializeKernel
     {
@@ -119,8 +120,9 @@ class PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit PlasticAcousticStep1stHalf(Contact<Parameters...> &wall_contact_relation);
-    virtual ~PlasticAcousticStep1stHalf() {};
+    template <class DynamicsIdentifier>
+    explicit PlasticAcousticStep1stHalf(DynamicsIdentifier &identifier);
+    virtual ~PlasticAcousticStep1stHalf(){};
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {

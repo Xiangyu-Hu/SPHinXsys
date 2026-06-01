@@ -7,9 +7,10 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
+template <class DynamicsIdentifier>
 Interpolation<Contact<Base, DataType, Parameters...>>::Interpolation(
-    Contact<Parameters...> &pair_contact_relation, const std::string &variable_name)
-    : Interaction<Contact<Parameters...>>(pair_contact_relation),
+    DynamicsIdentifier &identifier, const std::string &variable_name)
+    : Interaction<Contact<Parameters...>>(identifier),
       dv_interpolated_quantities_(this->particles_->template registerStateVariable<DataType>(variable_name))
 {
     if (this->contact_particles_.size() > 1)
@@ -22,9 +23,10 @@ Interpolation<Contact<Base, DataType, Parameters...>>::Interpolation(
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
+template <class DynamicsIdentifier>
 Interpolation<Contact<Base, DataType, Parameters...>>::Interpolation(
-    Contact<Parameters...> &pair_contact_relation, const std::string &variable_name, const std::string &entry_name)
-    : Interpolation(pair_contact_relation, variable_name)
+    DynamicsIdentifier &identifier, const std::string &variable_name, const std::string &entry_name)
+    : Interpolation(identifier, variable_name)
 {
     dv_interpolated_quantities_->setName(variable_name + entry_name);
     entry_ = dv_contact_data_[0]->getEntryIndexByName(entry_name);

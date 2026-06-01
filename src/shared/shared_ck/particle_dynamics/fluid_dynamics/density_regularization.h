@@ -50,7 +50,7 @@ class DensitySummationCK<Base, RelationType<Parameters...>>
   public:
     template <class DynamicsIdentifier>
     explicit DensitySummationCK(DynamicsIdentifier &identifier);
-    virtual ~DensitySummationCK() {};
+    virtual ~DensitySummationCK(){};
 
     class InteractKernel : public Interaction<RelationType<Parameters...>>::InteractKernel
     {
@@ -74,8 +74,9 @@ class DensitySummationCK<Inner<Parameters...>>
     : public DensitySummationCK<Base, Inner<Parameters...>>
 {
   public:
-    explicit DensitySummationCK(Inner<Parameters...> &inner_relation);
-    virtual ~DensitySummationCK() {};
+    template <class DynamicsIdentifier>
+    explicit DensitySummationCK(DynamicsIdentifier &identifier);
+    virtual ~DensitySummationCK(){};
 
     class InteractKernel
         : public DensitySummationCK<Base, Inner<Parameters...>>::InteractKernel
@@ -95,8 +96,9 @@ class DensitySummationCK<Contact<Parameters...>>
     : public DensitySummationCK<Base, Contact<Parameters...>>
 {
   public:
-    explicit DensitySummationCK(Contact<Parameters...> &contact_relation);
-    virtual ~DensitySummationCK() {};
+    template <class DynamicsIdentifier>
+    explicit DensitySummationCK(DynamicsIdentifier &identifier);
+    virtual ~DensitySummationCK(){};
 
     class InteractKernel
         : public DensitySummationCK<Base, Contact<Parameters...>>::InteractKernel
@@ -125,7 +127,7 @@ template <>
 class Regularization<Internal>
 {
   public:
-    Regularization(BaseParticles *particles) {};
+    Regularization(BaseParticles *particles){};
 
     class ComputingKernel
     {
@@ -143,7 +145,7 @@ template <>
 class Regularization<FreeSurface>
 {
   public:
-    Regularization(BaseParticles *particles) {};
+    Regularization(BaseParticles *particles){};
 
     class ComputingKernel
     {
@@ -168,7 +170,7 @@ class Regularization<FreeStream>
 
   public:
     Regularization(BaseParticles *particles)
-        : dv_indicator_(particles->getVariableByName<int>("Indicator")) {};
+        : dv_indicator_(particles->getVariableByName<int>("Indicator")){};
 
     class ComputingKernel
     {
@@ -195,7 +197,7 @@ class DensityRegularization : public BaseLocalDynamics<DynamicsIdentifier>
 
   public:
     explicit DensityRegularization(DynamicsIdentifier &identifier);
-    virtual ~DensityRegularization() {};
+    virtual ~DensityRegularization(){};
 
     class UpdateKernel
     {

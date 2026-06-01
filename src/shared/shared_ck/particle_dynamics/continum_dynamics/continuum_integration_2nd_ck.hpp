@@ -9,9 +9,10 @@ namespace continuum_dynamics
 {
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    PlasticAcousticStep2ndHalf(Inner<Parameters...> &inner_relation)
-    : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
+    PlasticAcousticStep2ndHalf(DynamicsIdentifier &identifier)
+    : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(identifier),
       correction_method_(this->particles_),
       riemann_solver_(this->plastic_continuum_, this->plastic_continuum_, 20.0 * (Real)Dimensions)
 {
@@ -99,9 +100,10 @@ void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    PlasticAcousticStep2ndHalf(Contact<Parameters...> &wall_contact_relation)
-    : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
+    PlasticAcousticStep2ndHalf(DynamicsIdentifier &identifier)
+    : BaseInteraction(identifier), Interaction<Wall>(identifier),
       correction_method_(this->particles_),
       riemann_solver_(this->plastic_continuum_, this->plastic_continuum_) {}
 //=================================================================================================//

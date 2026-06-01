@@ -69,7 +69,10 @@ class Interaction<Inner<Parameters...>>
 
   public:
     explicit Interaction(InnerRelationType &inner_relation);
-    virtual ~Interaction() {};
+    virtual ~Interaction(){};
+
+    InnerRelationType &getRelation() { return *inner_relation_; }
+    const InnerRelationType &getRelation() const { return *inner_relation_; }
 
     class InteractKernel : public NeighborList, public NeighborKernel
     {
@@ -99,7 +102,13 @@ class Interaction<Contact<Parameters...>>
 
   public:
     explicit Interaction(ContactRelationType &contact_relation);
-    virtual ~Interaction() {};
+    virtual ~Interaction(){};
+
+    ContactRelationType &getRelation() { return *contact_relation_; }
+    const ContactRelationType &getRelation() const { return *contact_relation_; }
+    const StdVec<SPHBody *> &getContactBodies() const { return contact_bodies_; }
+    const StdVec<BaseParticles *> &getContactParticles() const { return contact_particles_; }
+    const StdVec<SPHAdaptation *> &getContactAdaptations() const { return contact_adaptations_; }
 
     class InteractKernel : public NeighborList, public NeighborKernel
     {
@@ -128,7 +137,7 @@ class Interaction<Wall>
   public:
     template <class WallContactRelationType>
     Interaction(WallContactRelationType &wall_contact_relation);
-    virtual ~Interaction() {};
+    virtual ~Interaction(){};
 
   protected:
     StdVec<DiscreteVariable<Vecd> *> dv_wall_vel_ave_, dv_wall_acc_ave_, dv_wall_n_;

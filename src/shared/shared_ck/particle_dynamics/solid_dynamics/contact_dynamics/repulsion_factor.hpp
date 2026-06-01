@@ -18,9 +18,10 @@ RepulsionFactor<Base, Contact<Parameters...>>::RepulsionFactor(
       dv_repulsion_factor_(this->particles_->template registerStateVariable<Real>(factor_name)) {}
 //=================================================================================================//
 template <typename... Parameters>
+template <class DynamicsIdentifier>
 RepulsionFactor<Contact<Parameters...>>::
-    RepulsionFactor(Contact<Parameters...> &contact_relation)
-    : BaseInteractionType(contact_relation, "RepulsionFactor")
+    RepulsionFactor(DynamicsIdentifier &identifier)
+    : BaseInteractionType(identifier, "RepulsionFactor")
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
