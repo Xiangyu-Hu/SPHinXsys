@@ -138,6 +138,30 @@ class Interaction<Contact<Parameters...>>
     UnsignedInt getContactIndex(UnsignedInt target_index);
 };
 
+template <typename... P, typename... Args>
+auto makeInteraction(Inner<P...> &relation, Args &&...args)
+{
+    return Interaction<Inner<P...>>(relation, std::forward<Args>(args)...);
+}
+
+template <typename... P, typename... Args>
+auto makeInteraction(Contact<P...> &relation, Args &&...args)
+{
+    return Interaction<Contact<P...>>(relation, std::forward<Args>(args)...);
+}
+
+template <typename... P>
+Interaction<Inner<P...>> &asInteraction(Interaction<Inner<P...>> &view)
+{
+    return view;
+}
+
+template <typename... P>
+Interaction<Contact<P...>> &asInteraction(Interaction<Contact<P...>> &view)
+{
+    return view;
+}
+
 template <>
 class Interaction<Wall>
 {
