@@ -96,6 +96,7 @@ class Interaction<Contact<Parameters...>>
     using NeighborList = typename ContactRelationType::NeighborList;
     using Neighborhood = typename ContactRelationType::NeighborhoodType;
     using NeighborKernel = typename Neighborhood::NeighborKernel;
+    ContactRelationType *contact_relation_;
 
   public:
     explicit Interaction(ContactRelationType &contact_relation);
@@ -114,7 +115,6 @@ class Interaction<Contact<Parameters...>>
     void resetComputingKernelUpdated(UnsignedInt contact_index);
 
   protected:
-    ContactRelationType *contact_relation_;
     StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
