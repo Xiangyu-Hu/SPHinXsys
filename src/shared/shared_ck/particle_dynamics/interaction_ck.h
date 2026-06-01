@@ -69,7 +69,7 @@ class Interaction<Inner<Parameters...>>
 
   public:
     explicit Interaction(InnerRelationType &inner_relation);
-    virtual ~Interaction() {};
+    virtual ~Interaction(){};
 
     class InteractKernel : public NeighborList, public NeighborKernel
     {
@@ -88,6 +88,12 @@ class Interaction<Inner<Parameters...>>
 };
 
 template <typename... Parameters>
+Interaction<Inner<Parameters...>> generateInnerInteraction(Inner<Parameters...> &inner_relation)
+{
+    return Interaction<Inner<Parameters...>>(inner_relation);
+}
+
+template <typename... Parameters>
 class Interaction<Contact<Parameters...>>
     : public BaseLocalDynamics<typename Contact<Parameters...>::SourceType>
 {
@@ -100,7 +106,7 @@ class Interaction<Contact<Parameters...>>
 
   public:
     explicit Interaction(ContactRelationType &contact_relation);
-    virtual ~Interaction() {};
+    virtual ~Interaction(){};
 
     class InteractKernel : public NeighborList, public NeighborKernel
     {
@@ -128,7 +134,7 @@ class Interaction<Wall>
   public:
     template <class WallContactRelationType>
     Interaction(WallContactRelationType &wall_contact_relation);
-    virtual ~Interaction() {};
+    virtual ~Interaction(){};
 
   protected:
     StdVec<DiscreteVariable<Vecd> *> dv_wall_vel_ave_, dv_wall_acc_ave_, dv_wall_n_;

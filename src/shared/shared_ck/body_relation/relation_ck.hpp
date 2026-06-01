@@ -95,7 +95,7 @@ Inner<Relation<DynamicsIdentifier>>::
 template <typename SourceIdentifier, class TargetIdentifier>
 RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>::
     RelationView(Contact<Relation<SourceIdentifier, TargetIdentifier>> &contact_relation)
-    : contact_relation_(contact_relation),
+    : contact_relation_(&contact_relation),
       contact_bodies_(contact_relation.getContactBodies()),
       contact_particles_(contact_relation.getContactParticles()),
       contact_adaptations_(contact_relation.getContactAdaptations())
@@ -110,7 +110,7 @@ template <typename SourceIdentifier, class TargetIdentifier>
 RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>::
     RelationView(Contact<Relation<SourceIdentifier, TargetIdentifier>> &contact_relation,
                  StdVec<TargetIdentifier *> contact_identifiers)
-    : contact_relation_(contact_relation)
+    : contact_relation_(&contact_relation)
 {
     StdVec<SPHBody *> all_contact_bodies = contact_relation.getContactBodies();
     StdVec<BaseParticles *> all_contact_particles = contact_relation.getContactParticles();
@@ -133,17 +133,23 @@ RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>::
 }
 //=================================================================================================//
 template <typename SourceIdentifier, class TargetIdentifier>
+RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>::
+    RelationView(Contact<Relation<SourceIdentifier, TargetIdentifier>> &contact_relation,
+                 TargetIdentifier &contact_identifiers)
+    : RelationView(contact_relation, StdVec<TargetIdentifier *>{&contact_identifiers}) {}
+//=================================================================================================//
+template <typename SourceIdentifier, class TargetIdentifier>
 void RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>::
     registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index)
 {
-    contact_relation_.registerComputingKernel(implementation, contact_target_indices_[target_index]);
+    contact_relation_->registerComputingKernel(implementation, contact_target_indices_[target_index]);
 }
 //=================================================================================================//
 template <typename SourceIdentifier, class TargetIdentifier>
 void RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>::
     resetComputingKernelUpdated(UnsignedInt target_index)
 {
-    contact_relation_.resetComputingKernelUpdated(contact_target_indices_[target_index]);
+    contact_relation_->resetComputingKernelUpdated(contact_target_indices_[target_index]);
 }
 //=================================================================================================//
 template <typename SourceIdentifier, class TargetIdentifier>
@@ -162,18 +168,12 @@ Contact<Relation<SourceIdentifier, TargetIdentifier>>::Contact(
 }
 //=================================================================================================//
 template <typename SourceIdentifier, class TargetIdentifier>
+template <typename... Args>
 RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>
-Contact<Relation<SourceIdentifier, TargetIdentifier>>::getRelationView()
+Contact<Relation<SourceIdentifier, TargetIdentifier>>::getRelationView(Args &&...args)
 {
-    return RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>(*this);
-}
-//=================================================================================================//
-template <typename SourceIdentifier, class TargetIdentifier>
-RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>
-Contact<Relation<SourceIdentifier, TargetIdentifier>>::getRelationView(
-    StdVec<TargetIdentifier *> contact_identifiers)
-{
-    return RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>(*this, contact_identifiers);
+    return RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>(
+        *this, std::forward<Args>(args)...);
 }
 //=================================================================================================//
 } // namespace SPH

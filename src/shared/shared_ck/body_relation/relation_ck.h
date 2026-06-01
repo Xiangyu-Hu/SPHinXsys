@@ -152,6 +152,8 @@ class RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>
     RelationView(Contact<Relation<SourceIdentifier, TargetIdentifier>> &contact_relation);
     RelationView(Contact<Relation<SourceIdentifier, TargetIdentifier>> &contact_relation,
                  StdVec<TargetIdentifier *> contact_identifiers);
+    RelationView(Contact<Relation<SourceIdentifier, TargetIdentifier>> &contact_relation,
+                 TargetIdentifier &contact_identifier);
     StdVec<SPHBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
     StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
@@ -169,7 +171,7 @@ class RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>
     void resetComputingKernelUpdated(UnsignedInt target_index);
 
   protected:
-    Contact<Relation<SourceIdentifier, TargetIdentifier>> &contact_relation_;
+    Contact<Relation<SourceIdentifier, TargetIdentifier>> *contact_relation_;
     StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
@@ -192,9 +194,8 @@ class Contact<Relation<SourceIdentifier, TargetIdentifier>> : public Relation<So
     BaseParticles &getContactParticles(UnsignedInt target_index) { return *contact_particles_[target_index]; };
     SPHAdaptation &getContactAdaptation(UnsignedInt target_index) { return *contact_adaptations_[target_index]; };
     TargetIdentifier &getContactIdentifier(UnsignedInt target_index) { return *contact_identifiers_[target_index]; };
-    RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>> getRelationView();
-    RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>> getRelationView(
-        StdVec<TargetIdentifier *> contact_identifiers);
+    template <typename... Args>
+    RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>> getRelationView(Args &&...args);
 
   protected:
     SourceIdentifier *source_identifier_;
