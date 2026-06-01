@@ -49,10 +49,10 @@ class ParticleDynamicsGroup : public BaseDynamics<void>
     StdVec<BaseDynamics<void> *> particle_dynamics_;
 
   public:
-    ParticleDynamicsGroup() : BaseDynamics<void>() {};
+    ParticleDynamicsGroup() : BaseDynamics<void>(){};
     ParticleDynamicsGroup(const StdVec<BaseDynamics<void> *> &particle_dynamics)
         : BaseDynamics<void>(), particle_dynamics_(particle_dynamics) {}
-    ~ParticleDynamicsGroup() {};
+    ~ParticleDynamicsGroup(){};
 
     bool hasDynamics() const
     {
@@ -168,7 +168,7 @@ class IODynamicsGroup : public BaseIO
     StdVec<BaseIO *> io_dynamics_;
 
   public:
-    IODynamicsGroup(SPHSystem &sph_system) : BaseIO(sph_system) {};
+    IODynamicsGroup(SPHSystem &sph_system) : BaseIO(sph_system){};
     ~IODynamicsGroup() = default;
 
     IODynamicsGroup &add(BaseIO *io_dynamics)
@@ -194,7 +194,7 @@ class IODynamicsGroup : public BaseIO
 class BaseMethodContainer
 {
   public:
-    virtual ~BaseMethodContainer() {};
+    virtual ~BaseMethodContainer(){};
 };
 
 template <typename ExecutionPolicy>
@@ -205,8 +205,8 @@ class ParticleMethodContainer : public BaseMethodContainer
     UniquePtrsKeeper<BaseIO> other_io_keeper_;
 
   public:
-    ParticleMethodContainer(const ExecutionPolicy &ex_policy) : BaseMethodContainer() {};
-    virtual ~ParticleMethodContainer() {};
+    ParticleMethodContainer(const ExecutionPolicy &ex_policy) : BaseMethodContainer(){};
+    virtual ~ParticleMethodContainer(){};
 
     ParticleDynamicsGroup &addParticleDynamicsGroup()
     {
@@ -369,6 +369,17 @@ class ParticleMethodContainer : public BaseMethodContainer
 
     template <template <typename...> class InteractionType, typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addInteractionDynamics(
+        Interaction<RelationType<RelationParameters...>> &interaction, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
+            interaction, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
     auto &addInteractionDynamicsOneLevel(
         RelationType<RelationParameters...> &relation, Args &&...args)
     {
@@ -376,6 +387,17 @@ class ParticleMethodContainer : public BaseMethodContainer
             InteractionDynamicsCK<
                 ExecutionPolicy, InteractionType<RelationType<OneLevel, ControlParameters..., RelationParameters...>>>>(
             relation, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addInteractionDynamicsOneLevel(
+        Interaction<RelationType<RelationParameters...>> &interaction, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<RelationType<OneLevel, ControlParameters..., RelationParameters...>>>>(
+            interaction, std::forward<Args>(args)...);
     };
 
     template <template <typename...> class InteractionType, typename... ControlParameters,
@@ -391,6 +413,17 @@ class ParticleMethodContainer : public BaseMethodContainer
 
     template <template <typename...> class InteractionType, typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addInteractionDynamicsWithUpdate(
+        Interaction<RelationType<RelationParameters...>> &interaction, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<RelationType<WithUpdate, ControlParameters..., RelationParameters...>>>>(
+            interaction, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
     auto &addInteractionDynamicsWithInitialization(
         RelationType<RelationParameters...> &relation, Args &&...args)
     {
@@ -398,6 +431,17 @@ class ParticleMethodContainer : public BaseMethodContainer
             InteractionDynamicsCK<
                 ExecutionPolicy, InteractionType<RelationType<WithInitialization, ControlParameters..., RelationParameters...>>>>(
             relation, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addInteractionDynamicsWithInitialization(
+        Interaction<RelationType<RelationParameters...>> &interaction, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<RelationType<WithInitialization, ControlParameters..., RelationParameters...>>>>(
+            interaction, std::forward<Args>(args)...);
     };
 
     template <template <typename...> class InteractionType, typename... ControlParameters,
@@ -411,6 +455,19 @@ class ParticleMethodContainer : public BaseMethodContainer
                 InteractionType<RelationType<OneLevel, RungeKutta1stStage, ControlParameters..., RelationParameters...>>,
                 InteractionType<RelationType<OneLevel, RungeKutta2ndStage, ControlParameters..., RelationParameters...>>>>>(
             relation, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addRK2Sequence(
+        Interaction<RelationType<RelationParameters...>> &interaction, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            RungeKuttaSequence<InteractionDynamicsCK<
+                ExecutionPolicy,
+                InteractionType<RelationType<OneLevel, RungeKutta1stStage, ControlParameters..., RelationParameters...>>,
+                InteractionType<RelationType<OneLevel, RungeKutta2ndStage, ControlParameters..., RelationParameters...>>>>>(
+            interaction, std::forward<Args>(args)...);
     };
 
     template <template <typename...> class RecorderType, typename... Args>
