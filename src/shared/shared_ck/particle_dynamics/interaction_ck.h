@@ -102,6 +102,10 @@ class Interaction<Contact<Parameters...>>
 
   public:
     explicit Interaction(ContactRelationType &contact_relation);
+    template <class TargetIdentifier>
+    Interaction(ContactRelationType &contact_relation, const StdVec<TargetIdentifier *> &target_identifiers);
+    template <class TargetIdentifier>
+    Interaction(ContactRelationType &contact_relation, TargetIdentifier &target_identifiers);
     virtual ~Interaction(){};
 
     ContactRelationType &getRelation() { return *contact_relation_; }
@@ -129,6 +133,9 @@ class Interaction<Contact<Parameters...>>
     StdVec<SPHAdaptation *> contact_adaptations_;
     DiscreteVariable<Real> *dv_Vol_;
     StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
+    StdVec<UnsignedInt> contact_target_indices_;
+
+    UnsignedInt getContactIndex(UnsignedInt target_index);
 };
 
 template <>
