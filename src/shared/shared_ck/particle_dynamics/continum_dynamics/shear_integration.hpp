@@ -11,9 +11,10 @@ namespace continuum_dynamics
 {
 //====================================================================================//
 template <class MaterialType, typename... Parameters>
+template <class DynamicsIdentifier>
 ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
-    ShearIntegration(Inner<Parameters...> &inner_relation, Real xi, Real shear_stress_damping)
-    : BaseInteraction(inner_relation), ForcePriorCK(this->particles_, "ShearForce"),
+    ShearIntegration(DynamicsIdentifier &identifier, Real xi, Real shear_stress_damping)
+    : BaseInteraction(identifier), ForcePriorCK(this->particles_, "ShearForce"),
       material_(DynamicCast<MaterialType>(this, this->sph_body_->getMatterMaterial())),
       adaptation_(DynamicCast<Adaptation>(this, this->sph_body_->getSPHAdaptation())),
       h_ref_(adaptation_.ReferenceSmoothingLength()), shear_stress_damping_(shear_stress_damping),

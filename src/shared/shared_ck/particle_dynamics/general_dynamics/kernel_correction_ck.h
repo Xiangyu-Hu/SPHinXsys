@@ -50,7 +50,7 @@ class LinearCorrectionMatrix<Base, RelationType<Parameters...>>
   public:
     template <class DynamicsIdentifier>
     explicit LinearCorrectionMatrix(DynamicsIdentifier &identifier);
-    virtual ~LinearCorrectionMatrix() {};
+    virtual ~LinearCorrectionMatrix(){};
 
     class InteractKernel
         : public Interaction<RelationType<Parameters...>>::InteractKernel
@@ -76,12 +76,13 @@ class LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>
 {
 
   public:
-    explicit LinearCorrectionMatrix(Inner<Parameters...> &inner_relation, Real alpha = Real(0))
-        : LinearCorrectionMatrix<Base, Inner<Parameters...>>(inner_relation), alpha_(alpha) {};
+    template <class DynamicsIdentifier>
+    explicit LinearCorrectionMatrix(DynamicsIdentifier &identifier, Real alpha = Real(0))
+        : LinearCorrectionMatrix<Base, Inner<Parameters...>>(identifier), alpha_(alpha){};
     template <typename BodyRelationType, typename FirstArg>
     explicit LinearCorrectionMatrix(DynamicsArgs<BodyRelationType, FirstArg> parameters)
         : LinearCorrectionMatrix(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~LinearCorrectionMatrix() {};
+    virtual ~LinearCorrectionMatrix(){};
 
     class InteractKernel
         : public LinearCorrectionMatrix<Base, Inner<Parameters...>>::InteractKernel
@@ -116,8 +117,9 @@ class LinearCorrectionMatrix<Contact<Parameters...>>
     : public LinearCorrectionMatrix<Base, Contact<Parameters...>>
 {
   public:
-    explicit LinearCorrectionMatrix(Contact<Parameters...> &contact_relation);
-    virtual ~LinearCorrectionMatrix() {};
+    template <class DynamicsIdentifier>
+    explicit LinearCorrectionMatrix(DynamicsIdentifier &identifier);
+    virtual ~LinearCorrectionMatrix(){};
 
     class InteractKernel
         : public LinearCorrectionMatrix<Base, Contact<Parameters...>>::InteractKernel
@@ -140,7 +142,7 @@ class NoKernelCorrectionCK : public KernelCorrection
 {
   public:
     typedef Real CorrectionDataType;
-    NoKernelCorrectionCK(BaseParticles *particles) : KernelCorrection() {};
+    NoKernelCorrectionCK(BaseParticles *particles) : KernelCorrection(){};
 
     class ComputingKernel : public ParameterFixed<Real>
     {
@@ -158,7 +160,7 @@ class LinearCorrectionCK : public KernelCorrection
     typedef Matd CorrectionDataType;
     LinearCorrectionCK(BaseParticles *particles)
         : KernelCorrection(),
-          dv_B_(particles->getVariableByName<Matd>("LinearCorrectionMatrix")) {};
+          dv_B_(particles->getVariableByName<Matd>("LinearCorrectionMatrix")){};
 
     class ComputingKernel : public ParameterVariable<Matd>
     {

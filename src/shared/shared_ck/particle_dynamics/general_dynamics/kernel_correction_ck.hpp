@@ -66,9 +66,10 @@ void LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
 }
 //=================================================================================================//
 template <typename... Parameters>
+template <class DynamicsIdentifier>
 LinearCorrectionMatrix<Contact<Parameters...>>::
-    LinearCorrectionMatrix(Contact<Parameters...> &contact_relation)
-    : LinearCorrectionMatrix<Base, Contact<Parameters...>>(contact_relation) {}
+    LinearCorrectionMatrix(DynamicsIdentifier &identifier)
+    : LinearCorrectionMatrix<Base, Contact<Parameters...>>(identifier) {}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>

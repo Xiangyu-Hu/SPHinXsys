@@ -43,9 +43,10 @@ void LinearGradient<Inner<DataType, Parameters...>>::InteractKernel::interact(si
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
+template <class DynamicsIdentifier>
 LinearGradient<Contact<DataType, Parameters...>>::LinearGradient(
-    Contact<Parameters...> &contact_relation, const std::string &variable_name)
-    : BaseDynamicsType(contact_relation, variable_name)
+    DynamicsIdentifier &identifier, const std::string &variable_name)
+    : BaseDynamicsType(identifier, variable_name)
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
     {

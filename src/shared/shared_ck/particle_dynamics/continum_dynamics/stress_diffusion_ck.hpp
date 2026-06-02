@@ -9,8 +9,9 @@ namespace continuum_dynamics
 {
 //=================================================================================================//
 template <typename... Parameters>
-StressDiffusionCK<Inner<Parameters...>>::StressDiffusionCK(Inner<Parameters...> &inner_relation)
-    : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
+template <class DynamicsIdentifier>
+StressDiffusionCK<Inner<Parameters...>>::StressDiffusionCK(DynamicsIdentifier &identifier)
+    : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(identifier),
       dv_phi_(DynamicCast<PlasticContinuum>(this, this->plastic_continuum_).getFrictionAngle()),
       dv_smoothing_length_(this->getSPHAdaptation().ReferenceSmoothingLength()),
       dv_sound_speed_(this->plastic_continuum_.ReferenceSoundSpeed()),

@@ -52,8 +52,9 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
     using ConstituteKernel = typename MaterialType::ConstituteKernel;
 
   public:
-    explicit ShearIntegration(Inner<Parameters...> &inner_relation, Real xi = 2.0, Real shear_stress_damping = 0.0);
-    virtual ~ShearIntegration() {};
+    template <class DynamicsIdentifier>
+    explicit ShearIntegration(DynamicsIdentifier &identifier, Real xi = 2.0, Real shear_stress_damping = 0.0);
+    virtual ~ShearIntegration(){};
 
     class InitializeKernel
     {

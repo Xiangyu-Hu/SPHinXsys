@@ -47,9 +47,10 @@ void DisplacementMatrixGradient<Inner<Parameters...>>::
 }
 //=================================================================================================//
 template <typename... Parameters>
+template <class DynamicsIdentifier>
 DisplacementMatrixGradient<Contact<Parameters...>>::
-    DisplacementMatrixGradient(Contact<Parameters...> &contact_relation)
-    : BaseDynamicsType(contact_relation) {}
+    DisplacementMatrixGradient(DynamicsIdentifier &identifier)
+    : BaseDynamicsType(identifier) {}
 //=================================================================================================//
 template <typename... Parameters>
 void DisplacementMatrixGradient<Contact<Parameters...>>::
@@ -102,9 +103,10 @@ void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
 }
 //=================================================================================================//
 template <typename... Parameters>
+template <class DynamicsIdentifier>
 HessianCorrectionMatrix<Contact<Parameters...>>::
-    HessianCorrectionMatrix(Contact<Parameters...> &contact_relation)
-    : BaseDynamicsType(contact_relation) {}
+    HessianCorrectionMatrix(DynamicsIdentifier &identifier)
+    : BaseDynamicsType(identifier) {}
 //=================================================================================================//
 template <typename... Parameters>
 void HessianCorrectionMatrix<Contact<Parameters...>>::

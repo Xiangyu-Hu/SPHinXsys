@@ -48,8 +48,9 @@ class PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit PlasticAcousticStep2ndHalf(Inner<Parameters...> &inner_relation);
-    virtual ~PlasticAcousticStep2ndHalf() {};
+    template <class DynamicsIdentifier>
+    explicit PlasticAcousticStep2ndHalf(DynamicsIdentifier &identifier);
+    virtual ~PlasticAcousticStep2ndHalf(){};
 
     class InitializeKernel
     {
@@ -104,8 +105,9 @@ class PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit PlasticAcousticStep2ndHalf(Contact<Parameters...> &wall_contact_relation);
-    virtual ~PlasticAcousticStep2ndHalf() {};
+    template <class DynamicsIdentifier>
+    explicit PlasticAcousticStep2ndHalf(DynamicsIdentifier &identifier);
+    virtual ~PlasticAcousticStep2ndHalf(){};
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
