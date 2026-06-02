@@ -42,7 +42,7 @@ class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
 {
   public:
     explicit AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL = 0.6);
-    virtual ~AcousticTimeStepCK() {};
+    virtual ~AcousticTimeStepCK(){};
 
     class FinishDynamics
     {
@@ -78,7 +78,7 @@ class StructureDynamicsVariables
 {
   public:
     explicit StructureDynamicsVariables(BaseParticles *particles);
-    virtual ~StructureDynamicsVariables() {};
+    virtual ~StructureDynamicsVariables(){};
 
   protected:
     DiscreteVariable<Real> *dv_rho_, *dv_mass_;
@@ -91,7 +91,7 @@ class BaseStructureIntegration1stHalf : public StructureDynamicsVariables
 {
   public:
     explicit BaseStructureIntegration1stHalf(BaseParticles *particles);
-    virtual ~BaseStructureIntegration1stHalf() {};
+    virtual ~BaseStructureIntegration1stHalf(){};
 
     class UpdateKernel
     {
@@ -123,8 +123,9 @@ class StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrection
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit StructureIntegration1stHalf(Inner<Parameters...> &inner_relation, Real numerical_damping_factor = 0.125);
-    virtual ~StructureIntegration1stHalf() {};
+    template <class DynamicsIdentifier>
+    explicit StructureIntegration1stHalf(DynamicsIdentifier &identifier, Real numerical_damping_factor = 0.125);
+    virtual ~StructureIntegration1stHalf(){};
 
     class InitializeKernel
     {
@@ -176,8 +177,9 @@ class StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...
     using ConstituteKernel = typename MaterialType::ConstituteKernel;
 
   public:
-    explicit StructureIntegration1stHalfPK2(Inner<Parameters...> &inner_relation);
-    virtual ~StructureIntegration1stHalfPK2() {};
+    template <class DynamicsIdentifier>
+    explicit StructureIntegration1stHalfPK2(DynamicsIdentifier &identifier);
+    virtual ~StructureIntegration1stHalfPK2(){};
 
     class InitializeKernel
     {
@@ -222,8 +224,9 @@ class StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>
     using BaseInteraction = Interaction<Inner<Parameters...>>;
 
   public:
-    explicit StructureIntegration2ndHalf(Inner<Parameters...> &inner_relation);
-    virtual ~StructureIntegration2ndHalf() {};
+    template <class DynamicsIdentifier>
+    explicit StructureIntegration2ndHalf(DynamicsIdentifier &identifier);
+    virtual ~StructureIntegration2ndHalf(){};
 
     class InitializeKernel
     {
@@ -276,8 +279,9 @@ class StructureNumericalDamping<Inner<WithUpdate, MaterialType, Parameters...>>
     using ConstituteKernel = typename MaterialType::ConstituteKernel;
 
   public:
-    explicit StructureNumericalDamping(Inner<Parameters...> &inner_relation, Real numerical_damping_factor = 0.25);
-    virtual ~StructureNumericalDamping() {};
+    template <class DynamicsIdentifier>
+    explicit StructureNumericalDamping(DynamicsIdentifier &identifier, Real numerical_damping_factor = 0.25);
+    virtual ~StructureNumericalDamping(){};
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
@@ -307,7 +311,7 @@ class UpdateElasticNormalDirectionCK : public LocalDynamics
 {
   public:
     explicit UpdateElasticNormalDirectionCK(SPHBody &sph_body);
-    virtual ~UpdateElasticNormalDirectionCK() {};
+    virtual ~UpdateElasticNormalDirectionCK(){};
     class UpdateKernel
     {
       public:
@@ -331,7 +335,7 @@ class UpdateAnisotropicMeasure : public LocalDynamics
 {
   public:
     explicit UpdateAnisotropicMeasure(SPHBody &sph_body);
-    virtual ~UpdateAnisotropicMeasure() {};
+    virtual ~UpdateAnisotropicMeasure(){};
     class UpdateKernel
     {
       public:

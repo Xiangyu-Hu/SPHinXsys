@@ -105,6 +105,7 @@ class Interaction<Contact<Parameters...>>
     ContactRelationType *contact_relation_;
 
   public:
+    explicit Interaction(const RelationView<ContactRelationType> &contact_relation_view);
     explicit Interaction(ContactRelationType &contact_relation);
     virtual ~Interaction(){};
 
@@ -121,6 +122,7 @@ class Interaction<Contact<Parameters...>>
     void resetComputingKernelUpdated(UnsignedInt contact_index);
 
   protected:
+    RelationView<ContactRelationType> contact_relation_view_;
     StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;

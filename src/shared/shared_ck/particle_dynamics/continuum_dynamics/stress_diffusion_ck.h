@@ -49,8 +49,9 @@ class StressDiffusionCK<Inner<Parameters...>> : public PlasticAcousticStep<Inter
     using BaseInteraction = PlasticAcousticStep<Interaction<Inner<Parameters...>>>;
 
   public:
-    explicit StressDiffusionCK(Inner<Parameters...> &inner_relation);
-    virtual ~StressDiffusionCK() {};
+    template <class DynamicsIdentifier>
+    explicit StressDiffusionCK(DynamicsIdentifier &identifier);
+    virtual ~StressDiffusionCK(){};
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {

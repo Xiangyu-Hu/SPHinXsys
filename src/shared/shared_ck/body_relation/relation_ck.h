@@ -142,43 +142,6 @@ class Inner<> : public Inner<Relation<RealBody>>
 };
 
 template <typename SourceIdentifier, class TargetIdentifier>
-class RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>
-{
-    using RelationType = Relation<SourceIdentifier, TargetIdentifier>;
-    using NeighborList = typename RelationType::NeighborList;
-    using Neighborhood = typename RelationType::NeighborhoodType;
-
-  public:
-    RelationView(Contact<Relation<SourceIdentifier, TargetIdentifier>> &contact_relation);
-    RelationView(Contact<Relation<SourceIdentifier, TargetIdentifier>> &contact_relation,
-                 StdVec<TargetIdentifier *> contact_identifiers);
-    RelationView(Contact<Relation<SourceIdentifier, TargetIdentifier>> &contact_relation,
-                 TargetIdentifier &contact_identifier);
-    StdVec<SPHBody *> getContactBodies() { return contact_bodies_; };
-    StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
-    StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
-
-    NeighborList getNeighborList(UnsignedInt target_index)
-    {
-        return NeighborList(contact_relation_, contact_target_indices_[target_index]);
-    };
-
-    Neighborhood &getNeighborhood(UnsignedInt target_index)
-    {
-        return contact_relation_.getNeighborhood(contact_target_indices_[target_index]);
-    };
-    void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index);
-    void resetComputingKernelUpdated(UnsignedInt target_index);
-
-  protected:
-    Contact<Relation<SourceIdentifier, TargetIdentifier>> *contact_relation_;
-    StdVec<SPHBody *> contact_bodies_;
-    StdVec<BaseParticles *> contact_particles_;
-    StdVec<SPHAdaptation *> contact_adaptations_;
-    StdVec<UnsignedInt> contact_target_indices_;
-};
-
-template <typename SourceIdentifier, class TargetIdentifier>
 class Contact<Relation<SourceIdentifier, TargetIdentifier>> : public Relation<SourceIdentifier, TargetIdentifier>
 {
   public:
@@ -214,5 +177,55 @@ class Contact<> : public Contact<Relation<SPHBody, RealBody>>
         : Contact<Relation<SPHBody, RealBody>>(sph_body, contact_bodies, std::forward<Args>(args)...) {}
     virtual ~Contact(){};
 };
+
+template <typename...>
+class RelationView;
+
+template <typename... Parameters>
+class RelationView<Contact<Parameters...>>
+{
+    using RelationType = Contact<Parameters...>;
+    using NeighborList = typename RelationType::NeighborList;
+    using Neighborhood = typename RelationType::NeighborhoodType;
+
+  public:
+    RelationView(Contact<Parameters...> &contact_relation);
+    template <class TargetIdentifier>
+    RelationView(Contact<Parameters...> &contact_relation, StdVec<TargetIdentifier *> contact_identifiers);
+    template <class TargetIdentifier>
+    RelationView(Contact<Parameters...> &contact_relation,
+                 TargetIdentifier &contact_identifier);
+    Contact<Parameters...> &getContactRelation() const { return *contact_relation_; };
+    StdVec<SPHBody *> getContactBodies() const { return contact_bodies_; };
+    StdVec<BaseParticles *> getContactParticles() const { return contact_particles_; };
+    StdVec<SPHAdaptation *> getContactAdaptations() const { return contact_adaptations_; };
+
+    template <class ExecutionPolicy>
+    NeighborList getNeighborList(const ExecutionPolicy &ex_policy, UnsignedInt target_index)
+    {
+        return NeighborList(ex_policy, *contact_relation_, contact_target_indices_[target_index]);
+    };
+
+    Neighborhood &getNeighborhood(UnsignedInt target_index)
+    {
+        return contact_relation_->getNeighborhood(contact_target_indices_[target_index]);
+    };
+
+    void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index);
+    void resetComputingKernelUpdated(UnsignedInt target_index);
+
+  protected:
+    Contact<Parameters...> *contact_relation_;
+    StdVec<SPHBody *> contact_bodies_;
+    StdVec<BaseParticles *> contact_particles_;
+    StdVec<SPHAdaptation *> contact_adaptations_;
+    StdVec<UnsignedInt> contact_target_indices_;
+};
+
+template <template <typename...> class RelationType, typename... Parameters, typename... Args>
+auto makeRelationView(RelationType<Parameters...> &relation, Args &&...args)
+{
+    return RelationView<RelationType<Parameters...>>(relation, std::forward<Args>(args)...);
+}
 } // namespace SPH
 #endif // RELATION_CK_H
