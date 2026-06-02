@@ -93,66 +93,6 @@ Inner<Relation<DynamicsIdentifier>>::
       identifier_(&identifier) {}
 //=================================================================================================//
 template <typename SourceIdentifier, class TargetIdentifier>
-RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>::
-    RelationView(Contact<Relation<SourceIdentifier, TargetIdentifier>> &contact_relation)
-    : contact_relation_(&contact_relation),
-      contact_bodies_(contact_relation.getContactBodies()),
-      contact_particles_(contact_relation.getContactParticles()),
-      contact_adaptations_(contact_relation.getContactAdaptations())
-{
-    for (size_t k = 0; k != contact_bodies_.size(); ++k)
-    {
-        contact_target_indices_.push_back(k);
-    }
-}
-//=================================================================================================//
-template <typename SourceIdentifier, class TargetIdentifier>
-RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>::
-    RelationView(Contact<Relation<SourceIdentifier, TargetIdentifier>> &contact_relation,
-                 StdVec<TargetIdentifier *> contact_identifiers)
-    : contact_relation_(&contact_relation)
-{
-    StdVec<SPHBody *> all_contact_bodies = contact_relation.getContactBodies();
-    StdVec<BaseParticles *> all_contact_particles = contact_relation.getContactParticles();
-    StdVec<SPHAdaptation *> all_contact_adaptations = contact_relation.getContactAdaptations();
-    for (size_t k = 0; k != contact_identifiers.size(); ++k)
-    {
-        TargetIdentifier *target_identifier = contact_identifiers[k];
-        for (size_t j = 0; j != all_contact_bodies.size(); ++j)
-        {
-            if (all_contact_bodies[j]->Name() == target_identifier->Name())
-            {
-                contact_bodies_.push_back(all_contact_bodies[j]);
-                contact_particles_.push_back(all_contact_particles[j]);
-                contact_adaptations_.push_back(all_contact_adaptations[j]);
-                contact_target_indices_.push_back(j);
-                break;
-            }
-        }
-    }
-}
-//=================================================================================================//
-template <typename SourceIdentifier, class TargetIdentifier>
-RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>::
-    RelationView(Contact<Relation<SourceIdentifier, TargetIdentifier>> &contact_relation,
-                 TargetIdentifier &contact_identifiers)
-    : RelationView(contact_relation, StdVec<TargetIdentifier *>{&contact_identifiers}) {}
-//=================================================================================================//
-template <typename SourceIdentifier, class TargetIdentifier>
-void RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>::
-    registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index)
-{
-    contact_relation_->registerComputingKernel(implementation, contact_target_indices_[target_index]);
-}
-//=================================================================================================//
-template <typename SourceIdentifier, class TargetIdentifier>
-void RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>>::
-    resetComputingKernelUpdated(UnsignedInt target_index)
-{
-    contact_relation_->resetComputingKernelUpdated(contact_target_indices_[target_index]);
-}
-//=================================================================================================//
-template <typename SourceIdentifier, class TargetIdentifier>
 Contact<Relation<SourceIdentifier, TargetIdentifier>>::Contact(
     SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, ConfigType config_type)
     : Relation<SourceIdentifier, TargetIdentifier>(source_identifier, contact_identifiers, config_type),

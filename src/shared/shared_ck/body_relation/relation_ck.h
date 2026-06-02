@@ -45,9 +45,6 @@ enum class ConfigType
 template <typename...>
 class Relation;
 
-template <typename...>
-class RelationView;
-
 class RelationBase
 {
   public:
@@ -157,8 +154,6 @@ class Contact<Relation<SourceIdentifier, TargetIdentifier>> : public Relation<So
     BaseParticles &getContactParticles(UnsignedInt target_index) { return *contact_particles_[target_index]; };
     SPHAdaptation &getContactAdaptation(UnsignedInt target_index) { return *contact_adaptations_[target_index]; };
     TargetIdentifier &getContactIdentifier(UnsignedInt target_index) { return *contact_identifiers_[target_index]; };
-    template <typename... Args>
-    RelationView<Contact<Relation<SourceIdentifier, TargetIdentifier>>> getRelationView(Args &&...args);
 
   protected:
     SourceIdentifier *source_identifier_;
