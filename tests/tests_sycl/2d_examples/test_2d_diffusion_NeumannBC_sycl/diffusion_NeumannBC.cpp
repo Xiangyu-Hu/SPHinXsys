@@ -159,8 +159,8 @@ int main(int ac, char *av[])
     UpdateRelation<MainExecutionPolicy, Contact<>> observer_contact_relation(temperature_observer_contact);
 
     IsotropicDiffusion isotropic_diffusion(species_name, diffusion_coeff);
-    auto interaction_dirichlet = makeInteraction(diffusion_body_contact, wall_Dirichlet);
-    auto interaction_neumann = makeInteraction(diffusion_body_contact, wall_Neumann);
+    auto contact_dirichlet_view = makeRelationView(diffusion_body_contact, wall_Dirichlet);
+    auto contact_neumann_view = makeRelationView(diffusion_body_contact, wall_Neumann);
 
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, &isotropic_diffusion);
     RungeKuttaSequence<InteractionDynamicsCK<
@@ -174,8 +174,8 @@ int main(int ac, char *av[])
             Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>,
             Contact<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>>>>
         diffusion_relaxation_rk2(DynamicsArgs(diffusion_body_inner, &isotropic_diffusion),
-                                 DynamicsArgs(interaction_dirichlet, &isotropic_diffusion),
-                                 DynamicsArgs(interaction_neumann, &isotropic_diffusion));
+                                 DynamicsArgs(contact_dirichlet_view, &isotropic_diffusion),
+                                 DynamicsArgs(contact_neumann_view, &isotropic_diffusion));
     //----------------------------------------------------------------------
     //	Specify initial condition if necessary.
     //----------------------------------------------------------------------

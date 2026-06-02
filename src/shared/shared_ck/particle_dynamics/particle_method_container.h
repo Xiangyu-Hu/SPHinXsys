@@ -370,7 +370,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     template <template <typename...> class InteractionType, typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
     auto &addInteractionDynamics(
-        Interaction<RelationType<RelationParameters...>> &interaction, Args &&...args)
+        RelationView<RelationType<RelationParameters...>> &interaction, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
             InteractionDynamicsCK<
@@ -392,7 +392,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     template <template <typename...> class InteractionType, typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
     auto &addInteractionDynamicsOneLevel(
-        Interaction<RelationType<RelationParameters...>> &interaction, Args &&...args)
+        RelationView<RelationType<RelationParameters...>> &interaction, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
             InteractionDynamicsCK<
@@ -414,7 +414,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     template <template <typename...> class InteractionType, typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
     auto &addInteractionDynamicsWithUpdate(
-        Interaction<RelationType<RelationParameters...>> &interaction, Args &&...args)
+        RelationView<RelationType<RelationParameters...>> &interaction, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
             InteractionDynamicsCK<
@@ -436,7 +436,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     template <template <typename...> class InteractionType, typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
     auto &addInteractionDynamicsWithInitialization(
-        Interaction<RelationType<RelationParameters...>> &interaction, Args &&...args)
+        RelationView<RelationType<RelationParameters...>> &interaction, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
             InteractionDynamicsCK<
@@ -460,7 +460,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     template <template <typename...> class InteractionType, typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
     auto &addRK2Sequence(
-        Interaction<RelationType<RelationParameters...>> &interaction, Args &&...args)
+        RelationView<RelationType<RelationParameters...>> &interaction, Args &&...args)
     {
         return *particle_dynamics_keeper_.createPtr<
             RungeKuttaSequence<InteractionDynamicsCK<

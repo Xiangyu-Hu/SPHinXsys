@@ -71,9 +71,6 @@ class Interaction<Inner<Parameters...>>
     explicit Interaction(InnerRelationType &inner_relation);
     virtual ~Interaction(){};
 
-    InnerRelationType &getRelation() { return *inner_relation_; }
-    const InnerRelationType &getRelation() const { return *inner_relation_; }
-
     class InteractKernel : public NeighborList, public NeighborKernel
     {
       public:
@@ -101,18 +98,9 @@ class Interaction<Contact<Parameters...>>
     using NeighborKernel = typename Neighborhood::NeighborKernel;
 
   public:
+    explicit Interaction(const RelationView<ContactRelationType> &contact_relation_view);
     explicit Interaction(ContactRelationType &contact_relation);
-    template <class TargetIdentifier>
-    Interaction(ContactRelationType &contact_relation, const StdVec<TargetIdentifier *> &target_identifiers);
-    template <class TargetIdentifier>
-    Interaction(ContactRelationType &contact_relation, TargetIdentifier &target_identifiers);
     virtual ~Interaction(){};
-
-    ContactRelationType &getRelation() { return *contact_relation_; }
-    const ContactRelationType &getRelation() const { return *contact_relation_; }
-    const StdVec<SPHBody *> &getContactBodies() const { return contact_bodies_; }
-    const StdVec<BaseParticles *> &getContactParticles() const { return contact_particles_; }
-    const StdVec<SPHAdaptation *> &getContactAdaptations() const { return contact_adaptations_; }
 
     class InteractKernel : public NeighborList, public NeighborKernel
     {
@@ -127,40 +115,13 @@ class Interaction<Contact<Parameters...>>
     void resetComputingKernelUpdated(UnsignedInt contact_index);
 
   protected:
-    ContactRelationType *contact_relation_;
+    RelationView<ContactRelationType> contact_relation_view_;
     StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
     DiscreteVariable<Real> *dv_Vol_;
     StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
-    StdVec<UnsignedInt> contact_target_indices_;
-
-    UnsignedInt getContactIndex(UnsignedInt target_index);
 };
-
-template <typename... P, typename... Args>
-auto makeInteraction(Inner<P...> &relation, Args &&...args)
-{
-    return Interaction<Inner<P...>>(relation, std::forward<Args>(args)...);
-}
-
-template <typename... P, typename... Args>
-auto makeInteraction(Contact<P...> &relation, Args &&...args)
-{
-    return Interaction<Contact<P...>>(relation, std::forward<Args>(args)...);
-}
-
-template <typename... P>
-Interaction<Inner<P...>> &asInteraction(Interaction<Inner<P...>> &view)
-{
-    return view;
-}
-
-template <typename... P>
-Interaction<Contact<P...>> &asInteraction(Interaction<Contact<P...>> &view)
-{
-    return view;
-}
 
 template <>
 class Interaction<Wall>
