@@ -53,7 +53,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : eos_(encloser.fluid_),
+    : eos_(ex_policy, encloser.fluid_),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       p_(encloser.dv_p_->DelegatedData(ex_policy)),
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
@@ -65,7 +65,7 @@ void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
     InitializeKernel::initialize(size_t index_i, Real dt)
 {
     rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
-    p_[index_i] = eos_.getPressure(rho_[index_i]);
+    p_[index_i] = eos_.PressureFromDensity(index_i, rho_[index_i]);
     dpos_[index_i] += vel_[index_i] * dt * 0.5;
 }
 //=================================================================================================//

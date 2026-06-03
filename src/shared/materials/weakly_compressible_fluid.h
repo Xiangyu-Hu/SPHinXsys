@@ -43,38 +43,44 @@ namespace SPH
 class WeaklyCompressibleFluid : public Fluid
 {
   protected:
-    Real p0_; /**< reference pressure */
+    Real rho0_; /**< reference density. */
+    Real c0_;   /**< reference sound speed. */
+    Real p0_;   /**< reference pressure */
+
   public:
     explicit WeaklyCompressibleFluid(Real rho0, Real c0);
     explicit WeaklyCompressibleFluid(ConstructArgs<Real, Real> args);
-    virtual ~WeaklyCompressibleFluid() {};
-
+    virtual ~WeaklyCompressibleFluid(){};
+    virtual Real ReferenceDensity() override { return rho0_; };
+    virtual Real ReferenceSoundSpeed() override { return c0_; };
     virtual Real getPressure(Real rho) override;
     virtual Real DensityFromPressure(Real p) override;
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
 
-    class EosKernel : public Fluid::EosKernel
+    class EosKernel
     {
       public:
-        EosKernel(WeaklyCompressibleFluid &encloser);
+        template <class ExecutionPolicy, class EnclosureType>
+        EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser)
+            : rho0_(encloser.rho0_), p0_(encloser.p0_), c0_(encloser.c0_){};
 
-        Real getPressure(Real rho)
+        Real PressureFromDensity(UnsignedInt, Real rho)
         {
             return p0_ * (rho / rho0_ - 1.0);
         };
 
-        Real DensityFromPressure(Real p)
+        Real DensityFromPressure(UnsignedInt, Real p)
         {
             return rho0_ * (p / p0_ + 1.0);
         };
 
-        Real getSoundSpeed(Real p = 0.0, Real rho = 1.0)
+        Real getSoundSpeed(UnsignedInt, Real, Real)
         {
             return c0_;
         };
 
       protected:
-        Real p0_;
+        Real rho0_, p0_, c0_;
     };
 };
 } // namespace SPH

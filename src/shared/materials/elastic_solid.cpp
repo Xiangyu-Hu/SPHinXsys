@@ -292,6 +292,7 @@ void LocallyOrthotropicMuscle::registerLocalParameters(BaseParticles *base_parti
     local_f0_ = base_particles->registerStateVariableData<Vecd>("Fiber");
     local_s0_ = base_particles->registerStateVariableData<Vecd>("Sheet");
 }
+//=================================================================================================//
 void LocallyOrthotropicMuscle::registerLocalParametersFromReload(BaseParticles *base_particles)
 {
     Muscle::registerLocalParametersFromReload(base_particles);

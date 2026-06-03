@@ -51,7 +51,7 @@ template <class ConditionType>
 template <class ExecutionPolicy, class EncloserType>
 BufferInflowInjectionCK<ConditionType>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : part_id_(encloser.part_id_), eos_(encloser.fluid_), condition_(encloser.condition_),
+    : part_id_(encloser.part_id_), eos_(ex_policy, encloser.fluid_), condition_(encloser.condition_),
       oriented_box_(encloser.sv_oriented_box_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       spawn_real_particle_(ex_policy, encloser.spawn_real_particle_method_),

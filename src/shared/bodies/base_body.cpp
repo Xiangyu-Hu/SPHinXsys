@@ -16,7 +16,6 @@ SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
       base_particles_(nullptr), is_bound_set_(false), initial_shape_(&shape),
       sph_adaptation_(sph_adaptation_keeper_.createPtr<SPHAdaptation>(sph_system.GlobalResolution()))
 {
-    all_material_properties_.push_back(matter_material_keeper_.createPtr<MatterMaterial>());
     sph_system_.addSPHBody(this);
 }
 //=================================================================================================//
@@ -76,7 +75,8 @@ BaseParticles &SPHBody::getBaseParticles()
 //=================================================================================================//
 MatterMaterial &SPHBody::getMatterMaterial()
 {
-    return DynamicCast<MatterMaterial>(this, *matter_material_keeper_.getPtr());
+    checkPointer(matter_keeper_.getPtr(), "matter material", body_name_);
+    return DynamicCast<MatterMaterial>(this, *matter_keeper_.getPtr());
 };
 //=================================================================================================//
 void SPHBody::setSPHBodyBounds(const BoundingBoxd &bound)
