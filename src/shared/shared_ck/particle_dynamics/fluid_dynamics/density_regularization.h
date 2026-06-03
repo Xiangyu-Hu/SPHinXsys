@@ -52,19 +52,8 @@ class DensitySummationCK<Base, RelationType<Parameters...>>
     explicit DensitySummationCK(DynamicsIdentifier &identifier);
     virtual ~DensitySummationCK(){};
 
-    class InteractKernel : public Interaction<RelationType<Parameters...>>::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, class Encloser, typename... Args>
-        InteractKernel(const ExecutionPolicy &ex_policy, Encloser &encloser, Args &&...args);
-
-      protected:
-        Real *rho_, *mass_, *rho_sum_, *Vol_;
-        Real rho0_;
-    };
-
   protected:
-    DiscreteVariable<Real> *dv_rho_, *dv_mass_, *dv_rho_sum_;
+    DiscreteVariable<Real> *dv_mass_, *dv_rho_sum_;
     Real rho0_;
 };
 
@@ -72,13 +61,14 @@ template <typename... Parameters>
 class DensitySummationCK<Inner<Parameters...>>
     : public DensitySummationCK<Base, Inner<Parameters...>>
 {
+    using BaseInteraction = DensitySummationCK<Base, Inner<Parameters...>>;
+
   public:
     template <class DynamicsIdentifier>
     explicit DensitySummationCK(DynamicsIdentifier &identifier);
     virtual ~DensitySummationCK(){};
 
-    class InteractKernel
-        : public DensitySummationCK<Base, Inner<Parameters...>>::InteractKernel
+    class InteractKernel : public BaseInteraction::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class Encloser>
@@ -86,6 +76,7 @@ class DensitySummationCK<Inner<Parameters...>>
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
+        DataView<Real> mass_, rho_sum_;
         Vecd zero_;
     };
 };
@@ -94,13 +85,14 @@ template <typename... Parameters>
 class DensitySummationCK<Contact<Parameters...>>
     : public DensitySummationCK<Base, Contact<Parameters...>>
 {
+    using BaseInteraction = DensitySummationCK<Base, Contact<Parameters...>>;
+
   public:
     template <class DynamicsIdentifier>
     explicit DensitySummationCK(DynamicsIdentifier &identifier);
     virtual ~DensitySummationCK(){};
 
-    class InteractKernel
-        : public DensitySummationCK<Base, Contact<Parameters...>>::InteractKernel
+    class InteractKernel : public BaseInteraction::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class Encloser>
@@ -108,8 +100,9 @@ class DensitySummationCK<Contact<Parameters...>>
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        Real contact_inv_rho0_k_;
-        Real *contact_mass_k_;
+        Real rho0_;
+        Real contact_inv_rho0_;
+        DataView<Real> rho_sum_, contact_mass_;
     };
 
   protected:
