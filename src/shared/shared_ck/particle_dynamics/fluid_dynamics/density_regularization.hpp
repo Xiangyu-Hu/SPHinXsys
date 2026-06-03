@@ -98,7 +98,7 @@ DensityRegularization<DynamicsIdentifier, FlowType, ParticleScopes...>::
       rho0_(this->sph_body_->getMatterMaterial().ReferenceDensity()),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_rho_sum_(this->particles_->template getVariableByName<Real>("DensitySummation")),
-      regularization_method_(this->particles_), within_scope_method_(this->particles_)
+      regularization_method_(*this), within_scope_method_(this->particles_)
 {
     static_assert(std::is_base_of<WithinScope, ParticleScopeTypeCK<ParticleScopes...>>::value,
                   "WithinScope is not the base of ParticleScope!");
@@ -111,8 +111,8 @@ DensityRegularization<DynamicsIdentifier, FlowType, ParticleScopes...>::UpdateKe
     : rho0_(encloser.rho0_),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       rho_sum_(encloser.dv_rho_sum_->DelegatedData(ex_policy)),
-      regularization_(ex_policy, encloser.regularization_method_, *this),
-      particle_scope_(ex_policy, encloser.within_scope_method_, *this) {}
+      regularization_(ex_policy, encloser.regularization_method_),
+      particle_scope_(ex_policy, encloser.within_scope_method_) {}
 //=================================================================================================//
 template <class DynamicsIdentifier, class FlowType, typename... ParticleScopes>
 void DensityRegularization<DynamicsIdentifier, FlowType, ParticleScopes...>::

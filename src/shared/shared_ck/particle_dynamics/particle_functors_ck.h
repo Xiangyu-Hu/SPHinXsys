@@ -56,9 +56,8 @@ class ParticleScopeTypeCK<> : public WithinScope
     {
       public:
         // The signature typically follows the style of other SPH "ComputingKernel" constructors
-        template <class ExecutionPolicy, class ComputingKernelType>
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        ParticleScopeTypeCK<> &encloser, ComputingKernelType &computing_kernel){};
+        template <class ExecutionPolicy, class EnclosureType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser){};
 
         constexpr bool operator()(size_t /*index_i*/) const
         {
@@ -85,10 +84,8 @@ class ParticleScopeTypeCK<BulkParticles> : public WithinScope
     {
       public:
         // Typically, we pass the "encloser" object to get the pointer from dv_indicator_
-        template <class ExecutionPolicy, class ComputingKernelType>
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        ParticleScopeTypeCK<BulkParticles> &encloser,
-                        ComputingKernelType &computing_kernel)
+        template <class ExecutionPolicy, class EnclosureType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser)
             : indicator_(encloser.dv_indicator_->DelegatedData(ex_policy))
         {
         }
@@ -114,17 +111,13 @@ class ParticleScopeTypeCK<NotIndicatedParticles<INDICATOR>> : public WithinScope
   public:
     explicit ParticleScopeTypeCK(BaseParticles *particles)
         : WithinScope(),
-          dv_indicator_(particles->getVariableByName<int>("Indicator"))
-    {
-    }
+          dv_indicator_(particles->getVariableByName<int>("Indicator")) {}
 
     class ComputingKernel
     {
       public:
-        template <class ExecutionPolicy, class ComputingKernelType>
-        ComputingKernel(const ExecutionPolicy &ex_policy,
-                        ParticleScopeTypeCK<NotIndicatedParticles<INDICATOR>> &encloser,
-                        ComputingKernelType &computing_kernel)
+        template <class ExecutionPolicy, class EnclosureType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser)
             : indicator_(encloser.dv_indicator_->DelegatedData(ex_policy))
         {
         }
@@ -158,13 +151,11 @@ class ParticleScopeTypeCK<ExcludeBufferParticles> : public WithinScope
     class ComputingKernel
     {
       public:
-        template <class ExecutionPolicy, class ComputingKernelType>
+        template <class ExecutionPolicy, class EnclosureType>
         ComputingKernel(const ExecutionPolicy &ex_policy,
-                        ParticleScopeTypeCK<ExcludeBufferParticles> &encloser,
-                        ComputingKernelType &computing_kernel)
-            : buffer_particles_indicator_(encloser.dv_buffer_particles_indicator_->DelegatedData(ex_policy))
-        {
-        }
+                        EnclosureType &encloser)
+            : buffer_particles_indicator_(
+                  encloser.dv_buffer_particles_indicator_->DelegatedData(ex_policy)) {}
 
         bool operator()(size_t index_i) const
         {
