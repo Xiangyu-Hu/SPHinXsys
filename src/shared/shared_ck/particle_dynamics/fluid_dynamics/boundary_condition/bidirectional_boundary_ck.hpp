@@ -75,7 +75,7 @@ void BufferInflowInjectionCK<ConditionType>::UpdateKernel::update(size_t index_i
             buffer_indicator_[new_particle_index] = 0;
             pos_[index_i] = oriented_box_->getUpperPeriodic(pos_[index_i]);
             p_[index_i] = condition_.getPressure(p_[index_i], *physical_time_);
-            rho_[index_i] = eos_.DensityFromPressure(p_[index_i]);
+            rho_[index_i] = eos_.DensityFromPressure(index_i, p_[index_i]);
         }
     }
 }
