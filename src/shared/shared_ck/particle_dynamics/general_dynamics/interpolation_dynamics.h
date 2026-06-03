@@ -52,13 +52,15 @@ template <typename DataType, typename... Parameters>
 class Interpolation<Contact<Base, DataType, Parameters...>> : public Interaction<Contact<Parameters...>>
 {
   public:
-    Interpolation(Contact<Parameters...> &pair_contact_relation, const std::string &variable_name);
-    Interpolation(Contact<Parameters...> &pair_contact_relation,
+    template <class DynamicsIdentifier>
+    Interpolation(DynamicsIdentifier &identifier, const std::string &variable_name);
+    template <class DynamicsIdentifier>
+    Interpolation(DynamicsIdentifier &identifier,
                   const std::string &variable_name, const std::string &entry_name);
     template <typename BodyRelationType, typename FirstArg>
     explicit Interpolation(DynamicsArgs<BodyRelationType, FirstArg> parameters)
         : Interpolation(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~Interpolation() {};
+    virtual ~Interpolation(){};
     DiscreteVariable<DataType> *dvInterpolatedQuantities() { return dv_interpolated_quantities_; };
 
   protected:
@@ -134,7 +136,7 @@ class ObservingQuantityCK : public InteractionDynamicsCK<ExecutionPolicy, Interp
   public:
     template <typename... Args>
     ObservingQuantityCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
-    virtual ~ObservingQuantityCK() {};
+    virtual ~ObservingQuantityCK(){};
 };
 } // namespace SPH
 #endif // INTERPOLATION_DYNAMICS_H

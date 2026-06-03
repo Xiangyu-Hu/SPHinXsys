@@ -73,7 +73,8 @@ class DensitySummationCK<Inner<Parameters...>>
     : public DensitySummationCK<Base, Inner<Parameters...>>
 {
   public:
-    explicit DensitySummationCK(Inner<Parameters...> &inner_relation);
+    template <class DynamicsIdentifier>
+    explicit DensitySummationCK(DynamicsIdentifier &identifier);
     virtual ~DensitySummationCK(){};
 
     class InteractKernel
@@ -94,7 +95,8 @@ class DensitySummationCK<Contact<Parameters...>>
     : public DensitySummationCK<Base, Contact<Parameters...>>
 {
   public:
-    explicit DensitySummationCK(Contact<Parameters...> &contact_relation);
+    template <class DynamicsIdentifier>
+    explicit DensitySummationCK(DynamicsIdentifier &identifier);
     virtual ~DensitySummationCK(){};
 
     class InteractKernel
@@ -119,6 +121,72 @@ class DensitySummationCK<Contact<Parameters...>>
 //------------------------------------------------------------------
 template <typename...>
 class Regularization;
+
+template <>
+class Regularization<Internal>
+{
+  public:
+    Regularization(BaseParticles *particles){};
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class ComputingKernelType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        Regularization<Internal> &encloser,
+                        ComputingKernelType &computing_kernel){};
+
+        Real operator()(UnsignedInt index_i, Real &rho_sum) { return rho_sum; };
+    };
+};
+
+template <>
+class Regularization<FreeSurface>
+{
+  public:
+    Regularization(BaseParticles *particles){};
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class ComputingKernelType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        Regularization<FreeSurface> &encloser,
+                        ComputingKernelType &computing_kernel)
+            : rho0_(computing_kernel.InitialDensity()){};
+
+        Real operator()(UnsignedInt index_i, Real &rho_sum) { return SMAX(rho_sum, rho0_); };
+
+      protected:
+        Real rho0_;
+    };
+};
+
+template <>
+class Regularization<FreeStream>
+{
+    DiscreteVariable<int> *dv_indicator_;
+
+  public:
+    Regularization(BaseParticles *particles)
+        : dv_indicator_(particles->getVariableByName<int>("Indicator")){};
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class ComputingKernelType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        Regularization<FreeStream> &encloser, ComputingKernelType &computing_kernel)
+            : rho0_(computing_kernel.InitialDensity()),
+              indicator_(encloser.dv_indicator_->DelegatedData(ex_policy)){};
+
+        Real operator()(UnsignedInt index_i, Real &rho_sum) { return indicator_[index_i] != 0 ? rho0_ : rho_sum; };
+
+      protected:
+        Real rho0_;
+        int *indicator_;
+    };
+};
 
 template <class DynamicsIdentifier, class FlowType, typename... ParticleScopes>
 class DensityRegularization : public BaseLocalDynamics<DynamicsIdentifier>

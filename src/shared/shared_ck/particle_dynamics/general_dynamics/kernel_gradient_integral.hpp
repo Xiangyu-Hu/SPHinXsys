@@ -14,9 +14,10 @@ KernelGradientIntegralBase<BaseInteractionType>::KernelGradientIntegralBase(Dyna
           this->particles_->template registerStateVariable<Vecd>("KernelGradientIntegral")) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>::KernelGradientIntegral(
-    Inner<Parameters...> &inner_relation)
-    : KernelGradientIntegralBase<Interaction<Inner<Parameters...>>>(inner_relation),
+    DynamicsIdentifier &identifier)
+    : KernelGradientIntegralBase<Interaction<Inner<Parameters...>>>(identifier),
       kernel_correction_(this->particles_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
@@ -48,9 +49,10 @@ void KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>::
 }
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>::
-    KernelGradientIntegral(Contact<Parameters...> &contact_relation)
-    : KernelGradientIntegralBase<Interaction<Contact<Parameters...>>>(contact_relation),
+    KernelGradientIntegral(DynamicsIdentifier &identifier)
+    : KernelGradientIntegralBase<Interaction<Contact<Parameters...>>>(identifier),
       kernel_correction_(this->particles_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,

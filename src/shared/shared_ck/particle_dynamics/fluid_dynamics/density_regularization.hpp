@@ -33,8 +33,9 @@ DensitySummationCK<Base, RelationType<Parameters...>>::InteractKernel::InteractK
       rho0_(encloser.rho0_) {}
 //=================================================================================================//
 template <typename... Parameters>
-DensitySummationCK<Inner<Parameters...>>::DensitySummationCK(Inner<Parameters...> &inner_relation)
-    : DensitySummationCK<Base, Inner<Parameters...>>(inner_relation) {}
+template <class DynamicsIdentifier>
+DensitySummationCK<Inner<Parameters...>>::DensitySummationCK(DynamicsIdentifier &identifier)
+    : DensitySummationCK<Base, Inner<Parameters...>>(identifier) {}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class Encloser>
@@ -57,9 +58,10 @@ void DensitySummationCK<Inner<Parameters...>>::
 }
 //=================================================================================================//
 template <typename... Parameters>
+template <class DynamicsIdentifier>
 DensitySummationCK<Contact<Parameters...>>::
-    DensitySummationCK(Contact<Parameters...> &contact_relation)
-    : DensitySummationCK<Base, Contact<Parameters...>>(contact_relation)
+    DensitySummationCK(DynamicsIdentifier &identifier)
+    : DensitySummationCK<Base, Contact<Parameters...>>(identifier)
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
