@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<reload_data>
+<body name="GlassBody">
+    <particle OriginalID="0" VolumetricMeasure="8.0e-4" Position="0.0, 0.0, 0.5"/>
+    <particle OriginalID="1" VolumetricMeasure="8.0e-4" Position="0.05, 0.0, 0.5"/>
+    <particle OriginalID="2" VolumetricMeasure="8.0e-4" Position="0.0, 0.05, 0.5"/>
+</body>
+</reload_data>

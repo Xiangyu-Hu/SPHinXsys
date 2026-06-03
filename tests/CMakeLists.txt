@@ -34,14 +34,14 @@ if(NOT SPHINXSYS_USE_SYCL)
         ADD_SUBDIRECTORY(test_python_interface)
     endif()
 
-    if(SPHINXSYS_BUILD_EXTRA_SOURCE_AND_TESTS)
-        ADD_SUBDIRECTORY(extra_source_and_tests)
-    endif()
-
     if(SPHINXSYS_BUILD_MODULES)
         add_subdirectory(modules)
     endif()
 
+endif()
+
+if(SPHINXSYS_BUILD_EXTRA_SOURCE_AND_TESTS)
+    ADD_SUBDIRECTORY(extra_source_and_tests)
 endif()
 
 if(SPHINXSYS_BUILD_USER_EXAMPLES)
