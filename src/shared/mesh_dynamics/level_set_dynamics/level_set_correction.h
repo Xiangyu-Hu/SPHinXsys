@@ -60,8 +60,8 @@ class ReinitializeLevelSet : public BaseMeshLocalDynamics
     };
 
   protected:
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<int> &pmv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
@@ -90,8 +90,8 @@ class MarkCutInterfaces : public BaseMeshLocalDynamics
 
   protected:
     Real perturbation_ratio_;
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<int> &pmv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
@@ -118,8 +118,8 @@ class MarkNearInterface : public BaseMeshLocalDynamics
     };
 
   protected:
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<int> &pmv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
@@ -146,9 +146,9 @@ class RedistanceInterface : public BaseMeshLocalDynamics
     };
 
   protected:
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<Vecd> &mv_phi_gradient_;
-    PackageVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<Vecd> &pmv_phi_gradient_;
+    PackageVariable<int> &pmv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
@@ -157,7 +157,7 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
   public:
     explicit DiffuseLevelSetSign(
         SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
-        SingularVariable<UnsignedInt> &sv_count_modified);
+        SingleVariable<UnsignedInt> &sv_count_modified);
     virtual ~DiffuseLevelSetSign() {};
 
     class UpdateKernel
@@ -175,10 +175,39 @@ class DiffuseLevelSetSign : public BaseMeshLocalDynamics
     };
 
   protected:
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<int> &pmv_near_interface_id_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
-    SingularVariable<UnsignedInt> &sv_count_modified_;
+    SingleVariable<UnsignedInt> &sv_count_modified_;
+};
+
+class LevelSetSignFromFine : public BaseMeshLocalDynamics
+{
+    using ProbeCoarsePhi = SparseMeshField<4>::ProbeMesh<Real>;
+
+  public:
+    LevelSetSignFromFine(SparseMeshField<4> &data_mesh, UnsignedInt resolution_level);
+    virtual ~LevelSetSignFromFine() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(const UnsignedInt &index);
+
+      protected:
+        PackageVariableData<Real> *phi_;
+        UnsignedInt *pkg_1d_cell_index_;
+        IndexHandler index_handler_;
+        IndexHandler fine_index_handler_;
+        ProbeCoarsePhi probe_fine_phi_;
+    };
+
+  private:
+    PackageVariable<Real> &pmv_phi_;
+    MetaVariable<UnsignedInt> &dv_pkg_1d_cell_index_;
+    UnsignedInt fine_resolution_level_;
 };
 
 class RepeatTimes
@@ -197,7 +226,7 @@ class CleanInterface : public RepeatTimes, public BaseDynamics<void>
 {
   public:
     CleanInterface(SparseMeshField<4> &mesh_data, UnsignedInt resolution_level,
-                   NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method,
+                   Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method,
                    Real refinement);
     virtual ~CleanInterface() {};
 
@@ -221,7 +250,7 @@ class CleanInterface : public RepeatTimes, public BaseDynamics<void>
     }
 
   private:
-    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method_;
+    Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method_;
     MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient;
     MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals;
     MeshInnerDynamics<ExecutionPolicy, MarkCutInterfaces> mark_cut_interfaces;
@@ -230,13 +259,11 @@ class CleanInterface : public RepeatTimes, public BaseDynamics<void>
 };
 
 template <class ExecutionPolicy>
-class CorrectTopology : public BaseDynamics<void>
+class CorrectFinestLevelSetSign : public BaseDynamics<void>
 {
   public:
-    CorrectTopology(
-        SparseMeshField<4> &mesh_data, UnsignedInt resolution_level,
-        NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method);
-    virtual ~CorrectTopology() {};
+    CorrectFinestLevelSetSign(SparseMeshField<4> &mesh_data, UnsignedInt finest_level);
+    virtual ~CorrectFinestLevelSetSign() {};
 
     void exec(Real dt = 0.0) override
     {
@@ -246,17 +273,43 @@ class CorrectTopology : public BaseDynamics<void>
             sv_count_modified_.setValue(0);
             diffuse_level_set_sign.exec();
         }
-        update_level_set_gradient.exec();
-        update_kernel_integrals.exec();
     }
 
   private:
-    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method_;
-    SingularVariable<UnsignedInt> sv_count_modified_{"CountModifiedData", 1};
-    MeshInnerDynamics<ExecutionPolicy, UpdateLevelSetGradient> update_level_set_gradient;
-    MeshInnerDynamics<ExecutionPolicy, UpdateKernelIntegrals> update_kernel_integrals;
+    SingleVariable<UnsignedInt> sv_count_modified_{"CountModifiedData", 1};
     MeshInnerDynamics<ExecutionPolicy, MarkNearInterface> mark_near_interface;
     MeshInnerDynamics<ExecutionPolicy, DiffuseLevelSetSign> diffuse_level_set_sign;
+};
+
+template <class ExecutionPolicy>
+class CorrectTopology : public BaseDynamics<void>
+{
+    UniquePtrsKeeper<BaseDynamics<void>> base_dynamics_keeper_;
+
+  public:
+    CorrectTopology(
+        SparseMeshField<4> &mesh_data,
+        StdVec<Neighbor<SPHAdaptation, SPHAdaptation> *> neighbor_method_set);
+    virtual ~CorrectTopology() {};
+
+    void exec(Real dt = 0.0) override
+    {
+
+        for (UnsignedInt resolution_level = resolution_levels_; resolution_level != 0; resolution_level--)
+        { // correcting from high to low reoslutions
+            UnsignedInt current_level = resolution_level - 1;
+            level_set_sign_correction_set_[current_level]->exec();
+            update_level_set_gradient_set_[current_level]->exec();
+            update_kernel_integrals_set[current_level]->exec();
+        }
+    }
+
+  private:
+    UnsignedInt resolution_levels_;
+    StdVec<Neighbor<SPHAdaptation, SPHAdaptation> *> neighbor_method_set_;
+    StdVec<BaseDynamics<void> *> level_set_sign_correction_set_;
+    StdVec<BaseDynamics<void> *> update_level_set_gradient_set_;
+    StdVec<BaseDynamics<void> *> update_kernel_integrals_set;
 };
 } // namespace SPH
 #endif // LEVEL_SET_CORRECTION_H

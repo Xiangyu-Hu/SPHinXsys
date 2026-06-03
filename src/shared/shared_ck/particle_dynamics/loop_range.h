@@ -31,8 +31,7 @@
 
 #include "base_body.h"
 #include "base_body_part.h"
-#include "base_particles.hpp"
-#include "reduce_functors.h"
+#include "base_particles.h"
 
 namespace SPH
 {
@@ -45,7 +44,7 @@ class LoopRangeCK<ExecutionPolicy, SPHBody>
   public:
     LoopRangeCK(SPHBody &sph_body)
         : loop_bound_(sph_body.getBaseParticles().svTotalRealParticles()->DelegatedData(ExecutionPolicy{})) {};
-    LoopRangeCK(SingularVariable<UnsignedInt> *sv_total_particles)
+    LoopRangeCK(SingleVariable<UnsignedInt> *sv_total_particles)
         : loop_bound_(sv_total_particles->DelegatedData(ExecutionPolicy{})) {};
     template <class UnaryFunc>
     void computeUnit(const UnaryFunc &f, UnsignedInt i) const { f(i); };

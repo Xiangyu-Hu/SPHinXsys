@@ -1,6 +1,8 @@
 
 #include "porous_media_dynamics.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 namespace multi_species_continuum
@@ -8,13 +10,13 @@ namespace multi_species_continuum
 //=================================================================================================//
 GetSaturationTimeStepSize::GetSaturationTimeStepSize(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
-      porous_solid_(DynamicCast<PorousMediaSolid>(this, particles_->getBaseMaterial())),
+      porous_solid_(DynamicCast<PorousMediaSolid>(this, sph_body_->getMatterMaterial())),
       smoothing_length_(sph_body.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 BasePorousMediaRelaxation::BasePorousMediaRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
       DataDelegateInner(inner_relation),
-      porous_solid_(DynamicCast<PorousMediaSolid>(this, particles_->getBaseMaterial())),
+      porous_solid_(DynamicCast<PorousMediaSolid>(this, sph_body_->getMatterMaterial())),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       vel_(particles_->registerStateVariableData<Vecd>("Velocity")),
@@ -48,7 +50,8 @@ PorousMediaStressRelaxationFirstHalf::
       Stress_(particles_->registerStateVariableData<Matd>("Stress")),
       diffusivity_constant_(porous_solid_.getDiffusivityConstant()),
       fluid_initial_density_(porous_solid_.getFluidInitialDensity()),
-      water_pressure_constant_(porous_solid_.getWaterPressureConstant()) {}
+      water_pressure_constant_(porous_solid_.getWaterPressureConstant()),
+      inv_W0_(1.0 / getSPHAdaptation().getKernel()->W0(ZeroVecd)) {}
 //=================================================================================================//
 void PorousMediaStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 {

@@ -18,15 +18,16 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
-    structure.defineMaterial<Solid>(rho_s);
+    structure.defineMatterMaterial<Solid>(rho_s);
     structure.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody observer(sph_system, "Observer");
@@ -196,7 +197,6 @@ int main(int ac, char *av[])
         write_recorded_pressure_fp2("Pressure", fp2_contact_w);
     ObservedQuantityRecording<Real>
         write_recorded_pressure_fp3("Pressure", fp3_contact_w);
-    RestartIO restart_io(sph_system);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -213,7 +213,6 @@ int main(int ac, char *av[])
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 1000;
-    int restart_output_interval = screen_output_interval * 10;
     Real end_time = total_physical_time;
     Real output_interval = end_time / 25;
     Real dt = 0.0;
@@ -285,8 +284,6 @@ int main(int ac, char *av[])
                           << "	Total Time = " << total_time
                           << "	Physical Time = " << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
             if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
@@ -335,7 +332,7 @@ int main(int ac, char *av[])
         write_str_displacement.generateDataBase(1.0e-3);
         write_recorded_pressure_fp2.generateDataBase(1.0e-3);
     }
-    else if (sph_system.RestartStep() == 0)
+    else
     {
         write_str_displacement.testResult();
         write_recorded_pressure_fp2.testResult();

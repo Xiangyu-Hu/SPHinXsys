@@ -52,8 +52,9 @@ class ContactRelationCrossResolution : public BaseContactRelation
     {
         for (size_t k = 0; k != contact_bodies_.size(); ++k)
         {
-            CellLinkedList *target_cell_linked_list =
-                DynamicCast<CellLinkedList>(this, &contact_bodies_[k]->getCellLinkedList());
+            CellLinkedList<SPHAdaptation> *target_cell_linked_list =
+                DynamicCast<CellLinkedList<SPHAdaptation>>(
+                    this, &contact_bodies_[k]->getCellLinkedList());
             target_cell_linked_lists_.push_back(target_cell_linked_list);
             get_search_depths_.push_back(
                 search_depths_keeper_.createPtr<SearchDepthContact>(
@@ -61,10 +62,13 @@ class ContactRelationCrossResolution : public BaseContactRelation
         }
     };
     virtual ~ContactRelationCrossResolution() {};
-    StdVec<CellLinkedList *> getContactCellLinkedList() { return target_cell_linked_lists_; }
+    StdVec<CellLinkedList<SPHAdaptation> *> getContactCellLinkedList()
+    {
+        return target_cell_linked_lists_;
+    }
 
   protected:
-    StdVec<CellLinkedList *> target_cell_linked_lists_;
+    StdVec<CellLinkedList<SPHAdaptation> *> target_cell_linked_lists_;
     StdVec<SearchDepthContact *> get_search_depths_;
 };
 
@@ -222,6 +226,23 @@ class SurfaceContactRelation : public ContactRelationCrossResolution
     StdVec<NeighborBuilder *> get_contact_neighbors_;
 
     void resetNeighborhoodCurrentSize() override;
+};
+
+/**
+ * @class MaxSmoothingLengthContactRelation
+ * @brief The relation between a SPH body and its contact SPH bodies, where the cut-off radius is set as factor * 2h_max
+ */
+class MaxSmoothingLengthContactRelation : public ContactRelationCrossResolution
+{
+  private:
+    UniquePtrsKeeper<MaxSmoothingLengthNeighborBuilder> neighbor_builder_contact_ptrs_keeper_;
+
+  public:
+    MaxSmoothingLengthContactRelation(SPHBody &sph_body, RealBodyVector contact_bodies, const std::vector<Real> &factors = {});
+    void updateConfiguration() override;
+
+  private:
+    StdVec<MaxSmoothingLengthNeighborBuilder *> get_contact_neighbors_;
 };
 
 class ContactRelationFSI2 : public ContactRelationCrossResolution

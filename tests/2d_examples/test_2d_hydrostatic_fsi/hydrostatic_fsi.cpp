@@ -82,7 +82,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createWaterBlockShape(), GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -117,8 +117,8 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createInnerWallShape(), GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -143,7 +143,7 @@ class Gate : public MultiPolygonShape
   public:
     explicit Gate(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createGateShape(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createGateShape(), GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -167,8 +167,8 @@ MultiPolygon createGateConstrainShape()
     gate_constraint_shape_right.push_back(ConstrainRP_lb);
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(gate_constraint_shape_left, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(gate_constraint_shape_right, ShapeBooleanOps::add);
+    multi_polygon.addPolygon(gate_constraint_shape_left, GeometricOps::add);
+    multi_polygon.addPolygon(gate_constraint_shape_right, GeometricOps::add);
     return multi_polygon;
 }
 //----------------------------------------------------------------------
@@ -200,15 +200,15 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody gate(sph_system, makeShared<Gate>("Gate"));
-    gate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    gate.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     gate.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of gate observer.

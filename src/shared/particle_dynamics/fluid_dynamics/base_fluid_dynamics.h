@@ -30,7 +30,8 @@
 #define BASE_FLUID_DYNAMICS_H
 
 #include "all_body_relations.h"
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
+#include "base_material.h"
 #include "base_particles.hpp"
 
 namespace SPH
@@ -59,7 +60,7 @@ class InteractionWithWall : public BaseInteractionType<DataDelegateContact>
     {
         for (size_t k = 0; k != this->contact_particles_.size(); ++k)
         {
-            Solid &solid_material = DynamicCast<Solid>(this, this->contact_particles_[k]->getBaseMaterial());
+            Solid &solid_material = DynamicCast<Solid>(this, this->contact_bodies_[k]->getMatterMaterial());
             wall_vel_ave_.push_back(solid_material.AverageVelocity(this->contact_particles_[k]));
             wall_acc_ave_.push_back(solid_material.AverageAcceleration(this->contact_particles_[k]));
             wall_n_.push_back(this->contact_particles_[k]->template getVariableDataByName<Vecd>("NormalDirection"));

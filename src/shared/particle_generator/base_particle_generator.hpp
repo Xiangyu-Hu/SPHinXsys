@@ -15,7 +15,7 @@ ParticleGenerator<ParticlesType, Reload>::
     ParticleGenerator(SPHBody &sph_body, ParticlesType &particles, const std::string &reload_body_name)
     : ParticleGenerator<ParticlesType>(sph_body, particles)
 {
-    std::string reload_folder = sph_body.getSPHSystem().getIOEnvironment().ReloadFolder();
+    std::string reload_folder = IO::getEnvironment().ReloadFolder();
     if (!fs::exists(reload_folder))
     {
         std::cout << "\n Error: the particle reload folder:" << reload_folder << " is not exists" << std::endl;
@@ -23,13 +23,14 @@ ParticleGenerator<ParticlesType, Reload>::
         exit(1);
     }
 
-    file_path_ = reload_folder + "/" + reload_body_name + "_rld.xml";
+    file_path_ = reload_folder + "/Reload.xml";
+    body_name_ = reload_body_name;
 }
 //=================================================================================================//
 template <typename ParticlesType>
 void ParticleGenerator<ParticlesType, Reload>::prepareGeometricData()
 {
-    this->base_particles_.readReloadXmlFile(file_path_);
+    this->base_particles_.readReloadXmlFile(file_path_, body_name_);
 }
 //=================================================================================================//
 template <typename ParticlesType>
@@ -39,9 +40,9 @@ void ParticleGenerator<ParticlesType, Reload>::setAllParticleBounds()
 };
 //=================================================================================================//
 template <typename ParticlesType>
-void ParticleGenerator<ParticlesType, Reload>::initializeParticleVariables()
+void ParticleGenerator<ParticlesType, Reload>::initializeDiscreteVariables()
 {
-    ParticleGenerator<ParticlesType>::initializeParticleVariablesFromReload();
+    ParticleGenerator<ParticlesType>::initializeDiscreteVariablesFromReload();
 }
 //=================================================================================================//
 } // namespace SPH

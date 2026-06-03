@@ -30,7 +30,7 @@
 #ifndef SOLID_CONSTRAINT_H
 #define SOLID_CONSTRAINT_H
 
-#include "all_simbody.h"
+#include "body_part_for_simbody.h"
 #include "general_constraint_ck.h"
 #include "general_reduce_ck.h"
 
@@ -38,7 +38,6 @@ namespace SPH
 {
 namespace solid_dynamics
 {
-
 template <class DynamicsIdentifier>
 class ConstraintBySimBodyCK : public BaseLocalDynamics<DynamicsIdentifier>
 {
@@ -47,7 +46,7 @@ class ConstraintBySimBodyCK : public BaseLocalDynamics<DynamicsIdentifier>
                                    SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
     virtual ~ConstraintBySimBodyCK() {};
     virtual void setupDynamics(Real dt = 0.0) override;
-    SingularVariable<SimbodyState> *svSimbodyState() { return sv_simbody_state_; };
+    SingleVariable<SimbodyState> *svSimbodyState() { return sv_simbody_state_; };
 
     class UpdateKernel
     {
@@ -68,7 +67,7 @@ class ConstraintBySimBodyCK : public BaseLocalDynamics<DynamicsIdentifier>
     SimTK::RungeKuttaMersonIntegrator &integ_;
     DiscreteVariable<Vecd> *dv_pos_, *dv_pos0_, *dv_vel_;
     DiscreteVariable<Vecd> *dv_n_, *dv_n0_, *dv_acc_;
-    SingularVariable<SimbodyState> *sv_simbody_state_;
+    SingleVariable<SimbodyState> *sv_simbody_state_;
     SimTKVec3 sim_tk_initial_origin_location_;
 };
 using ConstraintBodyBySimBodyCK = ConstraintBySimBodyCK<SPHBody>;
@@ -103,7 +102,7 @@ class TotalForceForSimBodyCK
     SimTK::MobilizedBody &mobod_;
     SimTK::RungeKuttaMersonIntegrator &integ_;
     DiscreteVariable<Vecd> *dv_force_, *dv_force_prior_, *dv_pos_;
-    SingularVariable<Vec3d> *sv_current_origin_location_;
+    SingleVariable<Vec3d> *sv_current_origin_location_;
 };
 using TotalForceOnBodyForSimBodyCK = TotalForceForSimBodyCK<SPHBody>;
 using TotalForceOnBodyPartForSimBodyCK = TotalForceForSimBodyCK<BodyPartByParticle>;

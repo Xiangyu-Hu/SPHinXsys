@@ -1,7 +1,10 @@
 #include "level_set.hpp"
+
 #include "adaptation.h"
+#include "base_geometry.h"
 #include "base_kernel.h"
-#include <type_traits>
+#include "level_set_initialization.hpp"
+#include "mesh_data_package_sort.h"
 
 namespace SPH
 {
@@ -10,7 +13,7 @@ LevelSet::LevelSet(
     BoundingBoxd tentative_bounds, SparseMeshField<4> *coarse_data,
     Shape &shape, const SPHAdaptation &sph_adaptation, Real refinement)
     : SparseMeshField<4>(
-          "LevelSet_" + shape.getName(), 1, tentative_bounds,
+          "LevelSet_" + shape.Name(), 1, tentative_bounds,
           coarse_data->getFinestMesh().GridSpacing() * 0.5, 4, 2),
       shape_(shape), refinement_(refinement), ca_global_h_ratio_(nullptr)
 {
@@ -20,18 +23,18 @@ LevelSet::LevelSet(
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec.push_back(global_h_ratio);
     neighbor_method_set_.push_back(
-        neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
+        neighbor_method_keeper_.template createPtr<Neighbor<SPHAdaptation, SPHAdaptation>>(
             sph_adaptation.getKernelPtr(), smoothing_length, data_spacing));
 
     initializeLevel(0, coarse_data, coarse_data->ResolutionLevels() - 1);
-    ca_global_h_ratio_ = createUniqueEnity<Real, ConstantArray>("GlobalHRatio", global_h_ratio_vec);
+    ca_global_h_ratio_ = createUniqueEntity<Real, ConstantArray>("GlobalHRatio", global_h_ratio_vec);
 }
 //=================================================================================================//
 LevelSet::LevelSet(
     BoundingBoxd tentative_bounds, Real data_spacing,
     size_t total_levels, Shape &shape, const SPHAdaptation &sph_adaptation, Real refinement)
     : SparseMeshField<4>(
-          "LevelSet_" + shape.getName(), total_levels, tentative_bounds,
+          "LevelSet_" + shape.Name(), total_levels, tentative_bounds,
           data_spacing * Real(4), 4, 2),
       shape_(shape), refinement_(refinement), ca_global_h_ratio_(nullptr)
 {
@@ -40,7 +43,7 @@ LevelSet::LevelSet(
     Real smoothing_length = sph_adaptation.ReferenceSmoothingLength() / global_h_ratio;
     global_h_ratio_vec.push_back(global_h_ratio);
     neighbor_method_set_.push_back(
-        neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
+        neighbor_method_keeper_.template createPtr<Neighbor<SPHAdaptation, SPHAdaptation>>(
             sph_adaptation.getKernelPtr(), smoothing_length, data_spacing));
 
     initializeLevel(0);
@@ -51,12 +54,12 @@ LevelSet::LevelSet(
         smoothing_length *= 0.5; // Halve the smoothing length
         global_h_ratio_vec.push_back(global_h_ratio);
         neighbor_method_set_.push_back(
-            neighbor_method_keeper_.template createPtr<NeighborMethod<SPHAdaptation, SPHAdaptation>>(
+            neighbor_method_keeper_.template createPtr<Neighbor<SPHAdaptation, SPHAdaptation>>(
                 sph_adaptation.getKernelPtr(), smoothing_length, data_spacing));
 
         initializeLevel(level, this, level - 1);
     }
-    ca_global_h_ratio_ = createUniqueEnity<Real, ConstantArray>("GlobalHRatioi", global_h_ratio_vec);
+    ca_global_h_ratio_ = createUniqueEntity<Real, ConstantArray>("GlobalHRatio", global_h_ratio_vec);
 }
 //=================================================================================================//
 void LevelSet::initializeLevel(

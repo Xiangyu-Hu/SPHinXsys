@@ -1,6 +1,9 @@
 #include "slender_structure_dynamics.h"
 
+#include "adaptation.h"
 #include "base_particles.hpp"
+#include "vector_functions.h"
+
 namespace SPH
 {
 namespace slender_structure_dynamics
@@ -8,7 +11,7 @@ namespace slender_structure_dynamics
 //=================================================================================================//
 BarAcousticTimeStepSize::BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body), CFL_(CFL),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getMatterMaterial())),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
       angular_vel_(particles_->getVariableDataByName<Vecd>("AngularVelocity")),
@@ -98,7 +101,7 @@ BarStressRelaxationFirstHalf::
     BarStressRelaxationFirstHalf(BaseInnerRelation &inner_relation,
                                  int number_of_gaussian_points, bool hourglass_control)
     : BaseBarRelaxation(inner_relation),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getMatterMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
       smoothing_length_(getSPHAdaptation().ReferenceSmoothingLength()),
       numerical_damping_scaling_matrix_(Matd::Identity() * smoothing_length_),
@@ -113,6 +116,7 @@ BarStressRelaxationFirstHalf::
       G0_(elastic_solid_.ShearModulus()),
       nu_(elastic_solid_.PoissonRatio()),
       hourglass_control_(hourglass_control),
+      inv_W0_(1.0 / getSPHAdaptation().getKernel()->W0(ZeroVecd)),
       number_of_gaussian_points_(number_of_gaussian_points),
       global_b_stress_(particles_->registerStateVariableData<Matd>("GlobalBinormalStress")),
       global_b_moment_(particles_->registerStateVariableData<Matd>("GlobalBinormalMoment")),

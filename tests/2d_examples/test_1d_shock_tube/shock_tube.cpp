@@ -35,7 +35,7 @@ class WaveBlock : public MultiPolygonShape
         std::vector<Vecd> waves_block_shape{
             Vecd(-2.0 / 5.0 * DL, 0.0), Vecd(-2.0 / 5.0 * DL, DH), Vecd(3.0 / 5.0 * DL, DH),
             Vecd(3.0 / 5.0 * DL, 0.0), Vecd(-2.0 / 5.0 * DL, 0.0)};
-        multi_polygon_.addAPolygon(waves_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(waves_block_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -89,7 +89,7 @@ int main(int ac, char *av[])
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody wave_body(sph_system, makeShared<WaveBlock>("WaveBody"));
-    wave_body.defineMaterial<CompressibleFluid>(rho0_l, heat_capacity_ratio);
+    wave_body.defineMatterMaterial<CompressibleFluid>(rho0_l, heat_capacity_ratio);
     wave_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

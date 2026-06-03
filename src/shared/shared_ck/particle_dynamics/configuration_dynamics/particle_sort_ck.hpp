@@ -10,7 +10,7 @@ template <class ExecutionPolicy>
 ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
     : LocalDynamics(real_body), BaseDynamics<void>(),
       ex_policy_(ExecutionPolicy{}),
-      cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.getCellLinkedList())),
+      cell_linked_list_(real_body.getCellLinkedList()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       dv_sequence_(particles_->registerDiscreteVariable<UnsignedInt>(
           "Sequence", particles_->ParticlesBound())),
@@ -32,7 +32,10 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
         dv_particle_lists_.push_back(dv_particle_list);
         DiscreteVariable<UnsignedInt> *original_id_list =
             particles_->addUniqueDiscreteVariable<UnsignedInt>(
-                dv_particle_list->Name() + "Initial", dv_particle_list->getDataSize(), dv_particle_list);
+                dv_particle_list->Name() + "Initial", dv_particle_list->getSize());
+        original_id_list->fill([&](UnsignedInt index)
+                               { return dv_particle_list->getValue(index); },
+                               0, dv_particle_list->getSize());
         dv_original_id_lists_.push_back(original_id_list);
     }
 
@@ -49,7 +52,7 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
 template <class ExecutionPolicy>
 ParticleSortCK<ExecutionPolicy>::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, ParticleSortCK<ExecutionPolicy> &encloser)
-    : mesh_(encloser.cell_linked_list_.getMesh()),
+    : mesh_(encloser.cell_linked_list_.getSortSequenceMesh()),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       sequence_(encloser.dv_sequence_->DelegatedData(ex_policy)),
       index_permutation_(encloser.dv_index_permutation_->DelegatedData(ex_policy)),

@@ -66,7 +66,7 @@ class InitialCellTagging : public BaseMeshLocalDynamics
 
 class InitialCellTaggingFromCoarse : public BaseMeshLocalDynamics
 {
-  using ProbeCoarsePhi = SparseMeshField<4>::ProbeMesh<Real>;
+    using ProbeCoarsePhi = SparseMeshField<4>::ProbeMesh<Real>;
 
   public:
     InitialCellTaggingFromCoarse(
@@ -201,9 +201,9 @@ class InitializeBasicPackageData : public BaseMeshLocalDynamics
   private:
     Shape &shape_;
     MetaVariable<UnsignedInt> &dv_pkg_1d_cell_index_;
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<Vecd> &mv_phi_gradient_;
-    PackageVariable<int> &mv_near_interface_id_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<Vecd> &pmv_phi_gradient_;
+    PackageVariable<int> &pmv_near_interface_id_;
 };
 
 class NearInterfaceCellTagging : public BaseMeshLocalDynamics
@@ -229,7 +229,7 @@ class NearInterfaceCellTagging : public BaseMeshLocalDynamics
   protected:
     MetaVariable<UnsignedInt> &dv_pkg_1d_cell_index_;
     CellVariable<int> &mcv_cell_contain_id_;
-    PackageVariable<Real> &mv_phi_;
+    PackageVariable<Real> &pmv_phi_;
 };
 
 class CellContainDiffusion : public BaseMeshLocalDynamics
@@ -237,7 +237,7 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
   public:
     explicit CellContainDiffusion(
         SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
-        SingularVariable<UnsignedInt> &sv_count_modified);
+        SingleVariable<UnsignedInt> &sv_count_modified);
     virtual ~CellContainDiffusion() {};
 
     class UpdateKernel
@@ -259,7 +259,7 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
     UnsignedInt boundary_pkg_index_offset_;
     CellVariable<int> &mcv_cell_contain_id_;
     CellVariable<UnsignedInt> &mcv_cell_package_index_;
-    SingularVariable<UnsignedInt> &sv_count_modified_;
+    SingleVariable<UnsignedInt> &sv_count_modified_;
 };
 
 class FinishPackageDatas : public BaseDynamics<void>
@@ -274,7 +274,7 @@ class FinishPackageDatas : public BaseDynamics<void>
     SparseMeshField<4> &mesh_data_;
     UnsignedInt resolution_level_;
     Shape &shape_;
-    SingularVariable<UnsignedInt> sv_count_modified_{"CountModifiedCell", 1};
+    SingleVariable<UnsignedInt> sv_count_modified_{"CountModifiedCell", 1};
 
     MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood;
     MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package;

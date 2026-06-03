@@ -61,20 +61,20 @@ class UpdateLevelSetGradient : public BaseMeshLocalDynamics
     };
 
   protected:
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<Vecd> &mv_phi_gradient_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<Vecd> &pmv_phi_gradient_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
 };
 
 class UpdateKernelIntegrals : public BaseMeshLocalDynamics
 {
     using SmoothingKernel =
-        typename NeighborMethod<SPHAdaptation, SPHAdaptation>::SmoothingKernel;
+        typename Neighbor<SPHAdaptation, SPHAdaptation>::SmoothingKernel;
 
   public:
     explicit UpdateKernelIntegrals(
         SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
-        NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method);
+        Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method);
     virtual ~UpdateKernelIntegrals() {};
 
     class UpdateKernel
@@ -112,14 +112,14 @@ class UpdateKernelIntegrals : public BaseMeshLocalDynamics
     };
 
   private:
-    NeighborMethod<SPHAdaptation, SPHAdaptation> &neighbor_method_;
+    Neighbor<SPHAdaptation, SPHAdaptation> &neighbor_method_;
     Real global_h_ratio_;
-    PackageVariable<Real> &mv_phi_;
-    PackageVariable<Vecd> &mv_phi_gradient_;
+    PackageVariable<Real> &pmv_phi_;
+    PackageVariable<Vecd> &pmv_phi_gradient_;
     DiscreteVariable<CellNeighborhood> &dv_cell_neighborhood_;
-    PackageVariable<Real> &mv_kernel_weight_;
-    PackageVariable<Vecd> &mv_kernel_gradient_;
-    PackageVariable<Matd> &mv_kernel_second_gradient_;
+    PackageVariable<Real> &pmv_kernel_weight_;
+    PackageVariable<Vecd> &pmv_kernel_gradient_;
+    PackageVariable<Matd> &pmv_kernel_second_gradient_;
 };
 } // namespace SPH
 #endif // LEVEL_SET_TRANSFORMATION_H

@@ -11,8 +11,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //  Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.004;                 /**< Channel length. */
-Real DH = 0.001;                 /**< Channel height. */
+Real DL = 0.004;                    /**< Channel length. */
+Real DH = 0.001;                    /**< Channel height. */
 Real global_resolution = DH / 20.0; /**< Reference particle spacing. */
 Real BW = global_resolution * 4;    /**< Extending width for BCs. */
 StdVec<Vecd> observer_location;
@@ -128,7 +128,7 @@ class WaterBlock : public MultiPolygonShape
         water_body_shape.emplace_back(DL, 0.0);
         water_body_shape.emplace_back(0.0, 0.0);
 
-        multi_polygon_.addAPolygon(water_body_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(water_body_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -156,8 +156,8 @@ class WallBoundary : public MultiPolygonShape
         inner_wall_shape.emplace_back(DL + BW, 0.0);
         inner_wall_shape.emplace_back(-BW, 0.0);
 
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -232,12 +232,13 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_body.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> particle_buffer(0.5);
     water_body.generateParticlesWithReserve<BaseParticles, Lattice>(particle_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall.defineMaterial<Solid>();
+    wall.defineMatterMaterial<Solid>();
     wall.generateParticles<BaseParticles, Lattice>();
     // Add observer
     {
@@ -260,8 +261,10 @@ int main(int ac, char *av[])
     // //----------------------------------------------------------------------
     // //	Creating body parts.
     // //----------------------------------------------------------------------
-    AlignedBoxByCell left_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
-    AlignedBoxByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
+    OrientedBoxByCell left_emitter_by_cell(water_body, OrientedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
+    left_emitter_by_cell.writeOrientedBoxToVtp();
+    OrientedBoxByCell right_emitter_by_cell(water_body, OrientedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(right_disposer_translation)), bidirectional_buffer_halfsize));
+    right_emitter_by_cell.writeOrientedBoxToVtp();
 
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -299,12 +302,14 @@ int main(int ac, char *av[])
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexInternalPressureBoundary>
-        fluid_density_regularization(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+        fluid_density_summation(water_body_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, Internal, ExcludeBufferParticles>>
+        fluid_density_regularization(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
         fluid_boundary_indicator(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionComplexBulkParticlesCK>
-        transport_correction_ck(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex> kernel_gradient_integral(water_body_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear, BulkParticles>> transport_correction(water_body);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
@@ -321,7 +326,7 @@ int main(int ac, char *av[])
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
     body_states_recording.addToWrite<Real>(water_body, "Pressure");
     body_states_recording.addToWrite<int>(water_body, "BufferIndicator");
-    ObservedQuantityRecording<MainExecutionPolicy, Vecd, RestoringCorrection> write_centerline_velocity("Velocity", velocity_observer_contact);
+    ObservedQuantityRecording<MainExecutionPolicy, Vecd, RestoringCorrection> write_centerline_velocity(velocity_observer_contact, "Velocity");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -337,7 +342,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     size_t screen_output_interval = 100;
     size_t observation_sample_interval = screen_output_interval * 2;
@@ -366,10 +371,12 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
+            fluid_density_summation.exec();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             fluid_linear_correction_matrix.exec();
-            transport_correction_ck.exec();
+            kernel_gradient_integral.exec();
+            transport_correction.exec();
             fluid_viscous_force.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             interval_computing_time_step += TickCount::now() - time_instance;

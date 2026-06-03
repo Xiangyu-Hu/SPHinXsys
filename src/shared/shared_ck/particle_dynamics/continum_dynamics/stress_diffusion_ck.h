@@ -32,10 +32,8 @@
 
 #include "base_continuum_dynamics.h"
 #include "constraint_dynamics.h"
-#include "continuum_integration_1st_ck.h"
 #include "continuum_integration_1st_ck.hpp"
 #include "fluid_integration.hpp"
-#include "general_continuum.h"
 #include "general_continuum.hpp"
 namespace SPH
 {
@@ -47,12 +45,13 @@ class StressDiffusionCK;
 template <typename... Parameters>
 class StressDiffusionCK<Inner<Parameters...>> : public PlasticAcousticStep<Interaction<Inner<Parameters...>>>
 {
-    using PlasticKernel = typename PlasticContinuum::PlasticKernel;
+    using ConstituteKernel = typename PlasticContinuum::ConstituteKernel;
     using BaseInteraction = PlasticAcousticStep<Interaction<Inner<Parameters...>>>;
 
   public:
-    explicit StressDiffusionCK(Inner<Parameters...> &inner_relation);
-    virtual ~StressDiffusionCK() {};
+    template <class DynamicsIdentifier>
+    explicit StressDiffusionCK(DynamicsIdentifier &identifier);
+    virtual ~StressDiffusionCK(){};
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
@@ -62,7 +61,7 @@ class StressDiffusionCK<Inner<Parameters...>> : public PlasticAcousticStep<Inter
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        PlasticKernel plastic_kernel_;
+        ConstituteKernel constitute_;
         Real zeta_, phi_;
         Real smoothing_length_, sound_speed_;
         Real *mass_, *Vol_;

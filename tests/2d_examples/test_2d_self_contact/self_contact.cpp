@@ -64,8 +64,8 @@ class Beam : public MultiPolygonShape
   public:
     explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createBeamBaseShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createBeamShape(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createBeamBaseShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createBeamShape(), GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -74,8 +74,8 @@ class Beam : public MultiPolygonShape
 MultiPolygon createBeamConstrainShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(createBeamBaseShape(), ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(createBeamShape(), ShapeBooleanOps::sub);
+    multi_polygon.addPolygon(createBeamBaseShape(), GeometricOps::add);
+    multi_polygon.addPolygon(createBeamShape(), GeometricOps::sub);
     return multi_polygon;
 };
 //----------------------------------------------------------------------
@@ -87,7 +87,7 @@ class BeamInitialCondition
   public:
     explicit BeamInitialCondition(SPHBody &sph_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(sph_body),
-          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())) {};
+          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getMatterMaterial())) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -121,7 +121,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
-    beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    beam_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");

@@ -117,7 +117,7 @@ int main(int ac, char *av[])
 
     /** Import a beam body, with corresponding material and particles. */
     SolidBody beam_body(sph_system, makeShared<Beam>("beam"));
-    beam_body.defineMaterial<LinearElasticSolid>(rho, Youngs_modulus, poisson_ratio);
+    beam_body.defineMatterMaterial<LinearElasticSolid>(rho, Youngs_modulus, poisson_ratio);
     beam_body.generateParticles<BaseParticles, Lattice>();
 
     // Define Observer
@@ -209,7 +209,7 @@ int main(int ac, char *av[])
             stress_relaxation_second_half.exec(dt);
 
             ite++;
-            dt = sph_system.getSmallestTimeStepAmongSolidBodies();
+            dt = computing_time_step_size.exec();
             integration_time += dt;
             physical_time += dt;
         }

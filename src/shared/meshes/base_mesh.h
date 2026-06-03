@@ -34,9 +34,10 @@
 #ifndef BASE_MESH_H
 #define BASE_MESH_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 #include "sphinxsys_constant.h"
 #include "sphinxsys_variable.h"
+#include "variable_functions.h"
 
 #include <fstream>
 
@@ -65,6 +66,7 @@ class Mesh
     Arrayi AllCells() const { return all_cells_; };
     UnsignedInt NumberOfGridPoints() const { return all_grid_points_.prod(); };
     UnsignedInt NumberOfCells() const { return all_cells_.prod(); };
+    void setLinearCellIndexOffset(UnsignedInt offset) { linear_cell_index_offset_ = offset; };
 
     Arrayi CellIndexFromPosition(const Vecd &position) const;
     UnsignedInt LinearCellIndexFromPosition(const Vecd &position) const;
@@ -129,7 +131,7 @@ template <class MeshType>
 class MultiResolutionMeshField : public BaseMeshField
 {
     DataContainerUniquePtrAssemble<DiscreteVariable> cell_variable_ptrs_;
-    UniquePtrsKeeper<Entity> unique_entity_ptrs_;
+    UniquePtrsKeeper<Quantity> unique_entity_ptrs_;
 
   public:
     MultiResolutionMeshField(
@@ -137,7 +139,7 @@ class MultiResolutionMeshField : public BaseMeshField
         BoundingBoxd tentative_bounds, Real Reference_grid_spacing, UnsignedInt buffer_width);
     virtual ~MultiResolutionMeshField() {};
 
-    UniquePtrsKeeper<MeshType> meshs_keeper_;
+    UniquePtrsKeeper<MeshType> meshes_keeper_;
     MeshType *getMeshes() { return ca_meshes_.Data(); };
     MeshType &getMesh(UnsignedInt level) { return ca_meshes_.Data()[level]; };
     MeshType &getCoarsestMesh() { return ca_meshes_.Data()[0]; };
@@ -151,7 +153,7 @@ class MultiResolutionMeshField : public BaseMeshField
     template <typename DataType>
     CellVariable<DataType> *getCellVariable(const std::string &variable_name);
     template <typename DataType, template <typename> class EntityType, typename... Args>
-    EntityType<DataType> *createUniqueEnity(Args &&...args);
+    EntityType<DataType> *createUniqueEntity(Args &&...args);
 
     template <typename DataType>
     void addCellVariableToWrite(const std::string &variable_name);

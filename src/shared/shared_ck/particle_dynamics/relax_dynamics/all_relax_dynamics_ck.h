@@ -30,7 +30,6 @@
 #ifndef ALL_RELAX_DYNAMICS_CK_H
 #define ALL_RELAX_DYNAMICS_CK_H
 
-#include "relaxation_residual_ck.hpp"
 #include "relaxation_stepping_ck.h"
 #include "surface_correction.hpp"
 

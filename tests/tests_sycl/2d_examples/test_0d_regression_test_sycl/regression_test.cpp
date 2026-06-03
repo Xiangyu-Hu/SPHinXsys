@@ -18,7 +18,7 @@ BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Global parameters on material properties
 //----------------------------------------------------------------------
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real diffusion_coeff = 1.0e-3;
 Real bias_coeff = 0.0;
 Real alpha = Pi / 4.0;
@@ -40,7 +40,7 @@ MultiPolygon createDiffusionDomain()
     diffusion_domain.push_back(Vecd(-BW, -BW));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(diffusion_domain, ShapeBooleanOps::add);
+    multi_polygon.addPolygon(diffusion_domain, GeometricOps::add);
     return multi_polygon;
 }
 
@@ -55,7 +55,7 @@ MultiPolygon createInnerDomain()
     inner_domain.push_back(Vecd(0.0, 0.0));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(inner_domain, ShapeBooleanOps::add);
+    multi_polygon.addPolygon(inner_domain, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -71,7 +71,7 @@ MultiPolygon createLeftSideBoundary()
     left_boundary.push_back(Vecd(-BW, -BW));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(left_boundary, ShapeBooleanOps::add);
+    multi_polygon.addPolygon(left_boundary, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -91,7 +91,7 @@ MultiPolygon createOtherSideBoundary()
     other_boundaries.push_back(Vecd(-BW, -BW));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(other_boundaries, ShapeBooleanOps::add);
+    multi_polygon.addPolygon(other_boundaries, GeometricOps::add);
 
     return multi_polygon;
 }
@@ -125,8 +125,8 @@ int main(int ac, char *av[])
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createDiffusionDomain(), "DiffusionBody"));
-    diffusion_body.defineClosure<Solid, DirectionalDiffusion>(
-        Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff, bias_coeff, bias_direction));
+    diffusion_body.defineMatterMaterial<Solid>();
+    diffusion_body.addMaterialProperty<DirectionalDiffusion>(species_name, diffusion_coeff, bias_coeff, bias_direction);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Observer body
@@ -156,7 +156,7 @@ int main(int ac, char *av[])
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
@@ -169,16 +169,16 @@ int main(int ac, char *av[])
 
     auto &correct_configuration = main_methods.addInteractionDynamics<LinearCorrectionMatrixInner>(diffusion_body_inner);
     auto &diffusion_initial_condition = main_methods.addStateDynamics<VariableAssignment, ConstantValue<Real>>(
-        diffusion_body, diffusion_species_name, initial_temperature);
+        diffusion_body, species_name, initial_temperature);
 
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
     auto &diffusion_relaxation_rk2 =
         main_methods.addRK2Sequence<DiffusionRelaxationCK, DirectionalDiffusion, LinearCorrectionCK>(diffusion_body_inner);
 
     auto &left_boundary_condition =
-        main_methods.addStateDynamics<ConstantConstraintCK, Real>(left_boundary, diffusion_species_name, high_temperature);
+        main_methods.addStateDynamics<ConstantConstraintCK, Real>(left_boundary, species_name, high_temperature);
     auto &other_boundary_condition =
-        main_methods.addStateDynamics<ConstantConstraintCK, Real>(other_boundary, diffusion_species_name, low_temperature);
+        main_methods.addStateDynamics<ConstantConstraintCK, Real>(other_boundary, species_name, low_temperature);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations of the simulation.
     //	Regression tests are also defined here.
@@ -186,14 +186,14 @@ int main(int ac, char *av[])
     auto &write_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     auto &write_solid_temperature =
         main_methods.addObserveRegression<RegressionTestEnsembleAverage, Real>(
-            diffusion_species_name, observer_contact);
+            observer_contact, species_name);
     auto &write_solid_average_temperature_part =
         main_methods.addReduceRegression<RegressionTestDynamicTimeWarping, QuantityAverage, Real>(
-            inner_domain, diffusion_species_name);
+            inner_domain, species_name);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(20.0);
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
     size_t iteration_steps = 0;
     auto &state_recording = time_stepper.addTriggerByInterval(0.2);
     //----------------------------------------------------------------------
@@ -216,7 +216,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (!time_stepper.isEndTime())
+    while (!time_stepper.isEndTime(20.0))
     {
         Real dt = time_stepper.incrementPhysicalTime(get_time_step_size);
         diffusion_relaxation_rk2.exec(dt);

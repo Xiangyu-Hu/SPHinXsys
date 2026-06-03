@@ -29,11 +29,14 @@
 #ifndef GENERAL_ASSIGNMENT_H
 #define GENERAL_ASSIGNMENT_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include <string>
+#include <utility>
 
 namespace SPH
 {
-template <typename AssignmentFunctionType, class DynamicsIdentifier>
+template <class DynamicsIdentifier, typename AssignmentFunctionType>
 class VariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
 {
     using DataType = typename AssignmentFunctionType::ReturnType;
@@ -67,6 +70,45 @@ class VariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
 
   protected:
     DiscreteVariable<DataType> *dv_variable_;
+    AssignmentFunctionType assignment_method_;
+};
+
+template <class DynamicsIdentifier, typename AssignmentFunctionType>
+class VariableEntryAssignment : public BaseLocalDynamics<DynamicsIdentifier>
+{
+    using DataType = typename AssignmentFunctionType::ReturnType;
+    using Assign = typename AssignmentFunctionType::ComputingKernel;
+
+  public:
+    template <typename... Args>
+    VariableEntryAssignment(DynamicsIdentifier &identifier, const std::string &variable_name,
+                            const std::string &entry_name, Args &&...args)
+        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
+          dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
+          entry_name_(entry_name), assignment_method_(this->particles_, std::forward<Args>(args)...){};
+    virtual ~VariableEntryAssignment() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : entry_(encloser.dv_variable_->DelegatedEntryView(ex_policy, encloser.entry_name_)),
+              assign_(ex_policy, encloser.assignment_method_){};
+
+        void update(UnsignedInt index_i, Real dt = 0.0)
+        {
+            entry_[index_i] = assign_(index_i);
+        };
+
+      protected:
+        EntryView<DataType> entry_;
+        Assign assign_;
+    };
+
+  protected:
+    DiscreteVariable<DataType> *dv_variable_;
+    std::string entry_name_;
     AssignmentFunctionType assignment_method_;
 };
 

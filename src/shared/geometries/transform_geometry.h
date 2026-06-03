@@ -29,8 +29,8 @@
 #ifndef TRANSFORM_SHAPE_H
 #define TRANSFORM_SHAPE_H
 
-#include "base_data_type_package.h"
 #include "base_geometry.h"
+#include "data_type.h"
 
 namespace SPH
 {
@@ -41,11 +41,13 @@ class TransformGeometry : public GeometryType
   public:
     template <typename... Args>
     explicit TransformGeometry(const Transform &transform, Args &&...args)
-        : GeometryType(std::forward<Args>(args)...), transform_(transform){};
+        : GeometryType(std::forward<Args>(args)...),
+          initial_transform_(transform), transform_(transform){};
     ~TransformGeometry() {};
 
     /** variable transform is introduced here */
     Transform &getTransform() { return transform_; };
+    Transform initialTransform() const { return initial_transform_; };
     void setTransform(const Transform &transform) { transform_ = transform; };
 
     bool checkContain(const Vecd &probe_point)
@@ -61,7 +63,38 @@ class TransformGeometry : public GeometryType
         return transform_.shiftFrameStationToBase(closest_point_origin);
     };
 
+    // Returns the AABB of the rotated underlying shape's AABB
+    // It is not the tight fit AABB of the underlying shape
+    // But at least it encloses the underlying shape fully
+    BoundingBoxd findBounds()
+    {
+        BoundingBoxd original_bound = GeometryType::findBounds();
+        Vecd bb_min = Vecd::Constant(MaxReal);
+        Vecd bb_max = Vecd::Constant(-MaxReal);
+        for (auto x : {original_bound.lower_.x(), original_bound.upper_.x()})
+        {
+            for (auto y : {original_bound.lower_.y(), original_bound.upper_.y()})
+            {
+                if constexpr (Dimensions == 3)
+                {
+                    for (auto z : {original_bound.lower_.z(), original_bound.upper_.z()})
+                    {
+                        bb_min = bb_min.cwiseMin(this->transform_.shiftFrameStationToBase(Vecd(x, y, z)));
+                        bb_max = bb_max.cwiseMax(this->transform_.shiftFrameStationToBase(Vecd(x, y, z)));
+                    }
+                }
+                else
+                {
+                    bb_min = bb_min.cwiseMin(this->transform_.shiftFrameStationToBase(Vecd(x, y)));
+                    bb_max = bb_max.cwiseMax(this->transform_.shiftFrameStationToBase(Vecd(x, y)));
+                }
+            }
+        }
+        return BoundingBoxd(bb_min, bb_max);
+    };
+
   protected:
+    Transform initial_transform_;
     Transform transform_;
 };
 
@@ -93,34 +126,9 @@ class TransformShape : public TransformGeometry<GeometryType>, public Shape
         return TransformGeometry<GeometryType>::findClosestPoint(probe_point);
     };
 
-    // Returns the AABB of the rotated underlying shape's AABB
-    // It is not the tight fit AABB of the underlying shape
-    // But at least it encloses the underlying shape fully
     virtual BoundingBoxd findBounds() override
     {
-        BoundingBoxd original_bound = TransformGeometry<GeometryType>::findBounds();
-        Vecd bb_min = Vecd::Constant(MaxReal);
-        Vecd bb_max = Vecd::Constant(-MaxReal);
-        for (auto x : {original_bound.lower_.x(), original_bound.upper_.x()})
-        {
-            for (auto y : {original_bound.lower_.y(), original_bound.upper_.y()})
-            {
-                if constexpr (Dimensions == 3)
-                {
-                    for (auto z : {original_bound.lower_.z(), original_bound.upper_.z()})
-                    {
-                        bb_min = bb_min.cwiseMin(this->transform_.shiftFrameStationToBase(Vecd(x, y, z)));
-                        bb_max = bb_max.cwiseMax(this->transform_.shiftFrameStationToBase(Vecd(x, y, z)));
-                    }
-                }
-                else
-                {
-                    bb_min = bb_min.cwiseMin(this->transform_.shiftFrameStationToBase(Vecd(x, y)));
-                    bb_max = bb_max.cwiseMax(this->transform_.shiftFrameStationToBase(Vecd(x, y)));
-                }
-            }
-        }
-        return BoundingBoxd(bb_min, bb_max);
+        return TransformGeometry<GeometryType>::findBounds();
     };
 };
 } // namespace SPH

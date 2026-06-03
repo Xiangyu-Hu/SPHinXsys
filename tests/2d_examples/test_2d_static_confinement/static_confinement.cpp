@@ -9,10 +9,10 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.366;              /**< Tank length. */
-Real DH = 5.366;              /**< Tank height. */
-Real LL = 2.0;                /**< Liquid column length. */
-Real LH = 1.0;                /**< Liquid column height. */
+Real DL = 5.366;                 /**< Tank length. */
+Real DH = 5.366;                 /**< Tank height. */
+Real LL = 2.0;                   /**< Liquid column length. */
+Real LH = 1.0;                   /**< Liquid column height. */
 Real global_resolution = 0.025;  /**< Global reference resolution. */
 Real BW = global_resolution * 4; /**< Extending width for BCs. */
 // Observer location
@@ -70,7 +70,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createWaterBlockShape(), GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -81,7 +81,7 @@ class WallShape : public MultiPolygonShape
   public:
     explicit WallShape(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWallShape(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createWallShape(), GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -92,7 +92,7 @@ class Triangle : public MultiPolygonShape
   public:
     explicit Triangle(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createStructureShape(), GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -110,7 +110,7 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");

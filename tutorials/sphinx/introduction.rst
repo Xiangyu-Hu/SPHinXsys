@@ -53,7 +53,7 @@ By introducing particle summation,
 Eq. :eq:`particle-average` can be approximated by
  
 .. math::
-	:label: particle-reconstuction
+	:label: particle-reconstruction
 
 	f(\mathbf{r}) \approx \sum_{j}  V_j W(\mathbf{r} - \mathbf{r}_{j}, h) f_j = \sum_{j}  \frac{m_j}{\rho_j} W(\mathbf{r} - \mathbf{r}_{j}, h) f_j,  
  
@@ -61,7 +61,7 @@ where the summation is over all the neighboring particles :math:`j` located in t
 Substituting the variable :math:`f(\mathbf{r})` with density one gets the approximation of the particle-average density 
  
 .. math::
-	:label: particle-density-reconstuction
+	:label: particle-density-reconstruction
 
 	\rho_i \approx \sum_{j}  \frac{m_j}{\rho_j} W(\mathbf{r}_{i} - \mathbf{r}_{j}, h) \rho_j = \sum_{j}  m_j W_{ij}, 
  
@@ -164,11 +164,11 @@ Basically, there are three types of ownerships.
 First, the SPHsystem, bodies, body relations, gravities and particle-dynamics methods are owned by the application,
 i.e. the main function. This requires that these objects are defined in the main function.
 Second, the particles and materials are owned by SPHbody; 
-Third, though the geometries, are owned by SPHBody; the shapes owned by complex shape or body part during the simualtion,
-these objects are temporaly owned by base and derived constrcutors.   
+Third, though the geometries, are owned by SPHBody; the shapes owned by complex shape or body part during the simulation,
+these objects are temporally owned by base and derived constructors.   
 Therefore, we need to use shared pointer for them.
 
-One important choice in SPHinXsys is that the ownship is only clarified at the constrcution phase.
+One important choice in SPHinXsys is that the ownership is only clarified at the construction phase.
 After that, observers of raw pointers are assigned and used during the simulation.
 
 

@@ -82,22 +82,24 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBoxd system_domain_bounds(Vecd(-DL / 2 - BW, -DL / 2 - BW, -DL / 2 - BW), Vecd(DL / 2 + BW, DH / 2 + BW, DW / 2 + BW));
+    BoundingBoxd system_domain_bounds(Vecd(-DL / 2, -DL / 2, -DL / 2), Vecd(DL / 2, DH / 2, DW / 2));
     SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
-    air_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_a, c_f), mu_a);
+    air_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_a, c_f);
+    air_block.addMaterialProperty<Viscosity>(mu_a);
     air_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

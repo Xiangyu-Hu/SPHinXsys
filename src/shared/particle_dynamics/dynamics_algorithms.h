@@ -52,11 +52,12 @@
 
 #include "base_dynamics.h"
 #include "base_local_dynamics.h"
-#include "base_particle_dynamics.h"
 #include "cell_linked_list.hpp"
 #include "particle_iterators.h"
 
+#include <string>
 #include <type_traits>
+#include <utility>
 
 namespace SPH
 {
@@ -142,10 +143,11 @@ class ReduceDynamics : public LocalDynamicsType,
     virtual ReturnType exec(Real dt = 0.0) override
     {
         this->setupDynamics(dt);
-        ReturnType temp = particle_reduce(ExecutionPolicy(),
-                                          this->identifier_->LoopRange(), this->Reference(), this->getOperation(),
-                                          [&](size_t i) -> ReturnType
-                                          { return this->reduce(i, dt); });
+        ReturnType temp = particle_reduce(
+            ExecutionPolicy(),
+            this->identifier_->LoopRange(), this->Reference(), this->getOperation(),
+            [&](size_t i) -> ReturnType
+            { return this->reduce(i, dt); });
         return this->outputResult(temp);
     };
 };
@@ -195,19 +197,19 @@ class BaseInteractionDynamics : public LocalDynamicsType, public BaseDynamics<vo
  * @class InteractionSplit
  * @brief This is for the splitting algorithm
  */
-template <class LocalDynamicsType, class CellLinkedListType, class ExecutionPolicy = ParallelPolicy>
+template <class LocalDynamicsType, class CellLinkedListIdentifier, class ExecutionPolicy = ParallelPolicy>
 class BaseInteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, ParallelPolicy>
 {
   protected:
     RealBody &real_body_;
-    CellLinkedListType &cell_linked_list_;
+    CellLinkedListIdentifier &cell_linked_list_;
 
   public:
     template <typename... Args>
     explicit BaseInteractionSplit(Args &&...args)
         : BaseInteractionDynamics<LocalDynamicsType, ParallelPolicy>(std::forward<Args>(args)...),
           real_body_(DynamicCast<RealBody>(this, this->getSPHBody())),
-          cell_linked_list_(DynamicCast<CellLinkedListType>(this, real_body_.getCellLinkedList()))
+          cell_linked_list_(DynamicCast<CellLinkedListIdentifier>(this, real_body_.getCellLinkedList()))
     {
         static_assert(!has_initialize<LocalDynamicsType>::value &&
                           !has_update<LocalDynamicsType>::value,
@@ -223,10 +225,10 @@ class BaseInteractionSplit : public BaseInteractionDynamics<LocalDynamicsType, P
 };
 
 template <class LocalDynamicsType>
-using InteractionSplit = BaseInteractionSplit<LocalDynamicsType, CellLinkedList>;
+using InteractionSplit = BaseInteractionSplit<LocalDynamicsType, CellLinkedList<SPHAdaptation>>;
 
 template <class LocalDynamicsType>
-using InteractionAdaptiveSplit = BaseInteractionSplit<LocalDynamicsType, MultilevelCellLinkedList>;
+using InteractionAdaptiveSplit = BaseInteractionSplit<LocalDynamicsType, CellLinkedList<AdaptiveSmoothingLength>>;
 
 /**
  * @class InteractionDynamics

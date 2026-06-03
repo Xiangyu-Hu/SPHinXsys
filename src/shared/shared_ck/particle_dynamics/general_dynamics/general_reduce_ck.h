@@ -29,7 +29,12 @@
 #ifndef GENERAL_REDUCE_CK_H
 #define GENERAL_REDUCE_CK_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include "external_force.h"
+
+#include <string>
+#include <utility>
 
 namespace SPH
 {
@@ -149,6 +154,35 @@ class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<std::pair<DataT
         ReduceReturnType reduce(size_t index_i, Real dt = 0.0)
         {
             return ReduceReturnType(variable_[index_i], Real(1));
+        };
+
+      protected:
+        DataType *variable_;
+    };
+
+  protected:
+    DiscreteVariable<DataType> *dv_variable_;
+};
+
+template <typename DataType, class DynamicsIdentifier = SPHBody>
+class MaximumNorm : public BaseLocalDynamicsReduce<ReduceParticleMax, DynamicsIdentifier>
+{
+    using ReduceReturnType = std::pair<Real, UnsignedInt>;
+    using BaseDynamicsType = BaseLocalDynamicsReduce<ReduceParticleMax, DynamicsIdentifier>;
+
+  public:
+    MaximumNorm(DynamicsIdentifier &identifier, const std::string &variable_name);
+    virtual ~MaximumNorm() {};
+
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
+        ReduceReturnType reduce(size_t index_i, Real dt = 0.0)
+        {
+            return ReduceReturnType(getNorm(variable_[index_i]), index_i);
         };
 
       protected:

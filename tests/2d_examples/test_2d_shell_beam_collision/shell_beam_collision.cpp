@@ -9,8 +9,8 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 4.0;                        /**< box length. */
-Real DH = 4.0;                        /**< box height. */
+Real DL = 4.0;                           /**< box length. */
+Real DH = 4.0;                           /**< box height. */
 Real global_resolution = 0.025;          /**< reference resolution. */
 Real BW = global_resolution * 4.;        /**< wall width for BCs. */
 Real thickness = global_resolution * 1.; /**< shell thickness. */
@@ -40,7 +40,7 @@ class Beam : public MultiPolygonShape
         outer_beam_shape.push_back(Vecd(0.0, -BW));
         outer_beam_shape.push_back(Vecd(-BW, -BW));
 
-        multi_polygon_.addAPolygon(outer_beam_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(outer_beam_shape, GeometricOps::add);
     }
 };
 class Shell : public ComplexShape
@@ -69,8 +69,8 @@ MultiPolygon createBeamConstrainShape()
         Vecd(0.5 * global_resolution, DH - 0.5 * global_resolution), Vecd(-1.5 * BW, DH - 0.5 * global_resolution)};
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(bottom_beam_base_shape, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(top_beam_base_shape, ShapeBooleanOps::add);
+    multi_polygon.addPolygon(bottom_beam_base_shape, GeometricOps::add);
+    multi_polygon.addPolygon(top_beam_base_shape, GeometricOps::add);
     return multi_polygon;
 };
 //----------------------------------------------------------------------
@@ -92,15 +92,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody shell(sph_system, makeShared<Shell>("Shell"));
     shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    shell.defineMaterial<Solid>();
+    shell.defineMatterMaterial<Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        shell.generateParticles<SurfaceParticles, Reload>(shell.getName());
+        shell.generateParticles<SurfaceParticles, Reload>(shell.Name());
     }
     else
     {
         shell.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
-            ->writeLevelSet();
+            .writeLevelSet();
         shell.generateParticles<SurfaceParticles, Lattice>(thickness);
     }
 
@@ -111,7 +111,7 @@ int main(int ac, char *av[])
     }
 
     SolidBody beam(sph_system, makeShared<Beam>("Beam"));
-    beam.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    beam.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

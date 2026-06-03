@@ -1,5 +1,5 @@
-#ifndef CONTINUUM_INTERGRATION_1ST_CK_HPP
-#define CONTINUUM_INTERGRATION_1ST_CK_HPP
+#ifndef CONTINUUM_INTEGRATION_1ST_CK_HPP
+#define CONTINUUM_INTEGRATION_1ST_CK_HPP
 
 #include "base_particles.hpp"
 #include "continuum_integration_1st_ck.h"
@@ -12,7 +12,7 @@ template <class BaseInteractionType>
 template <class DynamicsIdentifier>
 PlasticAcousticStep<BaseInteractionType>::PlasticAcousticStep(DynamicsIdentifier &identifier)
     : fluid_dynamics::AcousticStep<BaseInteractionType>(identifier),
-      plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->sph_body_->getBaseMaterial())),
+      plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->sph_body_->getMatterMaterial())),
       dv_stress_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StressTensor3D")),
       dv_strain_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainTensor3D")),
       dv_stress_rate_3D_(this->particles_->template registerStateVariable<Mat3d>("StressRate3D")),
@@ -26,10 +26,12 @@ PlasticAcousticStep<BaseInteractionType>::PlasticAcousticStep(DynamicsIdentifier
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    PlasticAcousticStep1stHalf(Inner<Parameters...> &inner_relation)
-    : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
-      correction_(this->particles_), riemann_solver_(this->plastic_continuum_, this->plastic_continuum_)
+    PlasticAcousticStep1stHalf(DynamicsIdentifier &identifier)
+    : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(identifier),
+      correction_method_(this->particles_),
+      riemann_solver_(this->plastic_continuum_, this->plastic_continuum_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");
@@ -60,7 +62,7 @@ template <class ExecutionPolicy, class EncloserType>
 PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
-      correction_(encloser.correction_),
+      correction_(ex_policy, encloser.correction_method_),
       riemann_solver_(encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
@@ -85,7 +87,7 @@ void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
         Vecd nablaW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j] * this->e_ij(index_i, index_j);
         Matd stress_tensor_j = degradeToMatd(stress_tensor_3D_[index_j]);
         force += mass_[index_i] * rho_[index_j] * ((stress_tensor_i + stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
-        rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_[index_j]) * dW_ijV_j;
+        rho_dissipation += riemann_solver_.DissipativeUJump(index_i, index_j, p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
     force_[index_i] += force;
     drho_dt_[index_i] = rho_dissipation * rho_[index_i];
@@ -109,10 +111,12 @@ void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
 
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    PlasticAcousticStep1stHalf(Contact<Parameters...> &wall_contact_relation)
-    : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
-      correction_(this->particles_), riemann_solver_(this->plastic_continuum_, this->plastic_continuum_) {}
+    PlasticAcousticStep1stHalf(DynamicsIdentifier &identifier)
+    : BaseInteraction(identifier), Interaction<Wall>(identifier),
+      correction_method_(this->particles_),
+      riemann_solver_(this->plastic_continuum_, this->plastic_continuum_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -120,7 +124,7 @@ PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType
     InteractKernel::InteractKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
-      correction_(encloser.correction_),
+      correction_(ex_policy, encloser.correction_method_),
       riemann_solver_(encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
@@ -151,7 +155,7 @@ void PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectio
         Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_[index_j]).dot(-e_ij);
         Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
         force += 2 * mass_[index_i] * stress_tensor_i * dW_ijV_j * e_ij;
-        rho_dissipation += riemann_solver_.DissipativeUJump(p_[index_i] - p_in_wall) * dW_ijV_j;
+        rho_dissipation += riemann_solver_.DissipativeUJump(index_i, index_j, p_[index_i] - p_in_wall) * dW_ijV_j;
     }
     force_[index_i] += force / rho_[index_i];
     drho_dt_[index_i] += rho_dissipation * rho_[index_i];
@@ -159,4 +163,4 @@ void PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectio
 
 } // namespace continuum_dynamics
 } // namespace SPH
-#endif // CONTINUUM_INTERGRATION_1ST_CK_HPP
+#endif // CONTINUUM_INTEGRATION_1ST_CK_HPP

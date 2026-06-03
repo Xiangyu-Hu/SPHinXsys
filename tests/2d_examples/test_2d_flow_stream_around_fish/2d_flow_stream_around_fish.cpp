@@ -24,17 +24,18 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
 
     SolidBody fish_body(sph_system, makeShared<FishBody>("FishBody"));
     fish_body.defineAdaptationRatios(1.15, 2.0);
-    fish_body.defineBodyLevelSetShape()->writeLevelSet();
-    fish_body.defineMaterial<FishBodyComposite>();
+    fish_body.defineBodyLevelSetShape().writeLevelSet();
+    fish_body.defineMatterMaterial<FishBodyComposite>();
     //  Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? fish_body.generateParticles<BaseParticles, Reload>(fish_body.getName())
+        ? fish_body.generateParticles<BaseParticles, Reload>(fish_body.Name())
         : fish_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -122,13 +123,13 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
 
-    AlignedBoxByParticle emitter(water_block, AlignedBox(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
+    OrientedBoxByParticle emitter(water_block, OrientedBox(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer);
 
-    AlignedBoxByCell emitter_buffer(water_block, AlignedBox(xAxis, Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
+    OrientedBoxByCell emitter_buffer(water_block, OrientedBox(xAxis, Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
 
-    AlignedBoxByCell disposer(water_block, AlignedBox(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize));
+    OrientedBoxByCell disposer(water_block, OrientedBox(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
 
     SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>> velocity_boundary_condition_constraint(water_block);
@@ -153,9 +154,13 @@ int main(int ac, char *av[])
     write_real_body_states.addToWrite<int>(water_block, "Indicator");
     write_real_body_states.addToWrite<int>(fish_body, "MaterialID");
     write_real_body_states.addToWrite<Matd>(fish_body, "ActiveStrain");
-    RestartIO restart_io(sph_system);
-    ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_viscous_force_from_fluid(fish_body, "ViscousForceFromFluid");
+    Gravity gravity(Vecd::Zero());
+    RegressionTestDynamicTimeWarping<ReducedQuantityRecording<TotalMechanicalEnergy>>
+        write_water_mechanical_energy(water_block, gravity);
+    ReducedQuantityRecording<QuantitySummation<Vecd>>
+        write_total_viscous_force_from_fluid(fish_body, "ViscousForceFromFluid");
     ReducedQuantityRecording<QuantitySummation<Vecd>> write_total_pressure_force_from_fluid(fish_body, "PressureForceFromFluid");
+    RestartIO restart_io(sph_system);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -164,17 +169,29 @@ int main(int ac, char *av[])
     sph_system.initializeSystemCellLinkedLists();
     /** initialize configurations for all bodies. */
     sph_system.initializeSystemConfigurations();
-    /** computing surface normal direction for the fish. */
-    fish_body_normal_direction.exec();
-    /** computing linear reproducing configuration for the fish. */
-    fish_body_corrected_configuration.exec();
     /** initialize material ids for the fish. */
     composite_material_id.exec();
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
-    size_t number_of_iterations = 0;
+    size_t number_of_iterations = sph_system.RestartStep();
+    if (sph_system.RestartStep() != 0)
+    {
+        // Restore physical time and all evolving particle variables from XML restart file
+        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
+        // Rebuild spatial hash from restored positions (required before neighbor search)
+        water_block.updateCellLinkedList();
+        fish_body.updateCellLinkedList();
+        // Re-sort particles for cache locality; invalidates CLL so rebuild immediately after
+        particle_sorting.exec();
+        water_block.updateCellLinkedList();  // rebuild CLL after sorting — sort invalidates it
+        fish_body.updateCellLinkedList();
+        // Reconstruct neighbor lists from restored + sorted particle positions
+        water_block_complex.updateConfiguration();
+        fish_contact.updateConfiguration();
+    }
+
     int screen_output_interval = 100;
     Real End_Time = 1.7; /**< End time. */
     Real D_Time = 0.01;  /**< time stamps for output. */
@@ -186,7 +203,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
-    write_real_body_states.writeToFile();
+    if (sph_system.RestartStep() == 0)
+    {
+        write_real_body_states.writeToFile();
+    }
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -197,6 +217,14 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < D_Time)
         {
+            // Write restart at start of step before any physics — captures pre-acoustic positions.
+            // Writing after pressure_relaxation half-steps would shift particle positions near
+            // the fish surface, causing density overcounting on reload and a pressure spike.
+            if (number_of_iterations % 500 == 0 && number_of_iterations != sph_system.RestartStep())
+            {
+                restart_io.writeToFile(number_of_iterations);
+            }
+
             apply_gravity_force.exec();
             Real Dt = get_fluid_advection_time_step_size.exec();
             free_stream_surface_indicator.exec();
@@ -208,6 +236,7 @@ int main(int ac, char *av[])
             viscous_force_from_fluid.exec();
             /** Update normal direction on elastic body.*/
             fish_body_update_normal.exec();
+
             size_t inner_ite_dt = 0;
             size_t inner_ite_dt_s = 0;
             Real relaxation_time = 0.0;
@@ -242,7 +271,6 @@ int main(int ac, char *av[])
                 emitter_buffer_inflow_condition.exec(dt);
                 inner_ite_dt++;
             }
-
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
@@ -250,6 +278,7 @@ int main(int ac, char *av[])
                           << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "	dt / dt_s = " << inner_ite_dt_s << "\n";
 
                 write_total_viscous_force_from_fluid.writeToFile(number_of_iterations);
+                write_water_mechanical_energy.writeToFile(number_of_iterations);
                 write_total_pressure_force_from_fluid.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
@@ -281,6 +310,17 @@ int main(int ac, char *av[])
     TimeInterval tt;
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+    if (sph_system.GenerateRegressionData())
+    {
+        // Build DTW reference database from current run (use --regression 1 flag)
+        write_water_mechanical_energy.generateDataBase(0.3);  // 0.3 = DTW threshold
+    }
+    else if (sph_system.RestartStep() == 0)
+    {
+        // Verify current full run matches reference database — fails if physics changed
+        write_water_mechanical_energy.testResult();
+    }
 
     return 0;
 }

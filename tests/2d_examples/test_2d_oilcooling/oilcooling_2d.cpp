@@ -28,7 +28,7 @@ Real angle_increment = 2 * Pi / Wnum;
 Real WD = 0.5 * DRO + AG + 0.5 * WH;     /**< Distance from center point to the center of a winding. */
 Real ZW = 0.5 * DRO + AG;                /**< Distance from center point to the site of a winding. */
 int resolution_circle = 60;              /**<Approximate the circle as the number of sides of the polygon. */
-Real global_resolution = 0.00075;           /**< Initial reference particle spacing. */
+Real global_resolution = 0.00075;        /**< Initial reference particle spacing. */
 Real BW = 0.5 * (DMO - DM);              /**< Extending width for wall boundary. */
 Real OH = LH;                            /**< Outflows region height. */
 Real Lnum = 5;                           /**< Inflows number. */
@@ -145,14 +145,14 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(center, (RM + BW), resolution_circle, ShapeBooleanOps::add); /**< Outer wall of motor hausing. */
-        multi_polygon_.addACircle(center, RM, resolution_circle, ShapeBooleanOps::sub);        /**< Inner wall of motor hausing. */
-        multi_polygon_.addABox(inlet_transform, inlet_halfsize, ShapeBooleanOps::sub);         /**< Top Inlets. */
-        multi_polygon_.addABox(outlet_transform, outlet_halfsize, ShapeBooleanOps::sub);       /**< Outlets. */
-        multi_polygon_.addABox(inlet2_transform, inlet_halfsize, ShapeBooleanOps::sub);
-        multi_polygon_.addABox(inlet3_transform, inlet_halfsize, ShapeBooleanOps::sub);
-        multi_polygon_.addABox(inlet4_transform, inlet_halfsize, ShapeBooleanOps::sub);
-        multi_polygon_.addABox(inlet5_transform, inlet_halfsize, ShapeBooleanOps::sub);
+        multi_polygon_.addCircle(center, (RM + BW), resolution_circle, GeometricOps::add); /**< Outer wall of motor hausing. */
+        multi_polygon_.addCircle(center, RM, resolution_circle, GeometricOps::sub);        /**< Inner wall of motor hausing. */
+        multi_polygon_.addBox(inlet_transform, inlet_halfsize, GeometricOps::sub);         /**< Top Inlets. */
+        multi_polygon_.addBox(outlet_transform, outlet_halfsize, GeometricOps::sub);       /**< Outlets. */
+        multi_polygon_.addBox(inlet2_transform, inlet_halfsize, GeometricOps::sub);
+        multi_polygon_.addBox(inlet3_transform, inlet_halfsize, GeometricOps::sub);
+        multi_polygon_.addBox(inlet4_transform, inlet_halfsize, GeometricOps::sub);
+        multi_polygon_.addBox(inlet5_transform, inlet_halfsize, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -163,7 +163,7 @@ class RotorBoundary : public MultiPolygonShape
   public:
     explicit RotorBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(center, RR, resolution_circle, ShapeBooleanOps::add); /**< Rotor */
+        multi_polygon_.addCircle(center, RR, resolution_circle, GeometricOps::add); /**< Rotor */
     }
 };
 //----------------------------------------------------------------------
@@ -183,7 +183,7 @@ class WindingBoundary : public MultiPolygonShape
             Vec2d winding_translation(center_x, center_y);
             Vec2d winding_halfsize(WL / 2, WH / 2);
             Transform winding_transform(Rotation2d(theta - (Pi / 2)), winding_translation);
-            multi_polygon_.addABox(winding_transform, winding_halfsize, ShapeBooleanOps::add);
+            multi_polygon_.addBox(winding_transform, winding_halfsize, GeometricOps::add);
         }
     }
 };
@@ -195,11 +195,11 @@ class FluidBoundary : public MultiPolygonShape
   public:
     explicit FluidBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addABox(inlet_transform, inlet_halfsize, ShapeBooleanOps::add); /**< Top Inlets. */
-        multi_polygon_.addABox(inlet2_transform, inlet_halfsize, ShapeBooleanOps::add);
-        multi_polygon_.addABox(inlet3_transform, inlet_halfsize, ShapeBooleanOps::add);
-        multi_polygon_.addABox(inlet4_transform, inlet_halfsize, ShapeBooleanOps::add);
-        multi_polygon_.addABox(inlet5_transform, inlet_halfsize, ShapeBooleanOps::add);
+        multi_polygon_.addBox(inlet_transform, inlet_halfsize, GeometricOps::add); /**< Top Inlets. */
+        multi_polygon_.addBox(inlet2_transform, inlet_halfsize, GeometricOps::add);
+        multi_polygon_.addBox(inlet3_transform, inlet_halfsize, GeometricOps::add);
+        multi_polygon_.addBox(inlet4_transform, inlet_halfsize, GeometricOps::add);
+        multi_polygon_.addBox(inlet5_transform, inlet_halfsize, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -208,8 +208,8 @@ class FluidBoundary : public MultiPolygonShape
 class InletInflowCondition : public fluid_dynamics::EmitterInflowCondition
 {
   public:
-    InletInflowCondition(AlignedBoxByParticle &aligned_box_part)
-        : EmitterInflowCondition(aligned_box_part) {}
+    InletInflowCondition(OrientedBoxByParticle &oriented_box_part)
+        : EmitterInflowCondition(oriented_box_part) {}
 
   protected:
     virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
@@ -291,31 +291,32 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody oil_body(sph_system, makeShared<FluidBoundary>("OilBody"));
     oil_body.getSPHAdaptation().resetKernel<KernelTabulated<KernelWendlandC2>>(20);
-    oil_body.defineClosure<WeaklyCompressibleFluid, Viscosity, IsotropicDiffusion>(
-        ConstructArgs(rho0_f, c_f), mu_f, ConstructArgs(temperature_species_name, k_oil));
+    oil_body.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    oil_body.addMaterialProperty<Viscosity>(mu_f);
+    oil_body.addMaterialProperty<IsotropicDiffusion>(temperature_species_name, k_oil);
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(3500.0);
     oil_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
-    wall.defineBodyLevelSetShape()->writeLevelSet();
-    wall.defineMaterial<Solid>();
+    wall.defineBodyLevelSetShape().writeLevelSet();
+    wall.defineMatterMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall.generateParticles<BaseParticles, Reload>(wall.getName())
+        ? wall.generateParticles<BaseParticles, Reload>(wall.Name())
         : wall.generateParticles<BaseParticles, Lattice>();
 
     SolidBody rotor(sph_system, makeShared<RotorBoundary>("Rotor"));
-    rotor.defineBodyLevelSetShape()->writeLevelSet();
-    rotor.defineMaterial<Solid>();
+    rotor.defineBodyLevelSetShape().writeLevelSet();
+    rotor.defineMatterMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? rotor.generateParticles<BaseParticles, Reload>(rotor.getName())
+        ? rotor.generateParticles<BaseParticles, Reload>(rotor.Name())
         : rotor.generateParticles<BaseParticles, Lattice>();
 
     SolidBody winding(sph_system, makeShared<WindingBoundary>("Winding"));
-    winding.defineBodyLevelSetShape()->writeLevelSet();
-    winding.defineClosure<Solid, IsotropicDiffusion>(
-        Solid(), ConstructArgs(temperature_species_name, k_winding));
+    winding.defineBodyLevelSetShape().writeLevelSet();
+    winding.defineMatterMaterial<Solid>();
+    winding.addMaterialProperty<IsotropicDiffusion>(temperature_species_name, k_winding);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? winding.generateParticles<BaseParticles, Reload>(winding.getName())
+        ? winding.generateParticles<BaseParticles, Reload>(winding.Name())
         : winding.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody slot_observer(sph_system, "ObserverSlot");
@@ -348,9 +349,7 @@ int main(int ac, char *av[])
         BodyStatesRecordingToVtp write_wall_to_vtp(wall);
         BodyStatesRecordingToVtp write_rotor_to_vtp(rotor);
         BodyStatesRecordingToVtp write_winding_to_vtp(winding);
-        ReloadParticleIO write_wall_particle_reload_files(wall);
-        ReloadParticleIO write_rotor_particle_reload_files(rotor);
-        ReloadParticleIO write_winding_particle_reload_files(winding);
+        ReloadParticleIO particle_reload(SPHBodyVector{&wall, &rotor, &winding});
         //----------------------------------------------------------------------
         //	Particle relaxation starts here.
         //----------------------------------------------------------------------
@@ -383,9 +382,7 @@ int main(int ac, char *av[])
         }
         std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
         /** Output results. */
-        write_wall_particle_reload_files.writeToFile(0);
-        write_rotor_particle_reload_files.writeToFile(0);
-        write_winding_particle_reload_files.writeToFile(0);
+        particle_reload.writeToFile();
         return 0;
     }
     //----------------------------------------------------------------------
@@ -428,22 +425,22 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(oil_body);
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(oil_body_inner, oil_body_contact);
 
-    AlignedBoxByParticle emitter(oil_body, AlignedBox(xAxis, inlet_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter(oil_body, OrientedBox(xAxis, inlet_transform, inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition(emitter);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, inlet_buffer);
-    AlignedBoxByParticle emitter2(oil_body, AlignedBox(xAxis, inlet2_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter2(oil_body, OrientedBox(xAxis, inlet2_transform, inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition2(emitter2);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection2(emitter2, inlet_buffer);
-    AlignedBoxByParticle emitter3(oil_body, AlignedBox(xAxis, inlet3_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter3(oil_body, OrientedBox(xAxis, inlet3_transform, inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition3(emitter3);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection3(emitter3, inlet_buffer);
-    AlignedBoxByParticle emitter4(oil_body, AlignedBox(xAxis, inlet4_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter4(oil_body, OrientedBox(xAxis, inlet4_transform, inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition4(emitter4);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection4(emitter4, inlet_buffer);
-    AlignedBoxByParticle emitter5(oil_body, AlignedBox(xAxis, inlet5_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter5(oil_body, OrientedBox(xAxis, inlet5_transform, inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition5(emitter5);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection5(emitter5, inlet_buffer);
-    AlignedBoxByCell outlet_disposer(oil_body, AlignedBox(xAxis, outlet_transform, outlet_halfsize));
+    OrientedBoxByCell outlet_disposer(oil_body, OrientedBox(xAxis, outlet_transform, outlet_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> outlet_disposer_outflow_deletion(outlet_disposer);
 
     GetDiffusionTimeStepSize get_thermal_time_step(oil_body);

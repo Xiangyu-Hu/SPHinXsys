@@ -30,20 +30,23 @@
 #define GENERAL_REDUCE_H
 
 #include "base_general_dynamics.h"
+
+#include <cmath>
 #include <limits>
+#include <string>
 
 namespace SPH
 {
 /**
  * @class VariableNorm
- * @brief  obtained the maximum norm of a variable
+ * @brief  obtains the norm of a variable for reduce
  */
-template <typename DataType, typename NormType, class DynamicsIdentifier = SPHBody>
-class VariableNorm : public BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>
+template <typename DataType, typename Operation, class DynamicsIdentifier = SPHBody>
+class VariableNorm : public BaseLocalDynamicsReduce<Operation, DynamicsIdentifier>
 {
   public:
     VariableNorm(DynamicsIdentifier &identifier, const std::string &variable_name)
-        : BaseLocalDynamicsReduce<NormType, DynamicsIdentifier>(identifier),
+        : BaseLocalDynamicsReduce<Operation, DynamicsIdentifier>(identifier),
           variable_(this->particles_->template getVariableDataByName<DataType>(variable_name)) {};
     virtual ~VariableNorm() {};
     virtual Real outputResult(Real reduced_value) override { return std::sqrt(reduced_value); }

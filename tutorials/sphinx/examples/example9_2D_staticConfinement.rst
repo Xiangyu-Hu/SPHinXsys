@@ -91,7 +91,7 @@ by using :code:`.push_back`. Similar way is used to create the geometry of the t
 	}
 
 The fluid body and material properties are defined. The function :code:`createWaterBlockShape()` is applied to 
-related to the geometry we have already defined in above step. We use :code:`addAPolygon` and switch :code:`ShapeBooleanOps` to 
+related to the geometry we have already defined in above step. We use :code:`addPolygon` and switch :code:`ShapeBooleanOps` to 
 :code:`add` to add the shape of the fluid body.
 We define the fluid material by using :code:`public WeaklyCompressibleFluid`. The basic material like density :code:`rho0_f` and 
 sound speed :code:`c_f` is defined in the above step. By calling the function :code:`assignDerivedMaterialParameters()`, some derived 
@@ -111,7 +111,7 @@ parameters are calculated, as reference pressure.
 			/** Geomtry definition. */
 			std::vector<Vecd> water_block_shape = createWaterBlockShape();
 			body_shape_ = new ComplexShape(body_name);
-			body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
+			body_shape_->addPolygon(water_block_shape, ShapeBooleanOps::add);
 		}
 	};
 	/**
@@ -146,8 +146,8 @@ such as :code:`add` and :code:`sub`.
 	   std::vector<Vecd> wall_shape = createWallShape();
 	   std::vector<Vecd> structure_shape = createStructureShape();
 	   ComplexShape* wall_and_structure_shape = new ComplexShape();
-	   wall_and_structure_shape->addAPolygon(wall_shape, ShapeBooleanOps::add);
-	   wall_and_structure_shape->addAPolygon(structure_shape, ShapeBooleanOps::sub);
+	   wall_and_structure_shape->addPolygon(wall_shape, ShapeBooleanOps::add);
+	   wall_and_structure_shape->addPolygon(structure_shape, ShapeBooleanOps::sub);
 	   return wall_and_structure_shape;
    }
 

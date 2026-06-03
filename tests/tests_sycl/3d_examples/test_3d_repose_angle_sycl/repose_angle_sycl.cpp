@@ -4,13 +4,14 @@
  * @details This is a fundamental GPU-accelerated test for soil dynamics.
  * @author SHuang Li, Xiangyu Hu and Shuaihao Zhang
  */
+#include "all_continuum_dynamics_ck.h"
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 // general parameters for geometry
 Real radius = 0.1;                                         // Soil column length
 Real height = 0.1;                                         // Soil column height
-Real global_resolution = radius / 10;                         // particle spacing
-Real BW = global_resolution * 4;                              // boundary width
+Real global_resolution = radius / 10;                      // particle spacing
+Real BW = global_resolution * 4;                           // boundary width
 Real DL = 2 * radius * (1 + 1.24 * height / radius) + 0.1; // tank length
 Real DH = height + 0.02;                                   // tank height
 Real DW = DL;                                              // tank width
@@ -89,12 +90,12 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     RealBody soil_block(sph_system, makeShared<SoilBlock>("GranularBody"));
-    soil_block.defineBodyLevelSetShape()->writeLevelSet();
-    soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
+    soil_block.defineBodyLevelSetShape().writeLevelSet();
+    soil_block.defineMatterMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     soil_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -130,8 +131,10 @@ int main(int ac, char *av[])
         soil_acoustic_step_1st_half(soil_block_inner, soil_block_contact);
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::PlasticAcousticStep2ndHalfWithWallRiemannCK>
         soil_acoustic_step_2nd_half(soil_block_inner, soil_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
-        soil_density_regularization(soil_block_inner, soil_block_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+        soil_density_summation(soil_block_inner, soil_block_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
+        soil_density_regularization(soil_block);
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::StressDiffusionInnerCK> stress_diffusion(soil_block_inner);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> soil_acoustic_time_step(soil_block, 0.4);
     //----------------------------------------------------------------------
@@ -146,14 +149,13 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<Real>(soil_block, "VerticalStress");
     StateDynamics<MainExecutionPolicy, continuum_dynamics::AccDeviatoricPlasticStrainCK> accumulated_deviatoric_plastic_strain(soil_block);
     body_states_recording.addToWrite<Real>(soil_block, "AccDeviatoricPlasticStrain");
-    RestartIOCK<MainExecutionPolicy> restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
         write_mechanical_energy(soil_block, gravity);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     wall_boundary_normal_direction.exec();
     soil_initial_condition.exec();
     constant_gravity.exec();
@@ -166,7 +168,6 @@ int main(int ac, char *av[])
     size_t number_of_iterations = 0;
     int screen_output_interval = 500;
     int observation_sample_interval = screen_output_interval * 2;
-    int restart_output_interval = screen_output_interval * 10;
     Real End_Time = 0.5; /**< End time. */
     Real D_Time = 0.01;  /**< Time stamps for output of body states. */
     Real Dt = 0.1 * D_Time;
@@ -194,6 +195,7 @@ int main(int ac, char *av[])
         while (integration_time < D_Time)
         {
             /** outer loop for dual-time criteria time-stepping. */
+            soil_density_summation.exec();
             soil_density_regularization.exec();
             interval_computing_time_step += TickCount::now() - time_instance;
 
@@ -212,19 +214,17 @@ int main(int ac, char *av[])
 
                 interval_acoustic_steps += TickCount::now() - time_instance;
 
-                /** screen output, write body reduced values and restart files  */
+                /** screen output, write body reduced values  */
                 if (number_of_iterations % screen_output_interval == 0)
                 {
                     std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << std::setprecision(4) << "	Time = "
                               << sv_physical_time->getValue()
                               << std::scientific << "	dt = " << dt << "\n";
 
-                    if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                    if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != 0)
                     {
                         write_mechanical_energy.writeToFile(number_of_iterations);
                     }
-                    if (number_of_iterations % restart_output_interval == 0)
-                        restart_io.writeToFile(number_of_iterations);
                 }
                 soil_update_particle_position.exec();
                 number_of_iterations++;
@@ -261,7 +261,7 @@ int main(int ac, char *av[])
     {
         write_mechanical_energy.generateDataBase(1.0e-3);
     }
-    else if (sph_system.RestartStep() == 0)
+    else
     {
         write_mechanical_energy.testResult();
     }

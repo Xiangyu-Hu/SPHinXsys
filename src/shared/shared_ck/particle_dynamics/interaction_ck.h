@@ -31,7 +31,6 @@
 #define INTERACTION_CK_H
 
 #include "base_local_dynamics.h"
-#include "neighborhood_ck.h"
 #include "relation_ck.hpp"
 
 namespace SPH
@@ -70,7 +69,7 @@ class Interaction<Inner<Parameters...>>
 
   public:
     explicit Interaction(InnerRelationType &inner_relation);
-    virtual ~Interaction() {};
+    virtual ~Interaction(){};
 
     class InteractKernel : public NeighborList, public NeighborKernel
     {
@@ -99,8 +98,9 @@ class Interaction<Contact<Parameters...>>
     using NeighborKernel = typename Neighborhood::NeighborKernel;
 
   public:
+    explicit Interaction(const RelationView<ContactRelationType> &contact_relation_view);
     explicit Interaction(ContactRelationType &contact_relation);
-    virtual ~Interaction() {};
+    virtual ~Interaction(){};
 
     class InteractKernel : public NeighborList, public NeighborKernel
     {
@@ -115,7 +115,7 @@ class Interaction<Contact<Parameters...>>
     void resetComputingKernelUpdated(UnsignedInt contact_index);
 
   protected:
-    ContactRelationType *contact_relation_;
+    RelationView<ContactRelationType> contact_relation_view_;
     StdVec<SPHBody *> contact_bodies_;
     StdVec<BaseParticles *> contact_particles_;
     StdVec<SPHAdaptation *> contact_adaptations_;
@@ -129,7 +129,7 @@ class Interaction<Wall>
   public:
     template <class WallContactRelationType>
     Interaction(WallContactRelationType &wall_contact_relation);
-    virtual ~Interaction() {};
+    virtual ~Interaction(){};
 
   protected:
     StdVec<DiscreteVariable<Vecd> *> dv_wall_vel_ave_, dv_wall_acc_ave_, dv_wall_n_;

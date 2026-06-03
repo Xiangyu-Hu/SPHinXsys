@@ -36,13 +36,21 @@
 #include "execution_policy.h"
 #include "neighborhood.h"
 
+#include "tbb/concurrent_vector.h"
+
 namespace SPH
 {
 
 class BaseParticles;
 class Kernel;
 class SPHAdaptation;
-class CellLinkedList;
+class AdaptiveSmoothingLength;
+
+template <typename T>
+using ConcurrentVec = tbb::concurrent_vector<T>;
+using ConcurrentIndexVector = ConcurrentVec<size_t>;
+using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
+using CellLists = std::pair<ConcurrentCellLists, DataListsInCells>;
 
 /**
  * @class BaseCellLinkedList
@@ -84,11 +92,10 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
                                GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation);
     DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
+    Mesh getSortSequenceMesh();
 
   protected:
     Kernel &kernel_;
-    UnsignedInt cell_offset_list_size_;
-    UnsignedInt index_list_size_; // at least number_of_cells_pluse_one_
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
     DiscreteVariable<UnsignedInt> *dv_cell_offset_;
     /** using concurrent vectors due to writing conflicts when building the list */
@@ -99,8 +106,9 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
     void clearCellLists();
     void UpdateCellListData(BaseParticles &base_particles);
     void tagBodyPartByCellByMesh(Mesh &mesh, ConcurrentCellLists &cell_lists,
-                                 ConcurrentIndexVector &cell_indexes,
                                  std::function<bool(Vecd, Real)> &check_included);
+    virtual void tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes,
+                                     std::function<bool(Vecd, Real)> &check_included) = 0;
     void tagBoundingCellsByMesh(Mesh &mesh, StdVec<CellLists> &cell_data_lists,
                                 const BoundingBoxd &bounding_bounds, int axis);
     void findNearestListDataEntryByMesh(Mesh &mesh, Real &min_distance_sqr, ListData &nearest_entry,
@@ -111,52 +119,58 @@ class BaseCellLinkedList : public MultiResolutionMeshField<Mesh>
                                     const LocalDynamicsFunction &local_dynamics_function);
 };
 
-class NeighborSearch : public Mesh
-{
-  public:
-    template <class ExecutionPolicy>
-    NeighborSearch(const ExecutionPolicy &ex_policy, CellLinkedList &cell_linked_list);
+template <typename...>
+class CellLinkedList;
 
-    template <typename FunctionOnEach>
-    void forEachSearch(const Vecd &source_pos, const FunctionOnEach &function,
-                       const BoundingBoxi &search_box = BoundingBoxi(Arrayi::Ones())) const;
-
-  protected:
-    UnsignedInt *particle_index_;
-    UnsignedInt *cell_offset_;
-};
-
-/**
- * @class CellLinkedList
- * @brief Defining a mesh cell linked list for a body.
- * 		  The meshes for all bodies share the same global coordinates.
- */
-class CellLinkedList : public BaseCellLinkedList
+template <>
+class CellLinkedList<SPHAdaptation> : public BaseCellLinkedList
 {
   protected:
     Mesh *mesh_;
 
   public:
+    class CellLinkedListMesh : public Mesh
+    {
+      public:
+        CellLinkedListMesh(CellLinkedList<SPHAdaptation> &cell_linked_list);
+    };
+
     CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
                    BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
     ~CellLinkedList() {};
     Mesh &getMesh() { return *mesh_; };
     void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
+    virtual void tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes,
+                                     std::function<bool(Vecd, Real)> &check_included) override;
 
-    template <class ExecutionPolicy>
-    NeighborSearch createNeighborSearch(const ExecutionPolicy &ex_policy);
-    UnsignedInt getCellOffsetListSize() { return cell_offset_list_size_; };
+    class NeighborSearch : public CellLinkedListMesh
+    {
+      public:
+        template <class ExecutionPolicy, class Encloser>
+        NeighborSearch(const ExecutionPolicy &ex_policy, Encloser &encloser);
+
+        template <typename FunctionOnEach>
+        void forInnerSearch(const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const;
+        template <typename FunctionOnEach>
+        void forContactSearch(const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const;
+
+      protected:
+        UnsignedInt *particle_index_;
+        UnsignedInt *cell_offset_;
+
+        inline BoundingBoxi InnerSearchBox(const Vecd &src_cut_off) const;
+        inline BoundingBoxi ContactSearchBox(const Vecd &src_cut_off) const;
+        template <typename FunctionOnEach>
+        void searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const;
+    };
 };
 
-/**
- * @class MultilevelCellLinkedList
- * @brief Defining a multilevel mesh cell linked list for a body
- * 		  for multi-resolution particle configuration.
- */
-class MultilevelCellLinkedList : public BaseCellLinkedList
+template <>
+class CellLinkedList<AdaptiveSmoothingLength> : public BaseCellLinkedList
 {
   protected:
+    AdaptiveSmoothingLength &adaptation_;
     Real *h_ratio_; /**< Smoothing length for each level. */
     int *h_level_;  /**< Smoothing length level for each particle. */
 
@@ -164,12 +178,44 @@ class MultilevelCellLinkedList : public BaseCellLinkedList
     inline UnsignedInt getMeshLevel(Real particle_cutoff_radius);
 
   public:
-    MultilevelCellLinkedList(BoundingBoxd tentative_bounds,
-                             Real reference_grid_spacing, UnsignedInt total_levels,
-                             BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
-    virtual ~MultilevelCellLinkedList() {};
+    CellLinkedList(BoundingBoxd tentative_bounds,
+                   Real reference_grid_spacing, UnsignedInt total_levels,
+                   BaseParticles &base_particles, SPHAdaptation &sph_adaptation);
+    virtual ~CellLinkedList() {};
     void insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position) override;
     void InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position) override;
+    virtual void tagBodyPartByCellCK(ConcurrentIndexVector &cell_indexes,
+                                     std::function<bool(Vecd, Real)> &check_included) override;
+
+    class CellLinkedListMesh : public Mesh
+    {
+      public:
+        CellLinkedListMesh(CellLinkedList<AdaptiveSmoothingLength> &cell_linked_list);
+
+      protected:
+        Real max_cut_off_;
+    };
+
+    class NeighborSearch : public CellLinkedListMesh
+    {
+      public:
+        template <class ExecutionPolicy, class Encloser>
+        NeighborSearch(const ExecutionPolicy &ex_policy, Encloser &encloser);
+
+        template <typename FunctionOnEach>
+        void forInnerSearch(const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const;
+        template <typename FunctionOnEach>
+        void forContactSearch(const Vecd &source_pos, const FunctionOnEach &function, const Vecd &src_cut_off) const;
+
+      protected:
+        UnsignedInt *particle_index_;
+        UnsignedInt *cell_offset_;
+
+        inline BoundingBoxi InnerSearchBox(const Vecd &src_cut_off) const;
+        inline BoundingBoxi ContactSearchBox(const Vecd &src_cut_off) const;
+        template <typename FunctionOnEach>
+        void searchInRange(const FunctionOnEach &function, const BoundingBoxi &rang_box) const;
+    };
 };
 } // namespace SPH
 #endif // MESH_CELL_LINKED_LIST_H

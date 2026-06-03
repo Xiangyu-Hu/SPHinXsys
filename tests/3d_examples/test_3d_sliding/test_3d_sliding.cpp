@@ -109,12 +109,12 @@ void block_sliding(
 
     // Create objects
     SolidBody cube_body(system, mesh_cube);
-    cube_body.defineMaterial<SaintVenantKirchhoffSolid>(*material_cube.get());
+    cube_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(*material_cube.get());
     cube_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody slope_body(system, mesh_slope);
     slope_body.defineAdaptationRatios(1.15, resolution_cube / resolution_slope);
-    slope_body.defineMaterial<SaintVenantKirchhoffSolid>(*material_cube.get());
+    slope_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(*material_cube.get());
     slope_body.generateParticles<SurfaceParticles, Wall>(slope_translation, slope_length, slope_width, resolution_slope);
 
     // Inner relation

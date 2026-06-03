@@ -1,5 +1,6 @@
 #pragma once
 
+#include "base_body.hpp"
 #include "viscous_force.h"
 
 namespace SPH
@@ -13,16 +14,17 @@ template <class BaseRelationType>
 ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Parameters...>>::
     ViscousForceCK(BaseRelationType &base_relation)
     : Interaction<RelationType<Parameters...>>(base_relation),
-      viscosity_model_(DynamicCast<ViscosityType>(this, this->particles_->getBaseMaterial())),
+      viscosity_model_(this->sph_body_->template getMaterialProperty<ViscosityType>()),
       kernel_correction_(this->particles_),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_viscous_force_(this->particles_->template registerStateVariable<Vecd>("ViscousForce")),
       smoothing_length_sq_(pow(this->getSPHAdaptation().ReferenceSmoothingLength(), 2)) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>::
-    ViscousForceCK(Inner<Parameters...> &inner_relation)
-    : BaseViscousForceType(inner_relation),
+    ViscousForceCK(DynamicsIdentifier &identifier)
+    : BaseViscousForceType(identifier),
       ForcePriorCK(this->particles_, this->dv_viscous_force_) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
@@ -60,9 +62,10 @@ void ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Param
 }
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Parameters...>>::
-    ViscousForceCK(Contact<Parameters...> &contact_relation)
-    : BaseViscousForceType(contact_relation), Interaction<Wall>(contact_relation) {}
+    ViscousForceCK(DynamicsIdentifier &identifier)
+    : BaseViscousForceType(identifier), Interaction<Wall>(identifier) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>

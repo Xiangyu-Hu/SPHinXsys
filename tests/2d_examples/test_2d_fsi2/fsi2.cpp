@@ -27,19 +27,20 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody insert_body(sph_system, makeShared<Insert>("InsertedBody"));
     insert_body.defineAdaptationRatios(1.15, 2.0);
-    insert_body.defineBodyLevelSetShape()->writeLevelSet();
-    insert_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    insert_body.defineBodyLevelSetShape().writeLevelSet();
+    insert_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? insert_body.generateParticles<BaseParticles, Reload>(insert_body.getName())
+        ? insert_body.generateParticles<BaseParticles, Reload>(insert_body.Name())
         : insert_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
@@ -140,7 +141,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
 
-    AlignedBoxByCell inflow_buffer(water_block, AlignedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
+    OrientedBoxByCell inflow_buffer(water_block, OrientedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
     PeriodicAlongAxis periodic_along_x(water_block.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(water_block, periodic_along_x);

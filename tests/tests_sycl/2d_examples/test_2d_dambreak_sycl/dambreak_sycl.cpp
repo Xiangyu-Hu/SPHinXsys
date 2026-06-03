@@ -47,14 +47,14 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     GeometricShapeBox initial_water_block(Transform(water_block_translation), water_block_halfsize, "WaterBody");
     FluidBody water_block(sph_system, initial_water_block);
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     ComplexShape wall_complex_shape("WallBoundary");
     wall_complex_shape.add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
     wall_complex_shape.subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
     SolidBody wall_boundary(sph_system, wall_complex_shape);
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
@@ -80,7 +80,7 @@ int main(int ac, char *av[])
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
@@ -111,9 +111,9 @@ int main(int ac, char *av[])
                         fluid_dynamics::AcousticStep2ndHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(water_block_inner)
             .addPostContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(water_wall_contact);
     auto &fluid_density_regularization =
-        main_methods.addInteractionDynamics<
-                        fluid_dynamics::DensityRegularization, WithUpdate, FreeSurface, AllParticles>(water_block_inner)
-            .addPostContactInteraction(water_wall_contact);
+        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(water_block_inner)
+            .addPostContactInteraction(water_wall_contact)
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(water_block);
 
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_ref);
     auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_block);
@@ -128,17 +128,17 @@ int main(int ac, char *av[])
     auto &record_water_mechanical_energy = main_methods.addReduceRegression<
         RegressionTestDynamicTimeWarping, TotalMechanicalEnergyCK>(water_block, gravity);
     auto &fluid_observer_pressure = main_methods.addObserveRegression<
-        RegressionTestDynamicTimeWarping, Real>("Pressure", fluid_observer_contact);
+        RegressionTestDynamicTimeWarping, Real>(fluid_observer_contact, "Pressure");
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(20.0);
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
-        time_stepper.setPhysicalTime(restart_io.readRestartFiles(sph_system.RestartStep()));
+        restart_io.readRestartFiles(sph_system.RestartStep());
     }
     //----------------------------------------------------------------------
     //	Setup for advection-step based time-stepping control
@@ -180,7 +180,7 @@ int main(int ac, char *av[])
     //	Single time stepping loop is used for multi-time stepping.
     //----------------------------------------------------------------------
     TickCount t0 = TickCount::now();
-    while (!time_stepper.isEndTime())
+    while (!time_stepper.isEndTime(20.0))
     {
         //----------------------------------------------------------------------
         //	the fastest and most frequent acostic time stepping.

@@ -69,7 +69,7 @@ First, We give the geometry for modeling the taylor green.
 			water_block_shape.push_back(Vecd(DL, 0.0));
 			water_block_shape.push_back(Vecd(0.0, 0.0));
 			body_shape_ = new ComplexShape(body_name);
-			body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
+			body_shape_->addPolygon(water_block_shape, ShapeBooleanOps::add);
 		}
 	};
 

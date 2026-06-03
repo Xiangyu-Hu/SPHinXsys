@@ -3,14 +3,15 @@
 
 #include "general_gradient.h"
 
+#include "vector_functions.h"
+
 namespace SPH
 {
 //=================================================================================================//
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>
-template <class DynamicsIdentifier>
 Gradient<Base, DataType, RelationType<Parameters...>>::
-    Gradient(DynamicsIdentifier &identifier, std::string &variable_name)
-    : BaseDynamicsType(identifier), variable_name_(variable_name),
+    Gradient(RelationType<Parameters...> &relation, const std::string &variable_name)
+    : BaseDynamicsType(relation), variable_name_(variable_name),
       dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
       dv_gradient_(this->particles_->template registerStateVariable<Grad<DataType>>(
           variable_name + "Gradient", ZeroData<Grad<DataType>>::value)),
@@ -27,8 +28,7 @@ Gradient<Base, DataType, RelationType<Parameters...>>::InteractKernel::
       B_(encloser.dv_B_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
-void LinearGradient<Inner<DataType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+void LinearGradient<Inner<DataType, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
 {
     Grad<DataType> summation = Grad<DataType>::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -43,9 +43,10 @@ void LinearGradient<Inner<DataType, Parameters...>>::
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
-template <typename... Args>
-LinearGradient<Contact<DataType, Parameters...>>::LinearGradient(Args &&...args)
-    : BaseDynamicsType(std::forward<Args>(args)...)
+template <class DynamicsIdentifier>
+LinearGradient<Contact<DataType, Parameters...>>::LinearGradient(
+    DynamicsIdentifier &identifier, const std::string &variable_name)
+    : BaseDynamicsType(identifier, variable_name)
 {
     for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
     {

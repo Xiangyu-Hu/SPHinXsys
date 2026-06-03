@@ -30,11 +30,13 @@
 #ifndef GENERAL_CONSTRAINT_CK_H
 #define GENERAL_CONSTRAINT_CK_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include <string>
 
 namespace SPH
 {
-template <typename DataType, class DynamicsIdentifier>
+template <class DynamicsIdentifier, typename DataType>
 class ConstantConstraintCK : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
@@ -67,5 +69,39 @@ class ConstantConstraintCK : public BaseLocalDynamics<DynamicsIdentifier>
     DiscreteVariable<DataType> *dv_variable_;
     DataType constrained_value_;
 };
+
+template <class DynamicsIdentifier>
+class MotionConstraintCK : public BaseLocalDynamics<DynamicsIdentifier>
+{
+  public:
+    explicit MotionConstraintCK(DynamicsIdentifier &identifier);
+    virtual ~MotionConstraintCK() {};
+
+  protected:
+    DiscreteVariable<Vecd> *dv_pos_, *dv_pos0_, *dv_vel_;
+};
+
+template <class DynamicsIdentifier>
+class FixConstraintCK : public MotionConstraintCK<DynamicsIdentifier>
+{
+  public:
+    explicit FixConstraintCK(DynamicsIdentifier &identifier)
+        : MotionConstraintCK<DynamicsIdentifier>(identifier) {};
+    virtual ~FixConstraintCK() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Vecd *pos_, *pos0_, *vel_;
+    };
+};
+using FixBodyConstraintCK = FixConstraintCK<SPHBody>;
+using FixBodyPartConstraintCK = FixConstraintCK<BodyPartByParticle>;
+
 } // namespace SPH
 #endif // GENERAL_CONSTRAINT_CK_H

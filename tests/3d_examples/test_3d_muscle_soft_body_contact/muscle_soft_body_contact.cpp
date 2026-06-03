@@ -63,12 +63,12 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     SolidBody myocardium_body(sph_system, makeShared<Myocardium>("MyocardiumBody"));
-    myocardium_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    myocardium_body.defineMatterMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     myocardium_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
     moving_plate.defineAdaptationRatios(1.15, 1.5);
-    moving_plate.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    moving_plate.defineMatterMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     moving_plate.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -135,6 +135,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
     TimeInterval interval;
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size_myocardium(myocardium_body);
+    ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size_plate(moving_plate);
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
@@ -174,7 +176,7 @@ int main(int ac, char *av[])
             stress_relaxation_second_half_2.exec(dt);
 
             ite++;
-            dt = sph_system.getSmallestTimeStepAmongSolidBodies();
+            dt = SMIN(computing_time_step_size_myocardium.exec(), computing_time_step_size_plate.exec());
             integration_time += dt;
             physical_time += dt;
 

@@ -6,8 +6,8 @@
  */
 
 #include "bidirectional_buffer.h"
-#include "density_correciton.h"
-#include "density_correciton.hpp"
+#include "density_correction.h"
+#include "density_correction.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"
@@ -17,14 +17,14 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 0.2;               /**< Reference length. */
-Real DH = 0.1;               /**< Reference and the height of main channel. */
-Real DL1 = 0.75 * DL;        /**< The length of the main channel. */
+Real DL = 0.2;                  /**< Reference length. */
+Real DH = 0.1;                  /**< Reference and the height of main channel. */
+Real DL1 = 0.75 * DL;           /**< The length of the main channel. */
 Real global_resolution = 0.005; /**< Initial reference particle spacing. */
 Real resolution_shell = global_resolution;
 Real BW = resolution_shell * 1.0;
-Real buffer_width = global_resolution * 4.0;                    /**< Reference size of the emitter. */
-Real DL_sponge = global_resolution * 20;                        /**< Reference size of the emitter buffer to impose inflow condition. */
+Real buffer_width = global_resolution * 4.0;                 /**< Reference size of the emitter. */
+Real DL_sponge = global_resolution * 20;                     /**< Reference size of the emitter buffer to impose inflow condition. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
 Real level_set_refinement = global_resolution / (0.1 * BW);
 //----------------------------------------------------------------------
@@ -67,7 +67,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(water_block_shape, GeometricOps::add);
     }
 };
 
@@ -76,8 +76,8 @@ class ShellShape : public MultiPolygonShape
   public:
     explicit ShellShape(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -158,14 +158,14 @@ class ParticleGenerator<SurfaceParticles, WallBoundary> : public ParticleGenerat
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBox &aligned_box_;
+    OrientedBox &oriented_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_f), t_ref_(2.0),
-          aligned_box_(boundary_condition.getAlignedBox()),
-          halfsize_(aligned_box_.HalfSize()) {}
+          oriented_box_(boundary_condition.getOrientedBox()),
+          halfsize_(oriented_box_.HalfSize()) {}
 
     Vecd operator()(Vecd &position, Vecd &velocity, Real physical_time)
     {
@@ -245,7 +245,8 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
-    SPHSystem sph_system(system_domain_bounds, global_resolution);
+    SPHSystem sph_system( // cancel the default extension in constructor to keep original system domain bounds.
+        system_domain_bounds.expand(-4.0 * global_resolution), global_resolution);
     sph_system.setGenerateRegressionData(false);
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
@@ -254,15 +255,16 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
     SolidBody shell_body(sph_system, makeShared<ShellShape>("ShellBody"));
     shell_body.defineAdaptation<SPHAdaptation>(1.15, global_resolution / resolution_shell);
     shell_body.defineBodyLevelSetShape(level_set_refinement, UsageType::Surface)
-        ->writeLevelSet();
-    shell_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+        .writeLevelSet();
+    shell_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     shell_body.generateParticles<SurfaceParticles, WallBoundary>(resolution_shell, BW);
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");
@@ -316,17 +318,17 @@ int main(int ac, char *av[])
     // left buffer
     Vec2d left_buffer_halfsize = Vec2d(0.5 * buffer_width, 0.5 * DH);
     Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize;
-    AlignedBoxByCell left_emitter(water_block, AlignedBox(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
+    OrientedBoxByCell left_emitter(water_block, OrientedBox(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_bidirection_buffer(left_emitter, in_outlet_particle_buffer);
     // up buffer
     Vec2d up_buffer_halfsize = Vec2d(0.5 * buffer_width, 0.75);
     Vec2d up_buffer_translation = Vec2d(0.5 * (DL + DL1), 2.0 * DH - 0.5 * buffer_width);
-    AlignedBoxByCell up_emitter(water_block, AlignedBox(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
+    OrientedBoxByCell up_emitter(water_block, OrientedBox(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<UpOutflowPressure> right_up_bidirection_buffer(up_emitter, in_outlet_particle_buffer);
     // down buffer
     Vec2d down_buffer_halfsize = Vec2d(0.5 * buffer_width, 0.75);
     Vec2d down_buffer_translation = Vec2d(0.5 * (DL + DL1), -DH + 0.5 * buffer_width);
-    AlignedBoxByCell down_emitter(water_block, AlignedBox(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
+    OrientedBoxByCell down_emitter(water_block, OrientedBox(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<DownOutflowPressure> right_down_bidirection_buffer(down_emitter, in_outlet_particle_buffer);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_shell_contact);
@@ -386,7 +388,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     TimeInterval interval_computing_time_step;

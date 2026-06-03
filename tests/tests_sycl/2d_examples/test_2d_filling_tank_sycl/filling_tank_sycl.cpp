@@ -10,14 +10,14 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Global geometry, material parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.366;              /**< Tank length. */
-Real DH = 5.366;              /**< Tank height. */
+Real DL = 5.366;                 /**< Tank length. */
+Real DH = 5.366;                 /**< Tank height. */
 Real global_resolution = 0.025;  /**< Initial reference particle spacing. */
 Real BW = global_resolution * 4; /**< Extending width for wall boundary. */
-Real LL = 2.0 * BW;           /**< Inflow region length. */
-Real LH = 0.125;              /**< Inflows region height. */
-Real inlet_height = 1.0;      /**< Inflow location height */
-Real inlet_distance = -BW;    /**< Inflow location distance */
+Real LL = 2.0 * BW;              /**< Inflow region length. */
+Real LH = 0.125;                 /**< Inflows region height. */
+Real inlet_height = 1.0;         /**< Inflow location height */
+Real inlet_distance = -BW;       /**< Inflow location distance */
 Vec2d inlet_halfsize = Vec2d(0.5 * LL, 0.5 * LH);
 Vec2d inlet_translation = Vec2d(inlet_distance, inlet_height) + inlet_halfsize;
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
@@ -62,32 +62,10 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(CreateOuterWallShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(CreateInnerWallShape(), ShapeBooleanOps::sub);
-        multi_polygon_.addABox(Transform(inlet_translation), inlet_halfsize, ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(CreateOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(CreateInnerWallShape(), GeometricOps::sub);
+        multi_polygon_.addBox(Transform(inlet_translation), inlet_halfsize, GeometricOps::sub);
     }
-};
-//----------------------------------------------------------------------
-//	Inlet inflow condition
-//----------------------------------------------------------------------
-class InletInflowCondition : public BaseStateCondition
-{
-  public:
-    InletInflowCondition(BaseParticles *particles)
-        : BaseStateCondition(particles) {};
-
-    class ComputingKernel : public BaseStateCondition::ComputingKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseStateCondition::ComputingKernel(ex_policy, encloser){};
-
-        void operator()(AlignedBox *aligned_box, UnsignedInt index_i, Real /*time*/)
-        {
-            vel_[index_i] = Vec2d(2.0, 0.0);
-        };
-    };
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -102,12 +80,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     GeometricShapeBox water_inlet_shape(Transform(inlet_translation), inlet_halfsize);
     FluidBody water_body(sph_system, water_inlet_shape, "WaterBody");
-    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(350.0);
     water_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
-    wall.defineMaterial<Solid>();
+    wall.defineMatterMaterial<Solid>();
     wall.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
@@ -115,7 +93,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
-    AlignedBoxByParticle emitter(water_body, AlignedBox(xAxis, Transform(inlet_translation), inlet_halfsize));
+    OrientedBoxByParticle emitter(water_body, OrientedBox(xAxis, Transform(inlet_translation), inlet_halfsize));
+    emitter.writeOrientedBoxToVtp();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -129,7 +108,7 @@ int main(int ac, char *av[])
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
@@ -152,14 +131,16 @@ int main(int ac, char *av[])
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
-        fluid_density_regularization(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+        fluid_density_summation(water_body_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
+        fluid_density_regularization(water_body);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
 
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowConditionCK<AlignedBoxByParticle, InletInflowCondition>> inflow_condition(emitter);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK<AlignedBoxByParticle>> emitter_injection(emitter, inlet_buffer);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowConditionCK<OrientedBoxByParticle, ConstantInflowSpeed>> inflow_condition(emitter, 2.0);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::EmitterInflowInjectionCK<OrientedBoxByParticle>> emitter_injection(emitter);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -168,12 +149,12 @@ int main(int ac, char *av[])
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
         write_water_mechanical_energy(water_body, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Real>>
-        write_recorded_water_pressure("Pressure", fluid_observer_contact);
+        write_recorded_water_pressure(fluid_observer_contact,"Pressure");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
 
     wall_boundary_normal_direction.exec(); // run particle dynamics on CPU first
     constant_gravity.exec();
@@ -207,6 +188,7 @@ int main(int ac, char *av[])
         /** Integrate time (loop) until the next output time. */
         while (integration_time < output_interval)
         {
+            fluid_density_summation.exec();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             Real advection_dt = fluid_advection_time_step.exec();

@@ -1,8 +1,7 @@
 #ifndef SURFACE_INDICATION_CK_H
 #define SURFACE_INDICATION_CK_H
 
-#include "base_fluid_dynamics.h"
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
 #include "interaction_ck.hpp"
 
 namespace SPH
@@ -81,7 +80,8 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>
     : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>
 {
   public:
-    explicit FreeSurfaceIndicationCK(Inner<Parameters...> &inner_relation);
+    template <class DynamicsIdentifier>
+    explicit FreeSurfaceIndicationCK(DynamicsIdentifier &identifier);
     virtual ~FreeSurfaceIndicationCK() {}
 
     //------------------------------------------------------------------------------------------//
@@ -99,8 +99,9 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>
 
         void interact(size_t index_i, Real dt = 0.0);
 
-        /// Pointer to the previously stored surface indicator.
+      protected:
         int *previous_surface_indicator_;
+        bool isNearPreviousFreeSurface(size_t index_i);
     };
 
     //------------------------------------------------------------------------------------------//
@@ -121,7 +122,7 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>
 
       protected:
         int *previous_surface_indicator_;
-        FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> *outer_;
+        bool isVeryNearFreeSurface(size_t index_i);
     };
 
   protected:
@@ -139,7 +140,8 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
     : public FreeSurfaceIndicationCK<Base, Contact<Parameters...>>
 {
   public:
-    explicit FreeSurfaceIndicationCK(Contact<Parameters...> &contact_relation);
+    template <class DynamicsIdentifier>
+    explicit FreeSurfaceIndicationCK(DynamicsIdentifier &identifier);
     virtual ~FreeSurfaceIndicationCK() {}
 
     //------------------------------------------------------------------------------------------//

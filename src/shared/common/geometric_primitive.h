@@ -31,6 +31,9 @@
 
 #include <base_data_type.h>
 
+#include <Eigen/Geometry>
+#include <iostream>
+
 namespace SPH
 {
 template <int N>
@@ -112,11 +115,37 @@ class BoundingBox
         return upper_ - lower_;
     };
 
+    BoundingBox expand(const Real &expand_size) const
+    {
+        Vectype new_lower = lower_ - Vectype::Constant(expand_size);
+        Vectype new_upper = upper_ + Vectype::Constant(expand_size);
+        return BoundingBox(new_lower, new_upper);
+    };
+
     BoundingBox expand(const Vectype &expand_size) const
     {
         Vectype new_lower = lower_ - expand_size;
         Vectype new_upper = upper_ + expand_size;
         return BoundingBox(new_lower, new_upper);
+    };
+
+    BoundingBox add(const BoundingBox &expand_box) const
+    {
+        Vectype new_lower = lower_.cwiseMin(expand_box.lower_);
+        Vectype new_upper = upper_.cwiseMax(expand_box.upper_);
+        return BoundingBox(new_lower, new_upper);
+    };
+
+    BoundingBox intersect(const BoundingBox &another) const
+    {
+        Vectype new_lower = lower_.cwiseMax(another.lower_);
+        Vectype new_upper = upper_.cwiseMin(another.upper_);
+        return BoundingBox(new_lower, new_upper);
+    };
+
+    BoundingBox scale(const Real &scale_factor) const
+    {
+        return BoundingBox(lower_ * scale_factor, upper_ * scale_factor);
     };
 
     auto MinimumDimension() const
@@ -128,8 +157,13 @@ class BoundingBox
 template <template <int> typename BoundType, int N>
 bool operator==(const BoundingBox<BoundType, N> &bb1, const BoundingBox<BoundType, N> &bb2)
 {
-    return bb1.lower_ == bb2.lower_ && bb1.upper_ == bb2.upper_ ? true : false;
+    return bb1.lower_ == bb2.lower_ && bb1.upper_ == bb2.upper_;
 };
+
+using BoundingBox2d = BoundingBox<VecdBound, 2>;
+using BoundingBox3d = BoundingBox<VecdBound, 3>;
+using BoundingBox2i = BoundingBox<ArrayiBound, 2>;
+using BoundingBox3i = BoundingBox<ArrayiBound, 3>;
 
 using Rotation2d = Eigen::Rotation2D<Real>;
 using Rotation3d = Eigen::AngleAxis<Real>;
@@ -150,29 +184,32 @@ class BaseTransform
     BaseTransform() : BaseTransform(VecType::Zero()) {};
 
     /** Forward rotation. */
-    VecType xformFrameVecToBase(const VecType &origin)
+    VecType xformFrameVecToBase(const VecType &origin) const
     {
         return rotation_ * origin;
     };
 
     /** Forward transformation. Note that the rotation operation is carried out first. */
-    VecType shiftFrameStationToBase(const VecType &origin)
+    VecType shiftFrameStationToBase(const VecType &origin) const
     {
         return translation_ + xformFrameVecToBase(origin);
     };
 
     /** Inverse rotation. */
-    VecType xformBaseVecToFrame(const VecType &target)
+    VecType xformBaseVecToFrame(const VecType &target) const
     {
         return inv_rotation_ * target;
     };
 
     /** Inverse transformation. Note that the inverse translation operation is carried out first. */
-    VecType shiftBaseStationToFrame(const VecType &target)
+    VecType shiftBaseStationToFrame(const VecType &target) const
     {
         return xformBaseVecToFrame(target - translation_);
     };
 };
+
+using Transform2d = BaseTransform<Rotation2d, Vec2d>;
+using Transform3d = BaseTransform<Rotation3d, Vec3d>;
 } // namespace SPH
 
 #endif // GEOMETRIC_PRIMITIVE_H

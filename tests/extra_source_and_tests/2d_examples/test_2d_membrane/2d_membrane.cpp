@@ -25,7 +25,7 @@ Real global_resolution = PH / num;
 
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d(-PL, -PL),
-                                 Vec2d(2.0 * PL, PL));
+                                  Vec2d(2.0 * PL, PL));
 
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
@@ -77,9 +77,9 @@ class Beam : public MultiPolygonShape
   public:
     explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(beam_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(beam_end_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(beam_base_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_end_shape, GeometricOps::add);
     }
 };
 
@@ -89,16 +89,16 @@ class Beam : public MultiPolygonShape
 MultiPolygon createBeamConstrainShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(beam_shape, ShapeBooleanOps::sub);
-    multi_polygon.addAPolygon(beam_end_shape, ShapeBooleanOps::add);
+    multi_polygon.addPolygon(beam_base_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_shape, GeometricOps::sub);
+    multi_polygon.addPolygon(beam_end_shape, GeometricOps::add);
     return multi_polygon;
 };
 
 MultiPolygon createSaturationConstrainShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_saturation_shape, ShapeBooleanOps::add);
+    multi_polygon.addPolygon(beam_saturation_shape, GeometricOps::add);
     return multi_polygon;
 };
 
@@ -139,7 +139,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody beam_body(sph_system, makeShared<Beam>("2dMembrane"));
-    beam_body.defineMaterial<multi_species_continuum::PorousMediaSolid>(
+    beam_body.defineMatterMaterial<multi_species_continuum::PorousMediaSolid>(
         rho_0, Youngs_modulus, poisson, diffusivity_constant_, fluid_initial_density_, water_pressure_constant_);
     beam_body.generateParticles<BaseParticles, Lattice>();
 

@@ -34,7 +34,7 @@
 #include "base_local_mesh_dynamics.h"
 #include "implementation.h"
 #include "mesh_iterators.hpp"
-#include "spares_mesh_field.h"
+#include "sparse_mesh_field.h"
 
 namespace SPH
 {

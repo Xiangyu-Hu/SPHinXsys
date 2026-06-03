@@ -9,13 +9,13 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 15.0;                        /**< Channel length. */
-Real DH = 10.0;                        /**< Channel height. */
+Real DL = 15.0;                           /**< Channel length. */
+Real DH = 10.0;                           /**< Channel height. */
 Real global_resolution = 1.0 / 4.0;       /**< Initial reference particle spacing. */
 Real DL_sponge = global_resolution * 2.0; /**< Sponge region to impose inflow condition. */
 Real DH_sponge = global_resolution * 2.0; /**< Sponge region to impose inflow condition. */
-Vec2d cylinder_center(4.0, DH / 2.0);  /**< Location of the cylinder center. */
-Real cylinder_radius = 1.0;            /**< Radius of the cylinder. */
+Vec2d cylinder_center(4.0, DH / 2.0);     /**< Location of the cylinder center. */
+Real cylinder_radius = 1.0;               /**< Radius of the cylinder. */
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -55,7 +55,7 @@ class Cylinder : public MultiPolygonShape
     explicit Cylinder(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         /** Geometry definition. */
-        multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addCircle(cylinder_center, cylinder_radius, 100, GeometricOps::add);
     }
 };
 
@@ -93,18 +93,19 @@ int main(int ac, char *av[])
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
     water_block.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     water_block.defineComponentLevelSetShape("OuterBoundary");
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
+        ? water_block.generateParticles<BaseParticles, Reload>(water_block.Name())
         : water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
     cylinder.defineAdaptationRatios(1.3, 2.0);
     cylinder.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
     cylinder.defineBodyLevelSetShape();
-    cylinder.defineMaterial<Solid>();
+    cylinder.defineMatterMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
+        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.Name())
         : cylinder.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

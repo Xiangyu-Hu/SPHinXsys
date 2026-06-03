@@ -1,5 +1,8 @@
 #include "relax_stepping.hpp"
 
+#include "adaptation.h"
+#include "complex_geometry.h"
+
 namespace SPH
 {
 namespace relax_dynamics

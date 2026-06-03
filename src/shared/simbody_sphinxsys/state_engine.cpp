@@ -1,15 +1,16 @@
 #include "state_engine.h"
 
+#include "io_environment.h"
 #include "sph_system.h"
 namespace SPH
 {
 //=================================================================================================//
 SimbodyStateEngine::
-    SimbodyStateEngine(SPHSystem &sph_system, SimTK::MultibodySystem &system)
+    SimbodyStateEngine(SimTK::MultibodySystem &system)
     : simbody_xml_engine_("state_xml", "mbsystem")
 {
     mbsystem_ = system;
-    restart_folder_ = sph_system.getIOEnvironment().RestartFolder();
+    restart_folder_ = IO::getEnvironment().RestartFolder();
     if (!fs::exists(restart_folder_))
     {
         fs::create_directory(restart_folder_);
@@ -68,7 +69,7 @@ void SimbodyStateEngine::addStateVariable(std::string statevariablename,
 //=============================================================================================//
 void SimbodyStateEngine::addStateVariable(SimbodyStateEngine::StateVariable *statevariable)
 {
-    std::string &statevariablename = statevariable->getName();
+    std::string &statevariablename = statevariable->Name();
     /** don't add state if there is another state variable with the same name. */
     std::map<std::string, StateVariableInfo>::const_iterator it;
     it = namedstatevariableinfo_.find(statevariablename);
@@ -170,7 +171,7 @@ Real SimbodyStateEngine::AddedStateVariable::getValue()
 
     std::stringstream msg;
     msg << "SimbodyStateEngine::AddedStateVariable::getValue: ERR- variable '"
-        << getName() << "' is invalid! " << __FILE__ << __LINE__;
+        << Name() << "' is invalid! " << __FILE__ << __LINE__;
     throw(msg.str());
     return SimTK::NaN;
 }
@@ -187,7 +188,7 @@ void SimbodyStateEngine::AddedStateVariable::setValue(Real value)
 
     std::stringstream msg;
     msg << "SimbodyStateEngine::AddedStateVariable::setValue: ERR- variable '"
-        << getName() << "' is invalid! " << __FILE__ << __LINE__;
+        << Name() << "' is invalid! " << __FILE__ << __LINE__;
     ;
     throw(msg.str());
 }
@@ -195,14 +196,14 @@ void SimbodyStateEngine::AddedStateVariable::setValue(Real value)
 Real SimbodyStateEngine::AddedStateVariable::
     getDerivative()
 {
-    // return getCacheVariableValue<Real>(state, getName()+"_deriv");
+    // return getCacheVariableValue<Real>(state, Name()+"_deriv");
     return 0.0;
 }
 //=============================================================================================//
 void SimbodyStateEngine::AddedStateVariable::
     setDerivative(Real deriv)
 {
-    // return setCacheVariableValue<Real>(state, getName()+"_deriv", deriv);
+    // return setCacheVariableValue<Real>(state, Name()+"_deriv", deriv);
 }
 //=============================================================================================//
 void SimbodyStateEngine::reporter(SimTK::State &state_)
@@ -246,6 +247,8 @@ void SimbodyStateEngine::writeStateToXml(int ite_rst, SimTK::RungeKuttaMersonInt
     const SimTK::State &state = integ.getState();
     const SimTK::SimbodyMatterSubsystem &matter = getMultibodySystem().getMatterSubsystem();
     resizeXmlDocForSimbody(matter.getNumBodies());
+    /** Write the simulation time to xml root element. */
+    simbody_xml_engine_.root_element_.setAttributeValue("time", SimTK::String(state.getTime()));
     SimTK::Xml::element_iterator ele_ite = simbody_xml_engine_.root_element_.element_begin();
     for (SimTK::MobilizedBodyIndex mbx(0); mbx != matter.getNumBodies(); ++mbx)
     {
@@ -286,6 +289,17 @@ void SimbodyStateEngine::readStateFromXml(int ite_rst, SimTK::State &state)
     {
         int num_mobod = 0;
         simbody_xml_engine_.loadXmlFile(filefullpath);
+        /** Read the simulation time from xml root element. */
+        try
+        {
+            Real time_value = SimTK::convertStringTo<Real>(
+                simbody_xml_engine_.root_element_.getRequiredAttributeValue("time"));
+            state.setTime(time_value);
+        }
+        catch (const std::exception &)
+        {
+            /** For backward compatibility with older restart files without time attribute. */
+        }
         SimTK::Xml::element_iterator ele_ite_ = simbody_xml_engine_.root_element_.element_begin();
         for (; ele_ite_ != simbody_xml_engine_.root_element_.element_end(); ++ele_ite_)
         {

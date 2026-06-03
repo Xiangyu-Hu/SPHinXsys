@@ -134,15 +134,16 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
-    structure.defineMaterial<Solid>(rho_s);
+    structure.defineMatterMaterial<Solid>(rho_s);
     structure.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody observer(sph_system, "Observer");
@@ -171,12 +172,13 @@ int main(int ac, char *av[])
     Contact<> water_block_contact(water_block, {&wall_boundary, &structure});
     Contact<> structure_contact(structure, {&water_block});
     Contact<> observer_contact(observer, {&structure}, ConfigType::Lagrangian);
-    Contact<SPHBody, BodyPartByParticle> structure_proxy_contact(structure_proxy, {&structure_surface}, ConfigType::Lagrangian);
+    Contact<Relation<SPHBody, BodyPartByParticle>> structure_proxy_contact(
+        structure_proxy, {&structure_surface}, ConfigType::Lagrangian);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
@@ -193,7 +195,7 @@ int main(int ac, char *av[])
         structure_update_contact_relation(structure_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>>
         observer_update_contact_relation(observer_contact);
-    UpdateRelation<MainExecutionPolicy, Contact<SPHBody, BodyPartByParticle>>
+    UpdateRelation<MainExecutionPolicy, Contact<Relation<SPHBody, BodyPartByParticle>>>
         structure_proxy_update_contact_relation(structure_proxy_contact);
     ParticleSortCK<MainExecutionPolicy> particle_sort(water_block);
 
@@ -213,8 +215,10 @@ int main(int ac, char *av[])
         fluid_acoustic_step_2nd_half_with_wall(water_block_contact);
     fluid_acoustic_step_2nd_half.addPostContactInteraction(fluid_acoustic_step_2nd_half_with_wall);
 
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensityRegularizationComplexFreeSurface>
-        fluid_density_regularization(water_block_inner, water_block_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+        fluid_density_summation(water_block_inner, water_block_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
+        fluid_density_regularization(water_block);
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceCK<Inner<WithUpdate, Viscosity, NoKernelCorrectionCK>>>
         fluid_viscous_force(water_block_inner);
@@ -232,8 +236,8 @@ int main(int ac, char *av[])
 
     ArbitraryDynamicsSequence<
         StateDynamics<MainExecutionPolicy, solid_dynamics::UpdateDisplacementFromPosition>,
-        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, SPHBody, BodyPartByParticle>>>,
-        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, SPHBody, BodyPartByParticle>>>,
+        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, Relation<SPHBody, BodyPartByParticle>>>>,
+        InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, Relation<SPHBody, BodyPartByParticle>>>>,
         StateDynamics<MainExecutionPolicy, solid_dynamics::UpdatePositionFromDisplacement>>
         update_structure_proxy_states(
             structure,
@@ -318,7 +322,7 @@ int main(int ac, char *av[])
         MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>>
-        write_structure_position("Position", observer_contact);
+        write_structure_position(observer_contact, "Position");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -338,7 +342,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     int screen_output_interval = 1000;
     Real end_time = total_physical_time;
@@ -363,6 +367,7 @@ int main(int ac, char *av[])
         Real integral_time = 0.0;
         while (integral_time < output_interval)
         {
+            fluid_density_summation.exec();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             Real advection_dt = fluid_advection_time_step.exec();

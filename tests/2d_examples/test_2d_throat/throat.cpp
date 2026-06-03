@@ -17,9 +17,9 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DH = 4.0;                  // channel height
-Real DT = 1.0;                  // throat height
-Real DL = 24.0;                 // channel length
+Real DH = 4.0;                     // channel height
+Real DT = 1.0;                     // throat height
+Real DL = 24.0;                    // channel length
 Real global_resolution = 0.1;      // particle spacing
 Real BW = global_resolution * 4.0; // boundary width
 //----------------------------------------------------------------------
@@ -68,9 +68,9 @@ class FluidBlock : public MultiPolygonShape
         pnts2.push_back(Vecd(0.5 * DL, -0.5 * DH));
         pnts2.push_back(Vecd(DL / 6.0, -0.5 * DH));
 
-        multi_polygon_.addAPolygon(pnts, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(pnts1, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(pnts2, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(pnts, GeometricOps::add);
+        multi_polygon_.addPolygon(pnts1, GeometricOps::add);
+        multi_polygon_.addPolygon(pnts2, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -109,10 +109,10 @@ class WallBoundary : public MultiPolygonShape
         pnts2.push_back(Vecd(0.5 * DL + 2.0 * BW, -0.5 * DH));
         pnts2.push_back(Vecd(DL / 6.0, -0.5 * DH));
 
-        multi_polygon_.addAPolygon(pnts3, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(pnts, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(pnts1, ShapeBooleanOps::sub);
-        multi_polygon_.addAPolygon(pnts2, ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(pnts3, GeometricOps::add);
+        multi_polygon_.addPolygon(pnts, GeometricOps::sub);
+        multi_polygon_.addPolygon(pnts1, GeometricOps::sub);
+        multi_polygon_.addPolygon(pnts2, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -123,21 +123,22 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
-    BoundingBoxd system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
-                                     Vec2d(0.5 * DL + BW, 0.5 * DH + BW));
+    BoundingBoxd system_domain_bounds(
+        Vec2d(-0.5 * DL, -0.5 * DH), Vec2d(0.5 * DL, 0.5 * DH));
     SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody fluid_block(sph_system, makeShared<FluidBlock>("FluidBody"));
-    fluid_block.defineClosure<WeaklyCompressibleFluid, OldroydBViscosity>(
-        ConstructArgs(rho0_f, c_f), ConstructArgs(mu_f, lambda_f, mu_p_f));
+
+    fluid_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    fluid_block.addMaterialProperty<OldroydBViscosity>(mu_f, lambda_f, mu_p_f);
     Ghost<PeriodicAlongAxis> ghost_along_x(fluid_block.getSPHBodyBounds(), xAxis);
     fluid_block.generateParticlesWithReserve<BaseParticles, Lattice>(ghost_along_x);
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");

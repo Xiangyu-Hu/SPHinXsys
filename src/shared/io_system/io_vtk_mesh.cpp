@@ -1,7 +1,7 @@
 #include "io_vtk_mesh.h"
 
-#include "io_environment.h"
 #include "io_vtk.hpp"
+#include "vector_functions.h"
 namespace SPH
 {
 //=================================================================================================//
@@ -15,7 +15,7 @@ void BodyStatesRecordingToMeshVtu::writeWithFileName(const std::string &sequence
     {
         if (body->checkNewlyUpdated() && state_recording_)
         {
-            std::string filefullpath = io_environment_.OutputFolder() + "/" + body->getName() + "_" + sequence + ".vtu";
+            std::string filefullpath = io_environment_.OutputFolder() + "/" + body->Name() + "_" + sequence + ".vtu";
             if (fs::exists(filefullpath))
             {
                 fs::remove(filefullpath);

@@ -9,8 +9,8 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 6.0;                   /**< Tank length. */
-Real DH = 1.0;                   /**< Tank height. */
+Real DL = 6.0;                      /**< Tank length. */
+Real DH = 1.0;                      /**< Tank height. */
 Real global_resolution = DH / 20.0; /**< Initial reference particle spacing. */
 Real BW = global_resolution * 4;    /**< Extending width for BCs. */
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
@@ -38,7 +38,7 @@ class WaterBlock : public MultiPolygonShape
         water_block_shape.push_back(Vecd(DL, DH));
         water_block_shape.push_back(Vecd(DL, 0.0));
         water_block_shape.push_back(Vecd(0.0, 0.0));
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(water_block_shape, GeometricOps::add);
     }
 };
 
@@ -61,8 +61,8 @@ class WallBoundary : public MultiPolygonShape
         inner_wall_shape.push_back(Vecd(DL + 2.0 * BW, 0.0));
         inner_wall_shape.push_back(Vecd(-2.0 * BW, 0.0));
 
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -79,11 +79,12 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

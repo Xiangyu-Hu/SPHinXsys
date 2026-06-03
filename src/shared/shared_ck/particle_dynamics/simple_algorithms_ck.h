@@ -30,17 +30,18 @@
 #ifndef SIMPLE_ALGORITHMS_CK_H
 #define SIMPLE_ALGORITHMS_CK_H
 
-#include "base_local_dynamics.h"
-#include "base_particle_dynamics.h"
-#include "io_log.h"
+#include "base_dynamics.h"
 #include "particle_iterators_ck.h"
+
+#include <string>
+#include <utility>
 
 namespace SPH
 {
 template <class ExecutionPolicy, class UpdateType>
 class StateDynamics : public UpdateType, public BaseDynamics<void>
 {
-    using Identifier = typename UpdateType::Identifier;
+    using RangeIdentifier = typename UpdateType::RangeIdentifier;
     using UpdateKernel = typename UpdateType::UpdateKernel;
     using FinishDynamics = typename UpdateType::FinishDynamics;
     using KernelImplementation =
@@ -60,7 +61,7 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
         this->setUpdated(this->identifier_->getSPHBody());
         this->setupDynamics(dt);
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-        particle_for(LoopRangeCK<ExecutionPolicy, Identifier>(*this->identifier_),
+        particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                      [=](size_t i)
                      { update_kernel->update(i, dt); });
 
@@ -69,7 +70,7 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
         this->logger_->debug(
             "StateDynamics::exec() for {} at {}",
             type_name<UpdateType>(),
-            this->sph_body_->getName());
+            this->sph_body_->Name());
     };
 };
 
@@ -77,7 +78,7 @@ template <class ExecutionPolicy, class ReduceType>
 class ReduceDynamicsCK : public ReduceType,
                          public BaseDynamics<typename ReduceType::FinishDynamics::OutputType>
 {
-    using Identifier = typename ReduceType::Identifier;
+    using RangeIdentifier = typename ReduceType::RangeIdentifier;
     using ReduceKernel = typename ReduceType::ReduceKernel;
     using ReduceReturnType = typename ReduceType::ReturnType;
     using Operation = typename ReduceType::OperationType;
@@ -105,7 +106,7 @@ class ReduceDynamicsCK : public ReduceType,
         this->setupDynamics(dt);
         ReduceKernel *reduce_kernel = kernel_implementation_.getComputingKernel();
         reduced_value_ = particle_reduce<Operation>(
-            LoopRangeCK<ExecutionPolicy, Identifier>(*this->identifier_),
+            LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
             this->reference_,
             [=](size_t i)
             { return reduce_kernel->reduce(i, dt); });
@@ -113,7 +114,7 @@ class ReduceDynamicsCK : public ReduceType,
         this->logger_->debug(
             "ReduceDynamicsCK::exec() for {} at {}",
             type_name<ReduceType>(),
-            this->sph_body_->getName());
+            this->sph_body_->Name());
 
         return finish_dynamics_.Result(reduced_value_);
     };

@@ -83,7 +83,7 @@ The initial condition of the solid body is defined with constant temperature.
 			{
 					std::vector<Vecd> body_shape = CreatShape();
 					body_shape_ = new ComplexShape(body_name);
-					body_shape_->addAPolygon(body_shape, ShapeBooleanOps::add);
+					body_shape_->addPolygon(body_shape, ShapeBooleanOps::add);
 			}
 	};
 	/**

@@ -16,11 +16,22 @@ LevelsetBounding::UpdateKernel::
       level_set_gradient_(ex_policy, encloser.level_set_, "LevelSetGradient"),
       constrained_distance_(encloser.constrained_distance_) {}
 //=================================================================================================//
+template <class DynamicIdentifier>
+LevelsetKernelGradientIntegral<DynamicIdentifier>::LevelsetKernelGradientIntegral(
+    DynamicIdentifier &identifier, LevelSetShape &level_set_shape)
+    : BaseLocalDynamics<DynamicIdentifier>(identifier),
+      dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
+      dv_residual_(this->particles_->template registerStateVariable<Vecd>("KernelGradientIntegral")),
+      adaptation_(DynamicCast<Adaptation>(this, identifier.getSPHAdaptation())),
+      level_set_(level_set_shape.getLevelSet()) {}
+//=================================================================================================//
+template <class DynamicIdentifier>
 template <class ExecutionPolicy, class EncloserType>
-LevelsetKernelGradientIntegral::UpdateKernel::
+LevelsetKernelGradientIntegral<DynamicIdentifier>::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       residual_(encloser.dv_residual_->DelegatedData(ex_policy)),
+      h_ratio_(ex_policy, encloser.adaptation_),
       kernel_gradient_integral_(ex_policy, encloser.level_set_, "KernelGradient") {}
 //=================================================================================================//
 } // namespace SPH

@@ -31,8 +31,7 @@
 
 #include "base_dynamics.h"
 #include "base_implementation.h"
-#include "data_package_function.hpp"
-#include "spares_mesh_field.hpp"
+#include "sparse_mesh_field.hpp"
 
 namespace SPH
 {

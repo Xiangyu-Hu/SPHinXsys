@@ -31,7 +31,9 @@
 #ifndef HESSIAN_CORRECTION_CK_H
 #define HESSIAN_CORRECTION_CK_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include <tuple>
 
 namespace SPH
 {
@@ -45,7 +47,7 @@ class HessianCorrectionMatrix<Base, RelationType<Parameters...>>
   public:
     template <class DynamicsIdentifier>
     explicit HessianCorrectionMatrix(DynamicsIdentifier &identifier);
-    virtual ~HessianCorrectionMatrix() {};
+    virtual ~HessianCorrectionMatrix(){};
 
     class InteractKernel
         : public Interaction<RelationType<Parameters...>>::InteractKernel
@@ -79,9 +81,10 @@ class DisplacementMatrixGradient<Inner<Parameters...>>
     using BaseDynamicsType = HessianCorrectionMatrix<Base, Inner<Parameters...>>;
 
   public:
-    explicit DisplacementMatrixGradient(Inner<Parameters...> &inner_relation)
-        : BaseDynamicsType(inner_relation) {};
-    virtual ~DisplacementMatrixGradient() {};
+    template <class DynamicsIdentifier>
+    explicit DisplacementMatrixGradient(DynamicsIdentifier &identifier)
+        : BaseDynamicsType(identifier){};
+    virtual ~DisplacementMatrixGradient(){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -100,8 +103,9 @@ class DisplacementMatrixGradient<Contact<Parameters...>>
     using BaseDynamicsType = HessianCorrectionMatrix<Base, Contact<Parameters...>>;
 
   public:
-    explicit DisplacementMatrixGradient(Contact<Parameters...> &contact_relation);
-    virtual ~DisplacementMatrixGradient() {};
+    template <class DynamicsIdentifier>
+    explicit DisplacementMatrixGradient(DynamicsIdentifier &identifier);
+    virtual ~DisplacementMatrixGradient(){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -115,7 +119,6 @@ class DisplacementMatrixGradient<Contact<Parameters...>>
       protected:
         Real *contact_Vol_;
     };
-
 };
 
 template <typename... Parameters>
@@ -125,12 +128,13 @@ class HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>
     using BaseDynamicsType = HessianCorrectionMatrix<Base, Inner<Parameters...>>;
 
   public:
-    explicit HessianCorrectionMatrix(Inner<Parameters...> &inner_relation, Real alpha = Real(0))
-        : BaseDynamicsType(inner_relation), alpha_(alpha) {};
+    template <class DynamicsIdentifier>
+    explicit HessianCorrectionMatrix(DynamicsIdentifier &identifier, Real alpha = Real(0))
+        : BaseDynamicsType(identifier), alpha_(alpha){};
     template <typename BodyRelationType, typename FirstArg>
     explicit HessianCorrectionMatrix(DynamicsArgs<BodyRelationType, FirstArg> parameters)
         : HessianCorrectionMatrix(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~HessianCorrectionMatrix() {};
+    virtual ~HessianCorrectionMatrix(){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -165,8 +169,9 @@ class HessianCorrectionMatrix<Contact<Parameters...>>
     using BaseDynamicsType = HessianCorrectionMatrix<Base, Contact<Parameters...>>;
 
   public:
-    explicit HessianCorrectionMatrix(Contact<Parameters...> &contact_relation);
-    virtual ~HessianCorrectionMatrix() {};
+    template <class DynamicsIdentifier>
+    explicit HessianCorrectionMatrix(DynamicsIdentifier &identifier);
+    virtual ~HessianCorrectionMatrix(){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {

@@ -23,7 +23,7 @@ class SphBasicSystemSetting : public SphBasicGeometrySetting
         : system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH + BW)),
           sph_system(system_domain_bounds, particle_spacing_ref)
     {
-        sph_system.getIOEnvironment().appendOutputFolder(
+        IO::getEnvironment().appendOutputFolder(
             "env_" + std::to_string(parallel_env) + "_episode_" + std::to_string(episode_env));
     }
 };
@@ -44,13 +44,14 @@ class SphFlapReloadEnvironment : public SphBasicSystemSetting
           flap_observer(sph_system, "FlapObserver"),
           wave_velocity_observer(sph_system, "WaveVelocityObserver")
     {
-        water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+        water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+        water_block.addMaterialProperty<Viscosity>(mu_f);
         water_block.generateParticles<BaseParticles, Lattice>();
 
-        wall_boundary.defineMaterial<Solid>();
+        wall_boundary.defineMatterMaterial<Solid>();
         wall_boundary.generateParticles<BaseParticles, Lattice>();
 
-        flap.defineMaterial<Solid>(rho0_s);
+        flap.defineMatterMaterial<Solid>(rho0_s);
         flap.generateParticles<BaseParticles, Lattice>();
 
         flap_observer.generateParticles<ObserverParticles>(createFlapObserver());

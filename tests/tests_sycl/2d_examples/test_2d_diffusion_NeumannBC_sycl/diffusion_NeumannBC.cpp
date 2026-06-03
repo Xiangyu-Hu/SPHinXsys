@@ -19,14 +19,14 @@ BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //	Basic parameters for diffusion properties.
 //----------------------------------------------------------------------
 Real diffusion_coeff = 1;
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 //----------------------------------------------------------------------
 //	Initial and boundary conditions.
 //----------------------------------------------------------------------
 Real initial_temperature = 100.0;
 Real left_temperature = 300.0;
 Real right_temperature = 350.0;
-Real heat_flux = 900.0; // from the Nemann boundary
+Real heat_flux = 900.0; // from the Neumann boundary
 //----------------------------------------------------------------------
 //	Generate 2D geometrics used in the case.
 //----------------------------------------------------------------------
@@ -53,7 +53,7 @@ class DiffusionBody : public MultiPolygonShape
   public:
     explicit DiffusionBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(thermal_domain_edge_points, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(thermal_domain_edge_points, GeometricOps::add);
     }
 };
 
@@ -62,8 +62,8 @@ class DirichletWallBoundary : public MultiPolygonShape
   public:
     explicit DirichletWallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(left_region_edge_points, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(right_region_edge_points, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(left_region_edge_points, GeometricOps::add);
+        multi_polygon_.addPolygon(right_region_edge_points, GeometricOps::add);
     }
 };
 
@@ -72,7 +72,7 @@ class NeumannWallBoundary : public MultiPolygonShape
   public:
     explicit NeumannWallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(heat_flux_region_edge_points, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(heat_flux_region_edge_points, GeometricOps::add);
     }
 };
 
@@ -107,15 +107,15 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    diffusion_body.defineMaterial<Solid>();
+    diffusion_body.defineMatterMaterial<Solid>();
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));
-    wall_Dirichlet.defineMaterial<Solid>();
+    wall_Dirichlet.defineMatterMaterial<Solid>();
     wall_Dirichlet.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_Neumann(sph_system, makeShared<NeumannWallBoundary>("NeumannWallBoundary"));
-    wall_Neumann.defineMaterial<Solid>();
+    wall_Neumann.defineMatterMaterial<Solid>();
     wall_Neumann.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody temperature_observer(sph_system, "TemperatureObserver");
@@ -135,40 +135,33 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     Inner<> diffusion_body_inner(diffusion_body);
-    Contact<> diffusion_body_contact_Dirichlet(diffusion_body, {&wall_Dirichlet});
-    Contact<> diffusion_body_contact_Neumann(diffusion_body, {&wall_Neumann});
+    Contact<> diffusion_body_contact(diffusion_body, {&wall_Dirichlet, &wall_Neumann});
     Contact<> temperature_observer_contact(temperature_observer, {&diffusion_body});
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
+    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_Neumann);
+
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> diffusion_body_cell_linked_list(diffusion_body);
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_Dirichlet_cell_linked_list(wall_Dirichlet);
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_Neumann_cell_linked_list(wall_Neumann);
 
-    UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>, Contact<>>
-        water_block_update_complex_relation(
-            diffusion_body_inner, diffusion_body_contact_Dirichlet, diffusion_body_contact_Neumann);
+    UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>>
+        diffusion_body_update_complex_relation(diffusion_body_inner, diffusion_body_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> observer_contact_relation(temperature_observer_contact);
 
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_Neumann);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<ConstantValue<Real>, SPHBody>>
-        diffusion_initial_condition(diffusion_body, diffusion_species_name, initial_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<ConstantValue<Real>, BodyRegionByParticle>>
-        left_initial_condition(wall_Dirichlet_left_region, diffusion_species_name, left_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<ConstantValue<Real>, BodyRegionByParticle>>
-        right_initial_condition(wall_Dirichlet_right_region, diffusion_species_name, right_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<ConstantValue<Real>, SPHBody>>
-        wall_Neumann_initial_condition(wall_Neumann, diffusion_species_name + "Flux", heat_flux);
+    IsotropicDiffusion isotropic_diffusion(species_name, diffusion_coeff);
+    auto contact_dirichlet_view = makeRelationView(diffusion_body_contact, wall_Dirichlet);
+    auto contact_neumann_view = makeRelationView(diffusion_body_contact, wall_Neumann);
 
-    IsotropicDiffusion isotropic_diffusion(diffusion_species_name, diffusion_coeff);
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, &isotropic_diffusion);
     RungeKuttaSequence<InteractionDynamicsCK<
         MainExecutionPolicy,
@@ -181,14 +174,25 @@ int main(int ac, char *av[])
             Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>,
             Contact<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>>>>
         diffusion_relaxation_rk2(DynamicsArgs(diffusion_body_inner, &isotropic_diffusion),
-                                 DynamicsArgs(diffusion_body_contact_Dirichlet, &isotropic_diffusion),
-                                 DynamicsArgs(diffusion_body_contact_Neumann, &isotropic_diffusion));
+                                 DynamicsArgs(contact_dirichlet_view, &isotropic_diffusion),
+                                 DynamicsArgs(contact_neumann_view, &isotropic_diffusion));
+    //----------------------------------------------------------------------
+    //	Specify initial condition if necessary.
+    //----------------------------------------------------------------------
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
+        diffusion_initial_condition(diffusion_body, species_name, initial_temperature);
+    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
+        left_initial_condition(wall_Dirichlet_left_region, species_name, left_temperature);
+    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
+        right_initial_condition(wall_Dirichlet_right_region, species_name, right_temperature);
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
+        wall_Neumann_initial_condition(wall_Neumann, species_name + "Flux", heat_flux);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_states(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>>
-        write_solid_temperature(diffusion_species_name, temperature_observer_contact);
+        observe_temperature(temperature_observer_contact, species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -199,7 +203,7 @@ int main(int ac, char *av[])
     wall_Dirichlet_cell_linked_list.exec();
     wall_Neumann_cell_linked_list.exec();
 
-    water_block_update_complex_relation.exec();
+    diffusion_body_update_complex_relation.exec();
     observer_contact_relation.exec();
 
     diffusion_initial_condition.exec();
@@ -209,7 +213,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     int ite = 0;
     Real T0 = 1;
     Real end_time = T0;
@@ -225,7 +229,7 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_states.writeToFile();
-    write_solid_temperature.writeToFile(ite);
+    observe_temperature.writeToFile(ite);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
@@ -256,7 +260,7 @@ int main(int ac, char *av[])
 
         TickCount t2 = TickCount::now();
         write_states.writeToFile();
-        write_solid_temperature.writeToFile(ite);
+        observe_temperature.writeToFile(ite);
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
@@ -270,11 +274,11 @@ int main(int ac, char *av[])
 
     if (sph_system.GenerateRegressionData())
     {
-        write_solid_temperature.generateDataBase(1.0e-3, 1.0e-3);
+        observe_temperature.generateDataBase(1.0e-3, 1.0e-3);
     }
     else if (sph_system.RestartStep() == 0)
     {
-        write_solid_temperature.testResult();
+        observe_temperature.testResult();
     }
 
     return 0;

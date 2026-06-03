@@ -3,6 +3,8 @@
 
 #include "force_on_structure.h"
 
+#include "base_body.hpp"
+
 namespace SPH
 {
 namespace FSI
@@ -13,7 +15,7 @@ template <class ContactRelationType>
 ForceFromFluid<KernelCorrectionType, Parameters...>::
     ForceFromFluid(ContactRelationType &contact_relation, const std::string &force_name)
     : Interaction<Contact<Parameters...>>(contact_relation), ForcePriorCK(this->particles_, force_name),
-      solid_(DynamicCast<Solid>(this, this->sph_body_->getBaseMaterial())),
+      solid_(DynamicCast<Solid>(this, this->sph_body_->getMatterMaterial())),
       dv_force_from_fluid_(ForcePriorCK::getCurrentForce()),
       dv_vel_ave_(solid_.AverageVelocityVariable(this->particles_))
 {
@@ -44,7 +46,7 @@ ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, P
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        ViscosityType *viscosity_model_k = DynamicCast<ViscosityType>(this, &this->contact_particles_[k]->getBaseMaterial());
+        ViscosityType *viscosity_model_k = &this->contact_bodies_[k]->template getMaterialProperty<ViscosityType>();
         contact_viscosity_model_.push_back(viscosity_model_k);
         contact_smoothing_length_sq_.push_back(pow(this->contact_bodies_[k]->getSPHAdaptation().ReferenceSmoothingLength(), 2));
     }
@@ -89,7 +91,7 @@ PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrectionTy
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        FluidType &contact_fluid_k = DynamicCast<FluidType>(this, this->contact_particles_[k]->getBaseMaterial());
+        FluidType &contact_fluid_k = DynamicCast<FluidType>(this, this->contact_bodies_[k]->getMatterMaterial());
         contact_riemann_solver_.push_back(RiemannSolverType(contact_fluid_k, contact_fluid_k));
         dv_contact_rho_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Density"));
         dv_contact_mass_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Mass"));
@@ -128,7 +130,7 @@ void PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrect
         Real p_j_in_wall = contact_p_[index_j] + contact_rho_[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
         Vecd face_to_fluid_n = -SGN(corrected_e_ij.dot(n_[index_i])) * n_[index_i];
         Real u_jump = 2.0 * (this->contact_vel_[index_j] - this->vel_ave_[index_i]).dot(face_to_fluid_n);
-        force -= (riemann_solver_.DissipativePJump(u_jump) * face_to_fluid_n +
+        force -= (riemann_solver_.DissipativePJump(index_j, index_i, u_jump) * face_to_fluid_n +
                   (p_j_in_wall + contact_p_[index_j]) * corrected_e_ij) *
                  this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j];
     }

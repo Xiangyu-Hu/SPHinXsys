@@ -10,9 +10,9 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.0;                        /**< Reference length. */
-Real DH = 3.0;                        /**< Reference and the height of main channel. */
-Real DL1 = 0.7 * DL;                  /**< The length of the main channel. */
+Real DL = 5.0;                           /**< Reference length. */
+Real DH = 3.0;                           /**< Reference and the height of main channel. */
+Real DL1 = 0.7 * DL;                     /**< The length of the main channel. */
 Real global_resolution = 0.15;           /**< Initial reference particle spacing. */
 Real BW = global_resolution * 4;         /**< Reference size of the emitter. */
 Real DL_sponge = global_resolution * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
@@ -49,7 +49,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(water_block_shape, GeometricOps::add);
     }
 };
 
@@ -58,8 +58,8 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -68,14 +68,14 @@ class WallBoundary : public MultiPolygonShape
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBox &aligned_box_;
+    OrientedBox &oriented_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_f), t_ref_(2.0),
-          aligned_box_(boundary_condition.getAlignedBox()),
-          halfsize_(aligned_box_.HalfSize()) {}
+          oriented_box_(boundary_condition.getOrientedBox()),
+          halfsize_(oriented_box_.HalfSize()) {}
 
     Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
@@ -93,18 +93,19 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
-    BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
+    BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge, -DH), Vec2d(DL, 2.0 * DH));
     SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.cd
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -138,23 +139,23 @@ int main(int ac, char *av[])
 
     Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
     Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
-    AlignedBoxByParticle emitter(water_block, AlignedBox(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
+    OrientedBoxByParticle emitter(water_block, OrientedBox(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer);
 
     Vec2d inlet_flow_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
     Vec2d inlet_flow_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_flow_buffer_halfsize;
-    AlignedBoxByCell inlet_flow_buffer(water_block, AlignedBox(xAxis, Transform(Vec2d(inlet_flow_buffer_translation)), inlet_flow_buffer_halfsize));
+    OrientedBoxByCell inlet_flow_buffer(water_block, OrientedBox(xAxis, Transform(Vec2d(inlet_flow_buffer_translation)), inlet_flow_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_condition(inlet_flow_buffer);
     Vec2d disposer_up_halfsize = Vec2d(0.3 * DH, 0.5 * BW);
     Vec2d disposer_up_translation = Vec2d(DL + 0.05 * DH, 2.0 * DH) - disposer_up_halfsize;
-    AlignedBoxByCell disposer_up(
-        water_block, AlignedBox(yAxis, Transform(Vec2d(disposer_up_translation)), disposer_up_halfsize));
+    OrientedBoxByCell disposer_up(
+        water_block, OrientedBox(yAxis, Transform(Vec2d(disposer_up_translation)), disposer_up_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_up_outflow_deletion(disposer_up);
 
     Vec2d disposer_down_halfsize = disposer_up_halfsize;
     Vec2d disposer_down_translation = Vec2d(DL1 - 0.05 * DH, -DH) + disposer_down_halfsize;
-    AlignedBoxByCell disposer_down(
-        water_block, AlignedBox(yAxis, Transform(Rotation2d(Pi), Vec2d(disposer_down_translation)), disposer_down_halfsize));
+    OrientedBoxByCell disposer_down(
+        water_block, OrientedBox(yAxis, Transform(Rotation2d(Pi), Vec2d(disposer_down_translation)), disposer_down_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_down_outflow_deletion(disposer_down);
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.

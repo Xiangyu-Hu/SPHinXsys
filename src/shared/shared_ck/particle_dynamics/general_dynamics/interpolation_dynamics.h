@@ -32,6 +32,10 @@
 #include "interaction_algorithms_ck.hpp"
 #include "scalar_numerics.h"
 
+#include <string>
+#include <tuple>
+#include <utility>
+
 namespace SPH
 {
 
@@ -48,16 +52,21 @@ template <typename DataType, typename... Parameters>
 class Interpolation<Contact<Base, DataType, Parameters...>> : public Interaction<Contact<Parameters...>>
 {
   public:
-    Interpolation(Contact<Parameters...> &pair_contact_relation, const std::string &variable_name);
+    template <class DynamicsIdentifier>
+    Interpolation(DynamicsIdentifier &identifier, const std::string &variable_name);
+    template <class DynamicsIdentifier>
+    Interpolation(DynamicsIdentifier &identifier,
+                  const std::string &variable_name, const std::string &entry_name);
     template <typename BodyRelationType, typename FirstArg>
     explicit Interpolation(DynamicsArgs<BodyRelationType, FirstArg> parameters)
         : Interpolation(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~Interpolation() {};
+    virtual ~Interpolation(){};
     DiscreteVariable<DataType> *dvInterpolatedQuantities() { return dv_interpolated_quantities_; };
 
   protected:
     DiscreteVariable<DataType> *dv_interpolated_quantities_;
     StdVec<DiscreteVariable<DataType> *> dv_contact_data_;
+    UnsignedInt entry_ = 0;
 };
 
 template <typename DataType, typename... Parameters>
@@ -80,7 +89,7 @@ class Interpolation<Contact<DataType, Parameters...>> : public Interpolation<Con
         DataType zero_value_;
         DataType *interpolated_quantities_;
         Real *contact_Vol_;
-        DataType *contact_data_;
+        EntryView<DataType> contact_data_;
     };
 };
 /**
@@ -115,7 +124,7 @@ class Interpolation<Contact<DataType, RestoringCorrection, Parameters...>> : pub
         PredictVecd zero_prediction_;
         DataType *interpolated_quantities_;
         Real *contact_Vol_;
-        DataType *contact_data_;
+        EntryView<DataType> contact_data_;
     };
 };
 
@@ -127,7 +136,7 @@ class ObservingQuantityCK : public InteractionDynamicsCK<ExecutionPolicy, Interp
   public:
     template <typename... Args>
     ObservingQuantityCK(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
-    virtual ~ObservingQuantityCK() {};
+    virtual ~ObservingQuantityCK(){};
 };
 } // namespace SPH
 #endif // INTERPOLATION_DYNAMICS_H

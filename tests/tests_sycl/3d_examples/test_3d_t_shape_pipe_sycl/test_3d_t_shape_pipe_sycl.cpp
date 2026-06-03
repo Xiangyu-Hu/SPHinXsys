@@ -85,18 +85,18 @@ struct BoundaryPressurePrescribed
     };
 };
 
-class ResetBufferCorrectionMatrixCK : public BaseLocalDynamics<AlignedBoxByCell>
+class ResetBufferCorrectionMatrixCK : public BaseLocalDynamics<OrientedBoxByCell>
 {
   private:
-    SingularVariable<AlignedBox> *sv_aligned_box_;
+    SingleVariable<OrientedBox> *sv_oriented_box_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Matd> *dv_B_;
     Real radius_;
 
   public:
-    explicit ResetBufferCorrectionMatrixCK(AlignedBoxByCell &aligned_box_part)
-        : BaseLocalDynamics<AlignedBoxByCell>(aligned_box_part),
-          sv_aligned_box_(aligned_box_part.svAlignedBox()),
+    explicit ResetBufferCorrectionMatrixCK(OrientedBoxByCell &oriented_box_part)
+        : BaseLocalDynamics<OrientedBoxByCell>(oriented_box_part),
+          sv_oriented_box_(oriented_box_part.svOrientedBox()),
           dv_pos_(particles_->getVariableByName<Vecd>("Position")),
           dv_B_(particles_->registerStateVariable<Matd>(
               "LinearCorrectionMatrix", IdentityMatrix<Matd>::value)),
@@ -106,18 +106,18 @@ class ResetBufferCorrectionMatrixCK : public BaseLocalDynamics<AlignedBoxByCell>
       public:
         template <class ExecutionPolicy, class EncloserType>
         explicit UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : aligned_box_(encloser.sv_aligned_box_->DelegatedData(ex_policy)),
+            : oriented_box_(encloser.sv_oriented_box_->DelegatedData(ex_policy)),
               pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
               B_(encloser.dv_B_->DelegatedData(ex_policy)),
               radius_(encloser.radius_) {}
         void update(size_t index_i, Real dt = 0.0)
         {
-            if (aligned_box_->checkLowerBound(pos_[index_i], -radius_))
+            if (oriented_box_->checkLowerBound(pos_[index_i], -radius_))
                 B_[index_i] = Matd::Identity();
         }
 
       protected:
-        AlignedBox *aligned_box_;
+        OrientedBox *oriented_box_;
         Vecd *pos_;
         Matd *B_;
         Real radius_;
@@ -131,8 +131,8 @@ struct PressureBC
     Vec3d center;
     Rotation3d rot;
     Vec3d buffer_halfsize;
-    AlignedBox alignedbox;
-    AlignedBoxByCell alignedbox_by_cell;
+    OrientedBox oriented_box;
+    OrientedBoxByCell oriented_box_by_cell;
     fluid_dynamics::BidirectionalBoundaryCK<ExecutionPolicy, CorrectionType, BoundaryPressurePrescribed> boundary_condition;
     StateDynamics<ExecutionPolicy, ResetBufferCorrectionMatrixCK> reset_buffer_correction_matrix;
 
@@ -143,10 +143,10 @@ struct PressureBC
           buffer_halfsize(params.L_emitter * 0.5,
                           params.diameter * 0.505,
                           params.diameter * 0.505),
-          alignedbox(xAxis, Transform(rot, center), buffer_halfsize),
-          alignedbox_by_cell(fluid_body, alignedbox),
-          boundary_condition(alignedbox_by_cell, params.pressure, t_ref),
-          reset_buffer_correction_matrix(alignedbox_by_cell) {}
+          oriented_box(xAxis, Transform(rot, center), buffer_halfsize),
+          oriented_box_by_cell(fluid_body, oriented_box),
+          boundary_condition(oriented_box_by_cell, params.pressure, t_ref),
+          reset_buffer_correction_matrix(oriented_box_by_cell) {}
 };
 
 void run_t_shape_pipe(Parameters &params, bool run_relaxation = false, bool reload_particles = true);
@@ -229,18 +229,19 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
 
     // --- Section 7: Create Fluid and Solid Bodies ---
     FluidBody water_block(sph_system, water_block_shape);
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(params.rho0_f, params.c_f), params.mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(params.rho0_f, params.c_f);
+    water_block.addMaterialProperty<Viscosity>(params.mu_f);
     water_block.defineComponentLevelSetShape("OuterBoundary");
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(10.);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(in_outlet_particle_buffer, water_block.getName())
+        ? water_block.generateParticlesWithReserve<BaseParticles, Reload>(in_outlet_particle_buffer, water_block.Name())
         : water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
     SolidBody wall_boundary(sph_system, wall_boundary_shape);
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.defineBodyLevelSetShape();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
+        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.Name())
         : wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     if (sph_system.RunParticleRelaxation())
@@ -318,11 +319,12 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
         fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
 
-    InteractionDynamicsCK<MainExecutionPolicy,
-                          fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionComplexBulkParticlesCK>
-        transport_correction_ck(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex>
+        kernel_gradient_integral(water_body_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear, BulkParticles>>
+        transport_correction(water_block);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionViscousTimeStepCK>
         fluid_advection_time_step(water_block, params.U_max);
@@ -341,11 +343,13 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
         bidirectional_pressure_conditions.emplace_back(
             std::make_unique<PressureBC<MainExecutionPolicy, LinearCorrectionCK>>(
                 water_block, boundary, params.t_ref));
+    for (auto &bc : bidirectional_pressure_conditions)
+        bc->oriented_box_by_cell.writeOrientedBoxToVtp();
     StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> particle_deletion(water_block);
-    InteractionDynamicsCK<
-        MainExecutionPolicy,
-        fluid_dynamics::DensityRegularizationComplexInternalPressureBoundary>
-        fluid_density_regularization(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+        fluid_density_summation(water_body_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, Internal, ExcludeBufferParticles>>
+        fluid_density_regularization(water_block);
 
     // --- Section 12: Setup Recording for Body States and Observers ---
     BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
@@ -370,7 +374,8 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
         {
             /** Integrate time (loop) until the next output time. */
             water_advection_step_setup.exec();
-            transport_correction_ck.exec();
+            kernel_gradient_integral.exec();
+            transport_correction.exec();
             water_advection_step_close.exec();
             if (relaxation_fluid_itr % 10 == 0)
             {
@@ -394,7 +399,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
 
     // --- Section 17: Main Simulation Loop to Find Baseline ---
     {
-        SingularVariable<Real> *sv_physical_time =
+        SingleVariable<Real> *sv_physical_time =
             sph_system.getSystemVariableByName<Real>("PhysicalTime");
         // ─────────────────────────────────────────────────────────────────────────────
         // ─── BEGIN INSERTION: BASELINE PID (PRESSURE-DRIVEN) SECTION
@@ -415,13 +420,15 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
             {
                 // ─── SPH PHYSICS STEPS (unchanged)
                 // ─────────────────────────────────────
+                fluid_density_summation.exec();
                 fluid_density_regularization.exec();
                 water_advection_step_setup.exec();
                 fluid_linear_correction_matrix.exec();
                 for (auto &bc : bidirectional_pressure_conditions)
                     bc->reset_buffer_correction_matrix.exec();
                 fluid_viscous_force.exec();
-                transport_correction_ck.exec();
+                kernel_gradient_integral.exec();
+                transport_correction.exec();
 
                 Real Dt = fluid_advection_time_step.exec();
                 if (Dt < Dt_ref)

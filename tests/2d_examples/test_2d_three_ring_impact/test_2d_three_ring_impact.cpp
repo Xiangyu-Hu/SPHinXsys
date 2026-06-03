@@ -4,8 +4,6 @@
  * @author  Weiyi Kong, Xiangyu Hu
  */
 
-#include "base_data_type.h"
-#include "large_data_containers.h"
 #include "sphinxsys.h"
 using namespace SPH;
 
@@ -41,8 +39,8 @@ class Ring : public MultiPolygonShape
   public:
     explicit Ring(const std::string &shape_name, const Vec2d &center, Real radius_inner, Real radius_outer) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(center, radius_outer, 100, ShapeBooleanOps::add);
-        multi_polygon_.addACircle(center, radius_inner, 100, ShapeBooleanOps::sub);
+        multi_polygon_.addCircle(center, radius_outer, 100, GeometricOps::add);
+        multi_polygon_.addCircle(center, radius_inner, 100, GeometricOps::sub);
     }
 };
 
@@ -180,7 +178,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
 
     // Bounding box
     BoundingBoxd bb_system(center_l - 0.5 * diameter_outer_l * Vec2d::Ones(),
-                          center_l + 0.5 * diameter_outer_l * Vec2d::Ones());
+                           center_l + 0.5 * diameter_outer_l * Vec2d::Ones());
 
     // System
     SPHSystem system(bb_system, dp_l);
@@ -188,19 +186,19 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     // Body
     SolidBody ring_l_body(system, makeShared<Ring>("RingLarge", center_l, 0.5 * diameter_inner_l, 0.5 * diameter_outer_l));
     ring_l_body.defineBodyLevelSetShape();
-    ring_l_body.defineMaterial<NeoHookeanSolid>(*material_l.get());
+    ring_l_body.defineMatterMaterial<NeoHookeanSolid>(*material_l.get());
     ring_l_body.generateParticles<BaseParticles, Lattice>();
     auto particles_l = &ring_l_body.getBaseParticles();
 
     SolidBody ring_m_body(system, makeShared<DefaultShape>("RingMedium"));
     ring_m_body.defineAdaptationRatios(1.15, dp_l / dp_m);
-    ring_m_body.defineMaterial<NeoHookeanSolid>(*material_m.get());
+    ring_m_body.defineMatterMaterial<NeoHookeanSolid>(*material_m.get());
     ring_m_body.generateParticles<SurfaceParticles, ShellRing>(center_m, 0.5 * mid_srf_diameter_m, dp_m, thickness_m);
     auto particles_m = &ring_m_body.getBaseParticles();
 
     SolidBody ring_s_body(system, makeShared<DefaultShape>("RingSmall"));
     ring_s_body.defineAdaptationRatios(1.15, dp_l / dp_s);
-    ring_s_body.defineMaterial<NeoHookeanSolid>(*material_s.get());
+    ring_s_body.defineMatterMaterial<NeoHookeanSolid>(*material_s.get());
     ring_s_body.generateParticles<SurfaceParticles, ShellRing>(center_s, 0.5 * mid_srf_diameter_s, dp_s, thickness_s);
     auto particles_s = &ring_s_body.getBaseParticles();
 

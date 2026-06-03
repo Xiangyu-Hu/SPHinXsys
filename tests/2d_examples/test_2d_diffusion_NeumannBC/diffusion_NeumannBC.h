@@ -21,7 +21,7 @@ BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
 Real diffusion_coeff = 1;
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 //----------------------------------------------------------------------
 //	Initial and boundary conditions.
 //----------------------------------------------------------------------
@@ -70,7 +70,7 @@ class DiffusionBody : public MultiPolygonShape
   public:
     explicit DiffusionBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createThermalDomain(), GeometricOps::add);
     }
 };
 
@@ -79,8 +79,8 @@ class DirichletWallBoundary : public MultiPolygonShape
   public:
     explicit DirichletWallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(left_temperature_region, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(right_temperature_region, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(left_temperature_region, GeometricOps::add);
+        multi_polygon_.addPolygon(right_temperature_region, GeometricOps::add);
     }
 };
 
@@ -89,7 +89,7 @@ class NeumannWallBoundary : public MultiPolygonShape
   public:
     explicit NeumannWallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(heat_flux_region, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(heat_flux_region, GeometricOps::add);
     }
 };
 
@@ -101,7 +101,7 @@ class DiffusionInitialCondition : public LocalDynamics
   public:
     explicit DiffusionInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -118,7 +118,7 @@ class DirichletWallBoundaryInitialCondition : public LocalDynamics
     explicit DirichletWallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -145,8 +145,8 @@ class NeumannWallBoundaryInitialCondition : public LocalDynamics
     explicit NeumannWallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)),
-          phi_flux_(particles_->getVariableDataByName<Real>(diffusion_species_name + "Flux")) {}
+          phi_(particles_->registerStateVariableData<Real>(species_name)),
+          phi_flux_(particles_->getVariableDataByName<Real>(species_name + "Flux")) {}
 
     void update(size_t index_i, Real dt)
     {

@@ -33,7 +33,7 @@ TEST(variable_buffer_array, test_sycl)
         [&](size_t i)
         { return int(ceil(rand_uniform(0.0, 1.0) * int(torques.size()))); });
 
-    SingularVariable<UnsignedInt> sv_buffer_particles("TotalBufferParticles", dv_copy_indexes.getDataSize());
+    SingleVariable<UnsignedInt> sv_buffer_particles("TotalBufferParticles", dv_copy_indexes.getSize());
 
     SimTKVec3 *torque = dv_torque.DelegatedData(ParallelPolicy{});
     SimTKVec3 *force = dv_force.DelegatedData(ParallelPolicy{});
@@ -52,7 +52,7 @@ TEST(variable_buffer_array, test_sycl)
     StdVec<DiscreteVariable<SimTKVec3> *> variables = {&dv_torque, &dv_force};
     VariableBufferArray<SimTKVec3> variable_buffer_array(variables, 200);
     using CopyVariableToBuffer = VariableBufferArray<SimTKVec3>::CopyVariableToBuffer;
-    SingularVariable<CopyVariableToBuffer> sv_copy_variable_to_buffer(
+    SingleVariable<CopyVariableToBuffer> sv_copy_variable_to_buffer(
         "CopyVariableToBuffer", CopyVariableToBuffer(ParallelPolicy{}, variable_buffer_array));
     CopyVariableToBuffer *copy_variable_to_buffer = sv_copy_variable_to_buffer.DelegatedData(ParallelPolicy{});
 
@@ -63,7 +63,7 @@ TEST(variable_buffer_array, test_sycl)
                      (*copy_variable_to_buffer)(index, i);
                  });
 
-    DataArray<SimTKVec3> *buff_array = variable_buffer_array.DelegatedBufferArray(ParallelPolicy{});
+    DataArray<SimTKVec3> buff_array = variable_buffer_array.DelegatedBufferArray(ParallelPolicy{});
     SimTK::SpatialVec partial_sum_ck = particle_reduce<ReduceSum<SimTK::SpatialVec>>(
         LoopRangeCK<ParallelPolicy, SPHBody>(&sv_buffer_particles),
         ReduceReference<ReduceSum<SimTK::SpatialVec>>::value,
@@ -76,7 +76,7 @@ TEST(variable_buffer_array, test_sycl)
         });
 
     CopyVariableToBuffer test(ParallelDevicePolicy{}, variable_buffer_array);
-    SingularVariable<CopyVariableToBuffer> sv_copy_variable_to_buffer_sycl(
+    SingleVariable<CopyVariableToBuffer> sv_copy_variable_to_buffer_sycl(
         "CopyVariableToBufferSYCL", CopyVariableToBuffer(ParallelDevicePolicy{}, variable_buffer_array));
     CopyVariableToBuffer *copy_variable_to_buffer_sycl = sv_copy_variable_to_buffer_sycl.DelegatedData(ParallelDevicePolicy{});
 
@@ -88,7 +88,7 @@ TEST(variable_buffer_array, test_sycl)
                      (*copy_variable_to_buffer_sycl)(index, i);
                  });
 
-    DataArray<SimTKVec3> *buff_array_sycl = variable_buffer_array.DelegatedBufferArray(ParallelDevicePolicy{});
+    DataArray<SimTKVec3> buff_array_sycl = variable_buffer_array.DelegatedBufferArray(ParallelDevicePolicy{});
     SimTK::SpatialVec partial_sum_sycl =
         particle_reduce<ReduceSum<SimTK::SpatialVec>>( // summation on device
             LoopRangeCK<ParallelDevicePolicy, SPHBody>(&sv_buffer_particles),
@@ -101,7 +101,7 @@ TEST(variable_buffer_array, test_sycl)
                 return SimTK::SpatialVec(a, buffer_force_sycl[i]);
             });
 
-    DataArray<SimTKVec3> *host_staging_buffer_array =
+    DataPtr<SimTKVec3> *host_staging_buffer_array =
         variable_buffer_array.synchronizeHostStagingBufferArray(ParallelDevicePolicy{}, sv_buffer_particles.getValue());
 
     SimTKVec3 *torque_host_staging = host_staging_buffer_array[0];

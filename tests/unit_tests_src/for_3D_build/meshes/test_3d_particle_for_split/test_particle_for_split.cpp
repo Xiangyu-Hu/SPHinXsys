@@ -15,7 +15,7 @@ TEST(test_meshes, split_for)
     SPHSystem system(bb_system, dp);
 
     SolidBody body(system, shape);
-    body.defineMaterial<Solid>();
+    body.defineMatterMaterial<Solid>();
     body.generateParticles<BaseParticles, Lattice>();
     auto &particles = body.getBaseParticles();
     const auto pos = particles.registerStateVariableData<Vec3d>("Position");
@@ -39,7 +39,7 @@ TEST(test_meshes, split_for)
         }
     };
 
-    auto &cell_linked_list = *dynamic_cast<CellLinkedList *>(&body.getCellLinkedList());
+    auto &cell_linked_list = *dynamic_cast<CellLinkedList<SPHAdaptation> *>(&body.getCellLinkedList());
 
     // run the interaction in sequenced policy
     cell_linked_list.particle_for_split(execution::SequencedPolicy(), interaction);

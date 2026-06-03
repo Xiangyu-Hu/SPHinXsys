@@ -38,7 +38,7 @@ class WallBoundary : public MultiPolygonShape
     {
         /** Geometry definition. */
         std::vector<Vecd> wall_shape{Vecd(0, 0), Vecd(0, slop_h), Vecd(DL, slop_h), Vecd(0, 0)};
-        multi_polygon_.addAPolygon(wall_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(wall_shape, GeometricOps::add);
     }
 };
 
@@ -54,7 +54,7 @@ class Cube : public MultiPolygonShape
         cubic_shape.push_back(Vecd(BW + L, slop_h + L + global_resolution));
         cubic_shape.push_back(Vecd(BW + L, slop_h + global_resolution));
         cubic_shape.push_back(Vecd(BW, slop_h + global_resolution));
-        multi_polygon_.addAPolygon(cubic_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(cubic_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -74,11 +74,11 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles
     //----------------------------------------------------------------------
     SolidBody free_cube(sph_system, makeShared<Cube>("FreeCube"));
-    free_cube.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    free_cube.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     free_cube.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    wall_boundary.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cube_observer(sph_system, "CubeObserver");

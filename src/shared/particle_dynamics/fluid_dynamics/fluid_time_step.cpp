@@ -1,5 +1,7 @@
 #include "fluid_time_step.h"
 
+#include "adaptation.h"
+#include "base_body.hpp"
 #include "viscosity.h"
 
 namespace SPH
@@ -9,7 +11,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real acousticCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body),
-      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+      fluid_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial())),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
@@ -30,8 +32,8 @@ Real AcousticTimeStep::outputResult(Real reduced_value)
 //=================================================================================================//
 SurfaceTensionTimeStep::SurfaceTensionTimeStep(SPHBody &sph_body, Real acousticCFL)
     : AcousticTimeStep(sph_body, acousticCFL),
-      rho0_(sph_body_->getBaseMaterial().ReferenceDensity()),
-      surface_tension_coeff_(*(particles_->getSingularVariableByName<Real>("SurfaceTensionCoef")->Data())) {}
+      rho0_(sph_body_->getMatterMaterial().ReferenceDensity()),
+      surface_tension_coeff_(*(particles_->getSingleVariableByName<Real>("SurfaceTensionCoef")->Data())) {}
 //=================================================================================================//
 Real SurfaceTensionTimeStep::outputResult(Real reduced_value)
 {
@@ -65,8 +67,8 @@ Real AdvectionTimeStep::outputResult(Real reduced_value)
 AdvectionViscousTimeStep::AdvectionViscousTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL)
     : AdvectionTimeStep(sph_body, U_ref, advectionCFL)
 {
-    Fluid &fluid = DynamicCast<Fluid>(this, particles_->getBaseMaterial());
-    Viscosity &viscosity = DynamicCast<Viscosity>(this, particles_->getBaseMaterial());
+    Fluid &fluid = DynamicCast<Fluid>(this, sph_body_->getMatterMaterial());
+    Viscosity &viscosity = sph_body_->getMaterialProperty<Viscosity>();
     Real viscous_speed = viscosity.ReferenceViscosity() / fluid.ReferenceDensity() / h_min_;
     speed_ref_ = SMAX(viscous_speed, speed_ref_);
 }

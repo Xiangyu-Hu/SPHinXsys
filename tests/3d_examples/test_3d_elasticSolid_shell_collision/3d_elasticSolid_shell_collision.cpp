@@ -9,8 +9,8 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real global_resolution = 0.05;                         /**< reference resolution. */
-Real thickness = global_resolution * 1.;               /**< shell thickness. */
+Real global_resolution = 0.05;                      /**< reference resolution. */
+Real thickness = global_resolution * 1.;            /**< shell thickness. */
 Real radius = 2.0;                                  /**< cylinder radius. */
 Real half_height = 1.0;                             /** Height of the cylinder. */
 Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surface. */
@@ -64,7 +64,7 @@ int main(int ac, char *av[])
     //	Build up the environment of a SPHSystem with global controls.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vec3d(-radius - thickness, -half_height - thickness, -radius - thickness),
-                                     Vec3d(radius + thickness, half_height + thickness, radius + thickness));
+                                      Vec3d(radius + thickness, half_height + thickness, radius + thickness));
     SPHSystem sph_system(system_domain_bounds, global_resolution);
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     sph_system.setRunParticleRelaxation(false);
@@ -75,18 +75,18 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody shell(sph_system, makeShared<DefaultShape>("shell"));
-    shell.defineMaterial<Solid>();
+    shell.defineMatterMaterial<Solid>();
     shell.generateParticles<SurfaceParticles, Cylinder>();
 
     SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
-    ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    ball.defineMatterMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        ball.generateParticles<BaseParticles, Reload>(ball.getName());
+        ball.generateParticles<BaseParticles, Reload>(ball.Name());
     }
     else
     {
-        ball.defineBodyLevelSetShape()->writeLevelSet();
+        ball.defineBodyLevelSetShape().writeLevelSet();
         ball.generateParticles<BaseParticles, Lattice>();
     }
 

@@ -32,9 +32,9 @@ void DampingBoundaryCondition::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 EmitterInflowCondition::
-    EmitterInflowCondition(AlignedBoxByParticle &aligned_box_part)
-    : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
-      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+    EmitterInflowCondition(OrientedBoxByParticle &oriented_box_part)
+    : BaseLocalDynamics<BodyPartByParticle>(oriented_box_part),
+      fluid_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial())),
       sorted_id_(particles_->ParticleSortedIds()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
@@ -43,8 +43,8 @@ EmitterInflowCondition::
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       drho_dt_(particles_->getVariableDataByName<Real>("DensityChangeRate")),
       inflow_pressure_(0), rho0_(fluid_.ReferenceDensity()),
-      aligned_box_(aligned_box_part.getAlignedBox()),
-      updated_transform_(aligned_box_.getTransform()),
+      oriented_box_(oriented_box_part.getOrientedBox()),
+      updated_transform_(oriented_box_.getTransform()),
       old_transform_(updated_transform_) {}
 //=================================================================================================//
 void EmitterInflowCondition ::update(size_t original_index_i, Real dt)
@@ -59,15 +59,15 @@ void EmitterInflowCondition ::update(size_t original_index_i, Real dt)
 }
 //=================================================================================================//
 EmitterInflowInjection::
-    EmitterInflowInjection(AlignedBoxByParticle &aligned_box_part, ParticleBuffer<Base> &buffer)
-    : BaseLocalDynamics<BodyPartByParticle>(aligned_box_part),
-      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
+    EmitterInflowInjection(OrientedBoxByParticle &oriented_box_part, ParticleBuffer<Base> &buffer)
+    : BaseLocalDynamics<BodyPartByParticle>(oriented_box_part),
+      fluid_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial())),
       original_id_(particles_->ParticleOriginalIds()),
       sorted_id_(particles_->ParticleSortedIds()),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
-      buffer_(buffer), aligned_box_(aligned_box_part.getAlignedBox())
+      buffer_(buffer), oriented_box_(oriented_box_part.getOrientedBox())
 {
     buffer_.checkParticlesReserved();
 }
@@ -75,7 +75,7 @@ EmitterInflowInjection::
 void EmitterInflowInjection::update(size_t original_index_i, Real dt)
 {
     size_t sorted_index_i = sorted_id_[original_index_i];
-    if (aligned_box_.checkUpperBound(pos_[sorted_index_i]))
+    if (oriented_box_.checkUpperBound(pos_[sorted_index_i]))
     {
         mutex_switch_to_real_.lock();
         buffer_.checkEnoughBuffer(*particles_);
@@ -83,22 +83,22 @@ void EmitterInflowInjection::update(size_t original_index_i, Real dt)
         mutex_switch_to_real_.unlock();
 
         /** Periodic bounding. */
-        pos_[sorted_index_i] = aligned_box_.getUpperPeriodic(pos_[sorted_index_i]);
+        pos_[sorted_index_i] = oriented_box_.getUpperPeriodic(pos_[sorted_index_i]);
         rho_[sorted_index_i] = fluid_.ReferenceDensity();
         p_[sorted_index_i] = fluid_.getPressure(rho_[sorted_index_i]);
     }
 }
 //=================================================================================================//
 DisposerOutflowDeletion::
-    DisposerOutflowDeletion(AlignedBoxByCell &aligned_box_part)
-    : BaseLocalDynamics<BodyPartByCell>(aligned_box_part),
+    DisposerOutflowDeletion(OrientedBoxByCell &oriented_box_part)
+    : BaseLocalDynamics<BodyPartByCell>(oriented_box_part),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
-      aligned_box_(aligned_box_part.getAlignedBox()) {}
+      oriented_box_(oriented_box_part.getOrientedBox()) {}
 //=================================================================================================//
 void DisposerOutflowDeletion::update(size_t index_i, Real dt)
 {
     mutex_switch_to_buffer_.lock();
-    while (aligned_box_.checkUpperBound(pos_[index_i]) && index_i < particles_->TotalRealParticles())
+    while (oriented_box_.checkUpperBound(pos_[index_i]) && index_i < particles_->TotalRealParticles())
     {
         particles_->switchToBufferParticle(index_i);
     }

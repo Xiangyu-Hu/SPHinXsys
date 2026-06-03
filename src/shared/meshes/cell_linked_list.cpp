@@ -13,10 +13,7 @@ BaseCellLinkedList::BaseCellLinkedList(
     BoundingBoxd tentative_bounds, Real Reference_grid_spacing, size_t total_levels)
     : MultiResolutionMeshField<Mesh>("CellLinkedList", total_levels, tentative_bounds, Reference_grid_spacing, 2),
       base_particles_(base_particles), kernel_(*sph_adaptation.getKernel()),
-      cell_offset_list_size_(total_number_of_cells_ + 1),
-      index_list_size_(SMAX(base_particles.ParticlesBound(), cell_offset_list_size_)),
-      dv_particle_index_(createUniqueEnity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size_)),
-      dv_cell_offset_(createUniqueEnity<UnsignedInt, DiscreteVariable>("CellOffset", cell_offset_list_size_))
+      dv_particle_index_(nullptr), dv_cell_offset_(nullptr)
 {
     cell_index_lists_.resize(total_number_of_cells_);
     cell_data_lists_.resize(total_number_of_cells_);
@@ -24,7 +21,7 @@ BaseCellLinkedList::BaseCellLinkedList(
 //=================================================================================================//
 void BaseCellLinkedList::clearCellLists()
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, total_number_of_cells_),
         [&](const IndexRange &r)
         {
@@ -39,7 +36,7 @@ void BaseCellLinkedList::clearCellLists()
 void BaseCellLinkedList::UpdateCellListData(BaseParticles &base_particles)
 {
     Vecd *pos = base_particles.ParticlePositions();
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, total_number_of_cells_),
         [&](const IndexRange &r)
         {
@@ -59,7 +56,6 @@ void BaseCellLinkedList::UpdateCellListData(BaseParticles &base_particles)
 }
 //=================================================================================================//
 void BaseCellLinkedList::tagBodyPartByCellByMesh(Mesh &mesh, ConcurrentCellLists &cell_lists,
-                                                 ConcurrentIndexVector &cell_indexes,
                                                  std::function<bool(Vecd, Real)> &check_included)
 {
     mesh_parallel_for(
@@ -81,7 +77,6 @@ void BaseCellLinkedList::tagBodyPartByCellByMesh(Mesh &mesh, ConcurrentCellLists
             {
                 UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
                 cell_lists.push_back(&cell_index_lists_[linear_index]);
-                cell_indexes.push_back(linear_index);
             }
         });
 }
@@ -91,7 +86,7 @@ void BaseCellLinkedList::UpdateCellLists(BaseParticles &base_particles)
     clearCellLists();
     Vecd *pos_n = base_particles.ParticlePositions();
     UnsignedInt total_real_particles = base_particles.TotalRealParticles();
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, total_real_particles),
         [&](const IndexRange &r)
         {
@@ -133,6 +128,13 @@ UnsignedInt BaseCellLinkedList::computingSequence(Vecd &position, UnsignedInt in
     return Mesh::transferMeshIndexToMortonOrder(getFinestMesh().CellIndexFromPosition(position));
 }
 //=================================================================================================//
+Mesh BaseCellLinkedList::getSortSequenceMesh()
+{
+    Mesh seqnece_mesh(getFinestMesh());
+    seqnece_mesh.setLinearCellIndexOffset(0);
+    return seqnece_mesh;
+}
+//=================================================================================================//
 ListData BaseCellLinkedList::findNearestListDataEntry(const Vecd &position)
 {
     Real min_distance_sqr = MaxReal;
@@ -148,8 +150,9 @@ void BaseCellLinkedList::tagBodyPartByCell(ConcurrentCellLists &cell_lists,
 {
     for (UnsignedInt l = 0; l != resolution_levels_; ++l)
     {
-        tagBodyPartByCellByMesh(getMesh(l), cell_lists, cell_indexes, check_included);
+        tagBodyPartByCellByMesh(getMesh(l), cell_lists, check_included);
     }
+    tagBodyPartByCellCK(cell_indexes, check_included);
 }
 //=================================================================================================//
 void BaseCellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_data_lists,
@@ -161,31 +164,75 @@ void BaseCellLinkedList::tagBoundingCells(StdVec<CellLists> &cell_data_lists,
     }
 }
 //=================================================================================================//
-CellLinkedList::CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
-                               BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
+CellLinkedList<SPHAdaptation>::CellLinkedList(BoundingBoxd tentative_bounds, Real grid_spacing,
+                                              BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, grid_spacing, 1),
-      mesh_(&getCoarsestMesh()) {}
+      mesh_(&getCoarsestMesh())
+{
+    UnsignedInt index_list_size = SMAX(base_particles.ParticlesBound(), total_number_of_cells_);
+    dv_particle_index_ = createUniqueEntity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size);
+    dv_cell_offset_ = createUniqueEntity<UnsignedInt, DiscreteVariable>("CellOffset", total_number_of_cells_ + 1);
+}
 //=================================================================================================//
-void CellLinkedList ::insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position)
+CellLinkedList<SPHAdaptation>::CellLinkedListMesh::CellLinkedListMesh(
+    CellLinkedList<SPHAdaptation> &cell_linked_list)
+    : Mesh(cell_linked_list.getCoarsestMesh()) {}
+//=================================================================================================//
+void CellLinkedList<SPHAdaptation>::insertParticleIndex(
+    UnsignedInt particle_index, const Vecd &particle_position)
 {
     UnsignedInt linear_index = mesh_->LinearCellIndexFromPosition(particle_position);
     cell_index_lists_[linear_index].emplace_back(particle_index);
 }
 //=================================================================================================//
-void CellLinkedList ::InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position)
+void CellLinkedList<SPHAdaptation>::InsertListDataEntry(
+    UnsignedInt particle_index, const Vecd &particle_position)
 {
     UnsignedInt linear_index = mesh_->LinearCellIndexFromPosition(particle_position);
     cell_data_lists_[linear_index].emplace_back(std::make_pair(particle_index, particle_position));
 }
 //=================================================================================================//
-MultilevelCellLinkedList::MultilevelCellLinkedList(
+void CellLinkedList<SPHAdaptation>::tagBodyPartByCellCK(
+    ConcurrentIndexVector &cell_indexes, std::function<bool(Vecd, Real)> &check_included)
+{
+    CellLinkedListMesh mesh(*this);
+    mesh_parallel_for(
+        MeshRange(Arrayi::Zero(), mesh.AllCells()),
+        [&](const Arrayi &cell_index)
+        {
+            bool is_included = false;
+            mesh_for_each(
+                Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+                mesh.AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                [&](const Arrayi &neighbor_cell_index)
+                {
+                    if (check_included(mesh.CellPositionFromIndex(neighbor_cell_index), mesh.GridSpacing()))
+                    {
+                        is_included = true;
+                    }
+                });
+            if (is_included == true)
+            {
+                UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
+                cell_indexes.push_back(linear_index);
+            }
+        });
+}
+//=================================================================================================//
+CellLinkedList<AdaptiveSmoothingLength>::CellLinkedList(
     BoundingBoxd tentative_bounds, Real reference_grid_spacing, UnsignedInt total_levels,
     BaseParticles &base_particles, SPHAdaptation &sph_adaptation)
     : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, reference_grid_spacing, total_levels),
-      h_ratio_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->dvSmoothingLengthRatio()->Data()),
-      h_level_(DynamicCast<AdaptiveSmoothingLength>(this, &sph_adaptation)->dvSmoothingLengthLevel()->Data()) {}
+      adaptation_(DynamicCast<AdaptiveSmoothingLength>(this, sph_adaptation)),
+      h_ratio_(adaptation_.dvSmoothingLengthRatio()->Data()),
+      h_level_(adaptation_.dvSmoothingLengthLevel()->Data())
+{
+    UnsignedInt index_list_size = SMAX(base_particles.ParticlesBound(), total_number_of_cells_);
+    dv_particle_index_ = createUniqueEntity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size);
+    dv_cell_offset_ = createUniqueEntity<UnsignedInt, DiscreteVariable>("CellOffset", total_number_of_cells_ + 1);
+}
 //=================================================================================================//
-UnsignedInt MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
+UnsignedInt CellLinkedList<AdaptiveSmoothingLength>::getMeshLevel(Real particle_cutoff_radius)
 {
     for (UnsignedInt level = resolution_levels_; level != 0; --level)
     {
@@ -199,7 +246,8 @@ UnsignedInt MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
     return 999; // means an error in level searching
 };
 //=================================================================================================//
-void MultilevelCellLinkedList::insertParticleIndex(UnsignedInt particle_index, const Vecd &particle_position)
+void CellLinkedList<AdaptiveSmoothingLength>::insertParticleIndex(
+    UnsignedInt particle_index, const Vecd &particle_position)
 {
     UnsignedInt level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
     h_level_[particle_index] = level;
@@ -207,12 +255,48 @@ void MultilevelCellLinkedList::insertParticleIndex(UnsignedInt particle_index, c
     cell_index_lists_[linear_index].emplace_back(particle_index);
 }
 //=================================================================================================//
-void MultilevelCellLinkedList::InsertListDataEntry(UnsignedInt particle_index, const Vecd &particle_position)
+void CellLinkedList<AdaptiveSmoothingLength>::InsertListDataEntry(
+    UnsignedInt particle_index, const Vecd &particle_position)
 {
     UnsignedInt level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
     UnsignedInt linear_index = getMesh(level).LinearCellIndexFromPosition(particle_position);
     cell_data_lists_[linear_index]
         .emplace_back(std::make_pair(particle_index, particle_position));
+}
+//=================================================================================================//
+CellLinkedList<AdaptiveSmoothingLength>::CellLinkedListMesh::CellLinkedListMesh(
+    CellLinkedList<AdaptiveSmoothingLength> &cell_linked_list)
+    : Mesh(cell_linked_list.getFinestMesh()),
+      max_cut_off_(cell_linked_list.adaptation_.MaxCutOffRadius())
+{
+    setLinearCellIndexOffset(0);
+}
+//=================================================================================================//
+void CellLinkedList<AdaptiveSmoothingLength>::tagBodyPartByCellCK(
+    ConcurrentIndexVector &cell_indexes, std::function<bool(Vecd, Real)> &check_included)
+{
+    CellLinkedListMesh mesh(*this);
+    mesh_parallel_for(
+        MeshRange(Arrayi::Zero(), mesh.AllCells()),
+        [&](const Arrayi &cell_index)
+        {
+            bool is_included = false;
+            mesh_for_each(
+                Arrayi::Zero().max(cell_index - Arrayi::Ones()),
+                mesh.AllCells().min(cell_index + 2 * Arrayi::Ones()),
+                [&](const Arrayi &neighbor_cell_index)
+                {
+                    if (check_included(mesh.CellPositionFromIndex(neighbor_cell_index), mesh.GridSpacing()))
+                    {
+                        is_included = true;
+                    }
+                });
+            if (is_included == true)
+            {
+                UnsignedInt linear_index = mesh.LinearCellIndex(cell_index);
+                cell_indexes.push_back(linear_index);
+            }
+        });
 }
 //=================================================================================================//
 } // namespace SPH

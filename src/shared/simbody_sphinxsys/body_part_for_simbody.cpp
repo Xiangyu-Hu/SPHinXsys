@@ -1,6 +1,8 @@
 #include "body_part_for_simbody.h"
 
 #include "base_particles.hpp"
+#include "base_material.h"
+#include "base_body.h"
 
 namespace SPH
 {
@@ -8,7 +10,7 @@ namespace SPH
 SolidBodyPartForSimbody::
     SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape)
     : BodyRegionByParticle(body, body_part_shape),
-      rho0_(DynamicCast<Solid>(this, body.getBaseMaterial()).ReferenceDensity()),
+      rho0_(DynamicCast<Solid>(this, body.getMatterMaterial()).ReferenceDensity()),
       Vol_(base_particles_.getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(base_particles_.getVariableDataByName<Vecd>("Position"))
 {

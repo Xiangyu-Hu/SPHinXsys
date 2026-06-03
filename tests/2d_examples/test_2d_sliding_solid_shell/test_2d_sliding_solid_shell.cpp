@@ -42,7 +42,7 @@ class Cube : public MultiPolygonShape
     {
         Vec2d halfsize_cube(0.5 * L, 0.5 * L);
         Transform translation_cube(halfsize_cube + 0.65 * (global_resolution + resolution_shell) * Vec2d::UnitY());
-        multi_polygon_.addABox(translation_cube, halfsize_cube, ShapeBooleanOps::add);
+        multi_polygon_.addBox(translation_cube, halfsize_cube, GeometricOps::add);
     }
 };
 namespace SPH
@@ -84,12 +84,12 @@ void run_simulation()
     //----------------------------------------------------------------------
     SolidBody free_cube(sph_system, makeShared<Cube>("FreeCube"));
     free_cube.defineBodyLevelSetShape();
-    free_cube.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    free_cube.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     free_cube.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<DefaultShape>("Wall"));
     wall_boundary.defineAdaptation<SPHAdaptation>(1.15, global_resolution / resolution_shell);
-    wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    wall_boundary.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<SurfaceParticles, WallBoundary>();
 
     ObserverBody cube_observer(sph_system, "CubeObserver");

@@ -18,8 +18,8 @@ int main(int ac, char *av[])
     system_fit.handleCommandlineOptions(ac, av);
     SolidBody structure_fit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
     structure_fit.defineAdaptation<AdaptiveNearSurface>(1.3, 0.7, 3);
-    structure_fit.defineBodyLevelSetShape()->correctLevelSetSign()->writeLevelSet();
-    structure_fit.defineMaterial<Solid>(StructureDensity);
+    structure_fit.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
+    structure_fit.defineMatterMaterial<Solid>(StructureDensity);
     structure_fit.generateParticles<BaseParticles, Lattice>();
 
     //----------------------------------------------------------------------
@@ -74,15 +74,16 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
-    structure.defineMaterial<Solid>(StructureDensity);
+    structure.defineMatterMaterial<Solid>(StructureDensity);
     structure.generateParticles<BaseParticles, Reload>("Structure_Fit");
 
     ObserverBody observer(sph_system, "Observer");
@@ -289,15 +290,12 @@ int main(int ac, char *av[])
     ObservedQuantityRecording<Real>
         write_recorded_pressure_bp1("Pressure", bp1_contact_w);
 
-    RestartIO restart_io(sph_system);
-
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     int screen_output_interval = 100;
-    int restart_output_interval = screen_output_interval * 10;
     Real end_time = total_physical_time;
     Real output_interval = end_time / 100;
     Real dt = 0.0;
@@ -317,23 +315,6 @@ int main(int ac, char *av[])
     structure_normal_direction.exec();
     structure_corrected_configuration.exec();
     constant_gravity_to_fluid.exec();
-    //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        water_block.updateCellLinkedList();
-        wall_boundary.updateCellLinkedList();
-        structure.updateCellLinkedList();
-        water_block_complex.updateConfiguration();
-        structure_contact.updateConfiguration();
-        observer_contact_with_water.updateConfiguration();
-        WMobserver_contact_with_water.updateConfiguration();
-
-        fp1_contact_w.updateConfiguration();
-        bp1_contact_w.updateConfiguration();
-    }
 
     //----------------------------------------------------------------------
     //	First output before the main loop.
@@ -404,8 +385,6 @@ int main(int ac, char *av[])
                           << "	Total Time = " << total_time
                           << "	Physical Time = " << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
             damping_wave.exec(Dt);
@@ -460,7 +439,7 @@ int main(int ac, char *av[])
         write_str_displacement.generateDataBase(1.0e-3);
         write_recorded_pressure_fp1.generateDataBase(1.0e-3);
     }
-    else if (sph_system.RestartStep() == 0)
+    else
     {
         write_str_displacement.testResult();
         write_recorded_pressure_fp1.testResult();

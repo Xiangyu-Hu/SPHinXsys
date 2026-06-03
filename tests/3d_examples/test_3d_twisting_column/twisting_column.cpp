@@ -84,7 +84,7 @@ int main(int ac, char *av[])
     // Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     SolidBody column(sph_system, makeShared<Column>("Column"));
-    column.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    column.defineMatterMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     column.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody my_observer(sph_system, "MyObserver");
@@ -156,7 +156,7 @@ int main(int ac, char *av[])
         Real integration_time = 0.0;
         while (integration_time < output_period)
         {
-            if (number_of_iterations % 100 == 0)
+            if (number_of_iterations == 1 || number_of_iterations % 100 == 0)
             {
                 std::cout << "N=" << number_of_iterations << " Time: "
                           << physical_time << "	dt: "

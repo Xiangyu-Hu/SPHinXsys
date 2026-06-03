@@ -6,8 +6,8 @@
  */
 
 #include "bidirectional_buffer.h"
-#include "density_correciton.h"
-#include "density_correciton.hpp"
+#include "density_correction.h"
+#include "density_correction.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"
@@ -20,9 +20,9 @@ using namespace SPH;
 Real DL = 0.2;                                               /**< Reference length. */
 Real DH = 0.1;                                               /**< Reference and the height of main channel. */
 Real DL1 = 0.75 * DL;                                        /**< The length of the main channel. */
-Real global_resolution = 0.005;                                 /**< Initial reference particle spacing. */
-Real BW = global_resolution * 4;                                /**< Reference size of the emitter. */
-Real DL_sponge = global_resolution * 20;                        /**< Reference size of the emitter buffer to impose inflow condition. */
+Real global_resolution = 0.005;                              /**< Initial reference particle spacing. */
+Real BW = global_resolution * 4;                             /**< Reference size of the emitter. */
+Real DL_sponge = global_resolution * 20;                     /**< Reference size of the emitter buffer to impose inflow condition. */
 StdVec<Vecd> observer_location = {Vecd(0.5 * DL, 0.5 * DH)}; /**< Displacement observation point. */
 
 //----------------------------------------------------------------------
@@ -80,14 +80,14 @@ struct DownOutflowPressure
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBox &aligned_box_;
+    OrientedBox &oriented_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_f), t_ref_(2.0),
-          aligned_box_(boundary_condition.getAlignedBox()),
-          halfsize_(aligned_box_.HalfSize()) {}
+          oriented_box_(boundary_condition.getOrientedBox()),
+          halfsize_(oriented_box_.HalfSize()) {}
 
     Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
@@ -121,7 +121,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(water_block_shape, GeometricOps::add);
     }
 };
 
@@ -130,8 +130,8 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 
@@ -143,7 +143,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
-    BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
+    BoundingBoxd system_domain_bounds(Vec2d(-DL_sponge, -DH), Vec2d(DL, 2.0 * DH));
     SPHSystem sph_system(system_domain_bounds, global_resolution);
     sph_system.setGenerateRegressionData(false);
     sph_system.handleCommandlineOptions(ac, av);
@@ -151,12 +151,13 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");
@@ -200,21 +201,21 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
     Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize;
-    AlignedBoxByCell left_emitter(water_block, AlignedBox(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
+    OrientedBoxByCell left_emitter(water_block, OrientedBox(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_bidirection_buffer(left_emitter, in_outlet_particle_buffer);
     //----------------------------------------------------------------------
     // Up buffer
     //----------------------------------------------------------------------
     Vec2d up_buffer_halfsize = Vec2d(0.5 * BW, 0.75);
     Vec2d up_buffer_translation = Vec2d(0.5 * (DL + DL1), 2.0 * DH - 0.5 * BW);
-    AlignedBoxByCell up_emitter(water_block, AlignedBox(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
+    OrientedBoxByCell up_emitter(water_block, OrientedBox(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<UpOutflowPressure> up_bidirection_buffer(up_emitter, in_outlet_particle_buffer);
     //----------------------------------------------------------------------
     // Down buffer
     //----------------------------------------------------------------------
     Vec2d down_buffer_halfsize = Vec2d(0.5 * BW, 0.75);
     Vec2d down_buffer_translation = Vec2d(0.5 * (DL + DL1), -DH + 0.5 * BW);
-    AlignedBoxByCell down_emitter(water_block, AlignedBox(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
+    OrientedBoxByCell down_emitter(water_block, OrientedBox(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<DownOutflowPressure> down_bidirection_buffer(down_emitter, in_outlet_particle_buffer);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);

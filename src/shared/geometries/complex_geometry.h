@@ -37,8 +37,6 @@
 
 namespace SPH
 {
-class LevelSetShape;
-
 /**
  * @class ComplexShape
  * @brief  For now, if the level set shape (for particle relaxation)
@@ -51,67 +49,65 @@ class LevelSetShape;
 class ComplexShape : public BinaryShapes
 {
   public:
-    explicit ComplexShape(const std::string &shape_name)
+    explicit ComplexShape(const std::string &shape_name = "ComplexShape")
         : BinaryShapes(shape_name) {};
     virtual ~ComplexShape() {};
 
     template <typename... Args>
-    LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
+    LevelSetShape &defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
     {
         size_t index = getSubShapeIndexByName(shape_name);
-        LevelSetShape *level_set_shape = sub_shapes_keeper_[index].createPtr<LevelSetShape>(
+        LevelSetShape *level_set_shape = sub_shapes_keeper_.createPtr<LevelSetShape>(
             sph_body, *sub_shapes_and_ops_[index].first, std::forward<Args>(args)...);
         sub_shapes_and_ops_[index].first = DynamicCast<Shape>(this, level_set_shape);
-        return level_set_shape;
+        return *level_set_shape;
     };
 };
 
-using DefaultShape = ComplexShape;
-
 /**
- * @class AlignedBox
+ * @class OrientedBox
  * @brief Used to describe a bounding box in which
  * the upper bound direction is aligned to the normal of a planar piece on a shape.
  */
-class AlignedBox : public TransformGeometry<GeometricBox>
+class OrientedBox : public TransformGeometry<GeometricBox>
 {
-    int alignment_axis_;
+    int axis_ref_;
 
   public:
     /** construct directly */
     template <typename... Args>
-    explicit AlignedBox(int upper_bound_axis, const Transform &transform, Args &&...args)
-        : TransformGeometry<GeometricBox>(transform, std::forward<Args>(args)...),
-          alignment_axis_(upper_bound_axis){};
-    /** construct from a shape already has aligned boundaries */
+    explicit OrientedBox(int upper_bound_axis, Args &&...args)
+        : TransformGeometry<GeometricBox>(std::forward<Args>(args)...),
+          axis_ref_(upper_bound_axis){};
+    /** construct from a shape already has oriented boundaries */
     template <typename... Args>
-    explicit AlignedBox(int upper_bound_axis, const Shape &shape, Args &&...args)
+    explicit OrientedBox(int upper_bound_axis, const Shape &shape, Args &&...args)
         : TransformGeometry<GeometricBox>(
               Transform(Vecd(0.5 * (shape.bounding_box_.upper_ + shape.bounding_box_.lower_))),
               0.5 * (shape.bounding_box_.upper_ - shape.bounding_box_.lower_), std::forward<Args>(args)...),
-          alignment_axis_(upper_bound_axis){};
-    ~AlignedBox() {};
+          axis_ref_(upper_bound_axis){};
+    ~OrientedBox() {};
 
-    Vecd HalfSize() { return halfsize_; }
+    Vecd HalfSize() const { return halfsize_; }
     bool checkNearSurface(const Vecd &probe_point, Real threshold);
     bool checkNotFar(const Vecd &probe_point, Real threshold);
     bool checkInBounds(const Vecd &probe_point, Real lower_bound_fringe = 0.0, Real upper_bound_fringe = 0.0)
     {
         Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-        return position_in_frame[alignment_axis_] >= -halfsize_[alignment_axis_] - lower_bound_fringe &&
-                       position_in_frame[alignment_axis_] <= halfsize_[alignment_axis_] + upper_bound_fringe
+        return position_in_frame[axis_ref_] >= -halfsize_[axis_ref_] - lower_bound_fringe &&
+                       position_in_frame[axis_ref_] <= halfsize_[axis_ref_] + upper_bound_fringe
                    ? true
                    : false;
     };
     bool checkUpperBound(const Vecd &probe_point, Real upper_bound_fringe = 0.0)
     {
         Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-        return position_in_frame[alignment_axis_] > halfsize_[alignment_axis_] + upper_bound_fringe ? true : false;
+        return position_in_frame[axis_ref_] > halfsize_[axis_ref_] + upper_bound_fringe;
     };
     bool checkLowerBound(const Vecd &probe_point, Real lower_bound_fringe = 0.0)
     {
         Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
-        return position_in_frame[alignment_axis_] < -halfsize_[alignment_axis_] - lower_bound_fringe ? true : false;
+        return position_in_frame[axis_ref_] < -halfsize_[axis_ref_] - lower_bound_fringe;
     }
     bool checkNearUpperBound(const Vecd &probe_point, Real threshold);
     bool checkNearLowerBound(const Vecd &probe_point, Real threshold);
@@ -119,16 +115,16 @@ class AlignedBox : public TransformGeometry<GeometricBox>
     {
         Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
         Vecd shift = Vecd::Zero();
-        shift[alignment_axis_] -= 2.0 * halfsize_[alignment_axis_];
+        shift[axis_ref_] -= 2.0 * halfsize_[axis_ref_];
         return transform_.shiftFrameStationToBase(position_in_frame + shift);
     };
     Vecd getLowerPeriodic(const Vecd &probe_point);
-    int AlignmentAxis() { return alignment_axis_; };
+    int ReferenceAxis() { return axis_ref_; };
 
     void imposeAlignment(Vecd &value)
     {
         Vecd frame_velocity = Vecd::Zero();
-        frame_velocity[alignment_axis_] = transform_.xformBaseVecToFrame(value)[alignment_axis_];
+        frame_velocity[axis_ref_] = transform_.xformBaseVecToFrame(value)[axis_ref_];
         value = transform_.xformFrameVecToBase(frame_velocity);
     };
 };

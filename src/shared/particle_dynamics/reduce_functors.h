@@ -29,7 +29,9 @@
 #ifndef REDUCE_FUNCTORS_H
 #define REDUCE_FUNCTORS_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
+
+#include <utility>
 
 namespace SPH
 {
@@ -79,6 +81,25 @@ struct ReduceReference<ReduceMax>
     static inline const Real value = MinReal;
 };
 
+struct ReduceParticleMax : ReturnFunction<std::pair<Real, UnsignedInt>>
+{
+    using PairType = std::pair<Real, UnsignedInt>;
+    PairType operator()(const PairType &x, const PairType &y) const
+    {
+        if (std::isnan(x.first))
+            return x;
+        if (std::isnan(y.first))
+            return y;
+        return x.first > y.first ? x : y;
+    };
+};
+
+template <>
+struct ReduceReference<ReduceParticleMax>
+{
+    using PairType = std::pair<Real, UnsignedInt>;
+    static inline const PairType value = std::pair<Real, UnsignedInt>(MinReal, 0);
+};
 struct ReduceMin : ReturnFunction<Real>
 {
     Real operator()(Real x, Real y) const { return SMIN(x, y); };

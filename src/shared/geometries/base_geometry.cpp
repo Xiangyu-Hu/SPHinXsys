@@ -1,11 +1,11 @@
 #include "base_geometry.h"
 
-#include "io_log.h"
+#include "io_environment.h"
 namespace SPH
 {
 //=================================================================================================//
 Shape::Shape(const std::string &shape_name)
-    : name_(shape_name), is_bounds_found_(false), logger_(Log::init()) {}
+    : name_(shape_name), is_bounds_found_(false), logger_(IO::initLogger()) {}
 //=================================================================================================//
 BoundingBoxd Shape::getBounds()
 {
@@ -27,13 +27,13 @@ BoundingBoxd Shape::getBounds()
 //=================================================================================================//
 bool Shape::checkNotFar(const Vecd &probe_point, Real threshold)
 {
-    return checkContain(probe_point) || checkNearSurface(probe_point, threshold) ? true : false;
+    return checkContain(probe_point) || checkNearSurface(probe_point, threshold);
 }
 //=================================================================================================//
 bool Shape::checkNearSurface(const Vecd &probe_point, Real threshold)
 {
     Vecd distance = probe_point - findClosestPoint(probe_point);
-    return distance.cwiseAbs().maxCoeff() < threshold ? true : false;
+    return distance.cwiseAbs().maxCoeff() < threshold;
 }
 //=================================================================================================//
 Real Shape::findSignedDistance(const Vecd &probe_point)
@@ -60,7 +60,7 @@ Vecd Shape::findNormalDirection(const Vecd &probe_point)
 //=================================================================================================//
 bool BinaryShapes::isValid()
 {
-    return sub_shapes_and_ops_.size() == 0 ? false : true;
+    return !sub_shapes_and_ops_.empty();
 }
 //=================================================================================================//
 BoundingBoxd BinaryShapes::findBounds()
@@ -89,16 +89,16 @@ bool BinaryShapes::checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED)
     for (auto &sub_shape_and_op : sub_shapes_and_ops_)
     {
         Shape *geometry = sub_shape_and_op.first;
-        ShapeBooleanOps operation_string = sub_shape_and_op.second;
+        GeometricOps operation_string = sub_shape_and_op.second;
         switch (operation_string)
         {
-        case ShapeBooleanOps::add:
+        case GeometricOps::add:
         {
             inside = geometry->checkContain(pnt);
             exist = exist || inside;
             break;
         }
-        case ShapeBooleanOps::sub:
+        case GeometricOps::sub:
         {
             inside = geometry->checkContain(pnt);
             exist = exist && (!inside);
@@ -144,7 +144,7 @@ SubShapeAndOp *BinaryShapes::getSubShapeAndOpByName(const std::string &name)
     for (auto &sub_shape_and_op : sub_shapes_and_ops_)
     {
         Shape *shape = sub_shape_and_op.first;
-        if (shape->getName() == name)
+        if (shape->Name() == name)
             return &sub_shape_and_op;
     }
     std::cout << "\n FAILURE: the shape " << name << " has not been created!" << std::endl;
@@ -162,7 +162,7 @@ size_t BinaryShapes::getSubShapeIndexByName(const std::string &name)
 {
     for (size_t index = 0; index != sub_shapes_and_ops_.size(); ++index)
     {
-        if (sub_shapes_and_ops_[index].first->getName() == name)
+        if (sub_shapes_and_ops_[index].first->Name() == name)
         {
             return index;
         }

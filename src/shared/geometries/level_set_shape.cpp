@@ -1,8 +1,9 @@
-#include "level_set_shape.h"
+#include "level_set_shape.hpp"
 
+#include "adaptation.h"
 #include "all_io.h"
-#include "sph_system.h"
 #include "base_body.h"
+#include "sph_system.h"
 
 namespace SPH
 {
@@ -16,35 +17,35 @@ LevelSetShape::LevelSetShape(
 //=================================================================================================//
 LevelSetShape::LevelSetShape(
     SPHSystem &sph_system, const SPHAdaptation &sph_adaptation, Shape &shape, Real refinement)
-    : Shape(shape.getName()), sph_system_(sph_system),
+    : Shape(shape.Name()), sph_system_(sph_system),
       level_set_(*level_set_keeper_.movePtr(sph_adaptation.createLevelSet(shape, refinement)))
 {
     bounding_box_ = shape.getBounds();
     is_bounds_found_ = true;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::writeLevelSet()
+LevelSetShape &LevelSetShape::writeLevelSet()
 {
     MeshRecordingToPlt write_level_set_to_plt(sph_system_, level_set_);
     write_level_set_to_plt.writeToFile(0);
-    return this;
+    return *this;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::cleanLevelSet(UnsignedInt repeat_times)
+LevelSetShape &LevelSetShape::cleanLevelSet(UnsignedInt repeat_times)
 {
     level_set_.cleanInterface(repeat_times);
-    return this;
+    return *this;
 }
 //=================================================================================================//
-LevelSetShape *LevelSetShape::correctLevelSetSign()
+LevelSetShape &LevelSetShape::correctLevelSetSign()
 {
     level_set_.correctTopology();
-    return this;
+    return *this;
 }
 //=================================================================================================//
 bool LevelSetShape::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
 {
-    return level_set_.probeSignedDistance(probe_point) < 0.0 ? true : false;
+    return level_set_.probeSignedDistance(probe_point) < 0.0;
 }
 //=================================================================================================//
 Vecd LevelSetShape::findClosestPoint(const Vecd &probe_point)

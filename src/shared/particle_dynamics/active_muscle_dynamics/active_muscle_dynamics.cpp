@@ -1,5 +1,7 @@
 #include "active_muscle_dynamics.h"
 
+#include "base_particles.hpp"
+
 namespace SPH
 {
 namespace active_muscle_dynamics

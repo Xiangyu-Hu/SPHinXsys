@@ -46,7 +46,7 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createWaterBlockShape(), GeometricOps::add);
     }
 };
 
@@ -87,7 +87,7 @@ MultiPolygon createWaveProbeShape()
     pnts.push_back(Vecd(1.0 - h, 0.0));
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
+    multi_polygon.addPolygon(pnts, GeometricOps::add);
     return multi_polygon;
 }
 //----------------------------------------------------------------------
@@ -106,10 +106,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineAdaptation<SPHAdaptation>(1.3, 1.0);
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     // Using relaxed particle distribution if needed
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
+        ? water_block.generateParticles<BaseParticles, Reload>(water_block.Name())
         : water_block.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -160,7 +160,7 @@ int main(int ac, char *av[])
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     if (sph_system.RestartStep() != 0)
     {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
+        restart_io.readRestartFiles(sph_system.RestartStep());
         water_block.updateCellLinkedList();
         water_body_inner.updateConfiguration();
     }

@@ -84,7 +84,7 @@ class DynamicContactForceWithWall : public LocalDynamics,
     explicit DynamicContactForceWithWall(SurfaceContactRelation &solid_body_contact_relation, Real penalty_strength = 1.0)
         : LocalDynamics(solid_body_contact_relation.getSPHBody()),
           DataDelegateContact(solid_body_contact_relation),
-          solid_(DynamicCast<Solid>(this, sph_body_->getBaseMaterial())),
+          solid_(DynamicCast<Solid>(this, sph_body_->getMatterMaterial())),
           Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
           vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
           force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),

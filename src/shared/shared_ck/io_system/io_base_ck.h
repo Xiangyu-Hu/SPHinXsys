@@ -32,6 +32,7 @@
 #include "execution_policy.h"
 #include "io_base.h"
 #include "io_vtk.h"
+#include "simple_algorithms_ck.h"
 
 namespace SPH
 {
@@ -40,77 +41,39 @@ template <class ExecutionPolicy>
 class BodyStatesRecordingToVtpCK : public BodyStatesRecordingToVtp
 {
   protected:
-    OperationOnDataAssemble<ParticleVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
+    OperationOnDataAssemble<DiscreteVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
 
-    void prepareToWrite()
-    {
-        for (size_t i = 0; i < bodies_.size(); ++i)
-        {
-            if (bodies_[i]->checkNewlyUpdated())
-            {
-                BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-                base_particles.dvParticlePosition()->prepareForOutput(ExecutionPolicy{});
-                prepare_variable_to_write_(base_particles.VariablesToWrite(), ExecutionPolicy{});
-            }
-        }
-    }
+    void prepareToWrite();
 
   public:
     template <typename... Args>
     BodyStatesRecordingToVtpCK(Args &&...args) : BodyStatesRecordingToVtp(std::forward<Args>(args)...){};
     virtual ~BodyStatesRecordingToVtpCK() {};
+    virtual void writeToFile() override;
+    virtual void writeToFile(size_t iteration_step) override;
 
-    virtual void writeToFile() override
-    {
-        if (state_recording_)
-        {
-            prepareToWrite();
-            BodyStatesRecordingToVtp::writeToFile();
-        }
-    };
-
-    virtual void writeToFile(size_t iteration_step) override
-    {
-        if (state_recording_)
-        {
-            prepareToWrite();
-            BodyStatesRecordingToVtp::writeToFile(iteration_step);
-        }
-    }
+    template <typename DerivedVariableMethod, typename DynamicsIdentifier, typename... Args>
+    BodyStatesRecording &addDerivedVariableToWrite(DynamicsIdentifier &identifier, Args &&...args);
 };
 
 template <class ExecutionPolicy>
 class RestartIOCK : public RestartIO
 {
+    UniquePtrsKeeper<AbstractDynamics> particle_dynamics_keeper_;
+
   public:
     template <typename... Args>
-    RestartIOCK(Args &&...args) : RestartIO(std::forward<Args>(args)...){};
+    RestartIOCK(Args &&...args);
     virtual ~RestartIOCK() {};
-
-    virtual void writeToFile(size_t iteration_step = 0) override
-    {
-        for (size_t i = 0; i < bodies_.size(); ++i)
-        {
-            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-            prepare_variable_to_write_(base_particles.EvolvingVariables(), ExecutionPolicy{});
-        }
-        RestartIO::writeToFile(iteration_step);
-    };
-
-    virtual void readFromFile(size_t iteration_step = 0) override
-    {
-        RestartIO::readFromFile(iteration_step);
-
-        for (size_t i = 0; i < bodies_.size(); ++i)
-        {
-            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-            finalize_variables_after_read_(base_particles.EvolvingVariables(), ExecutionPolicy{});
-        }
-    };
+    virtual void writeToFile(size_t iteration_step) override;
+    virtual void readFromFile(size_t iteration_step) override;
+    void reportEvolvingVariablesBounds(size_t restart_step);
 
   protected:
-    OperationOnDataAssemble<ParticleVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
-    OperationOnDataAssemble<ParticleVariables, FinalizeVariablesAfterRead<DiscreteVariable>> finalize_variables_after_read_;
+    StdVec<StdVec<BaseDynamics<std::pair<Real, UnsignedInt>> *>> output_evolving_variables_bounds_[3];
+    StdVec<StdVec<std::string>> evolving_variables_names_[3];
+    OperationOnDataAssemble<DiscreteVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
+    OperationOnDataAssemble<DiscreteVariables, FinalizeVariablesAfterRead<DiscreteVariable>> finalize_variables_after_read_;
 };
 
 template <class ExecutionPolicy>
@@ -120,19 +83,10 @@ class ReloadParticleIOCK : public ReloadParticleIO
     template <typename... Args>
     ReloadParticleIOCK(Args &&...args) : ReloadParticleIO(std::forward<Args>(args)...){};
     virtual ~ReloadParticleIOCK() {};
-
-    virtual void writeToFile(size_t iteration_step = 0) override
-    {
-        for (size_t i = 0; i < bodies_.size(); ++i)
-        {
-            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-            prepare_variable_to_reload_(base_particles.EvolvingVariables(), ExecutionPolicy{});
-        }
-        ReloadParticleIO::writeToFile(iteration_step);
-    };
+    virtual void writeToFile(size_t iteration_step = 0) override;
 
   protected:
-    OperationOnDataAssemble<ParticleVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_reload_;
+    OperationOnDataAssemble<DiscreteVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_reload_;
 };
 } // namespace SPH
 #endif // IO_BASE_CK_H

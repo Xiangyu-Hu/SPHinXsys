@@ -108,20 +108,21 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2),
-                                     Vecd(width + boundary_width * 2, height + boundary_width * 2));
+                                      Vecd(width + boundary_width * 2, height + boundary_width * 2));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
     SimpleDynamics<relax_dynamics::RandomizeParticlePosition> random_fluid_particles(water_block);
     random_fluid_particles.exec(0.25); // randomize particle to avoid the symmetry
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall.defineMaterial<Solid>();
+    wall.defineMatterMaterial<Solid>();
     wall.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
@@ -140,7 +141,7 @@ int main(int ac, char *av[])
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
     // Generally, the configuration dynamics, such as update cell linked list,
-    // update body relations, are defiend first.
+    // update body relations, are defined first.
     // Then the geometric models or simple objects without data dependencies,
     // such as gravity, initialized normal direction.
     // After that, the major physical particle dynamics model should be introduced.
@@ -160,16 +161,16 @@ int main(int ac, char *av[])
             DynamicsArgs(water_block_inner, std::string("Position")),
             DynamicsArgs(water_wall_contact, std::string("Position")));
     ObservedQuantityRecording<MainExecutionPolicy, Matd, RestoringCorrection>
-        observed_position_gradient("PositionGradient", fluid_observer_contact);
+        observed_position_gradient(fluid_observer_contact, "PositionGradient");
 
     InteractionDynamicsCK<MainExecutionPolicy, DisplacementMatrixGradient<Inner<>, Contact<>>>
         displacement_matrix_gradient(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, HessianCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
         hessian_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
 
-    StateDynamics<MainExecutionPolicy, VariableAssignment<SpatialDistribution<ParabolicProfile>, SPHBody>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<ParabolicProfile>>>
         water_block_initial_condition(water_block, "Phi");
-    StateDynamics<MainExecutionPolicy, VariableAssignment<SpatialDistribution<ParabolicProfile>, SPHBody>>
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<ParabolicProfile>>>
         wall_initial_condition(wall, "Phi");
     InteractionDynamicsCK<MainExecutionPolicy, LinearGradient<Inner<Real>, Contact<Real>>>
         variable_linear_gradient(
@@ -180,14 +181,14 @@ int main(int ac, char *av[])
             DynamicsArgs(water_block_inner, std::string("Phi")),
             DynamicsArgs(water_wall_contact, std::string("Phi")));
     ObservedQuantityRecording<MainExecutionPolicy, VecMat2d, RestoringCorrection>
-        observed_hessian("PhiHessian", fluid_observer_contact);
+        observed_hessian(fluid_observer_contact, "PhiHessian");
 
     InteractionDynamicsCK<MainExecutionPolicy, SecondOrderGradient<Inner<Real>, Contact<Real>>>
         variable_2nd_order_gradient(
             DynamicsArgs(water_block_inner, std::string("Phi")),
             DynamicsArgs(water_wall_contact, std::string("Phi")));
     ObservedQuantityRecording<MainExecutionPolicy, Vec2d, RestoringCorrection>
-        observed_2nd_order_gradient("PhiGradient", fluid_observer_contact);
+        observed_2nd_order_gradient(fluid_observer_contact, "PhiGradient");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

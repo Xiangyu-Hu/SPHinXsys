@@ -9,8 +9,8 @@ using namespace SPH;   // SPHinXsys namespace.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 1.0;                     /**< box length. */
-Real DH = 1.0;                     /**< box height. */
+Real DL = 1.0;                        /**< box length. */
+Real DH = 1.0;                        /**< box height. */
 Real global_resolution = 1.0 / 100.0; /**< Global reference resolution. */
 //----------------------------------------------------------------------
 //	Material parameters.
@@ -34,7 +34,7 @@ class WaterBlock : public MultiPolygonShape
         water_block_shape.push_back(Vecd(DL, DH));
         water_block_shape.push_back(Vecd(DL, 0.0));
         water_block_shape.push_back(Vecd(0.0, 0.0));
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(water_block_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -74,10 +74,11 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     // Using relaxed particle distribution if needed
     sph_system.ReloadParticles()
-        ? water_block.generateParticles<BaseParticles, Reload>(water_block.getName())
+        ? water_block.generateParticles<BaseParticles, Reload>(water_block.Name())
         : water_block.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

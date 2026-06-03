@@ -10,14 +10,14 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Global geometry, material parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.366;              /**< Tank length. */
-Real DH = 5.366;              /**< Tank height. */
+Real DL = 5.366;                 /**< Tank length. */
+Real DH = 5.366;                 /**< Tank height. */
 Real global_resolution = 0.025;  /**< Initial reference particle spacing. */
 Real BW = global_resolution * 4; /**< Extending width for wall boundary. */
-Real LL = 2.0 * BW;           /**< Inflow region length. */
-Real LH = 0.125;              /**< Inflows region height. */
-Real inlet_height = 1.0;      /**< Inflow location height */
-Real inlet_distance = -BW;    /**< Inflow location distance */
+Real LL = 2.0 * BW;              /**< Inflow region length. */
+Real LH = 0.125;                 /**< Inflows region height. */
+Real inlet_height = 1.0;         /**< Inflow location height */
+Real inlet_distance = -BW;       /**< Inflow location distance */
 Vec2d inlet_halfsize = Vec2d(0.5 * LL, 0.5 * LH);
 Vec2d inlet_translation = Vec2d(inlet_distance, inlet_height) + inlet_halfsize;
 BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
@@ -62,9 +62,9 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(CreateOuterWallShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(CreateInnerWallShape(), ShapeBooleanOps::sub);
-        multi_polygon_.addABox(Transform(inlet_translation), inlet_halfsize, ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(CreateOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(CreateInnerWallShape(), GeometricOps::sub);
+        multi_polygon_.addBox(Transform(inlet_translation), inlet_halfsize, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -73,8 +73,8 @@ class WallBoundary : public MultiPolygonShape
 class InletInflowCondition : public fluid_dynamics::EmitterInflowCondition
 {
   public:
-    InletInflowCondition(AlignedBoxByParticle &aligned_box_part)
-        : EmitterInflowCondition(aligned_box_part) {}
+    InletInflowCondition(OrientedBoxByParticle &oriented_box_part)
+        : EmitterInflowCondition(oriented_box_part) {}
 
   protected:
     virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
@@ -96,12 +96,12 @@ int main(int ac, char *av[])
     GeometricShapeBox water_inlet_shape(Transform(inlet_translation), inlet_halfsize);
     FluidBody water_body(sph_system, water_inlet_shape, "WaterBody");
     water_body.getSPHAdaptation().resetKernel<KernelTabulated<KernelWendlandC2>>(20);
-    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(350.0);
     water_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
-    wall.defineMaterial<Solid>();
+    wall.defineMatterMaterial<Solid>();
     wall.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
@@ -136,7 +136,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AdvectionTimeStep> get_fluid_advection_time_step_size(water_body, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_body);
 
-    AlignedBoxByParticle emitter(water_body, AlignedBox(xAxis, Transform(inlet_translation), inlet_halfsize));
+    OrientedBoxByParticle emitter(water_body, OrientedBox(xAxis, Transform(inlet_translation), inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition(emitter);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, inlet_buffer);
     //----------------------------------------------------------------------

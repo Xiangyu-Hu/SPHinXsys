@@ -30,10 +30,9 @@
 #define RELATION_CK_H
 
 #include "base_body.h"
+#include "base_implementation.h"
 #include "base_particles.h"
-#include "implementation.h"
-#include "neighbor_method.h"
-#include "neighborhood_ck.h"
+#include "neighbor_method.hpp"
 
 namespace SPH
 {
@@ -49,33 +48,41 @@ class Relation;
 class RelationBase
 {
   public:
-    virtual ~RelationBase() {};
+    RelationBase() {}
+    virtual ~RelationBase(){};
+    const std::string &Name() const { return names_.front(); }
+
+  protected:
+    StdVec<std::string> names_;
 };
 
-template <typename... AdaptationParameters>
-class Relation<NeighborMethod<AdaptationParameters...>> : public RelationBase
+template <typename SourceIdentifier, typename TargetIdentifier>
+class Relation<SourceIdentifier, TargetIdentifier> : public RelationBase
 {
-    using NeighborMethodType = NeighborMethod<AdaptationParameters...>;
-    SharedPtrsKeeper<Entity> relation_variable_ptrs_;
-    SharedPtrsKeeper<Neighbor<NeighborMethodType>> neighborhood_ptrs_;
+
+    using SourceAdaptation = typename SourceIdentifier::Adaptation;
+    using TargetAdaptation = typename TargetIdentifier::Adaptation;
+    SharedPtrsKeeper<Quantity> relation_variable_ptrs_;
+    SharedPtrsKeeper<Neighbor<Base>> neighborhood_ptrs_;
     DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
 
     template <class DataType>
     DiscreteVariable<DataType> *addRelationVariable(const std::string &name, size_t data_size);
 
   public:
-    typedef Neighbor<NeighborMethodType> NeighborhoodType;
-    template <typename SourceIdentifier, typename TargetIdentifier>
+    typedef SourceIdentifier SourceType;
+    typedef TargetIdentifier TargetType;
+    using NeighborhoodType = Neighbor<SourceAdaptation, TargetAdaptation>;
     Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers,
              ConfigType config_type = ConfigType::Eulerian);
-    virtual ~Relation() {};
+    virtual ~Relation(){};
     SPHBody &getSPHBody() { return *sph_body_; };
     DiscreteVariable<Vecd> *dvSourcePosition() { return dv_source_pos_; };
     DiscreteVariable<UnsignedInt> *dvNeighborSize() { return dv_neighbor_size_; };
     DiscreteVariable<Vecd> *dvTargetPosition(UnsignedInt target_index = 0) { return dv_target_pos_[target_index]; };
     DiscreteVariable<UnsignedInt> *dvNeighborIndex(UnsignedInt target_index = 0) { return dv_target_neighbor_index_[target_index]; };
     DiscreteVariable<UnsignedInt> *dvParticleOffset(UnsignedInt target_index = 0) { return dv_target_particle_offset_[target_index]; };
-    Neighbor<NeighborMethodType> &getNeighborhood(UnsignedInt target_index = 0) { return *neighborhoods_[target_index]; }
+    NeighborhoodType &getNeighborhood(UnsignedInt target_index = 0) { return *neighborhoods_[target_index]; }
     void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index = 0);
     void resetComputingKernelUpdated(UnsignedInt target_index = 0);
 
@@ -91,6 +98,7 @@ class Relation<NeighborMethod<AdaptationParameters...>> : public RelationBase
         UnsignedInt *particle_offset_;
         inline UnsignedInt FirstNeighbor(UnsignedInt i) { return particle_offset_[i]; };
         inline UnsignedInt LastNeighbor(UnsignedInt i) { return particle_offset_[i + 1]; };
+        inline bool hasNeighbor(UnsignedInt i) { return particle_offset_[i] != particle_offset_[i + 1]; };
     };
 
   protected:
@@ -102,19 +110,18 @@ class Relation<NeighborMethod<AdaptationParameters...>> : public RelationBase
     UnsignedInt offset_list_size_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_neighbor_index_;
     StdVec<DiscreteVariable<UnsignedInt> *> dv_target_particle_offset_;
-    StdVec<Neighbor<NeighborMethodType> *> neighborhoods_;
+    StdVec<NeighborhoodType *> neighborhoods_;
     StdVec<StdVec<execution::Implementation<Base> *>> registered_computing_kernels_;
 };
 
-template <typename DynamicsIdentifier, typename... AdaptationParameters>
-class Inner<DynamicsIdentifier, NeighborMethod<AdaptationParameters...>>
-    : public Relation<NeighborMethod<AdaptationParameters...>>
+template <typename DynamicsIdentifier>
+class Inner<Relation<DynamicsIdentifier>> : public Relation<DynamicsIdentifier, DynamicsIdentifier>
 {
   public:
     typedef DynamicsIdentifier SourceType;
     template <typename... Args>
     explicit Inner(DynamicsIdentifier &identifier, Args &&...args);
-    virtual ~Inner() {};
+    virtual ~Inner(){};
     DynamicsIdentifier &getDynamicsIdentifier() { return *identifier_; };
 
   protected:
@@ -122,28 +129,22 @@ class Inner<DynamicsIdentifier, NeighborMethod<AdaptationParameters...>>
 };
 
 template <>
-class Inner<> : public Inner<RealBody, NeighborMethod<SPHAdaptation, SPHAdaptation>>
+class Inner<> : public Inner<Relation<RealBody>>
 {
   public:
     template <typename... Args>
     Inner(RealBody &real_body, Args &&...args)
-        : Inner<RealBody, NeighborMethod<SPHAdaptation, SPHAdaptation>>(real_body, std::forward<Args>(args)...) {}
-    virtual ~Inner() {};
+        : Inner<Relation<RealBody>>(real_body, std::forward<Args>(args)...) {}
+    virtual ~Inner(){};
 };
 
-template <typename SourceIdentifier, class TargetIdentifier, typename... AdaptationParameters>
-class Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<AdaptationParameters...>>
-    : public Relation<NeighborMethod<AdaptationParameters...>>
+template <typename SourceIdentifier, class TargetIdentifier>
+class Contact<Relation<SourceIdentifier, TargetIdentifier>> : public Relation<SourceIdentifier, TargetIdentifier>
 {
-    using NeighborMethodType = NeighborMethod<AdaptationParameters...>;
-    using ContactRelationType = Contact<SourceIdentifier, TargetIdentifier, NeighborMethodType>;
-
   public:
-    typedef SourceIdentifier SourceType;
-    typedef TargetIdentifier TargetType;
     Contact(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> target_identifiers,
             ConfigType config_type = ConfigType::Eulerian);
-    virtual ~Contact() {};
+    virtual ~Contact(){};
     SourceIdentifier &getSourceIdentifier() { return *source_identifier_; };
     StdVec<SPHBody *> getContactBodies() { return contact_bodies_; };
     StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
@@ -162,27 +163,64 @@ class Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<AdaptationParam
     StdVec<TargetIdentifier *> contact_identifiers_;
 };
 
-template <class SourceIdentifier, class TargetIdentifier>
-class Contact<SourceIdentifier, TargetIdentifier>
-    : public Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<SPHAdaptation, SPHAdaptation>>
-{
-  public:
-    template <typename... Args>
-    Contact(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, Args &&...args)
-        : Contact<SourceIdentifier, TargetIdentifier, NeighborMethod<SPHAdaptation, SPHAdaptation>>(
-              source_identifier, contact_identifiers, std::forward<Args>(args)...) {}
-    virtual ~Contact() {};
-};
-
 template <>
-class Contact<> : public Contact<SPHBody, RealBody, NeighborMethod<SPHAdaptation, SPHAdaptation>>
+class Contact<> : public Contact<Relation<SPHBody, RealBody>>
 {
   public:
     template <typename... Args>
     Contact(SPHBody &sph_body, StdVec<RealBody *> contact_bodies, Args &&...args)
-        : Contact<SPHBody, RealBody, NeighborMethod<SPHAdaptation, SPHAdaptation>>(
-              sph_body, contact_bodies, std::forward<Args>(args)...) {}
-    virtual ~Contact() {};
+        : Contact<Relation<SPHBody, RealBody>>(sph_body, contact_bodies, std::forward<Args>(args)...) {}
+    virtual ~Contact(){};
 };
+
+template <typename...>
+class RelationView;
+
+template <typename... Parameters>
+class RelationView<Contact<Parameters...>>
+{
+    using RelationType = Contact<Parameters...>;
+    using NeighborList = typename RelationType::NeighborList;
+    using Neighborhood = typename RelationType::NeighborhoodType;
+
+  public:
+    RelationView(Contact<Parameters...> &contact_relation);
+    template <class TargetIdentifier>
+    RelationView(Contact<Parameters...> &contact_relation, StdVec<TargetIdentifier *> contact_identifiers);
+    template <class TargetIdentifier>
+    RelationView(Contact<Parameters...> &contact_relation,
+                 TargetIdentifier &contact_identifier);
+    Contact<Parameters...> &getContactRelation() const { return *contact_relation_; };
+    StdVec<SPHBody *> getContactBodies() const { return contact_bodies_; };
+    StdVec<BaseParticles *> getContactParticles() const { return contact_particles_; };
+    StdVec<SPHAdaptation *> getContactAdaptations() const { return contact_adaptations_; };
+
+    template <class ExecutionPolicy>
+    NeighborList getNeighborList(const ExecutionPolicy &ex_policy, UnsignedInt target_index)
+    {
+        return NeighborList(ex_policy, *contact_relation_, contact_target_indices_[target_index]);
+    };
+
+    Neighborhood &getNeighborhood(UnsignedInt target_index)
+    {
+        return contact_relation_->getNeighborhood(contact_target_indices_[target_index]);
+    };
+
+    void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index);
+    void resetComputingKernelUpdated(UnsignedInt target_index);
+
+  protected:
+    Contact<Parameters...> *contact_relation_;
+    StdVec<SPHBody *> contact_bodies_;
+    StdVec<BaseParticles *> contact_particles_;
+    StdVec<SPHAdaptation *> contact_adaptations_;
+    StdVec<UnsignedInt> contact_target_indices_;
+};
+
+template <template <typename...> class RelationType, typename... Parameters, typename... Args>
+auto makeRelationView(RelationType<Parameters...> &relation, Args &&...args)
+{
+    return RelationView<RelationType<Parameters...>>(relation, std::forward<Args>(args)...);
+}
 } // namespace SPH
 #endif // RELATION_CK_H

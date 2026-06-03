@@ -23,9 +23,9 @@ template <typename DataType>
 template <class PolicyType>
 DeviceOnlyConstantArray<DataType>::DeviceOnlyConstantArray(
     const DeviceExecution<PolicyType> &ex_policy, ConstantArray<DataType> *host_constant)
-    : Entity(host_constant->Name()), device_only_data_(nullptr)
+    : Quantity(host_constant->Name()), device_only_data_(nullptr)
 {
-    size_t data_size = host_constant->getDataSize();
+    size_t data_size = host_constant->getSize();
     DataType *host_data = host_constant->Data();
     device_only_data_ = allocateDeviceOnly<DataType>(data_size);
     copyToDevice(host_data, device_only_data_, data_size);

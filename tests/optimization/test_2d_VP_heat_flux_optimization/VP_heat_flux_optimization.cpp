@@ -17,7 +17,7 @@ BoundingBoxd system_domain_bounds(Vec2d(-BW, -BW), Vec2d(L + BW, H + BW));
 //----------------------------------------------------------------------
 //	Basic parameters for material properties.
 //----------------------------------------------------------------------
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real diffusion_coeff = 1.0;
 //----------------------------------------------------------------------
 //	Initial and boundary conditions.
@@ -67,7 +67,7 @@ class DiffusionBody : public MultiPolygonShape
   public:
     explicit DiffusionBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createThermalDomain(), GeometricOps::add);
     }
 };
 
@@ -76,15 +76,15 @@ class WallBoundary : public MultiPolygonShape
   public:
     explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createBoundaryDomain(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createThermalDomain(), ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(createBoundaryDomain(), GeometricOps::add);
+        multi_polygon_.addPolygon(createThermalDomain(), GeometricOps::sub);
     }
 };
 
 MultiPolygon createHeatFluxBoundary()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(heat_flux_boundary, ShapeBooleanOps::add);
+    multi_polygon.addPolygon(heat_flux_boundary, GeometricOps::add);
     return multi_polygon;
 }
 //----------------------------------------------------------------------
@@ -96,7 +96,7 @@ class DiffusionBodyInitialCondition : public LocalDynamics
     explicit DiffusionBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -129,7 +129,7 @@ class WallBoundaryInitialCondition : public LocalDynamics
     explicit WallBoundaryInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)),
+          phi_(particles_->registerStateVariableData<Real>(species_name)),
           heat_flux_(particles_->getVariableDataByName<Real>("HeatFlux")) {};
 
     void update(size_t index_i, Real dt)
@@ -162,7 +162,7 @@ class ImposeObjectiveFunction : public LocalDynamics
   public:
     explicit ImposeObjectiveFunction(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)),
+          phi_(particles_->registerStateVariableData<Real>(species_name)),
           species_modified_(particles_->getVariableDataByName<Real>("SpeciesModified")),
           species_recovery_(particles_->getVariableDataByName<Real>("SpeciesRecovery")) {};
 
@@ -209,8 +209,8 @@ TEST(test_optimization, test_problem4_optimized)
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<DiffusionBody>("DiffusionBody"));
-    diffusion_body.defineClosure<Solid, LocalIsotropicDiffusion>(
-        Solid(), ConstructArgs(diffusion_species_name, diffusion_coeff, diffusion_coeff));
+    diffusion_body.defineMatterMaterial<Solid>();
+    diffusion_body.addMaterialProperty<LocalIsotropicDiffusion>(species_name, diffusion_coeff, diffusion_coeff);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
@@ -236,11 +236,9 @@ TEST(test_optimization, test_problem4_optimized)
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
-    RestartIO restart_io(sph_system);
     //----------------------------------------------------------------------
     //	Setup parameter for optimization control
     //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;                  /* define the loop of all operations for optimization. */
     int ite_T = 0;                /* define loop index for temperature splitting iteration. */
     int ite_k = 0;                /* define loop index for parameter splitting iteration. */
@@ -250,7 +248,6 @@ TEST(test_optimization, test_problem4_optimized)
     int ite_loop = 0;             /* define loop index for optimization cycle. */
     int ite_T_comparison_opt = 0; /* define the real step for splitting temperature by solving PDE. */
     int ite_output = 50;          /* define the interval for state output. */
-    int ite_restart = 50;         /* define the interval for restart output. */
     int dt_ratio_k = 1;           /* ratio for adjusting the time step for the parameter evolution. */
     int dt_ratio_rg = 1;          /* ratio for adjusting the time step for the regularization.*/
     int dt_ratio_t = 1;           /* ratio for adjusting the time step for the state advancing.*/
@@ -327,15 +324,6 @@ TEST(test_optimization, test_problem4_optimized)
     diffusion_body_normal_direction.exec();
     wall_boundary_normal_direction.exec();
     //----------------------------------------------------------------------
-    //	Load restart file if necessary.
-    //----------------------------------------------------------------------
-    if (sph_system.RestartStep() != 0)
-    {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
-        diffusion_body.updateCellLinkedList();
-        diffusion_body_complex.updateConfiguration();
-    }
-    //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
     TickCount t1 = TickCount::now();
@@ -344,11 +332,11 @@ TEST(test_optimization, test_problem4_optimized)
     //	Main loop starts here.
     //----------------------------------------------------------------------
     std::string filefullpath_opt_temperature =
-        sph_system.getIOEnvironment().OutputFolder() + "/" + "opt_temperature.dat";
+        IO::getEnvironment().OutputFolder() + "/" + "opt_temperature.dat";
     std::ofstream out_file_opt_temperature(filefullpath_opt_temperature.c_str(), std::ios::app); // record the temperature with modifing parameter.
 
     std::string filefullpath_nonopt_temperature =
-        sph_system.getIOEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
+        IO::getEnvironment().OutputFolder() + "/" + "nonopt_temperature.dat";
     std::ofstream out_file_nonopt_temperature(filefullpath_nonopt_temperature.c_str(), std::ios::app); // record the temperature without modifing parameter.
     //----------------------------------------------------------------------
     //	Initial States update.
@@ -505,11 +493,6 @@ TEST(test_optimization, test_problem4_optimized)
         relative_temperature_difference = abs(current_averaged_temperature - last_averaged_temperature) / last_averaged_temperature;
         relative_average_variation_difference = abs(averaged_variation_current_global - averaged_variation_last_global) / abs(averaged_variation_last_global);
         averaged_variation_last_global = averaged_variation_current_global;
-
-        if (ite_loop % ite_restart == 0)
-        {
-            restart_io.writeToFile(ite_loop);
-        }
     }
     out_file_opt_temperature.close();
     out_file_nonopt_temperature.close();

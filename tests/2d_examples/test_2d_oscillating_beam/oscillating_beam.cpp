@@ -19,7 +19,7 @@ Real global_resolution = PH / 10.0;
 Real BW = global_resolution * 4; // boundary width, at least three particles
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
-                                 Vec2d(PL + 3.0 * BW, PL / 2.0));
+                                  Vec2d(PL + 3.0 * BW, PL / 2.0));
 //----------------------------------------------------------------------
 //	Material properties of the solid.
 //----------------------------------------------------------------------
@@ -55,8 +55,8 @@ class Beam : public MultiPolygonShape
   public:
     explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(beam_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(beam_base_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -68,7 +68,7 @@ class BeamInitialCondition
   public:
     explicit BeamInitialCondition(SPHBody &sph_body)
         : solid_dynamics::ElasticDynamicsInitialCondition(sph_body),
-          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())) {};
+          elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getMatterMaterial())) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -90,8 +90,8 @@ class BeamInitialCondition
 MultiPolygon createBeamConstrainShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(beam_shape, ShapeBooleanOps::sub);
+    multi_polygon.addPolygon(beam_base_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_shape, GeometricOps::sub);
     return multi_polygon;
 };
 //------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ int main(int ac, char *av[])
        //	Creating body, materials and particles.
        //----------------------------------------------------------------------
     SolidBody beam_body(sph_system, makeShared<Beam>("BeamBody"));
-    beam_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    beam_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     beam_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(sph_system, "BeamObserver");
@@ -142,6 +142,7 @@ int main(int ac, char *av[])
     // outputs
     //-----------------------------------------------------------------------------
     BodyStatesRecordingToVtp write_beam_states(sph_system);
+    RestartIO restart_io(sph_system);
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Vecd>> write_beam_tip_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------
     //	Setup computing and initial conditions.
@@ -150,12 +151,21 @@ int main(int ac, char *av[])
     sph_system.initializeSystemConfigurations();
     beam_initial_velocity.exec();
     beam_corrected_configuration.exec();
+    //----------------------------------------
+    //	Load restart file if necessary.
+    //----------------------------------------------------------------------
+    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    if (sph_system.RestartStep() != 0)
+    {
+        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
+        beam_observer_contact.updateConfiguration();
+    }
     //----------------------------------------------------------------------
     //	Setup computing time-step controls.
     //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
-    int ite = 0;
-    Real T0 = 1.0;
+
+    int ite = sph_system.RestartStep();
+    Real T0 = 1.0; // total simulation time
     Real end_time = T0;
     // time step size for output file
     Real output_interval = 0.01 * T0;
@@ -168,9 +178,11 @@ int main(int ac, char *av[])
     //-----------------------------------------------------------------------------
     // from here the time stepping begins
     //-----------------------------------------------------------------------------
-    write_beam_states.writeToFile(0);
-    write_beam_tip_displacement.writeToFile(0);
-
+    if (sph_system.RestartStep() == 0)
+    {
+        write_beam_states.writeToFile(0);
+        write_beam_tip_displacement.writeToFile(0);
+    }
     // computation loop starts
     while (physical_time < end_time)
     {
@@ -198,6 +210,10 @@ int main(int ac, char *av[])
                               << physical_time << "	dt: "
                               << dt << "\n";
                 }
+                if (ite % 1000 == 0)
+                {
+                    restart_io.writeToFile(ite);
+                }
             }
         }
 
@@ -219,7 +235,7 @@ int main(int ac, char *av[])
         // The lift force at the cylinder is very small and not important in this case.
         write_beam_tip_displacement.generateDataBase(Vec2d(1.0e-2, 1.0e-2), Vec2d(1.0e-2, 1.0e-2));
     }
-    else
+    else if (sph_system.RestartStep() == 0)
     {
         write_beam_tip_displacement.testResult();
     }

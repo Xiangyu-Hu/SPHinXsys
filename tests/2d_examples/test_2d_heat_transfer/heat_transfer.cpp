@@ -8,8 +8,8 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 2.0;                          /**< Channel length. */
-Real DH = 0.4;                          /**< Channel height. */
+Real DL = 2.0;                             /**< Channel length. */
+Real DH = 0.4;                             /**< Channel height. */
 Real global_resolution = DH / 25.0;        /**< Global reference resolution. */
 Real DL_sponge = global_resolution * 20.0; /**< Sponge region to impose inflow condition. */
 /** Boundary width, determined by specific layer of boundary particles. */
@@ -20,7 +20,7 @@ StdVec<Vecd> observation_location = {Vecd(0.0, DH * 0.5)};
 //----------------------------------------------------------------------
 //	Global parameters on the material properties
 //----------------------------------------------------------------------
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real diffusion_coeff = 1.0e-3;
 Real rho0_f = 1.0;                  /**< Density. */
 Real U_f = 1.0;                     /**< Characteristic velocity. */
@@ -81,7 +81,7 @@ class ThermofluidBody : public MultiPolygonShape
   public:
     explicit ThermofluidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createShape(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createShape(), GeometricOps::add);
     }
 };
 class ThermosolidBody : public MultiPolygonShape
@@ -89,8 +89,8 @@ class ThermosolidBody : public MultiPolygonShape
   public:
     explicit ThermosolidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(createOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createInnerWallShape(), GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -102,7 +102,7 @@ class ThermosolidBodyInitialCondition : public LocalDynamics
     explicit ThermosolidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -130,7 +130,7 @@ class ThermofluidBodyInitialCondition : public LocalDynamics
     explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -155,20 +155,20 @@ using ThermalRelaxationComplex = DiffusionBodyRelaxationComplex<
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBox &aligned_box_;
+    OrientedBox &oriented_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_f), t_ref_(2.0),
-          aligned_box_(boundary_condition.getAlignedBox()),
-          halfsize_(aligned_box_.HalfSize()) {}
+          oriented_box_(boundary_condition.getOrientedBox()),
+          halfsize_(oriented_box_.HalfSize()) {}
 
     Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
         Vecd target_velocity = velocity;
         Real u_ave = current_time < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * current_time / t_ref_)) : u_ref_;
-        if (aligned_box_.checkInBounds(position))
+        if (oriented_box_.checkInBounds(position))
         {
             target_velocity[0] = 1.5 * u_ave * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
         }
@@ -189,12 +189,13 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody thermofluid_body(sph_system, makeShared<ThermofluidBody>("ThermofluidBody"));
-    thermofluid_body.defineClosure<WeaklyCompressibleFluid, Viscosity, IsotropicDiffusion>(
-        ConstructArgs(rho0_f, c_f), mu_f, ConstructArgs(diffusion_species_name, diffusion_coeff));
+    thermofluid_body.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    thermofluid_body.addMaterialProperty<Viscosity>(mu_f);
+    thermofluid_body.addMaterialProperty<IsotropicDiffusion>(species_name, diffusion_coeff);
     thermofluid_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody thermosolid_body(sph_system, makeShared<ThermosolidBody>("ThermosolidBody"));
-    thermosolid_body.defineMaterial<Solid>();
+    thermosolid_body.defineMatterMaterial<Solid>();
     thermosolid_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody temperature_observer(sph_system, "FluidObserver");
@@ -240,7 +241,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step(thermofluid_body);
     PeriodicAlongAxis periodic_along_x(thermofluid_body.getSPHBodyBounds(), xAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(thermofluid_body, periodic_along_x);
-    AlignedBoxByCell inflow_buffer(thermofluid_body, AlignedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
+    OrientedBoxByCell inflow_buffer(thermofluid_body, OrientedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
     GetDiffusionTimeStepSize get_thermal_time_step(thermofluid_body);

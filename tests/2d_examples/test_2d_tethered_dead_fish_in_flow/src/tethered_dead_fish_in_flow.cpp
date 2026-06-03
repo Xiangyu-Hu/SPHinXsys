@@ -15,8 +15,8 @@ using namespace SPH;
 /**
  * @brief Basic geometry parameters and numerical setup.
  */
-Real DL = 11.0;                         /**< Channel length. */
-Real DH = 8.0;                          /**< Channel height. */
+Real DL = 11.0;                            /**< Channel length. */
+Real DH = 8.0;                             /**< Channel height. */
 Real global_resolution = 0.1;              /** Initial particle spacing. */
 Real DL_sponge = global_resolution * 20.0; /**< Sponge region to impose inflow condition. */
 Real BW = global_resolution * 4.0;         /**< Extending width for BCs. */
@@ -115,10 +115,10 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createWaterBlockShape(), GeometricOps::add);
         /** Exclude the fish body. */
         std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, fish_shape_resolution);
-        multi_polygon_.addAPolygon(fish_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(fish_shape, GeometricOps::sub);
     }
 };
 /**
@@ -131,8 +131,8 @@ class WallBoundary : public MultiPolygonShape
     {
         std::vector<Vecd> outer_shape = createOuterWallShape();
         std::vector<Vecd> inner_shape = createInnerWallShape();
-        multi_polygon_.addAPolygon(outer_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(outer_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_shape, GeometricOps::sub);
     }
 };
 /**
@@ -144,7 +144,7 @@ class FishBody : public MultiPolygonShape
     explicit FishBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, fish_shape_resolution);
-        multi_polygon_.addAPolygon(fish_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(fish_shape, GeometricOps::add);
     }
 };
 /**
@@ -154,8 +154,8 @@ MultiPolygon createFishHeadShape(SPHBody &sph_body)
 {
     std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, sph_body.getSPHAdaptation().ReferenceSpacing());
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(fish_shape, ShapeBooleanOps::add);
-    multi_polygon.addAPolygon(createFishBlockingShape(), ShapeBooleanOps::sub);
+    multi_polygon.addPolygon(fish_shape, GeometricOps::add);
+    multi_polygon.addPolygon(createFishBlockingShape(), GeometricOps::sub);
     return multi_polygon;
 };
 
@@ -172,14 +172,14 @@ StdVec<Vecd> createObservationPoints()
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBox &aligned_box_;
+    OrientedBox &oriented_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_f), t_ref_(2.0),
-          aligned_box_(boundary_condition.getAlignedBox()),
-          halfsize_(aligned_box_.HalfSize()) {}
+          oriented_box_(boundary_condition.getOrientedBox()),
+          halfsize_(oriented_box_.HalfSize()) {}
 
     Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
@@ -209,13 +209,14 @@ int main(int ac, char *av[])
      * @brief   Particles and body creation for water.
      */
     FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
     /**
      * @brief   Particles and body creation for wall boundary.
      */
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     /**
      * @brief   Particles and body creation for fish.
@@ -223,10 +224,10 @@ int main(int ac, char *av[])
     SolidBody fish_body(system, makeShared<FishBody>("FishBody"));
     fish_body.defineAdaptationRatios(1.15, 2.0);
     fish_body.defineBodyLevelSetShape();
-    fish_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    fish_body.defineMatterMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     // Using relaxed particle distribution if needed
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? fish_body.generateParticles<BaseParticles, Reload>(fish_body.getName())
+        ? fish_body.generateParticles<BaseParticles, Reload>(fish_body.Name())
         : fish_body.generateParticles<BaseParticles, Lattice>();
     /**
      * @brief   Particle and body creation of fish observer.
@@ -317,8 +318,8 @@ int main(int ac, char *av[])
     /** Computing vorticity in the flow. */
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
     /** Inflow boundary condition. */
-    AlignedBoxByCell inflow_buffer(
-        water_block, AlignedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
+    OrientedBoxByCell inflow_buffer(
+        water_block, OrientedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
     /**

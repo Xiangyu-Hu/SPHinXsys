@@ -39,9 +39,10 @@
 #include "sphinxsys_variable_sycl.hpp"
 #endif // SPHINXSYS_USE_SYCL
 
+#include "adaptation.hpp"
 #include "all_bodies.h"
 #include "all_body_relations.h"
-#include "all_closures.h"
+#include "all_materials.h"
 #include "all_geometries.h"
 #include "all_io.h"
 #include "all_kernels.h"
@@ -54,5 +55,9 @@
 #include "particle_method_container.h"
 #include "sph_solver.h"
 #include "sph_system.hpp"
+#include "sphinxsys_entity.h"
 
+#include "tbb/tick_count.h"
+typedef tbb::tick_count TickCount;
+typedef tbb::tick_count::interval_t TimeInterval;
 #endif // SPHINXSYS_H

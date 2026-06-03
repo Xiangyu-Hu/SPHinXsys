@@ -35,7 +35,7 @@ Real mu_f = 8.9e-7;                      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real diffusion_coeff = 100.0 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
 Real fluid_moisture = 1.0;                                   /**< fluid moisture. */
 Real cylinder_moisture = 0.0;                                /**< cylinder moisture. */
@@ -59,7 +59,7 @@ class WettingFluidBody : public MultiPolygonShape
   public:
     explicit WettingFluidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createWaterBlockShape(), GeometricOps::add);
     }
 };
 
@@ -69,7 +69,7 @@ class WettingFluidBodyInitialCondition : public LocalDynamics
     explicit WettingFluidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -110,8 +110,8 @@ class WettingWallBody : public MultiPolygonShape
   public:
     explicit WettingWallBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(createOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createInnerWallShape(), GeometricOps::sub);
     }
 };
 class WettingWallBodyInitialCondition : public LocalDynamics
@@ -120,7 +120,7 @@ class WettingWallBodyInitialCondition : public LocalDynamics
     explicit WettingWallBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -139,7 +139,7 @@ class WettingCylinderBody : public MultiPolygonShape
   public:
     explicit WettingCylinderBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addCircle(cylinder_center, cylinder_radius, 100, GeometricOps::add);
     }
 };
 class WettingCylinderBodyInitialCondition : public LocalDynamics
@@ -148,7 +148,7 @@ class WettingCylinderBodyInitialCondition : public LocalDynamics
     explicit WettingCylinderBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -171,7 +171,7 @@ using CylinderFluidDiffusionDirichlet =
 MultiPolygon createSimbodyConstrainShape(SPHBody &sph_body)
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addACircle(cylinder_center, cylinder_radius, 100, ShapeBooleanOps::add);
+    multi_polygon.addCircle(cylinder_center, cylinder_radius, 100, GeometricOps::add);
     return multi_polygon;
 };
 //----------------------------------------------------------------------
@@ -191,20 +191,21 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WettingFluidBody>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WettingWallBody>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody cylinder(sph_system, makeShared<WettingCylinderBody>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 1.0);
     cylinder.defineBodyLevelSetShape();
-    cylinder.defineClosure<Solid, IsotropicDiffusion>(
-        rho0_s, ConstructArgs(diffusion_species_name, diffusion_coeff));
+    cylinder.defineMatterMaterial<Solid>(rho0_s);
+    cylinder.addMaterialProperty<IsotropicDiffusion>(species_name, diffusion_coeff);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
+        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.Name())
         : cylinder.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
@@ -358,7 +359,6 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<Real>(water_block, "Density");           // output for debug
     body_states_recording.addToWrite<int>(water_block, "Indicator");          // output for debug
     body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection"); // output for debug
-    RestartIO restart_io(sph_system);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>> write_cylinder_displacement("Position", cylinder_observer_contact);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_cylinder_wetting("Phi", wetting_observer_contact);
     //----------------------------------------------------------------------
@@ -382,7 +382,6 @@ int main(int ac, char *av[])
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
     int observation_sample_interval = screen_output_interval * 2;
-    int restart_output_interval = screen_output_interval * 10;
     Real end_time = 1.0;
     Real output_interval = end_time / 70.0;
     //----------------------------------------------------------------------
@@ -443,20 +442,18 @@ int main(int ac, char *av[])
             }
             interval_computing_fluid_pressure_relaxation += TickCount::now() - time_instance;
 
-            /** screen output, write body reduced values and restart files  */
+            /** screen output, write body reduced values  */
             if (number_of_iterations % screen_output_interval == 0)
             {
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << physical_time
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
 
-                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
+                if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != 0)
                 {
                     write_cylinder_displacement.writeToFile(number_of_iterations);
                     write_cylinder_wetting.writeToFile(number_of_iterations);
                 }
-                if (number_of_iterations % restart_output_interval == 0)
-                    restart_io.writeToFile(number_of_iterations);
             }
             number_of_iterations++;
 

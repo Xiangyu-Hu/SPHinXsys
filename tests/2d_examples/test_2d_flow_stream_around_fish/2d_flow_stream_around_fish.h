@@ -56,7 +56,7 @@ class FishBody : public MultiPolygonShape
     explicit FishBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, fish_shape_resolution);
-        multi_polygon_.addAPolygon(fish_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(fish_shape, GeometricOps::add);
     }
 };
 std::vector<Vecd> createWaterBlockShape()
@@ -172,7 +172,20 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
           material_id_(particles_->getVariableDataByName<int>("MaterialID")),
           pos0_(particles_->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position")),
           active_strain_(particles_->getVariableDataByName<Matd>("ActiveStrain")),
-          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
+        physical_time_(sph_system_->svPhysicalTime().Data())
+        {
+            // Register as evolving so restart files save/restore muscle and material state.
+            // MaterialID assigned at t=0 from undeformed positions — must persist across restart
+            // since deformed positions at restart time would give wrong material assignments.
+            // InitialPosition (pos0) needed for muscle wave formula and Total Lagrangian B0.
+            particles_->addEvolvingVariable<Matd>("ActiveStrain");
+            particles_->addEvolvingVariable<int>("MaterialID");
+            particles_->addEvolvingVariable<Vecd>("InitialPosition");
+
+            // Re-fetch variable data after registering them as evolving variables.
+            material_id_ = particles_->getVariableDataByName<int>("MaterialID");
+            active_strain_ = particles_->getVariableDataByName<Matd>("ActiveStrain");
+        };
     virtual void update(size_t index_i, Real dt = 0.0)
     {
         if (material_id_[index_i] == 0)
@@ -201,4 +214,4 @@ class ImposingActiveStrain : public solid_dynamics::ElasticDynamicsInitialCondit
     Vecd *pos0_;
     Matd *active_strain_;
     Real *physical_time_;
-};
+    };

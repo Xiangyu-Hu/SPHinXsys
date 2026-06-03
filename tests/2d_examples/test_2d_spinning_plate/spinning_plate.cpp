@@ -41,7 +41,7 @@ class Square : public MultiPolygonShape
   public:
     explicit Square(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(square_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(square_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -79,7 +79,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     RealBody square_body(sph_system, makeShared<Square>("SquareBody"));
-    square_body.defineMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
+    square_body.defineMatterMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
     square_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody square_observer(sph_system, "SquareObserver");

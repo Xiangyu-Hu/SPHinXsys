@@ -1,6 +1,8 @@
 #include "fluid_structure_interaction.hpp"
 
+#include "adaptation.h"
 #include "viscosity.h"
+#include "base_body.hpp"
 
 namespace SPH
 {
@@ -10,13 +12,13 @@ namespace solid_dynamics
 //=================================================================================================//
 BaseForceFromFluid::BaseForceFromFluid(BaseContactRelation &contact_relation, const std::string &force_name)
     : ForcePrior(contact_relation.getSPHBody(), force_name), DataDelegateContact(contact_relation),
-      solid_(DynamicCast<Solid>(this, sph_body_->getBaseMaterial())),
+      solid_(DynamicCast<Solid>(this, sph_body_->getMatterMaterial())),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       force_from_fluid_(particles_->getVariableDataByName<Vecd>(force_name))
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        contact_fluids_.push_back(DynamicCast<Fluid>(this, &contact_particles_[k]->getBaseMaterial()));
+        contact_fluids_.push_back(DynamicCast<Fluid>(this, &contact_bodies_[k]->getMatterMaterial()));
     }
 }
 //=================================================================================================//
@@ -28,7 +30,7 @@ ViscousForceFromFluid::ViscousForceFromFluid(BaseContactRelation &contact_relati
     {
         contact_vel_.push_back(contact_particles_[k]->getVariableDataByName<Vecd>("Velocity"));
         contact_Vol_.push_back(contact_particles_[k]->getVariableDataByName<Real>("VolumetricMeasure"));
-        Viscosity &viscosity_k = DynamicCast<Viscosity>(this, contact_particles_[k]->getBaseMaterial());
+        Viscosity &viscosity_k = contact_bodies_[k]->getMaterialProperty<Viscosity>();
         mu_.push_back(viscosity_k.ReferenceViscosity());
         smoothing_length_.push_back(contact_bodies_[k]->getSPHAdaptation().ReferenceSmoothingLength());
     }

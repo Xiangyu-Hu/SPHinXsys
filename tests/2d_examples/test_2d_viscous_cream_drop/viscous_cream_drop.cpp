@@ -10,8 +10,8 @@ using namespace SPH;
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real global_resolution = 0.005;    /* reference resolution. */
-Real DL = 0.5;                  /* platform length. */
-Real DH = 2.0;                  /* height. */
+Real DL = 0.5;                     /* platform length. */
+Real DH = 2.0;                     /* height. */
 Real BW = global_resolution * 5.0; /* width for boundary. */
 Real cream_radius = global_resolution * 20.0;
 Vec2d cream_center(0.0, -cream_radius);
@@ -62,15 +62,15 @@ class Cream : public MultiPolygonShape
   public:
     explicit Cream(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createPlatformShape(), ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(createCreamUpperShape(), ShapeBooleanOps::add);
-        multi_polygon_.addACircle(cream_center, cream_radius, 100, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(createPlatformShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createCreamUpperShape(), GeometricOps::add);
+        multi_polygon_.addCircle(cream_center, cream_radius, 100, GeometricOps::add);
     }
 };
 MultiPolygon createPlatformConstraint()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(createPlatformShape(), ShapeBooleanOps::add);
+    multi_polygon.addPolygon(createPlatformShape(), GeometricOps::add);
     return multi_polygon;
 };
 //----------------------------------------------------------------------
@@ -93,10 +93,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody cream(sph_system, makeShared<Cream>("Cream"));
     cream.defineBodyLevelSetShape();
-    cream.defineMaterial<ViscousPlasticSolid>(rho0_s, Youngs_modulus, poisson,
+    cream.defineMatterMaterial<ViscousPlasticSolid>(rho0_s, Youngs_modulus, poisson,
                                               yield_stress, viscosity, Herschel_Bulkley_power);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cream.generateParticles<BaseParticles, Reload>(cream.getName())
+        ? cream.generateParticles<BaseParticles, Reload>(cream.Name())
         : cream.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cream_observer(sph_system, "CreamObserver");

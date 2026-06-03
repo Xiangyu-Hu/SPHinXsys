@@ -10,12 +10,12 @@ using namespace SPH;   //	Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 500.0;                        /**< Tank length. */
-Real DH = 200.1;                        /**< Tank height. */
-Real Dam_L = 100.0;                     /**< Water block width. */
-Real Dam_H = 140.0;                     /**< Water block height. */
-Real Gate_width = 5.0;                  /**< Width of the gate. */
-Real Base_bottom_position = 79.0;       /**< Position of gate base. (In Y direction) */
+Real DL = 500.0;                           /**< Tank length. */
+Real DH = 200.1;                           /**< Tank height. */
+Real Dam_L = 100.0;                        /**< Water block width. */
+Real Dam_H = 140.0;                        /**< Water block height. */
+Real Gate_width = 5.0;                     /**< Width of the gate. */
+Real Base_bottom_position = 79.0;          /**< Position of gate base. (In Y direction) */
 Real global_resolution = Gate_width / 2.0; /**< Initial reference particle spacing. */
 Real BW = global_resolution * 4.0;         /**< Extending width for BCs. */
 /** The offset that the rubber gate shifted above the tank. */
@@ -69,7 +69,7 @@ class WaterBlock : public MultiPolygonShape
         water_block_shape.push_back(DamP_rt);
         water_block_shape.push_back(DamP_rb);
         water_block_shape.push_back(DamP_lb);
-        multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(water_block_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -95,8 +95,8 @@ class WallBoundary : public MultiPolygonShape
         inner_wall_shape.push_back(Vecd(DL, 0.0));
         inner_wall_shape.push_back(Vecd(0.0, 0.0));
 
-        multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+        multi_polygon_.addPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -112,7 +112,7 @@ MultiPolygon createGateShape()
     gate_shape.push_back(GateP_lb);
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(gate_shape, ShapeBooleanOps::add);
+    multi_polygon.addPolygon(gate_shape, GeometricOps::add);
     return multi_polygon;
 }
 //----------------------------------------------------------------------
@@ -129,7 +129,7 @@ MultiPolygon createGateConstrainShape()
     gate_constraint_shape.push_back(ConstrainP_lb);
 
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(gate_constraint_shape, ShapeBooleanOps::add);
+    multi_polygon.addPolygon(gate_constraint_shape, GeometricOps::add);
     return multi_polygon;
 }
 //----------------------------------------------------------------------
@@ -146,16 +146,16 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody gate(sph_system, makeShared<MultiPolygonShape>(createGateShape(), "Gate"));
     gate.defineAdaptationRatios(1.15, 2.0);
-    gate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    gate.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     gate.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody gate_observer(sph_system, "Observer");

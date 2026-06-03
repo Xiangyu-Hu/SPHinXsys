@@ -9,8 +9,8 @@ using namespace SPH; //	Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 1.0;                    /**< box length. */
-Real DH = 1.0;                    /**< box height. */
+Real DL = 1.0;                       /**< box length. */
+Real DH = 1.0;                       /**< box height. */
 Real global_resolution = 1.0 / 50.0; /**< Global reference resolution. */
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d::Zero(), Vec2d(DL, DH));
@@ -38,7 +38,7 @@ class WaterBlock : public MultiPolygonShape
         water_body_shape.push_back(Vecd(DL, DH));
         water_body_shape.push_back(Vecd(DL, 0.0));
         water_body_shape.push_back(Vecd(0.0, 0.0));
-        multi_polygon_.addAPolygon(water_body_shape, ShapeBooleanOps::add);
+        multi_polygon_.addPolygon(water_body_shape, GeometricOps::add);
     }
 };
 //----------------------------------------------------------------------
@@ -84,7 +84,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_body.getSPHAdaptation().resetKernel<KernelTabulated<KernelLaguerreGauss>>(20);
-    water_body.defineClosure<CompressibleFluid, Viscosity>(ConstructArgs(rho0_f, heat_capacity_ratio), mu_f);
+    water_body.defineMatterMaterial<CompressibleFluid>(rho0_f, heat_capacity_ratio);
+    water_body.addMaterialProperty<Viscosity>(mu_f);
     water_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
