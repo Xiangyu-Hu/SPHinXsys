@@ -53,7 +53,7 @@ class DensitySummationCK<Base, RelationType<Parameters...>>
     virtual ~DensitySummationCK(){};
 
   protected:
-    DiscreteVariable<Real> *dv_mass_, *dv_rho_sum_;
+    DiscreteVariable<Real> *dv_Vol_ref_, *dv_rho_sum_;
     Real rho0_;
 };
 
@@ -76,7 +76,8 @@ class DensitySummationCK<Inner<Parameters...>>
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        DataView<Real> mass_, rho_sum_;
+        Real rho0_;
+        DataView<Real> Vol_ref_, rho_sum_;
         Vecd zero_;
     };
 };
@@ -102,12 +103,12 @@ class DensitySummationCK<Contact<Parameters...>>
       protected:
         Real rho0_;
         Real contact_inv_rho0_;
-        DataView<Real> rho_sum_, contact_mass_;
+        DataView<Real> rho_sum_, contact_Vol_ref_;
     };
 
   protected:
     StdVec<Real> contact_inv_rho0_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_mass_;
+    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_ref_;
 };
 //------------------------------------------------------------------
 // forward declarations of Regularization<FlowType>
