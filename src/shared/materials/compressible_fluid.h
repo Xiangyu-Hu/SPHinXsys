@@ -46,8 +46,8 @@ class CompressibleFluid : public Fluid
   public:
     explicit CompressibleFluid(Real gamma);
     virtual ~CompressibleFluid();
-    virtual Real ReferenceDensity() override { return 1.0; };
-    virtual Real ReferenceSoundSpeed() override { return 1.0; };
+    virtual Real ReferenceDensity() const override { return 1.0; };
+    virtual Real ReferenceSoundSpeed() const override { return 1.0; };
     Real HeatCapacityRatio() { return gamma_; };
     virtual Real getPressure(Real rho, Real rho_e) override;
     virtual Real getPressure(Real rho) override { return 0.0; };

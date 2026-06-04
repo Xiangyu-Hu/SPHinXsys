@@ -66,6 +66,7 @@ class AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
     using BaseInteraction = AcousticStep<Interaction<Inner<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
     using CorrectionDataType = typename KernelCorrectionType::CorrectionDataType;
+    using RiemannKernel = typename RiemannSolverType::ComputingKernel;
 
   public:
     template <class DynamicsIdentifier>
@@ -94,7 +95,7 @@ class AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
 
       protected:
         CorrectionKernel correction_;
-        RiemannSolverType riemann_solver_;
+        RiemannKernel riemann_;
         Real *Vol_, *rho_, *p_, *drho_dt_;
         Vecd *force_;
     };
@@ -124,6 +125,7 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
     using FluidType = typename RiemannSolverType::SourceFluid;
     using BaseInteraction = AcousticStep<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+    using RiemannKernel = typename RiemannSolverType::ComputingKernel;
 
   public:
     template <class DynamicsIdentifier>
@@ -139,7 +141,7 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
 
       protected:
         CorrectionKernel correction_;
-        RiemannSolverType riemann_solver_;
+        RiemannKernel riemann_;
         Real *Vol_, *rho_, *mass_, *p_, *drho_dt_;
         Vecd *vel_, *force_, *force_prior_;
         Real *contact_Vol_;
@@ -161,6 +163,7 @@ class AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
     using BaseInteraction = AcousticStep<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
     using CorrectionDataType = typename KernelCorrectionType::CorrectionDataType;
+    using RiemannKernel = typename RiemannSolverType::ComputingKernel;
 
   public:
     template <class DynamicsIdentifier>
@@ -177,7 +180,7 @@ class AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
       protected:
         CorrectionKernel correction_;
         CorrectionKernel contact_correction_;
-        RiemannSolverType riemann_solver_;
+        RiemannKernel riemann_;
         Real *Vol_, *rho_, *p_, *drho_dt_;
         Vecd *force_;
         Real *contact_Vol_, *contact_p_;

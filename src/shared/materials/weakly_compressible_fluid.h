@@ -52,8 +52,8 @@ class WeaklyCompressibleFluid : public Fluid
     explicit WeaklyCompressibleFluid(Real rho0, Real c0);
     explicit WeaklyCompressibleFluid(ConstructArgs<Real, Real> args);
     virtual ~WeaklyCompressibleFluid(){};
-    virtual Real ReferenceDensity() override { return rho0_; };
-    virtual Real ReferenceSoundSpeed() override { return c0_; };
+    virtual Real ReferenceDensity() const override { return rho0_; };
+    virtual Real ReferenceSoundSpeed() const override { return c0_; };
     virtual Real getPressure(Real rho) override;
     virtual Real DensityFromPressure(Real p) override;
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
@@ -104,8 +104,8 @@ class WeaklyCompressibleMixture : public Fluid
     WeaklyCompressibleMixture(StdVec<std::string> species_name_list, StdVec<Real> rho0_list, Real c0);
     virtual ~WeaklyCompressibleMixture();
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
-    virtual Real ReferenceDensity() override { return rho0_list_[0]; };
-    virtual Real ReferenceSoundSpeed() override { return c0_; };
+    virtual Real ReferenceDensity() const override { return rho0_list_[0]; };
+    virtual Real ReferenceSoundSpeed() const override { return c0_; };
 
     class EosKernel
     {

@@ -82,7 +82,7 @@ class MatterMaterial : public BaseMaterial
     explicit MatterMaterial();
     virtual ~MatterMaterial(){};
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
-    virtual Real ReferenceDensity() = 0;
+    virtual Real ReferenceDensity() const = 0;
 };
 
 /** @class  Fluid
@@ -97,7 +97,7 @@ class Fluid : public MatterMaterial
     virtual Real getPressure(Real rho, Real rho_e) { return getPressure(rho); };
     virtual Real DensityFromPressure(Real p) = 0;
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
-    virtual Real ReferenceSoundSpeed() = 0;
+    virtual Real ReferenceSoundSpeed() const = 0;
 };
 
 class SolidContact
@@ -127,7 +127,7 @@ class Solid : public MatterMaterial, public SolidContact
     explicit Solid(Real rho0) : Solid(rho0, 1.0){};
     Solid() : Solid(1.0){};
     virtual ~Solid(){};
-    virtual Real ReferenceDensity() override { return rho0_; };
+    virtual Real ReferenceDensity() const override { return rho0_; };
     /** Get average velocity when interacting with fluid. */
     virtual Vecd *AverageVelocity(BaseParticles *base_particles);
     /** Get average acceleration when interacting with fluid. */
