@@ -33,7 +33,8 @@
 
 #include "base_material.h"
 #include "common_functors.h"
-#include "sphinixsys_constant.h"
+#include "sphinxsys_constant.h"
+
 namespace SPH
 {
 /**
@@ -89,7 +90,7 @@ class WeaklyCompressibleFluid : public Fluid
     };
 };
 
-class WeaklyCOmpressibleMixture : public Fluid
+class WeaklyCompressibleMixture : public Fluid
 {
   protected:
     StdVec<std::string> species_name_list_; /**< species name list. */
@@ -100,10 +101,10 @@ class WeaklyCOmpressibleMixture : public Fluid
     Real c0_;                               /**< reference sound speed. */
 
   public:
-    explicit WeaklyCOmpressibleMixture(StdVec<std::string> species_name_list, StdVec<Real> rho0_list, Real c0);
-    explicit WeaklyCOmpressibleMixture(ConstructArgs<StdVec<std::string>, StdVec<Real>, Real> args);
-    virtual ~WeaklyCOmpressibleMixture(){};
-    virtual Real ReferenceDensity() override { return 1.0; };
+    WeaklyCompressibleMixture(StdVec<std::string> species_name_list, StdVec<Real> rho0_list, Real c0);
+    virtual ~WeaklyCompressibleMixture();
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+    virtual Real ReferenceDensity() override { return rho0_list_[0]; };
     virtual Real ReferenceSoundSpeed() override { return c0_; };
 
     class EosKernel
@@ -151,7 +152,7 @@ class WeaklyCOmpressibleMixture : public Fluid
         void update(UnsignedInt index_i)
         {
             Real sum = 0.0;
-            for (size_t k = 0; k != Y_list_.size(); ++k)
+            for (size_t k = 0; k != Y_list_.Width(); ++k)
             {
                 sum += Y_list_[index_i][k] * inv_rho0_list_[k];
             }

@@ -36,15 +36,12 @@
 #define BASE_MATERIAL_H
 
 #include "data_type.h"
-#include "ownership.h"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {
 class BaseParticles;
 class SPHSystem;
-class Quantity;
-template <typename T>
-class DiscreteVariable;
 
 /** @class  BaseMaterial
  *  @brief Base of all materials

@@ -45,7 +45,7 @@ class CompressibleFluid : public Fluid
 
   public:
     explicit CompressibleFluid(Real gamma);
-    virtual ~CompressibleFluid(){};
+    virtual ~CompressibleFluid();
     virtual Real ReferenceDensity() override { return 1.0; };
     virtual Real ReferenceSoundSpeed() override { return 1.0; };
     Real HeatCapacityRatio() { return gamma_; };
