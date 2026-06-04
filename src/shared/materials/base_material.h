@@ -65,7 +65,7 @@ class BaseMaterial
      * one need assign the base particle to that material too.
      */
     void setLocalParameters(SPHSystem &sph_system, BaseParticles *base_particles);
-    virtual void registerLocalParameters(BaseParticles *base_particles) {};
+    virtual void registerLocalParametersToReload(BaseParticles *base_particles) {};
     virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
     virtual void initializeLocalParameters(BaseParticles *base_particles) {};
 
@@ -82,7 +82,7 @@ class MatterMaterial : public BaseMaterial
   public:
     explicit MatterMaterial();
     virtual ~MatterMaterial(){};
-    virtual void registerLocalParameters(BaseParticles *base_particles) override;
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     virtual Real ReferenceDensity() = 0;
 };
 

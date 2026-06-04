@@ -14,7 +14,7 @@ void BaseMaterial::setLocalParameters(SPHSystem &sph_system, BaseParticles *base
     }
     else
     {
-        registerLocalParameters(base_particles);
+        registerLocalParametersToReload(base_particles);
     }
 
     initializeLocalParameters(base_particles);
@@ -34,7 +34,7 @@ MatterMaterial::MatterMaterial() : BaseMaterial()
     material_type_name_ = "MatterMaterial";
 }
 //=================================================================================================//
-void MatterMaterial::registerLocalParameters(BaseParticles *base_particles)
+void MatterMaterial::initializeLocalParameters(BaseParticles *base_particles)
 {
     dv_rho_ = base_particles->registerStateVariable<Real>("Density", ReferenceDensity());
     Real *rho = dv_rho_->Data();

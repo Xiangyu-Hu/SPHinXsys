@@ -45,7 +45,7 @@ class Viscosity : public BaseMaterial
     explicit Viscosity(Real mu) : BaseMaterial(), mu_(mu) {};
     virtual ~Viscosity() {};
     Real ReferenceViscosity() { return mu_; };
-    virtual void registerLocalParameters(BaseParticles *base_particles) {};
+    virtual void registerLocalParametersToReload(BaseParticles *base_particles) {};
     virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
     virtual void initializeLocalParameters(BaseParticles *base_particles) {};
 
