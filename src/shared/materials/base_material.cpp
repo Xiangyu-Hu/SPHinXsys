@@ -14,7 +14,7 @@ void BaseMaterial::setLocalParameters(SPHSystem &sph_system, BaseParticles *base
     }
     else
     {
-        registerLocalParameters(base_particles);
+        registerLocalParametersToReload(base_particles);
     }
 
     initializeLocalParameters(base_particles);
@@ -29,21 +29,30 @@ std::string BaseMaterial::Name()
     return material_name_;
 }
 //=================================================================================================//
-MatterMaterial::MatterMaterial(Real rho0)
-    : BaseMaterial(), rho0_(rho0) { material_type_name_ = "MatterMaterial"; }
+MatterMaterial::MatterMaterial() : BaseMaterial()
+{
+    material_type_name_ = "MatterMaterial";
+}
 //=================================================================================================//
-Fluid::Fluid(Real rho0, Real c0) : MatterMaterial(rho0), c0_(c0)
+void MatterMaterial::initializeLocalParameters(BaseParticles *base_particles)
+{
+    dv_rho_ = base_particles->registerStateVariable<Real>("Density", ReferenceDensity());
+    Real *rho = dv_rho_->Data();
+    dv_mass_ = base_particles->registerStateVariable<Real>(
+        "Mass", [&](UnsignedInt i) -> Real
+        { return rho[i] * base_particles->ParticleVolume(i); });
+}
+//=================================================================================================//
+Fluid::Fluid() : MatterMaterial()
 {
     material_type_name_ = "Fluid";
 }
-//=================================================================================================//
-Fluid::EosKernel::EosKernel(Fluid &encloser) : c0_(encloser.c0_), rho0_(encloser.rho0_) {}
 //=================================================================================================//
 SolidContact::SolidContact(Real rho0, Real contact_stiffness, Real contact_friction)
     : rho0_copy_(rho0), contact_stiffness_(contact_stiffness), contact_friction_(contact_friction) {}
 //=================================================================================================//
 Solid::Solid(Real rho0, Real contact_stiffness, Real contact_friction)
-    : MatterMaterial(rho0), SolidContact(rho0, contact_stiffness, contact_friction)
+    : MatterMaterial(), SolidContact(rho0, contact_stiffness, contact_friction), rho0_(rho0)
 {
     material_type_name_ = "Solid";
 }

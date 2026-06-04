@@ -39,7 +39,7 @@ template <class FluidType>
 template <class ExecutionPolicy>
 AcousticTimeStepCK<FluidType>::ReduceKernel::ReduceKernel(
     const ExecutionPolicy &ex_policy, AcousticTimeStepCK<FluidType> &encloser)
-    : eos_(encloser.fluid_),
+    : eos_(ex_policy, encloser.fluid_),
       mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       p_(encloser.dv_p_->DelegatedData(ex_policy)),
@@ -53,7 +53,7 @@ Real AcousticTimeStepCK<FluidType>::ReduceKernel::reduce(size_t index_i, Real dt
 {
     Real force_norm = (force_[index_i] + force_prior_[index_i]).norm();
     Real acc_scale = math::sqrt(4.0 * h_min_ * force_norm / mass_[index_i]);
-    return SMAX(eos_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm(), acc_scale);
+    return SMAX(eos_.getSoundSpeed(index_i, p_[index_i], rho_[index_i]) + vel_[index_i].norm(), acc_scale);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>

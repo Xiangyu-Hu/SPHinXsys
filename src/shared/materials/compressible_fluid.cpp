@@ -3,14 +3,10 @@
 namespace SPH
 {
 //=============================================================================================//
-CompressibleFluid::CompressibleFluid(Real rho0, Real gamma)
-    : Fluid(rho0, 1.0), gamma_(gamma)
+CompressibleFluid::CompressibleFluid(Real gamma) : Fluid(), gamma_(gamma)
 {
     material_type_name_ = "CompressibleFluid";
 }
-//=============================================================================================//
-CompressibleFluid::CompressibleFluid(ConstructArgs<Real, Real> args)
-    : CompressibleFluid(std::get<0>(args), std::get<1>(args)) {}
 //=============================================================================================//
 Real CompressibleFluid::getPressure(Real rho, Real rho_e)
 {

@@ -89,7 +89,7 @@ int main(int ac, char *av[])
     //	Create body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody wave_body(sph_system, makeShared<WaveBlock>("WaveBody"));
-    wave_body.defineMatterMaterial<CompressibleFluid>(rho0_l, heat_capacity_ratio);
+    wave_body.defineMatterMaterial<CompressibleFluid>(heat_capacity_ratio);
     wave_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

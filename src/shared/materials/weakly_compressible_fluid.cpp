@@ -4,7 +4,7 @@ namespace SPH
 {
 //=================================================================================================//
 WeaklyCompressibleFluid::WeaklyCompressibleFluid(Real rho0, Real c0)
-    : Fluid(rho0, c0), p0_(rho0 * c0 * c0)
+    : Fluid(), rho0_(rho0), c0_(c0), p0_(rho0 * c0 * c0)
 {
     material_type_name_ = "WeaklyCompressibleFluid";
 }
@@ -26,8 +26,5 @@ Real WeaklyCompressibleFluid::getSoundSpeed(Real p, Real rho)
 {
     return c0_;
 }
-//=================================================================================================//
-WeaklyCompressibleFluid::EosKernel::EosKernel(WeaklyCompressibleFluid &encloser)
-    : Fluid::EosKernel(encloser), p0_(encloser.p0_) {}
 //=================================================================================================//
 } // namespace SPH

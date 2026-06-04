@@ -51,7 +51,7 @@ template <class ConditionType>
 template <class ExecutionPolicy, class EncloserType>
 BufferInflowInjectionCK<ConditionType>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : part_id_(encloser.part_id_), eos_(encloser.fluid_), condition_(encloser.condition_),
+    : part_id_(encloser.part_id_), eos_(ex_policy, encloser.fluid_), condition_(encloser.condition_),
       oriented_box_(encloser.sv_oriented_box_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       spawn_real_particle_(ex_policy, encloser.spawn_real_particle_method_),
@@ -75,7 +75,7 @@ void BufferInflowInjectionCK<ConditionType>::UpdateKernel::update(size_t index_i
             buffer_indicator_[new_particle_index] = 0;
             pos_[index_i] = oriented_box_->getUpperPeriodic(pos_[index_i]);
             p_[index_i] = condition_.getPressure(p_[index_i], *physical_time_);
-            rho_[index_i] = eos_.DensityFromPressure(p_[index_i]);
+            rho_[index_i] = eos_.DensityFromPressure(index_i, p_[index_i]);
         }
     }
 }
