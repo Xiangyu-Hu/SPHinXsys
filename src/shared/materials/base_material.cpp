@@ -6,6 +6,8 @@
 namespace SPH
 {
 //=================================================================================================//
+BaseMaterial::~BaseMaterial() = default;
+//=================================================================================================//
 void BaseMaterial::setLocalParameters(SPHSystem &sph_system, BaseParticles *base_particles)
 {
     if (sph_system.ReloadParticles())

@@ -33,7 +33,7 @@
 
 #include "base_material.h"
 #include "common_functors.h"
-
+#include "sphinixsys_constant.h"
 namespace SPH
 {
 /**
@@ -79,8 +79,89 @@ class WeaklyCompressibleFluid : public Fluid
             return c0_;
         };
 
+        Real getReferenceDensity(UnsignedInt)
+        {
+            return rho0_;
+        };
+
       protected:
         Real rho0_, p0_, c0_;
+    };
+};
+
+class WeaklyCOmpressibleMixture : public Fluid
+{
+  protected:
+    StdVec<std::string> species_name_list_; /**< species name list. */
+    StdVec<Real> rho0_list_;                /**< reference density list. */
+    ConstantArray<Real> *ca_inv_rho0_list_; /**< inverse reference density list. */
+    DiscreteVariable<Real> *dv_Y_list_;     /**< species mass fraction list. */
+    DiscreteVariable<Real> *dv_rho0_;       /**< local reference density. */
+    Real c0_;                               /**< reference sound speed. */
+
+  public:
+    explicit WeaklyCOmpressibleMixture(StdVec<std::string> species_name_list, StdVec<Real> rho0_list, Real c0);
+    explicit WeaklyCOmpressibleMixture(ConstructArgs<StdVec<std::string>, StdVec<Real>, Real> args);
+    virtual ~WeaklyCOmpressibleMixture(){};
+    virtual Real ReferenceDensity() override { return 1.0; };
+    virtual Real ReferenceSoundSpeed() override { return c0_; };
+
+    class EosKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EnclosureType>
+        EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser)
+            : c0_(encloser.c0_), c0_sq_(c0_ * c0_),
+              rho0_(encloser.dv_rho0_.DelegateDataView(ex_policy)){};
+
+        Real PressureFromDensity(UnsignedInt index_i, Real rho)
+        {
+            return c0_sq_ * (rho - rho0_[index_i]);
+        };
+
+        Real DensityFromPressure(UnsignedInt index_i, Real p)
+        {
+            return rho0_[index_i] + p / c0_sq_;
+        };
+
+        Real getSoundSpeed(UnsignedInt, Real, Real)
+        {
+            return c0_;
+        };
+
+        Real getReferenceDensity(UnsignedInt index_i)
+        {
+            return rho0_[index_i];
+        };
+
+      protected:
+        Real c0_, c0_sq_;
+        DataView<Real> rho0_;
+    };
+
+    class MixtureKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EnclosureType>
+        MixtureKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser)
+            : inv_rho0_list_(encloser.ca_inv_rho0_list_.DelegatedData(ex_policy)),
+              Y_list_(encloser.dv_Y_list_.DelegateMultiEntryView(ex_policy)),
+              rho0_(encloser.dv_rho0_.DelegateDataView(ex_policy)){};
+
+        void update(UnsignedInt index_i)
+        {
+            Real sum = 0.0;
+            for (size_t k = 0; k != Y_list_.size(); ++k)
+            {
+                sum += Y_list_[index_i][k] * inv_rho0_list_[k];
+            }
+            rho0_[index_i] = 1.0 / sum;
+        };
+
+      protected:
+        Real *inv_rho0_list_;
+        MultiEntryView<Real> Y_list_;
+        DataView<Real> rho0_;
     };
 };
 } // namespace SPH

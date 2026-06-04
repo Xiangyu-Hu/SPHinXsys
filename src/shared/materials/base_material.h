@@ -36,12 +36,13 @@
 #define BASE_MATERIAL_H
 
 #include "data_type.h"
+#include "ownership.h"
 
 namespace SPH
 {
 class BaseParticles;
 class SPHSystem;
-
+class Quantity;
 template <typename T>
 class DiscreteVariable;
 
@@ -54,7 +55,7 @@ class BaseMaterial
 {
   public:
     BaseMaterial() : material_type_name_("BaseMaterial"){};
-    virtual ~BaseMaterial(){};
+    virtual ~BaseMaterial();
     std::string Name();
     void setName(const std::string &name) { material_name_ = name; };
     std::string MaterialType() { return material_type_name_; }
@@ -72,6 +73,7 @@ class BaseMaterial
   protected:
     std::string material_type_name_;
     std::string material_name_;
+    UniquePtrsKeeper<Quantity> unique_entity_ptrs_;
 };
 
 class MatterMaterial : public BaseMaterial
