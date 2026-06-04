@@ -133,6 +133,7 @@ class PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrec
 {
     using FluidType = typename RiemannSolverType::SourceFluid;
     using BaseForceFromFluid = ForceFromFluid<KernelCorrectionType, Parameters...>;
+    using RiemannKernel = typename RiemannSolverType::ComputingKernel;
 
   public:
     template <class ContactRelationType>
@@ -148,7 +149,7 @@ class PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrec
 
       protected:
         Vecd *acc_ave_, *n_;
-        RiemannSolverType riemann_solver_;
+        RiemannKernel riemann_;
         Real *contact_rho_, *contact_mass_, *contact_p_;
         Vecd *contact_force_prior_;
     };
