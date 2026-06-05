@@ -256,22 +256,20 @@ int main(int ac, char *av[])
         pressure_force_from_fluid.exec();               // every acoustic step (matches CPU)
         fluid_acoustic_step_2nd_half.exec(acoustic_dt);
 
-        fish_body_computing_time_step_size.exec(); // flush SYCL queue
+        Real dt_s_raw = fish_body_computing_time_step_size.exec();
+        int solid_sub_div = (dt_s_raw > Real(0))
+            ? static_cast<int>(acoustic_dt / dt_s_raw) + 2
+            : 33;
         initialize_displacement.exec();
-        Real dt_s_sum = 0.0;
-        Real dt_s_fixed = 6.5e-6; // physical CFL value
-        while (dt_s_sum < acoustic_dt)
-        {
-            Real dt_s = SMIN(dt_s_fixed, acoustic_dt - dt_s_sum);
-            // Real dt_s = SMIN(fish_body_computing_time_step_size.exec(),
-                            // acoustic_dt - dt_s_sum);
-            if (dt_s <= Real(0)) break;
-            imposing_active_strain.exec();
-            fish_body_stress_relaxation_first_half.exec(dt_s);
-            fish_body_stress_relaxation_second_half.exec(dt_s);
-            dt_s_sum += dt_s;
-            total_inner_ite_dt_s++;
-        }
+        time_stepper.integrateMatchedTimeInterval(
+            acoustic_dt, solid_sub_div,
+            [&](Real dt_s)
+            {
+                imposing_active_strain.exec();
+                fish_body_stress_relaxation_first_half.exec(dt_s);
+                fish_body_stress_relaxation_second_half.exec(dt_s);
+            });
+        total_inner_ite_dt_s += static_cast<size_t>(solid_sub_div);
 
         update_average_velocity.exec(acoustic_dt);
 
