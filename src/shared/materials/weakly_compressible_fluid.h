@@ -106,6 +106,7 @@ class WeaklyCompressibleMixture : public Fluid
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     virtual Real ReferenceDensity() const override { return rho0_list_[0]; };
     virtual Real ReferenceSoundSpeed() const override { return c0_; };
+    DiscreteVariable<Real> *dvReferenceDensity() const { return dv_rho0_; };
 
     class EosKernel
     {

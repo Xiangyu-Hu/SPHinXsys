@@ -66,5 +66,13 @@ ImpedanceModel<WeaklyCompressibleFluid, WeaklyCompressibleFluid>::ImpedanceModel
       rho0c0_geo_ave_(2.0 * rho0c0_i_ * rho0c0_j_ * inv_rho0c0_sum_),
       inv_c0_ave_(0.5 * (rho0_i_ + rho0_j_) * inv_rho0c0_ave_) {}
 //=================================================================================================//
+template <class ExecutionPolicy>
+ImpedanceModel<WeaklyCompressibleMixture, WeaklyCompressibleMixture>::ImpedanceModel(
+    const ExecutionPolicy &ex_policy,
+    const WeaklyCompressibleMixture &fluid_i, const WeaklyCompressibleMixture &fluid_j)
+    : rho0_i_(fluid_i.dvReferenceDensity()->DelegatedDataView(ex_policy)),
+      rho0_j_(fluid_j.dvReferenceDensity()->DelegatedDataView(ex_policy)),
+      c0_i_(fluid_i.ReferenceSoundSpeed()), c0_j_(fluid_j.ReferenceSoundSpeed()) {}
+//=================================================================================================//
 } // namespace SPH
 #endif // RIEMANN_SOLVER_CK_HPP

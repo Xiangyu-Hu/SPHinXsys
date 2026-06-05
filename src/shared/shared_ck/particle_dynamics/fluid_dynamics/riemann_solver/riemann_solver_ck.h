@@ -132,6 +132,45 @@ class ImpedanceModel<WeaklyCompressibleFluid, WeaklyCompressibleFluid>
     Real InvSoundSpeedAve(UnsignedInt, UnsignedInt) const { return inv_c0_ave_; };
 };
 
+template <>
+class ImpedanceModel<WeaklyCompressibleMixture, WeaklyCompressibleMixture>
+{
+    DataView<Real> rho0_i_, rho0_j_;
+    Real c0_i_, c0_j_;
+
+  public:
+    template <class ExecutionPolicy>
+    ImpedanceModel(
+        const ExecutionPolicy &ex_policy,
+        const WeaklyCompressibleMixture &fluid_i, const WeaklyCompressibleMixture &fluid_j);
+    Real Rho_i(UnsignedInt index_i) const { return rho0_i_[index_i]; };
+    Real Rho_j(UnsignedInt index_j) const { return rho0_j_[index_j]; };
+    Real Impedance_i(UnsignedInt index_i) const { return rho0_i_[index_i] * c0_i_; };
+    Real Impedance_j(UnsignedInt index_j) const { return rho0_j_[index_j] * c0_j_; };
+
+    Real InvImpedanceSum(UnsignedInt index_i, UnsignedInt index_j) const
+    {
+        return 1.0 / (Impedance_i(index_i) + Impedance_j(index_j));
+    };
+
+    Real InvImpedanceAve(UnsignedInt index_i, UnsignedInt index_j) const
+    {
+        Real rho0c0_i_ = Impedance_i(index_i);
+        Real rho0c0_j_ = Impedance_j(index_j);
+        return (rho0c0_i_ + rho0c0_j_) / (rho0c0_i_ * rho0c0_i_ + rho0c0_j_ * rho0c0_j_);
+    };
+
+    Real ImpedanceGeoAve(UnsignedInt index_i, UnsignedInt index_j) const
+    {
+        return 2.0 * Impedance_i(index_i) * Impedance_j(index_j) * InvImpedanceSum(index_i, index_j);
+    };
+
+    Real InvSoundSpeedAve(UnsignedInt index_i, UnsignedInt index_j) const
+    {
+        return 0.5 * (rho0_i_[index_i] + rho0_j_[index_j]) * InvImpedanceAve(index_i, index_j);
+    };
+};
+
 using AcousticRiemannSolverCK = RiemannSolver<WeaklyCompressibleFluid, WeaklyCompressibleFluid, TruncatedLinear>;
 using DissipativeRiemannSolverCK = RiemannSolver<WeaklyCompressibleFluid, WeaklyCompressibleFluid, NoLimiter>;
 } // namespace SPH
