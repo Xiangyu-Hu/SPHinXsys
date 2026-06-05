@@ -81,6 +81,8 @@ class MatterMaterial : public BaseMaterial
   public:
     explicit MatterMaterial();
     virtual ~MatterMaterial(){};
+    DiscreteVariable<Real> *dvDensity() const { return dv_rho_; };
+    DiscreteVariable<Real> *dvMass() const { return dv_mass_; };
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     virtual Real ReferenceDensity() const = 0;
 };

@@ -80,7 +80,15 @@ class ConstantArray : public Quantity
     template <class PolicyType>
     DataType *DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy);
     template <class PolicyType>
-    DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy) { return DelegatedOnDevice(ex_policy); };
+    DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy)
+    {
+        return DelegatedOnDevice(ex_policy);
+    };
+    template <class ExecutionPolicy>
+    DataView<DataType> DelegatedDataView(const ExecutionPolicy &ex_policy)
+    {
+        return DataView<DataType>(DelegatedData(ex_policy));
+    };
     bool isDataDelegated() { return data_ != delegated_; };
     void setDelegateData(DataType *new_delegated) { delegated_ = new_delegated; };
 
