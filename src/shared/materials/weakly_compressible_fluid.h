@@ -148,22 +148,26 @@ class WeaklyCompressibleMixture : public Fluid
         MixtureKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser)
             : inv_rho0_list_(encloser.ca_inv_rho0_list_.DelegatedData(ex_policy)),
               Y_list_(encloser.dv_Y_list_.DelegateMultiEntryView(ex_policy)),
-              rho0_(encloser.dv_rho0_.DelegateDataView(ex_policy)){};
+              rho0_(encloser.dv_rho0_.DelegateDataView(ex_policy)),
+              mass_(encloser.dv_mass_.DelegateDataView(ex_policy)){};
 
         void update(UnsignedInt index_i)
         {
             Real sum = 0.0;
+            Real old_rho0_inv = 1.0 / rho0_[index_i];
+            Real old_mass = mass_[index_i];
             for (size_t k = 0; k != Y_list_.Width(); ++k)
             {
                 sum += Y_list_[index_i][k] * inv_rho0_list_[k];
             }
             rho0_[index_i] = 1.0 / sum;
+            mass_[index_i] = rho0_[index_i] * old_mass * old_rho0_inv;
         };
 
       protected:
         Real *inv_rho0_list_;
         MultiEntryView<Real> Y_list_;
-        DataView<Real> rho0_;
+        DataView<Real> rho0_, mass_;
     };
 };
 } // namespace SPH

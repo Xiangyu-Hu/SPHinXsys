@@ -39,10 +39,9 @@ MatterMaterial::MatterMaterial() : BaseMaterial()
 void MatterMaterial::initializeLocalParameters(BaseParticles *base_particles)
 {
     dv_rho_ = base_particles->registerStateVariable<Real>("Density", ReferenceDensity());
-    Real *rho = dv_rho_->Data();
     dv_mass_ = base_particles->registerStateVariable<Real>(
         "Mass", [&](UnsignedInt i) -> Real
-        { return rho[i] * base_particles->ParticleVolume(i); });
+        { return ReferenceDensity() * base_particles->ParticleVolume(i); });
 }
 //=================================================================================================//
 Fluid::Fluid() : MatterMaterial()
