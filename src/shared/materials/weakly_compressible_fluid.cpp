@@ -34,6 +34,11 @@ WeaklyCompressibleMixture::WeaklyCompressibleMixture(
     : Fluid(), species_name_list_(species_name_list), rho0_list_(rho0_list), c0_(c0)
 {
     material_type_name_ = "WeaklyCompressibleMixture";
+    if (species_name_list_.size() != rho0_list_.size())
+    {
+        std::cout << "\n Error: species-name and reference-density lists should be the same size! \n";
+        exit(1);
+    }
     ca_inv_rho0_list_ = unique_entity_ptrs_.createPtr<ConstantArray<Real>>(
         rho0_list_.size(), [&](size_t k)
         { return 1.0 / rho0_list_[k]; });
