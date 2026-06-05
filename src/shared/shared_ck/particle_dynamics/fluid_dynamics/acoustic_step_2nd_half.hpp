@@ -58,11 +58,12 @@ void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
-        Vecd corrected_e_ij = correction_(index_i) * this->e_ij(index_i, index_j);
+        Vecd e_ij = this->e_ij(index_i, index_j);
 
-        Real u_jump = (vel_[index_i] - vel_[index_j]).dot(corrected_e_ij);
-        density_change_rate += u_jump * dW_ijV_j;
-        p_dissipation += riemann_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * corrected_e_ij;
+        Vecd vel_ave = riemann_.AverageV(index_i, index_j, vel_[index_i], vel_[index_j]);
+        density_change_rate += 2.0 * (vel_[index_i] - vel_ave).dot(correction_(index_i) * e_ij) * dW_ijV_j;
+        Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
+        p_dissipation += riemann_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * e_ij;
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
     force_[index_i] = p_dissipation * Vol_[index_i];
