@@ -65,9 +65,8 @@ TEST(ReferenceDesnityUpdate, UpdatesReferenceDensityAndMassFromMassFractions)
 
     FluidBody mixture_body(sph_system, makeShared<MixtureBlock>("MixtureBody"));
 
-    StdVec<std::string> species_name_list{"A", "B"};
-    StdVec<Real> rho0_list{1.0, 2.0};
-    mixture_body.defineMatterMaterial<TestWeaklyCompressibleMixture>(species_name_list, rho0_list, 10.0);
+    StdVec<std::pair<std::string, Real>> species_data{{"A", 1.0}, {"B", 2.0}};
+    mixture_body.defineMatterMaterial<TestWeaklyCompressibleMixture>(species_data, 10.0);
     mixture_body.generateParticles<BaseParticles, Lattice>();
 
     BaseParticles &particles = mixture_body.getBaseParticles();

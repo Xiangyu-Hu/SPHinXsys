@@ -101,11 +101,13 @@ class WeaklyCompressibleMixture : public Fluid
     Real c0_;                               /**< reference sound speed. */
 
   public:
-    WeaklyCompressibleMixture(StdVec<std::string> species_name_list, StdVec<Real> rho0_list, Real c0);
+    WeaklyCompressibleMixture(StdVec<std::pair<std::string, Real>> species_data, Real c0);
     virtual ~WeaklyCompressibleMixture();
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     virtual Real ReferenceDensity() const override { return rho0_list_[0]; };
     virtual Real ReferenceSoundSpeed() const override { return c0_; };
+    StdVec<std::string> getSpeciesNameList() const { return species_name_list_; };
+    StdVec<Real> getReferenceDensityList() const { return rho0_list_; };
     DiscreteVariable<Real> *dvReferenceDensity() const { return dv_rho0_; };
     DiscreteVariable<Real> *dvMassFraction() const { return dv_Y_list_; };
     ConstantArray<Real> *caInvReferenceDensity() const { return ca_inv_rho0_list_; };

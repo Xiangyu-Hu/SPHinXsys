@@ -30,14 +30,15 @@ Real WeaklyCompressibleFluid::getSoundSpeed(Real p, Real rho)
 }
 //=================================================================================================//
 WeaklyCompressibleMixture::WeaklyCompressibleMixture(
-    StdVec<std::string> species_name_list, StdVec<Real> rho0_list, Real c0)
-    : Fluid(), species_name_list_(species_name_list), rho0_list_(rho0_list), c0_(c0)
+    StdVec<std::pair<std::string, Real>> species_data, Real c0) : Fluid(), c0_(c0)
 {
     material_type_name_ = "WeaklyCompressibleMixture";
-    if (species_name_list_.size() != rho0_list_.size())
+    species_name_list_.reserve(species_data.size());
+    rho0_list_.reserve(species_data.size());
+    for (const auto &pair : species_data)
     {
-        std::cout << "\n Error: species-name and reference-density lists should be the same size! \n";
-        exit(1);
+        species_name_list_.push_back(pair.first);
+        rho0_list_.push_back(pair.second);
     }
     ca_inv_rho0_list_ = unique_entity_ptrs_.createPtr<ConstantArray<Real>>(
         rho0_list_.size(), [&](size_t k)
