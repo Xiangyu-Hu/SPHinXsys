@@ -238,6 +238,8 @@ int main(int ac, char *av[])
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     TimeInterval interval_acoustic_step;
+    size_t total_inner_ite_dt_s = 0; // accumulated solid sub-steps per advection step
+
     //----------------------------------------------------------------------
     //	Main loop — TimeStepper manages physical time and acoustic stepping.
     //----------------------------------------------------------------------
@@ -254,6 +256,25 @@ int main(int ac, char *av[])
         pressure_force_from_fluid.exec();               // every acoustic step (matches CPU)
         fluid_acoustic_step_2nd_half.exec(acoustic_dt);
 
+        fish_body_computing_time_step_size.exec(); // flush SYCL queue
+        initialize_displacement.exec();
+        Real dt_s_sum = 0.0;
+        Real dt_s_fixed = 6.5e-6; // physical CFL value
+        while (dt_s_sum < acoustic_dt)
+        {
+            Real dt_s = SMIN(dt_s_fixed, acoustic_dt - dt_s_sum);
+            // Real dt_s = SMIN(fish_body_computing_time_step_size.exec(),
+                            // acoustic_dt - dt_s_sum);
+            if (dt_s <= Real(0)) break;
+            imposing_active_strain.exec();
+            fish_body_stress_relaxation_first_half.exec(dt_s);
+            fish_body_stress_relaxation_second_half.exec(dt_s);
+            dt_s_sum += dt_s;
+            total_inner_ite_dt_s++;
+        }
+
+        update_average_velocity.exec(acoustic_dt);
+
         interval_acoustic_step += TickCount::now() - time_instance;
         //------------------------------------------------------------------
         //	Advection-level operations (every Dt interval).
@@ -268,19 +289,6 @@ int main(int ac, char *av[])
             viscous_force_from_fluid.exec();
             fish_body_update_normal.exec();
 
-            //	Solid sub-stepping — track sub-step count for output.
-            initialize_displacement.exec();
-            size_t inner_ite_dt_s = 0;
-            inner_ite_dt_s = time_stepper.integrateMatchedTimeInterval(
-                Dt, fish_body_computing_time_step_size,
-                [&](Real dt_s)
-                {
-                    imposing_active_strain.exec();
-                    fish_body_stress_relaxation_first_half.exec(dt_s);
-                    fish_body_stress_relaxation_second_half.exec(dt_s);
-                });
-            update_average_velocity.exec(Dt);
-
             //	Screen output — matches CPU fish case format exactly.
             if (number_of_iterations % screen_output_interval == 0)
             {
@@ -291,9 +299,10 @@ int main(int ac, char *av[])
                           << "  Time=" << time_stepper.getPhysicalTime()
                           << "  Dt=" << Dt
                           << "  Dt/dt=" << inner_ite_dt
-                          << "  dt/dt_s=" << inner_ite_dt_s << "\n";
+                          << "  dt/dt_s=" << total_inner_ite_dt_s << "\n";
                 write_water_mechanical_energy.writeToFile(number_of_iterations);
             }
+            total_inner_ite_dt_s = 0; // reset for next advection step
 
             //	VTP output every D_Time.
             if (state_recording_trigger())
