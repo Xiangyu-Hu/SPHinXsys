@@ -44,24 +44,15 @@ class VariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
 
   public:
     template <typename... Args>
-    VariableAssignment(DynamicsIdentifier &identifier, const std::string &variable_name, Args &&...args)
-        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          dv_variable_(this->particles_->template registerStateVariable<DataType>(variable_name)),
-          assignment_method_(this->particles_, std::forward<Args>(args)...){};
-    virtual ~VariableAssignment() {};
+    VariableAssignment(DynamicsIdentifier &identifier, const std::string &variable_name, Args &&...args);
+    virtual ~VariableAssignment(){};
 
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
-              assign_(ex_policy, encloser.assignment_method_){};
-
-        void update(UnsignedInt index_i, Real dt = 0.0)
-        {
-            variable_[index_i] = assign_(index_i);
-        };
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
         DataType *variable_;
@@ -81,25 +72,17 @@ class VariableEntryAssignment : public BaseLocalDynamics<DynamicsIdentifier>
 
   public:
     template <typename... Args>
-    VariableEntryAssignment(DynamicsIdentifier &identifier, const std::string &variable_name,
-                            const std::string &entry_name, Args &&...args)
-        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
-          entry_name_(entry_name), assignment_method_(this->particles_, std::forward<Args>(args)...){};
-    virtual ~VariableEntryAssignment() {};
+    VariableEntryAssignment(
+        DynamicsIdentifier &identifier, const std::string &variable_name,
+        const std::string &entry_name, Args &&...args);
+    virtual ~VariableEntryAssignment(){};
 
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : entry_(encloser.dv_variable_->DelegatedEntryView(ex_policy, encloser.entry_name_)),
-              assign_(ex_policy, encloser.assignment_method_){};
-
-        void update(UnsignedInt index_i, Real dt = 0.0)
-        {
-            entry_[index_i] = assign_(index_i);
-        };
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
         EntryView<DataType> entry_;
@@ -152,7 +135,7 @@ class ConstantValue : public ReturnFunction<DataType>
 {
   public:
     ConstantValue(BaseParticles *particles, DataType constant_value)
-        : constant_value_(constant_value) {};
+        : constant_value_(constant_value){};
 
     class ComputingKernel
     {
@@ -177,7 +160,7 @@ class CopyVariable : public ReturnFunction<DataType>
   public:
     CopyVariable(BaseParticles *particles, const std::string &copy_variable_name)
         : dv_copy_variable_(particles->template getVariableByName<DataType>(
-              copy_variable_name)) {};
+              copy_variable_name)){};
 
     class ComputingKernel
     {
@@ -195,5 +178,60 @@ class CopyVariable : public ReturnFunction<DataType>
   protected:
     DiscreteVariable<DataType> *dv_copy_variable_;
 };
+
+template <class DynamicsIdentifier, typename AssignmentFunctionType>
+class MultiEntryVariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
+{
+    using DataType = typename AssignmentFunctionType::ReturnType;
+    using Assign = typename AssignmentFunctionType::ComputingKernel;
+
+  public:
+    template <typename... Args>
+    MultiEntryVariableAssignment(
+        DynamicsIdentifier &identifier, const std::string &variable_name, Args &&...args);
+    virtual ~MultiEntryVariableAssignment(){};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(UnsignedInt index_i, Real dt = 0.0);
+
+      protected:
+        MultiEntryView<DataType> multi_entry_;
+        Assign assign_;
+    };
+
+  protected:
+    DiscreteVariable<DataType> *dv_variable_;
+    AssignmentFunctionType assignment_method_;
+};
+
+template <typename DataType>
+class MultiEntryConstant : public ReturnFunction<DataType>
+{
+  public:
+    MultiEntryConstant(BaseParticles *particles, StdVec<DataType> constants)
+        : multi_rentry_constant_(constants){};
+    UnsignedInt Width() const { return multi_rentry_constant_.getSize(); };
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : constant_entry_(encloser.multi_rentry_constant_.DelegatedData(ex_policy)){};
+
+        DataType operator()(UnsignedInt index_i, UnsignedInt entry) { return constant_entry_[entry]; };
+
+      protected:
+        DataType *constant_entry_;
+    };
+
+  protected:
+    ConstantArray<DataType> multi_rentry_constant_;
+};
+
 } // namespace SPH
 #endif // GENERAL_ASSIGNMENT_H

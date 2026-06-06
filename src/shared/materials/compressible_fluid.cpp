@@ -7,6 +7,8 @@ CompressibleFluid::CompressibleFluid(Real gamma) : Fluid(), gamma_(gamma)
 {
     material_type_name_ = "CompressibleFluid";
 }
+//=================================================================================================//
+CompressibleFluid::~CompressibleFluid() = default;
 //=============================================================================================//
 Real CompressibleFluid::getPressure(Real rho, Real rho_e)
 {

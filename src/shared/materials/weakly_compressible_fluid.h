@@ -33,6 +33,7 @@
 
 #include "base_material.h"
 #include "common_functors.h"
+#include "sphinxsys_constant.h"
 
 namespace SPH
 {
@@ -51,8 +52,8 @@ class WeaklyCompressibleFluid : public Fluid
     explicit WeaklyCompressibleFluid(Real rho0, Real c0);
     explicit WeaklyCompressibleFluid(ConstructArgs<Real, Real> args);
     virtual ~WeaklyCompressibleFluid(){};
-    virtual Real ReferenceDensity() override { return rho0_; };
-    virtual Real ReferenceSoundSpeed() override { return c0_; };
+    virtual Real ReferenceDensity() const override { return rho0_; };
+    virtual Real ReferenceSoundSpeed() const override { return c0_; };
     virtual Real getPressure(Real rho) override;
     virtual Real DensityFromPressure(Real p) override;
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
@@ -79,8 +80,69 @@ class WeaklyCompressibleFluid : public Fluid
             return c0_;
         };
 
+        Real getReferenceDensity(UnsignedInt)
+        {
+            return rho0_;
+        };
+
       protected:
         Real rho0_, p0_, c0_;
+    };
+};
+
+class WeaklyCompressibleMixture : public Fluid
+{
+  protected:
+    StdVec<std::string> species_name_list_; /**< species name list. */
+    StdVec<Real> rho0_list_;                /**< reference density list. */
+    ConstantArray<Real> *ca_inv_rho0_list_; /**< inverse reference density list. */
+    DiscreteVariable<Real> *dv_Y_list_;     /**< species mass fraction list. */
+    DiscreteVariable<Real> *dv_rho0_;       /**< local reference density. */
+    Real c0_;                               /**< reference sound speed. */
+
+  public:
+    WeaklyCompressibleMixture(StdVec<std::pair<std::string, Real>> species_data, Real c0);
+    virtual ~WeaklyCompressibleMixture();
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+    virtual Real ReferenceDensity() const override { return rho0_list_[0]; };
+    virtual Real ReferenceSoundSpeed() const override { return c0_; };
+    StdVec<std::string> getSpeciesNameList() const { return species_name_list_; };
+    StdVec<Real> getReferenceDensityList() const { return rho0_list_; };
+    DiscreteVariable<Real> *dvReferenceDensity() const { return dv_rho0_; };
+    DiscreteVariable<Real> *dvMassFraction() const { return dv_Y_list_; };
+    ConstantArray<Real> *caInvReferenceDensity() const { return ca_inv_rho0_list_; };
+
+    class EosKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EnclosureType>
+        EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser)
+            : c0_(encloser.c0_), c0_sq_(c0_ * c0_),
+              rho0_(encloser.dv_rho0_.DelegateDataView(ex_policy)){};
+
+        Real PressureFromDensity(UnsignedInt index_i, Real rho)
+        {
+            return c0_sq_ * (rho - rho0_[index_i]);
+        };
+
+        Real DensityFromPressure(UnsignedInt index_i, Real p)
+        {
+            return rho0_[index_i] + p / c0_sq_;
+        };
+
+        Real getSoundSpeed(UnsignedInt, Real, Real)
+        {
+            return c0_;
+        };
+
+        Real getReferenceDensity(UnsignedInt index_i)
+        {
+            return rho0_[index_i];
+        };
+
+      protected:
+        Real c0_, c0_sq_;
+        DataView<Real> rho0_;
     };
 };
 } // namespace SPH

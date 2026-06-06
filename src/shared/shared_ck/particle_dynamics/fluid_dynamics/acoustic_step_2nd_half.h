@@ -53,6 +53,7 @@ class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
     using FluidType = typename RiemannSolverType::SourceFluid;
     using BaseInteraction = AcousticStep<Interaction<Inner<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+    using RiemannKernel = typename RiemannSolverType::ComputingKernel;
 
   public:
     template <class DynamicsIdentifier>
@@ -79,7 +80,7 @@ class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
 
       protected:
         CorrectionKernel correction_;
-        RiemannSolverType riemann_solver_;
+        RiemannKernel riemann_;
         Real *Vol_, *rho_, *drho_dt_;
         Vecd *vel_, *force_;
     };
@@ -108,6 +109,7 @@ class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
     using FluidType = typename RiemannSolverType::SourceFluid;
     using BaseInteraction = AcousticStep<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+    using RiemannKernel = typename RiemannSolverType::ComputingKernel;
 
   public:
     template <class DynamicsIdentifier>
@@ -123,7 +125,7 @@ class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
 
       protected:
         CorrectionKernel correction_;
-        RiemannSolverType riemann_solver_;
+        RiemannKernel riemann_;
         Real *Vol_, *rho_, *drho_dt_;
         Vecd *vel_, *force_;
         Real *contact_Vol_;
@@ -147,6 +149,7 @@ class AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
     using TargetFluidType = typename RiemannSolverType::TargetFluid;
     using BaseInteraction = AcousticStep<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+    using RiemannKernel = typename RiemannSolverType::ComputingKernel;
 
   public:
     template <class DynamicsIdentifier>
@@ -162,7 +165,7 @@ class AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
 
       protected:
         CorrectionKernel correction_;
-        RiemannSolverType riemann_solver_;
+        RiemannKernel riemann_;
         Real *Vol_, *rho_, *drho_dt_;
         Vecd *vel_, *force_;
         Real *contact_Vol_;

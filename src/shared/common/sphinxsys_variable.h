@@ -51,9 +51,9 @@ template <typename DataType>
 class DataView
 {
   public:
-    DataView(DataType *data) : data_(data) {};
+    DataView(DataType *data) : data_(data){};
 
-    DataType &operator[](UnsignedInt index)
+    DataType &operator[](UnsignedInt index) const
     {
         return *(data_ + index);
     }
@@ -67,12 +67,12 @@ class EntryView
 {
   public:
     EntryView(DataType *data, UnsignedInt entry, UnsignedInt width)
-        : data_(data), entry_(entry), width_(width) {};
+        : data_(data), entry_(entry), width_(width){};
 
-    UnsignedInt Entry() { return entry_; };
-    UnsignedInt Width() { return width_; };
+    UnsignedInt Entry() const { return entry_; };
+    UnsignedInt Width() const { return width_; };
 
-    DataType &operator[](UnsignedInt index)
+    DataType &operator[](UnsignedInt index) const
     {
         return *(data_ + entry_ + index * width_);
     }
@@ -87,11 +87,11 @@ class MultiEntryView
 {
   public:
     MultiEntryView(DataType *data, UnsignedInt width)
-        : data_(data), width_(width) {};
+        : data_(data), width_(width){};
 
-    UnsignedInt Width() { return width_; };
+    UnsignedInt Width() const { return width_; };
 
-    DataType *operator[](UnsignedInt index)
+    DataType *operator[](UnsignedInt index) const
     {
         return data_ + index * width_;
     }
@@ -104,8 +104,8 @@ class MultiEntryView
 class Quantity
 {
   public:
-    explicit Quantity(const std::string &name) : name_(name) {};
-    virtual ~Quantity() {};
+    explicit Quantity(const std::string &name) : name_(name){};
+    virtual ~Quantity(){};
     std::string Name() const { return name_; };
     void setName(const std::string &name) { name_ = name; };
     Real getScalingRef() const { return scaling_ref_; };
@@ -134,7 +134,7 @@ class SingleVariable : public Quantity
 
   public:
     SingleVariable(const std::string &name, const DataType &value)
-        : Quantity(name), data_(new DataType(value)), delegated_(data_) {};
+        : Quantity(name), data_(new DataType(value)), delegated_(data_){};
 
     template <typename... Args>
     SingleVariable(const std::string &name, Args &&...args)
@@ -212,19 +212,18 @@ class DiscreteVariable : public Quantity
     DiscreteVariable(const std::string &name, UnsignedInt size,
                      DataType initial_value = ZeroData<DataType>::value)
         : DiscreteVariable(name, size, [&](UnsignedInt index)
-                           { return initial_value; }) {};
+                           { return initial_value; }){};
 
     DiscreteVariable(const std::string &name, UnsignedInt size,
                      const MultiEntryTag &tag, UnsignedInt width)
         : Quantity(name), size_(size), width_(width), data_(new DataType[size * width]),
           device_only_variable_(nullptr)
     {
-        fill([&](UnsignedInt index) // zero initialization
-             { return ZeroData<DataType>::value; }, 0, size * width);
-
         for (size_t i = 0; i < width; i++)
         {
             entry_names_.push_back(std::to_string(i));
+            fill([&](UnsignedInt index) // zero initialization
+                 { return ZeroData<DataType>::value; }, 0, size, i);
         }
     };
 

@@ -36,14 +36,12 @@
 #define BASE_MATERIAL_H
 
 #include "data_type.h"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {
 class BaseParticles;
 class SPHSystem;
-
-template <typename T>
-class DiscreteVariable;
 
 /** @class  BaseMaterial
  *  @brief Base of all materials
@@ -54,7 +52,7 @@ class BaseMaterial
 {
   public:
     BaseMaterial() : material_type_name_("BaseMaterial"){};
-    virtual ~BaseMaterial(){};
+    virtual ~BaseMaterial();
     std::string Name();
     void setName(const std::string &name) { material_name_ = name; };
     std::string MaterialType() { return material_type_name_; }
@@ -72,6 +70,7 @@ class BaseMaterial
   protected:
     std::string material_type_name_;
     std::string material_name_;
+    UniquePtrsKeeper<Quantity> unique_entity_ptrs_;
 };
 
 class MatterMaterial : public BaseMaterial
@@ -82,8 +81,10 @@ class MatterMaterial : public BaseMaterial
   public:
     explicit MatterMaterial();
     virtual ~MatterMaterial(){};
+    DiscreteVariable<Real> *dvDensity() const { return dv_rho_; };
+    DiscreteVariable<Real> *dvMass() const { return dv_mass_; };
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
-    virtual Real ReferenceDensity() = 0;
+    virtual Real ReferenceDensity() const = 0;
 };
 
 /** @class  Fluid
@@ -98,7 +99,7 @@ class Fluid : public MatterMaterial
     virtual Real getPressure(Real rho, Real rho_e) { return getPressure(rho); };
     virtual Real DensityFromPressure(Real p) = 0;
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
-    virtual Real ReferenceSoundSpeed() = 0;
+    virtual Real ReferenceSoundSpeed() const = 0;
 };
 
 class SolidContact
@@ -128,7 +129,7 @@ class Solid : public MatterMaterial, public SolidContact
     explicit Solid(Real rho0) : Solid(rho0, 1.0){};
     Solid() : Solid(1.0){};
     virtual ~Solid(){};
-    virtual Real ReferenceDensity() override { return rho0_; };
+    virtual Real ReferenceDensity() const override { return rho0_; };
     /** Get average velocity when interacting with fluid. */
     virtual Vecd *AverageVelocity(BaseParticles *base_particles);
     /** Get average acceleration when interacting with fluid. */

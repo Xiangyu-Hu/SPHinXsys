@@ -63,7 +63,7 @@ PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTy
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.correction_method_),
-      riemann_solver_(encloser.riemann_solver_),
+      riemann_(ex_policy, encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       p_(encloser.dv_p_->DelegatedData(ex_policy)),
@@ -87,7 +87,7 @@ void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
         Vecd nablaW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j] * this->e_ij(index_i, index_j);
         Matd stress_tensor_j = degradeToMatd(stress_tensor_3D_[index_j]);
         force += mass_[index_i] * rho_[index_j] * ((stress_tensor_i + stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
-        rho_dissipation += riemann_solver_.DissipativeUJump(index_i, index_j, p_[index_i] - p_[index_j]) * dW_ijV_j;
+        rho_dissipation += riemann_.DissipativeUJump(index_i, index_j, p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
     force_[index_i] += force;
     drho_dt_[index_i] = rho_dissipation * rho_[index_i];
@@ -125,7 +125,7 @@ PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
       correction_(ex_policy, encloser.correction_method_),
-      riemann_solver_(encloser.riemann_solver_),
+      riemann_(ex_policy, encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
@@ -155,7 +155,7 @@ void PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectio
         Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_[index_j]).dot(-e_ij);
         Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
         force += 2 * mass_[index_i] * stress_tensor_i * dW_ijV_j * e_ij;
-        rho_dissipation += riemann_solver_.DissipativeUJump(index_i, index_j, p_[index_i] - p_in_wall) * dW_ijV_j;
+        rho_dissipation += riemann_.DissipativeUJump(index_i, index_j, p_[index_i] - p_in_wall) * dW_ijV_j;
     }
     force_[index_i] += force / rho_[index_i];
     drho_dt_[index_i] += rho_dissipation * rho_[index_i];
