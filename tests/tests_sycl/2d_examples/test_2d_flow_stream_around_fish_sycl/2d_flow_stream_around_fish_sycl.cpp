@@ -26,17 +26,17 @@ int main(int ac, char *av[])
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
 
-    SolidBody fish_body(sph_system, makeShared<FishBody>("FishBody"));
-    fish_body.defineAdaptationRatios(1.15, 2.0);
-    fish_body.defineMaterial<FishBodyComposite>();
-    fish_body.generateParticles<BaseParticles, Lattice>();
+    // SolidBody fish_body(sph_system, makeShared<FishBody>("FishBody"));
+    // fish_body.defineAdaptationRatios(1.15, 2.0);
+    // fish_body.defineMaterial<FishBodyComposite>();
+    // fish_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relations.
     //----------------------------------------------------------------------
-    Inner<> fish_inner(fish_body, ConfigType::Lagrangian);
+    // Inner<> fish_inner(fish_body, ConfigType::Lagrangian);
     Inner<> water_block_inner(water_block);
-    Contact<> water_block_contact(water_block, {&fish_body});
-    Contact<> fish_contact(fish_body, {&water_block});
+    Contact<> water_block_contact(water_block, {}); // empty — no fish body for fluid-only
+    // Contact<> fish_contact(fish_body, {&water_block});
     //----------------------------------------------------------------------
     //	Define SPH solver — all operators via ParticleMethodContainer.
     //----------------------------------------------------------------------
@@ -44,55 +44,55 @@ int main(int ac, char *av[])
 
     // CPU-only one-shot initialisation (no GPU CK version needed for these).
     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-    host_methods.addStateDynamics<NormalFromBodyShapeCK>(fish_body).exec();
-    host_methods.addStateDynamics<FishMaterialInitialization>(fish_body).exec();
+    // host_methods.addStateDynamics<NormalFromBodyShapeCK>(fish_body).exec();
+    // host_methods.addStateDynamics<FishMaterialInitialization>(fish_body).exec();
 
     // All GPU operators via main_methods (par_ck = MainExecutionPolicy).
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     //----------------------------------------------------------------------
     //	Configuration dynamics.
     //----------------------------------------------------------------------
-    auto &update_fish_cell_linked_list =
-        main_methods.addCellLinkedListDynamics(fish_body);
+    // auto &update_fish_cell_linked_list =
+    //     main_methods.addCellLinkedListDynamics(fish_body);
     auto &update_water_body_configuration =
         main_methods.addCellLinkedListDynamics(water_block);
 
     // fish_inner is Lagrangian — built once during init, never rebuilt.
-    auto &fish_inner_build =
-        main_methods.addRelationDynamics(fish_inner);
+    // auto &fish_inner_build =
+    //     main_methods.addRelationDynamics(fish_inner);
     auto &water_body_update_complex_relation =
         main_methods.addRelationDynamics(water_block_inner, water_block_contact);
-    auto &fish_contact_relation =
-        main_methods.addRelationDynamics(fish_contact);
+    // auto &fish_contact_relation =
+    //     main_methods.addRelationDynamics(fish_contact);
     auto &particle_sort =
         main_methods.addSortDynamics(water_block);
     //----------------------------------------------------------------------
     //	Solid correction matrix (Lagrangian — computed once, stays fixed).
     //----------------------------------------------------------------------
-    auto &fish_body_corrected_configuration =
-        main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(fish_inner);
+    // auto &fish_body_corrected_configuration =
+    //     main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(fish_inner);
     //----------------------------------------------------------------------
     //	FSI average velocity / acceleration for dummy particle boundary condition.
     //----------------------------------------------------------------------
-    auto &initialize_displacement =
-        main_methods.addStateDynamics<InitializeDisplacementCK>(fish_body);
-    auto &update_average_velocity =
-        main_methods.addStateDynamics<UpdateAverageVelocityAndAccelerationCK>(fish_body);
+    // auto &initialize_displacement =
+    //     main_methods.addStateDynamics<InitializeDisplacementCK>(fish_body);
+    // auto &update_average_velocity =
+    //     main_methods.addStateDynamics<UpdateAverageVelocityAndAccelerationCK>(fish_body);
     //----------------------------------------------------------------------
     //	Solid dynamics.
     //----------------------------------------------------------------------
-    auto &imposing_active_strain =
-        main_methods.addStateDynamics<ImposingActiveStrain>(fish_body);
-    auto &fish_body_stress_relaxation_first_half =
-        main_methods.addInteractionDynamicsOneLevel<
-            solid_dynamics::StructureIntegration1stHalfPK2, FishBodyComposite>(fish_inner);
-    auto &fish_body_stress_relaxation_second_half =
-        main_methods.addInteractionDynamicsOneLevel<
-            solid_dynamics::StructureIntegration2ndHalf>(fish_inner);
-    auto &fish_body_computing_time_step_size =
-        main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(fish_body);
-    auto &fish_body_update_normal =
-        main_methods.addStateDynamics<solid_dynamics::UpdateElasticNormalDirectionCK>(fish_body);
+    // auto &imposing_active_strain =
+    //     main_methods.addStateDynamics<ImposingActiveStrain>(fish_body);
+    // auto &fish_body_stress_relaxation_first_half =
+    //     main_methods.addInteractionDynamicsOneLevel<
+    //         solid_dynamics::StructureIntegration1stHalfPK2, FishBodyComposite>(fish_inner);
+    // auto &fish_body_stress_relaxation_second_half =
+    //     main_methods.addInteractionDynamicsOneLevel<
+    //         solid_dynamics::StructureIntegration2ndHalf>(fish_inner);
+    // auto &fish_body_computing_time_step_size =
+    //     main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(fish_body);
+    // auto &fish_body_update_normal =
+    //     main_methods.addStateDynamics<solid_dynamics::UpdateElasticNormalDirectionCK>(fish_body);
     //----------------------------------------------------------------------
     //	Gravity (startup ramp, zero net acceleration for fish case).
     //----------------------------------------------------------------------
@@ -115,8 +115,6 @@ int main(int ac, char *av[])
             .addPostContactInteraction(water_block_contact)
             .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeStream>(water_block);
 
-    // FreeStreamCondition as post-process of acoustic 1st half —
-    // matches CPU post_processes_ pattern, runs on GPU after each acoustic half-step.
     StartupToConstantInflowSpeed free_stream_speed(U_f, 2.0);
     auto &fluid_acoustic_step_1st_half =
         main_methods.addInteractionDynamicsOneLevel<
@@ -157,15 +155,15 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	FSI: forces on solid from fluid.
     //----------------------------------------------------------------------
-    auto &viscous_force_from_fluid =
-        main_methods.addInteractionDynamics<
-            FSI::ViscousForceOnStructure<
-                fluid_dynamics::ViscousForceCK<Contact<Wall, Viscosity, NoKernelCorrectionCK>>>>(fish_contact);
-    auto &pressure_force_from_fluid =
-        main_methods.addInteractionDynamics<
-            FSI::PressureForceOnStructure<
-                fluid_dynamics::AcousticStep2ndHalf<
-                    Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>>(fish_contact);
+    // auto &viscous_force_from_fluid =
+    //     main_methods.addInteractionDynamics<
+    //         FSI::ViscousForceOnStructure<
+    //             fluid_dynamics::ViscousForceCK<Contact<Wall, Viscosity, NoKernelCorrectionCK>>>>(fish_contact);
+    // auto &pressure_force_from_fluid =
+    //     main_methods.addInteractionDynamics<
+    //         FSI::PressureForceOnStructure<
+    //             fluid_dynamics::AcousticStep2ndHalf<
+    //                 Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>>(fish_contact);
     //----------------------------------------------------------------------
     //	Free-stream boundary: emitter injection, inflow condition, disposer.
     //----------------------------------------------------------------------
@@ -193,8 +191,8 @@ int main(int ac, char *av[])
         main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     body_state_recorder.addToWrite<Real>(water_block, "Pressure");
     body_state_recorder.addToWrite<int>(water_block, "Indicator");
-    body_state_recorder.addToWrite<int>(fish_body, "MaterialID");
-    body_state_recorder.addToWrite<Matd>(fish_body, "ActiveStrain");
+    // body_state_recorder.addToWrite<int>(fish_body, "MaterialID");
+    // body_state_recorder.addToWrite<Matd>(fish_body, "ActiveStrain");
 
     Gravity gravity(Vecd::Zero());
     ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>
@@ -218,11 +216,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Initialisation.
     //----------------------------------------------------------------------
-    update_fish_cell_linked_list.exec();
+    // update_fish_cell_linked_list.exec();
     update_water_body_configuration.exec();
-    fish_inner_build.exec();
-    fish_contact_relation.exec();
-    fish_body_corrected_configuration.exec();
+    // fish_inner_build.exec();
+    // fish_contact_relation.exec();
+    // fish_body_corrected_configuration.exec();
 
     apply_gravity_force.exec();
     fluid_boundary_indicator.exec();
@@ -230,7 +228,7 @@ int main(int ac, char *av[])
     water_advection_step_setup.exec();
     transport_correction.exec();
     fluid_viscous_force.exec();
-    viscous_force_from_fluid.exec();
+    // viscous_force_from_fluid.exec();
 
     body_state_recorder.writeToFile();
     write_water_mechanical_energy.writeToFile(number_of_iterations);
@@ -238,7 +236,6 @@ int main(int ac, char *av[])
     TickCount t1 = TickCount::now();
     TimeInterval interval;
     TimeInterval interval_acoustic_step;
-    size_t total_inner_ite_dt_s = 0; // accumulated solid sub-steps per advection step
 
     //----------------------------------------------------------------------
     //	Main loop — TimeStepper manages physical time and acoustic stepping.
@@ -253,25 +250,25 @@ int main(int ac, char *av[])
 
         fluid_acoustic_step_1st_half.exec(acoustic_dt); // FreeStreamCondition runs here
         inflow_condition.exec();
-        pressure_force_from_fluid.exec();               // every acoustic step (matches CPU)
+        // pressure_force_from_fluid.exec();
         fluid_acoustic_step_2nd_half.exec(acoustic_dt);
 
-        Real dt_s_raw = fish_body_computing_time_step_size.exec();
-        int solid_sub_div = (dt_s_raw > Real(0))
-            ? static_cast<int>(acoustic_dt / dt_s_raw) + 2
-            : 33;
-        initialize_displacement.exec();
-        time_stepper.integrateMatchedTimeInterval(
-            acoustic_dt, solid_sub_div,
-            [&](Real dt_s)
-            {
-                imposing_active_strain.exec();
-                fish_body_stress_relaxation_first_half.exec(dt_s);
-                fish_body_stress_relaxation_second_half.exec(dt_s);
-            });
-        total_inner_ite_dt_s += static_cast<size_t>(solid_sub_div);
+        // Solid sub-loop removed for fluid-only mode.
+        // Real dt_s_raw = fish_body_computing_time_step_size.exec();
+        // int solid_sub_div = (dt_s_raw > Real(0))
+        //     ? static_cast<int>(acoustic_dt / dt_s_raw) + 2
+        //     : 33;
+        // initialize_displacement.exec();
+        // time_stepper.integrateMatchedTimeInterval(
+        //     acoustic_dt, solid_sub_div,
+        //     [&](Real dt_s)
+        //     {
+        //         imposing_active_strain.exec();
+        //         fish_body_stress_relaxation_first_half.exec(dt_s);
+        //         fish_body_stress_relaxation_second_half.exec(dt_s);
+        //     });
 
-        update_average_velocity.exec(acoustic_dt);
+        // update_average_velocity.exec(acoustic_dt);
 
         interval_acoustic_step += TickCount::now() - time_instance;
         //------------------------------------------------------------------
@@ -283,24 +280,20 @@ int main(int ac, char *av[])
             Real Dt = advection_trigger.getInterval();
             water_update_particle_position.exec();
 
-            //	Solid FSI viscous force (once per advection step).
-            viscous_force_from_fluid.exec();
-            fish_body_update_normal.exec();
+            // viscous_force_from_fluid.exec();
+            // fish_body_update_normal.exec();
 
-            //	Screen output — matches CPU fish case format exactly.
+            //	Screen output.
             if (number_of_iterations % screen_output_interval == 0)
             {
-                // Dt/dt: acoustic steps per advection step
                 size_t inner_ite_dt = static_cast<size_t>(Dt / time_stepper.getGlobalTimeStepSize());
                 std::cout << std::fixed << std::setprecision(9)
                           << "N=" << number_of_iterations
                           << "  Time=" << time_stepper.getPhysicalTime()
                           << "  Dt=" << Dt
-                          << "  Dt/dt=" << inner_ite_dt
-                          << "  dt/dt_s=" << total_inner_ite_dt_s << "\n";
+                          << "  Dt/dt=" << inner_ite_dt << "\n";
                 write_water_mechanical_energy.writeToFile(number_of_iterations);
             }
-            total_inner_ite_dt_s = 0; // reset for next advection step
 
             //	VTP output every D_Time.
             if (state_recording_trigger())
@@ -319,7 +312,7 @@ int main(int ac, char *av[])
                 particle_sort.exec();
 
             update_water_body_configuration.exec();
-            fish_contact_relation.exec();
+            // fish_contact_relation.exec();
 
             //	Advection-level fluid operators for next Dt.
             apply_gravity_force.exec();
