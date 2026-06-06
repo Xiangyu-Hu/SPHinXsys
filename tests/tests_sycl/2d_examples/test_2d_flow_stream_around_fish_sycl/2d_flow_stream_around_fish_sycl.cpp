@@ -23,20 +23,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
     water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
-    ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
+    ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.8);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
 
-    // SolidBody fish_body(sph_system, makeShared<FishBody>("FishBody"));
-    // fish_body.defineAdaptationRatios(1.15, 2.0);
-    // fish_body.defineMaterial<FishBodyComposite>();
-    // fish_body.generateParticles<BaseParticles, Lattice>();
+    SolidBody fish_body(sph_system, makeShared<FishBody>("FishBody"));
+    fish_body.defineAdaptationRatios(1.15, 2.0);
+    fish_body.defineMaterial<FishBodyComposite>();
+    fish_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relations.
     //----------------------------------------------------------------------
-    // Inner<> fish_inner(fish_body, ConfigType::Lagrangian);
+    Inner<> fish_inner(fish_body, ConfigType::Lagrangian);
     Inner<> water_block_inner(water_block);
-    Contact<> water_block_contact(water_block, {}); // empty — no fish body for fluid-only
-    // Contact<> fish_contact(fish_body, {&water_block});
+    Contact<> water_block_contact(water_block, {&fish_body}); // fish as stationary wall
+    Contact<> fish_contact(fish_body, {&water_block});
     //----------------------------------------------------------------------
     //	Define SPH solver — all operators via ParticleMethodContainer.
     //----------------------------------------------------------------------
@@ -44,33 +44,33 @@ int main(int ac, char *av[])
 
     // CPU-only one-shot initialisation (no GPU CK version needed for these).
     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-    // host_methods.addStateDynamics<NormalFromBodyShapeCK>(fish_body).exec();
-    // host_methods.addStateDynamics<FishMaterialInitialization>(fish_body).exec();
+    host_methods.addStateDynamics<NormalFromBodyShapeCK>(fish_body).exec();
+    host_methods.addStateDynamics<FishMaterialInitialization>(fish_body).exec();
 
     // All GPU operators via main_methods (par_ck = MainExecutionPolicy).
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     //----------------------------------------------------------------------
     //	Configuration dynamics.
     //----------------------------------------------------------------------
-    // auto &update_fish_cell_linked_list =
-    //     main_methods.addCellLinkedListDynamics(fish_body);
-    auto &update_water_body_configuration =
-        main_methods.addCellLinkedListDynamics(water_block);
+    auto &update_fish_cell_linked_list =
+        main_methods.addCellLinkedListDynamics(fish_body);
+    // Group water CLL + relation rebuild — both run on every update_water_body_configuration.exec().
+    ParticleDynamicsGroup update_water_body_configuration;
+    update_water_body_configuration.add(&main_methods.addCellLinkedListDynamics(water_block));
+    update_water_body_configuration.add(&main_methods.addRelationDynamics(water_block_inner, water_block_contact));
 
     // fish_inner is Lagrangian — built once during init, never rebuilt.
-    // auto &fish_inner_build =
-    //     main_methods.addRelationDynamics(fish_inner);
-    auto &water_body_update_complex_relation =
-        main_methods.addRelationDynamics(water_block_inner, water_block_contact);
-    // auto &fish_contact_relation =
-    //     main_methods.addRelationDynamics(fish_contact);
+    auto &fish_inner_build =
+        main_methods.addRelationDynamics(fish_inner);
+    auto &fish_contact_relation =
+        main_methods.addRelationDynamics(fish_contact);
     auto &particle_sort =
         main_methods.addSortDynamics(water_block);
     //----------------------------------------------------------------------
     //	Solid correction matrix (Lagrangian — computed once, stays fixed).
     //----------------------------------------------------------------------
-    // auto &fish_body_corrected_configuration =
-    //     main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(fish_inner);
+    auto &fish_body_corrected_configuration =
+        main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(fish_inner);
     //----------------------------------------------------------------------
     //	FSI average velocity / acceleration for dummy particle boundary condition.
     //----------------------------------------------------------------------
@@ -191,6 +191,8 @@ int main(int ac, char *av[])
         main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     body_state_recorder.addToWrite<Real>(water_block, "Pressure");
     body_state_recorder.addToWrite<int>(water_block, "Indicator");
+    body_state_recorder.addToWrite<Real>(water_block, "PositionDivergence");
+    body_state_recorder.addToWrite<Real>(water_block, "DensitySummation");
     // body_state_recorder.addToWrite<int>(fish_body, "MaterialID");
     // body_state_recorder.addToWrite<Matd>(fish_body, "ActiveStrain");
 
@@ -216,11 +218,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Initialisation.
     //----------------------------------------------------------------------
-    // update_fish_cell_linked_list.exec();
+    update_fish_cell_linked_list.exec();
     update_water_body_configuration.exec();
-    // fish_inner_build.exec();
-    // fish_contact_relation.exec();
-    // fish_body_corrected_configuration.exec();
+    fish_inner_build.exec();
+    fish_contact_relation.exec();
+    fish_body_corrected_configuration.exec();
 
     apply_gravity_force.exec();
     fluid_boundary_indicator.exec();
@@ -308,11 +310,15 @@ int main(int ac, char *av[])
             disposer_indication.exec();
             particle_deletion.exec();
 
-            if (number_of_iterations % 100 == 0)
-                particle_sort.exec();
+            // Sort disabled: GPU sort of 52k+ particles causes NaN (uninitialized reserve
+            // particles mixed into active array during sort). Buffer increased to 0.8x to
+            // accommodate particle growth from emitter without overflow.
+            // TODO: fix root cause — guard sort against reserve particles.
+            // if (number_of_iterations % 100 == 0)
+            //     particle_sort.exec();
 
             update_water_body_configuration.exec();
-            // fish_contact_relation.exec();
+            fish_contact_relation.exec();
 
             //	Advection-level fluid operators for next Dt.
             apply_gravity_force.exec();
