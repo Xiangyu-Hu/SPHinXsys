@@ -51,7 +51,7 @@ class SPHSystem;
 class BaseMaterial
 {
   public:
-    BaseMaterial() : material_type_name_("BaseMaterial"){};
+    BaseMaterial() : material_type_name_("BaseMaterial") {};
     virtual ~BaseMaterial();
     std::string Name();
     void setName(const std::string &name) { material_name_ = name; };
@@ -63,7 +63,7 @@ class BaseMaterial
      * one need assign the base particle to that material too.
      */
     void setLocalParameters(SPHSystem &sph_system, BaseParticles *base_particles);
-    virtual void registerLocalParameters(BaseParticles *base_particles) = 0;
+    virtual void registerLocalParametersToReload(BaseParticles *base_particles) = 0;
     virtual void registerLocalParametersFromReload(BaseParticles *base_particles) = 0;
     virtual void initializeLocalParameters(BaseParticles *base_particles) = 0;
 
@@ -80,9 +80,11 @@ class MatterMaterial : public BaseMaterial
 
   public:
     explicit MatterMaterial();
-    virtual ~MatterMaterial(){};
+    virtual ~MatterMaterial() {};
     DiscreteVariable<Real> *dvDensity() const { return dv_rho_; };
     DiscreteVariable<Real> *dvMass() const { return dv_mass_; };
+    virtual void registerLocalParametersToReload(BaseParticles *base_particles) override {};
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) override {};
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     virtual Real ReferenceDensity() const = 0;
 };
@@ -94,7 +96,7 @@ class Fluid : public MatterMaterial
 {
   public:
     explicit Fluid();
-    virtual ~Fluid(){};
+    virtual ~Fluid() {};
     virtual Real getPressure(Real rho) = 0;
     virtual Real getPressure(Real rho, Real rho_e) { return getPressure(rho); };
     virtual Real DensityFromPressure(Real p) = 0;
@@ -108,7 +110,7 @@ class SolidContact
     Real rho0_copy_; /**< reference density. */
   public:
     explicit SolidContact(Real rho0, Real contact_stiffness, Real contact_friction = 0.0);
-    virtual ~SolidContact(){};
+    virtual ~SolidContact() {};
     Real ContactReferenceDensity() { return rho0_copy_; };
     Real ContactFriction() { return contact_friction_; };
     Real ContactStiffness() { return contact_stiffness_; };
@@ -126,9 +128,9 @@ class Solid : public MatterMaterial, public SolidContact
 {
   public:
     Solid(Real rho0, Real contact_stiffness, Real contact_friction = 0.0);
-    explicit Solid(Real rho0) : Solid(rho0, 1.0){};
-    Solid() : Solid(1.0){};
-    virtual ~Solid(){};
+    explicit Solid(Real rho0) : Solid(rho0, 1.0) {};
+    Solid() : Solid(1.0) {};
+    virtual ~Solid() {};
     virtual Real ReferenceDensity() const override { return rho0_; };
     /** Get average velocity when interacting with fluid. */
     virtual Vecd *AverageVelocity(BaseParticles *base_particles);
