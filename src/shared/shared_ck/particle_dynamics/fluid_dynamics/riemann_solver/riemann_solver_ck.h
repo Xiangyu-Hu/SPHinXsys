@@ -49,7 +49,7 @@ class RiemannSolver<Base, FluidI, FluidJ>
   public:
     typedef FluidI SourceFluid;
     typedef FluidJ TargetFluid;
-    RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j) : fluid_i_(fluid_i), fluid_j_(fluid_j){};
+    RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j) : fluid_i_(fluid_i), fluid_j_(fluid_j) {};
 
     class ComputingKernel : public ImpedanceModel<FluidI, FluidJ>
     {
@@ -73,7 +73,7 @@ class RiemannSolver<NotUsed, FluidI, FluidJ> : public RiemannSolver<Base, FluidI
     using BaseRiemannSolver = RiemannSolver<Base, FluidI, FluidJ>;
 
   public:
-    RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j) : BaseRiemannSolver(fluid_i, fluid_j){};
+    RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j) : BaseRiemannSolver(fluid_i, fluid_j) {};
 
     class ComputingKernel : public BaseRiemannSolver::ComputingKernel
     {
