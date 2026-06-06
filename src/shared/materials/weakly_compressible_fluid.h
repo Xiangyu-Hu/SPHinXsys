@@ -126,7 +126,7 @@ class WeaklyCompressibleMixture : public Fluid
         template <class ExecutionPolicy, class EnclosureType>
         EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser)
             : c0_(encloser.c0_), c0_sq_(c0_ * c0_),
-              rho0_(encloser.dv_rho0_.DelegateDataView(ex_policy)){};
+              rho0_(encloser.dv_rho0_->DelegatedDataView(ex_policy)){};
 
         Real PressureFromDensity(UnsignedInt index_i, Real rho)
         {
