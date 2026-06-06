@@ -51,7 +51,7 @@ class WeaklyCompressibleFluid : public Fluid
   public:
     explicit WeaklyCompressibleFluid(Real rho0, Real c0);
     explicit WeaklyCompressibleFluid(ConstructArgs<Real, Real> args);
-    virtual ~WeaklyCompressibleFluid(){};
+    virtual ~WeaklyCompressibleFluid() {};
     virtual Real ReferenceDensity() const override { return rho0_; };
     virtual Real ReferenceSoundSpeed() const override { return c0_; };
     virtual Real getPressure(Real rho) override;
@@ -111,6 +111,14 @@ class WeaklyCompressibleMixture : public Fluid
     DiscreteVariable<Real> *dvReferenceDensity() const { return dv_rho0_; };
     DiscreteVariable<Real> *dvMassFraction() const { return dv_Y_list_; };
     ConstantArray<Real> *caInvReferenceDensity() const { return ca_inv_rho0_list_; };
+    // the following virtual functions are as they are deprecated for computing kernel
+    // based implementations, but we keep them for backward compatibility
+    [[deprecated("Use WeaklyCompressibleMixture::EosKernel::PressureFromDensity() instead.")]]
+    Real getPressure(Real rho) override;
+    [[deprecated("Use WeaklyCompressibleMixture::EosKernel::DensityFromPressure() instead.")]]
+    Real DensityFromPressure(Real p) override;
+    [[deprecated("Use WeaklyCompressibleMixture::EosKernel::getSoundSpeed() instead.")]]
+    Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
 
     class EosKernel
     {

@@ -56,4 +56,19 @@ void WeaklyCompressibleMixture::initializeLocalParameters(BaseParticles *base_pa
     base_particles->addVariableToWrite<Real>(dv_Y_list_);
 }
 //=================================================================================================//
+Real WeaklyCompressibleMixture::getPressure(Real rho)
+{
+    return c0_ * c0_ * (rho - ReferenceDensity());
+}
+//=================================================================================================//
+Real WeaklyCompressibleMixture::DensityFromPressure(Real p)
+{
+    return ReferenceDensity() + p / (c0_ * c0_);
+}
+//=================================================================================================//
+Real WeaklyCompressibleMixture::getSoundSpeed(Real p, Real rho)
+{
+    return c0_;
+}
+//=================================================================================================//
 } // namespace SPH
