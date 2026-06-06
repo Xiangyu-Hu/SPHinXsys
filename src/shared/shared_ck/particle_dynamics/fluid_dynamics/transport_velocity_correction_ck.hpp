@@ -33,7 +33,7 @@ TransportVelocityCorrectionCK<DynamicsIdentifier, LimiterType, ParticleScopes...
       h_ratio_(ex_policy, encloser.adaptation_), limiter_(encloser.limiter_),
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
       kernel_gradient_integral_(encloser.dv_kernel_gradient_integral_->DelegatedData(ex_policy)),
-      within_scope_(ex_policy, encloser.within_scope_method_, *this) {}
+      within_scope_(ex_policy, encloser.within_scope_method_) {}
 //=================================================================================================//
 template <class DynamicsIdentifier, class LimiterType, typename... ParticleScopes>
 void TransportVelocityCorrectionCK<DynamicsIdentifier, LimiterType, ParticleScopes...>::

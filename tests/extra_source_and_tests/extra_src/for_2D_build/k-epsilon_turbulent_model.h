@@ -281,7 +281,7 @@ class TurbuViscousForce<DataDelegationType> : public ViscousForce<DataDelegation
     Vecd *velo_friction_;
     Real *y_p_;
     int *is_near_wall_P2_;
-    Viscosity viscosity_;
+    Viscosity &viscosity_;
     Real molecular_viscosity_;
     Real c0_;
 };

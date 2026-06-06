@@ -98,9 +98,6 @@ void block_sliding(
     auto slope_translation = Vec3d(0.5 * slope_length, -(0.65 * resolution_cube + 1.15 * resolution_slope), 0);
     auto mesh_slope = std::make_shared<TriangleMeshShapeBrick>(0.5 * Vec3d(slope_length, resolution_slope, slope_width), 5, slope_translation, "Slope");
 
-    // Material models
-    auto material_cube = makeShared<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-
     // System bounding box
     BoundingBoxd bb_system = union_bounding_box(mesh_cube->getBounds(), mesh_slope->getBounds());
 
@@ -109,12 +106,12 @@ void block_sliding(
 
     // Create objects
     SolidBody cube_body(system, mesh_cube);
-    cube_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(*material_cube.get());
+    cube_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     cube_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody slope_body(system, mesh_slope);
     slope_body.defineAdaptationRatios(1.15, resolution_cube / resolution_slope);
-    slope_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(*material_cube.get());
+    slope_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     slope_body.generateParticles<SurfaceParticles, Wall>(slope_translation, slope_length, slope_width, resolution_slope);
 
     // Inner relation

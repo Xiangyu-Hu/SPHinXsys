@@ -107,7 +107,7 @@ PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrectionTy
     : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
       acc_ave_(encloser.dv_acc_ave_->DelegatedData(ex_policy)),
       n_(encloser.dv_n_->DelegatedData(ex_policy)),
-      riemann_solver_(encloser.contact_riemann_solver_[contact_index]),
+      riemann_(ex_policy, encloser.contact_riemann_solver_[contact_index]),
       contact_rho_(encloser.dv_contact_rho_[contact_index]->DelegatedData(ex_policy)),
       contact_mass_(encloser.dv_contact_mass_[contact_index]->DelegatedData(ex_policy)),
       contact_p_(encloser.dv_contact_p_[contact_index]->DelegatedData(ex_policy)),
@@ -130,7 +130,7 @@ void PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrect
         Real p_j_in_wall = contact_p_[index_j] + contact_rho_[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
         Vecd face_to_fluid_n = -SGN(corrected_e_ij.dot(n_[index_i])) * n_[index_i];
         Real u_jump = 2.0 * (this->contact_vel_[index_j] - this->vel_ave_[index_i]).dot(face_to_fluid_n);
-        force -= (riemann_solver_.DissipativePJump(index_j, index_i, u_jump) * face_to_fluid_n +
+        force -= (riemann_.DissipativePJump(index_j, index_i, u_jump) * face_to_fluid_n +
                   (p_j_in_wall + contact_p_[index_j]) * corrected_e_ij) *
                  this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j];
     }

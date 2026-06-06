@@ -42,7 +42,7 @@ class GeneralContinuum : public WeaklyCompressibleFluid, public SolidContact
     Real nu_; /* Poisson ratio  */
   public:
     explicit GeneralContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio);
-    virtual ~GeneralContinuum() {};
+    virtual ~GeneralContinuum(){};
     Real getYoungsModulus() { return E_; };
     Real getPoissonRatio() { return nu_; };
     Real ShearModulus() { return G_; };
@@ -94,7 +94,7 @@ class PlasticContinuum : public GeneralContinuum
   public:
     explicit PlasticContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio,
                               Real friction_angle, Real cohesion = 0, Real dilatancy = 0);
-    virtual ~PlasticContinuum() {};
+    virtual ~PlasticContinuum(){};
     Real getDPConstantsA(Real friction_angle);
     Real getDPConstantsK(Real cohesion, Real friction_angle);
     Real getFrictionAngle() { return phi_; };
@@ -137,7 +137,7 @@ class J2Plasticity : public GeneralContinuum
   public:
     explicit J2Plasticity(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio,
                           Real yield_stress, Real hardening_modulus = 0.0);
-    virtual ~J2Plasticity() {};
+    virtual ~J2Plasticity(){};
     Real YieldStress() { return yield_stress_; };
     Real HardeningModulus() { return hardening_modulus_; };
     Matd ConstitutiveRelationShearStressWithHardening(Matd &velocity_gradient, Matd &shear_stress, Real &hardening_factor);
@@ -169,7 +169,8 @@ class J2Plasticity : public GeneralContinuum
     class EosKernel : public GeneralContinuum::EosKernel
     {
       public:
-        EosKernel(J2Plasticity &encloser);
+        template <typename ExecutionPolicy>
+        EosKernel(const ExecutionPolicy &ex_policy, J2Plasticity &encloser);
         Real getPressure(Real rho);
 
       protected:

@@ -46,6 +46,7 @@ class PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
     using ConstituteKernel = typename PlasticContinuum::ConstituteKernel;
     using BaseInteraction = PlasticAcousticStep<Interaction<Inner<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+    using RiemannKernel = typename RiemannSolverType::ComputingKernel;
 
   public:
     template <class DynamicsIdentifier>
@@ -72,7 +73,7 @@ class PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
 
       protected:
         CorrectionKernel correction_;
-        RiemannSolverType riemann_solver_;
+        RiemannKernel riemann_;
         Real *Vol_, *rho_, *drho_dt_;
         Vecd *vel_, *force_;
         Matd *velocity_gradient_;
@@ -103,6 +104,7 @@ class PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
 {
     using BaseInteraction = PlasticAcousticStep<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+    using RiemannKernel = typename RiemannSolverType::ComputingKernel;
 
   public:
     template <class DynamicsIdentifier>
@@ -118,7 +120,7 @@ class PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
 
       protected:
         CorrectionKernel correction_;
-        RiemannSolverType riemann_solver_;
+        RiemannKernel riemann_;
         Real *Vol_, *rho_, *drho_dt_;
         Vecd *vel_, *force_;
         Real *contact_Vol_;

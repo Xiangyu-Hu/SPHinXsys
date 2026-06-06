@@ -91,7 +91,7 @@ LocalDirectionalDiffusion::LocalDirectionalDiffusion(const std::string &species_
                                                      Vecd bias_direction, Real cv)
     : LocalDirectionalDiffusion(species_name, species_name, d_coeff, bias_d_coeff_, bias_direction, cv) {}
 //=================================================================================================//
-void LocalDirectionalDiffusion::registerLocalParameters(BaseParticles *base_particles)
+void LocalDirectionalDiffusion::registerLocalParametersToReload(BaseParticles *base_particles)
 {
     local_bias_direction_ = base_particles->registerStateVariableData<Vecd>("Fiber");
 }

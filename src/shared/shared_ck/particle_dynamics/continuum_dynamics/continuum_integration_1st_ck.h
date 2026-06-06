@@ -61,6 +61,7 @@ class PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
 {
     using BaseInteraction = PlasticAcousticStep<Interaction<Inner<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+    using RiemannKernel = typename RiemannSolverType::ComputingKernel;
 
   public:
     template <class DynamicsIdentifier>
@@ -89,7 +90,7 @@ class PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
 
       protected:
         CorrectionKernel correction_;
-        RiemannSolverType riemann_solver_;
+        RiemannKernel riemann_;
         Real *Vol_, *rho_, *p_, *drho_dt_, *mass_;
         Vecd *force_;
         Mat3d *stress_tensor_3D_;
@@ -118,10 +119,10 @@ class PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
 {
     using BaseInteraction = PlasticAcousticStep<Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
+    using RiemannKernel = typename RiemannSolverType::ComputingKernel;
 
-  public:
-    template <class DynamicsIdentifier>
-    explicit PlasticAcousticStep1stHalf(DynamicsIdentifier &identifier);
+        public : template <class DynamicsIdentifier>
+                 explicit PlasticAcousticStep1stHalf(DynamicsIdentifier &identifier);
     virtual ~PlasticAcousticStep1stHalf(){};
 
     class InteractKernel : public BaseInteraction::InteractKernel
@@ -133,7 +134,7 @@ class PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
 
       protected:
         CorrectionKernel correction_;
-        RiemannSolverType riemann_solver_;
+        RiemannKernel riemann_;
         Real *Vol_, *rho_, *mass_, *p_, *drho_dt_;
         Vecd *force_, *force_prior_;
         Mat3d *stress_tensor_3D_;

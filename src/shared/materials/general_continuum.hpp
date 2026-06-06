@@ -174,8 +174,9 @@ Real J2Plasticity::ConstituteKernel::HardeningFactorRate(
     return (f > TinyReal) ? 0.5 * f / (G_ + hardening_modulus_ / 3.0) : 0.0;
 }
 //=================================================================================================//
-inline J2Plasticity::EosKernel::EosKernel(J2Plasticity &encloser)
-    : GeneralContinuum::EosKernel(encloser), failure_tension_(encloser.failure_tension_) {}
+template <typename ExecutionPolicy>
+J2Plasticity::EosKernel::EosKernel(const ExecutionPolicy &ex_policy, J2Plasticity &encloser)
+    : GeneralContinuum::EosKernel(ex_policy, encloser), failure_tension_(encloser.failure_tension_) {}
 //=================================================================================================//
 inline Real J2Plasticity::EosKernel::getPressure(Real rho)
 {
