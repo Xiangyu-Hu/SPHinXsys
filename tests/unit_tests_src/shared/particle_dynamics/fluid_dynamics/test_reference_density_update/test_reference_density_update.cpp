@@ -50,7 +50,7 @@ class MixtureBlock : public ComplexShape
 };
 } // namespace
 
-TEST(ReferenceDesnityUpdate, UpdatesReferenceDensityAndMassFromMassFractions)
+TEST(ReferenceDensityUpdate, UpdatesReferenceDensityAndMassFromMassFractions)
 {
     Vecd lower_bound = ZeroData<Vecd>::value;
     Vecd upper_bound = ZeroData<Vecd>::value;
@@ -92,8 +92,8 @@ TEST(ReferenceDesnityUpdate, UpdatesReferenceDensityAndMassFromMassFractions)
         mass_fraction[i][1] = y_b;
     }
 
-    fluid_dynamics::ReferenceDesnityUpdate reference_density_update(mixture_body);
-    fluid_dynamics::ReferenceDesnityUpdate::UpdateKernel update_kernel(execution::ParallelPolicy{}, reference_density_update);
+    fluid_dynamics::ReferenceDensityUpdate reference_density_update(mixture_body);
+    fluid_dynamics::ReferenceDensityUpdate::UpdateKernel update_kernel(execution::ParallelPolicy{}, reference_density_update);
     for (UnsignedInt i = 0; i < total_particles; ++i)
     {
         update_kernel.update(i);

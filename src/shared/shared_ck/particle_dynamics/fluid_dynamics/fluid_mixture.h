@@ -37,10 +37,10 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class ReferenceDesnityUpdate : public LocalDynamics
+class ReferenceDensityUpdate : public LocalDynamics
 {
   public:
-    explicit ReferenceDesnityUpdate(SPHBody &sph_body)
+    explicit ReferenceDensityUpdate(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           fluid_mixture_(DynamicCast<WeaklyCompressibleMixture>(
               this, this->sph_body_->getMatterMaterial())),
@@ -48,13 +48,13 @@ class ReferenceDesnityUpdate : public LocalDynamics
           dv_Y_list_(fluid_mixture_.dvMassFraction()),
           dv_rho0_(fluid_mixture_.dvReferenceDensity()),
           dv_mass_(fluid_mixture_.dvMass()){};
-    virtual ~ReferenceDesnityUpdate(){};
+    virtual ~ReferenceDensityUpdate(){};
 
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy, ReferenceDesnityUpdate &encloser)
+        UpdateKernel(const ExecutionPolicy &ex_policy, ReferenceDensityUpdate &encloser)
             : inv_rho0_list_(encloser.ca_inv_rho0_list_->DelegatedDataView(ex_policy)),
               Y_list_(encloser.dv_Y_list_->DelegatedMultiEntryView(ex_policy)),
               rho0_(encloser.dv_rho0_->DelegatedDataView(ex_policy)),
