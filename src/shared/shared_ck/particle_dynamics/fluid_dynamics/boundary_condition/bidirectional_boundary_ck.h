@@ -226,14 +226,50 @@ class PressureVelocityCondition : public BaseLocalDynamics<OrientedBoxByCell>,
     DiscreteVariable<Vecd> *dv_kernel_gradient_integral_;
 };
 
+template <typename ConditionType>
+class SupplementaryCondition : public BaseLocalDynamics<OrientedBoxByCell>
+{
+    using ConditionKernel = typename ConditionType::ComputingKernel;
+
+  public:
+    template <typename... Args>
+    SupplementaryCondition(OrientedBoxByCell &oriented_box_part, Args &&...args);
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        OrientedBox *oriented_box_;
+        ConditionKernel condition_;
+        DataView<Vecd> pos_;
+    };
+
+  protected:
+    SingleVariable<OrientedBox> *sv_oriented_box_;
+    ConditionType condition_method_;
+    DiscreteVariable<Vecd> *dv_pos_;
+};
+
 class AbstractBidirectionalBoundary : public AbstractDynamics
 {
+
   public:
     AbstractBidirectionalBoundary() : AbstractDynamics() {};
     virtual void tagBufferParticles() = 0;
     virtual void applyBoundaryCondition(Real dt) = 0;
     virtual void injectParticles() = 0;
     virtual void indicateOutFlowParticles() = 0;
+    template <typename ExecutionPolicy, class ConditionType, typename... Args>
+    AbstractBidirectionalBoundary &addSupplementaryCondition(
+        OrientedBoxByCell &oriented_box_part, Args &&...args);
+
+  protected:
+    UniquePtrsKeeper<BaseDynamics<void>> supplementary_conditions_keeper_;
+    StdVec<BaseDynamics<void> *> supplementary_conditions_;
 };
 
 template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>
@@ -248,7 +284,12 @@ class BidirectionalBoundaryCK : public AbstractBidirectionalBoundary
     template <typename... Args>
     BidirectionalBoundaryCK(OrientedBoxByCell &oriented_box_part, Args &&...args);
     virtual void tagBufferParticles() override { tag_buffer_particles_.exec(); }
-    virtual void applyBoundaryCondition(Real dt) override { boundary_condition_.exec(dt); }
+    virtual void applyBoundaryCondition(Real dt) override
+    {
+        boundary_condition_.exec(dt);
+        for (size_t k = 0; k < this->supplementary_conditions_.size(); ++k)
+            supplementary_conditions_[k]->exec(dt);
+    }
     virtual void injectParticles() override { inflow_injection_.exec(); }
     virtual void indicateOutFlowParticles() override { outflow_indication_.exec(); }
 };
