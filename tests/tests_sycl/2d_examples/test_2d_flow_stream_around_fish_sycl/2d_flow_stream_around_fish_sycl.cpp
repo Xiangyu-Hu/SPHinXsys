@@ -177,9 +177,10 @@ int main(int ac, char *av[])
             fluid_dynamics::EmitterInflowConditionCK, StartupToConstantInflowSpeed>(
             emitter_buffer_part, free_stream_speed);
 
+    Vec2d correct_disposer_translation = Vec2d(DL, -0.25 * DH) + disposer_halfsize;
     AlignedBoxByCell disposer_part(
         water_block,
-        AlignedBox(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize));
+        AlignedBox(xAxis, Transform(Vec2d(correct_disposer_translation)), disposer_halfsize));
     auto &disposer_indication =
         main_methods.addStateDynamics<fluid_dynamics::WithinDisposerIndication>(disposer_part);
     auto &particle_deletion =
