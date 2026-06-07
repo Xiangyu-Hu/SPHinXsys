@@ -40,13 +40,12 @@ template <typename... Parameters>
 void CompressionSummation<Inner<Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    Real sigma = this->W0(index_i, zero_) * Vol_ref_[index_i];
+    compression_sum_[index_i] = this->W0(index_i, zero_) * Vol_ref_[index_i];
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        sigma += this->W_ij(index_i, index_j) * Vol_ref_[index_j];
+        compression_sum_[index_i] += this->W_ij(index_i, index_j) * Vol_ref_[index_j];
     }
-    compression_sum_[index_i] = sigma;
 }
 //=================================================================================================//
 template <typename... Parameters>
@@ -75,13 +74,11 @@ template <typename... Parameters>
 void CompressionSummation<Contact<Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    Real sigma(0);
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        sigma += this->W_ij(index_i, index_j) * contact_Vol_ref_[index_j];
+        compression_sum_[index_i] += this->W_ij(index_i, index_j) * contact_Vol_ref_[index_j];
     }
-    compression_sum_[index_i] = sigma;
 }
 //=================================================================================================//
 template <class DynamicsIdentifier, class FluidType, class FlowType, typename... ParticleScopes>
