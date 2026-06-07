@@ -1,0 +1,5 @@
+probe_id,quantity,x_start_mm,x_end_mm,y_mm,z_mm,frequencies_Hz,reference_status,notes
+COMSOL_Bz_line,"Bz magnetic flux density; COMSOL uses sign(real(mf.Bz))*abs(mf.Bz), mT",0,288,72,34,50;200,COMSOL table exists as multiturn_coil_asymmetric_conductor_table1.txt; muFEM A1-B1 CSV included,Line between aluminum plate and coil
+COMSOL_Jy_line,"Jy induced current density; COMSOL uses sign(real(mf.Jy))*abs(mf.Jy), A/m^2",0,288,72,18.99,50;200,COMSOL table exists as multiturn_coil_asymmetric_conductor_table2.txt; values not scraped from webpage,Line slightly below conductor surface; text also says z≈19 mm
+MU_FEM_A1_B1,Bz real/imag reference,0,288,72,34,50;200,CSV included,Raw public CSV values are Gauss; mT conversion included
+MU_FEM_A2_B2,Bz real/imag reference,0,288,144,34,50;200,CSV included,Raw public CSV values are Gauss; mT conversion included

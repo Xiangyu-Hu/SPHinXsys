@@ -1,0 +1,9 @@
+STRING(REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
+PROJECT("${CURRENT_FOLDER}")
+
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
+
+add_executable(${PROJECT_NAME} test_3d_aphi_ck_gmres_interface_flux_matched_manufactured.cpp)
+target_link_libraries(${PROJECT_NAME} sphinxsys_3d extra_sources_3d)
+set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")

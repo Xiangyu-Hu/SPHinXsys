@@ -1,0 +1,13 @@
+STRING(REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
+PROJECT("${CURRENT_FOLDER}")
+SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
+SET(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
+SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
+
+file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
+file(MAKE_DIRECTORY ${BUILD_RELOAD_PATH})
+include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/team7_native_reload_sync.cmake)
+
+add_executable(${PROJECT_NAME} test_3d_aphi_ck_team7_native_geometry_audit.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE sphinxsys_3d extra_sources_3d)
+set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")

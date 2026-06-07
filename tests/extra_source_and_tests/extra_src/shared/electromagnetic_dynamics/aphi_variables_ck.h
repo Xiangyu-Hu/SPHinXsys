@@ -70,6 +70,26 @@ class InitializeAphiVariablesCK : public LocalDynamics
         Real *t_phi_real_;
         Real *t_phi_imag_;
 
+        Vecd *v_old_a_real_;
+        Vecd *v_old_a_imag_;
+        Real *v_old_phi_real_;
+        Real *v_old_phi_imag_;
+
+        Vecd *z_a_real_;
+        Vecd *z_a_imag_;
+        Real *z_phi_real_;
+        Real *z_phi_imag_;
+
+        Vecd *y_a_real_;
+        Vecd *y_a_imag_;
+        Real *y_phi_real_;
+        Real *y_phi_imag_;
+
+        Vecd *true_residual_a_real_;
+        Vecd *true_residual_a_imag_;
+        Real *true_residual_phi_real_;
+        Real *true_residual_phi_imag_;
+
         Real *sigma_;
         Real *nu_;
         Real default_sigma_;
@@ -126,6 +146,26 @@ class InitializeAphiVariablesCK : public LocalDynamics
     DiscreteVariable<Vecd> *dv_t_a_imag_;
     DiscreteVariable<Real> *dv_t_phi_real_;
     DiscreteVariable<Real> *dv_t_phi_imag_;
+
+    DiscreteVariable<Vecd> *dv_v_old_a_real_;
+    DiscreteVariable<Vecd> *dv_v_old_a_imag_;
+    DiscreteVariable<Real> *dv_v_old_phi_real_;
+    DiscreteVariable<Real> *dv_v_old_phi_imag_;
+
+    DiscreteVariable<Vecd> *dv_z_a_real_;
+    DiscreteVariable<Vecd> *dv_z_a_imag_;
+    DiscreteVariable<Real> *dv_z_phi_real_;
+    DiscreteVariable<Real> *dv_z_phi_imag_;
+
+    DiscreteVariable<Vecd> *dv_y_a_real_;
+    DiscreteVariable<Vecd> *dv_y_a_imag_;
+    DiscreteVariable<Real> *dv_y_phi_real_;
+    DiscreteVariable<Real> *dv_y_phi_imag_;
+
+    DiscreteVariable<Vecd> *dv_true_residual_a_real_;
+    DiscreteVariable<Vecd> *dv_true_residual_a_imag_;
+    DiscreteVariable<Real> *dv_true_residual_phi_real_;
+    DiscreteVariable<Real> *dv_true_residual_phi_imag_;
 
     DiscreteVariable<Real> *dv_sigma_;
     DiscreteVariable<Real> *dv_nu_;

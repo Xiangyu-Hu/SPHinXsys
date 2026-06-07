@@ -2,6 +2,7 @@
 #define APHI_VARIABLES_CK_HPP
 
 #include "electromagnetic_dynamics/aphi_variables_ck.h"
+#include "electromagnetic_dynamics/aphi_a_divergence_penalty_ck.h"
 
 namespace SPH
 {
@@ -47,9 +48,32 @@ inline InitializeAphiVariablesCK::InitializeAphiVariablesCK(SPHBody &sph_body, R
       dv_t_a_imag_(particles_->registerStateVariable<Vecd>(variable_names_.t.a_imag)),
       dv_t_phi_real_(particles_->registerStateVariable<Real>(variable_names_.t.phi_real)),
       dv_t_phi_imag_(particles_->registerStateVariable<Real>(variable_names_.t.phi_imag)),
+      dv_v_old_a_real_(particles_->registerStateVariable<Vecd>(variable_names_.v_old.a_real)),
+      dv_v_old_a_imag_(particles_->registerStateVariable<Vecd>(variable_names_.v_old.a_imag)),
+      dv_v_old_phi_real_(particles_->registerStateVariable<Real>(variable_names_.v_old.phi_real)),
+      dv_v_old_phi_imag_(particles_->registerStateVariable<Real>(variable_names_.v_old.phi_imag)),
+      dv_z_a_real_(particles_->registerStateVariable<Vecd>(variable_names_.z.a_real)),
+      dv_z_a_imag_(particles_->registerStateVariable<Vecd>(variable_names_.z.a_imag)),
+      dv_z_phi_real_(particles_->registerStateVariable<Real>(variable_names_.z.phi_real)),
+      dv_z_phi_imag_(particles_->registerStateVariable<Real>(variable_names_.z.phi_imag)),
+      dv_y_a_real_(particles_->registerStateVariable<Vecd>(variable_names_.y.a_real)),
+      dv_y_a_imag_(particles_->registerStateVariable<Vecd>(variable_names_.y.a_imag)),
+      dv_y_phi_real_(particles_->registerStateVariable<Real>(variable_names_.y.phi_real)),
+      dv_y_phi_imag_(particles_->registerStateVariable<Real>(variable_names_.y.phi_imag)),
+      dv_true_residual_a_real_(particles_->registerStateVariable<Vecd>(variable_names_.true_residual.a_real)),
+      dv_true_residual_a_imag_(particles_->registerStateVariable<Vecd>(variable_names_.true_residual.a_imag)),
+      dv_true_residual_phi_real_(particles_->registerStateVariable<Real>(variable_names_.true_residual.phi_real)),
+      dv_true_residual_phi_imag_(particles_->registerStateVariable<Real>(variable_names_.true_residual.phi_imag)),
       dv_sigma_(particles_->registerStateVariable<Real>(variable_names_.material.sigma, default_sigma_)),
       dv_nu_(particles_->registerStateVariable<Real>(variable_names_.material.nu, default_nu_))
 {
+    particles_->registerStateVariable<Real>(variable_names_.diagnostic.div_a_real, Real(0));
+    particles_->registerStateVariable<Real>(variable_names_.diagnostic.div_a_imag, Real(0));
+    const AphiADivergencePenaltyScratchNames &penalty_scratch = aphiDefaultADivergencePenaltyScratchNames();
+    particles_->registerStateVariable<Real>(penalty_scratch.div_a_real, Real(0));
+    particles_->registerStateVariable<Real>(penalty_scratch.div_a_imag, Real(0));
+    particles_->registerStateVariable<Vecd>(penalty_scratch.grad_div_a_real, ZeroData<Vecd>::value);
+    particles_->registerStateVariable<Vecd>(penalty_scratch.grad_div_a_imag, ZeroData<Vecd>::value);
     addBlockVariablesToWrite(variable_names_.solution);
     addBlockVariablesToWrite(variable_names_.rhs);
     addBlockVariablesToWrite(variable_names_.lhs);
@@ -59,6 +83,10 @@ inline InitializeAphiVariablesCK::InitializeAphiVariablesCK(SPHBody &sph_body, R
     addBlockVariablesToWrite(variable_names_.v);
     addBlockVariablesToWrite(variable_names_.s);
     addBlockVariablesToWrite(variable_names_.t);
+    addBlockVariablesToWrite(variable_names_.v_old);
+    addBlockVariablesToWrite(variable_names_.z);
+    addBlockVariablesToWrite(variable_names_.y);
+    addBlockVariablesToWrite(variable_names_.true_residual);
     particles_->addVariableToWrite<Real>(variable_names_.material.sigma);
     particles_->addVariableToWrite<Real>(variable_names_.material.nu);
 }
@@ -109,6 +137,22 @@ inline InitializeAphiVariablesCK::UpdateKernel::UpdateKernel(const ExecutionPoli
       t_a_imag_(encloser.dv_t_a_imag_->DelegatedData(ex_policy)),
       t_phi_real_(encloser.dv_t_phi_real_->DelegatedData(ex_policy)),
       t_phi_imag_(encloser.dv_t_phi_imag_->DelegatedData(ex_policy)),
+      v_old_a_real_(encloser.dv_v_old_a_real_->DelegatedData(ex_policy)),
+      v_old_a_imag_(encloser.dv_v_old_a_imag_->DelegatedData(ex_policy)),
+      v_old_phi_real_(encloser.dv_v_old_phi_real_->DelegatedData(ex_policy)),
+      v_old_phi_imag_(encloser.dv_v_old_phi_imag_->DelegatedData(ex_policy)),
+      z_a_real_(encloser.dv_z_a_real_->DelegatedData(ex_policy)),
+      z_a_imag_(encloser.dv_z_a_imag_->DelegatedData(ex_policy)),
+      z_phi_real_(encloser.dv_z_phi_real_->DelegatedData(ex_policy)),
+      z_phi_imag_(encloser.dv_z_phi_imag_->DelegatedData(ex_policy)),
+      y_a_real_(encloser.dv_y_a_real_->DelegatedData(ex_policy)),
+      y_a_imag_(encloser.dv_y_a_imag_->DelegatedData(ex_policy)),
+      y_phi_real_(encloser.dv_y_phi_real_->DelegatedData(ex_policy)),
+      y_phi_imag_(encloser.dv_y_phi_imag_->DelegatedData(ex_policy)),
+      true_residual_a_real_(encloser.dv_true_residual_a_real_->DelegatedData(ex_policy)),
+      true_residual_a_imag_(encloser.dv_true_residual_a_imag_->DelegatedData(ex_policy)),
+      true_residual_phi_real_(encloser.dv_true_residual_phi_real_->DelegatedData(ex_policy)),
+      true_residual_phi_imag_(encloser.dv_true_residual_phi_imag_->DelegatedData(ex_policy)),
       sigma_(encloser.dv_sigma_->DelegatedData(ex_policy)),
       nu_(encloser.dv_nu_->DelegatedData(ex_policy)),
       default_sigma_(encloser.default_sigma_),
@@ -164,6 +208,26 @@ inline void InitializeAphiVariablesCK::UpdateKernel::update(size_t index_i, Real
     t_a_imag_[index_i] = zero_vec;
     t_phi_real_[index_i] = 0.0;
     t_phi_imag_[index_i] = 0.0;
+
+    v_old_a_real_[index_i] = zero_vec;
+    v_old_a_imag_[index_i] = zero_vec;
+    v_old_phi_real_[index_i] = 0.0;
+    v_old_phi_imag_[index_i] = 0.0;
+
+    z_a_real_[index_i] = zero_vec;
+    z_a_imag_[index_i] = zero_vec;
+    z_phi_real_[index_i] = 0.0;
+    z_phi_imag_[index_i] = 0.0;
+
+    y_a_real_[index_i] = zero_vec;
+    y_a_imag_[index_i] = zero_vec;
+    y_phi_real_[index_i] = 0.0;
+    y_phi_imag_[index_i] = 0.0;
+
+    true_residual_a_real_[index_i] = zero_vec;
+    true_residual_a_imag_[index_i] = zero_vec;
+    true_residual_phi_real_[index_i] = 0.0;
+    true_residual_phi_imag_[index_i] = 0.0;
 
     sigma_[index_i] = default_sigma_;
     nu_[index_i] = default_nu_;

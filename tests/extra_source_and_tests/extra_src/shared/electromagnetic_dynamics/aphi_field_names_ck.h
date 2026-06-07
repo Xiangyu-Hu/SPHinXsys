@@ -35,11 +35,17 @@ struct AphiVariableNames
     AphiBlockNames rhs = {"RhsAReal", "RhsAImag", "RhsPhiReal", "RhsPhiImag"};
     AphiBlockNames lhs = {"LhsAReal", "LhsAImag", "LhsPhiReal", "LhsPhiImag"};
     AphiBlockNames residual = {"ResidualAReal", "ResidualAImag", "ResidualPhiReal", "ResidualPhiImag"};
+    AphiBlockNames true_residual = {"TrueResAReal", "TrueResAImag", "TrueResPhiReal", "TrueResPhiImag"};
     AphiBlockNames r_hat = {"RHatAReal", "RHatAImag", "RHatPhiReal", "RHatPhiImag"};
     AphiBlockNames search = {"SearchAReal", "SearchAImag", "SearchPhiReal", "SearchPhiImag"};
     AphiBlockNames v = {"VAReal", "VAImag", "VPhiReal", "VPhiImag"};
+    AphiBlockNames v_old = {"VOldAReal", "VOldAImag", "VOldPhiReal", "VOldPhiImag"};
     AphiBlockNames s = {"SAReal", "SAImag", "SPhiReal", "SPhiImag"};
     AphiBlockNames t = {"TAReal", "TAImag", "TPhiReal", "TPhiImag"};
+    /** z = M^{-1} p in right-preconditioned BiCGStab. */
+    AphiBlockNames z = {"ZAReal", "ZAImag", "ZPhiReal", "ZPhiImag"};
+    /** y = M^{-1} s in right-preconditioned BiCGStab. */
+    AphiBlockNames y = {"YAReal", "YAImag", "YPhiReal", "YPhiImag"};
     AphiMaterialNames material = {};
     AphiDiagnosticNames diagnostic = {};
 };

@@ -1,5 +1,6 @@
 #include "sphinxsys.h"
 #include "electromagnetic_dynamics/all_electromagnetic_dynamics_ck.h"
+#include "electromagnetic_dynamics/test_helpers/aphi_test_device_sync.h"
 
 #include <algorithm>
 #include <cmath>
@@ -8,6 +9,7 @@
 
 using namespace SPH;
 using namespace SPH::electromagnetics;
+using namespace SPH::electromagnetics::test;
 
 namespace
 {
@@ -104,7 +106,7 @@ int main(int ac, char *av[])
     const Real body_width = 1.0;
     const Real boundary_width = 3.0 * dp_0;
     const Real core_shell = 2.5 * dp_0;
-    const Real validation_threshold = 1.0;
+    const Real validation_threshold = 0.25;
 
     BoundingBoxd system_bounds(Vecd(-boundary_width, -boundary_width, -boundary_width),
                                Vecd(body_length + boundary_width, body_height + boundary_width, body_width + boundary_width));
@@ -153,6 +155,11 @@ int main(int ac, char *av[])
     laplace_a_imag.exec();
 
     BaseParticles &particles = body.getBaseParticles();
+    syncVariableToHost<Real>(particles, names.diagnostic.laplace.phi_real);
+    syncVariableToHost<Real>(particles, names.diagnostic.laplace.phi_imag);
+    syncVariableToHost<Vecd>(particles, names.diagnostic.laplace.a_real);
+    syncVariableToHost<Vecd>(particles, names.diagnostic.laplace.a_imag);
+
     const size_t total_real_particles = particles.TotalRealParticles();
     const Vecd *positions = particles.getVariableDataByName<Vecd>("Position");
     const Real *lap_phi_real = particles.getVariableDataByName<Real>(names.diagnostic.laplace.phi_real);

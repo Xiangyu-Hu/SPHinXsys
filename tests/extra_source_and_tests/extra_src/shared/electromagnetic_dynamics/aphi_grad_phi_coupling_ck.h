@@ -52,6 +52,48 @@ class AphiGradPhiCouplingCK<Inner<Parameters...>> : public Interaction<Inner<Par
     DiscreteVariable<Real> *dv_sigma_;
 };
 
+/** Contact pairwise grad(phi): sigma_i * g_ij * (phi_i - phi_j), gather to owner LhsA. */
+template <typename... Parameters>
+class AphiGradPhiCouplingCK<Contact<Parameters...>> : public Interaction<Contact<Parameters...>>
+{
+    using BaseInteraction = Interaction<Contact<Parameters...>>;
+
+  public:
+    explicit AphiGradPhiCouplingCK(Contact<Parameters...> &contact_relation, const AphiVariableNames &variable_names);
+    template <typename FirstArg>
+    explicit AphiGradPhiCouplingCK(DynamicsArgs<Contact<Parameters...>, FirstArg> parameters)
+        : AphiGradPhiCouplingCK(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~AphiGradPhiCouplingCK() = default;
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
+
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *contact_Vol_;
+        Real *sigma_;
+        Real *phi_real_;
+        Real *phi_imag_;
+        Real *contact_phi_real_;
+        Real *contact_phi_imag_;
+        Vecd *lhs_a_real_;
+        Vecd *lhs_a_imag_;
+    };
+
+  protected:
+    DiscreteVariable<Real> *dv_phi_real_;
+    DiscreteVariable<Real> *dv_phi_imag_;
+    DiscreteVariable<Vecd> *dv_lhs_a_real_;
+    DiscreteVariable<Vecd> *dv_lhs_a_imag_;
+    DiscreteVariable<Real> *dv_sigma_;
+    StdVec<DiscreteVariable<Real> *> dv_contact_phi_real_;
+    StdVec<DiscreteVariable<Real> *> dv_contact_phi_imag_;
+};
+
 /**
  * DIAGNOSTIC_B_CORRECTED / DEBUG_REFERENCE_ONLY — constant sigma.
  * Adds sigma_i * LinearGradient(phi) to LhsA. Requires phi*Gradient fields from LinearGradient.

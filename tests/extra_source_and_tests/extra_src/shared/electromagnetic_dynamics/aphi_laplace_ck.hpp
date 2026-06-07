@@ -26,10 +26,10 @@ inline AphiPairwiseLaplaceCK<Base, DataType, RelationType<Parameters...>>::AphiP
 }
 
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>
-template <class ExecutionPolicy, class EncloserType>
+template <class ExecutionPolicy, class EncloserType, typename... Args>
 inline AphiPairwiseLaplaceCK<Base, DataType, RelationType<Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : BaseInteraction::InteractKernel(ex_policy, encloser),
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
+    : BaseInteraction::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       input_(encloser.dv_input_->DelegatedData(ex_policy)),
       output_(encloser.dv_output_->DelegatedData(ex_policy)),
@@ -51,16 +51,56 @@ inline void AphiPairwiseLaplaceCK<Base, DataType, RelationType<Parameters...>>::
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         const UnsignedInt index_j = this->neighbor_index_[n];
-        const Real distance = this->vec_r_ij(index_i, index_j).norm();
+        const Vecd r_ij_vec = this->vec_r_ij(index_i, index_j);
+        const Real distance = r_ij_vec.norm();
+        const Real distance_sq = r_ij_vec.squaredNorm();
         const Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
         const Real harmonic_coefficient = AphiHarmonicMean(coefficient_i, coefficient_[index_j]);
         const Real pair_weight = harmonic_coefficient *
                                  AphiPairwiseNegativeLaplaceWeight(
-                                     dW_ijV_j, distance, pair_weight_regularization_, reference_smoothing_length_);
+                                     dW_ijV_j, distance, distance_sq, pair_weight_regularization_,
+                                     reference_smoothing_length_);
         laplace_i += pair_weight * (value_i - input_[index_j]);
     }
 
     output_[index_i] = laplace_i;
+}
+
+template <typename DataType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+inline AphiPairwiseLaplaceCK<Contact<DataType, Parameters...>>::InteractKernel::InteractKernel(
+    const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_input_(encloser.dv_contact_input_[contact_index]->DelegatedData(ex_policy)),
+      contact_coefficient_(encloser.dv_contact_coefficient_[contact_index]->DelegatedData(ex_policy))
+{
+}
+
+template <typename DataType, typename... Parameters>
+inline void AphiPairwiseLaplaceCK<Contact<DataType, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
+{
+    (void)dt;
+    const DataType value_i = this->input_[index_i];
+    const Real coefficient_i = this->coefficient_[index_i];
+    DataType laplace_i = AphiZeroValue<DataType>::value();
+
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        const UnsignedInt index_j = this->neighbor_index_[n];
+        const Vecd r_ij_vec = this->vec_r_ij(index_i, index_j);
+        const Real distance = r_ij_vec.norm();
+        const Real distance_sq = r_ij_vec.squaredNorm();
+        const Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
+        const Real harmonic_coefficient = AphiHarmonicMean(coefficient_i, contact_coefficient_[index_j]);
+        const Real pair_weight = harmonic_coefficient *
+                                 AphiPairwiseNegativeLaplaceWeight(
+                                     dW_ijV_j, distance, distance_sq, this->pair_weight_regularization_,
+                                     this->reference_smoothing_length_);
+        laplace_i += pair_weight * (value_i - contact_input_[index_j]);
+    }
+
+    this->output_[index_i] += laplace_i;
 }
 
 } // namespace electromagnetics

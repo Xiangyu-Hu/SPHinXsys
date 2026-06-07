@@ -1,4 +1,4 @@
-#include "electromagnetic_dynamics/aphi_lhs_test_helpers.h"
+#include "electromagnetic_dynamics/test_helpers/aphi_lhs_test_helpers.h"
 
 #include <iostream>
 
@@ -70,8 +70,7 @@ int main(int ac, char *av[])
     const Real omega = 1.5;
     const Real validation_threshold = 1.0e-10;
 
-    AphiLhsTestBody test_body(dp_0, body_length, body_height, body_width, boundary_width);
-    test_body.sph_system.handleCommandlineOptions(ac, av);
+    AphiLhsTestBody test_body(dp_0, body_length, body_height, body_width, boundary_width, ac, av);
     IOEnvironment io_environment(test_body.sph_system);
 
     AphiVariableNames names;
@@ -87,7 +86,7 @@ int main(int ac, char *av[])
     options.terms.div_sigma_a_coupling = false;
     options.omega = omega;
 
-    AphiAssembleLhsDebugDynamicsBundle<MainExecutionPolicy> assemble(test_body.body, test_body.inner_ck, names, options);
+    AphiAssembleLhsDebugDynamicsBundle<MainExecutionPolicy> assemble(test_body.body, test_body.inner(), names, options);
 
     initialize_aphi_variables.exec();
     set_material.exec();
@@ -96,6 +95,7 @@ int main(int ac, char *av[])
     assemble.exec();
 
     BaseParticles &particles = test_body.body.getBaseParticles();
+    syncAphiBlockToHost(particles, names.lhs);
     const size_t total_real_particles = particles.TotalRealParticles();
     const Vecd *positions = particles.getVariableDataByName<Vecd>("Position");
     const Vecd *lhs_a_real = particles.getVariableDataByName<Vecd>(names.lhs.a_real);

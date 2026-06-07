@@ -1,5 +1,6 @@
 #include "sphinxsys.h"
 #include "electromagnetic_dynamics/all_electromagnetic_dynamics_ck.h"
+#include "electromagnetic_dynamics/test_helpers/aphi_test_device_sync.h"
 
 #include <cmath>
 #include <iostream>
@@ -7,6 +8,7 @@
 
 using namespace SPH;
 using namespace SPH::electromagnetics;
+using namespace SPH::electromagnetics::test;
 
 namespace
 {
@@ -92,12 +94,26 @@ int main(int ac, char *av[])
     body.defineMaterial<Solid>();
     body.generateParticles<BaseParticles, Lattice>();
 
+    sph_system.initializeSystemCellLinkedLists();
+    sph_system.initializeSystemConfigurations();
+
     AphiVariableNames names;
     StateDynamics<MainExecutionPolicy, InitializeAphiVariablesCK> initialize_aphi_variables(body, default_sigma, default_nu, names);
     StateDynamics<MainExecutionPolicy, SetAphiMaterialPropertiesCK> reset_material_properties(body, reset_sigma, reset_nu, names.material);
     initialize_aphi_variables.exec();
 
     BaseParticles &particles = body.getBaseParticles();
+    syncAphiMaterialToHost(particles, names.material);
+    syncAphiBlockToHost(particles, names.solution);
+    syncAphiBlockToHost(particles, names.rhs);
+    syncAphiBlockToHost(particles, names.lhs);
+    syncAphiBlockToHost(particles, names.residual);
+    syncAphiBlockToHost(particles, names.r_hat);
+    syncAphiBlockToHost(particles, names.search);
+    syncAphiBlockToHost(particles, names.v);
+    syncAphiBlockToHost(particles, names.s);
+    syncAphiBlockToHost(particles, names.t);
+
     const size_t total_real_particles = particles.TotalRealParticles();
 
     const Real *sigma = particles.getVariableDataByName<Real>(names.material.sigma);
@@ -116,6 +132,7 @@ int main(int ac, char *av[])
                                        scalarFieldEquals(nu, total_real_particles, default_nu);
 
     reset_material_properties.exec();
+    syncAphiMaterialToHost(particles, names.material);
 
     const bool material_reset_passed = scalarFieldEquals(sigma, total_real_particles, reset_sigma) &&
                                        scalarFieldEquals(nu, total_real_particles, reset_nu);

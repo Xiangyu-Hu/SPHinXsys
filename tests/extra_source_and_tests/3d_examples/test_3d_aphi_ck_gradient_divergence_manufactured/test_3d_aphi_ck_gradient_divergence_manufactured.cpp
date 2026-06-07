@@ -4,6 +4,7 @@
  */
 #include "sphinxsys.h"
 #include "electromagnetic_dynamics/all_electromagnetic_dynamics_ck.h"
+#include "electromagnetic_dynamics/test_helpers/aphi_test_device_sync.h"
 
 #include <algorithm>
 #include <cmath>
@@ -12,6 +13,7 @@
 
 using namespace SPH;
 using namespace SPH::electromagnetics;
+using namespace SPH::electromagnetics::test;
 
 namespace
 {
@@ -171,6 +173,11 @@ int main(int ac, char *av[])
     div_a_imag.exec();
 
     BaseParticles &particles = body.getBaseParticles();
+    syncVariableToHost<Vecd>(particles, names.solution.phi_real + "Gradient");
+    syncVariableToHost<Vecd>(particles, names.solution.phi_imag + "Gradient");
+    syncVariableToHost<Real>(particles, names.diagnostic.div_a_real);
+    syncVariableToHost<Real>(particles, names.diagnostic.div_a_imag);
+
     const size_t total_real_particles = particles.TotalRealParticles();
     const Vecd *positions = particles.getVariableDataByName<Vecd>("Position");
     const Vecd *phi_real_gradient_data = particles.getVariableDataByName<Vecd>(names.solution.phi_real + "Gradient");

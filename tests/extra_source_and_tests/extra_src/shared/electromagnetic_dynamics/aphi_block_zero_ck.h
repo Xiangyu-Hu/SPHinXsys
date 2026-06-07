@@ -75,7 +75,7 @@ class AphiCopyBlockCK : public LocalDynamics
     DiscreteVariable<Real> *dv_src_phi_imag_;
 };
 
-/** Residual = RHS - LHS. Stage 3B debug op only. */
+/** Residual = RHS - LHS into variable_names.residual. */
 class AphiComputeResidualCK : public LocalDynamics
 {
   public:
@@ -110,6 +110,52 @@ class AphiComputeResidualCK : public LocalDynamics
     DiscreteVariable<Vecd> *dv_residual_a_imag_;
     DiscreteVariable<Real> *dv_residual_phi_real_;
     DiscreteVariable<Real> *dv_residual_phi_imag_;
+    DiscreteVariable<Vecd> *dv_rhs_a_real_;
+    DiscreteVariable<Vecd> *dv_rhs_a_imag_;
+    DiscreteVariable<Real> *dv_rhs_phi_real_;
+    DiscreteVariable<Real> *dv_rhs_phi_imag_;
+    DiscreteVariable<Vecd> *dv_lhs_a_real_;
+    DiscreteVariable<Vecd> *dv_lhs_a_imag_;
+    DiscreteVariable<Real> *dv_lhs_phi_real_;
+    DiscreteVariable<Real> *dv_lhs_phi_imag_;
+};
+
+/** output = rhs_block - lhs_block. Used for true residual diagnostics. */
+class AphiComputeBlockResidualCK : public LocalDynamics
+{
+  public:
+    explicit AphiComputeBlockResidualCK(SPHBody &sph_body, const AphiBlockNames &output_names,
+                                        const AphiBlockNames &rhs_names, const AphiBlockNames &lhs_names);
+    virtual ~AphiComputeBlockResidualCK() = default;
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Vecd *output_a_real_;
+        Vecd *output_a_imag_;
+        Real *output_phi_real_;
+        Real *output_phi_imag_;
+        Vecd *rhs_a_real_;
+        Vecd *rhs_a_imag_;
+        Real *rhs_phi_real_;
+        Real *rhs_phi_imag_;
+        Vecd *lhs_a_real_;
+        Vecd *lhs_a_imag_;
+        Real *lhs_phi_real_;
+        Real *lhs_phi_imag_;
+    };
+
+  protected:
+    DiscreteVariable<Vecd> *dv_output_a_real_;
+    DiscreteVariable<Vecd> *dv_output_a_imag_;
+    DiscreteVariable<Real> *dv_output_phi_real_;
+    DiscreteVariable<Real> *dv_output_phi_imag_;
     DiscreteVariable<Vecd> *dv_rhs_a_real_;
     DiscreteVariable<Vecd> *dv_rhs_a_imag_;
     DiscreteVariable<Real> *dv_rhs_phi_real_;

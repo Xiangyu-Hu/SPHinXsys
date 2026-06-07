@@ -113,6 +113,51 @@ inline void AphiComputeResidualCK::UpdateKernel::update(size_t index_i, Real dt)
     residual_phi_imag_[index_i] = rhs_phi_imag_[index_i] - lhs_phi_imag_[index_i];
 }
 
+inline AphiComputeBlockResidualCK::AphiComputeBlockResidualCK(SPHBody &sph_body, const AphiBlockNames &output_names,
+                                                             const AphiBlockNames &rhs_names,
+                                                             const AphiBlockNames &lhs_names)
+    : LocalDynamics(sph_body),
+      dv_output_a_real_(particles_->template getVariableByName<Vecd>(output_names.a_real)),
+      dv_output_a_imag_(particles_->template getVariableByName<Vecd>(output_names.a_imag)),
+      dv_output_phi_real_(particles_->template getVariableByName<Real>(output_names.phi_real)),
+      dv_output_phi_imag_(particles_->template getVariableByName<Real>(output_names.phi_imag)),
+      dv_rhs_a_real_(particles_->template getVariableByName<Vecd>(rhs_names.a_real)),
+      dv_rhs_a_imag_(particles_->template getVariableByName<Vecd>(rhs_names.a_imag)),
+      dv_rhs_phi_real_(particles_->template getVariableByName<Real>(rhs_names.phi_real)),
+      dv_rhs_phi_imag_(particles_->template getVariableByName<Real>(rhs_names.phi_imag)),
+      dv_lhs_a_real_(particles_->template getVariableByName<Vecd>(lhs_names.a_real)),
+      dv_lhs_a_imag_(particles_->template getVariableByName<Vecd>(lhs_names.a_imag)),
+      dv_lhs_phi_real_(particles_->template getVariableByName<Real>(lhs_names.phi_real)),
+      dv_lhs_phi_imag_(particles_->template getVariableByName<Real>(lhs_names.phi_imag))
+{
+}
+
+template <class ExecutionPolicy, class EncloserType>
+inline AphiComputeBlockResidualCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : output_a_real_(encloser.dv_output_a_real_->DelegatedData(ex_policy)),
+      output_a_imag_(encloser.dv_output_a_imag_->DelegatedData(ex_policy)),
+      output_phi_real_(encloser.dv_output_phi_real_->DelegatedData(ex_policy)),
+      output_phi_imag_(encloser.dv_output_phi_imag_->DelegatedData(ex_policy)),
+      rhs_a_real_(encloser.dv_rhs_a_real_->DelegatedData(ex_policy)),
+      rhs_a_imag_(encloser.dv_rhs_a_imag_->DelegatedData(ex_policy)),
+      rhs_phi_real_(encloser.dv_rhs_phi_real_->DelegatedData(ex_policy)),
+      rhs_phi_imag_(encloser.dv_rhs_phi_imag_->DelegatedData(ex_policy)),
+      lhs_a_real_(encloser.dv_lhs_a_real_->DelegatedData(ex_policy)),
+      lhs_a_imag_(encloser.dv_lhs_a_imag_->DelegatedData(ex_policy)),
+      lhs_phi_real_(encloser.dv_lhs_phi_real_->DelegatedData(ex_policy)),
+      lhs_phi_imag_(encloser.dv_lhs_phi_imag_->DelegatedData(ex_policy))
+{
+}
+
+inline void AphiComputeBlockResidualCK::UpdateKernel::update(size_t index_i, Real dt)
+{
+    (void)dt;
+    output_a_real_[index_i] = rhs_a_real_[index_i] - lhs_a_real_[index_i];
+    output_a_imag_[index_i] = rhs_a_imag_[index_i] - lhs_a_imag_[index_i];
+    output_phi_real_[index_i] = rhs_phi_real_[index_i] - lhs_phi_real_[index_i];
+    output_phi_imag_[index_i] = rhs_phi_imag_[index_i] - lhs_phi_imag_[index_i];
+}
+
 } // namespace electromagnetics
 } // namespace SPH
 

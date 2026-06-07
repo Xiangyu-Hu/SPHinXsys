@@ -60,6 +60,66 @@ inline void AphiDivSigmaACouplingCK<Inner<Parameters...>>::InteractKernel::inter
     lhs_phi_imag_[index_i] += contribution_phi_imag;
 }
 
+template <typename... Parameters>
+inline AphiDivSigmaACouplingCK<Contact<Parameters...>>::AphiDivSigmaACouplingCK(
+    Contact<Parameters...> &contact_relation, Real omega, const AphiVariableNames &variable_names)
+    : BaseInteraction(contact_relation), omega_(omega),
+      dv_a_real_(this->particles_->template getVariableByName<Vecd>(variable_names.solution.a_real)),
+      dv_a_imag_(this->particles_->template getVariableByName<Vecd>(variable_names.solution.a_imag)),
+      dv_lhs_phi_real_(this->particles_->template getVariableByName<Real>(variable_names.lhs.phi_real)),
+      dv_lhs_phi_imag_(this->particles_->template getVariableByName<Real>(variable_names.lhs.phi_imag)),
+      dv_sigma_(this->particles_->template getVariableByName<Real>(variable_names.material.sigma))
+{
+    for (auto *contact_particles : this->contact_particles_)
+    {
+        dv_contact_sigma_.push_back(contact_particles->template getVariableByName<Real>(variable_names.material.sigma));
+        dv_contact_a_real_.push_back(contact_particles->template getVariableByName<Vecd>(variable_names.solution.a_real));
+        dv_contact_a_imag_.push_back(contact_particles->template getVariableByName<Vecd>(variable_names.solution.a_imag));
+    }
+}
+
+template <typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+inline AphiDivSigmaACouplingCK<Contact<Parameters...>>::InteractKernel::InteractKernel(
+    const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
+    : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      sigma_(encloser.dv_sigma_->DelegatedData(ex_policy)),
+      a_real_(encloser.dv_a_real_->DelegatedData(ex_policy)),
+      a_imag_(encloser.dv_a_imag_->DelegatedData(ex_policy)),
+      contact_sigma_(encloser.dv_contact_sigma_[contact_index]->DelegatedData(ex_policy)),
+      contact_a_real_(encloser.dv_contact_a_real_[contact_index]->DelegatedData(ex_policy)),
+      contact_a_imag_(encloser.dv_contact_a_imag_[contact_index]->DelegatedData(ex_policy)),
+      lhs_phi_real_(encloser.dv_lhs_phi_real_->DelegatedData(ex_policy)),
+      lhs_phi_imag_(encloser.dv_lhs_phi_imag_->DelegatedData(ex_policy)),
+      omega_(encloser.omega_)
+{
+}
+
+template <typename... Parameters>
+inline void AphiDivSigmaACouplingCK<Contact<Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
+{
+    (void)dt;
+    const Real sigma_i = sigma_[index_i];
+    const Vecd a_re_i = a_real_[index_i];
+    const Vecd a_im_i = a_imag_[index_i];
+    Real contribution_phi_real = 0.0;
+    Real contribution_phi_imag = 0.0;
+
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        const UnsignedInt index_j = this->neighbor_index_[n];
+        const Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
+        const Vecd g_ij = AphiPairwiseGradientWeightUncorrected(dW_ijV_j, this->e_ij(index_i, index_j));
+        const Real sigma_ij = AphiHarmonicMean(sigma_i, contact_sigma_[index_j]);
+        contribution_phi_real += omega_ * sigma_ij * g_ij.dot(a_im_i - contact_a_imag_[index_j]);
+        contribution_phi_imag -= omega_ * sigma_ij * g_ij.dot(a_re_i - contact_a_real_[index_j]);
+    }
+
+    lhs_phi_real_[index_i] += contribution_phi_real;
+    lhs_phi_imag_[index_i] += contribution_phi_imag;
+}
+
 inline AphiDivSigmaAConstSigmaDiagnosticCouplingCK::AphiDivSigmaAConstSigmaDiagnosticCouplingCK(
     SPHBody &sph_body, Real omega, const AphiVariableNames &variable_names,
     const AphiDiagnosticNames &diagnostic_names)
