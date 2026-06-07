@@ -153,7 +153,7 @@ class Regularization<Internal>
 {
   public:
     template <class LocalDynamicsType>
-    Regularization(LocalDynamicsType &local_dynmaics){};
+    Regularization(LocalDynamicsType &local_dynamics){};
 
     class ComputingKernel
     {
@@ -171,7 +171,7 @@ class Regularization<FreeSurface>
 
   public:
     template <class LocalDynamicsType>
-    Regularization(LocalDynamicsType &local_dynmaics) : rho0_(local_dynmaics.InitialDensity()){};
+    Regularization(LocalDynamicsType &local_dynamics) : rho0_(local_dynamics.InitialDensity()){};
 
     class ComputingKernel
     {
@@ -195,9 +195,9 @@ class Regularization<FreeStream>
 
   public:
     template <class LocalDynamicsType>
-    Regularization(LocalDynamicsType &local_dynmaics)
-        : rho0_(local_dynmaics.InitialDensity()),
-          dv_indicator_(local_dynmaics.getBaseParticles().template getVariableByName<int>("Indicator")){};
+    Regularization(LocalDynamicsType &local_dynamics)
+        : rho0_(local_dynamics.InitialDensity()),
+          dv_indicator_(local_dynamics.getBaseParticles().template getVariableByName<int>("Indicator")){};
 
     class ComputingKernel
     {
