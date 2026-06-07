@@ -346,7 +346,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
     for (auto &bc : bidirectional_pressure_conditions)
         bc->oriented_box_by_cell.writeOrientedBoxToVtp();
     StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> particle_deletion(water_block);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
         fluid_density_summation(water_body_inner, water_wall_contact);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, Internal, ExcludeBufferParticles>>
         fluid_density_regularization(water_block);

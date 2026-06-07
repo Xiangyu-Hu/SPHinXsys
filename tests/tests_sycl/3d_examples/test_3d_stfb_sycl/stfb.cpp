@@ -215,7 +215,7 @@ int main(int ac, char *av[])
         fluid_acoustic_step_2nd_half_with_wall(water_block_contact);
     fluid_acoustic_step_2nd_half.addPostContactInteraction(fluid_acoustic_step_2nd_half_with_wall);
 
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
         fluid_density_summation(water_block_inner, water_block_contact);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
         fluid_density_regularization(water_block);

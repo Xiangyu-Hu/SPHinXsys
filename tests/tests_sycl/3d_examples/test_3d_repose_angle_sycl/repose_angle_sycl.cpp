@@ -131,7 +131,7 @@ int main(int ac, char *av[])
         soil_acoustic_step_1st_half(soil_block_inner, soil_block_contact);
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::PlasticAcousticStep2ndHalfWithWallRiemannCK>
         soil_acoustic_step_2nd_half(soil_block_inner, soil_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
         soil_density_summation(soil_block_inner, soil_block_contact);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
         soil_density_regularization(soil_block);

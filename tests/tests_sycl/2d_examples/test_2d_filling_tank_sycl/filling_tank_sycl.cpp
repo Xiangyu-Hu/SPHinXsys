@@ -131,7 +131,7 @@ int main(int ac, char *av[])
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
         fluid_density_summation(water_body_inner, water_wall_contact);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
         fluid_density_regularization(water_body);

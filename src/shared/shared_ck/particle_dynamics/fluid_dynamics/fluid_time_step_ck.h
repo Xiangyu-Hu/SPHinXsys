@@ -39,7 +39,7 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-template <class FluidType = WeaklyCompressibleFluid>
+template <class FluidType>
 class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
 {
     using EosKernel = typename FluidType::EosKernel;

@@ -193,7 +193,7 @@ int main(int ac, char *av[])
     fluid_acoustic_step_2nd_half.addPostContactInteraction(fluid_acoustic_step_2nd_half_with_wall);
 
     auto &fluid_density_regularization =
-        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(water_block_inner)
+        main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(water_block_inner)
             .addPostContactInteraction(water_block_contact)
             .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(water_block);
 

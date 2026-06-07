@@ -190,7 +190,7 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
     /** Evaluation of density by summation approach. */
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
         fluid_density_summation(water_block_inner, water_wall_contact);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, Internal>>
         fluid_density_regularization(water_body);

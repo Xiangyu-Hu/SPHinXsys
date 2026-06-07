@@ -268,7 +268,7 @@ int main(int ac, char *av[])
             .addPostContactInteraction(water_body_contact);
 
     auto &fluid_density_regularization =
-        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(water_body_inner)
+        main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(water_body_inner)
             .addPostContactInteraction(water_body_contact)
             .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeStream>(water_body);
 
