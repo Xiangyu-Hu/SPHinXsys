@@ -39,7 +39,7 @@ namespace SPH
 struct CopyParticleStateCK
 {
     template <typename DataType>
-    void operator()(DataArray<DataType> &variable_data_array, size_t index, size_t another_index);
+    void operator()(VariableArrayView<DataType> &variable_array_view, size_t index, size_t another_index);
 };
 
 class SpawnRealParticle
@@ -75,8 +75,8 @@ class SpawnRealParticle
         UnsignedInt *total_real_particles_;
         UnsignedInt particles_bound_;
         UnsignedInt *original_id_;
-        VariableDataArrayAssemble copyable_state_data_arrays_;
-        OperationOnDataAssemble<VariableDataArrayAssemble, CopyParticleStateCK> copy_particle_state_;
+        VariableArrayViewAssemble copyable_state_data_arrays_;
+        OperationOnDataAssemble<VariableArrayViewAssemble, CopyParticleStateCK> copy_particle_state_;
     };
 };
 
@@ -118,8 +118,8 @@ class RemoveRealParticle
       protected:
         UnsignedInt *total_real_particles_;
         UnsignedInt *original_id_;
-        VariableDataArrayAssemble copyable_state_data_arrays_;
-        OperationOnDataAssemble<VariableDataArrayAssemble, CopyParticleStateCK> copy_particle_state_;
+        VariableArrayViewAssemble copyable_state_data_arrays_;
+        OperationOnDataAssemble<VariableArrayViewAssemble, CopyParticleStateCK> copy_particle_state_;
     };
 };
 } // namespace SPH
