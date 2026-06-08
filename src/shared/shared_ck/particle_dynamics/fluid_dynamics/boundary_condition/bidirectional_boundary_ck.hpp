@@ -26,6 +26,22 @@ inline void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
     }
 }
 //=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+ResetBufferCorrectionMatrixCK::UpdateKernel::UpdateKernel(
+    const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : oriented_box_(encloser.sv_oriented_box_->DelegatedData(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
+      B_(encloser.dv_B_->DelegatedData(ex_policy)),
+      radius_(encloser.radius_) {}
+//=================================================================================================//
+inline void ResetBufferCorrectionMatrixCK::UpdateKernel::update(size_t index_i, Real dt)
+{
+    if (oriented_box_->checkLowerBound(pos_[index_i], -radius_))
+    {
+        B_[index_i] = Matd::Identity();
+    }
+}
+//=================================================================================================//
 template <class ConditionType>
 template <typename... Args>
 BufferInflowInjectionCK<ConditionType>::
@@ -205,6 +221,7 @@ template <typename... Args>
 BidirectionalBoundaryCK<ExecutionPolicy, KernelCorrectionType, ConditionType>::
     BidirectionalBoundaryCK(OrientedBoxByCell &oriented_box_part, Args &&...args)
     : AbstractBidirectionalBoundary(), tag_buffer_particles_(oriented_box_part),
+      reset_buffer_correction_matrix_(oriented_box_part),
       boundary_condition_(oriented_box_part, std::forward<Args>(args)...),
       inflow_injection_(oriented_box_part, std::forward<Args>(args)...),
       outflow_indication_(oriented_box_part) {}

@@ -68,6 +68,33 @@ class BufferIndicationCK : public BaseLocalDynamics<OrientedBoxByCell>
     DiscreteVariable<int> *dv_buffer_indicator_;
 };
 
+class ResetBufferCorrectionMatrixCK : public BaseLocalDynamics<OrientedBoxByCell>
+{
+  private:
+    SingleVariable<OrientedBox> *sv_oriented_box_;
+    DiscreteVariable<Vecd> *dv_pos_;
+    DiscreteVariable<Matd> *dv_B_;
+    Real radius_;
+
+  public:
+    explicit ResetBufferCorrectionMatrixCK(OrientedBoxByCell &oriented_box_part);
+    virtual ~ResetBufferCorrectionMatrixCK() {};
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        OrientedBox *oriented_box_;
+        Vecd *pos_;
+        Matd *B_;
+        Real radius_;
+    };
+};
+
 template <class ConditionType>
 class BufferInflowInjectionCK : public BaseLocalDynamics<OrientedBoxByCell>
 {
@@ -276,6 +303,7 @@ template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionT
 class BidirectionalBoundaryCK : public AbstractBidirectionalBoundary
 {
     StateDynamics<ExecutionPolicy, BufferIndicationCK> tag_buffer_particles_;
+    StateDynamics<ExecutionPolicy, ResetBufferCorrectionMatrixCK> reset_buffer_correction_matrix_;
     StateDynamics<ExecutionPolicy, PressureVelocityCondition<KernelCorrectionType, ConditionType>> boundary_condition_;
     StateDynamics<ExecutionPolicy, BufferInflowInjectionCK<ConditionType>> inflow_injection_;
     StateDynamics<ExecutionPolicy, BufferOutflowIndication> outflow_indication_;
@@ -283,7 +311,13 @@ class BidirectionalBoundaryCK : public AbstractBidirectionalBoundary
   public:
     template <typename... Args>
     BidirectionalBoundaryCK(OrientedBoxByCell &oriented_box_part, Args &&...args);
-    virtual void tagBufferParticles() override { tag_buffer_particles_.exec(); }
+
+    virtual void tagBufferParticles() override
+    {
+        tag_buffer_particles_.exec();
+        reset_buffer_correction_matrix_.exec();
+    }
+
     virtual void applyBoundaryCondition(Real dt) override
     {
         boundary_condition_.exec(dt);
