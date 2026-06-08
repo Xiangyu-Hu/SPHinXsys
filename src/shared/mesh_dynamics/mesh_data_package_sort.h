@@ -49,8 +49,8 @@ class PackageSort : public BaseDynamics<void>
           dv_index_permutation_(mesh_data.registerMetaVariable<UnsignedInt>("IndexPermutation")),
           dv_pkg_1d_cell_index_(&mesh_data.getPackage1DCellIndex()),
           mcv_cell_pkg_index_(&mesh_data.getCellPackageIndex()),
-          update_meta_variables_to_sort_(mesh_data.PackageBound()),
-          update_mesh_variables_to_sort_(mesh_data.PackageBound()),
+          update_meta_variables_to_sort_(mesh_data_.getEvolvingMetaVariables()),
+          update_mesh_variables_to_sort_(mesh_data_.getEvolvingPackageVariables()),
           sort_method_(ExecutionPolicy{}, dv_sequence_, dv_index_permutation_) {};
     virtual ~PackageSort() {};
 
