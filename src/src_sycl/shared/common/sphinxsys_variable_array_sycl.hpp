@@ -28,13 +28,13 @@ DeviceOnlyVariableArray<DataType>::
 {
     StdVec<DiscreteVariable<DataType> *> host_variables = host_variable_array->getVariables();
     size_t data_size = host_variable_array->getArraySize();
-    MultiEntryView<DataType> *multi_entry_view = host_variable_array->getArrayData();
     device_only_multi_entry_view_ = allocateDeviceOnly<MultiEntryView<DataType>>(data_size);
+    MultiEntryView<DataType> *host_multi_entry_view_ = host_variable_array->getArrayData();
     for (size_t i = 0; i != data_size; ++i)
     {
-        multi_entry_view[i].setData(host_variables[i]->DelegatedData(ex_policy));
-        copyToDevice(multi_entry_view, device_only_multi_entry_view_ + i, 1);
+        host_multi_entry_view_[i].setData(host_variables[i]->DelegatedData(ex_policy));
     }
+    copyToDevice(host_multi_entry_view_, device_only_multi_entry_view_, data_size);
 }
 //=================================================================================================//
 template <typename DataType>
