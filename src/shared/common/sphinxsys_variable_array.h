@@ -64,7 +64,7 @@ class DeviceOnlyVariableArray : public Quantity
     DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
                             VariableArray<DataType> *host_variable_array);
     ~DeviceOnlyVariableArray();
-    MultiEntryView<DataType> *DeviceOnlyDataPtr() { return device_only_multi_entry_view_; };
+    MultiEntryView<DataType> *DeviceOnlyMultiEntryView() { return device_only_multi_entry_view_; };
 
   protected:
     MultiEntryView<DataType> *device_only_multi_entry_view_;

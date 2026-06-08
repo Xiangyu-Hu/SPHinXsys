@@ -11,12 +11,12 @@ template <typename DataType>
 template <class PolicyType>
 MultiEntryView<DataType> *VariableArray<DataType>::DelegatedOnDevice()
 {
-    if (!isDataArrayDelegated())
+    if (!isVariableArrayViewDelegated())
     {
         device_only_variable_array_ = device_only_variable_array_keeper_.createPtr<
             DeviceOnlyVariableArray<DataType>>(DeviceExecution<PolicyType>{}, this);
     }
-    return device_only_variable_array_->DeviceOnlyDataPtr();
+    return device_only_variable_array_->DeviceOnlyMultiEntryView();
 }
 //=================================================================================================//
 template <typename DataType>

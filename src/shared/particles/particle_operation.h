@@ -39,7 +39,7 @@ namespace SPH
 struct CopyParticleStateCK
 {
     template <typename DataType>
-    void operator()(VariableArrayView<DataType> &variable_array_view, size_t index, size_t another_index);
+    void operator()(VariableArrayView<DataType> &variable_array_view, UnsignedInt index, UnsignedInt another_index);
 };
 
 class SpawnRealParticle
