@@ -129,8 +129,9 @@ sycl::event DeviceRadixSort<DataType>::sort_by_key(
                             // another kernel before sort_by_key in order to initialize it
                             digit ? data[global_id] : global_id};
                         else  // masking extra indexes
-                            // Initialize exceeding values to the largest key considered
-                            number.first = (1 << bits_max_key) - 1;  // max key for given number of bits
+                            // Fully initialize padding items so they can write to data_swap_acc without gaps.
+                            // Their max key guarantees they scatter beyond data_size in the global pass.
+                            number = {static_cast<UnsignedInt>((1 << bits_max_key) - 1), static_cast<DataType>(0)};
 
 
                         // Locally sort digit with split primitive
@@ -164,8 +165,9 @@ sycl::event DeviceRadixSort<DataType>::sort_by_key(
                         for (UnsignedInt r = 0; r < radix; ++r)
                             global_buckets_accessor[r][workgroup] = local_buckets[r];
 
-                        if (global_id < data_size)
-                            data_swap_acc[workgroup_size * workgroup + rank] = number; // save local sorting back to data
+                        // All work-items write (including padding): ensures no unwritten slots in data_swap_acc.
+                        // Scatter kernel guards on global_id < data_size to prevent out-of-bounds writes.
+                        data_swap_acc[workgroup_size * workgroup + rank] = number;
 
                         // Compute local buckets offsets
                         UnsignedInt *begin = local_buckets.get_multi_ptr<sycl::access::decorated::no>().get(), *end = begin + radix,
