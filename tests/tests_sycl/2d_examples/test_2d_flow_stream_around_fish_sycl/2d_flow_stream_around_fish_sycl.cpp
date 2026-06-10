@@ -54,18 +54,16 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &update_fish_cell_linked_list =
         main_methods.addCellLinkedListDynamics(fish_body);
-    // Group water CLL + relation rebuild — both run on every update_water_body_configuration.exec().
-    ParticleDynamicsGroup update_water_body_configuration;
-    update_water_body_configuration.add(&main_methods.addCellLinkedListDynamics(water_block));
-    update_water_body_configuration.add(&main_methods.addRelationDynamics(water_block_inner, water_block_contact));
+    auto &update_water_cell_linked_list =
+        main_methods.addCellLinkedListDynamics(water_block);
+    auto &water_body_update_complex_relation =
+        main_methods.addRelationDynamics(water_block_inner, water_block_contact);
 
     // fish_inner is Lagrangian — built once during init, never rebuilt.
     auto &fish_inner_build =
         main_methods.addRelationDynamics(fish_inner);
     auto &fish_contact_relation =
         main_methods.addRelationDynamics(fish_contact);
-    auto &particle_sort =
-        main_methods.addSortDynamics(water_block);
     //----------------------------------------------------------------------
     //	Solid correction matrix (Lagrangian — computed once, stays fixed).
     //----------------------------------------------------------------------
@@ -170,6 +168,9 @@ int main(int ac, char *av[])
     AlignedBoxByParticle emitter_part(
         water_block,
         AlignedBox(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
+    // Sort is constructed AFTER emitter_part so body_parts_by_particle_ includes it.
+    // This mirrors the cylinder pattern and ensures sort.exec() updates the emitter's particle list.
+    ParticleSortCK<MainExecutionPolicy> particle_sort(water_block);
     auto &emitter_injection =
         main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitter_part);
     auto &inflow_condition =
@@ -220,7 +221,8 @@ int main(int ac, char *av[])
     //	Initialisation.
     //----------------------------------------------------------------------
     update_fish_cell_linked_list.exec();
-    update_water_body_configuration.exec();
+    update_water_cell_linked_list.exec();
+    water_body_update_complex_relation.exec();
     fish_inner_build.exec();
     fish_contact_relation.exec();
     fish_body_corrected_configuration.exec();
@@ -311,14 +313,10 @@ int main(int ac, char *av[])
             disposer_indication.exec();
             particle_deletion.exec();
 
-            // Sort disabled: GPU sort of 52k+ particles causes NaN (uninitialized reserve
-            // particles mixed into active array during sort). Buffer increased to 0.8x to
-            // accommodate particle growth from emitter without overflow.
-            // TODO: fix root cause — guard sort against reserve particles.
-            // if (number_of_iterations % 100 == 0)
-            //     particle_sort.exec();
+            particle_sort.exec();
 
-            update_water_body_configuration.exec();
+            update_water_cell_linked_list.exec();
+            water_body_update_complex_relation.exec();
             fish_contact_relation.exec();
 
             //	Advection-level fluid operators for next Dt.
