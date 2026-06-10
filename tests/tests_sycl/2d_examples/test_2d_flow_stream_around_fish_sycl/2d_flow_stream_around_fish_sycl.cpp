@@ -313,7 +313,8 @@ int main(int ac, char *av[])
             disposer_indication.exec();
             particle_deletion.exec();
 
-            particle_sort.exec();
+            if (number_of_iterations % 100 == 0)
+                particle_sort.exec();
 
             update_water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
