@@ -115,7 +115,9 @@ class AlignedBox : public TransformGeometry<GeometricBox>
     {
         Vecd position_in_frame = transform_.shiftBaseStationToFrame(probe_point);
         Vecd shift = Vecd::Zero();
-        shift[alignment_axis_] -= 2.0 * halfsize_[alignment_axis_];
+        Real overshoot = position_in_frame[alignment_axis_] - halfsize_[alignment_axis_];
+        int n_wraps = static_cast<int>(std::ceil(overshoot / (2.0 * halfsize_[alignment_axis_])));
+        shift[alignment_axis_] -= n_wraps * 2.0 * halfsize_[alignment_axis_];
         return transform_.shiftFrameStationToBase(position_in_frame + shift);
     };
     Vecd getLowerPeriodic(const Vecd &probe_point);
