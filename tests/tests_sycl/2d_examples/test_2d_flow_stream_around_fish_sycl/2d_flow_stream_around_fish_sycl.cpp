@@ -113,7 +113,7 @@ int main(int ac, char *av[])
             .addPostContactInteraction(water_block_contact)
             .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeStream>(water_block);
 
-    StartupToConstantInflowSpeed free_stream_speed(U_f, 2.0);
+    StartupToConstantInflowSpeed free_stream_speed(0.0, 2.0);
     auto &fluid_acoustic_step_1st_half =
         main_methods.addInteractionDynamicsOneLevel<
             fluid_dynamics::AcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner)
