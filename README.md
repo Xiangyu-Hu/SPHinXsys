@@ -16,11 +16,15 @@
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
 [![QQ](https://img.shields.io/badge/QQ_Group-blue?logo=tencentqq&logoColor=white)](https://qm.qq.com/q/BZDAqz70Iw)
 
-## Newest update: Signed-distance Function (SDF) Based Geometrics
+## SPHinXsim: Multi-physics simulator with Jason, Python and Natural Language Interfaces based on SPHinXsys library
 
-By using SDF primitives, extensions and operations, alternative independent and meshless modeling can be carried out in SPHinXsys for complex geometrics.
+Welcome to check the newest development from the repository: https://github.com/Xiangyu-Hu/SPHinXsim.
 
-[![geometry-model](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/sdf_geometry.png)](https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/tests_sycl/3d_examples/test_3d_sdf_shape_sycl/sdf_shape_particle_relaxation.cpp)
+* Unified simulation building system accepting structured Jason as single source of truth
+* Python interface using pybind11
+* Natural Language (CLI) Interfaces based on Pydantic and Schema validations
+* Visualization (experiment) for geometry settings
+* AI-assisted documentation always updated in time
 
 ## Repository Description
 
