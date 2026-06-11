@@ -129,7 +129,7 @@ void MultiPolygon::addBoostMultiPoly(boost_multi_poly &boost_multi_poly_op, Geom
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, boost_multi_poly_op, op);
 }
 //=================================================================================================//
-void MultiPolygon::addBox(Transform transform, const Vecd &halfsize, GeometricOps op)
+void MultiPolygon::addBox(const Transform transform, const Vecd &halfsize, GeometricOps op)
 {
     Vecd point0 = transform.shiftFrameStationToBase(-halfsize);
     Vecd point1 = transform.shiftFrameStationToBase(Vecd(-halfsize[0], halfsize[1]));
@@ -223,6 +223,15 @@ void MultiPolygon::addPolygon(const std::vector<Vecd> &points, GeometricOps op)
     convert(poly, multi_poly_polygon);
 
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_polygon, op);
+}
+//=================================================================================================//
+void MultiPolygon::addTriangle(const Transform &transform, const Vecd &half_size, GeometricOps op)
+{
+    Vecd point0 = transform.shiftFrameStationToBase(Vecd(half_size[0], -half_size[1]));
+    Vecd point1 = transform.shiftFrameStationToBase(Vecd(-half_size[0], -half_size[1]));
+    Vecd point2 = transform.shiftFrameStationToBase(Vecd(0.0, half_size[1]));
+    std::vector<Vecd> points = {point0, point1, point2, point0};
+    addPolygon(points, op);
 }
 //=================================================================================================//
 void MultiPolygon::
