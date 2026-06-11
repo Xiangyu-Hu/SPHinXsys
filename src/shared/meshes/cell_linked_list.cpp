@@ -169,7 +169,7 @@ CellLinkedList<SPHAdaptation>::CellLinkedList(BoundingBoxd tentative_bounds, Rea
     : BaseCellLinkedList(base_particles, sph_adaptation, tentative_bounds, grid_spacing, 1),
       mesh_(&getCoarsestMesh())
 {
-    UnsignedInt index_list_size = SMAX(base_particles.ParticlesBound(), total_number_of_cells_);
+    UnsignedInt index_list_size = SMAX(base_particles.ParticlesBound(), total_number_of_cells_ + 1);
     dv_particle_index_ = createUniqueEntity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size);
     dv_cell_offset_ = createUniqueEntity<UnsignedInt, DiscreteVariable>("CellOffset", total_number_of_cells_ + 1);
 }
@@ -227,7 +227,7 @@ CellLinkedList<AdaptiveSmoothingLength>::CellLinkedList(
       h_ratio_(adaptation_.dvSmoothingLengthRatio()->Data()),
       h_level_(adaptation_.dvSmoothingLengthLevel()->Data())
 {
-    UnsignedInt index_list_size = SMAX(base_particles.ParticlesBound(), total_number_of_cells_);
+    UnsignedInt index_list_size = SMAX(base_particles.ParticlesBound(), total_number_of_cells_ + 1);
     dv_particle_index_ = createUniqueEntity<UnsignedInt, DiscreteVariable>("ParticleIndex", index_list_size);
     dv_cell_offset_ = createUniqueEntity<UnsignedInt, DiscreteVariable>("CellOffset", total_number_of_cells_ + 1);
 }
