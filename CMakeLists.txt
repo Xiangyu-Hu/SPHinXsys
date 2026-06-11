@@ -92,7 +92,7 @@ target_link_libraries(sphinxsys_core INTERFACE Eigen3::Eigen)
 
 # ## TBB
 find_package(TBB CONFIG REQUIRED)
-target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc $<$<PLATFORM_ID:Windows>:TBB::tbbmalloc_proxy>)
+target_link_libraries(sphinxsys_core INTERFACE TBB::tbb)
 
 # ## Threads
 find_package(Threads REQUIRED)
@@ -111,15 +111,11 @@ endif()
 
 target_link_libraries(sphinxsys_core INTERFACE Boost::boost)
 target_include_directories(sphinxsys_core INTERFACE ${Boost_INCLUDE_DIRS})
-find_package(Boost QUIET COMPONENTS program_options throw_exception)
+find_package(Boost QUIET COMPONENTS program_options)
 
 if(TARGET Boost::program_options)
     target_compile_definitions(sphinxsys_core INTERFACE BOOST_AVAILABLE)
     target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
-endif()
-
-if(TARGET Boost::throw_exception)
-    target_link_libraries(sphinxsys_core INTERFACE Boost::throw_exception)
 endif()
 
 find_package(spdlog CONFIG REQUIRED)

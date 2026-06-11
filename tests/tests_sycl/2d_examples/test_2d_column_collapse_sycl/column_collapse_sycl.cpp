@@ -117,10 +117,10 @@ int main(int ac, char *av[])
     auto &soil_density_regularization =
         main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(soil_block_inner)
             .addPostContactInteraction(soil_block_contact)
-            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(soil_block);
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeSurface>(soil_block);
     auto &stress_diffusion = main_methods.addInteractionDynamics<continuum_dynamics::StressDiffusionCK>(soil_block_inner);
 
-    auto &soil_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(soil_block, 0.4);
+    auto &soil_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(soil_block, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

@@ -270,7 +270,7 @@ int main(int ac, char *av[])
     auto &fluid_density_regularization =
         main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(water_body_inner)
             .addPostContactInteraction(water_body_contact)
-            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeStream>(water_body);
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeStream>(water_body);
 
     auto &fluid_acoustic_step_1st_half =
         main_methods.addInteractionDynamicsOneLevel<
@@ -290,7 +290,7 @@ int main(int ac, char *av[])
             .addPostStateDynamics<ConstantConstraintCK, Vecd>(emitter, "Displacement", Vecd::Zero());
 
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_body, U_f);
-    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_body);
+    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(water_body);
 
     auto &fluid_viscous_force =
         main_methods.addInteractionDynamicsWithUpdate<
