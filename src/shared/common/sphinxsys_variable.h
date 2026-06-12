@@ -88,6 +88,7 @@ class MultiEntryView
   public:
     MultiEntryView(DataType *data, UnsignedInt width)
         : data_(data), width_(width) {};
+    void setData(DataType *data) { data_ = data; };
     UnsignedInt Width() const { return width_; };
 
     DataType *operator[](UnsignedInt index) const
