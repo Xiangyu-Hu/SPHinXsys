@@ -20,10 +20,11 @@
 
 Welcome to check the newest development from the repository: https://github.com/Xiangyu-Hu/SPHinXsim.
 
-* Unified simulation building system accepting structured Jason as single source of truth
-* Python interface using pybind11
-* Natural Language (CLI) Interfaces based on Pydantic and Schema validations
-* Visualization (experiment) for geometry settings
+* Simulation building system accepting structured Jason as single source of truth
+* Jason interface directly used for the C++-based simulator
+* Optional Python interface using pybind11
+* Optional Natural Language (CLI) interface based on Pydantic and Schema validations (optional)
+* Visualization (experimental) for geometry settings
 * AI-assisted documentation always updated in time
 
 ## Repository Description

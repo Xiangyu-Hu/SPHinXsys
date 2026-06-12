@@ -78,17 +78,18 @@ class VariableArray : public Quantity
   public:
     VariableArray(StdVec<DiscreteVariable<DataType> *> variables)
         : Quantity("VariableArray"), variables_(variables),
-          array_size_(variables.size())
+          array_size_(variables.size()),
+          multi_entry_view_(static_cast<MultiEntryView<DataType> *>(
+              std::malloc(variables.size() * sizeof(MultiEntryView<DataType>))))
     {
-        multi_entry_view_ = new MultiEntryView<DataType>[variables.size()];
         for (size_t i = 0; i != variables.size(); ++i)
         {
-            multi_entry_view_[i].setData(variables[i]->Data());
-            multi_entry_view_[i].setWidth(variables[i]->getWidth());
+            multi_entry_view_[i] = MultiEntryView<DataType>(
+                variables[i]->Data(), variables[i]->getWidth());
         }
     };
 
-    ~VariableArray() { delete[] multi_entry_view_; };
+    ~VariableArray() { free(multi_entry_view_); };
     StdVec<DiscreteVariable<DataType> *> getVariables() { return variables_; };
     size_t getArraySize() { return array_size_; }
     MultiEntryView<DataType> *getArrayData() { return multi_entry_view_; };
