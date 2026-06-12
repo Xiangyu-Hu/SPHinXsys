@@ -52,8 +52,7 @@ class FreeStreamCondition : public LocalDynamics
 
       protected:
         ConditionFunction free_stream_velocity_;
-        Real rho0_;
-        Real *rho_sum_;
+        Real *compression_sum_;
         Vecd *pos_, *vel_;
         int *indicator_;
         Real *physical_time_;
@@ -61,8 +60,7 @@ class FreeStreamCondition : public LocalDynamics
 
   protected:
     ConditionFunction free_stream_velocity_;
-    Real rho0_;
-    DiscreteVariable<Real> *dv_rho_sum_;
+    DiscreteVariable<Real> *dv_compression_sum_;
     DiscreteVariable<Vecd> *dv_pos_, *dv_vel_;
     DiscreteVariable<int> *dv_indicator_;
     SingleVariable<Real> *sv_physical_time_;
