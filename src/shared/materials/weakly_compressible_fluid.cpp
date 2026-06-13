@@ -49,10 +49,27 @@ WeaklyCompressibleMixture::~WeaklyCompressibleMixture() = default;
 //=================================================================================================//
 void WeaklyCompressibleMixture::initializeLocalParameters(BaseParticles *base_particles)
 {
+    Fluid::initializeLocalParameters(base_particles);
     dv_rho0_ = base_particles->registerStateVariable<Real>("ReferenceDensity", rho0_list_[0]);
     dv_Y_list_ = base_particles->registerStateVariable<Real>("MassFraction", species_name_list_);
     base_particles->addEvolvingVariable<Real>(dv_rho0_);
     base_particles->addEvolvingVariable<Real>(dv_Y_list_);
+    base_particles->addVariableToWrite<Real>(dv_Y_list_);
+}
+//=================================================================================================//
+Real WeaklyCompressibleMixture::getPressure(Real rho)
+{
+    return c0_ * c0_ * (rho - ReferenceDensity());
+}
+//=================================================================================================//
+Real WeaklyCompressibleMixture::DensityFromPressure(Real p)
+{
+    return ReferenceDensity() + p / (c0_ * c0_);
+}
+//=================================================================================================//
+Real WeaklyCompressibleMixture::getSoundSpeed(Real p, Real rho)
+{
+    return c0_;
 }
 //=================================================================================================//
 } // namespace SPH

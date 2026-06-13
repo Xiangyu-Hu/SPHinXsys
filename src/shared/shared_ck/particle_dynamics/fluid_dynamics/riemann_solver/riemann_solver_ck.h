@@ -49,7 +49,7 @@ class RiemannSolver<Base, FluidI, FluidJ>
   public:
     typedef FluidI SourceFluid;
     typedef FluidJ TargetFluid;
-    RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j) : fluid_i_(fluid_i), fluid_j_(fluid_j){};
+    RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j) : fluid_i_(fluid_i), fluid_j_(fluid_j) {};
 
     class ComputingKernel : public ImpedanceModel<FluidI, FluidJ>
     {
@@ -73,7 +73,7 @@ class RiemannSolver<NotUsed, FluidI, FluidJ> : public RiemannSolver<Base, FluidI
     using BaseRiemannSolver = RiemannSolver<Base, FluidI, FluidJ>;
 
   public:
-    RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j) : BaseRiemannSolver(fluid_i, fluid_j){};
+    RiemannSolver(FluidI &fluid_i, FluidJ &fluid_j) : BaseRiemannSolver(fluid_i, fluid_j) {};
 
     class ComputingKernel : public BaseRiemannSolver::ComputingKernel
     {
@@ -111,17 +111,15 @@ class RiemannSolver<FluidI, FluidJ, LimiterType> : public RiemannSolver<Base, Fl
     Real limiter_coeff_;
 };
 
-template <>
-class ImpedanceModel<WeaklyCompressibleFluid, WeaklyCompressibleFluid>
+template <class FluidI, class FluidJ>
+class ImpedanceModel<FluidI, FluidJ>
 {
     Real rho0_i_, rho0_j_, rho0c0_i_, rho0c0_j_, inv_rho0c0_sum_;
     Real inv_rho0c0_ave_, rho0c0_geo_ave_, inv_c0_ave_;
 
   public:
     template <class ExecutionPolicy>
-    ImpedanceModel(
-        const ExecutionPolicy &ex_policy,
-        const WeaklyCompressibleFluid &fluid_i, const WeaklyCompressibleFluid &fluid_j);
+    ImpedanceModel(const ExecutionPolicy &ex_policy, const FluidI &fluid_i, const FluidJ &fluid_j);
     Real Rho_i(UnsignedInt) const { return rho0_i_; };
     Real Rho_j(UnsignedInt) const { return rho0_j_; };
     Real Impedance_i(UnsignedInt) const { return rho0c0_i_; };

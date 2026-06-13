@@ -37,24 +37,24 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-class ReferenceDesnityUpdate : public LocalDynamics
+class ReferenceDensityUpdate : public LocalDynamics
 {
   public:
-    explicit ReferenceDesnityUpdate(SPHBody &sph_body)
+    explicit ReferenceDensityUpdate(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          fluid_mixture_(DynamicCast<WeaklyCompressibleMixture>(
+          fluid_mixture(DynamicCast<WeaklyCompressibleMixture>(
               this, this->sph_body_->getMatterMaterial())),
-          ca_inv_rho0_list_(fluid_mixture_.caInvReferenceDensity()),
-          dv_Y_list_(fluid_mixture_.dvMassFraction()),
-          dv_rho0_(fluid_mixture_.dvReferenceDensity()),
-          dv_mass_(fluid_mixture_.dvMass()){};
-    virtual ~ReferenceDesnityUpdate(){};
+          ca_inv_rho0_list_(fluid_mixture.caInvReferenceDensity()),
+          dv_Y_list_(fluid_mixture.dvMassFraction()),
+          dv_rho0_(fluid_mixture.dvReferenceDensity()),
+          dv_mass_(fluid_mixture.dvMass()) {};
+    virtual ~ReferenceDensityUpdate() {};
 
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy, ReferenceDesnityUpdate &encloser)
+        UpdateKernel(const ExecutionPolicy &ex_policy, ReferenceDensityUpdate &encloser)
             : inv_rho0_list_(encloser.ca_inv_rho0_list_->DelegatedDataView(ex_policy)),
               Y_list_(encloser.dv_Y_list_->DelegatedMultiEntryView(ex_policy)),
               rho0_(encloser.dv_rho0_->DelegatedDataView(ex_policy)),
@@ -80,8 +80,66 @@ class ReferenceDesnityUpdate : public LocalDynamics
     };
 
   protected:
-    WeaklyCompressibleMixture &fluid_mixture_;
+    WeaklyCompressibleMixture &fluid_mixture;
     ConstantArray<Real> *ca_inv_rho0_list_;
+    DiscreteVariable<Real> *dv_Y_list_;
+    DiscreteVariable<Real> *dv_rho0_, *dv_mass_;
+};
+
+class PrescribedReferenceDensity
+{
+  public:
+    PrescribedReferenceDensity(
+        BaseParticles *base_particles,
+        const WeaklyCompressibleMixture &fluid_mixture,
+        StdVec<Real> mass_fractions)
+        : ca_inv_rho0_list_(fluid_mixture.caInvReferenceDensity()),
+          ca_mass_fractions_("ConstantMassFractions", mass_fractions),
+          dv_Y_list_(fluid_mixture.dvMassFraction()),
+          dv_rho0_(fluid_mixture.dvReferenceDensity()),
+          dv_mass_(fluid_mixture.dvMass())
+    {
+        if (ca_inv_rho0_list_->getSize() != mass_fractions.size())
+        {
+            std::cout << "\n Error: the mass fraction list and the number of "
+                      << "species should be the same !" << std::endl;
+            exit(1);
+        }
+    };
+    ~PrescribedReferenceDensity() {};
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : inv_rho0_list_(encloser.ca_inv_rho0_list_->DelegatedDataView(ex_policy)),
+              mass_fractions_(encloser.ca_mass_fractions_.DelegatedDataView(ex_policy)),
+              Y_list_(encloser.dv_Y_list_->DelegatedMultiEntryView(ex_policy)),
+              rho0_(encloser.dv_rho0_->DelegatedDataView(ex_policy)),
+              mass_(encloser.dv_mass_->DelegatedDataView(ex_policy)){};
+
+        void operator()(size_t index_i, Real dt = 0.0)
+        {
+            Real sum = 0.0;
+            Real volume = mass_[index_i] / rho0_[index_i];
+            for (size_t k = 0; k != Y_list_.Width(); ++k)
+            {
+                Y_list_[index_i][k] = mass_fractions_[k];
+                sum += mass_fractions_[k] * inv_rho0_list_[k];
+            }
+            rho0_[index_i] = 1.0 / sum;
+            mass_[index_i] = rho0_[index_i] * volume;
+        };
+
+      protected:
+        DataView<Real> inv_rho0_list_, mass_fractions_;
+        MultiEntryView<Real> Y_list_;
+        DataView<Real> rho0_, mass_;
+    };
+
+  protected:
+    ConstantArray<Real> *ca_inv_rho0_list_, ca_mass_fractions_;
     DiscreteVariable<Real> *dv_Y_list_;
     DiscreteVariable<Real> *dv_rho0_, *dv_mass_;
 };

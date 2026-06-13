@@ -54,10 +54,10 @@ Real RiemannSolver<FluidI, FluidJ, LimiterType>::ComputingKernel::DissipativeUJu
     return p_jump * this->InvImpedanceAve(i, j); // the factor 0.5 canceled
 }
 //=================================================================================================//
+template <class FluidI, class FluidJ>
 template <class ExecutionPolicy>
-ImpedanceModel<WeaklyCompressibleFluid, WeaklyCompressibleFluid>::ImpedanceModel(
-    const ExecutionPolicy &ex_policy,
-    const WeaklyCompressibleFluid &fluid_i, const WeaklyCompressibleFluid &fluid_j)
+ImpedanceModel<FluidI, FluidJ>::ImpedanceModel(
+    const ExecutionPolicy &ex_policy, const FluidI &fluid_i, const FluidJ &fluid_j)
     : rho0_i_(fluid_i.ReferenceDensity()), rho0_j_(fluid_j.ReferenceDensity()),
       rho0c0_i_(rho0_i_ * fluid_i.ReferenceSoundSpeed()),
       rho0c0_j_(rho0_j_ * fluid_j.ReferenceSoundSpeed()),

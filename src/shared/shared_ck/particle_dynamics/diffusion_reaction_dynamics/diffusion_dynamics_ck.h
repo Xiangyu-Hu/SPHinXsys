@@ -107,12 +107,13 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrecti
     Real smoothing_length_sq_;
 };
 
-template <class DiffusionType, template <typename...> class BoundaryType, class KernelCorrectionType>
-class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType>>
-    : public DiffusionRelaxationCK<DiffusionType, Interaction<Contact<>>>
+template <class DiffusionType, template <typename...> class BoundaryType,
+          class KernelCorrectionType, class... Parameters>
+class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>
+    : public DiffusionRelaxationCK<DiffusionType, Interaction<Contact<Parameters...>>>
 {
     UniquePtrsKeeper<BoundaryType<DiffusionType>> boundaries_keeper_;
-    using BaseInteraction = DiffusionRelaxationCK<DiffusionType, Interaction<Contact<>>>;
+    using BaseInteraction = DiffusionRelaxationCK<DiffusionType, Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
     using BoundaryKernel = typename BoundaryType<DiffusionType>::ComputingKernel;
 
