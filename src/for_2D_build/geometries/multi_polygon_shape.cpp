@@ -235,8 +235,10 @@ void MultiPolygon::addTriangle(const Transform &transform, const Vecd &half_size
 }
 //=================================================================================================//
 void MultiPolygon::
-    addPolygonFromFile(std::string file_path_name, GeometricOps op, Vecd translation, Real scale_factor)
+    addPolygonFromFile(std::string file_name, GeometricOps op, Vecd translation, Real scale_factor)
 {
+    IOEnvironment &io_env = IO::getEnvironment();
+    std::string file_path_name = io_env.InputFolder() + "/" + file_name;
     std::fstream dataFile(file_path_name);
     Vecd temp_point;
     std::vector<Vecd> coordinates;
