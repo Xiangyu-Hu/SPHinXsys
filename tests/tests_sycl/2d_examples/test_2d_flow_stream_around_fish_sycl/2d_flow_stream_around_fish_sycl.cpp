@@ -198,15 +198,8 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<int>(water_block, "Indicator");
     body_state_recorder.addToWrite<Real>(water_block, "PositionDivergence");
     body_state_recorder.addToWrite<Real>(water_block, "DensitySummation");
-    body_state_recorder.addToWrite<Vecd>(fish_body, "Velocity");
-    body_state_recorder.addToWrite<Vecd>(fish_body, "NormalDirection");
-    body_state_recorder.addToWrite<Vecd>(fish_body, "AverageAcceleration");
-    body_state_recorder.addToWrite<Vecd>(fish_body, "PressureForceFromFluid");
-    body_state_recorder.addToWrite<Real>(water_block, "Pressure");
-    body_state_recorder.addToWrite<Real>(water_block, "Density");
-    body_state_recorder.addToWrite<Vecd>(water_block, "ForcePrior");
-    // body_state_recorder.addToWrite<int>(fish_body, "MaterialID");
-    // body_state_recorder.addToWrite<Matd>(fish_body, "ActiveStrain");
+    body_state_recorder.addToWrite<int>(fish_body, "MaterialID");
+    body_state_recorder.addToWrite<Matd>(fish_body, "ActiveStrain");
 
     Gravity gravity(Vecd::Zero());
     ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>
