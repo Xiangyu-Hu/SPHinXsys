@@ -265,6 +265,7 @@ int main(int ac, char *av[])
 
         Real dt_s_sum = 0.0;
         int guard = 0;
+        int solid_sub_count = 0;
 
         while (dt_s_sum < acoustic_dt && guard++ < 10000)
         {
@@ -288,6 +289,7 @@ int main(int ac, char *av[])
             fish_body_stress_relaxation_second_half.exec(dt_s);
 
             dt_s_sum += dt_s;
+            solid_sub_count++;
         }
 
         update_average_velocity.exec(acoustic_dt);
@@ -309,16 +311,12 @@ int main(int ac, char *av[])
             if (number_of_iterations % screen_output_interval == 0)
             {
                 size_t inner_ite_dt = static_cast<size_t>(Dt / time_stepper.getGlobalTimeStepSize());
-                Real dt_s_screen = fish_body_computing_time_step_size.exec();
-                int dt_dt_s = (dt_s_screen > Real(0))
-                    ? static_cast<int>(time_stepper.getGlobalTimeStepSize() / dt_s_screen) + 2
-                    : 33;
                 std::cout << std::fixed << std::setprecision(9)
                           << "N=" << number_of_iterations
                           << "  Time=" << time_stepper.getPhysicalTime()
                           << "  Dt=" << Dt
                           << "  Dt/dt=" << inner_ite_dt
-                          << "  dt/dt_s=" << dt_dt_s << "\n";
+                          << "  dt/dt_s=" << solid_sub_count << "\n";
                 write_water_mechanical_energy.writeToFile(number_of_iterations);
             }
 
