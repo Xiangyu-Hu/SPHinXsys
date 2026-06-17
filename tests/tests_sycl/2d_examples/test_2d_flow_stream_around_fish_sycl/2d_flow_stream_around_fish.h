@@ -249,35 +249,6 @@ class UpdateAverageVelocityAndAccelerationCK : public LocalDynamics
     DiscreteVariable<Vecd> *dv_pos_, *dv_pos_temp_, *dv_vel_ave_, *dv_acc_ave_;
 };
 
-class ZeroForceCK : public LocalDynamics
-{
-  public:
-    explicit ZeroForceCK(SolidBody &solid_body)
-        : LocalDynamics(solid_body),
-          dv_force_(particles_->getVariableByName<Vecd>("Force")),
-          dv_force_prior_(particles_->getVariableByName<Vecd>("ForcePrior")) {}
-
-    struct UpdateKernel
-    {
-        template <typename ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy, ZeroForceCK &encloser)
-            : force_(encloser.dv_force_->DelegatedData(ex_policy)),
-              force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)) {}
-
-        void update(size_t index_i, Real dt = 0.0)
-        {
-            force_[index_i] = Vecd::Zero();
-            force_prior_[index_i] = Vecd::Zero();
-        }
-
-      protected:
-        Vecd *force_, *force_prior_;
-    };
-
-  protected:
-    DiscreteVariable<Vecd> *dv_force_, *dv_force_prior_;
-};
-
 class FishMaterialInitialization : public MaterialIdInitialization
 {
   public:
