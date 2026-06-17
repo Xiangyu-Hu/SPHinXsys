@@ -79,8 +79,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Solid dynamics.
     //----------------------------------------------------------------------
-    // auto &imposing_active_strain =
-    //     main_methods.addStateDynamics<ImposingActiveStrain>(fish_body);
+    auto &imposing_active_strain =
+        main_methods.addStateDynamics<ImposingActiveStrain>(fish_body);
     auto &fish_body_stress_relaxation_first_half =
         main_methods.addInteractionDynamicsOneLevel<
             solid_dynamics::StructureIntegration1stHalfPK2, FishBodyComposite>(fish_inner);
@@ -259,15 +259,14 @@ int main(int ac, char *av[])
         fluid_acoustic_step_2nd_half.exec(acoustic_dt);
 
         Real dt_s_raw = fish_body_computing_time_step_size.exec();
-        int solid_sub_div = (dt_s_raw > Real(0))
-            ? static_cast<int>(acoustic_dt / dt_s_raw) + 2
-            : 33;
+        int solid_sub_div =
+            static_cast<int>(acoustic_dt / dt_s_raw) + 2;
         initialize_displacement.exec();
         time_stepper.integrateMatchedTimeInterval(
             acoustic_dt, solid_sub_div,
             [&](Real dt_s)
             {
-                // imposing_active_strain.exec();  // no muscle activation in Step 3
+                // imposing_active_strain.exec(); 
                 fish_body_stress_relaxation_first_half.exec(dt_s);
                 fish_body_stress_relaxation_second_half.exec(dt_s);
             });
