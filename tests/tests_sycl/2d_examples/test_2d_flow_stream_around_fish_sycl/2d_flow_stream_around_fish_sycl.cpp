@@ -241,7 +241,7 @@ int main(int ac, char *av[])
     fluid_boundary_indicator.exec();
     fluid_density_regularization.exec();
     water_advection_step_setup.exec();
-    // transport_correction.exec();
+    transport_correction.exec();
     fluid_viscous_force.exec();
     viscous_force_from_fluid.exec();
 
@@ -288,7 +288,7 @@ int main(int ac, char *av[])
                 std::min(dt_s_candidate,
                         acoustic_dt - dt_s_sum);
 
-            // imposing_active_strain.exec();
+            imposing_active_strain.exec();
 
             fish_body_numerical_damping.exec(dt_s);
             fish_body_stress_relaxation_first_half.exec(dt_s);
