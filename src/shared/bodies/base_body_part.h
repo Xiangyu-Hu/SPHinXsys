@@ -69,9 +69,6 @@ class BodyPart
 
   public:
     typedef SPHAdaptation Adaptation;
-    template <typename TargetCriterion>
-    class TargetParticleMask;
-
     BodyPart(SPHBody &sph_body);
     virtual ~BodyPart();
     SPHBody &getSPHBody() { return sph_body_; };
@@ -82,7 +79,6 @@ class BodyPart
     SPHAdaptation &getSPHAdaptation() { return sph_adaptation_; };
     BaseCellLinkedList &getCellLinkedList();
 
-
   protected:
     SPHBody &sph_body_;
     BaseParticles &base_particles_;
@@ -91,7 +87,6 @@ class BodyPart
     std::optional<std::string> alias_;
     SPHAdaptation &sph_adaptation_;
     SingleVariable<UnsignedInt> *sv_range_size_;
-    DiscreteVariable<int> *dv_body_part_id_;
     Vecd *pos_;
 };
 

@@ -18,28 +18,6 @@ struct has_setupBaseParticles<T, std::void_t<decltype(&T::setupBaseParticles)>> 
 {
 };
 //=================================================================================================//
-template <typename TargetCriterion>
-class BodyPart::TargetParticleMask : public TargetCriterion
-{
-  public:
-    template <class ExecutionPolicy, typename EnclosureType, typename... Args>
-    TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
-        : TargetCriterion(std::forward<Args>(args)...), part_id_(encloser.part_id_),
-          body_part_id_(encloser.dv_body_part_id_->DelegatedData(ex_policy)) {}
-    ~TargetParticleMask() {}
-
-    template <typename... Args>
-    bool operator()(UnsignedInt target_index, Args &&...args)
-    {
-        return (body_part_id_[target_index] == part_id_) &&
-               TargetCriterion::operator()(target_index, std::forward<Args>(args)...);
-    }
-
-  protected:
-    int part_id_;
-    int *body_part_id_;
-};
-//=================================================================================================//
 template <typename TagCriteria>
 BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body, TagCriteria criteria)
     : BodyPartByParticle(sph_body)
