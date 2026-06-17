@@ -81,6 +81,9 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &imposing_active_strain =
         main_methods.addStateDynamics<ImposingActiveStrain>(fish_body);
+    auto &fish_body_numerical_damping =
+        main_methods.addInteractionDynamicsWithUpdate<
+            solid_dynamics::StructureNumericalDamping, FishBodyComposite>(fish_inner);
     auto &fish_body_stress_relaxation_first_half =
         main_methods.addInteractionDynamicsOneLevel<
             solid_dynamics::StructureIntegration1stHalfPK2, FishBodyComposite>(fish_inner);
@@ -195,6 +198,13 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<int>(water_block, "Indicator");
     body_state_recorder.addToWrite<Real>(water_block, "PositionDivergence");
     body_state_recorder.addToWrite<Real>(water_block, "DensitySummation");
+    body_state_recorder.addToWrite<Vecd>(fish_body, "Velocity");
+    body_state_recorder.addToWrite<Vecd>(fish_body, "NormalDirection");
+    body_state_recorder.addToWrite<Vecd>(fish_body, "AverageAcceleration");
+    body_state_recorder.addToWrite<Vecd>(fish_body, "PressureForceFromFluid");
+    body_state_recorder.addToWrite<Real>(water_block, "Pressure");
+    body_state_recorder.addToWrite<Real>(water_block, "Density");
+    body_state_recorder.addToWrite<Vecd>(water_block, "ForcePrior");
     // body_state_recorder.addToWrite<int>(fish_body, "MaterialID");
     // body_state_recorder.addToWrite<Matd>(fish_body, "ActiveStrain");
 
@@ -231,7 +241,7 @@ int main(int ac, char *av[])
     fluid_boundary_indicator.exec();
     fluid_density_regularization.exec();
     water_advection_step_setup.exec();
-    transport_correction.exec();
+    // transport_correction.exec();
     fluid_viscous_force.exec();
     viscous_force_from_fluid.exec();
 
@@ -258,18 +268,34 @@ int main(int ac, char *av[])
         pressure_force_from_fluid.exec();
         fluid_acoustic_step_2nd_half.exec(acoustic_dt);
 
-        Real dt_s_raw = fish_body_computing_time_step_size.exec();
-        int solid_sub_div =
-            static_cast<int>(acoustic_dt / dt_s_raw) + 2;
         initialize_displacement.exec();
-        time_stepper.integrateMatchedTimeInterval(
-            acoustic_dt, solid_sub_div,
-            [&](Real dt_s)
+
+        Real dt_s_sum = 0.0;
+        int guard = 0;
+
+        while (dt_s_sum < acoustic_dt && guard++ < 10000)
+        {
+            Real dt_s_candidate =
+                fish_body_computing_time_step_size.exec();
+
+            if (dt_s_candidate <= 0.0)
             {
-                // imposing_active_strain.exec(); 
-                fish_body_stress_relaxation_first_half.exec(dt_s);
-                fish_body_stress_relaxation_second_half.exec(dt_s);
-            });
+                std::cerr << "ERROR: dt_s_candidate <= 0\n";
+                break;
+            }
+
+            Real dt_s =
+                std::min(dt_s_candidate,
+                        acoustic_dt - dt_s_sum);
+
+            // imposing_active_strain.exec();
+
+            fish_body_numerical_damping.exec(dt_s);
+            fish_body_stress_relaxation_first_half.exec(dt_s);
+            fish_body_stress_relaxation_second_half.exec(dt_s);
+
+            dt_s_sum += dt_s;
+        }
 
         update_average_velocity.exec(acoustic_dt);
 

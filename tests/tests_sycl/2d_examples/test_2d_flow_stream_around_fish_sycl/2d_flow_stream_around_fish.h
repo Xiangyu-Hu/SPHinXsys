@@ -163,6 +163,11 @@ class FishBodyComposite : public CompositeSolid
 
         inline Real VolumetricKirchhoff(Real J) { return 0.0; }
 
+        inline Real PairNumericalDamping(Real dE_dt_ij, Real smoothing_length)
+        {
+            return active_kernel_.PairNumericalDamping(dE_dt_ij, smoothing_length);
+        }
+
       protected:
         int *material_id_;
         ActiveModelSolid::ConstituteKernel active_kernel_;
