@@ -153,5 +153,50 @@ class WeaklyCompressibleMixture : public Fluid
         DataView<Real> rho0_;
     };
 };
+
+class WeaklyCompressibleMultiPhase : public Fluid
+{
+    UniquePtrsKeeper<Fluid> fluid_ptrs_;
+    bool is_phases_set_ = false;
+
+  protected:
+    StdVec<std::string> phase_name_list_;
+    StdVec<Fluid *> phase_list_;               /**< phase list. */
+    DiscreteVariable<Real> *dv_phi_list_;      /**< phase volume fraction list. */
+    DiscreteVariable<Real> *dv_rho0_;          /**< local reference density. */
+    DiscreteVariable<Vecd> *dv_velocity_list_; /**< phase velocity list. */
+    Real c0_;                                  /**< reference sound speed. */
+
+  public:
+    template <class FirstFluidType, typename... Args>
+    WeaklyCompressibleMultiPhase(Real c0, Args &&...args);
+    virtual ~WeaklyCompressibleMultiPhase();
+    void setPhases() { is_phases_set_ = true; };
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+    virtual Real ReferenceDensity() const override { return phase_list_[0]->ReferenceDensity(); };
+    virtual Real ReferenceSoundSpeed() const override { return c0_; };
+    StdVec<std::string> getPhaseNameList() const { return phase_name_list_; };
+    DiscreteVariable<Real> *dvVolumeFraction() const { return dv_phi_list_; };
+    // the following virtual functions are as they are deprecated for computing kernel
+    // based implementations, but we keep them for backward compatibility
+    [[deprecated("Use WeaklyCompressibleMultiPhase::EosKernel::PressureFromDensity() instead.")]]
+    Real getPressure(Real rho) override
+    {
+        return 0.0;
+    };
+    [[deprecated("Use WeaklyCompressibleMultiPhase::EosKernel::DensityFromPressure() instead.")]]
+    Real DensityFromPressure(Real p) override
+    {
+        return 0.0;
+    };
+    [[deprecated("Use WeaklyCompressibleMultiPhase::EosKernel::getSoundSpeed() instead.")]]
+    Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override
+    {
+        return 0.0;
+    };
+
+    template <class FluidType, typename... Args>
+    void addPhase(Args &&...args);
+};
 } // namespace SPH
 #endif // WEAKLY_COMPRESSIBLE_FLUID_H

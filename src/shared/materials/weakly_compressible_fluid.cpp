@@ -72,4 +72,23 @@ Real WeaklyCompressibleMixture::getSoundSpeed(Real p, Real rho)
     return c0_;
 }
 //=================================================================================================//
+WeaklyCompressibleMultiPhase::~WeaklyCompressibleMultiPhase() = default;
+//=================================================================================================//
+void WeaklyCompressibleMultiPhase::initializeLocalParameters(BaseParticles *base_particles)
+{
+    if (!is_phases_set_)
+    {
+        std::cout << "\n Error in WeaklyCompressibleMultiPhase::initializeLocalParameters :"
+                  << " Phases have not been set, cannot initialize local parameters ! \n ";
+        exit(1);
+    }
+    Fluid::initializeLocalParameters(base_particles);
+    dv_rho0_ = base_particles->registerStateVariable<Real>("ReferenceDensity");
+    dv_phi_list_ = base_particles->registerStateVariable<Real>("VolumeFraction", phase_name_list_);
+    dv_velocity_list_ = base_particles->registerStateVariable<Vecd>("Velocity", phase_name_list_);
+    base_particles->addEvolvingVariable<Real>(dv_phi_list_);
+    base_particles->addEvolvingVariable<Real>(dv_rho0_);
+    base_particles->addEvolvingVariable<Vecd>(dv_velocity_list_);
+}
+//=================================================================================================//
 } // namespace SPH
