@@ -4,16 +4,14 @@
  * @details We consider a flow with one inlet and two outlets in a T - shaped pipe in 2D.
  * @author Xiangyu Hu,Shuoguo Zhang
  */
-
+#include "test_2d_aortic_valve.h" // case file to setup the test case
 #include "bidirectional_buffer.h"
 #include "density_correction.h"
 #include "density_correction.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"
-#include "sphinxsys.h"
-
-using namespace SPH;
+#include <unsupported/Eigen/Splines>
 
 void run_fsi2();
 
@@ -125,9 +123,9 @@ class ShellFluidMixtureMass : public LocalDynamics
 struct LeftInflowPressure
 {
     template <class BoundaryConditionType>
-    explicit LeftInflowPressure(BoundaryConditionType &boundary_condition) {}
+    explicit LeftInflowPressure(BoundaryConditionType &) {}
 
-    Real operator()(Real p, Real current_time)
+    Real operator()(Real p, Real)
     {
         return p;
     }
@@ -135,131 +133,138 @@ struct LeftInflowPressure
 
 struct RightInflowPressure
 {
-    Real outlet_pressure = 0.0;
-
     template <class BoundaryConditionType>
-    explicit RightInflowPressure(BoundaryConditionType &boundary_condition) {}
+    explicit RightInflowPressure(BoundaryConditionType &) {}
 
-    Real operator()(Real p, Real current_time)
+    Real operator()(Real p, Real)
     {
-        /*constant pressure*/
-        Real pressure = outlet_pressure;
-        return pressure;
+        return p;
     }
 };
 
 //----------------------------------------------------------------------
 //	inflow velocity definition.
 //----------------------------------------------------------------------
+// Colume 1: time, column 2: flow rate
+std::vector<std::vector<Real>> read_csv_data(const std::string &file_name)
+{
+    std::cout << "read_csv_data started" << std::endl;
+
+    std::ifstream my_file(file_name, std::ios_base::in);
+    if (!my_file.is_open())
+        throw std::runtime_error("read_csv_data: file doesn't exist");
+
+    std::vector<std::vector<Real>> data;
+
+    std::string line;
+    while (std::getline(my_file, line))
+    {
+        std::vector<Real> row;
+        std::stringstream ss(line);
+        std::string cell;
+
+        while (std::getline(ss, cell, ','))
+            row.emplace_back(std::stod(cell));
+
+        data.push_back(row);
+    }
+    my_file.close();
+    // convert to column-wise data
+    std::vector<std::vector<Real>> column_data;
+    if (!data.empty())
+    {
+        size_t num_columns = data[0].size();
+        column_data.resize(num_columns);
+        for (const auto &row : data)
+        {
+            for (size_t i = 0; i < num_columns; ++i)
+            {
+                column_data[i].push_back(row[i]);
+            }
+        }
+    }
+    std::cout << "read_csv_data finished" << std::endl;
+    return column_data;
+}
+
 struct InflowVelocity
 {
-    Real u_ref_ = 51.3 * 0.01;
+    using Spline1d = Eigen::Spline<double, 1>;
+    Spline1d Q_splines_{};
 
     template <class BoundaryConditionType>
-    explicit InflowVelocity(BoundaryConditionType &boundary_condition) {}
-
-    Vecd operator()(Vecd &, Vecd &, Real)
+    explicit InflowVelocity(BoundaryConditionType &boundary_condition)
     {
-        return u_ref_ * Vec2d::UnitX();
+        auto get_flowrate_splines = []()
+        {
+            // Read data from file
+            std::string filename = "input/flowrate.csv";
+            auto csv_data = read_csv_data(filename);
+            auto &time_data = csv_data[0];
+            auto &flow_rate_data = csv_data[1];
+
+            // Convert to Eigen
+            Eigen::VectorXd X = Eigen::Map<const Eigen::VectorXd>(time_data.data(), time_data.size());
+            Eigen::VectorXd flow_rate_vec = Eigen::Map<const Eigen::VectorXd>(flow_rate_data.data(), flow_rate_data.size());
+
+            // Normalize the time from 0-1 sec (could also do this in the csv file)
+            double x_min = X.minCoeff();
+            double x_max = X.maxCoeff();
+            Eigen::VectorXd t = (X.array() - x_min) / (x_max - x_min);
+
+            // Fit cubic spline
+            Spline1d spline = Eigen::SplineFitting<Spline1d>::Interpolate(
+                flow_rate_vec.transpose(), // column vector
+                3,                         // cubic
+                t);
+
+            return spline;
+        };
+        Q_splines_ = get_flowrate_splines();
+    }
+
+    Vecd operator()(Vecd &pos, Vecd &, Real time)
+    {
+        if (time < time_flow_init)
+            return Vec2d::Zero();
+        Real t = fmod(time - time_flow_init, time_cycle) / time_cycle;
+        Real Q = Q_splines_(t)(0) * L_to_m3 / min_to_s;
+        Real U_ave = Q / (width * height);
+        // parabolic velocity profile
+        Real y = pos.y();
+        Real u = 1.5 * U_ave * (1.0 - 4.0 * y * y / (height * height));
+        return u * Vec2d::UnitX();
     }
 };
 
-// delete particles too close to the contact body
-void delete_particles(BaseContactRelation &contact_relation)
+struct OutflowVelocity
 {
-    auto &body = contact_relation.getSPHBody();
-    auto &particles = body.getBaseParticles();
-    Real h_1 = body.getSPHAdaptation().ReferenceSmoothingLength();
-    std::cout << "h_1 = " << h_1 << std::endl;
-
-    std::cout << "total_real_particles before = " << particles.TotalRealParticles() << std::endl;
-
-    // looping over all source body particles
-    // if there is a neighbor on the contact body, store the id
-    // sort all the ids to remove
-    // loop backwards and switch to buffer
-    IndexVector ids_to_remove;
-    for (size_t i = 0; i < particles.TotalRealParticles(); ++i)
+    template <class BoundaryConditionType>
+    explicit OutflowVelocity(BoundaryConditionType &boundary_condition)
     {
-        bool if_remove = false;
-        for (size_t k = 0; k < contact_relation.contact_bodies_.size(); k++)
-        {
-            auto &body_k = *contact_relation.contact_bodies_[k];
-            Real h_k = body_k.getSPHAdaptation().ReferenceSmoothingLength();
-            Real distance = 0.5 * (h_1 + h_k);
-
-            Neighborhood &contact_neighborhood = (contact_relation.contact_configuration_[k])[i];
-            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-            {
-                if (contact_neighborhood.r_ij_[n] <= distance)
-                {
-                    ids_to_remove.push_back(i);
-                    if_remove = true;
-                    break;
-                }
-            }
-            if (if_remove)
-                break;
-        }
     }
-    // sort
-    sort(ids_to_remove.begin(), ids_to_remove.end());
-    // remove duplicates
-    ids_to_remove.erase(unique(ids_to_remove.begin(), ids_to_remove.end()), ids_to_remove.end());
-    for (size_t i = ids_to_remove.size(); i-- > 0;)
-        particles.switchToBufferParticle(ids_to_remove[i]);
-    std::cout << "total_real_particles after = " << particles.TotalRealParticles() << std::endl;
-}
 
+    Vecd operator()(Vecd &, Vecd &vel, Real)
+    {
+        Vecd target_velocity = vel;
+        target_velocity.y() = 0.0;
+        return target_velocity;
+    }
+};
 //----------------------------------------------------------------------
 void run_fsi2()
 {
-    constexpr Real mm_to_m = 1e-3;
-    constexpr Real L_to_m3 = 1e-3;
-    constexpr Real min_to_s = 60.0;
-    constexpr Real degree_to_rad = Pi / 180.0;
-
-    // geometry
-    const Real height = 20 * mm_to_m;
-    const Real length = 6 * height;
-    const Real width = 117 * mm_to_m;
-    const Real radius = 20 * mm_to_m;
-    const Real shell_length = 26 * mm_to_m;
-    const Real shell_thickness = 0.16 * mm_to_m;
-    const Real angle = 45 * degree_to_rad;
-
-    const Real dp_fluid = height / 20.0;
-    const Real dp_solid = dp_fluid;
-    const Real dp_shell = dp_fluid;
     std::cout << "dp_shell/thickness = " << dp_shell / shell_thickness << std::endl;
-
-    const Real buffer_length = dp_fluid * 3.0;
-    const Real wall_thickness = dp_fluid * 4.0;
-
-    const Vec2d circle_center(2.5 * height, height);
-
-    // material
-    // fluid
-    const Real rho0_f = 1000;                      /**< Density. */
-    const Real Q_max = 23.44 * L_to_m3 / min_to_s; /**< Maximum flow rate. */
-    const Real U_f = Q_max / (width * height);     /**< Characteristic velocity. */
-    const Real U_max = 1.5 * U_f;                  /**< Maximum velocity. */
-    const Real c_f = 10.0 * U_max;                 /**< Speed of sound. */
-    const Real mu_f = 4.3e-3;                      /**< Dynamics viscosity. */
+    std::cout << "U_max = " << U_max << std::endl;
     const Real Re = rho0_f * U_f * height / mu_f;
     std::cout << "The Reynolds number is " << Re << std::endl;
-
-    // solid
-    const Real rho0_s = rho0_f;        /**< Reference density.*/
-    const Real poisson = 0.49;         /**< Poisson ratio.*/
-    const Real Youngs_modulus = 1.5e6; /**< Youngs modulus.*/
 
     // create shape
     // fluid shape
     std::cout << "Creating fluid shape ... " << std::endl;
     MultiPolygon fluid_shape_poly;
-    Vec2d fluid_halfsize(0.5 * length, 0.5 * height);
-    Vec2d translation = fluid_halfsize;
+    Vec2d fluid_halfsize = 0.5 * Vec2d(length + 2 * buffer_length, height);
+    Vec2d translation = 0.5 * Vec2d(length, height);
     fluid_shape_poly.addBox(Transform(translation), fluid_halfsize, GeometricOps::add);
     fluid_shape_poly.addCircle(circle_center, radius, 10, GeometricOps::add);
     MultiPolygonShape fluid_shape(fluid_shape_poly, "Fluid");
@@ -268,8 +273,8 @@ void run_fsi2()
     // wall shape
     std::cout << "Creating wall shape ... " << std::endl;
     MultiPolygon wall_shape_poly;
-    Vec2d wall_outer_halfsize(0.5 * length + 0.5 * dp_fluid, 0.5 * height + wall_thickness);
-    Vec2d wall_inner_halfsize(0.5 * length + 0.5 * dp_fluid, 0.5 * height);
+    Vec2d wall_outer_halfsize = fluid_halfsize + Vec2d(dp_fluid, wall_thickness);
+    Vec2d wall_inner_halfsize = fluid_halfsize + dp_fluid * Vec2d::UnitX();
     Real wall_radius = radius + wall_thickness;
     wall_shape_poly.addBox(Transform(translation), wall_outer_halfsize, GeometricOps::add);
     wall_shape_poly.addCircle(circle_center, wall_radius, 20, GeometricOps::add);
@@ -327,11 +332,6 @@ void run_fsi2()
     SimpleDynamics<ShellFluidMixtureMass> reset_shell_mass(shell_body, rho0_f);
     reset_shell_mass.exec();
 
-    // remove fluid and square particles too close to the shell and run relaxation
-    ContactRelation fluid_to_shell(blood_body, {&shell_body});
-    sph_system.initializeSystemCellLinkedLists();
-    fluid_to_shell.updateConfiguration();
-    delete_particles(fluid_to_shell);
     // run relaxation
     InnerRelation wall_boundary_inner(wall_boundary);
     if (sph_system.RunParticleRelaxation())
@@ -371,11 +371,14 @@ void run_fsi2()
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> shell_stress_relaxation_second_half(shell_inner);
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> shell_computing_time_step_size(shell_body);
     SimpleDynamics<thin_structure_dynamics::UpdateShellNormalDirection> shell_update_normal(shell_body);
+    const Real physical_viscosity = 0.4 / 4.0 * std::sqrt(rho0_s * Youngs_modulus) * shell_thickness * shell_thickness;
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> shell_position_damping(0.2, shell_inner, "Velocity", physical_viscosity);
+    DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>> shell_rotation_damping(0.2, shell_inner, "AngularVelocity", physical_viscosity);
 
     auto clamp_id = [&]()
     {
         IndexVector ids;
-        auto *pos = shell_body.getBaseParticles().getVariableDataByName<Vec2d>("Position");
+        const auto *pos = shell_body.getBaseParticles().getVariableDataByName<Vec2d>("Position");
         auto fix_point = Vec2d(circle_center.x() - radius, circle_center.y());
         for (size_t i = 0; i < shell_body.getBaseParticles().TotalRealParticles(); ++i)
         {
@@ -397,13 +400,13 @@ void run_fsi2()
     InteractionWithUpdate<ComplexInteraction<fluid_dynamics::TransportVelocityCorrection<Inner<SPHAdaptation, NoLimiter>, Contact<Boundary>, Contact<Boundary>>, NoKernelCorrection, BulkParticles>> transport_correction(blood_inner, blood_wall_contact, blood_shell_contact);
     InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity, NoKernelCorrection>> viscous_force(blood_inner, blood_wall_contact, blood_shell_contact);
 
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(blood_body, U_f);
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(blood_body, U_max);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(blood_body);
 
     //-----------Inflow and periodic condition --------//
     Vec2d bidirectional_buffer_halfsize = 0.5 * Vec2d(buffer_length, 1.2 * height);
-    Vec2d left_bidirectional_translation = 0.5 * Vec2d(buffer_length, height);
-    Vec2d right_bidirectional_translation(length - 0.5 * buffer_length, 0.5 * height);
+    Vec2d left_bidirectional_translation = 0.5 * Vec2d(-buffer_length, height);
+    Vec2d right_bidirectional_translation(length + 0.5 * buffer_length, 0.5 * height);
     OrientedBoxByCell left_emitter(blood_body, OrientedBox(xAxis, Transform(Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_bidirection_buffer(left_emitter, in_outlet_particle_buffer);
     OrientedBoxByCell right_emitter(blood_body, OrientedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
@@ -411,9 +414,8 @@ void run_fsi2()
 
     InteractionWithUpdate<fluid_dynamics::BaseDensitySummationPressureComplex<Inner<>, Contact<>, Contact<>>> update_fluid_density(blood_inner, blood_wall_contact, blood_shell_contact);
 
-    SimpleDynamics<fluid_dynamics::PressureCondition<LeftInflowPressure>> left_inflow_pressure_condition(left_emitter);
-    SimpleDynamics<fluid_dynamics::PressureCondition<RightInflowPressure>> right_inflow_pressure_condition(right_emitter);
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_velocity_condition(left_emitter);
+    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<OutflowVelocity>> outflow_velocity_condition(right_emitter);
     //----------------------------------------------------------------------
     //	Algorithms of FSI.
     //----------------------------------------------------------------------
@@ -429,9 +431,11 @@ void run_fsi2()
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
     write_real_body_states.addToWrite<Vec2d>(blood_body, "Velocity");
+    write_real_body_states.addToWrite<Real>(blood_body, "Density");
     write_real_body_states.addToWrite<Real>(blood_body, "Pressure");
     write_real_body_states.addToWrite<int>(blood_body, "Indicator");
     write_real_body_states.addToWrite<int>(blood_body, "BufferIndicator");
+    write_real_body_states.addToWrite<Vec2d>(wall_boundary, "NormalDirection");
     write_real_body_states.addToWrite<Vec2d>(shell_body, "NormalDirection");
     write_real_body_states.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
     //----------------------------------------------------------------------
@@ -446,6 +450,8 @@ void run_fsi2()
     boundary_indicator.exec();
     left_bidirection_buffer.tag_buffer_particles.exec();
     right_bidirection_buffer.tag_buffer_particles.exec();
+    left_bidirection_buffer.deletion.exec();
+    right_bidirection_buffer.deletion.exec();
     /** computing surface normal direction for the wall. */
     wall_boundary_normal_direction.exec();
     /** computing linear reproducing configuration for the insert body. */
@@ -480,14 +486,15 @@ void run_fsi2()
     };
     run_fluid_relaxation();
     write_real_body_states.writeToFile();
+
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     int screen_output_interval = 100;
-    Real end_time = 1.0;
-    Real output_interval = end_time / 200.0;
+    Real end_time = time_flow_init + time_cycle * num_cycles;
+    Real output_interval = time_cycle / 100.0; // output 50 frames per cycle
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -509,10 +516,13 @@ void run_fsi2()
                 viscous_force.exec();
                 transport_correction.exec();
 
-                /** FSI for viscous force. */
-                viscous_force_from_fluid.exec();
-                /** Update normal direction on elastic body.*/
-                shell_update_normal.exec();
+                if (physical_time > time_flow_init)
+                {
+                    /** FSI for viscous force. */
+                    viscous_force_from_fluid.exec();
+                    /** Update normal direction on elastic body.*/
+                    shell_update_normal.exec();
+                }
 
                 size_t inner_ite_dt = 0;
                 size_t inner_ite_dt_s = 0;
@@ -522,16 +532,23 @@ void run_fsi2()
                     Real dt = SMIN(get_fluid_time_step_size.exec(), Dt);
                     /** Fluid pressure relaxation */
                     pressure_relaxation.exec(dt);
+
+                    // Boundary conditions
                     kernel_summation.exec();
-                    // left_inflow_pressure_condition.exec(dt);
-                    // right_inflow_pressure_condition.exec(dt);
-                    // inflow_velocity_condition.exec();
-                    /** FSI for pressure force. */
-                    pressure_force_from_fluid.exec();
+                    inflow_velocity_condition.exec();
+                    outflow_velocity_condition.exec();
+
+                    if (physical_time > time_flow_init)
+                    {
+                        /** FSI for pressure force. */
+                        pressure_force_from_fluid.exec();
+                    }
+
                     /** Fluid density relaxation */
                     density_relaxation.exec(dt);
 
                     /** Solid dynamics. */
+                    if (physical_time > time_flow_init)
                     {
                         inner_ite_dt_s = 0;
                         Real dt_s_sum = 0.0;
@@ -540,6 +557,9 @@ void run_fsi2()
                         {
                             Real dt_s = SMIN(shell_computing_time_step_size.exec(), dt - dt_s_sum);
                             shell_stress_relaxation_first_half.exec(dt_s);
+                            constraint_shell_base.exec();
+                            shell_position_damping.exec(dt_s);
+                            shell_rotation_damping.exec(dt_s);
                             constraint_shell_base.exec();
                             shell_stress_relaxation_second_half.exec(dt_s);
                             dt_s_sum += dt_s;
@@ -577,7 +597,8 @@ void run_fsi2()
                     particle_sorting.exec();
                 }
                 blood_body.updateCellLinkedList();
-                shell_body.updateCellLinkedList();
+                if (physical_time > time_flow_init)
+                    shell_body.updateCellLinkedList();
                 blood_body_complex.updateConfiguration();
                 shell_blood_contact.updateConfiguration();
 
@@ -588,6 +609,7 @@ void run_fsi2()
 
             TickCount t2 = TickCount::now();
             /** write run-time observation into file */
+            shell_body.updateCellLinkedList();
             write_real_body_states.writeToFile();
             TickCount t3 = TickCount::now();
             interval += t3 - t2;
