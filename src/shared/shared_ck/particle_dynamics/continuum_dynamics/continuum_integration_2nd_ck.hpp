@@ -11,10 +11,10 @@ namespace continuum_dynamics
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class DynamicsIdentifier>
 PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    PlasticAcousticStep2ndHalf(DynamicsIdentifier &identifier)
+    PlasticAcousticStep2ndHalf(DynamicsIdentifier &identifier, Real dissipation_factor)
     : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(identifier),
       correction_method_(this->particles_),
-      riemann_solver_(this->plastic_continuum_, this->plastic_continuum_, 20.0 * (Real)Dimensions)
+      riemann_solver_(this->plastic_continuum_, this->plastic_continuum_, dissipation_factor)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");

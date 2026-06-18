@@ -50,7 +50,9 @@ class PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrec
 
   public:
     template <class DynamicsIdentifier>
-    explicit PlasticAcousticStep2ndHalf(DynamicsIdentifier &identifier);
+    explicit PlasticAcousticStep2ndHalf(
+        DynamicsIdentifier &identifier,
+        Real dissipation_factor = 20.0 * (Real)Dimensions);
     virtual ~PlasticAcousticStep2ndHalf(){};
 
     class InitializeKernel
