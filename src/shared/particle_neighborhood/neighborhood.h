@@ -370,8 +370,10 @@ class MaxSmoothingLengthNeighborBuilder : public NeighborBuilderContact
 class NeighborBuilderContactFS2 : public NeighborBuilderContact
 {
   private:
-    Real *thickness_;
-    Real particle_distance_; // reference spacing of contact body
+    Real *mass_k_; // mass of contact body
+    Real *Vol_k_;  // volume of contact body
+    Real rho_k0_;  // reference density of contact body
+    Real dp_k_;    // reference spacing of contact body
 
   public:
     NeighborBuilderContactFS2(SPHBody &fluid_body, SPHBody &shell_body);
@@ -383,7 +385,7 @@ class NeighborBuilderContactFS2 : public NeighborBuilderContact
 class NeighborBuilderContactSF2 : public NeighborBuilderContact
 {
   private:
-    Real particle_distance_; // reference spacing of contact body
+    Real dp_; // reference spacing of contact body
 
   public:
     NeighborBuilderContactSF2(SPHBody &shell_body, SPHBody &fluid_body);

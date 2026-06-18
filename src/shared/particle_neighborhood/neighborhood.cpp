@@ -4,9 +4,9 @@
  */
 
 #include "neighborhood.h"
-
 #include "adaptation.h"
 #include "all_complex_bodies.h"
+#include "base_material.h"
 #include "base_particle_dynamics.h"
 #include "base_particles.hpp"
 
@@ -571,8 +571,10 @@ MaxSmoothingLengthNeighborBuilder::MaxSmoothingLengthNeighborBuilder(SPHBody &bo
 //=================================================================================================//
 NeighborBuilderContactFS2::NeighborBuilderContactFS2(SPHBody &fluid_body, SPHBody &shell_body)
     : NeighborBuilderContact(fluid_body, shell_body),
-      thickness_(shell_body.getBaseParticles().getVariableDataByName<Real>("Thickness")),
-      particle_distance_(shell_body.getSPHBodyResolutionRef())
+      mass_k_(shell_body.getBaseParticles().getVariableDataByName<Real>("Mass")),
+      Vol_k_(shell_body.getBaseParticles().getVariableDataByName<Real>("VolumetricMeasure")),
+      rho_k0_(shell_body.getMatterMaterial().ReferenceDensity()),
+      dp_k_(shell_body.getSPHBodyResolutionRef())
 {
 }
 //=================================================================================================//
@@ -584,8 +586,9 @@ void NeighborBuilderContactFS2::operator()(Neighborhood &neighborhood,
     Real distance = displacement.norm();
     if (kernel_->checkIfWithinCutOffRadius(displacement))
     {
-        Real W_ij = kernel_->W(distance, displacement) * particle_distance_ / thickness_[index_j];
-        Real dW_ij = kernel_->dW(distance, displacement) * particle_distance_;
+        Real Vol_j = Vol_k_[index_j] * dp_k_;
+        Real W_ij = kernel_->W(distance, displacement) * Vol_j * rho_k0_ / mass_k_[index_j];
+        Real dW_ij = kernel_->dW(distance, displacement) * dp_k_;
         Vecd e_ij = displacement / (distance + TinyReal);
 
         neighborhood.current_size_ >= neighborhood.allocated_size_
@@ -597,7 +600,7 @@ void NeighborBuilderContactFS2::operator()(Neighborhood &neighborhood,
 //=================================================================================================//
 NeighborBuilderContactSF2::NeighborBuilderContactSF2(SPHBody &shell_body, SPHBody &fluid_body)
     : NeighborBuilderContact(shell_body, fluid_body),
-      particle_distance_(shell_body.getSPHBodyResolutionRef())
+      dp_(shell_body.getSPHBodyResolutionRef())
 {
 }
 //=================================================================================================//
@@ -610,7 +613,7 @@ void NeighborBuilderContactSF2::operator()(Neighborhood &neighborhood,
     if (kernel_->checkIfWithinCutOffRadius(displacement))
     {
         Real W_ij = kernel_->W(distance, displacement);
-        Real dW_ij = kernel_->dW(distance, displacement) * particle_distance_;
+        Real dW_ij = kernel_->dW(distance, displacement) * dp_;
         Vecd e_ij = displacement / (distance + TinyReal);
 
         neighborhood.current_size_ >= neighborhood.allocated_size_
