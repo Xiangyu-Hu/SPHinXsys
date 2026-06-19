@@ -51,6 +51,7 @@ class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
     : public AcousticStep<Interaction<Inner<Parameters...>>>
 {
     using FluidType = typename RiemannSolverType::SourceFluid;
+    using EosKernel = typename FluidType::EosKernel;
     using BaseInteraction = AcousticStep<Interaction<Inner<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
     using RiemannKernel = typename RiemannSolverType::ComputingKernel;
@@ -58,7 +59,7 @@ class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
   public:
     template <class DynamicsIdentifier>
     explicit AcousticStep2ndHalf(DynamicsIdentifier &identifier);
-    virtual ~AcousticStep2ndHalf(){};
+    virtual ~AcousticStep2ndHalf() {};
 
     class InitializeKernel
     {
@@ -68,7 +69,7 @@ class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
         void initialize(size_t index_i, Real dt = 0.0);
 
       protected:
-        Vecd *vel_, *dpos_;
+        DataView<Vecd> vel_, dpos_;
     };
 
     class InteractKernel : public BaseInteraction::InteractKernel
@@ -81,8 +82,8 @@ class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
       protected:
         CorrectionKernel correction_;
         RiemannKernel riemann_;
-        Real *Vol_, *rho_, *drho_dt_;
-        Vecd *vel_, *force_;
+        DataView<Real> Vol_, compression_rate_;
+        DataView<Vecd> vel_, force_;
     };
 
     class UpdateKernel
@@ -93,7 +94,8 @@ class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTyp
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
-        Real *rho_, *drho_dt_;
+        EosKernel eos_;
+        DataView<Real> rho_, compression_, compression_rate_;
     };
 
   protected:
@@ -114,7 +116,7 @@ class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
   public:
     template <class DynamicsIdentifier>
     explicit AcousticStep2ndHalf(DynamicsIdentifier &identifier);
-    virtual ~AcousticStep2ndHalf(){};
+    virtual ~AcousticStep2ndHalf() {};
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
@@ -126,10 +128,10 @@ class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
       protected:
         CorrectionKernel correction_;
         RiemannKernel riemann_;
-        Real *Vol_, *rho_, *drho_dt_;
-        Vecd *vel_, *force_;
-        Real *contact_Vol_;
-        Vecd *wall_vel_ave_, *wall_n_;
+        DataView<Real> Vol_, compression_rate_;
+        DataView<Vecd> vel_, force_;
+        DataView<Real> contact_Vol_;
+        DataView<Vecd> wall_vel_ave_, wall_n_;
     };
 
   protected:
@@ -154,7 +156,7 @@ class AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
   public:
     template <class DynamicsIdentifier>
     explicit AcousticStep2ndHalf(DynamicsIdentifier &identifier);
-    virtual ~AcousticStep2ndHalf(){};
+    virtual ~AcousticStep2ndHalf() {};
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
@@ -166,10 +168,10 @@ class AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
       protected:
         CorrectionKernel correction_;
         RiemannKernel riemann_;
-        Real *Vol_, *rho_, *drho_dt_;
-        Vecd *vel_, *force_;
-        Real *contact_Vol_;
-        Vecd *contact_vel_;
+        DataView<Real> Vol_, rho_, compression_rate_;
+        DataView<Vecd> vel_, force_;
+        DataView<Real> contact_Vol_;
+        DataView<Vecd> contact_vel_;
     };
 
   protected:
