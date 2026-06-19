@@ -3,7 +3,7 @@
 In this work, we consider an incompressible multiphase flow using weakly compressible fluid model in the average velocity frame. The governing equations consist of the mass conservation and momentum conservation equations for each phase, as well as the equation of state for the mixture.
 
 ### Primary and derived variables
-We consider two different set of variables, one is for the mixture, the other is for each phase. 
+We consider two different set of variables, one is for the mixture, the other is for each phase.
 
 For the mixture, we use compression ratio $\beta$ as a primary variable, which is defined as the ratio of the initial volume element to the current volume element, that is $\beta = \frac{V_0}{V}$, where $V_0$ is the initial volume and $V$ is the current volume.
 For each phase $k$, we use the phase volume fraction $\phi_k$ and the phase velocity $\mathbf{v}_k$ as the primary variables.
