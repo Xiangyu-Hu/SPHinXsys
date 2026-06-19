@@ -44,7 +44,6 @@ namespace SPH
 {
 class SPHBody;
 class SPHAdaptation;
-class BaseMaterial;
 class BodyPartByParticle;
 class XmlParser;
 using TinyXMLElement = tinyxml2::XMLElement;
