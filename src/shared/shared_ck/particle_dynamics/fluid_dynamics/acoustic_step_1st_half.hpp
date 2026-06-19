@@ -80,6 +80,7 @@ AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
       riemann_(ex_policy, encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedDataView(ex_policy)),
       p_(encloser.dv_p_->DelegatedDataView(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedDataView(ex_policy)),
       compression_rate_(encloser.dv_compression_rate_->DelegatedDataView(ex_policy)),
       force_(encloser.dv_force_->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
@@ -87,22 +88,24 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    compression_rate_[index_i] = 0.0;
+    Vecd force_sum = Vecd::Zero();
+    Real compression_dissipation(0);
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
         Vecd e_ij = this->e_ij(index_i, index_j);
 
-        force_[index_i] -=
-            riemann_.AverageP(
-                index_i, index_j,
-                static_cast<CorrectionDataType>(correction_(index_j) * p_[index_i]),
-                static_cast<CorrectionDataType>(correction_(index_i) * p_[index_j])) *
-            2.0 * dW_ijV_j * Vol_[index_i] * e_ij;
-        compression_rate_[index_i] +=
+        force_sum -= riemann_.AverageP(
+                         index_i, index_j,
+                         static_cast<CorrectionDataType>(correction_(index_j) * p_[index_i]),
+                         static_cast<CorrectionDataType>(correction_(index_i) * p_[index_j])) *
+                     2.0 * dW_ijV_j * e_ij;
+        compression_dissipation +=
             riemann_.DissipativeUJump(index_i, index_j, p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
+    force_[index_i] += force_sum * Vol_[index_i];
+    compression_rate_[index_i] = compression_dissipation * compression_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -142,6 +145,7 @@ AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
       rho_(encloser.dv_rho_->DelegatedDataView(ex_policy)),
       mass_(encloser.dv_mass_->DelegatedDataView(ex_policy)),
       p_(encloser.dv_p_->DelegatedDataView(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedDataView(ex_policy)),
       compression_rate_(encloser.dv_compression_rate_->DelegatedDataView(ex_policy)),
       force_(encloser.dv_force_->DelegatedDataView(ex_policy)),
       force_prior_(encloser.dv_force_prior_->DelegatedDataView(ex_policy)),
@@ -152,6 +156,8 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
+    Vecd force_sum = Vecd::Zero();
+    Real compression_dissipation(0);
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
@@ -163,11 +169,12 @@ void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
             (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_[index_j]).dot(-e_ij);
         Real p_j_in_wall =
             p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-        force_[index_i] -=
-            (p_[index_i] + p_j_in_wall) * correction_(index_i) * dW_ijV_j * Vol_[index_i] * e_ij;
-        compression_rate_[index_i] +=
+        force_sum -= (p_[index_i] + p_j_in_wall) * correction_(index_i) * dW_ijV_j * e_ij;
+        compression_dissipation +=
             riemann_.DissipativeUJump(index_i, index_j, p_[index_i] - p_j_in_wall) * dW_ijV_j;
     }
+    force_[index_i] += force_sum * Vol_[index_i];
+    compression_rate_[index_i] += compression_dissipation * compression_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -200,6 +207,7 @@ AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters.
       riemann_(ex_policy, encloser.riemann_solvers_[contact_index]),
       Vol_(encloser.dv_Vol_->DelegatedDataView(ex_policy)),
       p_(encloser.dv_p_->DelegatedDataView(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedDataView(ex_policy)),
       compression_rate_(encloser.dv_compression_rate_->DelegatedDataView(ex_policy)),
       force_(encloser.dv_force_->DelegatedDataView(ex_policy)),
       contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedDataView(ex_policy)),
@@ -209,21 +217,24 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 void AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
+    Vecd force_sum = Vecd::Zero();
+    Real compression_dissipation(0);
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
         Vecd e_ij = this->e_ij(index_i, index_j);
 
-        force_[index_i] -=
-            riemann_.AverageP(
-                index_i, index_j,
-                static_cast<CorrectionDataType>(contact_correction_(index_j) * p_[index_i]),
-                static_cast<CorrectionDataType>(correction_(index_i) * contact_p_[index_j])) *
-            2.0 * dW_ijV_j * Vol_[index_i] * e_ij;
-        compression_rate_[index_i] +=
+        force_sum -= riemann_.AverageP(
+                         index_i, index_j,
+                         static_cast<CorrectionDataType>(contact_correction_(index_j) * p_[index_i]),
+                         static_cast<CorrectionDataType>(correction_(index_i) * contact_p_[index_j])) *
+                     2.0 * dW_ijV_j * e_ij;
+        compression_dissipation +=
             riemann_.DissipativeUJump(index_i, index_j, p_[index_i] - contact_p_[index_j]) * dW_ijV_j;
     }
+    force_[index_i] += force_sum * Vol_[index_i];
+    compression_rate_[index_i] += compression_dissipation * compression_[index_i];
 }
 //=================================================================================================//
 } // namespace fluid_dynamics
