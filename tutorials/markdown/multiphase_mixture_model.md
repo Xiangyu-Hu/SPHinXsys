@@ -23,7 +23,7 @@ Base on the above definitions, the governing equations of a Lagrangian volume el
 two set of equations can be derived, one is for the mixture, the other is for each phase. 
 
 For the mixture, one has the  the evolution of the compression ratio $\beta$, which is given as
-$$\frac{d\beta}{dt} = \beta \nabla \cdot \mathbf{v}$$
+$$\frac{d\beta}{dt} = -\beta \nabla \cdot \mathbf{v}$$
 where the material derivative is defined as $\frac{d}{dt} = \frac{\partial}{\partial t} + \mathbf{v} \cdot \nabla$. 
 For each phase, one first has the mass conservation equation, which is given as
 $$\frac{d\phi_k}{dt} = - \nabla \cdot \left[\phi_k  ( \mathbf{v}_k - \mathbf{v})\right]$$
