@@ -1,0 +1,17 @@
+Please read the attached OPHELIE_GPT_DISCUSSION_TEAM7_P5_NO_FLUX_BOUNDARY.md (TEAM7 P5 no-flux boundary work, 2026-06-14).
+
+Background: SPHinXsysSYCL / OPHELIE complex edge-flux / TEAM7 L2 one-way. Round 3 closed Lenz/C_ij/box 4× etc.; current blockers are hole-wall e_edge_em≈0.35 (interior≈0.05) and Bind/Bcoil≈4.
+
+P5 completed (check the pass/fail table in the document; do not rely on the summary alone):
+- P5.0 ✅ SPHinXsys NormalDirection + SignedDistance written to reload
+- P5.1/P5.2 ❌ post-hoc project-normal / tangent-ls: |Jn|→0 but e_edge_em worsened
+- P5.3 ✅ boundary consistency audit (31/35 pass including post-hoc items)
+- P5.4 ⏳ operator-level ghost edge: surface |Jn|/|Jt|↓, e_edge_em not closed
+- P5.5 ❌ missing moment and φ-RHS ghost individually had zero effect; no-flux-full ≈ P5.4
+
+Please answer document §4 Q1–Q8 one by one and give clear decisions:
+1) Continue TEAM7 through end of June (P5.6 φ-LHS) or downgrade TEAM7 and promote French reduced as the main line?
+2) If continuing, what is the only allowed next coding item (A/B/C/D)?
+3) Still forbidden: C_ij×k, J×constant, cancel φ-solve, edge-only production, a_sign=-1, Picard sweep.
+
+Attachments: source copies in p5_sources/, CSV in p5_outputs/, sweep summary P5_SWEEP_SUMMARY.txt.

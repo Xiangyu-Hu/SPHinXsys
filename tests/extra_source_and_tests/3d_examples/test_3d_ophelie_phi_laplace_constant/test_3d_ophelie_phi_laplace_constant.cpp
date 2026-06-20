@@ -3,6 +3,7 @@
  * @brief Constant PhiImag -> pairwise Laplace operator ~ 0; diagonal positive.
  */
 #include "electromagnetic_ophelie.h"
+#include "electromagnetic_ophelie_phi_mms_helpers.h"
 #include "sphinxsys.h"
 
 #include <cmath>
@@ -11,19 +12,6 @@
 using namespace SPH;
 using namespace SPH::electromagnetics::ophelie;
 using MainExecutionPolicy = execution::MainExecutionPolicy;
-
-namespace
-{
-class OphelieTestGlassBoxShape : public ComplexShape
-{
-  public:
-    OphelieTestGlassBoxShape(const std::string &shape_name, const Vecd &center, const Vecd &halfsize)
-        : ComplexShape(shape_name)
-    {
-        add<GeometricShapeBox>(Transform(center), halfsize);
-    }
-};
-} // namespace
 
 int main(int, char *[])
 {

@@ -5,6 +5,7 @@
 #include "electromagnetic_ophelie_field_names.h"
 #include "electromagnetic_ophelie_laplace.h"
 #include "electromagnetic_ophelie_observables.h"
+#include "electromagnetic_ophelie_phi_gradient.h"
 #include "interaction_algorithms_ck.h"
 #include "interaction_ck.h"
 #include "simple_algorithms_ck.h"
@@ -16,73 +17,6 @@ namespace electromagnetics
 {
 namespace ophelie
 {
-
-/** SPH div(J)_i = sum_j V_j (J_j - J_i) · grad_i W_ij (uncorrected). */
-template <typename... RelationTypes>
-class ComputeOphelieVecdDivergenceCK;
-
-template <template <typename...> class RelationType, typename... Parameters>
-class ComputeOphelieVecdDivergenceCK<Base, RelationType<Parameters...>> : public Interaction<RelationType<Parameters...>>
-{
-    using BaseInteraction = Interaction<RelationType<Parameters...>>;
-
-  public:
-    ComputeOphelieVecdDivergenceCK(RelationType<Parameters...> &relation, const std::string &vec_field_name,
-                                   const std::string &div_field_name)
-        : BaseInteraction(relation), dv_vec_field_(this->particles_->template getVariableByName<Vecd>(vec_field_name)),
-          dv_div_field_(this->particles_->template getVariableByName<Real>(div_field_name))
-    {
-    }
-
-    class InteractKernel : public BaseInteraction::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType, typename... Args>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
-            : BaseInteraction::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
-              Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-              vec_field_(encloser.dv_vec_field_->DelegatedData(ex_policy)),
-              div_field_(encloser.dv_div_field_->DelegatedData(ex_policy))
-        {
-        }
-
-        void interact(size_t index_i, Real dt = 0.0)
-        {
-            (void)dt;
-            const Vecd vec_i = vec_field_[index_i];
-            Real div_i = 0.0;
-            for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
-            {
-                const UnsignedInt index_j = this->neighbor_index_[n];
-                const Vecd grad_W_ij = pairwiseGradientWeightUncorrected(this->dW_ij(index_i, index_j) * Vol_[index_j],
-                                                                         this->e_ij(index_i, index_j));
-                div_i += (vec_field_[index_j] - vec_i).dot(grad_W_ij);
-            }
-            div_field_[index_i] = div_i;
-        }
-
-      protected:
-        Real *Vol_;
-        Vecd *vec_field_;
-        Real *div_field_;
-    };
-
-  protected:
-    DiscreteVariable<Vecd> *dv_vec_field_;
-    DiscreteVariable<Real> *dv_div_field_;
-};
-
-template <typename... Parameters>
-class ComputeOphelieVecdDivergenceCK<Inner<Parameters...>>
-    : public ComputeOphelieVecdDivergenceCK<Base, Inner<Parameters...>>
-{
-  public:
-    explicit ComputeOphelieVecdDivergenceCK(Inner<Parameters...> &relation, const std::string &vec_field_name,
-                                            const std::string &div_field_name)
-        : ComputeOphelieVecdDivergenceCK<Base, Inner<Parameters...>>(relation, vec_field_name, div_field_name)
-    {
-    }
-};
 
 inline Real hostVolWeightedVecdNormSquared(BaseParticles &particles, const std::string &variable_name,
                                           size_t total_real_particles)
@@ -122,17 +56,29 @@ inline OphelieDivJMetrics computeHostDivJMetrics(BaseParticles &particles, const
 
 template <class ExecutionPolicy, typename InnerRelationType>
 inline OphelieDivJMetrics computeOphelieDivJImag(RealBody &glass_body, InnerRelationType &glass_inner,
-                                                 const OphelieGlassFieldNames &names, Real characteristic_length)
+                                                 const OphelieGlassFieldNames &names,
+                                                 const OphelieParameters &params, Real characteristic_length)
 {
     UpdateCellLinkedList<ExecutionPolicy, RealBody> update_cell_linked_list(glass_body);
     UpdateRelation<ExecutionPolicy, Inner<>> update_inner_relation(glass_inner);
-    InteractionDynamicsCK<ExecutionPolicy, ComputeOphelieVecdDivergenceCK<Inner<>>> compute_div_j(
-        glass_inner, names.j_imag, names.div_j_imag);
     update_cell_linked_list.exec();
     update_inner_relation.exec();
-    compute_div_j.exec();
+    if (opheliePhiUseCorrectedDivergence(params))
+    {
+        execOpheliePhiGradCorrectionMatrixPrep<ExecutionPolicy>(glass_body, glass_inner, names, params);
+    }
+    execOphelieVecdDivergence<ExecutionPolicy>(glass_inner, names, params, names.j_imag, names.div_j_imag);
     return computeHostDivJMetrics(glass_body.getBaseParticles(), names, glass_body.getBaseParticles().TotalRealParticles(),
                                   characteristic_length);
+}
+
+template <class ExecutionPolicy, typename InnerRelationType>
+inline OphelieDivJMetrics computeOphelieDivJImag(RealBody &glass_body, InnerRelationType &glass_inner,
+                                                 const OphelieGlassFieldNames &names, Real characteristic_length)
+{
+    OphelieParameters default_params;
+    return computeOphelieDivJImag<ExecutionPolicy>(glass_body, glass_inner, names, default_params,
+                                                   characteristic_length);
 }
 
 struct OpheliePowerScalingFactors

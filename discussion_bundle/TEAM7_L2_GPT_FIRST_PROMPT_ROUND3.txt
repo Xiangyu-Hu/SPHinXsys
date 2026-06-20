@@ -1,0 +1,17 @@
+Please read the attached OPHELIE_GPT_DISCUSSION_TEAM7_L2_EDGE_FLUX_ROUND3.md (TEAM7 L2 edge-flux Round 3).
+
+Background: SPH + complex edge-flux + A_ind, TEAM7 crucible plate + coil, dp=3mm, filament source, source_scale=1, 2742 AT. Round 2 confirmed J-driven, ω linear, feedback/Picard cannot close Bind/B≈4.
+
+Round 3 completed (2026-06-11):
+- P0: normalization sweep (safe_rhs_l2 1e4→1e12) → post-restore J/Bind/B/phase90 completely unchanged
+- P1a: uniform_E and harmonic_A edge_only all passed; harmonic_A+phi_solve+restore all failed
+- P2β: solver-local (φ PCG + edge internal scaling) and field-scale-restore bit-identical (Bind/B=3.987)
+- P2: physical-scale Picard (solver-local, relax=0.05) → phase90 11.8→7.1, Bind/B still ~4.3
+- P4: operator audit → interior Bind/B=3.79, bottom=4.99; surface e_edge_em_mismatch 3× interior; C_ij ratio median~1.5e8
+
+Please focus on the 12 issues in main document §4, especially:
+1) Should C_ij / pairwiseNegativeLaplaceWeight scaling be changed, or should boundary edge-flux be fixed first?
+2) After P1a, should TEAM7 still use the phi_solve path? Should solver-local be the only default?
+3) Next-step code priority: (a) C_ij patch (b) boundary Neumann (c) hole partitioning (d) dp sweep
+
+Attachments: P0/P1a/P4 CSV, Round 2 baseline CSV, all logs, related source (see MANIFEST_ROUND3).

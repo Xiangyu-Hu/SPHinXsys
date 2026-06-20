@@ -60,6 +60,23 @@ class BodyStatesRecordingToTriangleMeshVtpCK : public BodyStatesRecordingToTrian
         }
     };
 
+    virtual void writeToFile(size_t iteration_step)
+    {
+        if (state_recording_)
+        {
+            for (size_t i = 0; i < bodies_.size(); ++i)
+            {
+                if (bodies_[i]->checkNewlyUpdated())
+                {
+                    BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+                    base_particles.dvParticlePosition()->prepareForOutput(ExecutionPolicy{});
+                    prepare_variable_to_write_(base_particles.VariablesToWrite(), ExecutionPolicy{});
+                }
+            }
+            BodyStatesRecordingToVtp::writeToFile(iteration_step);
+        }
+    };
+
   protected:
     OperationOnDataAssemble<DiscreteVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
 };

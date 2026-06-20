@@ -14,8 +14,8 @@ if(SPHINXSYS_USE_SYCL)
     file(GLOB UR_LOADER_CANDIDATES "/opt/intel/oneapi/compiler/*/lib/libur_loader.so*")
     list(SORT UR_LOADER_CANDIDATES)
     if(UR_LOADER_CANDIDATES)
-        # `libsycl.so` 里缺失的符号带有 `@LIBUR_LOADER_0.11` 版本标记，
-        # 因此这里优先选 0.11.x 的具体库文件，避免链接到 newer ABI (e.g. 0.12.x)。
+        # Missing symbols in `libsycl.so` are tagged with `@LIBUR_LOADER_0.11`,
+        # so prefer the 0.11.x library explicitly to avoid linking a newer ABI (e.g. 0.12.x).
         set(UR_LOADER_LIBRARY "")
         foreach(_cand IN LISTS UR_LOADER_CANDIDATES)
             if(_cand MATCHES "libur_loader\\.so\\.0\\.11")

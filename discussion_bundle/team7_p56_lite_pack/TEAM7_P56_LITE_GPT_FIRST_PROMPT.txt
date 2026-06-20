@@ -1,0 +1,56 @@
+You are the physics and numerics advisor for OPHELIE / TEAM7 complex edge-flux. Based on the attached pack, review our P5.6-lite work completed per your OPHELIE_TEAM7_P5_NO_FLUX_NEXT_CURSOR_PLAN.md and decide next steps.
+
+[Read first]
+1. OPHELIE_GPT_DISCUSSION_TEAM7_P56_LITE_CLOSURE.md (main summary)
+2. OPHELIE_TEAM7_P5_NO_FLUX_NEXT_CURSOR_PLAN.md (your original plan)
+3. logs/P56_LITE_RUN_SUMMARY.txt (TEAM7 boundary A/B and P6 run data)
+4. logs/TEAM7_VALIDATION_LOG_P56_LITE_EXCERPT.md (validation log excerpt)
+5. outputs/*.csv (P6a audit + P6b box sweep)
+6. sources/ (source changed this round)
+
+[We completed]
+- P5-fix-1: tangent-LS distance_t A/B (CLI --ophelie-tangent-ls-distance-norm=3d|tangent)
+- P5-fix-2: true_interior / boundary_shell_all / corner_or_edge partitioning; corrected legacy interior Jn/Jt≈0.47 false positive
+- P5-fix-3: normal/tangential EMF mismatch component diagnostics
+- P6a: L1 source/reference/probe audit (Pearson, best_fit, volume vs filament, ref vs coil+skin)
+- P6b: high-σ box sweep 4 boundary × 2 cases (none / ghost-edge / full / phi-neumann); SignedDistance fixed via NormalFromBodyShapeCK
+- TEAM7 one-way A/B: none vs ghost-edge vs no-flux-full
+
+[Key numbers (L2 one-way, dp=3mm, scale=0.754, f=50Hz)]
+| Boundary | Bind/B | hole_lateral e_edge_em | phase90 RMS |
+| none | 3.913 | 0.338 | 9.80 |
+| ghost-edge | 3.911 | 0.351 (worse) | 9.80 |
+| no-flux-full | 3.911 | 0.351 (worse) | 9.80 |
+
+P6b box: gauge cancellation passes all 4 boundaries; rotational ghost/full slightly worsens E_rel; phi-neumann same as none.
+
+P6a: one-way volume scale=0.754 → rms_rel=0.32, corr=0.95, pass=20/fail=2; filament scale=1 → rms_rel=0.53, peak_x=198 vs ref 126mm.
+
+[Current Cursor conclusion]
+- This round's changes help diagnostics / false-positive removal; basically no effect on TEAM7 L2 closure (Bind/B≈4, phase90≈10, hole e_edge_em≈0.35)
+- P5.6-lite manifest items 1–5 completed; simple benchmark did not show benefit of returning to TEAM7 for full φ-LHS static confinement
+- Recommendation: do not stack boundary patches on TEAM7 holes; production default boundary-mode=none
+
+[Issues to verify — please decide one by one]
+
+Q1. After P5.6-lite, do you agree not to pursue full φ-LHS static confinement on TEAM7 holes, and instead deepen P6a or promote French reduced glass as the main line?
+
+Q2. ghost-edge on TEAM7 reduced hole Jn/Jt (0.087→0.057) but worsened hole e_edge_em (0.338→0.351). Does this prove E-reconstruction-layer no-flux ghost should be abandoned entirely, or does it still have narrow diagnostic value?
+
+Q3. On P6b, phi-neumann and none are identical. Does this mean the current φ-Neumann implementation is not wired into an effective boundary operator, or is this benchmark itself insensitive?
+
+Q4. P6a confirms phase0 muFEM reference is not pure source-only (ref_vs_coil+ind_skin fail). L1 next-step priority: (a) f=0 no-plate reference (b) high-accuracy filament Biot self-reference (c) keep phase0 but relax gates? Please rank.
+
+Q5. Peak position x_sim≈198–216mm vs x_ref≈126mm (still present at filament scale=1). Priority check: probe line definition / STL origin / coil racetrack geometry / volume vs filament source — which root cause do you think is most likely?
+
+Q6. Bind/Bcoil≈3.9 unchanged through P5-fix + P6. After boundary patches proved ineffective, do you still think the primary conflict is: (a) φ-LHS operator (b) edge-flux conductance/RHS scaling (c) L1 source field/reference (d) Biot probe coupling? Please rank.
+
+Q7. tangent distance_t improves shell EMF but worsens hole-wall fair em_tan. Is it worth making distance_norm=tangent the tangent-ls diagnostic default while still forbidding production?
+
+Q8. End-of-June rule: "downgrade TEAM7 and promote French glass if no clear improvement" — does current P5.6-lite trigger downgrade? If not, what evidence of "clear improvement" is still missing?
+
+Q9. hole_lateral SPH normal mean angle≈22.7° (threshold 20° FAIL), but Jn/Jt still PASS. Should hole-wall EMF error be attributed to normal quality, tangential LS support, or φ gradient boundary?
+
+Q10. If continuing TEAM7, what is the only narrow item still worth doing? (limit 1–2 items; no long manifest)
+
+Please respond with: conclusion summary → Q1–Q10 decisions → July main-line recommendation (TEAM7 vs French) → if continuing coding, specific next step (command/file/acceptance metrics).

@@ -66,12 +66,14 @@ inline void ComputeOphelieCoilToGlassBiotSavartCK::UpdateKernel::update(size_t i
 }
 
 inline ComputeOphelieGlassSelfInducedBiotSavartCK::ComputeOphelieGlassSelfInducedBiotSavartCK(
-    SPHBody &glass_body, const OphelieGlassFieldNames &names, const OphelieParameters &params)
+    SPHBody &glass_body, const OphelieGlassFieldNames &names, const OphelieParameters &params,
+    const std::string &j_real_field, const std::string &j_imag_field)
     : LocalDynamics(glass_body), coeff_(params.mu0_ / (4.0 * Pi)),
       eps2_(params.softening_length_ * params.softening_length_),
       n_glass_(particles_->TotalRealParticles()),
       dv_glass_pos_(particles_->template getVariableByName<Vecd>("Position")),
-      dv_j_imag_(particles_->template getVariableByName<Vecd>(names.j_imag)),
+      dv_j_real_(particles_->template getVariableByName<Vecd>(j_real_field.empty() ? names.j_real : j_real_field)),
+      dv_j_imag_(particles_->template getVariableByName<Vecd>(j_imag_field.empty() ? names.j_imag : j_imag_field)),
       dv_glass_vol_(particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_a_ind_real_(particles_->template getVariableByName<Vecd>(names.a_ind_real)),
       dv_a_ind_imag_(particles_->template getVariableByName<Vecd>(names.a_ind_imag)),
@@ -85,6 +87,7 @@ inline ComputeOphelieGlassSelfInducedBiotSavartCK::UpdateKernel::UpdateKernel(co
                                                                                EncloserType &encloser)
     : coeff_(encloser.coeff_), eps2_(encloser.eps2_), n_glass_(encloser.n_glass_),
       glass_pos_(encloser.dv_glass_pos_->DelegatedData(ex_policy)),
+      j_real_(encloser.dv_j_real_->DelegatedData(ex_policy)),
       j_imag_(encloser.dv_j_imag_->DelegatedData(ex_policy)),
       glass_vol_(encloser.dv_glass_vol_->DelegatedData(ex_policy)),
       a_ind_real_(encloser.dv_a_ind_real_->DelegatedData(ex_policy)),
@@ -97,8 +100,10 @@ inline ComputeOphelieGlassSelfInducedBiotSavartCK::UpdateKernel::UpdateKernel(co
 inline void ComputeOphelieGlassSelfInducedBiotSavartCK::UpdateKernel::update(size_t index_i, Real dt)
 {
     (void)dt;
-    Vecd a_sum = Vecd::Zero();
-    Vecd b_sum = Vecd::Zero();
+    Vecd a_sum_r = Vecd::Zero();
+    Vecd a_sum_i = Vecd::Zero();
+    Vecd b_sum_r = Vecd::Zero();
+    Vecd b_sum_i = Vecd::Zero();
     const Vecd xi = glass_pos_[index_i];
 
     for (size_t j = 0; j < n_glass_; ++j)
@@ -111,15 +116,18 @@ inline void ComputeOphelieGlassSelfInducedBiotSavartCK::UpdateKernel::update(siz
         const Real r2 = r.squaredNorm() + eps2_;
         const Real inv_r = 1.0 / std::sqrt(r2);
         const Real inv_r3 = inv_r / r2;
-        const Vecd jv = j_imag_[j] * glass_vol_[j];
-        a_sum += coeff_ * jv * inv_r;
-        b_sum += coeff_ * jv.cross(r) * inv_r3;
+        const Vecd moment_r = j_real_[j] * glass_vol_[j];
+        const Vecd moment_i = j_imag_[j] * glass_vol_[j];
+        a_sum_r += coeff_ * moment_r * inv_r;
+        a_sum_i += coeff_ * moment_i * inv_r;
+        b_sum_r += coeff_ * moment_r.cross(r) * inv_r3;
+        b_sum_i += coeff_ * moment_i.cross(r) * inv_r3;
     }
 
-    a_ind_real_[index_i] = a_sum;
-    a_ind_imag_[index_i] = Vecd::Zero();
-    b_ind_real_[index_i] = b_sum;
-    b_ind_imag_[index_i] = Vecd::Zero();
+    a_ind_real_[index_i] = a_sum_r;
+    a_ind_imag_[index_i] = a_sum_i;
+    b_ind_real_[index_i] = b_sum_r;
+    b_ind_imag_[index_i] = b_sum_i;
 }
 
 inline CombineOphelieCoilAndInducedVectorPotentialCK::CombineOphelieCoilAndInducedVectorPotentialCK(

@@ -1,0 +1,29 @@
+# French reduced three-way comparison v2 (post power-fix, 2026-06-08)
+
+Calibration target @50 kW; H uses `P_recon`; A/G use `P_particle` (particle-gradient path).
+
+| Case | CLI | phi_eq_res | edge_res_red | P_raw | ampere_turns | divJ_L2_red | production_lit | passed |
+|------|-----|------------|--------------|-------|--------------|-------------|----------------|--------|
+| **H** edge-flux production | `--ophelie-current-form=edge-flux` | 8.0e-5 | **10955** | 50000 (P_recon) | **660** | 0.116 | **1** | **1** |
+| **A** div-grad baseline | `--ophelie-current-form=particle-gradient --phi-projection-operator=div-grad` | 0.486 | 0.024* | 50000 (particle) | 660 | **2.06** | **1** | **1** |
+| **G** edge-flux phi-only | `--ophelie-current-form=particle-gradient --phi-projection-operator=edge-flux` | 9.6e-5 | **341** | 50000 (particle) | 660 | 0.93 | 0 (diagnostic) | 0** |
+
+\* A edge_res is a legacy diagnostic on the div-grad solution; not directly comparable to H.
+\** G `passed=0` is **expected** (phi-only diagnostic; `divJ_L2_red<1.25` gate intentionally fails).
+
+## Log paths
+
+- H: `discussion_bundle/french_H_edge_flux_production_v2.log`
+- A: `discussion_bundle/french_A_baseline_v2.log`
+- G: `discussion_bundle/french_G_edge_flux_phi_only_v2.log`
+
+## Key conclusions
+
+1. **H production first reached `production_literature_passed=1`** (after power-fix).
+2. **A baseline remains stable** as fallback (divJ≈2.06, phi_eq_res≈0.49).
+3. **G remains diagnostic only**; good φ but particle divJ does not match (consistent with §4.12).
+4. H `P_graph/P_recon≈116402` is warning-only; see `OPHELIE_GPT_DISCUSSION_BLOCKERS.md` B1.
+
+## Differences from v1
+
+v1 (`FRENCH_THREE_WAY_SUMMARY.txt`) included F_compatible; v2 focuses on H/A/G three-way comparison + H power-fix before/after; see §4.14 development log.

@@ -64,7 +64,9 @@ class ComputeOphelieGlassSelfInducedBiotSavartCK : public LocalDynamics
 {
   public:
     ComputeOphelieGlassSelfInducedBiotSavartCK(SPHBody &glass_body, const OphelieGlassFieldNames &names,
-                                               const OphelieParameters &params);
+                                               const OphelieParameters &params,
+                                               const std::string &j_real_field = std::string(),
+                                               const std::string &j_imag_field = std::string());
 
     class UpdateKernel
     {
@@ -79,6 +81,7 @@ class ComputeOphelieGlassSelfInducedBiotSavartCK : public LocalDynamics
         Real eps2_;
         size_t n_glass_;
         Vecd *glass_pos_;
+        Vecd *j_real_;
         Vecd *j_imag_;
         Real *glass_vol_;
         Vecd *a_ind_real_;
@@ -92,6 +95,7 @@ class ComputeOphelieGlassSelfInducedBiotSavartCK : public LocalDynamics
     Real eps2_;
     size_t n_glass_;
     DiscreteVariable<Vecd> *dv_glass_pos_;
+    DiscreteVariable<Vecd> *dv_j_real_;
     DiscreteVariable<Vecd> *dv_j_imag_;
     DiscreteVariable<Real> *dv_glass_vol_;
     DiscreteVariable<Vecd> *dv_a_ind_real_;

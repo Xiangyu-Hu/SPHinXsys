@@ -3,6 +3,13 @@
  * @brief OPHELIE-like induction on TEAM7-like geometry: conducting plate + annular coil + air domain.
  */
 #include "electromagnetic_ophelie.h"
+#include "electromagnetic_ophelie_team7_geometry.h"
+#include "electromagnetic_ophelie_team7_coil_path_source.h"
+#include "electromagnetic_ophelie_team7_native_geometry.h"
+#include "electromagnetic_ophelie_team7_boundary_normal.h"
+#include "electromagnetic_ophelie_team7_probe.h"
+#include "electromagnetic_ophelie_racetrack_source.h"
+#include "electromagnetic_ophelie_self_induction.h"
 #include "electromagnetic_ophelie_progress.h"
 #include "electromagnetic_ophelie_relaxation.h"
 #include "io_environment.h"
@@ -197,6 +204,9 @@ int main(int ac, char *av[])
     Vecd coil_center = analytic_geom.coil_center_;
     Real div_j_characteristic_length = analytic_geom.plate_radius_;
     OphelieTeam7NativeDerivedGeometry native_derived;
+    OphelieTeam7CoilPathPrepareSummary coil_path_summary;
+    OphelieTeam7CoilPathSourceSpec coil_path_spec;
+    bool coil_path_audit_ok = true;
     const bool use_particle_reload = !sph_system.RunParticleRelaxation() && sph_system.ReloadParticles();
 
     if (sph_system.RunParticleRelaxation())
@@ -229,17 +239,18 @@ int main(int ac, char *av[])
             relaxSolidBodyParticles(sph_system, coil_body, coil_level_set, "CoilSourceBody", relaxation_steps,
                                     relaxation_log_every, relaxation_vtp_every);
         }
+        computeTeam7CoilPlateNormalsFromShape(sph_system, coil_body, plate_body);
         ReloadParticleIO write_reload({&coil_body, &plate_body});
+        registerTeam7CoilPlateNormalsForReload(write_reload, coil_body, plate_body);
         write_reload.writeToFile(0);
-        std::cout << "test_3d_ophelie_team7 particle relaxation finished. Reload.xml (CoilSourceBody+PlateBody) -> "
+        std::cout << "test_3d_ophelie_team7 particle relaxation finished. Reload.xml (CoilSourceBody+PlateBody+NormalDirection) -> "
                   << IO::getEnvironment().ReloadFolder() << std::endl;
         return 0;
     }
 
     if (use_particle_reload)
     {
-        plate_body.generateParticles<BaseParticles, Reload>(plate_body.Name());
-        coil_body.generateParticles<BaseParticles, Reload>(coil_body.Name());
+        reloadTeam7CoilPlateParticlesWithNormals(coil_body, plate_body);
         std::cout << "[ophelie] loaded relaxed particles from " << IO::getEnvironment().ReloadFolder()
                   << "/Reload.xml" << std::endl;
     }
@@ -288,11 +299,22 @@ int main(int ac, char *av[])
     {
         native_derived = deriveTeam7NativeGeometry(coil_body, plate_body);
         applyTeam7NativeParameters(params, native_mesh, native_derived, coil_body.getBaseParticles());
+        if (cli_options.coil_source_model == OphelieCoilSourceModel::VolumeRacetrack)
+        {
+            coil_path_spec.turns = native_mesh.team7_coil_turns_;
+            coil_path_spec.current_per_turn = native_mesh.team7_coil_current_per_turn_;
+            coil_path_summary =
+                prepareOphelieTeam7VolumeRacetrackCoilSource(coil_body, native_derived.coil_bbox_, coil_path_spec);
+            params.coil_j0_override_ = coil_path_summary.j0;
+            printOphelieTeam7CoilPathPrepareSummary(coil_path_summary, coil_path_spec);
+        }
         if (!cli_options.sigma_user_set)
         {
             params.sigma_glass_ = 3.54e7;
         }
-        std::cout << "[ophelie] native TEAM7 coil_center=" << native_derived.coil_center_.transpose()
+        std::cout << "[ophelie] native TEAM7 coil_source_model="
+                  << ophelieCoilSourceModelName(cli_options.coil_source_model)
+                  << " coil_center=" << native_derived.coil_center_.transpose()
                   << " A_cross=" << native_derived.coil_current_cross_section_m2_
                   << " coil_volume=" << native_derived.coil_volume_m3_
                   << " mean_radius=" << native_derived.coil_mean_radius_m_
@@ -323,8 +345,6 @@ int main(int ac, char *av[])
 
     UniquePtr<Inner<>> plate_inner = makeUnique<Inner<>>(plate_body);
 
-    StateDynamics<MainExecutionPolicy, InitializeOphelieCoilSourceCK> initialize_coil_source(coil_body, coil_names,
-                                                                                            params, coil_center);
     StateDynamics<MainExecutionPolicy, AssignOphelieGlassSigmaCK> assign_plate_sigma(plate_body, plate_names,
                                                                                      params.sigma_glass_);
     StateDynamics<MainExecutionPolicy, ComputeOphelieCoilToGlassBiotSavartCK> compute_biot_savart(
@@ -339,7 +359,22 @@ int main(int ac, char *av[])
     {
         OphelieProgressLogger em_progress("em_init");
         assign_plate_sigma.exec();
-        initialize_coil_source.exec();
+        if (cli_options.coil_source_model == OphelieCoilSourceModel::VolumeRacetrack)
+        {
+            StateDynamics<MainExecutionPolicy, InitializeOphelieVolumeRacetrackCoilSourceCK> initialize_volume_racetrack(
+                coil_body, coil_names, coil_path_summary.j0);
+            initialize_volume_racetrack.exec();
+            const Real integrated_current =
+                hostCoilIntegratedCurrentFromJSrc(coil_body.getBaseParticles(), coil_names, coil_path_summary.path_length_m);
+            coil_path_audit_ok =
+                ophelieTeam7CoilPathAmpereTurnsAuditPassed(coil_path_summary, integrated_current);
+        }
+        else
+        {
+            StateDynamics<MainExecutionPolicy, InitializeOphelieCoilSourceCK> initialize_coil_source(
+                coil_body, coil_names, params, coil_center);
+            initialize_coil_source.exec();
+        }
         em_progress.log("coil/plate source fields assigned");
         compute_biot_savart.exec();
         em_progress.log("biot savart coil->plate done");
@@ -358,7 +393,7 @@ int main(int ac, char *av[])
         }
         const std::string reference_dir =
             cli_options.team7_reference_dir.empty()
-                ? "/home/yyc/SPHinXsysSYCL/TEAM7-reference/reference_data/team7"
+                ? "tests/extra_source_and_tests/3d_examples/reference_data/team7"
                 : cli_options.team7_reference_dir;
         StdVec<Team7BzProbePoint> reference_probes;
         if (loadTeam7BzA1B1Reference(reference_dir, Team7ReferenceProbeLineMm::y_mm, Team7ReferenceProbeLineMm::z_mm,
@@ -461,8 +496,11 @@ int main(int ac, char *av[])
 
     if (params.enable_self_induction_)
     {
+        Real self_induction_phi_eq_res_vol = 0.0;
+        bool self_induction_picard_converged = false;
         self_induction_j_rel_change = runOphelieSelfInductionWithPhiSolve<MainExecutionPolicy>(
-            plate_body, *plate_inner, plate_names, params, phi_solver_rel_residual, self_induction_iterations_used);
+            plate_body, *plate_inner, plate_names, params, phi_solver_rel_residual, self_induction_iterations_used,
+            self_induction_phi_eq_res_vol, self_induction_picard_converged);
         div_j_phi_metrics =
             computeOphelieDivJImag<MainExecutionPolicy>(plate_body, *plate_inner, plate_names, div_j_characteristic_length);
     }
@@ -572,14 +610,17 @@ int main(int ac, char *av[])
           metrics.self_induction_j_rel_change < params.self_induction_j_tolerance_));
 
     const bool team7_bz_ok = !cli_options.compare_team7_bz || team7_bz_metrics.passed;
+    const bool coil_path_ok = cli_options.coil_source_model != OphelieCoilSourceModel::VolumeRacetrack ||
+                              !cli_options.native_stl || coil_path_audit_ok;
     const bool power_ok = !params.enable_power_scaling_ || (std::isfinite(metrics.joule_power_scaled) &&
                                                            metrics.joule_power_scaled > 0.0);
     const bool passed = metrics.n_glass > 0 && metrics.n_coil > 0 && metrics.max_a_src > 0.0 && metrics.max_b_src > 0.0 &&
                         metrics.max_e_imag > 0.0 && metrics.max_j_imag > 0.0 && metrics.max_joule_heat > 0.0 &&
-                        metrics.min_joule_heat >= 0.0 && power_ok && phi_residual_ok && team7_bz_ok;
+                        metrics.min_joule_heat >= 0.0 && power_ok && phi_residual_ok && team7_bz_ok && coil_path_ok;
 
     std::cout << "test_3d_ophelie_team7"
-              << (cli_options.native_stl ? " native_stl=1" : " native_stl=0") << " dp=" << dp
+              << (cli_options.native_stl ? " native_stl=1" : " native_stl=0")
+              << " coil_source_model=" << ophelieCoilSourceModelName(cli_options.coil_source_model) << " dp=" << dp
               << " n_plate=" << metrics.n_glass << " n_coil=" << metrics.n_coil
               << " frequency=" << params.frequency_ << " sigma=" << params.sigma_glass_
               << " J0=" << params.coil_j0_override_ << " phi_correction=" << (params.enable_phi_correction_ ? 1 : 0)
@@ -597,7 +638,8 @@ int main(int ac, char *av[])
               << " target_P=" << params.target_joule_power_ << " min_Joule=" << metrics.min_joule_heat
               << " max_Joule=" << metrics.max_joule_heat
               << " team7_bz_rms=" << team7_bz_metrics.rms_rel_error
-              << " team7_bz_passed=" << (team7_bz_metrics.passed ? 1 : 0) << " passed=" << (passed ? 1 : 0)
+              << " team7_bz_passed=" << (team7_bz_metrics.passed ? 1 : 0)
+              << " coil_path_audit=" << (coil_path_audit_ok ? 1 : 0) << " passed=" << (passed ? 1 : 0)
               << std::endl;
 
     return passed ? 0 : 1;

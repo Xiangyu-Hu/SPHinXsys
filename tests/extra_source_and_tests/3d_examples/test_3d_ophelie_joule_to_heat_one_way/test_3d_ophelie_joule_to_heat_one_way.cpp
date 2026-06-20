@@ -3,14 +3,15 @@
  * @brief One explicit step: DeltaT = Q * dt / (rho * cp) from uniform JouleHeat.
  */
 #include "electromagnetic_ophelie.h"
+#include "electromagnetic_ophelie_joule_to_heat_one_way.h"
 #include "io_environment.h"
 #include "sphinxsys.h"
 
-#include <cmath>
 #include <iostream>
 
 using namespace SPH;
 using namespace SPH::electromagnetics::ophelie;
+using MainExecutionPolicy = execution::MainExecutionPolicy;
 
 #ifndef OPHELIE_TEST_RELOAD_DIR
 #define OPHELIE_TEST_RELOAD_DIR "./reload"
@@ -21,11 +22,7 @@ namespace
 constexpr const char *kTemperatureField = "Temperature";
 constexpr Real kRho = 2500.0;
 constexpr Real kCp = 1000.0;
-
-inline Real relativeError(Real measured, Real expected)
-{
-    return std::abs(measured - expected) / (std::abs(expected) + TinyReal);
-}
+constexpr Real kT0 = 300.0;
 } // namespace
 
 int main(int, char *[])
@@ -56,32 +53,23 @@ int main(int, char *[])
 
     BaseParticles &particles = glass_body.getBaseParticles();
     const size_t n = particles.TotalRealParticles();
-    particles.registerStateVariable<Real>(kTemperatureField, Real(300.0));
+    hostRegisterOphelieTemperatureField(particles, kT0);
 
-    Real *temperature = particles.getVariableDataByName<Real>(kTemperatureField);
     Real *joule_heat = particles.getVariableDataByName<Real>(glass_names.joule_heat);
     for (size_t i = 0; i < n; ++i)
     {
         joule_heat[i] = q_uniform;
-        temperature[i] = 300.0;
     }
     syncVariableToDevice<Real>(particles, glass_names.joule_heat);
-    syncVariableToDevice<Real>(particles, kTemperatureField);
 
-    const Real delta_t_expected = q_uniform * dt / (kRho * kCp);
-    for (size_t i = 0; i < n; ++i)
-    {
-        temperature[i] += joule_heat[i] * dt / (kRho * kCp);
-    }
-    syncVariableToDevice<Real>(particles, kTemperatureField);
-    syncVariableToHost<Real>(particles, kTemperatureField);
-
-    Real max_rel_err = 0.0;
-    for (size_t i = 0; i < n; ++i)
-    {
-        const Real delta_t = temperature[i] - 300.0;
-        max_rel_err = std::max(max_rel_err, relativeError(delta_t, delta_t_expected));
-    }
+    const Real delta_t_expected = ophelieJouleHeatOneWayDeltaTExpected(q_uniform, dt, kRho, kCp);
+    OphelieJouleHeatOneWayMaterialProps material;
+    material.rho = kRho;
+    material.cp = kCp;
+    material.t_initial = kT0;
+    const OphelieJouleHeatOneWayStepResult thermal = applyOphelieJouleHeatOneWayTemperatureSteps<MainExecutionPolicy>(
+        glass_body, particles, glass_names.joule_heat, kOphelieTemperatureField, dt, material, n, 1);
+    const Real max_rel_err = thermal.max_per_particle_rel_err;
 
     const bool passed = n > 0 && max_rel_err < 1.0e-12;
     std::cout << "test_3d_ophelie_joule_to_heat_one_way n=" << n << " Q=" << q_uniform << " dt=" << dt

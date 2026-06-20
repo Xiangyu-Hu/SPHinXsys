@@ -1,0 +1,53 @@
+======== MODE=none ========
+[ophelie] TEAM7 one-way edge-flux P_coil_only=0.00111546 P_total=0 phi_eq_res_imag=0.000479077 phi_eq_res_real=0 Aind/Acoil=3.9591 Bind/Bcoil=3.91279 max_J_real=0 max_J_imag=6.13057e+06 edge_flux_scale=0.00526215 J_imag_L2_vol=53404.9 P_recon_W=40.2836 rhs_l2_pre=0 omegaA/gradPhi=2.02344 e_edge_em_mis=0.136507
+[team7]   f=50 Hz delta_mm=11.9628 rhs_l2=0 input_scale=0.00526215 omegaA/gradPhi=2.02344 J_imag_vol=53404.9 Bind/B=3.91279 P_recon=40.2836 e_edge_em_mis=0.136507
+  FAIL interior no_flux_jn_over_jt_raw metric=0.466904 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  PASS top_surface no_flux_jn_over_jt_raw metric=0.0158502 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  PASS bottom_surface no_flux_jn_over_jt_raw metric=0.0209986 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  PASS exterior_lateral no_flux_jn_over_jt_raw metric=0.0284413 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  FAIL hole_lateral e_edge_em_mismatch_raw metric=0.337608 threshold=0.1 (||E_edge-(-gradPhi-omegaA)||/||E_edge||)
+  PASS hole_lateral no_flux_jn_over_jt_raw metric=0.0865978 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  FAIL all no_flux_jn_over_jt_raw metric=0.351931 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+[team7] P5.3 TEAM7 plate summary: pass=22 fail=20
+======== MODE=no-flux-missing-moment ========
+[ophelie] P5 boundary closure chain=real width_m=0.0069 ghost_edge=0 missing_moment=1 phi_rhs_ghost=0
+[ophelie] P5 boundary closure chain=imag width_m=0.0069 ghost_edge=0 missing_moment=1 phi_rhs_ghost=0
+[ophelie] P5 boundary closure chain=real width_m=0.0069 ghost_edge=0 missing_moment=1 phi_rhs_ghost=0
+[ophelie] TEAM7 one-way edge-flux P_coil_only=0.00111545 P_total=0 phi_eq_res_imag=0.000478861 phi_eq_res_real=0 Aind/Acoil=3.95908 Bind/Bcoil=3.91277 max_J_real=0 max_J_imag=6.13053e+06 edge_flux_scale=0.00526215 J_imag_L2_vol=53404.6 P_recon_W=40.2832 rhs_l2_pre=0 omegaA/gradPhi=2.02344 e_edge_em_mis=0.136507
+[team7]   f=50 Hz delta_mm=11.9628 rhs_l2=0 input_scale=0.00526215 omegaA/gradPhi=2.02344 J_imag_vol=53404.6 Bind/B=3.91277 P_recon=40.2832 e_edge_em_mis=0.136507
+  FAIL interior no_flux_jn_over_jt_raw metric=0.466906 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  PASS top_surface no_flux_jn_over_jt_raw metric=0.0158503 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  PASS bottom_surface no_flux_jn_over_jt_raw metric=0.0209988 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  PASS exterior_lateral no_flux_jn_over_jt_raw metric=0.028442 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  FAIL hole_lateral e_edge_em_mismatch_raw metric=0.337606 threshold=0.1 (||E_edge-(-gradPhi-omegaA)||/||E_edge||)
+  PASS hole_lateral no_flux_jn_over_jt_raw metric=0.0865988 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  FAIL all no_flux_jn_over_jt_raw metric=0.351932 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+[team7] P5.3 TEAM7 plate summary: pass=22 fail=20
+======== MODE=no-flux-phi-rhs-ghost ========
+[ophelie] P5 boundary closure chain=real width_m=0.0069 ghost_edge=0 missing_moment=0 phi_rhs_ghost=1
+[ophelie] P5 boundary closure chain=imag width_m=0.0069 ghost_edge=0 missing_moment=0 phi_rhs_ghost=1
+[ophelie] P5 boundary closure chain=real width_m=0.0069 ghost_edge=0 missing_moment=0 phi_rhs_ghost=1
+[ophelie] TEAM7 one-way edge-flux P_coil_only=0.00111546 P_total=0 phi_eq_res_imag=0.000478689 phi_eq_res_real=0 Aind/Acoil=3.9591 Bind/Bcoil=3.91279 max_J_real=0 max_J_imag=6.13058e+06 edge_flux_scale=0.00526215 J_imag_L2_vol=53404.9 P_recon_W=40.2836 rhs_l2_pre=0 omegaA/gradPhi=2.02344 e_edge_em_mis=0.136507
+[team7]   f=50 Hz delta_mm=11.9628 rhs_l2=0 input_scale=0.00526215 omegaA/gradPhi=2.02344 J_imag_vol=53404.9 Bind/B=3.91279 P_recon=40.2836 e_edge_em_mis=0.136507
+  FAIL interior no_flux_jn_over_jt_raw metric=0.466904 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  PASS top_surface no_flux_jn_over_jt_raw metric=0.01585 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  PASS bottom_surface no_flux_jn_over_jt_raw metric=0.0209986 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  PASS exterior_lateral no_flux_jn_over_jt_raw metric=0.0284418 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  FAIL hole_lateral e_edge_em_mismatch_raw metric=0.337607 threshold=0.1 (||E_edge-(-gradPhi-omegaA)||/||E_edge||)
+  PASS hole_lateral no_flux_jn_over_jt_raw metric=0.0865979 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  FAIL all no_flux_jn_over_jt_raw metric=0.351931 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+[team7] P5.3 TEAM7 plate summary: pass=22 fail=20
+======== MODE=no-flux-full ========
+[ophelie] P5 boundary closure chain=real width_m=0.0069 ghost_edge=1 missing_moment=1 phi_rhs_ghost=1
+[ophelie] P5 boundary closure chain=imag width_m=0.0069 ghost_edge=1 missing_moment=1 phi_rhs_ghost=1
+[ophelie] P5 boundary closure chain=real width_m=0.0069 ghost_edge=1 missing_moment=1 phi_rhs_ghost=1
+[ophelie] TEAM7 one-way edge-flux P_coil_only=0.00111503 P_total=0 phi_eq_res_imag=0.000477639 phi_eq_res_real=0 Aind/Acoil=3.95655 Bind/Bcoil=3.91088 max_J_real=0 max_J_imag=6.12474e+06 edge_flux_scale=0.00526215 J_imag_L2_vol=53394.5 P_recon_W=40.2679 rhs_l2_pre=0 omegaA/gradPhi=2.02344 e_edge_em_mis=0.137911
+[team7]   f=50 Hz delta_mm=11.9628 rhs_l2=0 input_scale=0.00526215 omegaA/gradPhi=2.02344 J_imag_vol=53394.5 Bind/B=3.91088 P_recon=40.2679 e_edge_em_mis=0.137911
+  FAIL interior no_flux_jn_over_jt_raw metric=0.466448 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  PASS top_surface no_flux_jn_over_jt_raw metric=0.00980394 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  PASS bottom_surface no_flux_jn_over_jt_raw metric=0.0138736 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  PASS exterior_lateral no_flux_jn_over_jt_raw metric=0.0201878 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  FAIL hole_lateral e_edge_em_mismatch_raw metric=0.350616 threshold=0.1 (||E_edge-(-gradPhi-omegaA)||/||E_edge||)
+  PASS hole_lateral no_flux_jn_over_jt_raw metric=0.0571592 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+  FAIL all no_flux_jn_over_jt_raw metric=0.351377 threshold=0.1 (no-flux diagnostic: |Jn|/|Jt| using SPHinXsys n on shell)
+[team7] P5.3 TEAM7 plate summary: pass=22 fail=20

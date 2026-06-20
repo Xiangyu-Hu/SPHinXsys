@@ -3,9 +3,11 @@ PROJECT("${CURRENT_FOLDER}")
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
+SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
+file(MAKE_DIRECTORY ${BUILD_RELOAD_PATH})
 
 add_executable(${PROJECT_NAME} test_3d_ophelie_joule_to_heat_one_way.cpp)
-target_compile_definitions(${PROJECT_NAME} PRIVATE OPHELIE_TEST_RELOAD_DIR="${CMAKE_CURRENT_SOURCE_DIR}/reload")
+target_compile_definitions(${PROJECT_NAME} PRIVATE OPHELIE_TEST_RELOAD_DIR="${BUILD_RELOAD_PATH}")
 target_link_libraries(${PROJECT_NAME} sphinxsys_3d extra_sources_3d)
 
 if(SPHINXSYS_USE_SYCL)

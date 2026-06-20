@@ -1,0 +1,24 @@
+# French reduced three-way comparison v1 (pre power-fix, 2026-06-08)
+
+> English summary. See `FRENCH_THREE_WAY_SUMMARY_EN.md` for consolidated v1–v3 notes.
+
+H run used **wrong P_graph calibration** → `production_literature_passed=0`, `P_graph/P_recon ≈ 1.8e6`.
+
+Raw log excerpt below (F_compatible + A + G cases, literature-mode, `--reload=1`):
+
+[ophelie] literature-mode: phi=ON power_scaling=OFF phi_solver=GMRES calibrate_current=1 divJ_L2_red_min=1.25
+[ophelie] edge_flux_diag edge_res_red_l2=1.04372
+[ophelie] edge_flux_diag edge_res_red_l2=1.04372
+[ophelie] literature_acceptance: projection_operator=compatible-div-grad projection_operator_status=diagnostic_only phi=1 no_scaling=1 phi_res=0 P_raw=1 divJ_L2_red=1.34282 (gate>=1.25, target>=1.5) divJ_gate=1 fields=1 literature_passed=0 production_literature_passed=0
+test_3d_ophelie_french_reduced source=multiloop-filament particles=reload mode=literature dp=0.02 n_glass=20625 n_loops=8 frequency=300000 sigma=16 phi_correction=1 phi_solver_rel_res=0.744696 phi_eq_res_vol=0.744696 rhs_integral=0.00382561 rhs_mean=0.0231854 Jn_post_phi_rel=7.89278e-05 phi_p0_case=F_compatible max_ASrc=0.000171561 max_BSrc=0.00126573 max_EImag=323.37 max_JImag=5173.91 P_raw=50000 P_scaled=50000 power_scale=1 field_scale=1 ampere_turns_eff=660.264 divJ_L0=0.000763805 divJ_phi=0.000568805 divJ_red=1.34282 divJ_L2_L0=2.97275 divJ_L2_phi=2.21381 reconstructed_divJ_red=1.34282 demo_passed=1 phi_solver_passed=0 divJ_continuity_passed=1 literature_passed=0 production_literature_passed=0 passed=0
+[ophelie] literature-mode: phi=ON power_scaling=OFF phi_solver=GMRES calibrate_current=1 divJ_L2_red_min=1.25
+[ophelie] edge_flux_diag edge_res_red_l2=0.0233916
+[ophelie] edge_flux_diag edge_res_red_l2=0.0230687
+[ophelie] literature_acceptance: projection_operator=div-grad projection_operator_status=production phi=1 no_scaling=1 phi_res=1 P_raw=1 divJ_L2_red=2.06026 (gate>=1.25, target>=1.5) divJ_gate=1 fields=1 literature_passed=1 production_literature_passed=1
+test_3d_ophelie_french_reduced source=multiloop-filament particles=reload mode=literature dp=0.02 n_glass=20625 n_loops=8 frequency=300000 sigma=16 phi_correction=1 phi_solver_rel_res=0.485228 phi_eq_res_vol=0.485228 rhs_integral=-0.0367506 rhs_mean=-0.222729 Jn_post_phi_rel=0.00386807 phi_p0_case=A_baseline max_ASrc=0.000171559 max_BSrc=0.00126572 max_EImag=324.897 max_JImag=5198.35 P_raw=50000 P_scaled=50000 power_scale=1 field_scale=1 ampere_turns_eff=660.257 divJ_L0=0.00794651 divJ_phi=0.003857 divJ_red=2.06028 divJ_L2_L0=30.9278 divJ_L2_phi=15.0116 reconstructed_divJ_red=2.06026 demo_passed=1 phi_solver_passed=1 divJ_continuity_passed=1 literature_passed=1 production_literature_passed=1 passed=1
+[ophelie] literature-mode: phi=ON power_scaling=OFF phi_solver=GMRES calibrate_current=1 divJ_L2_red_min=1.25
+[ophelie][warning] E/J/JouleHeat postprocess still uses particle gradient/divergence; do not interpret particle divJ_L2_red as edge-current continuity.
+[ophelie] edge_flux_diag edge_res_red_l2=341.666
+[ophelie] edge_flux_diag edge_res_red_l2=341.497
+[ophelie] literature_acceptance: projection_operator=edge-flux projection_operator_status=diagnostic_only phi=1 no_scaling=1 phi_res=1 P_raw=1 divJ_L2_red=0.933331 (gate>=1.25, target>=1.5) divJ_gate=0 fields=1 literature_passed=0 production_literature_passed=0
+test_3d_ophelie_french_reduced source=multiloop-filament particles=reload mode=literature dp=0.02 n_glass=20625 n_loops=8 frequency=300000 sigma=16 phi_correction=1 phi_solver_rel_res=3.25488e-05 phi_eq_res_vol=9.62743e-05 rhs_integral=0.0367549 rhs_mean=0.222755 Jn_post_phi_rel=0.000124217 phi_p0_case=G_edge_flux max_ASrc=0.000171561 max_BSrc=0.00126573 max_EImag=323.386 max_JImag=5174.18 P_raw=50000 P_scaled=50000 power_scale=1 field_scale=1 ampere_turns_eff=660.263 divJ_L0=0.00794653 divJ_phi=0.00851415 divJ_red=0.933332 divJ_L2_L0=30.9282 divJ_L2_phi=33.1374 reconstructed_divJ_red=0.933331 demo_passed=1 phi_solver_passed=1 divJ_continuity_passed=0 literature_passed=0 production_literature_passed=0 passed=1

@@ -1,0 +1,20 @@
+Please read the attached OPHELIE_GPT_DISCUSSION_TEAM7_L2_EDGE_FLUX.md (TEAM7 L2 complex edge-flux, Round 2).
+
+Background: SPH + complex edge-flux + A_ind one-way, TEAM7 crucible geometry, dp=3mm, filament coil source, source_scale=1, fixed 2742 AT. L2 one-way runs (smoke_passed=1), but team7_validation_passed=0 permanently.
+
+This round completed: P0 acceptance layering, P1 filament source, P2/P2b Picard baseline, P3 200Hz, P3c ω scaling audit, P3b Jey reference + J/B split, P5 A_total feedback comparison.
+
+Key conclusions (please confirm or refute):
+1) Bind/Bcoil≈4 and Jy~10× reference: primary cause is edge-flux reconstructed J amplitude (J-driven), not independent Biot amplification;
+2) Bind/B scales linearly with frequency f (200Hz≈4×50Hz), ωA/∇φ≈1.96 constant across frequencies — not ω² high-frequency runaway;
+3) after feedback suppresses J, restore linear rescaling fully cancels it; probe metrics identical to pure one-way;
+4) Picard relax=0.05 only improves phase90 11.8→7.1; Bind/B still ~4.3.
+
+Frozen: phase90 is not a hard gate; B_phase90=-B_ind_imag; imag_a_sign=+1; j_post_scale=auto is debug-only.
+
+Please focus on the 14 issues in main document §8, especially:
+- First code change for next steps: (a) edge-flux conductance/RHS scaling (b) restore strategy (c) TEAM7-specific A-φ coupling?
+- pre-restore vs post-restore: which should participate in TEAM7 acceptance?
+- when can team7_validation_passed be raised to 1? which hard metrics are required?
+
+Attached CSV: omega_scaling, j_vs_b_probe_split, picard_r0.05/0.15/0.35, probe_feedback1; log is full stdout.

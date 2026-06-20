@@ -1,0 +1,21 @@
+No,x_mm,Jy_50Hz_phase0_Am2,Jy_50Hz_phase90_Am2,Jy_200Hz_phase0_Am2,Jy_200Hz_phase90_Am2
+# Source: Fujiwara & Nakata 1990 TEAM Problem 7 measured Jy on plate top (A4-B4 line, y=72 mm, z=19 mm).
+# Phasor components from NGSolve/TEAM-problems TEAM-7/team7.ipynb (Jy_A4B4_50Hz_ref), scaled by 1e6 A/m^2.
+# 200 Hz columns pending COMSOL multiturn_coil_asymmetric_conductor_table2.txt import (see tools/import_team7_jey_comsol_table2.py).
+1,0.0,461000,-662000,0,0
+2,18.0,621000,-664000,0,0
+3,36.0,0,0,0,0
+4,54.0,0,0,0,0
+5,72.0,0,0,0,0
+6,90.0,0,0,0,0
+7,108.0,0,0,0,0
+8,126.0,1573000,-1027000,0,0
+9,144.0,556000,-757000,0,0
+10,162.0,97000,-149000,0,0
+11,180.0,-34000,15000,0,0
+12,198.0,-157000,154000,0,0
+13,216.0,-305000,311000,0,0
+14,234.0,-478000,508000,0,0
+15,252.0,-660000,747000,0,0
+16,270.0,-1217000,1034000,0,0
+17,288.0,0,0,0,0

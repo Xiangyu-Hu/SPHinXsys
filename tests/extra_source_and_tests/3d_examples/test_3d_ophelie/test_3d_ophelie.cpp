@@ -3,6 +3,7 @@
  * @brief OPHELIE-like induction: box glass + coil shell, Biot-Savart, optional PhiImag correction, E/J/Q, VTP.
  */
 #include "electromagnetic_ophelie.h"
+#include "electromagnetic_ophelie_self_induction.h"
 #include "electromagnetic_ophelie_progress.h"
 #include "simple_algorithms_ck.h"
 #include "sphinxsys.h"
@@ -175,8 +176,11 @@ int main(int ac, char *av[])
 
     if (params.enable_self_induction_)
     {
+        Real self_induction_phi_eq_res_vol = 0.0;
+        bool self_induction_picard_converged = false;
         self_induction_j_rel_change = runOphelieSelfInductionWithPhiSolve<MainExecutionPolicy>(
-            glass_body, *glass_inner, glass_names, params, phi_solver_rel_residual, self_induction_iterations_used);
+            glass_body, *glass_inner, glass_names, params, phi_solver_rel_residual, self_induction_iterations_used,
+            self_induction_phi_eq_res_vol, self_induction_picard_converged);
         div_j_phi_metrics =
             computeOphelieDivJImag<MainExecutionPolicy>(glass_body, *glass_inner, glass_names, div_j_characteristic_length);
     }

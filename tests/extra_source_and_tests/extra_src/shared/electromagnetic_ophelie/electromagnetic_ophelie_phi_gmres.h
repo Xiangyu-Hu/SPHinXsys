@@ -3,6 +3,9 @@
 
 #include "electromagnetic_ophelie_observables.h"
 #include "electromagnetic_ophelie_phi.h"
+#include "electromagnetic_ophelie_phi_device_vector_ops.h"
+#include "electromagnetic_ophelie_phi_mms_helpers.h"
+#include "electromagnetic_ophelie_phi_rhs_diagnostics.h"
 #include "electromagnetic_ophelie_progress.h"
 
 #include <Eigen/Dense>
@@ -24,22 +27,94 @@ struct OpheliePhiGMRESResult
     bool converged = false;
 };
 
-template <class ExecutionPolicy>
-inline Real solvePhiImagGMRES(SolidBody &glass_body, Inner<> &inner, const OphelieGlassFieldNames &names,
-                              const OphelieParameters &params)
+inline void ophelieScalePhiPcgWorkspaceRhs(StdVec<Real> &rhs, Real solver_local_rhs_scale)
 {
-    setupOpheliePhiImagRhsProblem<ExecutionPolicy>(glass_body, inner, names, params);
+    if (solver_local_rhs_scale >= Real(1) - TinyReal)
+    {
+        return;
+    }
+    for (Real &value : rhs)
+    {
+        value *= solver_local_rhs_scale;
+    }
+}
 
-    StateDynamics<ExecutionPolicy, ZeroOphelieScalarFieldCK> zero_diag(glass_body, names.phi_laplace_diag);
-    InteractionDynamicsCK<ExecutionPolicy, OpheliePairwiseLaplaceDiagonalCK<Inner<>>> compute_diag(
-        inner, names.sigma, names.phi_laplace_diag, params.pair_weight_regularization_);
-    zero_diag.exec();
-    compute_diag.exec();
+inline void ophelieUnscalePhiPcgSolution(StdVec<Real> &solution, Real solver_local_rhs_scale)
+{
+    if (solver_local_rhs_scale >= Real(1) - TinyReal)
+    {
+        return;
+    }
+    const Real inv = Real(1) / (solver_local_rhs_scale + TinyReal);
+    for (Real &value : solution)
+    {
+        value *= inv;
+    }
+}
 
+template <class ExecutionPolicy>
+inline Real solvePhiImagGMRESWithCurrentRhs(SolidBody &glass_body, Inner<> &inner, const OphelieGlassFieldNames &names,
+                                            const OphelieParameters &params)
+{
     BaseParticles &particles = glass_body.getBaseParticles();
     const size_t n = particles.TotalRealParticles();
+    StateDynamics<ExecutionPolicy, ZeroOphelieScalarFieldCK> zero_phi(glass_body, names.phi_imag);
+    zero_phi.exec();
+    logOpheliePhiRhsFingerprint("gmres_entry",
+                                computeOpheliePhiRhsFingerprint(particles, names.phi_rhs_imag, n));
+
+    computeOpheliePhiGMRESPreconditionerDiagonal<ExecutionPolicy>(glass_body, inner, names, params);
     const UnsignedInt restart_dimension = std::max(params.phi_gmres_restart_dimension_, UnsignedInt(1));
     const UnsignedInt max_outer_iterations = std::max(params.phi_gmres_max_outer_iterations_, UnsignedInt(1));
+    const bool use_eq_res_stop =
+        params.phi_lhs_operator_kind_ == OpheliePhiLhsOperatorKind::DivSigmaGrad && params.phi_gmres_eq_res_tolerance_ > 0.0;
+
+#if SPHINXSYS_USE_SYCL
+    OpheliePhiDeviceVectorWorkspace device_vector_workspace;
+    OpheliePhiDeviceKrylovStorage device_krylov_storage;
+    const bool use_device_vector_ops = params.phi_gmres_use_device_vector_ops_;
+    const bool use_device_krylov_storage =
+        use_device_vector_ops && params.phi_gmres_use_device_krylov_storage_;
+    if (use_device_vector_ops)
+    {
+        device_vector_workspace.bind(glass_body, names, n);
+    }
+    if (use_device_krylov_storage)
+    {
+        device_krylov_storage.setup<ExecutionPolicy>(glass_body, names, n, restart_dimension);
+    }
+#else
+    const bool use_device_vector_ops = false;
+    const bool use_device_krylov_storage = false;
+#endif
+
+    auto vol_weighted_dot = [&](const Real *lhs_values, const Real *rhs_values) -> Real
+    {
+#if SPHINXSYS_USE_SYCL
+        if (use_device_vector_ops)
+        {
+            return device_vector_workspace.volWeightedDot(lhs_values, rhs_values);
+        }
+#endif
+        return hostVolWeightedDot(particles, lhs_values, rhs_values, n);
+    };
+
+    auto vol_weighted_norm = [&](const Real *values) -> Real
+    {
+#if SPHINXSYS_USE_SYCL
+        if (use_device_vector_ops)
+        {
+            return device_vector_workspace.volWeightedNorm(values);
+        }
+#endif
+        return hostVolWeightedNorm(particles, values, n);
+    };
+
+    OphelieProgressLogger gmres_progress("phi_gmres");
+    gmres_progress.log("n=" + std::to_string(n) + " restart=" + std::to_string(restart_dimension) +
+                       " max_outer=" + std::to_string(max_outer_iterations) +
+                       (use_device_vector_ops ? " device_ops=1" : " device_ops=0") +
+                       (use_device_krylov_storage ? " device_krylov=1" : " device_krylov=0"));
 
     StdVec<Real> solution(n, Real(0));
     StdVec<Real> rhs(n, Real(0));
@@ -56,7 +131,9 @@ inline Real solvePhiImagGMRES(SolidBody &glass_body, Inner<> &inner, const Ophel
     for (size_t i = 0; i < n; ++i)
     {
         const Real preconditioner = diagonal[i] + params.phi_gauge_penalty_ + TinyReal;
-        solution[i] = rhs[i] / preconditioner;
+        solution[i] = params.phi_lhs_operator_kind_ == OpheliePhiLhsOperatorKind::DivSigmaGrad
+                          ? Real(0)
+                          : rhs[i] / preconditioner;
     }
     hostAssignScalarField(particles, names.phi_imag, solution.data(), n);
 
@@ -81,9 +158,9 @@ inline Real solvePhiImagGMRES(SolidBody &glass_body, Inner<> &inner, const Ophel
         residual[i] = rhs[i] - operator_output[i];
     }
 
-    const Real rhs_norm = hostVolWeightedNorm(particles, rhs.data(), n);
+    const Real rhs_norm = vol_weighted_norm(rhs.data());
     const Real rhs_max = hostScalarFieldMax(particles, names.phi_rhs_imag, n);
-    Real beta = hostVolWeightedNorm(particles, residual.data(), n);
+    Real beta = vol_weighted_norm(residual.data());
     Real relative_residual = beta / (rhs_norm + TinyReal);
 
     if (!std::isfinite(relative_residual) ||
@@ -103,6 +180,12 @@ inline Real solvePhiImagGMRES(SolidBody &glass_body, Inner<> &inner, const Ophel
         {
             krylov_basis[0][i] = residual[i] * inv_beta;
         }
+#if SPHINXSYS_USE_SYCL
+        if (use_device_krylov_storage)
+        {
+            device_krylov_storage.writeBasisFromHost(0, krylov_basis[0].data());
+        }
+#endif
 
         Eigen::VectorXd givens_rhs = Eigen::VectorXd::Zero(restart_dimension + 1);
         givens_rhs(0) = beta;
@@ -115,34 +198,67 @@ inline Real solvePhiImagGMRES(SolidBody &glass_body, Inner<> &inner, const Ophel
             apply_preconditioner(krylov_basis[inner_step].data(), preconditioned.data());
             apply_operator(preconditioned.data(), workspace.data());
 
-            for (UnsignedInt i = 0; i <= inner_step; ++i)
+#if SPHINXSYS_USE_SYCL
+            if (use_device_krylov_storage)
             {
-                const Real projection =
-                    hostVolWeightedDot(particles, krylov_basis[i].data(), workspace.data(), n);
-                hessenberg(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(inner_step)) = projection;
-                hostSubtractScaledVector(workspace.data(), krylov_basis[i].data(), projection, n);
+                device_krylov_storage.writeWorkspaceFromHost(workspace.data());
+                for (UnsignedInt i = 0; i <= inner_step; ++i)
+                {
+                    const Real projection = device_krylov_storage.dotBasisWithWorkspace(i);
+                    hessenberg(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(inner_step)) = projection;
+                    device_krylov_storage.subtractBasisFromWorkspace(i, projection);
+                }
+                const Real subdiagonal_norm = device_krylov_storage.normWorkspace();
+                hessenberg(static_cast<Eigen::Index>(inner_step + 1), static_cast<Eigen::Index>(inner_step)) =
+                    subdiagonal_norm;
+
+                if (!std::isfinite(subdiagonal_norm))
+                {
+                    krylov_dimension = inner_step;
+                    break;
+                }
+
+                if (subdiagonal_norm < TinyReal)
+                {
+                    krylov_dimension = inner_step + 1;
+                    break;
+                }
+
+                const Real inv_subdiagonal_norm = Real(1.0) / (subdiagonal_norm + TinyReal);
+                device_krylov_storage.normalizeWorkspaceIntoBasis(inner_step + 1, inv_subdiagonal_norm);
+                device_krylov_storage.readBasisToHost(inner_step + 1, krylov_basis[inner_step + 1].data());
             }
-
-            const Real subdiagonal_norm = hostVolWeightedNorm(particles, workspace.data(), n);
-            hessenberg(static_cast<Eigen::Index>(inner_step + 1), static_cast<Eigen::Index>(inner_step)) =
-                subdiagonal_norm;
-
-            if (!std::isfinite(subdiagonal_norm))
+            else
+#endif
             {
-                krylov_dimension = inner_step;
-                break;
-            }
+                for (UnsignedInt i = 0; i <= inner_step; ++i)
+                {
+                    const Real projection = vol_weighted_dot(krylov_basis[i].data(), workspace.data());
+                    hessenberg(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(inner_step)) = projection;
+                    hostSubtractScaledVector(workspace.data(), krylov_basis[i].data(), projection, n);
+                }
 
-            if (subdiagonal_norm < TinyReal)
-            {
-                krylov_dimension = inner_step + 1;
-                break;
-            }
+                const Real subdiagonal_norm = vol_weighted_norm(workspace.data());
+                hessenberg(static_cast<Eigen::Index>(inner_step + 1), static_cast<Eigen::Index>(inner_step)) =
+                    subdiagonal_norm;
 
-            const Real inv_subdiagonal_norm = Real(1.0) / (subdiagonal_norm + TinyReal);
-            for (size_t k = 0; k < n; ++k)
-            {
-                krylov_basis[inner_step + 1][k] = workspace[k] * inv_subdiagonal_norm;
+                if (!std::isfinite(subdiagonal_norm))
+                {
+                    krylov_dimension = inner_step;
+                    break;
+                }
+
+                if (subdiagonal_norm < TinyReal)
+                {
+                    krylov_dimension = inner_step + 1;
+                    break;
+                }
+
+                const Real inv_subdiagonal_norm = Real(1.0) / (subdiagonal_norm + TinyReal);
+                for (size_t k = 0; k < n; ++k)
+                {
+                    krylov_basis[inner_step + 1][k] = workspace[k] * inv_subdiagonal_norm;
+                }
             }
 
             for (UnsignedInt i = 0; i < inner_step; ++i)
@@ -199,8 +315,27 @@ inline Real solvePhiImagGMRES(SolidBody &glass_body, Inner<> &inner, const Ophel
         {
             residual[i] = rhs[i] - operator_output[i];
         }
-        beta = hostVolWeightedNorm(particles, residual.data(), n);
+        beta = vol_weighted_norm(residual.data());
         relative_residual = beta / (rhs_norm + TinyReal);
+
+        if (use_eq_res_stop && (outer + 1) % 5 == 0)
+        {
+            const Real eq_res_vol = hostPhiEqResVolFromCurrentLhsRhs(particles, names, n);
+            if ((outer + 1) % 20 == 0 || eq_res_vol < params.phi_gmres_eq_res_tolerance_)
+            {
+                gmres_progress.log("outer " + std::to_string(outer + 1) + " rel_res_l2=" +
+                                   std::to_string(relative_residual) + " eq_res_vol=" + std::to_string(eq_res_vol));
+            }
+            if (std::isfinite(eq_res_vol) && eq_res_vol < params.phi_gmres_eq_res_tolerance_)
+            {
+                break;
+            }
+        }
+        else if ((outer + 1) % 20 == 0)
+        {
+            gmres_progress.log("outer " + std::to_string(outer + 1) + " rel_res_l2=" + std::to_string(relative_residual));
+        }
+
         if (relative_residual < params.phi_gmres_tolerance_)
         {
             break;
@@ -208,23 +343,36 @@ inline Real solvePhiImagGMRES(SolidBody &glass_body, Inner<> &inner, const Ophel
     }
 
     hostAssignScalarField(particles, names.phi_imag, solution.data(), n);
-    return evaluateOpheliePhiImagRelativeResidual<ExecutionPolicy>(glass_body, inner, names, params);
+    applyOpheliePhiImagLhsOperator<ExecutionPolicy>(glass_body, inner, names, params);
+    const Real eq_res_vol = hostPhiEqResVolFromCurrentLhsRhs(particles, names, n);
+    const Real rel_res_linf = evaluateOpheliePhiImagRelativeResidual<ExecutionPolicy>(glass_body, inner, names, params);
+    gmres_progress.finish("rel_res_linf=" + std::to_string(rel_res_linf) + " eq_res_vol=" + std::to_string(eq_res_vol));
+    if (params.phi_lhs_operator_kind_ == OpheliePhiLhsOperatorKind::DivSigmaGrad)
+    {
+        return eq_res_vol;
+    }
+    return rel_res_linf;
 }
 
 template <class ExecutionPolicy>
-inline Real solvePhiImagPCG(SolidBody &glass_body, Inner<> &inner, const OphelieGlassFieldNames &names,
-                            const OphelieParameters &params)
+inline Real solvePhiImagGMRES(SolidBody &glass_body, Inner<> &inner, const OphelieGlassFieldNames &names,
+                              const OphelieParameters &params)
 {
     setupOpheliePhiImagRhsProblem<ExecutionPolicy>(glass_body, inner, names, params);
+    return solvePhiImagGMRESWithCurrentRhs<ExecutionPolicy>(glass_body, inner, names, params);
+}
 
-    StateDynamics<ExecutionPolicy, ZeroOphelieScalarFieldCK> zero_diag(glass_body, names.phi_laplace_diag);
-    InteractionDynamicsCK<ExecutionPolicy, OpheliePairwiseLaplaceDiagonalCK<Inner<>>> compute_diag(
-        inner, names.sigma, names.phi_laplace_diag, params.pair_weight_regularization_);
-    zero_diag.exec();
-    compute_diag.exec();
-
+template <class ExecutionPolicy>
+inline Real solvePhiImagPCGWithCurrentRhs(SolidBody &glass_body, Inner<> &inner, const OphelieGlassFieldNames &names,
+                                          const OphelieParameters &params)
+{
     BaseParticles &particles = glass_body.getBaseParticles();
     const size_t n = particles.TotalRealParticles();
+    StateDynamics<ExecutionPolicy, ZeroOphelieScalarFieldCK> zero_phi(glass_body, names.phi_imag);
+    zero_phi.exec();
+    logOpheliePhiRhsFingerprint("pcg_entry", computeOpheliePhiRhsFingerprint(particles, names.phi_rhs_imag, n));
+
+    computeOpheliePhiOperatorDiagonal<ExecutionPolicy>(glass_body, inner, names, params);
 
     StdVec<Real> solution(n, Real(0));
     StdVec<Real> rhs(n, Real(0));
@@ -236,6 +384,9 @@ inline Real solvePhiImagPCG(SolidBody &glass_body, Inner<> &inner, const Ophelie
 
     hostReadScalarField(particles, names.phi_rhs_imag, rhs.data(), n);
     hostReadScalarField(particles, names.phi_laplace_diag, diagonal.data(), n);
+
+    // Solver-local: phi_rhs_imag is scaled on particles before PCG (see solveOphelieComplexEdgeFluxWithCurrentA).
+    const Real solver_local_rhs_scale = Real(1);
 
     auto apply_operator = [&](const Real *input, Real *output)
     {
@@ -266,12 +417,17 @@ inline Real solvePhiImagPCG(SolidBody &glass_body, Inner<> &inner, const Ophelie
     const Real rhs_norm = hostVolWeightedNorm(particles, rhs.data(), n);
     const Real rhs_max = hostScalarFieldMax(particles, names.phi_rhs_imag, n);
     Real relative_residual_l2_vol = hostVolWeightedNorm(particles, residual.data(), n) / (rhs_norm + TinyReal);
+    ophelieUnscalePhiPcgSolution(solution, solver_local_rhs_scale);
     hostAssignScalarField(particles, names.phi_imag, solution.data(), n);
     Real relative_residual_linf =
         evaluateOpheliePhiImagRelativeResidual<ExecutionPolicy>(glass_body, inner, names, params);
     if (rhs_max > TinyReal && relative_residual_linf < params.phi_pcg_tolerance_)
     {
         return relative_residual_linf;
+    }
+    if (solver_local_rhs_scale < Real(1) - TinyReal)
+    {
+        ophelieScalePhiPcgWorkspaceRhs(solution, solver_local_rhs_scale);
     }
 
     apply_preconditioner(residual.data(), preconditioned_residual.data());
@@ -302,7 +458,9 @@ inline Real solvePhiImagPCG(SolidBody &glass_body, Inner<> &inner, const Ophelie
         if ((iter + 1) % 5 == 0 || iter + 1 == params.phi_pcg_max_iterations_ ||
             (iter + 1) % 100 == 0)
         {
-            hostAssignScalarField(particles, names.phi_imag, solution.data(), n);
+            StdVec<Real> solution_physical = solution;
+            ophelieUnscalePhiPcgSolution(solution_physical, solver_local_rhs_scale);
+            hostAssignScalarField(particles, names.phi_imag, solution_physical.data(), n);
             relative_residual_linf =
                 evaluateOpheliePhiImagRelativeResidual<ExecutionPolicy>(glass_body, inner, names, params);
             if ((iter + 1) % 100 == 0 || iter + 1 == params.phi_pcg_max_iterations_)
@@ -313,6 +471,7 @@ inline Real solvePhiImagPCG(SolidBody &glass_body, Inner<> &inner, const Ophelie
             }
             if (relative_residual_linf < params.phi_pcg_tolerance_)
             {
+                solution = solution_physical;
                 break;
             }
         }
@@ -327,6 +486,7 @@ inline Real solvePhiImagPCG(SolidBody &glass_body, Inner<> &inner, const Ophelie
         rz_old = rz_new;
     }
 
+    ophelieUnscalePhiPcgSolution(solution, solver_local_rhs_scale);
     hostAssignScalarField(particles, names.phi_imag, solution.data(), n);
     const Real final_residual_linf =
         evaluateOpheliePhiImagRelativeResidual<ExecutionPolicy>(glass_body, inner, names, params);
@@ -334,6 +494,29 @@ inline Real solvePhiImagPCG(SolidBody &glass_body, Inner<> &inner, const Ophelie
     pcg_progress.finish("rel_res_linf=" + std::to_string(final_residual_linf) + " rel_res_l2_vol=" +
                         std::to_string(final_residual_l2_vol));
     return final_residual_linf;
+}
+
+template <class ExecutionPolicy>
+inline Real solvePhiImagPCG(SolidBody &glass_body, Inner<> &inner, const OphelieGlassFieldNames &names,
+                            const OphelieParameters &params)
+{
+    setupOpheliePhiImagRhsProblem<ExecutionPolicy>(glass_body, inner, names, params);
+    return solvePhiImagPCGWithCurrentRhs<ExecutionPolicy>(glass_body, inner, names, params);
+}
+
+template <class ExecutionPolicy>
+inline Real solvePhiImagWithCurrentRhs(SolidBody &glass_body, Inner<> &inner, const OphelieGlassFieldNames &names,
+                                       const OphelieParameters &params)
+{
+    switch (params.phi_solver_kind_)
+    {
+    case OpheliePhiSolverKind::GMRES:
+        return solvePhiImagGMRESWithCurrentRhs<ExecutionPolicy>(glass_body, inner, names, params);
+    case OpheliePhiSolverKind::PCG:
+        return solvePhiImagPCGWithCurrentRhs<ExecutionPolicy>(glass_body, inner, names, params);
+    default:
+        return solvePhiImagJacobiWithCurrentRhs<ExecutionPolicy>(glass_body, inner, names, params);
+    }
 }
 
 template <class ExecutionPolicy>

@@ -189,6 +189,75 @@ class OpheliePairwiseLaplaceDiagonalCK<Inner<Parameters...>>
     }
 };
 
+/** Jacobi/GMRES preconditioner diagonal estimate for div(sigma grad phi) with uncorrected grad/div kernels. */
+template <typename... RelationTypes>
+class OphelieDivSigmaGradDiagonalCK;
+
+template <template <typename...> class RelationType, typename... Parameters>
+class OphelieDivSigmaGradDiagonalCK<Base, RelationType<Parameters...>> : public Interaction<RelationType<Parameters...>>
+{
+    using BaseInteraction = Interaction<RelationType<Parameters...>>;
+
+  public:
+    explicit OphelieDivSigmaGradDiagonalCK(RelationType<Parameters...> &relation, const std::string &coefficient_name,
+                                           const std::string &diagonal_name)
+        : BaseInteraction(relation),
+          dv_diagonal_(this->particles_->template getVariableByName<Real>(diagonal_name)),
+          dv_coefficient_(this->particles_->template getVariableByName<Real>(coefficient_name))
+    {
+    }
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType, typename... Args>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
+            : BaseInteraction::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
+              Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+              diagonal_(encloser.dv_diagonal_->DelegatedData(ex_policy)),
+              coefficient_(encloser.dv_coefficient_->DelegatedData(ex_policy))
+        {
+        }
+
+        void interact(size_t index_i, Real dt = 0.0)
+        {
+            (void)dt;
+            const Real coefficient_i = coefficient_[index_i];
+            Real diag_i = 0.0;
+            for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+            {
+                const UnsignedInt index_j = this->neighbor_index_[n];
+                const Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
+                const Vecd g_ij = pairwiseGradientWeightUncorrected(dW_ijV_j, this->e_ij(index_i, index_j));
+                const Real harmonic_coefficient = harmonicMean(coefficient_i, coefficient_[index_j]);
+                diag_i += harmonic_coefficient * g_ij.squaredNorm();
+            }
+            diagonal_[index_i] = diag_i;
+        }
+
+      protected:
+        Real *Vol_;
+        Real *diagonal_;
+        Real *coefficient_;
+    };
+
+  protected:
+    DiscreteVariable<Real> *dv_diagonal_;
+    DiscreteVariable<Real> *dv_coefficient_;
+};
+
+template <typename... Parameters>
+class OphelieDivSigmaGradDiagonalCK<Inner<Parameters...>>
+    : public OphelieDivSigmaGradDiagonalCK<Base, Inner<Parameters...>>
+{
+  public:
+    explicit OphelieDivSigmaGradDiagonalCK(Inner<Parameters...> &inner_relation, const std::string &coefficient_name,
+                                           const std::string &diagonal_name)
+        : OphelieDivSigmaGradDiagonalCK<Base, Inner<Parameters...>>(inner_relation, coefficient_name, diagonal_name)
+    {
+    }
+};
+
 } // namespace ophelie
 } // namespace electromagnetics
 } // namespace SPH

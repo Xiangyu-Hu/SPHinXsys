@@ -1,7 +1,10 @@
 #include "io_vtk_mesh_3d.hpp"
 #include "io_vtk.hpp"
 
+#include <iomanip>
+
 #include "io_environment.h"
+#include "sph_system.h"
 #include "triangle_mesh_shape.h"
 
 namespace SPH
@@ -30,6 +33,15 @@ void BodyStatesRecordingToTriangleMeshVtp::writeWithFileName(const std::string &
             out_file << "<?xml version=\"1.0\"?>\n";
             out_file << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">\n";
             out_file << "<PolyData>\n";
+
+            if (sph_system_.isPhysical())
+            {
+                out_file << "<FieldData>\n";
+                out_file << "<DataArray type=\"Float64\" Name=\"TimeValue\" NumberOfTuples=\"1\" format=\"ascii\">\n";
+                out_file << std::fixed << std::setprecision(9) << sv_physical_time_->getValue() << "\n";
+                out_file << "</DataArray>\n";
+                out_file << "</FieldData>\n";
+            }
 
             // Write point data
             out_file << "<Piece NumberOfPoints=\"" << particles.TotalRealParticles()

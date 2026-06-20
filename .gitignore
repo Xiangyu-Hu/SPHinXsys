@@ -1052,3 +1052,22 @@ build_wasm_debug
 # CodeQL
 _codeql_detected_source_root
 build_test/
+
+##### OPHELIE / RH200 local artifacts (do not commit)
+build_ophelie_cpu/
+discussion_bundle/team7_l2_outputs/
+discussion_bundle/**/p5_outputs/
+discussion_bundle/**/outputs/
+discussion_bundle/**/p5_sources/
+discussion_bundle/**/sources/
+discussion_bundle/ophelie_*.csv
+RH200_OPHELIE_CLIENT_PROGRESS_REPORT.log
+RH200_OPHELIE_CLIENT_PROGRESS_REPORT.out
+RH200_OPHELIE_CLIENT_PROGRESS_REPORT.aux
+RH200_OPHELIE_CLIENT_PROGRESS_REPORT.toc
+
+##### OPHELIE / test run artifacts (must live under build/, not source trees)
+tests/extra_source_and_tests/3d_examples/*/reload/
+tests/extra_source_and_tests/3d_examples/*/bin/
+tests/extra_source_and_tests/3d_examples/*/output/
+tests/extra_source_and_tests/3d_examples/*/lib/

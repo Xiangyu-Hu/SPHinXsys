@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<reload_data>
-<body name="CoilSourceBody">
-    <particle OriginalID="0" VolumetricMeasure="8.0e-4" Position="0.1, 0.0, 0.5"/>
-</body>
-<body name="GlassBody">
-    <particle OriginalID="0" VolumetricMeasure="8.0e-4" Position="0.0, 0.0, 0.5"/>
-</body>
-</reload_data>

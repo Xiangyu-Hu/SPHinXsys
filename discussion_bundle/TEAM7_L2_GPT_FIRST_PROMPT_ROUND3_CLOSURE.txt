@@ -1,0 +1,15 @@
+Please read the attached OPHELIE_GPT_DISCUSSION_TEAM7_ROUND3_CLOSURE.md (TEAM7 L2 edge-flux Round 3 diagnostic closure).
+
+Background: SPH + complex edge-flux + A_ind one-way, TEAM7 plate + coil, dp=3mm, filament source, source_scale=1, solver-local, 2742 AT.
+
+Round 3 diagnostics closed (2026-06-12):
+- P1a: constant A full φ-solve → gauge cancellation (not failure)
+- P1: rotational-A box J preserved ~91%, no 4×
+- P2/P4.5: hole_lateral e_edge_em=0.35 vs interior 0.05; hole-wall Bind/B=2.76 (not 4× source)
+- P4 Lenz: lenz_pass=1; P4.1 moment: ratio/inv(h³)≈4; empirical C_ij patch forbidden
+- Picard relax sweep frozen
+
+Please decide on all six issues in closure document §4 and give Cursor execution order for next steps.
+Forbidden: J×constant, empirical C_ij scaling, cancel φ-solve, edge-only production.
+
+Attachments: TEAM7_VALIDATION_LOG, Round3 plan, team7_l2_outputs CSV, P1a CSV, core source (see TEAM7_L2_UPLOAD_MANIFEST.md).

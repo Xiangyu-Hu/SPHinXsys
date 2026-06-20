@@ -29,6 +29,7 @@ struct OphelieMultiloopCoilSpec
     size_t num_loops = 1;
     Real current_per_loop = 1.0;
     size_t segments_per_loop = 360;
+    bool use_cell_centered_loops = false;
 };
 
 inline Real analyticCircularLoopBzOnAxis(Real z_observer, Real z_loop, Real radius, Real current, Real mu0)
@@ -38,6 +39,25 @@ inline Real analyticCircularLoopBzOnAxis(Real z_observer, Real z_loop, Real radi
     return mu0 * current * radius * radius / (2.0 * denom);
 }
 
+inline Real multiloopZPosition(size_t loop_index, const OphelieMultiloopCoilSpec &spec)
+{
+    if (spec.num_loops == 0)
+    {
+        return 0.0;
+    }
+    if (spec.num_loops == 1)
+    {
+        return 0.5 * (spec.z_min + spec.z_max);
+    }
+    if (spec.use_cell_centered_loops)
+    {
+        return spec.z_min + (static_cast<Real>(loop_index) + Real(0.5)) / static_cast<Real>(spec.num_loops) *
+                                (spec.z_max - spec.z_min);
+    }
+    const Real dz_stack = (spec.z_max - spec.z_min) / static_cast<Real>(spec.num_loops - 1);
+    return spec.z_min + static_cast<Real>(loop_index) * dz_stack;
+}
+
 inline Real analyticMultiloopBzOnAxis(Real z_observer, const OphelieMultiloopCoilSpec &spec, Real mu0)
 {
     if (spec.num_loops == 0)
@@ -45,10 +65,9 @@ inline Real analyticMultiloopBzOnAxis(Real z_observer, const OphelieMultiloopCoi
         return 0.0;
     }
     Real bz = 0.0;
-    const Real dz_stack = spec.num_loops > 1 ? (spec.z_max - spec.z_min) / static_cast<Real>(spec.num_loops - 1) : 0.0;
     for (size_t k = 0; k < spec.num_loops; ++k)
     {
-        const Real z_loop = spec.num_loops > 1 ? spec.z_min + static_cast<Real>(k) * dz_stack : 0.5 * (spec.z_min + spec.z_max);
+        const Real z_loop = multiloopZPosition(k, spec);
         bz += analyticCircularLoopBzOnAxis(z_observer, z_loop, spec.loop_radius, spec.current_per_loop, mu0);
     }
     return bz;
@@ -82,12 +101,9 @@ inline void buildMultiloopFilamentMoments(const OphelieMultiloopCoilSpec &spec,
     {
         return;
     }
-    const Real dz_stack =
-        spec.num_loops > 1 ? (spec.z_max - spec.z_min) / static_cast<Real>(spec.num_loops - 1) : 0.0;
     for (size_t k = 0; k < spec.num_loops; ++k)
     {
-        const Real z_loop =
-            spec.num_loops > 1 ? spec.z_min + static_cast<Real>(k) * dz_stack : 0.5 * (spec.z_min + spec.z_max);
+        const Real z_loop = multiloopZPosition(k, spec);
         OphelieCircularLoopSpec loop;
         loop.center = Vecd(spec.stack_center[0], spec.stack_center[1], z_loop);
         loop.radius = spec.loop_radius;
