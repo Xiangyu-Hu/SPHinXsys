@@ -29,10 +29,19 @@ Real WeaklyCompressibleFluid::getSoundSpeed(Real p, Real rho)
     return c0_;
 }
 //=================================================================================================//
-WeaklyCompressibleMixture::WeaklyCompressibleMixture(
-    StdVec<std::pair<std::string, Real>> species_data, Real c0) : Fluid(), c0_(c0)
+WeaklyCompressibleMixture::WeaklyCompressibleMixture(Real c0)
+    : Fluid(), c0_(c0), dv_rho0_(nullptr)
 {
     material_type_name_ = "WeaklyCompressibleMixture";
+}
+//=================================================================================================//
+WeaklyCompressibleMixture::~WeaklyCompressibleMixture() = default;
+//=================================================================================================//
+WeaklyCompressibleMultiSpecies::WeaklyCompressibleMultiSpecies(
+    StdVec<std::pair<std::string, Real>> species_data, Real c0)
+    : WeaklyCompressibleMixture(c0)
+{
+    material_type_name_ = "WeaklyCompressibleMultiSpecies";
     species_name_list_.reserve(species_data.size());
     rho0_list_.reserve(species_data.size());
     for (const auto &pair : species_data)
@@ -45,11 +54,11 @@ WeaklyCompressibleMixture::WeaklyCompressibleMixture(
         { return 1.0 / rho0_list_[k]; });
 }
 //=================================================================================================//
-WeaklyCompressibleMixture::~WeaklyCompressibleMixture() = default;
+WeaklyCompressibleMultiSpecies::~WeaklyCompressibleMultiSpecies() = default;
 //=================================================================================================//
-void WeaklyCompressibleMixture::initializeLocalParameters(BaseParticles *base_particles)
+void WeaklyCompressibleMultiSpecies::initializeLocalParameters(BaseParticles *base_particles)
 {
-    Fluid::initializeLocalParameters(base_particles);
+    WeaklyCompressibleMixture::initializeLocalParameters(base_particles);
     dv_rho0_ = base_particles->registerStateVariable<Real>("ReferenceDensity", rho0_list_[0]);
     dv_Y_list_ = base_particles->registerStateVariable<Real>("MassFraction", species_name_list_);
     base_particles->addEvolvingVariable<Real>(dv_rho0_);

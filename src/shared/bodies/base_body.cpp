@@ -73,7 +73,7 @@ BaseParticles &SPHBody::getBaseParticles()
     return *base_particles_;
 };
 //=================================================================================================//
-MatterMaterial &SPHBody::getMatterMaterial()
+MatterMaterial &SPHBody::getMatterMaterial() const
 {
     checkPointer(matter_keeper_.getPtr(), "matter material", body_name_);
     return DynamicCast<MatterMaterial>(this, *matter_keeper_.getPtr());

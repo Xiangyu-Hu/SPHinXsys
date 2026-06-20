@@ -4,6 +4,7 @@
 #include "density_regularization.h"
 
 #include "base_particles.hpp"
+#include "weakly_compressible_fluid.hpp"
 
 namespace SPH
 {

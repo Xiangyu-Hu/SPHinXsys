@@ -37,10 +37,6 @@
 
 namespace SPH
 {
-/**
- * @class WeaklyCompressibleFluid
- * @brief Linear equation of state (EOS).
- */
 class WeaklyCompressibleFluid : public Fluid
 {
   protected:
@@ -62,99 +58,73 @@ class WeaklyCompressibleFluid : public Fluid
     {
       public:
         template <class ExecutionPolicy, class EnclosureType>
-        EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser)
-            : rho0_(encloser.rho0_), p0_(encloser.p0_), c0_(encloser.c0_){};
-
-        Real PressureFromDensity(UnsignedInt, Real rho)
-        {
-            return p0_ * (rho / rho0_ - 1.0);
-        };
-
-        Real DensityFromPressure(UnsignedInt, Real p)
-        {
-            return rho0_ * (p / p0_ + 1.0);
-        };
-
-        Real getSoundSpeed(UnsignedInt, Real, Real)
-        {
-            return c0_;
-        };
-
-        Real getReferenceDensity(UnsignedInt)
-        {
-            return rho0_;
-        };
+        EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser);
+        Real PressureFromDensity(UnsignedInt, Real rho);
+        Real DensityFromPressure(UnsignedInt, Real p);
+        Real getSoundSpeed(UnsignedInt, Real, Real);
+        Real getReferenceDensity(UnsignedInt);
 
       protected:
-        Real rho0_, p0_, c0_;
+        Real rho0_, c0_, p0_;
     };
 };
 
 class WeaklyCompressibleMixture : public Fluid
 {
-  protected:
-    StdVec<std::string> species_name_list_; /**< species name list. */
-    StdVec<Real> rho0_list_;                /**< reference density list. */
-    ConstantArray<Real> *ca_inv_rho0_list_; /**< inverse reference density list. */
-    DiscreteVariable<Real> *dv_Y_list_;     /**< species mass fraction list. */
-    DiscreteVariable<Real> *dv_rho0_;       /**< local reference density. */
-    Real c0_;                               /**< reference sound speed. */
-
   public:
-    WeaklyCompressibleMixture(StdVec<std::pair<std::string, Real>> species_data, Real c0);
+    explicit WeaklyCompressibleMixture(Real c0);
     virtual ~WeaklyCompressibleMixture();
-    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
-    virtual Real ReferenceDensity() const override { return rho0_list_[0]; };
     virtual Real ReferenceSoundSpeed() const override { return c0_; };
-    StdVec<std::string> getSpeciesNameList() const { return species_name_list_; };
-    StdVec<Real> getReferenceDensityList() const { return rho0_list_; };
     DiscreteVariable<Real> *dvReferenceDensity() const { return dv_rho0_; };
-    DiscreteVariable<Real> *dvMassFraction() const { return dv_Y_list_; };
-    ConstantArray<Real> *caInvReferenceDensity() const { return ca_inv_rho0_list_; };
     // the following virtual functions are as they are deprecated for computing kernel
     // based implementations, but we keep them for backward compatibility
-    [[deprecated("Use WeaklyCompressibleMixture::EosKernel::PressureFromDensity() instead.")]]
+    [[deprecated("Use WeaklyCompressibleMultiSpecies::EosKernel::PressureFromDensity() instead.")]]
     Real getPressure(Real rho) override;
-    [[deprecated("Use WeaklyCompressibleMixture::EosKernel::DensityFromPressure() instead.")]]
+    [[deprecated("Use WeaklyCompressibleMultiSpecies::EosKernel::DensityFromPressure() instead.")]]
     Real DensityFromPressure(Real p) override;
-    [[deprecated("Use WeaklyCompressibleMixture::EosKernel::getSoundSpeed() instead.")]]
+    [[deprecated("Use WeaklyCompressibleMultiSpecies::EosKernel::getSoundSpeed() instead.")]]
     Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
 
     class EosKernel
     {
       public:
         template <class ExecutionPolicy, class EnclosureType>
-        EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser)
-            : c0_(encloser.c0_), c0_sq_(c0_ * c0_),
-              rho0_(encloser.dv_rho0_->DelegatedDataView(ex_policy)){};
-
-        Real PressureFromDensity(UnsignedInt index_i, Real rho)
-        {
-            return c0_sq_ * (rho - rho0_[index_i]);
-        };
-
-        Real DensityFromPressure(UnsignedInt index_i, Real p)
-        {
-            return rho0_[index_i] + p / c0_sq_;
-        };
-
-        Real getSoundSpeed(UnsignedInt, Real, Real)
-        {
-            return c0_;
-        };
-
-        Real getReferenceDensity(UnsignedInt index_i)
-        {
-            return rho0_[index_i];
-        };
+        EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser);
+        Real PressureFromDensity(UnsignedInt index_i, Real rho);
+        Real DensityFromPressure(UnsignedInt index_i, Real p);
+        Real getSoundSpeed(UnsignedInt, Real, Real);
+        Real getReferenceDensity(UnsignedInt index_i);
 
       protected:
         Real c0_, c0_sq_;
         DataView<Real> rho0_;
     };
+
+  protected:
+    Real c0_;                         /**< reference sound speed. */
+    DiscreteVariable<Real> *dv_rho0_; /**< local reference density. */
 };
 
-class WeaklyCompressibleMultiPhase : public Fluid
+class WeaklyCompressibleMultiSpecies : public WeaklyCompressibleMixture
+{
+  protected:
+    StdVec<std::string> species_name_list_; /**< species name list. */
+    StdVec<Real> rho0_list_;                /**< reference density list. */
+    ConstantArray<Real> *ca_inv_rho0_list_; /**< inverse reference density list. */
+    DiscreteVariable<Real> *dv_Y_list_;     /**< species mass fraction list. */
+
+  public:
+    WeaklyCompressibleMultiSpecies(StdVec<std::pair<std::string, Real>> species_data, Real c0);
+    virtual ~WeaklyCompressibleMultiSpecies();
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+    virtual Real ReferenceDensity() const override { return rho0_list_[0]; };
+    StdVec<std::string> getSpeciesNameList() const { return species_name_list_; };
+    StdVec<Real> getReferenceDensityList() const { return rho0_list_; };
+    DiscreteVariable<Real> *dvMassFraction() const { return dv_Y_list_; };
+    ConstantArray<Real> *caInvReferenceDensity() const { return ca_inv_rho0_list_; };
+};
+
+class WeaklyCompressibleMultiPhase : public WeaklyCompressibleMixture
 {
     UniquePtrsKeeper<Fluid> fluid_ptrs_;
     bool is_phases_set_ = false;
@@ -174,26 +144,8 @@ class WeaklyCompressibleMultiPhase : public Fluid
     void setPhases() { is_phases_set_ = true; };
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     virtual Real ReferenceDensity() const override { return phase_list_[0]->ReferenceDensity(); };
-    virtual Real ReferenceSoundSpeed() const override { return c0_; };
     StdVec<std::string> getPhaseNameList() const { return phase_name_list_; };
     DiscreteVariable<Real> *dvVolumeFraction() const { return dv_phi_list_; };
-    // the following virtual functions are as they are deprecated for computing kernel
-    // based implementations, but we keep them for backward compatibility
-    [[deprecated("Use WeaklyCompressibleMultiPhase::EosKernel::PressureFromDensity() instead.")]]
-    Real getPressure(Real rho) override
-    {
-        return 0.0;
-    };
-    [[deprecated("Use WeaklyCompressibleMultiPhase::EosKernel::DensityFromPressure() instead.")]]
-    Real DensityFromPressure(Real p) override
-    {
-        return 0.0;
-    };
-    [[deprecated("Use WeaklyCompressibleMultiPhase::EosKernel::getSoundSpeed() instead.")]]
-    Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override
-    {
-        return 0.0;
-    };
 
     template <class FluidType, typename... Args>
     void addPhase(Args &&...args);

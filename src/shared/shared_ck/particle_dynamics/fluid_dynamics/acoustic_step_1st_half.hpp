@@ -3,6 +3,8 @@
 
 #include "acoustic_step_1st_half.h"
 
+#include "weakly_compressible_fluid.hpp"
+
 namespace SPH
 {
 namespace fluid_dynamics

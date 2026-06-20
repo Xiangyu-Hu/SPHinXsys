@@ -97,14 +97,17 @@ class SPHBody
     void assignBaseParticles(BaseParticles *base_particles) { base_particles_ = base_particles; };
     SPHAdaptation &getSPHAdaptation();
     BaseParticles &getBaseParticles();
-    MatterMaterial &getMatterMaterial();
-    
+    MatterMaterial &getMatterMaterial() const;
+
+    template <typename MaterialType>
+    bool isMatterMaterial() const;
+
     template <typename MaterialType>
     StdVec<MaterialType *> collectMaterialProperties();
-    
+
     template <typename MaterialType>
     MaterialType &getMaterialProperty(const std::string &name = ""); // name is optional for one material for a material type
-    
+
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
     IndexRange LoopRange();
     size_t SizeOfLoopRange();

@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	fluid_mixture.h
+ * @file 	fluid_multi_species_mixture.h
  * @brief 	TBD.
  * @details TBD.
  * @author	Xiangyu Hu
  */
 
-#ifndef FLUID_MIXTURE_H
-#define FLUID_MIXTURE_H
+#ifndef FLUID_MULTI_SPECIES_MIXTURE_H
+#define FLUID_MULTI_SPECIES_MIXTURE_H
 
 #include "base_fluid_dynamics.h"
 #include "weakly_compressible_fluid.h"
@@ -42,7 +42,7 @@ class ReferenceDensityUpdate : public LocalDynamics
   public:
     explicit ReferenceDensityUpdate(SPHBody &sph_body)
         : LocalDynamics(sph_body),
-          fluid_mixture(DynamicCast<WeaklyCompressibleMixture>(
+          fluid_mixture(DynamicCast<WeaklyCompressibleMultiSpecies>(
               this, this->sph_body_->getMatterMaterial())),
           ca_inv_rho0_list_(fluid_mixture.caInvReferenceDensity()),
           dv_Y_list_(fluid_mixture.dvMassFraction()),
@@ -80,7 +80,7 @@ class ReferenceDensityUpdate : public LocalDynamics
     };
 
   protected:
-    WeaklyCompressibleMixture &fluid_mixture;
+    WeaklyCompressibleMultiSpecies &fluid_mixture;
     ConstantArray<Real> *ca_inv_rho0_list_;
     DiscreteVariable<Real> *dv_Y_list_;
     DiscreteVariable<Real> *dv_rho0_, *dv_mass_;
@@ -91,7 +91,7 @@ class PrescribedReferenceDensity
   public:
     PrescribedReferenceDensity(
         BaseParticles *base_particles,
-        const WeaklyCompressibleMixture &fluid_mixture,
+        const WeaklyCompressibleMultiSpecies &fluid_mixture,
         StdVec<Real> mass_fractions)
         : ca_inv_rho0_list_(fluid_mixture.caInvReferenceDensity()),
           ca_mass_fractions_("ConstantMassFractions", mass_fractions),
@@ -145,4 +145,4 @@ class PrescribedReferenceDensity
 };
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // FLUID_MIXTURE_H
+#endif // FLUID_MULTI_SPECIES_MIXTURE_H

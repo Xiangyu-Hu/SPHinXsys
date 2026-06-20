@@ -50,6 +50,16 @@ MaterialType &SPHBody::defineMatterMaterial(Args &&...args)
     return *material;
 }
 //=================================================================================================//
+template <typename MaterialType>
+bool SPHBody::isMatterMaterial() const
+{
+    if (matter_keeper_.getPtr() && dynamic_cast<MaterialType *>(matter_keeper_.getPtr()))
+    {
+        return true;
+    }
+    return false;
+}
+//=================================================================================================//
 template <class MaterialType, typename... Args>
 MaterialType &SPHBody::addMaterialProperty(Args &&...args)
 {

@@ -1,20 +1,20 @@
 #include "sphinxsys.h"
-#include "fluid_mixture.h"
+#include "fluid_multi_species_mixture.h"
 #include <gtest/gtest.h>
 
 using namespace SPH;
 
 namespace
 {
-class TestWeaklyCompressibleMixture : public WeaklyCompressibleMixture
+class TestWeaklyCompressibleMultiSpecies : public WeaklyCompressibleMultiSpecies
 {
   public:
-    using WeaklyCompressibleMixture::WeaklyCompressibleMixture;
+    using WeaklyCompressibleMultiSpecies::WeaklyCompressibleMultiSpecies;
 
     void initializeLocalParameters(BaseParticles *base_particles) override
     {
         MatterMaterial::initializeLocalParameters(base_particles);
-        WeaklyCompressibleMixture::initializeLocalParameters(base_particles);
+        WeaklyCompressibleMultiSpecies::initializeLocalParameters(base_particles);
     }
 
     Real getPressure(Real rho) override
@@ -66,7 +66,7 @@ TEST(ReferenceDensityUpdate, UpdatesReferenceDensityAndMassFromMassFractions)
     FluidBody mixture_body(sph_system, makeShared<MixtureBlock>("MixtureBody"));
 
     StdVec<std::pair<std::string, Real>> species_data{{"A", 1.0}, {"B", 2.0}};
-    mixture_body.defineMatterMaterial<TestWeaklyCompressibleMixture>(species_data, 10.0);
+    mixture_body.defineMatterMaterial<TestWeaklyCompressibleMultiSpecies>(species_data, 10.0);
     mixture_body.generateParticles<BaseParticles, Lattice>();
 
     BaseParticles &particles = mixture_body.getBaseParticles();
