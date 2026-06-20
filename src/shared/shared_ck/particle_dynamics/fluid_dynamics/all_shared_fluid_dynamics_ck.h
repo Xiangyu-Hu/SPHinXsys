@@ -38,6 +38,6 @@
 #include "fluid_time_step_ck.hpp"
 #include "transport_velocity_correction_ck.hpp"
 #include "viscous_force.hpp"
-#include "fluid_multi_species_mixture.h"
+#include "fluid_multi_species.h"
 
 #endif // ALL_SHARED_FLUID_DYNAMICS_CK_H

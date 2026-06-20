@@ -1,5 +1,5 @@
 #include "sphinxsys.h"
-#include "fluid_multi_species_mixture.h"
+#include "fluid_multi_species.h"
 #include <gtest/gtest.h>
 
 using namespace SPH;

@@ -21,14 +21,14 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	fluid_multi_species_mixture.h
+ * @file 	fluid_multi_species.h
  * @brief 	TBD.
  * @details TBD.
  * @author	Xiangyu Hu
  */
 
-#ifndef FLUID_MULTI_SPECIES_MIXTURE_H
-#define FLUID_MULTI_SPECIES_MIXTURE_H
+#ifndef FLUID_MULTI_SPECIES_H
+#define FLUID_MULTI_SPECIES_H
 
 #include "base_fluid_dynamics.h"
 #include "weakly_compressible_fluid.h"
@@ -145,4 +145,4 @@ class PrescribedReferenceDensity
 };
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // FLUID_MULTI_SPECIES_MIXTURE_H
+#endif // FLUID_MULTI_SPECIES_H
