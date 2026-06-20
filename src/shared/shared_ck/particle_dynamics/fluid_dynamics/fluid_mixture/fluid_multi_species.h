@@ -55,7 +55,7 @@ class ReferenceDensityUpdate : public LocalDynamics
       public:
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy, ReferenceDensityUpdate &encloser)
-            : inv_rho0_list_(encloser.ca_inv_rho0_list_->DelegatedDataView(ex_policy)),
+            : inv_rho0_list_(encloser.ca_inv_rho0_list_->DelegatedConstantView(ex_policy)),
               Y_list_(encloser.dv_Y_list_->DelegatedMultiEntryView(ex_policy)),
               rho0_(encloser.dv_rho0_->DelegatedDataView(ex_policy)),
               mass_(encloser.dv_mass_->DelegatedDataView(ex_policy)){};
@@ -74,7 +74,7 @@ class ReferenceDensityUpdate : public LocalDynamics
         };
 
       protected:
-        DataView<Real> inv_rho0_list_;
+        ConstantView<Real> inv_rho0_list_;
         MultiEntryView<Real> Y_list_;
         DataView<Real> rho0_, mass_;
     };
@@ -88,18 +88,21 @@ class ReferenceDensityUpdate : public LocalDynamics
 
 class PrescribedReferenceDensity
 {
+    using EosKernel = typename WeaklyCompressibleMultiSpecies::EosKernel;
+
   public:
     PrescribedReferenceDensity(
         BaseParticles *base_particles,
-        const WeaklyCompressibleMultiSpecies &fluid_mixture,
+        WeaklyCompressibleMultiSpecies &fluid_mixture,
         StdVec<Real> mass_fractions)
-        : ca_inv_rho0_list_(fluid_mixture.caInvReferenceDensity()),
+        : fluid_mixture_(fluid_mixture),
           ca_mass_fractions_("ConstantMassFractions", mass_fractions),
-          dv_Y_list_(fluid_mixture.dvMassFraction()),
           dv_rho0_(fluid_mixture.dvReferenceDensity()),
+          dv_Vol_ref_(base_particles->template getVariableByName<Real>(
+              "VolumetricMeasureRef")),
           dv_mass_(fluid_mixture.dvMass())
     {
-        if (ca_inv_rho0_list_->getSize() != mass_fractions.size())
+        if (fluid_mixture.NumberOfSpecies() != mass_fractions.size())
         {
             std::cout << "\n Error: the mass fraction list and the number of "
                       << "species should be the same !" << std::endl;
@@ -113,35 +116,29 @@ class PrescribedReferenceDensity
       public:
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : inv_rho0_list_(encloser.ca_inv_rho0_list_->DelegatedDataView(ex_policy)),
-              mass_fractions_(encloser.ca_mass_fractions_.DelegatedDataView(ex_policy)),
-              Y_list_(encloser.dv_Y_list_->DelegatedMultiEntryView(ex_policy)),
+            : eos_(ex_policy, encloser.fluid_mixture_),
+              mass_fractions_(encloser.ca_mass_fractions_.DelegatedConstantView(ex_policy)),
               rho0_(encloser.dv_rho0_->DelegatedDataView(ex_policy)),
+              Vol_ref_(encloser.dv_Vol_ref_->DelegatedDataView(ex_policy)),
               mass_(encloser.dv_mass_->DelegatedDataView(ex_policy)){};
 
         void operator()(size_t index_i, Real dt = 0.0)
         {
-            Real sum = 0.0;
-            Real volume = mass_[index_i] / rho0_[index_i];
-            for (size_t k = 0; k != Y_list_.Width(); ++k)
-            {
-                Y_list_[index_i][k] = mass_fractions_[k];
-                sum += mass_fractions_[k] * inv_rho0_list_[k];
-            }
-            rho0_[index_i] = 1.0 / sum;
-            mass_[index_i] = rho0_[index_i] * volume;
+            eos_.setMassFractions(index_i, mass_fractions_);
+            rho0_[index_i] = eos_.computeReferenceDensity(index_i);
+            mass_[index_i] = rho0_[index_i] * Vol_ref_[index_i];
         };
 
       protected:
-        DataView<Real> inv_rho0_list_, mass_fractions_;
-        MultiEntryView<Real> Y_list_;
-        DataView<Real> rho0_, mass_;
+        EosKernel eos_;
+        ConstantView<Real> mass_fractions_;
+        DataView<Real> rho0_, Vol_ref_, mass_;
     };
 
   protected:
-    ConstantArray<Real> *ca_inv_rho0_list_, ca_mass_fractions_;
-    DiscreteVariable<Real> *dv_Y_list_;
-    DiscreteVariable<Real> *dv_rho0_, *dv_mass_;
+    WeaklyCompressibleMultiSpecies &fluid_mixture_;
+    ConstantArray<Real> ca_mass_fractions_;
+    DiscreteVariable<Real> *dv_rho0_, *dv_Vol_ref_, *dv_mass_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

@@ -61,6 +61,9 @@ void WeaklyCompressibleMultiSpecies::initializeLocalParameters(BaseParticles *ba
     WeaklyCompressibleMixture::initializeLocalParameters(base_particles);
     dv_rho0_ = base_particles->registerStateVariable<Real>("ReferenceDensity", rho0_list_[0]);
     dv_Y_list_ = base_particles->registerStateVariable<Real>("MassFraction", species_name_list_);
+    dv_Y_list_->fill([&](UnsignedInt index) // by default first species only
+                     { return 1.0; },
+                     0, base_particles->TotalRealParticles());
     base_particles->addEvolvingVariable<Real>(dv_rho0_);
     base_particles->addEvolvingVariable<Real>(dv_Y_list_);
     base_particles->addVariableToWrite<Real>(dv_Y_list_);

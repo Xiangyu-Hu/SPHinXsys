@@ -35,6 +35,23 @@
 namespace SPH
 {
 template <typename DataType>
+class ConstantView
+{
+  public:
+    ConstantView(DataType *data, UnsignedInt size) : data_(data), size_(size) {};
+    UnsignedInt Size() const { return size_; };
+
+    DataType &operator[](UnsignedInt index) const
+    {
+        return *(data_ + index);
+    }
+
+  protected:
+    DataType *data_;
+    UnsignedInt size_;
+};
+
+template <typename DataType>
 class ConstantArray : public Quantity
 {
     UniquePtrKeeper<Quantity> device_only_constant_array_keeper_;
@@ -85,9 +102,9 @@ class ConstantArray : public Quantity
         return DelegatedOnDevice(ex_policy);
     };
     template <class ExecutionPolicy>
-    DataView<DataType> DelegatedDataView(const ExecutionPolicy &ex_policy)
+    ConstantView<DataType> DelegatedConstantView(const ExecutionPolicy &ex_policy)
     {
-        return DataView<DataType>(DelegatedData(ex_policy));
+        return ConstantView<DataType>(DelegatedData(ex_policy), data_size_);
     };
     bool isDataDelegated() { return data_ != delegated_; };
     void setDelegateData(DataType *new_delegated) { delegated_ = new_delegated; };

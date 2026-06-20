@@ -122,6 +122,22 @@ class WeaklyCompressibleMultiSpecies : public WeaklyCompressibleMixture
     StdVec<Real> getReferenceDensityList() const { return rho0_list_; };
     DiscreteVariable<Real> *dvMassFraction() const { return dv_Y_list_; };
     ConstantArray<Real> *caInvReferenceDensity() const { return ca_inv_rho0_list_; };
+    UnsignedInt NumberOfSpecies() const { return species_name_list_.size(); };
+
+    class EosKernel : public WeaklyCompressibleMixture::EosKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EnclosureType>
+        EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser);
+        template <typename FractionType>
+        void setMassFractions(UnsignedInt index_i, const FractionType &mass_fractions);
+        Real computeReferenceDensity(UnsignedInt index_i);
+
+      protected:
+        ConstantView<Real> inv_rho0_list_;
+        MultiEntryView<Real> Y_list_;
+        DataView<Real> rho0_;
+    };
 };
 
 class WeaklyCompressibleMultiPhase : public WeaklyCompressibleMixture
