@@ -93,10 +93,21 @@ cd build/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_rh200_glass_em
 ./test_3d_ophelie_rh200_glass_em_stirring --reload=1 --run=1 --dp=0.005 \
   --preset=rh200-french-like-full --end-time=60 \
   --joule-mode=em-grid --target-power=50000 \
-  --state-recording=1 --state-record-interval=1.0
+  --state-recording=1
+# VTP cadence (default): ~1 frame per rotor revolution + 24 deg phase slip
+#   interval ~0.64 s => ~94 frames for 60 s (not ~1500). ParaView: play by physical_time_s in manifest.
+# Dense debug only: --state-record-frames-per-rev=15
 ```
 
 Particle count is large at `dp=0.005`; increase `dp` for faster smoke tests.
+
+### Animation / ParaView
+
+- Rotor ~**100 RPM** (period **~0.6 s**). Default output uses **staggered sampling**:
+  `interval = T * (1 + phase_slip/360)` with **phase_slip=24 deg** → each frame the rotor appears **+24 deg** vs the previous frame, while fluid time advances ~1 revolution.
+- **~94 frames / 60 s** (glass + RotorProxy + Rotor each frame). Do **not** use `--state-record-interval=1.0`.
+- Play by **`physical_time_s`** in `output/rh200_animation_manifest.csv`.
+- Temperature at T0=1473 K: ParaView Calculator `Temperature-1473`.
 
 ## Outputs
 

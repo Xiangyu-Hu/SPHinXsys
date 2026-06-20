@@ -41,7 +41,35 @@ std::string g_path_full_glass = "./input/full_oil.stl";
 std::string g_path_glass = "./input/oil.stl";
 
 constexpr Real kRcd = 0.178 * 2.0;
-constexpr Real kRotationSpeed = 10.472;
+constexpr Real kRotationSpeed = 10.472; /**< rad/s, ~100 RPM (2*pi*100/60). */
+constexpr Real kRotorRevolutionPeriod = Real(2) * Pi / kRotationSpeed;
+/** Default phase slip when sampling ~once per revolution (deg advance per output frame). */
+constexpr Real kDefaultStateRecordPhaseSlipDeg = Real(24);
+
+/** ~1 frame/rev plus phase slip: interval = T*(1 + slip/360); rotor advances slip deg per frame. */
+inline Real rh200StaggeredOncePerRevRecordInterval(Real phase_slip_deg)
+{
+    return kRotorRevolutionPeriod * (Real(1) + phase_slip_deg / Real(360));
+}
+
+inline Real rh200DefaultStateRecordInterval()
+{
+    return rh200StaggeredOncePerRevRecordInterval(kDefaultStateRecordPhaseSlipDeg);
+}
+
+inline Real rh200StateRecordIntervalDegreesPerFrame(Real interval_s)
+{
+    return kRotationSpeed * interval_s * Real(180) / Pi;
+}
+
+inline size_t rh200EstimatedStateRecordFrames(Real end_time, Real interval_s)
+{
+    if (!(interval_s > TinyReal) || !(end_time >= Real(0)))
+    {
+        return 1;
+    }
+    return static_cast<size_t>(std::floor(end_time / interval_s)) + 1;
+}
 
 struct Rh200GlassStirringCli
 {
@@ -58,7 +86,11 @@ struct Rh200GlassStirringCli
     FakeJouleMode joule_mode = FakeJouleMode::Off;
     Real joule_grid_spacing_factor = 1.0;
     Real joule_grid_bbox_margin = 2.0;
-    Real state_record_interval = 0.1;
+    Real state_record_interval = rh200DefaultStateRecordInterval();
+    Real state_record_phase_slip_deg = kDefaultStateRecordPhaseSlipDeg;
+    size_t state_record_frames_per_rev = 0;
+    bool state_record_interval_user_set = false;
+    bool state_record_frames_per_rev_user_set = false;
     Rh200MaterialPreset preset = Rh200MaterialPreset::DemoCurrent;
     Rh200FlowMaterialParams material;
     Rh200EmCli em;
@@ -121,6 +153,16 @@ inline void parseRh200GlassStirringCli(int ac, char *av[], Rh200GlassStirringCli
         else if (std::strncmp(av[i], "--state-record-interval=", 24) == 0)
         {
             cli.state_record_interval = static_cast<Real>(std::atof(av[i] + 24));
+            cli.state_record_interval_user_set = true;
+        }
+        else if (std::strncmp(av[i], "--state-record-frames-per-rev=", 30) == 0)
+        {
+            cli.state_record_frames_per_rev = static_cast<size_t>(std::atoi(av[i] + 30));
+            cli.state_record_frames_per_rev_user_set = true;
+        }
+        else if (std::strncmp(av[i], "--state-record-phase-slip-deg=", 32) == 0)
+        {
+            cli.state_record_phase_slip_deg = static_cast<Real>(std::atof(av[i] + 32));
         }
         else if (std::strcmp(av[i], "--em-solve=1") == 0 || std::strcmp(av[i], "--em-solve") == 0)
         {
@@ -161,6 +203,19 @@ inline void parseRh200GlassStirringCli(int ac, char *av[], Rh200GlassStirringCli
     }
     cli.material = makeRh200FlowMaterialParams(cli.preset);
     applyRh200MaterialPresetToEmDefaults(cli.preset, cli.em.sigma0, cli.em.frequency_hz, cli.em.target_power);
+
+    if (!cli.state_record_interval_user_set)
+    {
+        if (cli.state_record_frames_per_rev_user_set && cli.state_record_frames_per_rev > 0)
+        {
+            cli.state_record_interval =
+                kRotorRevolutionPeriod / static_cast<Real>(cli.state_record_frames_per_rev);
+        }
+        else
+        {
+            cli.state_record_interval = rh200StaggeredOncePerRevRecordInterval(cli.state_record_phase_slip_deg);
+        }
+    }
 }
 
 inline bool isRh200CustomCommandLineOption(const char *arg)
@@ -176,6 +231,8 @@ inline bool isRh200CustomCommandLineOption(const char *arg)
            std::strncmp(arg, "--joule-grid-spacing-factor=", 28) == 0 ||
            std::strncmp(arg, "--joule-grid-bbox-margin=", 25) == 0 ||
            std::strncmp(arg, "--state-record-interval=", 24) == 0 ||
+           std::strncmp(arg, "--state-record-frames-per-rev=", 30) == 0 ||
+           std::strncmp(arg, "--state-record-phase-slip-deg=", 32) == 0 ||
            std::strcmp(arg, "--em-solve=1") == 0 || std::strcmp(arg, "--em-solve") == 0 ||
            std::strncmp(arg, "--target-power=", 15) == 0 || std::strncmp(arg, "--sigma0=", 9) == 0 ||
            std::strncmp(arg, "--frequency=", 12) == 0 || std::strncmp(arg, "--coil-radius-factor=", 21) == 0 ||
@@ -1106,7 +1163,20 @@ int runGlassStirringFlow(const Rh200GlassStirringCli &cli, int ac, char *av[])
               << " thermal: Joule + glass/rotor diffusion (T0=" << initial_temperature_glass
               << " K glass&rotor; wall adiabatic; no stress/strain output)"
               << " joule_mode=" << fakeJouleModeName(cli.joule_mode)
-              << " state_record_interval=" << state_record_interval << " s" << std::endl;
+              << " state_record_interval=" << state_record_interval << " s"
+              << " (~" << rh200EstimatedStateRecordFrames(cli.end_time, state_record_interval)
+              << " VTP frames for end_time=" << cli.end_time << " s";
+    if (cli.state_record_frames_per_rev_user_set && cli.state_record_frames_per_rev > 0)
+    {
+        std::cout << ", dense " << cli.state_record_frames_per_rev << " frames/rev";
+    }
+    else
+    {
+        std::cout << ", staggered ~1/rev +" << cli.state_record_phase_slip_deg
+                  << " deg rotor slip/frame (~" << rh200StateRecordIntervalDegreesPerFrame(state_record_interval)
+                  << " deg total/frame)";
+    }
+    std::cout << ", rotor ~100 RPM)" << std::endl;
 
     while (!time_stepper.isEndTime(cli.end_time))
     {
@@ -1355,7 +1425,9 @@ int main(int ac, char *av[])
         << "      em-fixed (debug): OPHELIE solve once then frozen particle JouleHeat + stirring\n"
         << "  [--joule-grid-spacing-factor=1.0]  grid spacing = factor * dp (1.0=dp, 1.5=1.5*dp)\n"
         << "  [--joule-grid-bbox-margin=2.0]  expand full_oil bbox by margin*spacing each side\n"
-        << "  [--state-record-interval=0.1]  VTP interval in seconds (0.1 => 10 files/s; needs --state-recording=1)\n"
+        << "  [--state-record-phase-slip-deg=24]  default: ~1 VTP/rev + 24 deg slip (smooth video, ~100 frames/60s)\n"
+        << "  [--state-record-frames-per-rev=N]  optional dense mode (many VTPs; e.g. 15 => ~900 frames/60s)\n"
+        << "  [--state-record-interval=SEC]  override interval in seconds\n"
         << "  [--target-power=50000] [--sigma0=16] [--frequency=300000]\n"
         << "Resolution: --dp applies to SPHSystem + wall shell thickness; relax/reload/em/run must use the SAME dp.\n"
         << "  Default dp=0.008. Re-relax if you change dp: --relax=1 --dp=0.008\n"
