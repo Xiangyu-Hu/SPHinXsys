@@ -57,17 +57,6 @@ class ConstantArray : public Quantity
     UniquePtrKeeper<Quantity> device_only_constant_array_keeper_;
 
   public:
-    template <typename GeneratorType>
-    ConstantArray(StdVec<GeneratorType *> generators)
-        : Quantity("ConstantArray"), data_size_(generators.size()),
-          data_(new DataType[data_size_]), delegated_(data_)
-    {
-        for (size_t i = 0; i != data_size_; ++i)
-        {
-            data_[i] = DataType(*generators[i]);
-        }
-    };
-
     ConstantArray(const std::string &name, StdVec<DataType> constants)
         : Quantity(name), data_size_(constants.size()),
           data_(new DataType[data_size_]), delegated_(data_)
@@ -135,18 +124,18 @@ class ComputingKernelArray : public Quantity
 
   public:
     ComputingKernelArray(StdVec<GeneratorType *> generators)
-        : Quantity("ComputingKernelArray"), data_size_(generators.size()),
-          data_((ComputingKernelType *)std::malloc(data_size_ * sizeof(*data_))),
+        : Quantity("ComputingKernelArray"), generators_(generators),
+          data_((ComputingKernelType *)std::malloc(generators.size() * sizeof(*data_))),
           delegated_(data_)
     {
-        for (size_t i = 0; i != data_size_; ++i)
+        for (size_t i = 0; i != generators.size(); ++i)
         {
-            data_[i] = ComputingKernelType(ParallelPolicy{}, generators[i]);
+            data_[i] = ComputingKernelType(ParallelPolicy{}, *generators[i]);
         }
     }
 
     ~ComputingKernelArray() { std::free(data_); };
-    size_t getSize() { return data_size_; }
+    size_t getSize() { return generators_.size(); }
     ComputingKernelType *Data() { return data_; };
     StdVec<GeneratorType *> getGenerators() { return generators_; }
     template <class ExecutionPolicy>
@@ -161,13 +150,12 @@ class ComputingKernelArray : public Quantity
     template <class ExecutionPolicy>
     ArrayView<ComputingKernelType> DelegatedArrayView(const ExecutionPolicy &ex_policy)
     {
-        return ArrayView<ComputingKernelType>(DelegatedData(ex_policy), data_size_);
+        return ArrayView<ComputingKernelType>(DelegatedData(ex_policy), getSize());
     };
     bool isDataDelegated() { return data_ != delegated_; };
     void setDelegateData(ComputingKernelType *new_delegated) { delegated_ = new_delegated; };
 
   protected:
-    size_t data_size_;
     StdVec<GeneratorType *> generators_;
     ComputingKernelType *data_;
     ComputingKernelType *delegated_;

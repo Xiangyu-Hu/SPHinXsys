@@ -45,13 +45,14 @@ ComputingKernelType *ComputingKernelArray<GeneratorType, ComputingKernelType>::D
 {
     if (!isDataDelegated())
     {
-        device_only_kernel_array_keeper_.createPtr<
-            DeviceOnlyComputingKernelArray<ComputingKernelType>>(DeviceExecution<PolicyType>{}, this);
+        device_only_kernel_array_keeper_.createPtr<DeviceOnlyComputingKernelArray<
+            GeneratorType, ComputingKernelType>>(DeviceExecution<PolicyType>{}, this);
     }
     return delegated_;
 }
 //=================================================================================================//
 template <typename GeneratorType, typename ComputingKernelType>
+template <class PolicyType>
 DeviceOnlyComputingKernelArray<GeneratorType, ComputingKernelType>::DeviceOnlyComputingKernelArray(
     const DeviceExecution<PolicyType> &ex_policy,
     ComputingKernelArray<GeneratorType, ComputingKernelType> *host_constant)
@@ -60,9 +61,9 @@ DeviceOnlyComputingKernelArray<GeneratorType, ComputingKernelType>::DeviceOnlyCo
     size_t data_size = host_constant->getSize();
     StdVec<GeneratorType *> generators = host_constant->getGenerators();
     ComputingKernelType *host_data = host_constant->Data();
-    for (size_t i = 0; i != data_size_; ++i)
+    for (size_t i = 0; i != data_size; ++i)
     {
-        data_[i] = ComputingKernelType(ex_policy, generators[i]);
+        host_data[i] = ComputingKernelType(ex_policy, *generators[i]);
     }
     device_only_data_ = allocateDeviceOnly<ComputingKernelType>(data_size);
     copyToDevice(host_data, device_only_data_, data_size);

@@ -17,7 +17,7 @@ AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_mass_(this->particles_->template getVariableByName<Real>("Mass")),
       dv_p_(this->particles_->template registerStateVariable<Real>("Pressure")),
-      dv_compression_(this->particles_->template registerStateVariable<Real>("Compression", 1.0)),
+      dv_compression_(this->particles_->template registerStateVariable<Real>("Compression", Real(1))),
       dv_compression_rate_(this->particles_->template registerStateVariable<Real>("CompressionRate")),
       dv_vel_(this->particles_->template registerStateVariable<Vecd>("Velocity")),
       dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),

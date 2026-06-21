@@ -88,7 +88,7 @@ DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrectionType
     DiffusionRelaxationCK(Args &&...args)
     : BaseInteraction(std::forward<Args>(args)...),
       kernel_correction_method_(this->particles_),
-      ca_inter_particle_diffusion_coeff_(this->diffusions_),
+      cka_inter_particle_diffusion_coeff_(this->diffusions_),
       smoothing_length_sq_(pow(this->sph_adaptation_->ReferenceSmoothingLength(), 2)) {}
 //=================================================================================================//
 template <class DiffusionType, class KernelCorrectionType, class... Parameters>
@@ -99,7 +99,7 @@ DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrectionType
       correction_(ex_policy, encloser.kernel_correction_method_),
       species_(encloser.dv_species_->DelegatedMultiEntryView(ex_policy)),
       species_dt_(encloser.dv_species_dt_->DelegatedMultiEntryView(ex_policy)),
-      inter_particle_diffusion_coeff_(encloser.ca_inter_particle_diffusion_coeff_.DelegatedData(ex_policy)),
+      inter_particle_diffusion_coeff_(encloser.cka_inter_particle_diffusion_coeff_.DelegatedData(ex_policy)),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       smoothing_length_sq_(encloser.smoothing_length_sq_) {}
 //=================================================================================================//
@@ -189,7 +189,7 @@ template <template <typename...> class RelationType, class... InteractionParamet
 template <typename... Args>
 DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
     DiffusionRelaxationCK(Args &&...args)
-    : BaseDynamicsType(std::forward<Args>(args)...), ca_inverse_volume_capacity_(this->diffusions_) {}
+    : BaseDynamicsType(std::forward<Args>(args)...), cka_inverse_volume_capacity_(this->diffusions_) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -213,7 +213,7 @@ DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : species_(encloser.dv_species_->DelegatedMultiEntryView(ex_policy)),
       species_dt_(encloser.dv_species_dt_->DelegatedMultiEntryView(ex_policy)),
-      cv1_(encloser.ca_inverse_volume_capacity_.DelegatedData(ex_policy)) {}
+      cv1_(encloser.cka_inverse_volume_capacity_.DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 void DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
@@ -286,7 +286,7 @@ Dirichlet<DiffusionType>::Dirichlet(DiffusionDynamics &diffusion_dynamics, BaseP
           &diffusion_dynamics.getBaseParticles(), diffusion_dynamics.getSpeciesNames())),
       dv_contact_species_(diffusion_dynamics.registerSpecies(
           contact_particles, diffusion_dynamics.getSpeciesNames())),
-      ca_inter_particle_diffusion_coeff_(diffusion_dynamics.getDiffusions())
+      cka_inter_particle_diffusion_coeff_(diffusion_dynamics.getDiffusions())
 {
     contact_particles->template addVariableToWrite<Real>(dv_contact_species_);
 }
@@ -299,7 +299,7 @@ Dirichlet<DiffusionType>::ComputingKernel::
       species_(encloser.dv_species_->DelegatedMultiEntryView(ex_policy)),
       contact_species_(encloser.dv_contact_species_->DelegatedMultiEntryView(ex_policy)),
       inter_particle_diffusion_coeff_(
-          encloser.ca_inter_particle_diffusion_coeff_.DelegatedData(ex_policy)){};
+          encloser.cka_inter_particle_diffusion_coeff_.DelegatedData(ex_policy)){};
 //=================================================================================================//
 template <class DiffusionType>
 Vecd Dirichlet<DiffusionType>::ComputingKernel::operator()(
