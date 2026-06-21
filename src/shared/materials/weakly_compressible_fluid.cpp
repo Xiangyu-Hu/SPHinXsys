@@ -84,7 +84,47 @@ Real WeaklyCompressibleMixture::getSoundSpeed(Real p, Real rho)
     return c0_;
 }
 //=================================================================================================//
+WeaklyCompressibleMultiPhase::WeaklyCompressibleMultiPhase(
+    std::pair<std::string, Real> first_phase, Real c0)
+    : WeaklyCompressibleMixture(c0)
+{
+    material_type_name_ = "WeaklyCompressibleMultiPhase";
+    addPurePhase(first_phase);
+}
+//=================================================================================================//
 WeaklyCompressibleMultiPhase::~WeaklyCompressibleMultiPhase() = default;
+//=================================================================================================//
+Real WeaklyCompressibleMultiPhase::ReferenceDensity() const
+{
+    return pure_phase_list_[0]->ReferenceDensity();
+}
+//=================================================================================================//
+void WeaklyCompressibleMultiPhase::addPurePhase(std::pair<std::string, Real> pure_phase)
+{
+    if (is_phases_set_)
+    {
+        std::cout << "\n Error in WeaklyCompressibleMultiPhase::addPurePhase :"
+                  << " Phases have been set, cannot add more phase ! \n ";
+        exit(1);
+    }
+    phase_name_list_.push_back(pure_phase.first);
+    pure_phase_list_.push_back(
+        fluid_ptrs_.createPtr<WeaklyCompressibleFluid>(pure_phase.second, c0_));
+}
+//=================================================================================================//
+void WeaklyCompressibleMultiPhase::addMultiSpeciesPhase(
+    StdVec<std::pair<std::string, Real>> species_data)
+{
+    if (is_phases_set_)
+    {
+        std::cout << "\n Error in WeaklyCompressibleMultiPhase::addMultiSpeciesPhase :"
+                  << " Phases have been set, cannot add more phase ! \n ";
+        exit(1);
+    }
+    phase_name_list_.push_back("MultiSpeciesPhase" + std::to_string(phase_name_list_.size()));
+    multi_species_phase_list_.push_back(
+        fluid_ptrs_.createPtr<WeaklyCompressibleMultiSpecies>(species_data, c0_));
+}
 //=================================================================================================//
 void WeaklyCompressibleMultiPhase::initializeLocalParameters(BaseParticles *base_particles)
 {

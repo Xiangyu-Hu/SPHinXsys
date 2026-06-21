@@ -146,25 +146,36 @@ class WeaklyCompressibleMultiPhase : public WeaklyCompressibleMixture
     bool is_phases_set_ = false;
 
   protected:
-    StdVec<std::string> phase_name_list_;
-    StdVec<Fluid *> phase_list_;               /**< phase list. */
-    DiscreteVariable<Real> *dv_phi_list_;      /**< phase volume fraction list. */
-    DiscreteVariable<Real> *dv_rho0_;          /**< local reference density. */
-    DiscreteVariable<Vecd> *dv_velocity_list_; /**< phase velocity list. */
-    Real c0_;                                  /**< reference sound speed. */
+    StdVec<std::string> phase_name_list_;                               /**< phase name list. */
+    StdVec<WeaklyCompressibleFluid *> pure_phase_list_;                 /**< pure phase list. */
+    StdVec<WeaklyCompressibleMultiSpecies *> multi_species_phase_list_; /**< multi-species phase list. */
+    DiscreteVariable<Real> *dv_phi_list_;                               /**< phase volume fraction list. */
+    DiscreteVariable<Real> *dv_rho0_;                                   /**< local reference density. */
+    DiscreteVariable<Vecd> *dv_velocity_list_;                          /**< phase velocity list. */
 
   public:
-    template <class FirstFluidType, typename... Args>
-    WeaklyCompressibleMultiPhase(Real c0, Args &&...args);
+    WeaklyCompressibleMultiPhase(std::pair<std::string, Real> first_phase, Real c0);
     virtual ~WeaklyCompressibleMultiPhase();
+    void addPurePhase(std::pair<std::string, Real> pure_phase);
+    void addMultiSpeciesPhase(StdVec<std::pair<std::string, Real>> species_data);
     void setPhases() { is_phases_set_ = true; };
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
-    virtual Real ReferenceDensity() const override { return phase_list_[0]->ReferenceDensity(); };
+    virtual Real ReferenceDensity() const override;
     StdVec<std::string> getPhaseNameList() const { return phase_name_list_; };
     DiscreteVariable<Real> *dvVolumeFraction() const { return dv_phi_list_; };
 
-    template <class FluidType, typename... Args>
-    void addPhase(Args &&...args);
+    class EosKernel : public WeaklyCompressibleMixture::EosKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EnclosureType>
+        EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser);
+
+      protected:
+        ConstantView<WeaklyCompressibleFluid::EosKernel> pure_eos_;
+        ConstantView<WeaklyCompressibleMultiSpecies::EosKernel> multi_species_eos_;
+        MultiEntryView<Real> phi_list_;
+        DataView<Real> rho0_;
+    };
 };
 } // namespace SPH
 #endif // WEAKLY_COMPRESSIBLE_FLUID_H

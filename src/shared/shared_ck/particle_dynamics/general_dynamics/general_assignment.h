@@ -213,15 +213,15 @@ class MultiEntryConstant : public ReturnFunction<DataType>
 {
   public:
     MultiEntryConstant(BaseParticles *particles, StdVec<DataType> constants)
-        : multi_rentry_constant_(constants){};
-    UnsignedInt Width() const { return multi_rentry_constant_.getSize(); };
+        : multi_entry_constant_(constants){};
+    UnsignedInt Width() const { return multi_entry_constant_.getSize(); };
 
     class ComputingKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : constant_entry_(encloser.multi_rentry_constant_.DelegatedData(ex_policy)){};
+            : constant_entry_(encloser.multi_entry_constant_.DelegatedData(ex_policy)){};
 
         DataType operator()(UnsignedInt index_i, UnsignedInt entry) { return constant_entry_[entry]; };
 
@@ -230,7 +230,7 @@ class MultiEntryConstant : public ReturnFunction<DataType>
     };
 
   protected:
-    ConstantArray<DataType> multi_rentry_constant_;
+    ConstantArray<DataType> multi_entry_constant_;
 };
 
 } // namespace SPH
