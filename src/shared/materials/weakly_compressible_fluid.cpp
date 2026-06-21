@@ -1,4 +1,4 @@
-#include "weakly_compressible_fluid.h"
+#include "weakly_compressible_fluid.hpp"
 
 #include "base_particles.hpp"
 
@@ -141,6 +141,11 @@ void WeaklyCompressibleMultiPhase::initializeLocalParameters(BaseParticles *base
     base_particles->addEvolvingVariable<Real>(dv_phi_list_);
     base_particles->addEvolvingVariable<Real>(dv_rho0_);
     base_particles->addEvolvingVariable<Vecd>(dv_velocity_list_);
+    pure_eos_kernels_ = unique_entity_ptrs_.createPtr<
+        ComputingKernelArray<WeaklyCompressibleFluid, PureEosKernel>>(pure_phase_list_);
+    multi_species_eos_kernels_ = unique_entity_ptrs_.createPtr<
+        ComputingKernelArray<WeaklyCompressibleMultiSpecies, MultiSpeciesEosKernel>>(
+        multi_species_phase_list_);
 }
 //=================================================================================================//
 } // namespace SPH

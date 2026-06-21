@@ -85,5 +85,59 @@ inline Real WeaklyCompressibleMultiSpecies::EosKernel::computeReferenceDensity(U
     return 1.0 / sum;
 }
 //=================================================================================================//
+template <class ExecutionPolicy, class EnclosureType>
+WeaklyCompressibleMultiPhase::EosKernel::EosKernel(
+    const ExecutionPolicy &ex_policy, EnclosureType &encloser)
+    : WeaklyCompressibleMixture::EosKernel(ex_policy, encloser),
+      pure_eos_(encloser.pure_eos_kernels_->DelegatedArrayView(ex_policy)),
+      multi_species_eos_(encloser.multi_species_eos_kernels_->DelegatedArrayView(ex_policy)),
+      phi_list_(encloser.dv_phi_list_->DelegatedMultiEntryView(ex_policy)),
+      velocity_list_(encloser.dv_velocity_list_->DelegatedMultiEntryView(ex_policy)){};
+//=================================================================================================//
+template <typename FractionType>
+void WeaklyCompressibleMultiPhase::EosKernel::setVolumeFractions(
+    UnsignedInt index_i, const FractionType &volume_fractions)
+{
+    for (size_t k = 0; k != phi_list_.Width(); ++k)
+    {
+        phi_list_[index_i][k] = volume_fractions[k];
+    }
+}
+//=================================================================================================//
+inline Real WeaklyCompressibleMultiPhase::EosKernel::computeReferenceDensity(UnsignedInt index_i)
+{
+    Real sum = 0.0;
+    UnsignedInt num_pure_phases = pure_eos_.Size();
+    for (size_t k = 0; k != phi_list_.Width(); ++k)
+    {
+        Real reference_density =
+            k < num_pure_phases
+                ? pure_eos_[k].getReferenceDensity(index_i)
+                : multi_species_eos_[k - num_pure_phases].getReferenceDensity(index_i);
+        sum += phi_list_[index_i][k] * reference_density;
+    }
+    return sum;
+}
+//=================================================================================================//
+template <typename VelocityType>
+inline Vecd WeaklyCompressibleMultiPhase::EosKernel::computeMixtureVelocity(
+    UnsignedInt index_i, const VelocityType &velocities)
+{
+    Vecd velocity_sum = Vecd::Zero();
+    Real weight_sum(0);
+    UnsignedInt num_pure_phases = pure_eos_.Size();
+    for (size_t k = 0; k != phi_list_.Width(); ++k)
+    {
+        Real reference_density =
+            k < num_pure_phases
+                ? pure_eos_[k].getReferenceDensity(index_i)
+                : multi_species_eos_[k - num_pure_phases].getReferenceDensity(index_i);
+        Real weight = phi_list_[index_i][k] * reference_density;
+        velocity_sum += weight * velocities[k];
+        weight_sum += weight;
+    }
+    return velocity_sum / weight_sum;
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // WEAKLY_COMPRESSIBLE_FLUID_HPP

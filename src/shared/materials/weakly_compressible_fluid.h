@@ -132,6 +132,7 @@ class WeaklyCompressibleMultiSpecies : public WeaklyCompressibleMixture
         template <typename FractionType>
         void setMassFractions(UnsignedInt index_i, const FractionType &mass_fractions);
         Real computeReferenceDensity(UnsignedInt index_i);
+        DataView<Real> &ReferenceDensityView() { return rho0_; };
 
       protected:
         ArrayView<Real> inv_rho0_list_;
@@ -143,15 +144,20 @@ class WeaklyCompressibleMultiSpecies : public WeaklyCompressibleMixture
 class WeaklyCompressibleMultiPhase : public WeaklyCompressibleMixture
 {
     UniquePtrsKeeper<Fluid> fluid_ptrs_;
+    StdVec<WeaklyCompressibleFluid *> pure_phase_list_;                 /**< pure phase list. */
+    StdVec<WeaklyCompressibleMultiSpecies *> multi_species_phase_list_; /**< multi-species phase list. */
+    using PureEosKernel = typename WeaklyCompressibleFluid::EosKernel;
+    using MultiSpeciesEosKernel = typename WeaklyCompressibleMultiSpecies::EosKernel;
+
     bool is_phases_set_ = false;
 
   protected:
-    StdVec<std::string> phase_name_list_;                               /**< phase name list. */
-    StdVec<WeaklyCompressibleFluid *> pure_phase_list_;                 /**< pure phase list. */
-    StdVec<WeaklyCompressibleMultiSpecies *> multi_species_phase_list_; /**< multi-species phase list. */
-    DiscreteVariable<Real> *dv_phi_list_;                               /**< phase volume fraction list. */
-    DiscreteVariable<Real> *dv_rho0_;                                   /**< local reference density. */
-    DiscreteVariable<Vecd> *dv_velocity_list_;                          /**< phase velocity list. */
+    StdVec<std::string> phase_name_list_;      /**< phase name list. */
+    DiscreteVariable<Real> *dv_phi_list_;      /**< phase volume fraction list. */
+    DiscreteVariable<Real> *dv_rho0_;          /**< local reference density. */
+    DiscreteVariable<Vecd> *dv_velocity_list_; /**< phase velocity list. */
+    ComputingKernelArray<WeaklyCompressibleFluid, PureEosKernel> *pure_eos_kernels_;
+    ComputingKernelArray<WeaklyCompressibleMultiSpecies, MultiSpeciesEosKernel> *multi_species_eos_kernels_;
 
   public:
     WeaklyCompressibleMultiPhase(std::pair<std::string, Real> first_phase, Real c0);
@@ -169,12 +175,17 @@ class WeaklyCompressibleMultiPhase : public WeaklyCompressibleMixture
       public:
         template <class ExecutionPolicy, class EnclosureType>
         EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser);
+        template <typename FractionType>
+        void setVolumeFractions(UnsignedInt index_i, const FractionType &volume_fractions);
+        Real computeReferenceDensity(UnsignedInt index_i);
+        template <typename VelocityType>
+        Vecd computeMixtureVelocity(UnsignedInt index_i, const VelocityType &velocities);
 
       protected:
         ArrayView<WeaklyCompressibleFluid::EosKernel> pure_eos_;
         ArrayView<WeaklyCompressibleMultiSpecies::EosKernel> multi_species_eos_;
         MultiEntryView<Real> phi_list_;
-        DataView<Real> rho0_;
+        MultiEntryView<Vecd> velocity_list_;
     };
 };
 } // namespace SPH
