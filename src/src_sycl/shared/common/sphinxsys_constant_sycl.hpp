@@ -38,5 +38,42 @@ DeviceOnlyConstantArray<DataType>::~DeviceOnlyConstantArray()
     freeDeviceData(device_only_data_);
 }
 //=================================================================================================//
+template <typename GeneratorType, typename ComputingKernelType>
+template <class PolicyType>
+ComputingKernelType *ComputingKernelArray<GeneratorType, ComputingKernelType>::DelegatedOnDevice(
+    const DeviceExecution<PolicyType> &ex_policy)
+{
+    if (!isDataDelegated())
+    {
+        device_only_kernel_array_keeper_.createPtr<
+            DeviceOnlyComputingKernelArray<ComputingKernelType>>(DeviceExecution<PolicyType>{}, this);
+    }
+    return delegated_;
+}
+//=================================================================================================//
+template <typename GeneratorType, typename ComputingKernelType>
+DeviceOnlyComputingKernelArray<GeneratorType, ComputingKernelType>::DeviceOnlyComputingKernelArray(
+    const DeviceExecution<PolicyType> &ex_policy,
+    ComputingKernelArray<GeneratorType, ComputingKernelType> *host_constant)
+    : Quantity(host_constant->Name()), device_only_data_(nullptr)
+{
+    size_t data_size = host_constant->getSize();
+    StdVec<GeneratorType *> generators = host_constant->getGenerators();
+    ComputingKernelType *host_data = host_constant->Data();
+    for (size_t i = 0; i != data_size_; ++i)
+    {
+        data_[i] = ComputingKernelType(ex_policy, generators[i]);
+    }
+    device_only_data_ = allocateDeviceOnly<ComputingKernelType>(data_size);
+    copyToDevice(host_data, device_only_data_, data_size);
+    host_constant->setDelegateData(device_only_data_);
+}
+//=================================================================================================//
+template <typename GeneratorType, typename ComputingKernelType>
+DeviceOnlyComputingKernelArray<GeneratorType, ComputingKernelType>::~DeviceOnlyComputingKernelArray()
+{
+    freeDeviceData(device_only_data_);
+}
+//=================================================================================================//
 } // namespace SPH
 #endif // SPHINXSYS_CONSTANT_SYCL_HPP

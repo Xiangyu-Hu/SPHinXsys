@@ -35,10 +35,10 @@
 namespace SPH
 {
 template <typename DataType>
-class ConstantView
+class ArrayView
 {
   public:
-    ConstantView(DataType *data, UnsignedInt size) : data_(data), size_(size) {};
+    ArrayView(DataType *data, UnsignedInt size) : data_(data), size_(size) {};
     UnsignedInt Size() const { return size_; };
 
     DataType &operator[](UnsignedInt index) const
@@ -102,9 +102,9 @@ class ConstantArray : public Quantity
         return DelegatedOnDevice(ex_policy);
     };
     template <class ExecutionPolicy>
-    ConstantView<DataType> DelegatedConstantView(const ExecutionPolicy &ex_policy)
+    ArrayView<DataType> DelegatedArrayView(const ExecutionPolicy &ex_policy)
     {
-        return ConstantView<DataType>(DelegatedData(ex_policy), data_size_);
+        return ArrayView<DataType>(DelegatedData(ex_policy), data_size_);
     };
     bool isDataDelegated() { return data_ != delegated_; };
     void setDelegateData(DataType *new_delegated) { delegated_ = new_delegated; };
@@ -126,6 +126,65 @@ class DeviceOnlyConstantArray : public Quantity
 
   protected:
     DataType *device_only_data_;
+};
+
+template <typename GeneratorType, typename ComputingKernelType>
+class ComputingKernelArray : public Quantity
+{
+    UniquePtrKeeper<Quantity> device_only_kernel_array_keeper_;
+
+  public:
+    ComputingKernelArray(StdVec<GeneratorType *> generators)
+        : Quantity("ComputingKernelArray"), data_size_(generators.size()),
+          data_((ComputingKernelType *)std::malloc(data_size_ * sizeof(*data_))),
+          delegated_(data_)
+    {
+        for (size_t i = 0; i != data_size_; ++i)
+        {
+            data_[i] = ComputingKernelType(ParallelPolicy{}, generators[i]);
+        }
+    }
+
+    ~ComputingKernelArray() { std::free(data_); };
+    size_t getSize() { return data_size_; }
+    ComputingKernelType *Data() { return data_; };
+    StdVec<GeneratorType *> getGenerators() { return generators_; }
+    template <class ExecutionPolicy>
+    ComputingKernelType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
+    template <class PolicyType>
+    ComputingKernelType *DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy);
+    template <class PolicyType>
+    ComputingKernelType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy)
+    {
+        return DelegatedOnDevice(ex_policy);
+    };
+    template <class ExecutionPolicy>
+    ArrayView<ComputingKernelType> DelegatedArrayView(const ExecutionPolicy &ex_policy)
+    {
+        return ArrayView<ComputingKernelType>(DelegatedData(ex_policy), data_size_);
+    };
+    bool isDataDelegated() { return data_ != delegated_; };
+    void setDelegateData(ComputingKernelType *new_delegated) { delegated_ = new_delegated; };
+
+  protected:
+    size_t data_size_;
+    StdVec<GeneratorType *> generators_;
+    ComputingKernelType *data_;
+    ComputingKernelType *delegated_;
+};
+
+template <typename GeneratorType, typename ComputingKernelType>
+class DeviceOnlyComputingKernelArray : public Quantity
+{
+  public:
+    template <class PolicyType>
+    DeviceOnlyComputingKernelArray(
+        const DeviceExecution<PolicyType> &ex_policy,
+        ComputingKernelArray<GeneratorType, ComputingKernelType> *host_constant);
+    ~DeviceOnlyComputingKernelArray();
+
+  protected:
+    ComputingKernelType *device_only_data_;
 };
 } // namespace SPH
 #endif // SPHINXSYS_CONSTANT_H

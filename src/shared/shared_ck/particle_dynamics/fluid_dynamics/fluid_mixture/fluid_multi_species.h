@@ -55,7 +55,7 @@ class ReferenceDensityUpdate : public LocalDynamics
       public:
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy, ReferenceDensityUpdate &encloser)
-            : inv_rho0_list_(encloser.ca_inv_rho0_list_->DelegatedConstantView(ex_policy)),
+            : inv_rho0_list_(encloser.ca_inv_rho0_list_->DelegatedArrayView(ex_policy)),
               Y_list_(encloser.dv_Y_list_->DelegatedMultiEntryView(ex_policy)),
               rho0_(encloser.dv_rho0_->DelegatedDataView(ex_policy)),
               mass_(encloser.dv_mass_->DelegatedDataView(ex_policy)){};
@@ -74,7 +74,7 @@ class ReferenceDensityUpdate : public LocalDynamics
         };
 
       protected:
-        ConstantView<Real> inv_rho0_list_;
+        ArrayView<Real> inv_rho0_list_;
         MultiEntryView<Real> Y_list_;
         DataView<Real> rho0_, mass_;
     };
@@ -117,7 +117,7 @@ class PrescribedReferenceDensity
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : eos_(ex_policy, encloser.fluid_mixture_),
-              mass_fractions_(encloser.ca_mass_fractions_.DelegatedConstantView(ex_policy)),
+              mass_fractions_(encloser.ca_mass_fractions_.DelegatedArrayView(ex_policy)),
               rho0_(encloser.dv_rho0_->DelegatedDataView(ex_policy)),
               Vol_ref_(encloser.dv_Vol_ref_->DelegatedDataView(ex_policy)),
               mass_(encloser.dv_mass_->DelegatedDataView(ex_policy)){};
@@ -131,7 +131,7 @@ class PrescribedReferenceDensity
 
       protected:
         EosKernel eos_;
-        ConstantView<Real> mass_fractions_;
+        ArrayView<Real> mass_fractions_;
         DataView<Real> rho0_, Vol_ref_, mass_;
     };
 

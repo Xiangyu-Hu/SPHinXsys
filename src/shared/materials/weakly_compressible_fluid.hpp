@@ -61,7 +61,7 @@ template <class ExecutionPolicy, class EnclosureType>
 WeaklyCompressibleMultiSpecies::EosKernel::EosKernel(
     const ExecutionPolicy &ex_policy, EnclosureType &encloser)
     : WeaklyCompressibleMixture::EosKernel(ex_policy, encloser),
-      inv_rho0_list_(encloser.ca_inv_rho0_list_->DelegatedConstantView(ex_policy)),
+      inv_rho0_list_(encloser.ca_inv_rho0_list_->DelegatedArrayView(ex_policy)),
       Y_list_(encloser.dv_Y_list_->DelegatedMultiEntryView(ex_policy)),
       rho0_(encloser.dv_rho0_->DelegatedDataView(ex_policy)){};
 //=================================================================================================//

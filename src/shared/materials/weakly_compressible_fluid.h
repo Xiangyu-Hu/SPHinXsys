@@ -134,7 +134,7 @@ class WeaklyCompressibleMultiSpecies : public WeaklyCompressibleMixture
         Real computeReferenceDensity(UnsignedInt index_i);
 
       protected:
-        ConstantView<Real> inv_rho0_list_;
+        ArrayView<Real> inv_rho0_list_;
         MultiEntryView<Real> Y_list_;
         DataView<Real> rho0_;
     };
@@ -171,8 +171,8 @@ class WeaklyCompressibleMultiPhase : public WeaklyCompressibleMixture
         EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser);
 
       protected:
-        ConstantView<WeaklyCompressibleFluid::EosKernel> pure_eos_;
-        ConstantView<WeaklyCompressibleMultiSpecies::EosKernel> multi_species_eos_;
+        ArrayView<WeaklyCompressibleFluid::EosKernel> pure_eos_;
+        ArrayView<WeaklyCompressibleMultiSpecies::EosKernel> multi_species_eos_;
         MultiEntryView<Real> phi_list_;
         DataView<Real> rho0_;
     };
