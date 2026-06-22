@@ -96,7 +96,7 @@ class RadixSort
 template <typename T, typename Op>
 T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
 {
-    // #ifndef SPHINXSYS_USE_ONEDPL
+#ifndef SPHINXSYS_USE_ONEDPL
     execution_instance.getQueue()
         .submit([=](sycl::handler &cgh)
                 { cgh.parallel_for(
@@ -110,11 +110,11 @@ T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *d_first, U
                           }
                       }); })
         .wait_and_throw();
-    /* #else
-        oneapi::dpl::execution::device_policy<> policy(execution_instance.getQueue());
-        oneapi::dpl::exclusive_scan(policy, first, first + d_size, d_first, T{0}, op);
-        policy.queue().wait();
-    #endif */
+#else
+    oneapi::dpl::execution::device_policy<> policy(execution_instance.getQueue());
+    oneapi::dpl::exclusive_scan(policy, first, first + d_size, d_first, T{0}, op);
+    policy.queue().wait();
+#endif
     UnsignedInt scan_size = d_size - 1;
     T last_value;
     copyFromDevice(&last_value, d_first + scan_size, 1);
