@@ -161,9 +161,6 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     // time
     const Real end_time = 1.5;
 
-    // Material models
-    auto material = makeShared<NeoHookeanSolid>(params.rho, params.youngs_modulus, params.poisson_ratio);
-
     // Import meshes
     const Vec3d halfsize = 0.5 * (Vec3d(params.length, params.height, params.width) + extension_length * Vec3d::UnitX());
     const Vec3d translation = 0.5 * (params.length - extension_length) * Vec3d::UnitX();
@@ -186,7 +183,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     if (refinement_level > 0)
         beam_body.defineAdaptation<AdaptiveWithinShape>(1.15, 1.0, refinement_level);
     beam_body.defineBodyLevelSetShape();
-    beam_body.defineMatterMaterial<NeoHookeanSolid>(*material.get());
+    beam_body.defineMatterMaterial<NeoHookeanSolid>(params.rho, params.youngs_modulus, params.poisson_ratio);
     if (refinement_level > 0)
         beam_body.generateParticles<BaseParticles, Lattice>(*refinement_region);
     else

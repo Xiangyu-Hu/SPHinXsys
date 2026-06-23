@@ -88,6 +88,12 @@ class Interaction<Inner<Parameters...>>
 };
 
 template <typename... Parameters>
+Interaction<Inner<Parameters...>> generateInnerInteraction(Inner<Parameters...> &inner_relation)
+{
+    return Interaction<Inner<Parameters...>>(inner_relation);
+}
+
+template <typename... Parameters>
 class Interaction<Contact<Parameters...>>
     : public BaseLocalDynamics<typename Contact<Parameters...>::SourceType>
 {
@@ -96,6 +102,7 @@ class Interaction<Contact<Parameters...>>
     using NeighborList = typename ContactRelationType::NeighborList;
     using Neighborhood = typename ContactRelationType::NeighborhoodType;
     using NeighborKernel = typename Neighborhood::NeighborKernel;
+    ContactRelationType *contact_relation_;
 
   public:
     explicit Interaction(const RelationView<ContactRelationType> &contact_relation_view);

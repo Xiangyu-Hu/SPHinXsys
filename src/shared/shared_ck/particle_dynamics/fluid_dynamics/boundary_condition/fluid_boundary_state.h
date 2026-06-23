@@ -56,7 +56,7 @@ class BaseStateCondition
     DiscreteVariable<Real> *dv_p_, *dv_rho_;
 };
 
-template <class FluidType = WeaklyCompressibleFluid>
+template <class FluidType>
 struct PressurePrescribed
 {
     typedef FluidType Fluid;
@@ -69,7 +69,7 @@ struct PressurePrescribed
     };
 };
 
-template <class FluidType = WeaklyCompressibleFluid>
+template <class FluidType>
 struct VelocityPrescribed
 {
     typedef FluidType Fluid;

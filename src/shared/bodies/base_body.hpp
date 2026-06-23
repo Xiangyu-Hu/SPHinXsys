@@ -45,8 +45,8 @@ LevelSetShape &SPHBody::defineBodyLevelSetShape(const ExecutionPolicy &ex_policy
 template <class MaterialType, typename... Args>
 MaterialType &SPHBody::defineMatterMaterial(Args &&...args)
 {
-    MaterialType *material = matter_material_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
-    all_material_properties_[0] = material; // set the first material as the matter material for the body
+    MaterialType *material = matter_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
+    material_properties_.push_back(material); // set the first material as the matter material for the body
     return *material;
 }
 //=================================================================================================//
@@ -54,7 +54,12 @@ template <class MaterialType, typename... Args>
 MaterialType &SPHBody::addMaterialProperty(Args &&...args)
 {
     MaterialType *material = material_properties_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
-    all_material_properties_.push_back(material);
+    if (material_properties_.empty())
+    {
+        throw std::runtime_error(
+            "The matter material should be defined before adding material property for body: " + body_name_);
+    }
+    material_properties_.push_back(material);
     return *material;
 }
 //=================================================================================================//
@@ -62,7 +67,7 @@ template <typename MaterialType>
 StdVec<MaterialType *> SPHBody::collectMaterialProperties()
 {
     StdVec<MaterialType *> materials;
-    for (auto *material : all_material_properties_)
+    for (auto *material : material_properties_)
     {
         if (auto *cast_material = dynamic_cast<MaterialType *>(material))
         {
@@ -107,7 +112,7 @@ ParticleType &SPHBody::generateParticles(Args &&...args)
     particle_generator.generateParticlesWithGeometricVariables();
     particles->initializeBasicDiscreteVariables();
     sph_adaptation_->initializeAdaptationVariables(*particles);
-    for (auto *material : all_material_properties_)
+    for (auto *material : material_properties_)
     {
         material->setLocalParameters(sph_system_, particles);
     }

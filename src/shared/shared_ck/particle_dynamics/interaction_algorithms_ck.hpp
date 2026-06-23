@@ -18,6 +18,20 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
             contact_relation, std::forward<Args>(args)...));
     return *this;
 }
+//=================================================================================================//
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+template <typename... ControlParameters, typename... RelationParameters, typename... Args>
+auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
+    addPostContactInteraction(RelationView<Contact<RelationParameters...>> &contact_relation_view, Args &&...args)
+{
+    this->post_processes_.push_back(
+        supplementary_dynamics_keeper_.template createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<Contact<ControlParameters..., RelationParameters...>>>>(
+            contact_relation_view, std::forward<Args>(args)...));
+    return *this;
+}
+//=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
     addPostContactInteraction(BaseDynamics<void> &contact_interaction)
@@ -25,6 +39,7 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
     this->post_processes_.push_back(&contact_interaction);
     return *this;
 }
+//=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
     addPreContactInteraction(BaseDynamics<void> &contact_interaction)

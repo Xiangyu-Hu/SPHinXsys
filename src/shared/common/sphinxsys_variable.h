@@ -53,7 +53,7 @@ class DataView
   public:
     DataView(DataType *data) : data_(data) {};
 
-    DataType &operator[](UnsignedInt index)
+    DataType &operator[](UnsignedInt index) const
     {
         return *(data_ + index);
     }
@@ -69,10 +69,10 @@ class EntryView
     EntryView(DataType *data, UnsignedInt entry, UnsignedInt width)
         : data_(data), entry_(entry), width_(width) {};
 
-    UnsignedInt Entry() { return entry_; };
-    UnsignedInt Width() { return width_; };
+    UnsignedInt Entry() const { return entry_; };
+    UnsignedInt Width() const { return width_; };
 
-    DataType &operator[](UnsignedInt index)
+    DataType &operator[](UnsignedInt index) const
     {
         return *(data_ + entry_ + index * width_);
     }
@@ -88,10 +88,10 @@ class MultiEntryView
   public:
     MultiEntryView(DataType *data, UnsignedInt width)
         : data_(data), width_(width) {};
+    void setData(DataType *data) { data_ = data; };
+    UnsignedInt Width() const { return width_; };
 
-    UnsignedInt Width() { return width_; };
-
-    DataType *operator[](UnsignedInt index)
+    DataType *operator[](UnsignedInt index) const
     {
         return data_ + index * width_;
     }
@@ -219,12 +219,11 @@ class DiscreteVariable : public Quantity
         : Quantity(name), size_(size), width_(width), data_(new DataType[size * width]),
           device_only_variable_(nullptr)
     {
-        fill([&](UnsignedInt index) // zero initialization
-             { return ZeroData<DataType>::value; }, 0, size * width);
-
         for (size_t i = 0; i < width; i++)
         {
             entry_names_.push_back(std::to_string(i));
+            fill([&](UnsignedInt index) // zero initialization
+                 { return ZeroData<DataType>::value; }, 0, size, i);
         }
     };
 

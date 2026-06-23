@@ -62,8 +62,8 @@ class Relation<SourceIdentifier, TargetIdentifier> : public RelationBase
 
     using SourceAdaptation = typename SourceIdentifier::Adaptation;
     using TargetAdaptation = typename TargetIdentifier::Adaptation;
-    SharedPtrsKeeper<Quantity> relation_variable_ptrs_;
-    SharedPtrsKeeper<Neighbor<Base>> neighborhood_ptrs_;
+    UniquePtrsKeeper<Quantity> relation_variable_ptrs_;
+    UniquePtrsKeeper<Neighbor<Base>> neighborhood_ptrs_;
     DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
 
     template <class DataType>

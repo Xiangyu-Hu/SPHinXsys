@@ -65,7 +65,7 @@ class SPHBody
     SharedPtrKeeper<Shape> shape_keeper_;
     UniquePtrKeeper<SPHAdaptation> sph_adaptation_keeper_;
     UniquePtrKeeper<BaseParticles> base_particles_keeper_;
-    UniquePtrKeeper<MatterMaterial> matter_material_keeper_;
+    UniquePtrKeeper<BaseMaterial> matter_keeper_;
     UniquePtrsKeeper<BaseMaterial> material_properties_keeper_;
 
   protected:
@@ -77,11 +77,8 @@ class SPHBody
     BoundingBoxd bound_;            /**< bounding box of the body */
     Shape *initial_shape_;          /**< initial volumetric geometry enclosing the body */
     SPHAdaptation *sph_adaptation_; /**< numerical adaptation policy */
-    StdVec<BaseMaterial *> all_material_properties_;
+    StdVec<BaseMaterial *> material_properties_;
     StdVec<SPHRelation *> body_relations_; /**< all contact relations centered from this body **/
-
-    template <typename MaterialType>
-    StdVec<MaterialType *> collectMaterialProperties();
 
   public:
     typedef SPHBody RangeIdentifier;
@@ -101,8 +98,13 @@ class SPHBody
     SPHAdaptation &getSPHAdaptation();
     BaseParticles &getBaseParticles();
     MatterMaterial &getMatterMaterial();
+    
+    template <typename MaterialType>
+    StdVec<MaterialType *> collectMaterialProperties();
+    
     template <typename MaterialType>
     MaterialType &getMaterialProperty(const std::string &name = ""); // name is optional for one material for a material type
+    
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
     IndexRange LoopRange();
     size_t SizeOfLoopRange();

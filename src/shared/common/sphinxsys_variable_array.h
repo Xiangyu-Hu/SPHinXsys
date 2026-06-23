@@ -38,24 +38,21 @@ template <typename DataType>
 class VariableArray;
 
 template <typename DataType>
-using DataPtr = DataType *;
-
-template <typename DataType>
-class DataArray
+class VariableArrayView
 {
   public:
-    DataArray() : data_ptr_(nullptr), array_size_(0) {};
-    DataArray(DataPtr<DataType> *data_ptr, size_t array_size)
-        : data_ptr_(data_ptr), array_size_(array_size) {};
+    VariableArrayView() : multi_entry_view_(nullptr), array_size_(0) {};
+    VariableArrayView(MultiEntryView<DataType> *multi_entry_view, size_t array_size)
+        : multi_entry_view_(multi_entry_view), array_size_(array_size) {};
     size_t ArraySize() { return array_size_; };
 
-    DataType *operator[](size_t array_index) const
+    MultiEntryView<DataType> &operator[](size_t array_index) const
     {
-        return data_ptr_[array_index];
+        return multi_entry_view_[array_index];
     }
 
   protected:
-    DataPtr<DataType> *data_ptr_;
+    MultiEntryView<DataType> *multi_entry_view_;
     UnsignedInt array_size_;
 };
 
@@ -67,10 +64,10 @@ class DeviceOnlyVariableArray : public Quantity
     DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
                             VariableArray<DataType> *host_variable_array);
     ~DeviceOnlyVariableArray();
-    DataPtr<DataType> *DeviceOnlyDataPtr() { return device_only_data_ptr_; };
+    MultiEntryView<DataType> *DeviceOnlyMultiEntryView() { return device_only_multi_entry_view_; };
 
   protected:
-    DataPtr<DataType> *device_only_data_ptr_;
+    MultiEntryView<DataType> *device_only_multi_entry_view_;
 };
 
 template <typename DataType>
@@ -81,44 +78,47 @@ class VariableArray : public Quantity
   public:
     VariableArray(StdVec<DiscreteVariable<DataType> *> variables)
         : Quantity("VariableArray"), variables_(variables),
-          array_size_(variables.size())
+          array_size_(variables.size()),
+          multi_entry_view_(static_cast<MultiEntryView<DataType> *>(
+              std::malloc(variables.size() * sizeof(MultiEntryView<DataType>))))
     {
-        data_ptr_ = new DataPtr<DataType>[variables.size()];
         for (size_t i = 0; i != variables.size(); ++i)
         {
-            data_ptr_[i] = variables[i]->Data();
+            multi_entry_view_[i] = MultiEntryView<DataType>(
+                variables[i]->Data(), variables[i]->getWidth());
         }
     };
 
-    ~VariableArray() { delete[] data_ptr_; };
+    ~VariableArray() { free(multi_entry_view_); };
     StdVec<DiscreteVariable<DataType> *> getVariables() { return variables_; };
     size_t getArraySize() { return array_size_; }
+    MultiEntryView<DataType> *getArrayData() { return multi_entry_view_; };
 
     template <class ExecutionPolicy>
-    DataArray<DataType> DelegatedDataArray(const ExecutionPolicy &ex_policy)
+    VariableArrayView<DataType> DelegatedVariableArrayView(const ExecutionPolicy &ex_policy)
     {
-        return DataArray<DataType>(data_ptr_, array_size_);
+        return VariableArrayView<DataType>(multi_entry_view_, array_size_);
     };
 
     template <class PolicyType>
-    DataArray<DataType> DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy)
+    VariableArrayView<DataType> DelegatedVariableArrayView(const DeviceExecution<PolicyType> &ex_policy)
     {
-        return DataArray<DataType>(DelegatedOnDevice<PolicyType>(), array_size_);
+        return VariableArrayView<DataType>(DelegatedOnDevice<PolicyType>(), array_size_);
     };
 
   protected:
     StdVec<DiscreteVariable<DataType> *> variables_;
     UnsignedInt array_size_;
-    DataPtr<DataType> *data_ptr_ = nullptr;
+    MultiEntryView<DataType> *multi_entry_view_ = nullptr;
     DeviceOnlyVariableArray<DataType> *device_only_variable_array_ = nullptr;
     friend class DeviceOnlyVariableArray<DataType>;
 
     template <class PolicyType>
-    DataPtr<DataType> *DelegatedOnDevice();
-    bool isDataArrayDelegated() { return device_only_variable_array_ != nullptr; };
+    MultiEntryView<DataType> *DelegatedOnDevice();
+    bool isVariableArrayViewDelegated() { return device_only_variable_array_ != nullptr; };
 };
 
-typedef DataAssemble<TypeAlias, DataArray> VariableDataArrayAssemble;
+typedef DataAssemble<TypeAlias, VariableArrayView> VariableArrayViewAssemble;
 typedef DataAssemble<UniquePtr, VariableArray> VariableArrayAssemble;
 
 struct VariableArrayAssembleInitialization
@@ -131,14 +131,14 @@ struct VariableArrayAssembleInitialization
     }
 };
 
-struct VariableDataArrayAssembleInitialization
+struct VariableArrayViewAssembleInitialization
 {
     template <typename DataType, class ExecutionPolicy>
     void operator()(const UniquePtr<VariableArray<DataType>> &variable_array_ptr,
-                    DataArray<DataType> &variable_data_array,
+                    VariableArrayView<DataType> &variable_array_view,
                     const ExecutionPolicy &ex_policy)
     {
-        variable_data_array = variable_array_ptr->DelegatedDataArray(ex_policy);
+        variable_array_view = variable_array_ptr->DelegatedVariableArrayView(ex_policy);
     }
 };
 } // namespace SPH

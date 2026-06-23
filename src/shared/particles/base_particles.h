@@ -44,7 +44,6 @@ namespace SPH
 {
 class SPHBody;
 class SPHAdaptation;
-class BaseMaterial;
 class BodyPartByParticle;
 class XmlParser;
 using TinyXMLElement = tinyxml2::XMLElement;
@@ -181,9 +180,6 @@ class BaseParticles
   protected:
     DiscreteVariable<Vecd> *dv_pos_; /**< Discrete variable position */
     Real *Vol_;                      /**< Volumetric measure, also area and length of surface and linear particle */
-    Real *rho_;                      /**< Density as a fundamental property of phyiscal matter */
-    Real *mass_;                     /**< Mass as another fundamental property of physical matter */
-
     SPHBody &sph_body_;
     std::string body_name_;
     XmlParser &reload_xml_parser_;

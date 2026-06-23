@@ -222,7 +222,6 @@ void run_rigid_elastic_coupling(int res_factor)
     const Real rho = 1000 * pow(unit_mm, 2); // density
     const Real youngs_modulus = 5;           // MPa
     const Real poisson_ratio = 0.45;         // Poisson ratio
-    auto material = makeShared<NeoHookeanSolid>(rho, youngs_modulus, poisson_ratio);
 
     // load and end time
     const Real max_end_time = 5.0;
@@ -266,7 +265,7 @@ void run_rigid_elastic_coupling(int res_factor)
 
     // Create objects
     SolidBody body(system, mesh);
-    body.defineMatterMaterial<NeoHookeanSolid>(*material.get());
+    body.defineMatterMaterial<NeoHookeanSolid>(rho, youngs_modulus, poisson_ratio);
     body.generateParticles<BaseParticles, Lattice>();
 
     // Methods

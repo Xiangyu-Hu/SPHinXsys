@@ -1,7 +1,6 @@
 #include "base_particles.hpp"
 
 #include "base_body.h"
-#include "base_material.h"
 
 namespace SPH
 {
@@ -9,8 +8,7 @@ namespace SPH
 BaseParticles::BaseParticles(SPHBody &sph_body)
     : sv_total_real_particles_(nullptr),
       particles_bound_(0), original_id_(nullptr), sorted_id_(nullptr),
-      dv_pos_(nullptr), Vol_(nullptr), rho_(nullptr), mass_(nullptr),
-      sph_body_(sph_body), body_name_(sph_body.Name()),
+      dv_pos_(nullptr), Vol_(nullptr), sph_body_(sph_body), body_name_(sph_body.Name()),
       reload_xml_parser_(*xml_parser_ptrs_.createPtr<XmlParser>("xml_particle_reload", "particles")),
       total_body_parts_(0)
 {
@@ -34,16 +32,6 @@ void BaseParticles::initializeBasicDiscreteVariables()
 {
     addEvolvingVariable<Vecd>("Position");
     addEvolvingVariable<Real>("VolumetricMeasure");
-    //----------------------------------------------------------------------
-    //		register non-geometric variables
-    //----------------------------------------------------------------------
-    rho_ = registerStateVariableData<Real>("Density", sph_body_.getMatterMaterial().ReferenceDensity());
-    mass_ = registerStateVariableData<Real>("Mass",
-                                            [&](UnsignedInt i) -> Real
-                                            { return rho_[i] * ParticleVolume(i); });
-    //----------------------------------------------------------------------
-    //		unregistered variables and data
-    //----------------------------------------------------------------------
     original_id_ = registerDiscreteVariableData<UnsignedInt>("OriginalID", particles_bound_, AssignIndex());
     addEvolvingVariable<UnsignedInt>("OriginalID");
     addVariableToWrite<UnsignedInt>("OriginalID");

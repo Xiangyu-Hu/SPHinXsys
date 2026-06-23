@@ -51,7 +51,7 @@ template <class ConditionType>
 template <class ExecutionPolicy, class EncloserType>
 BufferInflowInjectionCK<ConditionType>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : part_id_(encloser.part_id_), eos_(encloser.fluid_), condition_(encloser.condition_),
+    : part_id_(encloser.part_id_), eos_(ex_policy, encloser.fluid_), condition_(encloser.condition_),
       oriented_box_(encloser.sv_oriented_box_->DelegatedData(ex_policy)),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       spawn_real_particle_(ex_policy, encloser.spawn_real_particle_method_),
@@ -75,7 +75,7 @@ void BufferInflowInjectionCK<ConditionType>::UpdateKernel::update(size_t index_i
             buffer_indicator_[new_particle_index] = 0;
             pos_[index_i] = oriented_box_->getUpperPeriodic(pos_[index_i]);
             p_[index_i] = condition_.getPressure(p_[index_i], *physical_time_);
-            rho_[index_i] = eos_.DensityFromPressure(p_[index_i]);
+            rho_[index_i] = eos_.DensityFromPressure(index_i, p_[index_i]);
         }
     }
 }
@@ -161,6 +161,43 @@ void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
         frame_velocity[axis_] = condition_.getAxisVelocity(frame_position, frame_velocity[axis_], *physical_time_);
         vel_[index_i] = transform_->xformFrameVecToBase(frame_velocity);
     }
+}
+//=================================================================================================//
+template <typename ConditionType>
+template <typename... Args>
+SupplementaryCondition<ConditionType>::SupplementaryCondition(
+    OrientedBoxByCell &oriented_box_part, Args &&...args)
+    : BaseLocalDynamics<OrientedBoxByCell>(oriented_box_part),
+      sv_oriented_box_(oriented_box_part.svOrientedBox()),
+      condition_method_(this->particles_, std::forward<Args>(args)...),
+      dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
+//=================================================================================================//
+template <typename ConditionType>
+template <class ExecutionPolicy, class EncloserType>
+SupplementaryCondition<ConditionType>::UpdateKernel::UpdateKernel(
+    const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : oriented_box_(encloser.sv_oriented_box_->DelegatedData(ex_policy)),
+      condition_(ex_policy, encloser.condition_method_),
+      pos_(encloser.dv_pos_->DelegatedDataView(ex_policy)) {}
+//=================================================================================================//
+template <typename ConditionType>
+void SupplementaryCondition<ConditionType>::UpdateKernel::update(size_t index_i, Real dt)
+{
+    if (oriented_box_->checkContain(pos_[index_i]))
+    {
+        condition_(index_i, dt);
+    }
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class ConditionType, typename... Args>
+AbstractBidirectionalBoundary &AbstractBidirectionalBoundary::
+    addSupplementaryCondition(OrientedBoxByCell &oriented_box_part, Args &&...args)
+{
+    auto *condition = supplementary_conditions_keeper_.template createPtr<
+        StateDynamics<ExecutionPolicy, SupplementaryCondition<ConditionType>>>(
+        oriented_box_part, std::forward<Args>(args)...);
+    supplementary_conditions_.push_back(condition);
+    return *this;
 }
 //=================================================================================================//
 template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>

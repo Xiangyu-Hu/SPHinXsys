@@ -24,7 +24,8 @@ SolidBodyFromMesh::SolidBodyFromMesh(
 {
     defineAdaptationRatios(1.15, system.GlobalResolution() / resolution);
     defineBodyLevelSetShape().cleanLevelSet();
-    defineMatterMaterial<SaintVenantKirchhoffSolid>(*material_model.get());
+    defineMatterMaterial<SaintVenantKirchhoffSolid>(
+        material_model->getDensity(), material_model->getYoungsModulus(), material_model->getPoissonRatio());
     generateParticles<BaseParticles, Lattice>();
 }
 

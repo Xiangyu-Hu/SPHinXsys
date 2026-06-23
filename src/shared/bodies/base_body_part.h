@@ -39,16 +39,6 @@
 
 namespace SPH
 {
-template <typename T, typename = void>
-struct has_setupBaseParticles : std::false_type
-{
-};
-
-template <typename T>
-struct has_setupBaseParticles<T, std::void_t<decltype(&T::setupBaseParticles)>> : std::true_type
-{
-};
-
 class BaseCellLinkedList;
 class LevelSetShape;
 class OrientedBox;
@@ -89,28 +79,6 @@ class BodyPart
     SPHAdaptation &getSPHAdaptation() { return sph_adaptation_; };
     BaseCellLinkedList &getCellLinkedList();
 
-    template <typename TargetCriterion>
-    class TargetParticleMask : public TargetCriterion
-    {
-      public:
-        template <class ExecutionPolicy, typename EnclosureType, typename... Args>
-        TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
-            : TargetCriterion(std::forward<Args>(args)...), part_id_(encloser.part_id_),
-              body_part_id_(encloser.dv_body_part_id_->DelegatedData(ex_policy)) {}
-        ~TargetParticleMask() {}
-
-        template <typename... Args>
-        bool operator()(UnsignedInt target_index, Args &&...args)
-        {
-            return (body_part_id_[target_index] == part_id_) &&
-                   TargetCriterion::operator()(target_index, std::forward<Args>(args)...);
-        }
-
-      protected:
-        int part_id_;
-        int *body_part_id_;
-    };
-
   protected:
     SPHBody &sph_body_;
     BaseParticles &base_particles_;
@@ -119,7 +87,6 @@ class BodyPart
     std::optional<std::string> alias_;
     SPHAdaptation &sph_adaptation_;
     SingleVariable<UnsignedInt> *sv_range_size_;
-    DiscreteVariable<int> *dv_body_part_id_;
     Vecd *pos_;
 };
 
@@ -128,7 +95,7 @@ class BodyPartByID : public BodyPart
   public:
     typedef BodyPartByID RangeIdentifier;
     BodyPartByID(SPHBody &sph_body);
-    virtual ~BodyPartByID() {};
+    virtual ~BodyPartByID(){};
 };
 
 /**
@@ -146,20 +113,9 @@ class BodyPartByParticle : public BodyPart
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
 
     BodyPartByParticle(SPHBody &sph_body);
-
     template <typename TagCriteria>
-    BodyPartByParticle(SPHBody &sph_body, TagCriteria criteria)
-        : BodyPartByParticle(sph_body)
-    {
-        if constexpr (has_setupBaseParticles<TagCriteria>::value)
-        {
-            criteria.setupBaseParticles(base_particles_);
-        }
-        TaggingParticleMethod tagging_method = criteria;
-        tagParticles(tagging_method);
-    }
-
-    virtual ~BodyPartByParticle() {};
+    BodyPartByParticle(SPHBody &sph_body, TagCriteria criteria);
+    virtual ~BodyPartByParticle(){};
 
   protected:
     DiscreteVariable<UnsignedInt> *dv_particle_list_;
@@ -176,25 +132,9 @@ class VariableRangeTagCriteria
 {
   public:
     VariableRangeTagCriteria(
-        const std::string &variable_name, DataType lower_bound, DataType upper_bound)
-        : variable_name_(variable_name), lower_bound_(lower_bound), upper_bound_(upper_bound), variable_(nullptr)
-    {
-        if (lower_bound_ > upper_bound_)
-        {
-            throw std::invalid_argument("Lower bound must be less than or equal to upper bound.");
-        }
-    }
-
-    void setupBaseParticles(BaseParticles &base_particles)
-    {
-        variable_ = base_particles.template getVariableDataByName<DataType>(variable_name_);
-    }
-
-    bool operator()(size_t index_i) const
-    {
-        return (lower_bound_ <= variable_[index_i]) &&
-               (variable_[index_i] <= upper_bound_);
-    }
+        const std::string &variable_name, DataType lower_bound, DataType upper_bound);
+    void setupBaseParticles(BaseParticles &base_particles);
+    bool operator()(size_t index_i) const;
 
   private:
     std::string variable_name_;
@@ -207,24 +147,14 @@ class BodyPartByRealVar : public BodyPartByParticle
 {
   public:
     template <typename... Args>
-    BodyPartByRealVar(SPHBody &sph_body, Args &&...args)
-        : BodyPartByParticle(
-              sph_body,
-              VariableRangeTagCriteria<Real>(std::forward<Args>(args)...))
-    {
-    }
+    BodyPartByRealVar(SPHBody &sph_body, Args &&...args);
 };
 
 class BodyPartByIntVar : public BodyPartByParticle
 {
   public:
     template <typename... Args>
-    BodyPartByIntVar(SPHBody &sph_body, Args &&...args)
-        : BodyPartByParticle(
-              sph_body,
-              VariableRangeTagCriteria<int>(std::forward<Args>(args)...))
-    {
-    }
+    BodyPartByIntVar(SPHBody &sph_body, Args &&...args);
 };
 
 /**
@@ -243,7 +173,7 @@ class BodyPartByCell : public BodyPart
     size_t SizeOfLoopRange();
 
     BodyPartByCell(RealBody &real_body);
-    virtual ~BodyPartByCell() {};
+    virtual ~BodyPartByCell(){};
     DiscreteVariable<UnsignedInt> *dvCellList() { return dv_cell_list_; };
     DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
@@ -285,7 +215,7 @@ class BodySurface : public BodyPartByParticle
 {
   public:
     explicit BodySurface(SPHBody &sph_body);
-    virtual ~BodySurface() {};
+    virtual ~BodySurface(){};
 
   protected:
     Real particle_spacing_min_;
@@ -300,7 +230,7 @@ class BodySurfaceLayer : public BodyPartByParticle
 {
   public:
     explicit BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness = 3.0);
-    virtual ~BodySurfaceLayer() {};
+    virtual ~BodySurfaceLayer(){};
 
   private:
     Real thickness_threshold_;
@@ -371,7 +301,7 @@ class OrientedBoxByParticle : public BodyPartByParticle, public OrientedBoxPart
 {
   public:
     OrientedBoxByParticle(RealBody &real_body, const OrientedBox &oriented_box);
-    virtual ~OrientedBoxByParticle() {};
+    virtual ~OrientedBoxByParticle(){};
 
   protected:
     bool tagByContain(size_t particle_index);
@@ -381,7 +311,7 @@ class OrientedBoxByCell : public BodyPartByCell, public OrientedBoxPart
 {
   public:
     OrientedBoxByCell(RealBody &real_body, const OrientedBox &oriented_box);
-    virtual ~OrientedBoxByCell() {};
+    virtual ~OrientedBoxByCell(){};
 
   protected:
     bool checkNotFar(Vecd cell_position, Real threshold);

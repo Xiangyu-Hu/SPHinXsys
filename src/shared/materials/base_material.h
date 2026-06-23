@@ -36,14 +36,12 @@
 #define BASE_MATERIAL_H
 
 #include "data_type.h"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {
 class BaseParticles;
 class SPHSystem;
-
-template <typename T>
-class DiscreteVariable;
 
 /** @class  BaseMaterial
  *  @brief Base of all materials
@@ -54,7 +52,7 @@ class BaseMaterial
 {
   public:
     BaseMaterial() : material_type_name_("BaseMaterial") {};
-    virtual ~BaseMaterial() {};
+    virtual ~BaseMaterial();
     std::string Name();
     void setName(const std::string &name) { material_name_ = name; };
     std::string MaterialType() { return material_type_name_; }
@@ -65,24 +63,30 @@ class BaseMaterial
      * one need assign the base particle to that material too.
      */
     void setLocalParameters(SPHSystem &sph_system, BaseParticles *base_particles);
-    virtual void registerLocalParameters(BaseParticles *base_particles) {};
-    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
-    virtual void initializeLocalParameters(BaseParticles *base_particles) {};
+    virtual void registerLocalParametersToReload(BaseParticles *base_particles) = 0;
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) = 0;
+    virtual void initializeLocalParameters(BaseParticles *base_particles) = 0;
 
   protected:
     std::string material_type_name_;
     std::string material_name_;
+    UniquePtrsKeeper<Quantity> unique_entity_ptrs_;
 };
 
 class MatterMaterial : public BaseMaterial
 {
-  public:
-    explicit MatterMaterial(Real rho0 = 1.0);
-    virtual ~MatterMaterial() {};
-    Real ReferenceDensity() { return rho0_; };
+    DiscreteVariable<Real> *dv_rho_;
+    DiscreteVariable<Real> *dv_mass_;
 
-  protected:
-    Real rho0_; /**< reference density. */
+  public:
+    explicit MatterMaterial();
+    virtual ~MatterMaterial() {};
+    DiscreteVariable<Real> *dvDensity() const { return dv_rho_; };
+    DiscreteVariable<Real> *dvMass() const { return dv_mass_; };
+    virtual void registerLocalParametersToReload(BaseParticles *base_particles) override {};
+    virtual void registerLocalParametersFromReload(BaseParticles *base_particles) override {};
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+    virtual Real ReferenceDensity() const = 0;
 };
 
 /** @class  Fluid
@@ -90,26 +94,14 @@ class MatterMaterial : public BaseMaterial
  */
 class Fluid : public MatterMaterial
 {
-  protected:
-    Real c0_; /**< reference sound speed and pressure */
-
   public:
-    explicit Fluid(Real rho0, Real c0);
+    explicit Fluid();
     virtual ~Fluid() {};
-    Real ReferenceSoundSpeed() { return c0_; };
     virtual Real getPressure(Real rho) = 0;
     virtual Real getPressure(Real rho, Real rho_e) { return getPressure(rho); };
     virtual Real DensityFromPressure(Real p) = 0;
     virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
-
-    class EosKernel
-    {
-      public:
-        EosKernel(Fluid &encloser);
-
-      protected:
-        Real c0_, rho0_;
-    };
+    virtual Real ReferenceSoundSpeed() const = 0;
 };
 
 class SolidContact
@@ -139,7 +131,7 @@ class Solid : public MatterMaterial, public SolidContact
     explicit Solid(Real rho0) : Solid(rho0, 1.0) {};
     Solid() : Solid(1.0) {};
     virtual ~Solid() {};
-
+    virtual Real ReferenceDensity() const override { return rho0_; };
     /** Get average velocity when interacting with fluid. */
     virtual Vecd *AverageVelocity(BaseParticles *base_particles);
     /** Get average acceleration when interacting with fluid. */
@@ -149,6 +141,9 @@ class Solid : public MatterMaterial, public SolidContact
     virtual DiscreteVariable<Vecd> *AverageVelocityVariable(BaseParticles *base_particles);
     /** Get average acceleration when interacting with fluid. */
     virtual DiscreteVariable<Vecd> *AverageAccelerationVariable(BaseParticles *base_particles);
+
+  protected:
+    Real rho0_; /**< reference density. */
 };
 } // namespace SPH
 #endif // BASE_MATERIAL_H

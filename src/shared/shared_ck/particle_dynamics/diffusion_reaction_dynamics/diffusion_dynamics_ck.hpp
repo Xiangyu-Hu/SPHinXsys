@@ -126,9 +126,10 @@ void DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrectio
     }
 }
 //=================================================================================================//
-template <class DiffusionType, template <typename...> class BoundaryType, class KernelCorrectionType>
+template <class DiffusionType, template <typename...> class BoundaryType,
+          class KernelCorrectionType, class... Parameters>
 template <typename... Args>
-DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType>>::
+DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>::
     DiffusionRelaxationCK(Args &&...args)
     : BaseInteraction(std::forward<Args>(args)...), kernel_correction_method_(this->particles_)
 {
@@ -143,9 +144,10 @@ DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, Kern
     }
 }
 //=================================================================================================//
-template <class DiffusionType, template <typename...> class BoundaryType, class KernelCorrectionType>
+template <class DiffusionType, template <typename...> class BoundaryType,
+          class KernelCorrectionType, class... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType>>::
+DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>::
     InteractKernel::InteractKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
@@ -156,8 +158,9 @@ DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, Kern
       contact_transfer_(encloser.contact_dv_transfer_[contact_index]->DelegatedMultiEntryView(ex_policy)),
       boundary_flux_(ex_policy, *encloser.contact_boundary_method_[contact_index]) {}
 //=================================================================================================//
-template <class DiffusionType, template <typename...> class BoundaryType, class KernelCorrectionType>
-void DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType>>::
+template <class DiffusionType, template <typename...> class BoundaryType,
+          class KernelCorrectionType, class... Parameters>
+void DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(UnsignedInt index_i, Real dt)
 {
     for (UnsignedInt m = 0; m < contact_transfer_.Width(); ++m)

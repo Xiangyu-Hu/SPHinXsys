@@ -328,7 +328,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionViscousTimeStepCK>
         fluid_advection_time_step(water_block, params.U_max);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>>
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>
         fluid_acoustic_time_step(water_block);
     InteractionDynamicsCK<MainExecutionPolicy,
                           fluid_dynamics::ViscousForceWithWallCK>
@@ -346,9 +346,9 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
     for (auto &bc : bidirectional_pressure_conditions)
         bc->oriented_box_by_cell.writeOrientedBoxToVtp();
     StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> particle_deletion(water_block);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
         fluid_density_summation(water_body_inner, water_wall_contact);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, Internal, ExcludeBufferParticles>>
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, WeaklyCompressibleFluid, Internal, ExcludeBufferParticles>>
         fluid_density_regularization(water_block);
 
     // --- Section 12: Setup Recording for Body States and Observers ---
