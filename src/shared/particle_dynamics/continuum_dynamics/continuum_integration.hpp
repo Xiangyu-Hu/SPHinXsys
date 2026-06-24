@@ -137,10 +137,9 @@ Vecd PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::computeNonCons
 }
 //=================================================================================================//
 template <class RiemannSolverType>
-PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::PlasticIntegration2ndHalf(
-    BaseInnerRelation &inner_relation, Real dissipation_factor)
+PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>::PlasticIntegration2ndHalf(BaseInnerRelation &inner_relation)
     : BasePlasticIntegration<DataDelegateInner>(inner_relation),
-      riemann_solver_(plastic_continuum_, plastic_continuum_, dissipation_factor),
+      riemann_solver_(plastic_continuum_, plastic_continuum_, 20.0 * (Real)Dimensions),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       mass_(particles_->getVariableDataByName<Real>("Mass")) {}
 //=================================================================================================//

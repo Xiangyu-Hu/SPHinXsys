@@ -143,9 +143,7 @@ class PlasticIntegration2ndHalf<Inner<>, RiemannSolverType>
     : public BasePlasticIntegration<DataDelegateInner>
 {
   public:
-    explicit PlasticIntegration2ndHalf(
-        BaseInnerRelation &inner_relation,
-        Real dissipation_factor = 20.0 * (Real)Dimensions);
+    explicit PlasticIntegration2ndHalf(BaseInnerRelation &inner_relation);
     virtual ~PlasticIntegration2ndHalf() {};
     void initialization(size_t index_i, Real dt = 0.0);
     void interaction(size_t index_i, Real dt = 0.0);
