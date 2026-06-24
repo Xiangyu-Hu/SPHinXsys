@@ -36,7 +36,7 @@ void ParticleGenerator<ParticlesType, Reload>::prepareGeometricData()
 template <typename ParticlesType>
 void ParticleGenerator<ParticlesType, Reload>::setAllParticleBounds()
 {
-    this->base_particles_.initializeAllParticlesBoundsFromReloadXml();
+    this->base_particles_.initializeAllParticlesBoundsFromReload();
 };
 //=================================================================================================//
 template <typename ParticlesType>
