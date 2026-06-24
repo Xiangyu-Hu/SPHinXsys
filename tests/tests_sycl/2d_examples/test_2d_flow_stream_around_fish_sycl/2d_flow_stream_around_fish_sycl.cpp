@@ -201,6 +201,8 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<int>(fish_body, "MaterialID");
     body_state_recorder.addToWrite<Matd>(fish_body, "ActiveStrain");
 
+    auto &restart_io = main_methods.addIODynamics<RestartIOCK>(sph_system);
+
     Gravity gravity(Vecd::Zero());
     ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>
         write_water_mechanical_energy(water_block, gravity);
@@ -229,6 +231,28 @@ int main(int ac, char *av[])
     fish_inner_build.exec();
     fish_contact_relation.exec();
     fish_body_corrected_configuration.exec();
+
+    //----------------------------------------------------------------------
+    //	Load restart file if necessary.
+    //----------------------------------------------------------------------
+    if (sph_system.RestartStep() != 0)
+    {
+        restart_io.readRestartFiles(sph_system.RestartStep());
+        // rebuild spatial hash from restored positions
+        update_fish_cell_linked_list.exec();
+        update_water_cell_linked_list.exec();
+        // re-sort water particles for cache locality, then rebuild CLL
+        particle_sort.exec();
+        update_water_cell_linked_list.exec();
+        // reconstruct neighbor lists
+        water_body_update_complex_relation.exec();
+        fish_contact_relation.exec();
+        // rebuild B-matrix from restored fish positions
+        fish_body_corrected_configuration.exec();
+        // repopulate density from restored positions
+        fluid_density_regularization.exec();
+        number_of_iterations = sph_system.RestartStep();
+    }
 
     apply_gravity_force.exec();
     fluid_boundary_indicator.exec();
@@ -326,6 +350,11 @@ int main(int ac, char *av[])
                 TickCount t2 = TickCount::now();
                 body_state_recorder.writeToFile();
                 interval += TickCount::now() - t2;
+            }
+
+            if (number_of_iterations % 500 == 0)
+            {
+                restart_io.writeToFile(number_of_iterations);
             }
 
             //	Particle injection, deletion, sort, relation update.
