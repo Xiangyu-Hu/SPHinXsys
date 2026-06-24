@@ -80,13 +80,12 @@ struct VelocityPrescribed
 
 struct ConstantInflowSpeed
 {
-    Real speed_, switch_time_;
-    ConstantInflowSpeed(Real speed, Real switch_time = Real(0))
-        : speed_(speed), switch_time_(switch_time) {};
+    Real speed_;
+    ConstantInflowSpeed(Real speed) : speed_(speed) {};
 
-    Real getAxisVelocity(const Vecd &, const Real &, Real time)
+    Real getAxisVelocity(const Vecd &, const Real &, Real)
     {
-        return time < switch_time_ ? Real(0) : speed_;
+        return speed_;
     };
 };
 
