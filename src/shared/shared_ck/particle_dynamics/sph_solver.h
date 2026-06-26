@@ -32,14 +32,42 @@
 
 #include "particle_method_container.h"
 
+#include <cstdint>
+#include <functional>
+#include <queue>
+
 namespace SPH
 {
+class EventScheduler
+{
+  public:
+    using Callback = std::function<void()>;
+    // Schedule a callback at an absolute simulation time.
+    void schedule(Real time, Callback cb);
+    // Execute every event whose time is ≤ current_time, and remove them from the queue.
+    void processEventsUpTo(Real current_time);
+    bool empty() const { return queue_.empty(); }
+
+  private:
+    struct Event
+    {
+        Real time_;
+        UnsignedInt order_;   // tie-breaker for simultaneous events
+        mutable Callback cb_; // mutable to allow move on top() (which is const)
+        bool operator<(const Event &other) const;
+    };
+
+    std::priority_queue<Event> queue_;
+    UnsignedInt nextOrder_ = 0;
+};
+
 class TimeStepper
 {
   public:
     TimeStepper(SPHSystem &sph_system);
     ~TimeStepper() {};
 
+    EventScheduler &getEventScheduler() { return event_scheduler_; }
     bool isEndTime(Real end_time);
     void setPhysicalTime(Real time);
     Real getPhysicalTime();
@@ -141,6 +169,7 @@ class TimeStepper
     UniquePtrsKeeper<TriggerByPhysicalTime> execution_by_physical_time_keeper_;
 
   protected:
+    EventScheduler event_scheduler_;
     StdVec<TriggerByInterval *> interval_executers_;
     StdVec<TriggerByPhysicalTime *> physical_time_executers_;
     Real global_dt_;
