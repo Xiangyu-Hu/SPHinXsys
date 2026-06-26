@@ -105,6 +105,7 @@ class WeaklyCompressibleMixture : public Fluid
     DiscreteVariable<Real> *dv_rho0_; /**< local reference density. */
 };
 
+using NamesAndDensities = StdVec<std::pair<std::string, Real>>;
 class WeaklyCompressibleMultiSpecies : public WeaklyCompressibleMixture
 {
   protected:
@@ -114,7 +115,7 @@ class WeaklyCompressibleMultiSpecies : public WeaklyCompressibleMixture
     DiscreteVariable<Real> *dv_Y_list_;     /**< species mass fraction list. */
 
   public:
-    WeaklyCompressibleMultiSpecies(StdVec<std::pair<std::string, Real>> species_data, Real c0);
+    WeaklyCompressibleMultiSpecies(const NamesAndDensities &species_data, Real c0);
     virtual ~WeaklyCompressibleMultiSpecies();
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     virtual Real ReferenceDensity() const override { return rho0_list_[0]; };
@@ -160,10 +161,10 @@ class WeaklyCompressibleMultiPhase : public WeaklyCompressibleMixture
     ComputingKernelArray<WeaklyCompressibleMultiSpecies, MultiSpeciesEosKernel> *multi_species_eos_kernels_;
 
   public:
-    WeaklyCompressibleMultiPhase(std::pair<std::string, Real> first_phase, Real c0);
+    WeaklyCompressibleMultiPhase(Real c0);
     virtual ~WeaklyCompressibleMultiPhase();
-    void addPurePhase(std::pair<std::string, Real> pure_phase);
-    void addMultiSpeciesPhase(StdVec<std::pair<std::string, Real>> species_data);
+    void addPurePhases(const NamesAndDensities &pure_phases);
+    void addMultiSpeciesPhases(const StdVec<std::pair<std::string, NamesAndDensities>> &multi_species_phases);
     void setPhases() { is_phases_set_ = true; };
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     virtual Real ReferenceDensity() const override;
