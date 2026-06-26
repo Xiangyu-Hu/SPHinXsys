@@ -54,19 +54,29 @@ WeaklyCompressibleMultiSpecies::WeaklyCompressibleMultiSpecies(
         { return 1.0 / rho0_list_[k]; });
 }
 //=================================================================================================//
+WeaklyCompressibleMultiSpecies::WeaklyCompressibleMultiSpecies(
+    const std::string &name, const NamesAndDensities &species_data, Real c0)
+    : WeaklyCompressibleMultiSpecies(species_data, c0)
+{
+    material_name_ = name;
+}
+//=================================================================================================//
 WeaklyCompressibleMultiSpecies::~WeaklyCompressibleMultiSpecies() = default;
 //=================================================================================================//
 void WeaklyCompressibleMultiSpecies::initializeLocalParameters(BaseParticles *base_particles)
 {
-    WeaklyCompressibleMixture::initializeLocalParameters(base_particles);
-    dv_rho0_ = base_particles->registerStateVariable<Real>("ReferenceDensity", rho0_list_[0]);
-    dv_Y_list_ = base_particles->registerStateVariable<Real>("MassFraction", species_name_list_);
+    Fluid::initializeLocalParameters(base_particles);
+    dv_rho0_ = base_particles->registerStateVariable<Real>(
+        Name() + "ReferenceDensity", rho0_list_[0]);
+    dv_Y_list_ = base_particles->registerStateVariable<Real>(
+        Name() + "MassFraction", species_name_list_);
     dv_Y_list_->fill([&](UnsignedInt index) // by default first species only
                      { return Real(1); },
                      0, base_particles->TotalRealParticles());
     base_particles->addEvolvingVariable<Real>(dv_rho0_);
     base_particles->addEvolvingVariable<Real>(dv_Y_list_);
     base_particles->addVariableToWrite<Real>(dv_Y_list_);
+    base_particles->addVariableToWrite<Real>(dv_rho0_);
 }
 //=================================================================================================//
 Real WeaklyCompressibleMixture::getPressure(Real rho)
@@ -101,7 +111,7 @@ void WeaklyCompressibleMultiPhase::addPurePhases(const NamesAndDensities &pure_p
 {
     if (is_phases_set_)
     {
-        std::cout << "\n Error in WeaklyCompressibleMultiPhase::addPurePhase :"
+        std::cout << "\n Error in WeaklyCompressibleMultiPhase::addPurePhases :"
                   << " Phases have been set, cannot add more phase ! \n ";
         exit(1);
     }
@@ -109,8 +119,8 @@ void WeaklyCompressibleMultiPhase::addPurePhases(const NamesAndDensities &pure_p
     for (const auto &pure_phase : pure_phases)
     {
         phase_name_list_.push_back(pure_phase.first);
-        pure_phase_list_.push_back(
-            fluid_ptrs_.createPtr<WeaklyCompressibleFluid>(pure_phase.second, c0_));
+        pure_phase_list_.push_back(fluid_ptrs_.createPtr<WeaklyCompressibleFluid>(
+            pure_phase.second, c0_));
     }
 }
 //=================================================================================================//
@@ -119,7 +129,7 @@ void WeaklyCompressibleMultiPhase::addMultiSpeciesPhases(
 {
     if (is_phases_set_)
     {
-        std::cout << "\n Error in WeaklyCompressibleMultiPhase::addMultiSpeciesPhase :"
+        std::cout << "\n Error in WeaklyCompressibleMultiPhase::addMultiSpeciesPhases :"
                   << " Phases have been set, cannot add more phase ! \n ";
         exit(1);
     }
@@ -127,8 +137,8 @@ void WeaklyCompressibleMultiPhase::addMultiSpeciesPhases(
     for (const auto &multi_species_phase : multi_species_phases)
     {
         phase_name_list_.push_back(multi_species_phase.first);
-        multi_species_phase_list_.push_back(
-            fluid_ptrs_.createPtr<WeaklyCompressibleMultiSpecies>(multi_species_phase.second, c0_));
+        multi_species_phase_list_.push_back(fluid_ptrs_.createPtr<WeaklyCompressibleMultiSpecies>(
+            multi_species_phase.first, multi_species_phase.second, c0_));
     }
 }
 //=================================================================================================//
@@ -146,10 +156,12 @@ void WeaklyCompressibleMultiPhase::initializeLocalParameters(BaseParticles *base
     dv_phi_list_->fill([&](UnsignedInt index) // by default first species only
                        { return Real(1); },
                        0, base_particles->TotalRealParticles());
-    dv_velocity_list_ = base_particles->registerStateVariable<Vecd>("Velocity", phase_name_list_);
-    base_particles->addEvolvingVariable<Real>(dv_phi_list_);
+    dv_velocity_list_ = base_particles->registerStateVariable<Vecd>("MultiPhaseVelocity", phase_name_list_);
     base_particles->addEvolvingVariable<Real>(dv_rho0_);
+    base_particles->addEvolvingVariable<Real>(dv_phi_list_);
     base_particles->addEvolvingVariable<Vecd>(dv_velocity_list_);
+    base_particles->addVariableToWrite<Real>(dv_phi_list_);
+    base_particles->addVariableToWrite<Vecd>(dv_velocity_list_);
 
     for (size_t k = 0; k != pure_phase_list_.size(); ++k)
     {

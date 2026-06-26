@@ -47,7 +47,7 @@ class ReferenceDensityUpdate : public LocalDynamics
           ca_inv_rho0_list_(fluid_mixture.caInvReferenceDensity()),
           dv_Y_list_(fluid_mixture.dvMassFraction()),
           dv_rho0_(fluid_mixture.dvReferenceDensity()),
-          dv_mass_(fluid_mixture.dvMass()) {};
+          dv_mass_(particles_->getVariableByName<Real>("Mass")) {};
     virtual ~ReferenceDensityUpdate() {};
 
     class UpdateKernel
@@ -98,9 +98,9 @@ class PrescribedReferenceDensity
         : fluid_mixture_(fluid_mixture),
           ca_mass_fractions_("ConstantMassFractions", mass_fractions),
           dv_rho0_(fluid_mixture.dvReferenceDensity()),
-          dv_Vol_ref_(base_particles->template getVariableByName<Real>(
+          dv_Vol_ref_(base_particles->getVariableByName<Real>(
               "VolumetricMeasureRef")),
-          dv_mass_(fluid_mixture.dvMass())
+          dv_mass_(base_particles->getVariableByName<Real>("Mass"))
     {
         if (fluid_mixture.NumberOfSpecies() != mass_fractions.size())
         {

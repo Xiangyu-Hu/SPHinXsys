@@ -13,7 +13,8 @@ namespace SPH
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
     : sph_system_(sph_system), body_name_(name), newly_updated_(true),
-      base_particles_(nullptr), is_bound_set_(false), initial_shape_(&shape),
+      base_particles_(nullptr), is_bound_set_(false),
+      is_physical_(false), initial_shape_(&shape),
       sph_adaptation_(sph_adaptation_keeper_.createPtr<SPHAdaptation>(sph_system.GlobalResolution()))
 {
     sph_system_.addSPHBody(this);

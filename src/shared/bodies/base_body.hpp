@@ -45,6 +45,7 @@ LevelSetShape &SPHBody::defineBodyLevelSetShape(const ExecutionPolicy &ex_policy
 template <class MaterialType, typename... Args>
 MaterialType &SPHBody::defineMatterMaterial(Args &&...args)
 {
+    is_physical_ = true;
     MaterialType *material = matter_keeper_.createPtr<MaterialType>(std::forward<Args>(args)...);
     material_properties_.push_back(material); // set the first material as the matter material for the body
     return *material;
@@ -122,9 +123,14 @@ ParticleType &SPHBody::generateParticles(Args &&...args)
     particle_generator.generateParticlesWithGeometricVariables();
     particles->initializeBasicDiscreteVariables();
     sph_adaptation_->initializeAdaptationVariables(*particles);
-    for (auto *material : material_properties_)
+
+    if (is_physical_)
     {
-        material->setLocalParameters(sph_system_, particles);
+        getMatterMaterial().initializeMatterVariables(particles);
+        for (auto *material : material_properties_)
+        {
+            material->setLocalParameters(sph_system_, particles);
+        }
     }
     return *particles;
 }

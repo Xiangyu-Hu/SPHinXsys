@@ -75,6 +75,7 @@ class SPHBody
     BaseParticles *base_particles_; /**< Base particles for dynamic cast DataDelegate  */
     bool is_bound_set_;             /**< whether the bounding box is set */
     BoundingBoxd bound_;            /**< bounding box of the body */
+    bool is_physical_;              /**< whether this body is a physical body */
     Shape *initial_shape_;          /**< initial volumetric geometry enclosing the body */
     SPHAdaptation *sph_adaptation_; /**< numerical adaptation policy */
     StdVec<BaseMaterial *> material_properties_;
