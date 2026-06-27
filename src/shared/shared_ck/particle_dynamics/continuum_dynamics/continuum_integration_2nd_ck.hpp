@@ -14,6 +14,7 @@ PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTy
     PlasticAcousticStep2ndHalf(DynamicsIdentifier &identifier, Real dissipation_factor)
     : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(identifier),
       correction_method_(this->particles_),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_->getMatterMaterial())),
       riemann_solver_(this->plastic_continuum_, this->plastic_continuum_, dissipation_factor)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
@@ -42,8 +43,8 @@ PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTy
       correction_(ex_policy, encloser.correction_method_),
       riemann_(ex_policy, encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedData(ex_policy)),
+      compression_rate_(encloser.dv_compression_rate_->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
       velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)) {}
@@ -52,7 +53,7 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    Real density_change_rate(0);
+    Real divergence_sum(0);
     Vecd p_dissipation = Vecd::Zero();
     Matd velocity_gradient = Matd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -62,11 +63,11 @@ void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
 
         Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
-        density_change_rate += u_jump * dW_ijV_j;
+        divergence_sum += u_jump * dW_ijV_j;
         p_dissipation += riemann_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * e_ij;
         velocity_gradient -= (vel_[index_i] - vel_[index_j]) * dW_ijV_j * e_ij.transpose();
     }
-    drho_dt_[index_i] += density_change_rate * rho_[index_i];
+    compression_rate_[index_i] += divergence_sum * compression_[index_i];
     force_[index_i] = p_dissipation * Vol_[index_i];
     velocity_gradient_[index_i] = velocity_gradient;
 }
@@ -75,9 +76,10 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : constitute_(ex_policy, encloser.plastic_continuum_),
+    : constitute_(ex_policy, encloser.plastic_continuum_), eos_(ex_policy, encloser.fluid_),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedData(ex_policy)),
+      compression_rate_(encloser.dv_compression_rate_->DelegatedData(ex_policy)),
       velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)),
       stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),
       strain_tensor_3D_(encloser.dv_strain_tensor_3D_->DelegatedData(ex_policy)),
@@ -88,7 +90,8 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 void PlasticAcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
-    rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
+    compression_[index_i] += 0.5 * dt * compression_rate_[index_i];
+    rho_[index_i] = compression_[index_i] * eos_.getReferenceDensity(index_i);
     Mat3d velocity_gradient = upgradeToMat3d(velocity_gradient_[index_i]);
     strain_rate_3D_[index_i] = 0.5 * (velocity_gradient + velocity_gradient.transpose());
     strain_tensor_3D_[index_i] += strain_rate_3D_[index_i] * dt;
@@ -116,8 +119,8 @@ PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType
       correction_(ex_policy, encloser.correction_method_),
       riemann_(ex_policy, encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedData(ex_policy)),
+      compression_rate_(encloser.dv_compression_rate_->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
       contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
@@ -129,22 +132,22 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 void PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    Real density_change_rate = 0.0;
+    Real divergence_sum = 0.0;
     Vecd p_dissipation = Vecd::Zero();
-    Vecd vel_i = vel_[index_i];
     Matd velocity_gradient = Matd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd e_ij = this->e_ij(index_i, index_j);
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
-        Vecd vel_in_wall = 2.0 * wall_vel_ave_[index_j] - vel_[index_i];
-        density_change_rate += (vel_i - vel_in_wall).dot(e_ij) * dW_ijV_j;
-        Real u_jump = 2.0 * (vel_i - wall_vel_ave_[index_j]).dot(wall_n_[index_j]);
+
+        Vecd vel_diff = 2.0 * (vel_[index_i] - wall_vel_ave_[index_j]);
+        divergence_sum += vel_diff.dot(e_ij) * dW_ijV_j;
+        Real u_jump = vel_diff.dot(wall_n_[index_j]);
         p_dissipation += riemann_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * wall_n_[index_j];
-        velocity_gradient -= (vel_i - vel_in_wall) * dW_ijV_j * e_ij.transpose();
+        velocity_gradient -= vel_diff * dW_ijV_j * e_ij.transpose();
     }
-    drho_dt_[index_i] += density_change_rate * rho_[index_i];
+    compression_rate_[index_i] += divergence_sum * compression_[index_i];
     force_[index_i] += p_dissipation * Vol_[index_i];
     velocity_gradient_[index_i] += velocity_gradient;
 }
