@@ -11,14 +11,33 @@ namespace continuum_dynamics
 template <class BaseInteractionType>
 template <class DynamicsIdentifier>
 PlasticAcousticStep<BaseInteractionType>::PlasticAcousticStep(DynamicsIdentifier &identifier)
-    : fluid_dynamics::AcousticStep<BaseInteractionType>(identifier),
+    : BaseInteractionType(identifier),
       plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->sph_body_->getMatterMaterial())),
+      dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
+      dv_mass_(this->particles_->template getVariableByName<Real>("Mass")),
+      dv_p_(this->particles_->template registerStateVariable<Real>("Pressure")),
+      dv_drho_dt_(this->particles_->template registerStateVariable<Real>("DensityChangeRate")),
+      dv_vel_(this->particles_->template registerStateVariable<Vecd>("Velocity")),
+      dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),
+      dv_force_(this->particles_->template registerStateVariable<Vecd>("Force")),
+      dv_force_prior_(this->particles_->template registerStateVariable<Vecd>("ForcePrior")),
       dv_stress_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StressTensor3D")),
       dv_strain_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainTensor3D")),
       dv_stress_rate_3D_(this->particles_->template registerStateVariable<Mat3d>("StressRate3D")),
       dv_strain_rate_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainRate3D")),
       dv_velocity_gradient_(this->particles_->template registerStateVariable<Matd>("VelocityGradient"))
 {
+    //----------------------------------------------------------------------
+    //		add evolving variables
+    //----------------------------------------------------------------------
+    this->particles_->template addEvolvingVariable<Vecd>("Velocity");
+    this->particles_->template addEvolvingVariable<Real>("Mass");
+    this->particles_->template addEvolvingVariable<Vecd>("ForcePrior");
+    this->particles_->template addEvolvingVariable<Real>("DensityChangeRate");
+    //----------------------------------------------------------------------
+    //		add output particle data
+    //----------------------------------------------------------------------
+    this->particles_->template addVariableToWrite<Vecd>("Velocity");
     this->particles_->template addEvolvingVariable<Mat3d>("StressTensor3D");
     this->particles_->template addEvolvingVariable<Mat3d>("StrainTensor3D");
     this->particles_->template addEvolvingVariable<Mat3d>("StressRate3D");
