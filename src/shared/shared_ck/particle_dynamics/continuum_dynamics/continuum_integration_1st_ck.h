@@ -148,9 +148,17 @@ class PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrecti
     RiemannSolverType riemann_solver_;
 };
 
+template <class RiemannSolverType, class KernelCorrectionType = NoKernelCorrectionCK>
+using PlasticAcousticStep1stHalfWithWallCK =
+    PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType>,
+                               Contact<Wall, RiemannSolverType, KernelCorrectionType>>;
+
+using PlasticAcousticStep1stHalfWithWallNoRiemannCK =
+    PlasticAcousticStep1stHalfWithWallCK<NoRiemannSolverCK>;
+
 using PlasticAcousticStep1stHalfWithWallRiemannCK =
-    PlasticAcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolverCK, NoKernelCorrectionCK>,
-                               Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>;
+    PlasticAcousticStep1stHalfWithWallCK<
+        RiemannSolver<PlasticContinuum, PlasticContinuum, TruncatedLinear>>;
 } // namespace continuum_dynamics
 } // namespace SPH
 #endif // CONTINUUM_INTEGRATION_1ST_CK_H
