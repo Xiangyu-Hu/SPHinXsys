@@ -66,7 +66,7 @@ WeaklyCompressibleMultiSpecies::EosKernel::EosKernel(
       rho0_(encloser.dv_rho0_->DelegatedDataView(ex_policy)){};
 //=================================================================================================//
 template <typename FractionType>
-void WeaklyCompressibleMultiSpecies::EosKernel::setMassFractions(
+void WeaklyCompressibleMultiSpecies::EosKernel::setMixtureFractions(
     UnsignedInt index_i, const FractionType &mass_fractions)
 {
     for (size_t k = 0; k != Y_list_.Width(); ++k)
@@ -95,7 +95,7 @@ WeaklyCompressibleMultiPhase::EosKernel::EosKernel(
       velocity_list_(encloser.dv_velocity_list_->DelegatedMultiEntryView(ex_policy)){};
 //=================================================================================================//
 template <typename FractionType>
-void WeaklyCompressibleMultiPhase::EosKernel::setVolumeFractions(
+void WeaklyCompressibleMultiPhase::EosKernel::setMixtureFractions(
     UnsignedInt index_i, const FractionType &volume_fractions)
 {
     for (size_t k = 0; k != phi_list_.Width(); ++k)

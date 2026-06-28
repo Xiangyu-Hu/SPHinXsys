@@ -124,7 +124,7 @@ class WeaklyCompressibleMultiSpecies : public WeaklyCompressibleMixture
     StdVec<Real> getReferenceDensityList() const { return rho0_list_; };
     DiscreteVariable<Real> *dvMassFraction() const { return dv_Y_list_; };
     ConstantArray<Real> *caInvReferenceDensity() const { return ca_inv_rho0_list_; };
-    UnsignedInt NumberOfSpecies() const { return species_name_list_.size(); };
+    UnsignedInt NumberOfMixtures() const { return species_name_list_.size(); };
 
     class EosKernel : public WeaklyCompressibleMixture::EosKernel
     {
@@ -132,7 +132,7 @@ class WeaklyCompressibleMultiSpecies : public WeaklyCompressibleMixture
         template <class ExecutionPolicy, class EnclosureType>
         EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser);
         template <typename FractionType>
-        void setMassFractions(UnsignedInt index_i, const FractionType &mass_fractions);
+        void setMixtureFractions(UnsignedInt index_i, const FractionType &mass_fractions);
         Real computeReferenceDensity(UnsignedInt index_i);
 
       protected:
@@ -168,6 +168,7 @@ class WeaklyCompressibleMultiPhase : public WeaklyCompressibleMixture
     virtual Real ReferenceDensity() const override;
     StdVec<std::string> getPhaseNameList() const { return phase_name_list_; };
     DiscreteVariable<Real> *dvVolumeFraction() const { return dv_phi_list_; };
+    UnsignedInt NumberOfMixtures() const;
 
     class EosKernel : public WeaklyCompressibleMixture::EosKernel
     {
@@ -175,7 +176,7 @@ class WeaklyCompressibleMultiPhase : public WeaklyCompressibleMixture
         template <class ExecutionPolicy, class EnclosureType>
         EosKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser);
         template <typename FractionType>
-        void setVolumeFractions(UnsignedInt index_i, const FractionType &volume_fractions);
+        void setMixtureFractions(UnsignedInt index_i, const FractionType &volume_fractions);
         Real computeReferenceDensity(UnsignedInt index_i);
         template <typename VelocityType>
         Vecd computeMixtureVelocity(UnsignedInt index_i, const VelocityType &velocities);

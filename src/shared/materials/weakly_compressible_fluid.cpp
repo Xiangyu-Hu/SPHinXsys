@@ -142,6 +142,11 @@ void WeaklyCompressibleMultiPhase::addMultiSpeciesPhases(
     }
 }
 //=================================================================================================//
+UnsignedInt WeaklyCompressibleMultiPhase::NumberOfMixtures() const
+{
+    return pure_phase_list_.size() + multi_species_phase_list_.size();
+};
+//=================================================================================================//
 void WeaklyCompressibleMultiPhase::initializeLocalParameters(BaseParticles *base_particles)
 {
     if (!is_phases_set_)
