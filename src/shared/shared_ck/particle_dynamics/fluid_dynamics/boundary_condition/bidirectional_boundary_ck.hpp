@@ -186,7 +186,7 @@ void SupplementaryCondition<ConditionType>::UpdateKernel::update(size_t index_i,
 {
     if (oriented_box_->checkContain(pos_[index_i]))
     {
-        condition_(index_i, dt);
+        condition_(index_i);
     }
 }
 //=================================================================================================//

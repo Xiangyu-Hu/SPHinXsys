@@ -86,15 +86,15 @@ class ReferenceDensityUpdate : public LocalDynamics
     DiscreteVariable<Real> *dv_rho0_, *dv_mass_;
 };
 
+template <typename FluidMixtureType>
 class PrescribedReferenceDensity
 {
-    using EosKernel = typename WeaklyCompressibleMultiSpecies::EosKernel;
+    using EosKernel = typename FluidMixtureType::EosKernel;
 
   public:
     PrescribedReferenceDensity(
         BaseParticles *base_particles,
-        WeaklyCompressibleMultiSpecies &fluid_mixture,
-        StdVec<Real> mixture_fractions)
+        FluidMixtureType &fluid_mixture, StdVec<Real> mixture_fractions)
         : fluid_mixture_(fluid_mixture),
           ca_mixture_fractions_("ConstantMixtureFractions", mixture_fractions),
           dv_rho0_(fluid_mixture.dvReferenceDensity()),
@@ -122,7 +122,7 @@ class PrescribedReferenceDensity
               Vol_ref_(encloser.dv_Vol_ref_->DelegatedDataView(ex_policy)),
               mass_(encloser.dv_mass_->DelegatedDataView(ex_policy)){};
 
-        void operator()(size_t index_i, Real dt = 0.0)
+        void operator()(size_t index_i)
         {
             eos_.setMixtureFractions(index_i, mixture_fractions_);
             rho0_[index_i] = eos_.computeReferenceDensity(index_i);
@@ -136,7 +136,7 @@ class PrescribedReferenceDensity
     };
 
   protected:
-    WeaklyCompressibleMultiSpecies &fluid_mixture_;
+    FluidMixtureType &fluid_mixture_;
     ConstantArray<Real> ca_mixture_fractions_;
     DiscreteVariable<Real> *dv_rho0_, *dv_Vol_ref_, *dv_mass_;
 };
