@@ -69,6 +69,30 @@ class EmitterInflowConditionCK : public BaseLocalDynamics<OrientedBoxPartType>
     SingleVariable<Real> *sv_physical_time_;
 };
 
+template <class DynamicsIdentifier, typename ConditionType>
+class SupplementaryEmitterCondition : public BaseLocalDynamics<DynamicsIdentifier>
+{
+    using ConditionKernel = typename ConditionType::ComputingKernel;
+
+  public:
+    template <typename... Args>
+    SupplementaryEmitterCondition(DynamicsIdentifier &dynamics_identifier, Args &&...args);
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        ConditionKernel condition_;
+    };
+
+  protected:
+    ConditionType condition_method_;
+};
+
 template <typename OrientedBoxPartType>
 class EmitterInflowInjectionCK : public BaseLocalDynamics<OrientedBoxPartType>
 {

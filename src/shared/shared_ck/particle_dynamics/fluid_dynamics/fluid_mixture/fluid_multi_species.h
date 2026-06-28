@@ -87,7 +87,7 @@ class ReferenceDensityUpdate : public LocalDynamics
 };
 
 template <typename FluidMixtureType>
-class PrescribedReferenceDensity
+class PrescribedReferenceDensity : public ReturnFunction<Real>
 {
     using EosKernel = typename FluidMixtureType::EosKernel;
 
