@@ -83,7 +83,7 @@ class BaseParticles
     DataContainerUniquePtrAssemble<DiscreteVariable> all_discrete_variable_ptrs_;
     DataContainerUniquePtrAssemble<SingleVariable> all_singular_variable_ptrs_;
     UniquePtrsKeeper<Quantity> unique_variable_ptrs_;
-    UniquePtrsKeeper<XmlParser> xml_parser_ptrs_;
+    UniquePtrKeeper<XmlParser> xml_parser_ptr_;
 
   public:
     explicit BaseParticles(SPHBody &sph_body);
@@ -110,7 +110,7 @@ class BaseParticles
     UnsignedInt TotalRealParticles() { return sv_total_real_particles_->getValue(); };
     UnsignedInt ParticlesBound() { return particles_bound_; };
     void initializeAllParticlesBounds(UnsignedInt total_real_particles);
-    void initializeAllParticlesBoundsFromReloadXml();
+    void initializeAllParticlesBoundsFromReload();
     void increaseParticlesBounds(UnsignedInt extra_size);
     void checkEnoughReserve();
     //----------------------------------------------------------------------
@@ -181,7 +181,6 @@ class BaseParticles
     DiscreteVariable<Vecd> *dv_pos_; /**< Discrete variable position */
     Real *Vol_;                      /**< Volumetric measure, also area and length of surface and linear particle */
     SPHBody &sph_body_;
-    std::string body_name_;
     XmlParser &reload_xml_parser_;
     DiscreteVariables all_discrete_variables_;
     SingleVariables all_singular_variables_;
