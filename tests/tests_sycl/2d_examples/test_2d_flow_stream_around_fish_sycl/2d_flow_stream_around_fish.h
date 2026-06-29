@@ -348,8 +348,14 @@ class ImposingActiveStrain : public LocalDynamics
         : LocalDynamics(solid_body),
           sv_physical_time_(&sph_system_->svPhysicalTime()),
           dv_material_id_(particles_->getVariableByName<int>("MaterialID")),
-          dv_pos0_(particles_->getVariableByName<Vecd>("InitialPosition")),
-          dv_active_strain_(particles_->getVariableByName<Matd>("ActiveStrain")) {}
+          dv_pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
+          dv_active_strain_(particles_->getVariableByName<Matd>("ActiveStrain"))
+    {
+        // pos0 must be undeformed reference, not the deformed position at restart time
+        // material ID is assigned from undeformed geometry at t=0, needs to survive restart
+        particles_->addEvolvingVariable<Vecd>("InitialPosition");
+        particles_->addEvolvingVariable<int>("MaterialID");
+    }
 
     struct UpdateKernel
     {
