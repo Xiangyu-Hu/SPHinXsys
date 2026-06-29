@@ -76,7 +76,6 @@ void WeaklyCompressibleMultiSpecies::initializeLocalParameters(BaseParticles *ba
     base_particles->addEvolvingVariable<Real>(dv_rho0_);
     base_particles->addEvolvingVariable<Real>(dv_Y_list_);
     base_particles->addVariableToWrite<Real>(dv_Y_list_);
-    base_particles->addVariableToWrite<Real>(dv_rho0_);
 }
 //=================================================================================================//
 Real WeaklyCompressibleMixture::getPressure(Real rho)
