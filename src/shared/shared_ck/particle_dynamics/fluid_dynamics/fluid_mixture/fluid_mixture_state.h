@@ -21,7 +21,7 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	fluid_multi_species.h
+ * @file 	fluid_mixture_state.h
  * @brief 	TBD.
  * @details TBD.
  * @author	Xiangyu Hu
