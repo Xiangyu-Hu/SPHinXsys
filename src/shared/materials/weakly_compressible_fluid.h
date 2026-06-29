@@ -152,7 +152,9 @@ class WeaklyCompressibleMultiPhase : public WeaklyCompressibleMixture
     bool is_phases_set_ = false;
 
   protected:
-    StdVec<std::string> phase_name_list_;      /**< phase name list. */
+    StdVec<std::string> phase_name_list_;
+    StdVec<std::string> pure_phase_name_list_;      /**< pure phase name list. */
+    StdVec<std::string> multi_species_phase_name_list_; /**< multi-species phase name list. */
     DiscreteVariable<Real> *dv_phi_list_;      /**< phase volume fraction list. */
     DiscreteVariable<Vecd> *dv_velocity_list_; /**< phase velocity list. */
     ComputingKernelArray<WeaklyCompressibleFluid, PureEosKernel> *pure_eos_kernels_;
@@ -166,7 +168,8 @@ class WeaklyCompressibleMultiPhase : public WeaklyCompressibleMixture
     void setPhases() { is_phases_set_ = true; };
     virtual void initializeLocalParameters(BaseParticles *base_particles) override;
     virtual Real ReferenceDensity() const override;
-    StdVec<std::string> getPhaseNameList() const { return phase_name_list_; };
+    WeaklyCompressibleFluid &getPurePhaseByName(const std::string &phase_name);
+    WeaklyCompressibleMultiSpecies &getMultiSpeciesPhaseByName(const std::string &phase_name);
     DiscreteVariable<Real> *dvVolumeFraction() const { return dv_phi_list_; };
     UnsignedInt NumberOfMixtures() const;
 

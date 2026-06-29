@@ -118,6 +118,7 @@ void WeaklyCompressibleMultiPhase::addPurePhases(const NamesAndDensities &pure_p
     for (const auto &pure_phase : pure_phases)
     {
         phase_name_list_.push_back(pure_phase.first);
+        pure_phase_name_list_.push_back(pure_phase.first);
         pure_phase_list_.push_back(fluid_ptrs_.createPtr<WeaklyCompressibleFluid>(
             pure_phase.second, c0_));
     }
@@ -136,9 +137,39 @@ void WeaklyCompressibleMultiPhase::addMultiSpeciesPhases(
     for (const auto &multi_species_phase : multi_species_phases)
     {
         phase_name_list_.push_back(multi_species_phase.first);
+        multi_species_phase_name_list_.push_back(multi_species_phase.first);
         multi_species_phase_list_.push_back(fluid_ptrs_.createPtr<WeaklyCompressibleMultiSpecies>(
             multi_species_phase.first, multi_species_phase.second, c0_));
     }
+}
+//=================================================================================================//
+WeaklyCompressibleFluid &WeaklyCompressibleMultiPhase::getPurePhaseByName(const std::string &phase_name)
+{
+    for (size_t k = 0; k != pure_phase_list_.size(); ++k)
+    {
+        if (pure_phase_name_list_[k] == phase_name)
+        {
+            return *pure_phase_list_[k];
+        }
+    }
+    std::cout << "\n Error in WeaklyCompressibleMultiPhase::getPurePhaseByName :"
+              << " Cannot find the pure phase with name " << phase_name << " ! \n ";
+    exit(1);
+}
+//=================================================================================================//
+WeaklyCompressibleMultiSpecies &WeaklyCompressibleMultiPhase::getMultiSpeciesPhaseByName(
+    const std::string &phase_name)
+{
+    for (size_t k = 0; k != multi_species_phase_list_.size(); ++k)
+    {
+        if (multi_species_phase_name_list_[k] == phase_name)
+        {
+            return *multi_species_phase_list_[k];
+        }
+    }
+    std::cout << "\n Error in WeaklyCompressibleMultiPhase::getMultiSpeciesPhaseByName :"
+              << " Cannot find the multi-species phase with name " << phase_name << " ! \n ";
+    exit(1);
 }
 //=================================================================================================//
 UnsignedInt WeaklyCompressibleMultiPhase::NumberOfMixtures() const
