@@ -237,8 +237,12 @@ return_data run_fsi2()
         {
             body_.generateParticles<ObserverParticles>(observation_locations);
             contact_relation_ = std::make_unique<ContactRelation>(body_, contact_bodies);
-            InteractionDynamics<CorrectInterpolationKernelWeights>{*contact_relation_}.exec();
             write_displacement_ = std::make_unique<ObservedQuantityRecording<Vec2d>>("Displacement", *contact_relation_);
+        }
+
+        void correct_kernel()
+        {
+            InteractionDynamics<CorrectInterpolationKernelWeights>{*contact_relation_}.exec();
         }
     };
     std::vector<std::unique_ptr<BeamObserver>> beam_observers;
@@ -281,6 +285,8 @@ return_data run_fsi2()
     /** computing linear reproducing configuration for the insert body. */
     for (const auto &object : shell_objects)
         object->algs_->corrected_configuration_.exec();
+    for (const auto &beam_observer : beam_observers)
+        beam_observer->correct_kernel();
     //----------------------------------------------------------------------
     // initial relaxation of fluid body
     //----------------------------------------------------------------------
