@@ -3,8 +3,8 @@ using namespace SPH;
 
 // geometry
 const Real L = 1;
-const Vec3d domain_lower_bound(5 * L, 2.3 * L, 0 * L);
-const Vec3d domain_upper_bound(10 * L, 5.3 * L, 2.5 * L);
+const Vec3d domain_lower_bound(3 * L, 2 * L, 0 * L);
+const Vec3d domain_upper_bound(10 * L, 5.6 * L, 5 * L);
 const auto plate_tip_pos = Vec3d(7 * L, 3.3 * L, 0 * L);
 const Real plate_width = L;
 const Real plate_height = L;
@@ -17,7 +17,7 @@ const Real plate_thickness = 0.01 * L;
 const Real rho0_f = 1.0;
 const Real U_f = 5.48;
 const Real Re = 200;
-const Real mu_f = Re / (rho0_f * U_f * L);
+const Real mu_f = rho0_f * U_f * L / Re;
 const Real c_f = 10.0 * U_f;
 
 // solid
@@ -28,7 +28,7 @@ const Real poisson = 0.32;         /**< Poisson ratio.*/
 // Cycle
 const Real flow_init_time = 0.5;
 const Real fsi_start_time = 2.0;
-const Real end_time = 11.0;
+const Real end_time = fsi_start_time + 9.0;
 
 // Shell structure
 namespace SPH
@@ -101,13 +101,35 @@ class ShellFluidMixtureMass : public LocalDynamics
     }
 };
 
-struct FreeStreamVelocity
+struct LeftInflowPressure
+{
+    template <class BoundaryConditionType>
+    explicit LeftInflowPressure(BoundaryConditionType &) {}
+
+    Real operator()(Real p, Real)
+    {
+        return p;
+    }
+};
+
+struct RightInflowPressure
+{
+    template <class BoundaryConditionType>
+    explicit RightInflowPressure(BoundaryConditionType &) {}
+
+    Real operator()(Real p, Real)
+    {
+        return p;
+    }
+};
+
+struct InflowVelocity
 {
     Real u_ref_ = U_f;
     Real t_ref_ = flow_init_time;
 
     template <class BoundaryConditionType>
-    explicit FreeStreamVelocity(BoundaryConditionType &) {}
+    explicit InflowVelocity(BoundaryConditionType &) {}
 
     Vecd operator()(Vecd &, Vecd &, Real current_time)
     {
@@ -209,3 +231,97 @@ inline void relax_solid(RealBody &body, BaseInnerRelation &inner)
     std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
     write_particle_reload_files.writeToFile(0);
 }
+
+namespace SPH
+{
+class FreeSlipWall;
+
+namespace fluid_dynamics
+{
+inline Vecd get_slip_vel(const Vec3d &v_i, const Vec3d &v_k, const Vec3d &n_k)
+{
+    Vecd v_n = v_i.dot(n_k) * n_k;
+    Vecd v_t = v_i - v_n;
+    Vecd v_n_wall = 2 * v_k.dot(n_k) * n_k - v_n;
+    return v_t + v_n_wall;
+}
+
+template <class RiemannSolverType>
+class Integration2ndHalf<Contact<FreeSlipWall>, RiemannSolverType>
+    : public BaseIntegrationWithWall
+{
+  private:
+    RiemannSolverType riemann_solver_;
+
+  public:
+    explicit Integration2ndHalf(BaseContactRelation &wall_contact_relation)
+        : BaseIntegrationWithWall(wall_contact_relation),
+          riemann_solver_(this->fluid_, this->fluid_) {};
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Real density_change_rate = 0.0;
+        Vecd p_dissipation = Vecd::Zero();
+        for (size_t k = 0; k < contact_configuration_.size(); ++k)
+        {
+            const Vecd *vel_ave_k = this->wall_vel_ave_[k];
+            const Vecd *n_k = this->wall_n_[k];
+            const Real *wall_Vol_k = this->wall_Vol_[k];
+            Neighborhood &wall_neighborhood = (*this->contact_configuration_[k])[index_i];
+            for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = wall_neighborhood.j_[n];
+                Vecd &e_ij = wall_neighborhood.e_ij_[n];
+                Real dW_ijV_j = wall_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
+
+                Vecd face_to_fluid_n = SGN(e_ij.dot(n_k[index_j])) * n_k[index_j];
+
+                Vecd vel_j_in_wall = get_slip_vel(this->vel_[index_i], vel_ave_k[index_j], n_k[index_j]);
+                density_change_rate += (this->vel_[index_i] - vel_j_in_wall).dot(e_ij) * dW_ijV_j;
+                Real u_jump = 2.0 * (this->vel_[index_i] - vel_ave_k[index_j]).dot(face_to_fluid_n);
+                p_dissipation += this->riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * face_to_fluid_n;
+            }
+        }
+        this->drho_dt_[index_i] += density_change_rate * this->rho_[index_i];
+        this->force_[index_i] += p_dissipation * this->Vol_[index_i];
+    }
+};
+
+template <typename ViscosityType, class KernelCorrectionType>
+class ViscousForce<Contact<FreeSlipWall>, ViscosityType, KernelCorrectionType>
+    : public BaseViscousForceWithWall
+{
+  private:
+    ViscosityType mu_;
+    KernelCorrectionType kernel_correction_;
+
+  public:
+    explicit ViscousForce(BaseContactRelation &wall_contact_relation)
+        : BaseViscousForceWithWall(wall_contact_relation),
+          mu_(particles_), kernel_correction_(particles_) {}
+    inline void interaction(size_t index_i, Real dt = 0.0)
+    {
+        Vecd force = Vecd::Zero();
+        for (size_t k = 0; k < contact_configuration_.size(); ++k)
+        {
+            const Vecd *vel_ave_k = wall_vel_ave_[k];
+            const Real *wall_Vol_k = wall_Vol_[k];
+            const Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+            for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+            {
+                size_t index_j = contact_neighborhood.j_[n];
+                Real r_ij = contact_neighborhood.r_ij_[n];
+                const Vecd &e_ij = contact_neighborhood.e_ij_[n];
+
+                Vec3d vel_wall = get_slip_vel(vel_[index_i], vel_ave_k[index_j], wall_n_[k][index_j]);
+                Vecd vel_derivative = (vel_[index_i] - vel_wall) /
+                                      (r_ij + 0.01 * smoothing_length_);
+                force += 2.0 * e_ij.dot(kernel_correction_(index_i) * e_ij) * mu_(index_i, index_i) *
+                         vel_derivative * contact_neighborhood.dW_ij_[n] * wall_Vol_k[index_j];
+            }
+        }
+
+        viscous_force_[index_i] += force * Vol_[index_i];
+    }
+};
+} // namespace fluid_dynamics
+} // namespace SPH

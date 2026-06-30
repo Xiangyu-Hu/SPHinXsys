@@ -5,18 +5,17 @@
  * @author Xiangyu Hu,Shuoguo Zhang
  */
 #include "test_3d_flipping_L_plate.h" // case file to setup the test case
+#include "bidirectional_buffer.h"
 #include "density_correction.h"
 #include "density_correction.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
-#include "pressure_boundary.h"
-#include <unsupported/Eigen/Splines>
 
 void run_fsi2(size_t res_factor = 1, size_t ref_factor = 1);
 
 int main(int ac, char *av[])
 {
-    run_fsi2(1, 1);
+    run_fsi2(6, 1);
 }
 //----------------------------------------------------------------------
 void run_fsi2(size_t res_factor, size_t ref_factor)
@@ -24,7 +23,7 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
     bool run_relaxation = true;
     bool reload_particles = false;
 
-    const Real dp_f = plate_y / (4.0 * Real(res_factor));
+    const Real dp_f = plate_y / Real(res_factor);
     const Real dp_s = dp_f / Real(ref_factor);
     std::cout << "dp_f = " << dp_f << ", dp_s = " << dp_s << std::endl;
     std::cout << "dp_shell/thickness = " << dp_s / plate_thickness << std::endl;
@@ -46,23 +45,30 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
     auto bbox_fluid = fluid_shape->getBounds();
 
     // wall shape
-    // only create the lower wall
     std::cout << "Creating wall shape ... " << std::endl;
-    auto wall_shape = makeShared<ComplexShape>("wall");
     auto wall_halfsize = Vec3d(fluid_halfsize.x() + wall_thickness, fluid_halfsize.y() + wall_thickness, 0.5 * wall_thickness);
+
+    // create the lower wall
+    auto lower_wall_shape = makeShared<ComplexShape>("lower_wall");
     auto wall_lower_translation = Vec3d(fluid_translation.x(), fluid_translation.y(), domain_lower_bound.z() - 0.5 * wall_thickness);
-    wall_shape->add<GeometricShapeBox>(Transform(wall_lower_translation), wall_halfsize);
+    lower_wall_shape->add<GeometricShapeBox>(Transform(wall_lower_translation), wall_halfsize);
     // subtract the plate base from the wall
     Vec3d plate_base_halfsize = 0.5 * Vec3d(dp_s, plate_y, wall_thickness);
     Vec3d plate_base_translation = plate_tip_pos + 0.5 * Vec3d(0, plate_y, -wall_thickness);
-    wall_shape->subtract<GeometricShapeBox>(Transform(plate_base_translation), plate_base_halfsize);
+    lower_wall_shape->subtract<GeometricShapeBox>(Transform(plate_base_translation), plate_base_halfsize);
+    auto bbox_lower_wall = lower_wall_shape->getBounds();
+
+    // create the upper wall
+    auto upper_wall_shape = makeShared<ComplexShape>("upper_wall");
+    auto wall_upper_translation = Vec3d(fluid_translation.x(), fluid_translation.y(), domain_upper_bound.z() + 0.5 * wall_thickness);
+    upper_wall_shape->add<GeometricShapeBox>(Transform(wall_upper_translation), wall_halfsize);
     std::cout << "Creating wall shape - done. " << std::endl;
-    auto bbox_wall = wall_shape->getBounds();
+    auto bbox_upper_wall = upper_wall_shape->getBounds();
 
     // shell
     StdVec<Vec3d> positions_shell;
     {
-        Real z = bbox_wall.lower_.z() + 0.5 * dp_s;
+        Real z = bbox_lower_wall.lower_.z() + 0.5 * dp_s;
         while (z < plate_z)
         {
             Real y = 0.5 * dp_s;
@@ -90,7 +96,7 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
     //----------------------------------------------------------------------
     //	Build up SPHSystem and IO environment.
     //----------------------------------------------------------------------
-    auto bbox = bbox_fluid.add(bbox_wall);
+    auto bbox = bbox_fluid.add(bbox_lower_wall).add(bbox_upper_wall);
     SPHSystem sph_system(bbox, dp_f);
     sph_system.setRunParticleRelaxation(run_relaxation); // Tag for run particle relaxation for body-fitted distribution
     sph_system.setReloadParticles(reload_particles);     // Tag for computation with save particles distribution
@@ -103,17 +109,30 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
     fluid_body.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
-    SolidBody wall_boundary(sph_system, wall_shape);
-    wall_boundary.defineAdaptation<SPHAdaptation>(1.15, dp_f / dp_wall);
-    wall_boundary.defineBodyLevelSetShape();
-    wall_boundary.defineMatterMaterial<Solid>();
+    SolidBody wall_lower_boundary(sph_system, lower_wall_shape);
+    wall_lower_boundary.defineAdaptation<SPHAdaptation>(1.15, dp_f / dp_wall);
+    wall_lower_boundary.defineBodyLevelSetShape();
+    wall_lower_boundary.defineMatterMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.Name())
-        : wall_boundary.generateParticles<BaseParticles, Lattice>();
+        ? wall_lower_boundary.generateParticles<BaseParticles, Reload>(wall_lower_boundary.Name())
+        : wall_lower_boundary.generateParticles<BaseParticles, Lattice>();
+
+    SolidBody wall_upper_boundary(sph_system, upper_wall_shape);
+    wall_upper_boundary.defineAdaptation<SPHAdaptation>(1.15, dp_f / dp_wall);
+    wall_upper_boundary.defineBodyLevelSetShape();
+    wall_upper_boundary.defineMatterMaterial<Solid>();
+    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
+        ? wall_upper_boundary.generateParticles<BaseParticles, Reload>(wall_upper_boundary.Name())
+        : wall_upper_boundary.generateParticles<BaseParticles, Lattice>();
+
     // run relaxation
-    InnerRelation wall_boundary_inner(wall_boundary);
+    InnerRelation wall_lower_boundary_inner(wall_lower_boundary);
+    InnerRelation wall_upper_boundary_inner(wall_upper_boundary);
     if (sph_system.RunParticleRelaxation())
-        relax_solid(wall_boundary, wall_boundary_inner);
+    {
+        relax_solid(wall_lower_boundary, wall_lower_boundary_inner);
+        relax_solid(wall_upper_boundary, wall_upper_boundary_inner);
+    }
 
     ShellObject shell_object(sph_system, "L_plate", positions_shell, normals_shell, dp_s, plate_thickness);
     //----------------------------------------------------------------------
@@ -123,13 +142,14 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     InnerRelation fluid_inner(fluid_body);
-    ContactRelation fluid_wall_contact(fluid_body, {&wall_boundary});
+    ContactRelation fluid_lower_wall_contact(fluid_body, {&wall_lower_boundary});
+    ContactRelation fluid_upper_wall_contact(fluid_body, {&wall_upper_boundary});
     ContactRelationFSI2 fluid_shell_contact(fluid_body, {&shell_object.body_});
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // and only used for update configuration.
     //----------------------------------------------------------------------
-    ComplexRelation fluid_body_complex(fluid_inner, {&fluid_wall_contact, &fluid_shell_contact});
+    ComplexRelation fluid_body_complex(fluid_inner, {&fluid_lower_wall_contact, &fluid_upper_wall_contact, &fluid_shell_contact});
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -142,7 +162,8 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
     // Then fluid dynamics and the corresponding coupling dynamics.
     // The coupling with multi-body dynamics will be introduced at last.
     //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_lower_boundary_normal_direction(wall_lower_boundary);
+    SimpleDynamics<NormalDirectionFromBodyShape> wall_upper_boundary_normal_direction(wall_upper_boundary);
     // Boundary condition for the shell structure
     auto clamp_id = [&, z_min = domain_lower_bound.z()]()
     {
@@ -161,39 +182,30 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
     //----------------------------------------------------------------------
     //	Algorithms of fluid dynamics.
     //----------------------------------------------------------------------
-    StartupAcceleration time_dependent_acceleration(U_f * Vec3d::UnitX(), flow_init_time);
-    SimpleDynamics<GravityForce<StartupAcceleration>> apply_gravity_force(fluid_body, time_dependent_acceleration);
-    InteractionWithUpdate<ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>, Contact<>>>> boundary_indicator(fluid_inner, fluid_wall_contact, fluid_shell_contact);
-    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> pressure_relaxation(fluid_inner, fluid_wall_contact, fluid_shell_contact);
-    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver>> density_relaxation(fluid_inner, fluid_wall_contact, fluid_shell_contact);
-    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::TransportVelocityCorrection<Inner<SPHAdaptation, NoLimiter>, Contact<Boundary>, Contact<Boundary>>, NoKernelCorrection, BulkParticles>> transport_correction(fluid_inner, fluid_wall_contact, fluid_shell_contact);
-    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<Wall>>, fluid_dynamics::FixedViscosity, NoKernelCorrection>> viscous_force(fluid_inner, fluid_wall_contact, fluid_shell_contact);
-    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationComplex<Inner<fluid_dynamics::NearFreeStream>, Contact<>, Contact<>>> update_fluid_density(fluid_inner, fluid_wall_contact, fluid_shell_contact);
+    InteractionDynamics<ComplexInteraction<NablaWV<Inner<>, Contact<>, Contact<>, Contact<>>>> kernel_summation(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
+    InteractionWithUpdate<ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>, Contact<>, Contact<>>>> boundary_indicator(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
+    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> pressure_relaxation(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
+    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<FreeSlipWall>, Contact<Wall>>, AcousticRiemannSolver>> density_relaxation(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
+    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::TransportVelocityCorrection<Inner<SPHAdaptation, NoLimiter>, Contact<Boundary>, Contact<Boundary>, Contact<Boundary>>, NoKernelCorrection, BulkParticles>> transport_correction(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
+    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<FreeSlipWall>, Contact<Wall>>, fluid_dynamics::FixedViscosity, NoKernelCorrection>> viscous_force(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
+    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_inner);
 
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(fluid_body, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(fluid_body);
 
     //-----------Inflow and periodic condition --------//
     Real buffer_length = 3 * dp_f;
-    auto emitter_halfsize = Vec3d(0.5 * buffer_length, 2 * fluid_halfsize.y(), 2 * fluid_halfsize.z());
-    auto emitter_translation = Vec3d(bbox_fluid.lower_.x() + 0.5 * buffer_length, fluid_translation.y(), fluid_translation.z());
-    OrientedBoxByParticle emitter(fluid_body, OrientedBox(xAxis, Transform(Vec3d(emitter_translation)), emitter_halfsize));
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, in_outlet_particle_buffer);
+    auto bidirectional_buffer_halfsize = Vec3d(0.5 * buffer_length, 2 * fluid_halfsize.y(), 2 * fluid_halfsize.z());
+    auto left_bidirectional_translation = Vec3d(bbox_fluid.lower_.x() + 0.5 * buffer_length, fluid_translation.y(), fluid_translation.z());
+    auto right_bidirectional_translation = Vec3d(bbox_fluid.upper_.x() - 0.5 * buffer_length, fluid_translation.y(), fluid_translation.z());
+    OrientedBoxByCell left_emitter(fluid_body, OrientedBox(xAxis, Transform(Vec3d(left_bidirectional_translation)), bidirectional_buffer_halfsize));
+    fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_bidirection_buffer(left_emitter, in_outlet_particle_buffer);
+    auto right_quaternion = Eigen::Quaternion<Real>::FromTwoVectors(Vec3d::UnitX(), -Vec3d::UnitX());
+    OrientedBoxByCell right_emitter(fluid_body, OrientedBox(xAxis, Transform(Rotation3d(right_quaternion), Vec3d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
+    fluid_dynamics::BidirectionalBuffer<RightInflowPressure> right_bidirection_buffer(right_emitter, in_outlet_particle_buffer);
 
-    Real inflow_length = 2 * buffer_length;
-    auto inflow_halfsize = Vec3d(0.5 * inflow_length, 2 * fluid_halfsize.y(), 2 * fluid_halfsize.z());
-    auto inflow_translation = Vec3d(bbox_fluid.lower_.x() + 0.5 * inflow_length, fluid_translation.y(), fluid_translation.z());
-    OrientedBoxByCell emitter_buffer(fluid_body, OrientedBox(xAxis, Transform(Vec3d(inflow_translation)), inflow_halfsize));
-    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>> inflow_condition(emitter_buffer);
-
-    auto disposer_halfsize = emitter_halfsize;
-    auto disposer_translation = Vec3d(bbox_fluid.upper_.x() - 0.5 * buffer_length, fluid_translation.y(), fluid_translation.z());
-    OrientedBoxByCell disposer(fluid_body, OrientedBox(xAxis, Transform(Vec3d(disposer_translation)), disposer_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
-
-    SimpleDynamics<fluid_dynamics::FreeStreamVelocityCorrection<FreeStreamVelocity>> velocity_boundary_condition_constraint(fluid_body);
-    pressure_relaxation.post_processes_.push_back(&velocity_boundary_condition_constraint);
-    InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_inner);
+    InteractionWithUpdate<fluid_dynamics::BaseDensitySummationPressureComplex<Inner<>, Contact<>, Contact<>, Contact<>>> update_fluid_density(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
+    SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> inflow_velocity_condition(left_emitter);
 
     PeriodicAlongAxis periodic_along_y(fluid_body.getSPHBodyBounds(), yAxis);
     PeriodicConditionUsingCellLinkedList periodic_condition(fluid_body, periodic_along_y);
@@ -213,7 +225,7 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
     write_real_body_states.addToWrite<Real>(fluid_body, "Density");
     write_real_body_states.addToWrite<Real>(fluid_body, "Pressure");
     write_real_body_states.addToWrite<int>(fluid_body, "Indicator");
-    write_real_body_states.addToWrite<Vec3d>(wall_boundary, "NormalDirection");
+    write_real_body_states.addToWrite<int>(fluid_body, "BufferIndicator");
     write_real_body_states.addToWrite<Vec3d>(shell_object.body_, "NormalDirection");
     write_real_body_states.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_object.body_);
     //----------------------------------------------------------------------
@@ -223,8 +235,7 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
     StdVec<Vec3d> beam_observation_location = {plate_tip_pos + Vec3d(0.0, plate_width, plate_height)};
     beam_observer.generateParticles<ObserverParticles>(beam_observation_location);
     ContactRelation beam_observer_contact(beam_observer, {&shell_object.body_});
-    InteractionDynamics<CorrectInterpolationKernelWeights>{beam_observer_contact}.exec();
-    ObservedQuantityRecording<Vec3d> write_tip_displacement("Displacement", beam_observer_contact);
+    ObservedQuantityRecording<Vec3d> write_tip_displacement("Position", beam_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -238,10 +249,16 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
     sph_system.initializeSystemConfigurations();
     // buffer and surface
     boundary_indicator.exec();
+    left_bidirection_buffer.tag_buffer_particles.exec();
+    right_bidirection_buffer.tag_buffer_particles.exec();
+    left_bidirection_buffer.deletion.exec();
+    right_bidirection_buffer.deletion.exec();
     /** computing surface normal direction for the wall. */
-    wall_boundary_normal_direction.exec();
+    wall_lower_boundary_normal_direction.exec();
+    wall_upper_boundary_normal_direction.exec();
     /** computing linear reproducing configuration for the insert body. */
     shell_object.algs_->corrected_configuration_.exec();
+    InteractionDynamics<CorrectInterpolationKernelWeights>{beam_observer_contact}.exec();
     //----------------------------------------------------------------------
     // initial relaxation of fluid body
     //----------------------------------------------------------------------
@@ -257,13 +274,19 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
             relaxation_fluid_itr++;
 
             // first do injection for all buffers
-            emitter_inflow_injection.exec();
-            disposer_outflow_deletion.exec();
+            left_bidirection_buffer.injection.exec();
+            right_bidirection_buffer.injection.exec();
+            // then do deletion for all buffers
+            left_bidirection_buffer.deletion.exec();
+            right_bidirection_buffer.deletion.exec();
 
             periodic_condition.bounding_.exec();
             fluid_body.updateCellLinkedList();
             periodic_condition.update_cell_linked_list_.exec();
             fluid_body_complex.updateConfiguration();
+
+            left_bidirection_buffer.tag_buffer_particles.exec();
+            right_bidirection_buffer.tag_buffer_particles.exec();
         }
         std::cout << "Fluid relaxation finished !" << std::endl;
     };
@@ -298,13 +321,12 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
             /** Integrate time (loop) until the next output time. */
             while (integration_time < output_interval)
             {
-                apply_gravity_force.exec();
                 Real Dt = get_fluid_advection_time_step_size.exec();
                 Real dt = 0;
                 Real dt_s = 0;
                 if (Dt < Dt_ref / 20.0)
                     throw std::runtime_error("Error: The fluid advection time step size is too small!");
-                boundary_indicator.exec();
+
                 update_fluid_density.exec();
                 viscous_force.exec();
                 transport_correction.exec();
@@ -328,7 +350,8 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
                     pressure_relaxation.exec(dt);
 
                     // Boundary conditions
-                    inflow_condition.exec();
+                    kernel_summation.exec();
+                    inflow_velocity_condition.exec();
 
                     if (physical_time > fsi_start_time)
                     {
@@ -352,9 +375,6 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
                             dt_s = SMIN(dt_s, dt - dt_s_sum);
                             shell_object.algs_->stress_relaxation_first_half_.exec(dt_s);
                             shell_constraint.exec();
-                            // shell_object.algs_->shell_position_damping_.exec(dt_s);
-                            // shell_object.algs_->shell_rotation_damping_.exec(dt_s);
-                            // shell_constraint.exec();
                             shell_object.algs_->stress_relaxation_second_half_.exec(dt_s);
                             dt_s_sum += dt_s;
                         }
@@ -371,14 +391,19 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
                     std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                               << physical_time
                               << "	Dt = " << Dt << "	dt = " << dt
-                              << "	dt / dt_s = " << dt_s
+                              << "	dt_s = " << dt_s
                               << "\n";
                 }
                 number_of_iterations++;
 
                 /** Water block configuration and periodic condition. */
-                emitter_inflow_injection.exec();
-                disposer_outflow_deletion.exec();
+                // first do injection for all buffers
+                left_bidirection_buffer.injection.exec();
+                right_bidirection_buffer.injection.exec();
+                // then do deletion for all buffers
+                left_bidirection_buffer.deletion.exec();
+                right_bidirection_buffer.deletion.exec();
+
                 periodic_condition.bounding_.exec();
                 if (number_of_iterations % 100 == 0 && number_of_iterations != 1)
                 {
@@ -392,6 +417,15 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
                 }
                 fluid_body_complex.updateConfiguration();
                 shell_fluid_algorithms.contact_relation_.updateConfiguration();
+
+                boundary_indicator.exec();
+                left_bidirection_buffer.tag_buffer_particles.exec();
+                right_bidirection_buffer.tag_buffer_particles.exec();
+
+                TickCount t2 = TickCount::now();
+                write_tip_displacement.writeToFile();
+                TickCount t3 = TickCount::now();
+                interval += t3 - t2;
             }
 
             TickCount t2 = TickCount::now();
