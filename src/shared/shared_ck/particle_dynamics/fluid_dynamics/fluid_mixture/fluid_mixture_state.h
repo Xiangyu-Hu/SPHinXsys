@@ -27,8 +27,8 @@
  * @author	Xiangyu Hu
  */
 
-#ifndef FLUID_MULTI_SPECIES_H
-#define FLUID_MULTI_SPECIES_H
+#ifndef FLUID_MIXTURE_STATE_H
+#define FLUID_MIXTURE_STATE_H
 
 #include "base_fluid_dynamics.h"
 #include "weakly_compressible_fluid.h"
@@ -124,4 +124,4 @@ class UpdateReferenceDensity : public ReturnFunction<Real>
 };
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // FLUID_MULTI_SPECIES_H
+#endif // FLUID_MIXTURE_STATE_H
