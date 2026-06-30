@@ -39,28 +39,25 @@ namespace SPH
 template <class DynamicsIdentifier, typename AssignmentFunctionType>
 class VariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
 {
-    using DataType = typename AssignmentFunctionType::ReturnType;
     using Assign = typename AssignmentFunctionType::ComputingKernel;
 
   public:
     template <typename... Args>
-    VariableAssignment(DynamicsIdentifier &identifier, const std::string &variable_name, Args &&...args);
-    virtual ~VariableAssignment(){};
+    VariableAssignment(DynamicsIdentifier &identifier, Args &&...args);
+    virtual ~VariableAssignment() {};
 
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(UnsignedInt index_i, Real dt = 0.0);
+        void update(UnsignedInt index_i, Real dt = 0.0) { assign_(index_i); };
 
       protected:
-        DataType *variable_;
         Assign assign_;
     };
 
   protected:
-    DiscreteVariable<DataType> *dv_variable_;
     AssignmentFunctionType assignment_method_;
 };
 
@@ -75,51 +72,47 @@ class SpatialDistribution<DistributionType>
 
   public:
     template <typename... Args>
-    SpatialDistribution(BaseParticles *particles, Args &&...args)
-        : dv_pos_(particles->template getVariableByName<Vecd>("Position")),
-          distribution_(std::forward<Args>(args)...){};
+    SpatialDistribution(BaseParticles *particles, const std::string &variable_name, Args &&...args);
 
     class ComputingKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
-              distribution_(encloser.distribution_){};
-
-        DataType operator()(UnsignedInt index_i) { return distribution_(pos_[index_i]); };
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void operator()(UnsignedInt index_i) { variable_[index_i] = distribution_(pos_[index_i]); };
 
       protected:
-        Vecd *pos_;
+        DataView<DataType> variable_;
+        DataView<Vecd> pos_;
         DistributionType distribution_;
     };
 
   protected:
+    DiscreteVariable<DataType> *dv_variable_;
     DiscreteVariable<Vecd> *dv_pos_;
     DistributionType distribution_;
 };
 
 template <typename DataType>
-class ConstantValue : public ReturnFunction<DataType>
+class ConstantValue
 {
   public:
-    ConstantValue(BaseParticles *particles, DataType constant_value)
-        : constant_value_(constant_value){};
+    ConstantValue(BaseParticles *particles, const std::string &variable_name, DataType constant_value);
 
     class ComputingKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : constant_value_(encloser.constant_value_){};
-
-        DataType operator()(UnsignedInt index_i) { return constant_value_; };
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void operator()(UnsignedInt index_i) { variable_[index_i] = constant_value_; };
 
       protected:
+        DataView<DataType> variable_;
         DataType constant_value_;
     };
 
   protected:
+    DiscreteVariable<DataType> *dv_variable_;
     DataType constant_value_;
 };
 } // namespace SPH

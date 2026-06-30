@@ -43,26 +43,6 @@ void EmitterInflowConditionCK<OrientedBoxPartType, ConditionFunction>::
     vel_[index_i] = transform.xformFrameVecToBase(frame_velocity);
 }
 //=================================================================================================//
-template <class DynamicsIdentifier, typename ConditionType>
-template <typename... Args>
-SupplementaryEmitterCondition<DynamicsIdentifier, ConditionType>::
-    SupplementaryEmitterCondition(DynamicsIdentifier &dynamics_identifier, Args &&...args)
-    : BaseLocalDynamics<DynamicsIdentifier>(dynamics_identifier),
-      condition_method_(this->particles_, std::forward<Args>(args)...) {}
-//=================================================================================================//
-template <class DynamicsIdentifier, typename ConditionType>
-template <class ExecutionPolicy, class EncloserType>
-SupplementaryEmitterCondition<DynamicsIdentifier, ConditionType>::UpdateKernel::
-    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : condition_(ex_policy, encloser.condition_method_) {}
-//=================================================================================================//
-template <class DynamicsIdentifier, typename ConditionType>
-void SupplementaryEmitterCondition<DynamicsIdentifier, ConditionType>::
-    UpdateKernel::update(size_t index_i, Real dt)
-{
-    condition_(index_i);
-}
-//=================================================================================================//
 template <typename OrientedBoxPartType>
 EmitterInflowInjectionCK<OrientedBoxPartType>::
     EmitterInflowInjectionCK(OrientedBoxPartType &oriented_box_part)
