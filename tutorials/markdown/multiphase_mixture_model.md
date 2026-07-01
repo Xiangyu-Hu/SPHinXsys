@@ -19,13 +19,13 @@ where $c_0$ is the artificial (reference) speed of sound and $\rho_0$ is the ref
 $$m = \rho_0 V_0$$
 which is dependent of reference density and initial element volume only.
 
-For each phase, the density $\rho_k$ can be computed from the phase volume fraction and the reference density as $\rho_k = \beta\phi_k \rho^{o}_k$. The momentum of each phase can be computed as $\mathbf{m}_k = \rho_k \mathbf{v}_k = \beta\phi_k \rho \mathbf{v}_k$. Note that one can obtain the mixture velocity from the phase velocity as $\mathbf{v} = \frac{1}{\rho} \sum_{k} \mathbf{m}_k$, which is consistent with the definition of the mass-averaged velocity.
+For each phase, the density $\rho_k$ can be computed from the phase volume fraction and the reference density as $\rho_k = \beta\phi_k \rho^{o}_k$. The momentum of each phase can be computed as $\mathbf{m}_k = \rho_k \mathbf{v}_k = \beta\phi_k \rho \mathbf{v}_k$. Note that one can obtain the mixture velocity from the phase velocity as $\mathbf{v} = \frac{1}{\rho} \sum_{k} \beta\phi_k \rho$, which is consistent with the definition of the mass-averaged velocity due to the cancellation of $\beta$.
 
 ### Governing equations
 Base on the above definitions, the governing equations of a Lagrangian volume element for the weakly compressible multiphase flow model,
 two set of equations can be derived, one is for the mixture, the other is for each phase. 
 
-For the mixture, one has the  the evolution of the compression ratio $\beta$, which is given as
+For the mixture, one has the evolution of the compression ratio $\beta$, which is given as
 $$\frac{d\beta}{dt} = -\beta \nabla \cdot \mathbf{v}$$
 where the material derivative is defined as $\frac{d}{dt} = \frac{\partial}{\partial t} + \mathbf{v} \cdot \nabla$. 
 For each phase, one first has the mass conservation equation, which is given as
@@ -33,3 +33,17 @@ $$\frac{d\phi_k}{dt} = - \nabla \cdot \left[\phi_k  ( \mathbf{v}_k - \mathbf{v})
 which describes the drift of each phase relative to the mixture. The momentum conservation equation for each phase can be written as
 $$\frac{d\mathbf{m}_k}{dt} = - \nabla \cdot \left[\mathbf{m}_k \otimes (\mathbf{v}_k - \mathbf{v})\right] - \phi_k \nabla p + \mathbf{f}_k + \nabla \cdot (\phi_k \bm{\tau}_k) $$
 where $\mathbf{f}_k$ and $\bm{\tau}_k$ is the body and shear forces acting on phase $k$.
+
+### SPH discretization
+
+We consider to use operator splitting to separate the drift and other terms. Therefore, the mass conservation and the drift contribution from the momentum conservation will hendeled seapartely.
+The discrization of conservation equation is gives as
+$$
+\frac{d}{dt}(m_{k, i}) = \sum_j
+\left[m_{k, i}  ( \mathbf{v}_{k, i} - \mathbf{v}_i) - m_{k, j}  ( \mathbf{v}_{k, j} - \mathbf{v}_j)\right] \nabla W_{ij}  V_iV_j
+$$
+where $m_{k, i} = \rho^{o}_k V^{0}_{i}\phi_{k_i}$ is the mass of phase $k$ in particle $i$.
+Similarly, the drift constribution of the momentum equation is discretized as
+$$\frac{d}{dt}(m_{k, i} \mathbf{v}_{k, i}) = \sum_j
+\left[\phi_{k, i}  ( \mathbf{v}_{k, i} - \mathbf{v}_i) - \phi_{k, j}  ( \mathbf{v}_{k, j} - \mathbf{v}_j)\right] \nabla W_{ij} V_iV_j.$$
+Note that, due to the definition of avarge velocity and volume fraction, these two discretizatons are full conservative, i.e. satisfied at each particle, even the discretization of the divegence discretization is using non-conservative from.
