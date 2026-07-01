@@ -28,7 +28,7 @@ const Real poisson = 0.32;         /**< Poisson ratio.*/
 // Cycle
 const Real flow_init_time = 0.5;
 const Real fsi_start_time = 2.0;
-const Real end_time = fsi_start_time + 9.0;
+const Real end_time = fsi_start_time + 2.0;
 
 // Shell structure
 namespace SPH
@@ -325,3 +325,10 @@ class ViscousForce<Contact<FreeSlipWall>, ViscosityType, KernelCorrectionType>
 };
 } // namespace fluid_dynamics
 } // namespace SPH
+
+struct result_data
+{
+    size_t fluid_particle_number = std::numeric_limits<size_t>::quiet_NaN();
+    size_t shell_particle_number = std::numeric_limits<size_t>::quiet_NaN();
+    Real computational_time = std::numeric_limits<Real>::quiet_NaN();
+};

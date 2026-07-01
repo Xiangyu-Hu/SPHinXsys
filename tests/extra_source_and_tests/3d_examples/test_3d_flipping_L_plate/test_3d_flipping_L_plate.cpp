@@ -11,20 +11,32 @@
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
 
-void run_fsi2(size_t res_factor = 1, size_t ref_factor = 1);
+result_data run_fsi2(size_t res_factor = 1, size_t res_ratio = 1);
 
 int main(int ac, char *av[])
 {
-    run_fsi2(6, 1);
+    std::vector<result_data> results;
+    results.reserve(3);
+    for (auto res_factor : {8})
+    {
+        auto data = run_fsi2(res_factor, 1);
+        results.push_back(data);
+    }
+    for (const auto &data : results)
+    {
+        std::cout << "Fluid particle number: " << data.fluid_particle_number << std::endl;
+        std::cout << "Shell particle number: " << data.shell_particle_number << std::endl;
+        std::cout << "Computational time: " << data.computational_time << std::endl;
+    }
 }
 //----------------------------------------------------------------------
-void run_fsi2(size_t res_factor, size_t ref_factor)
+result_data run_fsi2(size_t res_factor, size_t res_ratio)
 {
     bool run_relaxation = true;
     bool reload_particles = false;
 
     const Real dp_f = plate_y / Real(res_factor);
-    const Real dp_s = dp_f / Real(ref_factor);
+    const Real dp_s = dp_f / Real(res_ratio);
     std::cout << "dp_f = " << dp_f << ", dp_s = " << dp_s << std::endl;
     std::cout << "dp_shell/thickness = " << dp_s / plate_thickness << std::endl;
     std::cout << "U_f = " << U_f << std::endl;
@@ -98,6 +110,8 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
     //----------------------------------------------------------------------
     auto bbox = bbox_fluid.add(bbox_lower_wall).add(bbox_upper_wall);
     SPHSystem sph_system(bbox, dp_f);
+    auto &io_environment = IO::getEnvironment();
+    io_environment.resetOutputFolder("./output_" + std::to_string(res_factor) + "_" + std::to_string(res_ratio), true);
     sph_system.setRunParticleRelaxation(run_relaxation); // Tag for run particle relaxation for body-fitted distribution
     sph_system.setReloadParticles(reload_particles);     // Tag for computation with save particles distribution
     //----------------------------------------------------------------------
@@ -135,6 +149,10 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
     }
 
     ShellObject shell_object(sph_system, "L_plate", positions_shell, normals_shell, dp_s, plate_thickness);
+
+    std::cout << "fluid number: " << fluid_body.getBaseParticles().TotalRealParticles() << std::endl;
+    std::cout << "shell number: " << shell_object.body_.getBaseParticles().TotalRealParticles() << std::endl;
+    exit(0);
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -441,15 +459,19 @@ void run_fsi2(size_t res_factor, size_t ref_factor)
         TimeInterval tt;
         tt = t4 - t1 - interval;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+        return tt.seconds();
     };
 
+    result_data result{.fluid_particle_number = fluid_body.getBaseParticles().TotalRealParticles(), .shell_particle_number = shell_object.body_.getBaseParticles().TotalRealParticles()};
     try
     {
-        run_fsi();
+        auto computational_time = run_fsi();
+        result.computational_time = computational_time;
     }
     catch (const std::exception &e)
     {
         std::cerr << "An error occurred during the simulation: " << e.what() << std::endl;
         write_real_body_states.writeToFile();
     }
+    return result;
 }
