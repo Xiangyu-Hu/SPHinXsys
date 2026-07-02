@@ -6,44 +6,100 @@ In this work, we consider an incompressible multiphase flow using weakly compres
 We consider two different set of variables, one is for the mixture, the other is for each phase.
 
 For the mixture, we use compression ratio $\beta$ as a primary variable, which is defined as the ratio of the initial volume element to the current volume element, that is $\beta = \frac{V_0}{V}$, where $V_0$ is the initial volume and $V$ is the current volume.
-For each phase $k$, we use the phase volume fraction $\phi_k$ and the phase velocity $\mathbf{v}_k$ as the primary variables.
+For each phase $k$, we use the phase volume fraction $\phi_k$, 
+with $\sum_k \phi_k = 1$, and the phase velocity $\mathbf{v}_k$ as the primary variables.
 
 The mixture density $\rho$ can be computed from these primary variables as
 $$\rho = \beta\sum_{k} \phi_k \rho^{o}_k$$
-where $\rho_k = \beta\phi_k \rho^{o}_k$ is the reference density of the mixture.
+where $\rho_k = \beta\phi_k \rho^{o}_k$ and $\rho^{o}_k$ are the desnity and the reference density, respectively, of phase $k$. Also $\rho^{o} = \sum_{k} \phi_k \rho^{o}_k$ is the reference density of the mixture, which gives the mixture density of the initial volume element but with the present volume frection. 
 The mass-averaged velocity $\mathbf{v}$ is defined as
 $$\mathbf{v} = \frac{\sum_{k} \phi_k \rho^{o}_k \mathbf{v}_k}{\sum_{k} \phi_k \rho^{o}_k}$$
-where $\rho^{o}_k$ is the reference density of phase $k$. If we assume that all phases share the same speed of sound, then the pressure can be computed from the mixture density using the equation of state for the mixture, which is given by
-$$p =  \rho_0 c_0^2 (\beta - 1)$$
-where $c_0$ is the artificial (reference) speed of sound and $\rho_0$ is the reference density of the mixture, which can be computed as $\rho_0 = \sum_{k} \phi_k \rho^{o}_k$. Furthermore, we assume all phase share the same pressure, which is a common assumption for multiphase flow models. Note that, under the weakly compressible fluid model, $c_0$ is chosen so that the density variation is less or about 1\%.  Under this condition, we assume that the mass of the volume element $m$ as
+If we assume that all phases share the same speed of sound, then the pressure can be computed from the mixture density using the equation of state for the mixture, which is given by
+$$p =  \rho^{o} c^2 (\beta - 1)$$
+where $c$ is the artificial (reference) speed of sound. Furthermore, we assume all phase share the same pressure, which is a common assumption for multiphase flow models. Note that, under the weakly compressible fluid model, $c$ is chosen so that the density variation is less or about 1\%.  Under this condition, we assume that the mass of the volume element $m$ as
 $$m = \rho_0 V_0$$
 which is dependent of reference density and initial element volume only.
+Notr that this assumption does not assume constant mass in the element, as it changes in flow due to the change of volumn fractions, due to the difference betwen averge velcity and the volcity of each pahse (drift velocity).
 
-For each phase, the density $\rho_k$ can be computed from the phase volume fraction and the reference density as $\rho_k = \beta\phi_k \rho^{o}_k$. The momentum of each phase can be computed as $\mathbf{m}_k = \rho_k \mathbf{v}_k = \beta\phi_k \rho \mathbf{v}_k$. Note that one can obtain the mixture velocity from the phase velocity as $\mathbf{v} = \frac{1}{\rho} \sum_{k} \beta\phi_k \rho$, which is consistent with the definition of the mass-averaged velocity due to the cancellation of $\beta$.
+For each phase, the density $\rho_k$ can be computed from the phase volume fraction and the reference density as $\rho_k = \beta\phi_k \rho^{o}_k$. The momentum of each phase can be computed as $\mathbf{m}_k = \rho_k \mathbf{v}_k = \beta\phi_k \rho^{o}_k \mathbf{v}_k$. Note that one can obtain the mixture velocity from the phase velocity as $\mathbf{v} = \frac{1}{\rho} \sum_{k} \beta\phi_k \rho$, which is consistent with the definition of the mass-averaged velocity due to the cancellation of $\beta$.
 
 ### Governing equations
-Base on the above definitions, the governing equations of a Lagrangian volume element for the weakly compressible multiphase flow model,
-two set of equations can be derived, one is for the mixture, the other is for each phase. 
-
 For the mixture, one has the evolution of the compression ratio $\beta$, which is given as
 $$\frac{d\beta}{dt} = -\beta \nabla \cdot \mathbf{v}$$
 where the material derivative is defined as $\frac{d}{dt} = \frac{\partial}{\partial t} + \mathbf{v} \cdot \nabla$. 
+Base on the above definitions, the governing equations of a Lagrangian volume element for the weakly compressible multiphase flow model,
+two set of equations can be derived, one is for the mixture, the other is for each phase. 
+
 For each phase, one first has the mass conservation equation, which is given as
-$$\frac{d\phi_k}{dt} = - \nabla \cdot \left[\phi_k  ( \mathbf{v}_k - \mathbf{v})\right]$$
-which describes the drift of each phase relative to the mixture. The momentum conservation equation for each phase can be written as
-$$\frac{d\mathbf{m}_k}{dt} = - \nabla \cdot \left[\mathbf{m}_k \otimes (\mathbf{v}_k - \mathbf{v})\right] - \phi_k \nabla p + \mathbf{f}_k + \nabla \cdot (\phi_k \bm{\tau}_k) $$
-where $\mathbf{f}_k$ and $\bm{\tau}_k$ is the body and shear forces acting on phase $k$.
-
-### SPH discretization
-
-We consider to use operator splitting to separate the drift and other terms. Therefore, the mass conservation and the drift contribution from the momentum conservation will hendeled seapartely.
-The discrization of conservation equation is gives as
+$$\frac{d}{dt}\int_{V(t)}\rho_k\,dV + \int_{\partial V(t)}\mathbf{Q}_k\!\cdot\!\mathbf{n}\,dS = 0 $$
+which describes the drift of each phase relative to the mixture.
+Here, $\mathbf{Q}_k = \rho_k(\mathbf{v}_k-\mathbf{v})$ is the drift moementum. 
+The momentum conservation equation for each phase can be written as
+$$\frac{d}{dt}\int_{V(t)}\rho_k\mathbf{v}_k\,dV + \int_{\partial V(t)} \mathbf{T}_k\!\cdot\!\mathbf{n}\,dS
+= -\int_{V(t)}\phi_k\nabla p\,dV + \int_{V(t)}\mathbf{f}_k\,dV + \int_{\partial V(t)}(\phi_k\boldsymbol{\tau}_k)\!\cdot\!\mathbf{n}\,dS
 $$
-\frac{d}{dt}(m_{k, i}) = \sum_j
-\left[m_{k, i}  ( \mathbf{v}_{k, i} - \mathbf{v}_i) - m_{k, j}  ( \mathbf{v}_{k, j} - \mathbf{v}_j)\right] \nabla W_{ij}  V_iV_j
+where $\mathbf{T}_k = \mathbf{v}_k \otimes \mathbf{Q}_k$ is drift stree for phase $k$,  $\mathbf{f}_k$ and $\bm{\tau}_k$ is the body and shear forces acting on phase $k$.
+
+For the mixture, the mass conservation equation becomes
+$$\frac{d}{dt}\int_{V(t)}\rho\,dV = 0 $$
+which suggests that the mass within the movint control volume is invariant. Similarly, the momentum conservation equation becomes
+$$\frac{d}{dt}\int_{V(t)}\rho\mathbf{v}\,dV + \int_{\partial V(t)}\mathbf{T}\!\cdot\!\mathbf{n}\,dS
+= -\int_{V(t)}\nabla p\,dV + \int_{V(t)}\mathbf{f}\,dV + \int_{\partial V(t)}\boldsymbol{\tau}\!\cdot\!\mathbf{n}\,dS
 $$
-where $m_{k, i} = \rho^{o}_k V^{0}_{i}\phi_{k_i}$ is the mass of phase $k$ in particle $i$.
+where $\mathbf{T} = \sum_k\mathbf{T}_k$ is the mixture drift stress, $\mathbf{f} = \sum_k \mathbf{f}_k$ is gravity and $\boldsymbol{\tau} = \sum_k \phi_k \boldsymbol{\tau}_k$ is the mixture shear stress. Note that, compared to single phase flow, the drift stress is the extra contribution from the drift transport.
+
+### Boudary conditions of drift contributions
+
+For a free surface moves with the mixture velocity, 
+for each phase
+$$
+(\mathbf{v}_k - \mathbf{v})\cdot\mathbf{n} = 0
+\quad\Longrightarrow\quad
+\mathbf{Q}_k\cdot\mathbf{n} = 0,\quad
+\mathbf{T}_k\cdot\mathbf{n} = 0 .
+$$
+The drift momentum flux through the free surface is identically zero.
+
+Similairly, as a solid wall is impermeable: $\mathbf{v}_k\cdot\mathbf{n} = \mathbf{v}\cdot\mathbf{n} = 0$, therefore
+$$
+(\mathbf{v}_k - \mathbf{v})\cdot\mathbf{n} = 0
+\quad\Longrightarrow\quad
+\mathbf{Q}_k\cdot\mathbf{n} = 0,\quad
+\mathbf{T}_k\cdot\mathbf{n} = 0 .
+$$
+No drift momentum crosses the wall.
+
+### SPH discretization of drift contributions
+
+We consider to use a separated approach to handle the drift from other terms. Therefore, the mass conservation and the drift contribution from the momentum conservation will hendeled seapartely.
+The discrization of mass conservation equation is gives as
+$$
+\frac{d}{dt}(m_{k, i}) = - \sum_j
+\left(\mathbf{Q}_{k, i} + \mathbf{Q}_{k, j} \right) \nabla W_{ij}  V_iV_j$$
+where $m_{k, i} = \rho^{o}_k V^{0}_{i}\phi_{k_i}$ is the mass of phase $k$ of phase $k$ in particle $i$. Note that, here, we assume that the change of mass for one phase in the particle is purely due to the change of volume fraction. Note that the mixture mass conservation becomes
+$$\frac{d}{dt}(m_{i}) = 0$$
+suggesting invariation of the mass of each particle and the net contribution from drfit momentum is cancelled out. 
 Similarly, the drift constribution of the momentum equation is discretized as
-$$\frac{d}{dt}(m_{k, i} \mathbf{v}_{k, i}) = \sum_j
-\left[\phi_{k, i}  ( \mathbf{v}_{k, i} - \mathbf{v}_i) - \phi_{k, j}  ( \mathbf{v}_{k, j} - \mathbf{v}_j)\right] \nabla W_{ij} V_iV_j.$$
-Note that, due to the definition of avarge velocity and volume fraction, these two discretizatons are full conservative, i.e. satisfied at each particle, even the discretization of the divegence discretization is using non-conservative from.
+$$
+\left.\frac{d}{dt}(m_{k,i}\mathbf{v}_{k,i})\right|_{\mathrm{drift}}
+= -\sum_j \bigl( \mathbf{T}_{k,i} + \mathbf{T}_{k,j} \bigr)\!\cdot\!\nabla_i W_{ij}\, V_i V_j .
+$$
+For the mixture, the drift contibution becomes
+$$\left.\frac{d}{dt}(m_{i} \mathbf{v}_{i})\right|_{\mathrm{drift}} = -\sum_j
+\left(\mathbf{T}_{i} + \mathbf{T}_{j}\right) \nabla W_{ij} V_iV_j.$$
+suggesting non-vanishing drfit contribution.
+
+When the ambient phase (air or vacuum) is not modelled. Particles near the surface lack neighbours on the outside.
+The missing outside particles would contribute $\mathbf{T}_{k,\mathrm{outside}}=0$, so the truncation introduces
+no error.  No special boundary correction is needed; the conservative pairwise form automatically
+guarantees that no momentum flows through the surface.
+Similarly, if wall particles are used (for pressure and viscous terms), they are included in the drift summation with
+$$
+\mathbf{v}_{k,\mathrm{wall}} = \mathbf{v}_{\mathrm{wall}},\qquad
+\mathbf{Q}_{k,\mathrm{wall}} = \mathbf{0},\qquad
+\mathbf{T}_{k,\mathrm{wall}} = \mathbf{0}.
+$$
+This restores the full kernel support near the boundary without affecting conservation:
+fluid–wall pairs contribute zero net momentum exchange.
+Omitting wall particles is also physically consistent, but may slightly reduce the accuracy of the
+SPH divergence approximation.
