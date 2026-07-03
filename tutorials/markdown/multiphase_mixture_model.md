@@ -4,19 +4,20 @@ In this work, we consider an incompressible multiphase flow using weakly compres
 
 ### Primary and derived variables
 We consider two sets of variables, one is for the mixture, the other is for each phase.
-For the mixture, we use compression ratio $\beta$ as a primary variable, which is defined as the ratio of the initial volume element to the current volume element, that is $\beta = \frac{V_0}{V}$, where $V_0$ is the initial volume and $V$ is the current volume.
+For the mixture, we use compression ratio $\beta$ as a primary variable, which is defined as the ratio of the initial volume element to the current volume element, that is $\beta = \frac{V^{o}}{V}$, where $V^{o}$ is the initial volume and $V$ is the current volume.
 For each phase $k$, we use the phase volume fraction $\phi_k$, 
 with $\sum_k \phi_k = 1$, and the phase velocity $\mathbf{v}_k$ as the primary variables.
 
 The mixture density $\rho$ can be computed from these primary variables as
 $$\rho = \beta\sum_{k} \phi_k \rho^{o}_k$$
-where $\tilde{\rho}_k = \beta\phi_k \rho^{o}_k$ and $\rho^{o}_k$ are the partial desnity and the reference density, respectively, of phase $k$. Also $\rho^{o} = \sum_{k} \phi_k \rho^{o}_k$ is the reference density of the mixture, which gives the mixture density of the initial volume element but with the present volume fraction. 
+where $\tilde{\rho}_k = \beta\phi_k \rho^{o}_k$ and $\rho^{o}_k$ are the partial density and the reference density, respectively, of phase $k$. Also $\rho^{o} = \sum_{k} \phi^{o}_k \rho^{o}_k$ is the reference density of the mixture, 
+which is given by the initial mixture density with initial volume fractions $\phi^{o}_k$ in the initial volume element.
 The mass-averaged velocity $\mathbf{v}$ is defined as
 $$\mathbf{v} = \frac{\sum_{k} \phi_k \rho^{o}_k \mathbf{v}_k}{\sum_{k} \phi_k \rho^{o}_k}$$
 If we assume that all phases share the same speed of sound, then the pressure can be computed from the mixture density using the equation of state for the mixture, which is given by
 $$p =  \rho^{o} c^2 (\beta - 1)$$
 where $c$ is the artificial (reference) speed of sound. Furthermore, we assume all phase share the same pressure, which is a common assumption for multiphase flow models. Note that, under the weakly compressible fluid model, $c$ is chosen so that the density variation is less or about 1\%.  We assume that the initial mass of the volume element $m$ as
-$$m = \rho^{o} V_0$$
+$$m = \rho^{o} V^{o}$$
 which is dependent of reference density and initial element volume only. As will be shown latter the mass of the fluid element is an invariant under the present average velocity moving frame.
 
 For each phase, the partial density $\tilde{\rho}_k$ can be computed from the phase volume fraction and the reference density as $\tilde{\rho}_k = \beta\phi_k \rho^{o}_k$. Note that one can obtain the mixture velocity from the phase velocity as $\mathbf{v} = \frac{1}{\rho} \sum_{k} \beta\phi_k \rho$, which is consistent with the definition of the mass-averaged velocity due to the cancellation of $\beta$.
@@ -117,25 +118,27 @@ Then, we update the phase mass for each phase from the mass conservation equatio
 After this, we need a regularization approach so that 
 the volume fractions ensuring non-negative and unit sum of the volume fractions,
 under the condition of invariant mixture mass for each particle.
-To this end, we first clip the negative phase mass so that the phase mass $\tilde{m}_k$ is non-negative. 
-Then we assume the regularization factor $\delta_k = a m_k + b$, so the 
+To this end, we first clip the negative phase mass so that the phase mass $\tilde{m}_k$ is non-negative.
+Then we assume the regularization factor $\delta_k = a m_k + b$, so the
 regularized phase mass is given as $m_k = \tilde{m}_k (1 + \delta_k)$
 where $a$ and $b$ are the coefficients to be determined. 
-The regularization factor is determined by the following two conditions:
+Note that, the regularization factor ensures larger phase mass will have larger modification,
+which is consistent with the physical meaning of the regularization.
+The coefficients $a$ and $b$ is determined by the following two conditions:
 $$
 (1+ b)\sum_k \tilde{m}_k  + a \sum_k \tilde{m}^2_k  = m
 $$
 and 
 $$
-(1+ b)\sum_k \frac{\tilde{m}_k}{\rho^{o}_k}  + a \sum_k\frac{\tilde{m}^{2}_k}{\rho^{o}_k}  = V_{0}
+(1+ b)\sum_k \frac{\tilde{m}_k}{\rho^{o}_k}  + a \sum_k\frac{\tilde{m}^{2}_k}{\rho^{o}_k}  = V^{o}
 $$
 After obtain the coefficients $a$ and $b$ by solving the above two equations,
-we can update the phase volume fraction for each phase as $\phi_k = \frac{m_k}{\rho^{o}_k V_0}$.
+we can update the phase volume fraction for each phase as $\phi_k = \frac{m_k}{\rho^{o}_k V^{o}}$.
 
 Then, the momentum of each phase is updated from the momentum conservation equations.
 Note that, if the phase mass is clipped to zero, the corresponding momentum is also set to zero,
 and the clipped momentum $\mathbf{m}_{c}$ will be redistribute to other phases according the phase mass,
 that is, the incremental momentum of phase $k$ is
-$$\Delta \mathbf{m}_k = \frac{m_k \mathbf{m}^{c}}{\sum_{k} m_k} $$
+$$\Delta_k = \frac{m_k \mathbf{m}^{c}}{\sum_{k} m_k} $$
 
 Finally, we update the phase velocity for each phase and the mixture velocity.
