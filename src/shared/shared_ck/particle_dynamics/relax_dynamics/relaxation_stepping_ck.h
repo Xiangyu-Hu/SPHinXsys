@@ -143,7 +143,7 @@ class UpdateSmoothingLengthRatio : public BaseLocalDynamics<DynamicIdentifier>
         {
             Real local_spacing = local_spacing_(pos_[index_i]);
             h_ratio_[index_i] = reference_spacing_ / local_spacing;
-            Vol_[index_i] = math::pow(local_spacing, Dimensions);
+            Vol_[index_i] = math::pow(local_spacing, static_cast<Real>(Dimensions));
         };
 
       protected:

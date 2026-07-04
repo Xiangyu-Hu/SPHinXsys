@@ -76,7 +76,7 @@ class InflowVelocityPrescribed : public VelocityPrescribed<WeaklyCompressibleFlu
         Real y_centered = input_position[1];
         Real z_centered = input_position[2];
         Real r = std::sqrt(y_centered * y_centered + z_centered * z_centered);
-        Real u_steady = U_f_ * (1.0 - math::pow((2.0 * r / DH_), 2));
+        Real u_steady = U_f_ * (1.0 - math::pow((Real(2) * r / DH_), Real(2)));
         Real transient_factor = 1.0 - math::exp(-time / tau_);
         return u_steady * transient_factor;
     };

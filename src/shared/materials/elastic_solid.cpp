@@ -121,7 +121,7 @@ Matd NeoHookeanSolid::StressCauchy(Matd &almansi_strain, size_t index_i)
     Matd B = (-2.0 * almansi_strain + Matd::Identity()).inverse();
     Real J = sqrt(B.determinant());
     Matd cauchy_stress = 0.5 * K0_ * (J - 1.0 / J) * Matd::Identity() +
-                         G0_ * pow(J, -2.0 * OneOverDimensions - 1.0) *
+                         G0_ * math::pow(J, Real(-2.0 * OneOverDimensions - 1.0)) *
                              (B - OneOverDimensions * B.trace() * Matd::Identity());
     return cauchy_stress;
 }
@@ -136,7 +136,7 @@ Matd NeoHookeanSolidIncompressible::StressPK2(Matd &F, size_t index_i)
     Matd right_cauchy = F.transpose() * F;
     Real I_1 = right_cauchy.trace();       // first strain invariant
     Real I_3 = right_cauchy.determinant(); // first strain invariant
-    return G0_ * pow(I_3, -1.0 / 3.0) * (Matd::Identity() - 1.0 / 3.0 * I_1 * right_cauchy.inverse());
+    return G0_ * math::pow(I_3, Real(-1.0f / 3.0f)) * (Matd::Identity() - 1.0 / 3.0 * I_1 * right_cauchy.inverse());
 }
 //=================================================================================================//
 Matd NeoHookeanSolidIncompressible::
