@@ -136,7 +136,7 @@ Matd NeoHookeanSolidIncompressible::StressPK2(Matd &F, size_t index_i)
     Matd right_cauchy = F.transpose() * F;
     Real I_1 = right_cauchy.trace();       // first strain invariant
     Real I_3 = right_cauchy.determinant(); // first strain invariant
-    return G0_ * math::pow(I_3, Real(-1.0f / 3.0f)) * (Matd::Identity() - 1.0 / 3.0 * I_1 * right_cauchy.inverse());
+    return G0_ * math::pow(I_3, -Real(1) / Real(3)) * (Matd::Identity() - (Real(1) / Real(3)) * I_1 * right_cauchy.inverse());
 }
 //=================================================================================================//
 Matd NeoHookeanSolidIncompressible::
