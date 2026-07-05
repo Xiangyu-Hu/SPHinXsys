@@ -25,16 +25,17 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 2.0);
     cylinder.defineBodyLevelSetShape();
-    cylinder.defineMaterial<Solid>();
+    cylinder.defineMatterMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
+        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.Name())
         : cylinder.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
@@ -113,13 +114,13 @@ int main(int ac, char *av[])
     Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallNoRiemann> density_relaxation(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_fluid_density(water_block_inner, water_block_contact);
 
-    AlignedBoxByParticle emitter(water_block, AlignedBox(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
+    OrientedBoxByParticle emitter(water_block, OrientedBox(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer);
 
-    AlignedBoxByCell emitter_buffer(water_block, AlignedBox(xAxis, Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
+    OrientedBoxByCell emitter_buffer(water_block, OrientedBox(xAxis, Transform(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<FreeStreamVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
 
-    AlignedBoxByCell disposer(water_block, AlignedBox(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize));
+    OrientedBoxByCell disposer(water_block, OrientedBox(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
 
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);

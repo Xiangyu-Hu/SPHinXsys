@@ -79,7 +79,7 @@ class ExtrudeShape : public Shape
 
   public:
     explicit ExtrudeShape(BaseShapeType *base_shape, Real thickness)
-        : Shape("Extruded" + base_shape->getName()),
+        : Shape("Extruded" + base_shape->Name()),
           thickness_(thickness), thickness_sqr_(thickness * thickness),
           base_shape_(base_shape) {};
 
@@ -88,7 +88,7 @@ class ExtrudeShape : public Shape
         : Shape("Extruded"), thickness_(thickness), thickness_sqr_(thickness * thickness),
           base_shape_(base_shape_keeper_.template createPtr<BaseShapeType>(std::forward<Args>(args)...))
     {
-        name_ = "Extruded" + base_shape_->getName();
+        name_ = "Extruded" + base_shape_->Name();
     };
     virtual ~ExtrudeShape() {};
 

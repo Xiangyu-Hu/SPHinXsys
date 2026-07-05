@@ -96,11 +96,6 @@ void IOEnvironment::resetRestartFolder(const std::string &new_name, bool keep_ex
     {
         fs::create_directory(restart_folder_);
     }
-    else
-    {
-        fs::remove_all(restart_folder_);
-        fs::create_directory(restart_folder_);
-    }
 }
 //=================================================================================================//
 void IOEnvironment::resetReloadFolder(const std::string &new_name, bool keep_existing)
@@ -113,11 +108,6 @@ void IOEnvironment::resetReloadFolder(const std::string &new_name, bool keep_exi
     reload_folder_ = new_name;
     if (!fs::exists(reload_folder_))
     {
-        fs::create_directory(reload_folder_);
-    }
-    else
-    {
-        fs::remove_all(reload_folder_);
         fs::create_directory(reload_folder_);
     }
 }

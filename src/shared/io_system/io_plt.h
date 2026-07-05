@@ -75,7 +75,8 @@ class BodyStatesRecordingToPlt : public BodyStatesRecording
 
   protected:
     void writePltFileHeader(std::ofstream &output_file, DiscreteVariables &variables_to_write);
-    void writePltFileParticleData(std::ofstream &output_file, DiscreteVariables &variables_to_write, Vecd *position, size_t index);
+    void writePltFileParticleData(std::ofstream &output_file, DiscreteVariables &variables_to_write,
+                                  const Vecd &position, size_t index);
     virtual void writeWithFileName(const std::string &sequence) override;
 };
 

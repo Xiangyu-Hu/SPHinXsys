@@ -42,11 +42,11 @@ GeometricShapeBall cylinder_shape(insert_circle_center, insert_circle_radius, "C
 
 Vec2d emitter_halfsize = Vec2d(BW, 0.5 * DH);
 Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
-AlignedBox emitter_box(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize);
+OrientedBox emitter_box(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize);
 
 Vec2d disposer_halfsize = Vec2d(0.5 * BW, 0.75 * DH);
 Vec2d disposer_translation = Vec2d(DL, -0.25 * DH) + disposer_halfsize;
-AlignedBox disposer_box(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize);
+OrientedBox disposer_box(xAxis, Transform(Vec2d(disposer_translation)), disposer_halfsize);
 //----------------------------------------------------------------------
 //	Define adaptation
 //----------------------------------------------------------------------
@@ -203,22 +203,23 @@ int main(int ac, char *av[])
     auto &water_body = sph_system.addAdaptiveBody<FluidBody>(water_body_adaptation, water_body_shape);
     water_body.defineComponentLevelSetShape("OuterBoundary").writeLevelSet();
     sph_system.addShape<LevelSetShape>(water_body, refinement_region).writeLevelSet();
-    water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_body.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
-    water_body.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_body.getName())
+    water_body.generateParticlesWithReserve<BaseParticles, Reload>(inlet_particle_buffer, water_body.Name())
         .reloadExtraVariable<Real>("SmoothingLengthRatio");
     // //----------------------------------------------------------------------
     // //	Creating body parts.
     // //----------------------------------------------------------------------
-    auto &emitter = water_body.addBodyPart<AlignedBoxByParticle>(emitter_box);
-    emitter.writeShapeProxy();
-    auto &disposer = water_body.addBodyPart<AlignedBoxByCell>(disposer_box);
-    disposer.writeShapeProxy();
+    auto &emitter = water_body.addBodyPart<OrientedBoxByParticle>(emitter_box);
+    emitter.writeOrientedBoxToVtp();
+    auto &disposer = water_body.addBodyPart<OrientedBoxByCell>(disposer_box);
+    disposer.writeOrientedBoxToVtp();
 
     auto &cylinder = sph_system.addAdaptiveBody<SolidBody>(cylinder_adaptation, cylinder_shape);
     cylinder.defineBodyLevelSetShape().writeLevelSet();
-    cylinder.defineMaterial<Solid>();
-    cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
+    cylinder.defineMatterMaterial<Solid>();
+    cylinder.generateParticles<BaseParticles, Reload>(cylinder.Name())
         .reloadExtraVariable<Vecd>("NormalDirection");
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
@@ -267,9 +268,9 @@ int main(int ac, char *av[])
             .addPostContactInteraction(water_body_contact);
 
     auto &fluid_density_regularization =
-        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(water_body_inner)
+        main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(water_body_inner)
             .addPostContactInteraction(water_body_contact)
-            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeStream>(water_body);
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeStream>(water_body);
 
     auto &fluid_acoustic_step_1st_half =
         main_methods.addInteractionDynamicsOneLevel<
@@ -289,7 +290,7 @@ int main(int ac, char *av[])
             .addPostStateDynamics<ConstantConstraintCK, Vecd>(emitter, "Displacement", Vecd::Zero());
 
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_body, U_f);
-    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_body);
+    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(water_body);
 
     auto &fluid_viscous_force =
         main_methods.addInteractionDynamicsWithUpdate<
@@ -310,7 +311,7 @@ int main(int ac, char *av[])
     write_real_body_states.addToWrite<int>(water_body, "Indicator");
     write_real_body_states.addToWrite<Vecd>(cylinder, "NormalDirection");
     auto &fluid_observer_pressure = main_methods.addObserveRegression<
-        RegressionTestDynamicTimeWarping, Vecd>("Velocity", fluid_observer_contact);
+        RegressionTestDynamicTimeWarping, Vecd>(fluid_observer_contact, "Velocity");
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------

@@ -74,26 +74,9 @@ struct PlusUnsignedInt<ParallelPolicy>
 template <template <typename> class ContainerType>
 class UpdateSortableVariables
 {
-    typedef DataAssemble<UniquePtr, ContainerType> TemporaryVariables;
-
-    struct InitializeTemporaryVariables
-    {
-        template <typename DataType>
-        void operator()(UniquePtr<ContainerType<DataType>> &variable_ptr, UnsignedInt data_size)
-        {
-            variable_ptr = makeUnique<ContainerType<DataType>>("Temporary", data_size);
-        };
-    };
-
-    TemporaryVariables temp_variables_;
-    OperationOnDataAssemble<TemporaryVariables, InitializeTemporaryVariables> initialize_temp_variables_;
+    DataAssemble<UniquePtr, ContainerType> temp_variables_;
 
   public:
-    UpdateSortableVariables(UnsignedInt data_size) : initialize_temp_variables_()
-    {
-        initialize_temp_variables_(temp_variables_, data_size);
-    };
-
     template <class ExecutionPolicy, typename DataType>
     void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables,
                     ExecutionPolicy &ex_policy, UnsignedInt start_index, UnsignedInt end_index,
@@ -101,19 +84,45 @@ class UpdateSortableVariables
     {
         using ContainedDataType = typename ContainerType<DataType>::ContainedDataType;
         constexpr int type_index = DataTypeIndex<DataType>::value;
-        ContainedDataType *temp_data_field = std::get<type_index>(temp_variables_)->DelegatedData(ex_policy);
-
         UnsignedInt *index_permutation = dv_index_permutation->DelegatedData(ex_policy);
 
-        for (size_t k = 0; k != variables.size(); ++k)
+        if (!std::get<type_index>(temp_variables_))
         {
-            ContainedDataType *sorted_data_field = variables[k]->DelegatedData(ex_policy);
+            UnsignedInt total_size = 0;
+            for (UnsignedInt k = 0; k != variables.size(); ++k)
+            {
+                total_size = SMAX(total_size, variables[k]->getTotalSize());
+            }
+
+            std::get<type_index>(temp_variables_) =
+                makeUnique<ContainerType<DataType>>("Temporary", total_size);
+        }
+
+        for (UnsignedInt k = 0; k != variables.size(); ++k)
+        {
+            MultiEntryView<ContainedDataType> sorted_view =
+                variables[k]->DelegatedMultiEntryView(ex_policy);
+
+            MultiEntryView<ContainedDataType> temp_view(
+                std::get<type_index>(temp_variables_)->DelegatedData(ex_policy),
+                variables[k]->getWidth());
+
             generic_for(ex_policy, IndexRange(start_index, end_index),
-                        [=](size_t i)
-                        { temp_data_field[i] = sorted_data_field[i]; });
+                        [=](UnsignedInt i)
+                        {
+                            for (UnsignedInt entry = 0; entry != sorted_view.Width(); ++entry)
+                            {
+                                temp_view[i][entry] = sorted_view[i][entry];
+                            }
+                        });
             generic_for(ex_policy, IndexRange(start_index, end_index),
-                        [=](size_t i)
-                        { sorted_data_field[i] = temp_data_field[index_permutation[i]]; });
+                        [=](UnsignedInt i)
+                        {
+                            for (UnsignedInt entry = 0; entry != sorted_view.Width(); ++entry)
+                            {
+                                sorted_view[i][entry] = temp_view[index_permutation[i]][entry];
+                            }
+                        });
         }
     };
 };

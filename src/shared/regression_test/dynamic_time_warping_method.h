@@ -56,8 +56,8 @@ class RegressionTestDynamicTimeWarping : public RegressionTestTimeAverage<Observ
     {
         return std::abs(variable_a - variable_b);
     };
-    template <typename Variable>
-    Real calculatePNorm(const Variable &variable_a, const Variable variable_b)
+    template <typename DataType>
+    Real calculatePNorm(const DataType &variable_a, const DataType variable_b)
     {
         return (variable_a - variable_b).norm();
     };

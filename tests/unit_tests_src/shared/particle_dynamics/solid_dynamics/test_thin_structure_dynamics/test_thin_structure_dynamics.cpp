@@ -133,7 +133,7 @@ int main(int ac, char *av[])
 
     /** create a plate body. */
     SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
-    plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    plate_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles<SurfaceParticles, Plate>();
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&plate_body.getBaseParticles());
 

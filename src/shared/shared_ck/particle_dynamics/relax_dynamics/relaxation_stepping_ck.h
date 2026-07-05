@@ -79,11 +79,11 @@ class PositionRelaxationCK : public BaseLocalDynamics<DynamicIdentifier>
     using SmoothingLengthRatio = typename Adaptation::SmoothingLengthRatioType;
 
   public:
-    explicit PositionRelaxationCK(DynamicIdentifier &identfier)
-        : BaseLocalDynamics<DynamicIdentifier>(identfier),
+    explicit PositionRelaxationCK(DynamicIdentifier &identifier)
+        : BaseLocalDynamics<DynamicIdentifier>(identifier),
           pos_(this->particles_->template getVariableByName<Vecd>("Position")),
           residual_(this->particles_->template getVariableByName<Vecd>("KernelGradientIntegral")),
-          adaptation_(DynamicCast<Adaptation>(this, identfier.getSPHAdaptation())) {};
+          adaptation_(DynamicCast<Adaptation>(this, identifier.getSPHAdaptation())) {};
     virtual ~PositionRelaxationCK() {};
 
     class UpdateKernel
@@ -119,13 +119,13 @@ class UpdateSmoothingLengthRatio : public BaseLocalDynamics<DynamicIdentifier>
 
   public:
     template <typename... Args>
-    UpdateSmoothingLengthRatio(DynamicIdentifier &identfier, Args &&...args)
-        : BaseLocalDynamics<DynamicIdentifier>(identfier),
+    UpdateSmoothingLengthRatio(DynamicIdentifier &identifier, Args &&...args)
+        : BaseLocalDynamics<DynamicIdentifier>(identifier),
           dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
           dv_h_ratio_(this->particles_->template getVariableByName<Real>("SmoothingLengthRatio")),
           dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
-          local_spacing_method_(identfier.getAdaptation(), std::forward<Args>(args)...),
-          reference_spacing_(identfier.getAdaptation().ReferenceSpacing()){};
+          local_spacing_method_(identifier.getAdaptation(), std::forward<Args>(args)...),
+          reference_spacing_(identifier.getAdaptation().ReferenceSpacing()){};
     virtual ~UpdateSmoothingLengthRatio() {};
 
     class UpdateKernel

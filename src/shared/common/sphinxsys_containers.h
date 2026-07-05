@@ -83,7 +83,6 @@ class SpatialTemporal;
 //----------------------------------------------------------------------
 // Other type identifies
 //----------------------------------------------------------------------
-using MaterialVector = StdVec<BaseMaterial *>;
 using SPHBodyVector = StdVec<SPHBody *>;
 using RealBodyVector = StdVec<RealBody *>;
 using BodyPartVector = StdVec<BodyPart *>;

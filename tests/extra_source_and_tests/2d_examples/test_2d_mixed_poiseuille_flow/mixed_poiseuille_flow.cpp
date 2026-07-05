@@ -150,12 +150,13 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");
@@ -195,9 +196,9 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
 
-    AlignedBoxByCell left_emitter(water_block, AlignedBox(xAxis, Transform(Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize));
+    OrientedBoxByCell left_emitter(water_block, OrientedBox(xAxis, Transform(Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_bidirection_buffer(left_emitter, in_outlet_particle_buffer);
-    AlignedBoxByCell right_emitter(water_block, AlignedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
+    OrientedBoxByCell right_emitter(water_block, OrientedBox(xAxis, Transform(Rotation2d(Pi), Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<RightInflowPressure> right_bidirection_buffer(right_emitter, in_outlet_particle_buffer);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);

@@ -33,9 +33,10 @@ FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::InteractKernel::
       smoothing_length_(encloser.dv_smoothing_length_) {}
 //=================================================================================================//
 template <typename... Parameters>
+template <class DynamicsIdentifier>
 FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::
-    FreeSurfaceIndicationCK(Inner<Parameters...> &inner_relation)
-    : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>(inner_relation),
+    FreeSurfaceIndicationCK(DynamicsIdentifier &identifier)
+    : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>(identifier),
       dv_previous_surface_indicator_(
           this->particles_->template registerStateVariable<int>("PreviousSurfaceIndicator", 1))
 {
@@ -128,9 +129,10 @@ bool FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
 }
 //=================================================================================================//
 template <typename... Parameters>
+template <class DynamicsIdentifier>
 FreeSurfaceIndicationCK<Contact<Parameters...>>::
-    FreeSurfaceIndicationCK(Contact<Parameters...> &contact_relation)
-    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>(contact_relation) {}
+    FreeSurfaceIndicationCK(DynamicsIdentifier &identifier)
+    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>(identifier) {}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy>

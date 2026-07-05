@@ -10,13 +10,13 @@ namespace multi_species_continuum
 //=================================================================================================//
 GetSaturationTimeStepSize::GetSaturationTimeStepSize(SPHBody &sph_body)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
-      porous_solid_(DynamicCast<PorousMediaSolid>(this, particles_->getBaseMaterial())),
+      porous_solid_(DynamicCast<PorousMediaSolid>(this, sph_body_->getMatterMaterial())),
       smoothing_length_(sph_body.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 BasePorousMediaRelaxation::BasePorousMediaRelaxation(BaseInnerRelation &inner_relation)
     : LocalDynamics(inner_relation.getSPHBody()),
       DataDelegateInner(inner_relation),
-      porous_solid_(DynamicCast<PorousMediaSolid>(this, particles_->getBaseMaterial())),
+      porous_solid_(DynamicCast<PorousMediaSolid>(this, sph_body_->getMatterMaterial())),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(particles_->getVariableDataByName<Vecd>("Position")),
       vel_(particles_->registerStateVariableData<Vecd>("Velocity")),

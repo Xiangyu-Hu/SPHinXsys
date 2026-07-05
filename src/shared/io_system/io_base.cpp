@@ -53,18 +53,14 @@ void BodyStatesRecording::writeToFile(size_t iteration_step)
     writeWithFileName("ite_" + padValueWithZeros(iteration_step));
 };
 //=============================================================================================//
-RestartIO::RestartIO(SPHSystem &sph_system)
-    : BaseIO(sph_system), real_bodies_(sph_system.getRealBodies()),
+RestartIO::RestartIO(SPHSystem &sph_system, bool summary_enabled)
+    : BaseIO(sph_system), summary_enabled_(summary_enabled),
+      real_bodies_(sph_system.getRealBodies()),
       overall_file_path_(io_environment_.RestartFolder() + "/Restart_")
 {
     if (sph_system_.RestartStep() == 0)
     {
         io_environment_.resetForRestart();
-    }
-
-    for (size_t i = 0; i < real_bodies_.size(); ++i)
-    {
-        file_names_.push_back(io_environment_.RestartFolder() + "/" + real_bodies_[i]->getName() + "_rst_");
     }
 }
 //=============================================================================================//
@@ -86,10 +82,7 @@ void RestartIO::writeToFile(size_t iteration_step)
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
-        std::string body_name = real_bodies_[i]->getName();
-
-        std::cout << "\n Total real particles of body " << body_name
-                  << " written to restart: " << base_particles.TotalRealParticles() << "\n";
+        std::string body_name = real_bodies_[i]->Name();
 
         // Add a body element
         restart_xml.addNewElement(restart_xml.first_element_, "body");
@@ -101,11 +94,31 @@ void RestartIO::writeToFile(size_t iteration_step)
         restart_xml.setAttributeToElement(body_element, "name", body_name);
 
         // Write particles to this body element
-        base_particles.writeParticlesToXmlForRestart(restart_xml, body_element);
+        base_particles.writeParticlesToXml(restart_xml, body_element);
     }
 
     // Write the consolidated XML file
     restart_xml.writeToXmlFile(overall_filefullpath);
+
+    if (summary_enabled_)
+    {
+        reportRestartSummary(iteration_step);
+    }
+}
+//=============================================================================================//
+void RestartIO::reportRestartSummary(size_t restart_step)
+{
+    for (size_t i = 0; i < real_bodies_.size(); ++i)
+    {
+        BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
+        std::string body_name = real_bodies_[i]->Name();
+
+        std::cout << "Restart Information Summary:\n";
+        std::cout << "---------------------------------------------\n";
+        std::cout << "Total real particles of body " << body_name
+                  << " written to restart: " << base_particles.TotalRealParticles() << "\n";
+        std::cout << "---------------------------------------------\n";
+    }
 }
 //=============================================================================================//
 Real RestartIO::readRestartTime(size_t restart_step)
@@ -131,7 +144,7 @@ void RestartIO::readFromFile(size_t restart_step)
     // Iterate through all body elements in the XML
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
-        std::string body_name = real_bodies_[i]->getName();
+        std::string body_name = real_bodies_[i]->Name();
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
 
         // Find the body element by iterating through child elements
@@ -145,7 +158,7 @@ void RestartIO::readFromFile(size_t restart_step)
             if (name_attr != nullptr && std::string(name_attr) == body_name)
             {
                 found = true;
-                base_particles.readParticlesFromXmlForRestart(restart_xml, body_element);
+                base_particles.readParticlesFromXml(restart_xml, body_element);
                 std::cout << "\n Total real particles of body " << body_name
                           << " read from restart: " << base_particles.TotalRealParticles() << "\n";
                 break;
@@ -165,39 +178,46 @@ void RestartIO::readFromFile(size_t restart_step)
 }
 //=============================================================================================//
 ReloadParticleIO::ReloadParticleIO(SPHBodyVector bodies)
-    : BaseIO(bodies[0]->getSPHSystem()), bodies_(bodies)
+    : BaseIO(bodies[0]->getSPHSystem()), bodies_(bodies),
+      overall_file_path_(io_environment_.ReloadFolder() + "/Reload.xml")
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
-    {
-        file_names_.push_back(io_environment_.ReloadFolder() + "/" + bodies_[i]->getName() + "_rld.xml");
-    }
+        body_names_.push_back(bodies_[i]->Name());
 }
 //=============================================================================================//
 ReloadParticleIO::ReloadParticleIO(SPHSystem &sph_system)
     : ReloadParticleIO(sph_system.getRealBodies()) {}
 //=============================================================================================//
 ReloadParticleIO::ReloadParticleIO(SPHBody &sph_body, const std::string &given_body_name)
-    : BaseIO(sph_body.getSPHSystem()), bodies_({&sph_body})
-{
-    file_names_.push_back(io_environment_.ReloadFolder() + "/" + given_body_name + "_rld.xml");
-}
+    : BaseIO(sph_body.getSPHSystem()), bodies_({&sph_body}),
+      body_names_({given_body_name}),
+      overall_file_path_(io_environment_.ReloadFolder() + "/Reload.xml") {}
 //=============================================================================================//
 ReloadParticleIO::ReloadParticleIO(SPHBody &sph_body)
-    : ReloadParticleIO(sph_body, sph_body.getName()) {}
+    : ReloadParticleIO(sph_body, sph_body.Name()) {}
 //=============================================================================================//
 void ReloadParticleIO::writeToFile(size_t iteration_step)
 {
+    if (fs::exists(overall_file_path_))
+    {
+        fs::remove(overall_file_path_);
+    }
+
+    XmlParser reload_xml("xml_particle_reload", "reload_data");
+
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
-        std::string filefullpath = file_names_[i];
-
-        if (fs::exists(filefullpath))
-        {
-            fs::remove(filefullpath);
-        }
         BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-        base_particles.writeParticlesToXmlForReload(filefullpath);
+        std::string body_name = body_names_[i];
+
+        reload_xml.addNewElement(reload_xml.first_element_, "body");
+        tinyxml2::XMLElement *body_element = reload_xml.first_element_->LastChildElement("body");
+        reload_xml.setAttributeToElement(body_element, "name", body_name);
+
+        base_particles.writeParticlesToXml(reload_xml, body_element);
     }
+
+    reload_xml.writeToXmlFile(overall_file_path_);
 }
 //=============================================================================================//
 ParticleGenerationRecording::ParticleGenerationRecording(SPHBody &sph_body)

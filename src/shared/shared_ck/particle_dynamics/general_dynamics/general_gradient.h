@@ -89,7 +89,7 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
     template <typename FirstArg>
     explicit Gradient(DynamicsArgs<RelationType<Parameters...>, FirstArg> parameters)
         : Gradient(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~Gradient() {};
+    virtual ~Gradient(){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -121,12 +121,13 @@ class LinearGradient<Inner<DataType, Parameters...>>
     using BaseDynamicsType = Gradient<Base, DataType, Inner<Parameters...>>;
 
   public:
-    explicit LinearGradient(Inner<Parameters...> &inner_relation, const std::string &variable_name)
-        : BaseDynamicsType(inner_relation, variable_name) {};
+    template <class DynamicsIdentifier>
+    explicit LinearGradient(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : BaseDynamicsType(identifier, variable_name){};
     template <typename FirstArg>
     explicit LinearGradient(DynamicsArgs<Inner<Parameters...>, FirstArg> parameters)
         : LinearGradient(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~LinearGradient() {};
+    virtual ~LinearGradient(){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -145,11 +146,12 @@ class LinearGradient<Contact<DataType, Parameters...>>
     using BaseDynamicsType = Gradient<Base, DataType, Contact<Parameters...>>;
 
   public:
-    explicit LinearGradient(Contact<Parameters...> &contact_relation, const std::string &variable_name);
+    template <class DynamicsIdentifier>
+    explicit LinearGradient(DynamicsIdentifier &identifier, const std::string &variable_name);
     template <typename FirstArg>
     explicit LinearGradient(DynamicsArgs<Contact<Parameters...>, FirstArg> parameters)
         : LinearGradient(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~LinearGradient() {};
+    virtual ~LinearGradient(){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -179,7 +181,7 @@ class Hessian<Base, DataType, RelationType<Parameters...>>
   public:
     template <typename... Args>
     explicit Hessian(Args &&...args);
-    virtual ~Hessian() {};
+    virtual ~Hessian(){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -206,7 +208,7 @@ class Hessian<Inner<DataType, Parameters...>>
   public:
     template <typename... Args>
     explicit Hessian(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
-    virtual ~Hessian() {};
+    virtual ~Hessian(){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -227,7 +229,7 @@ class Hessian<Contact<DataType, Parameters...>>
   public:
     template <typename... Args>
     explicit Hessian(Args &&...args);
-    virtual ~Hessian() {};
+    virtual ~Hessian(){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -257,7 +259,7 @@ class SecondOrderGradient<Inner<DataType, Parameters...>>
   public:
     template <typename... Args>
     explicit SecondOrderGradient(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
-    virtual ~SecondOrderGradient() {};
+    virtual ~SecondOrderGradient(){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {
@@ -278,7 +280,7 @@ class SecondOrderGradient<Contact<DataType, Parameters...>>
   public:
     template <typename... Args>
     explicit SecondOrderGradient(Args &&...args);
-    virtual ~SecondOrderGradient() {};
+    virtual ~SecondOrderGradient(){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {

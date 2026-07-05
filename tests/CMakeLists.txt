@@ -12,11 +12,20 @@ include(GoogleTest)
 
 target_link_libraries(sphinxsys_core INTERFACE GTest::gtest GTest::gtest_main)
 
-if(SPHINXSYS_2D AND SPHINXSYS_BUILD_2D_EXAMPLES)
-    ADD_SUBDIRECTORY(2d_examples)
-endif()
+if(NOT SPHINXSYS_USE_SYCL)
 
-if(NOT SPHINXSYS_SYCL)
+    if(SPHINXSYS_2D AND SPHINXSYS_BUILD_2D_EXAMPLES)
+        ADD_SUBDIRECTORY(2d_examples)
+    endif()
+
+    if(SPHINXSYS_3D AND SPHINXSYS_BUILD_3D_EXAMPLES AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3d_examples/CMakeLists.txt)
+        ADD_SUBDIRECTORY(3d_examples)
+
+        if(EMSCRIPTEN)
+            ADD_SUBDIRECTORY(webassembly_models)
+        endif()
+    endif()
+
     if(SPHINXSYS_BUILD_OPTIMIZATION_EXAMPLES)
         ADD_SUBDIRECTORY(optimization)
     endif()
@@ -24,10 +33,15 @@ if(NOT SPHINXSYS_SYCL)
     if(SPHINXSYS_BUILD_PYTHON_INTERFACE)
         ADD_SUBDIRECTORY(test_python_interface)
     endif()
-endif()
 
-if(SPHINXSYS_BUILD_EXTRA_SOURCE_AND_TESTS)
-    ADD_SUBDIRECTORY(extra_source_and_tests)
+    if(SPHINXSYS_BUILD_EXTRA_SOURCE_AND_TESTS)
+        ADD_SUBDIRECTORY(extra_source_and_tests)
+    endif()
+
+    if(SPHINXSYS_BUILD_MODULES)
+        add_subdirectory(modules)
+    endif()
+
 endif()
 
 if(SPHINXSYS_BUILD_USER_EXAMPLES)
@@ -40,14 +54,3 @@ endif()
 
 ADD_SUBDIRECTORY(tests_sycl)
 
-if(SPHINXSYS_BUILD_MODULES)
-    add_subdirectory(modules)
-endif()
-
-if(SPHINXSYS_3D AND SPHINXSYS_BUILD_3D_EXAMPLES AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3d_examples/CMakeLists.txt)
-    ADD_SUBDIRECTORY(3d_examples)
-
-    if(EMSCRIPTEN)
-        ADD_SUBDIRECTORY(webassembly_models)
-    endif()
-endif()

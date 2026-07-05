@@ -139,10 +139,10 @@ DiscreteVariable<DataType> *MultiResolutionMeshField<MeshType>::getCellVariable(
 }
 //=============================================================================================//
 template <class MeshType>
-template <typename DataType, template <typename> class EntityType, typename... Args>
-EntityType<DataType> *MultiResolutionMeshField<MeshType>::createUniqueEntity(Args &&...args)
+template <typename DataType, template <typename> class QuantityType, typename... Args>
+QuantityType<DataType> *MultiResolutionMeshField<MeshType>::createUniqueQuantity(Args &&...args)
 {
-    return unique_entity_ptrs_.template createPtr<EntityType<DataType>>(std::forward<Args>(args)...);
+    return unique_entity_ptrs_.template createPtr<QuantityType<DataType>>(std::forward<Args>(args)...);
 }
 //=============================================================================================//
 template <class MeshType>

@@ -54,10 +54,10 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
-    ball.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    ball.defineMatterMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        ball.generateParticles<BaseParticles, Reload>(ball.getName());
+        ball.generateParticles<BaseParticles, Reload>(ball.Name());
     }
     else
     {
@@ -67,10 +67,10 @@ int main(int ac, char *av[])
 
     SolidBody rigid_shell(sph_system, makeShared<ShellShape>("ShellShape"));
     rigid_shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-    rigid_shell.defineMaterial<Solid>();
+    rigid_shell.defineMatterMaterial<Solid>();
     if (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
     {
-        rigid_shell.generateParticles<SurfaceParticles, Reload>(rigid_shell.getName());
+        rigid_shell.generateParticles<SurfaceParticles, Reload>(rigid_shell.Name());
     }
     else if (!sph_system.RunParticleRelaxation() && !sph_system.ReloadParticles())
     {

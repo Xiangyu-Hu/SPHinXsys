@@ -14,11 +14,15 @@ SPHinXsys depends on the following:
 * CMake 3.16 or later but before 4.0
 * C++17 compliant compiler
 
-* Visual Studio 2017 15.7 or later (Windows)
+* Visual Studio 2017 15.7 or later (Windows) but not 2022 17.0 or later, which is not compatible with the Simbody version used in SPHinXsys.
 * GCC 8 or later (Linux)
 * Python3
 * Git
 * vcpkg (please use the branch "2024.11.16", or the same one that we have used in CI: (line 29) https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/.github/workflows/ci.yml)
+
+Note that, for Visual Studio you can download the Community version, which is free for individual use and open source development
+from the link: https://www.junian.dev/tech/visual-studio-community-download-links/.
+
 
 Installing on Ubuntu
 ---------------------------------------
@@ -45,7 +49,7 @@ In the terminal, install the required system dependencies
         sudo apt install -y ccache              # ccache is a compiler cache. It speeds up recompilation by caching previous compilations
         sudo apt install -y python3-dev
         sudo apt install -y gfortran
-        sudo apt-get install autoconf automake autoconf-archive
+        sudo apt-get install autoconf automake autoconf-archive libtool
 
 If you want a debugger for development purposes:
 
@@ -286,9 +290,12 @@ Pre-requisites
 
 * Windows 7 or newer
 * `Git <https://git-scm.com/download/win>`_
-* `Visual Studio 2017 or newer <https://visualstudio.microsoft.com/vs/community/>`_ with C++ environment installed
-* `CMake <https://cmake.org/>`_
+* `Visual Studio from 2017 to 2022 17.0 <https://visualstudio.microsoft.com/vs/community/>`_ with C++ environment installed
+* `CMake <https://cmake.org/>`_ version 3.16 or later but before 4.0
 * `Python3 <https://www.python.org/>`_
+
+Note that, for Visual Studio you can download the Community version, which is free for individual use and open source development
+from the link: https://www.junian.dev/tech/visual-studio-community-download-links/.
 
 Installing dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -382,6 +389,12 @@ Installing on macOS (latest)
 The procedure is given for MAC OS 13.0.1  and clang 14.0.0 (clang-1400.0.29.202).
 With the assumption that you have installed Command Line Tools and python3. 
 
+Pre-requisites
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* `CMake <https://cmake.org/>`_ version 3.16 or later but before 4.0
+* `Python3 <https://www.python.org/>`_
+
 Installing dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -393,12 +406,11 @@ Note that gfortran is essential for lapack_reference, which is needed for simbod
 
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         brew update 
-        brew install cmake
         brew install pkg-config
         brew install ccache
         brew install gfortran
         brew install ninja
-        brew install autoconf automake autoconf-archive
+        brew install autoconf automake autoconf-archive libtool
 
 From here, pick a workspace where the library and any dependent code will be downloaded. 
 The following block will install the direct dependencies required by SPHinXsys in user-space:
@@ -444,3 +456,35 @@ Running the tests and examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 They are the same as in Ubuntu Linux (See above).  
+
+
+Using VS Code as the development environment
+----------------------------------------------
+
+If you are using VS Code as your development platform, 
+please make sure the CMake Tool plugin is installed 
+and the corresponding icon shown in the GUI.
+You may also need to install the C++ extension for better code editing experience.
+
+SPHinXsys provides CMake presets for both Linux and Windows platforms, 
+which can be used directly in VS Code. For macOS, you may use the clang presets. 
+To do so, you can open the Command Palette (Ctrl+Shift+P) and select "CMake: Select a Configure Preset". 
+Then, you can choose the preset that matches your platform and build configuration.
+
+To use the presets, you ensure the SPHinXsys repository is opened (using open folder) in VS Code.
+Please also make sure that vcpkg is installed in another folder parallel to SPHinXsys, 
+and the CMAKE_TOOLCHAIN_FILE variable is set correctly in the presets.
+
+When CMake icon is clicked, you can see the build and debug options.
+In Configuration option, you can choose Debug or Release presets by click the modification icon.
+In Build option, you can choose build the entire library or just a specific test case, such as test_2d_dambreak.
+After option is chosen, the building process will begin if you click
+the building icon beside target name, or the building icon at the VS Code status bar, 
+which is at bottom of the frame.
+
+SPHinXsys requires quite some memory and time to build, especially for the first time.
+So, it is recommended to build the library in Release mode and only build the test cases you
+are interested in. Also, please make sure that you are not using the full number of cores for building,
+otherwise, the building process may fail due to out of memory. 
+You can set the number of parallel compilation processes by changing the "parallel Jobs" 
+variable in the presets, or modify the VS Code settings on CMake parallel jobs.

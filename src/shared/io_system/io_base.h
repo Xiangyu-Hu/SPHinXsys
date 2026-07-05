@@ -43,7 +43,7 @@ class SPHSystem;
 class IOEnvironment;
 class SPHBody;
 template <typename T>
-class SingularVariable;
+class SingleVariable;
 template <typename ReturnType>
 class BaseDynamics;
 using SPHBodyVector = StdVec<SPHBody *>;
@@ -64,7 +64,7 @@ class BaseIO
   protected:
     SPHSystem &sph_system_;
     IOEnvironment &io_environment_;
-    SingularVariable<Real> *sv_physical_time_;
+    SingleVariable<Real> *sv_physical_time_;
 
     std::string convertPhysicalTimeToString(Real physical_time);
 
@@ -92,6 +92,7 @@ class BodyStatesRecording : public BaseIO
     BodyStatesRecording(SPHSystem &sph_system);
     BodyStatesRecording(SPHBody &body);
     virtual ~BodyStatesRecording();
+    SPHBodyVector getBodiesForRecording() { return bodies_; };
     /** write with filename indicated by physical time */
     virtual void writeToFile();
     virtual void writeToFile(size_t iteration_step) override;
@@ -102,7 +103,7 @@ class BodyStatesRecording : public BaseIO
     template <typename DerivedVariableMethod, typename DynamicsIdentifier, typename... Args>
     BodyStatesRecording &addDerivedVariableRecording(DynamicsIdentifier &identifier, Args &&...args);
 
-  protected:
+    protected:
     SPHBodyVector bodies_;
     StdVec<BaseDynamics<void> *> derived_variables_;
     bool state_recording_;
@@ -116,6 +117,7 @@ class BodyStatesRecording : public BaseIO
 class RestartIO : public BaseIO
 {
   protected:
+    bool summary_enabled_{false};
     SPHBodyVector real_bodies_;
     std::string overall_file_path_;
     StdVec<std::string> file_names_;
@@ -123,8 +125,9 @@ class RestartIO : public BaseIO
     Real readRestartTime(size_t restart_step);
 
   public:
-    RestartIO(SPHSystem &sph_system);
+    RestartIO(SPHSystem &sph_system, bool summary_enabled = false);
     virtual ~RestartIO() {};
+    void setReportSummary(bool summary_enabled) { summary_enabled_ = summary_enabled; };
 
     virtual void writeToFile(size_t iteration_step) override;
     virtual void readFromFile(size_t iteration_step);
@@ -134,6 +137,8 @@ class RestartIO : public BaseIO
         readFromFile(restart_step);
         return readRestartTime(restart_step);
     };
+
+    virtual void reportRestartSummary(size_t restart_step);
 };
 
 /**
@@ -144,7 +149,8 @@ class ReloadParticleIO : public BaseIO
 {
   protected:
     SPHBodyVector bodies_;
-    StdVec<std::string> file_names_;
+    StdVec<std::string> body_names_;
+    std::string overall_file_path_;
 
   public:
     ReloadParticleIO(SPHSystem &sph_system);

@@ -18,7 +18,6 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
           "IndexPermutation", particles_->ParticlesBound())),
       dv_original_id_(particles_->getVariableByName<UnsignedInt>("OriginalID")),
       dv_sorted_id_(particles_->getVariableByName<UnsignedInt>("SortedID")),
-      update_variables_to_sort_(particles_->ParticlesBound()),
       sort_method_(ExecutionPolicy{}, dv_sequence_, dv_index_permutation_),
       kernel_implementation_(*this)
 {
@@ -32,7 +31,10 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
         dv_particle_lists_.push_back(dv_particle_list);
         DiscreteVariable<UnsignedInt> *original_id_list =
             particles_->addUniqueDiscreteVariable<UnsignedInt>(
-                dv_particle_list->Name() + "Initial", dv_particle_list->getDataSize(), dv_particle_list);
+                dv_particle_list->Name() + "Initial", dv_particle_list->getSize());
+        original_id_list->fill([&](UnsignedInt index)
+                               { return dv_particle_list->getValue(index); },
+                               0, dv_particle_list->getSize());
         dv_original_id_lists_.push_back(original_id_list);
     }
 

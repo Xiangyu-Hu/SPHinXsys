@@ -105,7 +105,7 @@ class TurbulentChannelFlowBoundaryConditionSetup : public BoundaryConditionSetup
           K_(this->particles_->template getVariableDataByName<Real>("TKE")),
           Eps_(this->particles_->template getVariableDataByName<Real>("Dissipation")),
           mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
-          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
+          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, sph_body_->getMatterMaterial())),
           C_mu_(0.09) {};
     virtual ~TurbulentChannelFlowBoundaryConditionSetup() {};
 

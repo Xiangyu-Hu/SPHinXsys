@@ -10,14 +10,14 @@ namespace fluid_dynamics
 //=================================================================================================//
 BaseIntegrationInCompressible::BaseIntegrationInCompressible(BaseInnerRelation &inner_relation)
     : BaseIntegration(inner_relation),
-      compressible_fluid_(CompressibleFluid(1.0, 1.4)),
+      compressible_fluid_(1.4),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       E_(particles_->registerStateVariableData<Real>("TotalEnergy")),
       dE_dt_(particles_->registerStateVariableData<Real>("TotalEnergyChangeRate")),
       dmass_dt_(particles_->registerStateVariableData<Real>("MassChangeRate")),
       mom_(particles_->registerStateVariableData<Vecd>("Momentum")),
       force_(particles_->registerStateVariableData<Vecd>("Force")),
-      force_prior_(particles_->registerStateVariableData<Vecd>("ForcePrior")) {};
+      force_prior_(particles_->registerStateVariableData<Vecd>("ForcePrior")){};
 //=================================================================================================//
 inline MUSCLHLLCBridgeConfig make_default_bridge_config(CompressibleFluid &fluid, MUSCLHLLCBridgeConfig cfg_in)
 {
@@ -324,7 +324,7 @@ EulerianCompressibleAcousticTimeStepSize::
       p_(particles_->getVariableDataByName<Real>("Pressure")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       smoothing_length_(sph_body.getSPHAdaptation().ReferenceSmoothingLength()),
-      compressible_fluid_(CompressibleFluid(1.0, 1.4))
+      compressible_fluid_(1.4)
 {
     acousticCFL_ = acousticCFL;
 };

@@ -45,8 +45,9 @@ class RepulsionForceCK<Base, Contact<Parameters...>>
     : public Interaction<Contact<Parameters...>>, public ForcePriorCK
 {
   public:
-    explicit RepulsionForceCK(Contact<Parameters...> &contact_relation, Real numerical_damping = 0.5);
-    virtual ~RepulsionForceCK() {};
+    template <class DynamicsIdentifier>
+    explicit RepulsionForceCK(DynamicsIdentifier &identifier, Real numerical_damping = 0.5);
+    virtual ~RepulsionForceCK(){};
 
   protected:
     SolidContact &solid_contact_;
@@ -65,9 +66,9 @@ class RepulsionForceCK<Contact<WithUpdate, Parameters...>>
     using BaseInteractionType = RepulsionForceCK<Base, Contact<Parameters...>>;
 
   public:
-    template <typename... Args>
-    RepulsionForceCK(Contact<Parameters...> &contact_relation, Args &&...args);
-    virtual ~RepulsionForceCK() {};
+    template <class DynamicsIdentifier, typename... Args>
+    RepulsionForceCK(DynamicsIdentifier &identifier, Args &&...args);
+    virtual ~RepulsionForceCK(){};
 
     class InteractKernel : public BaseInteractionType::InteractKernel
     {
@@ -100,9 +101,9 @@ class RepulsionForceCK<Contact<WithUpdate, Wall, Parameters...>>
     using BaseInteractionType = RepulsionForceCK<Base, Contact<Parameters...>>;
 
   public:
-    template <typename... Args>
-    RepulsionForceCK(Contact<Parameters...> &contact_relation, Args &&...args);
-    virtual ~RepulsionForceCK() {};
+    template <class DynamicsIdentifier, typename... Args>
+    RepulsionForceCK(DynamicsIdentifier &identifier, Args &&...args);
+    virtual ~RepulsionForceCK(){};
 
     class InteractKernel : public BaseInteractionType::InteractKernel
     {

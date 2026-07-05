@@ -11,7 +11,7 @@ namespace solid_dynamics
 AcousticTimeStepCK::AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL)
     : LocalDynamicsReduce<ReduceMax>(sph_body), acousticCFL_(acousticCFL),
       h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
-      c0_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial()).ReferenceSoundSpeed()),
+      c0_(DynamicCast<ElasticSolid>(this, sph_body.getMatterMaterial()).ReferenceSoundSpeed()),
       dv_mass_(particles_->getVariableByName<Real>("Mass")),
       dv_vel_(particles_->getVariableByName<Vecd>("Velocity")),
       dv_force_(particles_->getVariableByName<Vecd>("Force")),
@@ -58,7 +58,7 @@ UpdateElasticNormalDirectionCK::UpdateElasticNormalDirectionCK(SPHBody &sph_body
       dv_n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       dv_phi_(particles_->getVariableByName<Real>("SignedDistance")),
       dv_phi0_(particles_->getVariableByName<Real>("InitialSignedDistance")),
-      dv_F_(particles_->getVariableByName<Matd>("DeformationGradient")){}
+      dv_F_(particles_->getVariableByName<Matd>("DeformationGradient")) {}
 //=================================================================================================//
 UpdateAnisotropicMeasure::UpdateAnisotropicMeasure(SPHBody &sph_body)
     : LocalDynamics(sph_body),

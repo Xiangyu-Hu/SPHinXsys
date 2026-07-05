@@ -110,6 +110,7 @@ template <typename ParticlesType> // generate particles by reloading dynamically
 class ParticleGenerator<ParticlesType, Reload> : public ParticleGenerator<ParticlesType>
 {
     std::string file_path_;
+    std::string body_name_;
 
   public:
     ParticleGenerator(SPHBody &sph_body, ParticlesType &particles, const std::string &reload_body_name);

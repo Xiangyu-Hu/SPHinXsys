@@ -39,16 +39,15 @@ namespace SPH
 struct CopyParticleStateCK
 {
     template <typename DataType>
-    void operator()(VariableAllocationSet<AllocatedDataArray<DataType>> &variable_allocation_pair,
-                    size_t index, size_t another_index);
+    void operator()(VariableArrayView<DataType> &variable_array_view, UnsignedInt index, UnsignedInt another_index);
 };
 
 class SpawnRealParticle
 {
     DiscreteVariables &evolving_variables_;
-    DiscreteVariableArrayAssemble copyable_states_;
+    VariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
-    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    SingleVariable<UnsignedInt> *sv_total_real_particles_;
     UnsignedInt particles_bound_;
 
   public:
@@ -76,17 +75,17 @@ class SpawnRealParticle
         UnsignedInt *total_real_particles_;
         UnsignedInt particles_bound_;
         UnsignedInt *original_id_;
-        VariableDataArrayAssemble copyable_state_data_arrays_;
-        OperationOnDataAssemble<VariableDataArrayAssemble, CopyParticleStateCK> copy_particle_state_;
+        VariableArrayViewAssemble copyable_state_data_arrays_;
+        OperationOnDataAssemble<VariableArrayViewAssemble, CopyParticleStateCK> copy_particle_state_;
     };
 };
 
 class RemoveRealParticle
 {
     DiscreteVariables &evolving_variables_;
-    DiscreteVariableArrayAssemble copyable_states_;
+    VariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
-    SingularVariable<UnsignedInt> *sv_total_real_particles_;
+    SingleVariable<UnsignedInt> *sv_total_real_particles_;
 
   public:
     RemoveRealParticle(BaseParticles *particles);
@@ -119,8 +118,8 @@ class RemoveRealParticle
       protected:
         UnsignedInt *total_real_particles_;
         UnsignedInt *original_id_;
-        VariableDataArrayAssemble copyable_state_data_arrays_;
-        OperationOnDataAssemble<VariableDataArrayAssemble, CopyParticleStateCK> copy_particle_state_;
+        VariableArrayViewAssemble copyable_state_data_arrays_;
+        OperationOnDataAssemble<VariableArrayViewAssemble, CopyParticleStateCK> copy_particle_state_;
     };
 };
 } // namespace SPH

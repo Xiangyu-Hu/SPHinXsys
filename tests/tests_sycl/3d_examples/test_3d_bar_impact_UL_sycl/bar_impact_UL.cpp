@@ -4,6 +4,7 @@
  * and feedbacked by contact force using updated Lagrangian SPH.
  * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu
  */
+#include "all_continuum_dynamics_ck.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -135,12 +136,12 @@ int main(int ac, char *av[])
         }
     }
     auto &column = sph_system.addBody<RealBody>(column_shape);
-    column.defineMaterial<J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
-    column.generateParticles<BaseParticles, Reload>(column.getName());
+    column.defineMatterMaterial<J2Plasticity>(rho0_s, c0, Youngs_modulus, poisson, yield_stress);
+    column.generateParticles<BaseParticles, Reload>(column.Name());
 
     auto &wall_boundary = sph_system.addBody<SolidBody>(wall_shape);
-    wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
-    wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
+    wall_boundary.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.Name())
         .reloadExtraVariable<Vecd>("NormalDirection");
 
     auto &column_observer = sph_system.addBody<ObserverBody>("ColumnObserver");
@@ -195,7 +196,7 @@ int main(int ac, char *av[])
     auto &column_wall_contact_force = main_methods.addInteractionDynamicsWithUpdate<solid_dynamics::RepulsionForceCK, Wall>(column_wall_contact);
 
     auto &column_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(column, U_max, 0.2);
-    auto &column_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(column, 0.4);
+    auto &column_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(column, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -205,7 +206,7 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Real>(column, "Density");
     auto &record_column_mechanical_energy = main_methods.addReduceRegression<
         RegressionTestDynamicTimeWarping, TotalKineticEnergyCK>(column);
-    auto &column_observer_position = main_methods.addObserveRecorder<Vecd>("Position", column_observer_contact);
+    auto &column_observer_position = main_methods.addObserveRecorder<Vecd>(column_observer_contact, "Position");
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------

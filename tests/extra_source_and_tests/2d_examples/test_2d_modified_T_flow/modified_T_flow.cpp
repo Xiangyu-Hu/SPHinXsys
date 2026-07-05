@@ -80,14 +80,14 @@ struct DownOutflowPressure
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBox &aligned_box_;
+    OrientedBox &oriented_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_f), t_ref_(2.0),
-          aligned_box_(boundary_condition.getAlignedBox()),
-          halfsize_(aligned_box_.HalfSize()) {}
+          oriented_box_(boundary_condition.getOrientedBox()),
+          halfsize_(oriented_box_.HalfSize()) {}
 
     Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
@@ -151,12 +151,13 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(in_outlet_particle_buffer);
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody velocity_observer(sph_system, "VelocityObserver");
@@ -200,21 +201,21 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Vec2d left_buffer_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
     Vec2d left_buffer_translation = Vec2d(-DL_sponge, 0.0) + left_buffer_halfsize;
-    AlignedBoxByCell left_emitter(water_block, AlignedBox(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
+    OrientedBoxByCell left_emitter(water_block, OrientedBox(xAxis, Transform(Vec2d(left_buffer_translation)), left_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_bidirection_buffer(left_emitter, in_outlet_particle_buffer);
     //----------------------------------------------------------------------
     // Up buffer
     //----------------------------------------------------------------------
     Vec2d up_buffer_halfsize = Vec2d(0.5 * BW, 0.75);
     Vec2d up_buffer_translation = Vec2d(0.5 * (DL + DL1), 2.0 * DH - 0.5 * BW);
-    AlignedBoxByCell up_emitter(water_block, AlignedBox(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
+    OrientedBoxByCell up_emitter(water_block, OrientedBox(xAxis, Transform(Rotation2d(-0.5 * Pi), Vec2d(up_buffer_translation)), up_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<UpOutflowPressure> up_bidirection_buffer(up_emitter, in_outlet_particle_buffer);
     //----------------------------------------------------------------------
     // Down buffer
     //----------------------------------------------------------------------
     Vec2d down_buffer_halfsize = Vec2d(0.5 * BW, 0.75);
     Vec2d down_buffer_translation = Vec2d(0.5 * (DL + DL1), -DH + 0.5 * BW);
-    AlignedBoxByCell down_emitter(water_block, AlignedBox(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
+    OrientedBoxByCell down_emitter(water_block, OrientedBox(xAxis, Transform(Rotation2d(0.5 * Pi), Vec2d(down_buffer_translation)), down_buffer_halfsize));
     fluid_dynamics::BidirectionalBuffer<DownOutflowPressure> down_bidirection_buffer(down_emitter, in_outlet_particle_buffer);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(water_block_inner, water_block_contact);

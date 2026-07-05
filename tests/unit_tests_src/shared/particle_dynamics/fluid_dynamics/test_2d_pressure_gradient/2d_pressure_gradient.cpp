@@ -128,14 +128,14 @@ int main(int ac, char *av[])
     sph_system.handleCommandlineOptions(ac, av);
     // Creating bodies with materials and particles
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(
-        ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
     water_block.getBaseParticles().registerStateVariable<Real>("Pressure");
     water_block.getBaseParticles().registerStateVariable<Vecd>("PressureGradient");
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     wall_boundary.getBaseParticles().registerStateVariable<Real>("Pressure");
 

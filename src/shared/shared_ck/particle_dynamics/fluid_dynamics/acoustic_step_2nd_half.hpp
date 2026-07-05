@@ -9,11 +9,12 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    AcousticStep2ndHalf(Inner<Parameters...> &inner_relation)
-    : AcousticStep<Interaction<Inner<Parameters...>>>(inner_relation),
+    AcousticStep2ndHalf(DynamicsIdentifier &identifier)
+    : AcousticStep<Interaction<Inner<Parameters...>>>(identifier),
       kernel_correction_(this->particles_),
-      fluid_(DynamicCast<FluidType>(this, this->sph_body_->getBaseMaterial())),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_->getMatterMaterial())),
       riemann_solver_(this->fluid_, this->fluid_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
@@ -40,7 +41,7 @@ AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_),
-      riemann_solver_(encloser.riemann_solver_),
+      riemann_(ex_policy, encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
@@ -57,11 +58,12 @@ void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
-        Vecd corrected_e_ij = correction_(index_i) * this->e_ij(index_i, index_j);
+        Vecd e_ij = this->e_ij(index_i, index_j);
 
-        Real u_jump = (vel_[index_i] - vel_[index_j]).dot(corrected_e_ij);
-        density_change_rate += u_jump * dW_ijV_j;
-        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * corrected_e_ij;
+        Vecd vel_ave = riemann_.AverageV(index_i, index_j, vel_[index_i], vel_[index_j]);
+        density_change_rate += 2.0 * (vel_[index_i] - vel_ave).dot(correction_(index_i) * e_ij) * dW_ijV_j;
+        Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
+        p_dissipation += riemann_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * e_ij;
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
     force_[index_i] = p_dissipation * Vol_[index_i];
@@ -82,11 +84,12 @@ void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    AcousticStep2ndHalf(Contact<Parameters...> &wall_contact_relation)
-    : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
+    AcousticStep2ndHalf(DynamicsIdentifier &identifier)
+    : BaseInteraction(identifier), Interaction<Wall>(identifier),
       kernel_correction_(this->particles_),
-      fluid_(DynamicCast<FluidType>(this, this->sph_body_->getBaseMaterial())),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_->getMatterMaterial())),
       riemann_solver_(this->fluid_, this->fluid_) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -96,7 +99,7 @@ AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
       correction_(ex_policy, encloser.kernel_correction_),
-      riemann_solver_(encloser.riemann_solver_),
+      riemann_(ex_policy, encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
@@ -116,29 +119,30 @@ void AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
-        Vecd corrected_e_ij = correction_(index_i) * this->e_ij(index_i, index_j);
+        Vecd e_ij = this->e_ij(index_i, index_j);
 
-        Vecd face_to_fluid_n = SGN(corrected_e_ij.dot(wall_n_[index_j])) * wall_n_[index_j];
-        Vecd vel_j_in_wall = 2.0 * wall_vel_ave_[index_j] - vel_[index_i];
-        density_change_rate += (vel_[index_i] - vel_j_in_wall).dot(corrected_e_ij) * dW_ijV_j;
-        Real u_jump = 2.0 * (vel_[index_i] - wall_vel_ave_[index_j]).dot(face_to_fluid_n);
-        p_dissipation += riemann_solver_.DissipativePJump(u_jump) * dW_ijV_j * face_to_fluid_n;
+        Vecd vel_diff = 2.0 * (vel_[index_i] - wall_vel_ave_[index_j]);
+        density_change_rate += vel_diff.dot(correction_(index_i) * e_ij) * dW_ijV_j;
+        Vecd face_to_fluid_n = SGN(e_ij.dot(wall_n_[index_j])) * wall_n_[index_j];
+        Real u_jump = vel_diff.dot(face_to_fluid_n);
+        p_dissipation += riemann_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * face_to_fluid_n;
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
     force_[index_i] += p_dissipation * Vol_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    AcousticStep2ndHalf(Contact<Parameters...> &wall_contact_relation)
-    : BaseInteraction(wall_contact_relation), kernel_correction_(this->particles_)
+    AcousticStep2ndHalf(DynamicsIdentifier &identifier)
+    : BaseInteraction(identifier), kernel_correction_(this->particles_)
 {
     SourceFluidType &source_fluid =
-        DynamicCast<SourceFluidType>(this, this->sph_body_->getBaseMaterial());
+        DynamicCast<SourceFluidType>(this, this->sph_body_->getMatterMaterial());
     for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
     {
         TargetFluidType &target_fluid =
-            DynamicCast<TargetFluidType>(this, this->contact_bodies_[k]->getBaseMaterial());
+            DynamicCast<TargetFluidType>(this, this->contact_bodies_[k]->getMatterMaterial());
         riemann_solvers_.push_back(RiemannSolverType(source_fluid, target_fluid));
         dv_contact_vel_.push_back(
             this->contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));
@@ -152,7 +156,7 @@ AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters.
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
       correction_(ex_policy, encloser.kernel_correction_),
-      riemann_solver_(encloser.riemann_solvers_[contact_index]),
+      riemann_(ex_policy, encloser.riemann_solvers_[contact_index]),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
@@ -173,9 +177,10 @@ void AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parame
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
         Vecd e_ij = this->e_ij(index_i, index_j);
 
-        Vecd vel_diff = (vel_[index_i] - riemann_solver_.AverageV(this->vel_[index_i], contact_vel_[index_j]));
-        density_change_rate += 2.0 * vel_diff.dot(correction_(index_i) * e_ij) * dW_ijV_j;
-        p_dissipation += riemann_solver_.DissipativePJump((vel_[index_i] - contact_vel_[index_j]).dot(e_ij)) * dW_ijV_j * e_ij;
+        Vecd vel_ave = riemann_.AverageV(index_i, index_j, vel_[index_i], contact_vel_[index_j]);
+        density_change_rate += 2.0 * (vel_[index_i] - vel_ave).dot(correction_(index_i) * e_ij) * dW_ijV_j;
+        Real u_jump = (vel_[index_i] - contact_vel_[index_j]).dot(e_ij);
+        p_dissipation += riemann_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * e_ij;
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
     force_[index_i] += p_dissipation * Vol_[index_i];

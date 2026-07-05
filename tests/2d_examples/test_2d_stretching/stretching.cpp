@@ -184,11 +184,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody beam_body(system, makeShared<Beam>("StretchingBody"));
     beam_body.defineBodyLevelSetShape();
-    beam_body.defineMaterial<NonLinearHardeningPlasticSolid>(
+    beam_body.defineMatterMaterial<NonLinearHardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus, saturation_flow_stress, saturation_exponent);
 
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? beam_body.generateParticles<BaseParticles, Reload>(beam_body.getName())
+        ? beam_body.generateParticles<BaseParticles, Reload>(beam_body.Name())
         : beam_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(system, "BeamObserver");

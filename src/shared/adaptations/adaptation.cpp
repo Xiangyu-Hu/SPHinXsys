@@ -218,16 +218,18 @@ void PrescribedAnisotropy::initializeAdaptationVariables(BaseParticles &particle
 {
     AnisotropicAdaptation::initializeAdaptationVariables(particles);
     UnsignedInt total_real_particles = particles.TotalRealParticles();
-    dv_h_ratio_->fill(0, total_real_particles, [&](size_t i) -> Real
-                      { return 1.0; });
-    dv_scaling_->fill(0, total_real_particles, [&](size_t i) -> Vecd
-                      { return scaling_ref_; });
-    dv_orientation_->fill(0, total_real_particles, [&](size_t i) -> Vecd
-                          { return orientation_ref_; });
-    dv_deformation_matrix_->fill(0, total_real_particles, [&](size_t i) -> Matd
-                                 { return deformation_matrix_ref_; });
-    dv_deformation_det_->fill(0, total_real_particles, [&](size_t i) -> Real
-                              { return deformation_matrix_ref_.determinant(); });
+    dv_h_ratio_->fill([&](size_t i) -> Real
+                      { return 1.0; }, 0, total_real_particles);
+    dv_scaling_->fill([&](size_t i) -> Vecd
+                      { return scaling_ref_; }, 0, total_real_particles);
+    dv_orientation_->fill([&](size_t i) -> Vecd
+                          { return orientation_ref_; }, 0, total_real_particles);
+    dv_deformation_matrix_->fill([&](size_t i) -> Matd
+                                 { return deformation_matrix_ref_; },
+                                 0, total_real_particles);
+    dv_deformation_det_->fill([&](size_t i) -> Real
+                              { return deformation_matrix_ref_.determinant(); },
+                              0, total_real_particles);
 }
 //=================================================================================================//
 } // namespace SPH

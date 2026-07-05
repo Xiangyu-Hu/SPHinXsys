@@ -143,13 +143,13 @@ int main(int ac, char *av[])
     //	Simulation setup continues to define bodies.
     //----------------------------------------------------------------------
     auto &column = sph_system.addBody<RealBody>(column_shape);
-    column.defineMaterial<HardeningPlasticSolid>(
+    column.defineMatterMaterial<HardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
-    column.generateParticles<BaseParticles, Reload>(column.getName());
+    column.generateParticles<BaseParticles, Reload>(column.Name());
 
     auto &wall = sph_system.addBody<RealBody>(wall_shape);
-    wall.defineMaterial<Solid>();
-    wall.generateParticles<BaseParticles, Reload>(wall.getName())
+    wall.defineMatterMaterial<Solid>();
+    wall.generateParticles<BaseParticles, Reload>(wall.Name())
         .reloadExtraVariable<Vecd>("NormalDirection");
 
     auto &my_observer = sph_system.addBody<ObserverBody>("MyObserver");
@@ -203,7 +203,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     auto &write_displacement = main_methods.addObserveRegression<
-        RegressionTestDynamicTimeWarping, Vecd>("Position", my_observer_contact);
+        RegressionTestDynamicTimeWarping, Vecd>(my_observer_contact, "Position");
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------

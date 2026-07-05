@@ -134,15 +134,16 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
-    structure.defineMaterial<Solid>(rho_s);
+    structure.defineMatterMaterial<Solid>(rho_s);
     structure.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody observer(sph_system, "Observer");
@@ -214,9 +215,9 @@ int main(int ac, char *av[])
         fluid_acoustic_step_2nd_half_with_wall(water_block_contact);
     fluid_acoustic_step_2nd_half.addPostContactInteraction(fluid_acoustic_step_2nd_half_with_wall);
 
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
         fluid_density_summation(water_block_inner, water_block_contact);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, WeaklyCompressibleFluid, FreeSurface>>
         fluid_density_regularization(water_block);
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceCK<Inner<WithUpdate, Viscosity, NoKernelCorrectionCK>>>
@@ -231,18 +232,18 @@ int main(int ac, char *av[])
         pressure_force_on_structure(structure_contact);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_f);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_block);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>> fluid_acoustic_time_step(water_block);
 
-    ArbitraryDynamicsSequence <
+    ArbitraryDynamicsSequence<
         StateDynamics<MainExecutionPolicy, solid_dynamics::UpdateDisplacementFromPosition>,
         InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, Relation<SPHBody, BodyPartByParticle>>>>,
         InteractionDynamicsCK<MainExecutionPolicy, Interpolation<Contact<Vecd, Relation<SPHBody, BodyPartByParticle>>>>,
-                              StateDynamics<MainExecutionPolicy, solid_dynamics::UpdatePositionFromDisplacement>>
-            update_structure_proxy_states(
-                structure,
-                DynamicsArgs(structure_proxy_contact, std::string("Velocity")),
-                DynamicsArgs(structure_proxy_contact, std::string("Displacement")),
-                structure_proxy);
+        StateDynamics<MainExecutionPolicy, solid_dynamics::UpdatePositionFromDisplacement>>
+        update_structure_proxy_states(
+            structure,
+            DynamicsArgs(structure_proxy_contact, std::string("Velocity")),
+            DynamicsArgs(structure_proxy_contact, std::string("Displacement")),
+            structure_proxy);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
@@ -321,7 +322,7 @@ int main(int ac, char *av[])
         MainExecutionPolicy, UpperFrontInAxisDirectionCK<BodyRegionByCell>>>
         wave_gauge(wave_probe_buffer, "FreeSurfaceHeight");
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>>
-        write_structure_position("Position", observer_contact);
+        write_structure_position(observer_contact, "Position");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -341,7 +342,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Basic control parameters for time stepping.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     int number_of_iterations = 0;
     int screen_output_interval = 1000;
     Real end_time = total_physical_time;

@@ -54,6 +54,11 @@ class ParticleDynamicsGroup : public BaseDynamics<void>
         : BaseDynamics<void>(), particle_dynamics_(particle_dynamics) {}
     ~ParticleDynamicsGroup() {};
 
+    bool hasDynamics() const
+    {
+        return !particle_dynamics_.empty();
+    }
+
     ParticleDynamicsGroup &add(BaseDynamics<void> *dynamics)
     {
         particle_dynamics_.push_back(dynamics);
@@ -158,6 +163,34 @@ class ReduceDynamicsGroup : public BaseDynamics<typename Operation::ReturnType>
     };
 };
 
+class IODynamicsGroup : public BaseIO
+{
+    StdVec<BaseIO *> io_dynamics_;
+
+  public:
+    IODynamicsGroup(SPHSystem &sph_system) : BaseIO(sph_system) {};
+    ~IODynamicsGroup() = default;
+
+    IODynamicsGroup &add(BaseIO *io_dynamics)
+    {
+        io_dynamics_.push_back(io_dynamics);
+        return *this;
+    }
+
+    StdVec<BaseIO *> getAllDynamics() const
+    {
+        return io_dynamics_;
+    }
+
+    void writeToFile(size_t iteration_step = 0)
+    {
+        for (UnsignedInt i = 0; i != io_dynamics_.size(); ++i)
+        {
+            io_dynamics_[i]->writeToFile(iteration_step);
+        }
+    }
+};
+
 class BaseMethodContainer
 {
   public:
@@ -172,6 +205,7 @@ class ParticleMethodContainer : public BaseMethodContainer
     UniquePtrsKeeper<BaseIO> other_io_keeper_;
 
   public:
+    typedef ExecutionPolicy ExPolicy;
     ParticleMethodContainer(const ExecutionPolicy &ex_policy) : BaseMethodContainer() {};
     virtual ~ParticleMethodContainer() {};
 
@@ -181,11 +215,15 @@ class ParticleMethodContainer : public BaseMethodContainer
     };
 
     template <typename Operation>
-    ReduceDynamicsGroup<Operation> &addReduceDynamicsGroup(const Operation &operation = Operation())
+    ReduceDynamicsGroup<Operation> &addReduceDynamicsGroup()
     {
-        return *particle_dynamics_keeper_.createPtr<ReduceDynamicsGroup<Operation>>(operation);
+        return *particle_dynamics_keeper_.createPtr<ReduceDynamicsGroup<Operation>>();
     };
 
+    IODynamicsGroup &addIODynamicsGroup(SPHSystem &sph_system)
+    {
+        return *other_io_keeper_.createPtr<IODynamicsGroup>(sph_system);
+    };
     template <template <typename...> class GeneralDynamicsType, typename... Parameters, class DynamicsIdentifier, typename... Args>
     auto &addGeneralDynamics(DynamicsIdentifier &identifier, Args &&...args)
     {
@@ -302,14 +340,14 @@ class ParticleMethodContainer : public BaseMethodContainer
     };
 
     template <typename Operation, class ReduceType, typename DynamicsIdentifier, typename... Args>
-    ReduceDynamicsGroup<Operation> addReduceDynamics(const StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
+    ReduceDynamicsGroup<Operation> &addReduceDynamics(const StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
     {
-        StdVec<BaseDynamics<typename Operation::ReturnType> *> reduce_dynamics;
+        auto &reduce_dynamics_group = addReduceDynamicsGroup<Operation>();
         for (auto &identifier : identifiers)
         {
-            reduce_dynamics.push_back(&addReduceDynamics<ReduceType>(*identifier, std::forward<Args>(args)...));
+            reduce_dynamics_group.add(&addReduceDynamics<ReduceType>(*identifier, std::forward<Args>(args)...));
         }
-        return ReduceDynamicsGroup<Operation>(Operation(), reduce_dynamics);
+        return reduce_dynamics_group;
     };
 
     template <class InteractionType, typename... Args>
@@ -332,6 +370,17 @@ class ParticleMethodContainer : public BaseMethodContainer
 
     template <template <typename...> class InteractionType, typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addInteractionDynamics(
+        RelationView<RelationType<RelationParameters...>> &interaction, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
+            interaction, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
     auto &addInteractionDynamicsOneLevel(
         RelationType<RelationParameters...> &relation, Args &&...args)
     {
@@ -339,6 +388,17 @@ class ParticleMethodContainer : public BaseMethodContainer
             InteractionDynamicsCK<
                 ExecutionPolicy, InteractionType<RelationType<OneLevel, ControlParameters..., RelationParameters...>>>>(
             relation, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addInteractionDynamicsOneLevel(
+        RelationView<RelationType<RelationParameters...>> &interaction, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<RelationType<OneLevel, ControlParameters..., RelationParameters...>>>>(
+            interaction, std::forward<Args>(args)...);
     };
 
     template <template <typename...> class InteractionType, typename... ControlParameters,
@@ -354,6 +414,17 @@ class ParticleMethodContainer : public BaseMethodContainer
 
     template <template <typename...> class InteractionType, typename... ControlParameters,
               template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addInteractionDynamicsWithUpdate(
+        RelationView<RelationType<RelationParameters...>> &interaction, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<RelationType<WithUpdate, ControlParameters..., RelationParameters...>>>>(
+            interaction, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
     auto &addInteractionDynamicsWithInitialization(
         RelationType<RelationParameters...> &relation, Args &&...args)
     {
@@ -361,6 +432,17 @@ class ParticleMethodContainer : public BaseMethodContainer
             InteractionDynamicsCK<
                 ExecutionPolicy, InteractionType<RelationType<WithInitialization, ControlParameters..., RelationParameters...>>>>(
             relation, std::forward<Args>(args)...);
+    };
+
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addInteractionDynamicsWithInitialization(
+        RelationView<RelationType<RelationParameters...>> &interaction, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            InteractionDynamicsCK<
+                ExecutionPolicy, InteractionType<RelationType<WithInitialization, ControlParameters..., RelationParameters...>>>>(
+            interaction, std::forward<Args>(args)...);
     };
 
     template <template <typename...> class InteractionType, typename... ControlParameters,
@@ -376,26 +458,40 @@ class ParticleMethodContainer : public BaseMethodContainer
             relation, std::forward<Args>(args)...);
     };
 
+    template <template <typename...> class InteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addRK2Sequence(
+        RelationView<RelationType<RelationParameters...>> &interaction, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.createPtr<
+            RungeKuttaSequence<InteractionDynamicsCK<
+                ExecutionPolicy,
+                InteractionType<RelationType<OneLevel, RungeKutta1stStage, ControlParameters..., RelationParameters...>>,
+                InteractionType<RelationType<OneLevel, RungeKutta2ndStage, ControlParameters..., RelationParameters...>>>>>(
+            interaction, std::forward<Args>(args)...);
+    };
+
     template <template <typename...> class RecorderType, typename... Args>
     auto &addBodyStateRecorder(Args &&...args)
     {
         return *state_recorders_keeper_.createPtr<RecorderType<ExecutionPolicy>>(std::forward<Args>(args)...);
     };
 
-    template <template <typename...> class RegressionType, typename... ControlParameters, typename... RelationParameters>
-    auto &addObserveRegression(const std::string &variable_name, Contact<RelationParameters...> &contact_relation)
+    template <template <typename...> class RegressionType, typename... ControlParameters,
+              typename... RelationParameters, typename... Args>
+    auto &addObserveRegression(Contact<RelationParameters...> &contact_relation, Args &&...args)
     {
         return *other_io_keeper_.createPtr<
             RegressionType<ObservedQuantityRecording<ExecutionPolicy, ControlParameters..., RelationParameters...>>>(
-            variable_name, contact_relation);
+            contact_relation, std::forward<Args>(args)...);
     };
 
-    template <typename... ControlParameters, typename... RelationParameters>
-    auto &addObserveRecorder(const std::string &variable_name, Contact<RelationParameters...> &contact_relation)
+    template <typename... ControlParameters, typename... RelationParameters, typename... Args>
+    auto &addObserveRecorder(Contact<RelationParameters...> &contact_relation, Args &&...args)
     {
         return *other_io_keeper_.createPtr<
             ObservedQuantityRecording<ExecutionPolicy, ControlParameters..., RelationParameters...>>(
-            variable_name, contact_relation);
+            contact_relation, std::forward<Args>(args)...);
     };
 
     template <template <typename...> class RegressionType, template <typename...> class LocalReduceMethodType,

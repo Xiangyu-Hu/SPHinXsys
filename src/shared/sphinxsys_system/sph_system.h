@@ -41,7 +41,7 @@ class SPHBody;
 class RealBody;
 class RelationBase;
 class Shape;
-class Entity;
+class Quantity;
 using SPHBodyVector = StdVec<SPHBody *>;
 /**
  * @class SPHSystem
@@ -49,8 +49,8 @@ using SPHBodyVector = StdVec<SPHBody *>;
  */
 class SPHSystem
 {
-    DataContainerUniquePtrAssemble<SingularVariable> all_system_variable_ptrs_;
-    UniquePtrsKeeper<Entity> unique_system_variable_ptrs_;
+    DataContainerUniquePtrAssemble<SingleVariable> all_system_variable_ptrs_;
+    UniquePtrsKeeper<Quantity> unique_system_variable_ptrs_;
     UniquePtrsKeeper<SPHBody> sph_bodies_keeper_;
     UniquePtrsKeeper<Shape> shapes_keeper_;
     UniquePtrsKeeper<RelationBase> relations_keeper_;
@@ -64,7 +64,7 @@ class SPHSystem
     SPHSystem *handleCommandlineOptions(int ac, char *av[]);
 #endif
     bool isPhysical() { return is_physical_; };
-    void writeSystemDomainShape();
+    void writeSystemDomainShapeToVtp(Real scale_factor = 1.0);
     void setRunParticleRelaxation(bool run_particle_relaxation) { run_particle_relaxation_ = run_particle_relaxation; };
     bool RunParticleRelaxation() { return run_particle_relaxation_; };
     void setReloadParticles(bool reload_particles) { reload_particles_ = reload_particles; };
@@ -76,7 +76,7 @@ class SPHSystem
     void setRestartStep(size_t restart_step) { restart_step_ = restart_step; };
     void setLogLevel(size_t log_level);
     size_t RestartStep() { return restart_step_; };
-    SingularVariable<Real> &svPhysicalTime() { return *sv_physical_time_; };
+    SingleVariable<Real> &svPhysicalTime() { return *sv_physical_time_; };
     /** Initialize cell linked list for the SPH system. */
     void initializeSystemCellLinkedLists();
     /** Initialize particle configuration for the SPH system. */
@@ -85,19 +85,18 @@ class SPHSystem
     void setGlobalResolution(Real global_resolution) { global_resolution_ = global_resolution; };
     SPHBodyVector getSPHBodies() { return sph_bodies_; };
     SPHBodyVector getRealBodies() { return real_bodies_; };
-    RealBody &getRealBodyByName(const std::string &name);
     void addSPHBody(SPHBody *sph_body) { sph_bodies_.push_back(sph_body); };
     void addRealBody(RealBody *real_body);
     void addObservationBody(SPHBody *sph_body) { observation_bodies_.push_back(sph_body); };
-    BoundingBoxd getSystemDomainBounds() { return system_domain_bounds_; };
-    void setSystemDomainBounds(const BoundingBoxd &domain_bounds) { system_domain_bounds_ = domain_bounds; };
+    BoundingBoxd getSystemDomainBounds() { return system_bounds_; };
+    void setSystemDomainBounds(const BoundingBoxd &domain_bounds) { system_bounds_ = domain_bounds; };
 
     template <typename DataType>
-    SingularVariable<DataType> *registerSystemVariable(
+    SingleVariable<DataType> *registerSystemVariable(
         const std::string &name, DataType initial_value = ZeroData<DataType>::value);
 
     template <typename DataType>
-    SingularVariable<DataType> *getSystemVariableByName(const std::string &name);
+    SingleVariable<DataType> *getSystemVariableByName(const std::string &name);
 
     template <typename DataType>
     DataType *getSystemVariableDataByName(const std::string &name);
@@ -120,22 +119,35 @@ class SPHSystem
     template <class SourceIdentifier, class TargetIdentifier, typename... Args>
     auto &addContactRelation(SourceIdentifier &src_identifier, TargetIdentifier &tar_identifiers, Args &&...args);
 
+    template <typename DerivedBodyType>
+    DerivedBodyType &getBodyByName(const std::string &name);
+
+    template <typename DerivedBodyType>
+    StdVec<DerivedBodyType *> collectBodies();
+
+    template <typename RelationType>
+    RelationType &getRelationByName(const std::string &name);
+
+    template <typename RelationType>
+    StdVec<RelationType *> collectRelations();
+
   protected:
-    std::string system_name_;           /**< name of the system. */
-    BoundingBoxd system_domain_bounds_; /**< Lower and Upper domain bounds. */
-    Real global_resolution_;            /**< reference resolution of the SPH system */
-    bool is_physical_;                  /**< flag for physical or non-physical system. */
-    SPHBodyVector sph_bodies_;          /**< All sph bodies. */
-    SPHBodyVector observation_bodies_;  /**< The bodies without inner particle configuration. */
-    SPHBodyVector real_bodies_;         /**< The bodies with inner particle configuration. */
-    bool run_particle_relaxation_;      /**< run particle relaxation for body fitted particle distribution */
-    bool reload_particles_;             /**< start the simulation with relaxed particles. */
-    size_t restart_step_;               /**< restart step */
-    bool generate_regression_data_;     /**< run and generate or enhance the regression test data set. */
-    bool state_recording_;              /**< Record state in output folder. */
-    int log_level_ = 2;                 /**< Log level, 0: trace, 1: debug, 2: info, 3: warning, 4: error, 5: critical, 6: off */
-    SingularVariables all_system_variables_;
-    SingularVariable<Real> *sv_physical_time_; /**< global physical time of the SPH system. */
+    std::string system_name_;          /**< name of the system. */
+    BoundingBoxd system_bounds_;       /**< Lower and Upper domain bounds. */
+    Real global_resolution_;           /**< reference resolution of the SPH system */
+    bool is_physical_;                 /**< flag for physical or non-physical system. */
+    SPHBodyVector sph_bodies_;         /**< All sph bodies. */
+    SPHBodyVector observation_bodies_; /**< The bodies without inner particle configuration. */
+    SPHBodyVector real_bodies_;        /**< The bodies with inner particle configuration. */
+    StdVec<RelationBase *> relations_; /**< All inner relations. */
+    bool run_particle_relaxation_;     /**< run particle relaxation for body fitted particle distribution */
+    bool reload_particles_;            /**< start the simulation with relaxed particles. */
+    size_t restart_step_;              /**< restart step */
+    bool generate_regression_data_;    /**< run and generate or enhance the regression test data set. */
+    bool state_recording_;             /**< Record state in output folder. */
+    int log_level_ = 2;                /**< Log level, 0: trace, 1: debug, 2: info, 3: warning, 4: error, 5: critical, 6: off */
+    SingleVariables all_system_variables_;
+    SingleVariable<Real> *sv_physical_time_; /**< global physical time of the SPH system. */
 
     SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds, Real global_resolution,
               size_t number_of_threads = std::thread::hardware_concurrency());

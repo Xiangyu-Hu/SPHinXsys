@@ -63,11 +63,11 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     SolidBody myocardium_body(sph_system, makeShared<Myocardium>("MyocardiumBody"));
-    myocardium_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    myocardium_body.defineMatterMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     myocardium_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
-    moving_plate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    moving_plate.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     moving_plate.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

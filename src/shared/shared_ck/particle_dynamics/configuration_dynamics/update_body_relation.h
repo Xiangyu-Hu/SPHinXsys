@@ -37,6 +37,61 @@ namespace SPH
 {
 
 template <typename... T>
+class TargetParticleMask;
+
+template <typename TargetCriterion>
+class TargetParticleMask<TargetCriterion, SPHBody>
+{
+  public:
+    TargetParticleMask(SPHBody &sph_body){};
+    ~TargetParticleMask() {}
+
+    class ComputingKernel : public TargetCriterion
+    {
+      public:
+        template <class ExecutionPolicy, typename EnclosureType, typename... Args>
+        ComputingKernel(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
+            : TargetCriterion(std::forward<Args>(args)...){};
+
+        template <typename... Args>
+        bool operator()(UnsignedInt target_index, Args &&...args)
+        {
+            return TargetCriterion::operator()(target_index, std::forward<Args>(args)...);
+        }
+    };
+};
+
+template <typename TargetCriterion>
+class TargetParticleMask<TargetCriterion, BodyPartByParticle>
+{
+  public:
+    TargetParticleMask(BodyPartByParticle &body_by_particle);
+    ~TargetParticleMask() {}
+
+    class ComputingKernel : public TargetCriterion
+    {
+      public:
+        template <class ExecutionPolicy, typename EnclosureType, typename... Args>
+        ComputingKernel(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args);
+
+        template <typename... Args>
+        bool operator()(UnsignedInt target_index, Args &&...args)
+        {
+            return (body_part_id_[target_index] == part_id_) &&
+                   TargetCriterion::operator()(target_index, std::forward<Args>(args)...);
+        }
+
+      protected:
+        int part_id_;
+        int *body_part_id_;
+    };
+
+  protected:
+    int part_id_;
+    DiscreteVariable<int> *dv_body_part_id_;
+};
+
+template <typename... T>
 class UpdateRelation;
 
 template <class ExecutionPolicy, typename... Parameters>
@@ -54,7 +109,8 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     using NeighborMethodType = typename InnerRelationType::NeighborhoodType;
     using CutOff = typename NeighborMethodType::CutOff;
     using NeighborCriterion = typename NeighborMethodType::NeighborCriterion;
-    using MaskedCriterion = typename RangeIdentifier::template TargetParticleMask<NeighborCriterion>;
+    using TargetParticleMaskMethod = TargetParticleMask<NeighborCriterion, RangeIdentifier>;
+    using MaskedCriterion = typename TargetParticleMaskMethod::ComputingKernel;
 
     class OneSidedCheck
     {
@@ -72,7 +128,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
 
   public:
     UpdateRelation(Inner<Parameters...> &inner_relation);
-    virtual ~UpdateRelation() {};
+    virtual ~UpdateRelation(){};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
@@ -99,6 +155,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
 
     ExecutionPolicy ex_policy_;
     InnerRelationType &inner_relation_;
+    TargetParticleMaskMethod target_particle_mask_method_;
     CellLinkedList<CellLinkedListIdentifier> &cell_linked_list_;
     Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel> kernel_implementation_;
 };
@@ -117,13 +174,15 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     using Neighborhood = typename ContactRelationType::NeighborhoodType;
     using CutOff = typename Neighborhood::CutOff;
     using RangeIdentifier = typename BaseLocalDynamicsType::RangeIdentifier;
+    using TargetRangeIdentifier = typename TargetType::RangeIdentifier;
     using MaskedSource = typename SourceType::SourceParticleMask;
     using NeighborCriterion = typename Neighborhood::NeighborCriterion;
-    using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
+    using TargetParticleMaskMethod = TargetParticleMask<NeighborCriterion, TargetRangeIdentifier>;
+    using MaskedCriterion = typename TargetParticleMaskMethod::ComputingKernel;
 
   public:
     UpdateRelation(ContactRelationType &contact_relation);
-    virtual ~UpdateRelation() {};
+    virtual ~UpdateRelation(){};
     virtual void exec(Real dt = 0.0) override;
 
   protected:
@@ -148,6 +207,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
     ExecutionPolicy ex_policy_;
     ContactRelationType &contact_relation_;
+    StdVec<TargetParticleMaskMethod> contact_target_particle_mask_methods_;
     StdVec<CellLinkedList<CellLinkedListIdentifier> *> contact_cell_linked_list_;
     StdVec<KernelImplementation *> contact_kernel_implementation_;
 };
@@ -156,7 +216,7 @@ template <class ExecutionPolicy>
 class UpdateRelation<ExecutionPolicy>
 {
   public:
-    UpdateRelation() {};
+    UpdateRelation(){};
     void exec(Real dt = 0.0) {};
 };
 

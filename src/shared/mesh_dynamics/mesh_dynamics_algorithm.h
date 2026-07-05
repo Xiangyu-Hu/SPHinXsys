@@ -55,13 +55,13 @@ class MeshAllDynamics : public LocalDynamicsType, public BaseDynamics<void>
         SparseMeshField<4> &mesh_data, Args &&...args)
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseDynamics<void>(), kernel_implementation_(*this){};
-    virtual ~MeshAllDynamics() {};
+    virtual ~MeshAllDynamics(){};
 
     void exec(Real dt = 0.0) override
     {
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         mesh_for(ExecutionPolicy(), MeshRange(Arrayi::Zero(), this->index_handler_.AllCells()),
-                 [&](Arrayi cell_index)
+                 [=](Arrayi cell_index)
                  {
                      update_kernel->update(cell_index);
                  });
@@ -87,7 +87,7 @@ class MeshInnerDynamics : public LocalDynamicsType, public BaseDynamics<void>
         : LocalDynamicsType(mesh_data, std::forward<Args>(args)...),
           BaseDynamics<void>(), kernel_implementation_(*this),
           num_pkgs_offsets_(mesh_data.getNumPackageOffsets()){};
-    virtual ~MeshInnerDynamics() {};
+    virtual ~MeshInnerDynamics(){};
 
     void exec(Real dt = 0.0) override
     {
@@ -125,7 +125,7 @@ class MeshCoreDynamics : public LocalDynamicsType, public BaseDynamics<void>
           BaseDynamics<void>(), dv_pkg_type_(mesh_data.getPackageType()),
           kernel_implementation_(*this),
           num_pkgs_offsets_(mesh_data.getNumPackageOffsets()){};
-    virtual ~MeshCoreDynamics() {};
+    virtual ~MeshCoreDynamics(){};
 
     void exec(Real dt = 0.0) override
     {

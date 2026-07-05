@@ -8,6 +8,7 @@
  * internal constrained subregion.                                             *
  * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu                              *
  * ----------------------------------------------------------------------------*/
+#include "all_continuum_dynamics_ck.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //------------------------------------------------------------------------------
@@ -92,7 +93,7 @@ int main(int ac, char *av[])
     beam_shape.add(&beam_base_shape);
     beam_shape.add(&beam_column);
     auto &beam = sph_system.addBody<RealBody>(beam_shape);
-    beam.defineMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
+    beam.defineMatterMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
     beam.generateParticles<BaseParticles, Lattice>();
     BodyRegionByParticle beam_base(beam, beam_base_shape);
 
@@ -144,7 +145,7 @@ int main(int ac, char *av[])
             fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(beam_inner);
 
     auto &beam_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(beam, U_ref, 0.2);
-    auto &beam_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(beam, 0.4);
+    auto &beam_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(beam, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -155,7 +156,7 @@ int main(int ac, char *av[])
     body_state_recorder.addDerivedVariableToWrite<continuum_dynamics::VonMisesStressCK>(beam);
     auto &record_beam_mechanical_energy = main_methods.addReduceRegression<
         RegressionTestDynamicTimeWarping, TotalKineticEnergyCK>(beam);
-    auto &beam_observer_position = main_methods.addObserveRecorder<Vecd>("Position", beam_observer_contact);
+    auto &beam_observer_position = main_methods.addObserveRecorder<Vecd>(beam_observer_contact, "Position");
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------

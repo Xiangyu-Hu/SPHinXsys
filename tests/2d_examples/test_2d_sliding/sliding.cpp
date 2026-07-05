@@ -74,11 +74,11 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles
     //----------------------------------------------------------------------
     SolidBody free_cube(sph_system, makeShared<Cube>("FreeCube"));
-    free_cube.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    free_cube.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     free_cube.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    wall_boundary.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cube_observer(sph_system, "CubeObserver");

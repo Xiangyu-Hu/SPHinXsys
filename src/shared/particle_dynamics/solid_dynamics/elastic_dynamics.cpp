@@ -12,7 +12,7 @@ namespace solid_dynamics
 AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
       CFL_(CFL),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getMatterMaterial())),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
       force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
@@ -68,17 +68,30 @@ BaseElasticIntegration::
       force_(particles_->registerStateVariableData<Vecd>("Force")),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
       F_(particles_->registerStateVariableData<Matd>("DeformationGradient", IdentityMatrix<Matd>::value)),
-      dF_dt_(particles_->registerStateVariableData<Matd>("DeformationRate")) {}
+      dF_dt_(particles_->registerStateVariableData<Matd>("DeformationRate"))
+      {
+        // Kinematic and stress state required for restart — cannot be recomputed from position alone.
+        // DeformationRate needed for Verlet half-step predictor (dF/dt × dt/2).
+        // LinearGradientCorrectionMatrix B0 computed from reference configuration — preserved for consistency.
+        particles_->addEvolvingVariable<Vecd>("Velocity");
+        particles_->addEvolvingVariable<Vecd>("Force");
+        particles_->addEvolvingVariable<Matd>("DeformationGradient");
+        particles_->addEvolvingVariable<Matd>("DeformationRate");
+        particles_->addEvolvingVariable<Matd>("LinearGradientCorrectionMatrix");
+      }
 //=================================================================================================//
 BaseIntegration1stHalf::
     BaseIntegration1stHalf(BaseInnerRelation &inner_relation)
     : BaseElasticIntegration(inner_relation),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getMatterMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()), inv_rho0_(1.0 / rho0_),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       force_prior_(particles_->registerStateVariableData<Vecd>("ForcePrior")),
-      smoothing_length_(getSPHAdaptation().ReferenceSmoothingLength()) {}
+      smoothing_length_(getSPHAdaptation().ReferenceSmoothingLength())
+{
+    particles_->addEvolvingVariable<Vecd>("ForcePrior");
+}
 //=================================================================================================//
 void BaseIntegration1stHalf::update(size_t index_i, Real dt)
 {

@@ -5,8 +5,8 @@
 namespace SPH
 {
 //=============================================================================================//
-LinearParticles::LinearParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : SurfaceParticles(sph_body, base_material), b_n_(nullptr), width_(nullptr) {}
+LinearParticles::LinearParticles(SPHBody &sph_body)
+    : SurfaceParticles(sph_body), b_n_(nullptr), width_(nullptr) {}
 //=================================================================================================//
 void LinearParticles::registerLineProperties(StdVec<Vecd> &b_n, StdVec<Real> &width)
 {
@@ -19,8 +19,8 @@ void LinearParticles::registerLineProperties(StdVec<Vecd> &b_n, StdVec<Real> &wi
 //=================================================================================================//
 void LinearParticles::registerLinePropertiesFromReload()
 {
-    b_n_ = registerStateVariableDataFromReload<Vecd>("NormalDirection");
-    width_ = registerStateVariableDataFromReload<Real>("Thickness");
+    b_n_ = registerStateVariableDataFromReload<Vecd>("BinormalDirection");
+    width_ = registerStateVariableDataFromReload<Real>("Width");
 }
 //=================================================================================================//
 void LinearParticles::registerTransformationMatrix()

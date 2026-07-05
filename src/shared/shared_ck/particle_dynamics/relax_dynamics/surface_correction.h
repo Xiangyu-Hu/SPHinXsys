@@ -82,7 +82,7 @@ class LevelsetKernelGradientIntegral : public BaseLocalDynamics<DynamicIdentifie
     using ProbeKernelGradientIntegral = LevelSet::ProbeLevelSet<Vecd>;
 
   public:
-    LevelsetKernelGradientIntegral(DynamicIdentifier &identfier, LevelSetShape &level_set_shape);
+    LevelsetKernelGradientIntegral(DynamicIdentifier &identifier, LevelSetShape &level_set_shape);
     virtual ~LevelsetKernelGradientIntegral() {};
 
     class UpdateKernel

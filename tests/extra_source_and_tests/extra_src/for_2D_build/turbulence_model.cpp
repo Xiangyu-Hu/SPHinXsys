@@ -1,7 +1,7 @@
-#ifndef TURBULENCEMODEL_CPP
-#define TURBULENCEMODEL_CPP
 #include "turbulence_model.h"
+
 #include "sphinxsys.h"
+#include "base_body.hpp"
 namespace SPH
 {
 namespace fluid_dynamics
@@ -21,7 +21,7 @@ BaseTurbulence::BaseTurbulence(BaseInnerRelation &inner_relation, GhostCreationF
       Eps_(this->particles_->template getVariableDataByName<Real>("Dissipation")),
       mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
       ghost_creator_(ghost_creator),
-      viscosity_(DynamicCast<Viscosity>(this, particles_->getBaseMaterial()))
+      viscosity_(sph_body_->getMaterialProperty<Viscosity>())
 {
 }
 //=================================================================================================//
@@ -126,6 +126,4 @@ void StdWallFunctionFVM::nearwallquantities(size_t index_i)
 }
 //=================================================================================================//
 } // namespace fluid_dynamics
-
 } // namespace SPH
-#endif // TURBULENCEMODEL_CPP

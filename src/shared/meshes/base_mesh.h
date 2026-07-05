@@ -37,6 +37,7 @@
 #include "data_type.h"
 #include "sphinxsys_constant.h"
 #include "sphinxsys_variable.h"
+#include "variable_functions.h"
 
 #include <fstream>
 
@@ -52,11 +53,11 @@ namespace SPH
 class Mesh
 {
   public:
-    Mesh() {};
+    Mesh(){};
     Mesh(BoundingBoxd tentative_bounds, Real grid_spacing,
          UnsignedInt buffer_width, UnsignedInt linear_cell_index_offset = 0);
     Mesh(Vecd mesh_lower_bound, Real grid_spacing, Arrayi all_grid_points);
-    ~Mesh() {};
+    ~Mesh(){};
 
     Vecd MeshLowerBound() const { return mesh_lower_bound_; };
     Real GridSpacing() const { return grid_spacing_; };
@@ -113,8 +114,8 @@ class BaseMeshField
     std::string name_{};
 
   public:
-    explicit BaseMeshField(const std::string &name) : name_(name) {};
-    virtual ~BaseMeshField() {};
+    explicit BaseMeshField(const std::string &name) : name_(name){};
+    virtual ~BaseMeshField(){};
     /** Return the mesh field name. */
     std::string Name() { return name_; };
     void setName(const std::string &new_name) { name_ = new_name; };
@@ -130,15 +131,15 @@ template <class MeshType>
 class MultiResolutionMeshField : public BaseMeshField
 {
     DataContainerUniquePtrAssemble<DiscreteVariable> cell_variable_ptrs_;
-    UniquePtrsKeeper<Entity> unique_entity_ptrs_;
+    UniquePtrsKeeper<Quantity> unique_entity_ptrs_;
 
   public:
     MultiResolutionMeshField(
         const std::string &name, size_t resolution_levels,
         BoundingBoxd tentative_bounds, Real Reference_grid_spacing, UnsignedInt buffer_width);
-    virtual ~MultiResolutionMeshField() {};
+    virtual ~MultiResolutionMeshField(){};
 
-    UniquePtrsKeeper<MeshType> meshs_keeper_;
+    UniquePtrsKeeper<MeshType> meshes_keeper_;
     MeshType *getMeshes() { return ca_meshes_.Data(); };
     MeshType &getMesh(UnsignedInt level) { return ca_meshes_.Data()[level]; };
     MeshType &getCoarsestMesh() { return ca_meshes_.Data()[0]; };
@@ -151,8 +152,8 @@ class MultiResolutionMeshField : public BaseMeshField
     CellVariable<DataType> *registerCellVariable(const std::string &variable_name, Args &&...args);
     template <typename DataType>
     CellVariable<DataType> *getCellVariable(const std::string &variable_name);
-    template <typename DataType, template <typename> class EntityType, typename... Args>
-    EntityType<DataType> *createUniqueEntity(Args &&...args);
+    template <typename DataType, template <typename> class QuantityType, typename... Args>
+    QuantityType<DataType> *createUniqueQuantity(Args &&...args);
 
     template <typename DataType>
     void addCellVariableToWrite(const std::string &variable_name);

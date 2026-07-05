@@ -73,8 +73,8 @@ class WallBoundary : public MultiPolygonShape
 class InletInflowCondition : public fluid_dynamics::EmitterInflowCondition
 {
   public:
-    InletInflowCondition(AlignedBoxByParticle &aligned_box_part)
-        : EmitterInflowCondition(aligned_box_part) {}
+    InletInflowCondition(OrientedBoxByParticle &oriented_box_part)
+        : EmitterInflowCondition(oriented_box_part) {}
 
   protected:
     virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
@@ -96,12 +96,12 @@ int main(int ac, char *av[])
     GeometricShapeBox water_inlet_shape(Transform(inlet_translation), inlet_halfsize);
     FluidBody water_body(sph_system, water_inlet_shape, "WaterBody");
     water_body.getSPHAdaptation().resetKernel<KernelTabulated<KernelWendlandC2>>(20);
-    water_body.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(350.0);
     water_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer);
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
-    wall.defineMaterial<Solid>();
+    wall.defineMatterMaterial<Solid>();
     wall.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
@@ -136,7 +136,7 @@ int main(int ac, char *av[])
     ReduceDynamics<fluid_dynamics::AdvectionTimeStep> get_fluid_advection_time_step_size(water_body, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_body);
 
-    AlignedBoxByParticle emitter(water_body, AlignedBox(xAxis, Transform(inlet_translation), inlet_halfsize));
+    OrientedBoxByParticle emitter(water_body, OrientedBox(xAxis, Transform(inlet_translation), inlet_halfsize));
     SimpleDynamics<InletInflowCondition> inflow_condition(emitter);
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, inlet_buffer);
     //----------------------------------------------------------------------

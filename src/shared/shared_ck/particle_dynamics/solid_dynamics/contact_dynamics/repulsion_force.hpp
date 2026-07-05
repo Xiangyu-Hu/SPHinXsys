@@ -10,11 +10,12 @@ namespace solid_dynamics
 {
 //=================================================================================================//
 template <typename... Parameters>
+template <class DynamicsIdentifier>
 RepulsionForceCK<Base, Contact<Parameters...>>::
-    RepulsionForceCK(Contact<Parameters...> &contact_relation, Real numerical_damping)
-    : Interaction<Contact<Parameters...>>(contact_relation),
+    RepulsionForceCK(DynamicsIdentifier &identifier, Real numerical_damping)
+    : Interaction<Contact<Parameters...>>(identifier),
       ForcePriorCK(this->particles_, "RepulsionForce"),
-      solid_contact_(DynamicCast<SolidContact>(this, this->particles_->getBaseMaterial())),
+      solid_contact_(DynamicCast<SolidContact>(this, this->sph_body_->getMatterMaterial())),
       numerical_damping_(numerical_damping),
       stiffness_(solid_contact_.ContactStiffness()),
       impedance_(sqrt(solid_contact_.ContactReferenceDensity() * stiffness_)),
@@ -24,15 +25,15 @@ RepulsionForceCK<Base, Contact<Parameters...>>::
       dv_repulsion_force_(ForcePriorCK::getCurrentForce()) {}
 //=================================================================================================//
 template <typename... Parameters>
-template <typename... Args>
+template <class DynamicsIdentifier, typename... Args>
 RepulsionForceCK<Contact<WithUpdate, Parameters...>>::
-    RepulsionForceCK(Contact<Parameters...> &contact_relation, Args &&...args)
-    : BaseInteractionType(contact_relation, std::forward<Args>(args)...),
+    RepulsionForceCK(DynamicsIdentifier &identifier, Args &&...args)
+    : BaseInteractionType(identifier, std::forward<Args>(args)...),
       dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection"))
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
-        Solid &solid = DynamicCast<Solid>(this, this->contact_bodies_[k]->getBaseMaterial());
+        Solid &solid = DynamicCast<Solid>(this, this->contact_bodies_[k]->getMatterMaterial());
         contact_stiffness_.push_back(solid.ContactStiffness());
         contact_impedance_.push_back(sqrt(solid.ReferenceDensity() * solid.ContactStiffness()));
         dv_contact_repulsion_factor_.push_back(
@@ -86,11 +87,11 @@ void RepulsionForceCK<Contact<WithUpdate, Parameters...>>::
 }
 //=================================================================================================//
 template <typename... Parameters>
-template <typename... Args>
+template <class DynamicsIdentifier, typename... Args>
 RepulsionForceCK<Contact<WithUpdate, Wall, Parameters...>>::
-    RepulsionForceCK(Contact<Parameters...> &contact_relation, Args &&...args)
-    : BaseInteractionType(contact_relation, std::forward<Args>(args)...),
-      Interaction<Wall>(contact_relation) {}
+    RepulsionForceCK(DynamicsIdentifier &identifier, Args &&...args)
+    : BaseInteractionType(identifier, std::forward<Args>(args)...),
+      Interaction<Wall>(identifier) {}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>

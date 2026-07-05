@@ -17,7 +17,7 @@ LevelSetShape::LevelSetShape(
 //=================================================================================================//
 LevelSetShape::LevelSetShape(
     SPHSystem &sph_system, const SPHAdaptation &sph_adaptation, Shape &shape, Real refinement)
-    : Shape(shape.getName()), sph_system_(sph_system),
+    : Shape(shape.Name()), sph_system_(sph_system),
       level_set_(*level_set_keeper_.movePtr(sph_adaptation.createLevelSet(shape, refinement)))
 {
     bounding_box_ = shape.getBounds();

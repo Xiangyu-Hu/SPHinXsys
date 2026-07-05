@@ -163,7 +163,7 @@ class SparseMeshField : public MultiResolutionMeshField<PackageMesh<PKG_SIZE>>
     DataContainerUniquePtrAssemble<MetaVariable> meta_variable_ptrs_;
     MetaVariableAssemble all_meta_variables_;
     MetaVariableAssemble evolving_meta_variables_;
-    UniquePtrsKeeper<Entity> unique_variable_ptrs_;
+    UniquePtrsKeeper<Quantity> unique_variable_ptrs_;
     UnsignedInt num_boundary_pkgs_;        /**< the number boundary packages for each resolution level. */
     StdVec<UnsignedInt> num_pkgs_offsets_; /**< save stating and ending indexes of non-boundary packages. */
     UnsignedInt pkgs_bound_;

@@ -44,8 +44,20 @@ class TimeStepper
     void setPhysicalTime(Real time);
     Real getPhysicalTime();
     Real getGlobalTimeStepSize();
+    Real getPhysicalTimeWithScalingRef();
+    Real getGlobalTimeStepSizeWithScalingRef();
     Real incrementPhysicalTime(Real global_time_step);
     Real incrementPhysicalTime(BaseDynamics<Real> &step_evaluator);
+    UnsignedInt getIterationStep() const { return iteration_step_; }
+    void setRestartStep(UnsignedInt restart_step);
+    bool isFirstComputingStep() const { return iteration_step_ == first_computing_step_; }
+    UnsignedInt incrementIterationStep() { return ++iteration_step_; }
+    UnsignedInt getScreeningInterval() const { return screening_interval_; }
+    UnsignedInt getObservationInterval() const { return observation_interval_; }
+    void setScreeningInterval(UnsignedInt interval) { screening_interval_ = interval; }
+    void setObservationInterval(UnsignedInt interval) { observation_interval_ = interval; }
+    bool isScreeningStep() const { return (iteration_step_ % screening_interval_ == 0); }
+    bool isObservationStep() const { return (iteration_step_ % observation_interval_ == 0); }
 
     template <class Integrator>
     UnsignedInt integrateMatchedTimeInterval( // designed to avoid too small last step
@@ -102,20 +114,22 @@ class TimeStepper
         bool operator()();
 
       private:
-        SingularVariable<Real> *sv_physical_time_;
+        SingleVariable<Real> *sv_physical_time_;
         Real trigger_time_;
     };
 
     class TriggerByInterval
     {
       public:
-        TriggerByInterval(Real initial_interval);
+        TriggerByInterval(TimeStepper &time_stepper, Real initial_interval);
         bool operator()(BaseDynamics<Real> &interval_evaluator);
         bool operator()();
         Real getInterval() const;
+        Real getIntervalWithScalingRef() const;
         void incrementPresentTime(Real dt);
 
       private:
+        SingleVariable<Real> *sv_physical_time_;
         Real present_time_, interval_;
     };
 
@@ -130,7 +144,11 @@ class TimeStepper
     StdVec<TriggerByInterval *> interval_executers_;
     StdVec<TriggerByPhysicalTime *> physical_time_executers_;
     Real global_dt_;
-    SingularVariable<Real> *sv_physical_time_;
+    SingleVariable<Real> *sv_physical_time_;
+    UnsignedInt iteration_step_{0};
+    UnsignedInt first_computing_step_{0};
+    UnsignedInt screening_interval_{100};
+    UnsignedInt observation_interval_{200};
 };
 
 class SPHSolver

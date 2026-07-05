@@ -55,6 +55,7 @@ target_compile_features(sphinxsys_core INTERFACE cxx_std_17) # Requires a compil
 if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
     set_target_properties(sphinxsys_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON) # For correct DLL generation on Windows
     target_compile_definitions(sphinxsys_core INTERFACE _USE_MATH_DEFINES)
+    target_compile_options(sphinxsys_core INTERFACE /EHsc)
     if(NOT SPHINXSYS_USE_SYCL)
         target_compile_definitions(sphinxsys_core INTERFACE NOMINMAX)
         target_compile_options(sphinxsys_core INTERFACE /MP)
@@ -91,7 +92,7 @@ target_link_libraries(sphinxsys_core INTERFACE Eigen3::Eigen)
 
 # ## TBB
 find_package(TBB CONFIG REQUIRED)
-target_link_libraries(sphinxsys_core INTERFACE TBB::tbb TBB::tbbmalloc $<$<PLATFORM_ID:Windows>:TBB::tbbmalloc_proxy>)
+target_link_libraries(sphinxsys_core INTERFACE TBB::tbb)
 
 # ## Threads
 find_package(Threads REQUIRED)

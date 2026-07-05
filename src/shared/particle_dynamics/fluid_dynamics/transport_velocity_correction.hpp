@@ -24,11 +24,11 @@ TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonControlTyp
     TransportVelocityCorrection(BaseInnerRelation &inner_relation, Real coefficient)
     : TransportVelocityCorrection<Base, DataDelegateInner, CommonControlTypes...>(inner_relation),
       h_ref_(this->getSPHAdaptation().ReferenceSmoothingLength()),
-      correction_scaling_(coefficient * h_ref_ * h_ref_),
+      squared_h_ref_(h_ref_ * h_ref_),
+      correction_scaling_(coefficient * squared_h_ref_),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       pos_(this->particles_->template getVariableDataByName<Vecd>("Position")),
-      h_ratio_(DynamicCast<AdaptationType>(this, this->getSPHAdaptation())),
-      limiter_(h_ref_ * h_ref_)
+      h_ratio_(DynamicCast<AdaptationType>(this, this->getSPHAdaptation())), limiter_()
 {
     static_assert(std::is_base_of<Limiter, LimiterType>::value,
                   "Limiter is not the base of LimiterType!");
@@ -61,7 +61,7 @@ void TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonContr
     {
         Real inv_h_ratio = 1.0 / h_ratio_(index_i);
         Real squared_norm = this->kernel_gradient_integral_[index_i].squaredNorm();
-        pos_[index_i] += correction_scaling_ * limiter_(squared_norm) *
+        pos_[index_i] += correction_scaling_ * limiter_(squared_h_ref_ * squared_norm) *
                          this->kernel_gradient_integral_[index_i] * inv_h_ratio * inv_h_ratio;
     }
 }

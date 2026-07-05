@@ -94,7 +94,7 @@ int main(int ac, char *av[])
     sph_system.handleCommandlineOptions(ac, av);
     /** create a plate body. */
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
-    plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    plate_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles<SurfaceParticles, Plate>();
 
     /** Define Observer. */

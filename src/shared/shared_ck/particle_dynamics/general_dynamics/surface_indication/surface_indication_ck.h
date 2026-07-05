@@ -80,7 +80,8 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>
     : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>
 {
   public:
-    explicit FreeSurfaceIndicationCK(Inner<Parameters...> &inner_relation);
+    template <class DynamicsIdentifier>
+    explicit FreeSurfaceIndicationCK(DynamicsIdentifier &identifier);
     virtual ~FreeSurfaceIndicationCK() {}
 
     //------------------------------------------------------------------------------------------//
@@ -139,7 +140,8 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
     : public FreeSurfaceIndicationCK<Base, Contact<Parameters...>>
 {
   public:
-    explicit FreeSurfaceIndicationCK(Contact<Parameters...> &contact_relation);
+    template <class DynamicsIdentifier>
+    explicit FreeSurfaceIndicationCK(DynamicsIdentifier &identifier);
     virtual ~FreeSurfaceIndicationCK() {}
 
     //------------------------------------------------------------------------------------------//

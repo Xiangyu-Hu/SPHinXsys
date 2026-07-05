@@ -38,7 +38,7 @@ std::array<Real, 4> b0 = {Real(7.209), Real(20.417), Real(11.176), Real(9.466)};
 Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
 /** Electrophysiology parameters. */
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real diffusion_coeff = 0.8;
 Real bias_coeff = 0.0;
 /** Electrophysiology parameters. */
@@ -115,7 +115,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
   public:
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
         : LocalDynamics(sph_body),
-          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_->getBaseMaterial())),
+          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_->getMatterMaterial())),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerStateVariableData<Real>(species_name))
     {

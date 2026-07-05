@@ -31,17 +31,18 @@
 #define BASE_BODY_PART_H
 
 #include "base_data_type_package.h"
-
+#include "base_particles.h"
 #include "tbb/concurrent_vector.h"
 
 #include <optional>
+#include <type_traits>
 
 namespace SPH
 {
 class BaseCellLinkedList;
 class LevelSetShape;
-class AlignedBox;
-class Entity;
+class OrientedBox;
+class Quantity;
 class SPHAdaptation;
 class SPHBody;
 class RealBody;
@@ -51,7 +52,7 @@ class BaseParticles;
 template <typename T>
 class DiscreteVariable;
 template <typename T>
-class SingularVariable;
+class SingleVariable;
 
 template <typename T>
 using ConcurrentVec = tbb::concurrent_vector<T>;
@@ -64,7 +65,7 @@ using namespace std::placeholders;
 class BodyPart
 {
   protected:
-    UniquePtrsKeeper<Entity> unique_variable_ptrs_;
+    UniquePtrsKeeper<Quantity> unique_variable_ptrs_;
 
   public:
     typedef SPHAdaptation Adaptation;
@@ -72,33 +73,11 @@ class BodyPart
     virtual ~BodyPart();
     SPHBody &getSPHBody() { return sph_body_; };
     SPHSystem &getSPHSystem();
-    std::string getName() const { return alias_.value_or(part_name_); };
+    std::string Name() const { return alias_.value_or(part_name_); };
     int getPartID() { return part_id_; };
-    SingularVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
+    SingleVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
     SPHAdaptation &getSPHAdaptation() { return sph_adaptation_; };
     BaseCellLinkedList &getCellLinkedList();
-
-    template <typename TargetCriterion>
-    class TargetParticleMask : public TargetCriterion
-    {
-      public:
-        template <class ExecutionPolicy, typename EnclosureType, typename... Args>
-        TargetParticleMask(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
-            : TargetCriterion(std::forward<Args>(args)...), part_id_(encloser.part_id_),
-              body_part_id_(encloser.dv_body_part_id_->DelegatedData(ex_policy)) {}
-        ~TargetParticleMask() {}
-
-        template <typename... Args>
-        bool operator()(UnsignedInt target_index, Args &&...args)
-        {
-            return (body_part_id_[target_index] == part_id_) &&
-                   TargetCriterion::operator()(target_index, std::forward<Args>(args)...);
-        }
-
-      protected:
-        int part_id_;
-        int *body_part_id_;
-    };
 
   protected:
     SPHBody &sph_body_;
@@ -107,8 +86,7 @@ class BodyPart
     std::string part_name_;
     std::optional<std::string> alias_;
     SPHAdaptation &sph_adaptation_;
-    SingularVariable<UnsignedInt> *sv_range_size_;
-    DiscreteVariable<int> *dv_body_part_id_;
+    SingleVariable<UnsignedInt> *sv_range_size_;
     Vecd *pos_;
 };
 
@@ -117,7 +95,7 @@ class BodyPartByID : public BodyPart
   public:
     typedef BodyPartByID RangeIdentifier;
     BodyPartByID(SPHBody &sph_body);
-    virtual ~BodyPartByID() {};
+    virtual ~BodyPartByID(){};
 };
 
 /**
@@ -133,13 +111,50 @@ class BodyPartByParticle : public BodyPart
     DiscreteVariable<UnsignedInt> *dvParticleList() { return dv_particle_list_; };
     IndexVector &LoopRange() { return body_part_particles_; };
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
+
     BodyPartByParticle(SPHBody &sph_body);
-    virtual ~BodyPartByParticle() {};
+    template <typename TagCriteria>
+    BodyPartByParticle(SPHBody &sph_body, TagCriteria criteria);
+    virtual ~BodyPartByParticle(){};
 
   protected:
     DiscreteVariable<UnsignedInt> *dv_particle_list_;
     typedef std::function<bool(size_t)> TaggingParticleMethod;
     void tagParticles(TaggingParticleMethod &tagging_particle_method);
+};
+
+/**
+ * @class VariableRangeTagCriteria
+ * @brief A common criteria defined by the range of one variable
+ */
+template <typename DataType>
+class VariableRangeTagCriteria
+{
+  public:
+    VariableRangeTagCriteria(
+        const std::string &variable_name, DataType lower_bound, DataType upper_bound);
+    void setupBaseParticles(BaseParticles &base_particles);
+    bool operator()(size_t index_i) const;
+
+  private:
+    std::string variable_name_;
+    DataType lower_bound_;
+    DataType upper_bound_;
+    DataType *variable_;
+};
+
+class BodyPartByRealVar : public BodyPartByParticle
+{
+  public:
+    template <typename... Args>
+    BodyPartByRealVar(SPHBody &sph_body, Args &&...args);
+};
+
+class BodyPartByIntVar : public BodyPartByParticle
+{
+  public:
+    template <typename... Args>
+    BodyPartByIntVar(SPHBody &sph_body, Args &&...args);
 };
 
 /**
@@ -158,7 +173,7 @@ class BodyPartByCell : public BodyPart
     size_t SizeOfLoopRange();
 
     BodyPartByCell(RealBody &real_body);
-    virtual ~BodyPartByCell() {};
+    virtual ~BodyPartByCell(){};
     DiscreteVariable<UnsignedInt> *dvCellList() { return dv_cell_list_; };
     DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
@@ -200,7 +215,7 @@ class BodySurface : public BodyPartByParticle
 {
   public:
     explicit BodySurface(SPHBody &sph_body);
-    virtual ~BodySurface() {};
+    virtual ~BodySurface(){};
 
   protected:
     Real particle_spacing_min_;
@@ -215,7 +230,7 @@ class BodySurfaceLayer : public BodyPartByParticle
 {
   public:
     explicit BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness = 3.0);
-    virtual ~BodySurfaceLayer() {};
+    virtual ~BodySurfaceLayer(){};
 
   private:
     Real thickness_threshold_;
@@ -267,36 +282,36 @@ class NearShapeSurface : public BodyPartByCell
     bool checkNearSurface(Vecd cell_position, Real threshold);
 };
 
-class AlignedBoxPart
+class OrientedBoxPart
 {
-    UniquePtrKeeper<SingularVariable<AlignedBox>> sv_aligned_box_keeper_;
+    UniquePtrKeeper<SingleVariable<OrientedBox>> sv_oriented_box_keeper_;
 
   public:
-    AlignedBoxPart(const std::string &part_name, const AlignedBox &aligned_box);
-    virtual ~AlignedBoxPart();
-    SingularVariable<AlignedBox> *svAlignedBox() { return sv_aligned_box_keeper_.getPtr(); };
-    AlignedBox &getAlignedBox() { return aligned_box_; };
-    void writeShapeProxy();
+    OrientedBoxPart(const std::string &part_name, const OrientedBox &oriented_box);
+    virtual ~OrientedBoxPart();
+    SingleVariable<OrientedBox> *svOrientedBox() { return sv_oriented_box_keeper_.getPtr(); };
+    OrientedBox &getOrientedBox() { return oriented_box_; };
+    void writeOrientedBoxToVtp(Real scale_factor = 1.0);
 
   protected:
-    AlignedBox &aligned_box_;
+    OrientedBox &oriented_box_;
 };
 
-class AlignedBoxByParticle : public BodyPartByParticle, public AlignedBoxPart
+class OrientedBoxByParticle : public BodyPartByParticle, public OrientedBoxPart
 {
   public:
-    AlignedBoxByParticle(RealBody &real_body, const AlignedBox &aligned_box);
-    virtual ~AlignedBoxByParticle() {};
+    OrientedBoxByParticle(RealBody &real_body, const OrientedBox &oriented_box);
+    virtual ~OrientedBoxByParticle(){};
 
   protected:
     bool tagByContain(size_t particle_index);
 };
 
-class AlignedBoxByCell : public BodyPartByCell, public AlignedBoxPart
+class OrientedBoxByCell : public BodyPartByCell, public OrientedBoxPart
 {
   public:
-    AlignedBoxByCell(RealBody &real_body, const AlignedBox &aligned_box);
-    virtual ~AlignedBoxByCell() {};
+    OrientedBoxByCell(RealBody &real_body, const OrientedBox &oriented_box);
+    virtual ~OrientedBoxByCell(){};
 
   protected:
     bool checkNotFar(Vecd cell_position, Real threshold);

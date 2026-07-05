@@ -57,7 +57,8 @@ class KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit KernelGradientIntegral(Inner<Parameters...> &inner_relation);
+    template <class DynamicsIdentifier>
+    explicit KernelGradientIntegral(DynamicsIdentifier &identifier);
     virtual ~KernelGradientIntegral() {}
 
     class InteractKernel : public BaseInteraction::InteractKernel
@@ -85,7 +86,8 @@ class KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters.
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit KernelGradientIntegral(Contact<Parameters...> &contact_relation);
+    template <class DynamicsIdentifier>
+    explicit KernelGradientIntegral(DynamicsIdentifier &identifier);
     virtual ~KernelGradientIntegral() {}
 
     class InteractKernel : public BaseInteraction::InteractKernel

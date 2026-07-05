@@ -33,6 +33,7 @@
 
 #include "base_local_dynamics.h"
 #include "interaction_ck.h"
+#include "particle_functors_ck.h"
 
 #include <tuple>
 
@@ -51,20 +52,6 @@ class LinearCorrectionMatrix<Base, RelationType<Parameters...>>
     explicit LinearCorrectionMatrix(DynamicsIdentifier &identifier);
     virtual ~LinearCorrectionMatrix() {};
 
-    class InteractKernel
-        : public Interaction<RelationType<Parameters...>>::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, typename... Args>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       LinearCorrectionMatrix<Base, RelationType<Parameters...>> &encloser,
-                       Args &&...args);
-
-      protected:
-        Real *Vol_;
-        Matd *B_;
-    };
-
   protected:
     DiscreteVariable<Matd> *dv_B_;
 };
@@ -73,36 +60,37 @@ template <typename... Parameters>
 class LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>
     : public LinearCorrectionMatrix<Base, Inner<Parameters...>>
 {
+    using BaseInteraction = LinearCorrectionMatrix<Base, Inner<Parameters...>>;
 
   public:
-    explicit LinearCorrectionMatrix(Inner<Parameters...> &inner_relation, Real alpha = Real(0))
-        : LinearCorrectionMatrix<Base, Inner<Parameters...>>(inner_relation), alpha_(alpha) {};
+    template <class DynamicsIdentifier>
+    explicit LinearCorrectionMatrix(DynamicsIdentifier &identifier, Real alpha = Real(0));
     template <typename BodyRelationType, typename FirstArg>
-    explicit LinearCorrectionMatrix(DynamicsArgs<BodyRelationType, FirstArg> parameters)
-        : LinearCorrectionMatrix(parameters.identifier_, std::get<0>(parameters.others_)){};
+    explicit LinearCorrectionMatrix(DynamicsArgs<BodyRelationType, FirstArg> parameters);
     virtual ~LinearCorrectionMatrix() {};
 
-    class InteractKernel
-        : public LinearCorrectionMatrix<Base, Inner<Parameters...>>::InteractKernel
+    class InteractKernel : public BaseInteraction::InteractKernel
     {
       public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>> &encloser);
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        DataView<Matd> B_;
+        DataView<Real> Vol_;
     };
 
     class UpdateKernel
-        : public LinearCorrectionMatrix<Base, Inner<Parameters...>>::InteractKernel
     {
       public:
-        template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy,
-                     LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>> &encloser);
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
         Real alpha_;
+        DataView<Matd> B_;
     };
 
   protected:
@@ -114,26 +102,53 @@ template <typename... Parameters>
 class LinearCorrectionMatrix<Contact<Parameters...>>
     : public LinearCorrectionMatrix<Base, Contact<Parameters...>>
 {
+    using BaseInteraction = LinearCorrectionMatrix<Base, Contact<Parameters...>>;
+
   public:
-    explicit LinearCorrectionMatrix(Contact<Parameters...> &contact_relation);
+    template <class DynamicsIdentifier>
+    explicit LinearCorrectionMatrix(DynamicsIdentifier &identifier);
     virtual ~LinearCorrectionMatrix() {};
 
-    class InteractKernel
-        : public LinearCorrectionMatrix<Base, Contact<Parameters...>>::InteractKernel
+    class InteractKernel : public BaseInteraction::InteractKernel
     {
       public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       LinearCorrectionMatrix<Contact<Parameters...>> &encloser,
-                       size_t contact_index);
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
-        Real *contact_Vol_k_;
+        DataView<Matd> B_;
+        DataView<Real> contact_Vol_k_;
     };
 };
-
 using LinearCorrectionMatrixComplex = LinearCorrectionMatrix<Inner<WithUpdate>, Contact<>>;
+
+template <class DynamicsIdentifier, class ParticleScope>
+class LinearCorrectionMatrixScope : public BaseLocalDynamics<DynamicsIdentifier>
+{
+    using ParticleScopeTypeKernel = typename ParticleScopeTypeCK<ParticleScope>::ComputingKernel;
+
+  public:
+    template <typename... Args>
+    explicit LinearCorrectionMatrixScope(DynamicsIdentifier &identifier, Args... args);
+    virtual ~LinearCorrectionMatrixScope() {}
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        DataView<Matd> B_;
+        ParticleScopeTypeKernel within_scope_;
+    };
+
+  protected:
+    DiscreteVariable<Matd> *dv_B_;
+    ParticleScopeTypeCK<ParticleScope> within_scope_method_;
+};
 
 class NoKernelCorrectionCK : public KernelCorrection
 {

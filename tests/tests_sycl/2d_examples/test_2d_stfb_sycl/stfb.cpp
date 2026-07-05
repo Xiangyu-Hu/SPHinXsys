@@ -115,16 +115,17 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     GeometricShapeBox structure_shape(Transform(structure_translation), structure_halfsize, "Structure");
     SolidBody structure(sph_system, structure_shape);
-    structure.defineMaterial<Solid>(rho_s);
+    structure.defineMatterMaterial<Solid>(rho_s);
     structure.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody observer(sph_system, "Observer");
@@ -192,12 +193,12 @@ int main(int ac, char *av[])
     fluid_acoustic_step_2nd_half.addPostContactInteraction(fluid_acoustic_step_2nd_half_with_wall);
 
     auto &fluid_density_regularization =
-        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(water_block_inner)
+        main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(water_block_inner)
             .addPostContactInteraction(water_block_contact)
-            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(water_block);
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeSurface>(water_block);
 
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_f);
-    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_block);
+    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(water_block);
 
     auto &fluid_viscous_force = main_methods.addInteractionDynamicsWithUpdate<
         fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(water_block_inner);
@@ -215,8 +216,8 @@ int main(int ac, char *av[])
     //	Define the multi-body system
     //----------------------------------------------------------------------
     SimTK::MultibodySystem MBsystem;
-    SimTK::SimbodyMatterSubsystem matter(MBsystem);                // the bodies or matter of the system
-    SimTK::GeneralForceSubsystem forces(MBsystem);                 // the forces of the system
+    SimTK::SimbodyMatterSubsystem matter(MBsystem);    // the bodies or matter of the system
+    SimTK::GeneralForceSubsystem forces(MBsystem);     // the forces of the system
     SimbodyStateEngine simbody_state_engine(MBsystem); // the state engine of the system
 
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
@@ -281,10 +282,10 @@ int main(int ac, char *av[])
     auto &wave_gauge = main_methods.addReduceRegression<
         RegressionTestDynamicTimeWarping, UpperFrontInAxisDirectionCK>(wave_probe_buffer, "FreeSurfaceHeight");
     auto &write_structure_position = main_methods.addObserveRegression<
-        RegressionTestDynamicTimeWarping, Vecd>("Position", observer_contact);
+        RegressionTestDynamicTimeWarping, Vecd>(observer_contact, "Position");
 
-    SingularVariable<SimTK::SpatialVec> sv_action_on_structure("ActionOnStructure", SimTK::SpatialVec(0));
-    SingularVariableRecording<SimTK::SpatialVec> action_on_structure_recording(sph_system, &sv_action_on_structure);
+    SingleVariable<SimTK::SpatialVec> sv_action_on_structure("ActionOnStructure", SimTK::SpatialVec(0));
+    SingleVariableRecording<SimTK::SpatialVec> action_on_structure_recording(sph_system, &sv_action_on_structure);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

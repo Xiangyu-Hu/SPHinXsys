@@ -11,7 +11,7 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 BaseIntegration<DataDelegationType>::BaseIntegration(BaseRelationType &base_relation)
     : LocalDynamics(base_relation.getSPHBody()), DataDelegationType(base_relation),
-      fluid_(DynamicCast<Fluid>(this, this->particles_->getBaseMaterial())),
+      fluid_(DynamicCast<Fluid>(this, this->sph_body_->getMatterMaterial())),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
       rho_(this->particles_->template getVariableDataByName<Real>("Density")),
       mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
@@ -121,7 +121,7 @@ Integration1stHalf<Contact<>, RiemannSolverType, KernelCorrectionType>::
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {
         contact_corrections_.push_back(KernelCorrectionType(this->contact_particles_[k]));
-        Fluid &contact_fluid = DynamicCast<Fluid>(this, this->contact_particles_[k]->getBaseMaterial());
+        Fluid &contact_fluid = DynamicCast<Fluid>(this, this->contact_bodies_[k]->getMatterMaterial());
         riemann_solvers_.push_back(RiemannSolverType(this->fluid_, contact_fluid));
         contact_p_.push_back(this->contact_particles_[k]->template registerStateVariableData<Real>("Pressure"));
         contact_Vol_.push_back(this->contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));
@@ -237,7 +237,7 @@ Integration2ndHalf<Contact<>, RiemannSolverType>::
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {
-        Fluid &contact_fluid = DynamicCast<Fluid>(this, contact_particles_[k]->getBaseMaterial());
+        Fluid &contact_fluid = DynamicCast<Fluid>(this, contact_bodies_[k]->getMatterMaterial());
         riemann_solvers_.push_back(RiemannSolverType(fluid_, contact_fluid));
         contact_vel_.push_back(contact_particles_[k]->template registerStateVariableData<Vecd>("Velocity"));
         contact_Vol_.push_back(contact_particles_[k]->template getVariableDataByName<Real>("VolumetricMeasure"));

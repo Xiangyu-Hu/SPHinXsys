@@ -81,7 +81,7 @@ class SimbodyStateEngine
 
         virtual ~StateVariable() {}
 
-        std::string &getName() { return name_; }
+        std::string &Name() { return name_; }
         SimbodyStateEngine &getOwner() { return *owner_; }
         /** Get the index of simbody state variable. */
         int &getVarIndex() { return varindex_; }

@@ -136,11 +136,12 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_body.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.addMaterialProperty<Viscosity>(mu_f);
     water_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
@@ -189,9 +190,9 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
     /** Evaluation of density by summation approach. */
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
         fluid_density_summation(water_block_inner, water_wall_contact);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, Internal>>
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, WeaklyCompressibleFluid, Internal>>
         fluid_density_regularization(water_body);
     /** Pressure and density relaxation algorithm by using Verlet time stepping. */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
@@ -208,7 +209,7 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex> kernel_gradient_integral(water_block_inner, water_wall_contact);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear>> transport_correction(water_body);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>> fluid_acoustic_time_step(water_body);
     /** Computing viscous acceleration with wall. */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_block_inner, water_wall_contact);
@@ -222,13 +223,13 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<int>(water_body, "Indicator");
     body_states_recording.addToWrite<Vecd>(wall_boundary, "Velocity");
 
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_horizontal_velocity("Velocity", horizontal_observer_contact);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_vertical_velocity("Velocity", vertical_observer_contact);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_horizontal_velocity(horizontal_observer_contact, "Velocity");
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_vertical_velocity(vertical_observer_contact, "Velocity");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     wall_boundary_normal_direction.exec(); // run particle dynamics on CPU first
     water_cell_linked_list.exec();
     wall_cell_linked_list.exec();

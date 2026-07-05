@@ -180,7 +180,7 @@ struct observer_point_shell
 
     void interpolate(SurfaceParticles &particles)
     {
-        ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getBaseMaterial());
+        ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getSPHBody().getMatterMaterial());
         pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
                                             { return (particles.getVariableDataByName<Vec3d>("Position"))[id]; });
         displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
@@ -339,7 +339,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
     SolidBody shell_body(system, shell_shape);
-    shell_body.defineMaterial<LinearElasticSolid>(rho, E, mu);
+    shell_body.defineMatterMaterial<LinearElasticSolid>(rho, E, mu);
     if (cvt)
     {
         shell_body.generateParticles<SurfaceParticles, ShellRoof>(obj_vertices, center, particle_area, thickness);

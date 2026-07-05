@@ -27,7 +27,7 @@ class TransportVelocityCorrectionCK : public BaseLocalDynamics<DynamicsIdentifie
         void update(size_t index_i, Real dt = 0.0);
 
       protected:
-        Real correction_scaling_;
+        Real squared_h_ref_, correction_scaling_; ///< typically coefficient * h_ref^2
         SmoothingLengthRatio h_ratio_;
         LimiterType limiter_;
         Vecd *dpos_;
@@ -36,9 +36,8 @@ class TransportVelocityCorrectionCK : public BaseLocalDynamics<DynamicsIdentifie
     };
 
   protected:
-    Real h_ref_;              ///< e.g. reference smoothing length
-    Real correction_scaling_; ///< typically coefficient * h_ref^2
-    LimiterType limiter_;     ///< e.g. a limiter on the final correction step
+    Real h_ref_, coefficient_;
+    LimiterType limiter_; ///< e.g. a limiter on the final correction step
     ParticleScopeTypeCK<ParticleScopes...> within_scope_method_;
     DiscreteVariable<Vecd> *dv_dpos_, *dv_kernel_gradient_integral_;
     Adaptation &adaptation_;

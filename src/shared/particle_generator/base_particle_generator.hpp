@@ -23,19 +23,20 @@ ParticleGenerator<ParticlesType, Reload>::
         exit(1);
     }
 
-    file_path_ = reload_folder + "/" + reload_body_name + "_rld.xml";
+    file_path_ = reload_folder + "/Reload.xml";
+    body_name_ = reload_body_name;
 }
 //=================================================================================================//
 template <typename ParticlesType>
 void ParticleGenerator<ParticlesType, Reload>::prepareGeometricData()
 {
-    this->base_particles_.readReloadXmlFile(file_path_);
+    this->base_particles_.readReloadXmlFile(file_path_, body_name_);
 }
 //=================================================================================================//
 template <typename ParticlesType>
 void ParticleGenerator<ParticlesType, Reload>::setAllParticleBounds()
 {
-    this->base_particles_.initializeAllParticlesBoundsFromReloadXml();
+    this->base_particles_.initializeAllParticlesBoundsFromReload();
 };
 //=================================================================================================//
 template <typename ParticlesType>

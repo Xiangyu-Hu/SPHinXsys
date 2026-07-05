@@ -31,6 +31,7 @@
 #define ALL_GEOMETRIES_H
 
 #include "complex_geometry.h"
+#include "geometric_element_and_shape_3d.h"
 #include "geometric_shape.h"
 #include "level_set_shape.hpp"
 #include "mapping_shape.h"
@@ -38,4 +39,7 @@
 #include "transform_geometry.h"
 #include "triangle_mesh_shape.h"
 
+namespace SPH
+{
+}
 #endif // ALL_GEOMETRIES_H

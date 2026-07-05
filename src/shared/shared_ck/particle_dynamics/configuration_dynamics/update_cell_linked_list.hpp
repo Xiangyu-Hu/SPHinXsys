@@ -89,7 +89,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::exec(Real dt)
                  { computing_kernel->incrementCellSize(i); });
 
     this->logger_->debug("UpdateCellLinkedList: incrementCellSize done at {}.",
-                         this->sph_body_->getName());
+                         this->sph_body_->Name());
 
     UnsignedInt *particle_index = this->dv_particle_index_->DelegatedData(ExecutionPolicy{});
     UnsignedInt *cell_offset = this->dv_cell_offset_->DelegatedData(ExecutionPolicy{});
@@ -102,7 +102,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::exec(Real dt)
                  [=](size_t i)
                  { computing_kernel->updateCellList(i); });
     this->logger_->debug("UpdateCellLinkedList: updateCellList done at {}.",
-                         this->sph_body_->getName());
+                         this->sph_body_->Name());
 }
 //=================================================================================================//
 } // namespace SPH

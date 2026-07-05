@@ -3,7 +3,7 @@
 #include "muscl_reconstruction.hpp"
 #include "muscl_hllc_integration.h"
 #include "eulerian_fluid_dynamics/eulerian_riemann_solver.h"
-#include "materials/compressible_fluid.h"
+#include "compressible_fluid.h"
 
 using namespace SPH;
 using namespace SPH::fluid_dynamics;
@@ -53,8 +53,8 @@ struct BridgeFixture : public ::testing::Test {
 
     void SetUp() override {
         // Material initialization with proper constructor
-        fluidL_ = new CompressibleFluid(rho0_, gamma_);
-        fluidR_ = new CompressibleFluid(rho0_, gamma_);
+        fluidL_ = new CompressibleFluid(gamma_);
+        fluidR_ = new CompressibleFluid(gamma_);
     }
 
     void TearDown() override {

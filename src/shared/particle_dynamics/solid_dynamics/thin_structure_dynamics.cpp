@@ -25,7 +25,7 @@ void UpdateShellNormalDirection::update(size_t index_i, Real dt)
 ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
     : LocalDynamicsReduce<ReduceMin>(sph_body),
       CFL_(CFL),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getMatterMaterial())),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
       angular_vel_(particles_->getVariableDataByName<Vecd>("AngularVelocity")),
@@ -100,7 +100,7 @@ ShellStressRelaxationFirstHalf::
                                    int number_of_gaussian_points, bool hourglass_control,
                                    Real hourglass_control_factor)
     : BaseShellRelaxation(inner_relation),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getMatterMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()),
       inv_rho0_(1.0 / rho0_),
       smoothing_length_(getSPHAdaptation().ReferenceSmoothingLength()),
@@ -145,7 +145,7 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
     // are defined in local coordinates, while others in global coordinates.
     pos_[index_i] += vel_[index_i] * dt * 0.5;
     rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
-    pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
+    pseudo_n_[index_i] = transformation_matrix0_[index_i].transpose() * getVectorAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i]);
 
     F_[index_i] += dF_dt_[index_i] * dt * 0.5;
     F_bending_[index_i] += dF_bending_dt_[index_i] * dt * 0.5;
@@ -169,7 +169,7 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
 
     /** correct out-plane numerical damping. */
     numerical_damping_scaling_matrix_(Dimensions - 1, Dimensions - 1) = thickness_[index_i] < smoothing_length_ ? thickness_[index_i] : smoothing_length_;
-    
+
     for (int i = 0; i != number_of_gaussian_points_; ++i)
     {
         Matd F_gaussian_point = F_[index_i] + gaussian_point_[i] * F_bending_[index_i] * thickness_[index_i] * 0.5;
@@ -229,7 +229,7 @@ void ShellStressRelaxationSecondHalf::initialization(size_t index_i, Real dt)
     rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
     dpseudo_n_dt_[index_i] = transformation_matrix0_[index_i].transpose() *
                              getVectorChangeRateAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i], angular_vel_[index_i]);
-    pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
+    pseudo_n_[index_i] = transformation_matrix0_[index_i].transpose() * getVectorAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i]);
 }
 //=================================================================================================//
 void ShellStressRelaxationSecondHalf::update(size_t index_i, Real dt)

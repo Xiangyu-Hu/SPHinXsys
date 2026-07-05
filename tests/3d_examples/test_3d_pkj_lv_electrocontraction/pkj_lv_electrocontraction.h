@@ -67,7 +67,7 @@ Real acceleration_factor = 27.5; /** Acceleration factor for fast diffusion on p
 Real diffusion_coeff = 0.8;
 Real bias_coeff = 0.0;
 /** Electrophysiology parameters. */
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real c_m = 1.0;
 Real k = 8.0;
 Real a = 0.01;
@@ -148,7 +148,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
   public:
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
         : LocalDynamics(sph_body),
-          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_->getBaseMaterial())),
+          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_->getMatterMaterial())),
           spacing_ref_(getSPHAdaptation().ReferenceSpacing()),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerStateVariableData<Real>(species_name)),

@@ -168,7 +168,7 @@ NearInterfaceCellTagging::NearInterfaceCellTagging(
 //=============================================================================================//
 CellContainDiffusion::CellContainDiffusion(
     SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
-    SingularVariable<UnsignedInt> &sv_count_modified)
+    SingleVariable<UnsignedInt> &sv_count_modified)
     : BaseMeshLocalDynamics(data_mesh, resolution_level),
       boundary_pkg_index_offset_(data_mesh.NumBoundaryPackages() * resolution_level),
       mcv_cell_contain_id_(*data_mesh.getCellVariable<int>("CellContainID")),

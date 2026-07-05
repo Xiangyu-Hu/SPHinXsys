@@ -30,13 +30,13 @@ SharedPtr<tbb::global_control> &getTbbGlobalControlHolder()
 SPHSystem::SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution, size_t number_of_threads)
     : SPHSystem(true, system_domain_bounds, global_resolution, number_of_threads)
 {
-    writeSystemDomainShape();
+    writeSystemDomainShapeToVtp();
 }
 //=================================================================================================//
 SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
                      Real global_resolution, size_t number_of_threads)
     : system_name_("SPHSystem"),
-      system_domain_bounds_(system_domain_bounds.expand(global_resolution * 4)),
+      system_bounds_(system_domain_bounds.expand(global_resolution * 4)),
       global_resolution_(global_resolution),
       is_physical_(is_physical), run_particle_relaxation_(false), reload_particles_(false),
       restart_step_(0), generate_regression_data_(false), state_recording_(true)
@@ -52,10 +52,10 @@ SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
 //=================================================================================================//
 SPHSystem::~SPHSystem() = default;
 //=================================================================================================//
-void SPHSystem::writeSystemDomainShape()
+void SPHSystem::writeSystemDomainShapeToVtp(Real scale_factor)
 {
-    GeometricShapeBox domain_shape(system_domain_bounds_, system_name_ + "Domain");
-    domain_shape.writeProxy();
+    GeometricShapeBox domain_shape(system_bounds_, system_name_ + "Domain");
+    domain_shape.writeGeometricShapeBoxToVtp(scale_factor);
 }
 //=================================================================================================//
 void SPHSystem::setLogLevel(size_t log_level)
@@ -73,18 +73,6 @@ void SPHSystem::setLogLevel(size_t log_level)
 void SPHSystem::addRealBody(RealBody *real_body)
 {
     real_bodies_.push_back(real_body);
-}
-//=================================================================================================//
-RealBody &SPHSystem::getRealBodyByName(const std::string &name)
-{
-    for (auto &real_body : real_bodies_)
-    {
-        if (real_body->getName() == name)
-        {
-            return *DynamicCast<RealBody>(this, real_body);
-        }
-    }
-    throw std::runtime_error("Real body with name " + name + " not found in SPHSystem.");
 }
 //=================================================================================================//
 
@@ -234,7 +222,7 @@ RelaxationSystem::RelaxationSystem(
     : SPHSystem(false, system_domain_bounds, global_resolution, number_of_threads)
 {
     system_name_ = "RelaxationSystem";
-    writeSystemDomainShape();
+    writeSystemDomainShapeToVtp();
 }
 //=================================================================================================//
 } // namespace SPH
