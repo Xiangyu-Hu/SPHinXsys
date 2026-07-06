@@ -1,4 +1,4 @@
-# Governing equations in the Lagrangian frame moving with averaged velocity
+# Lagrangian incompressible multiphase flow
 
 In this work, we consider an incompressible multiphase flow
 using weakly compressible fluid model in average velocity frames.
@@ -26,7 +26,7 @@ the partial density and the reference density, respectively, of phase $k$.
 Also $\rho^{o} = \sum_{k} \phi^{o}_k \rho^{o}_k$ is the reference density of the mixture,
 which is given by the initial mixture density with
 initial volume fractions $\phi^{o}_k$ in the initial volume element.
-The mass-averaged velocity $\mathbf{v}$ is defined as
+The mass-averaged velocity $\mathbf{v}^{m}$ is defined as
 $$\mathbf{v}^{m} = \frac{\sum_{k} \phi_k \rho^{o}_k \mathbf{v}_k}{\sum_{k} \phi_k \rho^{o}_k}$$
 If we assume that all phases share the same speed of sound,
 then the pressure can be computed from the mixture density
@@ -103,7 +103,7 @@ For a free surface moves with the mixture velocity,
 for each phase
 
 $$
-(\mathbf{v}_k - \mathbf{v}^{m})\cdot\mathbf{n} = 0
+(\mathbf{v}_k - \mathbf{v})\cdot\mathbf{n} = 0
 \quad\Longrightarrow\quad
 \mathbf{Q}_k\cdot\mathbf{n} = 0,\quad
 \mathbf{T}_k\cdot\mathbf{n} = 0 .
@@ -113,13 +113,15 @@ The drift flux through the free surface is identically zero.
 Similarly, as a solid wall is impermeable: $\mathbf{v}_k\cdot\mathbf{n} = \mathbf{v}^{m}\cdot\mathbf{n} = 0$, therefore
 
 $$
-(\mathbf{v}_k - \mathbf{v}^{m})\cdot\mathbf{n} = 0
+(\mathbf{v}_k - \mathbf{v})\cdot\mathbf{n} = 0
 \quad\Longrightarrow\quad
 \mathbf{Q}_k\cdot\mathbf{n} = 0,\quad
 \mathbf{T}_k\cdot\mathbf{n} = 0 .
 $$
 
 No drift flux crosses the wall either.
+Note that, we omit the superscript $^{m}$ as these boundary conditions are still valid
+when other average moving frame is chosen. 
 
 ## SPH discretization of drift contributions
 
@@ -137,17 +139,17 @@ suggesting no change of the mass of each particle and the net contribution from 
 Similarly, the drift contribution of the momentum equation for phase $k$ is discretized as
 
 $$
-\left.\frac{d}{dt}(m_{k,i}\mathbf{v}_{k,i})\right|_{\mathrm{drift}}
-= -\sum_j \bigl( \mathbf{T}^{m}_{k,i} + \mathbf{T}^{m}_{k,j} \bigr)\!\cdot\!\nabla_i W_{ij}\, V_i V_j .
+\left.\frac{d}{dt}(\mathbf{m}_{k,i})\right|_{\mathrm{drift}}
+= -\sum_j \bigl( \mathbf{T}^{m}_{k,i} + \mathbf{T}^{m}_{k,j} \bigr)\!\cdot\!\nabla_i W_{ij}\, V_i V_j
 $$
-
+where $\mathbf{m}_{k,i} = m_{k,i}\mathbf{v}_{k,i}$ is the momentum of phase $k$ on particle $i$.
 For the mixture momentum, the drift contribution becomes
 
 $$
-\left.\frac{d}{dt}(m_{i} \mathbf{v}^{m}_{i})\right|_{\mathrm{drift}} = -\sum_j
+\left.\frac{d}{dt}(\mathbf{m}^{m}_{i})\right|_{\mathrm{drift}} = -\sum_j
 \left(\mathbf{T}^{m}_{i} + \mathbf{T}^{m}_{j}\right) \cdot \nabla W_{ij} V_iV_j.
 $$
-
+where $\mathbf{m}^{m}_{i} = m_{i} \mathbf{v}^{m}_{i}$ is the mixture momentum on particle $i$,
 suggesting non-vanishing drift contribution.
 
 When the ambient phase (air or vacuum) is not modelled. Particles near the surface lack neighbors on the outside.
@@ -164,8 +166,6 @@ $$
 
 This restores the full kernel support near the boundary without affecting conservation:
 fluid–wall pairs contribute zero net momentum exchange.
-Note that, we omit the superscript $^{m}$ as these boundary conditions are still valid
-when other average moving frame is chosen. 
 
 ## Time stepping
 
@@ -197,11 +197,15 @@ we can update the phase volume fraction for each phase as $\phi_k = \frac{m_k}{\
 
 Then, the momentum of each phase is updated from the momentum conservation equations.
 Note that, if the phase mass is clipped to zero, the corresponding momentum is also set to zero,
-and the clipped momentum $\mathbf{m}_{c}$ will be redistributed to other phases according the phase mass,
+and the clipped momentum $\mathbf{m}^{c}$ will be redistributed to other phases according the phase mass,
 that is, the incremental momentum of phase $k$ is
 $$\Delta_k = \frac{m_k \mathbf{m}^{c}}{\sum_{k} m_k} $$
 
-Finally, we update the phase velocity for each phase and the mixture velocity.
+Finally, we update the mixture and phase velocities as
+$$  \mathbf{v}_i = \frac{\mathbf{m}^{m}_{i}}{m_{i}}, \quad 
+\mathbf{v}_{k,i} = \frac{\mathbf{m}_{k,i} +\epsilon_1 \mathbf{m}^{m}_{i}}{m_{k,i} +\epsilon_1 m_{i}} $$
+where $\epsilon_1$ is a small number to avoid division by zero 
+when the phase mass is clipped to zero.
 
 ## Governing equations in the Lagrangian frame moving with volume-averages velocity
 
@@ -241,13 +245,13 @@ Note that, for SPH discretization of drift contributions,
 the only considerable change is now the mixture mass evolution equation
 
 $$
-\frac{dm_{i}}{dt} = - \sum_k\sum_j
-\left(\mathbf{Q}^{\phi}_{k, i} + \mathbf{Q}^{\phi}_{k, j} \right) \cdot \nabla W_{ij}  V_iV_j
+\frac{dm_{i}}{dt} = - \sum_j
+\sum_k\left(\mathbf{Q}^{\phi}_{k, i} + \mathbf{Q}^{\phi}_{k, j} \right) \cdot \nabla W_{ij}  V_iV_j
 $$
 
 Similarly, the time stepping almost has no change except
-the mixture density is updated updated after particle mass is updated
-and the updated particle mass is used in the condition of regularization.
+the mixture density is updated after that of particle mass,
+which later is used in the first condition of regularization.
 
 ## A Lagrangian frame moving with complex-average velocity
 
@@ -256,21 +260,21 @@ Our assumption is that, when the gradient is significant,
 the velocity along it will be mass averaged. Otherwise,
 the flow interface is considered as smeared,
 or single phase is assumed,
-and hence volume average will be used.
-Therefore, one can define the average velocity blended by
+hence volume average will be used.
+Therefore, one can define a complex average velocity $\mathbf{v}^{c}$ blended by
 
 $$
 \mathbf{v}^{c} = \mathbf{v}^{\phi}
 + \sum_k \phi_k\,
 \frac{\bigl(\mathbf{v}^{m} - \mathbf{v}^{\phi}\bigr)\!\cdot\!\nabla\phi_k}
-{|\nabla\phi_k|^2 + \epsilon}\,
+{|\nabla\phi_k|^2 + \epsilon_2/h^2}\,
 \nabla\phi_k
 $$
 
 Note that, with the new frame velocity, the governing equation and SPH discretization
 are formally the same as those using volume average.
-Here, the small number can be choosing as $\epsilon = (h/L)^2$, where $h$ is smoothing length
-and $L$ is characteristic length scale of the problem.
+Here, the small number can be choosing as $\epsilon_2 \ll h^2$,
+where $h$ is smoothing length of SPH smoothing kernel.
 
 ## Consistency of these models for inviscid, immiscible and initially pure phase flows
 
