@@ -67,7 +67,7 @@ class StartupAcceleration : public Gravity
     Vecd InducedAcceleration(const Vecd &position, Real physical_time) const
     {
         Real time_factor = physical_time / target_time_;
-        Vecd acceleration = 0.5 * Pi * sin(Pi * time_factor) * Gravity::InducedAcceleration();
+        Vecd acceleration = 0.5 * Pi * math::sin(Pi * time_factor) * Gravity::InducedAcceleration();
         return time_factor < 1.0 ? acceleration : Vecd::Zero();
     };
 };
