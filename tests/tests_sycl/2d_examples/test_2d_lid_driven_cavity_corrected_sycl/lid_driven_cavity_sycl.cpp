@@ -186,8 +186,6 @@ int main(int ac, char *av[])
 
     /** Initial condition with momentum field */
     SimpleDynamics<BoundaryVelocity> solid_initial_condition(wall_boundary);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, WeaklyCompressibleFluid, Internal>>
-        fluid_density_regularization(water_body);
     /** Pressure and density relaxation algorithm by using Verlet time stepping. */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
@@ -199,6 +197,8 @@ int main(int ac, char *av[])
     /** Evaluation of density by summation approach. */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
         fluid_density_summation(water_block_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, WeaklyCompressibleFluid, Internal>>
+        fluid_density_regularization(water_body);
     /**
      * Free Surface Indicator and BulkParticles for Transport Velocity Correction are not required for this simulation.
      * They are included here solely for testing and verification purposes,
