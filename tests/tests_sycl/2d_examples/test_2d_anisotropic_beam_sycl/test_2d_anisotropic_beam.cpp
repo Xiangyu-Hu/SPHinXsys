@@ -153,10 +153,6 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(
-                    beam_body, "Velocity", beam_material.ReferenceSoundSpeed())
-        .exec();
-
     auto &main_methods = sph_solver.addParticleMethodContainer(seq);
     ParticleDynamicsGroup lagrangian_configuration;
     lagrangian_configuration.add(&main_methods.addCellLinkedListDynamics(beam_body));
@@ -172,6 +168,9 @@ int main(int ac, char *av[])
     auto &acoustic_time_step = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(beam_body);
     auto &update_anisotropic_measure = main_methods.addStateDynamics<solid_dynamics::UpdateAnisotropicMeasure>(beam_body);
     auto &constraint_holder = main_methods.addStateDynamics<ConstantConstraintCK, Vecd>(beam_base, "Velocity", Vec2d::Zero());
+    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(
+                    beam_body, "Velocity", beam_material.ReferenceSoundSpeed())
+        .exec();
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------

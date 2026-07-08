@@ -120,8 +120,6 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(beam, "Velocity").exec();
-
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     ParticleDynamicsGroup update_beam_configuration;
     update_beam_configuration.add(&main_methods.addCellLinkedListDynamics(beam));
@@ -146,6 +144,7 @@ int main(int ac, char *av[])
 
     auto &beam_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(beam, U_ref, 0.2);
     auto &beam_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(beam, 0.4);
+    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(beam, "Velocity").exec();
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

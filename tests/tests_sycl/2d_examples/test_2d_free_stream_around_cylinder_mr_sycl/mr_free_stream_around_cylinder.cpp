@@ -267,11 +267,6 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamicsWithUpdate<fluid_dynamics::FreeSurfaceIndicationCK>(water_body_inner)
             .addPostContactInteraction(water_body_contact);
 
-    auto &fluid_density_regularization =
-        main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(water_body_inner)
-            .addPostContactInteraction(water_body_contact)
-            .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeStream>(water_body);
-
     auto &fluid_acoustic_step_1st_half =
         main_methods.addInteractionDynamicsOneLevel<
                         fluid_dynamics::AcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
@@ -282,6 +277,11 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamicsOneLevel<
                         fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
             .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_contact);
+
+    auto &fluid_density_regularization =
+        main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(water_body_inner)
+            .addPostContactInteraction(water_body_contact)
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeStream>(water_body);
 
     auto &transport_correction =
         main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(water_body_inner)
