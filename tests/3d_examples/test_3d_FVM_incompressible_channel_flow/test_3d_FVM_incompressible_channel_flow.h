@@ -28,7 +28,7 @@ Real c_f = 10.0 * U_f;
 Real mu_f = 0.0; /**< Dynamics viscosity. */
 
 //----------------------------------------------------------------------
-//	Set the file path to the data file.
+//	Set the file name to the data file.
 //----------------------------------------------------------------------
 std::string channel_mesh = "Channel_ICEM.msh";
 //----------------------------------------------------------------------

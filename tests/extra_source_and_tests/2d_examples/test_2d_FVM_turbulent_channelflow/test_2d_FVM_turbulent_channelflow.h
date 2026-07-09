@@ -33,7 +33,7 @@ Real C_mu = 0.09;
 Real turbulent_intensity = 0.05;
 Real length_scale = 0.07 * 2 * DH / pow(C_mu, 0.75);
 //----------------------------------------------------------------------
-//	Set the file path to the data file.
+//	Set the file name to the data file.
 //----------------------------------------------------------------------
 std::string channel_mesh = "Channel_Mesh_short.msh";
 //	Define geometries and body shapes
