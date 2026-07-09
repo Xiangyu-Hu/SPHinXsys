@@ -168,13 +168,12 @@ int main(int ac, char *av[])
     auto &observer_update_contact_relation = main_methods.addRelationDynamics(observer_contact);
 
     auto &correct_configuration = main_methods.addInteractionDynamics<LinearCorrectionMatrixInner>(diffusion_body_inner);
-    auto &diffusion_initial_condition = main_methods.addStateDynamics<VariableAssignment, ConstantValue<Real>>(
-        diffusion_body, species_name, initial_temperature);
+    auto &diffusion_relaxation_rk2 = main_methods.addRK2Sequence<
+        DiffusionRelaxationCK, DirectionalDiffusion, LinearCorrectionCK>(diffusion_body_inner);
 
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body);
-    auto &diffusion_relaxation_rk2 =
-        main_methods.addRK2Sequence<DiffusionRelaxationCK, DirectionalDiffusion, LinearCorrectionCK>(diffusion_body_inner);
-
+    auto &diffusion_initial_condition = main_methods.addStateDynamics<VariableAssignment, ConstantValue<Real>>(
+        diffusion_body, species_name, initial_temperature);
     auto &left_boundary_condition =
         main_methods.addStateDynamics<ConstantConstraintCK, Real>(left_boundary, species_name, high_temperature);
     auto &other_boundary_condition =
