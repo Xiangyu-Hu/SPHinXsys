@@ -26,7 +26,7 @@ Real mu_f = rho0_f * U_f * (2.0 * cylinder_radius) / Re; /**< Dynamics viscosity
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-std::string ansys_mesh_file_path = "fluent_0.3.msh";
+std::string ansys_mesh = "fluent_0.3.msh";
 //----------------------------------------------------------------------
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
@@ -87,7 +87,7 @@ class FACBoundaryConditionSetup : public BoundaryConditionSetupInFVM
 int main(int ac, char *av[])
 {
     // read data from ANSYS mesh.file
-    ANSYSMesh ansys_mesh(ansys_mesh_file_path);
+    ANSYSMesh ansys_mesh(ansys_mesh);
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------

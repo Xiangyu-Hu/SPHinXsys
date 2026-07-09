@@ -35,7 +35,7 @@ Real length_scale = 0.07 * 2 * DH / pow(C_mu, 0.75);
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-std::string mesh_file_path = "Channel_Mesh_short.msh";
+std::string channel_mesh = "Channel_Mesh_short.msh";
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
 std::vector<Vecd> createWaterBlockShape()
