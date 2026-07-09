@@ -168,10 +168,6 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, HessianCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
         hessian_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
 
-    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<ParabolicProfile>>>
-        water_block_initial_condition(water_block, "Phi");
-    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<ParabolicProfile>>>
-        wall_initial_condition(wall, "Phi");
     InteractionDynamicsCK<MainExecutionPolicy, LinearGradient<Inner<Real>, Contact<Real>>>
         variable_linear_gradient(
             DynamicsArgs(water_block_inner, std::string("Phi")),
@@ -187,6 +183,12 @@ int main(int ac, char *av[])
         variable_2nd_order_gradient(
             DynamicsArgs(water_block_inner, std::string("Phi")),
             DynamicsArgs(water_wall_contact, std::string("Phi")));
+
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<ParabolicProfile>>>
+        water_block_initial_condition(water_block, "Phi");
+    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<ParabolicProfile>>>
+        wall_initial_condition(wall, "Phi");
+
     ObservedQuantityRecording<MainExecutionPolicy, Vec2d, RestoringCorrection>
         observed_2nd_order_gradient(fluid_observer_contact, "PhiGradient");
     //----------------------------------------------------------------------
