@@ -9,12 +9,12 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 50.0;                  /**< Channel length. */
-Real DH = 30.0;                  /**< Channel height. */
+Real DL = 50.0;                     /**< Channel length. */
+Real DH = 30.0;                     /**< Channel height. */
 Real global_resolution = 1.0 / 5.0; /**< Initial reference particle spacing. */
-Real DL_sponge = 2.0;            /**< Sponge region to impose inflow condition. */
-Real DH_sponge = 2.0;            /**< Sponge region to impose inflow condition. */
-Real cylinder_radius = 1.0;      /**< Radius of the cylinder. */
+Real DL_sponge = 2.0;               /**< Sponge region to impose inflow condition. */
+Real DH_sponge = 2.0;               /**< Sponge region to impose inflow condition. */
+Real cylinder_radius = 1.0;         /**< Radius of the cylinder. */
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -26,7 +26,7 @@ Real mu_f = rho0_f * U_f * (2.0 * cylinder_radius) / Re; /**< Dynamics viscosity
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-std::string ansys_mesh_file_path = "./input/fluent_0.3.msh";
+std::string ansys_mesh_file_path = "fluent_0.3.msh";
 //----------------------------------------------------------------------
 //	Define geometries and body shapes
 //----------------------------------------------------------------------

@@ -14,9 +14,9 @@
 using namespace SPH; // Namespace cite here.
 /** Geometry parameter. */
 /** Set the file path to the stl file. */
-std::string full_path_to_myocardium = "./input/myocardium_simple.stl";
-std::string full_path_to_lv = "./input/myocardium_simple_lv.stl";
-std::string full_path_to_rv = "./input/myocardium_simple_rv.stl";
+std::string full_path_to_myocardium = "myocardium_simple.stl";
+std::string full_path_to_lv = "myocardium_simple_lv.stl";
+std::string full_path_to_rv = "myocardium_simple_rv.stl";
 Real length_scale = 1.0;
 Real time_scale = 1.0 / 12.9;
 Real stress_scale = 1.0e-6;

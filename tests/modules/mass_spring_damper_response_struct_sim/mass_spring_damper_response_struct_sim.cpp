@@ -16,7 +16,7 @@ TEST(StructuralSimulation, MassSpringDamperResponse)
     Real spring_damper_ratio = 0.05;
     Real end_time = 2;
     /** STL IMPORT PARAMETERS */
-    std::string relative_input_path = "./input/"; // path definition for linux
+    std::string relative_input_path = ""; // path definition for linux
     std::vector<std::string> imported_stl_list = {"ball_mass.stl"};
     std::vector<Vec3d> translation_list = {Vec3d::Zero()};
     std::vector<Real> resolution_list = {resolution_mass};

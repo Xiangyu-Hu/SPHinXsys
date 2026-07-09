@@ -16,8 +16,8 @@ using namespace std;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 120.0;                 /**< Channel length. */
-Real DH = 2.0;                   /**< Channel height. */
+Real DL = 120.0;                    /**< Channel length. */
+Real DH = 2.0;                      /**< Channel height. */
 Real global_resolution = 1.0 / 5.0; /**< Initial reference particle spacing. */
 BoundingBoxd system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
 //----------------------------------------------------------------------
@@ -35,7 +35,7 @@ Real length_scale = 0.07 * 2 * DH / pow(C_mu, 0.75);
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-std::string mesh_file_path = "./input/Channel_Mesh_short.msh";
+std::string mesh_file_path = "Channel_Mesh_short.msh";
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
 std::vector<Vecd> createWaterBlockShape()

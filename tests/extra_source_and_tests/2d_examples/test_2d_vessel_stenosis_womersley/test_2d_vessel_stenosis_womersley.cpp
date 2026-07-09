@@ -19,8 +19,8 @@ using namespace SPH;
 // If you want 50% or 70% stenosis, change the filename suffix from "_0.3"
 // to "_0.5" or "_0.7" accordingly (0.3=30%, 0.5=50%, 0.7=70%).
 //----------------------------------------------------------------------
-std::string womersley_velocity_profile_csv = "./input/womersley_velocity_profile_0.3.csv";
-std::string outlet_pressure_csv = "./input/outlet_pressure_0.3.csv";
+std::string womersley_velocity_profile_csv = "womersley_velocity_profile_0.3.csv";
+std::string outlet_pressure_csv = "outlet_pressure_0.3.csv";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------

@@ -30,7 +30,7 @@ Real mu_f = 0.0; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-std::string mesh_fullpath = "./input/Channel_ICEM.msh";
+std::string mesh_fullpath = "Channel_ICEM.msh";
 //----------------------------------------------------------------------
 //	Define geometries and body shapes
 //----------------------------------------------------------------------

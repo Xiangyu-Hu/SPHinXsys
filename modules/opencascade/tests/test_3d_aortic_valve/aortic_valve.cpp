@@ -12,7 +12,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-Standard_CString full_path_to_geometry = "./input/valve.STEP";
+Standard_CString full_path_to_geometry = "valve.STEP";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------

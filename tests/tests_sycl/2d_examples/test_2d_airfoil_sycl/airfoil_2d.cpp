@@ -10,9 +10,9 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-std::string airfoil_flap_front = "./input/airfoil_flap_front.dat";
-std::string airfoil_wing = "./input/airfoil_wing.dat";
-std::string airfoil_flap_rear = "./input/airfoil_flap_rear.dat";
+std::string airfoil_flap_front = "airfoil_flap_front.dat";
+std::string airfoil_wing = "airfoil_wing.dat";
+std::string airfoil_flap_rear = "airfoil_flap_rear.dat";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------

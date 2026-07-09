@@ -259,7 +259,7 @@ Vecd obs(Strx, Stry + yT + Td / 2, Strz + zT + Th);
 // geometric shape elements used in the case
 //------------------------------------------------------------------------------
 /** Set the file path to the stl file. */
-std::string stl_structure_path = "./input/structure_cm.stl";
+std::string stl_structure_path = "structure_cm.stl";
 Real StructureScale = 1;
 Vecd translation_str = G;
 

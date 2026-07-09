@@ -62,7 +62,7 @@ int main()
     string beam_stl = "bernoulli_beam_20x.stl";
 
     input.stls = {beam_stl};
-    input.relative_input_path = "./input/";
+    input.relative_input_path = "";
 
     /* DOWNLOAD STLs files at this point */
 #ifdef __EMSCRIPTEN__
