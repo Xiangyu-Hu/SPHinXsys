@@ -270,9 +270,7 @@ int main(int ac, char *av[])
     auto &fluid_acoustic_step_1st_half =
         main_methods.addInteractionDynamicsOneLevel<
                         fluid_dynamics::AcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
-            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_contact)
-            .addPostStateDynamics<fluid_dynamics::FreeStreamCondition<StartupToConstantInflowSpeed>>(
-                water_body, free_stream_speed);
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_contact);
     auto &fluid_acoustic_step_2nd_half =
         main_methods.addInteractionDynamicsOneLevel<
                         fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_body_inner)
@@ -300,6 +298,8 @@ int main(int ac, char *av[])
     auto &emitter_injection = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitter);
     auto &inflow_condition = main_methods.addStateDynamics<
         fluid_dynamics::EmitterInflowConditionCK, StartupToConstantInflowSpeed>(emitter, free_stream_speed);
+    auto &free_stream_condition = main_methods.addStateDynamics<
+        fluid_dynamics::FreeStreamCondition<StartupToConstantInflowSpeed>>(water_body, free_stream_speed);
     auto &disposer_indication = main_methods.addStateDynamics<fluid_dynamics::WithinDisposerIndication>(disposer);
     auto &particle_deletion = main_methods.addStateDynamics<fluid_dynamics::OutflowParticleDeletion>(water_body);
     //----------------------------------------------------------------------
@@ -356,6 +356,7 @@ int main(int ac, char *av[])
         Real acoustic_dt = time_stepper.incrementPhysicalTime(fluid_acoustic_time_step);
         fluid_acoustic_step_1st_half.exec(acoustic_dt);
         inflow_condition.exec();
+        free_stream_condition.exec();
         fluid_acoustic_step_2nd_half.exec(acoustic_dt);
         interval_acoustic_step += TickCount::now() - time_instance;
         //----------------------------------------------------------------------
