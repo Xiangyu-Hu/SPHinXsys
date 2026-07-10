@@ -64,6 +64,7 @@ Real rho0_s = 2700.0;
 Real poisson = 0.30;
 Real Young_plate = 78.2e9;
 Real yield_plate = 0.29e9;
+Real hardening_modulus = 0.1e9;
 
 // //2.mild steel block(TEST)
 // Real rho0_s = 7850.0;
@@ -316,13 +317,14 @@ int main(int ac, char *av[])
     // ------------------------------------------------------------
 
     // Cutter: reload relaxed particles + normals
-    cutter.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Young_plate, poisson);
-    cutter.generateParticles<BaseParticles, Reload>(cutter.getName())
-     .reloadExtraVariable<Vecd>("NormalDirection");
+    cutter.defineMatterMaterial<Solid>();
+    cutter.generateParticles<BaseParticles, Reload>(cutter.Name())
+         .reloadExtraVariable<Vecd>("NormalDirection");
 
     // Plate: reload relaxed particles as well
-    plate.defineMaterial<J2Plasticity>(rho0_s, c0, Young_plate, poisson, yield_plate);
-    plate.generateParticles<BaseParticles, Reload>(plate.getName());
+    plate.defineMatterMaterial<HardeningPlasticSolid>(
+         rho0_s, Young_plate, poisson, yield_plate, hardening_modulus);
+    plate.generateParticles<BaseParticles, Reload>(plate.Name());
 
     //------------------------------------------------------------------
     // Observer
@@ -378,25 +380,30 @@ int main(int ac, char *av[])
     Vec2d left_upper(x_min + clamp_len, y_max);
     Vec2d left_halfsize = 0.5 * (left_upper - left_lower);
     Vec2d left_center   = 0.5 * (left_upper + left_lower);
-    AlignedBox left_box(xAxis, Transform(left_center), left_halfsize);
-    AlignedBoxByParticle left_part(plate, left_box);
+    // AlignedBox left_box(xAxis, Transform(left_center), left_halfsize);
+    // AlignedBoxByParticle left_part(plate, left_box);
+    GeometricShapeBox left_box(Transform(left_center), left_halfsize, "LeftBox");
+    BodyRegionByParticle left_part(plate, left_box);
 
     // Right clamp region
     Vec2d right_lower(x_max - clamp_len, y_min);
     Vec2d right_upper(x_max, y_max);
     Vec2d right_halfsize = 0.5 * (right_upper - right_lower);
     Vec2d right_center   = 0.5 * (right_upper + right_lower);
-    AlignedBox right_box(xAxis, Transform(right_center), right_halfsize);
-    AlignedBoxByParticle right_part(plate, right_box);
+    // AlignedBox right_box(xAxis, Transform(right_center), right_halfsize);
+    // AlignedBoxByParticle right_part(plate, right_box);
+    GeometricShapeBox right_box(Transform(right_center), right_halfsize, "RightBox");
+    BodyRegionByParticle right_part(plate, right_box);  
 
     // Bottom fixed region
     Vec2d bottom_lower(x_min, y_min);
     Vec2d bottom_upper(x_max, y_min + bottom_fix_thickness);
     Vec2d bottom_halfsize = 0.5 * (bottom_upper - bottom_lower);
     Vec2d bottom_center   = 0.5 * (bottom_upper + bottom_lower);
-    AlignedBox bottom_box(xAxis, Transform(bottom_center), bottom_halfsize);
-    AlignedBoxByParticle bottom_part(plate, bottom_box);
-
+    // AlignedBox bottom_box(xAxis, Transform(bottom_center), bottom_halfsize);
+    // AlignedBoxByParticle bottom_part(plate, bottom_box);
+    GeometricShapeBox bottom_box(Transform(bottom_center), bottom_halfsize, "BottomBox");
+    BodyRegionByParticle bottom_part(plate, bottom_box);
    
 
     auto &fix_left_velocity =
@@ -428,30 +435,46 @@ int main(int ac, char *av[])
     //------------------------------------------------------------------
     // Plate dynamics
     //------------------------------------------------------------------
-    auto &plate_advection_setup =
-        main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(plate);
-    auto &plate_update_pos =
-        main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(plate);
+    // auto &plate_advection_setup =
+    //     main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(plate);
+    // auto &plate_update_pos =
+    //     main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(plate);
 
-    auto &plate_correction =
-        main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(plate_inner);
+    // auto &plate_correction =
+    //     main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(plate_inner);
 
-    ParticleDynamicsGroup plate_shear_force;
-    plate_shear_force.add(
-        &main_methods.addInteractionDynamics<LinearGradient, Vecd>(plate_inner, "Velocity"));
-    plate_shear_force.add(
-        &main_methods.addInteractionDynamicsOneLevel<
-            continuum_dynamics::ShearIntegration, J2Plasticity>(plate_inner));
+    // ParticleDynamicsGroup plate_shear_force;
+    // plate_shear_force.add(
+    //     &main_methods.addInteractionDynamics<LinearGradient, Vecd>(plate_inner, "Velocity"));
+    // plate_shear_force.add(
+    //     &main_methods.addInteractionDynamicsOneLevel<
+    //         continuum_dynamics::ShearIntegration, J2Plasticity>(plate_inner));
 
-    auto &plate_acoustic_1st =
-        main_methods.addInteractionDynamicsOneLevel<
-            fluid_dynamics::AcousticStep1stHalf,
-            DissipativeRiemannSolverCK, NoKernelCorrectionCK>(plate_inner);
+    // auto &plate_acoustic_1st =
+    //     main_methods.addInteractionDynamicsOneLevel<
+    //         fluid_dynamics::AcousticStep1stHalf,
+    //         DissipativeRiemannSolverCK, NoKernelCorrectionCK>(plate_inner);
 
-    auto &plate_acoustic_2nd =
-        main_methods.addInteractionDynamicsOneLevel<
-            fluid_dynamics::AcousticStep2ndHalf,
-            DissipativeRiemannSolverCK, NoKernelCorrectionCK>(plate_inner);
+    // auto &plate_acoustic_2nd =
+    //     main_methods.addInteractionDynamicsOneLevel<
+    //         fluid_dynamics::AcousticStep2ndHalf,
+    //         DissipativeRiemannSolverCK, NoKernelCorrectionCK>(plate_inner);
+
+    
+   auto &plate_correction =
+      main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(plate_inner);
+
+   auto &plate_acoustic_step_1st_half =
+      main_methods.addInteractionDynamicsOneLevel<
+        solid_dynamics::StructureIntegration1stHalf,
+        HardeningPlasticSolid,
+        NoKernelCorrectionCK>(plate_inner);
+
+   auto &plate_acoustic_step_2nd_half =
+      main_methods.addInteractionDynamicsOneLevel<
+        solid_dynamics::StructureIntegration2ndHalf>(plate_inner);
+
+
 
     auto &contact_factor =
         main_methods.addInteractionDynamics<solid_dynamics::RepulsionFactor>(plate_cutter_contact);
@@ -505,7 +528,7 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Real>(plate, "Density");
 
     auto &observer_position =
-        main_methods.addObserveRecorder<Vecd>("Position", observer_plate_contact);
+        main_methods.addObserveRecorder<Vecd>(observer_plate_contact,"Position");
 
     //------------------------------------------------------------------
     // TimeStepper
@@ -513,13 +536,16 @@ int main(int ac, char *av[])
     Real total_physical_time = end_time;
     TimeStepper &time_stepper = sph_solver.getTimeStepper();
 
-    auto &plate_advection_time_step =
-        main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(plate, U_max, 0.2);
-    auto &plate_acoustic_time_step =
-        main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(plate, 0.4);
+    // auto &plate_advection_time_step =
+    //     main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(plate, U_max, 0.2);
+    // auto &plate_acoustic_time_step =
+    //     main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(plate, 0.4);
 
-    auto &advection_step =
-        time_stepper.addTriggerByInterval(plate_advection_time_step.exec());
+    // auto &advection_step =
+    //     time_stepper.addTriggerByInterval(plate_advection_time_step.exec());
+
+    auto &plate_acoustic_time_step =
+    main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(plate, 0.4);
 
     size_t advection_steps = system.RestartStep() + 1;
 
@@ -536,7 +562,7 @@ int main(int ac, char *av[])
     cutter_normal_direction.exec();
 
     update_configuration.exec();
-    plate_advection_setup.exec();
+    // plate_advection_setup.exec();
     contact_factor.exec();
     plate_correction.exec();
 
@@ -580,11 +606,27 @@ int main(int ac, char *av[])
         constraint_cutter.exec();
         cutter_normal_direction.exec();
 
-        // (C) Plate SPH dynamics + contact
-        plate_shear_force.exec(dt);
+        // // (C) Plate SPH dynamics + contact
+        // // plate_shear_force.exec(dt);
+        // contact_force.exec();
+        // // plate_acoustic_1st.exec(dt);
+        // // plate_acoustic_2nd.exec(dt);
+
+        // fix_left_velocity.exec();
+        // fix_right_velocity.exec();
+        // fix_bottom_velocity.exec();
+        
+        // (C) Contact + Taylor-bar-style solid dynamics
+        contact_factor.exec();
         contact_force.exec();
-        plate_acoustic_1st.exec(dt);
-        plate_acoustic_2nd.exec(dt);
+
+        plate_acoustic_step_1st_half.exec(dt);
+
+        fix_left_velocity.exec();
+        fix_right_velocity.exec();
+        fix_bottom_velocity.exec();
+
+        plate_acoustic_step_2nd_half.exec(dt);
 
         fix_left_velocity.exec();
         fix_right_velocity.exec();
@@ -592,50 +634,50 @@ int main(int ac, char *av[])
 
         interval_acoustic_step += TickCount::now() - time_instance;
 
-        if (advection_step(plate_advection_time_step))
-        {
-            advection_steps++;
+        // if (advection_step(plate_advection_time_step))
+        // {
+        //     advection_steps++;
 
-            plate_update_pos.exec();
+        //     // plate_update_pos.exec();
 
-            fix_left_velocity.exec();
-            fix_right_velocity.exec();
-            fix_bottom_velocity.exec();
+        //     fix_left_velocity.exec();
+        //     fix_right_velocity.exec();
+        //     fix_bottom_velocity.exec();
 
-            time_instance = TickCount::now();
+        //     time_instance = TickCount::now();
 
-            if (advection_steps % screening_interval == 0)
-            {
-                std::cout << std::fixed << std::setprecision(9)
-                          << "N=" << advection_steps
-                          << "  Time=" << time_stepper.getPhysicalTime()
-                          << "  advection_dt=" << advection_step.getInterval()
-                          << "  acoustic_dt=" << time_stepper.getGlobalTimeStepSize() << "\n";
-            }
+        //     if (advection_steps % screening_interval == 0)
+        //     {
+        //         std::cout << std::fixed << std::setprecision(9)
+        //                   << "N=" << advection_steps
+        //                   << "  Time=" << time_stepper.getPhysicalTime()
+        //                   << "  advection_dt=" << advection_step.getInterval()
+        //                   << "  acoustic_dt=" << time_stepper.getGlobalTimeStepSize() << "\n";
+        //     }
 
-            if (advection_steps % observation_interval == 0)
-            {
-                update_observer_contact.exec();
-                observer_position.writeToFile(advection_steps);
-            }
+        //     if (advection_steps % observation_interval == 0)
+        //     {
+        //         update_observer_contact.exec();
+        //         observer_position.writeToFile(advection_steps);
+        //     }
 
-            if (state_recording())
-            {
-                body_state_recorder.writeToFile();
-            }
+        //     if (state_recording())
+        //     {
+        //         body_state_recorder.writeToFile();
+        //     }
 
-            interval_output += TickCount::now() - time_instance;
+        //     interval_output += TickCount::now() - time_instance;
 
-            time_instance = TickCount::now();
-            update_configuration.exec();
-            interval_updating_configuration += TickCount::now() - time_instance;
+        //     time_instance = TickCount::now();
+        //     update_configuration.exec();
+        //     interval_updating_configuration += TickCount::now() - time_instance;
 
-            time_instance = TickCount::now();
-            plate_advection_setup.exec();
-            contact_factor.exec();
-            plate_correction.exec();
-            interval_advection_step += TickCount::now() - time_instance;
-        }
+        //     time_instance = TickCount::now();
+        //     // plate_advection_setup.exec();
+        //     contact_factor.exec();
+        //     plate_correction.exec();
+        //     interval_advection_step += TickCount::now() - time_instance;
+        // }
     }
 
     //------------------------------------------------------------------
