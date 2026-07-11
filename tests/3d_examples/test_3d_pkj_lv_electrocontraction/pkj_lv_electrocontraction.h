@@ -42,7 +42,7 @@
 using namespace SPH;
 #define PI 3.1415926
 /** Set the file name to the stl file. */
-std::string full_path_to_lv = "leftventricle.stl";
+std::string mesh_lv = "leftventricle.stl";
 Real length_scale = 1.0;
 Real time_scale = 1.0 / 12.9;
 Real stress_scale = 1.0e-6;
@@ -93,7 +93,7 @@ class Heart : public ComplexShape
     explicit Heart(const std::string &shape_name) : ComplexShape(shape_name)
     {
         Vecd translation(0.0, 0.0, 0.0);
-        add<TriangleMeshShapeSTL>(full_path_to_lv, translation, length_scale);
+        add<TriangleMeshShapeSTL>(mesh_lv, translation, length_scale);
     }
 };
 /** Set diffusion relaxation. */
