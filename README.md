@@ -27,7 +27,7 @@ is really carried out. Also note that, the modification will automatically valid
 to ensure meaningful settings. 
 
 <a href="https://xiangyu-hu.github.io/SPHinXsim/visualization">
-<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/visualization.png" height="192px"></a>
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/visualization.png" height="600px"></a>
 
 ## Repository Description
 
