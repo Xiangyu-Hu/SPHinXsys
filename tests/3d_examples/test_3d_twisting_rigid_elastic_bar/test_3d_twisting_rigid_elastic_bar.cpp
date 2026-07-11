@@ -302,7 +302,7 @@ void run_rigid_elastic_coupling(int res_factor)
     vtp_output.writeToFile(0);
 
     // Observer
-    const auto observation_locations = read_ref_data("initial_position");
+    const auto observation_locations = read_ref_data("./input/initial_position");
     ObserverBody observer(system, "InterfaceObserver");
     observer.generateParticles<ObserverParticles>(observation_locations);
     ContactRelation contact_observer(observer, {&body});
@@ -415,7 +415,7 @@ void run_rigid_elastic_coupling(int res_factor)
 
     // post-processing
     auto *disp = write_disp.getObservedQuantity();
-    const auto disp_ref = read_ref_data("displacement");
+    const auto disp_ref = read_ref_data("./input/displacement");
     for (size_t i = 0; i < observation_locations.size(); i++)
         ASSERT_LT((disp[i] - disp_ref[i]).norm() / disp_ref[i].norm(), 15e-2); // 15% error tolerance
 }
