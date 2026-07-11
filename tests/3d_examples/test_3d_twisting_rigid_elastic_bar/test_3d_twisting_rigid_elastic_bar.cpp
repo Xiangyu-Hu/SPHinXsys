@@ -136,7 +136,7 @@ struct rigid_algs
 };
 
 inline std::vector<Vec3d>
-read_ref_data(const fs::path &ref_name)
+read_ref_data(const std::string &ref_name)
 {
     std::vector<Vec3d> variable_ref;
 
@@ -144,9 +144,12 @@ read_ref_data(const fs::path &ref_name)
     std::string line;
     std::string word;
 
-    std::fstream file(ref_name, std::ios::in);
+    IOEnvironment &io_env = IO::getEnvironment();
+    std::string file_path_name = io_env.InputFolder() + "/" + ref_name;
+
+    std::fstream file(file_path_name, std::ios::in);
     if (!file.is_open())
-        throw std::runtime_error("Could not open the file: " + ref_name.string());
+        throw std::runtime_error("Could not open the file: " + file_path_name);
 
     Real variable_x;
     Real variable_y;
@@ -273,7 +276,7 @@ void run_rigid_elastic_coupling(int res_factor)
     rigid_algs rigid_algs(body, mesh_rigid);
 
     // damping
-    // use a different inner relation for damping to exlude the rigid body part
+    // use a different inner relation for damping to exclude the rigid body part
     InnerRelation inner_for_damping(body);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec3d, FixedDampingRate>>> damping(
         0.5,
