@@ -103,7 +103,7 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrecti
 
   protected:
     KernelCorrectionType kernel_correction_method_;
-    ConstantArray<InterParticleCoeff> ca_inter_particle_diffusion_coeff_;
+    ComputingKernelArray<DiffusionType, InterParticleCoeff> cka_inter_particle_diffusion_coeff_;
     Real smoothing_length_sq_;
 };
 
@@ -181,7 +181,7 @@ class DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionPara
     };
 
   protected:
-    ConstantArray<InverseVolumetricCapacity> ca_inverse_volume_capacity_;
+    ComputingKernelArray<DiffusionType, InverseVolumetricCapacity> cka_inverse_volume_capacity_;
 };
 
 template <template <typename...> class RelationType, class... InteractionParameters>
@@ -262,7 +262,7 @@ class Dirichlet<DiffusionType>
     Real smoothing_length_sq_;
     DiscreteVariable<Real> *dv_species_;
     DiscreteVariable<Real> *dv_contact_species_;
-    ConstantArray<InterParticleCoeff> ca_inter_particle_diffusion_coeff_;
+    ComputingKernelArray<DiffusionType, InterParticleCoeff> cka_inter_particle_diffusion_coeff_;
 };
 
 template <class DiffusionType>

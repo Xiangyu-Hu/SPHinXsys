@@ -113,23 +113,21 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamicsWithUpdate<fluid_dynamics::FreeSurfaceIndicationCK>(water_block_inner)
             .addPostContactInteraction(water_block_contact);
 
+    StartupToConstantInflowSpeed free_stream_speed(0.0, 2.0);
+    auto &fluid_acoustic_step_1st_half =
+        main_methods.addInteractionDynamicsOneLevel<
+                        fluid_dynamics::AcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_contact);
+
+    auto &fluid_acoustic_step_2nd_half =
+        main_methods.addInteractionDynamicsOneLevel<
+                        fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_contact);
+
     auto &fluid_density_regularization =
         main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(water_block_inner)
             .addPostContactInteraction(water_block_contact)
             .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeStream>(water_block);
-
-    StartupToConstantInflowSpeed free_stream_speed(0.0, 2.0);
-    auto &fluid_acoustic_step_1st_half =
-        main_methods.addInteractionDynamicsOneLevel<
-            fluid_dynamics::AcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner)
-            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_contact)
-            .addPostStateDynamics<fluid_dynamics::FreeStreamCondition<StartupToConstantInflowSpeed>>(
-                water_block, free_stream_speed);
-
-    auto &fluid_acoustic_step_2nd_half =
-        main_methods.addInteractionDynamicsOneLevel<
-            fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner)
-            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_contact);
 
     // Transport velocity correction (cylinder pattern):
     // KernelGradientIntegral feeds TransportVelocityCorrectionCK.
@@ -145,7 +143,7 @@ int main(int ac, char *av[])
 
     auto &fluid_viscous_force =
         main_methods.addInteractionDynamicsWithUpdate<
-            fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(water_block_inner)
+                        fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(water_block_inner)
             .addPostContactInteraction<Wall, Viscosity, NoKernelCorrectionCK>(water_block_contact);
 
     auto &fluid_advection_time_step =
@@ -176,12 +174,12 @@ int main(int ac, char *av[])
     // Sort is constructed AFTER emitter_part so body_parts_by_particle_ includes it.
     // This mirrors the cylinder pattern and ensures sort.exec() updates the emitter's particle list.
     ParticleSortCK<MainExecutionPolicy> particle_sort(water_block);
-    auto &emitter_injection =
-        main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitter_part);
+    auto &emitter_injection = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitter_part);
     auto &inflow_condition =
-        main_methods.addStateDynamics<
-            fluid_dynamics::EmitterInflowConditionCK, StartupToConstantInflowSpeed>(
+        main_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK, StartupToConstantInflowSpeed>(
             emitter_buffer_part, free_stream_speed);
+    auto &free_stream_condition = main_methods.addStateDynamics<
+        fluid_dynamics::FreeStreamCondition<StartupToConstantInflowSpeed>>(water_block, free_stream_speed);
 
     Vec2d correct_disposer_translation = Vec2d(DL, -0.25 * DH) + disposer_halfsize;
     OrientedBoxByCell disposer_part(
@@ -282,6 +280,7 @@ int main(int ac, char *av[])
 
         fluid_acoustic_step_1st_half.exec(acoustic_dt); // FreeStreamCondition runs here
         inflow_condition.exec();
+        free_stream_condition.exec();
         pressure_force_from_fluid.exec();
         fluid_acoustic_step_2nd_half.exec(acoustic_dt);
 
@@ -304,7 +303,7 @@ int main(int ac, char *av[])
 
             Real dt_s =
                 std::min(dt_s_candidate,
-                        acoustic_dt - dt_s_sum);
+                         acoustic_dt - dt_s_sum);
 
             imposing_active_strain.exec();
 

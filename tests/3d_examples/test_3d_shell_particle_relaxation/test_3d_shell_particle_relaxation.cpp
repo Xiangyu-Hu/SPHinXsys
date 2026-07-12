@@ -8,9 +8,9 @@
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
-//	Set the file path to the data file.
+//	Set the file name to the data file.
 //----------------------------------------------------------------------
-std::string full_path_to_geometry = "./input/curved_tube.stl";
+std::string full_path_to_geometry = "curved_tube.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------

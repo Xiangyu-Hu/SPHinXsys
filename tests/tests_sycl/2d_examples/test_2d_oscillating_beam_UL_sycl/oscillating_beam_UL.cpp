@@ -120,8 +120,6 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(beam, "Velocity").exec();
-
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     ParticleDynamicsGroup update_beam_configuration;
     update_beam_configuration.add(&main_methods.addCellLinkedListDynamics(beam));
@@ -130,22 +128,21 @@ int main(int ac, char *av[])
 
     auto &beam_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(beam);
     auto &beam_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(beam);
-    auto &beam_base_constraint = main_methods.addStateDynamics<ConstantConstraintCK, Vecd>(beam_base, "Velocity", Vec2d::Zero());
     auto &beam_linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(beam_inner);
+
+    auto &beam_acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
+        fluid_dynamics::AcousticStep1stHalf, NoRiemannSolverCK, NoKernelCorrectionCK>(beam_inner);
+    auto &beam_acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
+        fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(beam_inner);
 
     ParticleDynamicsGroup column_shear_force;
     column_shear_force.add(&main_methods.addInteractionDynamics<LinearGradient, Vecd>(beam_inner, "Velocity"));
     column_shear_force.add(&main_methods.addInteractionDynamicsOneLevel<continuum_dynamics::ShearIntegration, GeneralContinuum>(beam_inner));
 
-    auto &beam_acoustic_step_1st_half =
-        main_methods.addInteractionDynamicsOneLevel<
-            fluid_dynamics::AcousticStep1stHalf, NoRiemannSolverCK, NoKernelCorrectionCK>(beam_inner);
-    auto &beam_acoustic_step_2nd_half =
-        main_methods.addInteractionDynamicsOneLevel<
-            fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(beam_inner);
-
     auto &beam_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(beam, U_ref, 0.2);
     auto &beam_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(beam, 0.4);
+    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(beam, "Velocity").exec();
+    auto &beam_base_constraint = main_methods.addStateDynamics<ConstantConstraintCK, Vecd>(beam_base, "Velocity", Vec2d::Zero());
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

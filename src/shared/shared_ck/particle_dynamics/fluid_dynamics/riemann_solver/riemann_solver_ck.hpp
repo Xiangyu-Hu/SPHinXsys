@@ -3,6 +3,8 @@
 
 #include "riemann_solver_ck.h"
 
+#include "weakly_compressible_fluid.hpp"
+
 namespace SPH
 {
 //=================================================================================================//

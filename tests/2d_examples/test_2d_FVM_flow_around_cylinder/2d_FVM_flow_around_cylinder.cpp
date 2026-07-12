@@ -9,12 +9,12 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 50.0;                  /**< Channel length. */
-Real DH = 30.0;                  /**< Channel height. */
+Real DL = 50.0;                     /**< Channel length. */
+Real DH = 30.0;                     /**< Channel height. */
 Real global_resolution = 1.0 / 5.0; /**< Initial reference particle spacing. */
-Real DL_sponge = 2.0;            /**< Sponge region to impose inflow condition. */
-Real DH_sponge = 2.0;            /**< Sponge region to impose inflow condition. */
-Real cylinder_radius = 1.0;      /**< Radius of the cylinder. */
+Real DL_sponge = 2.0;               /**< Sponge region to impose inflow condition. */
+Real DH_sponge = 2.0;               /**< Sponge region to impose inflow condition. */
+Real cylinder_radius = 1.0;         /**< Radius of the cylinder. */
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -24,9 +24,9 @@ Real c_f = 10.0 * U_f;                                   /**< Speed of sound. */
 Real Re = 100.0;                                         /**< Reynolds number. */
 Real mu_f = rho0_f * U_f * (2.0 * cylinder_radius) / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
-//	Set the file path to the data file.
+//	Set the file name to the data file.
 //----------------------------------------------------------------------
-std::string ansys_mesh_file_path = "./input/fluent_0.3.msh";
+std::string domain_mesh = "fluent_0.3.msh";
 //----------------------------------------------------------------------
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
@@ -87,7 +87,7 @@ class FACBoundaryConditionSetup : public BoundaryConditionSetupInFVM
 int main(int ac, char *av[])
 {
     // read data from ANSYS mesh.file
-    ANSYSMesh ansys_mesh(ansys_mesh_file_path);
+    ANSYSMesh ansys_mesh(domain_mesh);
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------

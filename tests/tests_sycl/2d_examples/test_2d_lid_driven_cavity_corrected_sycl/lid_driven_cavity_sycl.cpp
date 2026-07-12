@@ -184,21 +184,21 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_body);
 
-    /** Initial condition with momentum field */
-    SimpleDynamics<BoundaryVelocity> solid_initial_condition(wall_boundary);
     /** Kernel correction matrix and transport velocity formulation. */
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
-    /** Evaluation of density by summation approach. */
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
-        fluid_density_summation(water_block_inner, water_wall_contact);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, WeaklyCompressibleFluid, Internal>>
-        fluid_density_regularization(water_body);
+    /** Initial condition with momentum field */
+    SimpleDynamics<BoundaryVelocity> solid_initial_condition(wall_boundary);
     /** Pressure and density relaxation algorithm by using Verlet time stepping. */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
         fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
+    /** Evaluation of density by summation approach. */
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
+        fluid_density_summation(water_block_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, WeaklyCompressibleFluid, Internal>>
+        fluid_density_regularization(water_body);
     /**
      * Free Surface Indicator and BulkParticles for Transport Velocity Correction are not required for this simulation.
      * They are included here solely for testing and verification purposes,

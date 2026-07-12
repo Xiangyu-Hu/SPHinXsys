@@ -111,6 +111,20 @@ void IOEnvironment::resetReloadFolder(const std::string &new_name, bool keep_exi
         fs::create_directory(reload_folder_);
     }
 }
+//=================================================================================================//
+void IOEnvironment::resetInputFolder(const std::string &new_name, bool keep_existing)
+{
+    if (fs::exists(input_folder_) && !keep_existing)
+    {
+        fs::remove_all(input_folder_);
+    }
+
+    input_folder_ = new_name;
+    if (!fs::exists(input_folder_))
+    {
+        fs::create_directory(input_folder_);
+    }
+}
 //=============================================================================================//
 ParameterizationIO *IOEnvironment::defineParameterizationIO()
 {

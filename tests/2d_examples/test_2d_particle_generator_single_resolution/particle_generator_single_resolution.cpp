@@ -12,9 +12,9 @@
 using namespace SPH;
 
 //----------------------------------------------------------------------
-//	Set the file path to the data file
+//	Set the file name to the data file
 //----------------------------------------------------------------------
-std::string input_body = "./input/SPHinXsys-2d.dat";
+std::string input_body = "SPHinXsys-2d.dat";
 //----------------------------------------------------------------------
 //	Basic geometry parameters
 //----------------------------------------------------------------------
