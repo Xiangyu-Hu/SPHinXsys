@@ -17,7 +17,7 @@ void RadixSort::sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size, Un
 
 #if !SPHINXSYS_USE_ONEDPL_SORTING
     auto &sycl_queue = execution_instance.getQueue();
-    device_radix_sorting.sort_by_key(begin, index_permutation, size, sycl_queue, execution_instance.getWorkGroupSize(), 4).wait();
+    device_radix_sorting.sort_by_key(begin, index_permutation, size, sycl_queue, execution_instance.getWorkGroupSize(), 4).wait_and_throw();
 #else
     oneapi::dpl::sort_by_key(oneapi::dpl::execution::make_device_policy(execution_instance.getQueue()),
                              begin, begin + size, index_permutation);
