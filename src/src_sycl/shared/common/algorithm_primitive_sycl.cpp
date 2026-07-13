@@ -10,9 +10,9 @@ void RadixSort::sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size, Un
     UnsignedInt *index_permutation = dv_index_permutation_->DelegatedData(ex_policy);
     UnsignedInt *begin = dv_sequence_->DelegatedData(ex_policy) + start_index;
 
-#ifndef SPHINXSYS_USE_ONEDPL
+#if !SPHINXSYS_USE_ONEDPL
     auto &sycl_queue = execution_instance.getQueue();
-    device_radix_sorting.sort_by_key(begin, index_permutation, size, sycl_queue, sycl_queue.getWorkGroupSize(), 4).wait();
+    device_radix_sorting.sort_by_key(begin, index_permutation, size, sycl_queue, execution_instance.getWorkGroupSize(), 4).wait_and_throw();
 #else
     oneapi::dpl::execution::device_policy<> policy(execution_instance.getQueue());
     oneapi::dpl::sort_by_key(policy, begin, begin + size, index_permutation);
