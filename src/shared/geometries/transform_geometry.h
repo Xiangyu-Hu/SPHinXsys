@@ -107,5 +107,4 @@ class TransformShape : public TransformGeometry<GeometryType>, public Shape
     };
 };
 } // namespace SPH
-
 #endif // TRANSFORM_SHAPE_H

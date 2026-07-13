@@ -23,7 +23,6 @@ BoundingBoxd TransformGeometry<GeometryType>::findBounds()
     return BoundingBoxd(bb_min, bb_max);
 }
 //=================================================================================================//
-
 } // namespace SPH
 
 #endif // TRANSFORM_SHAPE_HPP
