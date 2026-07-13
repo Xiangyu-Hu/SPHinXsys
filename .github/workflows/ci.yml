@@ -266,10 +266,7 @@ jobs:
             boost-geometry \
             simbody \
             spdlog \
-            gtest \
-            xsimd \
-            pybind11 \
-            opencascade
+            gtest
 
       - name: Generate buildsystem using double
         run: |
@@ -349,10 +346,7 @@ jobs:
             boost-geometry \
             simbody \
             spdlog \
-            gtest \
-            xsimd \
-            pybind11 \
-            opencascade
+            gtest
 
       - uses: actions/download-artifact@v4
         with:
@@ -492,9 +486,7 @@ jobs:
             boost-geometry `
             simbody `
             gtest `
-            spdlog `
-            xsimd `
-            pybind11
+            spdlog
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -571,9 +563,7 @@ jobs:
             boost-geometry `
             simbody `
             spdlog `
-            gtest `
-            xsimd `
-            pybind11
+            gtest
 
       - uses: actions/download-artifact@v4
         with:
@@ -706,8 +696,7 @@ jobs:
             boost-geometry \
             gtest \
             simbody \
-            spdlog \
-            pybind11
+            spdlog
 
       - name: Generate buildsystem
         run: |
@@ -775,8 +764,7 @@ jobs:
             boost-geometry \
             gtest \
             simbody \
-            spdlog \
-            pybind11
+            spdlog
 
       - uses: actions/download-artifact@v4
         with:
@@ -910,9 +898,7 @@ jobs:
             boost-geometry `
             simbody `
             gtest `
-            spdlog `
-            xsimd `
-            pybind11
+            spdlog
 
       # Enable debugging of manually-triggered workflows if the input option was provided
       - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
