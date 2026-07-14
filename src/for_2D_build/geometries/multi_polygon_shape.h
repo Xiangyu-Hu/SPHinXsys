@@ -82,7 +82,7 @@ using NRings = std::vector<std::vector<NPoint>>;
 class MultiPolygon
 {
   public:
-    MultiPolygon() {};
+    MultiPolygon(){};
     explicit MultiPolygon(const std::vector<Vecd> &points);
     explicit MultiPolygon(const Vecd &center, Real radius, int resolution);
     const boost_multi_poly &getBoostMultiPoly() const { return multi_poly_; };
@@ -117,10 +117,10 @@ class MultiPolygonShape : public Shape
 
   public:
     /** Default constructor. */
-    explicit MultiPolygonShape(const std::string &shape_name) : Shape(shape_name) {};
+    explicit MultiPolygonShape(const std::string &shape_name) : Shape(shape_name){};
     explicit MultiPolygonShape(const MultiPolygon &multi_polygon, const std::string &shape_name = "MultiPolygonShape")
-        : Shape(shape_name), multi_polygon_(multi_polygon) {};
-    virtual ~MultiPolygonShape() {};
+        : Shape(shape_name), multi_polygon_(multi_polygon){};
+    virtual ~MultiPolygonShape(){};
 
     virtual bool isValid() override;
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;

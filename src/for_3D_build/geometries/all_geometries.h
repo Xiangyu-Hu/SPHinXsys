@@ -36,7 +36,7 @@
 #include "level_set_shape.hpp"
 #include "mapping_shape.h"
 #include "sdf_shape.h"
-#include "transform_geometry.h"
+#include "transform_geometry.hpp"
 #include "triangle_mesh_shape.h"
 
 namespace SPH
