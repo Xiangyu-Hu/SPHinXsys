@@ -12,11 +12,13 @@ void RadixSort::sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size, Un
 
 #if !SPHINXSYS_USE_ONEDPL
     auto &sycl_queue = execution_instance.getQueue();
-    device_radix_sorting.sort_by_key(begin, index_permutation, size, sycl_queue, execution_instance.getWorkGroupSize(), 4).wait_and_throw();
+    auto work_group_size = execution_instance.getWorkGroupSize();
+    device_radix_sorting.sort_by_key(begin, index_permutation, size, sycl_queue, work_group_size, 4)
+        .wait_and_throw();
 #else
     oneapi::dpl::execution::device_policy<> policy(execution_instance.getQueue());
     oneapi::dpl::sort_by_key(policy, begin, begin + size, index_permutation);
-    policy.queue().wait();
+    policy.queue().wait_and_throw();
 #endif
 }
 //=================================================================================================//

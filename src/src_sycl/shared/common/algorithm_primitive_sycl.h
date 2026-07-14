@@ -33,7 +33,7 @@
 #include "sphinxsys_tbb.h"
 #include "sphinxsys_variable.h"
 
-#ifdef SPHINXSYS_USE_ONEDPL
+#if SPHINXSYS_USE_ONEDPL
 #include <oneapi/dpl/algorithm>
 #include <oneapi/dpl/execution>
 #endif
@@ -84,7 +84,7 @@ class RadixSort
     explicit RadixSort(const ExecutionPolicy &ex_policy,
                        DiscreteVariable<UnsignedInt> *dv_sequence,
                        DiscreteVariable<UnsignedInt> *dv_index_permutation)
-        : dv_sequence_(dv_sequence), dv_index_permutation_(dv_index_permutation){};
+        : dv_sequence_(dv_sequence), dv_index_permutation_(dv_index_permutation) {};
     void sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size, UnsignedInt start_index = 0);
 
   protected:
@@ -96,7 +96,7 @@ class RadixSort
 template <typename T, typename Op>
 T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
 {
-#ifndef SPHINXSYS_USE_ONEDPL
+#if !SPHINXSYS_USE_ONEDPL
     execution_instance.getQueue()
         .submit([=](sycl::handler &cgh)
                 { cgh.parallel_for(
