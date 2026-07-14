@@ -43,7 +43,7 @@ UpdateKernelIntegrals::UpdateKernel::
       kernel_second_gradient_(encloser.pmv_kernel_second_gradient_.DelegatedData(ex_policy)),
       kernel_(encloser.neighbor_method_),
       data_spacing_(encloser.index_handler_.DataSpacing()),
-      data_cell_volume_(math::pow(data_spacing_, Dimensions)),
+      data_cell_volume_(math::pow(data_spacing_, static_cast<Real>(Dimensions))),
       cell_neighborhood_(encloser.dv_cell_neighborhood_.DelegatedData(ex_policy)),
       cutoff_radius_(kernel_.CutOffRadius()),
       bounding_box_(BoundingBoxi(Arrayi::Constant(

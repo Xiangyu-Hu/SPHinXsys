@@ -263,12 +263,11 @@ class AbstractBidirectionalBoundary : public AbstractDynamics
     virtual void applyBoundaryCondition(Real dt) = 0;
     virtual void injectParticles() = 0;
     virtual void indicateOutFlowParticles() = 0;
-    template <typename ExecutionPolicy, class ConditionType, typename... Args>
+    template <class ConditionType, class MethodContainerType, typename... Args>
     AbstractBidirectionalBoundary &addSupplementaryCondition(
-        OrientedBoxByCell &oriented_box_part, Args &&...args);
+        MethodContainerType &method_container, OrientedBoxByCell &oriented_box_part, Args &&...args);
 
   protected:
-    UniquePtrsKeeper<BaseDynamics<void>> supplementary_conditions_keeper_;
     StdVec<BaseDynamics<void> *> supplementary_conditions_;
 };
 

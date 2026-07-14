@@ -11,14 +11,35 @@ namespace continuum_dynamics
 template <class BaseInteractionType>
 template <class DynamicsIdentifier>
 PlasticAcousticStep<BaseInteractionType>::PlasticAcousticStep(DynamicsIdentifier &identifier)
-    : fluid_dynamics::AcousticStep<BaseInteractionType>(identifier),
+    : BaseInteractionType(identifier),
       plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->sph_body_->getMatterMaterial())),
+      dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
+      dv_mass_(this->particles_->template getVariableByName<Real>("Mass")),
+      dv_p_(this->particles_->template registerStateVariable<Real>("Pressure")),
+      dv_compression_(this->particles_->template registerStateVariable<Real>("Compression", Real(1))),
+      dv_compression_rate_(this->particles_->template registerStateVariable<Real>("CompressionRate")),
+      dv_vel_(this->particles_->template registerStateVariable<Vecd>("Velocity")),
+      dv_dpos_(this->particles_->template getVariableByName<Vecd>("Displacement")),
+      dv_force_(this->particles_->template registerStateVariable<Vecd>("Force")),
+      dv_force_prior_(this->particles_->template registerStateVariable<Vecd>("ForcePrior")),
       dv_stress_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StressTensor3D")),
       dv_strain_tensor_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainTensor3D")),
       dv_stress_rate_3D_(this->particles_->template registerStateVariable<Mat3d>("StressRate3D")),
       dv_strain_rate_3D_(this->particles_->template registerStateVariable<Mat3d>("StrainRate3D")),
       dv_velocity_gradient_(this->particles_->template registerStateVariable<Matd>("VelocityGradient"))
 {
+    //----------------------------------------------------------------------
+    //		add evolving variables
+    //----------------------------------------------------------------------
+    this->particles_->template addEvolvingVariable<Vecd>("Velocity");
+    this->particles_->template addEvolvingVariable<Real>("Mass");
+    this->particles_->template addEvolvingVariable<Vecd>("ForcePrior");
+    this->particles_->template addEvolvingVariable<Real>("Compression");
+    this->particles_->template addEvolvingVariable<Real>("CompressionRate");
+    //----------------------------------------------------------------------
+    //		add output particle data
+    //----------------------------------------------------------------------
+    this->particles_->template addVariableToWrite<Vecd>("Velocity");
     this->particles_->template addEvolvingVariable<Mat3d>("StressTensor3D");
     this->particles_->template addEvolvingVariable<Mat3d>("StrainTensor3D");
     this->particles_->template addEvolvingVariable<Mat3d>("StressRate3D");
@@ -31,6 +52,7 @@ PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTy
     PlasticAcousticStep1stHalf(DynamicsIdentifier &identifier)
     : PlasticAcousticStep<Interaction<Inner<Parameters...>>>(identifier),
       correction_method_(this->particles_),
+      fluid_(DynamicCast<FluidType>(this, this->sph_body_->getMatterMaterial())),
       riemann_solver_(this->plastic_continuum_, this->plastic_continuum_)
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
@@ -41,9 +63,11 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+    : eos_(ex_policy, encloser.fluid_),
+      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       p_(encloser.dv_p_->DelegatedData(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedData(ex_policy)),
+      compression_rate_(encloser.dv_compression_rate_->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)),
       stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)) {}
@@ -52,7 +76,8 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InitializeKernel::initialize(size_t index_i, Real dt)
 {
-    rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
+    compression_[index_i] += 0.5 * dt * compression_rate_[index_i];
+    rho_[index_i] = compression_[index_i] * eos_.getReferenceDensity(index_i);
     p_[index_i] = -stress_tensor_3D_[index_i].trace() / 3;
     dpos_[index_i] += vel_[index_i] * dt * 0.5;
 }
@@ -67,7 +92,8 @@ PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTy
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       p_(encloser.dv_p_->DelegatedData(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedData(ex_policy)),
+      compression_rate_(encloser.dv_compression_rate_->DelegatedData(ex_policy)),
       mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
       stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)) {}
@@ -77,20 +103,19 @@ void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
     InteractKernel::interact(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
-    Real rho_dissipation(0);
-    Real rho_i = rho_[index_i];
+    Real compression_dissipation(0);
     Matd stress_tensor_i = degradeToMatd(stress_tensor_3D_[index_i]);
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
-        Vecd nablaW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j] * this->e_ij(index_i, index_j);
-        Matd stress_tensor_j = degradeToMatd(stress_tensor_3D_[index_j]);
-        force += mass_[index_i] * rho_[index_j] * ((stress_tensor_i + stress_tensor_j) / (rho_i * rho_[index_j])) * nablaW_ijV_j;
-        rho_dissipation += riemann_.DissipativeUJump(index_i, index_j, p_[index_i] - p_[index_j]) * dW_ijV_j;
+        Vecd nablaW_ijV_j = dW_ijV_j * this->e_ij(index_i, index_j);
+        force += (stress_tensor_i + degradeToMatd(stress_tensor_3D_[index_j])) * nablaW_ijV_j;
+        compression_dissipation +=
+            riemann_.DissipativeUJump(index_i, index_j, p_[index_i] - p_[index_j]) * dW_ijV_j;
     }
-    force_[index_i] += force;
-    drho_dt_[index_i] = rho_dissipation * rho_[index_i];
+    force_[index_i] += force * Vol_[index_i];
+    compression_rate_[index_i] = compression_dissipation * compression_[index_i];
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -108,7 +133,6 @@ void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrect
 {
     vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
 }
-
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class DynamicsIdentifier>
@@ -130,7 +154,8 @@ PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
       p_(encloser.dv_p_->DelegatedData(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedData(ex_policy)),
+      compression_rate_(encloser.dv_compression_rate_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
       force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)),
       stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),
@@ -142,23 +167,24 @@ void PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectio
     InteractKernel::interact(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
-    Real rho_dissipation(0);
-
+    Real compression_dissipation(0);
     Matd stress_tensor_i = degradeToMatd(stress_tensor_3D_[index_i]);
-
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Vecd e_ij = this->e_ij(index_i, index_j);
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
+        Vecd e_ij = this->e_ij(index_i, index_j);
         Real r_ij = this->vec_r_ij(index_i, index_j).norm();
-        Real face_wall_external_acceleration = (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_[index_j]).dot(-e_ij);
-        Real p_in_wall = p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
-        force += 2 * mass_[index_i] * stress_tensor_i * dW_ijV_j * e_ij;
-        rho_dissipation += riemann_.DissipativeUJump(index_i, index_j, p_[index_i] - p_in_wall) * dW_ijV_j;
+        Real face_wall_external_acceleration =
+            (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_[index_j]).dot(-e_ij);
+        Real p_in_wall =
+            p_[index_i] + rho_[index_i] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
+        force += 2.0 * stress_tensor_i * dW_ijV_j * e_ij;
+        compression_dissipation +=
+            riemann_.DissipativeUJump(index_i, index_j, p_[index_i] - p_in_wall) * dW_ijV_j;
     }
-    force_[index_i] += force / rho_[index_i];
-    drho_dt_[index_i] += rho_dissipation * rho_[index_i];
+    force_[index_i] += force * Vol_[index_i];
+    compression_rate_[index_i] += compression_dissipation * compression_[index_i];
 }
 
 } // namespace continuum_dynamics

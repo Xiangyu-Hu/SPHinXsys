@@ -11,8 +11,8 @@ struct Parameters
     Real inlet_pressure = 133.3; // 1mmHg
     int number_of_particles = 10;
     Real t_ref = 0;
-    std::string fluid_file_path = "./input/full_fluid_raw.stl";
-    std::string wall_file_path = "./input/wall.stl";
+    std::string fluid_file_path = "full_fluid_raw.stl";
+    std::string wall_file_path = "wall.stl";
     // Time and output parameters
     Real end_time = 0.05;
     Real output_dt = end_time / 100.0;

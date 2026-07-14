@@ -131,14 +131,14 @@ class DensityRegularization : public BaseLocalDynamics<DynamicsIdentifier>
 
       protected:
         EosKernel eos_;
-        DataView<Real> rho_, compression_sum_;
+        DataView<Real> rho_, compression_sum_, compression_;
         RegularizationKernel regularization_;
         ParticleScopeTypeKernel particle_scope_;
     };
 
   protected:
     FluidType &fluid_;
-    DiscreteVariable<Real> *dv_rho_, *dv_compression_sum_;
+    DiscreteVariable<Real> *dv_rho_, *dv_compression_sum_, *dv_compression_;
     Regularization<FlowType> regularization_method_;
     ParticleScopeTypeCK<ParticleScopes...> within_scope_method_;
 };
@@ -154,9 +154,9 @@ class Regularization<Internal>
       public:
         template <class ExecutionPolicy, class EnclosureType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser){};
-        Real operator()(UnsignedInt index_i, const Real &compression_sum, const Real &rho0)
+        Real operator()(UnsignedInt index_i, const Real &compression_sum)
         {
-            return compression_sum * rho0;
+            return compression_sum;
         };
     };
 };
@@ -173,9 +173,9 @@ class Regularization<FreeSurface>
         template <class ExecutionPolicy, class EnclosureType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser){};
 
-        Real operator()(UnsignedInt index_i, const Real &compression_sum, const Real &rho0)
+        Real operator()(UnsignedInt index_i, const Real &compression_sum)
         {
-            return SMAX(compression_sum, Real(1)) * rho0;
+            return SMAX(compression_sum, Real(1));
         };
 
       protected:
@@ -199,9 +199,9 @@ class Regularization<FreeStream>
         ComputingKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser)
             : indicator_(encloser.dv_indicator_->DelegatedDataView(ex_policy)){};
 
-        Real operator()(UnsignedInt index_i, const Real &compression_sum, const Real &rho0)
+        Real operator()(UnsignedInt index_i, const Real &compression_sum)
         {
-            return indicator_[index_i] != 0 ? rho0 : compression_sum * rho0;
+            return indicator_[index_i] != 0 ? Real(1) : compression_sum;
         };
 
       protected:

@@ -5,8 +5,34 @@
 namespace SPH
 {
 //=================================================================================================//
+void EventScheduler::schedule(Real time, Callback cb)
+{
+    queue_.push({time, nextOrder_++, std::move(cb)});
+}
+//=================================================================================================//
+void EventScheduler::processEventsUpTo(Real current_time)
+{
+    while (!queue_.empty() && queue_.top().time_ <= current_time)
+    {
+        // Because std::priority_queue::top() is const, we need to move the callback out carefully.
+        // Option 1: store callbacks in a std::shared_ptr<Callback>.
+        // Option 2: make the callback mutable (shown below).
+        auto &top = queue_.top();
+        Callback cb = std::move(top.cb_); // move out (mutable needed)
+        queue_.pop();
+        cb(); // execute
+    }
+}
+//=================================================================================================//
+bool EventScheduler::Event::operator<(const Event &other) const
+{
+    if (time_ != other.time_)
+        return time_ > other.time_; // min-heap
+    return order_ > other.order_;
+}
+//=================================================================================================//
 TimeStepper::TimeStepper(SPHSystem &sph_system)
-    : global_dt_(0.0), sv_physical_time_(&sph_system.svPhysicalTime()){}
+    : global_dt_(0.0), sv_physical_time_(&sph_system.svPhysicalTime()) {}
 //=================================================================================================//
 void TimeStepper::setRestartStep(UnsignedInt restart_step)
 {
@@ -67,6 +93,7 @@ Real TimeStepper::incrementPhysicalTime(Real global_time_step)
 {
     global_dt_ = global_time_step;
     sv_physical_time_->incrementValue(global_dt_);
+    event_scheduler_.processEventsUpTo(sv_physical_time_->getValue());
     for (auto &interval_executor : interval_executers_)
     {
         interval_executor->incrementPresentTime(global_dt_);

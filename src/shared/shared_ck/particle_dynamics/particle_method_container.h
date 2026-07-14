@@ -113,6 +113,11 @@ class ReduceDynamicsGroup : public BaseDynamics<typename Operation::ReturnType>
           operation_(operation), reduce_dynamics_(reduce_dynamics) {}
     ~ReduceDynamicsGroup() = default;
 
+    bool hasDynamics() const
+    {
+        return !reduce_dynamics_.empty();
+    }
+
     ReduceDynamicsGroup<Operation> &add(BaseDynamics<ReturnType> *dynamics)
     {
         reduce_dynamics_.push_back(dynamics);

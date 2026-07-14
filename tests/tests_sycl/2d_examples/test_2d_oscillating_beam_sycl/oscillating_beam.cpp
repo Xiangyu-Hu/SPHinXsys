@@ -126,9 +126,6 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(
-                    beam_body, "Velocity", beam_material.ReferenceSoundSpeed())
-        .exec();
     //-----------------------------------------------------------------------------
     // this section define all numerical methods will be used in this case
     //-----------------------------------------------------------------------------
@@ -150,6 +147,9 @@ int main(int ac, char *av[])
                                    solid_dynamics::StructureIntegration2ndHalf>(beam_body_inner));
 
     auto &acoustic_time_step = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(beam_body);
+    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(
+                    beam_body, "Velocity", beam_material.ReferenceSoundSpeed())
+        .exec();
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

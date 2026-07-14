@@ -13,8 +13,8 @@
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 /** Geometry parameter. */
-/** Set the file path to the stl file. */
-std::string full_path_to_stl_file = "./input/heart-new.stl";
+/** Set the file name to the stl file. */
+std::string full_path_to_stl_file = "heart-new.stl";
 Real length_scale = 1.0;
 Real time_scale = 1.0 / 12.9;
 Real stress_scale = 1.0e-6;

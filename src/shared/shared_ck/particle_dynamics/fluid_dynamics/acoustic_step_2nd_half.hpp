@@ -3,6 +3,8 @@
 
 #include "acoustic_step_2nd_half.h"
 
+#include "weakly_compressible_fluid.hpp"
+
 namespace SPH
 {
 namespace fluid_dynamics
@@ -25,8 +27,8 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InitializeKernel::InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
-      dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)) {}
+    : vel_(encloser.dv_vel_->DelegatedDataView(ex_policy)),
+      dpos_(encloser.dv_dpos_->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -42,17 +44,17 @@ AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_),
       riemann_(ex_policy, encloser.riemann_solver_),
-      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
-      force_(encloser.dv_force_->DelegatedData(ex_policy)) {}
+      Vol_(encloser.dv_Vol_->DelegatedDataView(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedDataView(ex_policy)),
+      compression_rate_(encloser.dv_compression_rate_->DelegatedDataView(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedDataView(ex_policy)),
+      force_(encloser.dv_force_->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    Real density_change_rate(0);
+    Real divergence_sum(0);
     Vecd p_dissipation = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
@@ -61,11 +63,12 @@ void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
         Vecd e_ij = this->e_ij(index_i, index_j);
 
         Vecd vel_ave = riemann_.AverageV(index_i, index_j, vel_[index_i], vel_[index_j]);
-        density_change_rate += 2.0 * (vel_[index_i] - vel_ave).dot(correction_(index_i) * e_ij) * dW_ijV_j;
+        divergence_sum +=
+            2.0 * (vel_[index_i] - vel_ave).dot(correction_(index_i) * e_ij) * dW_ijV_j;
         Real u_jump = (vel_[index_i] - vel_[index_j]).dot(e_ij);
         p_dissipation += riemann_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * e_ij;
     }
-    drho_dt_[index_i] += density_change_rate * rho_[index_i];
+    compression_rate_[index_i] += divergence_sum * compression_[index_i];
     force_[index_i] = p_dissipation * Vol_[index_i];
 }
 //=================================================================================================//
@@ -73,14 +76,16 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)) {}
+    : eos_(ex_policy, encloser.fluid_), rho_(encloser.dv_rho_->DelegatedDataView(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedDataView(ex_policy)),
+      compression_rate_(encloser.dv_compression_rate_->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
-    rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
+    compression_[index_i] += 0.5 * dt * compression_rate_[index_i];
+    rho_[index_i] = compression_[index_i] * eos_.getReferenceDensity(index_i);
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
@@ -100,20 +105,20 @@ AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
       correction_(ex_policy, encloser.kernel_correction_),
       riemann_(ex_policy, encloser.riemann_solver_),
-      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
-      force_(encloser.dv_force_->DelegatedData(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)),
-      wall_n_(encloser.dv_wall_n_[contact_index]->DelegatedData(ex_policy)) {}
+      Vol_(encloser.dv_Vol_->DelegatedDataView(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedDataView(ex_policy)),
+      compression_rate_(encloser.dv_compression_rate_->DelegatedDataView(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedDataView(ex_policy)),
+      force_(encloser.dv_force_->DelegatedDataView(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedDataView(ex_policy)),
+      wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedDataView(ex_policy)),
+      wall_n_(encloser.dv_wall_n_[contact_index]->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    Real density_change_rate = 0.0;
+    Real divergence_sum(0);
     Vecd p_dissipation = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
@@ -122,12 +127,12 @@ void AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
         Vecd e_ij = this->e_ij(index_i, index_j);
 
         Vecd vel_diff = 2.0 * (vel_[index_i] - wall_vel_ave_[index_j]);
-        density_change_rate += vel_diff.dot(correction_(index_i) * e_ij) * dW_ijV_j;
+        divergence_sum += vel_diff.dot(correction_(index_i) * e_ij) * dW_ijV_j;
         Vecd face_to_fluid_n = SGN(e_ij.dot(wall_n_[index_j])) * wall_n_[index_j];
         Real u_jump = vel_diff.dot(face_to_fluid_n);
         p_dissipation += riemann_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * face_to_fluid_n;
     }
-    drho_dt_[index_i] += density_change_rate * rho_[index_i];
+    compression_rate_[index_i] += divergence_sum * compression_[index_i];
     force_[index_i] += p_dissipation * Vol_[index_i];
 }
 //=================================================================================================//
@@ -157,19 +162,19 @@ AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters.
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
       correction_(ex_policy, encloser.kernel_correction_),
       riemann_(ex_policy, encloser.riemann_solvers_[contact_index]),
-      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
-      drho_dt_(encloser.dv_drho_dt_->DelegatedData(ex_policy)),
-      vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
-      force_(encloser.dv_force_->DelegatedData(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      contact_vel_(encloser.dv_contact_vel_[contact_index]->DelegatedData(ex_policy)) {}
+      Vol_(encloser.dv_Vol_->DelegatedDataView(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedDataView(ex_policy)),
+      compression_rate_(encloser.dv_compression_rate_->DelegatedDataView(ex_policy)),
+      vel_(encloser.dv_vel_->DelegatedDataView(ex_policy)),
+      force_(encloser.dv_force_->DelegatedDataView(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedDataView(ex_policy)),
+      contact_vel_(encloser.dv_contact_vel_[contact_index]->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(size_t index_i, Real dt)
 {
-    Real density_change_rate(0);
+    Real divergence_sum(0);
     Vecd p_dissipation = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
@@ -178,11 +183,12 @@ void AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parame
         Vecd e_ij = this->e_ij(index_i, index_j);
 
         Vecd vel_ave = riemann_.AverageV(index_i, index_j, vel_[index_i], contact_vel_[index_j]);
-        density_change_rate += 2.0 * (vel_[index_i] - vel_ave).dot(correction_(index_i) * e_ij) * dW_ijV_j;
+        divergence_sum +=
+            2.0 * (vel_[index_i] - vel_ave).dot(correction_(index_i) * e_ij) * dW_ijV_j;
         Real u_jump = (vel_[index_i] - contact_vel_[index_j]).dot(e_ij);
         p_dissipation += riemann_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * e_ij;
     }
-    drho_dt_[index_i] += density_change_rate * rho_[index_i];
+    compression_rate_[index_i] += divergence_sum * compression_[index_i];
     force_[index_i] += p_dissipation * Vol_[index_i];
 }
 //=================================================================================================//

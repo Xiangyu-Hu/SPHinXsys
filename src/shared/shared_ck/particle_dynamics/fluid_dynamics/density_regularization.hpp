@@ -4,6 +4,7 @@
 #include "density_regularization.h"
 
 #include "base_particles.hpp"
+#include "weakly_compressible_fluid.hpp"
 
 namespace SPH
 {
@@ -18,7 +19,7 @@ CompressionSummation<Base, RelationType<Parameters...>>::CompressionSummation(
       dv_Vol_ref_(this->particles_->template registerStateVariableFrom<Real>(
           "VolumetricMeasureRef", "VolumetricMeasure")),
       dv_compression_sum_(this->particles_->template registerStateVariable<Real>(
-          "CompressionSummation"))
+          "CompressionSummation", Real(1)))
 {
     this->particles_->template addEvolvingVariable<Real>(dv_Vol_ref_);
 }
@@ -88,6 +89,7 @@ DensityRegularization<DynamicsIdentifier, FluidType, FlowType, ParticleScopes...
       fluid_(DynamicCast<FluidType>(this, this->sph_body_->getMatterMaterial())),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_compression_sum_(this->particles_->template getVariableByName<Real>("CompressionSummation")),
+      dv_compression_(this->particles_->template getVariableByName<Real>("Compression")),
       regularization_method_(this->particles_), within_scope_method_(this->particles_)
 {
     static_assert(std::is_base_of<WithinScope, ParticleScopeTypeCK<ParticleScopes...>>::value,
@@ -100,6 +102,7 @@ DensityRegularization<DynamicsIdentifier, FluidType, FlowType, ParticleScopes...
     UpdateKernel(const ExecutionPolicy &ex_policy, Encloser &encloser)
     : eos_(ex_policy, encloser.fluid_), rho_(encloser.dv_rho_->DelegatedDataView(ex_policy)),
       compression_sum_(encloser.dv_compression_sum_->DelegatedDataView(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedDataView(ex_policy)),
       regularization_(ex_policy, encloser.regularization_method_),
       particle_scope_(ex_policy, encloser.within_scope_method_) {}
 //=================================================================================================//
@@ -109,8 +112,8 @@ void DensityRegularization<DynamicsIdentifier, FluidType, FlowType, ParticleScop
 {
     if (this->particle_scope_(index_i))
     {
-        rho_[index_i] = regularization_(
-            index_i, compression_sum_[index_i], eos_.getReferenceDensity(index_i));
+        compression_[index_i] = regularization_(index_i, compression_sum_[index_i]);
+        rho_[index_i] = compression_[index_i] * eos_.getReferenceDensity(index_i);
     }
 }
 //=================================================================================================//

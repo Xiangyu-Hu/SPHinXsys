@@ -4,6 +4,7 @@
 #include "bidirectional_boundary_ck.h"
 
 #include "complex_geometry.h"
+#include "particle_method_container.h"
 
 namespace SPH
 {
@@ -185,18 +186,17 @@ void SupplementaryCondition<ConditionType>::UpdateKernel::update(size_t index_i,
 {
     if (oriented_box_->checkContain(pos_[index_i]))
     {
-        condition_(index_i, dt);
+        condition_(index_i);
     }
 }
 //=================================================================================================//
-template <class ExecutionPolicy, class ConditionType, typename... Args>
-AbstractBidirectionalBoundary &AbstractBidirectionalBoundary::
-    addSupplementaryCondition(OrientedBoxByCell &oriented_box_part, Args &&...args)
+template <class ConditionType, class MethodContainerType, typename... Args>
+AbstractBidirectionalBoundary &AbstractBidirectionalBoundary::addSupplementaryCondition(
+    MethodContainerType &method_container, OrientedBoxByCell &oriented_box_part, Args &&...args)
 {
-    auto *condition = supplementary_conditions_keeper_.template createPtr<
-        StateDynamics<ExecutionPolicy, SupplementaryCondition<ConditionType>>>(
-        oriented_box_part, std::forward<Args>(args)...);
-    supplementary_conditions_.push_back(condition);
+    auto &condition = method_container.template addStateDynamics<
+        SupplementaryCondition<ConditionType>>(oriented_box_part, std::forward<Args>(args)...);
+    supplementary_conditions_.push_back(&condition);
     return *this;
 }
 //=================================================================================================//

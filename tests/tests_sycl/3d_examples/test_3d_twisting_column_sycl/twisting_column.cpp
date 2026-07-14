@@ -117,8 +117,6 @@ int main(int ac, char *av[])
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<VelocityProfile>>(column, "Velocity").exec();
-
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
     ParticleDynamicsGroup lagrangian_configuration;
     lagrangian_configuration.add(&main_methods.addCellLinkedListDynamics(column));
@@ -133,6 +131,7 @@ int main(int ac, char *av[])
 
     auto &column_acoustic_time_step = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(column, 0.5);
     auto &constraint_holder = main_methods.addStateDynamics<FixBodyPartConstraintCK>(holder);
+    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<VelocityProfile>>(column, "Velocity").exec();
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

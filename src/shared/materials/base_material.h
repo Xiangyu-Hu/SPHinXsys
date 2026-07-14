@@ -75,17 +75,13 @@ class BaseMaterial
 
 class MatterMaterial : public BaseMaterial
 {
-    DiscreteVariable<Real> *dv_rho_;
-    DiscreteVariable<Real> *dv_mass_;
-
   public:
     explicit MatterMaterial();
     virtual ~MatterMaterial() {};
-    DiscreteVariable<Real> *dvDensity() const { return dv_rho_; };
-    DiscreteVariable<Real> *dvMass() const { return dv_mass_; };
+    void initializeMatterVariables(BaseParticles *base_particles);
     virtual void registerLocalParametersToReload(BaseParticles *base_particles) override {};
     virtual void registerLocalParametersFromReload(BaseParticles *base_particles) override {};
-    virtual void initializeLocalParameters(BaseParticles *base_particles) override;
+    virtual void initializeLocalParameters(BaseParticles *base_particles) override {};
     virtual Real ReferenceDensity() const = 0;
 };
 

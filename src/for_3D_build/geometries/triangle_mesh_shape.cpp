@@ -196,17 +196,20 @@ TriangleMeshShapeCylinder::TriangleMeshShapeCylinder(
         poly_mesh.transformMesh(SimTKVec3(translation[0], translation[1], translation[2])));
 }
 //=================================================================================================//
-TriangleMeshShapeSTL::TriangleMeshShapeSTL(const std::string &filepathname, Vec3d translation,
+TriangleMeshShapeSTL::TriangleMeshShapeSTL(const std::string &file_name, Vec3d translation,
                                            Real scale_factor, const std::string &shape_name)
     : TriangleMeshShape(shape_name)
 {
-    if (!fs::exists(filepathname))
+    IO::initEnvironment();
+    IOEnvironment &io_env = IO::getEnvironment();
+    std::string file_path_name = io_env.InputFolder() + "/" + file_name;
+    if (!fs::exists(file_path_name))
     {
-        std::cout << "\n Error: the input file:" << filepathname << " is not exists" << std::endl;
+        std::cout << "\n Error: the input file:" << file_path_name << " is not exists" << std::endl;
         std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         throw;
     }
-    initializeFromSTLMesh(filepathname, translation, scale_factor);
+    initializeFromSTLMesh(file_path_name, translation, scale_factor);
 }
 //=================================================================================================//
 } // namespace SPH
