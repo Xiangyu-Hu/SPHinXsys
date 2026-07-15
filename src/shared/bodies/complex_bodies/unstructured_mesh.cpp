@@ -2,9 +2,20 @@
 
 #include "base_particle_dynamics.h"
 #include "base_particles.hpp"
+#include "io_environment.h"
 
 namespace SPH
 {
+//=================================================================================================//
+ANSYSMesh::ANSYSMesh(const std::string &file_name)
+{
+    IO::initEnvironment();
+    IOEnvironment &io_env = IO::getEnvironment();
+    std::string full_path = io_env.InputFolder() + "/" + file_name;
+    getDataFromMeshFile(full_path);
+    getElementCenterCoordinates();
+    getMinimumDistanceBetweenNodes();
+}
 //=================================================================================================//
 BaseInnerRelationInFVM::BaseInnerRelationInFVM(RealBody &real_body, ANSYSMesh &ansys_mesh)
     : BaseInnerRelation(real_body), real_body_(&real_body),

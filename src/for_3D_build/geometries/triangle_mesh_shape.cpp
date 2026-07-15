@@ -200,6 +200,7 @@ TriangleMeshShapeSTL::TriangleMeshShapeSTL(const std::string &file_name, Vec3d t
                                            Real scale_factor, const std::string &shape_name)
     : TriangleMeshShape(shape_name)
 {
+    IO::initEnvironment();
     IOEnvironment &io_env = IO::getEnvironment();
     std::string file_path_name = io_env.InputFolder() + "/" + file_name;
     if (!fs::exists(file_path_name))

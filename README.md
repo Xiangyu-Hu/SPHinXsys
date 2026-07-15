@@ -16,11 +16,18 @@
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
 [![QQ](https://img.shields.io/badge/QQ_Group-blue?logo=tencentqq&logoColor=white)](https://qm.qq.com/q/BZDAqz70Iw)
 
-## Newest update: Signed-distance Function (SDF) Based Geometrics
+## Newest update for SPHinXsim: interactive visualization and particle generation
 
-By using SDF primitives, extensions and operations, alternative independent and meshless modeling can be carried out in SPHinXsys for complex geometrics.
+Welcome to check the newest development from the repository: https://github.com/Xiangyu-Hu/SPHinXsim.
 
-[![geometry-model](https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/sdf_geometry.png)](https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/tests_sycl/3d_examples/test_3d_sdf_shape_sycl/sdf_shape_particle_relaxation.cpp)
+Now, with persistent visualization, one can modify the settings of the simulation (geometry, bodies and boundary condition, etc.)
+either by directly change the Jason configuration file or using LLM interface. The new settings will be update with `preview` function.
+Furthermore, after all settings are considered as settled, one can generate SPH particles and have a final check before the simulation
+is really carried out. Also note that, the modification will automatically validated by the specially designed schema, before each `preview` command,
+to ensure meaningful settings. 
+
+<a href="https://xiangyu-hu.github.io/SPHinXsim/visualization">
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/visualization.png" height="600px"></a>
 
 ## Repository Description
 

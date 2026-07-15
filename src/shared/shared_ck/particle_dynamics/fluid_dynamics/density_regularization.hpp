@@ -19,7 +19,7 @@ CompressionSummation<Base, RelationType<Parameters...>>::CompressionSummation(
       dv_Vol_ref_(this->particles_->template registerStateVariableFrom<Real>(
           "VolumetricMeasureRef", "VolumetricMeasure")),
       dv_compression_sum_(this->particles_->template registerStateVariable<Real>(
-          "CompressionSummation"))
+          "CompressionSummation", Real(1)))
 {
     this->particles_->template addEvolvingVariable<Real>(dv_Vol_ref_);
 }

@@ -30,11 +30,11 @@ Real v_another = -8.25 * cos(3.14159 / 3.0); /**< initial velocity of another in
 Real p_another = 140.2 / 1.2;                /**< initial pressure of another. */
 Real heat_capacity_ratio = 1.4;              /**< heat capacity ratio. */
 //----------------------------------------------------------------------
-//	Set the file path to the data file.
+//	Set the file name to the data file.
 //----------------------------------------------------------------------
-std::string double_mach_reflection_mesh1_fullpath = "./input/double_mach_reflection_0.05.msh";
-std::string double_mach_reflection_mesh2_fullpath = "./input/double_mach_reflection_0.0125.msh";
-std::string double_mach_reflection_mesh3_fullpath = "./input/double_mach_reflection_0.012.msh";
+std::string double_mach_reflection_mesh1 = "double_mach_reflection_0.05.msh";
+std::string double_mach_reflection_mesh2 = "double_mach_reflection_0.0125.msh";
+std::string double_mach_reflection_mesh3 = "double_mach_reflection_0.012.msh";
 //
 //	Define geometries and body shapes
 //----------------------------------------------------------------------

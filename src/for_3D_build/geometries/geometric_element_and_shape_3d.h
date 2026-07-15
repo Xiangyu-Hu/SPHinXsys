@@ -30,7 +30,7 @@
 #define GEOMETRIC_ELEMENT_AND_SHAPE_3D_H
 
 #include "data_type.h"
-#include "transform_geometry.h"
+#include "transform_geometry.hpp"
 
 namespace SPH
 {

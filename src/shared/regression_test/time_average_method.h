@@ -44,8 +44,8 @@ class RegressionTestTimeAverage : public RegressionTestBase<ObserveMethodType>
 
   protected:
     int snapshot_for_converged_;             /* the index of the steady converged starting point. */
-    std::string mean_variance_filefullpath_; /* the file path for mean and variance. (.xml) */
-    std::string filefullpath_filter_output_; /* the file path for filtered output. */
+    std::string mean_variance_filefullpath_; /* the file name for mean and variance. (.xml) */
+    std::string filefullpath_filter_output_; /* the file name for filtered output. */
     XmlEngine mean_variance_xml_engine_in_;  /* xml engine for mean and variance input. */
     XmlEngine mean_variance_xml_engine_out_; /* xml engine for mean and variance output. */
 

@@ -84,7 +84,7 @@ void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
         VecMatd displacement_matrix = vectorizeTensorSquare(r_ij);
         VecMatd linearly_corrected_matrix =
             displacement_matrix + this->displacement_matrix_grad_[index_i] * r_ij;
-        summation -= r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), 2) *
+        summation -= r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), Real(2)) *
                      displacement_matrix * linearly_corrected_matrix.transpose();
     }
     this->M_[index_i] = summation;
@@ -94,7 +94,7 @@ template <typename... Parameters>
 void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
-    Real det_sqr = math::pow(this->M_[index_i].determinant(), 2);
+    Real det_sqr = math::pow(this->M_[index_i].determinant(), Real(2));
     Real min_det_sqr = SMAX(alpha_ - det_sqr, Real(0));
     MatTend M_T = this->M_[index_i].transpose(); // for Tikhonov regularization
     MatTend inverse = (M_T * this->M_[index_i] + TinyReal * MatTend::Identity()).inverse() * M_T;
@@ -123,7 +123,7 @@ void HessianCorrectionMatrix<Contact<Parameters...>>::
         VecMatd displacement_matrix = vectorizeTensorSquare(r_ij);
         VecMatd linearly_corrected_matrix =
             displacement_matrix + this->displacement_matrix_grad_[index_i] * r_ij;
-        summation -= r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), 2) *
+        summation -= r_ij.dot(corrected_gradW_ij) / math::pow(r_ij.squaredNorm(), Real(2)) *
                      displacement_matrix * linearly_corrected_matrix.transpose();
     }
     this->M_[index_i] += summation;

@@ -1,7 +1,6 @@
 #include "base_particles.hpp"
 
 #include "base_body.h"
-#include "base_material.h"
 
 namespace SPH
 {
@@ -9,8 +8,8 @@ namespace SPH
 BaseParticles::BaseParticles(SPHBody &sph_body)
     : sv_total_real_particles_(nullptr),
       particles_bound_(0), original_id_(nullptr), sorted_id_(nullptr),
-      dv_pos_(nullptr), Vol_(nullptr), sph_body_(sph_body), body_name_(sph_body.Name()),
-      reload_xml_parser_(*xml_parser_ptrs_.createPtr<XmlParser>("xml_particle_reload", "particles")),
+      dv_pos_(nullptr), Vol_(nullptr), sph_body_(sph_body),
+      reload_xml_parser_(*xml_parser_ptr_.createPtr<XmlParser>("xml_particle_reload", "reload_data")),
       total_body_parts_(0)
 {
     sph_body.assignBaseParticles(this);
@@ -27,7 +26,7 @@ SPHAdaptation &BaseParticles::getSPHAdaptation()
 std::string BaseParticles::getBodyName()
 {
     return sph_body_.Name();
-};
+}
 //=================================================================================================//
 void BaseParticles::initializeBasicDiscreteVariables()
 {
@@ -57,7 +56,7 @@ void BaseParticles::initializeAllParticlesBounds(UnsignedInt number_of_particles
     particles_bound_ = number_of_particles;
 }
 //=================================================================================================//
-void BaseParticles::initializeAllParticlesBoundsFromReloadXml()
+void BaseParticles::initializeAllParticlesBoundsFromReload()
 {
     initializeAllParticlesBounds(reload_xml_parser_.Size(reload_xml_parser_.first_element_));
 }
@@ -146,7 +145,7 @@ void BaseParticles::readReloadXmlFile(const std::string &filefullpath, const std
 {
     reload_xml_parser_.loadXmlFile(filefullpath);
     // Navigate first_element_ to the matching body element so that downstream
-    // functions (initializeAllParticlesBoundsFromReloadXml, registerStateVariableFromReload)
+    // functions (initializeAllParticlesBoundsFromReload, registerStateVariableFromReload)
     // continue to work unchanged by iterating its <particle> children directly.
     tinyxml2::XMLElement *body_element = reload_xml_parser_.first_element_->FirstChildElement("body");
     while (body_element != nullptr)

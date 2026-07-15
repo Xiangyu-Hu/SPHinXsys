@@ -18,7 +18,6 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
           "IndexPermutation", particles_->ParticlesBound())),
       dv_original_id_(particles_->getVariableByName<UnsignedInt>("OriginalID")),
       dv_sorted_id_(particles_->getVariableByName<UnsignedInt>("SortedID")),
-      update_variables_to_sort_(particles_->EvolvingVariables()),
       sort_method_(ExecutionPolicy{}, dv_sequence_, dv_index_permutation_),
       kernel_implementation_(*this)
 {

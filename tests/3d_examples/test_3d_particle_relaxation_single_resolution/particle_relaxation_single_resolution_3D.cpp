@@ -12,7 +12,7 @@ using namespace SPH;
 //	Setting for the first geometry.
 //	To use this, please commenting the setting for the second geometry.
 //----------------------------------------------------------------------
-// std::string full_path_to_file = "./input/SPHinXsys.stl";
+// std::string full_path_to_file = "SPHinXsys.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -25,7 +25,7 @@ Real scaling = 1.0; */
 //	Setting for the second geometry.
 //	To use this, please commenting the setting for the first geometry.
 //----------------------------------------------------------------------
-std::string full_path_to_file = "./input/triangle_prism.stl";
+std::string full_path_to_file = "triangle_prism.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -55,7 +55,7 @@ class SolidBodyFromMesh : public ComplexShape
 //	Setting for the second geometry.
 //	To use this, please commenting the setting for the first geometry.
 //----------------------------------------------------------------------
-// std::string full_path_to_file = "./input/fluid.stl";
+// std::string full_path_to_file = "fluid.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------

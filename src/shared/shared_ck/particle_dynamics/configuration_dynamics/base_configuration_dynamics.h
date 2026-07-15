@@ -74,36 +74,9 @@ struct PlusUnsignedInt<ParallelPolicy>
 template <template <typename> class ContainerType>
 class UpdateSortableVariables
 {
-    typedef DataAssemble<UniquePtr, ContainerType> TemporaryVariables;
-
-    struct InitializeTemporaryVariables
-    {
-        template <typename DataType>
-        void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables,
-                        UniquePtr<ContainerType<DataType>> &variable_ptr)
-        {
-            UnsignedInt total_size = 0;
-            for (UnsignedInt k = 0; k != variables.size(); ++k)
-            {
-                total_size = SMAX(total_size, variables[k]->getTotalSize());
-            }
-
-            variable_ptr = makeUnique<ContainerType<DataType>>("Temporary", total_size);
-        };
-    };
-
-    TemporaryVariables temp_variables_;
+    DataAssemble<UniquePtr, ContainerType> temp_variables_;
 
   public:
-    template <class VariableAssembleIn>
-    UpdateSortableVariables(VariableAssembleIn &variable_assemble_in)
-    {
-        OperationBetweenDataAssembles<
-            VariableAssembleIn, TemporaryVariables, InitializeTemporaryVariables>
-            initialize_temp_variables;
-        initialize_temp_variables(variable_assemble_in, temp_variables_);
-    };
-
     template <class ExecutionPolicy, typename DataType>
     void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables,
                     ExecutionPolicy &ex_policy, UnsignedInt start_index, UnsignedInt end_index,
@@ -112,6 +85,18 @@ class UpdateSortableVariables
         using ContainedDataType = typename ContainerType<DataType>::ContainedDataType;
         constexpr int type_index = DataTypeIndex<DataType>::value;
         UnsignedInt *index_permutation = dv_index_permutation->DelegatedData(ex_policy);
+
+        if (!std::get<type_index>(temp_variables_))
+        {
+            UnsignedInt total_size = 0;
+            for (UnsignedInt k = 0; k != variables.size(); ++k)
+            {
+                total_size = SMAX(total_size, variables[k]->getTotalSize());
+            }
+
+            std::get<type_index>(temp_variables_) =
+                makeUnique<ContainerType<DataType>>("Temporary", total_size);
+        }
 
         for (UnsignedInt k = 0; k != variables.size(); ++k)
         {

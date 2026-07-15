@@ -113,10 +113,10 @@ int main(int ac, char *av[])
     auto &fluid_density_regularization =
         main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(water_block_inner)
             .addPostContactInteraction(water_wall_contact)
-            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(water_block);
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeSurface>(water_block);
 
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_ref);
-    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(water_block);
+    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(water_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

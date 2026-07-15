@@ -145,7 +145,7 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
     // are defined in local coordinates, while others in global coordinates.
     pos_[index_i] += vel_[index_i] * dt * 0.5;
     rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
-    pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
+    pseudo_n_[index_i] = transformation_matrix0_[index_i].transpose() * getVectorAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i]);
 
     F_[index_i] += dF_dt_[index_i] * dt * 0.5;
     F_bending_[index_i] += dF_bending_dt_[index_i] * dt * 0.5;
@@ -229,7 +229,7 @@ void ShellStressRelaxationSecondHalf::initialization(size_t index_i, Real dt)
     rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
     dpseudo_n_dt_[index_i] = transformation_matrix0_[index_i].transpose() *
                              getVectorChangeRateAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i], angular_vel_[index_i]);
-    pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
+    pseudo_n_[index_i] = transformation_matrix0_[index_i].transpose() * getVectorAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i]);
 }
 //=================================================================================================//
 void ShellStressRelaxationSecondHalf::update(size_t index_i, Real dt)
