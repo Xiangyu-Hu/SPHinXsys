@@ -64,6 +64,7 @@
         "CMAKE_C_COMPILER": "icx",
         "CMAKE_CXX_COMPILER": "icpx",
         "SPHINXSYS_USE_SYCL": "ON",
+        "SPHINXSYS_USE_ONEDPL": "ON",
         "CMAKE_TOOLCHAIN_FILE": "'${sourceDir}/../vcpkg/scripts/buildsystems/vcpkg.cmake'",
         "CMAKE_C_COMPILER_LAUNCHER": "ccache",
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
