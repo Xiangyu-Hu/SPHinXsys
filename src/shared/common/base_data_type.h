@@ -54,9 +54,11 @@ using UnsignedInt = uint32_t;
 #else
 using UnsignedInt = u_int32_t;
 #endif // _MSC_VER
+constexpr int UnsignedIntBits = 32;
 #else
 using Real = double;
 using UnsignedInt = size_t;
+constexpr int UnsignedIntBits = 64;
 #endif // SPHINXSYS_USE_FLOAT
 
 template <typename T>
