@@ -51,6 +51,11 @@ class GroupManager
         name_to_bit_["All"] = ALL_MASK;
     }
 
+    std::string GroupVariableName() const
+    {
+        return group_variable_->Name();
+    }
+
     // Create a group with a given name
     // Returns the group's bitmask or 0 if the group limit is reached.
     UnsignedInt createGroup(const std::string &name)
