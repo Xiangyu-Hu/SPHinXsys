@@ -21,7 +21,7 @@ CompressionSummation<Base, RelationType<Parameters...>>::CompressionSummation(
       dv_compression_sum_(this->particles_->template registerStateVariable<Real>(
           "CompressionSummation", Real(1))),
       sv_compression_inv_ref_(this->particles_->template registerSingleVariable<Real>(
-          "CompressionInverseRef", Real(1)))
+          "InverseReferenceCompression", Real(1)))
 {
     this->particles_->template addEvolvingVariable<Real>(dv_Vol_ref_);
 }
@@ -86,6 +86,20 @@ void CompressionSummation<Contact<Parameters...>>::
         compression_sum_[index_i] +=
             (*compression_inv_ref_) * this->W_ij(index_i, index_j) * contact_Vol_ref_[index_j];
     }
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+AverageCompression::ReduceKernel::ReduceKernel(
+    const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : compression_sum_(encloser.dv_compression_sum_->DelegatedDataView(ex_policy)) {}
+//=================================================================================================//
+inline std::pair<Real, Real> AverageCompression::ReduceKernel::reduce(size_t index_i, Real dt)
+{
+    // only consider the particles with compression_sum close to 1.0
+    // i.e. well within the fluid domain, not near free surface or inflow/outflow boundaries
+    return ABS(compression_sum_[index_i] - 1.0) < 0.025
+               ? ReduceReturnType(compression_sum_[index_i], Real(1))
+               : ReduceReturnType(Real(0), Real(0));
 }
 //=================================================================================================//
 template <class DynamicsIdentifier, class FluidType, class FlowType, typename... ParticleScopes>
