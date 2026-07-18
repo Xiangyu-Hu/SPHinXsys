@@ -43,6 +43,7 @@ class GroupManager
         : group_variable_(group_variable), next_bit_(0) {}
 
     std::string GroupVariableName() const { return group_variable_->Name(); }
+    DataView<UnsignedInt> GroupVariableDataView() const { return group_variable_->getDataView(); }
 
     // Register a group with a given name
     // Returns the group's bitmask or 0 if the group limit is reached.
