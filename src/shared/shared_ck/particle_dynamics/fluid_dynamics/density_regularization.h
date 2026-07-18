@@ -54,6 +54,7 @@ class CompressionSummation<Base, RelationType<Parameters...>>
 
   protected:
     DiscreteVariable<Real> *dv_Vol_ref_, *dv_compression_sum_;
+    SingleVariable<Real> *sv_compression_inv_ref_;
 };
 
 template <typename... Parameters>
@@ -77,6 +78,7 @@ class CompressionSummation<Inner<Parameters...>>
       protected:
         Vecd zero_;
         DataView<Real> Vol_ref_, compression_sum_;
+        Real *compression_inv_ref_;
     };
 };
 
@@ -100,6 +102,7 @@ class CompressionSummation<Contact<Parameters...>>
 
       protected:
         DataView<Real> compression_sum_, contact_Vol_ref_;
+        Real *compression_inv_ref_;
     };
 
   protected:
