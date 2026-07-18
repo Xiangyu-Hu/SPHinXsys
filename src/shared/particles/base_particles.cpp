@@ -1,6 +1,7 @@
 #include "base_particles.hpp"
 
 #include "base_body.h"
+#include "sphinxsys_bitmask.h"
 
 namespace SPH
 {
@@ -26,6 +27,17 @@ SPHAdaptation &BaseParticles::getSPHAdaptation()
 std::string BaseParticles::getBodyName()
 {
     return sph_body_.Name();
+}
+//=================================================================================================//
+GroupManager &BaseParticles::getParticleGroupManager()
+{
+    if (group_manager_ptr_.getPtr() == nullptr)
+    {
+        DiscreteVariable<UnsignedInt> *group_variable =
+            registerDiscreteVariable<UnsignedInt>("ParticleGroups", particles_bound_, UnsignedInt(1));
+        group_manager_ptr_.createPtr<GroupManager>(group_variable);
+    }
+    return *group_manager_ptr_.getPtr();
 }
 //=================================================================================================//
 void BaseParticles::initializeBasicDiscreteVariables()

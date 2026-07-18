@@ -47,7 +47,7 @@ class SPHAdaptation;
 class BodyPartByParticle;
 class XmlParser;
 using TinyXMLElement = tinyxml2::XMLElement;
-;
+class GroupManager;
 
 /** Generalized particle data type */
 typedef DataContainerAssemble<AllocatedData> ParticleData;
@@ -84,6 +84,7 @@ class BaseParticles
     DataContainerUniquePtrAssemble<SingleVariable> all_singular_variable_ptrs_;
     UniquePtrsKeeper<Quantity> unique_variable_ptrs_;
     UniquePtrKeeper<XmlParser> xml_parser_ptr_;
+    UniquePtrKeeper<GroupManager> group_manager_ptr_;
 
   public:
     explicit BaseParticles(SPHBody &sph_body);
@@ -109,6 +110,7 @@ class BaseParticles
     SingleVariable<UnsignedInt> *svTotalRealParticles() { return sv_total_real_particles_; };
     UnsignedInt TotalRealParticles() { return sv_total_real_particles_->getValue(); };
     UnsignedInt ParticlesBound() { return particles_bound_; };
+    GroupManager &getParticleGroupManager();
     void initializeAllParticlesBounds(UnsignedInt total_real_particles);
     void initializeAllParticlesBoundsFromReload();
     void increaseParticlesBounds(UnsignedInt extra_size);

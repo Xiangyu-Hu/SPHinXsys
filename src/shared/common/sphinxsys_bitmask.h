@@ -100,7 +100,7 @@ class GroupManager
       public:
         template <class ExecutionPolicy>
         AddMaskKernel(const ExecutionPolicy &ex_policy, GroupManager &manager, UnsignedInt group_mask)
-            : group_variable_(manager.group_variable_->DataView(ex_policy)),
+            : group_variable_(manager.group_variable_->DelegatedDataView(ex_policy)),
               group_mask_(group_mask) {}
 
         void operator()(UnsignedInt index)
@@ -118,7 +118,7 @@ class GroupManager
       public:
         template <class ExecutionPolicy>
         RemoveMaskKernel(const ExecutionPolicy &ex_policy, GroupManager &manager, UnsignedInt group_mask)
-            : group_variable_(manager.group_variable_->DataView(ex_policy)),
+            : group_variable_(manager.group_variable_->DelegatedDataView(ex_policy)),
               group_mask_(group_mask) {}
 
         void operator()(UnsignedInt index)
@@ -136,7 +136,7 @@ class GroupManager
       public:
         template <class ExecutionPolicy>
         CheckMaskKernel(const ExecutionPolicy &ex_policy, GroupManager &manager, UnsignedInt group_mask)
-            : group_variable_(manager.group_variable_->DataView(ex_policy)),
+            : group_variable_(manager.group_variable_->DelegatedDataView(ex_policy)),
               group_mask_(group_mask) {}
 
         bool operator()(UnsignedInt index)
