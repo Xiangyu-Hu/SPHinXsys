@@ -36,38 +36,25 @@
 
 namespace SPH
 {
-// ----------------------------------------------------------------------
-// GroupManager: manages named groups as bits in a per-atom 64-bit mask
-// ----------------------------------------------------------------------
 class GroupManager
 {
   public:
-    static constexpr UnsignedInt ALL_MASK = UnsignedInt(1); // group "All" bit
-
     GroupManager(DiscreteVariable<UnsignedInt> *group_variable)
-        : group_variable_(group_variable), next_bit_(1)
-    {
-        // register the special "All" group
-        name_to_bit_["All"] = ALL_MASK;
-    }
+        : group_variable_(group_variable), next_bit_(0) {}
 
-    std::string GroupVariableName() const
-    {
-        return group_variable_->Name();
-    }
+    std::string GroupVariableName() const { return group_variable_->Name(); }
 
-    // Create a group with a given name
+    // Register a group with a given name
     // Returns the group's bitmask or 0 if the group limit is reached.
-    UnsignedInt createGroup(const std::string &name)
+    UnsignedInt registerGroup(const std::string &name)
     {
         if (name_to_bit_.count(name))
         {
-            std::cerr << "Group '" << name << "' already exists.\n";
-            return 0;
+            return getGroupMask(name);
         }
         if (next_bit_ >= UnsignedIntBits)
         {
-            std::cerr << "Maximum number of groups reached (<" << UnsignedIntBits - 1 << " user groups).\n";
+            std::cerr << "Maximum number of groups reached (<" << UnsignedIntBits << " user groups).\n";
             return 0;
         }
         UnsignedInt bit = (UnsignedInt(1) << next_bit_);
