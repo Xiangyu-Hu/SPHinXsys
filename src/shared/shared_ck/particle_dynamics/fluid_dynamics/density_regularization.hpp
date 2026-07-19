@@ -93,13 +93,12 @@ AverageCompression::ReduceKernel::ReduceKernel(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : compression_sum_(encloser.dv_compression_sum_->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
-inline std::pair<Real, Real> AverageCompression::ReduceKernel::reduce(size_t index_i, Real dt)
+inline Sample<Real> AverageCompression::ReduceKernel::reduce(size_t index_i, Real dt)
 {
-    // only consider the particles with compression_sum close to 1.0
-    // i.e. well within the fluid domain, not near free surface or inflow/outflow boundaries
-    return ABS(compression_sum_[index_i] - 1.0) < 0.025
-               ? ReduceReturnType(compression_sum_[index_i], Real(1))
-               : ReduceReturnType(Real(0), Real(0));
+    // only consider summation greater than 1, i.e. with full kernel support
+    return compression_sum_[index_i] > Real(1)
+               ? Sample<Real>(compression_sum_[index_i], Real(1))
+               : Sample<Real>(Real(0), Real(0));
 }
 //=================================================================================================//
 template <class DynamicsIdentifier, class FluidType, class FlowType, typename... ParticleScopes>

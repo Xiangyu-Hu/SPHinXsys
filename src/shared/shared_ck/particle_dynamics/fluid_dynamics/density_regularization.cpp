@@ -13,7 +13,7 @@ AverageCompression::AverageCompression(SPHBody &sph_body)
 AverageCompression::FinishDynamics::FinishDynamics(AverageCompression &encloser)
     : sv_compression_inv_ref_(encloser.sv_compression_inv_ref_) {}
 //=================================================================================================//
-Real AverageCompression::FinishDynamics::Result(const ReduceReturnType &reduced_value)
+Real AverageCompression::FinishDynamics::Result(const Sample<Real> &reduced_value)
 {
     Real average_compression = reduced_value.first / reduced_value.second;
     sv_compression_inv_ref_->setValue(1.0 / average_compression);

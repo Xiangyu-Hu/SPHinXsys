@@ -124,9 +124,9 @@ class QuantityReduce : public BaseLocalDynamicsReduce<ReturnFunctionType, Dynami
 };
 
 template <typename DataType, class DynamicsIdentifier = SPHBody>
-class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<std::pair<DataType, Real>>, DynamicsIdentifier>
+class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<Sample<DataType>>, DynamicsIdentifier>
 {
-    using ReduceReturnType = std::pair<DataType, Real>;
+    using ReduceReturnType = Sample<DataType>;
     using BaseDynamicsType = BaseLocalDynamicsReduce<ReduceSum<ReduceReturnType>, DynamicsIdentifier>;
 
   public:

@@ -109,10 +109,9 @@ class CompressionSummation<Contact<Parameters...>>
     StdVec<DiscreteVariable<Real> *> dv_contact_Vol_ref_;
 };
 
-class AverageCompression : public BaseLocalDynamicsReduce<ReduceSum<std::pair<Real, Real>>, SPHBody>
+class AverageCompression : public BaseLocalDynamicsReduce<ReduceSum<Sample<Real>>, SPHBody>
 {
-    using ReduceReturnType = std::pair<Real, Real>;
-    using BaseDynamicsType = BaseLocalDynamicsReduce<ReduceSum<ReduceReturnType>, SPHBody>;
+    using BaseDynamicsType = BaseLocalDynamicsReduce<ReduceSum<Sample<Real>>, SPHBody>;
 
   public:
     AverageCompression(SPHBody &sph_body);
@@ -125,7 +124,7 @@ class AverageCompression : public BaseLocalDynamicsReduce<ReduceSum<std::pair<Re
       public:
         using OutputType = Real;
         FinishDynamics(AverageCompression &encloser);
-        Real Result(const ReduceReturnType &reduced_value);
+        Real Result(const Sample<Real> &reduced_value);
     };
 
     class ReduceKernel
@@ -133,7 +132,7 @@ class AverageCompression : public BaseLocalDynamicsReduce<ReduceSum<std::pair<Re
       public:
         template <class ExecutionPolicy, class EncloserType>
         ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        std::pair<Real, Real> reduce(size_t index_i, Real dt = 0.0);
+        Sample<Real> reduce(size_t index_i, Real dt = 0.0);
 
       protected:
         DataView<Real> compression_sum_;
