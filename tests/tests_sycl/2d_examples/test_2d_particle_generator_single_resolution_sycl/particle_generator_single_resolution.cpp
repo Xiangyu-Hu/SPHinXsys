@@ -97,7 +97,7 @@ int main(int ac, char *av[])
     relaxation_residual.add(&main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(filler_inner)
                                  .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(filler_contact));
 
-    ReduceDynamicsGroup relaxation_scaling = main_methods.addReduceDynamics<ReduceMin, RelaxationScalingCK>(real_bodies);
+    ReduceDynamicsGroup relaxation_scaling = main_methods.addReduceDynamics<ReduceMin<Real>, RelaxationScalingCK>(real_bodies);
 
     ParticleDynamicsGroup update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(real_bodies);
     update_particle_position.add(&main_methods.addStateDynamics<LevelsetBounding>(near_body_surface));

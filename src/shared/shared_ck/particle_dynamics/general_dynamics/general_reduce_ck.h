@@ -194,7 +194,7 @@ class MaximumNorm : public BaseLocalDynamicsReduce<ReduceParticleMax, DynamicsId
 };
 
 template <class DynamicsIdentifier>
-class UpperFrontInAxisDirectionCK : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>
+class UpperFrontInAxisDirectionCK : public BaseLocalDynamicsReduce<ReduceMax<Real>, DynamicsIdentifier>
 {
   public:
     UpperFrontInAxisDirectionCK(DynamicsIdentifier &identifier, const std::string &name, int axis = lastAxis);

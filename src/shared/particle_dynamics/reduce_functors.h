@@ -73,15 +73,22 @@ struct ReduceReference<ReduceSum<Sample<DataType>>>
     static inline const PairType value = ZeroData<PairType>::value;
 };
 
-struct ReduceMax : ReturnFunction<Real>
+template <typename DataType>
+struct ReduceMax : ReturnFunction<DataType>
 {
-    Real operator()(Real x, Real y) const { return SMAX(x, y); };
+    DataType operator()(DataType x, DataType y) const { return SMAX(x, y); };
 };
 
 template <>
-struct ReduceReference<ReduceMax>
+struct ReduceReference<ReduceMax<Real>>
 {
     static inline const Real value = MinReal;
+};
+
+template <>
+struct ReduceReference<ReduceMax<int>>
+{
+    static inline const int value = MinInt;
 };
 
 struct ReduceParticleMax : ReturnFunction<std::pair<Real, UnsignedInt>>
@@ -103,16 +110,25 @@ struct ReduceReference<ReduceParticleMax>
     using PairType = std::pair<Real, UnsignedInt>;
     static inline const PairType value = std::pair<Real, UnsignedInt>(MinReal, 0);
 };
-struct ReduceMin : ReturnFunction<Real>
+
+template <typename DataType>
+struct ReduceMin : ReturnFunction<DataType>
 {
-    Real operator()(Real x, Real y) const { return SMIN(x, y); };
+    DataType operator()(DataType x, DataType y) const { return SMIN(x, y); };
 };
 
 template <>
-struct ReduceReference<ReduceMin>
+struct ReduceReference<ReduceMin<Real>>
 {
     static inline const Real value = MaxReal;
 };
+
+template <>
+struct ReduceReference<ReduceMin<int>>
+{
+    static inline const int value = MaxInt;
+};
+
 struct ReduceOR : ReturnFunction<bool>
 {
     bool operator()(bool x, bool y) const { return x || y; };

@@ -208,6 +208,7 @@ constexpr Real TinyReal = Real(2.71051e-20);
 constexpr Real MinReal = std::numeric_limits<Real>::lowest();
 constexpr Real MaxReal = std::numeric_limits<Real>::max();
 constexpr UnsignedInt MaxUnsignedInt = std::numeric_limits<UnsignedInt>::max();
+constexpr int MinInt = std::numeric_limits<int>::lowest();
 constexpr int MaxInt = std::numeric_limits<int>::max();
 } // namespace SPH
 #endif // BASE_DATA_TYPE_H

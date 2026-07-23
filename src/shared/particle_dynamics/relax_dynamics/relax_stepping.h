@@ -175,7 +175,7 @@ class RelaxationResidual<Contact<>>
  * @class RelaxationScaling
  * @brief Obtain the scale for a particle relaxation step
  */
-class RelaxationScaling : public LocalDynamicsReduce<ReduceMax>
+class RelaxationScaling : public LocalDynamicsReduce<ReduceMax<Real>>
 {
   public:
     explicit RelaxationScaling(SPHBody &sph_body);

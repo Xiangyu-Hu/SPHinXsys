@@ -67,7 +67,7 @@ MaximumNorm<DataType, DynamicsIdentifier>::ReduceKernel::
 template <class DynamicsIdentifier>
 UpperFrontInAxisDirectionCK<DynamicsIdentifier>::UpperFrontInAxisDirectionCK(
     DynamicsIdentifier &identifier, const std::string &name, int axis)
-    : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
+    : BaseLocalDynamicsReduce<ReduceMax<Real>, DynamicsIdentifier>(identifier),
       axis_(axis), dv_pos_(this->particles_->template getVariableByName<Vecd>("Position"))
 {
     this->quantity_name_ = name;
