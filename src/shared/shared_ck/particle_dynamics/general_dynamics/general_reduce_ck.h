@@ -95,7 +95,7 @@ class TotalMechanicalEnergyCK : public TotalKineticEnergyCK
     DiscreteVariable<Vecd> *dv_pos_;
 };
 
-template <typename ReturnFunctionType, class DynamicsIdentifier = SPHBody>
+template <class DynamicsIdentifier, typename ReturnFunctionType>
 class QuantityReduce : public BaseLocalDynamicsReduce<ReturnFunctionType, DynamicsIdentifier>
 {
     using DataType = typename ReturnFunctionType::ReturnType;
@@ -138,7 +138,7 @@ class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<Sample<DataType
       public:
         using OutputType = DataType;
         template <class EncloserType>
-        FinishDynamics(EncloserType &encloser){};
+        FinishDynamics(EncloserType &encloser) {};
         OutputType Result(const ReduceReturnType &reduced_value)
         {
             return reduced_value.first / reduced_value.second;
