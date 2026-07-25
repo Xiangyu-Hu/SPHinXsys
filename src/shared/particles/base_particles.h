@@ -157,6 +157,7 @@ class BaseParticles
   public:
     DiscreteVariables &VariablesToWrite() { return variables_to_write_; };
     DiscreteVariables &EvolvingVariables() { return evolving_variables_; };
+    StdVec<std::string> &ParticleGroupsToWrite() { return particle_groups_to_write_; };
     void addParticleGroupToWrite(const std::string &name);
     template <typename DataType, typename... Args>
     void addEvolvingVariable(Args &&...args);
