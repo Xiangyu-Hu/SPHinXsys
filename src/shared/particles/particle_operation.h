@@ -31,6 +31,7 @@
 
 #include "base_particles.hpp"
 #include "sphinxsys_atom_ref.h"
+#include "sphinxsys_bitmask.h"
 #include "sphinxsys_variable_array.h"
 
 namespace SPH
@@ -44,9 +45,11 @@ struct CopyParticleStateCK
 
 class SpawnRealParticle
 {
+    using MasKKernel = typename GroupManager::ModifyMaskKernel;
     DiscreteVariables &evolving_variables_;
     VariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
+    GroupManager &group_manager_;
     SingleVariable<UnsignedInt> *sv_total_real_particles_;
     UnsignedInt particles_bound_;
 
@@ -67,6 +70,7 @@ class SpawnRealParticle
             {
                 copy_particle_state_(copyable_state_data_arrays_, last_real_particle_index, index_i);
                 original_id_[last_real_particle_index] = last_real_particle_index; // reinitialize original id
+                reset_mask_.set(last_real_particle_index);                         // reinitialize (set to zero)
             }
             return last_real_particle_index;
         };
@@ -75,6 +79,7 @@ class SpawnRealParticle
         UnsignedInt *total_real_particles_;
         UnsignedInt particles_bound_;
         UnsignedInt *original_id_;
+        MasKKernel reset_mask_;
         VariableArrayViewAssemble copyable_state_data_arrays_;
         OperationOnDataAssemble<VariableArrayViewAssemble, CopyParticleStateCK> copy_particle_state_;
     };
