@@ -19,7 +19,9 @@ CompressionSummation<Base, RelationType<Parameters...>>::CompressionSummation(
       dv_Vol_ref_(this->particles_->template registerStateVariableFrom<Real>(
           "VolumetricMeasureRef", "VolumetricMeasure")),
       dv_compression_sum_(this->particles_->template registerStateVariable<Real>(
-          "CompressionSummation", Real(1)))
+          "CompressionSummation", Real(1))),
+      sv_compression_inv_ref_(this->particles_->template registerSingleVariable<Real>(
+          "InverseReferenceCompression", Real(1)))
 {
     this->particles_->template addEvolvingVariable<Real>(dv_Vol_ref_);
 }
@@ -35,7 +37,8 @@ CompressionSummation<Inner<Parameters...>>::InteractKernel::InteractKernel(
     const ExecutionPolicy &ex_policy, Encloser &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       zero_(Vecd::Zero()), Vol_ref_(encloser.dv_Vol_ref_->DelegatedDataView(ex_policy)),
-      compression_sum_(encloser.dv_compression_sum_->DelegatedDataView(ex_policy)) {}
+      compression_sum_(encloser.dv_compression_sum_->DelegatedDataView(ex_policy)),
+      compression_inv_ref_(encloser.sv_compression_inv_ref_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
 void CompressionSummation<Inner<Parameters...>>::
@@ -45,7 +48,8 @@ void CompressionSummation<Inner<Parameters...>>::
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        compression_sum_[index_i] += this->W_ij(index_i, index_j) * Vol_ref_[index_j];
+        compression_sum_[index_i] +=
+            (*compression_inv_ref_) * this->W_ij(index_i, index_j) * Vol_ref_[index_j];
     }
 }
 //=================================================================================================//
@@ -69,7 +73,8 @@ CompressionSummation<Contact<Parameters...>>::InteractKernel::InteractKernel(
     const ExecutionPolicy &ex_policy, Encloser &encloser, size_t contact_index)
     : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
       compression_sum_(encloser.dv_compression_sum_->DelegatedDataView(ex_policy)),
-      contact_Vol_ref_(encloser.dv_contact_Vol_ref_[contact_index]->DelegatedDataView(ex_policy)) {}
+      contact_Vol_ref_(encloser.dv_contact_Vol_ref_[contact_index]->DelegatedDataView(ex_policy)),
+      compression_inv_ref_(encloser.sv_compression_inv_ref_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
 void CompressionSummation<Contact<Parameters...>>::
@@ -78,8 +83,22 @@ void CompressionSummation<Contact<Parameters...>>::
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        compression_sum_[index_i] += this->W_ij(index_i, index_j) * contact_Vol_ref_[index_j];
+        compression_sum_[index_i] +=
+            (*compression_inv_ref_) * this->W_ij(index_i, index_j) * contact_Vol_ref_[index_j];
     }
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+AverageCompression::ReduceKernel::ReduceKernel(
+    const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : compression_sum_(encloser.dv_compression_sum_->DelegatedDataView(ex_policy)) {}
+//=================================================================================================//
+inline Sample<Real> AverageCompression::ReduceKernel::reduce(size_t index_i, Real dt)
+{
+    // only consider summation greater than 1, i.e. with full kernel support
+    return compression_sum_[index_i] > Real(1)
+               ? Sample<Real>(compression_sum_[index_i], Real(1))
+               : Sample<Real>(Real(0), Real(0));
 }
 //=================================================================================================//
 template <class DynamicsIdentifier, class FluidType, class FlowType, typename... ParticleScopes>

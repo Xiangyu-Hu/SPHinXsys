@@ -42,7 +42,7 @@ namespace fluid_dynamics
  * @class AcousticTimeStep
  * @brief Computing the acoustic time step size
  */
-class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax>
+class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax<Real>>
 {
   public:
     explicit AcousticTimeStep(SPHBody &sph_body, Real acousticCFL = 0.6);
@@ -76,7 +76,7 @@ class SurfaceTensionTimeStep : public AcousticTimeStep
  * @brief Computing the advection time step size when viscosity is handled implicitly
  */
 class AdvectionTimeStep
-    : public LocalDynamicsReduce<ReduceMax>
+    : public LocalDynamicsReduce<ReduceMax<Real>>
 {
   protected:
     Real *mass_;

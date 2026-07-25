@@ -49,7 +49,7 @@ class ContinuumInitialCondition : public LocalDynamics
     Mat3d *stress_tensor_3D_;
 };
 
-class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax>
+class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax<Real>>
 {
   public:
     explicit AcousticTimeStep(SPHBody &sph_body, Real acousticCFL = 0.6);

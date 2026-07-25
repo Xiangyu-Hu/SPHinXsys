@@ -339,7 +339,7 @@ class TurbulentEddyViscosity : public LocalDynamics, public BaseTurbuClosureCoef
  * @class TurbulentAdvectionTimeStepSize
  * @brief Computing the turbulent advection time step size
  */
-class TurbulentAdvectionTimeStepSize : public LocalDynamicsReduce<ReduceMax>
+class TurbulentAdvectionTimeStepSize : public LocalDynamicsReduce<ReduceMax<Real>>
 {
   public:
     explicit TurbulentAdvectionTimeStepSize(SPHBody &sph_body, Real U_max, Real advectionCFL = 0.25);

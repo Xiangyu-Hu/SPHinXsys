@@ -79,7 +79,7 @@ class VelocityBoundCheck : public LocalDynamicsReduce<ReduceOR>
  * @brief 	Get the upper front in an axis direction for a body or body part
  */
 template <class DynamicsIdentifier>
-class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>
+class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax<Real>, DynamicsIdentifier>
 {
   protected:
     int axis_;
@@ -87,7 +87,7 @@ class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, Dyna
 
   public:
     explicit UpperFrontInAxisDirection(DynamicsIdentifier &identifier, const std::string &name, int axis = lastAxis)
-        : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
+        : BaseLocalDynamicsReduce<ReduceMax<Real>, DynamicsIdentifier>(identifier),
           axis_(axis),
           pos_(this->particles_->template getVariableDataByName<Vecd>("Position"))
     {
@@ -102,7 +102,7 @@ class UpperFrontInAxisDirection : public BaseLocalDynamicsReduce<ReduceMax, Dyna
  * @class MaximumSpeed
  * @brief Get the maximum particle speed in a SPH body
  */
-class MaximumSpeed : public LocalDynamicsReduce<ReduceMax>
+class MaximumSpeed : public LocalDynamicsReduce<ReduceMax<Real>>
 {
   protected:
     Vecd *vel_;

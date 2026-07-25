@@ -9,7 +9,7 @@ namespace multi_species_continuum
 {
 //=================================================================================================//
 GetSaturationTimeStepSize::GetSaturationTimeStepSize(SPHBody &sph_body)
-    : LocalDynamicsReduce<ReduceMin>(sph_body),
+    : LocalDynamicsReduce<ReduceMin<Real>>(sph_body),
       porous_solid_(DynamicCast<PorousMediaSolid>(this, sph_body_->getMatterMaterial())),
       smoothing_length_(sph_body.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//

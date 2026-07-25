@@ -35,7 +35,7 @@
 
 namespace SPH
 {
-class RelaxationScalingCK : public LocalDynamicsReduce<ReduceMax>
+class RelaxationScalingCK : public LocalDynamicsReduce<ReduceMax<Real>>
 {
   public:
     RelaxationScalingCK(SPHBody &sph_body);

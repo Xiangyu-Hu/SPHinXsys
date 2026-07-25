@@ -10,7 +10,7 @@ namespace slender_structure_dynamics
 {
 //=================================================================================================//
 BarAcousticTimeStepSize::BarAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
-    : LocalDynamicsReduce<ReduceMin>(sph_body), CFL_(CFL),
+    : LocalDynamicsReduce<ReduceMin<Real>>(sph_body), CFL_(CFL),
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getMatterMaterial())),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),

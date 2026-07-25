@@ -40,7 +40,7 @@ namespace SPH
 namespace fluid_dynamics
 {
 template <class FluidType>
-class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
+class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax<Real>>
 {
     using EosKernel = typename FluidType::EosKernel;
 
@@ -80,7 +80,7 @@ class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
     Real acousticCFL_;
 };
 
-class AdvectionTimeStepCK : public LocalDynamicsReduce<ReduceMax>
+class AdvectionTimeStepCK : public LocalDynamicsReduce<ReduceMax<Real>>
 {
   public:
     AdvectionTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
