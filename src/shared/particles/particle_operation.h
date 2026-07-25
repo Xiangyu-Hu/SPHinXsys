@@ -45,7 +45,7 @@ struct CopyParticleStateCK
 
 class SpawnRealParticle
 {
-    using MasKKernel = typename GroupManager::MaskKernel;
+    using MaskKernel = typename GroupManager::MaskKernel;
     DiscreteVariables &evolving_variables_;
     VariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
@@ -79,7 +79,7 @@ class SpawnRealParticle
         UnsignedInt *total_real_particles_;
         UnsignedInt particles_bound_;
         UnsignedInt *original_id_;
-        MasKKernel reset_mask_;
+        MaskKernel reset_mask_;
         VariableArrayViewAssemble copyable_state_data_arrays_;
         OperationOnDataAssemble<VariableArrayViewAssemble, CopyParticleStateCK> copy_particle_state_;
     };
@@ -87,7 +87,7 @@ class SpawnRealParticle
 
 class RemoveRealParticle
 {
-    using MasKKernel = typename GroupManager::MaskKernel;
+    using MaskKernel = typename GroupManager::MaskKernel;
     DiscreteVariables &evolving_variables_;
     VariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
@@ -126,7 +126,7 @@ class RemoveRealParticle
       protected:
         UnsignedInt *total_real_particles_;
         UnsignedInt *original_id_;
-        MasKKernel mask_;
+        MaskKernel mask_;
         VariableArrayViewAssemble copyable_state_data_arrays_;
         OperationOnDataAssemble<VariableArrayViewAssemble, CopyParticleStateCK> copy_particle_state_;
     };

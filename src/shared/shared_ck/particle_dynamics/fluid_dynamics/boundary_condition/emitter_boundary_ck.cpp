@@ -10,7 +10,8 @@ WithinDisposerIndication::WithinDisposerIndication(OrientedBoxByCell &oriented_b
       sv_oriented_box_(oriented_box_part.svOrientedBox()),
       sv_total_real_particles_(particles_->svTotalRealParticles()),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-      dv_life_status_(particles_->registerStateVariable<int>("LifeStatus", 0)) {}
+      particle_group_manager_(particles_->getParticleGroupManager()),
+      life_status_(particle_group_manager_.getGroupMask("LifeStatus")) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

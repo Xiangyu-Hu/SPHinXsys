@@ -112,6 +112,8 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<OrientedBoxPartType>
 
 class WithinDisposerIndication : public BaseLocalDynamics<OrientedBoxByCell>
 {
+    using MaskKernel = typename GroupManager::MaskKernel;
+
   public:
     WithinDisposerIndication(OrientedBoxByCell &oriented_box_part);
     virtual ~WithinDisposerIndication() {};
@@ -126,7 +128,7 @@ class WithinDisposerIndication : public BaseLocalDynamics<OrientedBoxByCell>
       protected:
         OrientedBox *oriented_box_;
         Vecd *pos_;
-        int *life_status_;
+        MaskKernel mask_;
         UnsignedInt *total_real_particles_;
     };
 
@@ -134,7 +136,8 @@ class WithinDisposerIndication : public BaseLocalDynamics<OrientedBoxByCell>
     SingleVariable<OrientedBox> *sv_oriented_box_;
     SingleVariable<UnsignedInt> *sv_total_real_particles_;
     DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<int> *dv_life_status_; // 0: alive, 1: to delete
+    GroupManager &particle_group_manager_;
+    UnsignedInt life_status_;
 };
 } // namespace fluid_dynamics
 } // namespace SPH

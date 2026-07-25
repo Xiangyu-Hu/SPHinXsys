@@ -57,7 +57,7 @@ class GroupManager
         }
         if (next_bit_ >= UnsignedIntBits)
         {
-            std::runtime_error(
+            throw std::runtime_error(
                 "Maximum groups reached (<" + std::to_string(UnsignedIntBits) + ").");
         }
         UnsignedInt bit = (UnsignedInt(1) << next_bit_);
@@ -108,7 +108,7 @@ class GroupManager
             group_variable_[index] = group_mask_;
         }
 
-        bool check(UnsignedInt index)
+        bool check(UnsignedInt index) const
         {
             return (group_variable_[index] & group_mask_) != 0;
         }
