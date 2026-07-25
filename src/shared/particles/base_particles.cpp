@@ -34,7 +34,8 @@ GroupManager &BaseParticles::getParticleGroupManager()
     if (group_manager_ptr_.getPtr() == nullptr)
     {
         DiscreteVariable<UnsignedInt> *group_variable =
-            registerDiscreteVariable<UnsignedInt>("ParticleGroups", particles_bound_, UnsignedInt(1));
+            registerDiscreteVariable<UnsignedInt>("ParticleGroups", particles_bound_);
+        addEvolvingVariable<UnsignedInt>(group_variable);
         group_manager_ptr_.createPtr<GroupManager>(group_variable);
     }
     return *group_manager_ptr_.getPtr();
@@ -42,7 +43,6 @@ GroupManager &BaseParticles::getParticleGroupManager()
 //=================================================================================================//
 void BaseParticles::addParticleGroupToWrite(const std::string &name)
 {
-    GroupManager &getParticleGroupManager();
     if (getParticleGroupManager().hasGroup(name))
     {
         auto location = find(particle_groups_to_write_.begin(), particle_groups_to_write_.end(), name);

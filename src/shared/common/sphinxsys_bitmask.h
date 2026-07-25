@@ -139,6 +139,13 @@ class GroupManager
         UnsignedInt group_mask_;
     };
 
+    template <class ExecutionPolicy>
+    AddMaskKernel createAddMaskKernel(const ExecutionPolicy &ex_policy, const std::string &name)
+    {
+        UnsignedInt group_mask = registerGroup(name);
+        return AddMaskKernel(ex_policy, *this, group_mask);
+    }
+
   private:
     DiscreteVariable<UnsignedInt> *group_variable_;
     std::unordered_map<std::string, UnsignedInt> name_to_bit_;
