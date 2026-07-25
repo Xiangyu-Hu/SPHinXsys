@@ -146,9 +146,6 @@ class BaseParticles
     DiscreteVariable<DataType> *addDiscreteVariableToList(DiscreteVariables &variable_set, const std::string &name);
     template <typename DataType>
     DiscreteVariable<DataType> *addDiscreteVariableToList(DiscreteVariables &variable_set, DiscreteVariable<DataType> *variable);
-
-    template <typename DataType, typename... Args>
-    void addVariableToWrite(Args &&...args);
     //----------------------------------------------------------------------
     // Particle data for sorting
     //----------------------------------------------------------------------
@@ -158,10 +155,13 @@ class BaseParticles
     DiscreteVariables evolving_variables_; // particle variables which evolving during simulation
 
   public:
-    template <typename DataType, typename... Args>
-    void addEvolvingVariable(Args &&...args);
     DiscreteVariables &VariablesToWrite() { return variables_to_write_; };
     DiscreteVariables &EvolvingVariables() { return evolving_variables_; };
+    void addParticleGroupToWrite(const std::string &name);
+    template <typename DataType, typename... Args>
+    void addEvolvingVariable(Args &&...args);
+    template <typename DataType, typename... Args>
+    void addVariableToWrite(Args &&...args);
     //----------------------------------------------------------------------
     // Particle data ouput functions
     //----------------------------------------------------------------------
@@ -187,6 +187,7 @@ class BaseParticles
     DiscreteVariables all_discrete_variables_;
     SingleVariables all_singular_variables_;
     DiscreteVariables variables_to_write_;
+    StdVec<std::string> particle_groups_to_write_;
 
   protected:
     int total_body_parts_;                                /**< total number of body parts indicated particle groups*/

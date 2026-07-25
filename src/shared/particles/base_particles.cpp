@@ -40,6 +40,23 @@ GroupManager &BaseParticles::getParticleGroupManager()
     return *group_manager_ptr_.getPtr();
 }
 //=================================================================================================//
+void BaseParticles::addParticleGroupToWrite(const std::string &name)
+{
+    GroupManager &getParticleGroupManager();
+    if (getParticleGroupManager().hasGroup(name))
+    {
+        auto location = find(particle_groups_to_write_.begin(), particle_groups_to_write_.end(), name);
+        if (location == particle_groups_to_write_.end())
+        {
+            particle_groups_to_write_.push_back(name);
+        }
+    }
+    else
+    {
+        std::runtime_error("Error: the particle group " + name + " is not registered!");
+    }
+}
+//=================================================================================================//
 void BaseParticles::initializeBasicDiscreteVariables()
 {
     addEvolvingVariable<Vecd>("Position");
