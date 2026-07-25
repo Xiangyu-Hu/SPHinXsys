@@ -35,6 +35,7 @@
 #include "particle_operation.hpp"
 #include "particle_reserve.h"
 #include "simple_algorithms_ck.h"
+#include "sphinxsys_bitmask.h"
 
 namespace SPH
 {
@@ -128,6 +129,8 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<OrientedBoxByCell>
 
 class BufferOutflowIndication : public BaseLocalDynamics<OrientedBoxByCell>
 {
+    using MaskKernel = typename GroupManager::MaskKernel;
+
   public:
     BufferOutflowIndication(OrientedBoxByCell &oriented_box_part);
     virtual ~BufferOutflowIndication() {};
@@ -153,7 +156,7 @@ class BufferOutflowIndication : public BaseLocalDynamics<OrientedBoxByCell>
       protected:
         OrientedBox *oriented_box_;
         Vecd *pos_;
-        int *life_status_;
+        MaskKernel mask_;
         IsDeletable is_deltable_;
         UnsignedInt *total_real_particles_;
     };
@@ -164,12 +167,14 @@ class BufferOutflowIndication : public BaseLocalDynamics<OrientedBoxByCell>
     SingleVariable<UnsignedInt> *sv_total_real_particles_;
     DiscreteVariable<int> *dv_buffer_indicator_;
     DiscreteVariable<Vecd> *dv_pos_;
-    DiscreteVariable<int> *dv_life_status_; // 0: alive, 1: to delete
+    GroupManager &particle_group_manager_;
+    UnsignedInt life_status_;
 };
 
 class OutflowParticleDeletion : public LocalDynamics
 {
     using RemoveRealParticleKernel = typename RemoveRealParticle::ComputingKernel;
+    using MaskKernel = typename GroupManager::MaskKernel;
 
   public:
     OutflowParticleDeletion(SPHBody &sph_body);
@@ -183,12 +188,13 @@ class OutflowParticleDeletion : public LocalDynamics
 
       protected:
         RemoveRealParticleKernel remove_real_particle_;
-        int *life_status_;
+        MaskKernel mask_;
     };
 
   protected:
     RemoveRealParticle remove_real_particle_method_;
-    DiscreteVariable<int> *dv_life_status_;
+    GroupManager &particle_group_manager_;
+    UnsignedInt life_status_;
 };
 
 template <class KernelCorrectionType, typename ConditionType>

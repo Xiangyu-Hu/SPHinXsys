@@ -85,11 +85,11 @@ class GroupManager
         return combined;
     }
 
-    class ModifyMaskKernel
+    class MaskKernel
     {
       public:
         template <class ExecutionPolicy>
-        ModifyMaskKernel(const ExecutionPolicy &ex_policy, GroupManager &manager, UnsignedInt group_mask)
+        MaskKernel(const ExecutionPolicy &ex_policy, GroupManager &manager, UnsignedInt group_mask)
             : group_variable_(manager.group_variable_->DelegatedDataView(ex_policy)),
               group_mask_(group_mask) {}
 
@@ -108,20 +108,7 @@ class GroupManager
             group_variable_[index] = group_mask_;
         }
 
-      private:
-        DataView<UnsignedInt> group_variable_;
-        UnsignedInt group_mask_;
-    };
-
-    class CheckMaskKernel
-    {
-      public:
-        template <class ExecutionPolicy>
-        CheckMaskKernel(const ExecutionPolicy &ex_policy, GroupManager &manager, UnsignedInt group_mask)
-            : group_variable_(manager.group_variable_->DelegatedDataView(ex_policy)),
-              group_mask_(group_mask) {}
-
-        bool operator()(UnsignedInt index)
+        bool check(UnsignedInt index)
         {
             return (group_variable_[index] & group_mask_) != 0;
         }
@@ -131,18 +118,10 @@ class GroupManager
         UnsignedInt group_mask_;
     };
 
-    template <class ExecutionPolicy>
-    ModifyMaskKernel createModifyMaskKernel(const ExecutionPolicy &ex_policy, const std::string &name)
+    MaskKernel createHostMaskKernel(const std::string &name)
     {
         UnsignedInt group_mask = registerGroup(name);
-        return ModifyMaskKernel(ex_policy, *this, group_mask);
-    }
-
-    template <class ExecutionPolicy>
-    CheckMaskKernel createCheckMaskKernel(const ExecutionPolicy &ex_policy, const std::string &name)
-    {
-        UnsignedInt group_mask = getGroupMask(name);
-        return CheckMaskKernel(ex_policy, *this, group_mask);
+        return MaskKernel(seq, *this, group_mask);
     }
 
   private:

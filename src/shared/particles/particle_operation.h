@@ -45,7 +45,7 @@ struct CopyParticleStateCK
 
 class SpawnRealParticle
 {
-    using MasKKernel = typename GroupManager::ModifyMaskKernel;
+    using MasKKernel = typename GroupManager::MaskKernel;
     DiscreteVariables &evolving_variables_;
     VariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
@@ -87,9 +87,12 @@ class SpawnRealParticle
 
 class RemoveRealParticle
 {
+    using MasKKernel = typename GroupManager::MaskKernel;
     DiscreteVariables &evolving_variables_;
     VariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
+    GroupManager &group_manager_;
+    UnsignedInt life_status_;
     SingleVariable<UnsignedInt> *sv_total_real_particles_;
 
   public:
@@ -101,13 +104,13 @@ class RemoveRealParticle
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
-        void operator()(UnsignedInt index_i, int *life_status)
+        void operator()(UnsignedInt index_i)
         {
             AtomicRef<UnsignedInt> total_real_particles_ref(*total_real_particles_);
             UnsignedInt last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
-            while (life_status[last_real_particle_index] == 1) // to delete
+            while (mask_.check(last_real_particle_index)) // to delete
             {
-                life_status[last_real_particle_index] = 0; // reset the life status
+                mask_.remove(last_real_particle_index); // reset the life status
                 last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
             }
 
@@ -115,7 +118,7 @@ class RemoveRealParticle
             {
                 UnsignedInt old_original_id = original_id_[index_i];
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
-                life_status[index_i] = 0;                                 // reset the life status
+                mask_.remove(index_i);                                    // reset the life status
                 original_id_[last_real_particle_index] = old_original_id; // swap the original id
             }
         };
@@ -123,6 +126,7 @@ class RemoveRealParticle
       protected:
         UnsignedInt *total_real_particles_;
         UnsignedInt *original_id_;
+        MasKKernel mask_;
         VariableArrayViewAssemble copyable_state_data_arrays_;
         OperationOnDataAssemble<VariableArrayViewAssemble, CopyParticleStateCK> copy_particle_state_;
     };
