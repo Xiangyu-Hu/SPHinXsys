@@ -41,12 +41,14 @@ class GroupManager
   public:
     GroupManager(DiscreteVariable<UnsignedInt> *group_variable)
         : group_variable_(group_variable), next_bit_(0) {}
+    GroupManager(const GroupManager &) = delete;
+    GroupManager &operator=(const GroupManager &) = delete;
 
     std::string GroupVariableName() const { return group_variable_->Name(); }
     DataView<UnsignedInt> GroupVariableDataView() const { return group_variable_->getDataView(); }
+    bool hasGroup(const std::string &name) const { return name_to_bit_.count(name) > 0; }
+    std::size_t numGroups() const { return name_to_bit_.size(); }
 
-    // Register a group with a given name
-    // Returns the group's bitmask or 0 if the group limit is reached.
     UnsignedInt registerGroup(const std::string &name)
     {
         if (name_to_bit_.count(name))
@@ -55,8 +57,8 @@ class GroupManager
         }
         if (next_bit_ >= UnsignedIntBits)
         {
-            std::cerr << "Maximum number of groups reached (<" << UnsignedIntBits << " user groups).\n";
-            return 0;
+            std::runtime_error(
+                "Maximum groups reached (<" + std::to_string(UnsignedIntBits) + ").");
         }
         UnsignedInt bit = (UnsignedInt(1) << next_bit_);
         name_to_bit_[name] = bit;
@@ -143,5 +145,4 @@ class GroupManager
     int next_bit_;
 };
 } // namespace SPH
-
 #endif // SPHINXSYS_BITMASK_H
