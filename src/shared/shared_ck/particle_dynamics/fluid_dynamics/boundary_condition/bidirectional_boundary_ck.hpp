@@ -190,16 +190,6 @@ void SupplementaryCondition<ConditionType>::UpdateKernel::update(size_t index_i,
     }
 }
 //=================================================================================================//
-template <class ConditionType, class MethodContainerType, typename... Args>
-AbstractBidirectionalBoundary &AbstractBidirectionalBoundary::addSupplementaryCondition(
-    MethodContainerType &method_container, OrientedBoxByCell &oriented_box_part, Args &&...args)
-{
-    auto &condition = method_container.template addStateDynamics<
-        SupplementaryCondition<ConditionType>>(oriented_box_part, std::forward<Args>(args)...);
-    supplementary_conditions_.push_back(&condition);
-    return *this;
-}
-//=================================================================================================//
 template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>
 template <typename... Args>
 BidirectionalBoundaryCK<ExecutionPolicy, KernelCorrectionType, ConditionType>::

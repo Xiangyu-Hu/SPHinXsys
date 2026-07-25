@@ -132,8 +132,8 @@ void DensityRegularization<DynamicsIdentifier, FluidType, FlowType, ParticleScop
     if (this->particle_scope_(index_i))
     {
         compression_[index_i] = regularization_(index_i, compression_sum_[index_i]);
-        rho_[index_i] = compression_[index_i] * eos_.getReferenceDensity(index_i);
     }
+    rho_[index_i] = compression_[index_i] * eos_.getReferenceDensity(index_i);
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

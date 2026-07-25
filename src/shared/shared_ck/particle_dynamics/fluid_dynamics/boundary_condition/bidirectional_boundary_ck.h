@@ -263,12 +263,6 @@ class AbstractBidirectionalBoundary : public AbstractDynamics
     virtual void applyBoundaryCondition(Real dt) = 0;
     virtual void injectParticles() = 0;
     virtual void indicateOutFlowParticles() = 0;
-    template <class ConditionType, class MethodContainerType, typename... Args>
-    AbstractBidirectionalBoundary &addSupplementaryCondition(
-        MethodContainerType &method_container, OrientedBoxByCell &oriented_box_part, Args &&...args);
-
-  protected:
-    StdVec<BaseDynamics<void> *> supplementary_conditions_;
 };
 
 template <typename ExecutionPolicy, class KernelCorrectionType, class ConditionType>
@@ -284,14 +278,7 @@ class BidirectionalBoundaryCK : public AbstractBidirectionalBoundary
     BidirectionalBoundaryCK(OrientedBoxByCell &oriented_box_part, Args &&...args);
 
     virtual void tagBufferParticles() override { tag_buffer_particles_.exec(); }
-
-    virtual void applyBoundaryCondition(Real dt) override
-    {
-        boundary_condition_.exec(dt);
-        for (size_t k = 0; k < this->supplementary_conditions_.size(); ++k)
-            supplementary_conditions_[k]->exec(dt);
-    }
-
+    virtual void applyBoundaryCondition(Real dt) override { boundary_condition_.exec(dt); }
     virtual void injectParticles() override { inflow_injection_.exec(); }
     virtual void indicateOutFlowParticles() override { outflow_indication_.exec(); }
 };
