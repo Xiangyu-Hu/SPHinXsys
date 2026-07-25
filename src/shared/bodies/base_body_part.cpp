@@ -48,14 +48,15 @@ BodyRegionByParticle::~BodyRegionByParticle() = default;
 void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
 {
     GroupManager &group_manager = base_particles_.getParticleGroupManager();
-    auto add_mask = group_manager.createAddMaskKernel(seq, part_name_);
+    auto modify_mask = group_manager.createModifyMaskKernel(seq, part_name_);
+    base_particles_.addParticleGroupToWrite(part_name_);
 
     for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
     {
         if (tagging_particle_method(i))
         {
             body_part_particles_.push_back(i);
-            add_mask(i);
+            modify_mask.add(i);
         }
     }
 
