@@ -47,7 +47,8 @@ class GroupManager
     std::string GroupVariableName() const { return group_variable_->Name(); }
     DataView<UnsignedInt> GroupVariableDataView() const { return group_variable_->getDataView(); }
     bool hasGroup(const std::string &name) const { return name_to_bit_.count(name) > 0; }
-    std::size_t numGroups() const { return name_to_bit_.size(); }
+    UnsignedInt numGroups() const { return name_to_bit_.size(); }
+    bool hasDerivedGroup(const std::string &derived_name) const { return derived_groups_.count(derived_name) > 0; }
 
     UnsignedInt registerGroup(const std::string &name)
     {
@@ -67,7 +68,6 @@ class GroupManager
         return bit;
     }
 
-    // Helper: get mask for a single group (throws if not found)
     UnsignedInt getGroupMask(const std::string &name) const
     {
         auto it = name_to_bit_.find(name);
@@ -76,13 +76,30 @@ class GroupManager
         return it->second;
     }
 
-    // Return the OR of masks for all given group names (union).
-    UnsignedInt unionMask(const std::vector<std::string> &names) const
+    void registerDerivedGroup(const std::string &derived_name)
     {
-        UnsignedInt combined = 0;
-        for (auto &n : names)
-            combined |= getGroupMask(n);
-        return combined;
+        if (!hasDerivedGroup(derived_name))
+        {
+            derived_groups_[derived_name] = 0;
+        }
+    }
+
+    void addToDerivedGroup(const std::string &derived_name, const std::string &group_name)
+    {
+        validateDerivedGroup(derived_name);
+        derived_groups_[derived_name] |= getGroupMask(group_name);
+    }
+
+    void removeFromDerivedGroup(const std::string &derived_name, const std::string &group_name)
+    {
+        validateDerivedGroup(derived_name);
+        derived_groups_[derived_name] &= ~getGroupMask(group_name);
+    }
+
+    void setDerivedGroup(const std::string &derived_name, UnsignedInt mask)
+    {
+        validateDerivedGroup(derived_name);
+        derived_groups_[derived_name] = mask;
     }
 
     class MaskKernel
@@ -127,7 +144,14 @@ class GroupManager
   private:
     DiscreteVariable<UnsignedInt> *group_variable_;
     std::unordered_map<std::string, UnsignedInt> name_to_bit_;
+    std::unordered_map<std::string, UnsignedInt> derived_groups_;
     int next_bit_;
+
+    void validateDerivedGroup(const std::string &derived_name) const
+    {
+        if (!hasDerivedGroup(derived_name))
+            throw std::runtime_error("Derived group not found: " + derived_name);
+    }
 };
 } // namespace SPH
 #endif // SPHINXSYS_BITMASK_H
