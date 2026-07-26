@@ -40,7 +40,7 @@ RemoveRealParticle::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       original_id_(encloser.dv_original_id_->DelegatedData(ex_policy)),
-      mask_(ex_policy, encloser.group_manager_, encloser.life_status_)
+      life_status_mask_(ex_policy, encloser.group_manager_, encloser.life_status_)
 {
     OperationBetweenDataAssembles<DiscreteVariables, VariableArrayAssemble, VariableArrayAssembleInitialization>
         initialize_discrete_variable_array;

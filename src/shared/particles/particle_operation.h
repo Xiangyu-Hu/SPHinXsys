@@ -108,9 +108,9 @@ class RemoveRealParticle
         {
             AtomicRef<UnsignedInt> total_real_particles_ref(*total_real_particles_);
             UnsignedInt last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
-            while (mask_.check(last_real_particle_index)) // to delete
+            while (life_status_mask_.check(last_real_particle_index)) // to delete
             {
-                mask_.remove(last_real_particle_index); // reset the life status
+                life_status_mask_.remove(last_real_particle_index); // reset the life status
                 last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
             }
 
@@ -118,7 +118,7 @@ class RemoveRealParticle
             {
                 UnsignedInt old_original_id = original_id_[index_i];
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
-                mask_.remove(index_i);                                    // reset the life status
+                life_status_mask_.remove(index_i);                        // reset the life status
                 original_id_[last_real_particle_index] = old_original_id; // swap the original id
             }
         };
@@ -126,7 +126,7 @@ class RemoveRealParticle
       protected:
         UnsignedInt *total_real_particles_;
         UnsignedInt *original_id_;
-        MaskKernel mask_;
+        MaskKernel life_status_mask_;
         VariableArrayViewAssemble copyable_state_data_arrays_;
         OperationOnDataAssemble<VariableArrayViewAssemble, CopyParticleStateCK> copy_particle_state_;
     };

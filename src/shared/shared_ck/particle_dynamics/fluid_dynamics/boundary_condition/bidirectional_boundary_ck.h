@@ -156,7 +156,7 @@ class BufferOutflowIndication : public BaseLocalDynamics<OrientedBoxByCell>
       protected:
         OrientedBox *oriented_box_;
         Vecd *pos_;
-        MaskKernel mask_;
+        MaskKernel life_status_mask_;
         IsDeletable is_deltable_;
         UnsignedInt *total_real_particles_;
     };
@@ -188,7 +188,7 @@ class OutflowParticleDeletion : public LocalDynamics
 
       protected:
         RemoveRealParticleKernel remove_real_particle_;
-        MaskKernel mask_;
+        MaskKernel life_status_mask_;
     };
 
   protected:
