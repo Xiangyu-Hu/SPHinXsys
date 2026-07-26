@@ -22,8 +22,8 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file 	sphinxsys_bitmask.h
- * @brief 	Data container for large vector, e.g. particle data.
- * @author	Chi Zhang and Xiangyu Hu
+ * @brief 	tbd.
+ * @author	Xiangyu Hu
  */
 #ifndef SPHINXSYS_BITMASK_H
 #define SPHINXSYS_BITMASK_H
@@ -32,7 +32,6 @@
 
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 namespace SPH
 {
@@ -84,16 +83,16 @@ class GroupManager
         }
     }
 
-    void addToDerivedGroup(const std::string &derived_name, const std::string &group_name)
+    void addToDerivedGroup(const std::string &derived_name, const std::string &name)
     {
         validateDerivedGroup(derived_name);
-        derived_groups_[derived_name] |= getGroupMask(group_name);
+        derived_groups_[derived_name] |= getGroupMask(name);
     }
 
-    void removeFromDerivedGroup(const std::string &derived_name, const std::string &group_name)
+    void removeFromDerivedGroup(const std::string &derived_name, const std::string &name)
     {
         validateDerivedGroup(derived_name);
-        derived_groups_[derived_name] &= ~getGroupMask(group_name);
+        derived_groups_[derived_name] &= ~getGroupMask(name);
     }
 
     void setDerivedGroup(const std::string &derived_name, UnsignedInt mask)
@@ -106,39 +105,39 @@ class GroupManager
     {
       public:
         template <class ExecutionPolicy>
-        MaskKernel(const ExecutionPolicy &ex_policy, GroupManager &manager, UnsignedInt group_mask)
+        MaskKernel(const ExecutionPolicy &ex_policy, GroupManager &manager, UnsignedInt mask)
             : group_variable_(manager.group_variable_->DelegatedDataView(ex_policy)),
-              group_mask_(group_mask) {}
+              mask_(mask) {}
 
         void add(UnsignedInt index)
         {
-            group_variable_[index] |= group_mask_;
+            group_variable_[index] |= mask_;
         }
 
         void remove(UnsignedInt index)
         {
-            group_variable_[index] &= ~group_mask_;
+            group_variable_[index] &= ~mask_;
         }
 
         void set(UnsignedInt index)
         {
-            group_variable_[index] = group_mask_;
+            group_variable_[index] = mask_;
         }
 
         bool check(UnsignedInt index) const
         {
-            return (group_variable_[index] & group_mask_) != 0;
+            return (group_variable_[index] & mask_) != 0;
         }
 
       private:
         DataView<UnsignedInt> group_variable_;
-        UnsignedInt group_mask_;
+        UnsignedInt mask_;
     };
 
     MaskKernel createHostMaskKernel(const std::string &name)
     {
-        UnsignedInt group_mask = registerGroup(name);
-        return MaskKernel(seq, *this, group_mask);
+        UnsignedInt mask = registerGroup(name);
+        return MaskKernel(seq, *this, mask);
     }
 
   private:
