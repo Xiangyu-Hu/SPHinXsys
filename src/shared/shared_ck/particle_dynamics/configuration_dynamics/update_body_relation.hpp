@@ -13,25 +13,15 @@ namespace SPH
 template <typename TargetCriterion>
 TargetParticleMask<TargetCriterion, BodyPartByParticle>::TargetParticleMask(
     BodyPartByParticle &body_by_particle)
-    : part_id_(body_by_particle.getPartID()), dv_body_part_id_(nullptr)
-{
-    BaseParticles &base_particles = body_by_particle.getBaseParticles();
-    dv_body_part_id_ = base_particles.registerStateVariable<int>(body_by_particle.Name() + "ID");
-    base_particles.addEvolvingVariable<int>(dv_body_part_id_);
-    DataView<int> body_part_id = dv_body_part_id_->getDataView();
-    DataView<UnsignedInt> particle_list = body_by_particle.dvParticleList()->getDataView();
-    for (size_t i = 0; i != body_by_particle.svRangeSize()->getValue(); ++i)
-    {
-        body_part_id[particle_list[i]] = part_id_;
-    }
-}
+    : particle_group_manager_(body_by_particle.getParticleGroupManager()),
+      body_part_bit_(particle_group_manager_.getGroupMask(body_by_particle.PartIDName())) {}
 //=================================================================================================//
 template <typename TargetCriterion>
 template <class ExecutionPolicy, typename EnclosureType, typename... Args>
 TargetParticleMask<TargetCriterion, BodyPartByParticle>::ComputingKernel::
     ComputingKernel(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
-    : TargetCriterion(std::forward<Args>(args)...), part_id_(encloser.part_id_),
-      body_part_id_(encloser.dv_body_part_id_->DelegatedData(ex_policy)) {}
+    : TargetCriterion(std::forward<Args>(args)...),
+      body_part_mask_(ex_policy, encloser.particle_group_manager_, encloser.body_part_bit_) {}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
