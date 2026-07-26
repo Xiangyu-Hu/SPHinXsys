@@ -101,6 +101,12 @@ class GroupManager
         derived_groups_[derived_name] = mask;
     }
 
+    UnsignedInt getDerivedGroup(const std::string &derived_name) const
+    {
+        validateDerivedGroup(derived_name);
+        return derived_groups_.at(derived_name);
+    }
+
     class MaskKernel
     {
       public:
