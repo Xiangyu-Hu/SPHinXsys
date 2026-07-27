@@ -16,19 +16,6 @@
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
 [![QQ](https://img.shields.io/badge/QQ_Group-blue?logo=tencentqq&logoColor=white)](https://qm.qq.com/q/BZDAqz70Iw)
 
-## Newest update for SPHinXsim: interactive visualization and particle generation
-
-Welcome to check the newest development from the repository: https://github.com/Xiangyu-Hu/SPHinXsim.
-
-Now, with persistent visualization, one can modify the settings of the simulation (geometry, bodies and boundary condition, etc.)
-either by directly change the Jason configuration file or using LLM interface. The new settings will be update with `preview` function.
-Furthermore, after all settings are considered as settled, one can generate SPH particles and have a final check before the simulation
-is really carried out. Also note that, the modification will automatically validated by the specially designed schema, before each `preview` command,
-to ensure meaningful settings.
-
-<a href="https://xiangyu-hu.github.io/SPHinXsim/visualization">
-<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/visualization.png" height="600px"></a>
-
 ## Repository Description
 
 SPHinXsys (pronunciation: s'fink-sis) is an acronym from **S**moothed **P**article **H**ydrodynamics for **in**dustrial comple**X** **sys**tems.
@@ -36,6 +23,8 @@ The multi-physics library uses SPH (smoothed particle hydrodynamics) as the unde
 for both particle-based and mesh-based discretization.
 Due to the unified computational framework, SPHinXsys is able to carry out simulation and optimization at the same time.
 For more information on the SPHinXsys project, please check the project website: <https://www.sphinxsys.org>.
+
+You are also welcomed to check [SPHinXsim](https://github.com/Xiangyu-Hu/SPHinXsim), which is an multi-physics simulator based on SPHinXsys with interactive visualization and particle generation. SPHinXsim provides independent C++, Python and large language model (LLM) user interfaces.
 
 ## Examples at a glance
 
