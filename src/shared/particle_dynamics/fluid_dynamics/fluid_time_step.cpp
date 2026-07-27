@@ -10,7 +10,7 @@ namespace fluid_dynamics
 {
 //=================================================================================================//
 AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real acousticCFL)
-    : LocalDynamicsReduce<ReduceMax>(sph_body),
+    : LocalDynamicsReduce<ReduceMax<Real>>(sph_body),
       fluid_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial())),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
@@ -43,7 +43,7 @@ Real SurfaceTensionTimeStep::outputResult(Real reduced_value)
 //=================================================================================================//
 AdvectionTimeStep::
     AdvectionTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL)
-    : LocalDynamicsReduce<ReduceMax>(sph_body),
+    : LocalDynamicsReduce<ReduceMax<Real>>(sph_body),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),

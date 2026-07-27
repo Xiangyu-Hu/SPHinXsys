@@ -2,7 +2,9 @@
 #define IO_VTK_HPP
 
 #include "io_vtk.h"
+
 #include "vector_functions.h"
+#include "sphinxsys_bitmask.h"
 
 namespace SPH
 {
@@ -49,6 +51,23 @@ void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream,
         for (size_t i = 0; i != total_real_particles; ++i)
         {
             output_stream << std::fixed << std::setprecision(9) << data_field[i] << " ";
+        }
+        output_stream << std::endl;
+        output_stream << "    </DataArray>\n";
+    }
+
+    // write particle groups
+    auto &group_manager = particles.getParticleGroupManager();
+    StdVec<std::string> &group_names = particles.ParticleGroupsToWrite();
+    for (auto group_name : group_names)
+    {
+        auto mask = group_manager.createHostMaskKernel(group_name);
+        output_stream << "    <DataArray Name=\"" << group_name << "\" type=\"Int32\" format=\"ascii\">\n";
+        output_stream << "    ";
+        for (size_t i = 0; i != total_real_particles; ++i)
+        {
+            int group_value = mask.check(i) ? 1 : 0;
+            output_stream << std::fixed << std::setprecision(9) << group_value << " ";
         }
         output_stream << std::endl;
         output_stream << "    </DataArray>\n";

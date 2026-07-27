@@ -54,6 +54,7 @@ class CompressionSummation<Base, RelationType<Parameters...>>
 
   protected:
     DiscreteVariable<Real> *dv_Vol_ref_, *dv_compression_sum_;
+    SingleVariable<Real> *sv_compression_inv_ref_;
 };
 
 template <typename... Parameters>
@@ -77,6 +78,7 @@ class CompressionSummation<Inner<Parameters...>>
       protected:
         Vecd zero_;
         DataView<Real> Vol_ref_, compression_sum_;
+        Real *compression_inv_ref_;
     };
 };
 
@@ -100,14 +102,47 @@ class CompressionSummation<Contact<Parameters...>>
 
       protected:
         DataView<Real> compression_sum_, contact_Vol_ref_;
+        Real *compression_inv_ref_;
     };
 
   protected:
     StdVec<DiscreteVariable<Real> *> dv_contact_Vol_ref_;
 };
-//------------------------------------------------------------------
-// forward declarations of Regularization<FlowType>
-//------------------------------------------------------------------
+
+class AverageCompression : public BaseLocalDynamicsReduce<ReduceSum<Sample<Real>>, SPHBody>
+{
+    using BaseDynamicsType = BaseLocalDynamicsReduce<ReduceSum<Sample<Real>>, SPHBody>;
+
+  public:
+    AverageCompression(SPHBody &sph_body);
+    virtual ~AverageCompression() {};
+
+    class FinishDynamics
+    {
+        SingleVariable<Real> *sv_compression_inv_ref_;
+
+      public:
+        using OutputType = Real;
+        FinishDynamics(AverageCompression &encloser);
+        Real Result(const Sample<Real> &reduced_value);
+    };
+
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        Sample<Real> reduce(size_t index_i, Real dt = 0.0);
+
+      protected:
+        DataView<Real> compression_sum_;
+    };
+
+  protected:
+    DiscreteVariable<Real> *dv_compression_sum_;
+    SingleVariable<Real> *sv_compression_inv_ref_;
+};
+
 template <typename...>
 class Regularization;
 
@@ -153,7 +188,7 @@ class Regularization<Internal>
     {
       public:
         template <class ExecutionPolicy, class EnclosureType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser){};
+        ComputingKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser) {};
         Real operator()(UnsignedInt index_i, const Real &compression_sum)
         {
             return compression_sum;
@@ -171,7 +206,7 @@ class Regularization<FreeSurface>
     {
       public:
         template <class ExecutionPolicy, class EnclosureType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser){};
+        ComputingKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser) {};
 
         Real operator()(UnsignedInt index_i, const Real &compression_sum)
         {
@@ -197,7 +232,7 @@ class Regularization<FreeStream>
       public:
         template <class ExecutionPolicy, class EnclosureType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EnclosureType &encloser)
-            : indicator_(encloser.dv_indicator_->DelegatedDataView(ex_policy)){};
+            : indicator_(encloser.dv_indicator_->DelegatedDataView(ex_policy)) {};
 
         Real operator()(UnsignedInt index_i, const Real &compression_sum)
         {

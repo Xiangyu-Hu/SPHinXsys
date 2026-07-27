@@ -19,8 +19,8 @@ TotalMechanicalEnergyCK::ReduceKernel::
       gravity_(encloser.gravity_),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <typename ReturnFunctionType, class DynamicsIdentifier>
-QuantityReduce<ReturnFunctionType, DynamicsIdentifier>::
+template <class DynamicsIdentifier, typename ReturnFunctionType>
+QuantityReduce<DynamicsIdentifier, ReturnFunctionType>::
     QuantityReduce(DynamicsIdentifier &identifier, const std::string &variable_name)
     : BaseLocalDynamicsReduce<ReturnFunctionType, DynamicsIdentifier>(identifier),
       dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name))
@@ -28,9 +28,9 @@ QuantityReduce<ReturnFunctionType, DynamicsIdentifier>::
     this->quantity_name_ = std::string(type_name<ReturnFunctionType>()) + variable_name;
 }
 //=================================================================================================//
-template <typename ReturnFunctionType, class DynamicsIdentifier>
+template <class DynamicsIdentifier, typename ReturnFunctionType>
 template <class ExecutionPolicy, class EncloserType>
-QuantityReduce<ReturnFunctionType, DynamicsIdentifier>::ReduceKernel::
+QuantityReduce<DynamicsIdentifier, ReturnFunctionType>::ReduceKernel::
     ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : variable_(encloser.dv_variable_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -67,7 +67,7 @@ MaximumNorm<DataType, DynamicsIdentifier>::ReduceKernel::
 template <class DynamicsIdentifier>
 UpperFrontInAxisDirectionCK<DynamicsIdentifier>::UpperFrontInAxisDirectionCK(
     DynamicsIdentifier &identifier, const std::string &name, int axis)
-    : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
+    : BaseLocalDynamicsReduce<ReduceMax<Real>, DynamicsIdentifier>(identifier),
       axis_(axis), dv_pos_(this->particles_->template getVariableByName<Vecd>("Position"))
 {
     this->quantity_name_ = name;

@@ -148,7 +148,7 @@ int main(int ac, char *av[])
         relaxation_residual.add(&main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(cylinder_inner)
                                      .addPostStateDynamics<LevelsetKernelGradientIntegral>(cylinder, cylinder_level_set_shape));
 
-        ReduceDynamicsGroup relaxation_scaling = main_methods.addReduceDynamics<ReduceMin, RelaxationScalingCK>(real_bodies);
+        ReduceDynamicsGroup relaxation_scaling = main_methods.addReduceDynamics<ReduceMin<Real>, RelaxationScalingCK>(real_bodies);
         ParticleDynamicsGroup update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(real_bodies);
         ParticleDynamicsGroup level_set_bounding = main_methods.addStateDynamics<LevelsetBounding>(near_body_surfaces);
         auto &update_smoothing_length_ratio = main_methods.addStateDynamics<UpdateSmoothingLengthRatio>(water_body, refinement_region_level_set_shape);

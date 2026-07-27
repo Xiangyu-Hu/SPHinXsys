@@ -95,7 +95,7 @@ class TotalMechanicalEnergyCK : public TotalKineticEnergyCK
     DiscreteVariable<Vecd> *dv_pos_;
 };
 
-template <typename ReturnFunctionType, class DynamicsIdentifier = SPHBody>
+template <class DynamicsIdentifier, typename ReturnFunctionType>
 class QuantityReduce : public BaseLocalDynamicsReduce<ReturnFunctionType, DynamicsIdentifier>
 {
     using DataType = typename ReturnFunctionType::ReturnType;
@@ -124,9 +124,9 @@ class QuantityReduce : public BaseLocalDynamicsReduce<ReturnFunctionType, Dynami
 };
 
 template <typename DataType, class DynamicsIdentifier = SPHBody>
-class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<std::pair<DataType, Real>>, DynamicsIdentifier>
+class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<Sample<DataType>>, DynamicsIdentifier>
 {
-    using ReduceReturnType = std::pair<DataType, Real>;
+    using ReduceReturnType = Sample<DataType>;
     using BaseDynamicsType = BaseLocalDynamicsReduce<ReduceSum<ReduceReturnType>, DynamicsIdentifier>;
 
   public:
@@ -138,7 +138,7 @@ class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<std::pair<DataT
       public:
         using OutputType = DataType;
         template <class EncloserType>
-        FinishDynamics(EncloserType &encloser){};
+        FinishDynamics(EncloserType &encloser) {};
         OutputType Result(const ReduceReturnType &reduced_value)
         {
             return reduced_value.first / reduced_value.second;
@@ -194,7 +194,7 @@ class MaximumNorm : public BaseLocalDynamicsReduce<ReduceParticleMax, DynamicsId
 };
 
 template <class DynamicsIdentifier>
-class UpperFrontInAxisDirectionCK : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>
+class UpperFrontInAxisDirectionCK : public BaseLocalDynamicsReduce<ReduceMax<Real>, DynamicsIdentifier>
 {
   public:
     UpperFrontInAxisDirectionCK(DynamicsIdentifier &identifier, const std::string &name, int axis = lastAxis);

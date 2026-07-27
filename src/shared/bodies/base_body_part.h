@@ -53,6 +53,7 @@ template <typename T>
 class DiscreteVariable;
 template <typename T>
 class SingleVariable;
+class GroupManager;
 
 template <typename T>
 using ConcurrentVec = tbb::concurrent_vector<T>;
@@ -73,17 +74,19 @@ class BodyPart
     virtual ~BodyPart();
     SPHBody &getSPHBody() { return sph_body_; };
     SPHSystem &getSPHSystem();
-    std::string Name() const { return alias_.value_or(part_name_); };
+    std::string Name() const { return alias_.value_or(part_id_name_); };
+    std::string PartIDName() const { return part_id_name_; };
     int getPartID() { return part_id_; };
     SingleVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
     SPHAdaptation &getSPHAdaptation() { return sph_adaptation_; };
     BaseCellLinkedList &getCellLinkedList();
+    GroupManager &getParticleGroupManager() { return base_particles_.getParticleGroupManager(); };
 
   protected:
     SPHBody &sph_body_;
     BaseParticles &base_particles_;
     int part_id_;
-    std::string part_name_;
+    std::string part_id_name_;
     std::optional<std::string> alias_;
     SPHAdaptation &sph_adaptation_;
     SingleVariable<UnsignedInt> *sv_range_size_;
@@ -95,7 +98,7 @@ class BodyPartByID : public BodyPart
   public:
     typedef BodyPartByID RangeIdentifier;
     BodyPartByID(SPHBody &sph_body);
-    virtual ~BodyPartByID(){};
+    virtual ~BodyPartByID() {};
 };
 
 /**
@@ -115,7 +118,7 @@ class BodyPartByParticle : public BodyPart
     BodyPartByParticle(SPHBody &sph_body);
     template <typename TagCriteria>
     BodyPartByParticle(SPHBody &sph_body, TagCriteria criteria);
-    virtual ~BodyPartByParticle(){};
+    virtual ~BodyPartByParticle() {};
 
   protected:
     DiscreteVariable<UnsignedInt> *dv_particle_list_;
@@ -173,7 +176,7 @@ class BodyPartByCell : public BodyPart
     size_t SizeOfLoopRange();
 
     BodyPartByCell(RealBody &real_body);
-    virtual ~BodyPartByCell(){};
+    virtual ~BodyPartByCell() {};
     DiscreteVariable<UnsignedInt> *dvCellList() { return dv_cell_list_; };
     DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
@@ -215,7 +218,7 @@ class BodySurface : public BodyPartByParticle
 {
   public:
     explicit BodySurface(SPHBody &sph_body);
-    virtual ~BodySurface(){};
+    virtual ~BodySurface() {};
 
   protected:
     Real particle_spacing_min_;
@@ -230,7 +233,7 @@ class BodySurfaceLayer : public BodyPartByParticle
 {
   public:
     explicit BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness = 3.0);
-    virtual ~BodySurfaceLayer(){};
+    virtual ~BodySurfaceLayer() {};
 
   private:
     Real thickness_threshold_;
@@ -301,7 +304,7 @@ class OrientedBoxByParticle : public BodyPartByParticle, public OrientedBoxPart
 {
   public:
     OrientedBoxByParticle(RealBody &real_body, const OrientedBox &oriented_box);
-    virtual ~OrientedBoxByParticle(){};
+    virtual ~OrientedBoxByParticle() {};
 
   protected:
     bool tagByContain(size_t particle_index);
@@ -311,7 +314,7 @@ class OrientedBoxByCell : public BodyPartByCell, public OrientedBoxPart
 {
   public:
     OrientedBoxByCell(RealBody &real_body, const OrientedBox &oriented_box);
-    virtual ~OrientedBoxByCell(){};
+    virtual ~OrientedBoxByCell() {};
 
   protected:
     bool checkNotFar(Vecd cell_position, Real threshold);

@@ -344,6 +344,15 @@ class ParticleMethodContainer : public BaseMethodContainer
             ReduceDynamicsCK<ExecutionPolicy, ReduceType>>(std::forward<Args>(args)...);
     };
 
+    template <template <typename...> class ReduceType, typename... ControlParameters,
+              class DynamicsIdentifier, typename... Args>
+    auto &addReduceDynamics(DynamicsIdentifier &dynamics_identifier, Args &&...args)
+    {
+        return *particle_dynamics_keeper_.template createPtr<
+            ReduceDynamicsCK<ExecutionPolicy, ReduceType<DynamicsIdentifier, ControlParameters...>>>(
+            dynamics_identifier, std::forward<Args>(args)...);
+    };
+
     template <typename Operation, class ReduceType, typename DynamicsIdentifier, typename... Args>
     ReduceDynamicsGroup<Operation> &addReduceDynamics(const StdVec<DynamicsIdentifier *> &identifiers, Args &&...args)
     {

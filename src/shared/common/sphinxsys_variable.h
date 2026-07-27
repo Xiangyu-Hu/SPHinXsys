@@ -86,6 +86,7 @@ template <typename DataType>
 class MultiEntryView
 {
   public:
+    MultiEntryView() : data_(nullptr), width_(0) {};
     MultiEntryView(DataType *data, UnsignedInt width)
         : data_(data), width_(width) {};
     void setData(DataType *data) { data_ = data; };

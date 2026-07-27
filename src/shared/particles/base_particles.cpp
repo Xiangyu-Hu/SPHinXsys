@@ -1,6 +1,7 @@
 #include "base_particles.hpp"
 
 #include "base_body.h"
+#include "sphinxsys_bitmask.h"
 
 namespace SPH
 {
@@ -26,6 +27,34 @@ SPHAdaptation &BaseParticles::getSPHAdaptation()
 std::string BaseParticles::getBodyName()
 {
     return sph_body_.Name();
+}
+//=================================================================================================//
+GroupManager &BaseParticles::getParticleGroupManager()
+{
+    if (group_manager_ptr_.getPtr() == nullptr)
+    {
+        DiscreteVariable<UnsignedInt> *group_variable =
+            registerDiscreteVariable<UnsignedInt>("ParticleGroups", particles_bound_);
+        addEvolvingVariable<UnsignedInt>(group_variable);
+        group_manager_ptr_.createPtr<GroupManager>(group_variable);
+    }
+    return *group_manager_ptr_.getPtr();
+}
+//=================================================================================================//
+void BaseParticles::addParticleGroupToWrite(const std::string &name)
+{
+    if (getParticleGroupManager().hasGroup(name))
+    {
+        auto location = find(particle_groups_to_write_.begin(), particle_groups_to_write_.end(), name);
+        if (location == particle_groups_to_write_.end())
+        {
+            particle_groups_to_write_.push_back(name);
+        }
+    }
+    else
+    {
+        std::runtime_error("Error: the particle group " + name + " is not registered!");
+    }
 }
 //=================================================================================================//
 void BaseParticles::initializeBasicDiscreteVariables()
