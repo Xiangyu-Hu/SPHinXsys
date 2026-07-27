@@ -17,7 +17,7 @@ Eigen::IOFormat fmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", ""
 BodyPart::BodyPart(SPHBody &sph_body)
     : sph_body_(sph_body), base_particles_(sph_body.getBaseParticles()),
       part_id_(base_particles_.getNewBodyPartID()),
-      part_name_(sph_body.Name() + "Part" + std::to_string(part_id_)),
+      part_id_name_(sph_body.Name() + "Part" + std::to_string(part_id_)),
       sph_adaptation_(sph_body.getSPHAdaptation()),
       sv_range_size_(nullptr),
       pos_(base_particles_.getVariableDataByName<Vecd>("Position")) {}
@@ -47,8 +47,8 @@ BodyRegionByParticle::~BodyRegionByParticle() = default;
 //=================================================================================================//
 void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
 {
-    GroupManager &group_manager = base_particles_.getParticleGroupManager();
-    auto part_mask = group_manager.createHostMaskKernel(part_name_);
+    GroupManager &group_manager = getParticleGroupManager();
+    auto part_mask = group_manager.createHostMaskKernel(part_id_name_);
 
     for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
     {
@@ -60,10 +60,10 @@ void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_me
     }
 
     dv_particle_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
-        part_name_, body_part_particles_.size(), [&](size_t i)
+        part_id_name_, body_part_particles_.size(), [&](size_t i)
         { return body_part_particles_[i]; });
     sv_range_size_ = unique_variable_ptrs_.createPtr<SingleVariable<UnsignedInt>>(
-        part_name_ + "_Size", body_part_particles_.size());
+        part_id_name_ + "_Size", body_part_particles_.size());
 }
 //=================================================================================================//
 BodyPartByCell::BodyPartByCell(RealBody &real_body)
@@ -88,10 +88,10 @@ void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
     cell_linked_list_.tagBodyPartByCell(body_part_cells_, cell_indexes, tagging_cell_method);
 
     dv_cell_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
-        part_name_, cell_indexes.size(), [&](size_t i)
+        part_id_name_, cell_indexes.size(), [&](size_t i)
         { return cell_indexes[i]; });
     sv_range_size_ = unique_variable_ptrs_.createPtr<SingleVariable<UnsignedInt>>(
-        part_name_ + "_Size", cell_indexes.size());
+        part_id_name_ + "_Size", cell_indexes.size());
 }
 //=================================================================================================//
 BodyRegionByParticle::
@@ -231,7 +231,7 @@ void OrientedBoxPart::writeOrientedBoxToVtp(Real scale_factor)
 }
 //=================================================================================================//
 OrientedBoxByParticle::OrientedBoxByParticle(RealBody &real_body, const OrientedBox &oriented_box)
-    : BodyPartByParticle(real_body), OrientedBoxPart(part_name_, oriented_box)
+    : BodyPartByParticle(real_body), OrientedBoxPart(part_id_name_, oriented_box)
 {
     TaggingParticleMethod tagging_particle_method =
         std::bind(&OrientedBoxByParticle::tagByContain, this, _1);
@@ -244,7 +244,7 @@ bool OrientedBoxByParticle::tagByContain(size_t particle_index)
 }
 //=================================================================================================//
 OrientedBoxByCell::OrientedBoxByCell(RealBody &real_body, const OrientedBox &oriented_box)
-    : BodyPartByCell(real_body), OrientedBoxPart(part_name_, oriented_box)
+    : BodyPartByCell(real_body), OrientedBoxPart(part_id_name_, oriented_box)
 {
     TaggingCellMethod tagging_cell_method =
         std::bind(&OrientedBoxByCell::checkNotFar, this, _1, _2);
