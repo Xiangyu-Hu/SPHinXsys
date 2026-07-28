@@ -19,20 +19,18 @@ TotalMechanicalEnergyCK::ReduceKernel::
       gravity_(encloser.gravity_),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-template <class DynamicsIdentifier, typename ReturnFunctionType>
-QuantityReduce<DynamicsIdentifier, ReturnFunctionType>::
-    QuantityReduce(DynamicsIdentifier &identifier, const std::string &variable_name)
+template <class DynamicsIdentifier, typename ReturnFunctionType, class EvaluationType>
+template <typename... Args>
+QuantityReduce<DynamicsIdentifier, ReturnFunctionType, EvaluationType>::
+    QuantityReduce(DynamicsIdentifier &identifier, Args &&...args)
     : BaseLocalDynamicsReduce<ReturnFunctionType, DynamicsIdentifier>(identifier),
-      dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name))
-{
-    this->quantity_name_ = std::string(type_name<ReturnFunctionType>()) + variable_name;
-}
+      evaluation_method_(this->particles_, std::forward<Args>(args)...) {}
 //=================================================================================================//
-template <class DynamicsIdentifier, typename ReturnFunctionType>
+template <class DynamicsIdentifier, typename ReturnFunctionType, class EvaluationType>
 template <class ExecutionPolicy, class EncloserType>
-QuantityReduce<DynamicsIdentifier, ReturnFunctionType>::ReduceKernel::
-    ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : variable_(encloser.dv_variable_->DelegatedData(ex_policy)) {}
+QuantityReduce<DynamicsIdentifier, ReturnFunctionType, EvaluationType>::
+    ReduceKernel::ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : evaluation_(ex_policy, encloser.evaluation_method_) {}
 //=================================================================================================//
 template <typename DataType, class DynamicsIdentifier>
 QuantityAverage<DataType, DynamicsIdentifier>::
