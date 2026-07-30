@@ -2,7 +2,7 @@
 
 ## Kinetics
 
-Along with the Reissner–Mindlin type shell model, we introduce the base $\{\mathbf{e}_x,\mathbf{e}_y, \mathbf{e}_z\}$ for the global coordinate system, and the initial local coordinate $\bm{\xi} = (\xi, \eta, \zeta)$ for the reference configuration, associated with initial normal vector $\mathbf{n}^{o} = (0, 0, 1)$.
+Along with the Reissner–Mindlin type shell model, we introduce the base $\{\mathbf{e}_x,\mathbf{e}_y, \mathbf{e}_z\}$ for the global coordinate system, and the initial local coordinate $\bm{\xi} = (\xi, \eta, \zeta)$ for the reference configuration, associated with initial normal (fiber) vector $\mathbf{n}^{o} = (0, 0, 1)$.
 Note that, for plate, the global coordinate system shares the same base with the initial local coordinate system
 
 $$\mathbf{e}_x = \mathbf{e}_\xi, \quad \mathbf{e}_y = \mathbf{e}_\eta, \quad \mathbf{e}_z = \mathbf{e}_\zeta $$
@@ -64,7 +64,11 @@ $$
 With the deformation gradient, one can define the Green-Lagrange strain tensor $\mathbf{E}$ as
 $$\mathbf{E} = \frac{1}{2}(\mathbf{F}^{T}\mathbf{F} - \mathbf{I})$$
 
-and right Cauchy-Green deformation tensor $\mathbf{C}$ as
+Note that, along the fiber direction,
+one has the following strain component
+$$E_{33} = \frac{1}{2}(\mathbf{n}\cdot\mathbf{n} - 1)$$
+which is essentially zero.
+The right Cauchy-Green deformation tensor $\mathbf{C}$ as
 
 $$\mathbf{C} = \mathbf{F}^{T}\mathbf{F} = \mathbf{I} + 2\mathbf{E}$$
 
@@ -84,7 +88,7 @@ $$\bar{\mathbf{S}} = f(\bar{\mathbf{E}}), \quad \text{or} \quad \overline{\bar{S
 To impose the plane stress condition, we can obtain the Cauchy stress tensor $\bm{\sigma}$ in the present local coordinate system as
 $$\bar{\bm{\sigma}} = \frac{1}{J} \bar{\mathbf{F}} \bar{\mathbf{S}} \bar{\mathbf{F}}^{T}, \quad J = \det(\bar{\mathbf{F}})$$
 
-Then, we set the stress component $\bar{\bm{\sigma}}_{33} = 0$ and solve for the strain component $\bar{E}_{33}$ in terms of the other strain components. This allows us to express the stress-strain relationship in a reduced form suitable for plate analysis.
+Then, we solve for the strain component $\bar{E}_{33}$ in terms of the other strain components so that the stress component $\bar{\bm{\sigma}}_{33} = 0$. This allows us to express the stress-strain relationship in a reduced form suitable for plate analysis.
 
 Note that to satisfy another boundary condition of free in-plane shear stress at the top and bottom surfaces of the plate, one need to introduce a shear correction factor to modify the shear stress components in the constitutive model as
 $$\bar{\bm{\sigma}}_{13} = \kappa \bar{\bm{\sigma}}_{13}, \quad \bar{\bm{\sigma}}_{23} = \kappa \bar{\bm{\sigma}}_{23}$$
@@ -96,7 +100,7 @@ $$\bar{\mathbf{S}} = f(\bar{\mathbf{E}})$$
 and then we can transform it back to the global coordinate system using the rotation tensor $\mathbf{Q}$ as
 $$\mathbf{S} = \mathbf{Q} \bar{\mathbf{S}} \mathbf{Q}^{T}$$
 
-for the total Lagrangian description within the original reference configuration and coordinate system.
+for the total Lagrangian description.
 
 ## Governing equations
 
