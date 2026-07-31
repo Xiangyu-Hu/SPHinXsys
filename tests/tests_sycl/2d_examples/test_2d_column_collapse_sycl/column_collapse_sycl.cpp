@@ -88,10 +88,10 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    auto &host_methods = sph_solver.getHostMethodContainer();
     host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall_boundary).exec();
 
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &main_methods = sph_solver.getMainMethodContainer();
     auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
 
     ParticleDynamicsGroup soil_update_configuration;

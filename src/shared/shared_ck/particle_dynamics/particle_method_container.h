@@ -196,14 +196,8 @@ class IODynamicsGroup : public BaseIO
     }
 };
 
-class BaseMethodContainer
-{
-  public:
-    virtual ~BaseMethodContainer() {};
-};
-
 template <typename ExecutionPolicy>
-class ParticleMethodContainer : public BaseMethodContainer
+class ParticleMethodContainer
 {
     UniquePtrsKeeper<AbstractDynamics> particle_dynamics_keeper_;
     UniquePtrsKeeper<BodyStatesRecording> state_recorders_keeper_;
@@ -211,7 +205,7 @@ class ParticleMethodContainer : public BaseMethodContainer
 
   public:
     typedef ExecutionPolicy ExPolicy;
-    ParticleMethodContainer(const ExecutionPolicy &ex_policy) : BaseMethodContainer() {};
+    ParticleMethodContainer(const ExecutionPolicy &ex_policy) {};
     virtual ~ParticleMethodContainer() {};
 
     ParticleDynamicsGroup &addParticleDynamicsGroup()

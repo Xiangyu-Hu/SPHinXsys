@@ -180,20 +180,22 @@ class TimeStepper
     UnsignedInt observation_interval_{200};
 };
 
+using MainMethods = ParticleMethodContainer<MainExecutionPolicy>;
+using HostMethods = ParticleMethodContainer<ParallelPolicy>;
+using SequenceMethods = ParticleMethodContainer<SequencedPolicy>;
+
 class SPHSolver
 {
-    UniquePtrsKeeper<BaseMethodContainer> methods_keeper_;
+    UniquePtrKeeper<MainMethods> main_methods_keeper_;
+    UniquePtrKeeper<HostMethods> host_methods_keeper_;
+    UniquePtrKeeper<SequenceMethods> seq_methods_keeper_;
 
   public:
     SPHSolver(SPHSystem &sph_system) : sph_system_(sph_system), time_stepper_(sph_system) {};
     virtual ~SPHSolver() {};
-
-    template <typename ExecutionPolicy>
-    auto &addParticleMethodContainer(const ExecutionPolicy &ex_policy)
-    {
-        return *methods_keeper_.createPtr<ParticleMethodContainer<ExecutionPolicy>>(ex_policy);
-    };
-
+    MainMethods &getMainMethodContainer();
+    HostMethods &getHostMethodContainer();
+    SequenceMethods &getSequenceMethodContainer();
     TimeStepper &getTimeStepper() { return time_stepper_; };
 
   protected:

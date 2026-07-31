@@ -127,12 +127,12 @@ int main(int ac, char *av[])
         // Finally, the auxiliary models such as time step estimator, initial condition,
         // boundary condition and other constraints should be defined.
         //----------------------------------------------------------------------
-        auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+        auto &host_methods = sph_solver.getHostMethodContainer();
         host_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies).exec(); // host method able to run immediately
         //----------------------------------------------------------------------
         //	Define simple file input and outputs functions.
         //----------------------------------------------------------------------
-        auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+        auto &main_methods = sph_solver.getMainMethodContainer();
         ParticleDynamicsGroup update_cell_linked_list;
         update_cell_linked_list.add(&main_methods.addCellLinkedListDynamics(water_body));
         update_cell_linked_list.add(&main_methods.addCellLinkedListDynamics(cylinder));
@@ -240,7 +240,7 @@ int main(int ac, char *av[])
     // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &main_methods = sph_solver.getMainMethodContainer();
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
