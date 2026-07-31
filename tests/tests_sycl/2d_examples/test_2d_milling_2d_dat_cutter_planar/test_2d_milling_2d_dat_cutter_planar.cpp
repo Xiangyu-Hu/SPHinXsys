@@ -1,21 +1,20 @@
-/**
- * @file    milling_2d_dat_cutter_planar.cpp
- * @brief   2D milling demo with a .dat-profile cutter:
- *          - rigid cutter imported from a single 2D .dat contour
- *          - plate + cutter particle relaxation + reload workflow
- *          - deformable J2 plate clamped at both ends
- *          - contact via RepulsionFactor / RepulsionForceCK (UL style)
- *          - rigid cutter driven by Simbody Planar mobilizer (rotation + feed)
- *
- * Workflow:
- *   1) First run:
- *        ./case_name --relax=true
- *      This relaxes BOTH plate and cutter particles and writes reload files.
- *
- *   2) Second run:
- *        ./case_name --relax=false --reload=true
- *      This reloads the relaxed plate/cutter and runs the formal milling simulation.
- */
+//          milling_2d_dat_cutter_planar.cpp
+//          2D milling demo with a .dat-profile cutter:
+//            - rigid cutter imported from a single 2D .dat contour
+//            - plate + cutter particle relaxation + reload workflow
+//            - deformable J2 plate clamped at both ends
+//            - contact via RepulsionFactor / RepulsionForceCK (UL style)
+//            - rigid cutter driven by Simbody Planar mobilizer (rotation + feed)
+//  
+//   Workflow:
+//     1) First run:
+//          ./case_name --relax=true
+//        This relaxes BOTH plate and cutter particles and writes reload files.
+//  
+//     2) Second run:
+//          ./case_name --relax=false --reload=true
+//        This reloads the relaxed plate/cutter and runs the formal milling simulation.
+//  
 
 #include "sphinxsys.h"
 #include "general_constraint_ck.h"
@@ -27,11 +26,11 @@ using namespace SPH;
 //----------------------------------------------------------------------
 
 // Plate geometry
-Real PL = 0.02;                  // Plate length scale in x
-Real PH = 0.004;                 // Plate height scale in y
-Real dp_0 = PL / 25.0;           // Particle spacing
+Real PL = 0.02;
+Real PH = 0.004;
+Real dp_0 = PL / 25.0;
 
-Real BW = 10.0 * dp_0;           // Margin
+Real BW = 10.0 * dp_0;
 Real DL = 10.0 * PL;
 Real DH = 30.0 * PL;
 
@@ -58,19 +57,19 @@ Real bottom_fix_thickness = 6.0 * dp_0;
 // 2) Material
 //----------------------------------------------------------------------
 
+// 1.Aluminum block
+// Real rho0_s = 2700.0;
+// Real poisson = 0.30;
+// Real Young_plate = 78.2e9;
+// Real yield_plate = 0.29e9;
+// Real hardening_modulus = 0.1e9;
 
-//1. aluminum block
-Real rho0_s = 2700.0;
-Real poisson = 0.30;
-Real Young_plate = 78.2e9;
-Real yield_plate = 0.29e9;
-Real hardening_modulus = 0.1e9;
-
-// //2.mild steel block(TEST)
+// 2.mild steel block(TEST)
 // Real rho0_s = 7850.0;
 // Real poisson = 0.30;
 // Real Young_plate = 210.0e9;
 // Real yield_plate = 0.25e9;
+// Real hardening_modulus = 2e9;
 
 // //3.STAINLESS STEEL BLOCK(TEST)
 // Real rho0_s = 8000.0;
@@ -111,10 +110,11 @@ Real hardening_modulus = 0.1e9;
 
 
 // // 9.
-// Real rho0_s = 1050.0;
-// Real poisson = 0.49;
-// Real Young_plate = 2.0e4;   
-// Real yield_plate = 0;   // 
+Real rho0_s = 1050.0;
+Real poisson = 0.49;
+Real Young_plate = 2.0e4;   
+Real yield_plate = 0;   
+Real hardening_modulus = 0;
 
 // Numerical sound speed
 Real c0 = sqrt(Young_plate / (3.0 * (1.0 - 2.0 * poisson) * rho0_s));
@@ -144,8 +144,9 @@ int main(int ac, char *av[])
 {
     SPHSystem system(system_domain_bounds, dp_0);
 
-    // The two-stage workflow can be controlled by command-line options
-    system.setRunParticleRelaxation(true);////true//false
+    // The two-stage workflow can be controlled by command-line options.
+    // Default is relaxation mode.
+    system.setRunParticleRelaxation(false);
     system.handleCommandlineOptions(ac, av);
 
     // ------------------------------------------------------------
@@ -169,84 +170,99 @@ int main(int ac, char *av[])
         RelaxationSystem relaxation_system(system_domain_bounds, dp_0);
 
         // Add both plate and cutter into the relaxation system
-        auto &plate_relax  = relaxation_system.addBody<RealBody>(plate_shape);
+        auto &plate_relax = relaxation_system.addBody<RealBody>(plate_shape);
         auto &cutter_relax = relaxation_system.addBody<SolidBody>(cutter_shape);
 
-        // Level-set definitions
-       LevelSetShape &plate_level_set =
-          plate_relax.defineBodyLevelSetShape(par_ck)
-            .correctLevelSetSign()
-            .writeLevelSet();
+        
+        // ------------------------------------------------------------
+        LevelSetShape &plate_level_set =
+            plate_relax.defineBodyLevelSetShape(par_host)
+                .correctLevelSetSign()
+                .writeLevelSet();
 
-       LevelSetShape &cutter_level_set =
-          cutter_relax.defineBodyLevelSetShape(par_ck)
-            .correctLevelSetSign()
-            .writeLevelSet();
+        LevelSetShape &cutter_level_set =
+            cutter_relax.defineBodyLevelSetShape(par_host)
+                .correctLevelSetSign()
+                .writeLevelSet();
 
         // Generate lattice particles
         plate_relax.generateParticles<BaseParticles, Lattice>();
         cutter_relax.generateParticles<BaseParticles, Lattice>();
 
         // Near-surface body parts
-        auto &near_plate_surface  = plate_relax.addBodyPart<NearShapeSurface>();
+        auto &near_plate_surface = plate_relax.addBodyPart<NearShapeSurface>();
         auto &near_cutter_surface = cutter_relax.addBodyPart<NearShapeSurface>();
 
         // Inner relations
-        auto &plate_inner_rel  = relaxation_system.addInnerRelation(plate_relax);
+        auto &plate_inner_rel = relaxation_system.addInnerRelation(plate_relax);
         auto &cutter_inner_rel = relaxation_system.addInnerRelation(cutter_relax);
 
         // Relaxation solver
         SPHSolver relax_solver(relaxation_system);
+
         auto &relax_main = relax_solver.addParticleMethodContainer(par_ck);
         auto &relax_host = relax_solver.addParticleMethodContainer(par_host);
 
         // Randomize initial particle positions
         auto &rand_plate =
             relax_host.addStateDynamics<RandomizeParticlePositionCK>(plate_relax);
+
         auto &rand_cutter =
             relax_host.addStateDynamics<RandomizeParticlePositionCK>(cutter_relax);
 
         // Configuration updates
         auto &update_plate_cell_linked_list =
             relax_main.addCellLinkedListDynamics(plate_relax);
+
         auto &update_plate_inner_relation =
             relax_main.addRelationDynamics(plate_inner_rel);
 
         auto &update_cutter_cell_linked_list =
             relax_main.addCellLinkedListDynamics(cutter_relax);
+
         auto &update_cutter_inner_relation =
             relax_main.addRelationDynamics(cutter_inner_rel);
 
         // Relaxation residuals
         auto &plate_relaxation_residual =
-            relax_main.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(plate_inner_rel)
-                .addPostStateDynamics<LevelsetKernelGradientIntegral>(plate_relax, plate_level_set);
+            relax_main
+                .addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(
+                    plate_inner_rel)
+                .addPostStateDynamics<LevelsetKernelGradientIntegral>(
+                    plate_relax, plate_level_set);
 
         auto &cutter_relaxation_residual =
-            relax_main.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(cutter_inner_rel)
-                .addPostStateDynamics<LevelsetKernelGradientIntegral>(cutter_relax, cutter_level_set);
+            relax_main
+                .addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(
+                    cutter_inner_rel)
+                .addPostStateDynamics<LevelsetKernelGradientIntegral>(
+                    cutter_relax, cutter_level_set);
 
         // Particle position updates
         auto &update_plate_particle_position =
             relax_main.addStateDynamics<PositionRelaxationCK>(plate_relax);
+
         auto &update_cutter_particle_position =
             relax_main.addStateDynamics<PositionRelaxationCK>(cutter_relax);
 
         // Level-set bounding
         auto &plate_level_set_bounding =
             relax_main.addStateDynamics<LevelsetBounding>(near_plate_surface);
+
         auto &cutter_level_set_bounding =
             relax_main.addStateDynamics<LevelsetBounding>(near_cutter_surface);
 
         // Relaxation scaling
         auto &plate_relaxation_scaling =
             relax_main.addReduceDynamics<RelaxationScalingCK>(plate_relax);
+
         auto &cutter_relaxation_scaling =
             relax_main.addReduceDynamics<RelaxationScalingCK>(cutter_relax);
 
         // Output
         auto &body_state_recorder =
-            relax_main.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(relaxation_system);
+            relax_main.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(
+                relaxation_system);
 
         auto &write_reload =
             relax_main.addIODynamics<ReloadParticleIOCK>(
@@ -255,6 +271,7 @@ int main(int ac, char *av[])
         // Cutter normal direction for later wall-contact usage
         auto &cutter_normal =
             relax_host.addStateDynamics<NormalFromBodyShapeCK>(cutter_relax);
+
         write_reload.addToReload<Vecd>(cutter_relax, "NormalDirection");
 
         // Randomize before relaxation
@@ -272,17 +289,23 @@ int main(int ac, char *av[])
             // Plate relaxation
             update_plate_cell_linked_list.exec();
             update_plate_inner_relation.exec();
+
             plate_relaxation_residual.exec();
+
             Real plate_relaxation_step = plate_relaxation_scaling.exec();
             update_plate_particle_position.exec(plate_relaxation_step);
+
             plate_level_set_bounding.exec();
 
-            // Cutter relaxation
+            //Cutter relaxation
             update_cutter_cell_linked_list.exec();
             update_cutter_inner_relation.exec();
+
             cutter_relaxation_residual.exec();
+
             Real cutter_relaxation_step = cutter_relaxation_scaling.exec();
             update_cutter_particle_position.exec(cutter_relaxation_step);
+
             cutter_level_set_bounding.exec();
 
             ite_p += 1;
@@ -291,6 +314,7 @@ int main(int ac, char *av[])
             {
                 std::cout << std::fixed << std::setprecision(9)
                           << "Relaxation steps N = " << ite_p << "\n";
+
                 body_state_recorder.writeToFile(ite_p);
             }
         }
@@ -299,8 +323,167 @@ int main(int ac, char *av[])
         write_reload.writeToFile();
 
         std::cout << "[Plate + Cutter Relaxation] done. Reload files written.\n";
+
         return 0;
     }
+
+
+    //==================================================================
+// Airfoil-style minimal 2D plate relaxation test
+//==================================================================
+//==================================================================
+// Taylor-bar-style relaxation branch
+// Mapping:
+//   Taylor column  -> milling plate
+//   Taylor wall    -> milling cutter
+//
+// Only the plate is relaxed.
+// The cutter only generates particles, computes NormalDirection,
+// and is written to reload files.
+//==================================================================
+// if (system.RunParticleRelaxation())
+// {
+//     std::cout << "[Taylor-style Plate Relaxation] start...\n";
+
+//     //----------------------------------------------------------------------
+//     // Setup a sub-system for particle relaxation.
+//     //----------------------------------------------------------------------
+//     RelaxationSystem relaxation_system(system_domain_bounds, dp_0);
+
+//     auto &plate = relaxation_system.addBody<RealBody>(plate_shape);
+//     auto &cutter = relaxation_system.addBody<SolidBody>(cutter_shape);
+
+//     //----------------------------------------------------------------------
+//     // Level set and lattice particles.
+//     //
+//     // Taylor bar uses:
+//     //     column.defineBodyLevelSetShape(par_ck, 2.0).writeLevelSet();
+//     //
+//     // For your case, if par_ck still triggers UpdateLevelSetGradient missing
+//     // kernel, temporarily use par_host here. The relaxation methods below
+//     // still follow the Taylor par_ck structure.
+//     //----------------------------------------------------------------------
+//     LevelSetShape &level_set_shape =
+//         plate.defineBodyLevelSetShape(par_host)
+//             .correctLevelSetSign()
+//             .writeLevelSet();
+
+//     // If you want the strict Taylor-bar GPU level-set version, use this instead:
+//     // LevelSetShape &level_set_shape =
+//     //     plate.defineBodyLevelSetShape(par_ck, 2.0).writeLevelSet();
+
+//     plate.generateParticles<BaseParticles, Lattice>();
+//     cutter.generateParticles<BaseParticles, Lattice>();
+
+//     NearShapeSurface near_body_surface(plate);
+//     Inner<> plate_inner(plate);
+
+//     //----------------------------------------------------------------------
+//     // Methods used for particle relaxation.
+//     //----------------------------------------------------------------------
+//     SPHSolver sph_solver(relaxation_system);
+
+//     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+//     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+
+//     auto &input_body_cell_linked_list =
+//         main_methods.addCellLinkedListDynamics(plate);
+
+//     auto &input_body_update_inner_relation =
+//         main_methods.addRelationDynamics(plate_inner);
+
+//     auto &random_input_body_particles =
+//         host_methods.addStateDynamics<RandomizeParticlePositionCK>(plate);
+
+//     auto &relaxation_residual =
+//         main_methods
+//             .addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(
+//                 plate_inner)
+//             .addPostStateDynamics<LevelsetKernelGradientIntegral>(
+//                 plate, level_set_shape);
+
+//     auto &relaxation_scaling =
+//         main_methods.addReduceDynamics<RelaxationScalingCK>(plate);
+
+//     auto &update_particle_position =
+//         main_methods.addStateDynamics<PositionRelaxationCK>(plate);
+
+//     auto &level_set_bounding =
+//         main_methods.addStateDynamics<LevelsetBounding>(near_body_surface);
+
+//     //----------------------------------------------------------------------
+//     // Run on CPU after relaxation finished and output results.
+//     // This follows Taylor bar wall handling.
+//     //----------------------------------------------------------------------
+//     auto &cutter_normal_direction =
+//         host_methods.addStateDynamics<NormalFromBodyShapeCK>(cutter);
+
+//     //----------------------------------------------------------------------
+//     // Define file output and reload functions.
+//     //----------------------------------------------------------------------
+//     auto &body_state_recorder =
+//         main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(
+//             relaxation_system);
+
+//     auto &write_particle_reload_files =
+//         main_methods.addIODynamics<ReloadParticleIOCK>(
+//             StdVec<SPHBody *>{&plate, &cutter});
+
+//     write_particle_reload_files.addToReload<Vecd>(cutter, "NormalDirection");
+
+//     //----------------------------------------------------------------------
+//     // Prepare relaxation.
+//     //----------------------------------------------------------------------
+//     random_input_body_particles.exec(0.25);
+
+//     //----------------------------------------------------------------------
+//     // First output before the relaxation loop.
+//     //----------------------------------------------------------------------
+//     body_state_recorder.writeToFile(0);
+
+//     //----------------------------------------------------------------------
+//     // Particle relaxation time stepping.
+//     // Only relax plate, exactly like Taylor only relaxes column.
+//     //----------------------------------------------------------------------
+//     int ite_p = 0;
+//     while (ite_p < 1000)
+//     {
+//         input_body_cell_linked_list.exec();
+//         input_body_update_inner_relation.exec();
+
+//         relaxation_residual.exec();
+
+//         Real relaxation_step = relaxation_scaling.exec();
+//         update_particle_position.exec(relaxation_step);
+
+//         level_set_bounding.exec();
+
+//         ite_p += 1;
+
+//         if (ite_p % 100 == 0)
+//         {
+//             std::cout << std::fixed << std::setprecision(9)
+//                       << "Relaxation steps N = " << ite_p << "\n";
+
+//             body_state_recorder.writeToFile(ite_p);
+//         }
+//     }
+
+//     std::cout << "The physics relaxation process finish !" << std::endl;
+
+//     cutter_normal_direction.exec();
+//     write_particle_reload_files.writeToFile();
+
+//     if (!system.ReloadParticles())
+//     {
+//         return 0;
+//     }
+//     else
+//     {
+//         std::cout << "To reload particles and start the main simulation." << std::endl;
+//     }
+// }
+
 
     //==================================================================
     // Formal simulation branch
@@ -309,7 +492,7 @@ int main(int ac, char *av[])
     // ------------------------------------------------------------
     // Bodies
     // ------------------------------------------------------------
-    auto &plate  = system.addBody<RealBody>(plate_shape);
+    auto &plate = system.addBody<RealBody>(plate_shape);
     auto &cutter = system.addBody<SolidBody>(cutter_shape);
 
     // ------------------------------------------------------------
@@ -318,12 +501,14 @@ int main(int ac, char *av[])
 
     // Cutter: reload relaxed particles + normals
     cutter.defineMatterMaterial<Solid>();
+
     cutter.generateParticles<BaseParticles, Reload>(cutter.Name())
-         .reloadExtraVariable<Vecd>("NormalDirection");
+        .reloadExtraVariable<Vecd>("NormalDirection");
 
     // Plate: reload relaxed particles as well
     plate.defineMatterMaterial<HardeningPlasticSolid>(
-         rho0_s, Young_plate, poisson, yield_plate, hardening_modulus);
+        rho0_s, Young_plate, poisson, yield_plate, hardening_modulus);
+
     plate.generateParticles<BaseParticles, Reload>(plate.Name());
 
     //------------------------------------------------------------------
@@ -331,14 +516,14 @@ int main(int ac, char *av[])
     //------------------------------------------------------------------
     StdVec<Vecd> observation_location = {
         Vecd(translation_holder_cutter[0], translation_holder_cutter[1])};
+
     auto &observer = system.addBody<ObserverBody>("Observer");
     observer.generateParticles<ObserverParticles>(observation_location);
 
     //------------------------------------------------------------------
     // Relations
     //------------------------------------------------------------------
-    //auto &cutter_inner = system.addInnerRelation(cutter);
-    auto &plate_inner  = system.addInnerRelation(plate);
+    auto &plate_inner = system.addInnerRelation(plate);
     auto &plate_cutter_contact = system.addContactRelation(plate, cutter);
     auto &observer_plate_contact = system.addContactRelation(observer, plate);
 
@@ -346,25 +531,36 @@ int main(int ac, char *av[])
     // Solver + method containers
     //------------------------------------------------------------------
     SPHSolver sph_solver(system);
+
     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
     auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
 
     // Initialize required state variables
-    host_methods.addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(
-        plate, "Velocity", Vec2d::Zero()).exec();
-    host_methods.addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(
-        plate, "ForcePrior", Vec2d::Zero()).exec();
+    host_methods
+        .addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(
+            plate, "Velocity", Vec2d::Zero())
+        .exec();
 
-    host_methods.addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(
-        cutter, "Velocity", Vec2d::Zero()).exec();
-    host_methods.addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(
-        cutter, "ForcePrior", Vec2d::Zero()).exec();
+    host_methods
+        .addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(
+            plate, "ForcePrior", Vec2d::Zero())
+        .exec();
+
+    host_methods
+        .addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(
+            cutter, "Velocity", Vec2d::Zero())
+        .exec();
+
+    host_methods
+        .addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(
+            cutter, "ForcePrior", Vec2d::Zero())
+        .exec();
 
     auto &cutter_normal_direction =
         host_methods.addStateDynamics<NormalFromBodyShapeCK>(cutter);
 
     //------------------------------------------------------------------
-    // Fixed regions on both plate ends (2D AlignedBoxByParticle)
+    // Fixed regions on both plate ends
     //------------------------------------------------------------------
     Vec2d plate_half = halfsize_holder_plate;
     Vec2d plate_center = translation_holder_plate;
@@ -379,32 +575,34 @@ int main(int ac, char *av[])
     Vec2d left_lower(x_min, y_min);
     Vec2d left_upper(x_min + clamp_len, y_max);
     Vec2d left_halfsize = 0.5 * (left_upper - left_lower);
-    Vec2d left_center   = 0.5 * (left_upper + left_lower);
-    // AlignedBox left_box(xAxis, Transform(left_center), left_halfsize);
-    // AlignedBoxByParticle left_part(plate, left_box);
-    GeometricShapeBox left_box(Transform(left_center), left_halfsize, "LeftBox");
+    Vec2d left_center = 0.5 * (left_upper + left_lower);
+
+    GeometricShapeBox left_box(
+        Transform(left_center), left_halfsize, "LeftBox");
+
     BodyRegionByParticle left_part(plate, left_box);
 
     // Right clamp region
     Vec2d right_lower(x_max - clamp_len, y_min);
     Vec2d right_upper(x_max, y_max);
     Vec2d right_halfsize = 0.5 * (right_upper - right_lower);
-    Vec2d right_center   = 0.5 * (right_upper + right_lower);
-    // AlignedBox right_box(xAxis, Transform(right_center), right_halfsize);
-    // AlignedBoxByParticle right_part(plate, right_box);
-    GeometricShapeBox right_box(Transform(right_center), right_halfsize, "RightBox");
-    BodyRegionByParticle right_part(plate, right_box);  
+    Vec2d right_center = 0.5 * (right_upper + right_lower);
+
+    GeometricShapeBox right_box(
+        Transform(right_center), right_halfsize, "RightBox");
+
+    BodyRegionByParticle right_part(plate, right_box);
 
     // Bottom fixed region
     Vec2d bottom_lower(x_min, y_min);
     Vec2d bottom_upper(x_max, y_min + bottom_fix_thickness);
     Vec2d bottom_halfsize = 0.5 * (bottom_upper - bottom_lower);
-    Vec2d bottom_center   = 0.5 * (bottom_upper + bottom_lower);
-    // AlignedBox bottom_box(xAxis, Transform(bottom_center), bottom_halfsize);
-    // AlignedBoxByParticle bottom_part(plate, bottom_box);
-    GeometricShapeBox bottom_box(Transform(bottom_center), bottom_halfsize, "BottomBox");
+    Vec2d bottom_center = 0.5 * (bottom_upper + bottom_lower);
+
+    GeometricShapeBox bottom_box(
+        Transform(bottom_center), bottom_halfsize, "BottomBox");
+
     BodyRegionByParticle bottom_part(plate, bottom_box);
-   
 
     auto &fix_left_velocity =
         main_methods.addStateDynamics<ConstantConstraintCK<BodyPartByParticle, Vecd>>(
@@ -422,11 +620,16 @@ int main(int ac, char *av[])
     // Configuration update group
     //------------------------------------------------------------------
     ParticleDynamicsGroup update_configuration;
-    update_configuration.add(&main_methods.addCellLinkedListDynamics(plate));
-    update_configuration.add(&main_methods.addCellLinkedListDynamics(cutter));
+
+    update_configuration.add(
+        &main_methods.addCellLinkedListDynamics(plate));
+
+    update_configuration.add(
+        &main_methods.addCellLinkedListDynamics(cutter));
 
     auto &update_plate_inner_and_contact =
         main_methods.addRelationDynamics(plate_inner, plate_cutter_contact);
+
     update_configuration.add(&update_plate_inner_and_contact);
 
     auto &update_observer_contact =
@@ -435,49 +638,23 @@ int main(int ac, char *av[])
     //------------------------------------------------------------------
     // Plate dynamics
     //------------------------------------------------------------------
-    // auto &plate_advection_setup =
-    //     main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(plate);
-    // auto &plate_update_pos =
-    //     main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(plate);
+    auto &plate_correction =
+        main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(
+            plate_inner);
 
-    // auto &plate_correction =
-    //     main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(plate_inner);
+    auto &plate_acoustic_step_1st_half =
+        main_methods.addInteractionDynamicsOneLevel<
+            solid_dynamics::StructureIntegration1stHalf,
+            HardeningPlasticSolid,
+            NoKernelCorrectionCK>(plate_inner);
 
-    // ParticleDynamicsGroup plate_shear_force;
-    // plate_shear_force.add(
-    //     &main_methods.addInteractionDynamics<LinearGradient, Vecd>(plate_inner, "Velocity"));
-    // plate_shear_force.add(
-    //     &main_methods.addInteractionDynamicsOneLevel<
-    //         continuum_dynamics::ShearIntegration, J2Plasticity>(plate_inner));
-
-    // auto &plate_acoustic_1st =
-    //     main_methods.addInteractionDynamicsOneLevel<
-    //         fluid_dynamics::AcousticStep1stHalf,
-    //         DissipativeRiemannSolverCK, NoKernelCorrectionCK>(plate_inner);
-
-    // auto &plate_acoustic_2nd =
-    //     main_methods.addInteractionDynamicsOneLevel<
-    //         fluid_dynamics::AcousticStep2ndHalf,
-    //         DissipativeRiemannSolverCK, NoKernelCorrectionCK>(plate_inner);
-
-    
-   auto &plate_correction =
-      main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(plate_inner);
-
-   auto &plate_acoustic_step_1st_half =
-      main_methods.addInteractionDynamicsOneLevel<
-        solid_dynamics::StructureIntegration1stHalf,
-        HardeningPlasticSolid,
-        NoKernelCorrectionCK>(plate_inner);
-
-   auto &plate_acoustic_step_2nd_half =
-      main_methods.addInteractionDynamicsOneLevel<
-        solid_dynamics::StructureIntegration2ndHalf>(plate_inner);
-
-
+    auto &plate_acoustic_step_2nd_half =
+        main_methods.addInteractionDynamicsOneLevel<
+            solid_dynamics::StructureIntegration2ndHalf>(plate_inner);
 
     auto &contact_factor =
-        main_methods.addInteractionDynamics<solid_dynamics::RepulsionFactor>(plate_cutter_contact);
+        main_methods.addInteractionDynamics<solid_dynamics::RepulsionFactor>(
+            plate_cutter_contact);
 
     auto &contact_force =
         main_methods.addInteractionDynamicsWithUpdate<
@@ -486,15 +663,16 @@ int main(int ac, char *av[])
     //------------------------------------------------------------------
     // Simbody planar cutter driving
     //------------------------------------------------------------------
-    Real omega_z = 2.0 * Pi * 2;   // Angular velocity [rad/s]   //200
+    Real omega_z = 2.0 * Pi * 2.0;
     Real feed_vx = 0.0;
-    Real feed_vy = -0.03;             // Feed velocity in y  //0.030
+    Real feed_vy = -0.03;
 
     Real end_time = 1.2;
 
     std::cout << "[Drive] omega_z=" << omega_z
               << " feed=(" << feed_vx << "," << feed_vy << ")"
-              << " U_max~" << U_max << " end_time=" << end_time << "\n";
+              << " U_max~" << U_max
+              << " end_time=" << end_time << "\n";
 
     SimTK::MultibodySystem MBsystem;
     SimTK::SimbodyMatterSubsystem matter(MBsystem);
@@ -505,11 +683,11 @@ int main(int ac, char *av[])
     SimTK::MobilizedBody::Planar cutter_mob(
         matter.Ground(),
         SimTK::Transform(SimTKVec3(0.0, 0.0, 0.0)),
-        // translation_holder_cutter[0], translation_holder_cutter[1], 0.0)),
         cutter_info,
         SimTK::Transform(SimTKVec3(0.0, 0.0, 0.0)));
 
     SimTK::State state = MBsystem.realizeTopology();
+
     SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
     integ.setAccuracy(1e-3);
     integ.setAllowInterpolation(false);
@@ -524,11 +702,13 @@ int main(int ac, char *av[])
     //------------------------------------------------------------------
     auto &body_state_recorder =
         main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(system);
-    body_state_recorder.addToWrite<Real>(plate, "Pressure");
-    body_state_recorder.addToWrite<Real>(plate, "Density");
+
+    // body_state_recorder.addToWrite<Real>(plate, "Pressure");
+    // body_state_recorder.addToWrite<Real>(plate, "Density");
 
     auto &observer_position =
-        main_methods.addObserveRecorder<Vecd>(observer_plate_contact,"Position");
+        main_methods.addObserveRecorder<Vecd>(
+            observer_plate_contact, "Position");
 
     //------------------------------------------------------------------
     // TimeStepper
@@ -536,24 +716,17 @@ int main(int ac, char *av[])
     Real total_physical_time = end_time;
     TimeStepper &time_stepper = sph_solver.getTimeStepper();
 
-    // auto &plate_advection_time_step =
-    //     main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(plate, U_max, 0.2);
-    // auto &plate_acoustic_time_step =
-    //     main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(plate, 0.4);
-
-    // auto &advection_step =
-    //     time_stepper.addTriggerByInterval(plate_advection_time_step.exec());
-
     auto &plate_acoustic_time_step =
-    main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(plate, 0.4);
+        main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(
+            plate, 0.4);
 
-    size_t advection_steps = system.RestartStep() + 1;
+    size_t acoustic_steps = system.RestartStep() + 1;
 
     int screening_interval = 100;
     int observation_interval = screening_interval * 2;
 
     auto &state_recording =
-        time_stepper.addTriggerByInterval(total_physical_time / 10000);//original:300
+        time_stepper.addTriggerByInterval(total_physical_time / 10000.0);
 
     //------------------------------------------------------------------
     // Preparation before the main loop
@@ -562,7 +735,7 @@ int main(int ac, char *av[])
     cutter_normal_direction.exec();
 
     update_configuration.exec();
-    // plate_advection_setup.exec();
+
     contact_factor.exec();
     plate_correction.exec();
 
@@ -571,13 +744,14 @@ int main(int ac, char *av[])
     fix_bottom_velocity.exec();
 
     body_state_recorder.writeToFile();
+
     update_observer_contact.exec();
-    observer_position.writeToFile(advection_steps);
+    observer_position.writeToFile(acoustic_steps);
 
     TimeInterval interval_output;
-    TimeInterval interval_advection_step;
     TimeInterval interval_acoustic_step;
     TimeInterval interval_updating_configuration;
+    TimeInterval interval_correction;
 
     TickCount t0 = TickCount::now();
 
@@ -591,10 +765,14 @@ int main(int ac, char *av[])
         Real dt = time_stepper.incrementPhysicalTime(plate_acoustic_time_step);
         Real t_target = time_stepper.getPhysicalTime();
 
-        // (A) Drive the cutter in-plane
+        // ------------------------------------------------------------
+        // A) Drive the cutter in-plane
+        // ------------------------------------------------------------
         SimTK::State &s_adv = integ.updAdvancedState();
+
         SimTK::Vec3 u_cmd(omega_z, feed_vx, feed_vy);
         cutter_mob.setU(s_adv, u_cmd);
+
         MBsystem.realize(s_adv, SimTK::Stage::Velocity);
 
         if (t_target > integ.getState().getTime())
@@ -602,21 +780,15 @@ int main(int ac, char *av[])
             integ.stepTo(t_target);
         }
 
-        // (B) Write back cutter pose and update normals
+        // ------------------------------------------------------------
+        // B) Write back cutter pose and update normals
+        // ------------------------------------------------------------
         constraint_cutter.exec();
         cutter_normal_direction.exec();
 
-        // // (C) Plate SPH dynamics + contact
-        // // plate_shear_force.exec(dt);
-        // contact_force.exec();
-        // // plate_acoustic_1st.exec(dt);
-        // // plate_acoustic_2nd.exec(dt);
-
-        // fix_left_velocity.exec();
-        // fix_right_velocity.exec();
-        // fix_bottom_velocity.exec();
-        
-        // (C) Contact + Taylor-bar-style solid dynamics
+        // ------------------------------------------------------------
+        // C) Contact + solid dynamics
+        // ------------------------------------------------------------
         contact_factor.exec();
         contact_force.exec();
 
@@ -634,69 +806,86 @@ int main(int ac, char *av[])
 
         interval_acoustic_step += TickCount::now() - time_instance;
 
-        // if (advection_step(plate_advection_time_step))
-        // {
-        //     advection_steps++;
+        acoustic_steps++;
 
-        //     // plate_update_pos.exec();
+        // ------------------------------------------------------------
+        // D) Output
+        // ------------------------------------------------------------
+        if (acoustic_steps % screening_interval == 0)
+        {
+            std::cout << std::fixed << std::setprecision(9)
+                      << "N=" << acoustic_steps
+                      << "  Time=" << time_stepper.getPhysicalTime()
+                      << "  dt=" << dt
+                      << "  acoustic_dt="
+                      << time_stepper.getGlobalTimeStepSize()
+                      << "\n";
+        }
 
-        //     fix_left_velocity.exec();
-        //     fix_right_velocity.exec();
-        //     fix_bottom_velocity.exec();
+        if (acoustic_steps % observation_interval == 0)
+        {
+            TickCount output_time = TickCount::now();
 
-        //     time_instance = TickCount::now();
+            update_observer_contact.exec();
+            observer_position.writeToFile(acoustic_steps);
 
-        //     if (advection_steps % screening_interval == 0)
-        //     {
-        //         std::cout << std::fixed << std::setprecision(9)
-        //                   << "N=" << advection_steps
-        //                   << "  Time=" << time_stepper.getPhysicalTime()
-        //                   << "  advection_dt=" << advection_step.getInterval()
-        //                   << "  acoustic_dt=" << time_stepper.getGlobalTimeStepSize() << "\n";
-        //     }
+            interval_output += TickCount::now() - output_time;
+        }
 
-        //     if (advection_steps % observation_interval == 0)
-        //     {
-        //         update_observer_contact.exec();
-        //         observer_position.writeToFile(advection_steps);
-        //     }
+        if (state_recording())
+        {
+            TickCount output_time = TickCount::now();
 
-        //     if (state_recording())
-        //     {
-        //         body_state_recorder.writeToFile();
-        //     }
+            body_state_recorder.writeToFile();
 
-        //     interval_output += TickCount::now() - time_instance;
+            interval_output += TickCount::now() - output_time;
+        }
 
-        //     time_instance = TickCount::now();
-        //     update_configuration.exec();
-        //     interval_updating_configuration += TickCount::now() - time_instance;
+        // ------------------------------------------------------------
+        // E) Update configuration and correction
+        // ------------------------------------------------------------
+        {
+            TickCount config_time = TickCount::now();
 
-        //     time_instance = TickCount::now();
-        //     // plate_advection_setup.exec();
-        //     contact_factor.exec();
-        //     plate_correction.exec();
-        //     interval_advection_step += TickCount::now() - time_instance;
-        // }
+            update_configuration.exec();
+
+            interval_updating_configuration += TickCount::now() - config_time;
+        }
+
+        {
+            TickCount correction_time = TickCount::now();
+
+            contact_factor.exec();
+            plate_correction.exec();
+
+            interval_correction += TickCount::now() - correction_time;
+        }
     }
 
     //------------------------------------------------------------------
     // Summary
     //------------------------------------------------------------------
     TimeInterval tt = TickCount::now() - t0 - interval_output;
-    std::cout << "Total wall time for computation: " << tt.seconds() << " seconds.\n";
+
+    std::cout << "Total wall time for computation: "
+              << tt.seconds() << " seconds.\n";
+
     std::cout << std::fixed << std::setprecision(9)
-              << "interval_advection_step = " << interval_advection_step.seconds() << "\n"
-              << "interval_acoustic_step = " << interval_acoustic_step.seconds() << "\n"
-              << "interval_updating_configuration = " << interval_updating_configuration.seconds() << "\n";
+              << "interval_acoustic_step = "
+              << interval_acoustic_step.seconds() << "\n"
+              << "interval_updating_configuration = "
+              << interval_updating_configuration.seconds() << "\n"
+              << "interval_correction = "
+              << interval_correction.seconds() << "\n";
 
     if (system.GenerateRegressionData())
     {
-        // Add generateDataBase here if needed
+        // Add generateDataBase here if needed.
     }
     else
     {
-        std::cout << "[Regression] baseline missing likely. Skip testResult in dev.\n";
+        std::cout << "[Regression] baseline missing likely. "
+                  << "Skip testResult in dev.\n";
     }
 
     return 0;
