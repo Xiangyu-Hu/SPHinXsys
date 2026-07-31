@@ -103,15 +103,11 @@ endif()
 
 target_link_libraries(sphinxsys_core INTERFACE Boost::boost)
 target_include_directories(sphinxsys_core INTERFACE ${Boost_INCLUDE_DIRS})
-find_package(Boost QUIET COMPONENTS program_options throw_exception)
+find_package(Boost QUIET COMPONENTS program_options)
 
 if(TARGET Boost::program_options)
     target_compile_definitions(sphinxsys_core INTERFACE BOOST_AVAILABLE)
     target_link_libraries(sphinxsys_core INTERFACE Boost::program_options)
-endif()
-
-if(TARGET Boost::throw_exception)
-    target_link_libraries(sphinxsys_core INTERFACE Boost::throw_exception)
 endif()
 
 find_package(spdlog CONFIG REQUIRED)
