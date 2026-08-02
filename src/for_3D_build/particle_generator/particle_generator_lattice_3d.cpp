@@ -18,9 +18,9 @@ void ParticleGenerator<BaseParticles, Lattice>::prepareGeometricData()
         for (int j = 0; j < number_of_lattices[1]; ++j)
             for (int k = 0; k < number_of_lattices[2]; ++k)
             {
-                Vecd particle_position = mesh.CellPositionFromIndex(Arrayi(i, j, k));
-                if (initial_shape_.checkContain(particle_position))
-                    addPositionAndVolumetricMeasure(particle_position, particle_volume);
+                Vecd position = mesh.CellPositionFromIndex(Arrayi(i, j, k));
+                if (initial_shape_.checkContain(position) && !checkBlocks(position))
+                    addPositionAndVolumetricMeasure(position, particle_volume);
             }
 }
 //=================================================================================================//
@@ -34,8 +34,8 @@ void ParticleGenerator<SurfaceParticles, Lattice>::prepareGeometricData()
         for (int j = 0; j < number_of_lattices[1]; ++j)
             for (int k = 0; k < number_of_lattices[2]; ++k)
             {
-                Vecd particle_position = mesh.CellPositionFromIndex(Arrayi(i, j, k));
-                if (initial_shape_.checkContain(particle_position))
+                Vecd position = mesh.CellPositionFromIndex(Arrayi(i, j, k));
+                if (initial_shape_.checkContain(position))
                 {
                     all_cells_++;
                     total_volume_ += lattice_spacing_ * lattice_spacing_ * lattice_spacing_;
@@ -58,15 +58,15 @@ void ParticleGenerator<SurfaceParticles, Lattice>::prepareGeometricData()
         for (int j = 0; j < number_of_lattices[1]; ++j)
             for (int k = 0; k < number_of_lattices[2]; ++k)
             {
-                Vecd particle_position = mesh.CellPositionFromIndex(Arrayi(i, j, k));
-                if (initial_shape_.checkContain(particle_position))
+                Vecd position = mesh.CellPositionFromIndex(Arrayi(i, j, k));
+                if (initial_shape_.checkContain(position))
                 {
                     Real random_real = uniform_distr(rng);
                     // If the random_real is smaller than the interval, add a particle, only if we haven't reached the max. number of particles.
                     if (random_real <= interval && base_particles_.TotalRealParticles() < planned_number_of_particles_)
                     {
-                        addPositionAndVolumetricMeasure(particle_position, avg_particle_volume_ / thickness_);
-                        addSurfaceProperties(initial_shape_.findNormalDirection(particle_position), thickness_);
+                        addPositionAndVolumetricMeasure(position, avg_particle_volume_ / thickness_);
+                        addSurfaceProperties(initial_shape_.findNormalDirection(position), thickness_);
                     }
                 }
             }

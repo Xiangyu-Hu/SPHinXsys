@@ -20,13 +20,14 @@ GeneratingMethod<Lattice>::GeneratingMethod(SPHBody &sph_body)
 }
 //=================================================================================================//
 ParticleGenerator<BaseParticles, Lattice>::
-    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape)
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
+                      Shape &target_shape, StdVec<OrientedBox *> blocks)
     : ParticleGenerator<BaseParticles>(sph_body, base_particles),
-      GeneratingMethod<Lattice>(sph_body), target_shape_(target_shape) {}
+      GeneratingMethod<Lattice>(sph_body), target_shape_(target_shape), blocks_(blocks) {}
 //=================================================================================================//
 ParticleGenerator<BaseParticles, Lattice>::
-    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
-    : ParticleGenerator(sph_body, base_particles, sph_body.getInitialShape()) {}
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, StdVec<OrientedBox *> blocks)
+    : ParticleGenerator(sph_body, base_particles, sph_body.getInitialShape(), blocks) {}
 //=================================================================================================//
 void ParticleGenerator<BaseParticles, Lattice>::
     addPositionAndVolumetricMeasure(const Vecd &position, Real volume)
@@ -38,6 +39,16 @@ void ParticleGenerator<BaseParticles, Lattice>::
         ParticleGenerator<BaseParticles>::addPositionAndVolumetricMeasure(
             position, volume / local_particle_volume_ratio);
     }
+}
+//=================================================================================================//
+bool ParticleGenerator<BaseParticles, Lattice>::checkBlocks(const Vecd &position)
+{
+    bool is_blocked = false;
+    for (OrientedBox *block : blocks_)
+    {
+        is_blocked = !is_blocked && block->checkLowerBound(position);
+    }
+    return is_blocked;
 }
 //=================================================================================================//
 ParticleGenerator<SurfaceParticles, Lattice>::
