@@ -53,7 +53,7 @@ void BaseParticles::addParticleGroupToWrite(const std::string &name)
     }
     else
     {
-        std::runtime_error("Error: the particle group " + name + " is not registered!");
+        throw std::runtime_error("Error: the particle group " + name + " is not registered!");
     }
 }
 //=================================================================================================//
