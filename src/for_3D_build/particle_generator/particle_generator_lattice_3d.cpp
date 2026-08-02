@@ -20,7 +20,13 @@ void ParticleGenerator<BaseParticles, Lattice>::prepareGeometricData()
             {
                 Vecd position = mesh.CellPositionFromIndex(Arrayi(i, j, k));
                 if (initial_shape_.checkContain(position) && !checkBlocks(position))
+                {
                     addPositionAndVolumetricMeasure(position, particle_volume);
+                }
+                else
+                {
+                    addInserts(position, particle_volume);
+                }
             }
 }
 //=================================================================================================//
