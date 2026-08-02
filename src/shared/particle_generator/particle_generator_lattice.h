@@ -60,17 +60,21 @@ class ParticleGenerator<BaseParticles, Lattice>
 {
   public:
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape,
-                      StdVec<OrientedBox *> blocks = StdVec<OrientedBox *>{});
+                      StdVec<OrientedBox *> blocks = StdVec<OrientedBox *>{},
+                      StdVec<OrientedBox *> inserts = StdVec<OrientedBox *>{});
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
-                      StdVec<OrientedBox *> blocks = StdVec<OrientedBox *>{});
+                      StdVec<OrientedBox *> blocks = StdVec<OrientedBox *>{},
+                      StdVec<OrientedBox *> inserts = StdVec<OrientedBox *>{});
     virtual ~ParticleGenerator() {};
     virtual void prepareGeometricData() override;
 
   protected:
     Shape &target_shape_;
     StdVec<OrientedBox *> blocks_;
+    StdVec<OrientedBox *> inserts_;
     virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
     bool checkBlocks(const Vecd &position);
+    void addInserts(const Vecd &position, Real volume);
 };
 
 template <> // For generating surface particles from lattice positions using reduced order approach

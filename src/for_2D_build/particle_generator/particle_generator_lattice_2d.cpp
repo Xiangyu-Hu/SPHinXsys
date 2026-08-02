@@ -22,6 +22,10 @@ void ParticleGenerator<BaseParticles, Lattice>::prepareGeometricData()
             {
                 addPositionAndVolumetricMeasure(position, particle_volume);
             }
+            else
+            {
+                addInserts(position, particle_volume);
+            }
         }
 }
 //=================================================================================================//
