@@ -49,6 +49,7 @@ class TransformGeometry : public GeometryType
     Transform &getTransform() { return transform_; };
     Transform initialTransform() const { return initial_transform_; };
     void setTransform(const Transform &transform) { transform_ = transform; };
+    GeometryType &getFrameGeometry() { return *this; };
 
     bool checkContain(const Vecd &probe_point)
     {

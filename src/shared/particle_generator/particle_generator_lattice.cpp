@@ -56,9 +56,13 @@ void ParticleGenerator<BaseParticles, Lattice>::addInserts(const Vecd &position,
 {
     for (OrientedBox *insert : inserts_)
     {
-        if (insert->checkContain(position))
+        Transform &transform = insert->getTransform();
+        Vecd inv_translation = position - transform.getTranslation();
+        auto &frame_geometry = insert->getFrameGeometry();
+        if (frame_geometry.checkContain(inv_translation))
         {
-            addPositionAndVolumetricMeasure(position, volume);
+            addPositionAndVolumetricMeasure(
+                transform.shiftFrameStationToBase(inv_translation), volume);
         }
     }
 }
