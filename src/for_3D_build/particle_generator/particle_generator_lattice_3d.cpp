@@ -5,9 +5,57 @@
 #include "base_particle_dynamics.h"
 #include "base_particles.h"
 #include "complex_geometry.h"
+#include "geometric_element_and_shape_3d.h"
 
 namespace SPH
 {
+//=================================================================================================//
+ParticleGenerator<BaseParticles, Lattice>::
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape,
+                      StdVec<OrientedBox *> blocks, StdVec<Shape *> inserts)
+    : ParticleGenerator<BaseParticles>(sph_body, base_particles),
+      GeneratingMethod<Lattice>(sph_body), target_shape_(target_shape), blocks_(blocks)
+{
+    for (Shape *insert : inserts)
+    {
+        if (dynamic_cast<GeometricShapeBox *>(insert) != nullptr)
+        {
+            box_shape_inserts_.push_back(dynamic_cast<GeometricShapeBox *>(insert));
+        }
+
+        if (dynamic_cast<GeometricShapeCylinder *>(insert) != nullptr)
+        {
+            cylinder_shape_inserts_.push_back(dynamic_cast<GeometricShapeCylinder *>(insert));
+        }
+    }
+}
+//=================================================================================================//
+void ParticleGenerator<BaseParticles, Lattice>::addInserts(const Vecd &position, Real volume)
+{
+    for (GeometricShapeBox *box_insert : box_shape_inserts_)
+    {
+        Transform &transform = box_insert->getTransform();
+        Vecd inv_translation = position - transform.getTranslation();
+        auto &frame_geometry = box_insert->getFrameGeometry();
+        if (frame_geometry.checkContain(inv_translation))
+        {
+            addPositionAndVolumetricMeasure(
+                transform.shiftFrameStationToBase(inv_translation), volume);
+        }
+    }
+
+    for (GeometricShapeCylinder *cylinder_insert : cylinder_shape_inserts_)
+    {
+        Transform &transform = cylinder_insert->getTransform();
+        Vecd inv_translation = position - transform.getTranslation();
+        auto &frame_geometry = cylinder_insert->getFrameGeometry();
+        if (frame_geometry.checkContain(inv_translation))
+        {
+            addPositionAndVolumetricMeasure(
+                transform.shiftFrameStationToBase(inv_translation), volume);
+        }
+    }
+}
 //=================================================================================================//
 void ParticleGenerator<BaseParticles, Lattice>::prepareGeometricData()
 {

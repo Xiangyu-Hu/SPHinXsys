@@ -20,14 +20,8 @@ GeneratingMethod<Lattice>::GeneratingMethod(SPHBody &sph_body)
 }
 //=================================================================================================//
 ParticleGenerator<BaseParticles, Lattice>::
-    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape,
-                      StdVec<OrientedBox *> blocks, StdVec<GeometricShapeBox *> inserts)
-    : ParticleGenerator<BaseParticles>(sph_body, base_particles),
-      GeneratingMethod<Lattice>(sph_body), target_shape_(target_shape), blocks_(blocks), inserts_(inserts) {}
-//=================================================================================================//
-ParticleGenerator<BaseParticles, Lattice>::
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
-                      StdVec<OrientedBox *> blocks, StdVec<GeometricShapeBox *> inserts)
+                      StdVec<OrientedBox *> blocks, StdVec<Shape *> inserts)
     : ParticleGenerator(sph_body, base_particles, sph_body.getInitialShape(), blocks, inserts) {}
 //=================================================================================================//
 void ParticleGenerator<BaseParticles, Lattice>::
@@ -50,21 +44,6 @@ bool ParticleGenerator<BaseParticles, Lattice>::checkBlocks(const Vecd &position
         is_blocked = !is_blocked && block->checkLowerBound(position);
     }
     return is_blocked;
-}
-//=================================================================================================//
-void ParticleGenerator<BaseParticles, Lattice>::addInserts(const Vecd &position, Real volume)
-{
-    for (GeometricShapeBox *insert : inserts_)
-    {
-        Transform &transform = insert->getTransform();
-        Vecd inv_translation = position - transform.getTranslation();
-        auto &frame_geometry = insert->getFrameGeometry();
-        if (frame_geometry.checkContain(inv_translation))
-        {
-            addPositionAndVolumetricMeasure(
-                transform.shiftFrameStationToBase(inv_translation), volume);
-        }
-    }
 }
 //=================================================================================================//
 ParticleGenerator<SurfaceParticles, Lattice>::

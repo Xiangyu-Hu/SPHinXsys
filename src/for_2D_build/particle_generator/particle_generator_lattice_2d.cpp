@@ -9,6 +9,36 @@
 namespace SPH
 {
 //=================================================================================================//
+ParticleGenerator<BaseParticles, Lattice>::
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape,
+                      StdVec<OrientedBox *> blocks, StdVec<Shape *> inserts)
+    : ParticleGenerator<BaseParticles>(sph_body, base_particles),
+      GeneratingMethod<Lattice>(sph_body), target_shape_(target_shape), blocks_(blocks)
+{
+    for (Shape *insert : inserts)
+    {
+        if (GeometricShapeBox *box_insert = DynamicCast<GeometricShapeBox>(this, insert))
+        {
+            box_shape_inserts_.push_back(box_insert);
+        }
+    }
+}
+//=================================================================================================//
+void ParticleGenerator<BaseParticles, Lattice>::addInserts(const Vecd &position, Real volume)
+{
+    for (GeometricShapeBox *insert : box_shape_inserts_)
+    {
+        Transform &transform = insert->getTransform();
+        Vecd inv_translation = position - transform.getTranslation();
+        auto &frame_geometry = insert->getFrameGeometry();
+        if (frame_geometry.checkContain(inv_translation))
+        {
+            addPositionAndVolumetricMeasure(
+                transform.shiftFrameStationToBase(inv_translation), volume);
+        }
+    }
+}
+//=================================================================================================//
 void ParticleGenerator<BaseParticles, Lattice>::prepareGeometricData()
 {
     Mesh mesh(domain_bounds_, lattice_spacing_, 0);
