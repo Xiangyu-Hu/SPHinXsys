@@ -17,9 +17,9 @@ ParticleGenerator<BaseParticles, Lattice>::
 {
     for (Shape *insert : inserts)
     {
-        if (GeometricShapeBox *box_insert = DynamicCast<GeometricShapeBox>(this, insert))
+        if (dynamic_cast<GeometricShapeBox *>(insert) != nullptr)
         {
-            box_shape_inserts_.push_back(box_insert);
+            box_shape_inserts_.push_back(dynamic_cast<GeometricShapeBox *>(insert));
         }
     }
 }
