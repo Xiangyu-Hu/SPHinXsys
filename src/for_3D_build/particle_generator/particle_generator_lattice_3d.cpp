@@ -12,9 +12,9 @@ namespace SPH
 //=================================================================================================//
 ParticleGenerator<BaseParticles, Lattice>::
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape,
-                      StdVec<OrientedBox *> blocks, StdVec<Shape *> inserts)
+                      StdVec<OrientedBox *> blockers, StdVec<Shape *> inserts)
     : ParticleGenerator<BaseParticles>(sph_body, base_particles),
-      GeneratingMethod<Lattice>(sph_body), target_shape_(target_shape), blocks_(blocks)
+      GeneratingMethod<Lattice>(sph_body), target_shape_(target_shape), blockers_(blockers)
 {
     for (Shape *insert : inserts)
     {

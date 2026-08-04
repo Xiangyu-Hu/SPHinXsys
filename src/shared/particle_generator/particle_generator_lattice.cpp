@@ -21,8 +21,8 @@ GeneratingMethod<Lattice>::GeneratingMethod(SPHBody &sph_body)
 //=================================================================================================//
 ParticleGenerator<BaseParticles, Lattice>::
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
-                      StdVec<OrientedBox *> blocks, StdVec<Shape *> inserts)
-    : ParticleGenerator(sph_body, base_particles, sph_body.getInitialShape(), blocks, inserts) {}
+                      StdVec<OrientedBox *> blockers, StdVec<Shape *> inserts)
+    : ParticleGenerator(sph_body, base_particles, sph_body.getInitialShape(), blockers, inserts) {}
 //=================================================================================================//
 void ParticleGenerator<BaseParticles, Lattice>::
     addPositionAndVolumetricMeasure(const Vecd &position, Real volume)
@@ -39,9 +39,9 @@ void ParticleGenerator<BaseParticles, Lattice>::
 bool ParticleGenerator<BaseParticles, Lattice>::checkBlocks(const Vecd &position)
 {
     bool is_blocked = false;
-    for (OrientedBox *block : blocks_)
+    for (OrientedBox *blocker : blockers_)
     {
-        is_blocked = !is_blocked && block->checkLowerBound(position);
+        is_blocked = !is_blocked && blocker->checkLowerBound(position);
     }
     return is_blocked;
 }

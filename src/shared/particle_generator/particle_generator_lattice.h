@@ -62,17 +62,17 @@ class ParticleGenerator<BaseParticles, Lattice>
 {
   public:
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape,
-                      StdVec<OrientedBox *> blocks = StdVec<OrientedBox *>{},
+                      StdVec<OrientedBox *> blockers = StdVec<OrientedBox *>{},
                       StdVec<Shape *> inserts = StdVec<Shape *>{});
     ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
-                      StdVec<OrientedBox *> blocks = StdVec<OrientedBox *>{},
+                      StdVec<OrientedBox *> blockers = StdVec<OrientedBox *>{},
                       StdVec<Shape *> inserts = StdVec<Shape *>{});
     virtual ~ParticleGenerator() {};
     virtual void prepareGeometricData() override;
 
   protected:
     Shape &target_shape_;
-    StdVec<OrientedBox *> blocks_;
+    StdVec<OrientedBox *> blockers_;
     StdVec<GeometricShapeBox *> box_shape_inserts_;
     StdVec<GeometricShapeCylinder *> cylinder_shape_inserts_;
     virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
