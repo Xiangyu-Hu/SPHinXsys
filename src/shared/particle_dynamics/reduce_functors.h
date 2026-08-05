@@ -123,7 +123,7 @@ struct IndexedMin : ReturnFunction<Indexed<Real>>
             return x;
         if (std::isnan(y.first))
             return y;
-        return x.first > y.first ? x : y;
+        return x.first < y.first ? x : y;
     };
 };
 
