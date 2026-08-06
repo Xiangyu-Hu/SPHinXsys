@@ -3,8 +3,8 @@
 namespace SPH
 {
 //=================================================================================================//
-ExtrudeShape::ExtrudeShape(Shape &base_shape, Real thickness)
-    : Shape("Extruded" + base_shape.Name()),
+ExtrudeShape::ExtrudeShape(Shape &base_shape, Real thickness, const std::string &shape_name)
+    : Shape(shape_name),
       thickness_(thickness), thickness_sqr_(thickness * thickness),
       base_shape_(base_shape) {};
 //=================================================================================================//

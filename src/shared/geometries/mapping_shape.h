@@ -77,7 +77,7 @@ class ExtrudeShape : public Shape
         : Shape("Extruded" + base_shape_ptr->Name()),
           thickness_(thickness), thickness_sqr_(thickness * thickness),
           base_shape_(*base_shape_keeper_.assignPtr(base_shape_ptr)) {};
-    ExtrudeShape(Shape &base_shape, Real thickness);
+    ExtrudeShape(Shape &base_shape, Real thickness, const std::string &shape_name = "ExtrudedShape");
     virtual ~ExtrudeShape() {};
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
