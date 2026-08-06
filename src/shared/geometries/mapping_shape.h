@@ -48,7 +48,7 @@ class InverseShape : public BaseShapeType
     /** template constructor for general shapes. */
     template <typename... Args>
     explicit InverseShape(Args &&...args)
-        : BaseShapeType(std::forward<Args>(args)...){};
+        : BaseShapeType(std::forward<Args>(args)...) {};
 
     virtual ~InverseShape() {};
 
@@ -64,61 +64,24 @@ class InverseShape : public BaseShapeType
  * @brief A template shape which define the region by expanding the geometry surface with given thickness.
  * @brief Positive thickness will extend the shape and negative thickness will shrink the shape.
  */
-template <class BaseShapeType>
 class ExtrudeShape : public Shape
 {
-    UniquePtrKeeper<BaseShapeType> base_shape_keeper_;
+    SharedPtrKeeper<Shape> base_shape_keeper_;
     Real thickness_, thickness_sqr_;
-
-    BaseShapeType *base_shape_;
-    Vecd getShift(const Vecd &probe_point, const Vecd &original_closest_point)
-    {
-        Vecd displacement = original_closest_point - probe_point;
-        return thickness_ * displacement / (displacement.norm() + Eps);
-    };
+    Shape &base_shape_;
+    Vecd getShift(const Vecd &probe_point, const Vecd &original_closest_point);
 
   public:
-    explicit ExtrudeShape(BaseShapeType *base_shape, Real thickness)
-        : Shape("Extruded" + base_shape->Name()),
+    template <class BaseShapeType>
+    ExtrudeShape(Real thickness, SharedPtr<BaseShapeType> base_shape_ptr)
+        : Shape("Extruded" + base_shape_ptr->Name()),
           thickness_(thickness), thickness_sqr_(thickness * thickness),
-          base_shape_(base_shape) {};
-
-    template <typename... Args>
-    explicit ExtrudeShape(Real thickness, Args &&...args)
-        : Shape("Extruded"), thickness_(thickness), thickness_sqr_(thickness * thickness),
-          base_shape_(base_shape_keeper_.template createPtr<BaseShapeType>(std::forward<Args>(args)...))
-    {
-        name_ = "Extruded" + base_shape_->Name();
-    };
+          base_shape_(*base_shape_keeper_.assignPtr(base_shape_ptr)) {};
+    ExtrudeShape(Shape &base_shape, Real thickness);
     virtual ~ExtrudeShape() {};
-
-    virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
-    {
-        Vecd original_closest_point = base_shape_->findClosestPoint(probe_point);
-        Vecd displacement = original_closest_point - probe_point;
-        if (base_shape_->checkContain(probe_point))
-        {
-            return thickness_ > 0.0 ? true : displacement.squaredNorm() > thickness_sqr_;
-        }
-        else
-        {
-            return thickness_ < 0.0 ? false : displacement.squaredNorm() < thickness_sqr_;
-        }
-    };
-
-    virtual Vecd findClosestPoint(const Vecd &probe_point) override
-    {
-        Vecd closest_point = base_shape_->findClosestPoint(probe_point);
-        Vecd shift = getShift(probe_point, closest_point);
-        closest_point += base_shape_->checkContain(probe_point) ? shift : -shift;
-        return closest_point;
-    };
-
-    virtual BoundingBoxd findBounds() override
-    {
-        BoundingBoxd bounds = base_shape_->findBounds();
-        return bounds.expand(thickness_ * Vecd::Ones());
-    };
+    virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
+    virtual Vecd findClosestPoint(const Vecd &probe_point) override;
+    virtual BoundingBoxd findBounds() override;
 };
 } // namespace SPH
 
