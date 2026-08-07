@@ -95,13 +95,15 @@ class TotalMechanicalEnergyCK : public TotalKineticEnergyCK
     DiscreteVariable<Vecd> *dv_pos_;
 };
 
-template <class DynamicsIdentifier, typename ReturnFunctionType>
+template <class DynamicsIdentifier, typename ReturnFunctionType, class EvaluationType>
 class QuantityReduce : public BaseLocalDynamicsReduce<ReturnFunctionType, DynamicsIdentifier>
 {
     using DataType = typename ReturnFunctionType::ReturnType;
+    using EvaluationKernel = typename EvaluationType::ComputingKernel;
 
   public:
-    QuantityReduce(DynamicsIdentifier &identifier, const std::string &variable_name);
+    template <typename... Args>
+    QuantityReduce(DynamicsIdentifier &identifier, Args &&...args);
     virtual ~QuantityReduce() {};
 
     class ReduceKernel
@@ -112,15 +114,60 @@ class QuantityReduce : public BaseLocalDynamicsReduce<ReturnFunctionType, Dynami
 
         DataType reduce(size_t index_i, Real dt = 0.0)
         {
-            return variable_[index_i];
+            return evaluation_(index_i);
         };
 
       protected:
-        DataType *variable_;
+        EvaluationKernel evaluation_;
     };
 
   protected:
-    DiscreteVariable<DataType> *dv_variable_;
+    EvaluationType evaluation_method_;
+};
+
+template <typename ReturnFunctionType>
+class SimpleEvaluation
+{
+    using ReturnType = typename ReturnFunctionType::ReturnType;
+    using InputType = typename ReturnFunctionType::InputType;
+    DiscreteVariable<InputType> *dv_variable_;
+
+  public:
+    SimpleEvaluation(BaseParticles *particles, const std::string &variable_name)
+        : dv_variable_(particles->template getVariableByName<InputType>(variable_name)) {};
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : variable_(encloser.dv_variable_->DelegatedDataView(ex_policy)) {}
+
+        ReturnType operator()(size_t index_i)
+        {
+            return return_function_(variable_[index_i], index_i);
+        };
+
+      protected:
+        DataView<InputType> variable_;
+        ReturnFunctionType return_function_;
+    };
+};
+template <typename DataType>
+struct DirectValue : ReturnFunction<DataType>, InputFunction<DataType>
+{
+    DataType operator()(const DataType &value, size_t)
+    {
+        return value;
+    };
+};
+
+template <typename DataType>
+struct IndexedValue : ReturnFunction<Indexed<DataType>>, InputFunction<DataType>
+{
+    Indexed<DataType> operator()(const DataType &value, size_t index_i)
+    {
+        return Indexed<DataType>(value, index_i);
+    };
 };
 
 template <typename DataType, class DynamicsIdentifier = SPHBody>
@@ -165,10 +212,10 @@ class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<Sample<DataType
 };
 
 template <typename DataType, class DynamicsIdentifier = SPHBody>
-class MaximumNorm : public BaseLocalDynamicsReduce<ReduceParticleMax, DynamicsIdentifier>
+class MaximumNorm : public BaseLocalDynamicsReduce<IndexedMax, DynamicsIdentifier>
 {
     using ReduceReturnType = std::pair<Real, UnsignedInt>;
-    using BaseDynamicsType = BaseLocalDynamicsReduce<ReduceParticleMax, DynamicsIdentifier>;
+    using BaseDynamicsType = BaseLocalDynamicsReduce<IndexedMax, DynamicsIdentifier>;
 
   public:
     MaximumNorm(DynamicsIdentifier &identifier, const std::string &variable_name);

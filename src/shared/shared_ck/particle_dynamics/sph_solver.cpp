@@ -170,4 +170,31 @@ Real TimeStepper::getGlobalTimeStepSizeWithScalingRef()
     return getGlobalTimeStepSize() * sv_physical_time_->getScalingRef();
 }
 //=================================================================================================//
+MainMethods &SPHSolver::getMainMethodContainer()
+{
+    if (main_methods_keeper_.getPtr() == nullptr)
+    {
+        return *main_methods_keeper_.createPtr<MainMethods>(par_ck);
+    }
+    return *main_methods_keeper_.getPtr();
+}
+//=================================================================================================//
+HostMethods &SPHSolver::getHostMethodContainer()
+{
+    if (host_methods_keeper_.getPtr() == nullptr)
+    {
+        return *host_methods_keeper_.createPtr<HostMethods>(par_host);
+    }
+    return *host_methods_keeper_.getPtr();
+}
+//=================================================================================================//
+SequenceMethods &SPHSolver::getSequenceMethodContainer()
+{
+    if (seq_methods_keeper_.getPtr() == nullptr)
+    {
+        return *seq_methods_keeper_.createPtr<SequenceMethods>(seq);
+    }
+    return *seq_methods_keeper_.getPtr();
+}
+//=================================================================================================//
 } // namespace SPH

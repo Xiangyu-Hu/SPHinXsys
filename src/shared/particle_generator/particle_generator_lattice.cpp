@@ -20,13 +20,9 @@ GeneratingMethod<Lattice>::GeneratingMethod(SPHBody &sph_body)
 }
 //=================================================================================================//
 ParticleGenerator<BaseParticles, Lattice>::
-    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape)
-    : ParticleGenerator<BaseParticles>(sph_body, base_particles),
-      GeneratingMethod<Lattice>(sph_body), target_shape_(target_shape) {}
-//=================================================================================================//
-ParticleGenerator<BaseParticles, Lattice>::
-    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles)
-    : ParticleGenerator(sph_body, base_particles, sph_body.getInitialShape()) {}
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
+                      StdVec<OrientedBox *> blockers, StdVec<Shape *> inserts)
+    : ParticleGenerator(sph_body, base_particles, sph_body.getInitialShape(), blockers, inserts) {}
 //=================================================================================================//
 void ParticleGenerator<BaseParticles, Lattice>::
     addPositionAndVolumetricMeasure(const Vecd &position, Real volume)
@@ -38,6 +34,16 @@ void ParticleGenerator<BaseParticles, Lattice>::
         ParticleGenerator<BaseParticles>::addPositionAndVolumetricMeasure(
             position, volume / local_particle_volume_ratio);
     }
+}
+//=================================================================================================//
+bool ParticleGenerator<BaseParticles, Lattice>::checkBlocks(const Vecd &position)
+{
+    bool is_blocked = false;
+    for (OrientedBox *blocker : blockers_)
+    {
+        is_blocked = !is_blocked && blocker->checkLowerBound(position);
+    }
+    return is_blocked;
 }
 //=================================================================================================//
 ParticleGenerator<SurfaceParticles, Lattice>::

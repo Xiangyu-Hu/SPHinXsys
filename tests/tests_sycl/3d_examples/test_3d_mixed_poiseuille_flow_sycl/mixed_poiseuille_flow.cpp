@@ -231,8 +231,8 @@ int main(int ac, char *av[])
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
         SPHSolver sph_solver(relaxation_system);
-        auto &main_methods = sph_solver.addParticleMethodContainer(par_host);
-        auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+        auto &main_methods = sph_solver.getHostMethodContainer();
+        auto &host_methods = sph_solver.getHostMethodContainer();
 
         auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall);
         auto &water_body_cell_linked_list = main_methods.addCellLinkedListDynamics(water_body);

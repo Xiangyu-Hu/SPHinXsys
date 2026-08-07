@@ -47,6 +47,12 @@ struct ReturnFunction
     typedef DataType ReturnType;
 };
 
+template <class DataType>
+struct InputFunction
+{
+    typedef DataType InputType;
+};
+
 struct AssignIndex
 {
     UnsignedInt operator()(UnsignedInt i) const { return i; }
@@ -70,7 +76,7 @@ class NoLimiter : public Limiter
 {
   public:
     template <typename... Args>
-    NoLimiter(Args &&...args) : Limiter(){};
+    NoLimiter(Args &&...args) : Limiter() {};
 
     template <typename... Args>
     Real operator()(Args &&...args) const
@@ -85,7 +91,7 @@ class TruncatedLinear : public Limiter
 
   public:
     TruncatedLinear(Real slope = 100.0)
-        : Limiter(), slope_(slope){};
+        : Limiter(), slope_(slope) {};
 
     Real operator()(Real dimensionless_measure) const
     {

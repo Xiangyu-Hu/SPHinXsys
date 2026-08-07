@@ -91,9 +91,12 @@ struct ReduceReference<ReduceMax<int>>
     static inline const int value = MinInt;
 };
 
-struct ReduceParticleMax : ReturnFunction<std::pair<Real, UnsignedInt>>
+template <typename DataType>
+using Indexed = std::pair<DataType, UnsignedInt>;
+
+struct IndexedMax : ReturnFunction<Indexed<Real>>
 {
-    using PairType = std::pair<Real, UnsignedInt>;
+    using PairType = Indexed<Real>;
     PairType operator()(const PairType &x, const PairType &y) const
     {
         if (std::isnan(x.first))
@@ -105,10 +108,30 @@ struct ReduceParticleMax : ReturnFunction<std::pair<Real, UnsignedInt>>
 };
 
 template <>
-struct ReduceReference<ReduceParticleMax>
+struct ReduceReference<IndexedMax>
 {
-    using PairType = std::pair<Real, UnsignedInt>;
-    static inline const PairType value = std::pair<Real, UnsignedInt>(MinReal, 0);
+    using PairType = Indexed<Real>;
+    static inline const PairType value = Indexed<Real>(MinReal, MaxUnsignedInt);
+};
+
+struct IndexedMin : ReturnFunction<Indexed<Real>>
+{
+    using PairType = Indexed<Real>;
+    PairType operator()(const PairType &x, const PairType &y) const
+    {
+        if (std::isnan(x.first))
+            return x;
+        if (std::isnan(y.first))
+            return y;
+        return x.first < y.first ? x : y;
+    };
+};
+
+template <>
+struct ReduceReference<IndexedMin>
+{
+    using PairType = Indexed<Real>;
+    static inline const PairType value = Indexed<Real>(MaxReal, MaxUnsignedInt);
 };
 
 template <typename DataType>

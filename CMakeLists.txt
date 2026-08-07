@@ -59,6 +59,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
         target_compile_options(sphinxsys_core INTERFACE /MP)
     endif()
     target_compile_options(sphinxsys_core INTERFACE /permissive-)
+    target_compile_options(sphinxsys_core INTERFACE /bigobj) # Heavily templated CK translation units (e.g. fluid_simulation_builder.cpp) exceed the default COFF section limit without this.
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
