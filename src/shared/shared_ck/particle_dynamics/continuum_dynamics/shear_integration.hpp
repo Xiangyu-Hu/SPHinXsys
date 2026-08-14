@@ -68,6 +68,7 @@ template <class ExecutionPolicy, class EncloserType>
 ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
+      constitute_(ex_policy, encloser.material_),
       G_(encloser.material_.ShearModulus()),
       shear_force_(encloser.dv_shear_force_->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
@@ -97,7 +98,8 @@ void ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
         sum_hourglass += penalty_scale * G_ * v_ij_correction.dot(e_ij) * vec_r_ij *
                          dW_ijV_j / vec_r_ij.squaredNorm();
     }
-    hourglass_force_[index_i] += sum_hourglass * Vol_[index_i] * dt;
+    hourglass_force_[index_i] = constitute_.updateHourglassForce(
+        index_i, hourglass_force_[index_i], sum_hourglass * Vol_[index_i] * dt);
     shear_force_[index_i] = sum_shear * Vol_[index_i] + hourglass_force_[index_i];
 }
 //=================================================================================================//

@@ -161,6 +161,12 @@ void J2Plasticity::ConstituteKernel::updateIntactFactor(UnsignedInt index_i)
     intact_factor_[index_i] = SMIN(intact_factor_[index_i], try_intact_factor); // damage is irreversible
 }
 //=================================================================================================//
+Vecd J2Plasticity::ConstituteKernel::updateHourglassForce(
+    UnsignedInt index_i, const Vecd &hourglass_force, const Vecd &increment)
+{
+    return intact_factor_[index_i] * (hourglass_force + increment);
+}
+//=================================================================================================//
 Matd J2Plasticity::ConstituteKernel::ReturnMapping(UnsignedInt index_i, Matd try_shear_stress)
 {
     return ScalePenaltyForce(index_i, try_shear_stress) * try_shear_stress;

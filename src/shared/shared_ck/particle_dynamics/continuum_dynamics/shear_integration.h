@@ -54,7 +54,7 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
   public:
     template <class DynamicsIdentifier>
     explicit ShearIntegration(DynamicsIdentifier &identifier, Real xi = 2.0, Real shear_stress_damping = 0.0);
-    virtual ~ShearIntegration(){};
+    virtual ~ShearIntegration() {};
 
     class InitializeKernel
     {
@@ -79,6 +79,7 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
+        ConstituteKernel constitute_;
         Real G_;
         Vecd *shear_force_, *vel_, *hourglass_force_;
         Matd *vel_gradient_, *shear_stress_;
