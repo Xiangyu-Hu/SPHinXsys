@@ -112,7 +112,8 @@ J2Plasticity::ConstituteKernel::
       sqrt_2_over_3_(encloser.sqrt_2_over_3_), failure_tension_(encloser.failure_tension_),
       hardening_factor_(encloser.dv_hardening_factor_->DelegatedData(ex_policy)),
       intact_factor_(encloser.dv_intact_factor_->DelegatedData(ex_policy)),
-      p_(encloser.dv_p_->DelegatedData(ex_policy)) {}
+      p_(encloser.dv_p_->DelegatedData(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 Matd J2Plasticity::ConstituteKernel::ShearStressRate(
     UnsignedInt index_i, const Matd &velocity_gradient, const Matd &shear_stress)
@@ -159,6 +160,8 @@ void J2Plasticity::ConstituteKernel::updateIntactFactor(UnsignedInt index_i)
     Real p_diff = p_[index_i] + alpha * failure_tension_;
     Real try_intact_factor = SMAX(1.0 + p_diff / ((1.0 - alpha) * failure_tension_), 0.0);
     intact_factor_[index_i] = SMIN(intact_factor_[index_i], try_intact_factor); // damage is irreversible
+    compression_[index_i] = // not less than 1.0 after failure
+        SMAX(compression_[index_i], 1.0 + (compression_[index_i] - 1.0) * intact_factor_[index_i]);
 }
 //=================================================================================================//
 Vecd J2Plasticity::ConstituteKernel::updateHourglassForce(
@@ -182,12 +185,8 @@ Real J2Plasticity::ConstituteKernel::HardeningFactorRate(
 //=================================================================================================//
 template <typename ExecutionPolicy>
 J2Plasticity::EosKernel::EosKernel(const ExecutionPolicy &ex_policy, J2Plasticity &encloser)
-    : GeneralContinuum::EosKernel(ex_policy, encloser), failure_tension_(encloser.failure_tension_) {}
-//=================================================================================================//
-inline Real J2Plasticity::EosKernel::PressureFromDensity(UnsignedInt, Real rho)
-{
-    return SMAX(p0_ * (rho / rho0_ - Real(1.0)), -failure_tension_);
-}
+    : GeneralContinuum::EosKernel(ex_policy, encloser), failure_tension_(encloser.failure_tension_),
+      intact_factor_(encloser.dv_intact_factor_->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // GENERAL_CONTINUUM_HPP
