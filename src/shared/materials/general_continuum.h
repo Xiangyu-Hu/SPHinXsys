@@ -173,7 +173,7 @@ class J2Plasticity : public GeneralContinuum
       public:
         template <typename ExecutionPolicy>
         EosKernel(const ExecutionPolicy &ex_policy, J2Plasticity &encloser);
-        Real getPressure(Real rho);
+        Real PressureFromDensity(UnsignedInt, Real rho);
 
       protected:
         Real failure_tension_;

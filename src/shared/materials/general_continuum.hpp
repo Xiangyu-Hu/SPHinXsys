@@ -184,7 +184,7 @@ template <typename ExecutionPolicy>
 J2Plasticity::EosKernel::EosKernel(const ExecutionPolicy &ex_policy, J2Plasticity &encloser)
     : GeneralContinuum::EosKernel(ex_policy, encloser), failure_tension_(encloser.failure_tension_) {}
 //=================================================================================================//
-inline Real J2Plasticity::EosKernel::getPressure(Real rho)
+inline Real J2Plasticity::EosKernel::PressureFromDensity(UnsignedInt, Real rho)
 {
     return SMAX(p0_ * (rho / rho0_ - Real(1.0)), -failure_tension_);
 }
