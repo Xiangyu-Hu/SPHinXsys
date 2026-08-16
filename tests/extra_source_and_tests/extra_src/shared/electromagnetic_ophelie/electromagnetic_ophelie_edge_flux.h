@@ -308,6 +308,21 @@ inline Real computeOphelieEdgeFluxPairConductance(const Real sigma_i, const Real
                                                     reference_smoothing_length);
 }
 
+/**
+ * Symmetric pair weight for power deposition only (Phase A).
+ * Uses V̄_ij = 0.5(V_i+V_j) so C^sym_ij = C^sym_ji when dW_ij = dW_ji.
+ * Residual / RHS keep the directed conductance above until Stage 1 Phase B.
+ */
+inline Real computeOphelieEdgeFluxPairConductanceSymmetric(const Real sigma_i, const Real sigma_j, const Real dW_ij,
+                                                           const Real vol_i, const Real vol_j, const Real distance,
+                                                           const Real distance_sq, const Real pair_weight_regularization,
+                                                           const Real reference_smoothing_length)
+{
+    const Real vol_avg = Real(0.5) * (vol_i + vol_j);
+    return computeOphelieEdgeFluxPairConductance(sigma_i, sigma_j, dW_ij * vol_avg, distance, distance_sq,
+                                                 pair_weight_regularization, reference_smoothing_length);
+}
+
 inline Real computeOphelieEdgeFluxEdgeDrop(const Real phi_i, const Real phi_j, const Vecd &a_i, const Vecd &a_j,
                                            const Vecd &xj_minus_xi, const Real omega, const Real a_sign = Real(1.0))
 {
@@ -317,11 +332,20 @@ inline Real computeOphelieEdgeFluxEdgeDrop(const Real phi_i, const Real phi_j, c
 
 struct OphelieEdgeFluxPowerMetrics
 {
-    /** Graph/Laplace discrete energy Σ 0.25*C_ij*edge_drop² — diagnostic only. */
+    /**
+     * Volume-consistent edge graph power Σ_i Q_i V_i with Q_i = Σ_j 0.25 C e² (W).
+     * Diagnostic until soft gate vs P_recon passes; calibration stays on P_recon.
+     */
     Real p_graph_edge = 0.0;
+    /** Legacy mistaken sum Σ_i Q_i (no volume) — kept to show the old ~1e5 B1 ratio. */
+    Real p_graph_legacy_unweighted = 0.0;
+    /** Undirected once-per-pair audit: Σ_{j>i} 0.5 α V_i V_j e². */
+    Real p_undirected_edge = 0.0;
     /** Physical Joule power from edge-reconstructed E/J. */
     Real p_total_recon = 0.0;
     Real p_graph_over_recon = 0.0;
+    Real p_legacy_over_recon = 0.0;
+    Real p_undirected_over_graph = 0.0;
     Real joule_heat_edge_max = 0.0;
     Real joule_heat_edge_mean = 0.0;
     Real joule_heat_edge_recon_max = 0.0;
@@ -329,6 +353,13 @@ struct OphelieEdgeFluxPowerMetrics
     Real joule_heat_edge_max_over_mean = 0.0;
     Real recon_fallback_fraction = 0.0;
 };
+
+inline void finalizeOphelieEdgeFluxPowerRatios(OphelieEdgeFluxPowerMetrics &metrics)
+{
+    metrics.p_graph_over_recon = metrics.p_graph_edge / (metrics.p_total_recon + TinyReal);
+    metrics.p_legacy_over_recon = metrics.p_graph_legacy_unweighted / (metrics.p_total_recon + TinyReal);
+    metrics.p_undirected_over_graph = metrics.p_undirected_edge / (metrics.p_graph_edge + TinyReal);
+}
 
 struct OphelieEdgeFluxEdgeDropMetrics
 {
@@ -628,13 +659,17 @@ class ComputeOphelieEdgeFluxJouleHeatCK<Base, RelationType<Parameters...>> : pub
 
   public:
     ComputeOphelieEdgeFluxJouleHeatCK(RelationType<Parameters...> &relation, const OphelieGlassFieldNames &names,
-                                      Real omega, Real pair_weight_regularization, const std::string &a_real_field,
-                                      Real a_sign = Real(1.0))
+                                      Real omega, Real pair_weight_regularization, const std::string &a_imag_chain_field,
+                                      Real imag_a_sign = Real(1.0), bool edge_flux_complex = false,
+                                      const std::string &a_real_chain_field = "ACoilImag", Real real_a_sign = Real(-1.0))
         : BaseInteraction(relation), omega_(omega), pair_weight_regularization_(pair_weight_regularization),
-          a_sign_(a_sign), reference_smoothing_length_(this->getSPHAdaptation().ReferenceSmoothingLength()),
+          imag_a_sign_(imag_a_sign), real_a_sign_(real_a_sign), edge_flux_complex_(edge_flux_complex),
+          reference_smoothing_length_(this->getSPHAdaptation().ReferenceSmoothingLength()),
           dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
           dv_phi_imag_(this->particles_->template getVariableByName<Real>(names.phi_imag)),
-          dv_a_src_real_(this->particles_->template getVariableByName<Vecd>(a_real_field)),
+          dv_phi_real_(this->particles_->template getVariableByName<Real>(names.phi_real)),
+          dv_a_imag_chain_(this->particles_->template getVariableByName<Vecd>(a_imag_chain_field)),
+          dv_a_real_chain_(this->particles_->template getVariableByName<Vecd>(a_real_chain_field)),
           dv_sigma_(this->particles_->template getVariableByName<Real>(names.sigma)),
           dv_joule_heat_edge_(this->particles_->template getVariableByName<Real>(names.joule_heat_edge)),
           dv_power_edge_particle_(this->particles_->template getVariableByName<Real>(names.power_edge_particle))
@@ -649,11 +684,15 @@ class ComputeOphelieEdgeFluxJouleHeatCK<Base, RelationType<Parameters...>> : pub
             : BaseInteraction::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
               Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
               phi_imag_(encloser.dv_phi_imag_->DelegatedData(ex_policy)),
-              a_src_real_(encloser.dv_a_src_real_->DelegatedData(ex_policy)),
+              phi_real_(encloser.dv_phi_real_->DelegatedData(ex_policy)),
+              a_imag_chain_(encloser.dv_a_imag_chain_->DelegatedData(ex_policy)),
+              a_real_chain_(encloser.dv_a_real_chain_->DelegatedData(ex_policy)),
               sigma_(encloser.dv_sigma_->DelegatedData(ex_policy)),
               joule_heat_edge_(encloser.dv_joule_heat_edge_->DelegatedData(ex_policy)),
               power_edge_particle_(encloser.dv_power_edge_particle_->DelegatedData(ex_policy)), omega_(encloser.omega_),
-              a_sign_(encloser.a_sign_), pair_weight_regularization_(encloser.pair_weight_regularization_),
+              imag_a_sign_(encloser.imag_a_sign_), real_a_sign_(encloser.real_a_sign_),
+              edge_flux_complex_(encloser.edge_flux_complex_),
+              pair_weight_regularization_(encloser.pair_weight_regularization_),
               reference_smoothing_length_(encloser.reference_smoothing_length_)
         {
         }
@@ -661,11 +700,15 @@ class ComputeOphelieEdgeFluxJouleHeatCK<Base, RelationType<Parameters...>> : pub
         void interact(size_t index_i, Real dt = 0.0)
         {
             (void)dt;
-            const Real phi_i = phi_imag_[index_i];
+            const Real phi_imag_i = phi_imag_[index_i];
+            const Real phi_real_i = phi_real_[index_i];
             const Real sigma_i = sigma_[index_i];
-            const Vecd a_i = a_src_real_[index_i];
+            const Vecd a_imag_chain_i = a_imag_chain_[index_i];
+            const Vecd a_real_chain_i = a_real_chain_[index_i];
             const Real vol_i = Vol_[index_i];
-            double power_i = 0.0;
+            // Phase A: Σ 0.25 C (|e_i|²[+|e_r|²]) is volumetric density (W/m³).
+            // Legacy B1 treated this sum as Watts and divided by V (~1/V inflation).
+            double q_density_i = 0.0;
             for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
             {
                 const UnsignedInt index_j = this->neighbor_index_[n];
@@ -677,25 +720,37 @@ class ComputeOphelieEdgeFluxJouleHeatCK<Base, RelationType<Parameters...>> : pub
                 const Real c_ij = computeOphelieEdgeFluxPairConductance(
                     sigma_i, sigma_[index_j], dW_ijV_j, distance, distance_sq, pair_weight_regularization_,
                     reference_smoothing_length_);
-                const Real edge_drop = computeOphelieEdgeFluxEdgeDrop(phi_i, phi_imag_[index_j], a_i,
-                                                                      a_src_real_[index_j], xj_minus_xi, omega_,
-                                                                      a_sign_);
-                power_i += Real(0.25) * static_cast<double>(c_ij) * static_cast<double>(edge_drop) *
-                           static_cast<double>(edge_drop);
+                const Real e_imag = computeOphelieEdgeFluxEdgeDrop(phi_imag_i, phi_imag_[index_j], a_imag_chain_i,
+                                                                   a_imag_chain_[index_j], xj_minus_xi, omega_,
+                                                                   imag_a_sign_);
+                q_density_i += Real(0.25) * static_cast<double>(c_ij) * static_cast<double>(e_imag) *
+                               static_cast<double>(e_imag);
+                if (edge_flux_complex_)
+                {
+                    const Real e_real = computeOphelieEdgeFluxEdgeDrop(phi_real_i, phi_real_[index_j], a_real_chain_i,
+                                                                       a_real_chain_[index_j], xj_minus_xi, omega_,
+                                                                       real_a_sign_);
+                    q_density_i += Real(0.25) * static_cast<double>(c_ij) * static_cast<double>(e_real) *
+                                   static_cast<double>(e_real);
+                }
             }
-            power_edge_particle_[index_i] = static_cast<Real>(power_i);
-            joule_heat_edge_[index_i] = static_cast<Real>(power_i / (static_cast<double>(vol_i) + TinyReal));
+            joule_heat_edge_[index_i] = static_cast<Real>(q_density_i);
+            power_edge_particle_[index_i] = static_cast<Real>(q_density_i * static_cast<double>(vol_i));
         }
 
       protected:
         Real *Vol_;
         Real *phi_imag_;
-        Vecd *a_src_real_;
+        Real *phi_real_;
+        Vecd *a_imag_chain_;
+        Vecd *a_real_chain_;
         Real *sigma_;
         Real *joule_heat_edge_;
         Real *power_edge_particle_;
         Real omega_;
-        Real a_sign_;
+        Real imag_a_sign_;
+        Real real_a_sign_;
+        bool edge_flux_complex_;
         Real pair_weight_regularization_;
         Real reference_smoothing_length_;
     };
@@ -703,11 +758,15 @@ class ComputeOphelieEdgeFluxJouleHeatCK<Base, RelationType<Parameters...>> : pub
   protected:
     Real omega_;
     Real pair_weight_regularization_;
-    Real a_sign_;
+    Real imag_a_sign_;
+    Real real_a_sign_;
+    bool edge_flux_complex_;
     Real reference_smoothing_length_;
     DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Real> *dv_phi_imag_;
-    DiscreteVariable<Vecd> *dv_a_src_real_;
+    DiscreteVariable<Real> *dv_phi_real_;
+    DiscreteVariable<Vecd> *dv_a_imag_chain_;
+    DiscreteVariable<Vecd> *dv_a_real_chain_;
     DiscreteVariable<Real> *dv_sigma_;
     DiscreteVariable<Real> *dv_joule_heat_edge_;
     DiscreteVariable<Real> *dv_power_edge_particle_;
@@ -719,11 +778,162 @@ class ComputeOphelieEdgeFluxJouleHeatCK<Inner<Parameters...>>
 {
   public:
     ComputeOphelieEdgeFluxJouleHeatCK(Inner<Parameters...> &inner_relation, const OphelieGlassFieldNames &names,
-                                      Real omega, Real pair_weight_regularization, const std::string &a_real_field,
-                                      Real a_sign = Real(1.0))
-        : ComputeOphelieEdgeFluxJouleHeatCK<Base, Inner<Parameters...>>(inner_relation, names, omega,
-                                                                        pair_weight_regularization, a_real_field,
-                                                                        a_sign)
+                                      Real omega, Real pair_weight_regularization, const std::string &a_imag_chain_field,
+                                      Real imag_a_sign = Real(1.0), bool edge_flux_complex = false,
+                                      const std::string &a_real_chain_field = "ACoilImag", Real real_a_sign = Real(-1.0))
+        : ComputeOphelieEdgeFluxJouleHeatCK<Base, Inner<Parameters...>>(
+              inner_relation, names, omega, pair_weight_regularization, a_imag_chain_field, imag_a_sign,
+              edge_flux_complex, a_real_chain_field, real_a_sign)
+    {
+    }
+};
+
+/**
+ * Undirected once-per-pair power audit (j > i only).
+ * With α such that C_ij = α V_j, C_ji = α V_i:
+ *   P_undirected += 0.5 * α * V_i * V_j * e²
+ * which matches Σ_i Q_i V_i for the directed 0.25 C e² volume-weighted form when C uses raw V_j.
+ * Here α is built from dW and harmonic σ; uses the same dW as the neighbor list.
+ */
+template <typename... RelationTypes>
+class ComputeOphelieEdgeFluxUndirectedPowerCK;
+
+template <template <typename...> class RelationType, typename... Parameters>
+class ComputeOphelieEdgeFluxUndirectedPowerCK<Base, RelationType<Parameters...>>
+    : public Interaction<RelationType<Parameters...>>
+{
+    using BaseInteraction = Interaction<RelationType<Parameters...>>;
+
+  public:
+    ComputeOphelieEdgeFluxUndirectedPowerCK(RelationType<Parameters...> &relation, const OphelieGlassFieldNames &names,
+                                            Real omega, Real pair_weight_regularization,
+                                            const std::string &a_imag_chain_field, Real imag_a_sign = Real(1.0),
+                                            bool edge_flux_complex = false,
+                                            const std::string &a_real_chain_field = "ACoilImag",
+                                            Real real_a_sign = Real(-1.0))
+        : BaseInteraction(relation), omega_(omega), pair_weight_regularization_(pair_weight_regularization),
+          imag_a_sign_(imag_a_sign), real_a_sign_(real_a_sign), edge_flux_complex_(edge_flux_complex),
+          reference_smoothing_length_(this->getSPHAdaptation().ReferenceSmoothingLength()),
+          dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
+          dv_phi_imag_(this->particles_->template getVariableByName<Real>(names.phi_imag)),
+          dv_phi_real_(this->particles_->template getVariableByName<Real>(names.phi_real)),
+          dv_a_imag_chain_(this->particles_->template getVariableByName<Vecd>(a_imag_chain_field)),
+          dv_a_real_chain_(this->particles_->template getVariableByName<Vecd>(a_real_chain_field)),
+          dv_sigma_(this->particles_->template getVariableByName<Real>(names.sigma)),
+          dv_power_undirected_(this->particles_->template getVariableByName<Real>(names.power_edge_undirected_particle))
+    {
+    }
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType, typename... Args>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
+            : BaseInteraction::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
+              Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+              phi_imag_(encloser.dv_phi_imag_->DelegatedData(ex_policy)),
+              phi_real_(encloser.dv_phi_real_->DelegatedData(ex_policy)),
+              a_imag_chain_(encloser.dv_a_imag_chain_->DelegatedData(ex_policy)),
+              a_real_chain_(encloser.dv_a_real_chain_->DelegatedData(ex_policy)),
+              sigma_(encloser.dv_sigma_->DelegatedData(ex_policy)),
+              power_undirected_(encloser.dv_power_undirected_->DelegatedData(ex_policy)), omega_(encloser.omega_),
+              imag_a_sign_(encloser.imag_a_sign_), real_a_sign_(encloser.real_a_sign_),
+              edge_flux_complex_(encloser.edge_flux_complex_),
+              pair_weight_regularization_(encloser.pair_weight_regularization_),
+              reference_smoothing_length_(encloser.reference_smoothing_length_)
+        {
+        }
+
+        void interact(size_t index_i, Real dt = 0.0)
+        {
+            (void)dt;
+            const Real phi_imag_i = phi_imag_[index_i];
+            const Real phi_real_i = phi_real_[index_i];
+            const Real sigma_i = sigma_[index_i];
+            const Vecd a_imag_chain_i = a_imag_chain_[index_i];
+            const Vecd a_real_chain_i = a_real_chain_[index_i];
+            const Real vol_i = Vol_[index_i];
+            double power_undirected_i = 0.0;
+            for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+            {
+                const UnsignedInt index_j = this->neighbor_index_[n];
+                if (index_j <= index_i)
+                {
+                    continue;
+                }
+                const Vecd r_ij_vec = this->vec_r_ij(index_i, index_j);
+                const Vecd xj_minus_xi = -r_ij_vec;
+                const Real distance = r_ij_vec.norm();
+                const Real distance_sq = r_ij_vec.squaredNorm();
+                const Real dW_ij = this->dW_ij(index_i, index_j);
+                const Real alpha = pairwiseNegativeLaplaceWeight(dW_ij, distance, distance_sq,
+                                                                 pair_weight_regularization_,
+                                                                 reference_smoothing_length_) *
+                                  harmonicMean(sigma_i, sigma_[index_j]);
+                const Real vol_j = Vol_[index_j];
+                const Real e_imag = computeOphelieEdgeFluxEdgeDrop(phi_imag_i, phi_imag_[index_j], a_imag_chain_i,
+                                                                   a_imag_chain_[index_j], xj_minus_xi, omega_,
+                                                                   imag_a_sign_);
+                double e2 = static_cast<double>(e_imag) * static_cast<double>(e_imag);
+                if (edge_flux_complex_)
+                {
+                    const Real e_real = computeOphelieEdgeFluxEdgeDrop(phi_real_i, phi_real_[index_j], a_real_chain_i,
+                                                                       a_real_chain_[index_j], xj_minus_xi, omega_,
+                                                                       real_a_sign_);
+                    e2 += static_cast<double>(e_real) * static_cast<double>(e_real);
+                }
+                power_undirected_i += Real(0.5) * static_cast<double>(alpha) * static_cast<double>(vol_i) *
+                                      static_cast<double>(vol_j) * e2;
+            }
+            power_undirected_[index_i] = static_cast<Real>(power_undirected_i);
+        }
+
+      protected:
+        Real *Vol_;
+        Real *phi_imag_;
+        Real *phi_real_;
+        Vecd *a_imag_chain_;
+        Vecd *a_real_chain_;
+        Real *sigma_;
+        Real *power_undirected_;
+        Real omega_;
+        Real imag_a_sign_;
+        Real real_a_sign_;
+        bool edge_flux_complex_;
+        Real pair_weight_regularization_;
+        Real reference_smoothing_length_;
+    };
+
+  protected:
+    Real omega_;
+    Real pair_weight_regularization_;
+    Real imag_a_sign_;
+    Real real_a_sign_;
+    bool edge_flux_complex_;
+    Real reference_smoothing_length_;
+    DiscreteVariable<Real> *dv_Vol_;
+    DiscreteVariable<Real> *dv_phi_imag_;
+    DiscreteVariable<Real> *dv_phi_real_;
+    DiscreteVariable<Vecd> *dv_a_imag_chain_;
+    DiscreteVariable<Vecd> *dv_a_real_chain_;
+    DiscreteVariable<Real> *dv_sigma_;
+    DiscreteVariable<Real> *dv_power_undirected_;
+};
+
+template <typename... Parameters>
+class ComputeOphelieEdgeFluxUndirectedPowerCK<Inner<Parameters...>>
+    : public ComputeOphelieEdgeFluxUndirectedPowerCK<Base, Inner<Parameters...>>
+{
+  public:
+    ComputeOphelieEdgeFluxUndirectedPowerCK(Inner<Parameters...> &inner_relation, const OphelieGlassFieldNames &names,
+                                            Real omega, Real pair_weight_regularization,
+                                            const std::string &a_imag_chain_field, Real imag_a_sign = Real(1.0),
+                                            bool edge_flux_complex = false,
+                                            const std::string &a_real_chain_field = "ACoilImag",
+                                            Real real_a_sign = Real(-1.0))
+        : ComputeOphelieEdgeFluxUndirectedPowerCK<Base, Inner<Parameters...>>(
+              inner_relation, names, omega, pair_weight_regularization, a_imag_chain_field, imag_a_sign,
+              edge_flux_complex, a_real_chain_field, real_a_sign)
     {
     }
 };
@@ -1000,12 +1210,14 @@ inline OphelieEdgeFluxPowerMetrics computeHostEdgeFluxPowerMetrics(BaseParticles
     syncVariableToHost<Real>(particles, names.joule_heat_edge);
     syncVariableToHost<Real>(particles, names.joule_heat_edge_recon_imag);
     syncVariableToHost<Real>(particles, names.power_edge_particle);
+    syncVariableToHost<Real>(particles, names.power_edge_undirected_particle);
     syncVariableToHost<Real>(particles, names.edge_recon_fallback);
     syncVariableToHost<Real>(particles, "VolumetricMeasure");
 
     const Real *joule_edge = particles.getVariableDataByName<Real>(names.joule_heat_edge);
     const Real *joule_edge_recon = particles.getVariableDataByName<Real>(names.joule_heat_edge_recon_imag);
     const Real *power_particle = particles.getVariableDataByName<Real>(names.power_edge_particle);
+    const Real *power_undirected = particles.getVariableDataByName<Real>(names.power_edge_undirected_particle);
     const Real *fallback = particles.getVariableDataByName<Real>(names.edge_recon_fallback);
     const Real *vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
 
@@ -1017,6 +1229,8 @@ inline OphelieEdgeFluxPowerMetrics computeHostEdgeFluxPowerMetrics(BaseParticles
     for (size_t i = 0; i < total_real_particles; ++i)
     {
         metrics.p_graph_edge += power_particle[i];
+        metrics.p_graph_legacy_unweighted += joule_edge[i];
+        metrics.p_undirected_edge += power_undirected[i];
         metrics.joule_heat_edge_max = std::max(metrics.joule_heat_edge_max, joule_edge[i]);
         metrics.joule_heat_edge_recon_max = std::max(metrics.joule_heat_edge_recon_max, joule_edge_recon[i]);
         joule_sum += joule_edge[i] * vol[i];
@@ -1032,6 +1246,7 @@ inline OphelieEdgeFluxPowerMetrics computeHostEdgeFluxPowerMetrics(BaseParticles
     metrics.joule_heat_edge_max_over_mean =
         metrics.joule_heat_edge_max / (metrics.joule_heat_edge_mean + TinyReal);
     metrics.recon_fallback_fraction = static_cast<Real>(fallback_count) / static_cast<Real>(total_real_particles + 1);
+    metrics.p_undirected_over_graph = metrics.p_undirected_edge / (metrics.p_graph_edge + TinyReal);
     return metrics;
 }
 
@@ -1044,6 +1259,12 @@ struct OphelieEdgeFluxPowerAuditDetail
     Real p_graph_sum = 0.0;
     Real p_joule_edge_vol = 0.0;
     Real p_recon_w = 0.0;
+    /** Independent physical identity: Σ |J|²/(2σ) V. */
+    Real p_j_squared_over_2sigma = 0.0;
+    /** Independent physical identity: 0.5 Σ Re(J·E*) V. */
+    Real p_j_dot_e = 0.0;
+    /** Relative mismatch between the two physical identities. */
+    Real p_identity_rel_error = 0.0;
     Real p_graph_over_recon = 0.0;
     Real joule_recon_vol_w = 0.0;
 };
@@ -1065,12 +1286,56 @@ inline OphelieEdgeFluxPowerAuditDetail hostOphelieEdgeFluxPowerAuditDetail(BaseP
     }
     detail.p_recon_w = hostEdgeFluxReconPower(particles, names, n, params);
     detail.p_graph_over_recon = detail.p_graph_sum / (detail.p_recon_w + TinyReal);
-    syncVariableToHost<Real>(particles, names.joule_heat_edge_recon_imag);
-    const Real *joule_recon = particles.getVariableDataByName<Real>(names.joule_heat_edge_recon_imag);
+    const std::string &joule_recon_field =
+        params.edge_flux_complex_ ? names.joule_heat_edge_recon_complex : names.joule_heat_edge_recon_imag;
+    syncVariableToHost<Real>(particles, joule_recon_field);
+    const Real *joule_recon = particles.getVariableDataByName<Real>(joule_recon_field);
     for (size_t i = 0; i < n; ++i)
     {
         detail.joule_recon_vol_w += joule_recon[i] * vol[i];
     }
+    syncVariableToHost<Real>(particles, names.sigma);
+    const Real *sigma = particles.getVariableDataByName<Real>(names.sigma);
+    if (params.edge_flux_complex_)
+    {
+        syncVariableToHost<Vecd>(particles, names.j_edge_recon_real);
+        syncVariableToHost<Vecd>(particles, names.j_edge_recon_imag);
+        syncVariableToHost<Vecd>(particles, names.e_edge_recon_real);
+        syncVariableToHost<Vecd>(particles, names.e_edge_recon_imag);
+        const Vecd *j_real = particles.getVariableDataByName<Vecd>(names.j_edge_recon_real);
+        const Vecd *j_imag = particles.getVariableDataByName<Vecd>(names.j_edge_recon_imag);
+        const Vecd *e_real = particles.getVariableDataByName<Vecd>(names.e_edge_recon_real);
+        const Vecd *e_imag = particles.getVariableDataByName<Vecd>(names.e_edge_recon_imag);
+        for (size_t i = 0; i < n; ++i)
+        {
+            if (sigma[i] <= TinyReal)
+            {
+                continue;
+            }
+            detail.p_j_squared_over_2sigma +=
+                Real(0.5) * (j_real[i].squaredNorm() + j_imag[i].squaredNorm()) * vol[i] / sigma[i];
+            detail.p_j_dot_e += Real(0.5) * (j_real[i].dot(e_real[i]) + j_imag[i].dot(e_imag[i])) * vol[i];
+        }
+    }
+    else
+    {
+        syncVariableToHost<Vecd>(particles, names.j_edge_recon_imag);
+        syncVariableToHost<Vecd>(particles, names.e_edge_recon_imag);
+        const Vecd *j_imag = particles.getVariableDataByName<Vecd>(names.j_edge_recon_imag);
+        const Vecd *e_imag = particles.getVariableDataByName<Vecd>(names.e_edge_recon_imag);
+        for (size_t i = 0; i < n; ++i)
+        {
+            if (sigma[i] <= TinyReal)
+            {
+                continue;
+            }
+            detail.p_j_squared_over_2sigma += Real(0.5) * j_imag[i].squaredNorm() * vol[i] / sigma[i];
+            detail.p_j_dot_e += Real(0.5) * j_imag[i].dot(e_imag[i]) * vol[i];
+        }
+    }
+    detail.p_identity_rel_error =
+        std::abs(detail.p_j_squared_over_2sigma - detail.p_j_dot_e) /
+        (std::max(std::abs(detail.p_j_squared_over_2sigma), std::abs(detail.p_j_dot_e)) + TinyReal);
     return detail;
 }
 
@@ -1079,8 +1344,11 @@ inline void printOphelieEdgeFluxPowerAuditDetail(const OphelieEdgeFluxPowerAudit
     std::cout << "[ophelie] edge-flux power audit (post-restore): p_graph_sum=" << detail.p_graph_sum
               << " p_joule_edge_vol=" << detail.p_joule_edge_vol << " p_recon_W=" << detail.p_recon_w
               << " joule_recon_vol_W=" << detail.joule_recon_vol_w
+              << " p_J2_over_2sigma=" << detail.p_j_squared_over_2sigma
+              << " p_Re_JdotE=" << detail.p_j_dot_e
+              << " p_identity_rel_error=" << detail.p_identity_rel_error
               << " p_graph/p_recon=" << detail.p_graph_over_recon
-              << " (P_graph_edge_diagnostic vs P_recon_physical; graph is diagnostic-only)" << std::endl;
+              << " (volume-consistent P_graph vs P_recon; calibration still uses P_recon)" << std::endl;
 }
 
 inline Real hostEdgeFluxReconPower(BaseParticles &particles, const OphelieGlassFieldNames &names,
@@ -1215,21 +1483,30 @@ inline OphelieEdgeFluxPowerMetrics execOphelieEdgeFluxPostPhiPipelineForComponen
         glass_body, names.sigma, component.e_recon_field, component.joule_heat_recon_field);
     update_cell_linked_list.exec();
     update_inner_relation.exec();
-    if (component.chain_label == std::string("imag"))
-    {
-        InteractionDynamicsCK<ExecutionPolicy, ComputeOphelieEdgeFluxJouleHeatCK<Inner<>>> compute_joule(
-            inner, names, params.omega(), params.pair_weight_regularization_, component.active_a_field,
-            component.a_sign);
-        compute_joule.exec();
-    }
     reconstruct_ej.exec();
     compute_joule_recon.exec();
     BaseParticles &particles = glass_body.getBaseParticles();
     const size_t n = particles.TotalRealParticles();
     OphelieEdgeFluxPowerMetrics metrics = computeHostEdgeFluxPowerMetrics(particles, names, n);
     metrics.p_total_recon = hostEdgeFluxReconPower(particles, names, n, params);
-    metrics.p_graph_over_recon = metrics.p_graph_edge / (metrics.p_total_recon + TinyReal);
+    finalizeOphelieEdgeFluxPowerRatios(metrics);
     return metrics;
+}
+
+template <class ExecutionPolicy>
+inline void execOphelieEdgeFluxGraphPowerKernels(Inner<> &inner, const OphelieGlassFieldNames &names,
+                                                 const OphelieParameters &params)
+{
+    const OphelieEdgeFluxComponent imag_component = makeOphelieEdgeFluxImagComponent(names, params);
+    const OphelieEdgeFluxComponent real_component = makeOphelieEdgeFluxRealComponent(names, params);
+    InteractionDynamicsCK<ExecutionPolicy, ComputeOphelieEdgeFluxJouleHeatCK<Inner<>>> compute_joule(
+        inner, names, params.omega(), params.pair_weight_regularization_, imag_component.active_a_field,
+        imag_component.a_sign, params.edge_flux_complex_, real_component.active_a_field, real_component.a_sign);
+    InteractionDynamicsCK<ExecutionPolicy, ComputeOphelieEdgeFluxUndirectedPowerCK<Inner<>>> compute_undirected(
+        inner, names, params.omega(), params.pair_weight_regularization_, imag_component.active_a_field,
+        imag_component.a_sign, params.edge_flux_complex_, real_component.active_a_field, real_component.a_sign);
+    compute_joule.exec();
+    compute_undirected.exec();
 }
 
 template <class ExecutionPolicy>
@@ -1248,11 +1525,13 @@ inline OphelieEdgeFluxPowerMetrics execOphelieEdgeFluxPostPhiPipeline(SolidBody 
             StateDynamics<ExecutionPolicy, ComputeOphelieEdgeFluxComplexJouleHeatCK> compute_q_complex(glass_body,
                                                                                                          names);
             compute_q_complex.exec();
-            BaseParticles &particles = glass_body.getBaseParticles();
-            const size_t n = particles.TotalRealParticles();
-            metrics.p_total_recon = hostEdgeFluxReconPower(particles, names, n, params);
-            metrics.p_graph_over_recon = metrics.p_graph_edge / (metrics.p_total_recon + TinyReal);
         }
+        execOphelieEdgeFluxGraphPowerKernels<ExecutionPolicy>(inner, names, params);
+        BaseParticles &particles = glass_body.getBaseParticles();
+        const size_t n = particles.TotalRealParticles();
+        metrics = computeHostEdgeFluxPowerMetrics(particles, names, n);
+        metrics.p_total_recon = hostEdgeFluxReconPower(particles, names, n, params);
+        finalizeOphelieEdgeFluxPowerRatios(metrics);
         return metrics;
     }
     const OphelieEdgeFluxComponent real_component = makeOphelieEdgeFluxRealComponent(names, params);
@@ -1260,10 +1539,12 @@ inline OphelieEdgeFluxPowerMetrics execOphelieEdgeFluxPostPhiPipeline(SolidBody 
                                                                           params);
     StateDynamics<ExecutionPolicy, ComputeOphelieEdgeFluxComplexJouleHeatCK> compute_q_complex(glass_body, names);
     compute_q_complex.exec();
+    execOphelieEdgeFluxGraphPowerKernels<ExecutionPolicy>(inner, names, params);
     BaseParticles &particles = glass_body.getBaseParticles();
     const size_t n = particles.TotalRealParticles();
+    metrics = computeHostEdgeFluxPowerMetrics(particles, names, n);
     metrics.p_total_recon = hostEdgeFluxReconPower(particles, names, n, params);
-    metrics.p_graph_over_recon = metrics.p_graph_edge / (metrics.p_total_recon + TinyReal);
+    finalizeOphelieEdgeFluxPowerRatios(metrics);
     return metrics;
 }
 
@@ -1519,17 +1800,19 @@ class ComputeOphelieEdgeFluxQAntisymmetryCK<Base, RelationType<Parameters...>> :
         void interact(size_t index_i, Real dt = 0.0)
         {
             (void)dt;
+            const Real vol_i = Vol_[index_i];
             const Real phi_i = phi_[index_i];
             const Real sigma_i = sigma_[index_i];
             const Vecd a_i = active_a_[index_i];
             Real antisym_max = 0.0;
             Real antisym_sq_sum = 0.0;
-            Real q_scale_sq_sum = 0.0;
+            Real q_scale_sq_sum = 0.0; // actually used as weak-current scale after Stage1.5
             Real neighbor_count = 0.0;
             Real nonfinite_count = 0.0;
             for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
             {
                 const UnsignedInt index_j = this->neighbor_index_[n];
+                const Real vol_j = Vol_[index_j];
                 const Vecd r_ij_vec = this->vec_r_ij(index_i, index_j);
                 const Vecd xj_minus_xi = -r_ij_vec;
                 const Real distance = r_ij_vec.norm();
@@ -1553,10 +1836,14 @@ class ComputeOphelieEdgeFluxQAntisymmetryCK<Base, RelationType<Parameters...>> :
                 {
                     nonfinite_count += 1.0;
                 }
-                const Real antisym = q_ij + q_ji;
+                // Stage1.5 weak-current audit:
+                // I_ij^w = V_i q_ij, and we check antisymmetry on weak-current.
+                const Real I_ij = vol_i * q_ij;
+                const Real I_ji = vol_j * q_ji;
+                const Real antisym = I_ij + I_ji;
                 antisym_max = std::max(antisym_max, std::abs(antisym));
                 antisym_sq_sum += antisym * antisym;
-                q_scale_sq_sum += q_ij * q_ij;
+                q_scale_sq_sum += I_ij * I_ij;
                 neighbor_count += 1.0;
             }
             q_antisym_max_[index_i] = antisym_max;
@@ -1746,7 +2033,7 @@ inline OphelieEdgeFluxQSpatialMetrics computeHostEdgeFluxQSpatialMetrics(
 inline void logOphelieEdgeFluxQAntisymMetrics(const OphelieEdgeFluxQAntisymMetrics &metrics,
                                               const char *chain_label = nullptr)
 {
-    std::cout << "[ophelie] edge_flux_q_antisym";
+    std::cout << "[ophelie] edge_flux_weak_current_antisym";
     if (chain_label != nullptr)
     {
         std::cout << " chain=" << chain_label;
@@ -1770,7 +2057,11 @@ inline void logOphelieEdgeFluxQSpatialMetrics(const OphelieEdgeFluxQSpatialMetri
 inline void logOphelieEdgeFluxPowerMetrics(const OphelieEdgeFluxPowerMetrics &metrics)
 {
     std::cout << "[ophelie] edge_flux_power: P_graph_edge=" << metrics.p_graph_edge
-              << " P_total_recon=" << metrics.p_total_recon << " P_graph_over_recon=" << metrics.p_graph_over_recon
+              << " P_undirected_edge=" << metrics.p_undirected_edge
+              << " P_total_recon=" << metrics.p_total_recon
+              << " P_graph_over_recon=" << metrics.p_graph_over_recon
+              << " P_undirected_over_graph=" << metrics.p_undirected_over_graph
+              << " P_legacy_unweighted_over_recon=" << metrics.p_legacy_over_recon
               << " Q_edge_graph_max=" << metrics.joule_heat_edge_max
               << " Q_edge_recon_max=" << metrics.joule_heat_edge_recon_max
               << " Q_edge_graph_mean=" << metrics.joule_heat_edge_mean

@@ -1,0 +1,15 @@
+# T_K,sigma_S_per_m,source,formula
+# Jacoutot PhD thesis (tel-00121350), Chapter IV mechanically stirred / Uox2 glass with 0.96% RuO2 [C_8].
+# Figure IV.10 is generated from fitted law; log denotes log10.
+# sigma = 10^(4.05726 - 3923.73/T)  [C_8], units Ohm^-1 m^-1
+900,0.4984,thesis_IV.10_law,log10_sigma=4.05726-3923.73/T
+1000,1.3600,thesis_IV.10_law,log10_sigma=4.05726-3923.73/T
+1100,3.0920,thesis_IV.10_law,log10_sigma=4.05726-3923.73/T
+1200,6.1303,thesis_IV.10_law,log10_sigma=4.05726-3923.73/T
+1300,10.9397,thesis_IV.10_law,log10_sigma=4.05726-3923.73/T
+1400,17.9720,thesis_IV.10_law,log10_sigma=4.05726-3923.73/T
+1473,24.7453,thesis_IV.10_law,log10_sigma=4.05726-3923.73/T
+1500,27.6338,thesis_IV.10_law,log10_sigma=4.05726-3923.73/T
+1600,40.2651,thesis_IV.10_law,log10_sigma=4.05726-3923.73/T
+1650,47.7795,thesis_IV.10_law,log10_sigma=4.05726-3923.73/T
+1700,56.1285,thesis_IV.10_law,log10_sigma=4.05726-3923.73/T

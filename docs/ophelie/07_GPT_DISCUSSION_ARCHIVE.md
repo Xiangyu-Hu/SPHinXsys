@@ -24,7 +24,8 @@
 
 **Doc:** [`archive/discussion/OPHELIE_GPT_ROUND_SUMMARY_2026-06-08.md`](archive/discussion/OPHELIE_GPT_ROUND_SUMMARY_2026-06-08.md)
 
-**One-line conclusion:** Edge φ/residual succeeded; graph energy was wrongly used for 50 kW calibration; switching to **`P_recon`** made H production pass.
+**One-line conclusion:** Edge φ/residual succeeded; graph energy was wrongly used for 50 kW calibration; switching to **`P_recon`** made H production pass.  
+**Follow-up (2026-08-08):** B1 reopened as Stage 1 Phase A — see [`08_EDGE_FLUX_UNDIRECTED_POWER_CLOSURE.md`](08_EDGE_FLUX_UNDIRECTED_POWER_CLOSURE.md) (volume-consistent `P_graph` + undirected audit; calibration still `P_recon`).
 
 **Stage 2 work record:** [`archive/discussion/OPHELIE_STAGE2_CURSOR_WORK_RECORD.md`](archive/discussion/OPHELIE_STAGE2_CURSOR_WORK_RECORD.md)
 

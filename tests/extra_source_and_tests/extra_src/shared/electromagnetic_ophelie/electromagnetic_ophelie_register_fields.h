@@ -64,6 +64,7 @@ class RegisterOphelieGlassFields : public LocalDynamics
         particles->template registerStateVariable<Real>(names.edge_flux_residual_real, Real(0));
         particles->template registerStateVariable<Real>(names.joule_heat_edge, Real(0));
         particles->template registerStateVariable<Real>(names.power_edge_particle, Real(0));
+        particles->template registerStateVariable<Real>(names.power_edge_undirected_particle, Real(0));
         particles->template registerStateVariable<Real>(names.joule_heat_edge_recon_imag, Real(0));
         particles->template registerStateVariable<Real>(names.joule_heat_edge_recon_real, Real(0));
         particles->template registerStateVariable<Real>(names.joule_heat_edge_recon_complex, Real(0));

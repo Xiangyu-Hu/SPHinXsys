@@ -16,6 +16,11 @@ cmake --build . --target test_3d_ophelie_french_em_dp_scan -j$(nproc)
 # Picard scan (same dp grid, joint J_rel + phi_eq_res gate)
 ./tests/extra_source_and_tests/3d_examples/test_3d_ophelie_french_em_dp_scan/bin/test_3d_ophelie_french_em_dp_scan --em-dp-scan-picard
 
+# Stage-2 low-conductivity limit: σ={1e-3,1e-2,1e-1,1,16} S/m at one coarse dp.
+# It verifies that A_ind/A_coil tends to zero as σ tends to zero.
+./tests/extra_source_and_tests/3d_examples/test_3d_ophelie_french_em_dp_scan/bin/test_3d_ophelie_french_em_dp_scan \
+  --em-sigma-scan --dp=0.08 --self-induction-max-iter=8
+
 # CSV (default ./output/ophelie_french_em_dp_scan.csv)
 # --em-dp-scan-csv=path/to.csv
 ```
@@ -29,6 +34,7 @@ Reload-quality check at `dp=0.02` remains on `test_3d_ophelie_french_self_induct
 | smoke | finite fields; `P_joule > 0`; `phi_eq_res_vol < 0.05` |
 | `--em-dp-scan` | smoke + **finest dp** `phi_eq_res_vol < 0.01` (on lattice, φ may not decrease monotonically with dp; reload @0.02 see Picard test) |
 | `--em-dp-scan-picard` | smoke + finest dp: `picard_converged` (J_rel + phi_eq_res joint) + `A_ind/A_coil > 0` |
+| `--em-sigma-scan` | Picard smoke at all σ; at `σ=1e-3`, `A_ind/A_coil < 0.05` and below the `σ=16` value |
 
 ## Related
 

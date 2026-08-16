@@ -38,7 +38,7 @@ Primary fields after solve: **EEdgeRecon**, **JEdgeRecon**, **JouleHeatEdgeRecon
 
 **Wrong (pre-2026-06-08):** calibrate coil current so graph edge energy `P_graph = Σ ¼ C_ij e_ij²` hits 50 kW.
 
-**Correct:** calibrate on reconstructed Joule body integral:
+**Correct (production):** calibrate on reconstructed Joule body integral:
 
 ```text
 P_recon = ∫ Q_recon dV
@@ -48,6 +48,20 @@ I_new = I_old · sqrt(P_target / P_raw)
 Observed before fix: `P_graph/P_recon ≈ 1.8×10⁶`, `production_literature_passed = 0`.  
 After fix: French H **`production_literature_passed = 1`**.
 
+### Stage 1 Phase A (2026-08-08) — volume-consistent graph power
+
+Legacy graph accumulator treated `Σ ¼ C e²` as **Watts** and set `Q = that / V`, which inflated totals by `~1/V̄` (French natural ratio `~10⁵`, blocker B1).
+
+Correct diagnostic semantics (still not production heating):
+
+```text
+Q_graph_i = Σ_j ¼ C_ij e_ij²          # W/m³
+P_graph   = Σ_i Q_graph_i V_i
+P_undirected = Σ_{j>i} ½ α V_i V_j e²  # once-per-pair audit
+```
+
+Calibration / primary `JouleHeat` remain on **`P_recon`** until soft gate `P_graph/P_recon ∈ [0.5,2]`.  
+Discussion pack: [`08_EDGE_FLUX_UNDIRECTED_POWER_CLOSURE.md`](08_EDGE_FLUX_UNDIRECTED_POWER_CLOSURE.md).
 ---
 
 ## 4. Complex edge-flux mode

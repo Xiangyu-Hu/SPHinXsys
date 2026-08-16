@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>
 #include <iostream>
 
 namespace SPH
@@ -141,13 +142,42 @@ class OphelieFrenchCrucibleWallVisualShape : public ComplexShape
     }
 };
 
+/**
+ * Stage 4.1 fluid wall (open-top crucible): SPHinXsys cylinder style
+ * (same pattern as tests_sycl mixed_poiseuille / taylor_bar):
+ *   TriangleMeshShapeCylinder add/subtract → defineBodyLevelSetShape → NormalFromBodyShapeCK.
+ * Cup = taller/lower outer cylinder minus melt cavity (no overlapping second add).
+ */
+class OphelieFrenchNaturalCrucibleWallShape : public ComplexShape
+{
+  public:
+    OphelieFrenchNaturalCrucibleWallShape(const std::string &shape_name, const OphelieFrenchReducedCaseParams &french,
+                                          Real wall_thickness, int mesh_resolution = 20)
+        : ComplexShape(shape_name)
+    {
+        const Vecd &c = french.glass_center;
+        const Real r_in = french.glass_radius;
+        const Real r_out = french.glass_radius + wall_thickness;
+        const Real half_h = french.glass_half_height;
+        const Vecd outer_center(c[0], c[1], c[2] - Real(0.5) * wall_thickness);
+        const Real outer_half_h = half_h + Real(0.5) * wall_thickness;
+        add<TriangleMeshShapeCylinder>(Vec3d(0, 0, 1), r_out, outer_half_h, mesh_resolution, outer_center,
+                                       "OuterBoundary");
+        subtract<TriangleMeshShapeCylinder>(Vec3d(0, 0, 1), r_in, half_h, mesh_resolution, c, "InnerBoundary");
+    }
+};
+
 inline BoundingBoxd frenchReducedDomainBounds(const OphelieFrenchReducedCaseParams &french, Real boundary_width)
 {
     const Real coil_extent = french.coil.loop_radius + french.coil_visual_thickness + boundary_width;
+    const Real glass_z_bottom = french.glass_center[2] - french.glass_half_height;
+    const Real glass_z_top = french.glass_center[2] + french.glass_half_height;
+    const Real z_lower = std::min(glass_z_bottom, french.coil.z_min);
+    const Real z_upper = std::max(glass_z_top, french.coil.z_max);
     const Vecd lower(french.glass_center[0] - coil_extent, french.glass_center[1] - coil_extent,
-                     french.glass_center[2] - french.glass_half_height - boundary_width);
+                     z_lower - boundary_width);
     const Vecd upper(french.glass_center[0] + coil_extent, french.glass_center[1] + coil_extent,
-                     french.glass_center[2] + french.glass_half_height + boundary_width);
+                     z_upper + boundary_width);
     return BoundingBoxd(lower, upper);
 }
 

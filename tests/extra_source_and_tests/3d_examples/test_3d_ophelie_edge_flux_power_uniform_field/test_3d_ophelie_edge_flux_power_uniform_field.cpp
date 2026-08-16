@@ -1,6 +1,6 @@
 /**
  * @file test_3d_ophelie_edge_flux_power_uniform_field.cpp
- * @brief Uniform-field edge-flux power closure: P_recon vs P_exact; P_graph diagnostic only.
+ * @brief Uniform-field edge-flux power closure: P_recon vs P_exact; volume-consistent P_graph audit.
  */
 #include "electromagnetic_ophelie.h"
 #include "sphinxsys.h"
@@ -78,17 +78,29 @@ static bool runUniformFieldPowerCase(const std::string &case_name, const Vecd &e
 
     const OphelieEdgeFluxPowerMetrics power_metrics =
         execOphelieEdgeFluxPostPhiPipeline<MainExecutionPolicy>(glass_body, *glass_inner, glass_names, params);
+    const OphelieEdgeFluxPowerAuditDetail power_identity =
+        hostOphelieEdgeFluxPowerAuditDetail(particles, glass_names, n, params);
     const Real total_volume = hostTotalVolume(particles, n);
     const Real p_exact = Real(0.5) * sigma * e_uniform.squaredNorm() * total_volume;
     p_recon_over_exact_out = power_metrics.p_total_recon / (p_exact + TinyReal);
     p_graph_over_exact_out = power_metrics.p_graph_edge / (p_exact + TinyReal);
 
-    const bool passed = n > 0 && p_recon_over_exact_out > Real(0.5) && p_recon_over_exact_out < Real(2.0);
+    const bool passed = n > 0 && p_recon_over_exact_out > Real(0.5) && p_recon_over_exact_out < Real(2.0) &&
+                        power_identity.p_identity_rel_error < Real(1.0e-10) &&
+                        p_graph_over_exact_out > Real(0.25) && p_graph_over_exact_out < Real(4.0) &&
+                        power_metrics.p_undirected_over_graph > Real(0.8) &&
+                        power_metrics.p_undirected_over_graph < Real(1.2);
     std::cout << "test_3d_ophelie_edge_flux_power_uniform_field case=" << case_name
               << " edge_flux_complex=" << (edge_flux_complex ? 1 : 0) << " n=" << n << " P_exact=" << p_exact
               << " P_recon=" << power_metrics.p_total_recon
-              << " P_graph_edge=" << power_metrics.p_graph_edge << " P_recon/P_exact=" << p_recon_over_exact_out
-              << " P_graph/P_exact=" << p_graph_over_exact_out << " passed=" << (passed ? 1 : 0) << std::endl;
+              << " P_graph_edge=" << power_metrics.p_graph_edge
+              << " P_undirected_edge=" << power_metrics.p_undirected_edge
+              << " P_recon/P_exact=" << p_recon_over_exact_out
+              << " P_graph/P_exact=" << p_graph_over_exact_out
+              << " P_undirected/P_graph=" << power_metrics.p_undirected_over_graph
+              << " P_legacy_unweighted/P_recon=" << power_metrics.p_legacy_over_recon
+              << " P_identity_rel_error=" << power_identity.p_identity_rel_error
+              << " passed=" << (passed ? 1 : 0) << std::endl;
     return passed;
 }
 
@@ -142,14 +154,28 @@ static bool runComplexInductionPowerCase(const std::string &case_name, const Vec
 
     const OphelieEdgeFluxPowerMetrics power_metrics =
         execOphelieEdgeFluxPostPhiPipeline<MainExecutionPolicy>(glass_body, *glass_inner, glass_names, params);
+    const OphelieEdgeFluxPowerAuditDetail power_identity =
+        hostOphelieEdgeFluxPowerAuditDetail(particles, glass_names, n, params);
     const Real total_volume = hostTotalVolume(particles, n);
     const Real p_exact = Real(0.5) * sigma * omega * omega * a_uniform.squaredNorm() * total_volume;
+    const Real p_graph_over_exact = power_metrics.p_graph_edge / (p_exact + TinyReal);
     p_recon_over_exact_out = power_metrics.p_total_recon / (p_exact + TinyReal);
 
-    const bool passed = n > 0 && p_recon_over_exact_out > Real(0.5) && p_recon_over_exact_out < Real(2.0);
+    const bool passed = n > 0 && p_recon_over_exact_out > Real(0.5) && p_recon_over_exact_out < Real(2.0) &&
+                        power_identity.p_identity_rel_error < Real(1.0e-10) &&
+                        p_graph_over_exact > Real(0.25) && p_graph_over_exact < Real(4.0) &&
+                        power_metrics.p_undirected_over_graph > Real(0.8) &&
+                        power_metrics.p_undirected_over_graph < Real(1.2);
     std::cout << "test_3d_ophelie_edge_flux_power_uniform_field case=" << case_name
               << " edge_flux_complex=1 n=" << n << " P_exact=" << p_exact
-              << " P_recon=" << power_metrics.p_total_recon << " P_recon/P_exact=" << p_recon_over_exact_out
+              << " P_recon=" << power_metrics.p_total_recon
+              << " P_graph_edge=" << power_metrics.p_graph_edge
+              << " P_undirected_edge=" << power_metrics.p_undirected_edge
+              << " P_recon/P_exact=" << p_recon_over_exact_out
+              << " P_graph/P_exact=" << p_graph_over_exact
+              << " P_undirected/P_graph=" << power_metrics.p_undirected_over_graph
+              << " P_legacy_unweighted/P_recon=" << power_metrics.p_legacy_over_recon
+              << " P_identity_rel_error=" << power_identity.p_identity_rel_error
               << " passed=" << (passed ? 1 : 0) << std::endl;
     return passed;
 }

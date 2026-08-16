@@ -215,7 +215,8 @@ inline bool isOphelieTestCommandLineOption(const char *arg)
            std::strcmp(arg, "--ophelie-smoke") == 0 || std::strcmp(arg, "--native-stl") == 0 ||
            std::strcmp(arg, "--native-standard-air") == 0 || std::strcmp(arg, "--native-no-air-relax") == 0 ||
            std::strncmp(arg, "--native-dp-mm=", 15) == 0 || std::strcmp(arg, "--no-power-scaling") == 0 ||
-           std::strncmp(arg, "--target-power=", 15) == 0 || std::strcmp(arg, "--compare-team7-bz") == 0 ||
+           std::strncmp(arg, "--target-power=", 15) == 0 || std::strcmp(arg, "--target-power") == 0 ||
+           std::strcmp(arg, "--compare-team7-bz") == 0 ||
            std::strcmp(arg, "--compare-team7-bz-loop") == 0 || std::strcmp(arg, "--compare-team7-bz-rect-loop") == 0 || std::strncmp(arg, "--team7-coil-turns=", 19) == 0 ||
            std::strcmp(arg, "--coil-j-outer-shell") == 0 || std::strncmp(arg, "--coil-j-outer-shell=", 21) == 0 ||
            std::strncmp(arg, "--team7-level=", 14) == 0 ||
@@ -251,7 +252,10 @@ inline bool isOphelieTestCommandLineOption(const char *arg)
            std::strcmp(arg, "--self-induction") == 0 || std::strncmp(arg, "--phi-solver=", 13) == 0 ||
            std::strncmp(arg, "--self-induction-relax=", 23) == 0 ||
            std::strncmp(arg, "--self-induction-max-iter=", 26) == 0 ||
+           std::strncmp(arg, "--self-induction-tol=", 21) == 0 ||
            std::strncmp(arg, "--self-induction-phi-tol=", 25) == 0 ||
+           std::strncmp(arg, "--phi-pcg-tol=", 14) == 0 ||
+           std::strncmp(arg, "--phi-pcg-max-iter=", 19) == 0 ||
            std::strncmp(arg, "--team7-picard-relax-aind=", 26) == 0 || std::strcmp(arg, "--skip-relax") == 0 ||
            std::strncmp(arg, "--relax-steps=", 14) == 0 || std::strncmp(arg, "--relax-log-every=", 18) == 0 ||
            std::strncmp(arg, "--relax-vtp-every=", 18) == 0 || std::strncmp(arg, "--reload-dir=", 13) == 0 ||
@@ -344,6 +348,10 @@ inline void applyOphelieTestCommandLineOption(const char *arg, OphelieParameters
         {
             params.enable_power_scaling_ = false;
         }
+    }
+    else if (std::strcmp(arg, "--target-power") == 0)
+    {
+        params.target_joule_power_ = Real(50000);
     }
     else if (std::strcmp(arg, "--compare-team7-bz") == 0)
     {
@@ -441,9 +449,21 @@ inline void applyOphelieTestCommandLineOption(const char *arg, OphelieParameters
     {
         params.self_induction_max_iterations_ = static_cast<size_t>(std::atoi(arg + 26));
     }
+    else if (std::strncmp(arg, "--self-induction-tol=", 21) == 0)
+    {
+        params.self_induction_j_tolerance_ = static_cast<Real>(std::atof(arg + 21));
+    }
     else if (std::strncmp(arg, "--self-induction-phi-tol=", 25) == 0)
     {
         params.self_induction_phi_eq_res_tolerance_ = static_cast<Real>(std::atof(arg + 25));
+    }
+    else if (std::strncmp(arg, "--phi-pcg-tol=", 14) == 0)
+    {
+        params.phi_pcg_tolerance_ = static_cast<Real>(std::atof(arg + 14));
+    }
+    else if (std::strncmp(arg, "--phi-pcg-max-iter=", 19) == 0)
+    {
+        params.phi_pcg_max_iterations_ = static_cast<size_t>(std::atoi(arg + 19));
     }
     else if (std::strncmp(arg, "--team7-picard-relax-aind=", 26) == 0)
     {

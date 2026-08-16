@@ -1,0 +1,16 @@
+# T_K,sigma_S_per_m,source,formula
+# Jacoutot PhD thesis (tel-00121350), Chapter III static bath / natural convection track.
+# Figure III.12 is generated from fitted law (III.6); log denotes log10.
+# sigma = 10^(3.7921 - 3179.8/T)  [C_2], units Ohm^-1 m^-1
+900,1.8155,thesis_III.12_law_III.6,log10_sigma=3.7921-3179.8/T
+1000,4.0954,thesis_III.12_law_III.6,log10_sigma=3.7921-3179.8/T
+1100,7.9684,thesis_III.12_law_III.6,log10_sigma=3.7921-3179.8/T
+1200,13.8761,thesis_III.12_law_III.6,log10_sigma=3.7921-3179.8/T
+1229,16.0248,thesis_III.12_law_III.6,log10_sigma=3.7921-3179.8/T
+1300,22.1871,thesis_III.12_law_III.6,log10_sigma=3.7921-3179.8/T
+1400,33.1753,thesis_III.12_law_III.6,log10_sigma=3.7921-3179.8/T
+1473,42.9909,thesis_III.12_law_III.6,log10_sigma=3.7921-3179.8/T
+1500,47.0147,thesis_III.12_law_III.6,log10_sigma=3.7921-3179.8/T
+1600,63.7859,thesis_III.12_law_III.6,log10_sigma=3.7921-3179.8/T
+1650,73.2738,thesis_III.12_law_III.6,log10_sigma=3.7921-3179.8/T
+1700,83.4890,thesis_III.12_law_III.6,log10_sigma=3.7921-3179.8/T

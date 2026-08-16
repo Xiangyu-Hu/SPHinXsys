@@ -58,9 +58,15 @@ struct OphelieGlassFieldNames
     std::string edge_flux_residual_imag = "EdgeFluxResidualImag";
     /** SPH pairwise edge-flux current residual sum_j q_ij (real chain). */
     std::string edge_flux_residual_real = "EdgeFluxResidualReal";
-    /** Graph/Laplace discrete energy density (diagnostic only, not physical Joule heat). */
+    /**
+     * Volume-consistent edge graph heating density Q_i = Σ_j 0.25 C e² (diagnostic).
+     * Not production Joule heat until Stage 1 soft gate vs recon passes.
+     */
     std::string joule_heat_edge = "JouleHeatEdgeGraph";
+    /** Particle Watt share Q_i * V_i for volume-consistent graph power. */
     std::string power_edge_particle = "PowerEdgeGraphParticle";
+    /** Undirected once-per-pair Watt contribution stored on min(i,j) owner particle. */
+    std::string power_edge_undirected_particle = "PowerEdgeUndirectedParticle";
     /** Per-component Joule heat from edge-reconstructed E_imag: 0.5*sigma*|E_i|². */
     std::string joule_heat_edge_recon_imag = "JouleHeatEdgeReconImag";
     /** Per-component Joule heat from edge-reconstructed E_real: 0.5*sigma*|E_r|². */

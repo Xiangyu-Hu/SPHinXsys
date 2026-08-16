@@ -1,6 +1,7 @@
 #ifndef ELECTROMAGNETIC_OPHELIE_JOULE_TO_HEAT_ONE_WAY_H
 #define ELECTROMAGNETIC_OPHELIE_JOULE_TO_HEAT_ONE_WAY_H
 
+#include "electromagnetic_ophelie_aind_diagnostic.h"
 #include "electromagnetic_ophelie_device_sync.h"
 #include "electromagnetic_ophelie_edge_flux.h"
 #include "electromagnetic_ophelie_french_literature.h"
@@ -23,6 +24,8 @@ inline constexpr const char *kOphelieThermalDeltaTField = "OphelieThermalDeltaT"
 inline constexpr const char *kOphelieThermalLaplaceTField = "OphelieThermalLaplaceT";
 inline constexpr const char *kOphelieThermalConductivityField = "OphelieThermalConductivity";
 inline constexpr const char *kOphelieThermalBoundaryMaskField = "OphelieThermalBoundaryMask";
+/** Face id on thermal shell: 0=interior, 1=side, 2=bottom, 3=free-top (Stage 4.0). */
+inline constexpr const char *kOphelieThermalBoundaryFaceField = "OphelieThermalBoundaryFace";
 
 /** Molten-glass order-of-magnitude defaults for one-way thermal step (no feedback). */
 struct OphelieJouleHeatOneWayMaterialProps
@@ -48,9 +51,15 @@ struct OphelieJouleHeatOneWayStepResult
     /** Volume fraction where |ΔT - Q·dt/(ρ·cp)| exceeds tolerance (closure diagnostic). */
     Real closure_mismatch_vol_fraction = 0.0;
     Real closure_inline_energy_rel_err = 0.0;
-    /** Stage 4.1: cold-wall Dirichlet compliance (1 = all boundary particles at T_wall). */
+    /** Regression-only cold-wall Dirichlet compliance (1 = all boundary particles at T_wall). */
     Real boundary_dirichlet_compliance = 1.0;
     Real max_temperature = 0.0;
+    /** Stage 4.0 French Natural production BC: instantaneous heat-loss powers [W] at final state. */
+    Real wall_heat_loss_side_w = 0.0;
+    Real wall_heat_loss_bottom_w = 0.0;
+    Real free_surface_conv_loss_w = 0.0;
+    Real free_surface_rad_loss_w = 0.0;
+    Real total_heat_loss_w = 0.0;
 };
 
 /** Particle Q field used as thermal source (complex edge-flux → recon complex Q on device). */
@@ -135,8 +144,9 @@ class ApplyOphelieJouleHeatOneWayTemperatureStepCK : public LocalDynamics
     ApplyOphelieJouleHeatOneWayTemperatureStepCK(SPHBody &sph_body, const std::string &q_field,
                                                  const std::string &delta_t_field,
                                                  const std::string &temperature_field, Real t_initial, Real dt,
-                                                 Real rho, Real cp)
+                                                 Real rho, Real cp, bool accumulate_on_temperature = false)
         : LocalDynamics(sph_body), t_initial_(t_initial), factor_(dt / (rho * cp + TinyReal)),
+          accumulate_on_temperature_(accumulate_on_temperature),
           dv_q_(particles_->template getVariableByName<Real>(q_field)),
           dv_delta_t_(particles_->template getVariableByName<Real>(delta_t_field)),
           dv_temperature_(particles_->template getVariableByName<Real>(temperature_field))
@@ -149,6 +159,7 @@ class ApplyOphelieJouleHeatOneWayTemperatureStepCK : public LocalDynamics
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : t_initial_(encloser.t_initial_), factor_(encloser.factor_),
+              accumulate_on_temperature_(encloser.accumulate_on_temperature_),
               q_(encloser.dv_q_->DelegatedData(ex_policy)),
               delta_t_(encloser.dv_delta_t_->DelegatedData(ex_policy)),
               temperature_(encloser.dv_temperature_->DelegatedData(ex_policy))
@@ -158,13 +169,22 @@ class ApplyOphelieJouleHeatOneWayTemperatureStepCK : public LocalDynamics
         void update(size_t index_i, Real dt = 0.0)
         {
             (void)dt;
-            delta_t_[index_i] += q_[index_i] * factor_;
-            temperature_[index_i] = t_initial_ + delta_t_[index_i];
+            const Real heating = q_[index_i] * factor_;
+            delta_t_[index_i] += heating;
+            if (accumulate_on_temperature_)
+            {
+                temperature_[index_i] += heating;
+            }
+            else
+            {
+                temperature_[index_i] = t_initial_ + delta_t_[index_i];
+            }
         }
 
       protected:
         Real t_initial_;
         Real factor_;
+        bool accumulate_on_temperature_;
         Real *q_;
         Real *delta_t_;
         Real *temperature_;
@@ -174,6 +194,7 @@ class ApplyOphelieJouleHeatOneWayTemperatureStepCK : public LocalDynamics
     Real t_initial_;
     Real dt_;
     Real factor_;
+    bool accumulate_on_temperature_;
     DiscreteVariable<Real> *dv_q_;
     DiscreteVariable<Real> *dv_delta_t_;
     DiscreteVariable<Real> *dv_temperature_;
@@ -183,10 +204,11 @@ template <class ExecutionPolicy>
 inline void execOphelieJouleHeatOneWayTemperatureSteps(SolidBody &glass_body, const std::string &q_field,
                                                        const std::string &delta_t_field,
                                                        const std::string &temperature_field, Real t_initial, Real dt,
-                                                       Real rho, Real cp, size_t n_steps)
+                                                       Real rho, Real cp, size_t n_steps,
+                                                       bool accumulate_on_temperature = false)
 {
     StateDynamics<ExecutionPolicy, ApplyOphelieJouleHeatOneWayTemperatureStepCK> thermal_step(
-        glass_body, q_field, delta_t_field, temperature_field, t_initial, dt, rho, cp);
+        glass_body, q_field, delta_t_field, temperature_field, t_initial, dt, rho, cp, accumulate_on_temperature);
     for (size_t step = 0; step < n_steps; ++step)
     {
         thermal_step.exec();
@@ -798,7 +820,7 @@ template <class ExecutionPolicy>
 inline OphelieJouleHeatOneWayStepResult applyOphelieJouleHeatOneWayTemperatureSteps(
     SolidBody &glass_body, BaseParticles &particles, const std::string &q_field, const std::string &temperature_field,
     Real dt, const OphelieJouleHeatOneWayMaterialProps &material, size_t n, size_t n_steps,
-    Real q_threshold = 1.0e-6)
+    Real q_threshold = 1.0e-6, bool accumulate_on_temperature = false)
 {
     OphelieJouleHeatOneWayStepResult result;
     result.n_steps = n_steps;
@@ -810,7 +832,7 @@ inline OphelieJouleHeatOneWayStepResult applyOphelieJouleHeatOneWayTemperatureSt
     syncOphelieJouleHeatOneWayThermalFieldsToDevice(particles, kOphelieThermalDeltaTField, temperature_field);
     execOphelieJouleHeatOneWayTemperatureSteps<ExecutionPolicy>(
         glass_body, q_field, kOphelieThermalDeltaTField, temperature_field, material.t_initial, dt, material.rho,
-        material.cp, n_steps);
+        material.cp, n_steps, accumulate_on_temperature);
     OphelieJouleHeatOneWayStepResult diagnostics = execOphelieJouleHeatOneWayClosureDiagnostics<ExecutionPolicy>(
         glass_body, q_field, kOphelieThermalDeltaTField, effective_dt, material.rho, material.cp, n, q_threshold);
     result.max_per_particle_rel_err = diagnostics.max_per_particle_rel_err;
@@ -832,7 +854,50 @@ struct OphelieFrenchEmJouleHeatOneWayResult
     OphelieJouleHeatOneWayStepResult thermal;
     Real joule_power_w = 0.0;
     Real phi_eq_res_vol = 0.0;
+    /** Stage 3.1: A_coil+A_glass Picard path before thermal handoff. */
+    bool used_self_induction = false;
+    size_t self_induction_iterations = 0;
+    Real final_j_rel_change = 0.0;
+    bool picard_converged = false;
+    Real a_ind_over_a_coil = 0.0;
+    Real b_ind_over_b_coil = 0.0;
 };
+
+/** Run coil-only EM or optional A_glass Picard, then leave Q fields ready for thermal. */
+template <class ExecutionPolicy>
+inline void runFrenchReducedEmOrSelfInductionForThermalHandoff(
+    SolidBody &glass_body, Inner<> &glass_inner, const OphelieGlassFieldNames &names, OphelieParameters &params,
+    const OphelieFrenchReducedCaseParams &french, OphelieFrenchEmJouleHeatOneWayResult &result)
+{
+    if (params.enable_self_induction_)
+    {
+        const OphelieFrenchSelfInductionPicardResult picard =
+            runFrenchReducedSelfInductionPicard<ExecutionPolicy>(glass_body, glass_inner, names, params, french);
+        result.used_self_induction = true;
+        result.self_induction_iterations = picard.self_induction_iterations;
+        result.final_j_rel_change = picard.final_j_rel_change;
+        result.picard_converged = picard.picard_converged;
+        result.a_ind_over_a_coil = picard.a_ind_over_a_coil;
+        result.b_ind_over_b_coil = picard.b_ind_over_b_coil;
+        result.joule_power_w = picard.joule_power_w;
+        result.phi_eq_res_vol = picard.phi_eq_res_vol;
+        result.em.joule_power_raw = picard.joule_power_w;
+        result.em.joule_power_recon_edge = picard.joule_power_w;
+        result.em.phi_eq_res_vol = picard.phi_eq_res_vol;
+        result.em.phi_solver_rel_residual = picard.phi_solver_rel_residual;
+    }
+    else
+    {
+        result.em = runFrenchReducedEmPipeline<ExecutionPolicy>(glass_body, glass_inner, names, params, french);
+        result.joule_power_w = result.em.joule_power_raw;
+        result.phi_eq_res_vol = result.em.phi_eq_res_vol;
+    }
+
+    if (ophelieUseEdgeFluxElectromotiveRhs(params))
+    {
+        syncOphelieJouleHeatPrimaryForThermalOneWay<ExecutionPolicy>(glass_body, names, params);
+    }
+}
 
 /** French reduced EM solve then frozen-Q thermal one-way (no EM feedback). */
 template <class ExecutionPolicy>
@@ -844,14 +909,8 @@ inline OphelieFrenchEmJouleHeatOneWayResult runFrenchReducedEmThenJouleHeatOneWa
     BaseParticles &particles = glass_body.getBaseParticles();
 
     OphelieFrenchEmJouleHeatOneWayResult result;
-    result.em = runFrenchReducedEmPipeline<ExecutionPolicy>(glass_body, glass_inner, names, params, french);
-    result.joule_power_w = result.em.joule_power_raw;
-    result.phi_eq_res_vol = result.em.phi_eq_res_vol;
-
-    if (ophelieUseEdgeFluxElectromotiveRhs(params))
-    {
-        syncOphelieJouleHeatPrimaryForThermalOneWay<ExecutionPolicy>(glass_body, names, params);
-    }
+    runFrenchReducedEmOrSelfInductionForThermalHandoff<ExecutionPolicy>(glass_body, glass_inner, names, params, french,
+                                                                        result);
 
     const size_t n = particles.TotalRealParticles();
     registerOphelieJouleHeatTemperatureField(particles, material.t_initial);

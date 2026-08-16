@@ -29,6 +29,8 @@ struct EmDpScanCli
 {
     bool scan = false;
     bool picard = false;
+    /** Low-conductivity self-induction limit: A_ind/A_coil must vanish as σ -> 0. */
+    bool sigma_scan = false;
     Real single_dp = 0.08;
     size_t picard_max_iter = 8;
     std::string csv_path = "./output/ophelie_french_em_dp_scan.csv";
@@ -37,6 +39,7 @@ struct EmDpScanCli
 struct EmDpScanRow
 {
     Real dp = 0.0;
+    Real sigma = 0.0;
     size_t n = 0;
     Real phi_eq_res_vol = 0.0;
     Real joule_power_w = 0.0;
@@ -59,6 +62,11 @@ inline void applyEmDpScanCli(int ac, char *av[], EmDpScanCli &cli)
         else if (std::strcmp(av[i], "--em-dp-scan-picard") == 0 || std::strcmp(av[i], "--em-dp-scan-picard=1") == 0)
         {
             cli.scan = true;
+            cli.picard = true;
+        }
+        else if (std::strcmp(av[i], "--em-sigma-scan") == 0 || std::strcmp(av[i], "--em-sigma-scan=1") == 0)
+        {
+            cli.sigma_scan = true;
             cli.picard = true;
         }
         else if (std::strncmp(av[i], "--dp=", 5) == 0)
@@ -124,6 +132,7 @@ inline EmDpScanRow runFrenchEmLatticeAtDp(Real dp, OphelieParameters &params, Op
 
     EmDpScanRow row;
     row.dp = dp;
+    row.sigma = params.sigma_glass_;
     row.n = glass_body.getBaseParticles().TotalRealParticles();
     row.picard_mode = picard_mode;
 
@@ -157,10 +166,10 @@ inline void appendEmDpScanCsv(const std::string &path, const EmDpScanRow &row)
     std::ofstream out(path, std::ios::app);
     if (write_header)
     {
-        out << "dp,n,phi_eq_res_vol,joule_power_w,div_j_l2_red,picard_mode,picard_converged,picard_iters,picard_j_rel,"
+        out << "dp,sigma,n,phi_eq_res_vol,joule_power_w,div_j_l2_red,picard_mode,picard_converged,picard_iters,picard_j_rel,"
                "a_ind_over_a_coil\n";
     }
-    out << row.dp << "," << row.n << "," << row.phi_eq_res_vol << "," << row.joule_power_w << "," << row.div_j_l2_red
+    out << row.dp << "," << row.sigma << "," << row.n << "," << row.phi_eq_res_vol << "," << row.joule_power_w << "," << row.div_j_l2_red
         << "," << (row.picard_mode ? 1 : 0) << "," << (row.picard_converged ? 1 : 0) << "," << row.picard_iters << ","
         << row.picard_j_rel << "," << row.a_ind_over_a_coil << "\n";
 }
@@ -188,6 +197,20 @@ inline bool passPicardDpScanGate(const EmDpScanRow &row, const OphelieParameters
            row.a_ind_over_a_coil > TinyReal;
 }
 
+inline bool passLowSigmaSelfInductionLimit(const StdVec<EmDpScanRow> &rows)
+{
+    if (rows.size() < 2)
+    {
+        return false;
+    }
+    const EmDpScanRow &lowest_sigma = rows.front();
+    const EmDpScanRow &reference_sigma = rows.back();
+    return lowest_sigma.picard_converged && reference_sigma.picard_converged &&
+           lowest_sigma.a_ind_over_a_coil >= Real(0) &&
+           lowest_sigma.a_ind_over_a_coil < reference_sigma.a_ind_over_a_coil &&
+           lowest_sigma.a_ind_over_a_coil < Real(0.05);
+}
+
 } // namespace
 
 int main(int ac, char *av[])
@@ -211,7 +234,11 @@ int main(int ac, char *av[])
     syncFrenchReducedToParameters(french, params);
 
     StdVec<Real> dp_list;
-    if (cli.scan)
+    if (cli.sigma_scan)
+    {
+        dp_list = {cli.single_dp};
+    }
+    else if (cli.scan)
     {
         dp_list = {Real(0.08), Real(0.06), Real(0.04)};
     }
@@ -220,18 +247,29 @@ int main(int ac, char *av[])
         dp_list = {cli.single_dp};
     }
 
-    StdVec<EmDpScanRow> rows;
-    rows.reserve(dp_list.size());
-    for (Real dp : dp_list)
+    StdVec<Real> sigma_list = {params.sigma_glass_};
+    if (cli.sigma_scan)
     {
-        EmDpScanRow row = runFrenchEmLatticeAtDp(dp, params, french, cli.picard, cli.picard_max_iter);
-        rows.push_back(row);
-        appendEmDpScanCsv(cli.csv_path, row);
-        std::cout << "em_dp_scan dp=" << row.dp << " n=" << row.n << " picard=" << (cli.picard ? 1 : 0)
-                  << " phi_eq_res_vol=" << row.phi_eq_res_vol << " P_joule_W=" << row.joule_power_w
-                  << " div_j_l2_red=" << row.div_j_l2_red << " picard_converged=" << (row.picard_converged ? 1 : 0)
-                  << " picard_iters=" << row.picard_iters << " J_rel=" << row.picard_j_rel
-                  << " A_ind_over_A_coil=" << row.a_ind_over_a_coil << std::endl;
+        sigma_list = {Real(1.0e-3), Real(1.0e-2), Real(1.0e-1), Real(1.0), Real(16.0)};
+    }
+
+    StdVec<EmDpScanRow> rows;
+    rows.reserve(dp_list.size() * sigma_list.size());
+    for (Real sigma : sigma_list)
+    {
+        params.sigma_glass_ = sigma;
+        for (Real dp : dp_list)
+        {
+            EmDpScanRow row = runFrenchEmLatticeAtDp(dp, params, french, cli.picard, cli.picard_max_iter);
+            rows.push_back(row);
+            appendEmDpScanCsv(cli.csv_path, row);
+            std::cout << "em_dp_scan dp=" << row.dp << " sigma=" << row.sigma << " n=" << row.n
+                      << " picard=" << (cli.picard ? 1 : 0) << " phi_eq_res_vol=" << row.phi_eq_res_vol
+                      << " P_joule_W=" << row.joule_power_w << " div_j_l2_red=" << row.div_j_l2_red
+                      << " picard_converged=" << (row.picard_converged ? 1 : 0)
+                      << " picard_iters=" << row.picard_iters << " J_rel=" << row.picard_j_rel
+                      << " A_ind_over_A_coil=" << row.a_ind_over_a_coil << std::endl;
+        }
     }
 
     bool smoke_passed = true;
@@ -252,10 +290,15 @@ int main(int ac, char *av[])
         picard_passed = passPicardDpScanGate(rows.back(), params);
     }
 
-    const bool passed = smoke_passed && refinement_passed && picard_passed;
-    std::cout << "test_3d_ophelie_french_em_dp_scan mode=" << (cli.picard ? "picard" : (cli.scan ? "em_scan" : "em_smoke"))
+    const bool low_sigma_limit_passed = !cli.sigma_scan || passLowSigmaSelfInductionLimit(rows);
+
+    const bool passed = smoke_passed && refinement_passed && picard_passed && low_sigma_limit_passed;
+    std::cout << "test_3d_ophelie_french_em_dp_scan mode="
+              << (cli.sigma_scan ? "sigma_picard_limit" : (cli.picard ? "picard" : (cli.scan ? "em_scan" : "em_smoke")))
               << " dp_count=" << rows.size() << " csv=" << cli.csv_path << " smoke_passed=" << (smoke_passed ? 1 : 0)
               << " refinement_passed=" << (refinement_passed ? 1 : 0)
-              << " picard_passed=" << (picard_passed ? 1 : 0) << " passed=" << (passed ? 1 : 0) << std::endl;
+              << " picard_passed=" << (picard_passed ? 1 : 0)
+              << " low_sigma_limit_passed=" << (low_sigma_limit_passed ? 1 : 0)
+              << " passed=" << (passed ? 1 : 0) << std::endl;
     return passed ? 0 : 1;
 }

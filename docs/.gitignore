@@ -4,3 +4,6 @@ _site
 .jekyll-metadata
 vendor
 Gemfile.lock
+
+# Local ephemeral GPT upload snapshots (duplicate source copies; do not commit)
+ophelie/packs/

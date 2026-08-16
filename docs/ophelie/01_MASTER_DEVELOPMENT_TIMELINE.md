@@ -19,6 +19,12 @@ Build an **OPHELIE-inspired** complex phasor EM solver on SPHinXsys SYCL, then c
 | 2026-06 | One-sided Neumann boundary; slab/cylinder MMS | Sprint B first version |
 | 2026-06-02 | Edge-flux Stage 1: pairwise SPH current equation | Sign MMS passed |
 | 2026-06-08 | **Power calibration fix**: graph energy ≠ physical Joule power → use `P_recon` | French H production **passed @ 50 kW** |
+| 2026-08-08 | French natural glass relax + EM (`R=0.25`, `H=0.185`) target-power 50 kW | `passed=1`, `I_peak≈170 A/loop`; legacy `P_graph/P_recon~1e5` still open |
+| 2026-08-11 | Stage 3.0–3.4: A_glass Picard → Q→T; σ(T); diffusion; III.12 sensitivity | φ residual floor ~2.1e-4 accepted via dual gate |
+| 2026-08-11 | Stage 3.4 closeout + Stage 3.5 plan: Natural σ_nat + 50 kW + A_glass | See `OPHELIE_STAGE3_4_CLOSEOUT_AND_FRENCH_NATURAL_NEXT_PLAN_2026-08-11.md` |
+| 2026-08-11 | Stage 3.5 passed: 50 kW + A_glass (`P=50000`, `phi≈1.78e-4`) | Then Stage 4.0 Natural Robin/radiation BC |
+| 2026-08-11 | Stage 4.0 Natural thermal BC smoke passed (loss channels >0; transient overcooling expected) | Stage 4.1 frozen-Q WCSPH+Boussinesq test added |
+| 2026-08-08 | **Stage 1 Phase A**: volume-consistent graph power + undirected `j>i` audit | See `08_EDGE_FLUX_UNDIRECTED_POWER_CLOSURE.md`; calibration still `P_recon` |
 | 2026-06-08 | Complex edge-flux: φ_r/φ_i, E_r/E_i, J_r/J_i | Production path |
 | 2026-06 | French thermal one-way: EM → JouleHeat → explicit heating | Energy closure tests |
 | 2026-06 | TEAM7 L2 Round 2–3: probe L2, high-σ scaling, operator audit | Side-track; not delivery gate |
@@ -81,12 +87,15 @@ RH200 flow coupling:
 
 ## 6. Open items (not blocking midterm demo)
 
-- **A_ind** self-induction Picard (`A_total = A_coil + A_ind`)
-- **σ(T), μ(T)** feedback
+- **A_ind** self-induction Picard — Stage 3.1 / 3.2b engineering pass (`phi_tol=2e-4`)
+- **σ(T)** — thesis III.12 law wired (`--sigma-law=thesis-iii12`); Table-1 `16@1473` ≠ representative point
 - Cold-crucible water cooling / free-surface losses
+- **Stage 4** natural convection / Boussinesq / 50 kW full outer coupling
 - TEAM7 strict L2 benchmark closure
 - **Task B**: pointwise J·E formula residual audit
 - French CAD / 400 kW supply-side model
+
+Stage 3 progress snapshot (2026-08-11): [`archive/discussion/OPHELIE_STAGE3_PROGRESS_SNAPSHOT_2026-08-11.md`](archive/discussion/OPHELIE_STAGE3_PROGRESS_SNAPSHOT_2026-08-11.md)
 
 ---
 

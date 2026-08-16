@@ -18,15 +18,67 @@ namespace electromagnetics
 namespace ophelie
 {
 
-/** Stage 4.1: isotropic conduction + optional cold-wall Dirichlet (no EM feedback). */
+/**
+ * Thermal BC mode for French one-way diffusion:
+ * - DirichletRegression: cold-wall T=T0 (Stage 3.3 regression only)
+ * - FrenchNaturalProduction: Robin side/bottom + free-surface convection/radiation (Stage 4.0)
+ */
+enum class OphelieThermalBoundaryMode
+{
+    None = 0,
+    DirichletRegression = 1,
+    FrenchNaturalProduction = 2
+};
+
+/** Isotropic conduction + optional thermal BCs (no EM feedback). */
 struct OphelieThermalDiffusionOneWayOptions
 {
     bool enable_diffusion = false;
+    /** Legacy alias: Dirichlet regression shell (mutually exclusive with french-natural). */
     bool enable_cold_wall_dirichlet = false;
+    bool enable_french_natural_bc = false;
     /** Shell width = factor * dp (match phi boundary convention). */
     Real boundary_width_factor = 1.5;
     Real pair_weight_regularization = Real(0.01);
+    /** Natural production BC (journal sensitivity range; h_side default selected, not unique). */
+    Real h_side = Real(300);     // W/(m^2 K)
+    Real h_bottom = Real(35);    // W/(m^2 K)
+    Real h_free = Real(20);      // W/(m^2 K)
+    Real emissivity = Real(0.8); // first-version free-surface emissivity
+    Real t_cool = Real(300);     // crucible coolant / wall ambient [K]
+    Real t_ambient = Real(300);  // free-surface convection ambient [K]
+    Real t_rad_ambient = Real(300); // radiative ambient [K]
+    Real stefan_boltzmann = Real(5.670374419e-8);
+    /** Filled by setup helpers: boundary_width_factor * dp. */
+    Real boundary_shell_thickness = Real(0);
 };
+
+inline OphelieThermalBoundaryMode ophelieThermalBoundaryModeFromOptions(
+    const OphelieThermalDiffusionOneWayOptions &options)
+{
+    if (options.enable_french_natural_bc)
+    {
+        return OphelieThermalBoundaryMode::FrenchNaturalProduction;
+    }
+    if (options.enable_cold_wall_dirichlet)
+    {
+        return OphelieThermalBoundaryMode::DirichletRegression;
+    }
+    return OphelieThermalBoundaryMode::None;
+}
+
+inline const char *ophelieThermalBoundaryModeName(OphelieThermalBoundaryMode mode)
+{
+    switch (mode)
+    {
+    case OphelieThermalBoundaryMode::DirichletRegression:
+        return "dirichlet_regression";
+    case OphelieThermalBoundaryMode::FrenchNaturalProduction:
+        return "french_natural_production";
+    default:
+        return "none";
+    }
+}
 
 struct OphelieThermalDiffusionOneWayStepResult : public OphelieJouleHeatOneWayStepResult
 {
@@ -37,6 +89,7 @@ inline void registerOphelieThermalDiffusionAuxFields(BaseParticles &particles, R
     particles.registerStateVariable<Real>(kOphelieThermalLaplaceTField, Real(0));
     particles.registerStateVariable<Real>(kOphelieThermalConductivityField, thermal_conductivity);
     particles.registerStateVariable<Real>(kOphelieThermalBoundaryMaskField, Real(0));
+    particles.registerStateVariable<Real>(kOphelieThermalBoundaryFaceField, Real(0));
     const size_t n = particles.TotalRealParticles();
     Real *conductivity = particles.getVariableDataByName<Real>(kOphelieThermalConductivityField);
     for (size_t i = 0; i < n; ++i)
@@ -46,22 +99,25 @@ inline void registerOphelieThermalDiffusionAuxFields(BaseParticles &particles, R
     syncVariableToDevice<Real>(particles, kOphelieThermalLaplaceTField);
     syncVariableToDevice<Real>(particles, kOphelieThermalConductivityField);
     syncVariableToDevice<Real>(particles, kOphelieThermalBoundaryMaskField);
+    syncVariableToDevice<Real>(particles, kOphelieThermalBoundaryFaceField);
 }
 
-/** Host: mark boundary shell particles for Dirichlet T = T_wall (French cylinder or analytic box). */
+/** Host: mark boundary shell particles for Dirichlet regression T = T_wall. */
 inline size_t setupOphelieThermalDirichletBoundaryMask(BaseParticles &particles,
-                                                       const OphelieThermalDiffusionOneWayOptions &options,
+                                                       OphelieThermalDiffusionOneWayOptions &options,
                                                        const OpheliePhiBoundaryGeometryContext &geom, Real dp)
 {
     if (!options.enable_cold_wall_dirichlet)
     {
         return 0;
     }
+    options.boundary_shell_thickness = options.boundary_width_factor * dp;
     const size_t n = particles.TotalRealParticles();
-    const Real boundary_width = options.boundary_width_factor * dp;
+    const Real boundary_width = options.boundary_shell_thickness;
     syncVariableToHost<Vecd>(particles, "Position");
     Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
     Real *mask = particles.getVariableDataByName<Real>(kOphelieThermalBoundaryMaskField);
+    Real *face = particles.getVariableDataByName<Real>(kOphelieThermalBoundaryFaceField);
     size_t n_boundary = 0;
     for (size_t i = 0; i < n; ++i)
     {
@@ -69,14 +125,75 @@ inline size_t setupOphelieThermalDirichletBoundaryMask(BaseParticles &particles,
         if (dist <= boundary_width)
         {
             mask[i] = 1.0;
+            face[i] = 1.0; // undifferentiated wall for regression
             ++n_boundary;
         }
         else
         {
             mask[i] = 0.0;
+            face[i] = 0.0;
         }
     }
     syncVariableToDevice<Real>(particles, kOphelieThermalBoundaryMaskField);
+    syncVariableToDevice<Real>(particles, kOphelieThermalBoundaryFaceField);
+    return n_boundary;
+}
+
+/**
+ * Host: classify French cylinder shell into side / bottom / free-top for Natural production BC.
+ * Face codes: 0 interior, 1 side, 2 bottom, 3 free-top.
+ */
+inline size_t setupOphelieThermalFrenchNaturalBoundaryFaces(BaseParticles &particles,
+                                                            OphelieThermalDiffusionOneWayOptions &options,
+                                                            const OphelieFrenchReducedCaseParams &french)
+{
+    if (!options.enable_french_natural_bc)
+    {
+        return 0;
+    }
+    options.boundary_shell_thickness = options.boundary_width_factor * french.dp;
+    const size_t n = particles.TotalRealParticles();
+    const Real boundary_width = options.boundary_shell_thickness;
+    const Vecd &center = french.glass_center;
+    const Real z_lo = center[2] - french.glass_half_height;
+    const Real z_hi = center[2] + french.glass_half_height;
+    syncVariableToHost<Vecd>(particles, "Position");
+    Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    Real *mask = particles.getVariableDataByName<Real>(kOphelieThermalBoundaryMaskField);
+    Real *face = particles.getVariableDataByName<Real>(kOphelieThermalBoundaryFaceField);
+    size_t n_boundary = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real dx = pos[i][0] - center[0];
+        const Real dy = pos[i][1] - center[1];
+        const Real r = std::sqrt(dx * dx + dy * dy);
+        const Real dist_side = french.glass_radius - r;
+        const Real dist_bottom = pos[i][2] - z_lo;
+        const Real dist_top = z_hi - pos[i][2];
+        const Real dist = std::min(dist_side, std::min(dist_bottom, dist_top));
+        if (dist > boundary_width)
+        {
+            mask[i] = 0.0;
+            face[i] = 0.0;
+            continue;
+        }
+        mask[i] = 1.0;
+        if (dist_side <= dist_bottom && dist_side <= dist_top)
+        {
+            face[i] = 1.0;
+        }
+        else if (dist_bottom <= dist_top)
+        {
+            face[i] = 2.0;
+        }
+        else
+        {
+            face[i] = 3.0;
+        }
+        ++n_boundary;
+    }
+    syncVariableToDevice<Real>(particles, kOphelieThermalBoundaryMaskField);
+    syncVariableToDevice<Real>(particles, kOphelieThermalBoundaryFaceField);
     return n_boundary;
 }
 
@@ -184,6 +301,152 @@ class ApplyOphelieThermalDirichletWallCK : public LocalDynamics
     DiscreteVariable<Real> *dv_delta_t_;
     DiscreteVariable<Real> *dv_temperature_;
 };
+
+/**
+ * Stage 4.0: Robin side/bottom + free-surface convection/radiation.
+ * Surface flux q [W/m^2] is distributed over the boundary shell volume via q / δ.
+ */
+class ApplyOphelieThermalFrenchNaturalBcCK : public LocalDynamics
+{
+  public:
+    ApplyOphelieThermalFrenchNaturalBcCK(SPHBody &sph_body, const std::string &delta_t_field,
+                                         const std::string &temperature_field, Real t_initial, Real rho, Real cp,
+                                         Real shell_thickness, const OphelieThermalDiffusionOneWayOptions &bc)
+        : LocalDynamics(sph_body), t_initial_(t_initial),
+          inv_rho_cp_delta_(Real(1) / ((rho * cp + TinyReal) * (shell_thickness + TinyReal))), h_side_(bc.h_side),
+          h_bottom_(bc.h_bottom), h_free_(bc.h_free), emissivity_(bc.emissivity), t_cool_(bc.t_cool),
+          t_ambient_(bc.t_ambient), t_rad_ambient_(bc.t_rad_ambient), stefan_boltzmann_(bc.stefan_boltzmann),
+          dv_face_(particles_->template getVariableByName<Real>(kOphelieThermalBoundaryFaceField)),
+          dv_delta_t_(particles_->template getVariableByName<Real>(delta_t_field)),
+          dv_temperature_(particles_->template getVariableByName<Real>(temperature_field))
+    {
+    }
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : t_initial_(encloser.t_initial_), inv_rho_cp_delta_(encloser.inv_rho_cp_delta_), h_side_(encloser.h_side_),
+              h_bottom_(encloser.h_bottom_), h_free_(encloser.h_free_), emissivity_(encloser.emissivity_),
+              t_cool_(encloser.t_cool_), t_ambient_(encloser.t_ambient_), t_rad_ambient_(encloser.t_rad_ambient_),
+              stefan_boltzmann_(encloser.stefan_boltzmann_), face_(encloser.dv_face_->DelegatedData(ex_policy)),
+              delta_t_(encloser.dv_delta_t_->DelegatedData(ex_policy)),
+              temperature_(encloser.dv_temperature_->DelegatedData(ex_policy))
+        {
+        }
+
+        void update(size_t index_i, Real dt = 0.0)
+        {
+            const Real face = face_[index_i];
+            if (face < Real(0.5))
+            {
+                return;
+            }
+            const Real t = temperature_[index_i];
+            Real q_out = Real(0);
+            if (face < Real(1.5))
+            {
+                q_out = h_side_ * (t - t_cool_);
+            }
+            else if (face < Real(2.5))
+            {
+                q_out = h_bottom_ * (t - t_cool_);
+            }
+            else
+            {
+                const Real t2 = t * t;
+                const Real tar2 = t_rad_ambient_ * t_rad_ambient_;
+                q_out = h_free_ * (t - t_ambient_) +
+                        emissivity_ * stefan_boltzmann_ * (t2 * t2 - tar2 * tar2);
+            }
+            delta_t_[index_i] -= dt * inv_rho_cp_delta_ * q_out;
+            temperature_[index_i] = t_initial_ + delta_t_[index_i];
+        }
+
+      protected:
+        Real t_initial_;
+        Real inv_rho_cp_delta_;
+        Real h_side_;
+        Real h_bottom_;
+        Real h_free_;
+        Real emissivity_;
+        Real t_cool_;
+        Real t_ambient_;
+        Real t_rad_ambient_;
+        Real stefan_boltzmann_;
+        Real *face_;
+        Real *delta_t_;
+        Real *temperature_;
+    };
+
+  protected:
+    Real t_initial_;
+    Real inv_rho_cp_delta_;
+    Real h_side_;
+    Real h_bottom_;
+    Real h_free_;
+    Real emissivity_;
+    Real t_cool_;
+    Real t_ambient_;
+    Real t_rad_ambient_;
+    Real stefan_boltzmann_;
+    DiscreteVariable<Real> *dv_face_;
+    DiscreteVariable<Real> *dv_delta_t_;
+    DiscreteVariable<Real> *dv_temperature_;
+};
+
+/** Host audit of instantaneous Natural BC heat-loss powers at the current temperature field. */
+inline void hostOphelieThermalFrenchNaturalHeatLossPowers(BaseParticles &particles,
+                                                          const OphelieThermalDiffusionOneWayOptions &options,
+                                                          Real shell_thickness, Real &side_w, Real &bottom_w,
+                                                          Real &free_conv_w, Real &free_rad_w, Real &total_w)
+{
+    side_w = bottom_w = free_conv_w = free_rad_w = total_w = Real(0);
+    if (!options.enable_french_natural_bc)
+    {
+        return;
+    }
+    const size_t n = particles.TotalRealParticles();
+    syncVariableToHost<Real>(particles, kOphelieTemperatureField);
+    syncVariableToHost<Real>(particles, kOphelieThermalBoundaryFaceField);
+    syncVariableToHost<Real>(particles, "VolumetricMeasure");
+    const Real *temperature = particles.getVariableDataByName<Real>(kOphelieTemperatureField);
+    const Real *face = particles.getVariableDataByName<Real>(kOphelieThermalBoundaryFaceField);
+    const Real *vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+    const Real inv_delta = Real(1) / (shell_thickness + TinyReal);
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real f = face[i];
+        if (f < Real(0.5))
+        {
+            continue;
+        }
+        const Real area = vol[i] * inv_delta;
+        const Real t = temperature[i];
+        if (f < Real(1.5))
+        {
+            const Real q = options.h_side * (t - options.t_cool);
+            side_w += q * area;
+        }
+        else if (f < Real(2.5))
+        {
+            const Real q = options.h_bottom * (t - options.t_cool);
+            bottom_w += q * area;
+        }
+        else
+        {
+            const Real t2 = t * t;
+            const Real tar2 = options.t_rad_ambient * options.t_rad_ambient;
+            const Real q_conv = options.h_free * (t - options.t_ambient);
+            const Real q_rad =
+                options.emissivity * options.stefan_boltzmann * (t2 * t2 - tar2 * tar2);
+            free_conv_w += q_conv * area;
+            free_rad_w += q_rad * area;
+        }
+    }
+    total_w = side_w + bottom_w + free_conv_w + free_rad_w;
+}
 
 class OphelieThermalBoundaryComplianceReduceCK
     : public BaseLocalDynamicsReduce<ReduceSum<std::pair<Real, Real>>, SPHBody>
@@ -319,6 +582,17 @@ inline void execOphelieJouleHeatDiffusionOneWayStep(SolidBody &glass_body, Inner
             glass_body, kOphelieThermalDeltaTField, temperature_field, t_initial);
         dirichlet_wall.exec();
     }
+    else if (options.enable_french_natural_bc)
+    {
+        const Real shell_thickness =
+            options.boundary_shell_thickness > TinyReal
+                ? options.boundary_shell_thickness
+                : options.boundary_width_factor; // fallback; prefer explicit setup
+        StateDynamics<ExecutionPolicy, ApplyOphelieThermalFrenchNaturalBcCK> natural_bc(
+            glass_body, kOphelieThermalDeltaTField, temperature_field, t_initial, material.rho, material.cp,
+            shell_thickness, options);
+        natural_bc.exec(dt);
+    }
 }
 
 template <class ExecutionPolicy>
@@ -351,6 +625,15 @@ inline OphelieThermalDiffusionOneWayStepResult execOphelieThermalDiffusionDiagno
     {
         result.boundary_dirichlet_compliance = 1.0;
     }
+    if (options.enable_french_natural_bc)
+    {
+        const Real shell =
+            options.boundary_shell_thickness > TinyReal ? options.boundary_shell_thickness : options.boundary_width_factor;
+        hostOphelieThermalFrenchNaturalHeatLossPowers(glass_body.getBaseParticles(), options, shell,
+                                                      result.wall_heat_loss_side_w, result.wall_heat_loss_bottom_w,
+                                                      result.free_surface_conv_loss_w, result.free_surface_rad_loss_w,
+                                                      result.total_heat_loss_w);
+    }
     ReduceDynamicsCK<ExecutionPolicy, OphelieThermalMaxTemperatureReduceCK> max_temperature(
         glass_body, kOphelieTemperatureField);
     result.max_temperature = max_temperature.exec();
@@ -373,13 +656,18 @@ inline void copyOphelieJouleHeatOneWayStepResult(OphelieJouleHeatOneWayStepResul
     dst.closure_inline_energy_rel_err = src.closure_inline_energy_rel_err;
     dst.boundary_dirichlet_compliance = src.boundary_dirichlet_compliance;
     dst.max_temperature = src.max_temperature;
+    dst.wall_heat_loss_side_w = src.wall_heat_loss_side_w;
+    dst.wall_heat_loss_bottom_w = src.wall_heat_loss_bottom_w;
+    dst.free_surface_conv_loss_w = src.free_surface_conv_loss_w;
+    dst.free_surface_rad_loss_w = src.free_surface_rad_loss_w;
+    dst.total_heat_loss_w = src.total_heat_loss_w;
 }
 
 template <class ExecutionPolicy>
 inline OphelieThermalDiffusionOneWayStepResult applyOphelieJouleHeatDiffusionOneWaySteps(
     SolidBody &glass_body, Inner<> &glass_inner, BaseParticles &particles, const std::string &q_field,
     const std::string &temperature_field, Real dt, const OphelieJouleHeatOneWayMaterialProps &material, size_t n,
-    size_t n_steps, const OphelieThermalDiffusionOneWayOptions &options, Real q_threshold = 1.0e-6,
+    size_t n_steps, OphelieThermalDiffusionOneWayOptions &options, Real q_threshold = 1.0e-6,
     const OphelieThermalVtpRecordingOptions *recording = nullptr)
 {
     OphelieThermalDiffusionOneWayStepResult result;
@@ -391,6 +679,7 @@ inline OphelieThermalDiffusionOneWayStepResult applyOphelieJouleHeatDiffusionOne
     ensureOphelieVariableDelegatedOnDevice<ExecutionPolicy, Real>(particles, kOphelieThermalLaplaceTField);
     ensureOphelieVariableDelegatedOnDevice<ExecutionPolicy, Real>(particles, kOphelieThermalConductivityField);
     ensureOphelieVariableDelegatedOnDevice<ExecutionPolicy, Real>(particles, kOphelieThermalBoundaryMaskField);
+    ensureOphelieVariableDelegatedOnDevice<ExecutionPolicy, Real>(particles, kOphelieThermalBoundaryFaceField);
     ensureOphelieVariableDelegatedOnDevice<ExecutionPolicy, Real>(particles, "VolumetricMeasure");
     syncOphelieJouleHeatOneWayThermalFieldsToDevice(particles, kOphelieThermalDeltaTField, temperature_field);
 
@@ -406,24 +695,94 @@ inline OphelieThermalDiffusionOneWayStepResult applyOphelieJouleHeatDiffusionOne
     return result;
 }
 
-/** French EM + Joule heat with optional isotropic diffusion and cold-crucible Dirichlet shell. */
+class ResetOphelieThermalStateToInitialCK : public LocalDynamics
+{
+  public:
+    ResetOphelieThermalStateToInitialCK(SPHBody &sph_body, Real t_initial,
+                                        const std::string &delta_t_field = kOphelieThermalDeltaTField,
+                                        const std::string &temperature_field = kOphelieTemperatureField)
+        : LocalDynamics(sph_body), t_initial_(t_initial),
+          dv_delta_t_(particles_->template getVariableByName<Real>(delta_t_field)),
+          dv_temperature_(particles_->template getVariableByName<Real>(temperature_field))
+    {
+    }
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : t_initial_(encloser.t_initial_), delta_t_(encloser.dv_delta_t_->DelegatedData(ex_policy)),
+              temperature_(encloser.dv_temperature_->DelegatedData(ex_policy))
+        {
+        }
+
+        void update(size_t index_i, Real dt = Real(0))
+        {
+            (void)dt;
+            delta_t_[index_i] = Real(0);
+            temperature_[index_i] = t_initial_;
+        }
+
+      protected:
+        Real t_initial_;
+        Real *delta_t_;
+        Real *temperature_;
+    };
+
+  protected:
+    Real t_initial_;
+    DiscreteVariable<Real> *dv_delta_t_;
+    DiscreteVariable<Real> *dv_temperature_;
+};
+
+/**
+ * Stage 3.3 verification helper:
+ * keep frozen EM/Q, reset T→T0 (clear σ-seed heating history), then run diffusion + cold wall.
+ * Used after σ(T) coupling so energy_cap / Dirichlet gates stay auditable.
+ */
+template <class ExecutionPolicy>
+inline OphelieThermalDiffusionOneWayStepResult applyOphelieFrozenQDiffusionFromUniformT0(
+    SolidBody &glass_body, Inner<> &glass_inner, BaseParticles &particles, const std::string &q_field,
+    const OphelieFrenchReducedCaseParams &french, Real thermal_dt, size_t thermal_steps,
+    const OphelieJouleHeatOneWayMaterialProps &material, OphelieThermalDiffusionOneWayOptions &options,
+    const OphelieThermalVtpRecordingOptions *recording = nullptr)
+{
+    registerOphelieJouleHeatTemperatureField(particles, material.t_initial);
+    registerOphelieThermalDiffusionAuxFields(particles, material.k);
+    StateDynamics<ExecutionPolicy, ResetOphelieThermalStateToInitialCK> reset_thermal(glass_body, material.t_initial);
+    reset_thermal.exec();
+
+    if (options.enable_cold_wall_dirichlet)
+    {
+        OpheliePhiBoundaryGeometryContext geom;
+        geom.normal_source = OpheliePhiBoundaryNormalSource::AnalyticCylinder;
+        geom.french = french;
+        (void)setupOphelieThermalDirichletBoundaryMask(particles, options, geom, french.dp);
+    }
+    else if (options.enable_french_natural_bc)
+    {
+        (void)setupOphelieThermalFrenchNaturalBoundaryFaces(particles, options, french);
+    }
+
+    const size_t n = particles.TotalRealParticles();
+    return applyOphelieJouleHeatDiffusionOneWaySteps<ExecutionPolicy>(
+        glass_body, glass_inner, particles, q_field, kOphelieTemperatureField, thermal_dt, material, n, thermal_steps,
+        options, 1.0e-6, recording);
+}
+
+/** French EM + Joule heat with optional isotropic diffusion and thermal BC. */
 template <class ExecutionPolicy>
 inline OphelieFrenchEmJouleHeatOneWayResult runFrenchReducedEmThenJouleHeatDiffusionOneWay(
     SolidBody &glass_body, Inner<> &glass_inner, const OphelieGlassFieldNames &names, OphelieParameters &params,
     const OphelieFrenchReducedCaseParams &french, Real thermal_dt, size_t thermal_steps,
-    const OphelieJouleHeatOneWayMaterialProps &material, const OphelieThermalDiffusionOneWayOptions &thermal_options,
+    const OphelieJouleHeatOneWayMaterialProps &material, OphelieThermalDiffusionOneWayOptions &thermal_options,
     const OphelieThermalVtpRecordingOptions *recording = nullptr)
 {
     BaseParticles &particles = glass_body.getBaseParticles();
     OphelieFrenchEmJouleHeatOneWayResult result;
-    result.em = runFrenchReducedEmPipeline<ExecutionPolicy>(glass_body, glass_inner, names, params, french);
-    result.joule_power_w = result.em.joule_power_raw;
-    result.phi_eq_res_vol = result.em.phi_eq_res_vol;
-
-    if (ophelieUseEdgeFluxElectromotiveRhs(params))
-    {
-        syncOphelieJouleHeatPrimaryForThermalOneWay<ExecutionPolicy>(glass_body, names, params);
-    }
+    runFrenchReducedEmOrSelfInductionForThermalHandoff<ExecutionPolicy>(glass_body, glass_inner, names, params, french,
+                                                                        result);
 
     const size_t n = particles.TotalRealParticles();
     registerOphelieJouleHeatTemperatureField(particles, material.t_initial);
@@ -435,6 +794,10 @@ inline OphelieFrenchEmJouleHeatOneWayResult runFrenchReducedEmThenJouleHeatDiffu
         geom.normal_source = OpheliePhiBoundaryNormalSource::AnalyticCylinder;
         geom.french = french;
         (void)setupOphelieThermalDirichletBoundaryMask(particles, thermal_options, geom, french.dp);
+    }
+    else if (thermal_options.enable_french_natural_bc)
+    {
+        (void)setupOphelieThermalFrenchNaturalBoundaryFaces(particles, thermal_options, french);
     }
 
     const std::string q_field = ophelieJouleHeatSourceFieldForThermal(names, params);

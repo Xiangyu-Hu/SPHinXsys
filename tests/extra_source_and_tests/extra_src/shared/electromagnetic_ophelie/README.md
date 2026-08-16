@@ -39,7 +39,7 @@
 |------|------|
 | `electromagnetic_ophelie_phi_gradient.h` | Particle-gradient div-grad path (`--phi-projection-operator=div-grad`) |
 
-## `diagnostics/` — MMS / operator audit / non-production diagnostics
+## `diagnostics/` — MMS / operator audit / thermal handoff / non-production diagnostics
 
 | File | Purpose |
 |------|------|
@@ -49,6 +49,15 @@
 | `electromagnetic_ophelie_phi_rhs_diagnostics.h` | RHS flux sign audit |
 | `electromagnetic_ophelie_vector_divergence_diagnostics.h` | Vector D/G MMS (sign diagnostics) |
 | `electromagnetic_ophelie_aind_diagnostic.h` | A_ind diagnostics (Stage 2 precursor) |
+| `electromagnetic_ophelie_joule_to_heat_one_way.h` | EM → thermal handoff / Stage 3.x drivers |
+| `electromagnetic_ophelie_thermal_diffusion_one_way.h` | One-way thermal diffusion + French Natural BC |
+| `electromagnetic_ophelie_sigma_t_coupling.h` | σ(T) update from temperature field |
+| `electromagnetic_ophelie_boussinesq.h` | Stage 4.1 Boussinesq buoyancy ForcePrior |
+
+Also at package root (French Natural materials):
+| File | Purpose |
+|------|------|
+| `electromagnetic_ophelie_french_material_laws.h` | CEP-2008 / journal-anchored σ(T), ρ, μ, … |
 
 ## `team7/` — Team7 / racetrack case-specific
 
