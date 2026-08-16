@@ -86,6 +86,18 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
         Real *Vol_, *scale_penalty_force_;
     };
 
+    class UpdateKernel : public BaseInteraction::InteractKernel, public ForcePriorCK::UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Vecd *shear_force_, *hourglass_force_;
+        Real *Vol_;
+    };
+
   protected:
     MaterialType &material_;
     Adaptation &adaptation_;
