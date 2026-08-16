@@ -161,7 +161,7 @@ void J2Plasticity::ConstituteKernel::updateIntactFactor(UnsignedInt index_i)
     Real try_intact_factor = SMAX(1.0 + p_diff / ((1.0 - alpha) * failure_tension_), 0.0);
     intact_factor_[index_i] = SMIN(intact_factor_[index_i], try_intact_factor); // damage is irreversible
     compression_[index_i] = // not less than 1.0 after failure
-        SMAX(compression_[index_i], 1.0 + (compression_[index_i] - 1.0) * intact_factor_[index_i]);
+        SMAX(compression_[index_i], Real(1) + (compression_[index_i] - Real(1)) * intact_factor_[index_i]);
 }
 //=================================================================================================//
 Vecd J2Plasticity::ConstituteKernel::updateHourglassForce(
@@ -182,11 +182,6 @@ Real J2Plasticity::ConstituteKernel::HardeningFactorRate(
     Real f = sqrt(2.0 * stress_tensor_J2) - sqrt_2_over_3_ * (hardening_modulus_ * hardening_factor + yield_stress_);
     return (f > TinyReal) ? 0.5 * f / (G_ + hardening_modulus_ / 3.0) : 0.0;
 }
-//=================================================================================================//
-template <typename ExecutionPolicy>
-J2Plasticity::EosKernel::EosKernel(const ExecutionPolicy &ex_policy, J2Plasticity &encloser)
-    : GeneralContinuum::EosKernel(ex_policy, encloser), failure_tension_(encloser.failure_tension_),
-      intact_factor_(encloser.dv_intact_factor_->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // GENERAL_CONTINUUM_HPP

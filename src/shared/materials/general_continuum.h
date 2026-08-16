@@ -167,18 +167,6 @@ class J2Plasticity : public GeneralContinuum
         inline Matd ReturnMapping(UnsignedInt index_i, Matd try_shear_stress);
         inline Real HardeningFactorRate(const Matd &shear_stress, Real &hardening_factor);
     };
-
-    class EosKernel : public GeneralContinuum::EosKernel
-    {
-      public:
-        template <typename ExecutionPolicy>
-        EosKernel(const ExecutionPolicy &ex_policy, J2Plasticity &encloser);
-
-
-      protected:
-        Real failure_tension_;
-        DataView<Real> intact_factor_;
-    };
 };
 } // namespace SPH
 #endif // GENERAL_CONTINUUM_H

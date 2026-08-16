@@ -20,7 +20,7 @@ ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
       h_ref_(adaptation_.ReferenceSmoothingLength()), shear_stress_damping_(shear_stress_damping),
       xi_(xi), dv_shear_force_(this->getCurrentForce()),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
-      dv_hourglass_force_(this->particles_->template registerStateVariable<Vecd>("HourglassForce")),
+      dv_hourglass_div_(this->particles_->template registerStateVariable<Vecd>("HourglassStressDivergence")),
       dv_vel_gradient_(this->particles_->template getVariableByName<Matd>("VelocityGradient")),
       dv_strain_tensor_(this->particles_->template registerStateVariable<Matd>("StrainTensor")),
       dv_shear_stress_(this->particles_->template registerStateVariable<Matd>("ShearStress")),
@@ -29,7 +29,7 @@ ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
 {
     this->particles_->template addEvolvingVariable<Matd>(dv_strain_tensor_);
     this->particles_->template addEvolvingVariable<Matd>(dv_shear_stress_);
-    this->particles_->template addEvolvingVariable<Vecd>(dv_hourglass_force_);
+    this->particles_->template addEvolvingVariable<Vecd>(dv_hourglass_div_);
 }
 //====================================================================================//
 template <class MaterialType, typename... Parameters>
@@ -72,7 +72,7 @@ ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::InteractKernel::
       G_(encloser.material_.ShearModulus()),
       shear_force_(encloser.dv_shear_force_->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
-      hourglass_force_(encloser.dv_hourglass_force_->DelegatedData(ex_policy)),
+      hourglass_div_(encloser.dv_hourglass_div_->DelegatedData(ex_policy)),
       vel_gradient_(encloser.dv_vel_gradient_->DelegatedData(ex_policy)),
       shear_stress_(encloser.dv_shear_stress_->DelegatedData(ex_policy)),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
@@ -98,8 +98,8 @@ void ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
         sum_hourglass += penalty_scale * G_ * v_ij_correction.dot(e_ij) * vec_r_ij *
                          dW_ijV_j / vec_r_ij.squaredNorm();
     }
-    hourglass_force_[index_i] = constitute_.updateHourglassForce(
-        index_i, hourglass_force_[index_i], sum_hourglass * dt);
+    hourglass_div_[index_i] = constitute_.updateHourglassForce(
+        index_i, hourglass_div_[index_i], sum_hourglass * dt);
     shear_force_[index_i] = sum_shear * Vol_[index_i];
 }
 //====================================================================================//
@@ -110,24 +110,25 @@ ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::UpdateKernel::
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       ForcePriorCK::UpdateKernel(ex_policy, encloser),
       shear_force_(encloser.dv_shear_force_->DelegatedData(ex_policy)),
-      hourglass_force_(encloser.dv_hourglass_force_->DelegatedData(ex_policy)),
+      hourglass_div_(encloser.dv_hourglass_div_->DelegatedData(ex_policy)),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)) {}
 //====================================================================================//
 template <class MaterialType, typename... Parameters>
 void ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
-    Vecd sum_hourglass = Vecd::Zero();
+    Vecd conservative_force = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
         Vecd e_ij = this->e_ij(index_i, index_j);
         Vecd vec_r_ij = this->vec_r_ij(index_i, index_j);
-
-        sum_hourglass -= (hourglass_force_[index_i] - hourglass_force_[index_j]) * vec_r_ij.transpose() * dW_ijV_j * e_ij;
+        // reformulate the hourglass force for local conservation
+        conservative_force -= (hourglass_div_[index_i] - hourglass_div_[index_j]) *
+                              vec_r_ij.transpose() * dW_ijV_j * e_ij;
     }
-    shear_force_[index_i] += sum_hourglass * Vol_[index_i];
+    shear_force_[index_i] += conservative_force * Vol_[index_i];
     ForcePriorCK::UpdateKernel::update(index_i, dt);
 }
 //=================================================================================================//
