@@ -161,7 +161,7 @@ void J2Plasticity::ConstituteKernel::updateIntactFactor(UnsignedInt index_i)
     Real try_intact_factor = SMAX(1.0 + p_diff / ((1.0 - alpha) * failure_tension_), 0.0);
     intact_factor_[index_i] = SMIN(intact_factor_[index_i], try_intact_factor); // damage is irreversible
     compression_[index_i] = // not less than 1.0 after failure
-        SMAX(compression_[index_i], 1.0 + (compression_[index_i] - 1.0) * intact_factor_[index_i]);
+        SMAX(compression_[index_i], Real(1) + (compression_[index_i] - Real(1)) * intact_factor_[index_i]);
 }
 //=================================================================================================//
 Vecd J2Plasticity::ConstituteKernel::updateHourglassForce(
