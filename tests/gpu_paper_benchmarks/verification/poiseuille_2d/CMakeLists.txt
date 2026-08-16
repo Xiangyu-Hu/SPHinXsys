@@ -1,0 +1,1 @@
+gpu_paper_add_benchmark(gpu_paper_poiseuille_2d 2d)

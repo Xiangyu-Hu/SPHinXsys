@@ -1,0 +1,11 @@
+if(SPHINXSYS_2D)
+    add_subdirectory(poiseuille_2d)
+    add_subdirectory(fish_fsi_2d)
+    add_subdirectory(oscillating_beam_2d)
+    add_subdirectory(diffusion_neumann_2d)
+endif()
+
+if(SPHINXSYS_3D)
+    add_subdirectory(dambreak_3d)
+    add_subdirectory(twisting_column_3d)
+endif()

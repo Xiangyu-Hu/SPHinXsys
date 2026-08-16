@@ -1,0 +1,1 @@
+cpu_paper_add_benchmark(cpu_paper_fish_fsi_2d 2d)
