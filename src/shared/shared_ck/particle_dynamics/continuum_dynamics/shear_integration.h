@@ -38,7 +38,6 @@ namespace SPH
 {
 namespace continuum_dynamics
 {
-
 template <typename...>
 class ShearIntegration;
 
@@ -55,6 +54,61 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
     template <class DynamicsIdentifier>
     explicit ShearIntegration(DynamicsIdentifier &identifier, Real xi = 2.0, Real shear_stress_damping = 0.0);
     virtual ~ShearIntegration() {};
+
+    class InitializeKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void initialize(size_t index_i, Real dt = 0.0);
+
+      protected:
+        ConstituteKernel constitute_;
+        SmoothingLengthRatioType h_ratio_;
+        Real h_ref_, shear_stress_damping_, xi_;
+        Matd *vel_gradient_, *strain_tensor_, *shear_stress_;
+        Real *scale_penalty_force_;
+    };
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real G_;
+        Vecd *shear_force_, *vel_, *hourglass_force_;
+        Matd *vel_gradient_, *shear_stress_;
+        Real *Vol_, *scale_penalty_force_;
+    };
+
+  protected:
+    MaterialType &material_;
+    Adaptation &adaptation_;
+    Real h_ref_, shear_stress_damping_, xi_;
+    DiscreteVariable<Vecd> *dv_shear_force_, *dv_vel_, *dv_hourglass_force_;
+    DiscreteVariable<Matd> *dv_vel_gradient_, *dv_strain_tensor_, *dv_shear_stress_;
+    DiscreteVariable<Real> *dv_Vol_, *dv_scale_penalty_force_;
+};
+
+template <typename...>
+class InelasticShearIntegration;
+
+template <class MaterialType, typename... Parameters>
+class InelasticShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
+    : public Interaction<Inner<Parameters...>>, public ForcePriorCK
+{
+    using BaseInteraction = Interaction<Inner<Parameters...>>;
+    using Adaptation = typename Inner<Parameters...>::SourceType::Adaptation;
+    using SmoothingLengthRatioType = typename Adaptation::SmoothingLengthRatioType;
+    using ConstituteKernel = typename MaterialType::ConstituteKernel;
+
+  public:
+    template <class DynamicsIdentifier>
+    explicit InelasticShearIntegration(DynamicsIdentifier &identifier, Real xi = 2.0, Real shear_stress_damping = 0.0);
+    virtual ~InelasticShearIntegration() {};
 
     class InitializeKernel
     {
