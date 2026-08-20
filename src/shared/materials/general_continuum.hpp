@@ -109,27 +109,28 @@ J2Plasticity::ConstituteKernel::
     : GeneralContinuum::ConstituteKernel(ex_policy, encloser),
       yield_stress_(encloser.yield_stress_),
       hardening_modulus_(encloser.hardening_modulus_),
-      sqrt_2_over_3_(encloser.sqrt_2_over_3_), failure_tension_(encloser.failure_tension_),
+      sqrt_2_over_3_(encloser.sqrt_2_over_3_),
+      failure_tension_(encloser.failure_tension_),
+      hardening_factor_(
+          encloser.dv_hardening_factor_->DelegatedData(ex_policy)),
+      intact_factor_(
+          encloser.dv_intact_factor_->DelegatedData(ex_policy)),
+      p_(
+          encloser.dv_p_->DelegatedData(ex_policy)),
+      compression_(
+          encloser.dv_compression_->DelegatedData(ex_policy)),
+      damage_(
+          encloser.dv_damage_->DelegatedData(ex_policy)),
       damage_enabled_(
           encloser.damage_parameters_.enabled_),
-
       damage_threshold_equivalent_plastic_strain_(
-          encloser.damage_parameters_
-              .threshold_equivalent_plastic_strain_),
-
+          encloser.damage_parameters_.threshold_equivalent_plastic_strain_),
       damage_critical_equivalent_plastic_strain_(
-          encloser.damage_parameters_
-              .critical_equivalent_plastic_strain_),
-
+          encloser.damage_parameters_.critical_equivalent_plastic_strain_),
       critical_damage_(
-          encloser.damage_parameters_.critical_damage_),
-      hardening_factor_(encloser.dv_hardening_factor_->DelegatedData(ex_policy)),
-      intact_factor_(encloser.dv_intact_factor_->DelegatedData(ex_policy)),
-      damage_(
-          encloser.dv_damage_
-              ->DelegatedData(ex_policy)),
-      p_(encloser.dv_p_->DelegatedData(ex_policy)),
-      compression_(encloser.dv_compression_->DelegatedData(ex_policy)) {}
+          encloser.damage_parameters_.critical_damage_)
+{
+}
 //=================================================================================================//
 Matd J2Plasticity::ConstituteKernel::ShearStressRate(
     UnsignedInt index_i, const Matd &velocity_gradient, const Matd &shear_stress)
