@@ -1,5 +1,8 @@
 # GPU paper benchmarks
 
+**Workflow / 运行说明（推 GitHub 用）：** [docs/GPU_Paper_Benchmark_Workflow.md](../../docs/GPU_Paper_Benchmark_Workflow.md)  
+**完整规划：** [docs/SPHinXsys_SYCL_GPU_Paper_Benchmark_Plan.md](../../docs/SPHinXsys_SYCL_GPU_Paper_Benchmark_Plan.md)
+
 Shared recorder/config live in `tests/paper_benchmarks_common` (same schema as `tests/cpu_paper_benchmarks`).
 
 This paper-only tree was copied from `tests/tests_sycl` at git commit
