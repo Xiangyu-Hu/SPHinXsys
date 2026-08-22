@@ -69,7 +69,7 @@ class Interaction<Inner<Parameters...>>
 
   public:
     explicit Interaction(InnerRelationType &inner_relation);
-    virtual ~Interaction(){};
+    virtual ~Interaction() {};
 
     class InteractKernel : public NeighborList, public NeighborKernel
     {
@@ -105,27 +105,26 @@ class Interaction<Contact<Parameters...>>
 
   public:
     explicit Interaction(ContactRelationType &contact_relation);
-    virtual ~Interaction(){};
+    virtual ~Interaction() {};
 
     class InteractKernel : public NeighborList, public NeighborKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser,
-                       UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
     };
 
     typedef InteractKernel BaseInteractKernel;
-    void registerComputingKernel(Implementation<Base> *implementation, UnsignedInt contact_index);
-    void resetComputingKernelUpdated(UnsignedInt contact_index);
+    void registerComputingKernel(Implementation<Base> *implementation);
+    void resetComputingKernelUpdated();
 
   protected:
     ContactRelationType *contact_relation_;
-    StdVec<SPHBody *> contact_bodies_;
-    StdVec<BaseParticles *> contact_particles_;
-    StdVec<SPHAdaptation *> contact_adaptations_;
+    SPHBody *contact_body_;
+    BaseParticles *contact_particles_;
+    SPHAdaptation *contact_adaptation_;
     DiscreteVariable<Real> *dv_Vol_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_;
+    DiscreteVariable<Real> *dv_contact_Vol_;
 };
 
 template <>
@@ -134,10 +133,10 @@ class Interaction<Wall>
   public:
     template <class WallContactRelationType>
     Interaction(WallContactRelationType &wall_contact_relation);
-    virtual ~Interaction(){};
+    virtual ~Interaction() {};
 
   protected:
-    StdVec<DiscreteVariable<Vecd> *> dv_wall_vel_ave_, dv_wall_acc_ave_, dv_wall_n_;
+    DiscreteVariable<Vecd> *dv_wall_vel_ave_, *dv_wall_acc_ave_, *dv_wall_n_;
 };
 } // namespace SPH
 #endif // INTERACTION_CK_H

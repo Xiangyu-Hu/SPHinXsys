@@ -48,12 +48,16 @@ class Relation;
 class RelationBase
 {
   public:
-    RelationBase() {}
+    RelationBase(const std::string &src_name, const std::string &tgt_name)
+        : name_(src_name == tgt_name ? src_name : src_name + tgt_name),
+          reverse_name_(tgt_name == src_name ? tgt_name : tgt_name + src_name) {};
     virtual ~RelationBase() {};
-    const std::string &Name() const { return names_.front(); }
+    const std::string &Name() const { return name_; }
+    const std::string &ReverseName() const { return reverse_name_; }
 
   protected:
-    StdVec<std::string> names_;
+    std::string name_;
+    std::string reverse_name_;
 };
 
 template <typename SourceIdentifier, typename TargetIdentifier>
@@ -63,7 +67,7 @@ class Relation<SourceIdentifier, TargetIdentifier> : public RelationBase
     using SourceAdaptation = typename SourceIdentifier::Adaptation;
     using TargetAdaptation = typename TargetIdentifier::Adaptation;
     UniquePtrsKeeper<Quantity> relation_variable_ptrs_;
-    UniquePtrsKeeper<Neighbor<Base>> neighborhood_ptrs_;
+    UniquePtrKeeper<Neighbor<Base>> neighborhood_ptr_;
     DiscreteVariable<Vecd> *assignConfigPosition(BaseParticles &particles, ConfigType config_type);
 
     template <class DataType>
@@ -73,25 +77,24 @@ class Relation<SourceIdentifier, TargetIdentifier> : public RelationBase
     typedef SourceIdentifier SourceType;
     typedef TargetIdentifier TargetType;
     using NeighborhoodType = Neighbor<SourceAdaptation, TargetAdaptation>;
-    Relation(SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers,
+    Relation(SourceIdentifier &src_identifier, TargetIdentifier &tgt_identifier,
              ConfigType config_type = ConfigType::Eulerian);
     virtual ~Relation() {};
     SPHBody &getSPHBody() { return *sph_body_; };
     DiscreteVariable<Vecd> *dvSourcePosition() { return dv_source_pos_; };
     DiscreteVariable<UnsignedInt> *dvNeighborSize() { return dv_neighbor_size_; };
-    DiscreteVariable<Vecd> *dvTargetPosition(UnsignedInt target_index = 0) { return dv_target_pos_[target_index]; };
-    DiscreteVariable<UnsignedInt> *dvNeighborIndex(UnsignedInt target_index = 0) { return dv_target_neighbor_index_[target_index]; };
-    DiscreteVariable<UnsignedInt> *dvParticleOffset(UnsignedInt target_index = 0) { return dv_target_particle_offset_[target_index]; };
-    NeighborhoodType &getNeighborhood(UnsignedInt target_index = 0) { return *neighborhoods_[target_index]; }
-    void registerComputingKernel(execution::Implementation<Base> *implementation, UnsignedInt target_index = 0);
-    void resetComputingKernelUpdated(UnsignedInt target_index = 0);
+    DiscreteVariable<Vecd> *dvTargetPosition() { return dv_target_pos_; };
+    DiscreteVariable<UnsignedInt> *dvNeighborIndex() { return dv_target_neighbor_index_; };
+    DiscreteVariable<UnsignedInt> *dvParticleOffset() { return dv_target_particle_offset_; };
+    NeighborhoodType &getNeighborhood() { return *neighborhood_; }
+    void registerComputingKernel(execution::Implementation<Base> *implementation);
+    void resetComputingKernelUpdated();
 
     class NeighborList
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        NeighborList(const ExecutionPolicy &ex_policy, EncloserType &encloser,
-                     UnsignedInt target_index = 0);
+        NeighborList(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
       protected:
         UnsignedInt *neighbor_index_;
@@ -106,12 +109,12 @@ class Relation<SourceIdentifier, TargetIdentifier> : public RelationBase
     BaseParticles *particles_;
     DiscreteVariable<Vecd> *dv_source_pos_;
     DiscreteVariable<UnsignedInt> *dv_neighbor_size_;
-    StdVec<DiscreteVariable<Vecd> *> dv_target_pos_;
+    DiscreteVariable<Vecd> *dv_target_pos_;
     UnsignedInt offset_list_size_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_target_neighbor_index_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_target_particle_offset_;
-    StdVec<NeighborhoodType *> neighborhoods_;
-    StdVec<StdVec<execution::Implementation<Base> *>> registered_computing_kernels_;
+    DiscreteVariable<UnsignedInt> *dv_target_neighbor_index_;
+    DiscreteVariable<UnsignedInt> *dv_target_particle_offset_;
+    NeighborhoodType *neighborhood_;
+    StdVec<execution::Implementation<Base> *> registered_computing_kernels_;
 };
 
 template <typename DynamicsIdentifier>
@@ -142,25 +145,21 @@ template <typename SourceIdentifier, class TargetIdentifier>
 class Contact<Relation<SourceIdentifier, TargetIdentifier>> : public Relation<SourceIdentifier, TargetIdentifier>
 {
   public:
-    Contact(SourceIdentifier &source_identifier, TargetIdentifier &target_identifier,
+    Contact(SourceIdentifier &src_identifier, TargetIdentifier &tgt_identifier,
             ConfigType config_type = ConfigType::Eulerian);
     virtual ~Contact() {};
-    SourceIdentifier &getSourceIdentifier() { return *source_identifier_; };
-    StdVec<SPHBody *> getContactBodies() { return contact_bodies_; };
-    StdVec<BaseParticles *> getContactParticles() { return contact_particles_; };
-    StdVec<SPHAdaptation *> getContactAdaptations() { return contact_adaptations_; };
-    StdVec<TargetIdentifier *> getContactIdentifiers() { return contact_identifiers_; };
-    SPHBody &getContactBody(UnsignedInt target_index) { return *contact_bodies_[target_index]; };
-    BaseParticles &getContactParticles(UnsignedInt target_index) { return *contact_particles_[target_index]; };
-    SPHAdaptation &getContactAdaptation(UnsignedInt target_index) { return *contact_adaptations_[target_index]; };
-    TargetIdentifier &getContactIdentifier(UnsignedInt target_index) { return *contact_identifiers_[target_index]; };
+    SourceIdentifier &getSourceIdentifier() { return *src_identifier_; };
+    SPHBody &getContactBody() { return *contact_body_; };
+    BaseParticles &getContactParticles() { return *contact_particles_; };
+    SPHAdaptation &getContactAdaptation() { return *contact_adaptation_; };
+    TargetIdentifier &getTargetIdentifier() { return *tgt_identifier_; };
 
   protected:
-    SourceIdentifier *source_identifier_;
-    StdVec<SPHBody *> contact_bodies_;
-    StdVec<BaseParticles *> contact_particles_;
-    StdVec<SPHAdaptation *> contact_adaptations_;
-    StdVec<TargetIdentifier *> contact_identifiers_;
+    SourceIdentifier *src_identifier_;
+    TargetIdentifier *tgt_identifier_;
+    SPHBody *contact_body_;
+    BaseParticles *contact_particles_;
+    SPHAdaptation *contact_adaptation_;
 };
 
 template <>
