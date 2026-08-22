@@ -110,7 +110,6 @@ J2Plasticity::ConstituteKernel::
       yield_stress_(encloser.yield_stress_),
       hardening_modulus_(encloser.hardening_modulus_),
       sqrt_2_over_3_(encloser.sqrt_2_over_3_),
-      failure_tension_(encloser.failure_tension_),
       hardening_factor_(
           encloser.dv_hardening_factor_->DelegatedData(ex_policy)),
       intact_factor_(
@@ -154,22 +153,12 @@ Matd J2Plasticity::ConstituteKernel::updateShearStress(
     UnsignedInt index_i, const Matd &try_shear_stress)
 {
     Real hardening_factor_increment = HardeningFactorRate(try_shear_stress, hardening_factor_[index_i]);
-    // hardening_factor_[index_i] += sqrt(2.0 / 3.0) * hardening_factor_increment;
     Real delta_equivalent_plastic_strain =sqrt(2.0 / 3.0) * hardening_factor_increment;
     hardening_factor_[index_i] +=delta_equivalent_plastic_strain;
     
-    Matd updated_shear_stress =
-        ReturnMapping(
-            index_i,
-            try_shear_stress);
-
-    updateDuctileDamage(
-        index_i,
-        updated_shear_stress,
-        delta_equivalent_plastic_strain);
-
+    Matd updated_shear_stress =ReturnMapping(index_i,try_shear_stress);
+    updateDuctileDamage(index_i,updated_shear_stress,delta_equivalent_plastic_strain);
     return updated_shear_stress;    
-    // return ReturnMapping(index_i, try_shear_stress);
 }
 //=================================================================================================//
 void J2Plasticity::ConstituteKernel::updateDuctileDamage(
@@ -177,70 +166,24 @@ void J2Plasticity::ConstituteKernel::updateDuctileDamage(
     const Matd &updated_shear_stress,
     Real delta_equivalent_plastic_strain)
 {
-    if (!damage_enabled_)
-        return;
+    if (!damage_enabled_) return;
+    if (delta_equivalent_plastic_strain <= TinyReal) return;
+    if (damage_[index_i] >= critical_damage_) return;
 
-    if (delta_equivalent_plastic_strain <= TinyReal)
-        return;
+    Real stress_tensor_J2 =0.5 *(updated_shear_stress.cwiseProduct(updated_shear_stress.transpose())).sum();
+    Real equivalent_stress =sqrt(3.0 * stress_tensor_J2);
+    
+    if (equivalent_stress <= TinyReal) return;
 
-    if (damage_[index_i] >= critical_damage_)
-        return;
+    Real hydrostatic_stress =-p_[index_i];
+    Real stress_triaxiality =hydrostatic_stress /equivalent_stress;
+    Real damage_weight =(2.0 / 3.0) * (1.0 + nu_) +3.0 * (1.0 - 2.0 * nu_) *stress_triaxiality *stress_triaxiality;
+    Real equivalent_plastic_strain =hardening_factor_[index_i];
+    Real damage_function =damage_weight *equivalent_plastic_strain -damage_threshold_equivalent_plastic_strain_;
+    if (damage_function < Real(0)) return;
 
-    // J2 = 1/2 s:s
-    Real stress_tensor_J2 =
-        0.5 *
-        (updated_shear_stress.cwiseProduct(
-             updated_shear_stress.transpose()))
-            .sum();
-
-    // Von Mises equivalent stress: sigma_eq = sqrt(3 J2)
-    Real equivalent_stress =
-        sqrt(3.0 * stress_tensor_J2);
-
-    if (equivalent_stress <= TinyReal)
-        return;
-
-    // sigma = s - pI  -> sigma_H = -p
-    Real hydrostatic_stress =
-        -p_[index_i];
-
-    Real stress_triaxiality =
-        hydrostatic_stress /
-        equivalent_stress;
-
-    // R_nu in Eq. (39) and Eq. (40)
-    Real damage_weight =
-        (2.0 / 3.0) * (1.0 + nu_) +
-        3.0 * (1.0 - 2.0 * nu_) *
-            stress_triaxiality *
-            stress_triaxiality;
-
-    // Existing HardeningFactor is accumulated equivalent plastic strain
-    Real equivalent_plastic_strain =
-        hardening_factor_[index_i];
-
-    // Eq. (39)
-    Real damage_function =
-        damage_weight *
-            equivalent_plastic_strain -
-        damage_threshold_equivalent_plastic_strain_;
-
-    if (damage_function < Real(0))
-        return;
-
-    // Incremental Eq. (40)
-    Real damage_increment =
-        critical_damage_ /
-        (damage_critical_equivalent_plastic_strain_ -
-         damage_threshold_equivalent_plastic_strain_) *
-        damage_weight *
-        delta_equivalent_plastic_strain;
-
-    damage_[index_i] =
-        SMIN(
-            critical_damage_,
-            damage_[index_i] +
-                SMAX(damage_increment, Real(0)));
+    Real damage_increment =critical_damage_ /(damage_critical_equivalent_plastic_strain_ -damage_threshold_equivalent_plastic_strain_) *damage_weight *delta_equivalent_plastic_strain;
+    damage_[index_i] =SMIN(critical_damage_,damage_[index_i] + SMAX(damage_increment, Real(0)));
 }
 
 //=================================================================================================//
@@ -259,14 +202,10 @@ Real J2Plasticity::ConstituteKernel::ScalePenaltyForce(UnsignedInt index_i, cons
 //=================================================================================================//
 void J2Plasticity::ConstituteKernel::updateIntactFactor(UnsignedInt index_i)
 {
-    Real alpha = 0.8;
-    Real p_diff = p_[index_i] + alpha * failure_tension_;
-    Real try_intact_factor = SMAX(1.0 + p_diff / ((1.0 - alpha) * failure_tension_), 0.0);
-    if (damage_enabled_ &&
-        damage_[index_i] >= critical_damage_)
-    {
-        try_intact_factor = Real(0);
-    }
+    if (!damage_enabled_)
+        return;
+    Real try_intact_factor = SMAX(Real(1.0) - damage_[index_i] / critical_damage_, Real(0.0));
+    
     intact_factor_[index_i] = SMIN(intact_factor_[index_i], try_intact_factor); // damage is irreversible
     compression_[index_i] = // not less than 1.0 after failure
         SMAX(compression_[index_i], Real(1) + (compression_[index_i] - Real(1)) * intact_factor_[index_i]);

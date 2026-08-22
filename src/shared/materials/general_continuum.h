@@ -126,13 +126,10 @@ class PlasticContinuum : public GeneralContinuum
 struct DuctileDamageParameters
 {
     bool enabled_ = false;
-
     // Equivalent plastic strain at damage initiation
     Real threshold_equivalent_plastic_strain_ = 0.0;
-
     // Equivalent plastic strain at complete failure
     Real critical_equivalent_plastic_strain_ = 1.0;
-
     // Critical damage value
     Real critical_damage_ = 1.0;
 };
@@ -145,7 +142,6 @@ class J2Plasticity : public GeneralContinuum
     DiscreteVariable<Real> *dv_hardening_factor_;
     DiscreteVariable<Real> *dv_intact_factor_;       // 1 for intact, 0 for fully failed
     DiscreteVariable<Real> *dv_p_, *dv_compression_; // for damage evaluation
-    Real failure_tension_;                           // tension failure criterion
     
     // New ductile damage state variable.
     DiscreteVariable<Real> *dv_damage_;
@@ -179,7 +175,7 @@ class J2Plasticity : public GeneralContinuum
       protected:
         Real yield_stress_;
         Real hardening_modulus_;
-        Real sqrt_2_over_3_, failure_tension_;
+        Real sqrt_2_over_3_;
         Real *hardening_factor_, *intact_factor_, *p_, *compression_;
         Real *damage_;
         /** Ductile-damage parameters copied to the compute kernel. */
@@ -190,11 +186,7 @@ class J2Plasticity : public GeneralContinuum
 
         inline Matd ReturnMapping(UnsignedInt index_i, Matd try_shear_stress);
         inline Real HardeningFactorRate(const Matd &shear_stress, Real &hardening_factor);
-        /** Eq. (39) + Eq. (40). */
-        inline void updateDuctileDamage(
-            UnsignedInt index_i,
-            const Matd &updated_shear_stress,
-            Real delta_equivalent_plastic_strain);
+        inline void updateDuctileDamage(UnsignedInt index_i,const Matd &updated_shear_stress,Real delta_equivalent_plastic_strain);
     };
 };
 } // namespace SPH

@@ -38,7 +38,7 @@ RepulsionForceCK<Contact<WithUpdate, Parameters...>>::
         contact_stiffness_.push_back(solid.ContactStiffness());
         contact_impedance_.push_back(sqrt(solid.ReferenceDensity() * solid.ContactStiffness()));
         dv_contact_repulsion_factor_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("RepulsionFactor")); //not implemented yet
+            this->contact_particles_[k]->template getVariableByName<Real>("RepulsionFactor")); 
         dv_contact_vel_.push_back(
             this->contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));
         dv_contact_n_.push_back(

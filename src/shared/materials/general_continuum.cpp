@@ -106,8 +106,8 @@ J2Plasticity::J2Plasticity(Real rho0, Real c0, Real youngs_modulus, Real poisson
                            Real yield_stress, Real hardening_modulus,const DuctileDamageParameters &damage_parameters)
     : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),
       yield_stress_(yield_stress), hardening_modulus_(hardening_modulus),
-      dv_hardening_factor_(nullptr), dv_intact_factor_(nullptr), dv_p_(nullptr),
-      failure_tension_(0.02 * youngs_modulus),dv_damage_(nullptr),damage_parameters_(damage_parameters)
+      dv_hardening_factor_(nullptr), dv_intact_factor_(nullptr), dv_p_(nullptr),dv_damage_(nullptr),
+      damage_parameters_(damage_parameters)
 {
     material_type_name_ = "J2Plasticity";
     if (damage_parameters_.enabled_)
@@ -186,12 +186,8 @@ void J2Plasticity::initializeLocalParameters(BaseParticles *base_particles)
      *      0 < D < Dc : damaging
      *      D = Dc      : rupture
      */
-    dv_damage_ =
-        base_particles->registerStateVariable<Real>(
-            "Damage", Real(0.0));
-
-    base_particles->addEvolvingVariable<Real>(
-        dv_damage_);
+    dv_damage_ =base_particles->registerStateVariable<Real>("Damage", Real(0.0));
+    base_particles->addEvolvingVariable<Real>(dv_damage_);
 }
 //=================================================================================================//
 } // namespace SPH
