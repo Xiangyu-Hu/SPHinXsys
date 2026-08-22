@@ -73,7 +73,7 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Contact<> fluid_observer_contact(fluid_observer, {&water_block});
+    Contact<> fluid_observer_contact(fluid_observer, water_block);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
