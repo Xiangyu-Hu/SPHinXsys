@@ -165,7 +165,7 @@ void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
         UnsignedInt index_j = this->neighbor_index_[n];
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
         Vecd e_ij = this->e_ij(index_i, index_j);
-        Real r_ij = this->vec_r_ij(index_i, index_j).norm();
+        Real r_ij = this->vec_r_ij(index_i, index_j).dot(e_ij);
 
         Real face_wall_external_acceleration =
             (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_[index_j]).dot(-e_ij);
