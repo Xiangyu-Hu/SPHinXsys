@@ -209,9 +209,9 @@ int main(int ac, char *av[])
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>
         fluid_acoustic_step_1st_half(water_block_inner);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalf<Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalf<Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>
         fluid_acoustic_step_1st_half_with_wall(fluid_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalf<Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalf<Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>
         fluid_acoustic_step_1st_half_with_structure(fluid_structure_contact);
     fluid_acoustic_step_1st_half.addPostContactInteraction(fluid_acoustic_step_1st_half_with_wall)
         .addPostContactInteraction(fluid_acoustic_step_1st_half_with_structure);        
