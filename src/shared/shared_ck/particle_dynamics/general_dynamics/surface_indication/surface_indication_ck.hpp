@@ -140,8 +140,8 @@ FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy,
                    FreeSurfaceIndicationCK<Contact<Parameters...>> &encloser,
                    size_t contact_index)
-    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)) {}
+    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>::InteractKernel(ex_policy, encloser),
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
 void FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::

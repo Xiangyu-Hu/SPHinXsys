@@ -150,12 +150,12 @@ template <class ExecutionPolicy, class EncloserType>
 DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>::
     InteractKernel::InteractKernel(
         const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+    : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_method_),
       species_(encloser.dv_species_->DelegatedMultiEntryView(ex_policy)),
       species_dt_(encloser.dv_species_dt_->DelegatedMultiEntryView(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      contact_transfer_(encloser.contact_dv_transfer_[contact_index]->DelegatedMultiEntryView(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)),
+      contact_transfer_(encloser.contact_dv_transfer_->DelegatedMultiEntryView(ex_policy)),
       boundary_flux_(ex_policy, *encloser.contact_boundary_method_[contact_index]) {}
 //=================================================================================================//
 template <class DiffusionType, template <typename...> class BoundaryType,

@@ -100,7 +100,7 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>
 
     template <typename... ControlParameters, typename... RelationParameters, typename... Args>
     auto &addPostContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
-    
+
     template <typename... ControlParameters, typename... RelationParameters, typename... Args>
     auto &addPreContactInteraction(Contact<RelationParameters...> &contact_relation, Args &&...args);
 
@@ -148,8 +148,8 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Param
     using RangeIdentifier = typename LocalDynamicsType::RangeIdentifier;
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
-    UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
-    StdVec<KernelImplementation *> contact_kernel_implementation_;
+    UniquePtrKeeper<KernelImplementation> contact_kernel_implementation_ptr_;
+    KernelImplementation *contact_kernel_implementation_;
 
   public:
     template <typename... Args>

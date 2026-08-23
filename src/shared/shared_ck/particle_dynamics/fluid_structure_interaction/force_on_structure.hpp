@@ -30,13 +30,13 @@ template <class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 ForceFromFluid<KernelCorrectionType, Parameters...>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : Interaction<Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
+    : Interaction<Contact<Parameters...>>::InteractKernel(ex_policy, encloser),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       force_from_fluid_(encloser.dv_force_from_fluid_->DelegatedData(ex_policy)),
       vel_ave_(encloser.dv_vel_ave_->DelegatedData(ex_policy)),
       contact_correction_(ex_policy, encloser.contact_kernel_correction_[contact_index]),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      contact_vel_(encloser.dv_contact_vel_[contact_index]->DelegatedData(ex_policy)) {}
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)),
+      contact_vel_(encloser.dv_contact_vel_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 template <class ContactRelationType>
@@ -56,8 +56,8 @@ template <typename ViscosityType, class KernelCorrectionType, typename... Parame
 template <class ExecutionPolicy, class EncloserType>
 ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
-      one_side_viscosity_(encloser.contact_viscosity_model_[contact_index]->getOneSideViscosity(ex_policy)),
+    : BaseForceFromFluid::InteractKernel(ex_policy, encloser),
+      one_side_viscosity_(encloser.contact_viscosity_model_->getOneSideViscosity(ex_policy)),
       smoothing_length_sq_(encloser.contact_smoothing_length_sq_[contact_index]) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
@@ -104,14 +104,14 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrectionType, Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
+    : BaseForceFromFluid::InteractKernel(ex_policy, encloser),
       acc_ave_(encloser.dv_acc_ave_->DelegatedData(ex_policy)),
       n_(encloser.dv_n_->DelegatedData(ex_policy)),
       riemann_(ex_policy, encloser.contact_riemann_solver_[contact_index]),
-      contact_rho_(encloser.dv_contact_rho_[contact_index]->DelegatedData(ex_policy)),
-      contact_mass_(encloser.dv_contact_mass_[contact_index]->DelegatedData(ex_policy)),
-      contact_p_(encloser.dv_contact_p_[contact_index]->DelegatedData(ex_policy)),
-      contact_force_prior_(encloser.dv_contact_force_prior_[contact_index]->DelegatedData(ex_policy)) {}
+      contact_rho_(encloser.dv_contact_rho_->DelegatedData(ex_policy)),
+      contact_mass_(encloser.dv_contact_mass_->DelegatedData(ex_policy)),
+      contact_p_(encloser.dv_contact_p_->DelegatedData(ex_policy)),
+      contact_force_prior_(encloser.dv_contact_force_prior_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrectionType, Parameters...>>::

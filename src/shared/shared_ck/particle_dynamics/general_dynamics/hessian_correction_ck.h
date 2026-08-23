@@ -111,9 +111,9 @@ class DisplacementMatrixGradient<Contact<Parameters...>>
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
-            : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
-              contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)){};
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseDynamicsType::InteractKernel(ex_policy, encloser),
+              contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)){};
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -177,9 +177,9 @@ class HessianCorrectionMatrix<Contact<Parameters...>>
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
-            : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
-              contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)){};
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseDynamicsType::InteractKernel(ex_policy, encloser),
+              contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)){};
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:

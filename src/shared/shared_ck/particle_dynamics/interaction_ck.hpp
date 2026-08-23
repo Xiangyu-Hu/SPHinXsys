@@ -41,7 +41,7 @@ Interaction<Contact<Parameters...>>::Interaction(Contact<Parameters...> &contact
       contact_relation_(&contact_relation),
       contact_body_(&contact_relation.getContactBody()),
       contact_particles_(&contact_relation.getContactParticles()),
-      contact_adaptation_(&contact_relation.getContactAdaptations()),
+      contact_adaptation_(&contact_relation.getContactAdaptation()),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_contact_Vol_(
           contact_particles_->template getVariableByName<Real>("VolumetricMeasure")) {}
@@ -68,12 +68,12 @@ Interaction<Contact<Parameters...>>::InteractKernel::
 template <class WallContactRelationType>
 Interaction<Wall>::Interaction(WallContactRelationType &wall_contact_relation)
 {
-    BaseParticles *contact_particles = wall_contact_relation.getContactParticles();
-    SPHBody *contact_body = wall_contact_relation.getContactBody();
-    Solid &solid_material = DynamicCast<Solid>(this, contact_body->getMatterMaterial());
-    dv_wall_vel_ave_ = solid_material.AverageVelocityVariable(contact_particles);
-    dv_wall_acc_ave_ = solid_material.AverageAccelerationVariable(contact_particles);
-    dv_wall_n_ = contact_particles->template getVariableByName<Vecd>("NormalDirection");
+    BaseParticles &contact_particles = wall_contact_relation.getContactParticles();
+    SPHBody &contact_body = wall_contact_relation.getContactBody();
+    Solid &solid_material = DynamicCast<Solid>(this, contact_body.getMatterMaterial());
+    dv_wall_vel_ave_ = solid_material.AverageVelocityVariable(&contact_particles);
+    dv_wall_acc_ave_ = solid_material.AverageAccelerationVariable(&contact_particles);
+    dv_wall_n_ = contact_particles.template getVariableByName<Vecd>("NormalDirection");
 }
 //=================================================================================================//
 } // namespace SPH
