@@ -280,7 +280,7 @@ TEST(ShockTubeMUSCL, Sod_Limiter_Comparison)
             for (int i=0;i<N;i++) {
                 Cons Un = prim2cons(P[i]);
                 Cons U2 = prim2cons(P2[i]);
-                Cons Uavg{0.5*(Un.r + U2.r), 0.5*(Un.ru + U2.ru), 0.5*(Un.E + U2.E)};
+                Cons Uavg{(Real)0.5*(Un.r + U2.r), (Real)0.5*(Un.ru + U2.ru), (Real)0.5*(Un.E + U2.E)};
                 P[i] = cons2prim(Uavg);
                 P[i].rho = std::max(P[i].rho, SMALL);
                 P[i].p   = std::max(P[i].p,   SMALL);
