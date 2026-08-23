@@ -46,14 +46,9 @@ template <typename DataType, typename... Parameters>
 template <class DynamicsIdentifier>
 LinearGradient<Contact<DataType, Parameters...>>::LinearGradient(
     DynamicsIdentifier &identifier, const std::string &variable_name)
-    : BaseDynamicsType(identifier, variable_name)
-{
-    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        dv_contact_variable_.push_back(
-            this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
-    }
-}
+    : BaseDynamicsType(identifier, variable_name),
+      dv_contact_variable_(
+          this->contact_particles_->template getVariableByName<DataType>(variable_name)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -117,14 +112,9 @@ void Hessian<Inner<DataType, Parameters...>>::
 template <typename DataType, typename... Parameters>
 template <typename... Args>
 Hessian<Contact<DataType, Parameters...>>::Hessian(Args &&...args)
-    : BaseDynamicsType(std::forward<Args>(args)...)
-{
-    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        dv_contact_variable_.push_back(
-            this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
-    }
-}
+    : BaseDynamicsType(std::forward<Args>(args)...),
+      dv_contact_variable_(this->contact_particles_->template getVariableByName<DataType>(
+          this->variable_name_)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -174,14 +164,9 @@ void SecondOrderGradient<Inner<DataType, Parameters...>>::
 template <typename DataType, typename... Parameters>
 template <typename... Args>
 SecondOrderGradient<Contact<DataType, Parameters...>>::SecondOrderGradient(Args &&...args)
-    : BaseDynamicsType(std::forward<Args>(args)...)
-{
-    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        dv_contact_variable_.push_back(
-            this->contact_particles_[k]->template getVariableByName<DataType>(this->variable_name_));
-    }
-}
+    : BaseDynamicsType(std::forward<Args>(args)...),
+      dv_contact_variable_(this->contact_particles_->template getVariableByName<DataType>(
+          this->variable_name_)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>

@@ -166,7 +166,7 @@ class LinearGradient<Contact<DataType, Parameters...>>
     };
 
   protected:
-    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
+    DiscreteVariable<DataType> *dv_contact_variable_;
 };
 
 template <typename... RelationTypes>
@@ -244,7 +244,7 @@ class Hessian<Contact<DataType, Parameters...>>
     };
 
   protected:
-    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
+    DiscreteVariable<DataType> *dv_contact_variable_;
 };
 
 template <typename... RelationTypes>
@@ -295,7 +295,7 @@ class SecondOrderGradient<Contact<DataType, Parameters...>>
     };
 
   protected:
-    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
+    DiscreteVariable<DataType> *dv_contact_variable_;
 };
 } // namespace SPH
 #endif // GENERAL_GRADIENT_H
