@@ -71,21 +71,13 @@ auto &SPHSystem::addInnerRelation(DynamicIdentifier &identifier, Args &&...args)
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier, typename... Args>
 auto &SPHSystem::addContactRelation(
-    SourceIdentifier &src_identifier, StdVec<TargetIdentifier *> tar_identifiers, Args &&...args)
+    SourceIdentifier &src_identifier, TargetIdentifier &tar_identifier, Args &&...args)
 {
     Contact<Relation<SourceIdentifier, TargetIdentifier>> *relation =
         relations_keeper_.createPtr<Contact<Relation<SourceIdentifier, TargetIdentifier>>>(
-            src_identifier, tar_identifiers, std::forward<Args>(args)...);
+            src_identifier, tar_identifier, std::forward<Args>(args)...);
     relations_.push_back(relation);
     return *relation;
-}
-//=================================================================================================//
-template <class SourceIdentifier, class TargetIdentifier, typename... Args>
-auto &SPHSystem::addContactRelation(
-    SourceIdentifier &src_identifier, TargetIdentifier &tar_identifiers, Args &&...args)
-{
-    return addContactRelation(src_identifier, StdVec<TargetIdentifier *>{&tar_identifiers},
-                              std::forward<Args>(args)...);
 }
 //=================================================================================================//
 template <typename DerivedBodyType>

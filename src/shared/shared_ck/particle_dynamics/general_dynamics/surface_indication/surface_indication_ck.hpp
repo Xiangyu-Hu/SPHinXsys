@@ -20,12 +20,10 @@ FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::
       dv_smoothing_length_(this->getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
-template <class ExecutionPolicy, typename... Args>
+template <class ExecutionPolicy, class EncloserType>
 FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy,
-                   FreeSurfaceIndicationCK<Base, RelationType<Parameters...>> &encloser,
-                   Args &&...args)
-    : Interaction<RelationType<Parameters...>>::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : Interaction<RelationType<Parameters...>>::InteractKernel(ex_policy, encloser),
       indicator_(encloser.dv_indicator_->DelegatedData(ex_policy)),
       pos_div_(encloser.dv_pos_div_->DelegatedData(ex_policy)),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
@@ -44,10 +42,9 @@ FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::
 }
 //=================================================================================================//
 template <typename... Parameters>
-template <class ExecutionPolicy>
+template <class ExecutionPolicy, class EncloserType>
 FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy,
-                   FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> &encloser)
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
       previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -89,10 +86,9 @@ bool FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::InteractKernel::
 }
 //=================================================================================================//
 template <typename... Parameters>
-template <class ExecutionPolicy>
+template <class ExecutionPolicy, class EncloserType>
 FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
-    UpdateKernel(const ExecutionPolicy &ex_policy,
-                 FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> &encloser)
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
       previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -135,13 +131,11 @@ FreeSurfaceIndicationCK<Contact<Parameters...>>::
     : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>(identifier) {}
 //=================================================================================================//
 template <typename... Parameters>
-template <class ExecutionPolicy>
+template <class ExecutionPolicy, class EncloserType>
 FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy,
-                   FreeSurfaceIndicationCK<Contact<Parameters...>> &encloser,
-                   size_t contact_index)
-    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)) {}
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>::InteractKernel(ex_policy, encloser),
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
 void FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::

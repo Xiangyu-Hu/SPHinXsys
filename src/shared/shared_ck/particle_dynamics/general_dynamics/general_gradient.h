@@ -157,7 +157,7 @@ class LinearGradient<Contact<DataType, Parameters...>>
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -166,7 +166,7 @@ class LinearGradient<Contact<DataType, Parameters...>>
     };
 
   protected:
-    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
+    DiscreteVariable<DataType> *dv_contact_variable_;
 };
 
 template <typename... RelationTypes>
@@ -235,7 +235,7 @@ class Hessian<Contact<DataType, Parameters...>>
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -244,7 +244,7 @@ class Hessian<Contact<DataType, Parameters...>>
     };
 
   protected:
-    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
+    DiscreteVariable<DataType> *dv_contact_variable_;
 };
 
 template <typename... RelationTypes>
@@ -286,7 +286,7 @@ class SecondOrderGradient<Contact<DataType, Parameters...>>
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -295,7 +295,7 @@ class SecondOrderGradient<Contact<DataType, Parameters...>>
     };
 
   protected:
-    StdVec<DiscreteVariable<DataType> *> dv_contact_variable_;
+    DiscreteVariable<DataType> *dv_contact_variable_;
 };
 } // namespace SPH
 #endif // GENERAL_GRADIENT_H

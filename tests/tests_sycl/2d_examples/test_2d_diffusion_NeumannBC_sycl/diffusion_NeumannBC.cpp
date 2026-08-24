@@ -135,8 +135,9 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     Inner<> diffusion_body_inner(diffusion_body);
-    Contact<> diffusion_body_contact(diffusion_body, {&wall_Dirichlet, &wall_Neumann});
-    Contact<> temperature_observer_contact(temperature_observer, {&diffusion_body});
+    Contact<> contact_dirichlet(diffusion_body, wall_Dirichlet);
+    Contact<> contact_neumann(diffusion_body, wall_Neumann);
+    Contact<> temperature_observer_contact(temperature_observer, diffusion_body);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -154,13 +155,11 @@ int main(int ac, char *av[])
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_Dirichlet_cell_linked_list(wall_Dirichlet);
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_Neumann_cell_linked_list(wall_Neumann);
 
-    UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>>
-        diffusion_body_update_complex_relation(diffusion_body_inner, diffusion_body_contact);
+    UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>, Contact<>>
+        diffusion_body_update_complex_relation(diffusion_body_inner, contact_dirichlet, contact_neumann);
     UpdateRelation<MainExecutionPolicy, Contact<>> observer_contact_relation(temperature_observer_contact);
 
     IsotropicDiffusion isotropic_diffusion(species_name, diffusion_coeff);
-    auto contact_dirichlet_view = makeRelationView(diffusion_body_contact, wall_Dirichlet);
-    auto contact_neumann_view = makeRelationView(diffusion_body_contact, wall_Neumann);
 
     GetDiffusionTimeStepSize get_time_step_size(diffusion_body, &isotropic_diffusion);
     RungeKuttaSequence<InteractionDynamicsCK<
@@ -174,8 +173,8 @@ int main(int ac, char *av[])
             Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>,
             Contact<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>>>>
         diffusion_relaxation_rk2(DynamicsArgs(diffusion_body_inner, &isotropic_diffusion),
-                                 DynamicsArgs(contact_dirichlet_view, &isotropic_diffusion),
-                                 DynamicsArgs(contact_neumann_view, &isotropic_diffusion));
+                                 DynamicsArgs(contact_dirichlet, &isotropic_diffusion),
+                                 DynamicsArgs(contact_neumann, &isotropic_diffusion));
     //----------------------------------------------------------------------
     //	Specify initial condition if necessary.
     //----------------------------------------------------------------------

@@ -273,8 +273,8 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     // ----------------------------------------------------------------------
     Inner<> water_body_inner(water_body);
-    Contact<> water_wall_contact(water_body, {&wall});
-    Contact<> velocity_observer_contact(velocity_observer, {&water_body});
+    Contact<> water_wall_contact(water_body, wall);
+    Contact<> velocity_observer_contact(velocity_observer, water_body);
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.

@@ -131,32 +131,25 @@ template <class DiffusionType, template <typename...> class BoundaryType,
 template <typename... Args>
 DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>::
     DiffusionRelaxationCK(Args &&...args)
-    : BaseInteraction(std::forward<Args>(args)...), kernel_correction_method_(this->particles_)
-{
-    for (UnsignedInt k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        contact_dv_transfer_.push_back(
-            this->registerSpecies( // registered in source body particles
-                this->particles_, this->species_names_, "TransferWith" + this->sph_body_->Name()));
-        contact_boundary_method_.push_back(
-            boundaries_keeper_.template createPtr<BoundaryType<DiffusionType>>(
-                *this, this->contact_particles_[k]));
-    }
-}
+    : BaseInteraction(std::forward<Args>(args)...),
+      kernel_correction_method_(this->particles_),
+      contact_dv_transfer_(this->registerSpecies(
+          this->particles_, this->species_names_, "TransferWith" + this->sph_body_->Name())),
+      contact_boundary_method_(boundary_keeper_.template createPtr<BoundaryType<DiffusionType>>(
+          *this, this->contact_particles_)) {}
 //=================================================================================================//
 template <class DiffusionType, template <typename...> class BoundaryType,
           class KernelCorrectionType, class... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>::
-    InteractKernel::InteractKernel(
-        const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+    InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_method_),
       species_(encloser.dv_species_->DelegatedMultiEntryView(ex_policy)),
       species_dt_(encloser.dv_species_dt_->DelegatedMultiEntryView(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      contact_transfer_(encloser.contact_dv_transfer_[contact_index]->DelegatedMultiEntryView(ex_policy)),
-      boundary_flux_(ex_policy, *encloser.contact_boundary_method_[contact_index]) {}
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)),
+      contact_transfer_(encloser.contact_dv_transfer_->DelegatedMultiEntryView(ex_policy)),
+      boundary_flux_(ex_policy, *encloser.contact_boundary_method_) {}
 //=================================================================================================//
 template <class DiffusionType, template <typename...> class BoundaryType,
           class KernelCorrectionType, class... Parameters>
@@ -299,7 +292,7 @@ Dirichlet<DiffusionType>::ComputingKernel::
       species_(encloser.dv_species_->DelegatedMultiEntryView(ex_policy)),
       contact_species_(encloser.dv_contact_species_->DelegatedMultiEntryView(ex_policy)),
       inter_particle_diffusion_coeff_(
-          encloser.cka_inter_particle_diffusion_coeff_.DelegatedData(ex_policy)){};
+          encloser.cka_inter_particle_diffusion_coeff_.DelegatedData(ex_policy)) {};
 //=================================================================================================//
 template <class DiffusionType>
 Vecd Dirichlet<DiffusionType>::ComputingKernel::operator()(

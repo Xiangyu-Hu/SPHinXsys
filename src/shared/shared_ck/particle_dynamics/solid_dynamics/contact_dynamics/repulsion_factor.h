@@ -71,7 +71,7 @@ class RepulsionFactor<Contact<Parameters...>>
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -81,8 +81,8 @@ class RepulsionFactor<Contact<Parameters...>>
     };
 
   protected:
-    StdVec<Real> contact_inv_rho0_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_mass_;
+    Real contact_inv_rho0_;
+    DiscreteVariable<Real> *dv_contact_mass_;
 };
 } // namespace solid_dynamics
 } // namespace SPH

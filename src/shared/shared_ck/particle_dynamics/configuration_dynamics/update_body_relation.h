@@ -192,7 +192,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     {
       public:
         template <class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void incrementNeighborSize(UnsignedInt source_index);
         void updateNeighborList(UnsignedInt source_index);
 
@@ -206,12 +206,12 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
 
     typedef UpdateRelation<ExecutionPolicy, Contact<Parameters...>> LocalDynamicsType;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
-    UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
+    UniquePtrKeeper<KernelImplementation> contact_kernel_implementation_ptr_;
     ExecutionPolicy ex_policy_;
     ContactRelationType &contact_relation_;
-    StdVec<TargetParticleMaskMethod> contact_target_particle_mask_methods_;
-    StdVec<CellLinkedList<CellLinkedListIdentifier> *> contact_cell_linked_list_;
-    StdVec<KernelImplementation *> contact_kernel_implementation_;
+    TargetParticleMaskMethod contact_target_particle_mask_method_;
+    CellLinkedList<CellLinkedListIdentifier> *contact_cell_linked_list_;
+    KernelImplementation *contact_kernel_implementation_;
 };
 
 template <class ExecutionPolicy>
