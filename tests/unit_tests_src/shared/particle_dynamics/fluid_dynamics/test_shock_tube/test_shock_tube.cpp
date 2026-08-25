@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <tuple>
 #include <iostream>
+#include <fstream>   // std::ofstream
+#include <iomanip>   // std::setprecision
 
 using namespace SPH;
 using namespace SPH::fluid_dynamics;
@@ -190,24 +192,17 @@ TEST(ShockTubeMUSCL, Sod_Limiter_Comparison)
     auto run_sim = [&](SlopeLimiter lim)->std::tuple<std::vector<Cell>, Real, int>
     {
         std::vector<Cell> P; init_state(P);
-        std::vector<Real> grho, gu, gp;
         SecondOrderConfig cfg;
         cfg.limiter    = lim;
         cfg.positivity = true;
         cfg.small      = SMALL;
 
-        Real t = 0.0; int steps = 0;
-        while (t < t_end) {
-            // positivity floor before CFL
-            for (auto& c : P) { c.rho = std::max(c.rho, SMALL); c.p = std::max(c.p, SMALL); }
-            // dt 
-            Real amax = 0.0;
-            for (auto& c : P) amax = std::max(amax, std::abs(c.u) + sound_speed(c.rho, c.p));
-            Real dt = CFL * dx / (amax + 1e-14);
-            if (t + dt > t_end) dt = t_end - t;
-
-            // Gradient
-            compute_gradients_1d(P, grho, gu, gp, dx);
+        // One explicit-Euler flux-divergence stage: reconstruct MUSCL interface
+        // states from P_in, solve HLLC, and return the updated primitive state.
+        auto euler_stage = [&](const std::vector<Cell>& P_in, Real dt) -> std::vector<Cell>
+        {
+            std::vector<Real> grho, gu, gp;
+            compute_gradients_1d(P_in, grho, gu, gp, dx);
 
             // Interface fluxes
             std::vector<Flux> F(N+1);
@@ -222,8 +217,8 @@ TEST(ShockTubeMUSCL, Sod_Limiter_Comparison)
                 Real xf = x0 + (i)*dx;
 
                 // Primitives
-                Primitives Pi{P[il].rho, Vecd(P[il].u, 0.0), P[il].p, P[il].E};
-                Primitives Pj{P[ir].rho, Vecd(P[ir].u, 0.0), P[ir].p, P[ir].E};
+                Primitives Pi{P_in[il].rho, Vecd(P_in[il].u, 0.0), P_in[il].p, P_in[il].E};
+                Primitives Pj{P_in[ir].rho, Vecd(P_in[ir].u, 0.0), P_in[ir].p, P_in[ir].E};
 
                 // 1D gradient vectors: nh direction, scalar — put x component for Vecd usage
                 Vecd gi(grho[il], 0.0), gj(grho[ir], 0.0);
@@ -233,7 +228,7 @@ TEST(ShockTubeMUSCL, Sod_Limiter_Comparison)
                 // Reconstruction (our MUSCL)
                 LR lr = reconstruct_primitives_muscl(
                     Pi, Pj,
-                    gi, gj, gui, guj, Vecd(0.0,0.0), Vecd(0.0,0.0), 
+                    gi, gj, gui, guj, Vecd(0.0,0.0), Vecd(0.0,0.0),
                     gpi, gpj,
                     Vecd(xi,0.0), Vecd(xj,0.0), Vecd(xf,0.0),
                     cfg
@@ -247,16 +242,46 @@ TEST(ShockTubeMUSCL, Sod_Limiter_Comparison)
 
             // FV update
             std::vector<Cons> U(N);
-            for (int i=0;i<N;i++) U[i] = prim2cons(P[i]);
+            for (int i=0;i<N;i++) U[i] = prim2cons(P_in[i]);
             for (int i=0;i<N;i++) {
                 U[i].r  -= dt/dx * (F[i+1].mass - F[i].mass);
                 U[i].ru -= dt/dx * (F[i+1].mom  - F[i].mom );
                 U[i].E  -= dt/dx * (F[i+1].ener - F[i].ener);
             }
             // back to primitives
+            std::vector<Cell> P_out(N);
             for (int i=0;i<N;i++) {
-                P[i] = cons2prim(U[i]);
+                P_out[i] = cons2prim(U[i]);
                 // positivity guard
+                P_out[i].rho = std::max(P_out[i].rho, SMALL);
+                P_out[i].p   = std::max(P_out[i].p,   SMALL);
+            }
+            return P_out;
+        };
+
+        Real t = 0.0; int steps = 0;
+        while (t < t_end) {
+            // positivity floor before CFL
+            for (auto& c : P) { c.rho = std::max(c.rho, SMALL); c.p = std::max(c.p, SMALL); }
+            // dt
+            Real amax = 0.0;
+            for (auto& c : P) amax = std::max(amax, std::abs(c.u) + sound_speed(c.rho, c.p));
+            Real dt = CFL * dx / (amax + 1e-14);
+            if (t + dt > t_end) dt = t_end - t;
+
+            // SSP-RK2 (Heun's method): two Euler stages averaged in conservative
+            // variables. Plain forward Euler + MUSCL reconstruction is only
+            // 1st-order accurate in time and is not TVD for the nonlinear Euler
+            // equations -- individual face values can be bounded while cell
+            // averages still drift into new extrema over many steps. SSP-RK2
+            // restores the genuine 2nd-order-in-space-and-time TVD scheme.
+            std::vector<Cell> P1 = euler_stage(P, dt);
+            std::vector<Cell> P2 = euler_stage(P1, dt);
+            for (int i=0;i<N;i++) {
+                Cons Un = prim2cons(P[i]);
+                Cons U2 = prim2cons(P2[i]);
+                Cons Uavg{(Real)0.5*(Un.r + U2.r), (Real)0.5*(Un.ru + U2.ru), (Real)0.5*(Un.E + U2.E)};
+                P[i] = cons2prim(Uavg);
                 P[i].rho = std::max(P[i].rho, SMALL);
                 P[i].p   = std::max(P[i].p,   SMALL);
             }
@@ -270,7 +295,10 @@ TEST(ShockTubeMUSCL, Sod_Limiter_Comparison)
         return {P, tv, band};
     };
 
-    // Three limiters in sequence
+    // Three limiters in sequence, plus an unlimited (SlopeLimiter::None) reference.
+    // Note: SlopeLimiter::None is NOT first-order -- it is the full gradient-based
+    // MUSCL extrapolation with no limiter applied, kept as an "unlimited" baseline.
+    auto [P_unlim,  tv_unlim,  band_unlim ] = run_sim(SlopeLimiter::None);
     auto [P_minmod, tv_minmod, band_minmod] = run_sim(SlopeLimiter::Minmod);
     auto [P_mc,     tv_mc,     band_mc    ] = run_sim(SlopeLimiter::MC);
     auto [P_vl,     tv_vl,     band_vl    ] = run_sim(SlopeLimiter::VanLeer);
@@ -307,5 +335,27 @@ TEST(ShockTubeMUSCL, Sod_Limiter_Comparison)
     EXPECT_LE(maxrho(P_mc),     1.05*global_max);
     EXPECT_LE(maxrho(P_vl),     1.05*global_max);
 
+    // 5) Write profiles + metrics for post-processing plots.
+    {
+        std::ofstream dens("shock_tube_density.dat");
+        dens << "x rho_unlimited rho_minmod rho_mc rho_vanleer\n";
+        dens << std::setprecision(16);
+        for (int i = 0; i < N; ++i)
+        {
+            dens << xc[i] << " "
+                 << P_unlim[i].rho << " "
+                 << P_minmod[i].rho << " "
+                 << P_mc[i].rho << " "
+                 << P_vl[i].rho << "\n";
+        }
+    }
+    {
+        std::ofstream met("shock_tube_metrics.dat");
+        met << "Limiter TV BandWidth\n";
+        met << "Unlimited " << tv_unlim << " " << band_unlim << "\n";
+        met << "Minmod " << tv_minmod << " " << band_minmod << "\n";
+        met << "MC " << tv_mc << " " << band_mc << "\n";
+        met << "VanLeer " << tv_vl << " " << band_vl << "\n";
+    }
 
 }
