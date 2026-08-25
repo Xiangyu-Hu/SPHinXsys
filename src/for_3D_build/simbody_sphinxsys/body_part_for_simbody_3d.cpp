@@ -41,10 +41,15 @@ void SolidBodyPartForSimbody::setMassProperties()
     inertia_moments /= body_part_volume;
     inertia_products /= body_part_volume;
 
+    // Create SimTK::UnitInertia from moments and products
+    SimTK::UnitInertia unit_inertia(
+        SimTKVec3(inertia_moments[0], inertia_moments[1], inertia_moments[2]),
+        SimTKVec3(inertia_products[0], inertia_products[1], inertia_products[2]));
+
+    // Create mass properties with the actual center of mass
+    SimTKVec3 com(initial_mass_center_[0], initial_mass_center_[1], initial_mass_center_[2]);
     body_part_mass_properties_ = mass_properties_keeper_.createPtr<SimTK::MassProperties>(
-        body_part_volume * rho0_, SimTKVec3(0),
-        SimTK::UnitInertia(SimTKVec3(inertia_moments[0], inertia_moments[1], inertia_moments[2]),
-                           SimTKVec3(inertia_products[0], inertia_products[1], inertia_products[2])));
+        body_part_volume * rho0_, com, unit_inertia);
 }
 //=================================================================================================//
 } // namespace SPH
