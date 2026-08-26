@@ -359,14 +359,14 @@ int main(int ac, char *av[])
     SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1.0, SimTKVec3(0), SimTK::UnitInertia(1)));
     SolidBodyPartForSimbody fish_head(fish_body, makeShared<MultiPolygonShape>(createFishHeadShape(fish_body), "FishHead"));
     /** Mass properties of the constrained spot. */
-    SimTK::Body::Rigid tethered_spot_info(*fish_head.body_part_mass_properties_);
+    SimTK::Body::Rigid tethered_spot_info(fish_head.getSimTKMassProperties());
     /** Mobility of the fixed spot. */
     SimTK::MobilizedBody::Weld fixed_spot(matter.Ground(), SimTK::Transform(SimTKVec3(tethering_point[0], tethering_point[1], 0.0)),
                                           fixed_spot_info, SimTK::Transform(SimTKVec3(0)));
     /** Mobility of the tethered spot.
      * Set the mass center as the origin location of the planar mobilizer
      */
-    Vecd disp0 = fish_head.initial_mass_center_ - tethering_point;
+    Vecd disp0 = fish_head.getMassCenter() - tethering_point;
     SimTK::MobilizedBody::Planar tethered_spot(fixed_spot, SimTK::Transform(SimTKVec3(disp0[0], disp0[1], 0.0)), tethered_spot_info, SimTK::Transform(SimTKVec3(0)));
     /** The tethering line give cable force.
      * the start point of the cable path is at the origin location of the first mobilizer body,
@@ -374,7 +374,7 @@ int main(int ac, char *av[])
      * location of the second mobilizer body origin location, here, the mass center
      * of the fish head.
      */
-    Vecd disp_cable_end = Vecd(cx, cy) - fish_head.initial_mass_center_;
+    Vecd disp_cable_end = Vecd(cx, cy) - fish_head.getMassCenter();
     SimTK::CablePath tethering_line(cables, fixed_spot, SimTKVec3(0), tethered_spot, SimTKVec3(disp_cable_end[0], disp_cable_end[1], 0.0));
     SimTK::CableSpring tethering_spring(forces, tethering_line, 100.0, 3.0, 10.0);
 

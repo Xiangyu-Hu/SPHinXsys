@@ -123,7 +123,7 @@ int main(int ac, char *av[])
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
-    SimTK::Body::Rigid rigid_info(*plate_multibody.body_part_mass_properties_);
+    SimTK::Body::Rigid rigid_info(plate_multibody.getSimTKMassProperties());
     SimTK::MobilizedBody::Slider
         plateMBody(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3(0)));
     /** Gravity. */
