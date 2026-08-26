@@ -2,8 +2,6 @@
 
 #include "base_particles.hpp"
 
-#include <stdexcept>
-
 namespace SPH
 {
 //=================================================================================================//
@@ -103,29 +101,13 @@ Mat3d PlasticContinuum::ReturnMapping(Mat3d &stress_tensor)
 }
 //=================================================================================================//
 J2Plasticity::J2Plasticity(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio,
-                           Real yield_stress, Real hardening_modulus,const DuctileDamageParameters &damage_parameters)
+                           Real yield_stress, Real hardening_modulus)
     : GeneralContinuum(rho0, c0, youngs_modulus, poisson_ratio),
       yield_stress_(yield_stress), hardening_modulus_(hardening_modulus),
-      dv_hardening_factor_(nullptr), dv_intact_factor_(nullptr), dv_p_(nullptr),dv_damage_(nullptr),
-      damage_parameters_(damage_parameters)
+      dv_hardening_factor_(nullptr), dv_intact_factor_(nullptr), dv_p_(nullptr),
+      failure_tension_(0.02 * youngs_modulus)
 {
     material_type_name_ = "J2Plasticity";
-    if (damage_parameters_.enabled_)
-    {
-        if (damage_parameters_.critical_equivalent_plastic_strain_ <=
-            damage_parameters_.threshold_equivalent_plastic_strain_)
-        {
-            throw std::invalid_argument(
-                "J2Plasticity: critical equivalent plastic strain "
-                "must be larger than threshold equivalent plastic strain.");
-        }
-
-        if (damage_parameters_.critical_damage_ <= Real(0))
-        {
-            throw std::invalid_argument(
-                "J2Plasticity: critical damage must be positive.");
-        }
-    }
 }
 //=================================================================================================//
 Matd J2Plasticity::ConstitutiveRelationShearStressWithHardening(Matd &velocity_gradient, Matd &shear_stress, Real &hardening_factor)
@@ -181,13 +163,6 @@ void J2Plasticity::initializeLocalParameters(BaseParticles *base_particles)
     base_particles->addEvolvingVariable<Real>(dv_p_);
     dv_intact_factor_ = base_particles->registerStateVariable<Real>("IntactFactor", Real(1.0));
     base_particles->addEvolvingVariable<Real>(dv_intact_factor_);
-    /** New ductile damage variable:
-     *      D = 0       : undamaged
-     *      0 < D < Dc : damaging
-     *      D = Dc      : rupture
-     */
-    dv_damage_ =base_particles->registerStateVariable<Real>("Damage", Real(0.0));
-    base_particles->addEvolvingVariable<Real>(dv_damage_);
 }
 //=================================================================================================//
 } // namespace SPH
