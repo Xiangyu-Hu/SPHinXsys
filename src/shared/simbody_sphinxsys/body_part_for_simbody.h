@@ -31,7 +31,6 @@
 
 #include "base_body_part.h"
 #include "simtk_wrapper.h"
-
 namespace SPH
 {
 /**
@@ -46,20 +45,23 @@ class SolidBodyPartForSimbody : public BodyRegionByParticle
     UniquePtrKeeper<SimTK::MassProperties> mass_properties_keeper_;
 
   public:
-    Vecd initial_mass_center_;
-    SimTK::MassProperties *body_part_mass_properties_;
+    SimTK::MassProperties &getSimTKMassProperties() const;
+    SimTK::Vec3 getSimTKMassCenter() const;
+    SimTK::Transform getSimTKTransform() const { return SimTKVec3(0.0); }
 
     SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape);
     SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);
     virtual ~SolidBodyPartForSimbody() {};
 
   protected:
+    Vecd initial_mass_center_;
+    SimTK::MassProperties *body_part_mass_properties_;
     Real rho0_;
     Real *Vol_;
     Vecd *pos_;
 
   private:
-    void setMassProperties();
+    void initialize();
 };
 } // namespace SPH
 #endif // BODY_PART_FOR_SIMBODY_H
