@@ -21,7 +21,7 @@ template <typename... Parameters>
 template <class DynamicsIdentifier>
 RepulsionFactor<Contact<Parameters...>>::
     RepulsionFactor(DynamicsIdentifier &identifier)
-    : BaseInteractionType(identifier, "RepulsionFactor")
+    : BaseInteractionType(identifier, "RepulsionFactor" + identifier.Name())
 {
     for (size_t k = 0; k != this->contact_particles_.size(); ++k)
     {

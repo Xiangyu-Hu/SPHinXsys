@@ -14,12 +14,13 @@ template <class DynamicsIdentifier>
 RepulsionForceCK<Base, Contact<Parameters...>>::
     RepulsionForceCK(DynamicsIdentifier &identifier, Real numerical_damping)
     : Interaction<Contact<Parameters...>>(identifier),
-      ForcePriorCK(this->particles_, "RepulsionForce"),
+      ForcePriorCK(this->particles_, "RepulsionForce" + identifier.Name()),
       solid_contact_(DynamicCast<SolidContact>(this, this->sph_body_->getMatterMaterial())),
       numerical_damping_(numerical_damping),
       stiffness_(solid_contact_.ContactStiffness()),
       impedance_(sqrt(solid_contact_.ContactReferenceDensity() * stiffness_)),
-      dv_repulsion_factor_(this->particles_->template getVariableByName<Real>("RepulsionFactor")),
+      dv_repulsion_factor_(this->particles_->template getVariableByName<Real>(
+          "RepulsionFactor" + identifier.Name())),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
       dv_repulsion_force_(ForcePriorCK::getCurrentForce()) {}
@@ -37,7 +38,7 @@ RepulsionForceCK<Contact<WithUpdate, Parameters...>>::
         contact_stiffness_.push_back(solid.ContactStiffness());
         contact_impedance_.push_back(sqrt(solid.ReferenceDensity() * solid.ContactStiffness()));
         dv_contact_repulsion_factor_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("RepulsionFactor"));
+            this->contact_particles_[k]->template getVariableByName<Real>("RepulsionFactor")); 
         dv_contact_vel_.push_back(
             this->contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));
         dv_contact_n_.push_back(
