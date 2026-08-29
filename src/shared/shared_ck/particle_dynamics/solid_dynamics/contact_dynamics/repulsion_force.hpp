@@ -14,7 +14,7 @@ template <class DynamicsIdentifier>
 RepulsionForceCK<Base, Contact<Parameters...>>::
     RepulsionForceCK(DynamicsIdentifier &identifier, Real numerical_damping)
     : Interaction<Contact<Parameters...>>(identifier),
-      ForcePriorCK(this->particles_, "RepulsionForce" + identifier.Name()),
+      ForcePriorCK(this->particles_, "RepulsionForce"),
       solid_contact_(DynamicCast<SolidContact>(this, this->sph_body_->getMatterMaterial())),
       numerical_damping_(numerical_damping),
       stiffness_(solid_contact_.ContactStiffness()),
