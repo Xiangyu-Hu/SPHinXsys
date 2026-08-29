@@ -40,6 +40,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 
 namespace fs = std::filesystem;
@@ -325,6 +326,88 @@ class ClampTemperatureCK : public LocalDynamics
     DiscreteVariable<Real> *dv_temperature_;
     DiscreteVariable<Real> *dv_delta_t_;
 };
+
+/**
+ * Host-side unit inertia for the whole rotor.
+ *
+ * SolidBodyPartForSimbody::setMassProperties does the same arithmetic on whatever
+ * pointer DiscreteVariable::Data() currently holds. After a SYCL kernel that pointer
+ * can be stale; on a Debug Simbody build the resulting NaN throws at
+ * Inertia::Inertia(moments,products). The paddle is kinematically driven, so only a
+ * finite, physically plausible tensor is required.
+ */
+inline SimTK::MassProperties makeRotorMassPropertiesFromHostParticles(BaseParticles &particles, Real rho0)
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Real>(particles, "VolumetricMeasure");
+    const size_t n = particles.TotalRealParticles();
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Real *vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+
+    double volume = 0.0;
+    double cx = 0.0;
+    double cy = 0.0;
+    double cz = 0.0;
+    size_t n_used = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const double v = static_cast<double>(vol[i]);
+        if (!(v > 0.0) || !std::isfinite(v) || !std::isfinite(static_cast<double>(pos[i][0])) ||
+            !std::isfinite(static_cast<double>(pos[i][1])) || !std::isfinite(static_cast<double>(pos[i][2])))
+        {
+            continue;
+        }
+        volume += v;
+        cx += v * static_cast<double>(pos[i][0]);
+        cy += v * static_cast<double>(pos[i][1]);
+        cz += v * static_cast<double>(pos[i][2]);
+        ++n_used;
+    }
+    if (n_used == 0 || !(volume > 0.0))
+    {
+        throw std::runtime_error("makeRotorMassPropertiesFromHostParticles: no finite rotor volume");
+    }
+    cx /= volume;
+    cy /= volume;
+    cz /= volume;
+
+    double Ixx = 0.0;
+    double Iyy = 0.0;
+    double Izz = 0.0;
+    double Ixy = 0.0;
+    double Ixz = 0.0;
+    double Iyz = 0.0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const double v = static_cast<double>(vol[i]);
+        if (!(v > 0.0) || !std::isfinite(v))
+        {
+            continue;
+        }
+        const double x = static_cast<double>(pos[i][0]) - cx;
+        const double y = static_cast<double>(pos[i][1]) - cy;
+        const double z = static_cast<double>(pos[i][2]) - cz;
+        Ixx += v * (y * y + z * z);
+        Iyy += v * (x * x + z * z);
+        Izz += v * (x * x + y * y);
+        Ixy -= v * x * y;
+        Ixz -= v * x * z;
+        Iyz -= v * y * z;
+    }
+    Ixx /= volume;
+    Iyy /= volume;
+    Izz /= volume;
+    Ixy /= volume;
+    Ixz /= volume;
+    Iyz /= volume;
+
+    std::cout << "[ophelie][stirring-em] rotor inertia n=" << n_used << " V=" << volume
+              << " com=(" << cx << "," << cy << "," << cz << ") unitI=[" << Ixx << "," << Iyy << ","
+              << Izz << "] products=[" << Ixy << "," << Ixz << "," << Iyz << "]" << std::endl;
+
+    return SimTK::MassProperties(volume * static_cast<double>(rho0), SimTK::Vec3(0),
+                                 SimTK::UnitInertia(SimTK::Vec3(Ixx, Iyy, Izz), SimTK::Vec3(Ixy, Ixz, Iyz)));
+}
 
 } // namespace
 
@@ -705,8 +788,10 @@ int main(int ac, char *av[])
         }
     }
 
-    SolidBodyPartForSimbody rotor_constraint_area(rotor, rotor_simbody_box);
-    SimTK::Body::Rigid rotor_info(*rotor_constraint_area.body_part_mass_properties_);
+    BodyRegionByParticle rotor_constraint_area(rotor, rotor_simbody_box);
+    const SimTK::MassProperties rotor_mass_properties =
+        makeRotorMassPropertiesFromHostParticles(rotor_particles, stirring.rho_rotor);
+    SimTK::Body::Rigid rotor_info(rotor_mass_properties);
 
     const Vecd axis = stirring.rotation_axis.normalized();
     const SimTK::UnitVec3 unit_axis(static_cast<SimTK::Real>(axis[0]), static_cast<SimTK::Real>(axis[1]),
