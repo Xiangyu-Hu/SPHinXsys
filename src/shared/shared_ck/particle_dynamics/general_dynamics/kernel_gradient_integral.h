@@ -112,6 +112,8 @@ using KernelGradientIntegralComplex =
 
 using KernelGradientIntegralCorrectedComplex =
     KernelGradientIntegral<Inner<LinearCorrectionCK>, Contact<Boundary, LinearCorrectionCK>>;
+using KernelGradientIntegralCorrectedForOpenBoundaryFlowComplex =
+    KernelGradientIntegral<Inner<LinearCorrectionWithinScopeCK<BulkParticles>>, Contact<Boundary, LinearCorrectionCK>>;
 
 } // namespace SPH
 #endif // KERNEL_GRADIENT_RESIDUAL_H

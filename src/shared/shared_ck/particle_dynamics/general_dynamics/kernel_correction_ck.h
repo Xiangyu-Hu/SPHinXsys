@@ -186,5 +186,60 @@ class LinearCorrectionCK : public KernelCorrection
     DiscreteVariable<Matd> *dv_B_;
 };
 
+template <typename... ParticleScopes>
+class LinearCorrectionWithinScopeCK : public KernelCorrection
+{
+    using ScopeMethod = ParticleScopeTypeCK<ParticleScopes...>;
+    using ScopeKernel = typename ScopeMethod::ComputingKernel;
+    using BaseParameter = ParameterVariable<Matd>;
+
+  public:
+    using CorrectionDataType = Matd;
+
+    explicit LinearCorrectionWithinScopeCK(BaseParticles *particles)
+        : KernelCorrection(),
+          dv_B_(particles->getVariableByName<Matd>(
+              "LinearCorrectionMatrix")),
+          within_scope_method_(particles)
+    {
+        static_assert(
+            std::is_base_of<WithinScope, ScopeMethod>::value,
+            "WithinScope is not the base of ParticleScope!");
+    }
+
+    class ComputingKernel : public BaseParameter
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy,
+                        EncloserType &encloser)
+            : BaseParameter(
+                  encloser.dv_B_->DelegatedData(ex_policy)),
+              within_scope_(
+                  ex_policy, encloser.within_scope_method_)
+        {
+        }
+
+        Matd operator()(size_t index_j, size_t index_i)
+        {
+            return within_scope_(index_j)
+                       ? BaseParameter::operator()(index_j)
+                       : BaseParameter::operator()(index_i);
+        }
+
+        Matd &operator()(size_t index_i)
+        {
+            return BaseParameter::operator()(index_i);
+        }
+
+      protected:
+        ScopeKernel within_scope_;
+    };
+
+  protected:
+    DiscreteVariable<Matd> *dv_B_;
+    ScopeMethod within_scope_method_;
+};
+
 } // namespace SPH
 #endif // KERNEL_CORRECTION_CK_H

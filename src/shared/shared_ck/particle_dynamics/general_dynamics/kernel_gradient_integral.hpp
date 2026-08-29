@@ -43,7 +43,7 @@ void KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>::
         UnsignedInt index_j = this->neighbor_index_[n];
         const Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
         const Vecd e_ij = this->e_ij(index_i, index_j);
-        inconsistency -= (correction_(index_i) + correction_(index_j)) * dW_ijV_j * e_ij;
+        inconsistency -= (correction_(index_i) + correction_(index_j, index_i)) * dW_ijV_j * e_ij;
     }
     kernel_gradient_integral_[index_i] = inconsistency;
 }

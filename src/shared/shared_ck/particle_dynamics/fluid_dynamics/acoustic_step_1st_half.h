@@ -199,6 +199,9 @@ using AcousticStep1stHalfWithWallRiemannCK =
 using AcousticStep1stHalfWithWallRiemannCorrectionCK =
     AcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>,
                         Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>>;
+using AcousticStep1stHalfWithWallRiemannCorrectionForOpenBoundaryFlowCK =
+    AcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionWithinScopeCK<BulkParticles>>,
+                        Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>>;
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // ACOUSTIC_STEP_1ST_HALF_H
