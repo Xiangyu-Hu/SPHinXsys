@@ -21,7 +21,7 @@ void SolidBodyPartForSimbody::initialize()
     initial_mass_center_ = mass_center;
 
     // computing unit inertia
-    Real Ixx = 0.0, Iyy = 0.0, Izz = 0.0, Ixy = 0.0; // Ixz = Iyz = 0 in 2D
+    Real Ixx = 0.0, Iyy = 0.0, Ixy = 0.0; // Ixz = Iyz = 0 in 2D
     for (size_t i = 0; i < body_part_particles_.size(); ++i)
     {
         size_t index_i = body_part_particles_[i];
@@ -33,23 +33,21 @@ void SolidBodyPartForSimbody::initialize()
 
         Ixx += particle_volume * y * y;
         Iyy += particle_volume * x * x;
-        Izz += particle_volume * (x * x + y * y);
         Ixy -= particle_volume * x * y; // note the negative sign
     }
     Ixx /= body_part_volume;
     Iyy /= body_part_volume;
-    Izz /= body_part_volume;
     Ixy /= body_part_volume;
 
-    // Create SimTK::UnitInertia with all six components (Ixy only; others zero)
+    Real Izz = Ixx + Iyy; // For 2D, Izz = Ixx + Iyy
     SimTK::UnitInertia unit_inertia(
         Ixx, Iyy, Izz, // diagonal moments
-        Ixy, 0.0, 0.0  // products of inertia (Ixz = Iyz = 0 in 2D)
+        Ixy, 0.0, 0.0  // products of inertia
     );
 
     // Zero center of mass due to local frame
     body_part_mass_properties_ = mass_properties_keeper_.createPtr<SimTK::MassProperties>(
-        body_part_volume * rho0_, SimTKVec3(Real(0)), unit_inertia);
+        body_part_volume * rho0_, SimTKVec3(0.0), unit_inertia);
 }
 //=================================================================================================//
 } // namespace SPH
