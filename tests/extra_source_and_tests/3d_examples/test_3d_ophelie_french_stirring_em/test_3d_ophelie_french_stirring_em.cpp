@@ -327,6 +327,48 @@ class ClampTemperatureCK : public LocalDynamics
     DiscreteVariable<Real> *dv_delta_t_;
 };
 
+struct RotorLoadSnapshot
+{
+    Real tip_speed = 0;
+    Real r_tip = 0;
+    Real f_visc = 0;
+    Real f_pres = 0;
+    Real torque_z = 0;
+};
+
+inline RotorLoadSnapshot hostRotorLoadSnapshot(BaseParticles &particles, const Vecd &center, const Vecd &axis)
+{
+    RotorLoadSnapshot snap;
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Vecd>(particles, "ViscousForceFromFluid");
+    syncVariableToHost<Vecd>(particles, "PressureForceFromFluid");
+    const size_t n = particles.TotalRealParticles();
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const Vecd *f_visc = particles.getVariableDataByName<Vecd>("ViscousForceFromFluid");
+    const Vecd *f_pres = particles.getVariableDataByName<Vecd>("PressureForceFromFluid");
+    const Vecd e_z = axis.normalized();
+    Vecd f_visc_sum = Vecd::Zero();
+    Vecd f_pres_sum = Vecd::Zero();
+    Real torque = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Vecd rel = pos[i] - center;
+        const Real r_xy = (rel - e_z * e_z.dot(rel)).norm();
+        snap.r_tip = std::max(snap.r_tip, r_xy);
+        snap.tip_speed = std::max(snap.tip_speed, vel[i].norm());
+        const Vecd f = f_visc[i] + f_pres[i];
+        torque += e_z.dot(rel.cross(f));
+        f_visc_sum += f_visc[i];
+        f_pres_sum += f_pres[i];
+    }
+    snap.f_visc = f_visc_sum.norm();
+    snap.f_pres = f_pres_sum.norm();
+    snap.torque_z = torque;
+    return snap;
+}
+
 } // namespace
 
 int main(int ac, char *av[])
@@ -659,9 +701,15 @@ int main(int ac, char *av[])
                                                                              t0);
 
     auto &glass_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(glass);
+    glass_state_recorder.addToWrite<Vecd>(glass, "Velocity");
     glass_state_recorder.addToWrite<Real>(glass, "Pressure");
     glass_state_recorder.addToWrite<Real>(glass, kOphelieTemperatureField);
     glass_state_recorder.addToWrite<Real>(glass, rh200::kJouleHeatField);
+
+    auto &rotor_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(rotor);
+    rotor_state_recorder.addToWrite<Vecd>(rotor, "Velocity");
+    rotor_state_recorder.addToWrite<Vecd>(rotor, "ViscousForceFromFluid");
+    rotor_state_recorder.addToWrite<Vecd>(rotor, "PressureForceFromFluid");
 
     StateDynamics<MainExecutionPolicy, UpdateSpinningParticlePosition> update_rotor_proxy_positions(
         rotor_proxy, stirring.rotation_center, stirring.rotation_axis, stirring.rotation_speed_rad_s);
@@ -694,17 +742,25 @@ int main(int ac, char *av[])
 
     fs::create_directories("./output");
     std::ofstream monitor("./output/french_stirring_em_monitor.csv");
-    monitor << "advection_step,physical_time_s,revolutions,acoustic_dt_s,u_max_mps,t_mean_K,t_max_K,wall_clock_s\n";
+    monitor << "advection_step,physical_time_s,revolutions,acoustic_dt_s,u_max_mps,t_mean_K,t_max_K,"
+               "rotor_tip_mps,rotor_r_tip_m,f_visc_N,f_pres_N,torque_z_Nm,wall_clock_s\n";
     monitor << std::setprecision(10);
 
     if (local_cli.state_recording)
     {
         update_rotor_proxy_positions.exec(Real(0));
         glass_state_recorder.writeToFile(0);
+        rotor_state_recorder.writeToFile(0);
         write_rotor_surface.writeToFile(0);
     }
 
     const Real revolution_time = Real(2.0 * M_PI) / std::max(stirring.rotation_speed_rad_s, TinyReal);
+    const RotorLoadSnapshot rotor0 =
+        hostRotorLoadSnapshot(rotor.getBaseParticles(), stirring.rotation_center, stirring.rotation_axis);
+    const Real omega = stirring.rotation_speed_rad_s;
+    const Real rpm = omega * Real(60.0) / Real(2.0 * M_PI);
+    const Real u_tip_expected = omega * rotor0.r_tip;
+    const Real re_impeller = rho0 * (omega / Real(2.0 * M_PI)) * (Real(2) * rotor0.r_tip) * (Real(2) * rotor0.r_tip) / mu;
     std::cout << "[ophelie][stirring-em] flow start: end_time=" << local_cli.end_time << " s ("
               << local_cli.end_time / revolution_time << " revolutions) budget=" << local_cli.max_wall_hours << " h\n"
               << "  n_glass=" << glass_particles.TotalRealParticles()
@@ -713,6 +769,9 @@ int main(int ac, char *av[])
               << " out_of_grid=" << n_out_of_grid << "\n"
               << "  rho=" << rho0 << " mu=" << mu << " cp=" << cp << " k=" << k_th << " beta=" << beta
               << " c0=" << local_cli.c0 << " U_ref=" << u_ref << " T0=" << t0 << " T_floor=" << local_cli.t_min
+              << "\n  paddle: rpm=" << rpm << " omega=" << omega << " rad/s r_tip=" << rotor0.r_tip
+              << " m U_tip=" << u_tip_expected << " m/s Re_imp=" << re_impeller
+              << " (creeping: swirl is weak, look at GlassBody Velocity glyphs)\n"
               << std::endl;
 
     const auto wall_clock_start = std::chrono::steady_clock::now();
@@ -761,6 +820,7 @@ int main(int ac, char *av[])
             {
                 update_rotor_proxy_positions.exec(time_stepper.getPhysicalTime());
                 glass_state_recorder.writeToFile(advection_steps);
+                rotor_state_recorder.writeToFile(advection_steps);
                 write_rotor_surface.writeToFile(advection_steps);
             }
 
@@ -787,22 +847,36 @@ int main(int ac, char *av[])
                 (void)setupOphelieThermalFrenchNaturalBoundaryFaces(glass_particles, thermal_bc, french_thermal);
             }
 
-            if (local_cli.csv_every > 0 && advection_steps % static_cast<size_t>(local_cli.csv_every) == 0)
+            const bool write_csv =
+                local_cli.csv_every > 0 && advection_steps % static_cast<size_t>(local_cli.csv_every) == 0;
+            const bool write_screen =
+                local_cli.screen_every > 0 && advection_steps % static_cast<size_t>(local_cli.screen_every) == 0;
+            if (write_csv || write_screen)
             {
                 const Real t_now = time_stepper.getPhysicalTime();
-                monitor << advection_steps << "," << t_now << "," << t_now / revolution_time << "," << acoustic_dt
-                        << "," << u_max_reduce.exec() << "," << t_mean_reduce.exec() << "," << t_max_reduce.exec()
-                        << "," << elapsed_s() << "\n";
-                monitor.flush();
-            }
-            if (local_cli.screen_every > 0 && advection_steps % static_cast<size_t>(local_cli.screen_every) == 0)
-            {
-                std::cout << std::fixed << std::setprecision(6) << "[ophelie][stirring-em] N=" << advection_steps
-                          << " n_ac=" << acoustic_steps << " t=" << time_stepper.getPhysicalTime()
-                          << " dt=" << std::scientific << acoustic_dt << std::fixed << " rev="
-                          << time_stepper.getPhysicalTime() / revolution_time << " U_max=" << u_max_reduce.exec()
-                          << " T_mean=" << t_mean_reduce.exec() << " T_max=" << t_max_reduce.exec()
-                          << " wall=" << elapsed_s() / 3600.0 << " h" << std::endl;
+                const Real u_max_now = u_max_reduce.exec();
+                const Real t_mean_now = t_mean_reduce.exec();
+                const Real t_max_now = t_max_reduce.exec();
+                const RotorLoadSnapshot rotor_load = hostRotorLoadSnapshot(
+                    rotor.getBaseParticles(), stirring.rotation_center, stirring.rotation_axis);
+                if (write_csv)
+                {
+                    monitor << advection_steps << "," << t_now << "," << t_now / revolution_time << "," << acoustic_dt
+                            << "," << u_max_now << "," << t_mean_now << "," << t_max_now << "," << rotor_load.tip_speed
+                            << "," << rotor_load.r_tip << "," << rotor_load.f_visc << "," << rotor_load.f_pres
+                            << "," << rotor_load.torque_z << "," << elapsed_s() << "\n";
+                    monitor.flush();
+                }
+                if (write_screen)
+                {
+                    std::cout << std::fixed << std::setprecision(6) << "[ophelie][stirring-em] N=" << advection_steps
+                              << " n_ac=" << acoustic_steps << " t=" << t_now << " dt=" << std::scientific
+                              << acoustic_dt << std::fixed << " rev=" << t_now / revolution_time
+                              << " U_max=" << u_max_now << " U_tip=" << rotor_load.tip_speed
+                              << " Fv=" << rotor_load.f_visc << " Fp=" << rotor_load.f_pres
+                              << " Tz=" << rotor_load.torque_z << " T_mean=" << t_mean_now
+                              << " T_max=" << t_max_now << " wall=" << elapsed_s() / 3600.0 << " h" << std::endl;
+                }
             }
 
             if (wall_clock_budget_s > 0.0 && elapsed_s() > wall_clock_budget_s)
@@ -817,6 +891,7 @@ int main(int ac, char *av[])
     {
         update_rotor_proxy_positions.exec(time_stepper.getPhysicalTime());
         glass_state_recorder.writeToFile(advection_steps + 1);
+        rotor_state_recorder.writeToFile(advection_steps + 1);
         write_rotor_surface.writeToFile(advection_steps + 1);
     }
 
