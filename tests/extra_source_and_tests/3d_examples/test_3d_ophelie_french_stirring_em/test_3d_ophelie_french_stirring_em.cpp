@@ -33,6 +33,7 @@
 #include "../test_3d_ophelie_rh200_glass_em_stirring/rh200_joule_heat_grid.h"
 
 #include <algorithm>
+#include <cmath>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
@@ -405,8 +406,19 @@ inline SimTK::MassProperties makeRotorMassPropertiesFromHostParticles(BasePartic
               << " com=(" << cx << "," << cy << "," << cz << ") unitI=[" << Ixx << "," << Iyy << ","
               << Izz << "] products=[" << Ixy << "," << Ixz << "," << Iyz << "]" << std::endl;
 
-    return SimTK::MassProperties(volume * static_cast<double>(rho0), SimTK::Vec3(0),
-                                 SimTK::UnitInertia(SimTK::Vec3(Ixx, Iyy, Izz), SimTK::Vec3(Ixy, Ixz, Iyz)));
+    // Do not use UnitInertia(moments, products): Debug Simbody default-fills the tensor
+    // with NaN and that two-Vec3 constructor leaves the implicit frame in a state that
+    // errChk rejects. The pin joint is prescribed, so any valid principal tensor works.
+    // cylinderAlongZ uses the 3-argument principal constructor and is always finite.
+    const double r_xy = std::sqrt(std::max(Ixx + Iyy - Izz, 0.0));
+    const double hz = std::sqrt(std::max(1.5 * (Ixx + Iyy) - r_xy * r_xy, 1.0e-8));
+    const SimTK::Real r_sim = static_cast<SimTK::Real>(std::max(r_xy, 1.0e-4));
+    const SimTK::Real hz_sim = static_cast<SimTK::Real>(std::max(hz, 1.0e-4));
+    std::cout << "[ophelie][stirring-em] Simbody unit inertia: cylinderAlongZ r=" << r_sim
+              << " hz=" << hz_sim << std::endl;
+    return SimTK::MassProperties(static_cast<SimTK::Real>(volume * static_cast<double>(rho0)),
+                                 SimTK::Vec3(SimTK::Real(0), SimTK::Real(0), SimTK::Real(0)),
+                                 SimTK::UnitInertia::cylinderAlongZ(r_sim, hz_sim));
 }
 
 } // namespace
