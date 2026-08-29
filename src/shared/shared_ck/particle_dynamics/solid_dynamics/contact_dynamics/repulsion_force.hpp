@@ -14,15 +14,16 @@ template <class DynamicsIdentifier>
 RepulsionForceCK<Base, Contact<Parameters...>>::
     RepulsionForceCK(DynamicsIdentifier &identifier, Real numerical_damping)
     : Interaction<Contact<Parameters...>>(identifier),
-      ForcePriorCK(this->particles_, "RepulsionForce"),
+      ForcePriorCK(this->particles_, "RepulsionForce" + identifier.Name()),
       solid_contact_(DynamicCast<SolidContact>(this, this->sph_body_->getMatterMaterial())),
       numerical_damping_(numerical_damping),
       stiffness_(solid_contact_.ContactStiffness()),
       impedance_(sqrt(solid_contact_.ContactReferenceDensity() * stiffness_)),
-      dv_repulsion_factor_(this->particles_->template getVariableByName<Real>("RepulsionFactor")),
+      dv_repulsion_factor_(this->particles_->template getVariableByName<Real>(
+          "RepulsionFactor" + identifier.Name())),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
-      dv_repulsion_force_(ForcePriorCK::getCurrentForce()) {}
+      dv_repulsion_force_(this->getCurrentForce()) {}
 //=================================================================================================//
 template <typename... Parameters>
 template <class DynamicsIdentifier, typename... Args>
