@@ -505,6 +505,22 @@ int main(int ac, char *av[])
     glass.addMaterialProperty<Viscosity>(mu);
     glass.generateParticles<BaseParticles, Reload>(glass.Name());
 
+    // Report the reload contents before anything consumes them. A truncated relax (or one run
+    // without --bodies=all) otherwise surfaces much later as a NaN Simbody inertia matrix, because
+    // SolidBodyPartForSimbody::setMassProperties divides by a zero body-part volume.
+    const size_t n_rotor = rotor.getBaseParticles().TotalRealParticles();
+    const size_t n_wall = wall.getBaseParticles().TotalRealParticles();
+    const size_t n_glass = glass.getBaseParticles().TotalRealParticles();
+    std::cout << "[ophelie][stirring-em] reload: n_glass=" << n_glass << " n_rotor=" << n_rotor
+              << " n_wall=" << n_wall << std::endl;
+    if (n_rotor == 0 || n_wall == 0 || n_glass == 0)
+    {
+        std::cerr << "[ophelie][stirring-em] empty body in \"" << local_cli.reload_dir
+                  << "/Reload.xml\". Rerun test_3d_ophelie_french_stirring_glass_relax --bodies=all "
+                     "and let it finish.\n";
+        return 1;
+    }
+
     TriangleMeshShapeSTL rotor_surface(stirring.rotor_stl_path, stirring.rotor_translation, stirring.geometry_scale);
     ObserverBody rotor_proxy(sph_system, "RotorProxy");
     rotor_proxy.defineAdaptationRatios(2.0);
@@ -658,7 +674,38 @@ int main(int ac, char *av[])
     SimTK::GeneralForceSubsystem forces(MBsystem);
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
 
-    SolidBodyPartForSimbody rotor_constraint_area(rotor, makeShared<OphelieFrenchStirringRotorShape>("Rotor", stirring));
+    // Select the rotor by a padded AABB, not the thin paddle STL. After relaxation the blades
+    // are only ~1.6 dp thick and TriangleMeshShapeSTL::checkContain typically matches zero
+    // particles; SolidBodyPartForSimbody then divides by a zero volume and Simbody throws.
+    BaseParticles &rotor_particles = rotor.getBaseParticles();
+    syncVariableToHost<Vecd>(rotor_particles, "Position");
+    syncVariableToHost<Real>(rotor_particles, "VolumetricMeasure");
+    SharedPtr<GeometricShapeBox> rotor_simbody_box = frenchStirringRotorSimbodyBox(stirring);
+    {
+        const Vecd *rotor_pos = rotor_particles.getVariableDataByName<Vecd>("Position");
+        const Real *rotor_vol = rotor_particles.getVariableDataByName<Real>("VolumetricMeasure");
+        size_t n_inside = 0;
+        Real selected_vol = Real(0);
+        for (size_t i = 0; i < n_rotor; ++i)
+        {
+            if (rotor_simbody_box->checkContain(rotor_pos[i]))
+            {
+                ++n_inside;
+                selected_vol += rotor_vol[i];
+            }
+        }
+        std::cout << "[ophelie][stirring-em] Simbody rotor region: " << n_inside << " / " << n_rotor
+                  << " particles, volume=" << selected_vol << " m^3" << std::endl;
+        if (n_inside == 0 || !(selected_vol > TinyReal) || !std::isfinite(selected_vol))
+        {
+            std::cerr << "[ophelie][stirring-em] Simbody cannot form a rotor inertia matrix "
+                         "(empty or non-finite volume). Check Reload.xml and "
+                      << stirring.rotor_stl_path << ".\n";
+            return 1;
+        }
+    }
+
+    SolidBodyPartForSimbody rotor_constraint_area(rotor, rotor_simbody_box);
     SimTK::Body::Rigid rotor_info(*rotor_constraint_area.body_part_mass_properties_);
 
     const Vecd axis = stirring.rotation_axis.normalized();

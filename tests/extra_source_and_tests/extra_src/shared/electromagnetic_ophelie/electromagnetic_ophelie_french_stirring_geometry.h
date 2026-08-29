@@ -346,6 +346,20 @@ inline BoundingBoxd frenchStirringFlowDomainBounds(const OphelieFrenchStirringCa
     return frenchStirringRelaxDomainBounds(stirring);
 }
 
+/**
+ * Relaxation sits particles on the paddle surface. TriangleMeshShapeSTL::checkContain then
+ * rejects them (the blades are only ~1.6 dp thick), SolidBodyPartForSimbody divides by a zero
+ * volume, and Simbody throws NaN inertia. A padded AABB around the same STL selects every
+ * rotor particle, which is what we want: the whole Rotor body is the paddle.
+ */
+inline SharedPtr<GeometricShapeBox> frenchStirringRotorSimbodyBox(const OphelieFrenchStirringCaseParams &stirring)
+{
+    const BoundingBoxd bounds = frenchStirringScaledStlBounds(
+        frenchStirringRotorBboxStlPath(stirring), stirring.rotor_translation, stirring.geometry_scale);
+    const Vec3d pad = Vec3d::Constant(Real(4) * stirring.french.dp);
+    return makeShared<GeometricShapeBox>(BoundingBoxd(bounds.lower_ - pad, bounds.upper_ + pad), "RotorSimbodyBox");
+}
+
 inline Real frenchStirringReferenceSpeed(const OphelieFrenchStirringCaseParams &stirring)
 {
     const BoundingBoxd glass_bounds =
