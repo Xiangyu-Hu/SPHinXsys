@@ -41,7 +41,6 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <stdexcept>
 #include <string>
 
 namespace fs = std::filesystem;
@@ -327,99 +326,6 @@ class ClampTemperatureCK : public LocalDynamics
     DiscreteVariable<Real> *dv_temperature_;
     DiscreteVariable<Real> *dv_delta_t_;
 };
-
-/**
- * Host-side unit inertia for the whole rotor.
- *
- * SolidBodyPartForSimbody::setMassProperties does the same arithmetic on whatever
- * pointer DiscreteVariable::Data() currently holds. After a SYCL kernel that pointer
- * can be stale; on a Debug Simbody build the resulting NaN throws at
- * Inertia::Inertia(moments,products). The paddle is kinematically driven, so only a
- * finite, physically plausible tensor is required.
- */
-inline SimTK::MassProperties makeRotorMassPropertiesFromHostParticles(BaseParticles &particles, Real rho0)
-{
-    syncVariableToHost<Vecd>(particles, "Position");
-    syncVariableToHost<Real>(particles, "VolumetricMeasure");
-    const size_t n = particles.TotalRealParticles();
-    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
-    const Real *vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
-
-    double volume = 0.0;
-    double cx = 0.0;
-    double cy = 0.0;
-    double cz = 0.0;
-    size_t n_used = 0;
-    for (size_t i = 0; i < n; ++i)
-    {
-        const double v = static_cast<double>(vol[i]);
-        if (!(v > 0.0) || !std::isfinite(v) || !std::isfinite(static_cast<double>(pos[i][0])) ||
-            !std::isfinite(static_cast<double>(pos[i][1])) || !std::isfinite(static_cast<double>(pos[i][2])))
-        {
-            continue;
-        }
-        volume += v;
-        cx += v * static_cast<double>(pos[i][0]);
-        cy += v * static_cast<double>(pos[i][1]);
-        cz += v * static_cast<double>(pos[i][2]);
-        ++n_used;
-    }
-    if (n_used == 0 || !(volume > 0.0))
-    {
-        throw std::runtime_error("makeRotorMassPropertiesFromHostParticles: no finite rotor volume");
-    }
-    cx /= volume;
-    cy /= volume;
-    cz /= volume;
-
-    double Ixx = 0.0;
-    double Iyy = 0.0;
-    double Izz = 0.0;
-    double Ixy = 0.0;
-    double Ixz = 0.0;
-    double Iyz = 0.0;
-    for (size_t i = 0; i < n; ++i)
-    {
-        const double v = static_cast<double>(vol[i]);
-        if (!(v > 0.0) || !std::isfinite(v))
-        {
-            continue;
-        }
-        const double x = static_cast<double>(pos[i][0]) - cx;
-        const double y = static_cast<double>(pos[i][1]) - cy;
-        const double z = static_cast<double>(pos[i][2]) - cz;
-        Ixx += v * (y * y + z * z);
-        Iyy += v * (x * x + z * z);
-        Izz += v * (x * x + y * y);
-        Ixy -= v * x * y;
-        Ixz -= v * x * z;
-        Iyz -= v * y * z;
-    }
-    Ixx /= volume;
-    Iyy /= volume;
-    Izz /= volume;
-    Ixy /= volume;
-    Ixz /= volume;
-    Iyz /= volume;
-
-    std::cout << "[ophelie][stirring-em] rotor inertia n=" << n_used << " V=" << volume
-              << " com=(" << cx << "," << cy << "," << cz << ") unitI=[" << Ixx << "," << Iyy << ","
-              << Izz << "] products=[" << Ixy << "," << Ixz << "," << Iyz << "]" << std::endl;
-
-    // Do not use UnitInertia(moments, products): Debug Simbody default-fills the tensor
-    // with NaN and that two-Vec3 constructor leaves the implicit frame in a state that
-    // errChk rejects. The pin joint is prescribed, so any valid principal tensor works.
-    // cylinderAlongZ uses the 3-argument principal constructor and is always finite.
-    const double r_xy = std::sqrt(std::max(Ixx + Iyy - Izz, 0.0));
-    const double hz = std::sqrt(std::max(1.5 * (Ixx + Iyy) - r_xy * r_xy, 1.0e-8));
-    const SimTK::Real r_sim = static_cast<SimTK::Real>(std::max(r_xy, 1.0e-4));
-    const SimTK::Real hz_sim = static_cast<SimTK::Real>(std::max(hz, 1.0e-4));
-    std::cout << "[ophelie][stirring-em] Simbody unit inertia: cylinderAlongZ r=" << r_sim
-              << " hz=" << hz_sim << std::endl;
-    return SimTK::MassProperties(static_cast<SimTK::Real>(volume * static_cast<double>(rho0)),
-                                 SimTK::Vec3(SimTK::Real(0), SimTK::Real(0), SimTK::Real(0)),
-                                 SimTK::UnitInertia::cylinderAlongZ(r_sim, hz_sim));
-}
 
 } // namespace
 
@@ -761,65 +667,13 @@ int main(int ac, char *av[])
         rotor_proxy, stirring.rotation_center, stirring.rotation_axis, stirring.rotation_speed_rad_s);
     BodyStatesRecordingToTriangleMeshVtpCK<MainExecutionPolicy> write_rotor_surface(rotor_proxy, rotor_surface);
 
-    //----------------------------------------------------------------------
-    // Simbody: paddle pinned to ground about the melt axis, driven at constant omega.
-    //----------------------------------------------------------------------
-    SimTK::MultibodySystem MBsystem;
-    SimTK::SimbodyMatterSubsystem matter(MBsystem);
-    SimTK::GeneralForceSubsystem forces(MBsystem);
-    SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
-
-    // Select the rotor by a padded AABB, not the thin paddle STL. After relaxation the blades
-    // are only ~1.6 dp thick and TriangleMeshShapeSTL::checkContain typically matches zero
-    // particles; SolidBodyPartForSimbody then divides by a zero volume and Simbody throws.
-    BaseParticles &rotor_particles = rotor.getBaseParticles();
-    syncVariableToHost<Vecd>(rotor_particles, "Position");
-    syncVariableToHost<Real>(rotor_particles, "VolumetricMeasure");
-    SharedPtr<GeometricShapeBox> rotor_simbody_box = frenchStirringRotorSimbodyBox(stirring);
-    {
-        const Vecd *rotor_pos = rotor_particles.getVariableDataByName<Vecd>("Position");
-        const Real *rotor_vol = rotor_particles.getVariableDataByName<Real>("VolumetricMeasure");
-        size_t n_inside = 0;
-        Real selected_vol = Real(0);
-        for (size_t i = 0; i < n_rotor; ++i)
-        {
-            if (rotor_simbody_box->checkContain(rotor_pos[i]))
-            {
-                ++n_inside;
-                selected_vol += rotor_vol[i];
-            }
-        }
-        std::cout << "[ophelie][stirring-em] Simbody rotor region: " << n_inside << " / " << n_rotor
-                  << " particles, volume=" << selected_vol << " m^3" << std::endl;
-        if (n_inside == 0 || !(selected_vol > TinyReal) || !std::isfinite(selected_vol))
-        {
-            std::cerr << "[ophelie][stirring-em] Simbody cannot form a rotor inertia matrix "
-                         "(empty or non-finite volume). Check Reload.xml and "
-                      << stirring.rotor_stl_path << ".\n";
-            return 1;
-        }
-    }
-
-    BodyRegionByParticle rotor_constraint_area(rotor, rotor_simbody_box);
-    const SimTK::MassProperties rotor_mass_properties =
-        makeRotorMassPropertiesFromHostParticles(rotor_particles, stirring.rho_rotor);
-    SimTK::Body::Rigid rotor_info(rotor_mass_properties);
-
-    const Vecd axis = stirring.rotation_axis.normalized();
-    const SimTK::UnitVec3 unit_axis(static_cast<SimTK::Real>(axis[0]), static_cast<SimTK::Real>(axis[1]),
-                                    static_cast<SimTK::Real>(axis[2]));
-    SimTK::Rotation R_rotor;
-    R_rotor.setRotationFromOneAxis(unit_axis, SimTK::ZAxis);
-    const SimTK::Vec3 pin_origin(static_cast<SimTK::Real>(stirring.rotation_center[0]),
-                                 static_cast<SimTK::Real>(stirring.rotation_center[1]),
-                                 static_cast<SimTK::Real>(stirring.rotation_center[2]));
-    SimTK::MobilizedBody::Pin mob_body_rotor(matter.Ground(), SimTK::Transform(R_rotor, pin_origin), rotor_info,
-                                             SimTK::Transform(R_rotor, SimTK::Vec3(0.0)));
-    MBsystem.realizeTopology();
-
-    SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
-    StateDynamics<MainExecutionPolicy, solid_dynamics::ConstraintBodyPartBySimBodyCK> constraint_rotation_rotor(
-        rotor_constraint_area, MBsystem, mob_body_rotor, integ);
+    // Constant-omega paddle: prescribe particle pose/velocity directly. Debug Simbody on the
+    // 3090 rejects every MassProperties constructor as a NaN inertia (Release on the 4090 does
+    // not run that check). The joint was already prescribed, so the tensor never entered the
+    // dynamics.
+    StateDynamics<MainExecutionPolicy, UpdateSpinningRigidBodyCK> update_rotor_spin(
+        rotor, stirring.rotation_center, stirring.rotation_axis, stirring.rotation_speed_rad_s);
+    update_rotor_spin.exec(Real(0));
 
     update_glass_cell_linked_list.exec();
     update_wall_cell_linked_list.exec();
@@ -833,12 +687,6 @@ int main(int ac, char *av[])
     boussinesq_force.exec();
 
     const Real n_out_of_grid = out_of_grid_probe.exec();
-
-    SimTK::State simbody_state = MBsystem.getDefaultState();
-    mob_body_rotor.setOneU(simbody_state, 0, stirring.rotation_speed_rad_s);
-    integ.setAccuracy(1e-5);
-    integ.setAllowInterpolation(false);
-    integ.initialize(simbody_state);
 
     TimeStepper &time_stepper = sph_solver.getTimeStepper();
     auto &advection_step = time_stepper.addTriggerByInterval(advection_time_step.exec());
@@ -897,10 +745,7 @@ int main(int ac, char *av[])
         pressure_force_from_fluid_on_rotor.exec(acoustic_dt);
         acoustic_step_2nd_half.exec(acoustic_dt);
 
-        integ.stepBy(acoustic_dt);
-        SimTK::State &state_for_update = integ.updAdvancedState();
-        force_on_bodies.clearAllBodyForces(state_for_update);
-        constraint_rotation_rotor.exec();
+        update_rotor_spin.exec(time_stepper.getPhysicalTime());
 
         apply_q.exec(acoustic_dt);
         apply_natural_bc.exec(acoustic_dt);

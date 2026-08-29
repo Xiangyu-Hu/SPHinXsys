@@ -415,6 +415,65 @@ class UpdateSpinningParticlePosition : public LocalDynamics
     DiscreteVariable<Vecd> *dv_pos_, *dv_pos0_;
 };
 
+/**
+ * Prescribe rigid rotation of a solid body: position, velocity and normal.
+ * Used instead of Simbody for a constant-omega paddle; Debug Simbody rejects
+ * otherwise-valid inertia tensors as NaN on some machines.
+ */
+class UpdateSpinningRigidBodyCK : public LocalDynamics
+{
+  public:
+    explicit UpdateSpinningRigidBodyCK(SPHBody &sph_body, const Vecd &rotation_center, const Vecd &spin_axis,
+                                       Real omega_spin)
+        : LocalDynamics(sph_body), rotation_center0_(rotation_center), spin_axis_(spin_axis.normalized()),
+          omega_spin_(omega_spin), dv_pos_(particles_->getVariableByName<Vecd>("Position")),
+          dv_pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
+          dv_vel_(particles_->getVariableByName<Vecd>("Velocity")),
+          dv_n_(particles_->getVariableByName<Vecd>("NormalDirection")),
+          dv_n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection"))
+    {
+    }
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy>
+        UpdateKernel(const ExecutionPolicy &ex_policy, UpdateSpinningRigidBodyCK &encloser)
+            : pos_(encloser.dv_pos_->DelegatedData(ex_policy)), pos0_(encloser.dv_pos0_->DelegatedData(ex_policy)),
+              vel_(encloser.dv_vel_->DelegatedData(ex_policy)), n_(encloser.dv_n_->DelegatedData(ex_policy)),
+              n0_(encloser.dv_n0_->DelegatedData(ex_policy)), rotation_center0_(encloser.rotation_center0_),
+              spin_axis_(encloser.spin_axis_), omega_spin_(encloser.omega_spin_)
+        {
+        }
+
+        void update(size_t index_i, Real physical_time)
+        {
+            const Real theta = omega_spin_ * physical_time;
+            const Real c = std::cos(theta);
+            const Real s = std::sin(theta);
+            const auto rotate = [&](const Vecd &rel) {
+                return rel * c + spin_axis_.cross(rel) * s + spin_axis_ * (spin_axis_.dot(rel) * (Real(1) - c));
+            };
+            const Vecd rotated = rotate(pos0_[index_i] - rotation_center0_);
+            pos_[index_i] = rotation_center0_ + rotated;
+            vel_[index_i] = spin_axis_.cross(rotated) * omega_spin_;
+            n_[index_i] = rotate(n0_[index_i]);
+        }
+
+      protected:
+        Vecd *pos_, *pos0_, *vel_, *n_, *n0_;
+        Vecd rotation_center0_;
+        Vecd spin_axis_;
+        Real omega_spin_;
+    };
+
+  protected:
+    Vecd rotation_center0_;
+    Vecd spin_axis_;
+    Real omega_spin_;
+    DiscreteVariable<Vecd> *dv_pos_, *dv_pos0_, *dv_vel_, *dv_n_, *dv_n0_;
+};
+
 inline bool isFrenchStirringCommandLineOption(const char *arg)
 {
     return std::strncmp(arg, "--glass-stl=", 12) == 0 || std::strncmp(arg, "--rotor-stl=", 12) == 0 ||
