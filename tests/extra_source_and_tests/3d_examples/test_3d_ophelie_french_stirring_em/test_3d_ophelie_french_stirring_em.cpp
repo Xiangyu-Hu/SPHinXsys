@@ -336,7 +336,84 @@ struct RotorLoadSnapshot
     Real torque_z = 0;
 };
 
-inline RotorLoadSnapshot hostRotorLoadSnapshot(BaseParticles &particles, const Vecd &center, const Vecd &axis)
+/**
+ * Rest pose kept on the host so paddle kinematics never depend on a device Position
+ * buffer. The previous GPU spin kernel left Rotor_*.vtp with all-nan coordinates:
+ * device Position was either never copied back, or InitialPosition on device was
+ * uninitialized, and ParaView then renders an empty black view.
+ */
+struct HostSpinPose
+{
+    StdVec<Vecd> pos0;
+    StdVec<Vecd> n0;
+    size_t n_nonfinite = 0;
+    Real r_tip = 0;
+};
+
+inline Vecd hostRotateAboutAxis(const Vecd &rel, const Vecd &axis, Real c, Real s)
+{
+    return rel * c + axis.cross(rel) * s + axis * (axis.dot(rel) * (Real(1) - c));
+}
+
+inline HostSpinPose captureHostSpinPose(BaseParticles &particles, const Vecd &center, const Vecd &axis,
+                                        bool with_normals)
+{
+    // Read the host reload/STL coordinates only. A device->host sync here would poison
+    // the rest pose if an earlier kernel allocated an uninitialized device Position.
+    const size_t n = particles.TotalRealParticles();
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    HostSpinPose pose;
+    pose.pos0.assign(pos, pos + n);
+    const Vecd e_z = axis.normalized();
+    for (size_t i = 0; i < n; ++i)
+    {
+        if (!std::isfinite(pose.pos0[i][0]) || !std::isfinite(pose.pos0[i][1]) || !std::isfinite(pose.pos0[i][2]))
+        {
+            ++pose.n_nonfinite;
+            continue;
+        }
+        const Vecd rel = pose.pos0[i] - center;
+        pose.r_tip = std::max(pose.r_tip, (rel - e_z * e_z.dot(rel)).norm());
+    }
+    if (with_normals)
+    {
+        const Vecd *n_dir = particles.getVariableDataByName<Vecd>("NormalDirection");
+        pose.n0.assign(n_dir, n_dir + n);
+    }
+    return pose;
+}
+
+inline void applyHostSpinPose(BaseParticles &particles, const HostSpinPose &pose, const Vecd &center,
+                              const Vecd &axis, Real omega, Real physical_time, bool with_normals)
+{
+    const size_t n = particles.TotalRealParticles();
+    Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    Vecd *n_dir = with_normals ? particles.getVariableDataByName<Vecd>("NormalDirection") : nullptr;
+    const Vecd e = axis.normalized();
+    const Real theta = omega * physical_time;
+    const Real c = std::cos(theta);
+    const Real s = std::sin(theta);
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Vecd rotated = hostRotateAboutAxis(pose.pos0[i] - center, e, c, s);
+        pos[i] = center + rotated;
+        vel[i] = e.cross(rotated) * omega;
+        if (n_dir != nullptr)
+        {
+            n_dir[i] = hostRotateAboutAxis(pose.n0[i], e, c, s);
+        }
+    }
+    syncVariableToDevice<Vecd>(particles, "Position");
+    syncVariableToDevice<Vecd>(particles, "Velocity");
+    if (n_dir != nullptr)
+    {
+        syncVariableToDevice<Vecd>(particles, "NormalDirection");
+    }
+}
+
+inline RotorLoadSnapshot hostRotorLoadSnapshot(BaseParticles &particles, const Vecd &center, const Vecd &axis,
+                                               Real omega)
 {
     RotorLoadSnapshot snap;
     syncVariableToHost<Vecd>(particles, "Position");
@@ -355,18 +432,71 @@ inline RotorLoadSnapshot hostRotorLoadSnapshot(BaseParticles &particles, const V
     for (size_t i = 0; i < n; ++i)
     {
         const Vecd rel = pos[i] - center;
+        if (!std::isfinite(rel[0]) || !std::isfinite(rel[1]) || !std::isfinite(rel[2]))
+        {
+            continue;
+        }
         const Real r_xy = (rel - e_z * e_z.dot(rel)).norm();
         snap.r_tip = std::max(snap.r_tip, r_xy);
-        snap.tip_speed = std::max(snap.tip_speed, vel[i].norm());
+        if (std::isfinite(vel[i][0]))
+        {
+            snap.tip_speed = std::max(snap.tip_speed, vel[i].norm());
+        }
         const Vecd f = f_visc[i] + f_pres[i];
+        if (!std::isfinite(f[0]) || !std::isfinite(f[1]) || !std::isfinite(f[2]))
+        {
+            continue;
+        }
         torque += e_z.dot(rel.cross(f));
         f_visc_sum += f_visc[i];
         f_pres_sum += f_pres[i];
+    }
+    if (snap.tip_speed < TinyReal && snap.r_tip > TinyReal)
+    {
+        snap.tip_speed = std::abs(omega) * snap.r_tip;
     }
     snap.f_visc = f_visc_sum.norm();
     snap.f_pres = f_pres_sum.norm();
     snap.torque_z = torque;
     return snap;
+}
+
+inline void hostMapRotorLoadToProxy(BaseParticles &rotor, BaseParticles &proxy)
+{
+    syncVariableToHost<Vecd>(rotor, "Position");
+    syncVariableToHost<Vecd>(rotor, "ViscousForceFromFluid");
+    syncVariableToHost<Vecd>(rotor, "PressureForceFromFluid");
+    syncVariableToHost<Vecd>(proxy, "Position");
+    const size_t n_rotor = rotor.TotalRealParticles();
+    const size_t n_proxy = proxy.TotalRealParticles();
+    const Vecd *r_pos = rotor.getVariableDataByName<Vecd>("Position");
+    const Vecd *f_visc = rotor.getVariableDataByName<Vecd>("ViscousForceFromFluid");
+    const Vecd *f_pres = rotor.getVariableDataByName<Vecd>("PressureForceFromFluid");
+    const Vecd *p_pos = proxy.getVariableDataByName<Vecd>("Position");
+    Vecd *p_visc = proxy.getVariableDataByName<Vecd>("ViscousForceFromFluid");
+    Vecd *p_pres = proxy.getVariableDataByName<Vecd>("PressureForceFromFluid");
+    for (size_t j = 0; j < n_proxy; ++j)
+    {
+        Real best = MaxReal;
+        size_t best_i = 0;
+        for (size_t i = 0; i < n_rotor; ++i)
+        {
+            if (!std::isfinite(r_pos[i][0]))
+            {
+                continue;
+            }
+            const Real d2 = (p_pos[j] - r_pos[i]).squaredNorm();
+            if (d2 < best)
+            {
+                best = d2;
+                best_i = i;
+            }
+        }
+        p_visc[j] = f_visc[best_i];
+        p_pres[j] = f_pres[best_i];
+    }
+    syncVariableToDevice<Vecd>(proxy, "ViscousForceFromFluid");
+    syncVariableToDevice<Vecd>(proxy, "PressureForceFromFluid");
 }
 
 } // namespace
@@ -711,17 +841,52 @@ int main(int ac, char *av[])
     rotor_state_recorder.addToWrite<Vecd>(rotor, "ViscousForceFromFluid");
     rotor_state_recorder.addToWrite<Vecd>(rotor, "PressureForceFromFluid");
 
-    StateDynamics<MainExecutionPolicy, UpdateSpinningParticlePosition> update_rotor_proxy_positions(
-        rotor_proxy, stirring.rotation_center, stirring.rotation_axis, stirring.rotation_speed_rad_s);
+    rotor.getBaseParticles().registerStateVariable<Vecd>("Velocity");
+    rotor_proxy.getBaseParticles().registerStateVariable<Vecd>("Velocity");
+    rotor_proxy.getBaseParticles().registerStateVariable<Vecd>("ViscousForceFromFluid");
+    rotor_proxy.getBaseParticles().registerStateVariable<Vecd>("PressureForceFromFluid");
     BodyStatesRecordingToTriangleMeshVtpCK<MainExecutionPolicy> write_rotor_surface(rotor_proxy, rotor_surface);
+    write_rotor_surface.addToWrite<Vecd>(rotor_proxy, "Velocity");
+    write_rotor_surface.addToWrite<Vecd>(rotor_proxy, "ViscousForceFromFluid");
+    write_rotor_surface.addToWrite<Vecd>(rotor_proxy, "PressureForceFromFluid");
 
-    // Constant-omega paddle: prescribe particle pose/velocity directly. Debug Simbody on the
-    // 3090 rejects every MassProperties constructor as a NaN inertia (Release on the 4090 does
-    // not run that check). The joint was already prescribed, so the tensor never entered the
-    // dynamics.
-    StateDynamics<MainExecutionPolicy, UpdateSpinningRigidBodyCK> update_rotor_spin(
-        rotor, stirring.rotation_center, stirring.rotation_axis, stirring.rotation_speed_rad_s);
-    update_rotor_spin.exec(Real(0));
+    // Snapshot the reload/STL rest pose on the host *before* any device kernel touches
+    // Position. The GPU spin path wrote nan into Rotor_*.vtp because device Position
+    // never came back as finite coordinates.
+    const HostSpinPose rotor_rest =
+        captureHostSpinPose(rotor.getBaseParticles(), stirring.rotation_center, stirring.rotation_axis, true);
+    const HostSpinPose proxy_rest =
+        captureHostSpinPose(rotor_proxy.getBaseParticles(), stirring.rotation_center, stirring.rotation_axis, false);
+    std::cout << "[ophelie][stirring-em] rotor rest pose: n=" << rotor_rest.pos0.size()
+              << " n_nan=" << rotor_rest.n_nonfinite << " r_tip=" << rotor_rest.r_tip
+              << " m; proxy n=" << proxy_rest.pos0.size() << " n_nan=" << proxy_rest.n_nonfinite
+              << std::endl;
+    if (rotor_rest.n_nonfinite > 0 || rotor_rest.r_tip < TinyReal)
+    {
+        std::cerr << "[ophelie][stirring-em] Rotor reload positions are non-finite or collapsed. "
+                     "Rerun test_3d_ophelie_french_stirring_glass_relax --bodies=all.\n";
+        return 1;
+    }
+
+    auto apply_rotor_kinematics = [&](Real physical_time) {
+        applyHostSpinPose(rotor.getBaseParticles(), rotor_rest, stirring.rotation_center, stirring.rotation_axis,
+                          stirring.rotation_speed_rad_s, physical_time, true);
+        applyHostSpinPose(rotor_proxy.getBaseParticles(), proxy_rest, stirring.rotation_center,
+                          stirring.rotation_axis, stirring.rotation_speed_rad_s, physical_time, false);
+        rotor.setNewlyUpdated();
+        rotor_proxy.setNewlyUpdated();
+    };
+
+    auto write_rotor_visualization = [&](size_t ite, Real physical_time) {
+        apply_rotor_kinematics(physical_time);
+        hostMapRotorLoadToProxy(rotor.getBaseParticles(), rotor_proxy.getBaseParticles());
+        rotor.setNewlyUpdated();
+        rotor_proxy.setNewlyUpdated();
+        rotor_state_recorder.writeToFile(ite);
+        write_rotor_surface.writeToFile(ite);
+    };
+
+    apply_rotor_kinematics(Real(0));
 
     update_glass_cell_linked_list.exec();
     update_wall_cell_linked_list.exec();
@@ -748,15 +913,14 @@ int main(int ac, char *av[])
 
     if (local_cli.state_recording)
     {
-        update_rotor_proxy_positions.exec(Real(0));
         glass_state_recorder.writeToFile(0);
-        rotor_state_recorder.writeToFile(0);
-        write_rotor_surface.writeToFile(0);
+        write_rotor_visualization(0, Real(0));
     }
 
     const Real revolution_time = Real(2.0 * M_PI) / std::max(stirring.rotation_speed_rad_s, TinyReal);
     const RotorLoadSnapshot rotor0 =
-        hostRotorLoadSnapshot(rotor.getBaseParticles(), stirring.rotation_center, stirring.rotation_axis);
+        hostRotorLoadSnapshot(rotor.getBaseParticles(), stirring.rotation_center, stirring.rotation_axis,
+                              stirring.rotation_speed_rad_s);
     const Real omega = stirring.rotation_speed_rad_s;
     const Real rpm = omega * Real(60.0) / Real(2.0 * M_PI);
     const Real u_tip_expected = omega * rotor0.r_tip;
@@ -804,8 +968,6 @@ int main(int ac, char *av[])
         pressure_force_from_fluid_on_rotor.exec(acoustic_dt);
         acoustic_step_2nd_half.exec(acoustic_dt);
 
-        update_rotor_spin.exec(time_stepper.getPhysicalTime());
-
         apply_q.exec(acoustic_dt);
         apply_natural_bc.exec(acoustic_dt);
         clamp_temperature.exec(acoustic_dt);
@@ -815,13 +977,12 @@ int main(int ac, char *av[])
         {
             ++advection_steps;
             fluid_update_particle_position.exec();
+            apply_rotor_kinematics(time_stepper.getPhysicalTime());
 
             if (local_cli.state_recording && state_recording())
             {
-                update_rotor_proxy_positions.exec(time_stepper.getPhysicalTime());
                 glass_state_recorder.writeToFile(advection_steps);
-                rotor_state_recorder.writeToFile(advection_steps);
-                write_rotor_surface.writeToFile(advection_steps);
+                write_rotor_visualization(advection_steps, time_stepper.getPhysicalTime());
             }
 
             if (advection_steps % 50 == 0)
@@ -858,7 +1019,8 @@ int main(int ac, char *av[])
                 const Real t_mean_now = t_mean_reduce.exec();
                 const Real t_max_now = t_max_reduce.exec();
                 const RotorLoadSnapshot rotor_load = hostRotorLoadSnapshot(
-                    rotor.getBaseParticles(), stirring.rotation_center, stirring.rotation_axis);
+                    rotor.getBaseParticles(), stirring.rotation_center, stirring.rotation_axis,
+                    stirring.rotation_speed_rad_s);
                 if (write_csv)
                 {
                     monitor << advection_steps << "," << t_now << "," << t_now / revolution_time << "," << acoustic_dt
@@ -889,10 +1051,8 @@ int main(int ac, char *av[])
 
     if (local_cli.state_recording)
     {
-        update_rotor_proxy_positions.exec(time_stepper.getPhysicalTime());
         glass_state_recorder.writeToFile(advection_steps + 1);
-        rotor_state_recorder.writeToFile(advection_steps + 1);
-        write_rotor_surface.writeToFile(advection_steps + 1);
+        write_rotor_visualization(advection_steps + 1, time_stepper.getPhysicalTime());
     }
 
     const Real u_max = u_max_reduce.exec();

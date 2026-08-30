@@ -376,7 +376,8 @@ class UpdateSpinningParticlePosition : public LocalDynamics
                                             Real omega_spin)
         : LocalDynamics(sph_body), rotation_center0_(rotation_center), spin_axis_(spin_axis.normalized()),
           omega_spin_(omega_spin), dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-          dv_pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position"))
+          dv_pos0_(particles_->registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
+          dv_vel_(particles_->registerStateVariable<Vecd>("Velocity"))
     {
     }
 
@@ -386,7 +387,8 @@ class UpdateSpinningParticlePosition : public LocalDynamics
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy, UpdateSpinningParticlePosition &encloser)
             : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
-              pos0_(encloser.dv_pos0_->DelegatedData(ex_policy)), rotation_center0_(encloser.rotation_center0_),
+              pos0_(encloser.dv_pos0_->DelegatedData(ex_policy)),
+              vel_(encloser.dv_vel_->DelegatedData(ex_policy)), rotation_center0_(encloser.rotation_center0_),
               spin_axis_(encloser.spin_axis_), omega_spin_(encloser.omega_spin_)
         {
         }
@@ -399,10 +401,11 @@ class UpdateSpinningParticlePosition : public LocalDynamics
             const Vecd rel = pos0_[index_i] - rotation_center0_;
             const Vecd rotated = rel * c + spin_axis_.cross(rel) * s + spin_axis_ * (spin_axis_.dot(rel) * (1.0 - c));
             pos_[index_i] = rotation_center0_ + rotated;
+            vel_[index_i] = spin_axis_.cross(rotated) * omega_spin_;
         }
 
       protected:
-        Vecd *pos_, *pos0_;
+        Vecd *pos_, *pos0_, *vel_;
         Vecd rotation_center0_;
         Vecd spin_axis_;
         Real omega_spin_;
@@ -412,7 +415,7 @@ class UpdateSpinningParticlePosition : public LocalDynamics
     Vecd rotation_center0_;
     Vecd spin_axis_;
     Real omega_spin_;
-    DiscreteVariable<Vecd> *dv_pos_, *dv_pos0_;
+    DiscreteVariable<Vecd> *dv_pos_, *dv_pos0_, *dv_vel_;
 };
 
 /**
