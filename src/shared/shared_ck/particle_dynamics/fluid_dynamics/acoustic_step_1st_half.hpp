@@ -100,7 +100,7 @@ void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
 
         force_sum -= riemann_.AverageP(
                          index_i, index_j,
-                         static_cast<CorrectionDataType>(correction_(index_j) * p_[index_i]),
+                         static_cast<CorrectionDataType>(correction_(index_j, index_i) * p_[index_i]),
                          static_cast<CorrectionDataType>(correction_(index_i) * p_[index_j])) *
                      2.0 * dW_ijV_j * e_ij;
         compression_dissipation +=

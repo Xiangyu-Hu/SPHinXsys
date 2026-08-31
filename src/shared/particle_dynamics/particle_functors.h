@@ -111,6 +111,10 @@ class ParameterFixed : public ParticleParameter
     {
         return parameter_;
     };
+    T &operator()(size_t /*index_j*/, size_t /*index_i*/)
+    {
+        return parameter_;
+    }
 };
 
 template <typename T>
@@ -124,6 +128,10 @@ class ParameterVariable : public ParticleParameter
     {
         return v_[index_i];
     };
+    T &operator()(size_t index_j, size_t /*index_i*/)
+    {
+        return v_[index_j];
+    }
 };
 //----------------------------------------------------------------------
 // Particle average functors
