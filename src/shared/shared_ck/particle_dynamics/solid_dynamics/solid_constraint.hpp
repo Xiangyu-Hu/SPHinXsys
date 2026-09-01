@@ -33,7 +33,11 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::
 template <class DynamicsIdentifier>
 void ConstraintBySimBodyCK<DynamicsIdentifier>::setupDynamics(Real dt)
 {
-    const SimTK::State &state = integ_.getState();
+    // SimTK State copy constructor allocates fresh (uninitialized) cache buffers while
+    // copying the stage metadata, so MBsystem_.realize() would be a no-op on a plain copy.
+    // Invalidating the dynamics cache forces the acceleration to be freshly computed.
+    SimTK::State state = integ_.getState();
+    state.invalidateAllCacheAtOrAbove(SimTK::Stage::Dynamics);
     MBsystem_.realize(state);
     sv_simbody_state_->setValue(SimbodyState(sim_tk_initial_origin_location_, mobod_, state));
 };
