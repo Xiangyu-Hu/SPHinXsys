@@ -16,7 +16,7 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::
       MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_pos0_(this->particles_->template registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
-      dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
+      dv_vel_(this->particles_->template registerStateVariable<Vecd>("Velocity")),
       dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection")),
       dv_n0_(this->particles_->template registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       dv_acc_(this->particles_->template registerStateVariable<Vecd>("Acceleration")),
