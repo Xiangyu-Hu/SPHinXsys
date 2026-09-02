@@ -23,7 +23,7 @@ RepulsionForceCK<Base, Contact<Parameters...>>::
           "RepulsionFactor" + identifier.Name())),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
       dv_vel_(this->particles_->template getVariableByName<Vecd>("Velocity")),
-      dv_repulsion_force_(ForcePriorCK::getCurrentForce()) {}
+      dv_repulsion_force_(this->getCurrentForce()) {}
 //=================================================================================================//
 template <typename... Parameters>
 template <class DynamicsIdentifier, typename... Args>

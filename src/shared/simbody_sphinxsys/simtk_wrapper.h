@@ -150,7 +150,8 @@ struct SimbodyState
         std::cout << "origin_acceleration_: " << origin_acceleration_.transpose() << std::endl;
         std::cout << "angular_velocity_: " << angular_velocity_.transpose() << std::endl;
         std::cout << "angular_acceleration_: " << angular_acceleration_.transpose() << std::endl;
-        std::cout << "rotation_: \n" << rotation_ << std::endl;
+        std::cout << "rotation_: \n"
+                  << rotation_ << std::endl;
     }
 };
 
