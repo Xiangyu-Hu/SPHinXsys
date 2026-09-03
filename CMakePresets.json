@@ -123,13 +123,19 @@
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
       },
+      "environment": {
+        "LD_LIBRARY_PATH": "/p/software/default/stages/2026/software/Python/3.13.5-GCCcore-14.3.0/lib:$penv{LD_LIBRARY_PATH}"
+      },
       "cacheVariables": {
+        "CMAKE_MAKE_PROGRAM": "/p/software/default/stages/2026/software/Ninja/1.13.0-GCCcore-14.3.0/bin/ninja",
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_TOOLCHAIN_FILE": "'${sourceDir}/../vcpkg/scripts/buildsystems/vcpkg.cmake'",
-        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
+        "CMAKE_TOOLCHAIN_FILE": "/p/project1/training2644/sphinxsys/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "Python3_ROOT_DIR": "/p/software/default/stages/2026/software/Python/3.13.5-GCCcore-14.3.0",
+        "Python3_EXECUTABLE": "/p/software/default/stages/2026/software/Python/3.13.5-GCCcore-14.3.0/bin/python3",
+        "CMAKE_C_COMPILER_LAUNCHER": "/p/software/default/stages/2026/software/ccache/4.11.3-GCCcore-14.3.0/bin/ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "/p/software/default/stages/2026/software/ccache/4.11.3-GCCcore-14.3.0/bin/ccache"
       }
     },
     {
