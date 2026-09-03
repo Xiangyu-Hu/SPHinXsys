@@ -206,6 +206,10 @@ class BaseTransform
     {
         return xformBaseVecToFrame(target - translation_);
     };
+
+    VecType getTranslation() const { return translation_; };
+    RotationType getRotation() const { return RotationType(rotation_); };
+    RotationType getInvRotation() const { return RotationType(inv_rotation_); };
 };
 
 using Transform2d = BaseTransform<Rotation2d, Vec2d>;

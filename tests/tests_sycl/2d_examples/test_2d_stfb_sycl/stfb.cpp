@@ -143,15 +143,16 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     Inner<> water_block_inner(water_block);
-    Contact<> water_block_contact(water_block, {&wall_boundary, &structure});
-    Contact<> structure_contact(structure, {&water_block});
-    Contact<> observer_contact(observer, {&structure}, ConfigType::Lagrangian);
+    Contact<> fluid_wall_contact(water_block, wall_boundary);
+    Contact<> fluid_structure_contact(water_block, structure);
+    Contact<> structure_contact(structure, water_block);
+    Contact<> observer_contact(observer, structure, ConfigType::Lagrangian);
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    auto &main_methods = sph_solver.getMainMethodContainer();
+    auto &host_methods = sph_solver.getHostMethodContainer();
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -169,7 +170,7 @@ int main(int ac, char *av[])
     auto &water_cell_linked_list = main_methods.addCellLinkedListDynamics(water_block);
     auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
     auto &structure_cell_linked_list = main_methods.addCellLinkedListDynamics(structure);
-    auto &water_block_update_complex_relation = main_methods.addRelationDynamics(water_block_inner, water_block_contact);
+    auto &water_block_update_complex_relation = main_methods.addRelationDynamics(water_block_inner, fluid_wall_contact, fluid_structure_contact);
     auto &structure_update_contact_relation = main_methods.addRelationDynamics(structure_contact);
     auto &observer_update_contact_relation = main_methods.addRelationDynamics(observer_contact);
     auto &particle_sort = main_methods.addSortDynamics(water_block);
@@ -182,19 +183,26 @@ int main(int ac, char *av[])
     auto &fluid_acoustic_step_1st_half =
         main_methods.addInteractionDynamicsOneLevel<
                         fluid_dynamics::AcousticStep1stHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner)
-            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_contact);
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(fluid_wall_contact)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(fluid_structure_contact);
 
     auto &fluid_acoustic_step_2nd_half =
         main_methods.addInteractionDynamicsOneLevel<
             fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner);
     auto &fluid_acoustic_step_2nd_half_with_wall =
         main_methods.addInteractionDynamics<
-            fluid_dynamics::AcousticStep2ndHalf, Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_contact);
-    fluid_acoustic_step_2nd_half.addPostContactInteraction(fluid_acoustic_step_2nd_half_with_wall);
+            fluid_dynamics::AcousticStep2ndHalf, Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(fluid_wall_contact);
+    auto &fluid_acoustic_step_2nd_half_with_structure =
+        main_methods.addInteractionDynamics<
+            fluid_dynamics::AcousticStep2ndHalf, Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(fluid_structure_contact);
+
+    fluid_acoustic_step_2nd_half.addPostContactInteraction(fluid_acoustic_step_2nd_half_with_wall)
+        .addPostContactInteraction(fluid_acoustic_step_2nd_half_with_structure);
 
     auto &fluid_density_regularization =
         main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(water_block_inner)
-            .addPostContactInteraction(water_block_contact)
+            .addPostContactInteraction(fluid_wall_contact)
+            .addPostContactInteraction(fluid_structure_contact)
             .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeSurface>(water_block);
 
     auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_f);
@@ -203,15 +211,19 @@ int main(int ac, char *av[])
     auto &fluid_viscous_force = main_methods.addInteractionDynamicsWithUpdate<
         fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(water_block_inner);
     auto &fluid_viscous_force_from_wall =
-        main_methods.addInteractionDynamics<fluid_dynamics::ViscousForceCK, Wall, Viscosity, NoKernelCorrectionCK>(water_block_contact);
-    fluid_viscous_force.addPostContactInteraction(fluid_viscous_force_from_wall);
+        main_methods.addInteractionDynamics<fluid_dynamics::ViscousForceCK, Wall, Viscosity, NoKernelCorrectionCK>(fluid_wall_contact);
+    auto &fluid_viscous_force_from_structure =
+        main_methods.addInteractionDynamics<fluid_dynamics::ViscousForceCK, Wall, Viscosity, NoKernelCorrectionCK>(fluid_structure_contact);
+
+    fluid_viscous_force.addPostContactInteraction(fluid_viscous_force_from_wall)
+        .addPostContactInteraction(fluid_viscous_force_from_structure);
 
     auto &viscous_force_on_structure =
         main_methods.addInteractionDynamicsWithUpdate<
             FSI::ViscousForceFromFluid, std::remove_reference_t<decltype(fluid_viscous_force_from_wall)>>(structure_contact);
     auto &pressure_force_on_structure =
         main_methods.addInteractionDynamicsWithUpdate<
-            FSI::PressureForceFromFluid, std::remove_reference_t<decltype(fluid_acoustic_step_2nd_half_with_wall)>>(structure_contact);
+            FSI::PressureForceFromFluid, std::remove_reference_t<decltype(fluid_acoustic_step_2nd_half_with_structure)>>(structure_contact);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------

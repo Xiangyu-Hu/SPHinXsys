@@ -43,7 +43,7 @@ namespace multi_species_continuum
  * @brief Computing the time step size based on diffusion coefficient and particle smoothing length
  */
 class GetSaturationTimeStepSize
-    : public LocalDynamicsReduce<ReduceMin>
+    : public LocalDynamicsReduce<ReduceMin<Real>>
 {
   protected:
     PorousMediaSolid &porous_solid_;

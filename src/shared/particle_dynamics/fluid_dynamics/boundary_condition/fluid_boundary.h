@@ -82,7 +82,7 @@ class FlowVelocityBuffer : public BaseFlowBoundaryCondition
  * @class   InflowVelocityCondition
  * @brief   Inflow boundary condition which imposes directly to a given velocity profile.
  *          TargetVelocity gives the velocity profile along the inflow direction,
- *          i.e. the upper bound direction of the aligned box in local frame.
+ *          i.e. the upper bound direction of the oriented box in local frame.
  */
 template <typename TargetVelocity>
 class InflowVelocityCondition : public BaseFlowBoundaryCondition
@@ -168,7 +168,7 @@ class FreeStreamVelocityCorrection : public LocalDynamics
  * @class DampingBoundaryCondition
  * @brief damping boundary condition which relaxes
  * the particles to zero velocity profile.
- * TODO: one can using aligned box shape and generalize the damping factor along
+ * TODO: one can using oriented box shape and generalize the damping factor along
  * one axis direction.
  */
 class DampingBoundaryCondition : public BaseFlowBoundaryCondition

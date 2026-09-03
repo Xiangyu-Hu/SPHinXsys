@@ -76,8 +76,8 @@ class InflowVelocityPrescribed : public VelocityPrescribed<WeaklyCompressibleFlu
         Real y_centered = input_position[1];
         Real z_centered = input_position[2];
         Real r = std::sqrt(y_centered * y_centered + z_centered * z_centered);
-        Real u_steady = U_f_ * (1.0 - math::pow((2.0 * r / DH_), 2));
-        Real transient_factor = 1.0 - math::exp(-time / tau_);
+        Real u_steady = U_f_ * (Real(1) - math::pow((Real(2) * r / DH_), Real(2)));
+        Real transient_factor = Real(1) - math::exp(-time / tau_);
         return u_steady * transient_factor;
     };
 
@@ -226,13 +226,13 @@ int main(int ac, char *av[])
 
         Inner<> wall_inner(wall);
         Inner<> water_inner(water_body);
-        Contact<> wall_contact(wall, {&water_body});
+        Contact<> wall_contact(wall, water_body);
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
         SPHSolver sph_solver(relaxation_system);
-        auto &main_methods = sph_solver.addParticleMethodContainer(par_host);
-        auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+        auto &main_methods = sph_solver.getHostMethodContainer();
+        auto &host_methods = sph_solver.getHostMethodContainer();
 
         auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall);
         auto &water_body_cell_linked_list = main_methods.addCellLinkedListDynamics(water_body);
@@ -367,8 +367,8 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     // ----------------------------------------------------------------------
     Inner<> water_body_inner(water_body);
-    Contact<> water_wall_contact(water_body, {&wall});
-    Contact<> velocity_observer_contact(velocity_observer, {&water_body});
+    Contact<> water_wall_contact(water_body, wall);
+    Contact<> velocity_observer_contact(velocity_observer, water_body);
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -389,8 +389,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_body);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
+        fluid_boundary_indicator(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(water_body_inner, 0.5), water_wall_contact);
+    StateDynamics<MainExecutionPolicy, LinearCorrectionMatrixScope<SPHBody, BulkParticles>>
+        fluid_linear_correction_scope(water_body);        
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
@@ -399,8 +403,6 @@ int main(int ac, char *av[])
         fluid_density_summation(water_body_inner, water_wall_contact);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, WeaklyCompressibleFluid, Internal, ExcludeBufferParticles>>
         fluid_density_regularization(water_body);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
-        fluid_boundary_indicator(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex> kernel_gradient_integral(water_body_inner, water_wall_contact);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear, BulkParticles>> transport_correction(water_body);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);

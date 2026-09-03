@@ -39,7 +39,7 @@ namespace SPH
 class ANSYSMesh
 {
   public:
-    ANSYSMesh(const std::string &full_path);
+    ANSYSMesh(const std::string &file_name);
     virtual ~ANSYSMesh() {};
 
     StdVec<size_t> types_of_boundary_condition_;

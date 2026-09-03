@@ -11,8 +11,8 @@ struct Parameters
     Real inlet_pressure = 133.3; // 1mmHg
     int number_of_particles = 10;
     Real t_ref = 0;
-    std::string fluid_file_path = "./input/full_fluid_raw.stl";
-    std::string wall_file_path = "./input/wall.stl";
+    std::string fluid_file_path = "full_fluid_raw.stl";
+    std::string wall_file_path = "wall.stl";
     // Time and output parameters
     Real end_time = 0.05;
     Real output_dt = end_time / 100.0;
@@ -300,7 +300,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
 
     // --- Section 8: Define Body Relations and Cell Linking ---
     Inner<> water_body_inner(water_block);
-    Contact<> water_wall_contact(water_block, {&wall_boundary});
+    Contact<> water_wall_contact(water_block, wall_boundary);
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> water_cell_linked_list(water_block);
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall_boundary);
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> water_body_update_relation(water_body_inner, water_wall_contact);

@@ -278,7 +278,7 @@ return_data bending_circular_plate(Real dp_ratio)
     BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.addToWrite<Vec3d>(shell_body, "NormalDirection");
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax<Real>>> maximum_displace_norm(shell_body, "Displacement");
     vtp_output.writeToFile(0);
 
     Vecd *pos0_ = shell_particles->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position");

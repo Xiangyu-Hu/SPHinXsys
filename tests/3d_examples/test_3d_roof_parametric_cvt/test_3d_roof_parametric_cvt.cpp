@@ -400,7 +400,7 @@ return_data roof_under_self_weight(Real dp, bool cvt = true, int particle_number
     vtp_output.addToWrite<Vecd>(shell_body, "NormalDirection");
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
     vtp_output.writeToFile(0);
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax<Real>>> maximum_displace_norm(shell_body, "Displacement");
 
     Vecd *pos0_ = shell_particles->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position");
     // observer points A & B

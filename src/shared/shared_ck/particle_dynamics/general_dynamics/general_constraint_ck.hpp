@@ -11,7 +11,10 @@ MotionConstraintCK<DynamicsIdentifier>::MotionConstraintCK(DynamicsIdentifier &i
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_pos0_(this->particles_->template registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
-      dv_vel_(this->particles_->template registerStateVariable<Vecd>("Velocity")) {}
+      dv_vel_(this->particles_->template registerStateVariable<Vecd>("Velocity"))
+{
+    this->particles_->template addEvolvingVariable<Vecd>(dv_pos0_);
+}
 //=================================================================================================//
 template <class DynamicsIdentifier>
 template <class ExecutionPolicy, class EncloserType>

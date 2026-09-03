@@ -30,7 +30,7 @@
 #define GEOMETRIC_ELEMENT_AND_SHAPE_3D_H
 
 #include "data_type.h"
-#include "transform_geometry.h"
+#include "transform_geometry.hpp"
 
 namespace SPH
 {
@@ -40,6 +40,8 @@ class GeometricCylinder
     explicit GeometricCylinder(Real radius, Real halflength);
     ~GeometricCylinder(){};
 
+    Real getRadius() const { return radius_; };
+    Real getHalfLength() const { return halflength_; };
     bool checkContain(const Vec3d &probe_point)
     {
         if (ABS(probe_point[0]) > halflength_)
@@ -62,6 +64,9 @@ class GeometricShapeCylinder : public TransformShape<GeometricCylinder>
   public:
     GeometricShapeCylinder(const Transform &transform, Real radius, Real halflength,
                            const std::string &name = "GeometricShapeCylinder");
+    GeometricShapeCylinder(const TransformGeometryCylinder &transformed_cylinder,
+                           const std::string &name = "GeometricShapeCylinder");                       
+    void writeGeometricShapeCylinderToVtp(Real scale_factor);                       
     virtual ~GeometricShapeCylinder(){};
 };
 } // namespace SPH

@@ -392,7 +392,7 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     auto get_U_max = [&]()
     {
         Real U_max = particle_reduce(ParallelPolicy(),
-                                     cube_body.LoopRange(), 0.0, ReduceMax{},
+                                     cube_body.LoopRange(), 0.0, ReduceMax<Real>{},
                                      [&](size_t i) -> Real
                                      { return vel_cube[i].norm(); });
         return U_max;
@@ -607,7 +607,7 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
     auto get_U_max = [&]()
     {
         Real U_max = particle_reduce(ParallelPolicy(),
-                                     body.LoopRange(), 0.0, ReduceMax{},
+                                     body.LoopRange(), 0.0, ReduceMax<Real>{},
                                      [&](size_t i) -> Real
                                      { return vel[i].norm(); });
         return U_max;

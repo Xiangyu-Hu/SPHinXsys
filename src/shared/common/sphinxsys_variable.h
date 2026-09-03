@@ -86,6 +86,7 @@ template <typename DataType>
 class MultiEntryView
 {
   public:
+    MultiEntryView() : data_(nullptr), width_(0) {};
     MultiEntryView(DataType *data, UnsignedInt width)
         : data_(data), width_(width) {};
     void setData(DataType *data) { data_ = data; };
@@ -219,7 +220,7 @@ class DiscreteVariable : public Quantity
         : Quantity(name), size_(size), width_(width), data_(new DataType[size * width]),
           device_only_variable_(nullptr)
     {
-        for (size_t i = 0; i < width; i++)
+        for (UnsignedInt i = 0; i < width; i++)
         {
             entry_names_.push_back(std::to_string(i));
             fill([&](UnsignedInt index) // zero initialization

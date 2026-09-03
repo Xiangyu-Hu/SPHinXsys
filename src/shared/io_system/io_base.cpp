@@ -17,12 +17,27 @@ std::string BaseIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream
     return padValueWithZeros(i_time);
 }
 //=============================================================================================/
-bool BaseIO::isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body)
+void BaseIO::checkBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body)
 {
-    auto result = std::find_if(bodies.begin(), bodies.end(),
-                               [&](auto &body) -> bool
-                               { return body == sph_body; });
-    return result != bodies.end();
+    auto result = std::find_if(
+        bodies.begin(), bodies.end(), [&](auto &body) -> bool
+        { return body == sph_body; });
+
+    if (result == bodies.end())
+    {
+        std::cout << "\n Error: the body: " << sph_body->Name()
+                  << " is not in the recording body list" << std::endl;
+
+        std::cout << "Recording body list: " << std::endl;
+        for (size_t i = 0; i < bodies.size(); ++i)
+        {
+            std::cout << bodies[i]->Name() << ", ";
+        }
+        std::cout << std::endl;
+
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
 }
 //=============================================================================================//
 BodyStatesRecording::BodyStatesRecording(SPHSystem &sph_system)

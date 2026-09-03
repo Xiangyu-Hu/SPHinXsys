@@ -152,9 +152,9 @@ int main(int ac, char *av[])
     BodyRegionByParticle upper_wall(wall_boundary, makeShared<UpperBoundary>("UpperWall"));
     SimpleDynamics<BoundaryEnergy> upper_wall_energy(upper_wall);
 
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_energy_gradient_norm(
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax<Real>>> maximum_energy_gradient_norm(
         water_block, "EnergyGradient");
-    ReduceDynamics<VariableNorm<Vecd, ReduceMin>> minimum_energy_gradient_norm(
+    ReduceDynamics<VariableNorm<Vecd, ReduceMin<Real>>> minimum_energy_gradient_norm(
         water_block, "EnergyGradient");
 
     // I/O and regression test setup

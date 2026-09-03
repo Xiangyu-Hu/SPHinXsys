@@ -39,59 +39,25 @@ namespace SPH
 template <class DynamicsIdentifier, typename AssignmentFunctionType>
 class VariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
 {
-    using DataType = typename AssignmentFunctionType::ReturnType;
     using Assign = typename AssignmentFunctionType::ComputingKernel;
 
   public:
     template <typename... Args>
-    VariableAssignment(DynamicsIdentifier &identifier, const std::string &variable_name, Args &&...args);
-    virtual ~VariableAssignment(){};
+    VariableAssignment(DynamicsIdentifier &identifier, Args &&...args);
+    virtual ~VariableAssignment() {};
 
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(UnsignedInt index_i, Real dt = 0.0);
+        void update(UnsignedInt index_i, Real dt = 0.0) { assign_(index_i); };
 
       protected:
-        DataType *variable_;
         Assign assign_;
     };
 
   protected:
-    DiscreteVariable<DataType> *dv_variable_;
-    AssignmentFunctionType assignment_method_;
-};
-
-template <class DynamicsIdentifier, typename AssignmentFunctionType>
-class VariableEntryAssignment : public BaseLocalDynamics<DynamicsIdentifier>
-{
-    using DataType = typename AssignmentFunctionType::ReturnType;
-    using Assign = typename AssignmentFunctionType::ComputingKernel;
-
-  public:
-    template <typename... Args>
-    VariableEntryAssignment(
-        DynamicsIdentifier &identifier, const std::string &variable_name,
-        const std::string &entry_name, Args &&...args);
-    virtual ~VariableEntryAssignment(){};
-
-    class UpdateKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(UnsignedInt index_i, Real dt = 0.0);
-
-      protected:
-        EntryView<DataType> entry_;
-        Assign assign_;
-    };
-
-  protected:
-    DiscreteVariable<DataType> *dv_variable_;
-    std::string entry_name_;
     AssignmentFunctionType assignment_method_;
 };
 
@@ -106,132 +72,48 @@ class SpatialDistribution<DistributionType>
 
   public:
     template <typename... Args>
-    SpatialDistribution(BaseParticles *particles, Args &&...args)
-        : dv_pos_(particles->template getVariableByName<Vecd>("Position")),
-          distribution_(std::forward<Args>(args)...){};
+    SpatialDistribution(BaseParticles *particles, const std::string &variable_name, Args &&...args);
 
     class ComputingKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
-              distribution_(encloser.distribution_){};
-
-        DataType operator()(UnsignedInt index_i) { return distribution_(pos_[index_i]); };
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void operator()(UnsignedInt index_i) { variable_[index_i] = distribution_(pos_[index_i]); };
 
       protected:
-        Vecd *pos_;
+        DataView<DataType> variable_;
+        DataView<Vecd> pos_;
         DistributionType distribution_;
     };
 
   protected:
+    DiscreteVariable<DataType> *dv_variable_;
     DiscreteVariable<Vecd> *dv_pos_;
     DistributionType distribution_;
 };
 
 template <typename DataType>
-class ConstantValue : public ReturnFunction<DataType>
+class ConstantValue
 {
   public:
-    ConstantValue(BaseParticles *particles, DataType constant_value)
-        : constant_value_(constant_value){};
+    ConstantValue(BaseParticles *particles, const std::string &variable_name, DataType constant_value);
 
     class ComputingKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : constant_value_(encloser.constant_value_){};
-
-        DataType operator()(UnsignedInt index_i) { return constant_value_; };
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void operator()(UnsignedInt index_i) { variable_[index_i] = constant_value_; };
 
       protected:
+        DataView<DataType> variable_;
         DataType constant_value_;
     };
 
   protected:
+    DiscreteVariable<DataType> *dv_variable_;
     DataType constant_value_;
 };
-
-template <typename DataType>
-class CopyVariable : public ReturnFunction<DataType>
-{
-  public:
-    CopyVariable(BaseParticles *particles, const std::string &copy_variable_name)
-        : dv_copy_variable_(particles->template getVariableByName<DataType>(
-              copy_variable_name)){};
-
-    class ComputingKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : copy_variable_(encloser.dv_copy_variable_->DelegatedData(ex_policy)){};
-
-        DataType operator()(UnsignedInt index_i) { return copy_variable_[index_i]; };
-
-      protected:
-        DataType *copy_variable_;
-    };
-
-  protected:
-    DiscreteVariable<DataType> *dv_copy_variable_;
-};
-
-template <class DynamicsIdentifier, typename AssignmentFunctionType>
-class MultiEntryVariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
-{
-    using DataType = typename AssignmentFunctionType::ReturnType;
-    using Assign = typename AssignmentFunctionType::ComputingKernel;
-
-  public:
-    template <typename... Args>
-    MultiEntryVariableAssignment(
-        DynamicsIdentifier &identifier, const std::string &variable_name, Args &&...args);
-    virtual ~MultiEntryVariableAssignment(){};
-
-    class UpdateKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(UnsignedInt index_i, Real dt = 0.0);
-
-      protected:
-        MultiEntryView<DataType> multi_entry_;
-        Assign assign_;
-    };
-
-  protected:
-    DiscreteVariable<DataType> *dv_variable_;
-    AssignmentFunctionType assignment_method_;
-};
-
-template <typename DataType>
-class MultiEntryConstant : public ReturnFunction<DataType>
-{
-  public:
-    MultiEntryConstant(BaseParticles *particles, StdVec<DataType> constants)
-        : multi_rentry_constant_(constants){};
-    UnsignedInt Width() const { return multi_rentry_constant_.getSize(); };
-
-    class ComputingKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : constant_entry_(encloser.multi_rentry_constant_.DelegatedData(ex_policy)){};
-
-        DataType operator()(UnsignedInt index_i, UnsignedInt entry) { return constant_entry_[entry]; };
-
-      protected:
-        DataType *constant_entry_;
-    };
-
-  protected:
-    ConstantArray<DataType> multi_rentry_constant_;
-};
-
 } // namespace SPH
 #endif // GENERAL_ASSIGNMENT_H

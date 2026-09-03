@@ -14,7 +14,7 @@ ContinuumInitialCondition::ContinuumInitialCondition(SPHBody &sph_body)
       stress_tensor_3D_(particles_->registerStateVariableData<Mat3d>("StressTensor3D")) {}
 //=================================================================================================//
 AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real acousticCFL)
-    : LocalDynamicsReduce<ReduceMax>(sph_body),
+    : LocalDynamicsReduce<ReduceMax<Real>>(sph_body),
       fluid_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial())),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),

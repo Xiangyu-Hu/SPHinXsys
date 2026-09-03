@@ -13,7 +13,8 @@ namespace SPH
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
     : sph_system_(sph_system), body_name_(name), newly_updated_(true),
-      base_particles_(nullptr), is_bound_set_(false), initial_shape_(&shape),
+      base_particles_(nullptr), is_bound_set_(false),
+      is_physical_(false), initial_shape_(&shape),
       sph_adaptation_(sph_adaptation_keeper_.createPtr<SPHAdaptation>(sph_system.GlobalResolution()))
 {
     sph_system_.addSPHBody(this);
@@ -73,7 +74,7 @@ BaseParticles &SPHBody::getBaseParticles()
     return *base_particles_;
 };
 //=================================================================================================//
-MatterMaterial &SPHBody::getMatterMaterial()
+MatterMaterial &SPHBody::getMatterMaterial() const
 {
     checkPointer(matter_keeper_.getPtr(), "matter material", body_name_);
     return DynamicCast<MatterMaterial>(this, *matter_keeper_.getPtr());

@@ -24,7 +24,8 @@ BufferOutflowIndication::BufferOutflowIndication(OrientedBoxByCell &oriented_box
       sv_total_real_particles_(particles_->svTotalRealParticles()),
       dv_buffer_indicator_(particles_->registerStateVariable<int>("BufferIndicator")),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-      dv_life_status_(particles_->registerStateVariable<int>("LifeStatus", 0)) {}
+      particle_group_manager_(particles_->getParticleGroupManager()),
+      life_status_(particle_group_manager_.registerGroup("LifeStatus")) {}
 //=================================================================================================//
 BufferOutflowIndication::UpdateKernel::
     IsDeletable::IsDeletable(int part_id, OrientedBox *oriented_box,
@@ -35,7 +36,8 @@ BufferOutflowIndication::UpdateKernel::
 OutflowParticleDeletion::OutflowParticleDeletion(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       remove_real_particle_method_(particles_),
-      dv_life_status_(particles_->getVariableByName<int>("LifeStatus")) {}
+      particle_group_manager_(particles_->getParticleGroupManager()),
+      life_status_(particle_group_manager_.getGroupMask("LifeStatus")) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

@@ -12,7 +12,7 @@ using namespace SPH;
 int main(int ac, char *av[])
 {
     // read data from ANSYS mesh.file
-    ANSYSMesh read_mesh_data(mesh_fullpath);
+    ANSYSMesh read_mesh_data(channel_mesh);
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------

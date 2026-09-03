@@ -32,6 +32,12 @@
 #include "implementation_sycl.h"
 #include "sphinxsys_tbb.h"
 #include "sphinxsys_variable.h"
+
+#if SPHINXSYS_USE_ONEDPL
+#include <oneapi/dpl/algorithm>
+#include <oneapi/dpl/execution>
+#endif
+
 namespace SPH
 {
 using namespace execution;
@@ -78,7 +84,7 @@ class RadixSort
     explicit RadixSort(const ExecutionPolicy &ex_policy,
                        DiscreteVariable<UnsignedInt> *dv_sequence,
                        DiscreteVariable<UnsignedInt> *dv_index_permutation)
-        : dv_sequence_(dv_sequence), dv_index_permutation_(dv_index_permutation){};
+        : dv_sequence_(dv_sequence), dv_index_permutation_(dv_index_permutation) {};
     void sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size, UnsignedInt start_index = 0);
 
   protected:
@@ -90,6 +96,7 @@ class RadixSort
 template <typename T, typename Op>
 T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
 {
+#if !SPHINXSYS_USE_ONEDPL
     execution_instance.getQueue()
         .submit([=](sycl::handler &cgh)
                 { cgh.parallel_for(
@@ -103,7 +110,11 @@ T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *d_first, U
                           }
                       }); })
         .wait_and_throw();
-
+#else
+    oneapi::dpl::execution::device_policy<> policy(execution_instance.getQueue());
+    oneapi::dpl::exclusive_scan(policy, first, first + d_size, d_first, T{0}, op);
+    policy.queue().wait();
+#endif
     UnsignedInt scan_size = d_size - 1;
     T last_value;
     copyFromDevice(&last_value, d_first + scan_size, 1);

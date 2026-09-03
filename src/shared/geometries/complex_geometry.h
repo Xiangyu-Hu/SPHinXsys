@@ -33,7 +33,7 @@
 #include "base_geometry.h"
 #include "geometric_shape.h"
 #include "level_set_shape.h"
-#include "transform_geometry.h"
+#include "transform_geometry.hpp"
 
 namespace SPH
 {
@@ -50,8 +50,8 @@ class ComplexShape : public BinaryShapes
 {
   public:
     explicit ComplexShape(const std::string &shape_name = "ComplexShape")
-        : BinaryShapes(shape_name) {};
-    virtual ~ComplexShape() {};
+        : BinaryShapes(shape_name){};
+    virtual ~ComplexShape(){};
 
     template <typename... Args>
     LevelSetShape &defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, Args &&...args)
@@ -86,7 +86,7 @@ class OrientedBox : public TransformGeometry<GeometricBox>
               Transform(Vecd(0.5 * (shape.bounding_box_.upper_ + shape.bounding_box_.lower_))),
               0.5 * (shape.bounding_box_.upper_ - shape.bounding_box_.lower_), std::forward<Args>(args)...),
           axis_ref_(upper_bound_axis){};
-    ~OrientedBox() {};
+    ~OrientedBox(){};
 
     Vecd HalfSize() const { return halfsize_; }
     bool checkNearSurface(const Vecd &probe_point, Real threshold);

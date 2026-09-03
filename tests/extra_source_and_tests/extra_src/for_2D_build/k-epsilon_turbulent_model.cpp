@@ -469,7 +469,7 @@ void TurbulentEddyViscosity::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 TurbulentAdvectionTimeStepSize::TurbulentAdvectionTimeStepSize(SPHBody &sph_body, Real U_max, Real advectionCFL)
-    : LocalDynamicsReduce<ReduceMax>(sph_body),
+    : LocalDynamicsReduce<ReduceMax<Real>>(sph_body),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       smoothing_length_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       speed_ref_turbu_(U_max), advectionCFL_(advectionCFL),

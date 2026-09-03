@@ -9,80 +9,44 @@ namespace SPH
 template <class DynamicsIdentifier, typename AssignmentFunctionType>
 template <typename... Args>
 VariableAssignment<DynamicsIdentifier, AssignmentFunctionType>::VariableAssignment(
-    DynamicsIdentifier &identifier, const std::string &variable_name, Args &&...args)
+    DynamicsIdentifier &identifier, Args &&...args)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-      dv_variable_(this->particles_->template registerStateVariable<DataType>(variable_name)),
       assignment_method_(this->particles_, std::forward<Args>(args)...) {}
 //=================================================================================================//
 template <class DynamicsIdentifier, typename AssignmentFunctionType>
 template <class ExecutionPolicy, class EncloserType>
 VariableAssignment<DynamicsIdentifier, AssignmentFunctionType>::UpdateKernel::UpdateKernel(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
-      assign_(ex_policy, encloser.assignment_method_) {}
+    : assign_(ex_policy, encloser.assignment_method_) {}
 //=================================================================================================//
-template <class DynamicsIdentifier, typename AssignmentFunctionType>
-void VariableAssignment<DynamicsIdentifier, AssignmentFunctionType>::UpdateKernel::update(
-    UnsignedInt index_i, Real dt)
-{
-    variable_[index_i] = assign_(index_i);
-}
-//=================================================================================================//
-template <class DynamicsIdentifier, typename AssignmentFunctionType>
+template <typename DistributionType>
 template <typename... Args>
-VariableEntryAssignment<DynamicsIdentifier, AssignmentFunctionType>::VariableEntryAssignment(
-    DynamicsIdentifier &identifier, const std::string &variable_name,
-    const std::string &entry_name, Args &&...args)
-    : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-      dv_variable_(this->particles_->template registerStateVariable<DataType>(variable_name)),
-      entry_name_(entry_name), assignment_method_(this->particles_, std::forward<Args>(args)...){};
+SpatialDistribution<DistributionType>::SpatialDistribution(
+    BaseParticles *particles, const std::string &variable_name, Args &&...args)
+    : dv_variable_(particles->template getVariableByName<DataType>(variable_name)),
+      dv_pos_(particles->template getVariableByName<Vecd>("Position")),
+      distribution_(std::forward<Args>(args)...) {}
 //=================================================================================================//
-template <class DynamicsIdentifier, typename AssignmentFunctionType>
+template <typename DistributionType>
 template <class ExecutionPolicy, class EncloserType>
-VariableEntryAssignment<DynamicsIdentifier, AssignmentFunctionType>::UpdateKernel::UpdateKernel(
-    const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : entry_(encloser.dv_variable_->DelegatedEntryView(ex_policy, encloser.entry_name_)),
-      assign_(ex_policy, encloser.assignment_method_) {}
+SpatialDistribution<DistributionType>::SpatialDistribution::ComputingKernel::
+    ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : variable_(encloser.dv_variable_->DelegatedDataView(ex_policy)),
+      pos_(encloser.dv_pos_->DelegatedDataView(ex_policy)),
+      distribution_(encloser.distribution_) {}
 //=================================================================================================//
-template <class DynamicsIdentifier, typename AssignmentFunctionType>
-void VariableEntryAssignment<DynamicsIdentifier, AssignmentFunctionType>::UpdateKernel::update(
-    UnsignedInt index_i, Real dt)
-{
-    entry_[index_i] = assign_(index_i);
-}
+template <typename DataType>
+ConstantValue<DataType>::ConstantValue(
+    BaseParticles *particles, const std::string &variable_name, DataType constant_value)
+    : dv_variable_(particles->template getVariableByName<DataType>(variable_name)),
+      constant_value_(constant_value) {}
 //=================================================================================================//
-template <class DynamicsIdentifier, typename AssignmentFunctionType>
-template <typename... Args>
-MultiEntryVariableAssignment<DynamicsIdentifier, AssignmentFunctionType>::MultiEntryVariableAssignment(
-    DynamicsIdentifier &identifier, const std::string &variable_name, Args &&...args)
-    : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-      dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
-      assignment_method_(this->particles_, std::forward<Args>(args)...)
-{
-    if (dv_variable_->getWidth() != assignment_method_.Width())
-    {
-        std::cout << "\n Error: the width of variable '" << variable_name
-                  << "' does not match the assignment method!" << std::endl;
-        exit(1);
-    }
-}
-//=================================================================================================//
-template <class DynamicsIdentifier, typename AssignmentFunctionType>
+template <typename DataType>
 template <class ExecutionPolicy, class EncloserType>
-MultiEntryVariableAssignment<DynamicsIdentifier, AssignmentFunctionType>::UpdateKernel::
-    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-    : multi_entry_(encloser.dv_variable_->DelegatedMultiEntryView(ex_policy)),
-      assign_(ex_policy, encloser.assignment_method_){};
-//=================================================================================================//
-template <class DynamicsIdentifier, typename AssignmentFunctionType>
-void MultiEntryVariableAssignment<DynamicsIdentifier, AssignmentFunctionType>::UpdateKernel::update(
-    UnsignedInt index_i, Real dt)
-{
-    for (UnsignedInt entry = 0; entry < multi_entry_.Width(); ++entry)
-    {
-        multi_entry_[index_i][entry] = assign_(index_i, entry);
-    }
-}
+ConstantValue<DataType>::ComputingKernel::
+    ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : variable_(encloser.dv_variable_->DelegatedDataView(ex_policy)),
+      constant_value_(encloser.constant_value_) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // GENERAL_ASSIGNMENT_HPP

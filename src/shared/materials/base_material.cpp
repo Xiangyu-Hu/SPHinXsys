@@ -24,10 +24,6 @@ void BaseMaterial::setLocalParameters(SPHSystem &sph_system, BaseParticles *base
 //=================================================================================================//
 std::string BaseMaterial::Name()
 {
-    if (material_name_.empty())
-    {
-        return material_type_name_;
-    }
     return material_name_;
 }
 //=================================================================================================//
@@ -36,10 +32,10 @@ MatterMaterial::MatterMaterial() : BaseMaterial()
     material_type_name_ = "MatterMaterial";
 }
 //=================================================================================================//
-void MatterMaterial::initializeLocalParameters(BaseParticles *base_particles)
+void MatterMaterial::initializeMatterVariables(BaseParticles *base_particles)
 {
-    dv_rho_ = base_particles->registerStateVariable<Real>("Density", ReferenceDensity());
-    dv_mass_ = base_particles->registerStateVariable<Real>(
+    base_particles->registerStateVariable<Real>("Density", ReferenceDensity());
+    base_particles->registerStateVariable<Real>(
         "Mass", [&](UnsignedInt i) -> Real
         { return ReferenceDensity() * base_particles->ParticleVolume(i); });
 }

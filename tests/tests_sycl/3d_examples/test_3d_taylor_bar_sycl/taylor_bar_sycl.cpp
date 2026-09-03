@@ -73,8 +73,8 @@ int main(int ac, char *av[])
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
         SPHSolver sph_solver(relaxation_system);
-        auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-        auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+        auto &main_methods = sph_solver.getMainMethodContainer();
+        auto &host_methods = sph_solver.getHostMethodContainer();
 
         auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(column);
         auto &input_body_update_inner_relation = main_methods.addRelationDynamics(column_inner);
@@ -176,10 +176,8 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-    host_methods.addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(column, "Velocity", Vec3d(0, 0, -impact_speed)).exec();
-
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &host_methods = sph_solver.getHostMethodContainer();
+    auto &main_methods = sph_solver.getMainMethodContainer();
     auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall);
     ParticleDynamicsGroup update_conact_configuration;
     update_conact_configuration.add(&main_methods.addCellLinkedListDynamics(column));
@@ -188,15 +186,15 @@ int main(int ac, char *av[])
     auto &my_observer_contact_relation = main_methods.addRelationDynamics(my_observer_contact);
 
     auto &column_linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(column_inner);
-    auto &column_wall_contact_factor = main_methods.addInteractionDynamics<solid_dynamics::RepulsionFactor>(column_wall_contact);
-    auto &column_wall_contact_force = main_methods.addInteractionDynamicsWithUpdate<solid_dynamics::RepulsionForceCK, Wall>(column_wall_contact);
-
     auto &column_acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
         solid_dynamics::StructureIntegration1stHalf, HardeningPlasticSolid, NoKernelCorrectionCK>(column_inner);
     auto &column_acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
         solid_dynamics::StructureIntegration2ndHalf>(column_inner);
+    auto &column_wall_contact_factor = main_methods.addInteractionDynamics<solid_dynamics::RepulsionFactor>(column_wall_contact);
+    auto &column_wall_contact_force = main_methods.addInteractionDynamicsWithUpdate<solid_dynamics::RepulsionForceCK, Wall>(column_wall_contact);
 
     auto &column_acoustic_time_step = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(column, 0.2);
+    host_methods.addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(column, "Velocity", Vec3d(0, 0, -impact_speed)).exec();
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

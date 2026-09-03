@@ -11,7 +11,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 template <class FluidType>
 AcousticTimeStepCK<FluidType>::AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL)
-    : LocalDynamicsReduce<ReduceMax>(sph_body),
+    : LocalDynamicsReduce<ReduceMax<Real>>(sph_body),
       fluid_(DynamicCast<FluidType>(this, sph_body_->getMatterMaterial())),
       dv_mass_(particles_->getVariableByName<Real>("Mass")),
       dv_rho_(particles_->getVariableByName<Real>("Density")),

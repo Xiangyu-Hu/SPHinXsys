@@ -75,6 +75,7 @@ class SPHBody
     BaseParticles *base_particles_; /**< Base particles for dynamic cast DataDelegate  */
     bool is_bound_set_;             /**< whether the bounding box is set */
     BoundingBoxd bound_;            /**< bounding box of the body */
+    bool is_physical_;              /**< whether this body is a physical body */
     Shape *initial_shape_;          /**< initial volumetric geometry enclosing the body */
     SPHAdaptation *sph_adaptation_; /**< numerical adaptation policy */
     StdVec<BaseMaterial *> material_properties_;
@@ -97,14 +98,17 @@ class SPHBody
     void assignBaseParticles(BaseParticles *base_particles) { base_particles_ = base_particles; };
     SPHAdaptation &getSPHAdaptation();
     BaseParticles &getBaseParticles();
-    MatterMaterial &getMatterMaterial();
-    
+    MatterMaterial &getMatterMaterial() const;
+
+    template <typename MaterialType>
+    bool isMatterMaterial() const;
+
     template <typename MaterialType>
     StdVec<MaterialType *> collectMaterialProperties();
-    
+
     template <typename MaterialType>
     MaterialType &getMaterialProperty(const std::string &name = ""); // name is optional for one material for a material type
-    
+
     StdVec<SPHRelation *> &getBodyRelations() { return body_relations_; };
     IndexRange LoopRange();
     size_t SizeOfLoopRange();

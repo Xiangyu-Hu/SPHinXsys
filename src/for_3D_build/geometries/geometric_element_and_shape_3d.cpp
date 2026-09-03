@@ -84,6 +84,18 @@ GeometricShapeCylinder::GeometricShapeCylinder(const Transform &transform, Real 
                                                const std::string &name)
     : TransformShape<GeometricCylinder>(name, transform, radius, halflength) {}
 //=================================================================================================//
+GeometricShapeCylinder::GeometricShapeCylinder(const TransformGeometryCylinder &transformed_cylinder,
+                                               const std::string &name)
+    : GeometricShapeCylinder(Transform(transformed_cylinder.initialTransform()),
+                             transformed_cylinder.getRadius(),
+                             transformed_cylinder.getHalfLength(), name) {}    
+//=================================================================================================//
+void GeometricShapeCylinder::writeGeometricShapeCylinderToVtp(Real scale_factor)
+{
+    TriangleMeshShapeCylinder shape(Vec3d(1.0, 0.0, 0.0), radius_, halflength_, 20, Vecd::Zero(), Name());
+    shape.writTriangleMeshShapeToVtp(getTransform(), scale_factor);
+}
+//=================================================================================================//
 void GeometricShapeBox::writeGeometricShapeBoxToVtp(Real scale_factor)
 {
     TriangleMeshShapeBrick shape(HalfSize(), 1, Vecd::Zero(), Name());

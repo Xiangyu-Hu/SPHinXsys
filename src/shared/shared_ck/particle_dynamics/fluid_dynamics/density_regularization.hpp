@@ -4,6 +4,7 @@
 #include "density_regularization.h"
 
 #include "base_particles.hpp"
+#include "weakly_compressible_fluid.hpp"
 
 namespace SPH
 {
@@ -18,7 +19,9 @@ CompressionSummation<Base, RelationType<Parameters...>>::CompressionSummation(
       dv_Vol_ref_(this->particles_->template registerStateVariableFrom<Real>(
           "VolumetricMeasureRef", "VolumetricMeasure")),
       dv_compression_sum_(this->particles_->template registerStateVariable<Real>(
-          "CompressionSummation"))
+          "CompressionSummation", Real(1))),
+      sv_compression_inv_ref_(this->particles_->template registerSingleVariable<Real>(
+          "InverseReferenceCompression", Real(1)))
 {
     this->particles_->template addEvolvingVariable<Real>(dv_Vol_ref_);
 }
@@ -34,7 +37,8 @@ CompressionSummation<Inner<Parameters...>>::InteractKernel::InteractKernel(
     const ExecutionPolicy &ex_policy, Encloser &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       zero_(Vecd::Zero()), Vol_ref_(encloser.dv_Vol_ref_->DelegatedDataView(ex_policy)),
-      compression_sum_(encloser.dv_compression_sum_->DelegatedDataView(ex_policy)) {}
+      compression_sum_(encloser.dv_compression_sum_->DelegatedDataView(ex_policy)),
+      compression_inv_ref_(encloser.sv_compression_inv_ref_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
 void CompressionSummation<Inner<Parameters...>>::
@@ -44,7 +48,8 @@ void CompressionSummation<Inner<Parameters...>>::
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        compression_sum_[index_i] += this->W_ij(index_i, index_j) * Vol_ref_[index_j];
+        compression_sum_[index_i] +=
+            (*compression_inv_ref_) * this->W_ij(index_i, index_j) * Vol_ref_[index_j];
     }
 }
 //=================================================================================================//
@@ -53,22 +58,18 @@ template <class DynamicsIdentifier>
 CompressionSummation<Contact<Parameters...>>::CompressionSummation(DynamicsIdentifier &identifier)
     : BaseInteraction(identifier)
 {
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        BaseParticles *contact_particles = this->contact_particles_[k];
-        dv_contact_Vol_ref_.push_back(
-            contact_particles->template registerStateVariableFrom<Real>(
-                "VolumetricMeasureRef", "VolumetricMeasure"));
-    }
+    dv_contact_Vol_ref_ = this->contact_particles_->template registerStateVariableFrom<Real>(
+        "VolumetricMeasureRef", "VolumetricMeasure");
 }
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class Encloser>
 CompressionSummation<Contact<Parameters...>>::InteractKernel::InteractKernel(
-    const ExecutionPolicy &ex_policy, Encloser &encloser, size_t contact_index)
-    : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+    const ExecutionPolicy &ex_policy, Encloser &encloser)
+    : BaseInteraction::InteractKernel(ex_policy, encloser),
       compression_sum_(encloser.dv_compression_sum_->DelegatedDataView(ex_policy)),
-      contact_Vol_ref_(encloser.dv_contact_Vol_ref_[contact_index]->DelegatedDataView(ex_policy)) {}
+      contact_Vol_ref_(encloser.dv_contact_Vol_ref_->DelegatedDataView(ex_policy)),
+      compression_inv_ref_(encloser.sv_compression_inv_ref_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
 void CompressionSummation<Contact<Parameters...>>::
@@ -77,8 +78,22 @@ void CompressionSummation<Contact<Parameters...>>::
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        compression_sum_[index_i] += this->W_ij(index_i, index_j) * contact_Vol_ref_[index_j];
+        compression_sum_[index_i] +=
+            (*compression_inv_ref_) * this->W_ij(index_i, index_j) * contact_Vol_ref_[index_j];
     }
+}
+//=================================================================================================//
+template <class ExecutionPolicy, class EncloserType>
+AverageCompression::ReduceKernel::ReduceKernel(
+    const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : compression_sum_(encloser.dv_compression_sum_->DelegatedDataView(ex_policy)) {}
+//=================================================================================================//
+inline Sample<Real> AverageCompression::ReduceKernel::reduce(size_t index_i, Real dt)
+{
+    // only consider summation greater than 1, i.e. with full kernel support
+    return compression_sum_[index_i] > Real(1)
+               ? Sample<Real>(compression_sum_[index_i], Real(1))
+               : Sample<Real>(Real(0), Real(0));
 }
 //=================================================================================================//
 template <class DynamicsIdentifier, class FluidType, class FlowType, typename... ParticleScopes>
@@ -88,6 +103,7 @@ DensityRegularization<DynamicsIdentifier, FluidType, FlowType, ParticleScopes...
       fluid_(DynamicCast<FluidType>(this, this->sph_body_->getMatterMaterial())),
       dv_rho_(this->particles_->template getVariableByName<Real>("Density")),
       dv_compression_sum_(this->particles_->template getVariableByName<Real>("CompressionSummation")),
+      dv_compression_(this->particles_->template getVariableByName<Real>("Compression")),
       regularization_method_(this->particles_), within_scope_method_(this->particles_)
 {
     static_assert(std::is_base_of<WithinScope, ParticleScopeTypeCK<ParticleScopes...>>::value,
@@ -100,6 +116,7 @@ DensityRegularization<DynamicsIdentifier, FluidType, FlowType, ParticleScopes...
     UpdateKernel(const ExecutionPolicy &ex_policy, Encloser &encloser)
     : eos_(ex_policy, encloser.fluid_), rho_(encloser.dv_rho_->DelegatedDataView(ex_policy)),
       compression_sum_(encloser.dv_compression_sum_->DelegatedDataView(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedDataView(ex_policy)),
       regularization_(ex_policy, encloser.regularization_method_),
       particle_scope_(ex_policy, encloser.within_scope_method_) {}
 //=================================================================================================//
@@ -109,9 +126,9 @@ void DensityRegularization<DynamicsIdentifier, FluidType, FlowType, ParticleScop
 {
     if (this->particle_scope_(index_i))
     {
-        rho_[index_i] = regularization_(
-            index_i, compression_sum_[index_i], eos_.getReferenceDensity(index_i));
+        compression_[index_i] = regularization_(index_i, compression_sum_[index_i]);
     }
+    rho_[index_i] = compression_[index_i] * eos_.getReferenceDensity(index_i);
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

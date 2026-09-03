@@ -98,7 +98,7 @@ struct StartupToConstantInflowSpeed
     Real getAxisVelocity(const Vecd &, const Real &, Real time)
     {
         return time < startup_time_
-                   ? 0.5 * speed_ * (1.0 - cos(Pi * time / startup_time_))
+                   ? 0.5 * speed_ * (1.0 - math::cos(Pi * time / startup_time_))
                    : speed_;
     };
 };

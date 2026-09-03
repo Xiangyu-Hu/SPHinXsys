@@ -182,7 +182,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.addToWrite<Vecd>(shell_body, "NormalDirection");
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax<Real>>> maximum_displace_norm(shell_body, "Displacement");
     vtp_output.writeToFile(0);
 
     /** Apply initial condition. */

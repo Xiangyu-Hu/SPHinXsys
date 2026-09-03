@@ -76,7 +76,7 @@ class BaseIO
         return s_time.str();
     }
 
-    bool isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body);
+    void checkBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body);
 };
 
 /**
@@ -103,7 +103,7 @@ class BodyStatesRecording : public BaseIO
     template <typename DerivedVariableMethod, typename DynamicsIdentifier, typename... Args>
     BodyStatesRecording &addDerivedVariableRecording(DynamicsIdentifier &identifier, Args &&...args);
 
-    protected:
+  protected:
     SPHBodyVector bodies_;
     StdVec<BaseDynamics<void> *> derived_variables_;
     bool state_recording_;

@@ -24,7 +24,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, dp_0);
     Real mechanical_time_ = 0.0;
     sph_system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(false);       // Tag for computation with save particles distribution
+    sph_system.setReloadParticles(true);        // Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
 #endif
@@ -200,15 +200,15 @@ int main(int ac, char *av[])
     //	 Surfaces and operations - must be after system initialized
     //----------------------------------------------------------------------
     MeshData myo_mesh;
-    myo_mesh.load(full_path_to_myocardium, length_scale);
+    myo_mesh.load(mesh_myocardium, length_scale);
     myo_mesh.translate(translation);
     myo_mesh.initialize();
     MeshData lv_mesh;
-    lv_mesh.load(full_path_to_lv, length_scale);
+    lv_mesh.load(mesh_lv, length_scale);
     lv_mesh.translate(translation);
     lv_mesh.initialize();
     MeshData rv_mesh;
-    rv_mesh.load(full_path_to_rv, length_scale);
+    rv_mesh.load(mesh_rv, length_scale);
     rv_mesh.translate(translation);
     rv_mesh.initialize();
     MyocardiumSurfaces myo_srf(mechanics_heart);

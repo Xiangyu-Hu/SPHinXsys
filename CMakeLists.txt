@@ -12,11 +12,9 @@ option(SPHINXSYS_BUILD_TESTS "Build tests" ON)
 option(TEST_STATE_RECORDING "State recording when run Ctest" ON)
 option(SPHINXSYS_DEVELOPER_MODE "Developer mode has more flags active for code quality" ON)
 option(SPHINXSYS_USE_FLOAT "Build using float (single-precision floating-point format) as primary type" OFF)
-option(SPHINXSYS_USE_SIMD "Build using SIMD instructions" OFF)
-option(SPHINXSYS_MODULE_OPENCASCADE "Build extension relying on OpenCASCADE" OFF)
 option(SPHINXSYS_USE_VTK "Build using VTK library for writing VTP/VTU files" OFF)
 option(SPHINXSYS_USE_SYCL "Build using SYCL acceleration or not" OFF)
-option(SPHINXSYS_USE_ONEDPL_SORTING "Build One DPL for particle sorting" ON)
+option(SPHINXSYS_USE_ONEDPL "Build with One DPL for exclusive scan and particle sorting" ON)
 
 # ------ Global properties (Some cannot be set on INTERFACE targets)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
@@ -30,7 +28,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE) # Enable for all targets, needed for p
 # ------ Declare core library
 add_library(sphinxsys_core INTERFACE)
 
-# ------ Constrain compilesr if SYCL is used
+# ------ Constrain compiler if SYCL is used
 if(SPHINXSYS_USE_SYCL)
     if(NOT SPHINXSYS_USE_FLOAT)
     set(SPHINXSYS_USE_FLOAT ON)
@@ -61,6 +59,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
         target_compile_options(sphinxsys_core INTERFACE /MP)
     endif()
     target_compile_options(sphinxsys_core INTERFACE /permissive-)
+    target_compile_options(sphinxsys_core INTERFACE /bigobj) # Heavily templated CK translation units (e.g. fluid_simulation_builder.cpp) exceed the default COFF section limit without this.
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Werror>)
     target_compile_options(sphinxsys_core INTERFACE $<$<BOOL:${SPHINXSYS_DEVELOPER_MODE}>:-Wall>)
@@ -68,15 +67,9 @@ endif()
 
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_SYCL=$<BOOL:${SPHINXSYS_USE_SYCL}>)
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_FLOAT=$<BOOL:${SPHINXSYS_USE_FLOAT}>)
-target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_ONEDPL_SORTING=$<BOOL:${SPHINXSYS_USE_ONEDPL_SORTING}>)
+target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_ONEDPL=$<BOOL:${SPHINXSYS_USE_ONEDPL}>)
 
 # ------ Dependencies
-# ## SIMD flags
-if(SPHINXSYS_USE_SIMD)
-    find_package(SIMD QUIET)
-    target_compile_options(sphinxsys_core INTERFACE ${SIMD_CXX_FLAGS})
-endif()
-
 # ## Simbody
 find_package(Simbody CONFIG REQUIRED)
 set(Simbody_LIBS
@@ -149,7 +142,6 @@ endif()
 
 # ------ Setup the concrete libraries
 add_subdirectory(src)
-add_subdirectory(modules)
 
 # ------ Setup the tests
 if(SPHINXSYS_BUILD_TESTS)

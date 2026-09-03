@@ -49,7 +49,7 @@ class MeshData
     tmd::TriangleMeshDistance mesh_sdf;
 
   public:
-    void load(std::string path_to_mesh, Real scale);
+    void load(std::string file_name, Real scale);
     void initialize();
     void translate(const Vec3d &translation);
     IndexVector get_ids_close_to_surface(Vec3d *pos_0, const IndexVector &all_surface_ids, Real distance) const;
