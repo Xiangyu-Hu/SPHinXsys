@@ -65,7 +65,7 @@ class Interpolation<Contact<Base, DataType, Parameters...>> : public Interaction
 
   protected:
     DiscreteVariable<DataType> *dv_interpolated_quantities_;
-    StdVec<DiscreteVariable<DataType> *> dv_contact_data_;
+    DiscreteVariable<DataType> *dv_contact_data_;
     UnsignedInt entry_ = 0;
 };
 
@@ -82,7 +82,7 @@ class Interpolation<Contact<DataType, Parameters...>> : public Interpolation<Con
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -117,7 +117,7 @@ class Interpolation<Contact<DataType, RestoringCorrection, Parameters...>> : pub
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:

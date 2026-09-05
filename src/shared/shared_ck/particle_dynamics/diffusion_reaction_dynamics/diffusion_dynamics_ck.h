@@ -57,7 +57,7 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
     explicit DiffusionRelaxationCK(DynamicsIdentifier &identifier);
     template <typename BodyRelationType, typename FirstArg>
     DiffusionRelaxationCK(DynamicsArgs<BodyRelationType, FirstArg> parameters)
-        : DiffusionRelaxationCK(parameters.identifier_, std::get<0>(parameters.others_)){};
+        : DiffusionRelaxationCK(parameters.identifier_, std::get<0>(parameters.others_)) {};
     virtual ~DiffusionRelaxationCK() {};
     StdVec<DiffusionType *> &getDiffusions() { return diffusions_; };
     StdVec<std::string> &getSpeciesNames() { return species_names_; };
@@ -112,7 +112,7 @@ template <class DiffusionType, template <typename...> class BoundaryType,
 class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>
     : public DiffusionRelaxationCK<DiffusionType, Interaction<Contact<Parameters...>>>
 {
-    UniquePtrsKeeper<BoundaryType<DiffusionType>> boundaries_keeper_;
+    UniquePtrKeeper<BoundaryType<DiffusionType>> boundary_keeper_;
     using BaseInteraction = DiffusionRelaxationCK<DiffusionType, Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
     using BoundaryKernel = typename BoundaryType<DiffusionType>::ComputingKernel;
@@ -126,8 +126,7 @@ class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser,
-                       UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
@@ -140,8 +139,8 @@ class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>
 
   protected:
     KernelCorrectionType kernel_correction_method_;
-    StdVec<DiscreteVariable<Real> *> contact_dv_transfer_;
-    StdVec<BoundaryType<DiffusionType> *> contact_boundary_method_;
+    DiscreteVariable<Real> *contact_dv_transfer_;
+    BoundaryType<DiffusionType> *contact_boundary_method_;
 };
 
 template <template <typename...> class RelationType, class... InteractionParameters>

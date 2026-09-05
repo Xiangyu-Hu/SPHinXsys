@@ -22,35 +22,18 @@ BoundingBoxd system_domain_bounds(
 //----------------------------------------------------------------------
 //  Material parameters.
 //----------------------------------------------------------------------
-const Real Inlet_pressure = 0.5;
-const Real Outlet_pressure = -0.5;
+Real Inlet_pressure = 0.2;
+Real Outlet_pressure = 0.1;
 Real rho0_f = 1000.0;
 Real Re = 50.0;
-Real mu_f = std::sqrt(rho0_f * std::pow(0.5 * DH, 3.0) *
-                      std::abs(Inlet_pressure - Outlet_pressure) / (Re * DL));
-
-/**
- * Analytical solution for a laminar Poiseuille flow in a 2D channel:
- *
- *    U_f = Δp * DH^2 / (8 * μ * L)
- *
- *  where:
- *    Δp = |p_in - p_out|
- *    DH  = channel height
- *    μ   = dynamic viscosity
- *    L   = channel length
- */
-Real U_f = (DH * DH * std::abs(Inlet_pressure - Outlet_pressure)) /
-           (8.0 * mu_f * DL);
-
-// Compute speed of sound (c0) based on the pressure difference between inlet and outlet boundaries.
-// Ensures density variations are limited to ~1% (WCSPH criterion), multiplied by 4 as a safety factor.
-Real c_f = std::max(10.0 * U_f, sqrt(4 * (Inlet_pressure - Outlet_pressure) / (rho0_f * 0.01))); //
+Real mu_f = sqrt(rho0_f * pow(0.5 * DH, 3.0) * fabs(Inlet_pressure - Outlet_pressure) / (Re * DL));
+Real U_f = pow(0.5 * DH, 2.0) * fabs(Inlet_pressure - Outlet_pressure) / (2.0 * mu_f * DL);
+Real c_f = 10.0 * U_f;
 
 //----------------------------------------------------------------------
 //  Geometric shapes for the channel and boundaries.
 //----------------------------------------------------------------------
-Real bidirectional_buffer_length = 3.0 * global_resolution;
+Real bidirectional_buffer_length = 5.0 * global_resolution;
 Vec2d bidirectional_buffer_halfsize(
     0.5 * bidirectional_buffer_length, 0.5 * DH);
 Vec2d left_bidirectional_translation = bidirectional_buffer_halfsize;
@@ -273,8 +256,8 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     // ----------------------------------------------------------------------
     Inner<> water_body_inner(water_body);
-    Contact<> water_wall_contact(water_body, {&wall});
-    Contact<> velocity_observer_contact(velocity_observer, {&water_body});
+    Contact<> water_wall_contact(water_body, wall);
+    Contact<> velocity_observer_contact(velocity_observer, water_body);
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -296,9 +279,11 @@ int main(int ac, char *av[])
     StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_normal_direction(wall); // run on CPU
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_body);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
+        fluid_boundary_indicator(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
-        fluid_linear_correction_matrix(DynamicsArgs(water_body_inner, 0.5), water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
+        fluid_linear_correction_matrix(DynamicsArgs(water_body_inner, 0.5), water_wall_contact);   
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionForOpenBoundaryFlowCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
@@ -306,11 +291,9 @@ int main(int ac, char *av[])
         fluid_density_summation(water_body_inner, water_wall_contact);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, WeaklyCompressibleFluid, Internal, ExcludeBufferParticles>>
         fluid_density_regularization(water_body);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
-        fluid_boundary_indicator(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex> kernel_gradient_integral(water_body_inner, water_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedForOpenBoundaryFlowComplex> kernel_gradient_integral(water_body_inner, water_wall_contact);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear, BulkParticles>> transport_correction(water_body);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionViscousTimeStepCK> fluid_advection_time_step(water_body, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>> fluid_acoustic_time_step(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_body_inner, water_wall_contact);

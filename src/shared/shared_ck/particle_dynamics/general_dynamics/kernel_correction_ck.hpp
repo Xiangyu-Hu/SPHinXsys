@@ -72,10 +72,10 @@ LinearCorrectionMatrix<Contact<Parameters...>>::LinearCorrectionMatrix(DynamicsI
 template <typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 LinearCorrectionMatrix<Contact<Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
-    : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseInteraction::InteractKernel(ex_policy, encloser),
       B_(encloser.dv_B_->DelegatedDataView(ex_policy)),
-      contact_Vol_k_(encloser.dv_contact_Vol_[contact_index]->DelegatedDataView(ex_policy)) {}
+      contact_Vol_k_(encloser.dv_contact_Vol_->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
 void LinearCorrectionMatrix<Contact<Parameters...>>::

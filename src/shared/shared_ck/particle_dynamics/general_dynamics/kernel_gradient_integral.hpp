@@ -43,7 +43,7 @@ void KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>::
         UnsignedInt index_j = this->neighbor_index_[n];
         const Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
         const Vecd e_ij = this->e_ij(index_i, index_j);
-        inconsistency -= (correction_(index_i) + correction_(index_j)) * dW_ijV_j * e_ij;
+        inconsistency -= (correction_(index_i) + correction_(index_j, index_i)) * dW_ijV_j * e_ij;
     }
     kernel_gradient_integral_[index_i] = inconsistency;
 }
@@ -62,11 +62,11 @@ KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>::
 template <class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_),
       kernel_gradient_integral_(encloser.dv_kernel_gradient_integral_->DelegatedData(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)) {}
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 void KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>::

@@ -67,8 +67,8 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     Inner<> water_block_inner(water_block);
-    Contact<> water_wall_contact(water_block, {&wall_boundary});
-    Contact<> fluid_observer_contact(fluid_observer, {&water_block});
+    Contact<> water_wall_contact(water_block, wall_boundary);
+    Contact<> fluid_observer_contact(fluid_observer, water_block);
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.

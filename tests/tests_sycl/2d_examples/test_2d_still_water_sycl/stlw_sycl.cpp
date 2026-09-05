@@ -82,7 +82,7 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     Inner<> water_body_inner(water_body);
-    Contact<> water_wall_contact(water_body, {&wall});
+    Contact<> water_wall_contact(water_body, wall);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.

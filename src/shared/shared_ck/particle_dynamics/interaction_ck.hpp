@@ -36,58 +36,44 @@ Interaction<Inner<Parameters...>>::InteractKernel::
       NeighborKernel(ex_policy, encloser.inner_relation_->getNeighborhood()) {}
 //=================================================================================================//
 template <typename... Parameters>
-Interaction<Contact<Parameters...>>::Interaction(
-    const RelationView<Contact<Parameters...>> &contact_relation_view)
-    : BaseLocalDynamicsType(contact_relation_view.getContactRelation().getSourceIdentifier()),
-      contact_relation_view_(contact_relation_view),
-      contact_bodies_(contact_relation_view.getContactBodies()),
-      contact_particles_(contact_relation_view.getContactParticles()),
-      contact_adaptations_(contact_relation_view.getContactAdaptations()),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure"))
-{
-    for (auto &particles : contact_particles_)
-    {
-        dv_contact_Vol_.push_back(
-            particles->template getVariableByName<Real>("VolumetricMeasure"));
-    }
-}
-//=================================================================================================//
-template <typename... Parameters>
 Interaction<Contact<Parameters...>>::Interaction(Contact<Parameters...> &contact_relation)
-    : Interaction(RelationView<Contact<Parameters...>>(contact_relation)) {}
+    : BaseLocalDynamicsType(contact_relation.getSourceIdentifier()),
+      contact_relation_(&contact_relation),
+      contact_body_(&contact_relation.getContactBody()),
+      contact_particles_(&contact_relation.getContactParticles()),
+      contact_adaptation_(&contact_relation.getContactAdaptation()),
+      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
+      dv_contact_Vol_(
+          contact_particles_->template getVariableByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
 template <typename... Parameters>
-void Interaction<Contact<Parameters...>>::
-    registerComputingKernel(Implementation<Base> *implementation, UnsignedInt contact_index)
+void Interaction<Contact<Parameters...>>::registerComputingKernel(Implementation<Base> *implementation)
 {
-    contact_relation_view_.registerComputingKernel(implementation, contact_index);
+    contact_relation_->registerComputingKernel(implementation);
 }
 //=================================================================================================//
 template <typename... Parameters>
-void Interaction<Contact<Parameters...>>::resetComputingKernelUpdated(UnsignedInt contact_index)
+void Interaction<Contact<Parameters...>>::resetComputingKernelUpdated()
 {
-    contact_relation_view_.resetComputingKernelUpdated(contact_index);
+    contact_relation_->resetComputingKernelUpdated();
 }
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 Interaction<Contact<Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : NeighborList(encloser.contact_relation_view_.getNeighborList(ex_policy, contact_index)),
-      NeighborKernel(ex_policy, encloser.contact_relation_view_.getNeighborhood(contact_index)) {}
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : NeighborList(ex_policy, *encloser.contact_relation_),
+      NeighborKernel(ex_policy, encloser.contact_relation_->getNeighborhood()) {}
 //=================================================================================================//
 template <class WallContactRelationType>
 Interaction<Wall>::Interaction(WallContactRelationType &wall_contact_relation)
 {
-    StdVec<BaseParticles *> contact_particles = wall_contact_relation.getContactParticles();
-    StdVec<SPHBody *> contact_bodies = wall_contact_relation.getContactBodies();
-    for (size_t k = 0; k != contact_particles.size(); ++k)
-    {
-        Solid &solid_material = DynamicCast<Solid>(this, contact_bodies[k]->getMatterMaterial());
-        dv_wall_vel_ave_.push_back(solid_material.AverageVelocityVariable(contact_particles[k]));
-        dv_wall_acc_ave_.push_back(solid_material.AverageAccelerationVariable(contact_particles[k]));
-        dv_wall_n_.push_back(contact_particles[k]->template getVariableByName<Vecd>("NormalDirection"));
-    }
+    BaseParticles &contact_particles = wall_contact_relation.getContactParticles();
+    SPHBody &contact_body = wall_contact_relation.getContactBody();
+    Solid &solid_material = DynamicCast<Solid>(this, contact_body.getMatterMaterial());
+    dv_wall_vel_ave_ = solid_material.AverageVelocityVariable(&contact_particles);
+    dv_wall_acc_ave_ = solid_material.AverageAccelerationVariable(&contact_particles);
+    dv_wall_n_ = contact_particles.template getVariableByName<Vecd>("NormalDirection");
 }
 //=================================================================================================//
 } // namespace SPH
