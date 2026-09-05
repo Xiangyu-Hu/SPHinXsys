@@ -42,7 +42,7 @@ class GeneralContinuum : public WeaklyCompressibleFluid, public SolidContact
     Real nu_; /* Poisson ratio  */
   public:
     explicit GeneralContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio);
-    virtual ~GeneralContinuum(){};
+    virtual ~GeneralContinuum() {};
     Real getYoungsModulus() { return E_; };
     Real getPoissonRatio() { return nu_; };
     Real ShearModulus() { return G_; };
@@ -67,6 +67,7 @@ class GeneralContinuum : public WeaklyCompressibleFluid, public SolidContact
         inline Matd updateShearStress(UnsignedInt index_i, const Matd &try_shear_stress) { return try_shear_stress; };
         inline Real ScalePenaltyForce(UnsignedInt index_i, const Matd &try_shear_stress) { return 1.0; };
         inline void updateIntactFactor(UnsignedInt index_i) {};
+        inline Vecd updateHourglassForce(UnsignedInt index_i, const Vecd &hourglass_force, const Vecd &increment) { return hourglass_force; };
         template <typename ScalingType>
         Matd NumericalDampingStress(const Matd &deformation, const Matd &deformation_rate,
                                     const ScalingType &scaling, size_t particle_index_i);
@@ -94,7 +95,7 @@ class PlasticContinuum : public GeneralContinuum
   public:
     explicit PlasticContinuum(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio,
                               Real friction_angle, Real cohesion = 0, Real dilatancy = 0);
-    virtual ~PlasticContinuum(){};
+    virtual ~PlasticContinuum() {};
     Real getDPConstantsA(Real friction_angle);
     Real getDPConstantsK(Real cohesion, Real friction_angle);
     Real getFrictionAngle() { return phi_; };
@@ -130,14 +131,14 @@ class J2Plasticity : public GeneralContinuum
     Real hardening_modulus_;
     const Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
     DiscreteVariable<Real> *dv_hardening_factor_;
-    DiscreteVariable<Real> *dv_intact_factor_; // 1 for intact, 0 for fully failed
-    DiscreteVariable<Real> *dv_p_;             // pressure for damage evaluation
-    Real failure_tension_;                     // tension failure criterion
+    DiscreteVariable<Real> *dv_intact_factor_;       // 1 for intact, 0 for fully failed
+    DiscreteVariable<Real> *dv_p_, *dv_compression_; // for damage evaluation
+    Real failure_tension_;                           // tension failure criterion
 
   public:
     explicit J2Plasticity(Real rho0, Real c0, Real youngs_modulus, Real poisson_ratio,
                           Real yield_stress, Real hardening_modulus = 0.0);
-    virtual ~J2Plasticity(){};
+    virtual ~J2Plasticity() {};
     Real YieldStress() { return yield_stress_; };
     Real HardeningModulus() { return hardening_modulus_; };
     Matd ConstitutiveRelationShearStressWithHardening(Matd &velocity_gradient, Matd &shear_stress, Real &hardening_factor);
@@ -155,26 +156,16 @@ class J2Plasticity : public GeneralContinuum
         inline Matd updateShearStress(UnsignedInt index_i, const Matd &try_shear_stress);
         inline Real ScalePenaltyForce(UnsignedInt index_i, const Matd &try_shear_stress);
         inline void updateIntactFactor(UnsignedInt index_i);
+        inline Vecd updateHourglassForce(UnsignedInt index_i, const Vecd &hourglass_force, const Vecd &increment);
 
       protected:
         Real yield_stress_;
         Real hardening_modulus_;
         Real sqrt_2_over_3_, failure_tension_;
-        Real *hardening_factor_, *intact_factor_, *p_;
+        Real *hardening_factor_, *intact_factor_, *p_, *compression_;
 
         inline Matd ReturnMapping(UnsignedInt index_i, Matd try_shear_stress);
         inline Real HardeningFactorRate(const Matd &shear_stress, Real &hardening_factor);
-    };
-
-    class EosKernel : public GeneralContinuum::EosKernel
-    {
-      public:
-        template <typename ExecutionPolicy>
-        EosKernel(const ExecutionPolicy &ex_policy, J2Plasticity &encloser);
-        Real getPressure(Real rho);
-
-      protected:
-        Real failure_tension_;
     };
 };
 } // namespace SPH

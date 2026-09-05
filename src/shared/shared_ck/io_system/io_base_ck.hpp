@@ -48,19 +48,10 @@ BodyStatesRecording &BodyStatesRecordingToVtpCK<ExecutionPolicy>::addDerivedVari
     DynamicsIdentifier &identifier, Args &&...args)
 {
     SPHBody &sph_body = identifier.getSPHBody();
-    if (isBodyIncluded(bodies_, &sph_body))
-    {
-        derived_variables_.push_back(
-            derived_variables_keeper_.createPtr<StateDynamics<ParallelPolicy, DerivedVariableMethod>>(
-                identifier, std::forward<Args>(args)...));
-    }
-    else
-    {
-        std::cout << "\n Error: the body:" << sph_body.Name()
-                  << " is not in the recording body list" << std::endl;
-        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-        exit(1);
-    }
+    checkBodyIncluded(bodies_, &sph_body);
+    derived_variables_.push_back(
+        derived_variables_keeper_.createPtr<StateDynamics<ParallelPolicy, DerivedVariableMethod>>(
+            identifier, std::forward<Args>(args)...));
     return *this;
 }
 //=================================================================================================//
