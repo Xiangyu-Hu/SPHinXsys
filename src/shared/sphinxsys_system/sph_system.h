@@ -114,9 +114,6 @@ class SPHSystem
     auto &addInnerRelation(DynamicIdentifier &identifier, Args &&...args);
 
     template <class SourceIdentifier, class TargetIdentifier, typename... Args>
-    auto &addContactRelation(SourceIdentifier &src_identifier, StdVec<TargetIdentifier *> tar_identifiers, Args &&...args);
-
-    template <class SourceIdentifier, class TargetIdentifier, typename... Args>
     auto &addContactRelation(SourceIdentifier &src_identifier, TargetIdentifier &tar_identifiers, Args &&...args);
 
     template <typename DerivedBodyType>

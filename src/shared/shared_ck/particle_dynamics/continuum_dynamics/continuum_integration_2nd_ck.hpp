@@ -114,8 +114,8 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::InteractKernel(
-        const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+        const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.correction_method_),
       riemann_(ex_policy, encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
@@ -123,9 +123,9 @@ PlasticAcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType
       compression_rate_(encloser.dv_compression_rate_->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)),
-      wall_n_(encloser.dv_wall_n_[contact_index]->DelegatedData(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)),
+      wall_vel_ave_(encloser.dv_wall_vel_ave_->DelegatedData(ex_policy)),
+      wall_n_(encloser.dv_wall_n_->DelegatedData(ex_policy)),
       velocity_gradient_(encloser.dv_velocity_gradient_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>

@@ -31,37 +31,32 @@ RepulsionForceCK<Contact<WithUpdate, Parameters...>>::
     : BaseInteractionType(identifier, std::forward<Args>(args)...),
       dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection"))
 {
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        Solid &solid = DynamicCast<Solid>(this, this->contact_bodies_[k]->getMatterMaterial());
-        contact_stiffness_.push_back(solid.ContactStiffness());
-        contact_impedance_.push_back(sqrt(solid.ReferenceDensity() * solid.ContactStiffness()));
-        dv_contact_repulsion_factor_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Real>("RepulsionFactor"));
-        dv_contact_vel_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));
-        dv_contact_n_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Vecd>("NormalDirection"));
-    }
+    Solid &solid = DynamicCast<Solid>(this, this->contact_body_->getMatterMaterial());
+    contact_stiffness_ = solid.ContactStiffness();
+    contact_impedance_ = sqrt(solid.ReferenceDensity() * solid.ContactStiffness());
+    dv_contact_repulsion_factor_ =
+        this->contact_particles_->template getVariableByName<Real>("RepulsionFactor");
+    dv_contact_vel_ = this->contact_particles_->template getVariableByName<Vecd>("Velocity");
+    dv_contact_n_ = this->contact_particles_->template getVariableByName<Vecd>("NormalDirection");
 }
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 RepulsionForceCK<Contact<WithUpdate, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
-    : BaseInteractionType::InteractKernel(ex_policy, encloser, contact_index),
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseInteractionType::InteractKernel(ex_policy, encloser),
       numerical_damping_(encloser.numerical_damping_),
-      stiffness_ave_(2.0 * encloser.stiffness_ * encloser.contact_stiffness_[contact_index] /
-                     (encloser.stiffness_ + encloser.contact_stiffness_[contact_index])),
-      impedance_(encloser.impedance_), contact_impedance_(encloser.contact_impedance_[contact_index]),
+      stiffness_ave_(2.0 * encloser.stiffness_ * encloser.contact_stiffness_ /
+                     (encloser.stiffness_ + encloser.contact_stiffness_)),
+      impedance_(encloser.impedance_), contact_impedance_(encloser.contact_impedance_),
       repulsion_factor_(encloser.dv_repulsion_factor_->DelegatedData(ex_policy)),
-      contact_repulsion_factor_(encloser.dv_contact_repulsion_factor_[contact_index]->DelegatedData(ex_policy)),
+      contact_repulsion_factor_(encloser.dv_contact_repulsion_factor_->DelegatedData(ex_policy)),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
-      contact_vel_(encloser.dv_contact_vel_[contact_index]->DelegatedData(ex_policy)),
+      contact_vel_(encloser.dv_contact_vel_->DelegatedData(ex_policy)),
       n_(encloser.dv_n_->DelegatedData(ex_policy)),
-      contact_n_(encloser.dv_contact_n_[contact_index]->DelegatedData(ex_policy)),
+      contact_n_(encloser.dv_contact_n_->DelegatedData(ex_policy)),
       repulsion_force_(encloser.dv_repulsion_force_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
@@ -96,16 +91,16 @@ RepulsionForceCK<Contact<WithUpdate, Wall, Parameters...>>::
 template <typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 RepulsionForceCK<Contact<WithUpdate, Wall, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
-    : BaseInteractionType::InteractKernel(ex_policy, encloser, contact_index),
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseInteractionType::InteractKernel(ex_policy, encloser),
       numerical_damping_(encloser.numerical_damping_),
       stiffness_(encloser.stiffness_), impedance_(encloser.impedance_),
       repulsion_factor_(encloser.dv_repulsion_factor_->DelegatedData(ex_policy)),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)),
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
-      contact_vel_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)),
-      contact_n_(encloser.dv_wall_n_[contact_index]->DelegatedData(ex_policy)),
+      contact_vel_(encloser.dv_wall_vel_ave_->DelegatedData(ex_policy)),
+      contact_n_(encloser.dv_wall_n_->DelegatedData(ex_policy)),
       repulsion_force_(encloser.dv_repulsion_force_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
