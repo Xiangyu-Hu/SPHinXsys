@@ -141,6 +141,18 @@ struct SimbodyState
                                angular_velocity_.cross(temp_velocity);
         normalInGround = rotation_ * initial_normal;
     };
+
+    void printSimbodyState()
+    {
+        std::cout << "initial_origin_location_: " << initial_origin_location_.transpose() << std::endl;
+        std::cout << "origin_location_: " << origin_location_.transpose() << std::endl;
+        std::cout << "origin_velocity_: " << origin_velocity_.transpose() << std::endl;
+        std::cout << "origin_acceleration_: " << origin_acceleration_.transpose() << std::endl;
+        std::cout << "angular_velocity_: " << angular_velocity_.transpose() << std::endl;
+        std::cout << "angular_acceleration_: " << angular_acceleration_.transpose() << std::endl;
+        std::cout << "rotation_: \n"
+                  << rotation_ << std::endl;
+    }
 };
 
 template <>
