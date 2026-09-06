@@ -161,14 +161,14 @@ are defined.
 
 	/** Creat a plate body. */
 	Plate *plate_body = new Plate(system, "PlateBody", new ParticleAdaptation(1.15, 0), new ParticleGeneratorDirect());
-	/** elastic soild material properties */
+	/** elastic solid material properties */
 	PlateMaterial *plate_material = new PlateMaterial();
 	/** Creat particles for the elastic body. */
 	ShellParticles plate_body_particles(plate_body, plate_material, PT);
 
 When defining :code:`plate_body`, four parameters are inputed.
 In :code:`ParticleAdaptation(1.15, 0)`, 1.15 is the smooth length ratio, 
-which means the cutoff radius for searching neighbor particls is 2.3 * :code:`resolution_ref`.
+which means the cutoff radius for searching neighbor particles is 2.3 * :code:`resolution_ref`.
 And 0 is global refinement level, which means the particle spacing is still :code:`resolution_ref`.
 If 0 is changed to 1, the particle spacing will be half :code:`resolution_ref`.
 And then the observer body and contact map are defined.
