@@ -117,7 +117,7 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<int>(water_block, "Indicator");
     body_states_recording.addToWrite<Real>(water_block, "Density");
     body_states_recording.addToWrite<Vecd>(wall_boundary, "NormalDirection");
-    ObservedQuantityRecording<Real> write_centerpoint_quantity("TurbulentViscosity", observer_centerpoint_contact);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>> write_centerpoint_quantity("TurbulentViscosity", observer_centerpoint_contact);
 
     sph_system.initializeSystemCellLinkedLists();
     periodic_condition_x.update_cell_linked_list_.exec();
@@ -204,6 +204,7 @@ int main(int ac, char *av[])
                           << "	Dt = " << Dt << "	dt = " << dt << "\n";
                 if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.RestartStep())
                 {
+                    observer_centerpoint_contact.updateConfiguration();
                     write_centerpoint_quantity.writeToFile(number_of_iterations);
                 }
             }
@@ -228,13 +229,13 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
     std::cout << "Total wall time for computation: " << tt.seconds()
               << " seconds." << std::endl;
-    // if (sph_system.GenerateRegressionData())
-    // {
-    //     write_centerpoint_quantity.generateDataBase(1.0e-3);
-    // }
-    // else
-    // {
-    //     write_centerpoint_quantity.testResult();
-    // }
+    if (sph_system.GenerateRegressionData())
+    {
+        write_centerpoint_quantity.generateDataBase(1.0e-3);
+    }
+    else
+    {
+        write_centerpoint_quantity.testResult();
+    }
     return 0;
 }
