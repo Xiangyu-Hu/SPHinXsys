@@ -61,74 +61,39 @@ class MultiSubdomainTag
 {
 };
 
-/**
- * @class MultiDeviceExecution
- * @brief Execution over all devices of the node, one host thread per device.
- * @details It derives from DeviceExecution so that every existing overload keyed on
- *          DeviceExecution<PolicyType> -- notably DiscreteVariable::DelegatedData and
- *          the computing kernel allocation in implementation.h -- keeps applying. The
- *          replication into per-device resources happens inside those overloads by way
- *          of execution::currentSubdomainID(), so the policy itself stays a plain tag.
- */
 template <typename PolicyType>
-class MultiDeviceExecution
-    : public DeviceExecution<PolicyType>, public MultiSubdomainTag
+class DecomposedExecution : public PolicyType, public MultiSubdomainTag
 {
 };
 
-using ParallelMultiDevicePolicy = MultiDeviceExecution<ParallelPolicy>;
-
-/**
- * @class MultiHostExecution
- * @brief Domain decomposed execution entirely on the host, one subdomain at a time or
- *        one host thread per subdomain.
- * @details Its purpose is to be a debugging vehicle for MultiDeviceExecution: the two
- *          share the decomposition, the halo exchange, the migration and every fan-out
- *          point, and differ only in where the replicas live and how a copy between
- *          them is performed. A decomposition bug therefore reproduces here, under a
- *          debugger, without a GPU and without a device toolchain.
- *
- *          It derives from PolicyType so that the existing host overloads of
- *          particle_for and exclusive_scan keep applying. It does NOT derive from
- *          DeviceExecution, so DelegatedData() resolves to the host replica overload
- *          rather than to device memory.
- */
-template <typename PolicyType>
-class MultiHostExecution
-    : public PolicyType, public MultiSubdomainTag
-{
-};
-
-using ParallelMultiHostPolicy = MultiHostExecution<ParallelPolicy>;
-/** Fully deterministic: one subdomain at a time, one particle at a time. */
-using SequencedMultiHostPolicy = MultiHostExecution<SequencedPolicy>;
+using MultiDevicePolicy = DecomposedExecution<SYCLDevicePolicy>;
+using MultiHostPolicy = DecomposedExecution<ParallelPolicy>;
+using SequencedMultiHostPolicy = DecomposedExecution<SequencedPolicy>;
 
 inline constexpr auto seq = SequencedPolicy{};
 inline constexpr auto unseq = UnsequencedPolicy{};
 inline constexpr auto par_host = ParallelPolicy{};
 inline constexpr auto par_unseq = ParallelUnsequencedPolicy{};
-inline constexpr auto par_device = ParallelDevicePolicy{};
-inline constexpr auto seq_device = SequencedDevicePolicy{};
-inline constexpr auto par_multi_device = ParallelMultiDevicePolicy{};
-inline constexpr auto par_multi_host = ParallelMultiHostPolicy{};
+inline constexpr auto multi_device = MultiDevicePolicy{};
+inline constexpr auto multi_host = MultiHostPolicy{};
 inline constexpr auto seq_multi_host = SequencedMultiHostPolicy{};
 
 #if SPHINXSYS_USE_SYCL
 #if SPHINXSYS_MULTI_DEVICE
-using MainExecutionPolicy = ParallelMultiDevicePolicy;
-inline constexpr auto par_ck = ParallelMultiDevicePolicy{};
+using MainExecutionPolicy = MultiDevicePolicy;
+inline constexpr auto par_ck = MultiDevicePolicy{};
 #else
-using MainExecutionPolicy = ParallelDevicePolicy;
-inline constexpr auto par_ck = ParallelDevicePolicy{};
+using MainExecutionPolicy = SYCLDevicePolicy;
+inline constexpr auto par_ck = SYCLDevicePolicy{};
 #endif // SPHINXSYS_MULTI_DEVICE
 #else
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
-using MainExecutionPolicy = ParallelMultiHostPolicy;
-inline constexpr auto par_ck = ParallelMultiHostPolicy{};
+#if SPHINXSYS_MULTI_HOST
+using MainExecutionPolicy = MultiHostPolicy;
+inline constexpr auto par_ck = MultiHostPolicy{};
 #else
 using MainExecutionPolicy = ParallelPolicy;
 inline constexpr auto par_ck = ParallelPolicy{};
-#endif // SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#endif // SPHINXSYS_MULTI_HOST
 #endif // SPHINXSYS_USE_SYCL
 
 } // namespace execution

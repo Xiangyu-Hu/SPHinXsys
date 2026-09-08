@@ -172,8 +172,8 @@ inline DeviceEnvironment &device_environment = DeviceEnvironment::getInstance();
 /** The device replicas live in USM of the shared context, so a copy between two of
  *  them is a queue operation rather than a host copy. Enqueued on the destination
  *  queue, matching the pull direction of the exchange protocol. */
-template <class PolicyType, class DataType>
-inline void copyBetweenSubdomains(const DeviceExecution<PolicyType> &ex_policy,
+template <class DataType>
+inline void copyBetweenSubdomains(const SYCLDevicePolicy &ex_policy,
                                   int destination_subdomain, DataType *destination,
                                   const DataType *source, std::size_t size)
 {
@@ -183,11 +183,11 @@ inline void copyBetweenSubdomains(const DeviceExecution<PolicyType> &ex_policy,
 }
 
 /** Multi-device overrides of the policy generic fan-out declared in subdomain_fan_out.h. */
-template <class PolicyType, class Body>
-inline void fanOutOverSubdomains(const MultiDeviceExecution<PolicyType> &ex_policy, const Body &body)
+template <class Body>
+inline void fanOutOverSubdomains(const MultiDevicePolicy &ex_policy, const Body &body)
 {
     device_environment.forEachSubdomain([&](int device_id)
-                                     { body(); });
+                                        { body(); });
 }
 
 /**
@@ -196,14 +196,14 @@ inline void fanOutOverSubdomains(const MultiDeviceExecution<PolicyType> &ex_poli
  * for a given decomposition; note that it still differs from the single-device result
  * by floating point association, exactly as an MPI reduction would.
  */
-template <typename Operation, class PolicyType, class ReturnType, class Body>
-inline ReturnType reduceOverSubdomains(const MultiDeviceExecution<PolicyType> &ex_policy,
-                                    ReturnType identity, const Body &body)
+template <typename Operation, class ReturnType, class Body>
+inline ReturnType reduceOverSubdomains(const MultiDevicePolicy &ex_policy,
+                                       ReturnType identity, const Body &body)
 {
     std::array<ReturnType, MaxSubdomains> partial_results;
     partial_results.fill(identity);
     device_environment.forEachSubdomain([&](int device_id)
-                                     { partial_results[device_id] = body(); });
+                                        { partial_results[device_id] = body(); });
 
     Operation operation;
     ReturnType result = identity;
