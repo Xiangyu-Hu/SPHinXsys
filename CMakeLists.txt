@@ -15,6 +15,7 @@ option(SPHINXSYS_USE_FLOAT "Build using float (single-precision floating-point f
 option(SPHINXSYS_USE_VTK "Build using VTK library for writing VTP/VTU files" OFF)
 option(SPHINXSYS_USE_SYCL "Build using SYCL acceleration or not" OFF)
 option(SPHINXSYS_USE_ONEDPL "Build with One DPL for exclusive scan and particle sorting" ON)
+option(SPHINXSYS_USE_MPI "Build with MPI for distributed-memory (multi-GPU / multi-node) runs" OFF)
 
 # ------ Global properties (Some cannot be set on INTERFACE targets)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
@@ -68,6 +69,7 @@ endif()
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_SYCL=$<BOOL:${SPHINXSYS_USE_SYCL}>)
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_FLOAT=$<BOOL:${SPHINXSYS_USE_FLOAT}>)
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_ONEDPL=$<BOOL:${SPHINXSYS_USE_ONEDPL}>)
+target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_MPI=$<BOOL:${SPHINXSYS_USE_MPI}>)
 
 # ------ Dependencies
 # ## Simbody
@@ -78,6 +80,12 @@ set(Simbody_LIBS
 )
 target_link_libraries(sphinxsys_core INTERFACE ${Simbody_LIBS})
 target_compile_definitions(sphinxsys_core INTERFACE _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING) # Because of Simbody headers
+
+# ## MPI (distributed-memory runs only)
+if(SPHINXSYS_USE_MPI)
+    find_package(MPI REQUIRED COMPONENTS CXX)
+    target_link_libraries(sphinxsys_core INTERFACE MPI::MPI_CXX)
+endif()
 
 # ## Eigen
 find_package(Eigen3 CONFIG REQUIRED)
