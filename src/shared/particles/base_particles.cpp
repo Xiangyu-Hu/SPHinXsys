@@ -15,6 +15,7 @@ BaseParticles::BaseParticles(SPHBody &sph_body)
 {
     sph_body.assignBaseParticles(this);
     sv_total_real_particles_ = registerSingleVariable<UnsignedInt>("TotalRealParticles");
+    sv_total_local_particles_ = registerSingleVariable<UnsignedInt>("TotalLocalParticles");
 }
 //=================================================================================================//
 BaseParticles::~BaseParticles() = default;
@@ -82,6 +83,7 @@ void BaseParticles::registerPositionAndVolumetricMeasureFromReload()
 void BaseParticles::initializeAllParticlesBounds(UnsignedInt number_of_particles)
 {
     sv_total_real_particles_->setValue(number_of_particles);
+    sv_total_local_particles_->setValue(number_of_particles);
     particles_bound_ = number_of_particles;
 }
 //=================================================================================================//

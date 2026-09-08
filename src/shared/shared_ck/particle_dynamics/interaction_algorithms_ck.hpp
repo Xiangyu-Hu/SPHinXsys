@@ -156,7 +156,11 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<Paramet
 {
     this->setUpdated(this->identifier_->getSPHBody());
     this->setupDynamics(dt);
-    InteractionDynamicsCK<Base>::runAllSteps(dt);
+    // One host thread per device under the multi-device policy; every nested step,
+    // including the pre- and post-processes, then stays on that device.
+    execution::fanOutOverSubdomains(
+        ExecutionPolicy{}, [&]()
+        { InteractionDynamicsCK<Base>::runAllSteps(dt); });
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
@@ -191,7 +195,11 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpd
 {
     this->setUpdated(this->identifier_->getSPHBody());
     this->setupDynamics(dt);
-    InteractionDynamicsCK<WithUpdate>::runAllSteps(dt);
+    // One host thread per device under the multi-device policy; every nested step,
+    // including the pre- and post-processes, then stays on that device.
+    execution::fanOutOverSubdomains(
+        ExecutionPolicy{}, [&]()
+        { InteractionDynamicsCK<WithUpdate>::runAllSteps(dt); });
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
@@ -246,7 +254,11 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
 {
     this->setUpdated(this->identifier_->getSPHBody());
     this->setupDynamics(dt);
-    InteractionDynamicsCK<OneLevel>::runAllSteps(dt);
+    // One host thread per device under the multi-device policy; every nested step,
+    // including the pre- and post-processes, then stays on that device.
+    execution::fanOutOverSubdomains(
+        ExecutionPolicy{}, [&]()
+        { InteractionDynamicsCK<OneLevel>::runAllSteps(dt); });
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,

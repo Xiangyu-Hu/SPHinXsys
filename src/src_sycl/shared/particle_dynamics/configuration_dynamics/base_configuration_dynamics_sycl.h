@@ -46,5 +46,11 @@ struct PlusUnsignedInt<ParallelDevicePolicy>
 {
     typedef sycl::plus<UnsignedInt> type;
 };
+
+template <>
+struct PlusUnsignedInt<ParallelMultiDevicePolicy>
+{ // the scan itself is per device, only the fan-out differs
+    typedef sycl::plus<UnsignedInt> type;
+};
 } // namespace SPH
 #endif // BASE_CONFIGURATION_DYNAMICS_SYCL_H

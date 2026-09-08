@@ -78,6 +78,8 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
     };
 
     virtual void exec(Real dt = 0.0) override;
+    /** Body of exec(), executed once per device inside the fan-out. */
+    void sortOnCurrentDevice(Real dt);
     typedef ParticleSortCK<ExecutionPolicy> LocalDynamicsType;
 
   protected:

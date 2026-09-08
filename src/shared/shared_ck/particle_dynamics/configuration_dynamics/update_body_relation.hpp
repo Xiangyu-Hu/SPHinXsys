@@ -107,6 +107,16 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
 {
+    // Neighbor lists are built for the owned particles only. Their neighbors may well
+    // be halo particles, whose indices live past the owned range of the local arrays.
+    execution::fanOutOverSubdomains(
+        ExecutionPolicy{}, [&]()
+        { this->updateOnCurrentDevice(dt); });
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename... Parameters>
+void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::updateOnCurrentDevice(Real dt)
+{
     UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
     InteractKernel *computing_kernel = kernel_implementation_.getComputingKernel();
 
@@ -222,6 +232,14 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
+{
+    execution::fanOutOverSubdomains(
+        ExecutionPolicy{}, [&]()
+        { this->updateOnCurrentDevice(dt); });
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename... Parameters>
+void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::updateOnCurrentDevice(Real dt)
 {
     UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
 

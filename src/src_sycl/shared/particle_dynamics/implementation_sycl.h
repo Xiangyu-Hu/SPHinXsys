@@ -31,6 +31,7 @@
 #define IMPLEMENTATION_SYCL_H
 
 #include "device_copyable_variable.h"
+#include "device_environment_sycl.h"
 #include "execution_policy.h"
 #include "implementation.h"
 #include "ownership.h"
@@ -40,6 +41,15 @@ namespace SPH
 {
 namespace execution
 {
+/**
+ * @class ExecutionInstance
+ * @brief Thin facade over DeviceEnvironment resolving resources for the current device.
+ * @details Everything it exposes is keyed on execution::currentSubdomainID(), which is
+ *          zero unless the calling thread entered a SubdomainScope. Single device runs
+ *          therefore behave exactly as before, while a multi-device fan-out gets the
+ *          queue and the work group size of the device it drives, without any of the
+ *          call sites having to be aware of the device at all.
+ */
 class ExecutionInstance
 {
   public:
@@ -54,24 +64,22 @@ class ExecutionInstance
 
     sycl::queue &getQueue()
     {
-        if (!sycl_queue_)
-        {
-            sycl_queue_ = makeUnique<sycl::queue>(sycl::default_selector_v);
-            auto device = sycl_queue_->get_device();
-            unsigned long max_workgroup_size = device.get_info<sycl::info::device::max_work_group_size>();
-            work_group_size_ = SMIN(max_workgroup_size, 64UL);
-        }
-        return *sycl_queue_;
+        return device_environment.getCurrentQueue();
     }
 
-    auto getWorkGroupSize() const
+    sycl::queue &getQueue(int device_id)
     {
-        return work_group_size_;
+        return device_environment.getQueue(device_id);
+    }
+
+    auto getWorkGroupSize()
+    {
+        return device_environment.getWorkGroupSize(currentSubdomainID());
     }
 
     void setWorkGroupSize(size_t work_group_size)
     {
-        work_group_size_ = work_group_size;
+        device_environment.setWorkGroupSize(currentSubdomainID(), work_group_size);
     }
 
     static inline sycl::nd_range<1> getUniformNdRange(size_t global_size, size_t local_size)
@@ -79,17 +87,14 @@ class ExecutionInstance
         return {global_size % local_size ? (global_size / local_size + 1) * local_size : global_size, local_size};
     }
 
-    inline sycl::nd_range<1> getUniformNdRange(size_t global_size) const
+    inline sycl::nd_range<1> getUniformNdRange(size_t global_size)
     {
         // sycl::nd_range is trivially-copyable, no std::move required
-        return getUniformNdRange(global_size, work_group_size_);
+        return getUniformNdRange(global_size, getWorkGroupSize());
     }
 
   private:
-    ExecutionInstance() : work_group_size_(128), sycl_queue_() {}
-
-    size_t work_group_size_;
-    UniquePtr<sycl::queue> sycl_queue_;
+    ExecutionInstance() = default;
 
 } static &execution_instance = ExecutionInstance::getInstance();
 
@@ -137,6 +142,35 @@ inline void copyFromDevice(T *host, const T *device, std::size_t size)
 {
     execution::execution_instance.getQueue().memcpy(host, device, size * sizeof(T)).wait_and_throw();
 }
+
+/* Multi-device memory utilities.
+ * All devices share one sycl::context, hence a pointer allocated for one device is a
+ * legal argument to a copy enqueued on another device's queue. Peer-to-peer traffic
+ * is therefore expressed as an ordinary memcpy on the destination queue; when the
+ * link is missing the runtime stages through the host on its own. */
+template <class T>
+inline T *allocateDeviceOnlyOn(int device_id, std::size_t size)
+{
+    auto &environment = execution::device_environment;
+    return sycl::malloc_device<T>(size, environment.getDevice(device_id), environment.getContext());
+}
+
+template <class T>
+inline T *allocateDeviceSharedOn(int device_id, std::size_t size)
+{
+    auto &environment = execution::device_environment;
+    return sycl::malloc_shared<T>(size, environment.getDevice(device_id), environment.getContext());
+}
+
+template <class T>
+inline void freeDeviceDataOn(int device_id, T *device_mem)
+{
+    sycl::free(device_mem, execution::device_environment.getContext());
+}
+
+/* Copies between two devices of the shared context go through
+ * execution::copyBetweenSubdomains(), declared in device_environment_sycl.h, so that
+ * the exchange code stays backend independent. */
 
 namespace execution
 {

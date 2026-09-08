@@ -99,6 +99,13 @@ class BaseParticles
     //----------------------------------------------------------------------
   protected:
     SingleVariable<UnsignedInt> *sv_total_real_particles_;
+    /** Real particles plus the halo copies received from neighboring subdomains.
+     *  Equal to sv_total_real_particles_ outside a domain decomposed run. The two
+     *  counts differ in what they are used for: physics is integrated over the real
+     *  (owned) particles only, whereas the cell linked list and hence the neighbor
+     *  search must also see the halo, or particles near a cut plane would lose part
+     *  of their support. */
+    SingleVariable<UnsignedInt> *sv_total_local_particles_;
     UnsignedInt particles_bound_;
 
   public:
@@ -109,6 +116,8 @@ class BaseParticles
     //----------------------------------------------------------------------
     SingleVariable<UnsignedInt> *svTotalRealParticles() { return sv_total_real_particles_; };
     UnsignedInt TotalRealParticles() { return sv_total_real_particles_->getValue(); };
+    SingleVariable<UnsignedInt> *svTotalLocalParticles() { return sv_total_local_particles_; };
+    UnsignedInt TotalLocalParticles() { return sv_total_local_particles_->getValue(); };
     UnsignedInt ParticlesBound() { return particles_bound_; };
     GroupManager &getParticleGroupManager();
     void initializeAllParticlesBounds(UnsignedInt total_real_particles);

@@ -32,6 +32,7 @@
 #include "algorithm_primitive.h"
 #include "data_type.h"
 #include "execution_policy.h"
+#include "subdomain_fan_out.h"
 
 #include <functional>
 #include <tuple>
@@ -69,6 +70,31 @@ template <>
 struct PlusUnsignedInt<ParallelPolicy>
 {
     typedef std::plus<UnsignedInt> type;
+};
+
+/** Host side decomposition: the scan itself is per subdomain, only the fan-out differs. */
+template <>
+struct PlusUnsignedInt<ParallelMultiHostPolicy>
+{
+    typedef std::plus<UnsignedInt> type;
+};
+
+template <>
+struct PlusUnsignedInt<SequencedMultiHostPolicy>
+{
+    typedef std::plus<UnsignedInt> type;
+};
+
+template <>
+struct SortMethod<ParallelMultiHostPolicy>
+{
+    typedef QuickSort type;
+};
+
+template <>
+struct SortMethod<SequencedMultiHostPolicy>
+{
+    typedef QuickSort type;
 };
 
 template <template <typename> class ContainerType>

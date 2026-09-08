@@ -75,7 +75,18 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel:
 template <class ExecutionPolicy, typename DynamicsIdentifier>
 void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::exec(Real dt)
 {
-    UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
+    // The cell linked list is built over the local particles, i.e. the ones owned by
+    // this device plus the halo received from its neighbors, so that the neighbor
+    // search of a particle close to a cut plane still finds a complete support.
+    execution::fanOutOverSubdomains(
+        ExecutionPolicy{}, [&]()
+        { this->buildOnCurrentDevice(); });
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename DynamicsIdentifier>
+void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::buildOnCurrentDevice()
+{
+    UnsignedInt total_local_particles = this->particles_->TotalLocalParticles();
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
 
     particle_for(ExecutionPolicy{},
@@ -84,7 +95,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::exec(Real dt)
                  { computing_kernel->clearAllLists(i); });
 
     particle_for(ExecutionPolicy{},
-                 IndexRange(0, total_real_particles),
+                 IndexRange(0, total_local_particles),
                  [=](size_t i)
                  { computing_kernel->incrementCellSize(i); });
 
@@ -98,7 +109,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::exec(Real dt)
                    typename PlusUnsignedInt<ExecutionPolicy>::type());
 
     particle_for(ExecutionPolicy{},
-                 IndexRange(0, total_real_particles),
+                 IndexRange(0, total_local_particles),
                  [=](size_t i)
                  { computing_kernel->updateCellList(i); });
     this->logger_->debug("UpdateCellLinkedList: updateCellList done at {}.",

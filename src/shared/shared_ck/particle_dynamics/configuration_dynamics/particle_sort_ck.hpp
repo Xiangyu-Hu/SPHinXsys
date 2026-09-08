@@ -76,6 +76,16 @@ void ParticleSortCK<ExecutionPolicy>::ComputingKernel::
 template <class ExecutionPolicy>
 void ParticleSortCK<ExecutionPolicy>::exec(Real dt)
 {
+    // Only the owned particles are sorted; the halo occupies the slots past them and
+    // is overwritten by the next exchange anyway.
+    execution::fanOutOverSubdomains(
+        ExecutionPolicy{}, [&]()
+        { this->sortOnCurrentDevice(dt); });
+}
+//=================================================================================================//
+template <class ExecutionPolicy>
+void ParticleSortCK<ExecutionPolicy>::sortOnCurrentDevice(Real dt)
+{
     UnsignedInt total_real_particles = particles_->TotalRealParticles();
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
 

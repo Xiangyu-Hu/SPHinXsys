@@ -35,6 +35,7 @@
 #include "ownership.h"
 
 #include <algorithm>
+#include <array>
 #include <iterator>
 
 namespace SPH
@@ -131,27 +132,41 @@ class DeviceSharedSingleVariable : public Quantity
 template <typename DataType>
 class SingleVariable : public Quantity
 {
-    UniquePtrKeeper<Quantity> device_shared_singular_variable_keeper_;
+    UniquePtrsKeeper<Quantity> device_shared_singular_variable_keeper_;
 
   public:
     SingleVariable(const std::string &name, const DataType &value)
-        : Quantity(name), data_(new DataType(value)), delegated_(data_) {};
+        : Quantity(name), data_(new DataType(value)) { delegated_.fill(data_); };
 
     template <typename... Args>
     SingleVariable(const std::string &name, Args &&...args)
-        : Quantity(name), data_(new DataType(std::forward<Args>(args)...)),
-          delegated_(data_){};
+        : Quantity(name), data_(new DataType(std::forward<Args>(args)...)) { delegated_.fill(data_); };
 
-    ~SingleVariable() { delete data_; };
-
-    DataType *Data() { return delegated_; };
-    void setValue(const DataType &value) { *delegated_ = value; };
-    DataType getValue() const { return *delegated_; };
-    DataType getValueWithScalingRef() const { return *delegated_ * scaling_ref_; };
-    void incrementValue(const DataType &value) { *delegated_ += value; };
+    ~SingleVariable()
+    {
+        for (DataType *replica : host_replica_)
+        {
+            delete replica;
+        }
+        delete data_;
+    };
+    //----------------------------------------------------------------------
+    // The delegate is resolved per device. In a multi-device run each device holds
+    // its own replica, since quantities such as the number of local particles
+    // differ between subdomains. When a single device is used, currentSubdomainID()
+    // is always 0 and the behavior is that of a single delegate.
+    //----------------------------------------------------------------------
+    DataType *Data() { return delegated_[currentSubdomainID()]; };
+    DataType *Data(int device_id) { return delegated_[device_id]; };
+    void setValue(const DataType &value) { *Data() = value; };
+    void setValue(int device_id, const DataType &value) { *Data(device_id) = value; };
+    DataType getValue() const { return *delegated_[currentSubdomainID()]; };
+    DataType getValue(int device_id) const { return *delegated_[device_id]; };
+    DataType getValueWithScalingRef() const { return *delegated_[currentSubdomainID()] * scaling_ref_; };
+    void incrementValue(const DataType &value) { *Data() += value; };
 
     template <class ExecutionPolicy>
-    DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
+    DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_[currentSubdomainID()]; };
 
     template <class PolicyType>
     DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy)
@@ -159,9 +174,21 @@ class SingleVariable : public Quantity
         return DelegatedOnDevice();
     };
 
+    /** Host side decomposition: each subdomain owns its own value, since counters such
+     *  as the number of local particles differ between subdomains. */
+    template <class PolicyType>
+    DataType *DelegatedData(const MultiHostExecution<PolicyType> &ex_policy)
+    {
+        return DelegatedOnHostSubdomain();
+    };
+
   protected:
     DataType *data_;
-    DataType *delegated_;
+    /** One delegate per subdomain, all initially aliasing the host data. */
+    std::array<DataType *, MaxSubdomains> delegated_;
+    /** Host replicas owned by this variable. The device replicas are owned by
+     *  DeviceSharedSingleVariable instead, hence the two separate arrays. */
+    std::array<DataType *, MaxSubdomains> host_replica_{};
     friend class DeviceSharedSingleVariable<DataType>;
 
     DataType *DelegatedOnDevice()
@@ -169,12 +196,61 @@ class SingleVariable : public Quantity
         if (!isDataDelegated())
         {
             device_shared_singular_variable_keeper_
-                .createPtr<DeviceSharedSingleVariable<DataType>>(this);
+                .template createPtr<DeviceSharedSingleVariable<DataType>>(this);
         }
-        return delegated_;
+        return delegated_[currentSubdomainID()];
     };
-    bool isDataDelegated() { return data_ != delegated_; };
-    void setDelegateData(DataType *new_delegated) { delegated_ = new_delegated; };
+    /** Mirrors DelegatedOnDevice(), with the replica in ordinary host memory. The
+     *  replicas are separate allocations rather than aliases of data_, so that the
+     *  host path reproduces the aliasing rules of the device path exactly. */
+    DataType *DelegatedOnHostSubdomain()
+    {
+        const int subdomain_id = currentSubdomainID();
+        if (!isDataDelegated())
+        {
+            host_replica_[subdomain_id] = new DataType(*data_);
+            delegated_[subdomain_id] = host_replica_[subdomain_id];
+        }
+        return delegated_[subdomain_id];
+    };
+
+    bool isDataDelegated() { return data_ != delegated_[currentSubdomainID()]; };
+    bool isDataDelegated(int subdomain_id) { return data_ != delegated_[subdomain_id]; };
+    void setDelegateData(DataType *new_delegated) { delegated_[currentSubdomainID()] = new_delegated; };
+};
+
+/**
+ * @class HostOnlyDiscreteVariable
+ * @brief Host memory replica of a discrete variable, one per subdomain.
+ * @details The host counterpart of DeviceOnlyDiscreteVariable, deliberately given the
+ *          same shape and the same lifetime rules. Under a host side decomposition the
+ *          replicas hold disjoint particle sets, exactly as the device replicas do, and
+ *          the variable's own data_ array is only used as staging for scatter, gather
+ *          and I/O. Keeping the two classes symmetric is what makes a bug found on the
+ *          host path the same bug as on the device path.
+ */
+template <typename DataType>
+class HostOnlyDiscreteVariable : public Quantity
+{
+  public:
+    explicit HostOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable)
+        : Quantity(host_variable->Name()), host_only_data_(nullptr)
+    {
+        const UnsignedInt total_size = host_variable->getTotalSize();
+        host_only_data_ = new DataType[total_size];
+        std::copy(host_variable->Data(), host_variable->Data() + total_size, host_only_data_);
+    };
+    ~HostOnlyDiscreteVariable() { delete[] host_only_data_; };
+
+    void reallocateData(DiscreteVariable<DataType> *host_variable)
+    {
+        delete[] host_only_data_;
+        host_only_data_ = new DataType[host_variable->getTotalSize()];
+    };
+    DataType *HostOnlyDataField() { return host_only_data_; };
+
+  protected:
+    DataType *host_only_data_;
 };
 
 template <typename DataType>
@@ -197,7 +273,7 @@ struct MultiEntryTag
 template <typename DataType>
 class DiscreteVariable : public Quantity
 {
-    UniquePtrKeeper<Quantity> device_only_variable_keeper_;
+    UniquePtrsKeeper<Quantity> subdomain_replica_keeper_;
 
   public:
     typedef DataType ContainedDataType;
@@ -289,6 +365,13 @@ class DiscreteVariable : public Quantity
         return DelegatedOnDevice();
     };
 
+    /** Host side decomposition: the replica of the subdomain bound to this thread. */
+    template <class PolicyType>
+    DataType *DelegatedData(const MultiHostExecution<PolicyType> &ex_policy)
+    {
+        return DelegatedOnHostSubdomain();
+    };
+
     template <class ExecutionPolicy>
     DataView<DataType> DelegatedDataView(const ExecutionPolicy &ex_policy)
     {
@@ -348,6 +431,43 @@ class DiscreteVariable : public Quantity
         }
     };
 
+    template <class PolicyType>
+    void reallocateData(const MultiHostExecution<PolicyType> &ex_policy, UnsignedInt tentative_size)
+    {
+        if (size_ < tentative_size)
+        {
+            reallocateData(tentative_size);
+            for (int subdomain_id = 0; subdomain_id < numberOfSubdomains(); ++subdomain_id)
+            {
+                if (host_only_variable_[subdomain_id] != nullptr)
+                {
+                    host_only_variable_[subdomain_id]->reallocateData(this);
+                }
+            }
+        }
+    };
+
+    /** Stage the replica of the given subdomain into, or out of, the host data array.
+     *  The device path does the same over PCIe; here it is a copy, which is precisely
+     *  why scatter and gather are cheap to debug on this path. */
+    void synchronizeWithHostSubdomain(int subdomain_id)
+    {
+        if (host_only_variable_[subdomain_id] != nullptr)
+        {
+            DataType *replica = host_only_variable_[subdomain_id]->HostOnlyDataField();
+            std::copy(replica, replica + getTotalSize(), data_);
+        }
+    };
+
+    void synchronizeToHostSubdomain(int subdomain_id)
+    {
+        if (host_only_variable_[subdomain_id] != nullptr)
+        {
+            std::copy(data_, data_ + getTotalSize(),
+                      host_only_variable_[subdomain_id]->HostOnlyDataField());
+        }
+    };
+
     template <class ExecutionPolicy>
     void prepareForOutput(const ExecutionPolicy &ex_policy) {};
     void prepareForOutput(const ParallelDevicePolicy &ex_policy) { synchronizeWithDevice(); };
@@ -360,11 +480,30 @@ class DiscreteVariable : public Quantity
     UnsignedInt size_, width_;
     StdVec<std::string> entry_names_;
     DataType *data_;
-    DeviceOnlyDiscreteVariable<DataType> *device_only_variable_ = nullptr;
+    /** One device-only allocation per device. In a multi-device run the replicas hold
+     *  disjoint particle sets (the subdomain owned by that device plus its halo), not
+     *  copies of one global array; the host data_ is only used as I/O staging. */
+    std::array<DeviceOnlyDiscreteVariable<DataType> *, MaxSubdomains> device_only_variable_{};
+    /** The host side counterpart, used by MultiHostExecution policies. */
+    std::array<HostOnlyDiscreteVariable<DataType> *, MaxSubdomains> host_only_variable_{};
     friend class DeviceOnlyDiscreteVariable<DataType>;
+    friend class HostOnlyDiscreteVariable<DataType>;
 
     DataType *DelegatedOnDevice();
-    bool isDataDelegated() { return device_only_variable_ != nullptr; };
+    bool isDataDelegated() { return device_only_variable_[currentSubdomainID()] != nullptr; };
+    bool isDataDelegated(int subdomain_id) { return device_only_variable_[subdomain_id] != nullptr; };
+
+    DataType *DelegatedOnHostSubdomain()
+    {
+        const int subdomain_id = currentSubdomainID();
+        if (host_only_variable_[subdomain_id] == nullptr)
+        {
+            host_only_variable_[subdomain_id] =
+                subdomain_replica_keeper_
+                    .template createPtr<HostOnlyDiscreteVariable<DataType>>(this);
+        }
+        return host_only_variable_[subdomain_id]->HostOnlyDataField();
+    };
 
     void reallocateData(UnsignedInt tentative_size)
     {
@@ -374,6 +513,11 @@ class DiscreteVariable : public Quantity
     };
 
     void reallocateDataOnDevice(UnsignedInt tentative_size);
+
+  public:
+    /** Host staging of the replica held by the current device. In a multi-device run
+     *  these only make sense inside a SubdomainScope, or through the gather routines of
+     *  the domain decomposition, which assemble the global field for I/O. */
     void synchronizeWithDevice();
     void synchronizeToDevice();
 };

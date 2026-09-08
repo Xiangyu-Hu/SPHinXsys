@@ -30,7 +30,10 @@
 #ifndef BASE_IMPLEMENTATION_H
 #define BASE_IMPLEMENTATION_H
 
+#include "subdomain_scope.h"
 #include "sphinxsys_containers.h"
+
+#include <array>
 
 namespace SPH
 {
@@ -46,12 +49,16 @@ class Implementation<Base>
     explicit Implementation() {}
     ~Implementation() {}
 
-    bool isUpdated() { return is_updated_; };
-    void resetUpdated() { is_updated_ = false; };
+    /** The freshness of a computing kernel is tracked per device: each device holds
+     *  its own kernel replica, pointing at its own subdomain data. */
+    bool isUpdated() { return is_updated_[currentSubdomainID()]; };
+    /** Invalidation is global, since it follows a configuration change that affects
+     *  every device. It is called from the host thread, outside any SubdomainScope. */
+    void resetUpdated() { is_updated_.fill(false); };
 
   protected:
-    bool is_updated_ = false;
-    void setUpdated() { is_updated_ = true; };
+    std::array<bool, MaxSubdomains> is_updated_{};
+    void setUpdated() { is_updated_[currentSubdomainID()] = true; };
 };
 
 } // namespace execution

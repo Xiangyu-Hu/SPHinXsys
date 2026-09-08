@@ -34,6 +34,7 @@
 #include "execution_policy.h"
 #include "ownership.h"
 
+#include <array>
 #include <cstdlib>
 #include <utility>
 
@@ -97,27 +98,43 @@ template <class ExecutionPolicy, class LocalDynamicsType, class ComputingKernelT
 class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
     : public Implementation<Base>
 {
-    UniquePtrKeeper<ComputingKernelType> kernel_keeper_;
+    /** One staging kernel per device: the device threads of a multi-device fan-out
+     *  construct their kernels concurrently and must not share the staging slot. */
+    std::array<UniquePtrKeeper<ComputingKernelType>, MaxSubdomains> kernel_keeper_;
 
   public:
     explicit Implementation(LocalDynamicsType &local_dynamics)
-        : Implementation<Base>(), local_dynamics_(local_dynamics),
-          computing_kernel_(nullptr) {}
+        : Implementation<Base>(), local_dynamics_(local_dynamics)
+    {
+        computing_kernel_.fill(nullptr);
+    }
     ~Implementation()
     {
-        freeComputingKernel(ExecutionPolicy{}, computing_kernel_);
+        for (int device_id = 0; device_id < numberOfSubdomains(); ++device_id)
+        {
+            if (computing_kernel_[device_id] != nullptr)
+            {
+                SubdomainScope scope(device_id);
+                freeComputingKernel(ExecutionPolicy{}, computing_kernel_[device_id]);
+            }
+        }
     }
 
+    /** Resolved for the device bound to the calling thread. The kernel constructor
+     *  calls DelegatedData() on the variables it reads, which resolves to the same
+     *  device, so the replica is consistently bound to one subdomain. */
     template <typename... Args>
     ComputingKernelType *getComputingKernel(Args &&...args)
     {
-        if (computing_kernel_ == nullptr)
+        const int device_id = currentSubdomainID();
+        if (computing_kernel_[device_id] == nullptr)
         {
-            computing_kernel_ = allocateComputingKernel<ComputingKernelType>(ExecutionPolicy{});
+            computing_kernel_[device_id] =
+                allocateComputingKernel<ComputingKernelType>(ExecutionPolicy{});
             ComputingKernelType *temp_kernel =
-                kernel_keeper_.template createPtr<ComputingKernelType>(
+                kernel_keeper_[device_id].template createPtr<ComputingKernelType>(
                     ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
-            copyComputingKernel(ExecutionPolicy{}, temp_kernel, computing_kernel_);
+            copyComputingKernel(ExecutionPolicy{}, temp_kernel, computing_kernel_[device_id]);
             this->setUpdated();
         }
 
@@ -126,22 +143,23 @@ class Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernelType>
             overwriteComputingKernel(std::forward<Args>(args)...);
         }
 
-        return computing_kernel_;
+        return computing_kernel_[device_id];
     }
 
     template <typename... Args>
     void overwriteComputingKernel(Args &&...args)
     {
+        const int device_id = currentSubdomainID();
         ComputingKernelType *temp_kernel =
-            kernel_keeper_.template createPtr<ComputingKernelType>(
+            kernel_keeper_[device_id].template createPtr<ComputingKernelType>(
                 ExecutionPolicy{}, this->local_dynamics_, std::forward<Args>(args)...);
-        copyComputingKernel(ExecutionPolicy{}, temp_kernel, computing_kernel_);
+        copyComputingKernel(ExecutionPolicy{}, temp_kernel, computing_kernel_[device_id]);
         this->setUpdated();
     }
 
   protected:
     LocalDynamicsType &local_dynamics_;
-    ComputingKernelType *computing_kernel_;
+    std::array<ComputingKernelType *, MaxSubdomains> computing_kernel_;
 };
 } // namespace execution
 } // namespace SPH
