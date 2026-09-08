@@ -56,13 +56,8 @@ class SYCLDevicePolicy
 {
 };
 
-/** Tag identifying policies which fan out over the subdomains of a decomposed run. */
-class MultiSubdomainTag
-{
-};
-
 template <typename PolicyType>
-class DecomposedExecution : public PolicyType, public MultiSubdomainTag
+class DecomposedExecution : public PolicyType
 {
 };
 
