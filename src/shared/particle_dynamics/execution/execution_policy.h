@@ -52,22 +52,9 @@ class ParallelUnsequencedPolicy
 {
 };
 
-template <typename...>
-class DeviceExecution;
-
-template <>
-class DeviceExecution<>
+class SYCLDevicePolicy
 {
 };
-
-template <typename PolicyType>
-class DeviceExecution<PolicyType>
-    : public DeviceExecution<>, public PolicyType
-{
-};
-
-using ParallelDevicePolicy = DeviceExecution<ParallelPolicy>;
-using SequencedDevicePolicy = DeviceExecution<SequencedPolicy>;
 
 /** Tag identifying policies which fan out over the subdomains of a decomposed run. */
 class MultiSubdomainTag

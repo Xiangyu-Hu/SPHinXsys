@@ -61,7 +61,7 @@ class DeviceOnlyVariableArray : public Quantity
 {
   public:
     template <class PolicyType>
-    DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
+    DeviceOnlyVariableArray(const SYCLDevicePolicy &ex_policy,
                             VariableArray<DataType> *host_variable_array);
     ~DeviceOnlyVariableArray();
     MultiEntryView<DataType> *DeviceOnlyMultiEntryView() { return device_only_multi_entry_view_; };
@@ -101,7 +101,7 @@ class VariableArray : public Quantity
     };
 
     template <class PolicyType>
-    VariableArrayView<DataType> DelegatedVariableArrayView(const DeviceExecution<PolicyType> &ex_policy)
+    VariableArrayView<DataType> DelegatedVariableArrayView(const SYCLDevicePolicy &ex_policy)
     {
         return VariableArrayView<DataType>(DelegatedOnDevice<PolicyType>(), array_size_);
     };

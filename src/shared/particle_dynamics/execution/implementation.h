@@ -74,13 +74,13 @@ template <class ComputingKernelType>
 inline void freeComputingKernelOnDevice(ComputingKernelType *device_kernel);
 
 template <class ComputingKernelType, class PolicyType>
-inline ComputingKernelType *allocateComputingKernel(const DeviceExecution<PolicyType> &ex_policy)
+inline ComputingKernelType *allocateComputingKernel(const SYCLDevicePolicy &ex_policy)
 {
     return allocateComputingKernelOnDevice<ComputingKernelType>();
 }
 
 template <class PolicyType, class ComputingKernelType>
-inline void copyComputingKernel(const DeviceExecution<PolicyType> &ex_policy,
+inline void copyComputingKernel(const SYCLDevicePolicy &ex_policy,
                                 ComputingKernelType *temp_kernel,
                                 ComputingKernelType *computing_kernel)
 {
@@ -88,7 +88,7 @@ inline void copyComputingKernel(const DeviceExecution<PolicyType> &ex_policy,
 }
 
 template <class PolicyType, class ComputingKernelType>
-inline void freeComputingKernel(const DeviceExecution<PolicyType> &ex_policy,
+inline void freeComputingKernel(const SYCLDevicePolicy &ex_policy,
                                 ComputingKernelType *computing_kernel)
 {
     freeComputingKernelOnDevice(computing_kernel);

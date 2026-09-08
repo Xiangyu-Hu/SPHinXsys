@@ -9,12 +9,12 @@ namespace SPH
 //=================================================================================================//
 template <typename DataType>
 template <class PolicyType>
-DataType *ConstantArray<DataType>::DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy)
+DataType *ConstantArray<DataType>::DelegatedOnDevice(const SYCLDevicePolicy &ex_policy)
 {
     if (!isDataDelegated())
     {
         device_only_constant_array_keeper_
-            .createPtr<DeviceOnlyConstantArray<DataType>>(DeviceExecution<PolicyType>{}, this);
+            .createPtr<DeviceOnlyConstantArray<DataType>>(SYCLDevicePolicy{}, this);
     }
     return delegated_;
 };
@@ -22,7 +22,7 @@ DataType *ConstantArray<DataType>::DelegatedOnDevice(const DeviceExecution<Polic
 template <typename DataType>
 template <class PolicyType>
 DeviceOnlyConstantArray<DataType>::DeviceOnlyConstantArray(
-    const DeviceExecution<PolicyType> &ex_policy, ConstantArray<DataType> *host_constant)
+    const SYCLDevicePolicy &ex_policy, ConstantArray<DataType> *host_constant)
     : Quantity(host_constant->Name()), device_only_data_(nullptr)
 {
     size_t data_size = host_constant->getSize();
@@ -41,12 +41,12 @@ DeviceOnlyConstantArray<DataType>::~DeviceOnlyConstantArray()
 template <typename GeneratorType, typename ComputingKernelType>
 template <class PolicyType>
 ComputingKernelType *ComputingKernelArray<GeneratorType, ComputingKernelType>::DelegatedOnDevice(
-    const DeviceExecution<PolicyType> &ex_policy)
+    const SYCLDevicePolicy &ex_policy)
 {
     if (!isDataDelegated())
     {
         device_only_kernel_array_keeper_.createPtr<DeviceOnlyComputingKernelArray<
-            GeneratorType, ComputingKernelType>>(DeviceExecution<PolicyType>{}, this);
+            GeneratorType, ComputingKernelType>>(SYCLDevicePolicy{}, this);
     }
     return delegated_;
 }
@@ -54,7 +54,7 @@ ComputingKernelType *ComputingKernelArray<GeneratorType, ComputingKernelType>::D
 template <typename GeneratorType, typename ComputingKernelType>
 template <class PolicyType>
 DeviceOnlyComputingKernelArray<GeneratorType, ComputingKernelType>::DeviceOnlyComputingKernelArray(
-    const DeviceExecution<PolicyType> &ex_policy,
+    const SYCLDevicePolicy &ex_policy,
     ComputingKernelArray<GeneratorType, ComputingKernelType> *host_constant)
     : Quantity(host_constant->Name()), device_only_data_(nullptr)
 {
