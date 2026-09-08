@@ -154,7 +154,7 @@ class SingleVariable : public Quantity
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
 
     template <class PolicyType>
-    DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy)
+    DataType *DelegatedData(const SYCLDevicePolicy &ex_policy)
     {
         return DelegatedOnDevice();
     };
@@ -284,7 +284,7 @@ class DiscreteVariable : public Quantity
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return data_; };
 
     template <class PolicyType>
-    DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy)
+    DataType *DelegatedData(const SYCLDevicePolicy &ex_policy)
     {
         return DelegatedOnDevice();
     };
@@ -340,7 +340,7 @@ class DiscreteVariable : public Quantity
         }
     };
 
-    void reallocateData(const ParallelDevicePolicy &par_device, UnsignedInt tentative_size)
+    void reallocateData(const SYCLDevicePolicy &sycl_device, UnsignedInt tentative_size)
     {
         if (size_ < tentative_size)
         {
@@ -350,11 +350,11 @@ class DiscreteVariable : public Quantity
 
     template <class ExecutionPolicy>
     void prepareForOutput(const ExecutionPolicy &ex_policy) {};
-    void prepareForOutput(const ParallelDevicePolicy &ex_policy) { synchronizeWithDevice(); };
+    void prepareForOutput(const SYCLDevicePolicy &ex_policy) { synchronizeWithDevice(); };
 
     template <class ExecutionPolicy>
     void finalizeLoadIn(const ExecutionPolicy &ex_policy) {};
-    void finalizeLoadIn(const ParallelDevicePolicy &ex_policy) { synchronizeToDevice(); };
+    void finalizeLoadIn(const SYCLDevicePolicy &ex_policy) { synchronizeToDevice(); };
 
   private:
     UnsignedInt size_, width_;

@@ -22,7 +22,7 @@ TEST(exclusive_scan, test_sycl)
     UnsignedInt *device_list_data = allocateDeviceOnly<UnsignedInt>(list_size);
     UnsignedInt *device_result = allocateDeviceOnly<UnsignedInt>(list_size);
     copyToDevice(list_data, device_list_data, list_size);
-    UnsignedInt sycl_sum = exclusive_scan(ParallelDevicePolicy{}, device_list_data, device_result, list_size, PlusUnsignedInt<ParallelDevicePolicy>::type());
+    UnsignedInt sycl_sum = exclusive_scan(SYCLDevicePolicy{}, device_list_data, device_result, list_size, PlusUnsignedInt<SYCLDevicePolicy>::type());
     copyFromDevice(sycl_result.data(), device_result, list_size);
 
     freeDeviceData(device_list_data);

@@ -14,7 +14,7 @@ MultiEntryView<DataType> *VariableArray<DataType>::DelegatedOnDevice()
     if (!isVariableArrayViewDelegated())
     {
         device_only_variable_array_ = device_only_variable_array_keeper_.createPtr<
-            DeviceOnlyVariableArray<DataType>>(DeviceExecution<PolicyType>{}, this);
+            DeviceOnlyVariableArray<DataType>>(SYCLDevicePolicy{}, this);
     }
     return device_only_variable_array_->DeviceOnlyMultiEntryView();
 }
@@ -22,7 +22,7 @@ MultiEntryView<DataType> *VariableArray<DataType>::DelegatedOnDevice()
 template <typename DataType>
 template <class PolicyType>
 DeviceOnlyVariableArray<DataType>::
-    DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
+    DeviceOnlyVariableArray(const SYCLDevicePolicy &ex_policy,
                             VariableArray<DataType> *host_variable_array)
     : Quantity(host_variable_array->Name()), device_only_multi_entry_view_(nullptr)
 {
