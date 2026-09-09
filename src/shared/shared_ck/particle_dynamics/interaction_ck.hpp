@@ -9,11 +9,17 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename... Parameters>
-Interaction<Inner<Parameters...>>::
-    Interaction(InnerRelationType &inner_relation)
+Interaction<Inner<Parameters...>>::Interaction(InnerRelationType &inner_relation)
     : BaseLocalDynamicsType(inner_relation.getDynamicsIdentifier()),
       inner_relation_(&inner_relation),
       dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")) {}
+//=================================================================================================//
+template <typename... Parameters>
+template <typename DataType>
+void Interaction<Inner<Parameters...>>::addInteractVariable(DiscreteVariable<DataType> *variable)
+{
+    addVariableToList<DiscreteVariable, DataType>(interact_variables_, variable);
+}
 //=================================================================================================//
 template <typename... Parameters>
 void Interaction<Inner<Parameters...>>::
@@ -46,6 +52,15 @@ Interaction<Contact<Parameters...>>::Interaction(Contact<Parameters...> &contact
       dv_contact_Vol_(
           contact_particles_->template getVariableByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
+template <typename... Parameters>
+template <typename DataType>
+void Interaction<Contact<Parameters...>>::addContactInteractVariable(
+    DiscreteVariable<DataType> *contact_variable)
+{
+    addVariableToList<DiscreteVariable, DataType>(contact_interact_variables_, variable);
+}
+//=================================================================================================//
+
 template <typename... Parameters>
 void Interaction<Contact<Parameters...>>::registerComputingKernel(Implementation<Base> *implementation)
 {
