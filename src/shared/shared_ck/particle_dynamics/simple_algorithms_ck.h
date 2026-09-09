@@ -54,25 +54,15 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
     template <typename... Args>
     StateDynamics(Args &&...args)
         : UpdateType(std::forward<Args>(args)...),
-          BaseDynamics<void>(), kernel_implementation_(*this), finish_dynamics_(*this){};
+          BaseDynamics<void>(), kernel_implementation_(*this), finish_dynamics_(*this) {};
     virtual ~StateDynamics() {};
 
     virtual void exec(Real dt = 0.0) override
     {
         this->setUpdated(this->identifier_->getSPHBody());
         this->setupDynamics(dt);
-        // Under a multi-device policy the body below runs once per device, on that
-        // device's host thread; the computing kernel and the loop range then resolve
-        // to the subdomain replica of that device.
-        execution::fanOutOverSubdomains(
-            ExecutionPolicy{},
-            [&]()
-            {
-                UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-                particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
-                             [=](size_t i)
-                             { update_kernel->update(i, dt); });
-            });
+        particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
+                     kernel_implementation_, dt);
 
         finish_dynamics_();
 
@@ -105,7 +95,7 @@ class ReduceDynamicsCK : public ReduceType,
     ReduceDynamicsCK(Args &&...args)
         : ReduceType(std::forward<Args>(args)...),
           BaseDynamics<OutputType>(), kernel_implementation_(*this),
-          reduced_value_(this->reference_), finish_dynamics_(*this){};
+          reduced_value_(this->reference_), finish_dynamics_(*this) {};
     virtual ~ReduceDynamicsCK() {};
     std::string QuantityName() { return this->quantity_name_; };
     ReduceReturnType ReducedValue() { return reduced_value_; };
@@ -113,20 +103,9 @@ class ReduceDynamicsCK : public ReduceType,
     virtual OutputType exec(Real dt = 0.0) override
     {
         this->setupDynamics(dt);
-        // Each device reduces over the particles it owns; reduceOverSubdomains() combines
-        // the partial results. Halo particles are excluded by construction, so no
-        // contribution is counted twice.
-        reduced_value_ = execution::reduceOverSubdomains<Operation>(
-            ExecutionPolicy{}, this->reference_,
-            [&]()
-            {
-                ReduceKernel *reduce_kernel = kernel_implementation_.getComputingKernel();
-                return particle_reduce<Operation>(
-                    LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
-                    this->reference_,
-                    [=](size_t i)
-                    { return reduce_kernel->reduce(i, dt); });
-            });
+        reduced_value_ = particle_reduce<Operation>(
+            LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
+            this->reference_, kernel_implementation_, dt);
 
         this->logger_->debug(
             "ReduceDynamicsCK::exec() for {} at {}",

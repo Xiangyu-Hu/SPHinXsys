@@ -105,7 +105,7 @@ DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrectionType
 //=================================================================================================//
 template <class DiffusionType, class KernelCorrectionType, class... Parameters>
 void DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrectionType, Parameters...>>::
-    InteractKernel::interact(UnsignedInt index_i, Real dt)
+    InteractKernel::compute(UnsignedInt index_i, Real dt)
 {
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
@@ -154,7 +154,7 @@ DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, Kern
 template <class DiffusionType, template <typename...> class BoundaryType,
           class KernelCorrectionType, class... Parameters>
 void DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>::
-    InteractKernel::interact(UnsignedInt index_i, Real dt)
+    InteractKernel::compute(UnsignedInt index_i, Real dt)
 {
     for (UnsignedInt m = 0; m < contact_transfer_.Width(); ++m)
     {
@@ -192,7 +192,7 @@ DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 void DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
-    InitializeKernel::initialize(UnsignedInt index_i, Real dt)
+    InitializeKernel::compute(UnsignedInt index_i, Real dt)
 {
     for (UnsignedInt m = 0; m < species_dt_.Width(); ++m)
     {
@@ -210,7 +210,7 @@ DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 void DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionParameters...>>::
-    UpdateKernel::update(UnsignedInt index_i, Real dt)
+    UpdateKernel::compute(UnsignedInt index_i, Real dt)
 {
     for (UnsignedInt m = 0; m < species_.Width(); ++m)
     {
@@ -235,9 +235,9 @@ DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta1stStage, InteractionPara
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 void DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta1stStage, InteractionParameters...>>::
-    InitializeKernel::initialize(UnsignedInt index_i, Real dt)
+    InitializeKernel::compute(UnsignedInt index_i, Real dt)
 {
-    BaseDynamicsType::InitializeKernel::initialize(index_i, dt);
+    BaseDynamicsType::InitializeKernel::compute(index_i, dt);
 
     for (UnsignedInt m = 0; m < this->species_.Width(); ++m)
     {
@@ -262,9 +262,9 @@ DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta2ndStage, InteractionPara
 //=================================================================================================//
 template <template <typename...> class RelationType, class... InteractionParameters>
 void DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta2ndStage, InteractionParameters...>>::
-    UpdateKernel::update(UnsignedInt index_i, Real dt)
+    UpdateKernel::compute(UnsignedInt index_i, Real dt)
 {
-    BaseDynamicsType::UpdateKernel::update(index_i, dt);
+    BaseDynamicsType::UpdateKernel::compute(index_i, dt);
     for (UnsignedInt m = 0; m < this->species_.Width(); ++m)
     {
         species_[index_i][m] = 0.5 * species_s_[index_i][m] + 0.5 * species_[index_i][m];

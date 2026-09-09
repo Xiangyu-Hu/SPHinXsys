@@ -25,7 +25,7 @@ FixConstraintCK<DynamicsIdentifier>::UpdateKernel::UpdateKernel(
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class DynamicsIdentifier>
-void FixConstraintCK<DynamicsIdentifier>::UpdateKernel::update(size_t index_i, Real dt)
+void FixConstraintCK<DynamicsIdentifier>::UpdateKernel::compute(size_t index_i, Real dt)
 {
     pos_[index_i] = pos0_[index_i];
     vel_[index_i] = Vecd::Zero();
