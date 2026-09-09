@@ -66,10 +66,11 @@ void particle_for(const LoopRangeCK<SYCLDevicePolicy, Identifier> &loop_range,
         .wait_and_throw();
 }
 
-template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
+template <typename Operation, class Identifier, class ReturnType, class KernelImplementationType>
 ReturnType particle_reduce(const LoopRangeCK<SYCLDevicePolicy, Identifier> &loop_range,
-                           ReturnType temp, const UnaryFunc &unary_func)
+                           ReturnType temp, KernelImplementationType &implementation, Real dt)
 {
+    auto reduce_kernel = implementation.getComputingKernel();
     auto &sycl_queue = execution_instance.getQueue();
     const size_t loop_bound = loop_range.LoopBound();
     ReturnType temp0 = temp;
@@ -86,7 +87,9 @@ ReturnType particle_reduce(const LoopRangeCK<SYCLDevicePolicy, Identifier> &loop
                                                  {
                                                      if (item.get_global_id() < loop_bound)
                                                          reduction.combine(loop_range.computeUnit(
-                                                             acc[0], operation, unary_func, item.get_global_id(0)));
+                                                             acc[0], operation, 
+                                                             [=](size_t i){ return reduce_kernel->reduce(i, dt); }, 
+                                                             item.get_global_id(0)));
                                                  }); })
             .wait_and_throw();
     } // buffer_result goes out of scope, so the result (of temp) is updated

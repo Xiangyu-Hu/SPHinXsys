@@ -66,23 +66,29 @@ void particle_for(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
         ap);
 };
 
-template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
+template <typename Operation, class Identifier, class ReturnType, class KernelImplementationType>
 ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, Identifier> &loop_range,
-                           ReturnType temp, const UnaryFunc &unary_func)
+                           ReturnType temp, KernelImplementationType &implementation, Real dt)
 {
+    auto reduce_kernel = implementation.getComputingKernel();
     Operation operation;
     ReturnType temp0 = temp;
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
     {
-        temp0 = operation(temp0, loop_range.computeUnit(temp, operation, unary_func, i));
+        temp0 = operation(
+            temp0, loop_range.computeUnit(
+                       temp, operation,
+                       [=](size_t i)
+                       { return reduce_kernel->reduce(i, dt); }, i));
     }
     return temp0;
 }
 
-template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
+template <typename Operation, class Identifier, class ReturnType, class KernelImplementationType>
 ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
-                           ReturnType temp, const UnaryFunc &unary_func)
+                           ReturnType temp, KernelImplementationType &implementation, Real dt)
 {
+    auto reduce_kernel = implementation.getComputingKernel();
     Operation operation;
     return tbb::parallel_reduce(
         IndexRange(0, loop_range.LoopBound()), temp,
@@ -90,7 +96,10 @@ ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, Identifier> &loop_r
         {
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					temp0 = operation(temp0, loop_range.computeUnit(temp, operation, unary_func, i));
+					temp0 = operation(temp0, loop_range.computeUnit(
+                        temp, operation,                         
+                        [=](size_t i)
+                       { return reduce_kernel->reduce(i, dt); }, i));
 				}
 				return temp0; },
         [&](const ReturnType &x, const ReturnType &y) -> ReturnType
