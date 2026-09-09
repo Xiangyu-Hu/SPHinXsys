@@ -83,13 +83,13 @@ class ConstantArray : public Quantity
     DataType *Data() { return data_; };
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
-    template <class PolicyType>
     DataType *DelegatedOnDevice(const SYCLDevicePolicy &ex_policy);
-    template <class PolicyType>
+
     DataType *DelegatedData(const SYCLDevicePolicy &ex_policy)
     {
         return DelegatedOnDevice(ex_policy);
     };
+
     template <class ExecutionPolicy>
     ArrayView<DataType> DelegatedArrayView(const ExecutionPolicy &ex_policy)
     {
@@ -108,7 +108,6 @@ template <typename DataType>
 class DeviceOnlyConstantArray : public Quantity
 {
   public:
-    template <class PolicyType>
     DeviceOnlyConstantArray(const SYCLDevicePolicy &ex_policy,
                             ConstantArray<DataType> *host_constant);
     ~DeviceOnlyConstantArray();
@@ -140,9 +139,7 @@ class ComputingKernelArray : public Quantity
     StdVec<GeneratorType *> getGenerators() { return generators_; }
     template <class ExecutionPolicy>
     ComputingKernelType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
-    template <class PolicyType>
     ComputingKernelType *DelegatedOnDevice(const SYCLDevicePolicy &ex_policy);
-    template <class PolicyType>
     ComputingKernelType *DelegatedData(const SYCLDevicePolicy &ex_policy)
     {
         return DelegatedOnDevice(ex_policy);
@@ -165,7 +162,6 @@ template <typename GeneratorType, typename ComputingKernelType>
 class DeviceOnlyComputingKernelArray : public Quantity
 {
   public:
-    template <class PolicyType>
     DeviceOnlyComputingKernelArray(
         const SYCLDevicePolicy &ex_policy,
         ComputingKernelArray<GeneratorType, ComputingKernelType> *host_constant);

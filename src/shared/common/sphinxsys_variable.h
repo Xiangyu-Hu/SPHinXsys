@@ -153,7 +153,6 @@ class SingleVariable : public Quantity
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
 
-    template <class PolicyType>
     DataType *DelegatedData(const SYCLDevicePolicy &ex_policy)
     {
         return DelegatedOnDevice();
@@ -282,8 +281,7 @@ class DiscreteVariable : public Quantity
 
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return data_; };
-
-    template <class PolicyType>
+    
     DataType *DelegatedData(const SYCLDevicePolicy &ex_policy)
     {
         return DelegatedOnDevice();
