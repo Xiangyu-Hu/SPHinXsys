@@ -60,7 +60,7 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
       public:
         template <class ExecutionPolicy, class EncloserType>
         InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void initialize(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         ConstituteKernel constitute_;
@@ -75,7 +75,7 @@ class ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real G_;
@@ -115,7 +115,7 @@ class InelasticShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
       public:
         template <class ExecutionPolicy, class EncloserType>
         InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void initialize(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         ConstituteKernel constitute_;
@@ -130,7 +130,7 @@ class InelasticShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         ConstituteKernel constitute_;
@@ -145,7 +145,7 @@ class InelasticShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Vecd *shear_force_, *hourglass_div_;

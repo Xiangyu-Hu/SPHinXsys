@@ -33,7 +33,7 @@ StressDiffusionCK<Inner<Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 void StressDiffusionCK<Inner<Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Vecd acc_prior_i = force_prior_[index_i] / this->mass_[index_i];
     Real gravity = abs(acc_prior_i(1, 0));

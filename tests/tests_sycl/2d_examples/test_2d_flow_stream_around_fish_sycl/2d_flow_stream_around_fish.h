@@ -214,7 +214,7 @@ class InitializeDisplacementCK : public LocalDynamics
             : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
               pos_temp_(encloser.dv_pos_temp_->DelegatedData(ex_policy)) {}
 
-        void update(size_t index_i, Real dt = 0.0) { pos_temp_[index_i] = pos_[index_i]; }
+        void compute(size_t index_i, Real dt = 0.0) { pos_temp_[index_i] = pos_[index_i]; }
 
       protected:
         Vecd *pos_, *pos_temp_;
@@ -243,7 +243,7 @@ class UpdateAverageVelocityAndAccelerationCK : public LocalDynamics
               vel_ave_(encloser.dv_vel_ave_->DelegatedData(ex_policy)),
               acc_ave_(encloser.dv_acc_ave_->DelegatedData(ex_policy)) {}
 
-        void update(size_t index_i, Real dt = 0.0)
+        void compute(size_t index_i, Real dt = 0.0)
         {
             Vecd updated_vel_ave = (pos_[index_i] - pos_temp_[index_i]) / (dt + Eps);
             acc_ave_[index_i] = (updated_vel_ave - vel_ave_[index_i]) / (dt + Eps);
@@ -266,7 +266,7 @@ class FishMaterialInitialization : public MaterialIdInitialization
           dv_material_id_(particles_->getVariableByName<int>("MaterialID")),
           dv_pos_(particles_->getVariableByName<Vecd>("Position")) {};
 
-    void update(size_t index_i, Real dt = 0.0)
+    void compute(size_t index_i, Real dt = 0.0)
     {
         Real x = pos_[index_i][0] - cx;
         Real y = pos_[index_i][1];
@@ -301,7 +301,7 @@ class FishMaterialInitialization : public MaterialIdInitialization
               bone_thickness_(bone_thickness),
               a1_(a1), a2_(a2), a3_(a3), a4_(a4), a5_(a5) {}
 
-        void update(size_t index_i, Real dt = 0.0)
+        void compute(size_t index_i, Real dt = 0.0)
         {
             Real x = pos_[index_i][0] - cx_;
             Real y = pos_[index_i][1];
@@ -367,7 +367,7 @@ class ImposingActiveStrain : public LocalDynamics
               active_strain_(encloser.dv_active_strain_->DelegatedData(ex_policy)),
               cx_(cx), cy_(cy), fish_length_(fish_length), bone_thickness_(bone_thickness) {}
 
-        void update(size_t index_i, Real dt = 0.0)
+        void compute(size_t index_i, Real dt = 0.0)
         {
             if (material_id_[index_i] == 0)
             {
