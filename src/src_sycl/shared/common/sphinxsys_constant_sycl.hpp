@@ -8,7 +8,6 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType>
-template <class PolicyType>
 DataType *ConstantArray<DataType>::DelegatedOnDevice(const SYCLDevicePolicy &ex_policy)
 {
     if (!isDataDelegated())
@@ -20,7 +19,6 @@ DataType *ConstantArray<DataType>::DelegatedOnDevice(const SYCLDevicePolicy &ex_
 };
 //=================================================================================================//
 template <typename DataType>
-template <class PolicyType>
 DeviceOnlyConstantArray<DataType>::DeviceOnlyConstantArray(
     const SYCLDevicePolicy &ex_policy, ConstantArray<DataType> *host_constant)
     : Quantity(host_constant->Name()), device_only_data_(nullptr)
@@ -39,7 +37,6 @@ DeviceOnlyConstantArray<DataType>::~DeviceOnlyConstantArray()
 }
 //=================================================================================================//
 template <typename GeneratorType, typename ComputingKernelType>
-template <class PolicyType>
 ComputingKernelType *ComputingKernelArray<GeneratorType, ComputingKernelType>::DelegatedOnDevice(
     const SYCLDevicePolicy &ex_policy)
 {
@@ -52,7 +49,6 @@ ComputingKernelType *ComputingKernelArray<GeneratorType, ComputingKernelType>::D
 }
 //=================================================================================================//
 template <typename GeneratorType, typename ComputingKernelType>
-template <class PolicyType>
 DeviceOnlyComputingKernelArray<GeneratorType, ComputingKernelType>::DeviceOnlyComputingKernelArray(
     const SYCLDevicePolicy &ex_policy,
     ComputingKernelArray<GeneratorType, ComputingKernelType> *host_constant)

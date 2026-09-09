@@ -8,7 +8,6 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename DataType>
-template <class PolicyType>
 MultiEntryView<DataType> *VariableArray<DataType>::DelegatedOnDevice()
 {
     if (!isVariableArrayViewDelegated())
@@ -20,7 +19,6 @@ MultiEntryView<DataType> *VariableArray<DataType>::DelegatedOnDevice()
 }
 //=================================================================================================//
 template <typename DataType>
-template <class PolicyType>
 DeviceOnlyVariableArray<DataType>::
     DeviceOnlyVariableArray(const SYCLDevicePolicy &ex_policy,
                             VariableArray<DataType> *host_variable_array)
