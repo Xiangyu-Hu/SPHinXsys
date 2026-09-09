@@ -37,25 +37,30 @@ namespace SPH
 {
 using namespace execution;
 
-template <class Identifier, class UnaryFunc>
+template <class Identifier, class KernelImplementationType>
 void particle_for(const LoopRangeCK<SequencedPolicy, Identifier> &loop_range,
-                  const UnaryFunc &unary_func)
+                  KernelImplementationType &implementation, Real dt)
 {
+    auto kernel = implementation.getComputingKernel();
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
-        loop_range.computeUnit(unary_func, i);
+        loop_range.computeUnit([=](size_t i)
+                               { kernel->compute(i, dt); }, i);
 };
 
-template <class Identifier, class UnaryFunc>
+template <class Identifier, class KernelImplementationType>
 void particle_for(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
-                  const UnaryFunc &unary_func)
+                  KernelImplementationType &implementation, Real dt)
 {
+    auto kernel = implementation.getComputingKernel();
     tbb::parallel_for(
         IndexRange(0, loop_range.LoopBound()),
         [&](const IndexRange &r)
         {
             for (size_t i = r.begin(); i < r.end(); ++i)
             {
-                loop_range.computeUnit(unary_func, i);
+                loop_range.computeUnit(
+                    [=](size_t i)
+                    { kernel->compute(i, dt); }, i);
             }
         },
         ap);

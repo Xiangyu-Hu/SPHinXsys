@@ -60,10 +60,8 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
     {
         this->setUpdated(this->identifier_->getSPHBody());
         this->setupDynamics(dt);
-        UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
-                     [=](size_t i)
-                     { update_kernel->compute(i, dt); });
+                     kernel_implementation_, dt);
 
         finish_dynamics_();
 
