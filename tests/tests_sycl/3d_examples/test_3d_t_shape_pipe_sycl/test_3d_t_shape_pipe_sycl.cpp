@@ -110,7 +110,7 @@ class ResetBufferCorrectionMatrixCK : public BaseLocalDynamics<OrientedBoxByCell
               pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
               B_(encloser.dv_B_->DelegatedData(ex_policy)),
               radius_(encloser.radius_) {}
-        void update(size_t index_i, Real dt = 0.0)
+        void compute(size_t index_i, Real dt = 0.0)
         {
             if (oriented_box_->checkLowerBound(pos_[index_i], -radius_))
                 B_[index_i] = Matd::Identity();
