@@ -107,5 +107,25 @@ ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, Identifier> &loop_r
             return operation(x, y);
         });
 };
+
+template <typename Operation, class ReturnType, class UnaryFunc>
+ReturnType particle_reduce(const ParallelPolicy &par, const IndexRange &particles_range,
+                           ReturnType temp, const UnaryFunc &unary_func)
+{
+    Operation operation;
+    return tbb::parallel_reduce(
+        particles_range, temp,
+        [&](const IndexRange &r, ReturnType temp0) -> ReturnType
+        {
+				for (size_t i = r.begin(); i != r.end(); ++i)
+				{
+					temp0 = operation(temp0, unary_func(i));
+				}
+				return temp0; },
+        [&](const ReturnType &x, const ReturnType &y) -> ReturnType
+        {
+            return operation(x, y);
+        });
+};
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_CK_H

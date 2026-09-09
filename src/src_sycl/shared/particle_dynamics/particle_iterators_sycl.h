@@ -95,5 +95,31 @@ ReturnType particle_reduce(const LoopRangeCK<SYCLDevicePolicy, Identifier> &loop
     } // buffer_result goes out of scope, so the result (of temp) is updated
     return temp;
 }
+
+template <typename Operation, class ReturnType, class UnaryFunc>
+ReturnType particle_reduce(const SYCLDevicePolicy &sycl_device, const IndexRange &particles_range,
+                           ReturnType temp, const UnaryFunc &unary_func)
+{
+   auto &sycl_queue = execution_instance.getQueue();
+    const size_t loop_bound = particles_range.size();
+    ReturnType temp0 = temp;
+    {
+        sycl::buffer<ReturnType> buffer_result(&temp, 1);
+        sycl::buffer<ReturnType> buffer_reference(&temp0, 1);
+        sycl_queue.submit([&](sycl::handler &cgh)
+                          {
+                                Operation operation;
+                                sycl::accessor acc(buffer_reference, cgh, sycl::read_only);
+                                auto reduction_operator = sycl::reduction(buffer_result, cgh, operation);
+                                cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), reduction_operator,
+                                                 [=](sycl::nd_item<1> item, auto &reduction)
+                                                 {
+                                                     if (item.get_global_id() < loop_bound)
+                                                         reduction.combine(unary_func(item.get_global_id(0)));
+                                                 }); })
+            .wait_and_throw();
+    } // buffer_result goes out of scope, so the result (of temp) is updated
+    return temp;
+}
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_SYCL_H
