@@ -63,7 +63,7 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                      [=](size_t i)
-                     { update_kernel->update(i, dt); });
+                     { update_kernel->compute(i, dt); });
 
         finish_dynamics_();
 

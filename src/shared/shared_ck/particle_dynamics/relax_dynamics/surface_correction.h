@@ -50,7 +50,7 @@ class LevelsetBounding : public BaseLocalDynamics<BodyPartByCell>
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
-        void update(size_t index_i, Real dt = 0.0)
+        void compute(size_t index_i, Real dt = 0.0)
         {
             Real phi = signed_distance_(pos_[index_i]);
 
@@ -91,7 +91,7 @@ class LevelsetKernelGradientIntegral : public BaseLocalDynamics<DynamicIdentifie
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
-        void update(size_t index_i, Real dt = 0.0)
+        void compute(size_t index_i, Real dt = 0.0)
         {
             residual_[index_i] -= 2.0 * kernel_gradient_integral_(pos_[index_i], h_ratio_(index_i));
         };

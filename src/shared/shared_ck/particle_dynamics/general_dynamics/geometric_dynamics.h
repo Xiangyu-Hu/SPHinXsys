@@ -61,7 +61,7 @@ class NormalFromBodyShapeCK : public LocalDynamics
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy,
                      NormalFromBodyShapeCK &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Shape *initial_shape_;
@@ -87,7 +87,7 @@ class NormalFromSubShapeAndOpCK : public LocalDynamics
       public:
         template <class ExecutionPolicy, class Encloser>
         UpdateKernel(const ExecutionPolicy &ex_policy, Encloser &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Shape *shape_;
@@ -114,7 +114,7 @@ class SurfaceIndicationFromBodyShape : public LocalDynamics
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy,
                      SurfaceIndicationFromBodyShape &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Shape *initial_shape_;
@@ -141,7 +141,7 @@ class RandomizeParticlePositionCK : public LocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Vecd *pos_;

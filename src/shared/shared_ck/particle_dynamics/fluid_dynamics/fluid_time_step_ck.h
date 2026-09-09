@@ -142,7 +142,7 @@ class AdvectionStepSetup : public LocalDynamics
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepSetup &encloser);
 
-        void update(size_t index_i, Real dt = 0.0)
+        void compute(size_t index_i, Real dt = 0.0)
         {
             Vol_[index_i] = mass_[index_i] / rho_[index_i];
             dpos_[index_i] = Vecd::Zero();
@@ -170,7 +170,7 @@ class UpdateParticlePosition : public LocalDynamics
         template <class ExecutionPolicy>
         UpdateKernel(const ExecutionPolicy &ex_policy, UpdateParticlePosition &encloser);
 
-        void update(size_t index_i, Real dt = 0.0)
+        void compute(size_t index_i, Real dt = 0.0)
         {
             pos_[index_i] += dpos_[index_i];
         };

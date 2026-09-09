@@ -103,7 +103,7 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Paramete
     InteractKernel *interact_kernel = kernel_implementation_.getComputingKernel();
     particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                  [=](size_t i)
-                 { interact_kernel->interact(i, dt); });
+                 { interact_kernel->compute(i, dt); });
 
     this->logger_->debug(
         "InteractionDynamicsCK::runInteraction() for {} at {}",
@@ -130,7 +130,7 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parame
     particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                  [=](size_t i)
                  {
-                     interact_kernel->interact(i, dt);
+                     interact_kernel->compute(i, dt);
                  });
 
     this->logger_->debug(
@@ -210,7 +210,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpd
     UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
     particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                  [=](size_t i)
-                 { update_kernel->update(i, dt); });
+                 { update_kernel->compute(i, dt); });
 
     this->logger_->debug(
         "InteractionDynamicsCK::runUpdateStep() for {} at {}",
@@ -265,7 +265,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
     InitializeKernel *initialize_kernel = initialize_kernel_implementation_.getComputingKernel();
     particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                  [=](size_t i)
-                 { initialize_kernel->initialize(i, dt); });
+                 { initialize_kernel->compute(i, dt); });
 
     this->logger_->debug(
         "InteractionDynamicsCK::runInitializationStep() for {} at {}",
@@ -281,7 +281,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
     UpdateKernel *update_kernel = update_kernel_implementation_.getComputingKernel();
     particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                  [=](size_t i)
-                 { update_kernel->update(i, dt); });
+                 { update_kernel->compute(i, dt); });
 
     this->logger_->debug(
         "InteractionDynamicsCK::runUpdateStep() for {} at {}",
