@@ -120,10 +120,12 @@ int main(int ac, char *av[])
     water_block.generateParticles<BaseParticles, Lattice>();
     SimpleDynamics<relax_dynamics::RandomizeParticlePosition> random_fluid_particles(water_block);
     random_fluid_particles.exec(0.25); // randomize particle to avoid the symmetry
+    water_block.getBaseParticles().registerStateVariable<Real>("Phi");
 
     SolidBody wall(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall.defineMatterMaterial<Solid>();
     wall.generateParticles<BaseParticles, Lattice>();
+    wall.getBaseParticles().registerStateVariable<Real>("Phi");
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
     StdVec<Vec2d> observation_location = {random_observation};
@@ -135,8 +137,8 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     Inner<> water_block_inner(water_block);
-    Contact<> water_wall_contact(water_block, {&wall});
-    Contact<> fluid_observer_contact(fluid_observer, {&water_block});
+    Contact<> water_wall_contact(water_block, wall);
+    Contact<> fluid_observer_contact(fluid_observer, water_block);
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------

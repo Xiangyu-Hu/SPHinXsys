@@ -31,7 +31,7 @@ Real DL3 = 16 * DH;
 Real DL = DL1 + DL2 + DL3;
 Real resolution_ref = DH / 12.0;
 Real BW = resolution_ref * 4.0;
-Real max_narrowing = 0.3; // chage to 0.5 or 0.7 for other stenosis cases
+Real max_narrowing = 0.3; // change to 0.5 or 0.7 for other stenosis cases
 Real interpolationNum = 100;
 BoundingBoxd system_domain_bounds(Vec2d(-DL1 - 0.5 * DL2, -0.5 * DH), Vec2d(0.5 * DL2 + DL3, 0.5 * DH));
 //----------------------------------------------------------------------
@@ -303,7 +303,7 @@ struct InflowVelocity
 
 //----------------------------------------------------------------------
 //	stenosis definition
-//  a - maximaum narrowing, X0 - halflength of stenosis
+//  a - maximum narrowing, X0 - halflength of stenosis
 //----------------------------------------------------------------------
 Real outline(Real x_rel, Real a, Real X0)
 {

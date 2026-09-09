@@ -47,7 +47,7 @@ class RepulsionForceCK<Base, Contact<Parameters...>>
   public:
     template <class DynamicsIdentifier>
     explicit RepulsionForceCK(DynamicsIdentifier &identifier, Real numerical_damping = 0.5);
-    virtual ~RepulsionForceCK(){};
+    virtual ~RepulsionForceCK() {};
 
   protected:
     SolidContact &solid_contact_;
@@ -68,13 +68,13 @@ class RepulsionForceCK<Contact<WithUpdate, Parameters...>>
   public:
     template <class DynamicsIdentifier, typename... Args>
     RepulsionForceCK(DynamicsIdentifier &identifier, Args &&...args);
-    virtual ~RepulsionForceCK(){};
+    virtual ~RepulsionForceCK() {};
 
     class InteractKernel : public BaseInteractionType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -89,9 +89,9 @@ class RepulsionForceCK<Contact<WithUpdate, Parameters...>>
 
   protected:
     DiscreteVariable<Vecd> *dv_n_;
-    StdVec<Real> contact_stiffness_, contact_impedance_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_repulsion_factor_;
-    StdVec<DiscreteVariable<Vecd> *> dv_contact_vel_, dv_contact_n_;
+    Real contact_stiffness_, contact_impedance_;
+    DiscreteVariable<Real> *dv_contact_repulsion_factor_;
+    DiscreteVariable<Vecd> *dv_contact_vel_, *dv_contact_n_;
 };
 
 template <typename... Parameters>
@@ -103,13 +103,13 @@ class RepulsionForceCK<Contact<WithUpdate, Wall, Parameters...>>
   public:
     template <class DynamicsIdentifier, typename... Args>
     RepulsionForceCK(DynamicsIdentifier &identifier, Args &&...args);
-    virtual ~RepulsionForceCK(){};
+    virtual ~RepulsionForceCK() {};
 
     class InteractKernel : public BaseInteractionType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:

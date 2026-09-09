@@ -158,9 +158,9 @@ int main(int ac, char *av[])
     BodyRegionByParticle upper_wall(wall_boundary, makeShared<UpperBoundary>("UpperWall"));
     SimpleDynamics<BoundaryPressure> upper_wall_pressure(upper_wall);
 
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_pressure_gradient_norm(
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax<Real>>> maximum_pressure_gradient_norm(
         water_block, "PressureGradient");
-    ReduceDynamics<VariableNorm<Vecd, ReduceMin>> minimum_pressure_gradient_norm(
+    ReduceDynamics<VariableNorm<Vecd, ReduceMin<Real>>> minimum_pressure_gradient_norm(
         water_block, "PressureGradient");
 
     // I/O and regression test setup

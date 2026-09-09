@@ -24,7 +24,8 @@ SpawnRealParticle::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
       particles_bound_(encloser.particles_bound_),
-      original_id_(encloser.dv_original_id_->DelegatedData(ex_policy))
+      original_id_(encloser.dv_original_id_->DelegatedData(ex_policy)),
+      reset_mask_(ex_policy, encloser.group_manager_, UnsignedInt(0)) // initialize the group mask to zero
 {
     OperationBetweenDataAssembles<DiscreteVariables, VariableArrayAssemble, VariableArrayAssembleInitialization>
         initialize_discrete_variable_array;
@@ -38,7 +39,8 @@ template <class ExecutionPolicy, class EncloserType>
 RemoveRealParticle::ComputingKernel::
     ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)),
-      original_id_(encloser.dv_original_id_->DelegatedData(ex_policy))
+      original_id_(encloser.dv_original_id_->DelegatedData(ex_policy)),
+      life_status_mask_(ex_policy, encloser.group_manager_, encloser.life_status_)
 {
     OperationBetweenDataAssembles<DiscreteVariables, VariableArrayAssemble, VariableArrayAssembleInitialization>
         initialize_discrete_variable_array;

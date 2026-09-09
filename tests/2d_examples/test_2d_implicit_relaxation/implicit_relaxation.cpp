@@ -6,9 +6,9 @@
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
-//	Set the file path to the data file
+//	Set the file name to the data file
 //----------------------------------------------------------------------
-std::string input_body = "./input/TurbineBlade.dat";
+std::string input_body = "TurbineBlade.dat";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------

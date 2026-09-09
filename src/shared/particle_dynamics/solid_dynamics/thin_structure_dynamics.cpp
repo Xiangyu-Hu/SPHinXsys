@@ -23,7 +23,7 @@ void UpdateShellNormalDirection::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
-    : LocalDynamicsReduce<ReduceMin>(sph_body),
+    : LocalDynamicsReduce<ReduceMin<Real>>(sph_body),
       CFL_(CFL),
       elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getMatterMaterial())),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),

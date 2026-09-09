@@ -31,7 +31,7 @@ void HardeningPlasticSolid::initializeLocalParameters(BaseParticles *base_partic
 Matd HardeningPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t index_i, Real dt)
 {
     Matd be = F * inverse_plastic_strain_[index_i] * F.transpose();
-    Matd normalized_be = be * pow(be.determinant(), -OneOverDimensions);
+    Matd normalized_be = be * math::pow(be.determinant(), -Real(OneOverDimensions));
     Real normalized_be_isentropic = normalized_be.trace() * OneOverDimensions;
     Matd deviatoric_Kirchhoff = DeviatoricKirchhoff(normalized_be - normalized_be_isentropic * Matd::Identity());
     Real deviatoric_Kirchhoff_norm = deviatoric_Kirchhoff.norm();
@@ -44,7 +44,7 @@ Matd HardeningPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t index_i, Rea
         hardening_parameter_[index_i] += sqrt_2_over_3_ * relax_increment;
         deviatoric_Kirchhoff -= 2.0 * renormalized_shear_modulus * relax_increment * deviatoric_Kirchhoff / deviatoric_Kirchhoff_norm;
         Matd relaxed_be = deviatoric_Kirchhoff / G0_ + normalized_be_isentropic * Matd::Identity();
-        normalized_be = relaxed_be * pow(relaxed_be.determinant(), -OneOverDimensions);
+        normalized_be = relaxed_be * math::pow(relaxed_be.determinant(), -Real(OneOverDimensions));
     }
     Matd inverse_F = F.inverse();
     Matd inverse_F_T = inverse_F.transpose();
@@ -55,7 +55,7 @@ Matd HardeningPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t index_i, Rea
 //=================================================================================================//
 Matd NonLinearHardeningPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t index_i, Real dt)
 {
-    Matd normalized_F = F * pow(F.determinant(), -OneOverDimensions);
+    Matd normalized_F = F * math::pow(F.determinant(), -Real(OneOverDimensions));
     Matd normalized_be = normalized_F * inverse_plastic_strain_[index_i] * normalized_F.transpose();
     Real normalized_be_isentropic = normalized_be.trace() * OneOverDimensions;
     Matd deviatoric_Kirchhoff = DeviatoricKirchhoff(normalized_be - normalized_be_isentropic * Matd::Identity());
@@ -79,7 +79,7 @@ Matd NonLinearHardeningPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t ind
         hardening_parameter_[index_i] += sqrt_2_over_3_ * relax_increment;
         deviatoric_Kirchhoff -= 2.0 * renormalized_shear_modulus * relax_increment * deviatoric_Kirchhoff / deviatoric_Kirchhoff_norm;
         Matd relaxed_be = deviatoric_Kirchhoff / G0_ + normalized_be_isentropic * Matd::Identity();
-        normalized_be = relaxed_be * pow(relaxed_be.determinant(), -OneOverDimensions);
+        normalized_be = relaxed_be * math::pow(relaxed_be.determinant(), -Real(OneOverDimensions));
     }
 
     Matd inverse_normalized_F = normalized_F.inverse();
@@ -102,7 +102,7 @@ void ViscousPlasticSolid::initializeLocalParameters(BaseParticles *base_particle
 Matd ViscousPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t index_i, Real dt)
 {
     Matd be = F * inverse_plastic_strain_[index_i] * F.transpose();
-    Matd normalized_be = be * pow(be.determinant(), -OneOverDimensions);
+    Matd normalized_be = be * math::pow(be.determinant(), -Real(OneOverDimensions));
     Real normalized_be_isentropic = normalized_be.trace() * OneOverDimensions;
     Matd deviatoric_Kirchhoff = DeviatoricKirchhoff(normalized_be - normalized_be_isentropic * Matd::Identity());
     Real deviatoric_Kirchhoff_norm = deviatoric_Kirchhoff.norm();
@@ -116,11 +116,12 @@ Matd ViscousPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t index_i, Real 
         Real predicted_func = 0.0;
         Real Precision = 1.0e-6;
         Real Relative_Error;
+        Real inverse_power = Real(1.0f) / Real(Herschel_Bulkley_power_);
         do
         {
             deviatoric_Kirchhoff_norm_Mid = (deviatoric_Kirchhoff_norm_Max + deviatoric_Kirchhoff_norm_Min) / 2.0;
-            predicted_func = pow(viscous_modulus_, 1.0 / Herschel_Bulkley_power_) * (deviatoric_Kirchhoff_norm_Mid - deviatoric_Kirchhoff_norm) +
-                             2.0 * renormalized_shear_modulus * dt * pow((deviatoric_Kirchhoff_norm_Mid - sqrt_2_over_3_ * yield_stress_), 1.0 / Herschel_Bulkley_power_);
+            predicted_func = math::pow(viscous_modulus_, inverse_power) * (deviatoric_Kirchhoff_norm_Mid - deviatoric_Kirchhoff_norm) +
+                             2.0 * renormalized_shear_modulus * dt * math::pow((deviatoric_Kirchhoff_norm_Mid - sqrt_2_over_3_ * yield_stress_), inverse_power);
             if (predicted_func < 0.0)
             {
                 deviatoric_Kirchhoff_norm_Min = deviatoric_Kirchhoff_norm_Mid;
@@ -134,7 +135,7 @@ Matd ViscousPlasticSolid::ElasticLeftCauchy(const Matd &F, size_t index_i, Real 
 
         deviatoric_Kirchhoff = deviatoric_Kirchhoff_norm_Mid * deviatoric_Kirchhoff / deviatoric_Kirchhoff_norm;
         Matd relaxed_be = deviatoric_Kirchhoff / G0_ + normalized_be_isentropic * Matd::Identity();
-        normalized_be = relaxed_be * pow(relaxed_be.determinant(), -OneOverDimensions);
+        normalized_be = relaxed_be * math::pow(relaxed_be.determinant(), -Real(OneOverDimensions));
     }
 
     Matd inverse_F = F.inverse();

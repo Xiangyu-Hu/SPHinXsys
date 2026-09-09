@@ -11,7 +11,7 @@ namespace fluid_dynamics
 //=================================================================================================//
 AdvectionTimeStepCK::
     AdvectionTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL)
-    : LocalDynamicsReduce<ReduceMax>(sph_body),
+    : LocalDynamicsReduce<ReduceMax<Real>>(sph_body),
       h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       speed_ref_(U_ref), advectionCFL_(advectionCFL),
       dv_vel_(particles_->getVariableByName<Vecd>("Velocity")) {}

@@ -49,14 +49,14 @@ class ForceFromFluid : public Interaction<Contact<Parameters...>>, public ForceP
   public:
     template <class ContactRelationType>
     explicit ForceFromFluid(ContactRelationType &contact_relation, const std::string &force_name);
-    virtual ~ForceFromFluid(){};
+    virtual ~ForceFromFluid() {};
 
     class InteractKernel
         : public Interaction<Contact<Parameters...>>::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
       protected:
         Real *Vol_;
@@ -70,8 +70,8 @@ class ForceFromFluid : public Interaction<Contact<Parameters...>>, public ForceP
     Solid &solid_;
     DiscreteVariable<Vecd> *dv_force_from_fluid_, *dv_vel_ave_;
 
-    StdVec<KernelCorrectionType> contact_kernel_correction_;
-    StdVec<DiscreteVariable<Vecd> *> dv_contact_vel_;
+    KernelCorrectionType contact_kernel_correction_;
+    DiscreteVariable<Vecd> *dv_contact_vel_;
 };
 
 template <typename...>
@@ -87,12 +87,12 @@ class ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionT
   public:
     template <class ContactRelationType>
     explicit ViscousForceFromFluid(ContactRelationType &contact_relation);
-    virtual ~ViscousForceFromFluid(){};
+    virtual ~ViscousForceFromFluid() {};
     class InteractKernel : public BaseForceFromFluid::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -101,8 +101,8 @@ class ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionT
     };
 
   protected:
-    StdVec<ViscosityType *> contact_viscosity_model_;
-    StdVec<Real> contact_smoothing_length_sq_;
+    ViscosityType *contact_viscosity_model_;
+    Real contact_smoothing_length_sq_;
 };
 
 template <typename ViscousForceType, typename... Parameters>
@@ -117,8 +117,8 @@ class ViscousForceFromFluid<Contact<WithUpdate, ViscousForceType, Parameters...>
     explicit ViscousForceFromFluid(DynamicsIdentifier &contact_relation)
         : ViscousForceFromFluid<Contact<
               WithUpdate, typename ViscousForceType::ViscosityModel,
-              decltype(ViscousForceType::kernel_correction_), Parameters...>>(contact_relation){};
-    virtual ~ViscousForceFromFluid(){};
+              decltype(ViscousForceType::kernel_correction_), Parameters...>>(contact_relation) {};
+    virtual ~ViscousForceFromFluid() {};
 };
 
 template <typename ViscousForceType>
@@ -138,13 +138,13 @@ class PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrec
   public:
     template <class ContactRelationType>
     explicit PressureForceFromFluid(ContactRelationType &contact_relation);
-    virtual ~PressureForceFromFluid(){};
+    virtual ~PressureForceFromFluid() {};
 
     class InteractKernel : public BaseForceFromFluid::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -155,10 +155,11 @@ class PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrec
     };
 
   protected:
+    FluidType &contact_fluid_;
+    RiemannSolverType contact_riemann_solver_;
     DiscreteVariable<Vecd> *dv_acc_ave_, *dv_n_;
-    StdVec<RiemannSolverType> contact_riemann_solver_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_rho_, dv_contact_mass_, dv_contact_p_;
-    StdVec<DiscreteVariable<Vecd> *> dv_contact_force_prior_;
+    DiscreteVariable<Real> *dv_contact_rho_, *dv_contact_mass_, *dv_contact_p_;
+    DiscreteVariable<Vecd> *dv_contact_force_prior_;
 };
 
 template <class AcousticStep2ndHalfType, typename... Parameters>
@@ -174,8 +175,8 @@ class PressureForceFromFluid<Contact<WithUpdate, AcousticStep2ndHalfType, Parame
         : PressureForceFromFluid<Contact<
               WithUpdate, decltype(AcousticStep2ndHalfType::riemann_solver_),
               decltype(AcousticStep2ndHalfType::kernel_correction_),
-              Parameters...>>(contact_relation){};
-    virtual ~PressureForceFromFluid(){};
+              Parameters...>>(contact_relation) {};
+    virtual ~PressureForceFromFluid() {};
 };
 
 template <typename AcousticStep2ndHalfType>

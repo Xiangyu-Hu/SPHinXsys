@@ -79,11 +79,9 @@ class BaseDiffusion : public AbstractDiffusion
         Real cv1_;
 
       public:
-        InverseVolumetricCapacity() : cv1_(0) {};
-        InverseVolumetricCapacity(BaseDiffusion &encloser) : cv1_(1.0 / encloser.cv_) {};
-        template <class ExecutionPolicy>
-        InverseVolumetricCapacity(const ExecutionPolicy &ex_policy, BaseDiffusion &encloser)
-            : InverseVolumetricCapacity(encloser){};
+        template <class ExecutionPolicy, class EncloserType>
+        InverseVolumetricCapacity(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : cv1_(1.0 / encloser.cv_){};
         Real operator()(size_t index_i) { return cv1_; };
     };
 
@@ -122,12 +120,9 @@ class IsotropicDiffusion : public BaseDiffusion
         Real d_coeff_;
 
       public:
-        InterParticleCoeff() : d_coeff_(0) {};
-        InterParticleCoeff(IsotropicDiffusion &encloser)
-            : d_coeff_(encloser.d_coeff_) {};
-        template <class ExecutionPolicy>
-        InterParticleCoeff(const ExecutionPolicy &ex_policy, IsotropicDiffusion &encloser)
-            : InterParticleCoeff(encloser){};
+        template <class ExecutionPolicy, class EncloserType>
+        InterParticleCoeff(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : d_coeff_(encloser.d_coeff_){};
         Real operator()(size_t index_i, size_t index_j, const Vecd &e_ij) { return d_coeff_; };
         Real operator()(size_t index_i, size_t index_j) { return d_coeff_; };
     };
@@ -202,12 +197,9 @@ class DirectionalDiffusion : public IsotropicDiffusion
         Matd transformed_diffusivity_;
 
       public:
-        InterParticleCoeff() : transformed_diffusivity_(ZeroData<Matd>::value) {};
-        InterParticleCoeff(DirectionalDiffusion &encloser)
-            : transformed_diffusivity_(encloser.transformed_diffusivity_) {};
-        template <class ExecutionPolicy>
-        InterParticleCoeff(const ExecutionPolicy &ex_policy, DirectionalDiffusion &encloser)
-            : InterParticleCoeff(encloser){};
+        template <class ExecutionPolicy, class EncloserType>
+        InterParticleCoeff(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : transformed_diffusivity_(encloser.transformed_diffusivity_){};
         Real operator()(size_t index_i, size_t index_j, const Vecd &e_ij)
         {
             Vecd grad_ij = transformed_diffusivity_ * e_ij;

@@ -16,7 +16,7 @@ bool VelocityBoundCheck::reduce(size_t index_i, Real dt)
 }
 //=================================================================================================//
 MaximumSpeed::MaximumSpeed(SPHBody &sph_body)
-    : LocalDynamicsReduce<ReduceMax>(sph_body),
+    : LocalDynamicsReduce<ReduceMax<Real>>(sph_body),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity"))
 {
     quantity_name_ = "MaximumSpeed";

@@ -69,8 +69,8 @@ int main(int ac, char *av[])
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
         SPHSolver sph_solver(relaxation_system);
-        auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-        auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+        auto &main_methods = sph_solver.getMainMethodContainer();
+        auto &host_methods = sph_solver.getHostMethodContainer();
 
         auto &input_body_cell_linked_list = main_methods.addCellLinkedListDynamics(column);
         auto &input_body_update_inner_relation = main_methods.addRelationDynamics(column_inner);
@@ -167,10 +167,8 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-    host_methods.addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(column, "Velocity", Vec3d(0, 0, -vel_0)).exec();
-
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &host_methods = sph_solver.getHostMethodContainer();
+    auto &main_methods = sph_solver.getMainMethodContainer();
     ParticleDynamicsGroup update_column_configuration;
     update_column_configuration.add(&main_methods.addCellLinkedListDynamics(column));
     update_column_configuration.add(&main_methods.addRelationDynamics(column_inner, column_wall_contact));
@@ -181,22 +179,21 @@ int main(int ac, char *av[])
     auto &column_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(column);
     auto &column_linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(column_inner);
 
+    auto &column_acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
+        fluid_dynamics::AcousticStep1stHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner);
+    auto &column_acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
+        fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner);
+
     ParticleDynamicsGroup column_shear_force;
     column_shear_force.add(&main_methods.addInteractionDynamics<LinearGradient, Vecd>(column_inner, "Velocity"));
     column_shear_force.add(&main_methods.addInteractionDynamicsOneLevel<continuum_dynamics::ShearIntegration, J2Plasticity>(column_inner));
-
-    auto &column_acoustic_step_1st_half =
-        main_methods.addInteractionDynamicsOneLevel<
-            fluid_dynamics::AcousticStep1stHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner);
-    auto &column_acoustic_step_2nd_half =
-        main_methods.addInteractionDynamicsOneLevel<
-            fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(column_inner);
 
     auto &column_wall_contact_factor = main_methods.addInteractionDynamics<solid_dynamics::RepulsionFactor>(column_wall_contact);
     auto &column_wall_contact_force = main_methods.addInteractionDynamicsWithUpdate<solid_dynamics::RepulsionForceCK, Wall>(column_wall_contact);
 
     auto &column_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(column, U_max, 0.2);
     auto &column_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(column, 0.4);
+    host_methods.addStateDynamics<VariableAssignment, ConstantValue<Vecd>>(column, "Velocity", Vec3d(0, 0, -vel_0)).exec();
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.

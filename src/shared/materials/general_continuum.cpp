@@ -159,6 +159,7 @@ void J2Plasticity::initializeLocalParameters(BaseParticles *base_particles)
     dv_hardening_factor_ = base_particles->registerStateVariable<Real>("HardeningFactor");
     base_particles->addEvolvingVariable<Real>(dv_hardening_factor_);
     dv_p_ = base_particles->registerStateVariable<Real>("Pressure");
+    dv_compression_ = base_particles->registerStateVariable<Real>("Compression", Real(1.0));
     base_particles->addEvolvingVariable<Real>(dv_p_);
     dv_intact_factor_ = base_particles->registerStateVariable<Real>("IntactFactor", Real(1.0));
     base_particles->addEvolvingVariable<Real>(dv_intact_factor_);

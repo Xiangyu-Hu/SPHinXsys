@@ -64,7 +64,10 @@ class IOEnvironment
     void resetOutputFolder(const std::string &new_name, bool keep_existing = false);
     void resetRestartFolder(const std::string &new_name, bool keep_existing = false);
     void resetReloadFolder(const std::string &new_name, bool keep_existing = false);
+    void resetInputFolder(const std::string &new_name, bool keep_existing = false);
     void reinitializeReloadFolder();
+
+
     std::string InputFolder() const { return input_folder_; }
     std::string OutputFolder() const { return output_folder_; }
     std::string RestartFolder() const { return restart_folder_; }

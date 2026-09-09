@@ -139,7 +139,7 @@ class UniquePtrKeeper
         return ptr_member_.get();
     };
 
-    BaseType *getPtr()
+    BaseType *getPtr() const
     {
         return ptr_member_.get();
     };

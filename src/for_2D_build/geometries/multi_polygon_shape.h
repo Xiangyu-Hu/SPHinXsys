@@ -82,7 +82,7 @@ using NRings = std::vector<std::vector<NPoint>>;
 class MultiPolygon
 {
   public:
-    MultiPolygon() {};
+    MultiPolygon(){};
     explicit MultiPolygon(const std::vector<Vecd> &points);
     explicit MultiPolygon(const Vecd &center, Real radius, int resolution);
     const boost_multi_poly &getBoostMultiPoly() const { return multi_poly_; };
@@ -94,11 +94,12 @@ class MultiPolygon
     void addMultiPolygon(const MultiPolygon &multi_polygon, GeometricOps op);
     void addBoostMultiPoly(boost_multi_poly &boost_multi_poly, GeometricOps op);
     void addPolygon(const std::vector<Vecd> &points, GeometricOps op);
-    void addBox(Transform transform, const Vecd &halfsize, GeometricOps op);
+    void addBox(const Transform transform, const Vecd &halfsize, GeometricOps op);
     void addBox(const BoundingBox2d &bounding_box, GeometricOps op);
     void addContainerBox(const BoundingBox2d &bounding_box, Real thickness, GeometricOps op);
     void addCircle(const Vecd &center, Real radius, int resolution, GeometricOps op);
-    void addPolygonFromFile(std::string file_path_name, GeometricOps op, Vecd translation = Vecd::Zero(), Real scale_factor = 1.0);
+    void addTriangle(const Transform &transform, const Vecd &half_size, GeometricOps op);
+    void addPolygonFromFile(std::string file_name, GeometricOps op, Vecd translation = Vecd::Zero(), Real scale_factor = 1.0);
 
   protected:
     boost_multi_poly multi_poly_;
@@ -116,10 +117,10 @@ class MultiPolygonShape : public Shape
 
   public:
     /** Default constructor. */
-    explicit MultiPolygonShape(const std::string &shape_name) : Shape(shape_name) {};
+    explicit MultiPolygonShape(const std::string &shape_name) : Shape(shape_name){};
     explicit MultiPolygonShape(const MultiPolygon &multi_polygon, const std::string &shape_name = "MultiPolygonShape")
-        : Shape(shape_name), multi_polygon_(multi_polygon) {};
-    virtual ~MultiPolygonShape() {};
+        : Shape(shape_name), multi_polygon_(multi_polygon){};
+    virtual ~MultiPolygonShape(){};
 
     virtual bool isValid() override;
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;

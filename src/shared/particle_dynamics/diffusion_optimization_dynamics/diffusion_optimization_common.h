@@ -70,14 +70,14 @@ class ComputeTotalErrorOrPositiveParameter
  */
 template <class DynamicsIdentifier>
 class ComputeMaximumError
-    : public BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>
+    : public BaseLocalDynamicsReduce<ReduceMax<Real>, DynamicsIdentifier>
 {
   protected:
     Real *variable_;
 
   public:
     ComputeMaximumError(DynamicsIdentifier &identifier, const std::string &variable_name)
-        : BaseLocalDynamicsReduce<ReduceMax, DynamicsIdentifier>(identifier),
+        : BaseLocalDynamicsReduce<ReduceMax<Real>, DynamicsIdentifier>(identifier),
           variable_(this->particles_->template getVariableDataByName<Real>(variable_name)) {};
 
     Real reduce(size_t index_i, Real dt = 0.0)

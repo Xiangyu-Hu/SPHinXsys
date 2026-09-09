@@ -13,10 +13,10 @@
 #include "heart_volume_change.h"
 using namespace SPH; // Namespace cite here.
 /** Geometry parameter. */
-/** Set the file path to the stl file. */
-std::string full_path_to_myocardium = "./input/myocardium_simple.stl";
-std::string full_path_to_lv = "./input/myocardium_simple_lv.stl";
-std::string full_path_to_rv = "./input/myocardium_simple_rv.stl";
+/** Set the file name to the stl file. */
+std::string mesh_myocardium = "myocardium_simple.stl";
+std::string mesh_lv = "myocardium_simple_lv.stl";
+std::string mesh_rv = "myocardium_simple_rv.stl";
 Real length_scale = 1.0;
 Real time_scale = 1.0 / 12.9;
 Real stress_scale = 1.0e-6;
@@ -63,7 +63,7 @@ class Heart : public ComplexShape
   public:
     explicit Heart(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeSTL>(full_path_to_myocardium, translation, length_scale);
+        add<TriangleMeshShapeSTL>(mesh_myocardium, translation, length_scale);
     }
 };
 /** Set diffusion relaxation method. */

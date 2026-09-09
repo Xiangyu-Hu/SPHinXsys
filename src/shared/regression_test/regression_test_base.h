@@ -56,9 +56,9 @@ class RegressionTestBase : public ObserveMethodType
 
   protected:
     std::string input_folder_path_;      /*< the folder path for the input folder. (folder) */
-    std::string in_output_filefullpath_; /*< the file path for current result from xml memory to xml file. */
-    std::string result_filefullpath_;    /*< the file path for all run results. (.xml)*/
-    std::string runtimes_filefullpath_;  /*< the file path for run times information. (.dat)*/
+    std::string in_output_filefullpath_; /*< the file name for current result from xml memory to xml file. */
+    std::string result_filefullpath_;    /*< the file name for all run results. (.xml)*/
+    std::string runtimes_filefullpath_;  /*< the file name for run times information. (.dat)*/
 
     bool generate_regression_data_; /*< the flag to generate regression data. */
 

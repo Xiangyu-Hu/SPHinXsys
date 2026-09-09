@@ -43,12 +43,13 @@ class TransformGeometry : public GeometryType
     explicit TransformGeometry(const Transform &transform, Args &&...args)
         : GeometryType(std::forward<Args>(args)...),
           initial_transform_(transform), transform_(transform){};
-    ~TransformGeometry() {};
+    ~TransformGeometry(){};
 
     /** variable transform is introduced here */
     Transform &getTransform() { return transform_; };
     Transform initialTransform() const { return initial_transform_; };
     void setTransform(const Transform &transform) { transform_ = transform; };
+    GeometryType &getFrameGeometry() { return *this; };
 
     bool checkContain(const Vecd &probe_point)
     {
@@ -66,32 +67,7 @@ class TransformGeometry : public GeometryType
     // Returns the AABB of the rotated underlying shape's AABB
     // It is not the tight fit AABB of the underlying shape
     // But at least it encloses the underlying shape fully
-    BoundingBoxd findBounds()
-    {
-        BoundingBoxd original_bound = GeometryType::findBounds();
-        Vecd bb_min = Vecd::Constant(MaxReal);
-        Vecd bb_max = Vecd::Constant(-MaxReal);
-        for (auto x : {original_bound.lower_.x(), original_bound.upper_.x()})
-        {
-            for (auto y : {original_bound.lower_.y(), original_bound.upper_.y()})
-            {
-                if constexpr (Dimensions == 3)
-                {
-                    for (auto z : {original_bound.lower_.z(), original_bound.upper_.z()})
-                    {
-                        bb_min = bb_min.cwiseMin(this->transform_.shiftFrameStationToBase(Vecd(x, y, z)));
-                        bb_max = bb_max.cwiseMax(this->transform_.shiftFrameStationToBase(Vecd(x, y, z)));
-                    }
-                }
-                else
-                {
-                    bb_min = bb_min.cwiseMin(this->transform_.shiftFrameStationToBase(Vecd(x, y)));
-                    bb_max = bb_max.cwiseMax(this->transform_.shiftFrameStationToBase(Vecd(x, y)));
-                }
-            }
-        }
-        return BoundingBoxd(bb_min, bb_max);
-    };
+    BoundingBoxd findBounds();
 
   protected:
     Transform initial_transform_;
@@ -114,7 +90,7 @@ class TransformShape : public TransformGeometry<GeometryType>, public Shape
     explicit TransformShape(const std::string &name, const Transform &transform, Args &&...args)
         : TransformGeometry<GeometryType>(transform, std::forward<Args>(args)...),
           Shape(name){};
-    virtual ~TransformShape() {};
+    virtual ~TransformShape(){};
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override
     {
@@ -132,5 +108,4 @@ class TransformShape : public TransformGeometry<GeometryType>, public Shape
     };
 };
 } // namespace SPH
-
 #endif // TRANSFORM_SHAPE_H

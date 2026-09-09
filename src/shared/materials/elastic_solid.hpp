@@ -17,7 +17,7 @@ inline Matd LinearElasticSolid::ConstituteKernel::ElasticLeftCauchy(
     const Matd &F, size_t index_i, Real dt)
 {
     Matd be = F * F.transpose();
-    return be * pow(be.determinant(), -OneOverDimensions);
+    return be * math::pow(be.determinant(), -Real(OneOverDimensions));
 }
 //=================================================================================================//
 inline Real LinearElasticSolid::ConstituteKernel::VolumetricKirchhoff(Real J)

@@ -44,7 +44,7 @@ namespace slender_structure_dynamics
  * @class BarAcousticTimeStepSize
  * @brief Computing the acoustic time step size for bar
  */
-class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>
+class BarAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin<Real>>
 {
   protected:
     Real CFL_;

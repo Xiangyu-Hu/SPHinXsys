@@ -78,7 +78,7 @@ class UpdateElasticNormalDirection : public LocalDynamics
  * @brief Computing the acoustic time step size
  * computing time step size
  */
-class AcousticTimeStep : public LocalDynamicsReduce<ReduceMin>
+class AcousticTimeStep : public LocalDynamicsReduce<ReduceMin<Real>>
 {
   protected:
     Real CFL_;

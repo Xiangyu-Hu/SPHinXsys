@@ -124,7 +124,7 @@ class TriangleMeshShapeCylinder : public TriangleMeshShape
 class TriangleMeshShapeSTL : public TriangleMeshShape
 {
   public:
-    explicit TriangleMeshShapeSTL(const std::string &file_path_name, Vec3d translation, Real scale_factor,
+    explicit TriangleMeshShapeSTL(const std::string &file_name, Vec3d translation, Real scale_factor,
                                   const std::string &shape_name = "TriangleMeshShapeSTL");
     virtual ~TriangleMeshShapeSTL() {};
 };

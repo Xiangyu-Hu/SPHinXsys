@@ -154,8 +154,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<LinearGradientCorrection>> vel_grad_calculation(water_block_inner, water_wall_contact);
     BodyRegionByParticle upper_wall(wall_boundary, makeShared<UpperBoundary>("UpperWall"));
     SimpleDynamics<BoundaryVelocity> upper_wall_velocity(upper_wall);
-    ReduceDynamics<VariableNorm<Matd, ReduceMax>> maximum_velocity_gradient_norm(water_block, "VelocityGradient");
-    ReduceDynamics<VariableNorm<Matd, ReduceMin>> minimum_velocity_gradient_norm(water_block, "VelocityGradient");
+    ReduceDynamics<VariableNorm<Matd, ReduceMax<Real>>> maximum_velocity_gradient_norm(water_block, "VelocityGradient");
+    ReduceDynamics<VariableNorm<Matd, ReduceMin<Real>>> minimum_velocity_gradient_norm(water_block, "VelocityGradient");
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations

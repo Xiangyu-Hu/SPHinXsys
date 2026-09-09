@@ -18,7 +18,7 @@ SPHinXsys depends on the following:
 * GCC 8 or later (Linux)
 * Python3
 * Git
-* vcpkg (please use the branch "2024.11.16", or the same one that we have used in CI: (line 29) https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/.github/workflows/ci.yml)
+* vcpkg (please use the branch "2026.04.27", or the same one that we have used in CI: (line 29) https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/.github/workflows/ci.yml)
 
 Note that, for Visual Studio you can download the Community version, which is free for individual use and open source development
 from the link: https://www.junian.dev/tech/visual-studio-community-download-links/.
@@ -63,7 +63,7 @@ The following block will install the direct dependencies required by SPHinXsys i
 ..  code-block:: bash
     
     cd $HOME
-    git clone -b 2024.11.16 https://www.github.com/microsoft/vcpkg.git
+    git clone -b 2026.04.27 https://www.github.com/microsoft/vcpkg.git
     cd vcpkg
     ./bootstrap-vcpkg.sh
     ./vcpkg install --clean-after-build \
@@ -73,7 +73,6 @@ The following block will install the direct dependencies required by SPHinXsys i
         boost-geometry                  \
         simbody                         \
         gtest                           \
-        pybind11                        \
         spdlog
 
 Note that, some libraries can be installed simply by apt install, such as eigen3, tbb and boost.
@@ -92,7 +91,6 @@ To install the *shared* versions, do the following:
         boost-geometry:x64-linux-dynamic        \
         simbody:x64-linux-dynamic               \
         gtest:x64-linux-dynamic                 \
-        pybind11:x64-linux-dynamic              \
         spdlog:x64-linux-dynamic
     cd ..
 
@@ -306,7 +304,7 @@ First clone the vcpkg repository to your home directory.
 
 ..  code-block:: pwsh
     
-    git clone -b 2024.11.16 https://www.github.com/microsoft/vcpkg.git
+    git clone -b 2026.04.27 https://www.github.com/microsoft/vcpkg.git
     cd vcpkg
     .\bootstrap-vcpkg.bat
     .\vcpkg install --clean-after-build         \
@@ -315,7 +313,6 @@ First clone the vcpkg repository to your home directory.
         boost-program-options:x64-windows       \
         boost-geometry:x64-windows              \
         simbody:x64-windows gtest:x64-windows   \
-        pybind11:x64-windows                    \
         spdlog:x64-windows
     .\vcpkg integrate install
 
@@ -326,7 +323,7 @@ i.e., you need to use the slash :code:`/` instead of the backslash:code:`\`, as 
 
 ..  code-block:: bash
     
-    git clone -b 2024.11.16 https://www.github.com/microsoft/vcpkg.git
+    git clone -b 2026.04.27 https://www.github.com/microsoft/vcpkg.git
     cd vcpkg
     ./bootstrap-vcpkg.bat
     ./vcpkg install --clean-after-build             \
@@ -336,7 +333,6 @@ i.e., you need to use the slash :code:`/` instead of the backslash:code:`\`, as 
         boost-geometry:x64-windows                  \
         simbody:x64-windows                         \
         gtest:x64-windows                           \
-        pybind11:x64-windows                        \
         spdlog:x64-windows
     ./vcpkg integrate install
 
@@ -354,7 +350,6 @@ To install the *static* versions, replace the former install line by the followi
         boost-geometry:x64-windows-static        \
         simbody:x64-windows-static               \
         gtest:x64-windows-static                 \
-        pybind11:x64-windows-static              \
         spdlog:x64-windows-static
 
 For any other combination, please refer to the official `architecture documentation <https://vcpkg.io/en/docs/users/triplets.html>` .
@@ -418,7 +413,7 @@ The following block will install the direct dependencies required by SPHinXsys i
 ..  code-block:: bash
     
     cd $HOME
-    git clone -b 2024.11.16 https://www.github.com/microsoft/vcpkg.git
+    git clone -b 2026.04.27 https://www.github.com/microsoft/vcpkg.git
     cd vcpkg
     ./bootstrap-vcpkg.sh -disableMetrics
     ./vcpkg env --triplet=x64-osx
@@ -429,7 +424,6 @@ The following block will install the direct dependencies required by SPHinXsys i
         boost-geometry                          \
         simbody                                 \
         gtest                                   \
-        pybind11                                \
         spdlog
 
 Note that, if you are using ARM Mac (M1 or later chips), 

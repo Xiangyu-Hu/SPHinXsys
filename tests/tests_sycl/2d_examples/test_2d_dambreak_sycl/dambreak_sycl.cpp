@@ -67,15 +67,15 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     Inner<> water_block_inner(water_block);
-    Contact<> water_wall_contact(water_block, {&wall_boundary});
-    Contact<> fluid_observer_contact(fluid_observer, {&water_block});
+    Contact<> water_wall_contact(water_block, wall_boundary);
+    Contact<> fluid_observer_contact(fluid_observer, water_block);
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    auto &main_methods = sph_solver.getMainMethodContainer();
+    auto &host_methods = sph_solver.getHostMethodContainer();
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.

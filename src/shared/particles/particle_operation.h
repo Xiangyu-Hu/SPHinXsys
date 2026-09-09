@@ -31,6 +31,7 @@
 
 #include "base_particles.hpp"
 #include "sphinxsys_atom_ref.h"
+#include "sphinxsys_bitmask.h"
 #include "sphinxsys_variable_array.h"
 
 namespace SPH
@@ -44,9 +45,11 @@ struct CopyParticleStateCK
 
 class SpawnRealParticle
 {
+    using MaskKernel = typename GroupManager::MaskKernel;
     DiscreteVariables &evolving_variables_;
     VariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
+    GroupManager &group_manager_;
     SingleVariable<UnsignedInt> *sv_total_real_particles_;
     UnsignedInt particles_bound_;
 
@@ -67,6 +70,7 @@ class SpawnRealParticle
             {
                 copy_particle_state_(copyable_state_data_arrays_, last_real_particle_index, index_i);
                 original_id_[last_real_particle_index] = last_real_particle_index; // reinitialize original id
+                reset_mask_.set(last_real_particle_index);                         // reinitialize (set to zero)
             }
             return last_real_particle_index;
         };
@@ -75,6 +79,7 @@ class SpawnRealParticle
         UnsignedInt *total_real_particles_;
         UnsignedInt particles_bound_;
         UnsignedInt *original_id_;
+        MaskKernel reset_mask_;
         VariableArrayViewAssemble copyable_state_data_arrays_;
         OperationOnDataAssemble<VariableArrayViewAssemble, CopyParticleStateCK> copy_particle_state_;
     };
@@ -82,9 +87,12 @@ class SpawnRealParticle
 
 class RemoveRealParticle
 {
+    using MaskKernel = typename GroupManager::MaskKernel;
     DiscreteVariables &evolving_variables_;
     VariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
+    GroupManager &group_manager_;
+    UnsignedInt life_status_;
     SingleVariable<UnsignedInt> *sv_total_real_particles_;
 
   public:
@@ -96,13 +104,13 @@ class RemoveRealParticle
         template <class ExecutionPolicy, class EncloserType>
         ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
-        void operator()(UnsignedInt index_i, int *life_status)
+        void operator()(UnsignedInt index_i)
         {
             AtomicRef<UnsignedInt> total_real_particles_ref(*total_real_particles_);
             UnsignedInt last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
-            while (life_status[last_real_particle_index] == 1) // to delete
+            while (life_status_mask_.check(last_real_particle_index)) // to delete
             {
-                life_status[last_real_particle_index] = 0; // reset the life status
+                life_status_mask_.remove(last_real_particle_index); // reset the life status
                 last_real_particle_index = total_real_particles_ref.fetch_sub(1) - 1;
             }
 
@@ -110,7 +118,7 @@ class RemoveRealParticle
             {
                 UnsignedInt old_original_id = original_id_[index_i];
                 copy_particle_state_(copyable_state_data_arrays_, index_i, last_real_particle_index);
-                life_status[index_i] = 0;                                 // reset the life status
+                life_status_mask_.remove(index_i);                        // reset the life status
                 original_id_[last_real_particle_index] = old_original_id; // swap the original id
             }
         };
@@ -118,6 +126,7 @@ class RemoveRealParticle
       protected:
         UnsignedInt *total_real_particles_;
         UnsignedInt *original_id_;
+        MaskKernel life_status_mask_;
         VariableArrayViewAssemble copyable_state_data_arrays_;
         OperationOnDataAssemble<VariableArrayViewAssemble, CopyParticleStateCK> copy_particle_state_;
     };

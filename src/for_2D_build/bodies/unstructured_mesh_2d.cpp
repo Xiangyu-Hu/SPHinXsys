@@ -1,18 +1,11 @@
 
+#include "unstructured_mesh.h"
+
 #include "base_particle_dynamics.h"
 #include "mesh_helper.h"
 #include "sphinxsys_tbb.h"
-#include "unstructured_mesh.h"
-
 namespace SPH
 {
-//=================================================================================================//
-ANSYSMesh::ANSYSMesh(const std::string &full_path)
-{
-    getDataFromMeshFile(full_path);
-    getElementCenterCoordinates();
-    getMinimumDistanceBetweenNodes();
-}
 //=================================================================================================//
 void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
 {
@@ -165,7 +158,7 @@ void NeighborBuilderInFVM::initializeRelation(Neighborhood &neighborhood, Real &
 }
 //=================================================================================================//
 InnerRelationInFVM::InnerRelationInFVM(RealBody &real_body, ANSYSMesh &ansys_mesh)
-    : BaseInnerRelationInFVM(real_body, ansys_mesh), get_inner_neighbor_(&real_body){};
+    : BaseInnerRelationInFVM(real_body, ansys_mesh), get_inner_neighbor_(&real_body) {};
 //=================================================================================================//
 template <typename GetParticleIndex, typename GetNeighborRelation>
 void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, BaseParticles &source_particles,

@@ -59,7 +59,7 @@ class UpdateShellNormalDirection : public LocalDynamics
  * @class ShellAcousticTimeStepSize
  * @brief Computing the acoustic time step size for shell
  */
-class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin>
+class ShellAcousticTimeStepSize : public LocalDynamicsReduce<ReduceMin<Real>>
 {
   protected:
     Real CFL_;

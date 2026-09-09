@@ -31,7 +31,7 @@
 
 #include "base_geometry.h"
 #include "geometric_element.h"
-#include "transform_geometry.h"
+#include "transform_geometry.hpp"
 
 namespace SPH
 {

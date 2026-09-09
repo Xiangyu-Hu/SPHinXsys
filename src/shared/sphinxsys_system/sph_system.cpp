@@ -6,7 +6,7 @@
 #include "predefined_bodies.h"
 
 #define TBB_PREVIEW_GLOBAL_CONTROL 1
-#include <tbb/global_control.h>
+#include "tbb/global_control.h"
 #define TBB_PARALLEL true
 #ifdef BOOST_AVAILABLE
 #include "boost/program_options.hpp"

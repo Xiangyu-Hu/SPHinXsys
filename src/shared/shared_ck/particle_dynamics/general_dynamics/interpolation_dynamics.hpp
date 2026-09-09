@@ -11,16 +11,8 @@ template <class DynamicsIdentifier>
 Interpolation<Contact<Base, DataType, Parameters...>>::Interpolation(
     DynamicsIdentifier &identifier, const std::string &variable_name)
     : Interaction<Contact<Parameters...>>(identifier),
-      dv_interpolated_quantities_(this->particles_->template registerStateVariable<DataType>(variable_name))
-{
-    if (this->contact_particles_.size() > 1)
-    {
-        std::cout << "\n Error: Interpolation only works for single contact body!" << std::endl;
-        exit(1);
-    }
-    // must be single contact body
-    dv_contact_data_.push_back(this->contact_particles_[0]->template getVariableByName<DataType>(variable_name));
-}
+      dv_interpolated_quantities_(this->particles_->template registerStateVariable<DataType>(variable_name)),
+      dv_contact_data_(this->contact_particles_->template getVariableByName<DataType>(variable_name)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 template <class DynamicsIdentifier>
@@ -29,18 +21,18 @@ Interpolation<Contact<Base, DataType, Parameters...>>::Interpolation(
     : Interpolation(identifier, variable_name)
 {
     dv_interpolated_quantities_->setName(variable_name + entry_name);
-    entry_ = dv_contact_data_[0]->getEntryIndexByName(entry_name);
+    entry_ = dv_contact_data_->getEntryIndexByName(entry_name);
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 Interpolation<Contact<DataType, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser),
       zero_value_(ZeroData<DataType>::value),
       interpolated_quantities_(encloser.dv_interpolated_quantities_->DelegatedData(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      contact_data_(encloser.dv_contact_data_[contact_index]->DelegatedEntryView(ex_policy, encloser.entry_)) {}
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)),
+      contact_data_(encloser.dv_contact_data_->DelegatedEntryView(ex_policy, encloser.entry_)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 void Interpolation<Contact<DataType, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
@@ -62,15 +54,16 @@ void Interpolation<Contact<DataType, Parameters...>>::InteractKernel::interact(s
 template <typename DataType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 Interpolation<Contact<DataType, RestoringCorrection, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : BaseDynamicsType::InteractKernel(ex_policy, encloser, contact_index),
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser),
       zero_prediction_(ZeroData<PredictVecd>::value),
       interpolated_quantities_(encloser.dv_interpolated_quantities_->DelegatedData(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      contact_data_(encloser.dv_contact_data_[contact_index]->DelegatedEntryView(ex_policy, encloser.entry_)) {}
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)),
+      contact_data_(encloser.dv_contact_data_->DelegatedEntryView(ex_policy, encloser.entry_)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
-void Interpolation<Contact<DataType, RestoringCorrection, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
+void Interpolation<Contact<DataType, RestoringCorrection, Parameters...>>::InteractKernel::
+    interact(size_t index_i, Real dt)
 {
     PredictVecd prediction = zero_prediction_;
     RestoreMatd restoring_matrix = Eps * RestoreMatd::Identity();

@@ -8,11 +8,11 @@
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
-//	Set the file path to the data file.
+//	Set the file name to the data file.
 //----------------------------------------------------------------------
-std::string airfoil_flap_front = "./input/airfoil_flap_front.dat";
-std::string airfoil_wing = "./input/airfoil_wing.dat";
-std::string airfoil_flap_rear = "./input/airfoil_flap_rear.dat";
+std::string airfoil_flap_front = "airfoil_flap_front.dat";
+std::string airfoil_wing = "airfoil_wing.dat";
+std::string airfoil_flap_rear = "airfoil_flap_rear.dat";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -69,8 +69,8 @@ int main(int ac, char *av[])
     // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    auto &main_methods = sph_solver.getMainMethodContainer();
+    auto &host_methods = sph_solver.getHostMethodContainer();
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
