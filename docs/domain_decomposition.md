@@ -238,15 +238,23 @@ the next interaction needs.
 
 Ownership transfer, needed only at the advection step:
 
-1. flag departing particles per destination side, and the complement (staying);
+1. flag departing particles per destination side; from the same flags derive the new
+   owned count `n_new`, the list of departing slots below `n_new` (the holes) and the
+   list of staying particles at or above `n_new` (the donors), both ascending. There
+   are exactly as many donors as holes;
 2. pack the departing ones;
-3. compact the staying ones — gather into scratch, then copy back; an in-place
-   compaction would overwrite entries still to be read;
+3. remove them by copying the k-th donor into the k-th hole. This is the "swap with
+   the last real particle" used by particle deletion, driven by scans instead of an
+   atomic counter, so it is deterministic and costs O(departing) rather than a full
+   compaction; no slot is both read and written;
 4. **barrier**;
-5. pull arrivals into the slots after the compacted particles, where they become owned.
+5. pull arrivals into the slots after `n_new`, where they become owned. This is the
+   particle generation side of the exchange: the state of a new particle comes from
+   the neighbor's send buffer rather than from another particle of the same array.
 
-Packing must precede compaction (packing reads the arrays, compaction rewrites them),
-but no barrier is needed between them since compaction touches only local memory.
+Packing must precede the removal (packing reads the departing slots, the removal
+overwrites them), but no barrier is needed between them since the removal touches
+only local memory.
 
 `SubdomainExchange::checkConsistency()` verifies the invariants — counts within bounds,
 and every owned particle actually inside its own slab. On the host path it reads the
@@ -260,8 +268,8 @@ advection step:
     water_update_particle_position.exec();
     migrate_particles.exec();              // ownership follows the positions
     particle_sort.exec();                  // optional, per subdomain
+    update_halo.exec();                    // new plan + full state refresh; publishes n_local
     water_cell_linked_list.exec();         // over owned + halo
-    update_halo.exec();                    // new plan + full state refresh
     water_block_update_complex_relation.exec();
     ... rebalance every few hundred steps ...
 
@@ -298,12 +306,21 @@ switched from owned to local, which is *not* wired up.
   Regression tolerances need revisiting; quantify the effect on the CPU path first.
 - **One-sided inner relation.** `UpdateRelation<Inner<...>>::incrementNeighborSize`
   registers the reverse neighbor of each pair, writing `neighbor_index_[tar_index]` for
-  a target that may be a halo particle, while offsets are only scanned over
-  `[0, n_owned]`. With halos present this writes out of range. The inner relation must
-  be built **two-sided** under decomposition, or the scan extended to `n_local`. This is
-  the most likely source of silent corruption and is **not fixed**. It should be the
-  first thing the CPU path is pointed at — under ASan it is an immediate, localized
-  failure rather than a drifting result.
+  a target that may be a halo particle. The lists, the offsets and the scan therefore
+  cover the local range `[0, n_local]` (`UpdateRelation<Inner>::updateOnCurrentDevice`);
+  outside a decomposed run the two counts are equal and nothing changes.
+- **State that survives an advection step must be an evolving variable.** The particle
+  sort permutes the evolving variables only. `Force` is assigned by the second acoustic
+  half step and accumulated onto by the next first half step, across the sort, and was
+  not evolving in the CK acoustic step; a single domain scrambles it deterministically,
+  two subdomains scramble it differently, and the runs diverge at the first sort. It is
+  evolving now. The same reasoning applies to any variable a case adds: whatever a
+  particle carries from one advection step to the next has to be in the evolving set,
+  which is also the set that migrates.
+- **Halo refresh points.** Each quantity read at the neighbors is refreshed right after
+  the stage that writes it: the volume after the advection step setup, the correction
+  matrix after the kernel correction, the pressure inside the first acoustic half step
+  and the velocity inside the second, through `addPostInitialization()`.
 - **Contact relations to a non-decomposed body** (walls, observers) work only if that
   body is fully replicated on every subdomain. Replication is right for small static
   bodies, but the draft does not distinguish replicated from decomposed bodies, and that
@@ -318,7 +335,7 @@ switched from owned to local, which is *not* wired up.
 | Item | State |
 | --- | --- |
 | Replicated (non-decomposed) bodies | not distinguished from decomposed ones |
-| One-sided inner relation with halos | broken as described above |
+| Threaded host runner | lazy replica creation is serialized (`replicaCreationMutex()`), but `DiscreteVariable::reallocateData` grows the shared capacity and every subdomain's replica from whichever subdomain thread triggers it, while the other threads still hold the old pointers in their computing kernels. Neighbor list growth during a threaded run therefore crashes; use the sequential runner until capacities are per replica |
 | Per-subdomain cell mesh | full-domain mesh per subdomain |
 | Restart with a decomposition | untouched |
 | NUMA placement on the host path | none; first-touch is incidental, `tbb::task_arena` constraints would be the fix if this path ever needs to be fast |

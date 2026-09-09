@@ -117,16 +117,22 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::updateOnCurrentDevice(Real dt)
 {
-    UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
+    // The inner relation is one-sided: a pair (i, j) is registered from the side of
+    // the smaller index into the lists of both particles. Halo particles occupy the
+    // slots past the owned range, so an owned particle next to a cut plane writes
+    // into the list of a halo particle. The lists, the offsets and the scan therefore
+    // cover the local (owned plus halo) range; outside a decomposed run the two
+    // counts are equal and nothing changes.
+    UnsignedInt total_local_particles = this->particles_->TotalLocalParticles();
     InteractKernel *computing_kernel = kernel_implementation_.getComputingKernel();
 
     particle_for(ex_policy_,
-                 IndexRange(0, total_real_particles),
+                 IndexRange(0, total_local_particles),
                  [=](size_t i)
                  { computing_kernel->clearNeighborSize(i); });
 
     particle_for(ex_policy_,
-                 IndexRange(0, total_real_particles),
+                 IndexRange(0, total_local_particles),
                  [=](size_t i)
                  { computing_kernel->incrementNeighborSize(i); });
 
@@ -137,7 +143,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::updateOnCurrentDevic
     auto *dv_particle_offset = this->inner_relation_.dvParticleOffset();
     UnsignedInt *neighbor_index = dv_neighbor_index->DelegatedData(ex_policy_);
     UnsignedInt *particle_offset = dv_particle_offset->DelegatedData(ex_policy_);
-    UnsignedInt current_offset_list_size = total_real_particles + 1;
+    UnsignedInt current_offset_list_size = total_local_particles + 1;
     UnsignedInt current_neighbor_index_size =
         exclusive_scan(ex_policy_, neighbor_index, particle_offset, current_offset_list_size,
                        typename PlusUnsignedInt<ExecutionPolicy>::type());
@@ -155,7 +161,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::updateOnCurrentDevic
     }
 
     particle_for(ex_policy_,
-                 IndexRange(0, total_real_particles),
+                 IndexRange(0, total_local_particles),
                  [=](size_t i)
                  { computing_kernel->updateNeighborList(i); });
 

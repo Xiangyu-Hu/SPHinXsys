@@ -75,9 +75,13 @@ DataType *DiscreteVariable<DataType>::DelegatedOnDevice()
     if (!isDataDelegated())
     { // the allocation lands on the device bound to the calling thread, because
       // allocateDeviceOnly() resolves the queue through currentSubdomainID() as well
-        device_only_variable_[device_id] =
-            subdomain_replica_keeper_
-                .template createPtr<DeviceOnlyDiscreteVariable<DataType>>(this);
+        std::lock_guard<std::mutex> lock(execution::replicaCreationMutex());
+        if (!isDataDelegated())
+        {
+            device_only_variable_[device_id] =
+                subdomain_replica_keeper_
+                    .template createPtr<DeviceOnlyDiscreteVariable<DataType>>(this);
+        }
     }
     return device_only_variable_[device_id]->DeviceOnlyDataField();
 }

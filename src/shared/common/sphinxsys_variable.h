@@ -280,8 +280,7 @@ class DiscreteVariable : public Quantity
     template <class InitializationFunction>
     DiscreteVariable(const std::string &name, UnsignedInt size,
                      const InitializationFunction &initialization)
-        : Quantity(name), size_(size), width_(1), data_(new DataType[size]),
-          device_only_variable_(nullptr)
+        : Quantity(name), size_(size), width_(1), data_(new DataType[size])
     {
         fill(initialization, 0, size);
     };
@@ -293,8 +292,7 @@ class DiscreteVariable : public Quantity
 
     DiscreteVariable(const std::string &name, UnsignedInt size,
                      const MultiEntryTag &tag, UnsignedInt width)
-        : Quantity(name), size_(size), width_(width), data_(new DataType[size * width]),
-          device_only_variable_(nullptr)
+        : Quantity(name), size_(size), width_(width), data_(new DataType[size * width])
     {
         for (UnsignedInt i = 0; i < width; i++)
         {
@@ -498,9 +496,13 @@ class DiscreteVariable : public Quantity
         const int subdomain_id = currentSubdomainID();
         if (host_only_variable_[subdomain_id] == nullptr)
         {
-            host_only_variable_[subdomain_id] =
-                subdomain_replica_keeper_
-                    .template createPtr<HostOnlyDiscreteVariable<DataType>>(this);
+            std::lock_guard<std::mutex> lock(execution::replicaCreationMutex());
+            if (host_only_variable_[subdomain_id] == nullptr)
+            {
+                host_only_variable_[subdomain_id] =
+                    subdomain_replica_keeper_
+                        .template createPtr<HostOnlyDiscreteVariable<DataType>>(this);
+            }
         }
         return host_only_variable_[subdomain_id]->HostOnlyDataField();
     };

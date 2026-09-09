@@ -46,10 +46,22 @@
 #ifndef SUBDOMAIN_SCOPE_H
 #define SUBDOMAIN_SCOPE_H
 
+#include <mutex>
+
 namespace SPH
 {
 namespace execution
 {
+/** Serializes the lazy creation of per-subdomain replicas. Under the threaded runner
+ *  the subdomain threads reach the first DelegatedData() of a variable concurrently,
+ *  and the keeper that owns the replicas is a plain vector. Creation happens once per
+ *  variable and subdomain, so one process-wide lock costs nothing measurable. */
+inline std::mutex &replicaCreationMutex()
+{
+    static std::mutex mutex;
+    return mutex;
+}
+
 /** Compile-time upper bound on the number of subdomains in one process. It sizes the
  *  small per-subdomain pointer arrays held by each variable, so it is kept small. */
 constexpr int MaxSubdomains = 8;

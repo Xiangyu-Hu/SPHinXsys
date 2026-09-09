@@ -19,7 +19,7 @@ namespace SPH
 template <class ExecutionPolicy, typename DataType>
 VariableExchangeBuffer<ExecutionPolicy, DataType>::VariableExchangeBuffer(
     DiscreteVariable<DataType> *variable, UnsignedInt capacity)
-    : variable_(variable), scratch_(nullptr), capacity_(capacity)
+    : variable_(variable), capacity_(capacity)
 {
     const UnsignedInt width = variable->getWidth();
     auto create = [&](const std::string &suffix)
@@ -35,7 +35,6 @@ VariableExchangeBuffer<ExecutionPolicy, DataType>::VariableExchangeBuffer(
     {
         send_buffer_[side] = create("_Send" + std::to_string(side));
     }
-    scratch_ = create("_Scratch");
 
     // Pre-touch every replica, so that a later DelegatedData() from a neighbor's
     // thread only reads an existing pointer and cannot race on the lazy allocation.
@@ -46,7 +45,6 @@ VariableExchangeBuffer<ExecutionPolicy, DataType>::VariableExchangeBuffer(
         {
             send_buffer_[side]->DelegatedData(ExecutionPolicy{});
         }
-        scratch_->DelegatedData(ExecutionPolicy{});
     }
 }
 //=================================================================================================//
@@ -55,13 +53,6 @@ DataType *VariableExchangeBuffer<ExecutionPolicy, DataType>::SendBuffer(int subd
 {
     execution::SubdomainScope scope(subdomain_id);
     return send_buffer_[side]->DelegatedData(ExecutionPolicy{});
-}
-//=================================================================================================//
-template <class ExecutionPolicy, typename DataType>
-DataType *VariableExchangeBuffer<ExecutionPolicy, DataType>::Scratch(int subdomain_id)
-{
-    execution::SubdomainScope scope(subdomain_id);
-    return scratch_->DelegatedData(ExecutionPolicy{});
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename DataType>
@@ -78,7 +69,6 @@ void VariableExchangeBuffer<ExecutionPolicy, DataType>::reserve(UnsignedInt capa
         {
             send_buffer_[side]->reallocateData(ExecutionPolicy{}, capacity);
         }
-        scratch_->reallocateData(ExecutionPolicy{}, capacity);
     }
     capacity_ = capacity;
 }
@@ -191,35 +181,33 @@ struct PullVariablesFromNeighbor
     }
 };
 
-/** Compact the particles that stay on the current subdomain to the front. */
+/** Remove the departing particles by moving staying particles from the tail into
+ *  their slots. Holes lie below the new owned count and donors at or above it, so no
+ *  slot is both read and written and the copies are independent. Every exchanged
+ *  variable is moved, whether or not it is part of the current halo subset: the slot
+ *  now belongs to a different particle. */
 template <class ExecutionPolicy>
-struct CompactVariables
+struct FillHolesFromTail
 {
     template <typename DataType>
     void operator()(DataContainerAddressKeeper<VariableExchangeBuffer<ExecutionPolicy, DataType>> &buffers,
-                    int subdomain_id, const UnsignedInt *keep_index, UnsignedInt keep_count)
+                    const UnsignedInt *hole_index, const UnsignedInt *donor_index, UnsignedInt fill_count)
     {
+        if (fill_count == 0)
+        {
+            return;
+        }
         for (std::size_t k = 0; k != buffers.size(); ++k)
         {
             const UnsignedInt width = buffers[k]->Variable()->getWidth();
             DataType *data = buffers[k]->Variable()->DelegatedData(ExecutionPolicy{});
-            DataType *scratch = buffers[k]->Scratch(subdomain_id);
-            // Gather then copy back: an in-place compaction would overwrite entries
-            // that are still to be read, since keep_index is only weakly increasing.
-            particle_for(ExecutionPolicy{}, IndexRange(0, keep_count),
+            particle_for(ExecutionPolicy{}, IndexRange(0, fill_count),
                          [=](std::size_t i)
                          {
                              for (UnsignedInt entry = 0; entry < width; ++entry)
                              {
-                                 scratch[i * width + entry] = data[keep_index[i] * width + entry];
-                             }
-                         });
-            particle_for(ExecutionPolicy{}, IndexRange(0, keep_count),
-                         [=](std::size_t i)
-                         {
-                             for (UnsignedInt entry = 0; entry < width; ++entry)
-                             {
-                                 data[i * width + entry] = scratch[i * width + entry];
+                                 data[hole_index[i] * width + entry] =
+                                     data[donor_index[i] * width + entry];
                              }
                          });
         }
@@ -316,14 +304,30 @@ SubdomainExchange<ExecutionPolicy>::SubdomainExchange(SlabDecomposition &decompo
         dv_send_index_[side] = particles_.template addUniqueDiscreteVariable<UnsignedInt>(
             "SubdomainSendIndex" + std::to_string(side), particles_bound);
     }
-    dv_keep_index_ = particles_.template addUniqueDiscreteVariable<UnsignedInt>(
-        "SubdomainKeepIndex", particles_bound);
+    dv_hole_index_ = particles_.template addUniqueDiscreteVariable<UnsignedInt>(
+        "SubdomainHoleIndex", particles_bound);
+    dv_donor_index_ = particles_.template addUniqueDiscreteVariable<UnsignedInt>(
+        "SubdomainDonorIndex", particles_bound);
 
     send_count_.resize(number_of_subdomains, {0, 0});
     recv_count_.resize(number_of_subdomains, {0, 0});
     halo_offset_.resize(number_of_subdomains, {0, 0});
     owned_count_.resize(number_of_subdomains, 0);
     keep_count_.resize(number_of_subdomains, 0);
+    fill_count_.resize(number_of_subdomains, 0);
+
+    // The particle counters are written per subdomain through setValue(), which
+    // addresses the replica of the subdomain bound to the calling thread. A replica is
+    // only created on the first DelegatedData() call; before that every subdomain's
+    // delegate still aliases the host value, and per-subdomain writes would overwrite
+    // each other there. Touching the replicas here makes every later write land on
+    // the right subdomain.
+    for (int subdomain_id = 0; subdomain_id < number_of_subdomains; ++subdomain_id)
+    {
+        execution::SubdomainScope scope(subdomain_id);
+        particles_.svTotalRealParticles()->DelegatedData(ExecutionPolicy{});
+        particles_.svTotalLocalParticles()->DelegatedData(ExecutionPolicy{});
+    }
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -430,7 +434,17 @@ void SubdomainExchange<ExecutionPolicy>::gatherToHost()
               owned_count_[subdomain_id], false);
         host_offset += owned_count_[subdomain_id];
     }
-    particles_.svTotalRealParticles()->setValue(host_offset);
+    // Host side readers (output, restart) read the counter through the delegate of
+    // subdomain 0, since the host thread is bound to subdomain 0 outside a fan-out.
+    // Publish the global count there, and restore the owned count of subdomain 0
+    // with finishHostAccess() before the next fan-out.
+    particles_.svTotalRealParticles()->setValue(0, host_offset);
+}
+//=================================================================================================//
+template <class ExecutionPolicy>
+void SubdomainExchange<ExecutionPolicy>::finishHostAccess()
+{
+    particles_.svTotalRealParticles()->setValue(0, owned_count_[0]);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -588,7 +602,8 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
             Vecd *position = particles_.dvParticlePosition()->DelegatedData(ExecutionPolicy{});
             UnsignedInt *send_flag = dv_send_flag_->DelegatedData(ExecutionPolicy{});
             UnsignedInt *send_scan = dv_send_scan_->DelegatedData(ExecutionPolicy{});
-            UnsignedInt *keep_index = dv_keep_index_->DelegatedData(ExecutionPolicy{});
+            UnsignedInt *hole_index = dv_hole_index_->DelegatedData(ExecutionPolicy{});
+            UnsignedInt *donor_index = dv_donor_index_->DelegatedData(ExecutionPolicy{});
 
             for (int side = 0; side < NumberOfSides; ++side)
             {
@@ -621,16 +636,32 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
                 send_count_[subdomain_id][side] = count;
             }
 
-            // The particles that stay, in their original order.
+            // Owned count after the departures: the departing particles are counted
+            // once, whichever side they leave to.
             particle_for(ExecutionPolicy{}, IndexRange(0, owned_particles + 1),
                          [=](std::size_t i)
                          {
                              send_flag[i] = (i < owned_particles &&
-                                             map.subdomainOf(position[i]) == subdomain_id)
+                                             map.subdomainOf(position[i]) != subdomain_id)
                                                 ? UnsignedInt(1)
                                                 : UnsignedInt(0);
                          });
-            keep_count_[subdomain_id] = exclusive_scan(
+            const UnsignedInt departing = exclusive_scan(
+                ExecutionPolicy{}, send_flag, send_scan, owned_particles + 1,
+                typename PlusUnsignedInt<ExecutionPolicy>::type());
+            const UnsignedInt new_owned = owned_particles - departing;
+            keep_count_[subdomain_id] = new_owned;
+
+            // Holes: departing slots below the new owned count, in ascending order.
+            particle_for(ExecutionPolicy{}, IndexRange(0, owned_particles + 1),
+                         [=](std::size_t i)
+                         {
+                             send_flag[i] = (i < new_owned &&
+                                             map.subdomainOf(position[i]) != subdomain_id)
+                                                ? UnsignedInt(1)
+                                                : UnsignedInt(0);
+                         });
+            const UnsignedInt holes = exclusive_scan(
                 ExecutionPolicy{}, send_flag, send_scan, owned_particles + 1,
                 typename PlusUnsignedInt<ExecutionPolicy>::type());
             particle_for(ExecutionPolicy{}, IndexRange(0, owned_particles),
@@ -638,16 +669,46 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
                          {
                              if (send_flag[i] != UnsignedInt(0))
                              {
-                                 keep_index[send_scan[i]] = i;
+                                 hole_index[send_scan[i]] = i;
                              }
                          });
+
+            // Donors: staying particles at or above the new owned count, ascending.
+            // There are exactly as many of them as there are holes.
+            particle_for(ExecutionPolicy{}, IndexRange(0, owned_particles + 1),
+                         [=](std::size_t i)
+                         {
+                             send_flag[i] = (i >= new_owned && i < owned_particles &&
+                                             map.subdomainOf(position[i]) == subdomain_id)
+                                                ? UnsignedInt(1)
+                                                : UnsignedInt(0);
+                         });
+            const UnsignedInt donors = exclusive_scan(
+                ExecutionPolicy{}, send_flag, send_scan, owned_particles + 1,
+                typename PlusUnsignedInt<ExecutionPolicy>::type());
+            particle_for(ExecutionPolicy{}, IndexRange(0, owned_particles),
+                         [=](std::size_t i)
+                         {
+                             if (send_flag[i] != UnsignedInt(0))
+                             {
+                                 donor_index[send_scan[i]] = i;
+                             }
+                         });
+            if (holes != donors)
+            {
+                std::cout << "\n Error: subdomain " << subdomain_id << " has " << holes
+                          << " holes but " << donors << " donors on migration. \n";
+                exit(1);
+            }
+            fill_count_[subdomain_id] = holes;
         });
 
     reserveBuffers(largestSendCount());
 
-    // 2. Pack the departing particles, then compact the ones that stay. Packing reads
-    //    the arrays and compaction rewrites them, so the order matters; no barrier is
-    //    needed between them, since compaction touches only local memory.
+    // 2. Pack the departing particles, then remove them by filling their slots from
+    //    the tail. Packing reads the departing slots and the filling overwrites them,
+    //    so the order matters; no barrier is needed between the two, since the filling
+    //    touches only local memory.
     execution::fanOutOverSubdomains(
         ExecutionPolicy{},
         [&]()
@@ -655,13 +716,14 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
             const int subdomain_id = execution::currentSubdomainID();
             packOnCurrentSubdomain(variables_to_exchange_);
 
-            OperationOnDataAssemble<ExchangeBuffers, CompactVariables<ExecutionPolicy>> compact;
-            const UnsignedInt *keep_index = dv_keep_index_->DelegatedData(ExecutionPolicy{});
-            compact(exchange_buffers_, subdomain_id, keep_index, keep_count_[subdomain_id]);
+            OperationOnDataAssemble<ExchangeBuffers, FillHolesFromTail<ExecutionPolicy>> fill_holes;
+            const UnsignedInt *hole_index = dv_hole_index_->DelegatedData(ExecutionPolicy{});
+            const UnsignedInt *donor_index = dv_donor_index_->DelegatedData(ExecutionPolicy{});
+            fill_holes(exchange_buffers_, hole_index, donor_index, fill_count_[subdomain_id]);
         });
     // Barrier: every send buffer holds the migrants before anyone pulls.
 
-    // 3. Append the arrivals after the compacted particles; they become owned.
+    // 3. Append the arrivals after the staying particles; they become owned.
     execution::fanOutOverSubdomains(
         ExecutionPolicy{},
         [&]()

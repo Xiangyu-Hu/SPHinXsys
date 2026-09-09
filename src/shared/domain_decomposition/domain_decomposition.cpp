@@ -21,7 +21,7 @@ SlabDecomposition::SlabDecomposition(const BoundingBoxd &bounds, Real halo_width
 
     if (split_axis < 0)
     { // cut along the longest extent, which gives the smallest interface area
-        const Vecd extent = bounds.second_ - bounds.first_;
+        const Vecd extent = bounds.upper_ - bounds.lower_;
         split_axis = 0;
         for (int axis = 1; axis < Dimensions; ++axis)
         {
@@ -36,8 +36,8 @@ SlabDecomposition::SlabDecomposition(const BoundingBoxd &bounds, Real halo_width
     subdomain_map_.split_axis_ = split_axis;
     subdomain_map_.halo_width_ = halo_width;
 
-    const Real lower = bounds.first_[split_axis];
-    const Real upper = bounds.second_[split_axis];
+    const Real lower = bounds.lower_[split_axis];
+    const Real upper = bounds.upper_[split_axis];
     const Real slab_thickness = (upper - lower) / Real(number_of_subdomains);
     for (int index = 0; index <= number_of_subdomains; ++index)
     {

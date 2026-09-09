@@ -254,11 +254,27 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
 {
     this->setUpdated(this->identifier_->getSPHBody());
     this->setupDynamics(dt);
-    // One host thread per device under the multi-device policy; every nested step,
-    // including the pre- and post-processes, then stays on that device.
+    // The three steps fan out separately, so that the post-initialization dynamics
+    // run on the host thread at a point where every subdomain has finished the
+    // initialization step: a fan-out is a barrier over the subdomains. Under a
+    // non-decomposed policy the three fan-outs collapse into plain calls and this is
+    // exactly InteractionDynamicsCK<OneLevel>::runAllSteps(). The pre- and
+    // post-processes of the interaction step (contact interactions, for instance)
+    // stay inside the interaction fan-out, on the subdomain they were entered on.
     execution::fanOutOverSubdomains(
         ExecutionPolicy{}, [&]()
-        { InteractionDynamicsCK<OneLevel>::runAllSteps(dt); });
+        { this->runInitializationStep(dt); });
+
+    for (size_t k = 0; k < this->post_initialization_.size(); ++k)
+        this->post_initialization_[k]->exec(dt);
+
+    execution::fanOutOverSubdomains(
+        ExecutionPolicy{}, [&]()
+        { InteractionDynamicsCK<Base>::runAllSteps(dt); });
+
+    execution::fanOutOverSubdomains(
+        ExecutionPolicy{}, [&]()
+        { this->runUpdateStep(dt); });
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,

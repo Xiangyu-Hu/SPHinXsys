@@ -101,15 +101,12 @@ class VariableExchangeBuffer
      *  subdomain's thread; the replicas are pre-touched at construction so that no
      *  allocation can race here. */
     DataType *SendBuffer(int subdomain_id, int side);
-    /** Scratch of `subdomain_id`, used to compact the owned particles on migration. */
-    DataType *Scratch(int subdomain_id);
     void reserve(UnsignedInt capacity);
     UnsignedInt Capacity() const { return capacity_; };
 
   protected:
     DiscreteVariable<DataType> *variable_;
     DiscreteVariable<DataType> *send_buffer_[NumberOfSides];
-    DiscreteVariable<DataType> *scratch_;
     UnsignedInt capacity_;
 };
 
@@ -137,16 +134,31 @@ class SubdomainExchange
      *  after particle generation, from the host thread. */
     void scatterFromHost();
     /** Assemble the owned particles of all subdomains back into the host arrays, in
-     *  subdomain order. Used for output, restart and host side dynamics. */
+     *  subdomain order. Used for output, restart and host side dynamics. While the
+     *  host arrays are in use, the particle counter seen from the host thread is the
+     *  global one; call finishHostAccess() afterwards. */
     void gatherToHost();
+    /** Undo the counter publication of gatherToHost(), so that subdomain 0 sees its
+     *  own owned count again. Must be called before the next fan-out. */
+    void finishHostAccess();
 
     /** Recompute which particles are exchanged and how many arrive, and publish the
-     *  resulting n_local. Must run after every cell linked list update. */
+     *  resulting n_local. Must run after every migration or sort, and before the cell
+     *  linked list is rebuilt, since that list covers the local particles. */
     void updateHaloPlan();
     /** Re-send the values of the given variables along the current plan. */
     void refreshHalo(DiscreteVariables &variables);
     void refreshHalo() { refreshHalo(variables_to_exchange_); };
-    /** Transfer ownership of the particles that crossed a cut plane. */
+    /** Transfer ownership of the particles that crossed a cut plane.
+     *
+     *  The departing particles are packed into the send buffers first, then removed
+     *  by filling their slots from the tail: the k-th departing slot below the new
+     *  owned count receives the k-th staying particle at or above it, so that the
+     *  staying particles end up contiguous in [0, n_new) with O(departing) copies.
+     *  This is the "swap with the last real particle" of particle deletion, but
+     *  driven by the same flag-and-scan lists as the packing, which keeps it free of
+     *  atomics and deterministic. The arrivals are then appended after n_new, which is
+     *  the particle generation side: their state comes from the neighbor's buffer. */
     void migrateParticles();
 
     UnsignedInt OwnedParticles(int subdomain_id) const { return owned_count_[subdomain_id]; };
@@ -182,14 +194,18 @@ class SubdomainExchange
     DiscreteVariable<UnsignedInt> *dv_send_flag_;
     DiscreteVariable<UnsignedInt> *dv_send_scan_;
     DiscreteVariable<UnsignedInt> *dv_send_index_[NumberOfSides];
-    DiscreteVariable<UnsignedInt> *dv_keep_index_;
+    /** Migration: slots of departing particles below the new owned count, and the
+     *  staying particles at or above it which move into those slots. */
+    DiscreteVariable<UnsignedInt> *dv_hole_index_;
+    DiscreteVariable<UnsignedInt> *dv_donor_index_;
 
     /** Host side bookkeeping, written by the subdomain threads at disjoint indices. */
     StdVec<std::array<UnsignedInt, NumberOfSides>> send_count_;
     StdVec<std::array<UnsignedInt, NumberOfSides>> recv_count_;
     StdVec<std::array<UnsignedInt, NumberOfSides>> halo_offset_;
     StdVec<UnsignedInt> owned_count_;
-    StdVec<UnsignedInt> keep_count_;
+    StdVec<UnsignedInt> keep_count_; /**< owned count after the departures, before arrivals */
+    StdVec<UnsignedInt> fill_count_; /**< number of holes filled from the tail */
     UnsignedInt buffer_capacity_;
 };
 } // namespace SPH

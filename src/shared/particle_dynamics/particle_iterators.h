@@ -54,6 +54,20 @@ void particle_for(const ExecutionPolicy &execution_policy, const DynamicsRange &
 };
 
 /**
+ * Host side decomposition policies iterate exactly like the host policy they derive
+ * from; only the data they address differs, and that is resolved by DelegatedData().
+ * The forwarding is explicit because the generic template above is an exact match
+ * for MultiHostExecution<...> and would otherwise be chosen over the ParallelPolicy
+ * or SequencedPolicy overloads, which need a derived-to-base conversion.
+ */
+template <class PolicyType, typename DynamicsRange, class LocalDynamicsFunction>
+inline void particle_for(const MultiHostExecution<PolicyType> &ex_policy, const DynamicsRange &dynamics_range,
+                         const LocalDynamicsFunction &local_dynamics_function)
+{
+    particle_for(static_cast<const PolicyType &>(ex_policy), dynamics_range, local_dynamics_function);
+};
+
+/**
  * Range-wise iterators (for sequential and parallel computing).
  */
 
@@ -178,6 +192,16 @@ void particle_reduce(const ExecutionPolicy &execution_policy, const DynamicsRang
     std::cout << "\n Error: ExecutionPolicy, DynamicsRange or LocalDynamicsFunction not defined for particle dynamics !" << std::endl;
     std::cout << __FILE__ << ':' << __LINE__ << std::endl;
     exit(1);
+};
+
+/** Host side decomposition policies reduce like the host policy they derive from. */
+template <class ReturnType, typename Operation, class PolicyType, typename DynamicsRange, class LocalDynamicsFunction>
+inline ReturnType particle_reduce(const MultiHostExecution<PolicyType> &ex_policy, const DynamicsRange &dynamics_range,
+                                  ReturnType temp, Operation &&operation,
+                                  const LocalDynamicsFunction &local_dynamics_function)
+{
+    return particle_reduce(static_cast<const PolicyType &>(ex_policy), dynamics_range, temp,
+                           std::forward<Operation>(operation), local_dynamics_function);
 };
 
 /**

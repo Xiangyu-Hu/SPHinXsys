@@ -30,9 +30,13 @@
  *              update particle positions
  *              MigrateParticlesCK          ownership follows the positions
  *              particle sort               optional, per subdomain
- *              update cell linked list     over owned plus halo
  *              UpdateHaloCK                new plan, and a full state refresh
+ *              update cell linked list     over owned plus halo
  *              update body relations       neighbor lists of the owned particles
+ *
+ *          The halo must be rebuilt before the cell linked list: the list is built
+ *          over the local particles, and it is the halo plan that publishes how many
+ *          of those there are.
  *
  *          and within an acoustic step, after every stage that writes a state variable
  *          read by the next interaction:

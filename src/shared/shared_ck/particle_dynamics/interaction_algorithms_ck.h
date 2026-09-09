@@ -82,8 +82,20 @@ class InteractionDynamicsCK<OneLevel> : public InteractionDynamicsCK<Base>
   public:
     InteractionDynamicsCK() : InteractionDynamicsCK<Base>() {};
     virtual void runAllSteps(Real dt) override;
+    /** Dynamics executed on the host thread after the initialization step and before
+     *  the interaction step, outside any subdomain fan-out. In a domain decomposed run
+     *  this is where the halo copies of the quantities written by the initialization
+     *  step (the pressure, for the first acoustic half step) are refreshed, since the
+     *  interaction step reads them at the neighbors. Otherwise there is no point in
+     *  time between the two steps at which all subdomains have finished initializing. */
+    auto &addPostInitialization(BaseDynamics<void> &dynamics)
+    {
+        post_initialization_.push_back(&dynamics);
+        return *this;
+    };
 
   protected:
+    StdVec<BaseDynamics<void> *> post_initialization_;
     virtual void runInitializationStep(Real dt) = 0;
     virtual void runUpdateStep(Real dt) = 0;
 };

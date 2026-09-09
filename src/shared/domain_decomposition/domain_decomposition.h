@@ -35,7 +35,7 @@
 #ifndef DOMAIN_DECOMPOSITION_H
 #define DOMAIN_DECOMPOSITION_H
 
-#include "base_data_package.h"
+#include "base_data_type_package.h"
 #include "subdomain_scope.h"
 #include "sphinxsys_containers.h"
 

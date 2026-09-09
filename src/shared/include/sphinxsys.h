@@ -39,11 +39,6 @@
 #include "sphinxsys_variable_sycl.hpp"
 #endif // SPHINXSYS_USE_SYCL
 
-#if SPHINXSYS_MULTI_DEVICE || SPHINXSYS_MULTI_SUBDOMAIN_HOST
-#include "domain_decomposition_dynamics.h"
-#include "subdomain_exchange.hpp"
-#endif // decomposed run
-
 #include "adaptation.hpp"
 #include "all_bodies.h"
 #include "all_body_relations.h"
@@ -62,6 +57,13 @@
 #include "sph_solver.h"
 #include "sph_system.hpp"
 #include "sphinxsys_entity.h"
+
+// The decomposition headers rely on the particle, body and iterator headers above,
+// so they are included last.
+#if SPHINXSYS_MULTI_DEVICE || SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#include "domain_decomposition_dynamics.h"
+#include "subdomain_exchange.hpp"
+#endif // decomposed run
 
 #include "tbb/tick_count.h"
 typedef tbb::tick_count TickCount;

@@ -37,17 +37,23 @@ namespace SPH
 {
 using namespace execution;
 
-template <class Identifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<SequencedPolicy, Identifier> &loop_range,
-                  const UnaryFunc &unary_func)
+//----------------------------------------------------------------------
+// The loop bodies are written once, on a generic loop range, and the policy
+// overloads below only select between them. This is what lets the host side
+// decomposition policies (MultiHostExecution<...>) reuse the same loops: a
+// LoopRangeCK<ParallelMultiHostPolicy, ...> is a distinct type from a
+// LoopRangeCK<ParallelPolicy, ...>, so it needs its own overload, but the loop
+// itself is identical.
+//----------------------------------------------------------------------
+template <class LoopRangeType, class UnaryFunc>
+void sequenced_particle_for(const LoopRangeType &loop_range, const UnaryFunc &unary_func)
 {
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
         loop_range.computeUnit(unary_func, i);
 };
 
-template <class Identifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
-                  const UnaryFunc &unary_func)
+template <class LoopRangeType, class UnaryFunc>
+void parallel_particle_for(const LoopRangeType &loop_range, const UnaryFunc &unary_func)
 {
     tbb::parallel_for(
         IndexRange(0, loop_range.LoopBound()),
@@ -61,9 +67,9 @@ void particle_for(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
         ap);
 };
 
-template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
-ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, Identifier> &loop_range,
-                           ReturnType temp, const UnaryFunc &unary_func)
+template <typename Operation, class LoopRangeType, class ReturnType, class UnaryFunc>
+ReturnType sequenced_particle_reduce(const LoopRangeType &loop_range,
+                                     ReturnType temp, const UnaryFunc &unary_func)
 {
     Operation operation;
     ReturnType temp0 = temp;
@@ -74,24 +80,81 @@ ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, Identifier> &loop_
     return temp0;
 }
 
-template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
-ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
-                           ReturnType temp, const UnaryFunc &unary_func)
+template <typename Operation, class LoopRangeType, class ReturnType, class UnaryFunc>
+ReturnType parallel_particle_reduce(const LoopRangeType &loop_range,
+                                    ReturnType temp, const UnaryFunc &unary_func)
 {
     Operation operation;
     return tbb::parallel_reduce(
         IndexRange(0, loop_range.LoopBound()), temp,
         [&](const IndexRange &r, ReturnType temp0) -> ReturnType
         {
-				for (size_t i = r.begin(); i != r.end(); ++i)
-				{
-					temp0 = operation(temp0, loop_range.computeUnit(temp, operation, unary_func, i));
-				}
-				return temp0; },
+            for (size_t i = r.begin(); i != r.end(); ++i)
+            {
+                temp0 = operation(temp0, loop_range.computeUnit(temp, operation, unary_func, i));
+            }
+            return temp0;
+        },
         [&](const ReturnType &x, const ReturnType &y) -> ReturnType
         {
             return operation(x, y);
         });
+};
+
+template <class Identifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<SequencedPolicy, Identifier> &loop_range,
+                  const UnaryFunc &unary_func)
+{
+    sequenced_particle_for(loop_range, unary_func);
+};
+
+template <class Identifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
+                  const UnaryFunc &unary_func)
+{
+    parallel_particle_for(loop_range, unary_func);
+};
+
+template <class Identifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<SequencedMultiHostPolicy, Identifier> &loop_range,
+                  const UnaryFunc &unary_func)
+{
+    sequenced_particle_for(loop_range, unary_func);
+};
+
+template <class Identifier, class UnaryFunc>
+void particle_for(const LoopRangeCK<ParallelMultiHostPolicy, Identifier> &loop_range,
+                  const UnaryFunc &unary_func)
+{
+    parallel_particle_for(loop_range, unary_func);
+};
+
+template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
+ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, Identifier> &loop_range,
+                           ReturnType temp, const UnaryFunc &unary_func)
+{
+    return sequenced_particle_reduce<Operation>(loop_range, temp, unary_func);
+}
+
+template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
+ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
+                           ReturnType temp, const UnaryFunc &unary_func)
+{
+    return parallel_particle_reduce<Operation>(loop_range, temp, unary_func);
+};
+
+template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
+ReturnType particle_reduce(const LoopRangeCK<SequencedMultiHostPolicy, Identifier> &loop_range,
+                           ReturnType temp, const UnaryFunc &unary_func)
+{
+    return sequenced_particle_reduce<Operation>(loop_range, temp, unary_func);
+}
+
+template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
+ReturnType particle_reduce(const LoopRangeCK<ParallelMultiHostPolicy, Identifier> &loop_range,
+                           ReturnType temp, const UnaryFunc &unary_func)
+{
+    return parallel_particle_reduce<Operation>(loop_range, temp, unary_func);
 };
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_CK_H
