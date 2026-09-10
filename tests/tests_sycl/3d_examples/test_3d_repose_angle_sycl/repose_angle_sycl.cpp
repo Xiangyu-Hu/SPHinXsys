@@ -65,7 +65,7 @@ class SoilInitialConditionCK : public continuum_dynamics::ContinuumInitialCondit
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : ContinuumInitialConditionCK::UpdateKernel(ex_policy, encloser){};
-        void update(UnsignedInt index_i, Real dt = 0.0)
+        void compute(UnsignedInt index_i, Real dt = 0.0)
         {
             /** initial stress */
             Real y = pos_[index_i][1];

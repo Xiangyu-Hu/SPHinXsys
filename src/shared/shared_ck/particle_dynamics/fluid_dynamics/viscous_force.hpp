@@ -42,7 +42,7 @@ ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Parameters
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 void ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -83,7 +83,7 @@ ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Parameters...>
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 void ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)

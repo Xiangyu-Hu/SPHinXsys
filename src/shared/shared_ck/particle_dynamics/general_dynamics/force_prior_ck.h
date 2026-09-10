@@ -52,7 +52,7 @@ class ForcePriorCK
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0)
+        void compute(size_t index_i, Real dt = 0.0)
         {
             force_prior_[index_i] += current_force_[index_i] - previous_force_[index_i];
             previous_force_[index_i] = current_force_[index_i];
@@ -76,7 +76,7 @@ class GravityForceCK : public LocalDynamics, public ForcePriorCK
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         GravityType gravity_;

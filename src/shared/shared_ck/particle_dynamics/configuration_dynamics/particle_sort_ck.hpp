@@ -109,7 +109,7 @@ void ParticleSortCK<ExecutionPolicy>::sortOnCurrentDevice(Real dt)
 
         particle_for(ex_policy_, IndexRange(0, total_particles),
                      [=](size_t i)
-                     { update_body_part_by_particle->update(i); });
+                     { update_body_part_by_particle->compute(i); });
     }
 }
 //=================================================================================================//
@@ -124,7 +124,7 @@ ParticleSortCK<ExecutionPolicy>::UpdateBodyPartByParticle::
 //=================================================================================================//
 template <class ExecutionPolicy>
 void ParticleSortCK<ExecutionPolicy>::UpdateBodyPartByParticle::
-    update(UnsignedInt index_i)
+    compute(UnsignedInt index_i)
 {
     particle_list_[index_i] = sorted_id_[original_id_list_[index_i]];
 }

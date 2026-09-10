@@ -37,64 +37,91 @@ namespace SPH
 {
 using namespace execution;
 
-//----------------------------------------------------------------------
-// The loop bodies are written once, on a generic loop range, and the policy
-// overloads below only select between them. This is what lets the host side
-// decomposition policies (MultiHostExecution<...>) reuse the same loops: a
-// LoopRangeCK<ParallelMultiHostPolicy, ...> is a distinct type from a
-// LoopRangeCK<ParallelPolicy, ...>, so it needs its own overload, but the loop
-// itself is identical.
-//----------------------------------------------------------------------
-template <class LoopRangeType, class UnaryFunc>
-void sequenced_particle_for(const LoopRangeType &loop_range, const UnaryFunc &unary_func)
+template <class Identifier, class KernelImplementationType>
+void particle_for(const LoopRangeCK<SequencedPolicy, Identifier> &loop_range,
+                  KernelImplementationType &implementation, Real dt)
 {
+    auto kernel = implementation.getComputingKernel();
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
-        loop_range.computeUnit(unary_func, i);
+        loop_range.computeUnit([=](size_t i)
+                               { kernel->compute(i, dt); }, i);
 };
 
-template <class LoopRangeType, class UnaryFunc>
-void parallel_particle_for(const LoopRangeType &loop_range, const UnaryFunc &unary_func)
+template <class Identifier, class KernelImplementationType>
+void particle_for(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
+                  KernelImplementationType &implementation, Real dt)
 {
+    auto kernel = implementation.getComputingKernel();
     tbb::parallel_for(
         IndexRange(0, loop_range.LoopBound()),
         [&](const IndexRange &r)
         {
             for (size_t i = r.begin(); i < r.end(); ++i)
             {
-                loop_range.computeUnit(unary_func, i);
+                loop_range.computeUnit(
+                    [=](size_t i)
+                    { kernel->compute(i, dt); }, i);
             }
         },
         ap);
 };
 
-template <typename Operation, class LoopRangeType, class ReturnType, class UnaryFunc>
-ReturnType sequenced_particle_reduce(const LoopRangeType &loop_range,
-                                     ReturnType temp, const UnaryFunc &unary_func)
+template <typename Operation, class Identifier, class ReturnType, class KernelImplementationType>
+ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, Identifier> &loop_range,
+                           ReturnType temp, KernelImplementationType &implementation, Real dt)
 {
+    auto reduce_kernel = implementation.getComputingKernel();
     Operation operation;
     ReturnType temp0 = temp;
     for (size_t i = 0; i < loop_range.LoopBound(); ++i)
     {
-        temp0 = operation(temp0, loop_range.computeUnit(temp, operation, unary_func, i));
+        temp0 = operation(
+            temp0, loop_range.computeUnit(
+                       temp, operation,
+                       [=](size_t i)
+                       { return reduce_kernel->reduce(i, dt); }, i));
     }
     return temp0;
 }
 
-template <typename Operation, class LoopRangeType, class ReturnType, class UnaryFunc>
-ReturnType parallel_particle_reduce(const LoopRangeType &loop_range,
-                                    ReturnType temp, const UnaryFunc &unary_func)
+template <typename Operation, class Identifier, class ReturnType, class KernelImplementationType>
+ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
+                           ReturnType temp, KernelImplementationType &implementation, Real dt)
 {
+    auto reduce_kernel = implementation.getComputingKernel();
     Operation operation;
     return tbb::parallel_reduce(
         IndexRange(0, loop_range.LoopBound()), temp,
         [&](const IndexRange &r, ReturnType temp0) -> ReturnType
         {
-            for (size_t i = r.begin(); i != r.end(); ++i)
-            {
-                temp0 = operation(temp0, loop_range.computeUnit(temp, operation, unary_func, i));
-            }
-            return temp0;
-        },
+				for (size_t i = r.begin(); i != r.end(); ++i)
+				{
+					temp0 = operation(temp0, loop_range.computeUnit(
+                        temp, operation,                         
+                        [=](size_t i)
+                       { return reduce_kernel->reduce(i, dt); }, i));
+				}
+				return temp0; },
+        [&](const ReturnType &x, const ReturnType &y) -> ReturnType
+        {
+            return operation(x, y);
+        });
+};
+
+template <typename Operation, class ReturnType, class UnaryFunc>
+ReturnType particle_reduce(const ParallelPolicy &par, const IndexRange &particles_range,
+                           ReturnType temp, const UnaryFunc &unary_func)
+{
+    Operation operation;
+    return tbb::parallel_reduce(
+        particles_range, temp,
+        [&](const IndexRange &r, ReturnType temp0) -> ReturnType
+        {
+				for (size_t i = r.begin(); i != r.end(); ++i)
+				{
+					temp0 = operation(temp0, unary_func(i));
+				}
+				return temp0; },
         [&](const ReturnType &x, const ReturnType &y) -> ReturnType
         {
             return operation(x, y);

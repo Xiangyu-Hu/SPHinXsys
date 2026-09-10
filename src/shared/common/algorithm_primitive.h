@@ -294,7 +294,7 @@ inline void generic_for(const SequencedPolicy &seq, const IndexRange &index_rang
 };
 
 template <class LocalDynamicsFunction>
-inline void generic_for(const ParallelPolicy &par_host, const IndexRange &particles_range,
+inline void generic_for(const ParallelPolicy &ex_policy, const IndexRange &particles_range,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
     tbb::parallel_for(

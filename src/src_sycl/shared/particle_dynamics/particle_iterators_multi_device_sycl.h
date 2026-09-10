@@ -63,12 +63,12 @@ namespace SPH
  */
 template <class Identifier>
 class LoopRangeCK<ParallelMultiDevicePolicy, Identifier>
-    : public LoopRangeCK<ParallelDevicePolicy, Identifier>
+    : public LoopRangeCK<SYCLDevicePolicy, Identifier>
 {
   public:
     template <typename... Args>
     explicit LoopRangeCK(Args &&...args)
-        : LoopRangeCK<ParallelDevicePolicy, Identifier>(std::forward<Args>(args)...) {};
+        : LoopRangeCK<SYCLDevicePolicy, Identifier>(std::forward<Args>(args)...) {};
 };
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_MULTI_DEVICE_SYCL_H

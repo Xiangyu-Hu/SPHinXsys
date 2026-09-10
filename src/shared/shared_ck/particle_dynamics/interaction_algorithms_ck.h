@@ -160,8 +160,7 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Param
     using RangeIdentifier = typename LocalDynamicsType::RangeIdentifier;
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
-    UniquePtrKeeper<KernelImplementation> contact_kernel_implementation_ptr_;
-    KernelImplementation *contact_kernel_implementation_;
+    KernelImplementation contact_kernel_implementation_;
 
   public:
     template <typename... Args>
