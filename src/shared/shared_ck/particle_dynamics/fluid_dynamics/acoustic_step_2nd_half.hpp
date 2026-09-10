@@ -24,7 +24,7 @@ AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
     //----------------------------------------------------------------------
     // add interact variables
     //----------------------------------------------------------------------
-    this->addInteractVariable<Real>(this->dv_vel_);
+    this->template addInteractVariable<Vecd>(this->dv_vel_);
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>

@@ -57,7 +57,7 @@ template <typename DataType>
 void Interaction<Contact<Parameters...>>::addContactInteractVariable(
     DiscreteVariable<DataType> *contact_variable)
 {
-    addVariableToList<DiscreteVariable, DataType>(contact_interact_variables_, variable);
+    addVariableToList<DiscreteVariable, DataType>(contact_interact_variables_, contact_variable);
 }
 //=================================================================================================//
 
