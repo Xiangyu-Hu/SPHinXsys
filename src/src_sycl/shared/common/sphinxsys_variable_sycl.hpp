@@ -46,11 +46,11 @@ void DiscreteVariable<DataType>::synchronizeToDevice()
 template <typename DataType>
 DeviceOnlyDiscreteVariable<DataType>::
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable)
-    : Quantity(host_variable->Name()), device_only_data_(nullptr)
+    : Quantity(host_variable->Name()), device_only_data_(nullptr),
+      total_size_(host_variable->getTotalSize())
 {
-    UnsignedInt total_size = host_variable->getTotalSize();
-    device_only_data_ = allocateDeviceOnly<DataType>(total_size);
-    copyToDevice(host_variable->Data(), device_only_data_, total_size);
+    device_only_data_ = allocateDeviceOnly<DataType>(total_size_);
+    copyToDevice(host_variable->Data(), device_only_data_, total_size_);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -63,9 +63,17 @@ template <typename DataType>
 void DeviceOnlyDiscreteVariable<DataType>::
     reallocateData(DiscreteVariable<DataType> *host_variable)
 {
+    // Staged through the host: the old contents are copied back, the new allocation
+    // made, and the contents copied in again. Rare enough (a neighbor list growth)
+    // for the round trip not to matter.
+    const UnsignedInt new_total_size = host_variable->getTotalSize();
+    const UnsignedInt kept_size = std::min(total_size_, new_total_size);
+    StdVec<DataType> kept(kept_size);
+    copyFromDevice(kept.data(), device_only_data_, kept_size);
     freeDeviceData(device_only_data_);
-    UnsignedInt new_host_variable_size = host_variable->getTotalSize();
-    device_only_data_ = allocateDeviceOnly<DataType>(new_host_variable_size);
+    device_only_data_ = allocateDeviceOnly<DataType>(new_total_size);
+    copyToDevice(kept.data(), device_only_data_, kept_size);
+    total_size_ = new_total_size;
 }
 //=================================================================================================//
 template <typename DataType>

@@ -44,6 +44,7 @@ class BodyStatesRecordingToVtpCK : public BodyStatesRecordingToVtp
     OperationOnDataAssemble<DiscreteVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
 
     void prepareToWrite();
+    void finishWrite();
 
   public:
     template <typename... Args>

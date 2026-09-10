@@ -32,7 +32,13 @@ UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
       target_particle_mask_method_(inner_relation_.getDynamicsIdentifier()),
       cell_linked_list_(DynamicCast<CellLinkedList<CellLinkedListIdentifier>>(
           this, inner_relation_.getDynamicsIdentifier().getCellLinkedList())),
-      kernel_implementation_(*this) {}
+      kernel_implementation_(*this)
+{
+    // Registered like the interaction kernels, so that a growth of the neighbor list
+    // by one subdomain invalidates the update kernels of the other subdomains as well;
+    // they hold pointers into the replicas the growth reallocates.
+    inner_relation_.registerComputingKernel(&kernel_implementation_);
+}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 template <class EncloserType>
@@ -180,7 +186,10 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
           DynamicCast<CellLinkedList<CellLinkedListIdentifier>>(
               this, &contact_relation.getTargetIdentifier().getCellLinkedList())),
       contact_kernel_implementation_(
-          contact_kernel_implementation_ptr_.template createPtr<KernelImplementation>(*this)) {}
+          contact_kernel_implementation_ptr_.template createPtr<KernelImplementation>(*this))
+{
+    contact_relation_.registerComputingKernel(contact_kernel_implementation_); // see the inner relation
+}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 template <class EncloserType>

@@ -130,6 +130,21 @@ int main(int ac, char *av[])
     auto &fluid_observer_pressure = main_methods.addObserveRegression<
         RegressionTestDynamicTimeWarping, Real>(fluid_observer_contact, "Pressure");
     //----------------------------------------------------------------------
+    //	Domain decomposition of the water body, effective when the main execution
+    //	policy is decomposed (built with SPHINXSYS_DECOMPOSITION, run with --subdomains=N)
+    //	and a no-op otherwise. Defined after every dynamics and output variable of the
+    //	body, since that fixes the set of variables a migrating particle carries.
+    //----------------------------------------------------------------------
+    auto &water_decomposition = main_methods.addDecomposition(water_block);
+    water_decomposition.addExchangeVariable<Real>("Pressure");               // read at the neighbors,
+    water_decomposition.addExchangeVariable<Matd>("LinearCorrectionMatrix"); // neither evolving nor written
+    auto &water_migrate_particles = main_methods.addGeneralDynamics<MigrateParticlesCK>(water_decomposition);
+    auto &water_update_halo = main_methods.addGeneralDynamics<UpdateHaloCK>(water_decomposition);
+    auto &water_sync_volume = main_methods.addGeneralDynamics<SyncHaloStateCK>(water_decomposition);
+    water_sync_volume.addVariable<Real>("VolumetricMeasure");
+    auto &water_sync_correction = main_methods.addGeneralDynamics<SyncHaloStateCK>(water_decomposition);
+    water_sync_correction.addVariable<Matd>("LinearCorrectionMatrix");
+    //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
     TimeStepper &time_stepper = sph_solver.getTimeStepper();
@@ -140,6 +155,7 @@ int main(int ac, char *av[])
     {
         restart_io.readRestartFiles(sph_system.RestartStep());
     }
+    water_decomposition.scatterFromHost(); // distributes the global particle set over the subdomains
     //----------------------------------------------------------------------
     //	Setup for advection-step based time-stepping control
     //----------------------------------------------------------------------
@@ -155,6 +171,7 @@ int main(int ac, char *av[])
     wall_boundary_normal_direction.exec(); // run particle dynamics with host kernels first
     constant_gravity.exec();
 
+    water_update_halo.exec(); // halo plan of the subdomains, before the cell linked list
     water_cell_linked_list.exec();
     wall_cell_linked_list.exec();
     water_block_update_complex_relation.exec();
@@ -162,7 +179,9 @@ int main(int ac, char *av[])
 
     fluid_density_regularization.exec();
     water_advection_step_setup.exec();
+    water_sync_volume.exec();
     fluid_linear_correction_matrix.exec();
+    water_sync_correction.exec();
     //----------------------------------------------------------------------
     //	First output before the integration loop.
     //----------------------------------------------------------------------
@@ -227,12 +246,14 @@ int main(int ac, char *av[])
             }
             interval_output += TickCount::now() - time_instance;
 
-            /** Particle sort, update cell linked list and configuration. */
+            /** Particle migration and sort, update cell linked list and configuration. */
             time_instance = TickCount::now();
+            water_migrate_particles.exec(); // ownership follows the new positions
             if (advection_steps % 100)
             {
                 particle_sort.exec();
             }
+            water_update_halo.exec(); // new halo plan and full refresh, before the cell linked list
             water_cell_linked_list.exec();
             water_block_update_complex_relation.exec();
             interval_updating_configuration += TickCount::now() - time_instance;
@@ -241,7 +262,9 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
+            water_sync_volume.exec(); // the volume is read at the neighbors by the steps below
             fluid_linear_correction_matrix.exec();
+            water_sync_correction.exec(); // the correction matrix likewise
             interval_advection_step += TickCount::now() - time_instance;
         }
     }

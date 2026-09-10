@@ -297,14 +297,41 @@ acoustic step:
     fluid_acoustic_step_2nd_half.exec(dt); // its interaction step; the velocity likewise
 ```
 
-Setup, before any particles are generated (this ordering matters — it fixes how many
-replicas each variable allocates):
+Setup. The subdomain runner must be initialized before any particles are generated,
+since that fixes how many replicas each variable allocates. The number of subdomains is
+a run time choice of the `SPHSystem`: the command line option `--subdomains=N`, or
+`sph_system.setNumberOfSubdomains(N)` right after construction; both initialize the
+runner in its sequential mode. The threaded host runner is selected by calling
+`execution::subdomain_runner.initialize(N, SubdomainRunner::Mode::Threaded)` at the same
+point. On the SYCL path the device environment is initialized there as well
+(`execution::device_environment.initialize(0)`, 0 = all visible GPUs).
+
+The case then drives everything through one `BodyDecomposition<MainExecutionPolicy>` and
+the dynamics built on it (`body_decomposition.h`, `domain_decomposition_dynamics.h`). All
+of them are no-ops when the policy is not a `DecomposedExecution<>`, so the same source
+serves the decomposed and the plain build:
 
 ```cpp
-execution::subdomain_runner.initialize(4, SubdomainRunner::Mode::Sequential); // CPU path
-// or, on the SYCL path:
-execution::device_environment.initialize(0);   // 0 = all visible GPUs
+// after every dynamics of the body and after its output variables: fixes the exchange set
+auto &decomposition = main_methods.addDecomposition(water_block, 0 /* split axis */);
+decomposition.addExchangeVariable<Real>("Pressure");             // read at the neighbors,
+decomposition.addExchangeVariable<Matd>("LinearCorrectionMatrix"); // neither evolving nor written
+decomposition.addSubdomainIDToWrite(body_state_recorder);        // optional owner tag in the vtp
+auto &update_halo = main_methods.addGeneralDynamics<UpdateHaloCK>(decomposition);
+auto &migrate_particles = main_methods.addGeneralDynamics<MigrateParticlesCK>(decomposition);
+auto &sync_volume = main_methods.addGeneralDynamics<SyncHaloStateCK>(decomposition);
+sync_volume.addVariable<Real>("VolumetricMeasure");
+
+decomposition.scatterFromHost();   // once, before the first dynamics on the body
+...
+decomposition.gatherToHost();      // around every host side access: output, restart
+body_state_recorder.writeToFile();
+decomposition.finishHostAccess();
 ```
+
+The exchange set of a `BodyDecomposition` is the evolving variables plus the variables
+registered for output when it is constructed, plus `addExchangeVariable()` calls made
+before `scatterFromHost()`.
 
 The per-stage refresh is the dominant new cost and follows from a halo one cut-off deep:
 a halo particle has an incomplete neighborhood, so its own update is untrustworthy and
@@ -358,7 +385,7 @@ switched from owned to local, which is *not* wired up.
 | Replicated (non-decomposed) bodies | not distinguished from decomposed ones |
 | Threaded host runner | lazy replica creation is serialized (`replicaCreationMutex()`), but `DiscreteVariable::reallocateData` grows the shared capacity and every subdomain's replica from whichever subdomain thread triggers it, while the other threads still hold the old pointers in their computing kernels. Neighbor list growth during a threaded run therefore crashes; use the sequential runner until capacities are per replica |
 | Per-subdomain cell mesh | full-domain mesh per subdomain |
-| Restart with a decomposition | untouched |
+| Restart with a decomposition | works: the restart output gathers to the host, the restart read precedes `scatterFromHost()` |
 | NUMA placement on the host path | none; first-touch is incidental, `tbb::task_arena` constraints would be the fix if this path ever needs to be fast |
 
 `scatterFromHost()` and `gatherToHost()` are now implemented (they were stubs in the
@@ -391,19 +418,39 @@ since Eigen is not installed on this machine; in the repo they compile against t
 **Not tested:** anything touching `BaseParticles`, the variable replication, the
 exchange itself, or SYCL. That needs the real dependencies.
 
-## 12. Suggested bring-up order
+Since then, with the real dependencies (2026-09-10): `test_2d_dambreak_sycl` itself runs
+decomposed, `--subdomains=2` in a `SPHINXSYS_DECOMPOSITION=ON` build, through
+`BodyDecomposition` and the loop dynamics of §8, with its observer, its restart output
+and both of its dynamic time warping regression tests passing, and a restart from the
+files of the decomposed run completing. The corresponding ctest entries exist in that
+build. The plain build is unchanged: with one subdomain, or without the option, the
+energy record matches the plain run bit for bit for as long as the plain run is itself
+reproducible (about two seconds of physical time; the one-sided inner relation appends
+neighbors with atomic counters, so the summation order and, from there, the trajectory
+varies from run to run, on this branch and independently of the decomposition).
 
-1. Build with both options `OFF`, confirm existing tests unchanged. Every edit in §5 is
+Two defects found on the way, both only visible once a subdomain grows its neighbor
+list after the others have built theirs in the same step: replica reallocation used to
+discard the contents of every replica, and the relation update dynamics did not
+register its kernel with the relation, so the other subdomains kept pointers into the
+freed replica. Both are fixed; the host and the device replicas now keep their contents
+on growth, and the update kernels are invalidated like the interaction kernels.
+
+## 12. Bring-up order and where it stands
+
+1. Build with the option `OFF`, confirm existing tests unchanged. Every edit in §5 is
    designed to be a no-op there; this is the regression gate for the whole refactor.
+   **Done.**
 2. `SPHINXSYS_DECOMPOSITION=ON` (without SYCL) with **1** subdomain. Exercises the fan-out, the
    per-subdomain arrays and the host replicas while the answer must still match step 1.
-3. Same, **2 subdomains, sequential**, on `dambreak`. First real decomposition. Turn on
-   `checkConsistency()` every step and build with ASan — this is where the one-sided
-   inner relation of §9 should surface.
+   **Done**, on `test_2d_dambreak_sycl --subdomains=1`.
+3. Same, **2 subdomains, sequential**, on `dambreak`. First real decomposition.
+   **Done**, `--subdomains=2`, regression tests and restart included (§11).
 4. Same, **threaded**, under ThreadSanitizer. Any difference from step 3 is a
-   synchronization bug, and the barrier structure of §7 is where to look.
+   synchronization bug, and the barrier structure of §7 is where to look. Open; the
+   threaded runner is still restricted by the reallocation issue of §10.
 5. `SPHINXSYS_USE_SYCL=ON -DSPHINXSYS_DECOMPOSITION=ON`, one GPU, then two. By this point the decomposition logic
    is already known good, so a failure here is device-specific: USM lifetime, queue
-   ordering, or peer access.
+   ordering, or peer access. Open; no SYCL compiler on the development machine.
 6. Then: per-subdomain mesh, deeper halos, and overlapping the exchange with interior
    computation — the barrier structure already isolates where that overlap goes.

@@ -239,23 +239,32 @@ class HostOnlyDiscreteVariable : public Quantity
 {
   public:
     explicit HostOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable)
-        : Quantity(host_variable->Name()), host_only_data_(nullptr)
+        : Quantity(host_variable->Name()), host_only_data_(nullptr),
+          total_size_(host_variable->getTotalSize())
     {
-        const UnsignedInt total_size = host_variable->getTotalSize();
-        host_only_data_ = new DataType[total_size];
-        std::copy(host_variable->Data(), host_variable->Data() + total_size, host_only_data_);
+        host_only_data_ = new DataType[total_size_];
+        std::copy(host_variable->Data(), host_variable->Data() + total_size_, host_only_data_);
     };
     ~HostOnlyDiscreteVariable() { delete[] host_only_data_; };
 
+    /** Grow to the host variable's new size, keeping the existing contents. A growth
+     *  triggered by one subdomain reallocates every replica, and the other subdomains
+     *  may already have written theirs in the same step (for instance the neighbor
+     *  lists built one subdomain after another), so those must survive. */
     void reallocateData(DiscreteVariable<DataType> *host_variable)
     {
+        const UnsignedInt new_total_size = host_variable->getTotalSize();
+        DataType *new_data = new DataType[new_total_size];
+        std::copy(host_only_data_, host_only_data_ + std::min(total_size_, new_total_size), new_data);
         delete[] host_only_data_;
-        host_only_data_ = new DataType[host_variable->getTotalSize()];
+        host_only_data_ = new_data;
+        total_size_ = new_total_size;
     };
     DataType *HostOnlyDataField() { return host_only_data_; };
 
   protected:
     DataType *host_only_data_;
+    UnsignedInt total_size_;
 };
 
 template <typename DataType>
@@ -264,11 +273,14 @@ class DeviceOnlyDiscreteVariable : public Quantity
   public:
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable);
     ~DeviceOnlyDiscreteVariable();
+    /** Grow to the host variable's new size, keeping the existing contents; see the
+     *  host replica for why. */
     void reallocateData(DiscreteVariable<DataType> *host_variable);
     DataType *DeviceOnlyDataField() { return device_only_data_; };
 
   protected:
     DataType *device_only_data_;
+    UnsignedInt total_size_;
 };
 
 struct MultiEntryTag

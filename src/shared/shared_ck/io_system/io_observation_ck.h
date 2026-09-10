@@ -33,6 +33,7 @@
 
 #include "execution_policy.h"
 #include "interpolation_dynamics.hpp"
+#include "subdomain_fan_out.h"
 
 namespace SPH
 {
@@ -43,6 +44,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
   protected:
     SPHBody &observer_;
     BaseParticles &base_particles_;
+    BaseParticles &contact_particles_;
     ObservingQuantityCK<ExecutionPolicy, DataType, Parameters...> observation_method_;
     DiscreteVariable<DataType> *dv_interpolated_quantities_;
     size_t number_of_observe_;
@@ -57,6 +59,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
               contact_relation.getSPHBody().getSPHSystem(), contact_relation.getSPHBody().Name()),
           observer_(contact_relation.getSPHBody()),
           base_particles_(observer_.getBaseParticles()),
+          contact_particles_(contact_relation.getContactParticles()),
           observation_method_(contact_relation, std::forward<Args>(args)...),
           dv_interpolated_quantities_(observation_method_.dvInterpolatedQuantities()),
           number_of_observe_(base_particles_.TotalRealParticles())
@@ -84,7 +87,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_->getValueWithScalingRef() << "   ";
         observation_method_.exec();
-        dv_interpolated_quantities_->prepareForOutput(ExecutionPolicy{});
+        collectInterpolatedQuantities(ExecutionPolicy{});
         for (size_t i = 0; i != number_of_observe_; ++i)
         {
             plt_engine_.writeAQuantity(
@@ -98,6 +101,47 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
     {
         return this->dv_interpolated_quantities_->Data();
     };
+
+  protected:
+    template <class Policy>
+    void collectInterpolatedQuantities(const Policy &ex_policy)
+    {
+        dv_interpolated_quantities_->prepareForOutput(ex_policy);
+    };
+    /** Decomposed run of the observed body. The observer is replicated: every subdomain
+     *  interpolated every observer particle from its own owned and halo particles, which
+     *  is complete only for the observer particles inside its slab. Each value is
+     *  therefore taken from the subdomain owning the observation point. */
+    template <class PolicyType>
+    void collectInterpolatedQuantities(const DecomposedExecution<PolicyType> &ex_policy)
+    {
+        SubdomainExchangeInterface *exchange = contact_particles_.getSubdomainExchange();
+        if (exchange == nullptr)
+        { // observed body not decomposed, hence replicated as a whole
+            dv_interpolated_quantities_->prepareForOutput(PolicyType{});
+            return;
+        }
+        const Vecd *position = base_particles_.dvParticlePosition()->Data();
+        const UnsignedInt width = dv_interpolated_quantities_->getWidth();
+        DataType *host_data = dv_interpolated_quantities_->Data();
+        StdVec<DataType> replica_copy(number_of_observe_ * width);
+        for (int subdomain_id = 0; subdomain_id < execution::numberOfSubdomains(); ++subdomain_id)
+        {
+            execution::SubdomainScope scope(subdomain_id);
+            const DataType *replica = dv_interpolated_quantities_->DelegatedData(ex_policy);
+            execution::copyBetweenSubdomains(ex_policy, subdomain_id, replica_copy.data(), replica, replica_copy.size());
+            for (size_t i = 0; i != number_of_observe_; ++i)
+            {
+                if (exchange->subdomainOf(position[i]) == subdomain_id)
+                {
+                    for (UnsignedInt entry = 0; entry < width; ++entry)
+                        host_data[i * width + entry] = replica_copy[i * width + entry];
+                }
+            }
+        }
+    };
+
+  public:
 
     size_t NumberOfObservedQuantity()
     {

@@ -4,6 +4,9 @@
 #include "geometric_shape.h"
 #include "io_environment.h"
 #include "predefined_bodies.h"
+#include "subdomain_runner.h"
+
+#include <iostream>
 
 #define TBB_PREVIEW_GLOBAL_CONTROL 1
 #include "tbb/global_control.h"
@@ -51,6 +54,18 @@ SPHSystem::SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds,
 }
 //=================================================================================================//
 SPHSystem::~SPHSystem() = default;
+//=================================================================================================//
+void SPHSystem::setNumberOfSubdomains(int number_of_subdomains)
+{
+    number_of_subdomains_ = number_of_subdomains;
+    if (!SPHINXSYS_DECOMPOSITION && number_of_subdomains > 1)
+    {
+        std::cout << "\n Warning: " << number_of_subdomains << " subdomains requested, but the "
+                  << "library is built without SPHINXSYS_DECOMPOSITION; the main execution "
+                  << "policy is not decomposed and the extra subdomains stay unused. \n";
+    }
+    execution::subdomain_runner.initialize(number_of_subdomains);
+}
 //=================================================================================================//
 void SPHSystem::writeSystemDomainShapeToVtp(Real scale_factor)
 {
@@ -109,6 +124,8 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
         desc.add_options()("regression", po::value<bool>(), "Regression test.");
         desc.add_options()("state_recording", po::value<bool>(), "State recording in output folder.");
         desc.add_options()("restart_step", po::value<int>(), "Run form a restart file.");
+        desc.add_options()("subdomains", po::value<int>(), "Number of subdomains of a domain decomposed run "
+                                                           "(effective with SPHINXSYS_DECOMPOSITION only).");
         desc.add_options()("log_level", po::value<int>(), "Output log level (0-6). "
                                                           "0: trace, 1: debug, 2: info, 3: warning, 4: error, 5: critical, 6: off");
 
@@ -173,6 +190,12 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
         {
             std::cout << "State recording was set to default ("
                       << state_recording_ << ").\n";
+        }
+
+        if (vm.count("subdomains"))
+        {
+            setNumberOfSubdomains(vm["subdomains"].as<int>());
+            std::cout << "Number of subdomains was set to " << number_of_subdomains_ << ".\n";
         }
 
         if (vm.count("restart_step"))

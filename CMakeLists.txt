@@ -15,7 +15,7 @@ option(SPHINXSYS_USE_FLOAT "Build using float (single-precision floating-point f
 option(SPHINXSYS_USE_VTK "Build using VTK library for writing VTP/VTU files" OFF)
 option(SPHINXSYS_USE_SYCL "Build using SYCL acceleration or not" OFF)
 option(SPHINXSYS_USE_ONEDPL "Build with One DPL for exclusive scan and particle sorting" ON)
-option(SPHINXSYS_DECOMPOSITION "Domain decomposed execution: over all GPUs of the node with SYCL, over host subdomains otherwise" OFF)
+option(SPHINXSYS_DECOMPOSITION "Domain decomposed execution" ON)
 
 # ------ Global properties (Some cannot be set on INTERFACE targets)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900

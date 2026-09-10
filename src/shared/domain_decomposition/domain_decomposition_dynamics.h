@@ -21,41 +21,25 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file 	domain_decomposition_dynamics.h
- * @brief 	Time loop entries of a domain decomposed run.
- * @details These are ordinary BaseDynamics objects, so a case file inserts them into
- *          the time loop next to the cell linked list and relation updates. The order
- *          within an advection step is:
+ * @file    domain_decomposition_dynamics.h
+ * @brief   The time loop entries of a decomposed run.
+ * @details Each dynamics forwards to one operation of a BodyDecomposition. Under a
+ *          non-decomposed execution policy the BodyDecomposition is a no-op, and so
+ *          are these, which lets a case place them unconditionally in its loop:
  *
- *              update particle positions
- *              MigrateParticlesCK          ownership follows the positions
- *              particle sort               optional, per subdomain
- *              UpdateHaloCK                new plan, and a full state refresh
- *              update cell linked list     over owned plus halo
- *              update body relations       neighbor lists of the owned particles
+ *            migrate  ->  (sort)  ->  update halo  ->  cell linked list  ->  ...
  *
- *          The halo must be rebuilt before the cell linked list: the list is built
- *          over the local particles, and it is the halo plan that publishes how many
- *          of those there are.
- *
- *          and within an acoustic step, after every stage that writes a state variable
- *          read by the next interaction:
- *
- *              SyncHaloStateCK({"Velocity", "Pressure", ...})
- *
- *          The last point is the one that costs: a halo refresh per acoustic stage.
- *          It is the price of a halo one cut-off deep. A deeper halo would let several
- *          stages run between exchanges, at the cost of redundant computation on the
- *          halo particles; which of the two wins depends on the particle count per
- *          device and on the interconnect, so both should be measured.
- * @author	Niki Loppi
+ *          The interaction algorithms refresh the halo of their interact variables
+ *          themselves; SyncHaloStateCK is for variables refreshed once per advection
+ *          step by the case, such as the volume or the kernel correction matrix.
+ * @author  Niki Loppi, Xiangyu Hu
  */
 
 #ifndef DOMAIN_DECOMPOSITION_DYNAMICS_H
 #define DOMAIN_DECOMPOSITION_DYNAMICS_H
 
 #include "base_dynamics.h"
-#include "subdomain_exchange.hpp"
+#include "body_decomposition.h"
 
 namespace SPH
 {
@@ -67,14 +51,14 @@ template <class ExecutionPolicy>
 class UpdateHaloCK : public BaseDynamics<void>
 {
   public:
-    explicit UpdateHaloCK(SubdomainExchange<ExecutionPolicy> &exchange)
-        : BaseDynamics<void>(), exchange_(exchange) {};
+    explicit UpdateHaloCK(BodyDecomposition<ExecutionPolicy> &decomposition)
+        : BaseDynamics<void>(), decomposition_(decomposition) {};
     virtual ~UpdateHaloCK() {};
 
-    virtual void exec(Real dt = 0.0) override { exchange_.updateHaloPlan(); };
+    virtual void exec(Real dt = 0.0) override { decomposition_.updateHaloPlan(); };
 
   protected:
-    SubdomainExchange<ExecutionPolicy> &exchange_;
+    BodyDecomposition<ExecutionPolicy> &decomposition_;
 };
 
 /**
@@ -87,8 +71,9 @@ template <class ExecutionPolicy>
 class SyncHaloStateCK : public BaseDynamics<void>
 {
   public:
-    SyncHaloStateCK(SubdomainExchange<ExecutionPolicy> &exchange, BaseParticles &particles)
-        : BaseDynamics<void>(), exchange_(exchange), particles_(particles) {};
+    explicit SyncHaloStateCK(BodyDecomposition<ExecutionPolicy> &decomposition)
+        : BaseDynamics<void>(), decomposition_(decomposition),
+          particles_(decomposition.getParticles()) {};
     virtual ~SyncHaloStateCK() {};
 
     /** Usage: sync.addVariable<Vecd>("Velocity").addVariable<Real>("Pressure"); */
@@ -99,10 +84,10 @@ class SyncHaloStateCK : public BaseDynamics<void>
         return *this;
     };
 
-    virtual void exec(Real dt = 0.0) override { exchange_.refreshHalo(variables_); };
+    virtual void exec(Real dt = 0.0) override { decomposition_.refreshHalo(variables_); };
 
   protected:
-    SubdomainExchange<ExecutionPolicy> &exchange_;
+    BodyDecomposition<ExecutionPolicy> &decomposition_;
     BaseParticles &particles_;
     DiscreteVariables variables_;
 };
@@ -115,19 +100,19 @@ template <class ExecutionPolicy>
 class MigrateParticlesCK : public BaseDynamics<void>
 {
   public:
-    explicit MigrateParticlesCK(SubdomainExchange<ExecutionPolicy> &exchange)
-        : BaseDynamics<void>(), exchange_(exchange) {};
+    explicit MigrateParticlesCK(BodyDecomposition<ExecutionPolicy> &decomposition)
+        : BaseDynamics<void>(), decomposition_(decomposition) {};
     virtual ~MigrateParticlesCK() {};
 
-    virtual void exec(Real dt = 0.0) override { exchange_.migrateParticles(); };
+    virtual void exec(Real dt = 0.0) override { decomposition_.migrateParticles(); };
 
   protected:
-    SubdomainExchange<ExecutionPolicy> &exchange_;
+    BodyDecomposition<ExecutionPolicy> &decomposition_;
 };
 
 /**
  * @class RebalanceSubdomainsCK
- * @brief Move the cut planes towards an equal particle count per device.
+ * @brief Move the cut planes towards an equal particle count per subdomain.
  * @details Run rarely, for instance every few hundred advection steps: each move
  *          triggers a migration of everything between the old and the new plane.
  */
@@ -135,23 +120,15 @@ template <class ExecutionPolicy>
 class RebalanceSubdomainsCK : public BaseDynamics<void>
 {
   public:
-    RebalanceSubdomainsCK(SlabDecomposition &decomposition, SubdomainExchange<ExecutionPolicy> &exchange,
-                          Real relaxation = Real(0.5))
-        : BaseDynamics<void>(), decomposition_(decomposition),
-          exchange_(exchange), relaxation_(relaxation) {};
+    explicit RebalanceSubdomainsCK(BodyDecomposition<ExecutionPolicy> &decomposition,
+                                   Real relaxation = Real(0.5))
+        : BaseDynamics<void>(), decomposition_(decomposition), relaxation_(relaxation) {};
     virtual ~RebalanceSubdomainsCK() {};
 
-    virtual void exec(Real dt = 0.0) override
-    {
-        if (decomposition_.rebalance(exchange_.OwnedParticlesPerSubdomain(), relaxation_))
-        {
-            exchange_.migrateParticles();
-        }
-    };
+    virtual void exec(Real dt = 0.0) override { decomposition_.rebalance(relaxation_); };
 
   protected:
-    SlabDecomposition &decomposition_;
-    SubdomainExchange<ExecutionPolicy> &exchange_;
+    BodyDecomposition<ExecutionPolicy> &decomposition_;
     Real relaxation_;
 };
 } // namespace SPH

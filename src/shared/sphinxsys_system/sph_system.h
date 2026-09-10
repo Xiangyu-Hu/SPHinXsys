@@ -74,6 +74,14 @@ class SPHSystem
     bool StateRecording() { return state_recording_; };
     void setStateRecording(bool state_recording) { state_recording_ = state_recording; };
     void setRestartStep(size_t restart_step) { restart_step_ = restart_step; };
+    /** Number of subdomains of a domain decomposed run. Must be set before any body is
+     *  created, since it fixes how many replicas every particle variable allocates;
+     *  the command line option --subdomains=N does the same. Only effective when the
+     *  library is built with SPHINXSYS_DECOMPOSITION, i.e. MainExecutionPolicy is a
+     *  DecomposedExecution<>. The subdomains are visited one after another on the
+     *  calling thread; a threaded runner is chosen through execution::subdomain_runner. */
+    void setNumberOfSubdomains(int number_of_subdomains);
+    int NumberOfSubdomains() { return number_of_subdomains_; };
     void setLogLevel(size_t log_level);
     size_t RestartStep() { return restart_step_; };
     SingleVariable<Real> &svPhysicalTime() { return *sv_physical_time_; };
@@ -140,6 +148,7 @@ class SPHSystem
     bool run_particle_relaxation_;     /**< run particle relaxation for body fitted particle distribution */
     bool reload_particles_;            /**< start the simulation with relaxed particles. */
     size_t restart_step_;              /**< restart step */
+    int number_of_subdomains_ = 1;     /**< subdomains of a domain decomposed run */
     bool generate_regression_data_;    /**< run and generate or enhance the regression test data set. */
     bool state_recording_;             /**< Record state in output folder. */
     int log_level_ = 2;                /**< Log level, 0: trace, 1: debug, 2: info, 3: warning, 4: error, 5: critical, 6: off */

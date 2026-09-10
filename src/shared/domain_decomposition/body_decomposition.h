@@ -1,0 +1,250 @@
+/* ------------------------------------------------------------------------- *
+ *                                SPHinXsys                                  *
+ * ------------------------------------------------------------------------- *
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for    *
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH   *
+ * (smoothed particle hydrodynamics), a meshless computational method using  *
+ * particle discretization.                                                  *
+ *                                                                           *
+ * SPHinXsys is partially funded by German Research Foundation               *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,            *
+ *  HU1527/12-1 and HU1527/12-4.                                             *
+ *                                                                           *
+ * Portions copyright (c) 2017-2025 Technical University of Munich and       *
+ * the authors' affiliations.                                                *
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * ------------------------------------------------------------------------- */
+/**
+ * @file    body_decomposition.h
+ * @brief   The decomposition of one body over the subdomains of a run, selected by
+ *          the execution policy.
+ * @details A case file drives the decomposition through one object of this class
+ *          and a few dynamics built on it (domain_decomposition_dynamics.h). The
+ *          primary template is the non-decomposed case: every operation is a no-op
+ *          and the body keeps its single global particle set. The partial
+ *          specialization on DecomposedExecution<> owns the cut planes and the halo
+ *          and migration exchange. Since MainExecutionPolicy is a decomposed policy
+ *          exactly when SPHINXSYS_DECOMPOSITION is on, a case written against this
+ *          class runs decomposed or not without any conditional compilation.
+ *
+ *          The exchange set, that is the variables a particle carries when it
+ *          migrates and the variables staged to the host for output, is fixed when
+ *          the object is constructed: the evolving variables of the body and the
+ *          variables registered for output at that time, plus whatever the case adds
+ *          with addExchangeVariable(). Construct it after every dynamics and after
+ *          the output variables are registered.
+ * @author  Niki Loppi, Xiangyu Hu
+ */
+
+#ifndef BODY_DECOMPOSITION_H
+#define BODY_DECOMPOSITION_H
+
+#include "adaptation.h"
+#include "base_body.h"
+#include "base_particles.hpp"
+#include "domain_decomposition.h"
+#include "execution_policy.h"
+#include "sph_system.h"
+#include "subdomain_exchange.hpp"
+#include "subdomain_runner.h"
+
+#include <memory>
+#include <string>
+
+namespace SPH
+{
+/**
+ * @class BodyDecomposition
+ * @brief Non-decomposed run: the single global particle set is the only "subdomain".
+ * @details The recorders gather a decomposed body to the host themselves, through the
+ *          SubdomainExchangeInterface the decomposed specialization installs on the
+ *          particles; a case therefore only places scatterFromHost() and the loop
+ *          dynamics. The gather and finish methods stay public for host side work a
+ *          case does on its own.
+ */
+template <class ExecutionPolicy>
+class BodyDecomposition
+{
+  public:
+    explicit BodyDecomposition(RealBody &body, int split_axis = -1)
+        : body_(body), particles_(body.getBaseParticles()) {};
+    virtual ~BodyDecomposition() {};
+
+    BaseParticles &getParticles() { return particles_; };
+    template <typename DataType>
+    BodyDecomposition &addExchangeVariable(const std::string &name) { return *this; };
+    template <class RecorderType>
+    void addSubdomainIDToWrite(RecorderType &recorder) {};
+
+    void scatterFromHost() {};
+    void gatherToHost() {};
+    void finishHostAccess() {};
+    void updateHaloPlan() {};
+    void refreshHalo(DiscreteVariables &variables) {};
+    void migrateParticles() {};
+    bool rebalance(Real relaxation) { return false; };
+
+    int NumberOfSubdomains() const { return 1; };
+    StdVec<UnsignedInt> OwnedParticlesPerSubdomain() { return {particles_.TotalRealParticles()}; };
+    UnsignedInt TotalOwnedParticles() { return particles_.TotalRealParticles(); };
+    Real HaloLoadFactor() const { return Real(0); };
+    std::string checkConsistency() const { return std::string(); };
+    std::string describe() const { return "Body " + body_.Name() + " is not decomposed\n"; };
+
+  protected:
+    RealBody &body_;
+    BaseParticles &particles_;
+};
+
+/** Append every variable of one data assemble to an exchange set, skipping duplicates. */
+struct AddVariablesToExchangeSet
+{
+    template <typename DataType>
+    void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
+                    BaseParticles &particles, DiscreteVariables &exchange_set)
+    {
+        for (std::size_t k = 0; k != variables.size(); ++k)
+        {
+            particles.template addDiscreteVariableToList<DataType>(exchange_set, variables[k]);
+        }
+    }
+};
+
+/**
+ * @class BodyDecomposition<DecomposedExecution<PolicyType>>
+ * @brief Decomposed run: slab cut planes plus the halo and migration exchange of the body.
+ */
+template <class PolicyType>
+class BodyDecomposition<DecomposedExecution<PolicyType>> : public SubdomainExchangeInterface
+{
+    using ExecutionPolicy = DecomposedExecution<PolicyType>;
+
+  public:
+    /**
+     * @param body        the body to decompose; its particles must be generated
+     * @param split_axis  axis to cut along; by default the longest one
+     *
+     * The cut planes are balanced on the initial particle positions, so that a body
+     * occupying only part of the domain does not leave a subdomain empty.
+     */
+    explicit BodyDecomposition(RealBody &body, int split_axis = -1)
+        : body_(body), particles_(body.getBaseParticles()),
+          decomposition_(body.getSPHSystem().getSystemDomainBounds(),
+                         body.getSPHAdaptation().getKernel()->CutOffRadius(),
+                         execution::subdomain_runner.NumberOfSubdomains(), split_axis),
+          dv_subdomain_id_(nullptr)
+    {
+        OperationOnDataAssemble<DiscreteVariables, AddVariablesToExchangeSet> add_variables;
+        add_variables(particles_.EvolvingVariables(), particles_, exchange_variables_);
+        add_variables(particles_.VariablesToWrite(), particles_, exchange_variables_);
+
+        balanceOnInitialPositions();
+        std::cout << decomposition_.describe();
+
+        exchange_ = std::make_unique<SubdomainExchange<ExecutionPolicy>>(
+            decomposition_, particles_, exchange_variables_);
+        particles_.setSubdomainExchange(this);
+    };
+    virtual ~BodyDecomposition() {};
+
+    BaseParticles &getParticles() { return particles_; };
+    SlabDecomposition &getSlabDecomposition() { return decomposition_; };
+    SubdomainExchange<ExecutionPolicy> &getExchange() { return *exchange_; };
+
+    /** Add a variable to the exchange set, for instance one that is read at the
+     *  neighbors by an interaction but is neither evolving nor written out. Must be
+     *  called before scatterFromHost(). */
+    template <typename DataType>
+    BodyDecomposition &addExchangeVariable(const std::string &name)
+    {
+        exchange_->template addExchangeVariable<DataType>(particles_.template getVariableByName<DataType>(name));
+        return *this;
+    };
+
+    /** Write the owning subdomain of every particle as the variable "SubdomainID".
+     *  The tag is filled on the host by gatherToHost(), which lays the owned
+     *  particles out subdomain by subdomain, so it costs no exchange. */
+    template <class RecorderType>
+    void addSubdomainIDToWrite(RecorderType &recorder)
+    {
+        dv_subdomain_id_ = particles_.template registerStateVariable<int>("SubdomainID");
+        recorder.template addToWrite<int>(body_, "SubdomainID");
+    };
+
+    void scatterFromHost() { exchange_->scatterFromHost(); };
+    virtual void gatherToHost() override
+    {
+        exchange_->gatherToHost();
+        if (dv_subdomain_id_ != nullptr)
+        {
+            int *subdomain_id = dv_subdomain_id_->Data();
+            UnsignedInt offset = 0;
+            const StdVec<UnsignedInt> owned = exchange_->OwnedParticlesPerSubdomain();
+            for (int s = 0; s < decomposition_.NumberOfSubdomains(); ++s)
+            {
+                for (UnsignedInt i = offset; i < offset + owned[s]; ++i)
+                    subdomain_id[i] = s;
+                offset += owned[s];
+            }
+        }
+    };
+    virtual void finishHostAccess() override { exchange_->finishHostAccess(); };
+    virtual int subdomainOf(const Vecd &position) const override
+    {
+        return decomposition_.getSubdomainMap().subdomainOf(position);
+    };
+    void updateHaloPlan() { exchange_->updateHaloPlan(); };
+    virtual void refreshHalo(DiscreteVariables &variables) override { exchange_->refreshHalo(variables); };
+    void migrateParticles() { exchange_->migrateParticles(); };
+    /** Move the cut planes towards equal owned counts; migrates when a plane moved. */
+    bool rebalance(Real relaxation)
+    {
+        if (decomposition_.rebalance(exchange_->OwnedParticlesPerSubdomain(), relaxation))
+        {
+            exchange_->migrateParticles();
+            return true;
+        }
+        return false;
+    };
+
+    int NumberOfSubdomains() const { return decomposition_.NumberOfSubdomains(); };
+    StdVec<UnsignedInt> OwnedParticlesPerSubdomain() { return exchange_->OwnedParticlesPerSubdomain(); };
+    UnsignedInt TotalOwnedParticles() { return exchange_->TotalOwnedParticles(); };
+    Real HaloLoadFactor() const { return exchange_->HaloLoadFactor(); };
+    std::string checkConsistency() const { return exchange_->checkConsistency(); };
+    std::string describe() const { return decomposition_.describe(); };
+
+  protected:
+    /** Iterate the one dimensional rebalance on the initial positions until the cut
+     *  planes settle. A full correction per iteration is fine here: no migration is
+     *  triggered before the scatter. */
+    void balanceOnInitialPositions()
+    {
+        const int number_of_subdomains = decomposition_.NumberOfSubdomains();
+        Vecd *position = particles_.dvParticlePosition()->Data();
+        const UnsignedInt total_particles = particles_.TotalRealParticles();
+        for (int iteration = 0; iteration < 100; ++iteration)
+        {
+            StdVec<UnsignedInt> counts(number_of_subdomains, 0);
+            for (UnsignedInt i = 0; i < total_particles; ++i)
+                counts[decomposition_.getSubdomainMap().subdomainOf(position[i])]++;
+            if (!decomposition_.rebalance(counts, Real(1)))
+                break;
+        }
+    };
+
+    RealBody &body_;
+    BaseParticles &particles_;
+    SlabDecomposition decomposition_;
+    DiscreteVariables exchange_variables_;
+    std::unique_ptr<SubdomainExchange<ExecutionPolicy>> exchange_;
+    DiscreteVariable<int> *dv_subdomain_id_;
+};
+} // namespace SPH
+#endif // BODY_DECOMPOSITION_H

@@ -115,7 +115,7 @@ class VariableExchangeBuffer
  * @brief Halo and migration exchange of the particles of one body.
  */
 template <class ExecutionPolicy>
-class SubdomainExchange : public HaloRefresher
+class SubdomainExchange
 {
     /** The buffer assembles are keyed on the policy too, so that a translation unit
      *  which instantiates both policies keeps their buffers apart. */
@@ -129,6 +129,12 @@ class SubdomainExchange : public HaloRefresher
     SubdomainExchange(SlabDecomposition &decomposition, BaseParticles &particles,
                       DiscreteVariables &variables_to_exchange);
     virtual ~SubdomainExchange() {};
+
+    /** Add a variable to the exchange set, with its send buffers. Skips a variable
+     *  already in the set. Must precede scatterFromHost(), which permutes the host
+     *  arrays of the set only. */
+    template <typename DataType>
+    void addExchangeVariable(DiscreteVariable<DataType> *variable);
 
     /** Distribute an initially global particle set over the subdomains. Called once,
      *  after particle generation, from the host thread. */
@@ -149,7 +155,7 @@ class SubdomainExchange : public HaloRefresher
     /** Re-send the values of the given variables along the current plan. Also reached
      *  through BaseParticles::refreshHalo(), which the interaction algorithms call with
      *  their interact variables before every interaction step. */
-    virtual void refreshHalo(DiscreteVariables &variables) override;
+    void refreshHalo(DiscreteVariables &variables);
     void refreshHalo() { refreshHalo(variables_to_exchange_); };
     /** Transfer ownership of the particles that crossed a cut plane.
      *

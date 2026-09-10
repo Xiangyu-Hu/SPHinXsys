@@ -31,6 +31,7 @@
 #define PARTICLE_METHOD_CONTAINER_H
 
 #include "complex_algorithms_ck.h"
+#include "domain_decomposition_dynamics.h"
 #include "interaction_algorithms_ck.h"
 #include "io_base.h"
 #include "io_observation_ck.h"
@@ -202,11 +203,23 @@ class ParticleMethodContainer
     UniquePtrsKeeper<AbstractDynamics> particle_dynamics_keeper_;
     UniquePtrsKeeper<BodyStatesRecording> state_recorders_keeper_;
     UniquePtrsKeeper<BaseIO> other_io_keeper_;
+    UniquePtrsKeeper<BodyDecomposition<ExecutionPolicy>> decomposition_keeper_;
 
   public:
     typedef ExecutionPolicy ExPolicy;
     ParticleMethodContainer(const ExecutionPolicy &ex_policy) {};
     virtual ~ParticleMethodContainer() {};
+
+    /** The decomposition of a body over the subdomains; a no-op object unless the
+     *  policy is a DecomposedExecution<>. Define it after every dynamics of the body
+     *  and after its output variables, since that fixes the exchange set. The loop
+     *  entries are then added as addGeneralDynamics<UpdateHaloCK>(decomposition), etc. */
+    template <typename... Args>
+    BodyDecomposition<ExecutionPolicy> &addDecomposition(RealBody &body, Args &&...args)
+    {
+        return *decomposition_keeper_.template createPtr<BodyDecomposition<ExecutionPolicy>>(
+            body, std::forward<Args>(args)...);
+    };
 
     ParticleDynamicsGroup &addParticleDynamicsGroup()
     {

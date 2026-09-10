@@ -57,12 +57,7 @@
 #include "sph_system.hpp"
 #include "sphinxsys_entity.h"
 
-// The decomposition headers rely on the particle, body and iterator headers above,
-// so they are included last.
-#if SPHINXSYS_DECOMPOSITION
 #include "domain_decomposition_dynamics.h"
-#include "subdomain_exchange.hpp"
-#endif // SPHINXSYS_DECOMPOSITION
 
 #include "tbb/tick_count.h"
 typedef tbb::tick_count TickCount;

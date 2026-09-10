@@ -6,6 +6,7 @@
 #include "algorithm_primitive.h"
 #include "base_configuration_dynamics.h"
 #include "base_particles.hpp"
+#include "cell_linked_list.h" // declares ConcurrentVec, which particle_iterators.h relies on
 #include "particle_iterators.h"
 
 #include <algorithm>
@@ -289,7 +290,6 @@ SubdomainExchange<ExecutionPolicy>::SubdomainExchange(SlabDecomposition &decompo
       buffer_capacity_(std::max<UnsignedInt>(
           UnsignedInt(initial_buffer_fraction * Real(particles.ParticlesBound())), 1024))
 {
-    particles_.setHaloRefresher(this);
     const int number_of_subdomains = execution::numberOfSubdomains();
     const UnsignedInt particles_bound = particles_.ParticlesBound();
 
@@ -329,6 +329,20 @@ SubdomainExchange<ExecutionPolicy>::SubdomainExchange(SlabDecomposition &decompo
         particles_.svTotalRealParticles()->DelegatedData(ExecutionPolicy{});
         particles_.svTotalLocalParticles()->DelegatedData(ExecutionPolicy{});
     }
+}
+//=================================================================================================//
+template <class ExecutionPolicy>
+template <typename DataType>
+void SubdomainExchange<ExecutionPolicy>::addExchangeVariable(DiscreteVariable<DataType> *variable)
+{
+    if (particles_.template addDiscreteVariableToList<DataType>(variables_to_exchange_, variable) == nullptr)
+    {
+        return; // already in the set
+    }
+    using BufferType = VariableExchangeBuffer<ExecutionPolicy, DataType>;
+    auto &keeper = std::get<DataContainerUniquePtrKeeper<BufferType>>(exchange_buffer_ptrs_);
+    auto &buffer_list = std::get<DataContainerAddressKeeper<BufferType>>(exchange_buffers_);
+    buffer_list.push_back(keeper.template createPtr<BufferType>(variable, buffer_capacity_));
 }
 //=================================================================================================//
 template <class ExecutionPolicy>

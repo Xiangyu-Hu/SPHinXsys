@@ -52,16 +52,25 @@ class GroupManager;
 /** Generalized particle data type */
 typedef DataContainerAssemble<AllocatedData> ParticleData;
 /**
- * @class HaloRefresher
- * @brief Refreshes the halo copies of a set of particle variables in a domain decomposed
- *        run. Implemented by SubdomainExchange; declared here so that the shared dynamics
- *        can request a refresh without depending on the decomposition headers.
+ * @class SubdomainExchangeInterface
+ * @brief What the shared dynamics and the I/O need from the decomposition of a body:
+ *        the halo refresh of a set of variables, the assembly of the global particle
+ *        set in the host arrays for output, and the owner of a position. Implemented
+ *        by BodyDecomposition; declared here so that the shared code can use it
+ *        without depending on the decomposition headers.
  */
-class HaloRefresher
+class SubdomainExchangeInterface
 {
   public:
-    virtual ~HaloRefresher() {};
+    virtual ~SubdomainExchangeInterface() {};
     virtual void refreshHalo(DiscreteVariables &variables) = 0;
+    /** Assemble the owned particles of all subdomains in the host arrays, in subdomain
+     *  order, and publish the global particle count to the host thread. */
+    virtual void gatherToHost() = 0;
+    /** Undo the count publication of gatherToHost(); required before the next fan-out. */
+    virtual void finishHostAccess() = 0;
+    /** The subdomain owning a position. */
+    virtual int subdomainOf(const Vecd &position) const = 0;
 };
 
 /**
@@ -169,23 +178,35 @@ class BaseParticles
     template <typename DataType>
     DiscreteVariable<DataType> *addDiscreteVariableToList(DiscreteVariables &variable_set, DiscreteVariable<DataType> *variable);
     //----------------------------------------------------------------------
-    // Halo refresh of a domain decomposed run
+    // Domain decomposed run
     //----------------------------------------------------------------------
-    /** Installed by the SubdomainExchange of this body, if any. Interaction algorithms
+    /** Installed by the BodyDecomposition of this body, if any. Interaction algorithms
      *  call refreshHalo() with the variables they read at the neighbors right before
-     *  their interaction step, so the halo copies are current without the case file
-     *  placing the refresh by hand. A no-op when the body is not decomposed. */
-    void setHaloRefresher(HaloRefresher *halo_refresher) { halo_refresher_ = halo_refresher; };
+     *  their interaction step, and the recorders bracket their host side access with
+     *  gatherToHost() and finishHostAccess(), so that neither needs placing by hand in
+     *  the case file. All of them are no-ops when the body is not decomposed. */
+    void setSubdomainExchange(SubdomainExchangeInterface *subdomain_exchange) { subdomain_exchange_ = subdomain_exchange; };
+    SubdomainExchangeInterface *getSubdomainExchange() { return subdomain_exchange_; };
     void refreshHalo(DiscreteVariables &variables)
     {
-        if (halo_refresher_ != nullptr)
-            halo_refresher_->refreshHalo(variables);
+        if (subdomain_exchange_ != nullptr)
+            subdomain_exchange_->refreshHalo(variables);
+    };
+    void gatherToHost()
+    {
+        if (subdomain_exchange_ != nullptr)
+            subdomain_exchange_->gatherToHost();
+    };
+    void finishHostAccess()
+    {
+        if (subdomain_exchange_ != nullptr)
+            subdomain_exchange_->finishHostAccess();
     };
     //----------------------------------------------------------------------
     // Particle data for sorting
     //----------------------------------------------------------------------
   protected:
-    HaloRefresher *halo_refresher_ = nullptr; /**< see setHaloRefresher() */
+    SubdomainExchangeInterface *subdomain_exchange_ = nullptr; /**< see setSubdomainExchange() */
     UnsignedInt *original_id_;             /**< the original ids assigned just after particle is generated. */
     UnsignedInt *sorted_id_;               /**< the current sorted particle ids of particles from original ids. */
     DiscreteVariables evolving_variables_; // particle variables which evolving during simulation

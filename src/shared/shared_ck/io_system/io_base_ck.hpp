@@ -16,9 +16,19 @@ void BodyStatesRecordingToVtpCK<ExecutionPolicy>::prepareToWrite()
         if (bodies_[i]->checkNewlyUpdated())
         {
             BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+            base_particles.gatherToHost(); // a decomposed body: its global set, in the host arrays
             base_particles.dvParticlePosition()->prepareForOutput(ExecutionPolicy{});
             prepare_variable_to_write_(base_particles.VariablesToWrite(), ExecutionPolicy{});
         }
+    }
+}
+//=================================================================================================//
+template <class ExecutionPolicy>
+void BodyStatesRecordingToVtpCK<ExecutionPolicy>::finishWrite()
+{
+    for (size_t i = 0; i < bodies_.size(); ++i)
+    {
+        bodies_[i]->getBaseParticles().finishHostAccess();
     }
 }
 //=================================================================================================//
@@ -29,6 +39,7 @@ void BodyStatesRecordingToVtpCK<ExecutionPolicy>::writeToFile()
     {
         prepareToWrite();
         BodyStatesRecordingToVtp::writeToFile();
+        finishWrite();
     }
 }
 //=================================================================================================//
@@ -39,6 +50,7 @@ void BodyStatesRecordingToVtpCK<ExecutionPolicy>::writeToFile(size_t iteration_s
     {
         prepareToWrite();
         BodyStatesRecordingToVtp::writeToFile(iteration_step);
+        finishWrite();
     }
 }
 //=================================================================================================//
@@ -111,9 +123,14 @@ void RestartIOCK<ExecutionPolicy>::writeToFile(size_t iteration_step)
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
+        base_particles.gatherToHost(); // a decomposed body: its global set, in the host arrays
         prepare_variable_to_write_(base_particles.EvolvingVariables(), ExecutionPolicy{});
     }
     RestartIO::writeToFile(iteration_step);
+    for (size_t i = 0; i < real_bodies_.size(); ++i)
+    {
+        real_bodies_[i]->getBaseParticles().finishHostAccess(); // before the reductions below fan out
+    }
 
     if (summary_enabled_)
     {
@@ -175,9 +192,14 @@ void ReloadParticleIOCK<ExecutionPolicy>::writeToFile(size_t iteration_step)
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+        base_particles.gatherToHost();
         prepare_variable_to_reload_(base_particles.EvolvingVariables(), ExecutionPolicy{});
     }
     ReloadParticleIO::writeToFile(iteration_step);
+    for (size_t i = 0; i < bodies_.size(); ++i)
+    {
+        bodies_[i]->getBaseParticles().finishHostAccess();
+    }
 }
 //=================================================================================================//
 } // namespace SPH
