@@ -49,6 +49,10 @@ AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
 {
     static_assert(std::is_base_of<KernelCorrection, KernelCorrectionType>::value,
                   "KernelCorrection is not the base of KernelCorrectionType!");
+    //----------------------------------------------------------------------
+    // add interact variables
+    //----------------------------------------------------------------------
+    this->template addInteractVariable<Real>(this->dv_p_);
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
