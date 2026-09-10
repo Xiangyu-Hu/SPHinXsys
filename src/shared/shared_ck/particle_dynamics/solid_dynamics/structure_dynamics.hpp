@@ -32,7 +32,7 @@ BaseStructureIntegration1stHalf::UpdateKernel::
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
       force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-inline void BaseStructureIntegration1stHalf::UpdateKernel::update(size_t index_i, Real dt)
+inline void BaseStructureIntegration1stHalf::UpdateKernel::compute(size_t index_i, Real dt)
 {
     vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
 }
@@ -66,7 +66,7 @@ StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, 
 //=================================================================================================//
 template <class MaterialType, typename KernelCorrectionType, typename... Parameters>
 void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, Parameters...>>::
-    InitializeKernel::initialize(size_t index_i, Real dt)
+    InitializeKernel::compute(size_t index_i, Real dt)
 {
     pos_[index_i] += vel_[index_i] * dt * 0.5;
     F_[index_i] += dF_dt_[index_i] * dt * 0.5;
@@ -101,7 +101,7 @@ StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, 
 //=================================================================================================//
 template <class MaterialType, typename KernelCorrectionType, typename... Parameters>
 void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Vecd sum = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -148,7 +148,7 @@ StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...>>::
 //=================================================================================================//
 template <class MaterialType, typename... Parameters>
 void StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...>>::
-    InitializeKernel::initialize(size_t index_i, Real dt)
+    InitializeKernel::compute(size_t index_i, Real dt)
 {
     pos_[index_i] += vel_[index_i] * dt * 0.5;
     F_[index_i] += dF_dt_[index_i] * dt * 0.5;
@@ -170,7 +170,7 @@ StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...>>::
 //=================================================================================================//
 template <class MaterialType, typename... Parameters>
 void StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...>>::InteractKernel::
-    interact(size_t index_i, Real dt)
+    compute(size_t index_i, Real dt)
 {
     Vecd sum = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -197,7 +197,7 @@ StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::InitializeKernel::
 //=================================================================================================//
 template <typename... Parameters>
 void StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::InitializeKernel::
-    initialize(size_t index_i, Real dt)
+    compute(size_t index_i, Real dt)
 {
     pos_[index_i] += vel_[index_i] * dt * 0.5;
 }
@@ -214,7 +214,7 @@ StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename... Parameters>
 void StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::InteractKernel::
-    interact(size_t index_i, Real dt)
+    compute(size_t index_i, Real dt)
 {
     Matd sum = Matd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -235,7 +235,7 @@ StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::UpdateKernel::
 //=================================================================================================//
 template <typename... Parameters>
 void StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::UpdateKernel::
-    update(size_t index_i, Real dt)
+    compute(size_t index_i, Real dt)
 {
     F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 }
@@ -268,7 +268,7 @@ StructureNumericalDamping<Inner<WithUpdate, MaterialType, Parameters...>>::
 //=================================================================================================//
 template <class MaterialType, typename... Parameters>
 void StructureNumericalDamping<Inner<WithUpdate, MaterialType, Parameters...>>::InteractKernel::
-    interact(size_t index_i, Real dt)
+    compute(size_t index_i, Real dt)
 {
     Vecd sum = Vecd::Zero();
     Real inv_W0 = 1.0 / this->W0(index_i, zero_);
@@ -300,7 +300,7 @@ UpdateElasticNormalDirectionCK::UpdateKernel::
       phi0_(encloser.dv_phi0_->DelegatedData(ex_policy)),
       F_(encloser.dv_F_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-inline void UpdateElasticNormalDirectionCK::UpdateKernel::update(size_t index_i, Real dt)
+inline void UpdateElasticNormalDirectionCK::UpdateKernel::compute(size_t index_i, Real dt)
 {
     n_[index_i] = polarRotation(F_[index_i]) * n0_[index_i];
     // Nanson's relation is used to update the distance to surface
@@ -317,7 +317,7 @@ UpdateAnisotropicMeasure::UpdateKernel::
       orientation0_(encloser.dv_orientation0_->DelegatedData(ex_policy)),
       F_(encloser.dv_F_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-inline void UpdateAnisotropicMeasure::UpdateKernel::update(size_t index_i, Real dt)
+inline void UpdateAnisotropicMeasure::UpdateKernel::compute(size_t index_i, Real dt)
 {
     Matd rotation = Matd::Identity();
     Matd stretch = Matd::Identity();

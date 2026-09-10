@@ -28,7 +28,7 @@ Gradient<Base, DataType, RelationType<Parameters...>>::InteractKernel::
       B_(encloser.dv_B_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
-void LinearGradient<Inner<DataType, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
+void LinearGradient<Inner<DataType, Parameters...>>::InteractKernel::compute(size_t index_i, Real dt)
 {
     Grad<DataType> summation = Grad<DataType>::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -60,7 +60,7 @@ LinearGradient<Contact<DataType, Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 void LinearGradient<Contact<DataType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Grad<DataType> summation = Grad<DataType>::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -92,7 +92,7 @@ Hessian<Base, DataType, RelationType<Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 void Hessian<Inner<DataType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Hess<DataType> summation = Hess<DataType>::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -126,7 +126,7 @@ Hessian<Contact<DataType, Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 void Hessian<Contact<DataType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Hess<DataType> summation = Hess<DataType>::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -145,7 +145,7 @@ void Hessian<Contact<DataType, Parameters...>>::
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 void SecondOrderGradient<Inner<DataType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Grad<DataType> summation = Grad<DataType>::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -178,7 +178,7 @@ SecondOrderGradient<Contact<DataType, Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 void SecondOrderGradient<Contact<DataType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Grad<DataType> summation = Grad<DataType>::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)

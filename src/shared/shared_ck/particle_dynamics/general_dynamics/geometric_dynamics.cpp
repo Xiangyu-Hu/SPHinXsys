@@ -16,7 +16,7 @@ NormalFromBodyShapeCK::NormalFromBodyShapeCK(SPHBody &sph_body)
       dv_phi_(particles_->registerStateVariable<Real>("SignedDistance")),
       dv_phi0_(particles_->registerStateVariableFrom<Real>("InitialSignedDistance", "SignedDistance")) {}
 //=============================================================================================//
-void NormalFromBodyShapeCK::UpdateKernel::update(size_t index_i, Real dt)
+void NormalFromBodyShapeCK::UpdateKernel::compute(size_t index_i, Real dt)
 {
     Vecd normal_direction = initial_shape_->findNormalDirection(pos_[index_i]);
     n_[index_i] = normal_direction;
@@ -40,7 +40,7 @@ NormalFromSubShapeAndOpCK::NormalFromSubShapeAndOpCK(SPHBody &sph_body, const st
     : NormalFromSubShapeAndOpCK(
           sph_body, DynamicCast<ComplexShape>(this, sph_body.getInitialShape()), shape_name) {}
 //=================================================================================================//
-void NormalFromSubShapeAndOpCK::UpdateKernel::update(size_t index_i, Real /*dt*/)
+void NormalFromSubShapeAndOpCK::UpdateKernel::compute(size_t index_i, Real /*dt*/)
 {
     Vecd normal_direction = switch_sign_ * shape_->findNormalDirection(pos_[index_i]);
     n_[index_i] = normal_direction;
@@ -57,7 +57,7 @@ SurfaceIndicationFromBodyShape::SurfaceIndicationFromBodyShape(SPHBody &sph_body
       dv_indicator_(particles_->registerStateVariable<int>("SurfaceIndicator")),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
 //=============================================================================================//
-void SurfaceIndicationFromBodyShape::UpdateKernel::update(size_t index_i, Real dt)
+void SurfaceIndicationFromBodyShape::UpdateKernel::compute(size_t index_i, Real dt)
 {
     Real signed_distance = initial_shape_->findSignedDistance(pos_[index_i]);
     indicator_[index_i] = signed_distance > -spacing_ref_ ? 1 : 0;
@@ -67,7 +67,7 @@ RandomizeParticlePositionCK::RandomizeParticlePositionCK(SPHBody &sph_body, Real
     : LocalDynamics(sph_body), dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       randomize_scale_(sph_body.getSPHAdaptation().MinimumSpacing() * randomize_factor) {}
 //=============================================================================================//
-void RandomizeParticlePositionCK::UpdateKernel::update(size_t index_i, Real dt)
+void RandomizeParticlePositionCK::UpdateKernel::compute(size_t index_i, Real dt)
 {
     for (int k = 0; k != Dimensions; ++k)
     {

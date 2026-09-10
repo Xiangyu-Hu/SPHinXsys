@@ -70,7 +70,7 @@ class UpdateDisplacementFromPosition : public DisplacementAndPosition
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : DisplacementAndPosition::UpdateKernel(ex_policy, encloser){};
-        void update(size_t index_i, Real dt = 0.0)
+        void compute(size_t index_i, Real dt = 0.0)
         {
             displacement_[index_i] = pos_[index_i] - pos0_[index_i];
         };
@@ -89,7 +89,7 @@ class UpdatePositionFromDisplacement : public DisplacementAndPosition
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : DisplacementAndPosition::UpdateKernel(ex_policy, encloser){};
-        void update(size_t index_i, Real dt = 0.0)
+        void compute(size_t index_i, Real dt = 0.0)
         {
             pos_[index_i] = pos0_[index_i] + displacement_[index_i];
         };

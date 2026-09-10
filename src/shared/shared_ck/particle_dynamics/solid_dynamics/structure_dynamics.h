@@ -98,7 +98,7 @@ class BaseStructureIntegration1stHalf : public StructureDynamicsVariables
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *mass_;
@@ -132,7 +132,7 @@ class StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrection
       public:
         template <class ExecutionPolicy, class EncloserType>
         InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void initialize(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         ConstituteKernel constitute_;
@@ -149,7 +149,7 @@ class StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrection
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *Vol0_;
@@ -186,7 +186,7 @@ class StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...
       public:
         template <class ExecutionPolicy, class EncloserType>
         InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void initialize(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         ConstituteKernel constitute_;
@@ -201,7 +201,7 @@ class StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *Vol0_;
@@ -233,7 +233,7 @@ class StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>
       public:
         template <class ExecutionPolicy, class EncloserType>
         InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void initialize(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Vecd *pos_, *vel_;
@@ -244,7 +244,7 @@ class StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *Vol0_;
@@ -257,7 +257,7 @@ class StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Matd *F_, *dF_dt_;
@@ -288,7 +288,7 @@ class StructureNumericalDamping<Inner<WithUpdate, MaterialType, Parameters...>>
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         ConstituteKernel constitute_;
@@ -317,7 +317,7 @@ class UpdateElasticNormalDirectionCK : public LocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Vecd *n_, *n0_;
@@ -341,7 +341,7 @@ class UpdateAnisotropicMeasure : public LocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Vecd *scaling_, *scaling0_;
