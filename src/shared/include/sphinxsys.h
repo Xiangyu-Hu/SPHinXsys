@@ -59,10 +59,10 @@
 
 // The decomposition headers rely on the particle, body and iterator headers above,
 // so they are included last.
-#if SPHINXSYS_MULTI_DEVICE || SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
 #include "domain_decomposition_dynamics.h"
 #include "subdomain_exchange.hpp"
-#endif // decomposed run
+#endif // SPHINXSYS_DECOMPOSITION
 
 #include "tbb/tick_count.h"
 typedef tbb::tick_count TickCount;

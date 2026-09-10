@@ -15,8 +15,7 @@ option(SPHINXSYS_USE_FLOAT "Build using float (single-precision floating-point f
 option(SPHINXSYS_USE_VTK "Build using VTK library for writing VTP/VTU files" OFF)
 option(SPHINXSYS_USE_SYCL "Build using SYCL acceleration or not" OFF)
 option(SPHINXSYS_USE_ONEDPL "Build with One DPL for exclusive scan and particle sorting" ON)
-option(SPHINXSYS_MULTI_DEVICE "Distribute the simulation over all GPUs of the node (requires SYCL)" OFF)
-option(SPHINXSYS_MULTI_SUBDOMAIN_HOST "Domain decomposed host execution; a debugging vehicle for the multi-GPU path" OFF)
+option(SPHINXSYS_DECOMPOSITION "Domain decomposed execution: over all GPUs of the node with SYCL, over host subdomains otherwise" OFF)
 
 # ------ Global properties (Some cannot be set on INTERFACE targets)
 set(CMAKE_VERBOSE_MAKEFILE OFF CACHE BOOL "Enable verbose compilation commands for Makefile and Ninja" FORCE) # Extra fluff needed for Ninja: https://github.com/ninja-build/ninja/issues/900
@@ -70,8 +69,7 @@ endif()
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_SYCL=$<BOOL:${SPHINXSYS_USE_SYCL}>)
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_FLOAT=$<BOOL:${SPHINXSYS_USE_FLOAT}>)
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_ONEDPL=$<BOOL:${SPHINXSYS_USE_ONEDPL}>)
-target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_MULTI_DEVICE=$<BOOL:${SPHINXSYS_MULTI_DEVICE}>)
-target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_MULTI_SUBDOMAIN_HOST=$<BOOL:${SPHINXSYS_MULTI_SUBDOMAIN_HOST}>)
+target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_DECOMPOSITION=$<BOOL:${SPHINXSYS_DECOMPOSITION}>)
 
 # ------ Dependencies
 # ## Simbody

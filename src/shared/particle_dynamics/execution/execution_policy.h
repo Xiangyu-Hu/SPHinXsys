@@ -73,23 +73,21 @@ inline constexpr auto multi_device = MultiDevicePolicy{};
 inline constexpr auto multi_host = MultiHostPolicy{};
 inline constexpr auto seq_multi_host = SequencedMultiHostPolicy{};
 
+/** The backend is chosen by SPHINXSYS_USE_SYCL. SPHINXSYS_DECOMPOSITION then wraps
+ *  that backend in DecomposedExecution, so the same option gives the multi-GPU run
+ *  with SYCL and the multi-subdomain host run without it. */
 #if SPHINXSYS_USE_SYCL
-#if SPHINXSYS_MULTI_DEVICE
-using MainExecutionPolicy = MultiDevicePolicy;
-inline constexpr auto par_ck = MultiDevicePolicy{};
+using BackendExecutionPolicy = SYCLDevicePolicy;
 #else
-using MainExecutionPolicy = SYCLDevicePolicy;
-inline constexpr auto par_ck = SYCLDevicePolicy{};
-#endif // SPHINXSYS_MULTI_DEVICE
-#else
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
-using MainExecutionPolicy = MultiHostPolicy;
-inline constexpr auto par_ck = MultiHostPolicy{};
-#else
-using MainExecutionPolicy = ParallelPolicy;
-inline constexpr auto par_ck = ParallelPolicy{};
-#endif // SPHINXSYS_MULTI_SUBDOMAIN_HOST
+using BackendExecutionPolicy = ParallelPolicy;
 #endif // SPHINXSYS_USE_SYCL
+
+#if SPHINXSYS_DECOMPOSITION
+using MainExecutionPolicy = DecomposedExecution<BackendExecutionPolicy>;
+#else
+using MainExecutionPolicy = BackendExecutionPolicy;
+#endif // SPHINXSYS_DECOMPOSITION
+inline constexpr auto par_ck = MainExecutionPolicy{};
 
 } // namespace execution
 } // namespace SPH

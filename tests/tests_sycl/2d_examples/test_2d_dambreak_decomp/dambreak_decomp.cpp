@@ -4,7 +4,7 @@
  * @details Derived from test_2d_dambreak_sycl. The observer, the regression tests
  *          and the restart output are removed; the total mechanical energy is
  *          recorded more often so that runs can be compared line by line.
- *          With SPHINXSYS_MULTI_SUBDOMAIN_HOST=OFF this file must reproduce the
+ *          With SPHINXSYS_DECOMPOSITION=OFF this file must reproduce the
  *          original case bit for bit.
  */
 #include "sphinxsys.h"
@@ -56,7 +56,7 @@ Vec2d inner_wall_translation = inner_wall_halfsize;
 int main(int ac, char *av[])
 {
     const int number_of_threads = environmentInt("SPHINXSYS_THREADS", int(std::thread::hardware_concurrency()));
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
     // The runner fixes the number of replicas every variable allocates, so it must be
     // initialized before any particle data exists.
     const int number_of_subdomains = environmentInt("SPHINXSYS_SUBDOMAINS", 1);
@@ -139,7 +139,7 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Real>(water_block, "Density");
     auto &record_water_mechanical_energy =
         main_methods.addIODynamics<ReducedQuantityRecording, TotalMechanicalEnergyCK>(water_block, gravity);
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
     //----------------------------------------------------------------------
     //	Domain decomposition of the water body. Defined after every dynamics, so that
     //	all state variables are registered before the exchange set is fixed.
@@ -244,12 +244,12 @@ int main(int ac, char *av[])
     //	Prepare for the time integration loop.
     //----------------------------------------------------------------------
     wall_boundary_normal_direction.exec(); // run particle dynamics with host kernels first
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
     exchange.scatterFromHost(); // before any dynamics touches the water replicas
 #endif
     constant_gravity.exec();
 
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
     update_halo.exec(); // publishes n_local, which the cell linked list is built over
 #endif
     water_cell_linked_list.exec();
@@ -258,11 +258,11 @@ int main(int ac, char *av[])
 
     fluid_density_regularization.exec();
     water_advection_step_setup.exec();
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
     sync_volume.exec();
 #endif
     fluid_linear_correction_matrix.exec();
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
     sync_correction.exec();
     check_consistency(advection_steps);
     report_subdomains();
@@ -270,12 +270,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	First output before the integration loop.
     //----------------------------------------------------------------------
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
     exchange.gatherToHost();
     tag_subdomains_for_output();
 #endif
     body_state_recorder.writeToFile();
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
     exchange.finishHostAccess();
 #endif
     record_water_mechanical_energy.writeToFile(advection_steps);
@@ -331,7 +331,7 @@ int main(int ac, char *av[])
                           << "	Time = " << time_stepper.getPhysicalTime() << "	"
                           << "	advection_dt = " << advection_step.getInterval()
                           << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
                 report_subdomains();
 #endif
             }
@@ -343,12 +343,12 @@ int main(int ac, char *av[])
 
             if (state_recording())
             {
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
                 exchange.gatherToHost();
                 tag_subdomains_for_output();
 #endif
                 body_state_recorder.writeToFile();
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
                 exchange.finishHostAccess();
 #endif
             }
@@ -356,14 +356,14 @@ int main(int ac, char *av[])
 
             /** Particle sort, update cell linked list and configuration. */
             time_instance = TickCount::now();
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
             migrate_particles.exec(); // ownership follows the new positions
 #endif
             if (advection_steps % 100)
             {
                 particle_sort.exec();
             }
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
             update_halo.exec(); // new halo plan and full refresh, before the cell linked list
 #endif
             water_cell_linked_list.exec();
@@ -374,11 +374,11 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
             sync_volume.exec();
 #endif
             fluid_linear_correction_matrix.exec();
-#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
+#if SPHINXSYS_DECOMPOSITION
             sync_correction.exec();
             check_consistency(advection_steps);
 #endif

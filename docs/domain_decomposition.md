@@ -185,15 +185,16 @@ src_sycl/shared/common/device_environment_sycl.{h,cpp}            devices, share
 tests/unit_tests_src/for_2D_build/domain_decomposition/...        the tests of §11
 ```
 
-Build options, all default `OFF`, and mutually exclusive in practice:
+One build option, default `OFF`. Which decomposition it selects follows from the backend:
 
 ```
-cmake -DSPHINXSYS_USE_SYCL=ON -DSPHINXSYS_MULTI_DEVICE=ON        # multi-GPU
-cmake -DSPHINXSYS_MULTI_SUBDOMAIN_HOST=ON                        # CPU debugging path
+cmake -DSPHINXSYS_USE_SYCL=ON -DSPHINXSYS_DECOMPOSITION=ON       # multi-GPU
+cmake -DSPHINXSYS_DECOMPOSITION=ON                               # CPU debugging path
 ```
 
-Each switches `MainExecutionPolicy`. Headers are globbed, so no `CMakeLists.txt` edits
-are needed for the new sources.
+`SPHINXSYS_DECOMPOSITION` wraps the backend policy (`SYCLDevicePolicy` with SYCL,
+`ParallelPolicy` otherwise) in `DecomposedExecution<>` to form `MainExecutionPolicy`.
+Headers are globbed, so no `CMakeLists.txt` edits are needed for the new sources.
 
 ## 6. Decomposition
 
@@ -394,14 +395,14 @@ exchange itself, or SYCL. That needs the real dependencies.
 
 1. Build with both options `OFF`, confirm existing tests unchanged. Every edit in §5 is
    designed to be a no-op there; this is the regression gate for the whole refactor.
-2. `SPHINXSYS_MULTI_SUBDOMAIN_HOST=ON` with **1** subdomain. Exercises the fan-out, the
+2. `SPHINXSYS_DECOMPOSITION=ON` (without SYCL) with **1** subdomain. Exercises the fan-out, the
    per-subdomain arrays and the host replicas while the answer must still match step 1.
 3. Same, **2 subdomains, sequential**, on `dambreak`. First real decomposition. Turn on
    `checkConsistency()` every step and build with ASan — this is where the one-sided
    inner relation of §9 should surface.
 4. Same, **threaded**, under ThreadSanitizer. Any difference from step 3 is a
    synchronization bug, and the barrier structure of §7 is where to look.
-5. `SPHINXSYS_MULTI_DEVICE=ON`, one GPU, then two. By this point the decomposition logic
+5. `SPHINXSYS_USE_SYCL=ON -DSPHINXSYS_DECOMPOSITION=ON`, one GPU, then two. By this point the decomposition logic
    is already known good, so a failure here is device-specific: USM lifetime, queue
    ordering, or peer access.
 6. Then: per-subdomain mesh, deeper halos, and overlapping the exchange with interior
