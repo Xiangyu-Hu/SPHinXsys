@@ -280,7 +280,7 @@ T exclusive_scan(const ParallelPolicy &par_policy, T *first, T *d_first, Unsigne
 
 /** Host side decomposition policies scan like the host policy they derive from. */
 template <typename T, typename Op, class PolicyType>
-T exclusive_scan(const MultiHostExecution<PolicyType> &ex_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
+T exclusive_scan(const DecomposedExecution<PolicyType> &ex_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
 {
     return exclusive_scan(static_cast<const PolicyType &>(ex_policy), first, d_first, d_size, op);
 }
@@ -311,7 +311,7 @@ inline void generic_for(const ParallelPolicy &ex_policy, const IndexRange &parti
 
 /** Host side decomposition policies iterate like the host policy they derive from. */
 template <class PolicyType, class LocalDynamicsFunction>
-inline void generic_for(const MultiHostExecution<PolicyType> &ex_policy, const IndexRange &index_range,
+inline void generic_for(const DecomposedExecution<PolicyType> &ex_policy, const IndexRange &index_range,
                         const LocalDynamicsFunction &local_dynamics_function)
 {
     generic_for(static_cast<const PolicyType &>(ex_policy), index_range, local_dynamics_function);

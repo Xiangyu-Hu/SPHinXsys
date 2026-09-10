@@ -11,7 +11,7 @@ is likely to break first.
 There are two decomposed execution policies, and they share essentially all of their
 code:
 
-| | `ParallelMultiDevicePolicy` | `ParallelMultiHostPolicy` |
+| | `MultiDevicePolicy` = `DecomposedExecution<SYCLDevicePolicy>` | `MultiHostPolicy` = `DecomposedExecution<ParallelPolicy>` |
 | --- | --- | --- |
 | a subdomain is | one GPU | one host thread, or one pass of a loop |
 | replicas live in | SYCL USM, shared context | ordinary host memory |
@@ -51,7 +51,7 @@ then resolved implicitly through `currentSubdomainID()`:
 | replica of a `SingleVariable` | `SingleVariable::DelegatedOn{Device,HostSubdomain}()` |
 | computing kernel | `Implementation<...>::getComputingKernel()` |
 | freshness flag | `Implementation<Base>::isUpdated()` |
-| loop range | `LoopRangeCK<ParallelMultiDevicePolicy, ...>` |
+| loop range | `LoopRangeCK<DecomposedExecution<P>, ...>`, built per subdomain inside `particle_for` |
 
 The consequence is that **the physics code does not change at all**. A computing
 kernel's constructor calls `DelegatedData()` on the variables it reads; run that
@@ -68,22 +68,39 @@ one live entry, and behavior is identical to the current single-GPU / single-CPU
 
 ### Where the fan-out lives
 
-Parallelism over subdomains is expressed **at the algorithm level**, not inside
-`particle_for`. `StateDynamics::exec()` becomes:
+Parallelism over subdomains is expressed **inside `particle_for` / `particle_reduce`**, in the
+overloads for `LoopRangeCK<DecomposedExecution<P>, ...>` (`particle_iterators_ck.h`). The
+algorithms' `exec()` bodies are the plain single-domain ones:
 
 ```cpp
-execution::fanOutOverSubdomains(ExecutionPolicy{}, [&]() {
-    UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
-    particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
-                 [=](size_t i) { update_kernel->update(i, dt); });
-});
+// StateDynamics::exec(), unchanged for every policy
+particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
+             kernel_implementation_, dt);
+
+// the decomposed overload
+template <class PolicyType, class Identifier, class KernelImplementationType>
+void particle_for(const LoopRangeCK<DecomposedExecution<PolicyType>, Identifier> &loop_range,
+                  KernelImplementationType &implementation, Real dt)
+{
+    fanOutOverSubdomains(DecomposedExecution<PolicyType>{}, [&]()
+                         { particle_for(loop_range.onCurrentSubdomain(), implementation, dt); });
+}
 ```
 
-`fanOutOverSubdomains` is a no-op wrapper for every non-decomposed policy, so one
-`exec()` body serves all of them. This placement is what makes the kernel lookup and the
-loop-range construction happen *inside* the subdomain thread. Putting the fan-out inside
-`particle_for` would not work: the kernel pointer is captured before the loop is
-entered, so every subdomain would get subdomain 0's kernel.
+Two things make this possible. The computing kernel is fetched *inside* the loop function
+(`implementation.getComputingKernel()`, resolved on `currentSubdomainID()`), so each subdomain
+gets its own kernel. And the loop range of a decomposed policy is deferred
+(`DeferredLoopRangeCK` in `loop_range.h`): it only stores the identifier, and
+`onCurrentSubdomain()` builds the base policy's range inside the fan-out, where
+`DelegatedData()` addresses that subdomain's replica. A range built on the host thread would
+bind every subdomain to the replica of subdomain 0.
+
+`DecomposedExecution<P>` means "P, plus a fan-out" and nothing else: every other operation
+(`DelegatedData`, kernel allocation, `exclusive_scan`, `particle_for` on an `IndexRange`, the
+copy between subdomains) is forwarded to `P` by a one-line overload on
+`DecomposedExecution<P>`. Those forwarders are not optional: a catch-all template
+`foo(const ExecutionPolicy &)` is an exact match for `DecomposedExecution<SYCLDevicePolicy>` and
+would otherwise win over `foo(const SYCLDevicePolicy &)`, silently running the host branch.
 
 Reductions take the symmetric route: `reduceOverSubdomains<Operation>` runs the body per
 subdomain and combines the partials in subdomain order. A global reduction therefore
@@ -147,12 +164,14 @@ Each of these is a no-op when one subdomain is used.
 | `execution/subdomain_scope.h` | new: `MaxSubdomains`, thread-local id, `SubdomainScope`, fan-out guard |
 | `execution/subdomain_runner.{h,cpp}` | new: worker pool and the sequential/threaded runner |
 | `execution/subdomain_fan_out.h` | new: `fanOutOverSubdomains` / `reduceOverSubdomains` / `copyBetweenSubdomains` |
-| `execution/execution_policy.h` | new `MultiDeviceExecution` and `MultiHostExecution` policies |
+| `execution/execution_policy.h` | `DecomposedExecution<P>`, with `MultiDevicePolicy`, `MultiHostPolicy`, `SequencedMultiHostPolicy` |
 | `execution/base_implementation.h` | `is_updated_` becomes one flag per subdomain |
 | `execution/implementation.h` | computing kernel and staging keeper become per-subdomain arrays |
 | `common/sphinxsys_variable.h` | per-subdomain delegates; new `HostOnlyDiscreteVariable` |
 | `particles/base_particles.{h,cpp}` | second counter `TotalLocalParticles` |
-| `simple_algorithms_ck.h`, `interaction_algorithms_ck.hpp`, `update_cell_linked_list.hpp`, `update_body_relation.hpp`, `particle_sort_ck.hpp` | `exec()` bodies wrapped in the fan-out |
+| `loop_range.h`, `particle_iterators_ck.h` | deferred loop range and the loop-level fan-out for `DecomposedExecution<P>` |
+| `update_cell_linked_list.hpp`, `update_body_relation.hpp`, `particle_sort_ck.hpp` | `exec()` bodies wrapped in the fan-out (loops on an `IndexRange` with a captured kernel) |
+| `particles/base_particles.h`, `interaction_algorithms_ck.hpp` | `HaloRefresher` hook; interactions refresh their interact variables before the interaction step |
 | `implementation_sycl.h` | `ExecutionInstance` becomes a facade over `DeviceEnvironment` |
 | `sphinxsys_variable_sycl.hpp` | per-device allocation and staging |
 
@@ -163,7 +182,6 @@ shared/domain_decomposition/domain_decomposition.{h,cpp}          slab geometry,
 shared/domain_decomposition/subdomain_exchange.{h,hpp}            halo + migration, policy generic
 shared/domain_decomposition/domain_decomposition_dynamics.h       time loop entries
 src_sycl/shared/common/device_environment_sycl.{h,cpp}            devices, shared context, queues
-src_sycl/shared/particle_dynamics/particle_iterators_multi_device_sycl.h
 tests/unit_tests_src/for_2D_build/domain_decomposition/...        the tests of §11
 ```
 
@@ -274,10 +292,8 @@ advection step:
     ... rebalance every few hundred steps ...
 
 acoustic step:
-    fluid_acoustic_step_1st_half.exec(dt);
-    sync_halo_state.exec();                // velocity, pressure, density, ...
-    fluid_acoustic_step_2nd_half.exec(dt);
-    sync_halo_state.exec();
+    fluid_acoustic_step_1st_half.exec(dt); // refreshes the halo pressure itself, before
+    fluid_acoustic_step_2nd_half.exec(dt); // its interaction step; the velocity likewise
 ```
 
 Setup, before any particles are generated (this ordering matters — it fixes how many
@@ -318,9 +334,13 @@ switched from owned to local, which is *not* wired up.
   particle carries from one advection step to the next has to be in the evolving set,
   which is also the set that migrates.
 - **Halo refresh points.** Each quantity read at the neighbors is refreshed right after
-  the stage that writes it: the volume after the advection step setup, the correction
-  matrix after the kernel correction, the pressure inside the first acoustic half step
-  and the velocity inside the second, through `addPostInitialization()`.
+  the stage that writes it. The pressure and the velocity are refreshed by the acoustic
+  steps themselves: an interaction algorithm calls `BaseParticles::refreshHalo()` with
+  its `interact_variables_` right before its interaction step (a no-op unless a
+  `SubdomainExchange` installed itself as the `HaloRefresher` of that body). The volume
+  and the correction matrix change once per advection step and are refreshed there by the
+  case (`SyncHaloStateCK`), rather than being listed as interact variables and re-sent
+  every acoustic step.
 - **Contact relations to a non-decomposed body** (walls, observers) work only if that
   body is fully replicated on every subdomain. Replication is right for small static
   bodies, but the draft does not distinguish replicated from decomposed bodies, and that

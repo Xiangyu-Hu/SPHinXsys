@@ -30,6 +30,7 @@
 #define PARTICLE_ITERATORS_CK_H
 
 #include "loop_range.h"
+#include "subdomain_fan_out.h"
 #include "sphinxsys_tbb.h"
 #include "tbb/parallel_reduce.h"
 
@@ -128,60 +129,32 @@ ReturnType particle_reduce(const ParallelPolicy &par, const IndexRange &particle
         });
 };
 
-template <class Identifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<SequencedPolicy, Identifier> &loop_range,
-                  const UnaryFunc &unary_func)
+//----------------------------------------------------------------------
+// Decomposed policies: the fan-out over the subdomains happens here, at the loop level.
+// Each subdomain builds its own range and fetches its own computing kernel inside the
+// fan-out (getComputingKernel() resolves on currentSubdomainID()), then runs the loop of
+// the base policy unchanged. A fan-out is a barrier over the subdomains, so consecutive
+// particle_for() calls of one algorithm are ordered across subdomains, which is what
+// lets a halo refresh sit between any two of them.
+//----------------------------------------------------------------------
+template <class PolicyType, class Identifier, class KernelImplementationType>
+void particle_for(const LoopRangeCK<DecomposedExecution<PolicyType>, Identifier> &loop_range,
+                  KernelImplementationType &implementation, Real dt)
 {
-    sequenced_particle_for(loop_range, unary_func);
+    fanOutOverSubdomains(DecomposedExecution<PolicyType>{}, [&]()
+                         { particle_for(loop_range.onCurrentSubdomain(), implementation, dt); });
 };
 
-template <class Identifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
-                  const UnaryFunc &unary_func)
+/** Each subdomain reduces its owned particles; the partial results are combined in
+ *  subdomain order by reduceOverSubdomains(), so the result is reproducible for a given
+ *  decomposition. Halo particles lie past the owned range and are never counted. */
+template <typename Operation, class PolicyType, class Identifier, class ReturnType, class KernelImplementationType>
+ReturnType particle_reduce(const LoopRangeCK<DecomposedExecution<PolicyType>, Identifier> &loop_range,
+                           ReturnType temp, KernelImplementationType &implementation, Real dt)
 {
-    parallel_particle_for(loop_range, unary_func);
-};
-
-template <class Identifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<SequencedMultiHostPolicy, Identifier> &loop_range,
-                  const UnaryFunc &unary_func)
-{
-    sequenced_particle_for(loop_range, unary_func);
-};
-
-template <class Identifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<ParallelMultiHostPolicy, Identifier> &loop_range,
-                  const UnaryFunc &unary_func)
-{
-    parallel_particle_for(loop_range, unary_func);
-};
-
-template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
-ReturnType particle_reduce(const LoopRangeCK<SequencedPolicy, Identifier> &loop_range,
-                           ReturnType temp, const UnaryFunc &unary_func)
-{
-    return sequenced_particle_reduce<Operation>(loop_range, temp, unary_func);
-}
-
-template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
-ReturnType particle_reduce(const LoopRangeCK<ParallelPolicy, Identifier> &loop_range,
-                           ReturnType temp, const UnaryFunc &unary_func)
-{
-    return parallel_particle_reduce<Operation>(loop_range, temp, unary_func);
-};
-
-template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
-ReturnType particle_reduce(const LoopRangeCK<SequencedMultiHostPolicy, Identifier> &loop_range,
-                           ReturnType temp, const UnaryFunc &unary_func)
-{
-    return sequenced_particle_reduce<Operation>(loop_range, temp, unary_func);
-}
-
-template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
-ReturnType particle_reduce(const LoopRangeCK<ParallelMultiHostPolicy, Identifier> &loop_range,
-                           ReturnType temp, const UnaryFunc &unary_func)
-{
-    return parallel_particle_reduce<Operation>(loop_range, temp, unary_func);
+    return reduceOverSubdomains<Operation>(
+        DecomposedExecution<PolicyType>{}, temp, [&]()
+        { return particle_reduce<Operation>(loop_range.onCurrentSubdomain(), temp, implementation, dt); });
 };
 } // namespace SPH
 #endif // PARTICLE_ITERATORS_CK_H

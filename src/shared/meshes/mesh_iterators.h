@@ -95,14 +95,14 @@ void package_for(const execution::ParallelPolicy &ex_policy, UnsignedInt start_i
 
 /** Host side decomposition policies iterate like the host policy they derive from. */
 template <typename PolicyType, typename LocalFunction, typename... Args>
-void mesh_for(const execution::MultiHostExecution<PolicyType> &ex_policy, const MeshRange &mesh_range,
+void mesh_for(const execution::DecomposedExecution<PolicyType> &ex_policy, const MeshRange &mesh_range,
               const LocalFunction &local_function, Args &&...args)
 {
     mesh_for(static_cast<const PolicyType &>(ex_policy), mesh_range, local_function, std::forward<Args>(args)...);
 };
 
 template <typename PolicyType, typename FunctionOnData>
-void package_for(const execution::MultiHostExecution<PolicyType> &ex_policy, UnsignedInt start_index,
+void package_for(const execution::DecomposedExecution<PolicyType> &ex_policy, UnsignedInt start_index,
                  UnsignedInt end_index, const FunctionOnData &function)
 {
     package_for(static_cast<const PolicyType &>(ex_policy), start_index, end_index, function);

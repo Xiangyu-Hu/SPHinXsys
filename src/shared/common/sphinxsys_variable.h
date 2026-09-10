@@ -176,9 +176,15 @@ class SingleVariable : public Quantity
     /** Host side decomposition: each subdomain owns its own value, since counters such
      *  as the number of local particles differ between subdomains. */
     template <class PolicyType>
-    DataType *DelegatedData(const MultiHostExecution<PolicyType> &ex_policy)
+    DataType *DelegatedData(const DecomposedExecution<PolicyType> &ex_policy)
     {
         return DelegatedOnHostSubdomain();
+    };
+    /** The device replica of the current subdomain. A non-template overload, so that it
+     *  beats the host template above, which is an exact match for MultiDevicePolicy too. */
+    DataType *DelegatedData(const MultiDevicePolicy &ex_policy)
+    {
+        return DelegatedOnDevice();
     };
 
   protected:
@@ -363,9 +369,15 @@ class DiscreteVariable : public Quantity
 
     /** Host side decomposition: the replica of the subdomain bound to this thread. */
     template <class PolicyType>
-    DataType *DelegatedData(const MultiHostExecution<PolicyType> &ex_policy)
+    DataType *DelegatedData(const DecomposedExecution<PolicyType> &ex_policy)
     {
         return DelegatedOnHostSubdomain();
+    };
+    /** The device replica of the current subdomain; non-template so that it wins over the
+     *  host template above for MultiDevicePolicy. */
+    DataType *DelegatedData(const MultiDevicePolicy &ex_policy)
+    {
+        return DelegatedOnDevice();
     };
 
     template <class ExecutionPolicy>
@@ -427,8 +439,13 @@ class DiscreteVariable : public Quantity
         }
     };
 
+    void reallocateData(const MultiDevicePolicy &ex_policy, UnsignedInt tentative_size)
+    {
+        reallocateData(SYCLDevicePolicy{}, tentative_size);
+    };
+
     template <class PolicyType>
-    void reallocateData(const MultiHostExecution<PolicyType> &ex_policy, UnsignedInt tentative_size)
+    void reallocateData(const DecomposedExecution<PolicyType> &ex_policy, UnsignedInt tentative_size)
     {
         if (size_ < tentative_size)
         {
@@ -467,10 +484,14 @@ class DiscreteVariable : public Quantity
     template <class ExecutionPolicy>
     void prepareForOutput(const ExecutionPolicy &ex_policy) {};
     void prepareForOutput(const SYCLDevicePolicy &ex_policy) { synchronizeWithDevice(); };
+    template <class PolicyType>
+    void prepareForOutput(const DecomposedExecution<PolicyType> &ex_policy) { prepareForOutput(PolicyType{}); };
 
     template <class ExecutionPolicy>
     void finalizeLoadIn(const ExecutionPolicy &ex_policy) {};
     void finalizeLoadIn(const SYCLDevicePolicy &ex_policy) { synchronizeToDevice(); };
+    template <class PolicyType>
+    void finalizeLoadIn(const DecomposedExecution<PolicyType> &ex_policy) { finalizeLoadIn(PolicyType{}); };
 
   private:
     UnsignedInt size_, width_;
@@ -480,7 +501,7 @@ class DiscreteVariable : public Quantity
      *  disjoint particle sets (the subdomain owned by that device plus its halo), not
      *  copies of one global array; the host data_ is only used as I/O staging. */
     std::array<DeviceOnlyDiscreteVariable<DataType> *, MaxSubdomains> device_only_variable_{};
-    /** The host side counterpart, used by MultiHostExecution policies. */
+    /** The host side counterpart, used by the host decomposed policies. */
     std::array<HostOnlyDiscreteVariable<DataType> *, MaxSubdomains> host_only_variable_{};
     friend class DeviceOnlyDiscreteVariable<DataType>;
     friend class HostOnlyDiscreteVariable<DataType>;

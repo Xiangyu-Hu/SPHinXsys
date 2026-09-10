@@ -57,11 +57,11 @@ void particle_for(const ExecutionPolicy &execution_policy, const DynamicsRange &
  * Host side decomposition policies iterate exactly like the host policy they derive
  * from; only the data they address differs, and that is resolved by DelegatedData().
  * The forwarding is explicit because the generic template above is an exact match
- * for MultiHostExecution<...> and would otherwise be chosen over the ParallelPolicy
+ * for DecomposedExecution<...> and would otherwise be chosen over the ParallelPolicy
  * or SequencedPolicy overloads, which need a derived-to-base conversion.
  */
 template <class PolicyType, typename DynamicsRange, class LocalDynamicsFunction>
-inline void particle_for(const MultiHostExecution<PolicyType> &ex_policy, const DynamicsRange &dynamics_range,
+inline void particle_for(const DecomposedExecution<PolicyType> &ex_policy, const DynamicsRange &dynamics_range,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
     particle_for(static_cast<const PolicyType &>(ex_policy), dynamics_range, local_dynamics_function);
@@ -196,7 +196,7 @@ void particle_reduce(const ExecutionPolicy &execution_policy, const DynamicsRang
 
 /** Host side decomposition policies reduce like the host policy they derive from. */
 template <class ReturnType, typename Operation, class PolicyType, typename DynamicsRange, class LocalDynamicsFunction>
-inline ReturnType particle_reduce(const MultiHostExecution<PolicyType> &ex_policy, const DynamicsRange &dynamics_range,
+inline ReturnType particle_reduce(const DecomposedExecution<PolicyType> &ex_policy, const DynamicsRange &dynamics_range,
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {

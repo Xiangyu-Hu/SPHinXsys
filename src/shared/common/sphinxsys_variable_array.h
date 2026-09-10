@@ -103,6 +103,12 @@ class VariableArray : public Quantity
     {
         return VariableArrayView<DataType>(DelegatedOnDevice(), array_size_);
     };
+    /** A decomposed policy delegates like its base policy. */
+    template <class PolicyType>
+    VariableArrayView<DataType> DelegatedVariableArrayView(const DecomposedExecution<PolicyType> &ex_policy)
+    {
+        return DelegatedVariableArrayView(PolicyType{});
+    };
 
   protected:
     StdVec<DiscreteVariable<DataType> *> variables_;

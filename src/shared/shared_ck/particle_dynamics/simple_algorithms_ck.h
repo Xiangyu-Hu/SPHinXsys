@@ -31,7 +31,6 @@
 #define SIMPLE_ALGORITHMS_CK_H
 
 #include "base_dynamics.h"
-#include "subdomain_fan_out.h"
 #include "particle_iterators_ck.h"
 
 #include <string>

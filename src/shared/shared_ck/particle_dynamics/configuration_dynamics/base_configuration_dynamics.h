@@ -74,7 +74,7 @@ struct PlusUnsignedInt<ParallelPolicy>
 
 /** Host side decomposition: the scan itself is per subdomain, only the fan-out differs. */
 template <>
-struct PlusUnsignedInt<ParallelMultiHostPolicy>
+struct PlusUnsignedInt<MultiHostPolicy>
 {
     typedef std::plus<UnsignedInt> type;
 };
@@ -86,7 +86,7 @@ struct PlusUnsignedInt<SequencedMultiHostPolicy>
 };
 
 template <>
-struct SortMethod<ParallelMultiHostPolicy>
+struct SortMethod<MultiHostPolicy>
 {
     typedef QuickSort type;
 };

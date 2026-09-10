@@ -89,6 +89,12 @@ class ConstantArray : public Quantity
     {
         return DelegatedOnDevice(ex_policy);
     };
+    /** A decomposed policy delegates like its base policy. */
+    template <class PolicyType>
+    DataType *DelegatedData(const DecomposedExecution<PolicyType> &ex_policy)
+    {
+        return DelegatedData(PolicyType{});
+    };
 
     template <class ExecutionPolicy>
     ArrayView<DataType> DelegatedArrayView(const ExecutionPolicy &ex_policy)
@@ -143,6 +149,12 @@ class ComputingKernelArray : public Quantity
     ComputingKernelType *DelegatedData(const SYCLDevicePolicy &ex_policy)
     {
         return DelegatedOnDevice(ex_policy);
+    };
+    /** A decomposed policy delegates like its base policy. */
+    template <class PolicyType>
+    ComputingKernelType *DelegatedData(const DecomposedExecution<PolicyType> &ex_policy)
+    {
+        return DelegatedData(PolicyType{});
     };
     template <class ExecutionPolicy>
     ArrayView<ComputingKernelType> DelegatedArrayView(const ExecutionPolicy &ex_policy)

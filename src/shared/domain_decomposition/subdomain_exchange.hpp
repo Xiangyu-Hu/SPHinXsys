@@ -289,6 +289,7 @@ SubdomainExchange<ExecutionPolicy>::SubdomainExchange(SlabDecomposition &decompo
       buffer_capacity_(std::max<UnsignedInt>(
           UnsignedInt(initial_buffer_fraction * Real(particles.ParticlesBound())), 1024))
 {
+    particles_.setHaloRefresher(this);
     const int number_of_subdomains = execution::numberOfSubdomains();
     const UnsignedInt particles_bound = particles_.ParticlesBound();
 
@@ -776,7 +777,7 @@ std::string SubdomainExchange<ExecutionPolicy>::checkConsistency() const
         Vecd *position = const_cast<BaseParticles &>(particles_)
                              .dvParticlePosition()
                              ->DelegatedData(ExecutionPolicy{});
-        if (!std::is_same<ExecutionPolicy, ParallelMultiHostPolicy>::value &&
+        if (!std::is_same<ExecutionPolicy, MultiHostPolicy>::value &&
             !std::is_same<ExecutionPolicy, SequencedMultiHostPolicy>::value)
         {
             continue; // device replicas are not host readable; use gatherToHost() first

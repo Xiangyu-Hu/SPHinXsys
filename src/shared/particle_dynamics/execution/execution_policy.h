@@ -82,13 +82,13 @@ using MainExecutionPolicy = SYCLDevicePolicy;
 inline constexpr auto par_ck = SYCLDevicePolicy{};
 #endif // SPHINXSYS_MULTI_DEVICE
 #else
-#if SPHINXSYS_MULTI_HOST
+#if SPHINXSYS_MULTI_SUBDOMAIN_HOST
 using MainExecutionPolicy = MultiHostPolicy;
 inline constexpr auto par_ck = MultiHostPolicy{};
 #else
 using MainExecutionPolicy = ParallelPolicy;
 inline constexpr auto par_ck = ParallelPolicy{};
-#endif // SPHINXSYS_MULTI_HOST
+#endif // SPHINXSYS_MULTI_SUBDOMAIN_HOST
 #endif // SPHINXSYS_USE_SYCL
 
 } // namespace execution

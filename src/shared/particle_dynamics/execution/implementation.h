@@ -73,13 +73,13 @@ inline void copyComputingKernelToDevice(ComputingKernelType *host_kernel,
 template <class ComputingKernelType>
 inline void freeComputingKernelOnDevice(ComputingKernelType *device_kernel);
 
-template <class ComputingKernelType, class PolicyType>
+template <class ComputingKernelType>
 inline ComputingKernelType *allocateComputingKernel(const SYCLDevicePolicy &ex_policy)
 {
     return allocateComputingKernelOnDevice<ComputingKernelType>();
 }
 
-template <class PolicyType, class ComputingKernelType>
+template <class ComputingKernelType>
 inline void copyComputingKernel(const SYCLDevicePolicy &ex_policy,
                                 ComputingKernelType *temp_kernel,
                                 ComputingKernelType *computing_kernel)
@@ -87,11 +87,36 @@ inline void copyComputingKernel(const SYCLDevicePolicy &ex_policy,
     copyComputingKernelToDevice(temp_kernel, computing_kernel);
 }
 
-template <class PolicyType, class ComputingKernelType>
+template <class ComputingKernelType>
 inline void freeComputingKernel(const SYCLDevicePolicy &ex_policy,
                                 ComputingKernelType *computing_kernel)
 {
     freeComputingKernelOnDevice(computing_kernel);
+}
+
+/** A decomposed policy allocates its kernels exactly like its base policy; the replica
+ *  selection happens through currentSubdomainID() inside Implementation, not here. The
+ *  forwarders are needed because the generic templates above are an exact match for
+ *  DecomposedExecution<SYCLDevicePolicy> and would otherwise win over the SYCL overloads. */
+template <class ComputingKernelType, class PolicyType>
+inline ComputingKernelType *allocateComputingKernel(const DecomposedExecution<PolicyType> &ex_policy)
+{
+    return allocateComputingKernel<ComputingKernelType>(PolicyType{});
+}
+
+template <class PolicyType, class ComputingKernelType>
+inline void copyComputingKernel(const DecomposedExecution<PolicyType> &ex_policy,
+                                ComputingKernelType *temp_kernel,
+                                ComputingKernelType *computing_kernel)
+{
+    copyComputingKernel(PolicyType{}, temp_kernel, computing_kernel);
+}
+
+template <class PolicyType, class ComputingKernelType>
+inline void freeComputingKernel(const DecomposedExecution<PolicyType> &ex_policy,
+                                ComputingKernelType *computing_kernel)
+{
+    freeComputingKernel(PolicyType{}, computing_kernel);
 }
 
 template <class ExecutionPolicy, class LocalDynamicsType, class ComputingKernelType>

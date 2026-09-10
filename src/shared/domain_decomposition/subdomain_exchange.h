@@ -115,7 +115,7 @@ class VariableExchangeBuffer
  * @brief Halo and migration exchange of the particles of one body.
  */
 template <class ExecutionPolicy>
-class SubdomainExchange
+class SubdomainExchange : public HaloRefresher
 {
     /** The buffer assembles are keyed on the policy too, so that a translation unit
      *  which instantiates both policies keeps their buffers apart. */
@@ -146,8 +146,10 @@ class SubdomainExchange
      *  resulting n_local. Must run after every migration or sort, and before the cell
      *  linked list is rebuilt, since that list covers the local particles. */
     void updateHaloPlan();
-    /** Re-send the values of the given variables along the current plan. */
-    void refreshHalo(DiscreteVariables &variables);
+    /** Re-send the values of the given variables along the current plan. Also reached
+     *  through BaseParticles::refreshHalo(), which the interaction algorithms call with
+     *  their interact variables before every interaction step. */
+    virtual void refreshHalo(DiscreteVariables &variables) override;
     void refreshHalo() { refreshHalo(variables_to_exchange_); };
     /** Transfer ownership of the particles that crossed a cut plane.
      *

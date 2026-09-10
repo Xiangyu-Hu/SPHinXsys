@@ -46,6 +46,7 @@
 
 #include <algorithm>
 #include <array>
+#include <type_traits>
 
 namespace SPH
 {
@@ -71,8 +72,12 @@ inline ReturnType reduceOverSubdomains(const ExecutionPolicy &ex_policy,
 // Host side decomposition, driven by the SubdomainRunner.
 // The multi-device overloads live in device_environment_sycl.h.
 //----------------------------------------------------------------------
-template <class PolicyType, class Body>
-inline void fanOutOverSubdomains(const MultiHostExecution<PolicyType> &ex_policy, const Body &body)
+/** Host decomposed policies only: the multi-device overload in device_environment_sycl.h
+ *  is a non-template on MultiDevicePolicy, but the constraint keeps this one from being
+ *  picked when that header is not visible at the point of instantiation. */
+template <class PolicyType, class Body,
+          typename = std::enable_if_t<!std::is_base_of_v<SYCLDevicePolicy, PolicyType>>>
+inline void fanOutOverSubdomains(const DecomposedExecution<PolicyType> &ex_policy, const Body &body)
 {
     subdomain_runner.forEachSubdomain([&](int subdomain_id)
                                       { body(); });
@@ -85,8 +90,9 @@ inline void fanOutOverSubdomains(const MultiHostExecution<PolicyType> &ex_policy
  * that difference is expected and is one of the things the CPU path lets you measure
  * cheaply, ahead of interpreting a multi-GPU regression failure.
  */
-template <typename Operation, class PolicyType, class ReturnType, class Body>
-inline ReturnType reduceOverSubdomains(const MultiHostExecution<PolicyType> &ex_policy,
+template <typename Operation, class PolicyType, class ReturnType, class Body,
+          typename = std::enable_if_t<!std::is_base_of_v<SYCLDevicePolicy, PolicyType>>>
+inline ReturnType reduceOverSubdomains(const DecomposedExecution<PolicyType> &ex_policy,
                                        ReturnType identity, const Body &body)
 {
     std::array<ReturnType, MaxSubdomains> partial_results;
@@ -115,6 +121,17 @@ inline void copyBetweenSubdomains(const ExecutionPolicy &ex_policy, int destinat
                                   DataType *destination, const DataType *source, std::size_t size)
 {
     std::copy(source, source + size, destination);
+}
+
+/** A decomposed policy copies exactly like its base policy: the host policies fall back to
+ *  the overload above, MultiDevicePolicy reaches the queue copy of the SYCL backend. Without
+ *  this forwarder the generic template would be an exact match for MultiDevicePolicy and win
+ *  over the SYCLDevicePolicy overload, which needs a derived-to-base conversion. */
+template <class PolicyType, class DataType>
+inline void copyBetweenSubdomains(const DecomposedExecution<PolicyType> &ex_policy, int destination_subdomain,
+                                  DataType *destination, const DataType *source, std::size_t size)
+{
+    copyBetweenSubdomains(PolicyType{}, destination_subdomain, destination, source, size);
 }
 } // namespace execution
 } // namespace SPH

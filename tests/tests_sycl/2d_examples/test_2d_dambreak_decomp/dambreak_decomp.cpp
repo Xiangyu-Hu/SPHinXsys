@@ -175,20 +175,17 @@ int main(int ac, char *av[])
     MigrateParticlesCK<MainExecutionPolicy> migrate_particles(exchange);
     // Refreshed in the advection step, each right after the stage that writes it: the
     // volume is read at the neighbors by the kernel correction and by both acoustic
-    // halves, the correction matrix by the first acoustic half.
+    // halves, the correction matrix by the first acoustic half. Both change once per
+    // advection step only, which is why they are not interact variables of the acoustic
+    // steps (those would be re-sent every acoustic step).
     SyncHaloStateCK<MainExecutionPolicy> sync_volume(exchange, water_particles);
     sync_volume.addVariable<Real>("VolumetricMeasure");
     SyncHaloStateCK<MainExecutionPolicy> sync_correction(exchange, water_particles);
     sync_correction.addVariable<Matd>("LinearCorrectionMatrix");
-    // Refreshed inside each acoustic half step, between its initialization and its
-    // interaction step: the only quantity that step reads at the neighbors and that
-    // the initialization step has just written.
-    SyncHaloStateCK<MainExecutionPolicy> sync_pressure(exchange, water_particles);
-    sync_pressure.addVariable<Real>("Pressure");
-    SyncHaloStateCK<MainExecutionPolicy> sync_velocity(exchange, water_particles);
-    sync_velocity.addVariable<Vecd>("Velocity");
-    fluid_acoustic_step_1st_half.addPostInitialization(sync_pressure);
-    fluid_acoustic_step_2nd_half.addPostInitialization(sync_velocity);
+    // The pressure (first half) and the velocity (second half) are refreshed by the
+    // acoustic steps themselves: each interaction algorithm refreshes the halo of its
+    // interact variables right before its interaction step, through the HaloRefresher
+    // installed on the particles by the exchange.
 
     auto check_consistency = [&](size_t step)
     {

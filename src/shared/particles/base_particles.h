@@ -52,6 +52,19 @@ class GroupManager;
 /** Generalized particle data type */
 typedef DataContainerAssemble<AllocatedData> ParticleData;
 /**
+ * @class HaloRefresher
+ * @brief Refreshes the halo copies of a set of particle variables in a domain decomposed
+ *        run. Implemented by SubdomainExchange; declared here so that the shared dynamics
+ *        can request a refresh without depending on the decomposition headers.
+ */
+class HaloRefresher
+{
+  public:
+    virtual ~HaloRefresher() {};
+    virtual void refreshHalo(DiscreteVariables &variables) = 0;
+};
+
+/**
  * @class BaseParticles
  * @brief Particles with essential (geometric and matter) data.
  * There are three groups of particles，all particles of a same type are saved with continuous memory segments.
@@ -156,9 +169,23 @@ class BaseParticles
     template <typename DataType>
     DiscreteVariable<DataType> *addDiscreteVariableToList(DiscreteVariables &variable_set, DiscreteVariable<DataType> *variable);
     //----------------------------------------------------------------------
+    // Halo refresh of a domain decomposed run
+    //----------------------------------------------------------------------
+    /** Installed by the SubdomainExchange of this body, if any. Interaction algorithms
+     *  call refreshHalo() with the variables they read at the neighbors right before
+     *  their interaction step, so the halo copies are current without the case file
+     *  placing the refresh by hand. A no-op when the body is not decomposed. */
+    void setHaloRefresher(HaloRefresher *halo_refresher) { halo_refresher_ = halo_refresher; };
+    void refreshHalo(DiscreteVariables &variables)
+    {
+        if (halo_refresher_ != nullptr)
+            halo_refresher_->refreshHalo(variables);
+    };
+    //----------------------------------------------------------------------
     // Particle data for sorting
     //----------------------------------------------------------------------
   protected:
+    HaloRefresher *halo_refresher_ = nullptr; /**< see setHaloRefresher() */
     UnsignedInt *original_id_;             /**< the original ids assigned just after particle is generated. */
     UnsignedInt *sorted_id_;               /**< the current sorted particle ids of particles from original ids. */
     DiscreteVariables evolving_variables_; // particle variables which evolving during simulation

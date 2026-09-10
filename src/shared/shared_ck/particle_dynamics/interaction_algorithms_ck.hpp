@@ -100,6 +100,10 @@ template <class ExecutionPolicy, template <typename...> class InteractionType, t
 void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Parameters...>>>::
     runInteraction(Real dt)
 {
+    // The interaction reads the interact variables at the neighbors, which may be halo
+    // copies in a decomposed run; the preceding step's loop is a barrier over the
+    // subdomains, so every owner has finished writing them by now.
+    this->particles_->refreshHalo(this->interact_variables_);
     particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                  kernel_implementation_, dt);
 
@@ -123,6 +127,8 @@ template <class ExecutionPolicy, template <typename...> class InteractionType, t
 void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parameters...>>>::
     runInteraction(Real dt)
 {
+    // A no-op unless the contact body is itself decomposed.
+    this->contact_particles_->refreshHalo(this->contact_interact_variables_);
     particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                  contact_kernel_implementation_, dt);
 
@@ -149,11 +155,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<Paramet
 {
     this->setUpdated(this->identifier_->getSPHBody());
     this->setupDynamics(dt);
-    // One host thread per device under the multi-device policy; every nested step,
-    // including the pre- and post-processes, then stays on that device.
-    execution::fanOutOverSubdomains(
-        ExecutionPolicy{}, [&]()
-        { InteractionDynamicsCK<Base>::runAllSteps(dt); });
+    InteractionDynamicsCK<Base>::runAllSteps(dt);
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
@@ -188,11 +190,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<WithUpd
 {
     this->setUpdated(this->identifier_->getSPHBody());
     this->setupDynamics(dt);
-    // One host thread per device under the multi-device policy; every nested step,
-    // including the pre- and post-processes, then stays on that device.
-    execution::fanOutOverSubdomains(
-        ExecutionPolicy{}, [&]()
-        { InteractionDynamicsCK<WithUpdate>::runAllSteps(dt); });
+    InteractionDynamicsCK<WithUpdate>::runAllSteps(dt);
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,
@@ -245,27 +243,7 @@ void InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<OneLeve
 {
     this->setUpdated(this->identifier_->getSPHBody());
     this->setupDynamics(dt);
-    // The three steps fan out separately, so that the post-initialization dynamics
-    // run on the host thread at a point where every subdomain has finished the
-    // initialization step: a fan-out is a barrier over the subdomains. Under a
-    // non-decomposed policy the three fan-outs collapse into plain calls and this is
-    // exactly InteractionDynamicsCK<OneLevel>::runAllSteps(). The pre- and
-    // post-processes of the interaction step (contact interactions, for instance)
-    // stay inside the interaction fan-out, on the subdomain they were entered on.
-    execution::fanOutOverSubdomains(
-        ExecutionPolicy{}, [&]()
-        { this->runInitializationStep(dt); });
-
-    for (size_t k = 0; k < this->post_initialization_.size(); ++k)
-        this->post_initialization_[k]->exec(dt);
-
-    execution::fanOutOverSubdomains(
-        ExecutionPolicy{}, [&]()
-        { InteractionDynamicsCK<Base>::runAllSteps(dt); });
-
-    execution::fanOutOverSubdomains(
-        ExecutionPolicy{}, [&]()
-        { this->runUpdateStep(dt); });
+    InteractionDynamicsCK<OneLevel>::runAllSteps(dt);
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,

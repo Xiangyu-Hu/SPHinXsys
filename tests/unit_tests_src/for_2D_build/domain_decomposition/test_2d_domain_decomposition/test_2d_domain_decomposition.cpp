@@ -168,7 +168,7 @@ TEST_P(SubdomainFanOut, RunsTheBodyOncePerSubdomain)
 {
     std::mutex mutex;
     std::set<int> visited;
-    fanOutOverSubdomains(par_multi_host,
+    fanOutOverSubdomains(multi_host,
                          [&]()
                          {
                              std::lock_guard<std::mutex> lock(mutex);
@@ -182,10 +182,10 @@ TEST_P(SubdomainFanOut, NestedFanOutStaysOnTheBoundSubdomain)
 { // dynamics compose: an interaction fans out, then calls exec() of its post-processes
     std::mutex mutex;
     std::set<int> visited;
-    fanOutOverSubdomains(par_multi_host,
+    fanOutOverSubdomains(multi_host,
                          [&]()
                          {
-                             fanOutOverSubdomains(par_multi_host,
+                             fanOutOverSubdomains(multi_host,
                                                   [&]()
                                                   {
                                                       std::lock_guard<std::mutex> lock(mutex);
@@ -198,14 +198,14 @@ TEST_P(SubdomainFanOut, NestedFanOutStaysOnTheBoundSubdomain)
 TEST_P(SubdomainFanOut, ReductionCombinesThePartialResults)
 {
     const int total = reduceOverSubdomains<std::plus<int>>(
-        par_multi_host, 0, [&]() { return currentSubdomainID() + 1; });
+        multi_host, 0, [&]() { return currentSubdomainID() + 1; });
     EXPECT_EQ(total, 1 + 2 + 3 + 4);
 }
 
 TEST_P(SubdomainFanOut, ExceptionsPropagateToTheCaller)
 {
     EXPECT_THROW(
-        fanOutOverSubdomains(par_multi_host,
+        fanOutOverSubdomains(multi_host,
                              [&]()
                              {
                                  if (currentSubdomainID() == 2)

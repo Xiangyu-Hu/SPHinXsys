@@ -32,8 +32,8 @@
  *          run and a multi-subdomain CPU run.
  *
  *          A subdomain is a unit of decomposition, not a unit of hardware. Under
- *          ParallelMultiDevicePolicy one subdomain maps to one GPU; under
- *          ParallelMultiHostPolicy it maps to a host thread, or to nothing at all when
+ *          MultiDevicePolicy one subdomain maps to one GPU; under
+ *          MultiHostPolicy it maps to a host thread, or to nothing at all when
  *          the runner is in sequential mode. Keeping one name for the concept is
  *          deliberate: a bug reproduced on the CPU path is then literally the same bug.
  *

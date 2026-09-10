@@ -48,7 +48,7 @@ struct PlusUnsignedInt<SYCLDevicePolicy>
 };
 
 template <>
-struct PlusUnsignedInt<ParallelMultiDevicePolicy>
+struct PlusUnsignedInt<MultiDevicePolicy>
 { // the scan itself is per device, only the fan-out differs
     typedef sycl::plus<UnsignedInt> type;
 };
