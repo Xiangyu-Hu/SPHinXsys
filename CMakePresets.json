@@ -18,8 +18,6 @@
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl",
         "CMAKE_TOOLCHAIN_FILE": "'${sourceDir}/../vcpkg/scripts/buildsystems/vcpkg.cmake'",
-        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
       }
     },
     {
@@ -39,8 +37,6 @@
         "CMAKE_C_COMPILER": "icx-cl",
         "CMAKE_CXX_COMPILER": "icx-cl",
         "CMAKE_TOOLCHAIN_FILE": "'${sourceDir}/../vcpkg/scripts/buildsystems/vcpkg.cmake'",
-        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "SPHINXSYS_USE_SYCL": "ON",
         "SPHINXSYS_2D": "OFF",
         "SPHINXSYS_BUILD_2D_EXAMPLES": "OFF",
@@ -65,9 +61,7 @@
         "CMAKE_CXX_COMPILER": "icpx",
         "SPHINXSYS_USE_SYCL": "ON",
         "SPHINXSYS_USE_ONEDPL": "ON",
-        "CMAKE_TOOLCHAIN_FILE": "'${sourceDir}/../vcpkg/scripts/buildsystems/vcpkg.cmake'",
-        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
+        "CMAKE_TOOLCHAIN_FILE": "'${sourceDir}/../vcpkg/scripts/buildsystems/vcpkg.cmake'"
       }
     },
     {
@@ -87,8 +81,6 @@
         "CMAKE_CXX_COMPILER": "icpx",
         "SPHINXSYS_USE_SYCL": "ON",
         "CMAKE_TOOLCHAIN_FILE": "'${sourceDir}/../vcpkg/scripts/buildsystems/vcpkg.cmake'",
-        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "SPHINXSYS_SYCL_TARGETS": "nvptx64-nvidia-cuda"
       }
     },

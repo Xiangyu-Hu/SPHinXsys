@@ -48,9 +48,9 @@ Real H = -(rho_s / rho0_f * L - L / 2); /**< initial placement of float body */
 Real bcmx = 0;
 Real bcmy = H + 0;
 Vec2d G(bcmx, bcmy);
-Real Ix = L * L * L * L / 3;
-Real Iy = L * L * L * L / 3;
-Real Iz = StructureMass / 12 * (L * L + L * L);
+Real Ix = L * L / 12.0;
+Real Iy = L * L / 12.0;
+Real Iz = Ix + Iy;
 
 /** Structure observer position*/
 Vec2d obs = G;
@@ -66,11 +66,8 @@ class StructureSystemForSimbody : public SolidBodyPartForSimbody
     StructureSystemForSimbody(SPHBody &sph_body, Shape &shape)
         : SolidBodyPartForSimbody(sph_body, shape)
     {
-        // Vec2d mass_center(G[0], G[1]);
-        // initial_mass_center_ = SimTKVec3(mass_center[0], mass_center[1], 0.0);
-        body_part_mass_properties_ =
-            mass_properties_keeper_
-                .createPtr<SimTK::MassProperties>(StructureMass, SimTKVec3(0.0), SimTK::UnitInertia(Ix, Iy, Iz));
+        body_part_mass_properties_ = mass_properties_keeper_.createPtr<SimTK::MassProperties>(
+            StructureMass, SimTKVec3(0.0), SimTK::UnitInertia(Ix, Iy, Iz));
     }
 };
 //----------------------------------------------------------------------
@@ -236,7 +233,7 @@ int main(int ac, char *av[])
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
-    SimTK::Body::Rigid structure_info(*structure_multibody.body_part_mass_properties_);
+    SimTK::Body::Rigid structure_info(structure_multibody.getSimTKMassProperties());
     /**
      * @brief  ** Create a %Planar mobilizer between an existing parent (inboard) body P
      *	and a new child (outboard) body B created by copying the given \a bodyInfo
