@@ -187,7 +187,7 @@ int main(int ac, char *av[])
     // interact variables right before its interaction step, through the HaloRefresher
     // installed on the particles by the exchange.
 
-    auto check_consistency = [&](size_t step)
+    auto check_consistency = [&](UnsignedInt step)
     {
         std::string report = exchange.checkConsistency();
         if (!report.empty())
@@ -231,7 +231,7 @@ int main(int ac, char *av[])
     //	Setup for advection-step based time-stepping control
     //----------------------------------------------------------------------
     auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
-    size_t advection_steps = 1;
+    UnsignedInt advection_steps = 1;
     int screening_interval = 100;
     int observation_interval = 20;
     // SPHINXSYS_VTP_INTERVAL (seconds, default 0.1) sets the state recording interval; a
@@ -291,8 +291,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     // SPHINXSYS_DEBUG_STEPS = N prints the time step of the first N acoustic steps and
     // of every advection step among them, to compare two configurations step by step.
-    const int debug_steps = environmentInt("SPHINXSYS_DEBUG_STEPS", 0);
-    size_t acoustic_steps = 0;
+    const UnsignedInt debug_steps = environmentInt("SPHINXSYS_DEBUG_STEPS", 0);
+    UnsignedInt acoustic_steps = 0;
     TickCount t0 = TickCount::now();
     while (!time_stepper.isEndTime(end_time))
     {
