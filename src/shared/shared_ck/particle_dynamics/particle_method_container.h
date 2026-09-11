@@ -216,15 +216,15 @@ class ParticleMethodContainer
      *  and after its output variables, since that fixes the exchange set. The loop
      *  entries are then added as addGeneralDynamics<UpdateHaloCK>(decomposition), etc. */
     template <typename... Args>
-    BodyDecomposition<ExecutionPolicy> &addDecomposition(RealBody &body, Args &&...args)
+    BodyDecomposition<ExecutionPolicy> &addDecomposition(SPHBody &sph_body, Args &&...args)
     {
-        return body.addDecomposition<ExecutionPolicy>(std::forward<Args>(args)...);
+        return sph_body.addDecomposition<ExecutionPolicy>(std::forward<Args>(args)...);
     };
 
     template <typename... Args>
-    BodyDecomposition<ExecutionPolicy> &getDecomposition(RealBody &body)
+    BodyDecomposition<ExecutionPolicy> &getDecomposition(SPHBody &sph_body)
     {
-        return body.getDecomposition<ExecutionPolicy>();
+        return sph_body.getDecomposition<ExecutionPolicy>();
     };
 
     ParticleDynamicsGroup &addParticleDynamicsGroup()

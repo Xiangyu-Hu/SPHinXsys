@@ -174,7 +174,12 @@ MainMethods &SPHSolver::getMainMethodContainer()
 {
     if (main_methods_keeper_.getPtr() == nullptr)
     {
-        return *main_methods_keeper_.createPtr<MainMethods>(par_ck);
+        MainMethods &main_methods = *main_methods_keeper_.createPtr<MainMethods>(par_ck);
+        for (auto *body : sph_system_.getRealBodies())
+        {
+           main_methods.addDecomposition(*body);
+        }
+        return main_methods;
     }
     return *main_methods_keeper_.getPtr();
 }

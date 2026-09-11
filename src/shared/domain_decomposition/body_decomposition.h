@@ -131,6 +131,7 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
     : public BaseDecomposition, public SubdomainExchangeInterface
 {
     using ExecutionPolicy = DecomposedExecution<PolicyType>;
+    std::unique_ptr<SubdomainExchange<ExecutionPolicy>> exchange_;
 
   public:
     /**
@@ -147,22 +148,26 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
                          execution::subdomain_runner.NumberOfSubdomains(), split_axis),
           dv_subdomain_id_(nullptr)
     {
-        OperationOnDataAssemble<DiscreteVariables, AddVariablesToExchangeSet> add_variables;
-        add_variables(particles_.EvolvingVariables(), particles_, exchange_variables_);
-        add_variables(particles_.VariablesToWrite(), particles_, exchange_variables_);
-
         balanceOnInitialPositions();
         std::cout << decomposition_.describe();
-
-        exchange_ = std::make_unique<SubdomainExchange<ExecutionPolicy>>(
-            decomposition_, particles_, exchange_variables_);
         particles_.setSubdomainExchange(this);
     };
     virtual ~BodyDecomposition() {};
 
     BaseParticles &getParticles() { return particles_; };
     SlabDecomposition &getSlabDecomposition() { return decomposition_; };
-    SubdomainExchange<ExecutionPolicy> &getExchange() { return *exchange_; };
+    SubdomainExchange<ExecutionPolicy> &getExchange()
+    {
+        if (!exchange_)
+        {
+            OperationOnDataAssemble<DiscreteVariables, AddVariablesToExchangeSet> add_variables;
+            add_variables(particles_.EvolvingVariables(), particles_, exchange_variables_);
+            add_variables(particles_.VariablesToWrite(), particles_, exchange_variables_);
+            exchange_ = std::make_unique<SubdomainExchange<ExecutionPolicy>>(
+                decomposition_, particles_, exchange_variables_);
+        }
+        return *exchange_;
+    };
 
     /** Add a variable to the exchange set, for instance one that is read at the
      *  neighbors by an interaction but is neither evolving nor written out. Must be
@@ -170,7 +175,9 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
     template <typename DataType>
     BodyDecomposition &addExchangeVariable(const std::string &name)
     {
-        exchange_->template addExchangeVariable<DataType>(particles_.template getVariableByName<DataType>(name));
+        auto &exchange = getExchange();
+        exchange.template addExchangeVariable<DataType>(
+            particles_.template getVariableByName<DataType>(name));
         return *this;
     };
 
@@ -184,15 +191,22 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
         recorder.template addToWrite<int>(body_, "SubdomainID");
     };
 
-    void scatterFromHost() { exchange_->scatterFromHost(); };
+    void scatterFromHost()
+    {
+        auto &exchange = getExchange();
+        exchange.scatterFromHost();
+    };
+
     virtual void gatherToHost() override
     {
-        exchange_->gatherToHost();
+        auto &exchange = getExchange();
+        exchange.gatherToHost();
+
         if (dv_subdomain_id_ != nullptr)
         {
             int *subdomain_id = dv_subdomain_id_->Data();
             UnsignedInt offset = 0;
-            const StdVec<UnsignedInt> owned = exchange_->OwnedParticlesPerSubdomain();
+            const StdVec<UnsignedInt> owned = exchange.OwnedParticlesPerSubdomain();
             for (int s = 0; s < decomposition_.NumberOfSubdomains(); ++s)
             {
                 for (UnsignedInt i = offset; i < offset + owned[s]; ++i)
@@ -201,30 +215,73 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
             }
         }
     };
-    virtual void finishHostAccess() override { exchange_->finishHostAccess(); };
+
+    virtual void finishHostAccess() override
+    {
+        auto &exchange = getExchange();
+        exchange.finishHostAccess();
+    };
+
     virtual int subdomainOf(const Vecd &position) const override
     {
         return decomposition_.getSubdomainMap().subdomainOf(position);
     };
-    void updateHaloPlan() { exchange_->updateHaloPlan(); };
-    virtual void refreshHalo(DiscreteVariables &variables) override { exchange_->refreshHalo(variables); };
-    void migrateParticles() { exchange_->migrateParticles(); };
+
+    void updateHaloPlan()
+    {
+        auto &exchange = getExchange();
+        exchange.updateHaloPlan();
+    };
+
+    virtual void refreshHalo(DiscreteVariables &variables) override
+    {
+        auto &exchange = getExchange();
+        exchange.refreshHalo(variables);
+    };
+
+    void migrateParticles()
+    {
+        auto &exchange = getExchange();
+        exchange.migrateParticles();
+    };
+
     /** Move the cut planes towards equal owned counts; migrates when a plane moved. */
     bool rebalance(Real relaxation)
     {
-        if (decomposition_.rebalance(exchange_->OwnedParticlesPerSubdomain(), relaxation))
+        auto &exchange = getExchange();
+        if (decomposition_.rebalance(exchange.OwnedParticlesPerSubdomain(), relaxation))
         {
-            exchange_->migrateParticles();
+            exchange.migrateParticles();
             return true;
         }
         return false;
     };
 
     int NumberOfSubdomains() const { return decomposition_.NumberOfSubdomains(); };
-    StdVec<UnsignedInt> OwnedParticlesPerSubdomain() { return exchange_->OwnedParticlesPerSubdomain(); };
-    UnsignedInt TotalOwnedParticles() { return exchange_->TotalOwnedParticles(); };
-    Real HaloLoadFactor() const { return exchange_->HaloLoadFactor(); };
-    std::string checkConsistency() const { return exchange_->checkConsistency(); };
+    StdVec<UnsignedInt> OwnedParticlesPerSubdomain()
+    {
+        auto &exchange = getExchange();
+        return exchange.OwnedParticlesPerSubdomain();
+    };
+
+    UnsignedInt TotalOwnedParticles()
+    {
+        auto &exchange = getExchange();
+        return exchange.TotalOwnedParticles();
+    };
+
+    Real HaloLoadFactor() const
+    {
+        auto &exchange = getExchange();
+        return exchange.HaloLoadFactor();
+    };
+
+    std::string checkConsistency() const
+    {
+        auto &exchange = getExchange();
+        return exchange.checkConsistency();
+    };
+
     std::string describe() const { return decomposition_.describe(); };
 
   protected:
@@ -250,7 +307,6 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
     BaseParticles &particles_;
     SlabDecomposition decomposition_;
     DiscreteVariables exchange_variables_;
-    std::unique_ptr<SubdomainExchange<ExecutionPolicy>> exchange_;
     DiscreteVariable<int> *dv_subdomain_id_;
 };
 } // namespace SPH
