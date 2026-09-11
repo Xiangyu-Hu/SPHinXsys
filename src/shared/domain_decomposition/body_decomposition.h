@@ -4,7 +4,7 @@
  * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle *
  * Hydrodynamics for industrial compleX systems. It provides C++ APIs for    *
  * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH   *
+ * systems including fluid, solid, multi-sph_body dynamics and beyond with SPH   *
  * (smoothed particle hydrodynamics), a meshless computational method using  *
  * particle discretization.                                                  *
  *                                                                           *
@@ -22,12 +22,12 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file    body_decomposition.h
- * @brief   The decomposition of one body over the subdomains of a run, selected by
+ * @brief   The decomposition of one sph_body over the subdomains of a run, selected by
  *          the execution policy.
  * @details A case file drives the decomposition through one object of this class
  *          and a few dynamics built on it (domain_decomposition_dynamics.h). The
  *          primary template is the non-decomposed case: every operation is a no-op
- *          and the body keeps its single global particle set. The partial
+ *          and the sph_body keeps its single global particle set. The partial
  *          specialization on DecomposedExecution<> owns the cut planes and the halo
  *          and migration exchange. Since MainExecutionPolicy is a decomposed policy
  *          exactly when SPHINXSYS_DECOMPOSITION is on, a case written against this
@@ -35,7 +35,7 @@
  *
  *          The exchange set, that is the variables a particle carries when it
  *          migrates and the variables staged to the host for output, is fixed when
- *          the object is constructed: the evolving variables of the body and the
+ *          the object is constructed: the evolving variables of the sph_body and the
  *          variables registered for output at that time, plus whatever the case adds
  *          with addExchangeVariable(). Construct it after every dynamics and after
  *          the output variables are registered.
@@ -59,21 +59,27 @@
 
 namespace SPH
 {
+class BaseDecomposition
+{
+  public:
+    virtual ~BaseDecomposition() {};
+};
+
 /**
  * @class BodyDecomposition
  * @brief Non-decomposed run: the single global particle set is the only "subdomain".
- * @details The recorders gather a decomposed body to the host themselves, through the
+ * @details The recorders gather a decomposed sph_body to the host themselves, through the
  *          SubdomainExchangeInterface the decomposed specialization installs on the
  *          particles; a case therefore only places scatterFromHost() and the loop
  *          dynamics. The gather and finish methods stay public for host side work a
  *          case does on its own.
  */
 template <class ExecutionPolicy>
-class BodyDecomposition
+class BodyDecomposition : public BaseDecomposition
 {
   public:
-    explicit BodyDecomposition(RealBody &body, int split_axis = -1)
-        : body_(body), particles_(body.getBaseParticles()) {};
+    explicit BodyDecomposition(SPHBody &sph_body, int split_axis = -1)
+        : body_(sph_body), particles_(sph_body.getBaseParticles()) {};
     virtual ~BodyDecomposition() {};
 
     BaseParticles &getParticles() { return particles_; };
@@ -98,7 +104,7 @@ class BodyDecomposition
     std::string describe() const { return "Body " + body_.Name() + " is not decomposed\n"; };
 
   protected:
-    RealBody &body_;
+    SPHBody &body_;
     BaseParticles &particles_;
 };
 
@@ -118,25 +124,26 @@ struct AddVariablesToExchangeSet
 
 /**
  * @class BodyDecomposition<DecomposedExecution<PolicyType>>
- * @brief Decomposed run: slab cut planes plus the halo and migration exchange of the body.
+ * @brief Decomposed run: slab cut planes plus the halo and migration exchange of the sph_body.
  */
 template <class PolicyType>
-class BodyDecomposition<DecomposedExecution<PolicyType>> : public SubdomainExchangeInterface
+class BodyDecomposition<DecomposedExecution<PolicyType>>
+    : public BaseDecomposition, public SubdomainExchangeInterface
 {
     using ExecutionPolicy = DecomposedExecution<PolicyType>;
 
   public:
     /**
-     * @param body        the body to decompose; its particles must be generated
+     * @param sph_body        the sph_body to decompose; its particles must be generated
      * @param split_axis  axis to cut along; by default the longest one
      *
-     * The cut planes are balanced on the initial particle positions, so that a body
+     * The cut planes are balanced on the initial particle positions, so that a sph_body
      * occupying only part of the domain does not leave a subdomain empty.
      */
-    explicit BodyDecomposition(RealBody &body, int split_axis = -1)
-        : body_(body), particles_(body.getBaseParticles()),
-          decomposition_(body.getSPHSystem().getSystemDomainBounds(),
-                         body.getSPHAdaptation().getKernel()->CutOffRadius(),
+    explicit BodyDecomposition(SPHBody &sph_body, int split_axis = -1)
+        : body_(sph_body), particles_(sph_body.getBaseParticles()),
+          decomposition_(sph_body.getSPHSystem().getSystemDomainBounds(),
+                         sph_body.getSPHAdaptation().getKernel()->CutOffRadius(),
                          execution::subdomain_runner.NumberOfSubdomains(), split_axis),
           dv_subdomain_id_(nullptr)
     {
@@ -239,7 +246,7 @@ class BodyDecomposition<DecomposedExecution<PolicyType>> : public SubdomainExcha
         }
     };
 
-    RealBody &body_;
+    SPHBody &body_;
     BaseParticles &particles_;
     SlabDecomposition decomposition_;
     DiscreteVariables exchange_variables_;
