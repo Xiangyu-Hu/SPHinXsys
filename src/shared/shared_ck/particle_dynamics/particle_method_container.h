@@ -30,6 +30,7 @@
 #ifndef PARTICLE_METHOD_CONTAINER_H
 #define PARTICLE_METHOD_CONTAINER_H
 
+#include "base_body.hpp"
 #include "complex_algorithms_ck.h"
 #include "domain_decomposition_dynamics.h"
 #include "interaction_algorithms_ck.h"
@@ -217,8 +218,7 @@ class ParticleMethodContainer
     template <typename... Args>
     BodyDecomposition<ExecutionPolicy> &addDecomposition(RealBody &body, Args &&...args)
     {
-        return *decomposition_keeper_.template createPtr<BodyDecomposition<ExecutionPolicy>>(
-            body, std::forward<Args>(args)...);
+        return body.addDecomposition<ExecutionPolicy>(std::forward<Args>(args)...);
     };
 
     ParticleDynamicsGroup &addParticleDynamicsGroup()
