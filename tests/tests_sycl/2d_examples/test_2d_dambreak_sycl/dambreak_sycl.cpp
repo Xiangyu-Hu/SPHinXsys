@@ -135,7 +135,8 @@ int main(int ac, char *av[])
     //	and a no-op otherwise. Defined after every dynamics and output variable of the
     //	body, since that fixes the set of variables a migrating particle carries.
     //----------------------------------------------------------------------
-    auto &water_decomposition = main_methods.addDecomposition(water_block);
+    main_methods.addDecomposition(water_block);
+    auto &water_decomposition = main_methods.getDecomposition(water_block);
     water_decomposition.addExchangeVariable<Real>("Pressure");               // read at the neighbors,
     water_decomposition.addExchangeVariable<Matd>("LinearCorrectionMatrix"); // neither evolving nor written
     auto &water_migrate_particles = main_methods.addGeneralDynamics<MigrateParticlesCK>(water_decomposition);

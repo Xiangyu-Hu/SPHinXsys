@@ -221,6 +221,12 @@ class ParticleMethodContainer
         return body.addDecomposition<ExecutionPolicy>(std::forward<Args>(args)...);
     };
 
+    template <typename... Args>
+    BodyDecomposition<ExecutionPolicy> &getDecomposition(RealBody &body)
+    {
+        return body.getDecomposition<ExecutionPolicy>();
+    };
+
     ParticleDynamicsGroup &addParticleDynamicsGroup()
     {
         return *particle_dynamics_keeper_.createPtr<ParticleDynamicsGroup>();
