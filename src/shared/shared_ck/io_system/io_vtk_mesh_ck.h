@@ -52,7 +52,6 @@ class BodyStatesRecordingToTriangleMeshVtpCK : public BodyStatesRecordingToTrian
                 if (bodies_[i]->checkNewlyUpdated())
                 {
                     BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-                    base_particles.dvParticlePosition()->prepareForOutput(ExecutionPolicy{});
                     prepare_variable_to_write_(base_particles.VariablesToWrite(), ExecutionPolicy{});
                 }
             }

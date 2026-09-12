@@ -13,7 +13,7 @@ template <typename OutStreamType>
 void BodyStatesRecordingToVtp::writeParticlesToVtk(OutStreamType &output_stream, BaseParticles &particles)
 {
     size_t total_real_particles = particles.TotalRealParticles();
-    DiscreteVariables &variables_to_write = particles.VariablesToWrite();
+    DiscreteVariables &variables_to_write = particles.ParticleAttributesToWrite();
 
     // write sorted particles ID
     output_stream

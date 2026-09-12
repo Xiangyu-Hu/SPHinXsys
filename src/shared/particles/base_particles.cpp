@@ -61,6 +61,7 @@ void BaseParticles::initializeBasicDiscreteVariables()
 {
     addEvolvingVariable<Vecd>("Position");
     addEvolvingVariable<Real>("VolumetricMeasure");
+    addDiscreteVariableToList<Vecd>(variables_to_write_, "Position");
     original_id_ = registerDiscreteVariableData<UnsignedInt>("OriginalID", particles_bound_, AssignIndex());
     addEvolvingVariable<UnsignedInt>("OriginalID");
     addVariableToWrite<UnsignedInt>("OriginalID");
