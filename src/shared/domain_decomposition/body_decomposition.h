@@ -89,7 +89,7 @@ class BodyDecomposition : public BaseDecomposition
     void addSubdomainIDToWrite(RecorderType &recorder) {};
 
     void scatterFromHost() {};
-    void gatherToHost() {};
+    void gatherToHost(DiscreteVariables &variables) {};
     void finishHostAccess() {};
     void updateHaloPlan() {};
     void refreshHalo(DiscreteVariables &variables) {};
@@ -197,10 +197,10 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
         exchange.scatterFromHost();
     };
 
-    virtual void gatherToHost() override
+    virtual void gatherToHost(DiscreteVariables &variables) override
     {
         auto &exchange = getExchange();
-        exchange.gatherToHost();
+        exchange.gatherToHost(variables);
 
         if (dv_subdomain_id_ != nullptr)
         {

@@ -282,9 +282,9 @@ constexpr Real initial_buffer_fraction = Real(0.1);
 } // namespace
 //=================================================================================================//
 template <class ExecutionPolicy>
-SubdomainExchange<ExecutionPolicy>::SubdomainExchange(SlabDecomposition &decomposition,
-                                                      BaseParticles &particles,
-                                                      DiscreteVariables &variables_to_exchange)
+SubdomainExchange<ExecutionPolicy>::SubdomainExchange(
+    SlabDecomposition &decomposition, BaseParticles &particles,
+    DiscreteVariables &variables_to_exchange)
     : decomposition_(decomposition), particles_(particles),
       variables_to_exchange_(variables_to_exchange),
       buffer_capacity_(std::max<UnsignedInt>(
@@ -390,6 +390,7 @@ void SubdomainExchange<ExecutionPolicy>::scatterFromHost()
     const int number_of_subdomains = execution::numberOfSubdomains();
     const UnsignedInt total_particles = particles_.TotalRealParticles();
     Vecd *host_position = particles_.dvParticlePosition()->Data();
+    auto &scatter_variables = particles_.EvolvingVariables();
 
     // Group the host arrays by owner, so that each subdomain becomes one contiguous
     // range and can be staged into its replica with a single copy per variable.
@@ -410,12 +411,12 @@ void SubdomainExchange<ExecutionPolicy>::scatterFromHost()
     }
 
     OperationOnDataAssemble<DiscreteVariables, PermuteHostVariables> permute;
-    permute(variables_to_exchange_, order);
+    permute(scatter_variables, order);
 
     OperationOnDataAssemble<DiscreteVariables, StageHostSlice<ExecutionPolicy>> stage;
     for (int subdomain_id = 0; subdomain_id < number_of_subdomains; ++subdomain_id)
     {
-        stage(variables_to_exchange_, subdomain_id, host_offset[subdomain_id],
+        stage(scatter_variables, subdomain_id, host_offset[subdomain_id],
               owned_count_[subdomain_id], true);
     }
 
@@ -437,7 +438,7 @@ void SubdomainExchange<ExecutionPolicy>::scatterFromHost()
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void SubdomainExchange<ExecutionPolicy>::gatherToHost()
+void SubdomainExchange<ExecutionPolicy>::gatherToHost(DiscreteVariables &variables)
 {
     // Only the owned particles are gathered; the halo copies are duplicates of
     // particles owned elsewhere and would otherwise be written out twice.
@@ -445,7 +446,7 @@ void SubdomainExchange<ExecutionPolicy>::gatherToHost()
     UnsignedInt host_offset = 0;
     for (int subdomain_id = 0; subdomain_id < execution::numberOfSubdomains(); ++subdomain_id)
     {
-        stage(variables_to_exchange_, subdomain_id, host_offset,
+        stage(variables, subdomain_id, host_offset,
               owned_count_[subdomain_id], false);
         host_offset += owned_count_[subdomain_id];
     }

@@ -66,7 +66,7 @@ class SubdomainExchangeInterface
     virtual void refreshHalo(DiscreteVariables &variables) = 0;
     /** Assemble the owned particles of all subdomains in the host arrays, in subdomain
      *  order, and publish the global particle count to the host thread. */
-    virtual void gatherToHost() = 0;
+    virtual void gatherToHost(DiscreteVariables &variables) = 0;
     /** Undo the count publication of gatherToHost(); required before the next fan-out. */
     virtual void finishHostAccess() = 0;
     /** The subdomain owning a position. */
@@ -192,10 +192,10 @@ class BaseParticles
         if (subdomain_exchange_ != nullptr)
             subdomain_exchange_->refreshHalo(variables);
     };
-    void gatherToHost()
+    void gatherToHost(DiscreteVariables &variables)
     {
         if (subdomain_exchange_ != nullptr)
-            subdomain_exchange_->gatherToHost();
+            subdomain_exchange_->gatherToHost(variables);
     };
     void finishHostAccess()
     {

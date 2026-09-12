@@ -16,7 +16,7 @@ void BodyStatesRecordingToVtpCK<ExecutionPolicy>::prepareToWrite()
         if (bodies_[i]->checkNewlyUpdated())
         {
             BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-            base_particles.gatherToHost(); // a decomposed body: its global set, in the host arrays
+            base_particles.gatherToHost(base_particles.VariablesToWrite()); // a decomposed body: its global set, in the host arrays
             base_particles.dvParticlePosition()->prepareForOutput(ExecutionPolicy{});
             prepare_variable_to_write_(base_particles.VariablesToWrite(), ExecutionPolicy{});
         }
@@ -123,7 +123,7 @@ void RestartIOCK<ExecutionPolicy>::writeToFile(size_t iteration_step)
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
-        base_particles.gatherToHost(); // a decomposed body: its global set, in the host arrays
+        base_particles.gatherToHost(base_particles.EvolvingVariables()); // a decomposed body: its global set, in the host arrays
         prepare_variable_to_write_(base_particles.EvolvingVariables(), ExecutionPolicy{});
     }
     RestartIO::writeToFile(iteration_step);
@@ -192,7 +192,7 @@ void ReloadParticleIOCK<ExecutionPolicy>::writeToFile(size_t iteration_step)
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-        base_particles.gatherToHost();
+        base_particles.gatherToHost(base_particles.EvolvingVariables());
         prepare_variable_to_reload_(base_particles.EvolvingVariables(), ExecutionPolicy{});
     }
     ReloadParticleIO::writeToFile(iteration_step);

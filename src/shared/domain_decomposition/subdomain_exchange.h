@@ -143,7 +143,7 @@ class SubdomainExchange
      *  subdomain order. Used for output, restart and host side dynamics. While the
      *  host arrays are in use, the particle counter seen from the host thread is the
      *  global one; call finishHostAccess() afterwards. */
-    void gatherToHost();
+    void gatherToHost(DiscreteVariables &variables);
     /** Undo the counter publication of gatherToHost(), so that subdomain 0 sees its
      *  own owned count again. Must be called before the next fan-out. */
     void finishHostAccess();
