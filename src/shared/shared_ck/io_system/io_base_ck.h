@@ -43,12 +43,21 @@ class BodyStatesRecordingToVtpCK : public BodyStatesRecordingToVtp
   protected:
     OperationOnDataAssemble<DiscreteVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
 
-    void prepareToWrite();
-    void finishWrite();
+    template <class PolicyType>
+    void prepareToWrite(const PolicyType &ex_policy);
+
+    template <class PolicyType>
+    void prepareToWrite(const DecomposedExecution<PolicyType> &ex_policy);
+
+    template <class PolicyType>
+    void finishWrite(const PolicyType &ex_policy) {};
+
+    template <class PolicyType>
+    void finishWrite(const DecomposedExecution<PolicyType> &ex_policy);
 
   public:
     template <typename... Args>
-    BodyStatesRecordingToVtpCK(Args &&...args) : BodyStatesRecordingToVtp(std::forward<Args>(args)...){};
+    BodyStatesRecordingToVtpCK(Args &&...args) : BodyStatesRecordingToVtp(std::forward<Args>(args)...) {};
     virtual ~BodyStatesRecordingToVtpCK() {};
     virtual void writeToFile() override;
     virtual void writeToFile(size_t iteration_step) override;
@@ -82,7 +91,7 @@ class ReloadParticleIOCK : public ReloadParticleIO
 {
   public:
     template <typename... Args>
-    ReloadParticleIOCK(Args &&...args) : ReloadParticleIO(std::forward<Args>(args)...){};
+    ReloadParticleIOCK(Args &&...args) : ReloadParticleIO(std::forward<Args>(args)...) {};
     virtual ~ReloadParticleIOCK() {};
     virtual void writeToFile(size_t iteration_step = 0) override;
 

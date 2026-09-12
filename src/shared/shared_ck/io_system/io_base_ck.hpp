@@ -9,7 +9,23 @@ namespace SPH
 {
 //=================================================================================================//
 template <class ExecutionPolicy>
-void BodyStatesRecordingToVtpCK<ExecutionPolicy>::prepareToWrite()
+template <class PolicyType>
+void BodyStatesRecordingToVtpCK<ExecutionPolicy>::prepareToWrite(const PolicyType &ex_policy)
+{
+    for (size_t i = 0; i < bodies_.size(); ++i)
+    {
+        if (bodies_[i]->checkNewlyUpdated())
+        {
+            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+            prepare_variable_to_write_(base_particles.VariablesToWrite(), ex_policy);
+        }
+    }
+}
+//=================================================================================================//
+template <class ExecutionPolicy>
+template <class PolicyType>
+void BodyStatesRecordingToVtpCK<ExecutionPolicy>::prepareToWrite(
+    const DecomposedExecution<PolicyType> &ex_policy)
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
@@ -17,13 +33,14 @@ void BodyStatesRecordingToVtpCK<ExecutionPolicy>::prepareToWrite()
         {
             BaseParticles &base_particles = bodies_[i]->getBaseParticles();
             base_particles.gatherToHost(base_particles.VariablesToWrite()); // a decomposed body: its global set, in the host arrays
-            prepare_variable_to_write_(base_particles.VariablesToWrite(), ExecutionPolicy{});
         }
     }
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void BodyStatesRecordingToVtpCK<ExecutionPolicy>::finishWrite()
+template <class PolicyType>
+void BodyStatesRecordingToVtpCK<ExecutionPolicy>::finishWrite(
+    const DecomposedExecution<PolicyType> &ex_policy)
 {
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
@@ -36,9 +53,9 @@ void BodyStatesRecordingToVtpCK<ExecutionPolicy>::writeToFile()
 {
     if (state_recording_)
     {
-        prepareToWrite();
+        prepareToWrite(ExecutionPolicy{});
         BodyStatesRecordingToVtp::writeToFile();
-        finishWrite();
+        finishWrite(ExecutionPolicy{});
     }
 }
 //=================================================================================================//
@@ -47,9 +64,9 @@ void BodyStatesRecordingToVtpCK<ExecutionPolicy>::writeToFile(size_t iteration_s
 {
     if (state_recording_)
     {
-        prepareToWrite();
+        prepareToWrite(ExecutionPolicy{});
         BodyStatesRecordingToVtp::writeToFile(iteration_step);
-        finishWrite();
+        finishWrite(ExecutionPolicy{});
     }
 }
 //=================================================================================================//
