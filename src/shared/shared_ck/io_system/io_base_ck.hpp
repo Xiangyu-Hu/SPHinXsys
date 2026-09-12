@@ -17,7 +17,6 @@ void BodyStatesRecordingToVtpCK<ExecutionPolicy>::prepareToWrite()
         {
             BaseParticles &base_particles = bodies_[i]->getBaseParticles();
             base_particles.gatherToHost(base_particles.VariablesToWrite()); // a decomposed body: its global set, in the host arrays
-            base_particles.dvParticlePosition()->prepareForOutput(ExecutionPolicy{});
             prepare_variable_to_write_(base_particles.VariablesToWrite(), ExecutionPolicy{});
         }
     }

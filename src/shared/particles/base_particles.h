@@ -214,6 +214,7 @@ class BaseParticles
   public:
     DiscreteVariables &VariablesToWrite() { return variables_to_write_; };
     DiscreteVariables &EvolvingVariables() { return evolving_variables_; };
+    DiscreteVariables &ParticleAttributesToWrite() { return particle_attributes_to_write_; };
     StdVec<std::string> &ParticleGroupsToWrite() { return particle_groups_to_write_; };
     void addParticleGroupToWrite(const std::string &name);
     template <typename DataType, typename... Args>
@@ -244,7 +245,8 @@ class BaseParticles
     XmlParser &reload_xml_parser_;
     DiscreteVariables all_discrete_variables_;
     SingleVariables all_singular_variables_;
-    DiscreteVariables variables_to_write_;
+    DiscreteVariables variables_to_write_; // position is included
+    DiscreteVariables particle_attributes_to_write_; // position is excluded
     StdVec<std::string> particle_groups_to_write_;
 
   protected:

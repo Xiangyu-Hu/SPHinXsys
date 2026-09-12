@@ -106,7 +106,7 @@ template <class RiemannSolverType>
 void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     Vecd force_prior_i = computeNonConservativeForce(index_i);
-    Vecd force = force_prior_i;
+    Vecd force = Vecd::Zero();
     Real rho_dissipation(0);
     Matd stress_tensor_i = degradeToMatd(stress_tensor_3D_[index_i]);
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
