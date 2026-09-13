@@ -95,7 +95,7 @@ int main(int ac, char *av[])
 
     Gravity gravity(Vecd(0.0, -gravity_g));
     auto &constant_gravity = main_methods.addStateDynamics<GravityForceCK<Gravity>>(water_block, gravity);
-    auto &wall_boundary_normal_direction = host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall_boundary); // run on CPU
+    host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall_boundary).exec(); // run on CPU
     auto &water_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(water_block);
     auto &water_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(water_block);
 
@@ -142,6 +142,9 @@ int main(int ac, char *av[])
     water_sync_volume.addVariable<Real>("VolumetricMeasure");
     auto &water_sync_correction = main_methods.addGeneralDynamics<SyncHaloStateCK>(water_decomposition);
     water_sync_correction.addVariable<Matd>("LinearCorrectionMatrix");
+
+    auto &wall_decomposition = main_methods.getDecomposition(wall_boundary);
+    auto &wall_update_halo = main_methods.addGeneralDynamics<UpdateHaloCK>(wall_decomposition);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
@@ -154,6 +157,7 @@ int main(int ac, char *av[])
         restart_io.readRestartFiles(sph_system.RestartStep());
     }
     water_decomposition.scatterFromHost(); // distributes the global particle set over the subdomains
+    wall_decomposition.scatterFromHost();  // distributes the global particle set over the subdomains
     //----------------------------------------------------------------------
     //	Setup for advection-step based time-stepping control
     //----------------------------------------------------------------------
@@ -166,11 +170,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Prepare for the time integration loop.
     //----------------------------------------------------------------------
-    wall_boundary_normal_direction.exec(); // run particle dynamics with host kernels first
     constant_gravity.exec();
 
     water_update_halo.exec(); // halo plan of the subdomains, before the cell linked list
     water_cell_linked_list.exec();
+    wall_update_halo.exec(); // halo plan of the subdomains, before the cell linked list
     wall_cell_linked_list.exec();
     water_block_update_complex_relation.exec();
     fluid_observer_contact_relation.exec();

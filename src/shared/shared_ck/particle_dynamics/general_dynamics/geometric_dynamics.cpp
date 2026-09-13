@@ -14,7 +14,11 @@ NormalFromBodyShapeCK::NormalFromBodyShapeCK(SPHBody &sph_body)
       dv_n_(particles_->registerStateVariable<Vecd>("NormalDirection")),
       dv_n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       dv_phi_(particles_->registerStateVariable<Real>("SignedDistance")),
-      dv_phi0_(particles_->registerStateVariableFrom<Real>("InitialSignedDistance", "SignedDistance")) {}
+      dv_phi0_(particles_->registerStateVariableFrom<Real>("InitialSignedDistance", "SignedDistance"))
+{
+    particles_->addEvolvingVariable<Vecd>(dv_n_);
+    particles_->addEvolvingVariable<Real>(dv_phi_);
+}
 //=============================================================================================//
 void NormalFromBodyShapeCK::UpdateKernel::compute(size_t index_i, Real dt)
 {
@@ -34,7 +38,11 @@ NormalFromSubShapeAndOpCK::NormalFromSubShapeAndOpCK(
       dv_n_(particles_->registerStateVariable<Vecd>("NormalDirection")),
       dv_n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       dv_phi_(particles_->registerStateVariable<Real>("SignedDistance")),
-      dv_phi0_(particles_->registerStateVariableFrom<Real>("InitialSignedDistance", "SignedDistance")) {}
+      dv_phi0_(particles_->registerStateVariableFrom<Real>("InitialSignedDistance", "SignedDistance"))
+{
+    particles_->addEvolvingVariable<Vecd>(dv_n_);
+    particles_->addEvolvingVariable<Real>(dv_phi_);
+}
 //=================================================================================================//
 NormalFromSubShapeAndOpCK::NormalFromSubShapeAndOpCK(SPHBody &sph_body, const std::string &shape_name)
     : NormalFromSubShapeAndOpCK(

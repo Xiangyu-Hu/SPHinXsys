@@ -148,7 +148,7 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
                          execution::subdomain_runner.NumberOfSubdomains(), split_axis),
           dv_subdomain_id_(nullptr)
     {
-        balanceOnInitialPositions();
+        // balanceOnInitialPositions();
         std::cout << "Body " << body_.Name() << " decomposition: " << decomposition_.describe();
         particles_.setSubdomainExchange(this);
     };
