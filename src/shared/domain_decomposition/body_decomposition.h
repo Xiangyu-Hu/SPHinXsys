@@ -149,7 +149,7 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
           dv_subdomain_id_(nullptr)
     {
         balanceOnInitialPositions();
-        std::cout << decomposition_.describe();
+        std::cout << "Body " << body_.Name() << " decomposition: " << decomposition_.describe();
         particles_.setSubdomainExchange(this);
     };
     virtual ~BodyDecomposition() {};
@@ -162,7 +162,7 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
         {
             OperationOnDataAssemble<DiscreteVariables, AddVariablesToExchangeSet> add_variables;
             add_variables(particles_.EvolvingVariables(), particles_, exchange_variables_);
-            add_variables(particles_.VariablesToWrite(), particles_, exchange_variables_);
+            add_variables(particles_.AllInteractVariables(), particles_, exchange_variables_);
             exchange_ = std::make_unique<SubdomainExchange<ExecutionPolicy>>(
                 decomposition_, particles_, exchange_variables_);
         }

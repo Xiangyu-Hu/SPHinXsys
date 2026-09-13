@@ -89,6 +89,9 @@ class Interaction<Inner<Parameters...>>
 
     template <typename DataType>
     void addInteractVariable(DiscreteVariable<DataType> *variable);
+
+    template <typename DataType, class KernelMethodType>
+    void addInteractVariable(const KernelMethodType &kernel_method);
 };
 
 template <typename... Parameters>
@@ -133,6 +136,9 @@ class Interaction<Contact<Parameters...>>
 
     template <typename DataType>
     void addContactInteractVariable(DiscreteVariable<DataType> *contact_variable);
+
+    template <typename DataType, class KernelMethodType>
+    void addContactInteractVariable(const KernelMethodType &kernel_method);
 };
 
 template <>

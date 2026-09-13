@@ -19,6 +19,19 @@ template <typename DataType>
 void Interaction<Inner<Parameters...>>::addInteractVariable(DiscreteVariable<DataType> *variable)
 {
     addVariableToList<DiscreteVariable, DataType>(interact_variables_, variable);
+    this->particles_->template addInteractVariable<DataType>(variable);
+}
+//=================================================================================================//
+template <typename... Parameters>
+template <typename DataType, class KernelMethodType>
+void Interaction<Inner<Parameters...>>::addInteractVariable(
+    const KernelMethodType &kernel_method)
+{
+    DiscreteVariable<DataType> *variable = kernel_method.getDiscreteVariable();
+    if (variable != nullptr)
+    {
+        addInteractVariable(variable);
+    }
 }
 //=================================================================================================//
 template <typename... Parameters>
@@ -58,6 +71,18 @@ void Interaction<Contact<Parameters...>>::addContactInteractVariable(
     DiscreteVariable<DataType> *contact_variable)
 {
     addVariableToList<DiscreteVariable, DataType>(contact_interact_variables_, contact_variable);
+    contact_particles_->template addInteractVariable<DataType>(contact_variable);
+}
+//=================================================================================================//
+template <typename... Parameters>
+template <typename DataType, class KernelMethodType>
+void Interaction<Contact<Parameters...>>::addContactInteractVariable(const KernelMethodType &kernel_method)
+{
+    DiscreteVariable<DataType> *variable = kernel_method.getDiscreteVariable();
+    if (variable != nullptr)
+    {
+        addContactInteractVariable(variable);
+    }
 }
 //=================================================================================================//
 

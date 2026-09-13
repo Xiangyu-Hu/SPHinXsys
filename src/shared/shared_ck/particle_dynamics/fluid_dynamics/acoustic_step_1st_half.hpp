@@ -57,6 +57,7 @@ AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
     // add interact variables
     //----------------------------------------------------------------------
     this->template addInteractVariable<Real>(this->dv_p_);
+    this->template addInteractVariable<Matd>(kernel_correction_);
 }
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>

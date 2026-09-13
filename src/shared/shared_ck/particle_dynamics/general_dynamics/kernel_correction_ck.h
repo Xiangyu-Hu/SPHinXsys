@@ -155,14 +155,14 @@ class NoKernelCorrectionCK : public KernelCorrection
   public:
     typedef Real CorrectionDataType;
     NoKernelCorrectionCK(BaseParticles *particles) : KernelCorrection() {};
-
+    DiscreteVariable<Matd> *getDiscreteVariable() const { return nullptr; };
     class ComputingKernel : public ParameterFixed<Real>
     {
       public:
         template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy,
                         NoKernelCorrectionCK &encloser)
-            : ParameterFixed<Real>(1.0){};
+            : ParameterFixed<Real>(1.0) {};
     };
 };
 
@@ -173,13 +173,13 @@ class LinearCorrectionCK : public KernelCorrection
     LinearCorrectionCK(BaseParticles *particles)
         : KernelCorrection(),
           dv_B_(particles->getVariableByName<Matd>("LinearCorrectionMatrix")) {};
-
+    DiscreteVariable<Matd> *getDiscreteVariable() const { return dv_B_; };
     class ComputingKernel : public ParameterVariable<Matd>
     {
       public:
         template <class ExecutionPolicy>
         ComputingKernel(const ExecutionPolicy &ex_policy, LinearCorrectionCK &encloser)
-            : ParameterVariable<Matd>(encloser.dv_B_->DelegatedData(ex_policy)){};
+            : ParameterVariable<Matd>(encloser.dv_B_->DelegatedData(ex_policy)) {};
     };
 
   protected:
@@ -206,6 +206,7 @@ class LinearCorrectionWithinScopeCK : public KernelCorrection
             std::is_base_of<WithinScope, ScopeMethod>::value,
             "WithinScope is not the base of ParticleScope!");
     }
+    DiscreteVariable<Matd> *getDiscreteVariable() { return dv_B_; };
 
     class ComputingKernel : public BaseParameter
     {

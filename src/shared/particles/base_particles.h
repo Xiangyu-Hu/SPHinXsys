@@ -207,18 +207,25 @@ class BaseParticles
     //----------------------------------------------------------------------
   protected:
     SubdomainExchangeInterface *subdomain_exchange_ = nullptr; /**< see setSubdomainExchange() */
-    UnsignedInt *original_id_;             /**< the original ids assigned just after particle is generated. */
-    UnsignedInt *sorted_id_;               /**< the current sorted particle ids of particles from original ids. */
-    DiscreteVariables evolving_variables_; // particle variables which evolving during simulation
+    UnsignedInt *original_id_;                                 /**< the original ids assigned just after particle is generated. */
+    UnsignedInt *sorted_id_;                                   /**< the current sorted particle ids of particles from original ids. */
+    DiscreteVariables evolving_variables_;                     // particle variables which evolving during simulation
+    DiscreteVariables all_interact_variables_;              // particle variables which are used in interaction dynamics
 
   public:
     DiscreteVariables &VariablesToWrite() { return variables_to_write_; };
     DiscreteVariables &EvolvingVariables() { return evolving_variables_; };
     DiscreteVariables &ParticleAttributesToWrite() { return particle_attributes_to_write_; };
+    DiscreteVariables &AllInteractVariables() { return all_interact_variables_; };
     StdVec<std::string> &ParticleGroupsToWrite() { return particle_groups_to_write_; };
     void addParticleGroupToWrite(const std::string &name);
+    
     template <typename DataType, typename... Args>
     void addEvolvingVariable(Args &&...args);
+
+    template <typename DataType, typename... Args>
+    void addInteractVariable(Args &&...args);
+
     template <typename DataType, typename... Args>
     void addVariableToWrite(Args &&...args);
     //----------------------------------------------------------------------
@@ -245,7 +252,7 @@ class BaseParticles
     XmlParser &reload_xml_parser_;
     DiscreteVariables all_discrete_variables_;
     SingleVariables all_singular_variables_;
-    DiscreteVariables variables_to_write_; // position is included
+    DiscreteVariables variables_to_write_;           // position is included
     DiscreteVariables particle_attributes_to_write_; // position is excluded
     StdVec<std::string> particle_groups_to_write_;
 

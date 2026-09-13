@@ -136,8 +136,6 @@ int main(int ac, char *av[])
     //	body, since that fixes the set of variables a migrating particle carries.
     //----------------------------------------------------------------------
     auto &water_decomposition = main_methods.getDecomposition(water_block);
-    water_decomposition.addExchangeVariable<Real>("Pressure");               // read at the neighbors,
-    water_decomposition.addExchangeVariable<Matd>("LinearCorrectionMatrix"); // neither evolving nor written
     auto &water_migrate_particles = main_methods.addGeneralDynamics<MigrateParticlesCK>(water_decomposition);
     auto &water_update_halo = main_methods.addGeneralDynamics<UpdateHaloCK>(water_decomposition);
     auto &water_sync_volume = main_methods.addGeneralDynamics<SyncHaloStateCK>(water_decomposition);
