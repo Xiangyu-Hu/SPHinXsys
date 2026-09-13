@@ -29,10 +29,10 @@
 #ifndef IO_OBSERVATION_CK_H
 #define IO_OBSERVATION_CK_H
 
-#include "io_observation.h"
-
 #include "execution_policy.h"
 #include "interpolation_dynamics.hpp"
+#include "io_base_ck.hpp"
+#include "io_observation.h"
 #include "subdomain_fan_out.h"
 
 namespace SPH
@@ -48,6 +48,8 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
     ObservingQuantityCK<ExecutionPolicy, DataType, Parameters...> observation_method_;
     DiscreteVariable<DataType> *dv_interpolated_quantities_;
     size_t number_of_observe_;
+    VariablesWriteHelper variable_write_helper_;
+    DiscreteVariables observe_variables_;
 
   public:
     DataType type_indicator_; /*< this is an indicator to identify the variable type. */
@@ -65,6 +67,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
           number_of_observe_(base_particles_.TotalRealParticles())
     {
         setFullPath(dv_interpolated_quantities_->Name());
+        base_particles_.addDiscreteVariableToList<DataType>(observe_variables_, dv_interpolated_quantities_);
     };
     virtual ~ObservedQuantityRecording() {};
 
@@ -87,7 +90,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_->getValueWithScalingRef() << "   ";
         observation_method_.exec();
-        collectInterpolatedQuantities(ExecutionPolicy{});
+        variable_write_helper_.prepareToWrite(base_particles_, observe_variables_, ExecutionPolicy{});
         for (size_t i = 0; i != number_of_observe_; ++i)
         {
             plt_engine_.writeAQuantity(
@@ -95,53 +98,13 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
         }
         out_file << "\n";
         out_file.close();
+        variable_write_helper_.finishWrite(base_particles_, ExecutionPolicy{});
     };
 
     DataType *getObservedQuantity()
     {
         return this->dv_interpolated_quantities_->Data();
     };
-
-  protected:
-    template <class Policy>
-    void collectInterpolatedQuantities(const Policy &ex_policy)
-    {
-        dv_interpolated_quantities_->prepareForOutput(ex_policy);
-    };
-    /** Decomposed run of the observed body. The observer is replicated: every subdomain
-     *  interpolated every observer particle from its own owned and halo particles, which
-     *  is complete only for the observer particles inside its slab. Each value is
-     *  therefore taken from the subdomain owning the observation point. */
-    template <class PolicyType>
-    void collectInterpolatedQuantities(const DecomposedExecution<PolicyType> &ex_policy)
-    {
-        SubdomainExchangeInterface *exchange = contact_particles_.getSubdomainExchange();
-        if (exchange == nullptr)
-        { // observed body not decomposed, hence replicated as a whole
-            dv_interpolated_quantities_->prepareForOutput(PolicyType{});
-            return;
-        }
-        const Vecd *position = base_particles_.dvParticlePosition()->Data();
-        const UnsignedInt width = dv_interpolated_quantities_->getWidth();
-        DataType *host_data = dv_interpolated_quantities_->Data();
-        StdVec<DataType> replica_copy(number_of_observe_ * width);
-        for (int subdomain_id = 0; subdomain_id < execution::numberOfSubdomains(); ++subdomain_id)
-        {
-            execution::SubdomainScope scope(subdomain_id);
-            const DataType *replica = dv_interpolated_quantities_->DelegatedData(ex_policy);
-            execution::copyBetweenSubdomains(ex_policy, subdomain_id, replica_copy.data(), replica, replica_copy.size());
-            for (size_t i = 0; i != number_of_observe_; ++i)
-            {
-                if (exchange->subdomainOf(position[i]) == subdomain_id)
-                {
-                    for (UnsignedInt entry = 0; entry < width; ++entry)
-                        host_data[i * width + entry] = replica_copy[i * width + entry];
-                }
-            }
-        }
-    };
-
-  public:
 
     size_t NumberOfObservedQuantity()
     {

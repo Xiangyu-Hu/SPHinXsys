@@ -36,24 +36,28 @@
 
 namespace SPH
 {
+class VariablesWriteHelper
+{
+    OperationOnDataAssemble<DiscreteVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
+
+  public:
+    template <class PolicyType>
+    void prepareToWrite(BaseParticles &base_particles, DiscreteVariables &discrete_variables, const PolicyType &ex_policy);
+
+    template <class PolicyType>
+    void prepareToWrite(BaseParticles &base_particles, DiscreteVariables &discrete_variables, const DecomposedExecution<PolicyType> &ex_policy);
+
+    template <class PolicyType>
+    void finishWrite(BaseParticles &base_particles, const PolicyType &ex_policy) {};
+
+    template <class PolicyType>
+    void finishWrite(BaseParticles &base_particles, const DecomposedExecution<PolicyType> &ex_policy);
+};
 
 template <class ExecutionPolicy>
 class BodyStatesRecordingToVtpCK : public BodyStatesRecordingToVtp
 {
-  protected:
-    OperationOnDataAssemble<DiscreteVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
-
-    template <class PolicyType>
-    void prepareToWrite(const PolicyType &ex_policy);
-
-    template <class PolicyType>
-    void prepareToWrite(const DecomposedExecution<PolicyType> &ex_policy);
-
-    template <class PolicyType>
-    void finishWrite(const PolicyType &ex_policy) {};
-
-    template <class PolicyType>
-    void finishWrite(const DecomposedExecution<PolicyType> &ex_policy);
+    VariablesWriteHelper variable_write_helper_;
 
   public:
     template <typename... Args>
@@ -70,6 +74,7 @@ template <class ExecutionPolicy>
 class RestartIOCK : public RestartIO
 {
     UniquePtrsKeeper<AbstractDynamics> particle_dynamics_keeper_;
+    VariablesWriteHelper variable_write_helper_;
 
   public:
     template <typename... Args>
@@ -89,6 +94,8 @@ class RestartIOCK : public RestartIO
 template <class ExecutionPolicy>
 class ReloadParticleIOCK : public ReloadParticleIO
 {
+    VariablesWriteHelper variable_write_helper_;
+
   public:
     template <typename... Args>
     ReloadParticleIOCK(Args &&...args) : ReloadParticleIO(std::forward<Args>(args)...) {};
