@@ -15,6 +15,9 @@
 | [06_RH200_GLASS_EM_STIRRING.md](06_RH200_GLASS_EM_STIRRING.md) | RH200 midterm case: EM → Joule → Euler grid → SPH stirring |
 | [07_GPT_DISCUSSION_ARCHIVE.md](07_GPT_DISCUSSION_ARCHIVE.md) | Merged GPT discussion summaries (edge-flux, TEAM7 rounds) |
 | [08_EDGE_FLUX_UNDIRECTED_POWER_CLOSURE.md](08_EDGE_FLUX_UNDIRECTED_POWER_CLOSURE.md) | Stage 1 B1 reopen: volume-consistent / undirected edge power (advisor pack) |
+| [09_FRENCH_LITERATURE_REPRODUCTION_STATUS_2026-09.md](09_FRENCH_LITERATURE_REPRODUCTION_STATUS_2026-09.md) | 2026-09 status vs Jacoutot CES 2008 + roadmap options for advisor/ChatGPT |
+| [10_THERMO_EM_COUPLING_ROUND1.md](10_THERMO_EM_COUPLING_ROUND1.md) | Round-1 periodic thermo–EM coupling (natural first); audit + CLI |
+| [11_THERMO_EM_COUPLING_AFTER_CHATGPT_TASK.md](11_THERMO_EM_COUPLING_AFTER_CHATGPT_TASK.md) | 2026-09-14 close-out: hydro fix, natural 50 s, stirring 5 rev, spatial stats |
 | [OPHELIE_CURRENT_CODE_AUDIT.md](OPHELIE_CURRENT_CODE_AUDIT.md) | 2026-08 code audit vs Jacoutot papers |
 | [OPHELIE_STAGE3_4_CLOSEOUT_AND_FRENCH_NATURAL_NEXT_PLAN_2026-08-11.md](OPHELIE_STAGE3_4_CLOSEOUT_AND_FRENCH_NATURAL_NEXT_PLAN_2026-08-11.md) | Binding plan: φ dual gate, σ_nat, Stage 3.5 → Natural thermal / Stage 4.x |
 

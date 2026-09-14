@@ -548,6 +548,85 @@ class OphelieThermalMaxTemperatureReduceCK : public BaseLocalDynamicsReduce<Redu
     DiscreteVariable<Real> *dv_temperature_;
 };
 
+class OphelieThermalMinTemperatureReduceCK : public BaseLocalDynamicsReduce<ReduceMin, SPHBody>
+{
+  public:
+    OphelieThermalMinTemperatureReduceCK(SPHBody &sph_body, const std::string &temperature_field)
+        : BaseLocalDynamicsReduce<ReduceMin, SPHBody>(sph_body),
+          dv_temperature_(particles_->template getVariableByName<Real>(temperature_field))
+    {
+        quantity_name_ = "OphelieThermalMinTemperature";
+    }
+
+    class ReduceKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : temperature_(encloser.dv_temperature_->DelegatedData(ex_policy))
+        {
+        }
+
+        Real reduce(size_t index_i, Real dt = 0.0)
+        {
+            (void)dt;
+            return temperature_[index_i];
+        }
+
+      protected:
+        Real *temperature_;
+    };
+
+  protected:
+    DiscreteVariable<Real> *dv_temperature_;
+};
+
+/** Explicit Euler: T += dt * (-k/(ρ cp)) ∇²T, using a precomputed pairwise Laplace. */
+class ApplyLaplaceDiffusionDtCK : public LocalDynamics
+{
+  public:
+    ApplyLaplaceDiffusionDtCK(SPHBody &sph_body, Real rho, Real cp, Real k, Real t_initial)
+        : LocalDynamics(sph_body), diff_factor_(-k / (rho * cp + TinyReal)), t_initial_(t_initial),
+          dv_laplace_(particles_->template getVariableByName<Real>(kOphelieThermalLaplaceTField)),
+          dv_temperature_(particles_->template getVariableByName<Real>(kOphelieTemperatureField)),
+          dv_delta_t_(particles_->template getVariableByName<Real>(kOphelieThermalDeltaTField))
+    {
+    }
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : diff_factor_(encloser.diff_factor_), t_initial_(encloser.t_initial_),
+              laplace_(encloser.dv_laplace_->DelegatedData(ex_policy)),
+              temperature_(encloser.dv_temperature_->DelegatedData(ex_policy)),
+              delta_t_(encloser.dv_delta_t_->DelegatedData(ex_policy))
+        {
+        }
+
+        void update(size_t index_i, Real dt)
+        {
+            temperature_[index_i] += dt * diff_factor_ * laplace_[index_i];
+            delta_t_[index_i] = temperature_[index_i] - t_initial_;
+        }
+
+      protected:
+        Real diff_factor_;
+        Real t_initial_;
+        Real *laplace_;
+        Real *temperature_;
+        Real *delta_t_;
+    };
+
+  protected:
+    Real diff_factor_;
+    Real t_initial_;
+    DiscreteVariable<Real> *dv_laplace_;
+    DiscreteVariable<Real> *dv_temperature_;
+    DiscreteVariable<Real> *dv_delta_t_;
+};
+
 template <class ExecutionPolicy>
 inline void execOphelieJouleHeatDiffusionOneWayStep(SolidBody &glass_body, Inner<> &glass_inner,
                                                     const std::string &q_field, const std::string &temperature_field,

@@ -74,13 +74,16 @@ c0 的上限是稳定性给的，不是精度给的：玻璃、搅拌桨、坩�
 固定平面在 1 秒内就会丢掉大部分辐射粒子——而辐射占了热收支的三分之二。
 本算例每次重标记前先用粒子 z 坐标的 99.5 分位数量出当前液面，再传给标记函数。
 
-**没有 SPH 热传导。** 与 `frozen_q` 生产算例一致，只有 Q 源项 + 边界条件。
+**没有 SPH 热传导（默认 one-shot）。** 周期耦合 `--thermo-em-coupling=periodic` 会打开常物性 SPH 传导，除非加 `--no-thermal-diffusion`。
 熔体热扩散系数 α = 1.24e-6 m²/s，在几百秒的物理时间内扩散长度只有几个 dp。
 
 **搅拌桨绝热。** 文献没有给桨的热物性，桨不参与传热。
 
 **边界面标记会随流动失效。** Robin/辐射边界是按粒子到名义圆柱面的距离标记的，
 搅拌会把粒子搬走。默认每 50 个 advection step 重新标记一次（`--bc-retag-every=`）。
+
+**Q 网格不再默认二次归一化。** CIC 插值误差会记入日志（`P_em` vs `P_sampled`）。
+若需要守恒修正，显式加 `--q-conservative-remap`（会打印修正前功率、系数、修正后功率；这不是 EM 电流标定）。
 
 ## 运行
 
@@ -115,18 +118,35 @@ Phase A 约需 3 分钟（EM self-induction Picard + 坩埚壁 level set）。Ph
 | `--rotation-rpm=` | 10 | 搅拌转速 |
 | `--no-boussinesq` | — | 关闭浮力（纯机械搅拌） |
 | `--no-self-induction` | — | EM 不做 Picard 自感迭代 |
+| `--q-conservative-remap` | 关 | 显式把 Euler Q 缩放到 P_recon（带日志） |
+| `--thermo-em-coupling=` | `off` | `periodic`：σ(T)→EM→Q，与自然对流同一套控制器 |
+| `--em-update-interval=` | 10 s | 周期耦合的物理时间间隔 |
+| `--no-thermal-diffusion` | — | 周期模式下关掉 SPH 传导 |
+
+周期耦合冒烟（搅拌 relax，不要用自然对流的 Reload.xml）。SSH 上**不要写 VTP**（每帧约 48 MB）；看屏幕上的 `U_rms/U_th/T_out/T_ctr` 和 `output/french_spatial_stats.csv`（几 KB）。
+
+```bash
+./test_3d_ophelie_french_stirring_em \
+    --reload-dir=../../test_3d_ophelie_french_stirring_glass_relax/bin/reload \
+    --thermo-em-coupling=periodic --em-update-interval=0.5 \
+    --em-control=fixed-current --aind=off \
+    --end-time=1 --max-wall-hours=1 --no-state-recording
+```
 
 ## 输出
 
 - `output/StirringJouleHeatGrid.vti` — 欧拉 Q 场，可在 ParaView 里直接看感应加热分布
 - `output/GlassBody_*.vtp` — 熔体粒子（Pressure / Temperature / JouleHeat）
 - `output/RotorProxy_*.vtp` — 搅拌桨表面网格
-- `output/french_stirring_em_monitor.csv` — 时间、转数、U_max、T_mean、T_max、墙钟
+- `output/french_stirring_em_monitor.csv` — 时间、转数、U_max / U_rms / U_θ / T_min/mean/max、T_out/T_ctr、墙钟；末尾多 `t_min_K,P_joule,em_updates`
+- `output/french_spatial_stats.csv` — 体积统计时间序列（**替代 ParaView**；几 KB）
+- `output/french_T_rz.csv` — 方位角平均 T(r,z) 最新一帧（约 30 KB）
+- 周期耦合另写 `output/french_thermo_em_coupling.csv`、`french_sigma_rz.csv`、`french_q_rz.csv`、`french_energy_budget.csv`
 
-`--state-record-interval=10` 时约输出 120 帧，每帧 48 MB，合计约 5.8 GB。
+远程机器默认加 `--no-state-recording`。`--state-record-interval=10` 时约输出 120 帧，每帧 48 MB，合计约 5.8 GB。
 10 rpm 下一转是 6 s，想看清混合过程可以调到 `--state-record-interval=3`（约 23 GB，先看磁盘）。
 
-结束时打印 `passed=1` 需要同时满足：EM 功率标定误差 < 1%、
+结束时打印 `passed=1` 需要同时满足：one-shot 时 EM 功率标定误差 < 1%；周期模式改为 φ 残差有限且至少 1 次耦合更新。
 Q 网格重采样相对 L2 < 0.2 且没有粒子掉出网格、没有发散、速度有限且非零、边界散热为正。
 主循环里有发散保护：声学 dt 变成非有限值或塌缩到 1e-9 以下就带诊断信息退出，
 不会像之前那样在 NaN 物理时间上空转。

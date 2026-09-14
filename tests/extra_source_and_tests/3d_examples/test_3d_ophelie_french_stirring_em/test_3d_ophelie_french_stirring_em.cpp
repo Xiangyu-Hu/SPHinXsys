@@ -2,29 +2,26 @@
  * @file test_3d_ophelie_french_stirring_em.cpp
  * @brief French cold-crucible glass melter: induction heating + mechanical stirring.
  *
- * Phase A solves the EM problem once on the reloaded glass particles and deposits the
- * resulting Joule power density onto a fixed Eulerian grid. Phase B runs WCSPH with a
- * Simbody-driven paddle, Boussinesq buoyancy and the French Robin/radiation thermal BC,
+ * Phase A solves the EM problem on the reloaded glass particles and deposits Joule
+ * power density onto a laboratory-fixed Eulerian grid. Phase B runs WCSPH with a
+ * host-spun paddle, Boussinesq buoyancy and the French Robin/radiation thermal BC,
  * resampling Q from that grid every advection step.
  *
- * The Eulerian handoff (instead of freezing Q on particles as the natural-convection case
- * does) is what makes the stirred run correct: the inductor is fixed in the laboratory frame
- * while the melt is transported past it.
- *
- * Prerequisites:
- *   1) Run test_3d_ophelie_french_stirring_glass_relax --bodies=all
- *      (GlassBody + Rotor + WallBoundary reload).
- *   2) Point --reload-dir= to that reload folder.
+ * Default is one-shot EM. `--thermo-em-coupling=periodic` reuses the natural-convection
+ * controller: azimuthal σ(T) → EM → Euler Q, on physical time. Periodic mode also
+ * turns SPH conduction on unless `--no-thermal-diffusion`.
  */
 #include "electromagnetic_ophelie.h"
 #include "electromagnetic_ophelie_boussinesq.h"
 #include "electromagnetic_ophelie_french_literature.h"
+#include "electromagnetic_ophelie_french_literature_parameters.h"
 #include "electromagnetic_ophelie_french_reduced_geometry.h"
 #include "electromagnetic_ophelie_french_stirring_geometry.h"
 #include "electromagnetic_ophelie_french_thermal_material.h"
 #include "electromagnetic_ophelie_joule_to_heat_one_way.h"
 #include "electromagnetic_ophelie_self_induction.h"
 #include "electromagnetic_ophelie_thermal_diffusion_one_way.h"
+#include "electromagnetic_ophelie_thermo_em_coupling.h"
 #include "io_environment.h"
 #include "sphinxsys.h"
 
@@ -99,6 +96,9 @@ struct LocalCli
     Real state_record_interval = 10.0;
     bool enable_self_induction = true;
     bool enable_boussinesq = true;
+    bool q_conservative_remap = false;
+    bool thermal_diffusion_explicit = false;
+    FrenchLiteratureParameters literature = makeFrenchStirredLiteratureParameters();
 };
 
 inline bool isLocalCliOption(const char *arg)
@@ -110,8 +110,9 @@ inline bool isLocalCliOption(const char *arg)
            std::strncmp(arg, "--h-bottom=", 11) == 0 || std::strncmp(arg, "--h-free=", 9) == 0 ||
            std::strcmp(arg, "--balance-heat-loss") == 0 || std::strncmp(arg, "--bc-retag-every=", 17) == 0 ||
            std::strncmp(arg, "--screen-every=", 15) == 0 || std::strncmp(arg, "--state-record-interval=", 24) == 0 ||
-           std::strcmp(arg, "--no-state-recording") == 0 || std::strcmp(arg, "--no-self-induction") == 0 ||
-           std::strcmp(arg, "--no-boussinesq") == 0;
+           std::strcmp(arg, "--no-state-recording") == 0 ||            std::strcmp(arg, "--no-self-induction") == 0 ||
+           std::strcmp(arg, "--no-boussinesq") == 0 || std::strcmp(arg, "--q-conservative-remap") == 0 ||
+           isFrenchLiteratureCouplingCliOption(arg);
 }
 
 inline void applyLocalCli(int ac, char *av[], LocalCli &cli)
@@ -181,16 +182,45 @@ inline void applyLocalCli(int ac, char *av[], LocalCli &cli)
         else if (std::strcmp(av[i], "--no-self-induction") == 0)
         {
             cli.enable_self_induction = false;
+            cli.literature.enable_aind = false;
+        }
+        else if (tryApplyFrenchLiteratureCli(av[i], cli.literature, cli.thermal_diffusion_explicit))
+        {
+            if (std::strncmp(av[i], "--aind=", 7) == 0)
+            {
+                cli.enable_self_induction = cli.literature.enable_aind;
+            }
+            else if (std::strcmp(av[i], "--q-conservative-remap") == 0)
+            {
+                cli.q_conservative_remap = true;
+            }
+            else if (std::strcmp(av[i], "--no-boussinesq") == 0)
+            {
+                cli.enable_boussinesq = false;
+            }
         }
         else if (std::strcmp(av[i], "--no-boussinesq") == 0)
         {
             cli.enable_boussinesq = false;
+            cli.literature.enable_boussinesq = false;
+        }
+        else if (std::strcmp(av[i], "--q-conservative-remap") == 0)
+        {
+            cli.q_conservative_remap = true;
+            cli.literature.q_conservative_remap = true;
         }
     }
     if (cli.reload_dir.empty())
     {
         cli.reload_dir = resolveDefaultReloadFolder();
     }
+    finalizeFrenchPeriodicLiteratureDefaults(cli.literature, cli.thermal_diffusion_explicit);
+    if (cli.literature.coupling == ThermoEMCouplingMode::Periodic)
+    {
+        cli.enable_self_induction = cli.literature.enable_aind;
+    }
+    cli.q_conservative_remap = cli.q_conservative_remap || cli.literature.q_conservative_remap;
+    cli.enable_boussinesq = cli.enable_boussinesq && cli.literature.enable_boussinesq;
 }
 
 /**
@@ -499,6 +529,69 @@ inline void hostMapRotorLoadToProxy(BaseParticles &rotor, BaseParticles &proxy)
     syncVariableToDevice<Vecd>(proxy, "PressureForceFromFluid");
 }
 
+inline Real hostThermalEnergy(BaseParticles &particles, Real rho, Real cp)
+{
+    syncVariableToHost<Real>(particles, kOphelieTemperatureField);
+    syncVariableToHost<Real>(particles, "VolumetricMeasure");
+    const Real *t = particles.getVariableDataByName<Real>(kOphelieTemperatureField);
+    const Real *vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+    const size_t n = particles.TotalRealParticles();
+    Real e = 0.0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        e += rho * cp * t[i] * vol[i];
+    }
+    return e;
+}
+
+inline bool depositEmQAndRecord(BaseParticles &em_particles, const OphelieGlassFieldNames &names,
+                                const OphelieParameters &params, const FrenchCylindricalFrame &frame,
+                                const FrenchLiteratureParameters &lit, rh200::Rh200ScalarEulerianGrid &q_grid,
+                                ThermoEMCouplingState &state, Real p_em_recon)
+{
+    const std::string q_field = ophelieJouleHeatSourceFieldForThermal(names, params);
+    syncVariableToHost<Real>(em_particles, q_field);
+    syncVariableToHost<Vecd>(em_particles, "Position");
+    syncVariableToHost<Real>(em_particles, "VolumetricMeasure");
+    const Real *q = em_particles.getVariableDataByName<Real>(q_field);
+    const Vecd *pos = em_particles.getVariableDataByName<Vecd>("Position");
+    const Real *vol = em_particles.getVariableDataByName<Real>("VolumetricMeasure");
+    const size_t n = em_particles.TotalRealParticles();
+
+    state.q_rz.frame = frame;
+    azimuthalDeposit(state.q_rz, pos, q, vol, n);
+    fillEmptyAxisymmetricBins(state.q_rz, Real(0));
+
+    StdVec<Vecd> em_pos(pos, pos + n);
+    StdVec<Real> em_q(q, q + n);
+    StdVec<Real> em_vol(vol, vol + n);
+    q_grid.resetAccumulators();
+    q_grid.depositScalarCloudInCell(em_pos, em_q, em_vol);
+    q_grid.finalizeFromAccumulators();
+
+    FrenchPowerMapBook book;
+    book.p_em_recon = p_em_recon;
+    book.p_axisymmetric_grid = integrateAxisymmetricPower(state.q_rz);
+    book.p_euler_sample = rh200::hostSamplePowerFromScalarGrid(q_grid, em_pos, em_vol);
+    book.p_sph_particles = hostParticlePower(q, vol, n);
+    book.p_euler_before_remap = book.p_euler_sample;
+    if (lit.q_conservative_remap && book.p_euler_sample > TinyReal && p_em_recon > TinyReal)
+    {
+        book.remap_scale = p_em_recon / book.p_euler_sample;
+        q_grid.scaleField(book.remap_scale);
+        book.conservative_remap_applied = true;
+        book.p_euler_sample = rh200::hostSamplePowerFromScalarGrid(q_grid, em_pos, em_vol);
+        book.p_euler_after_remap = book.p_euler_sample;
+        std::cout << "[ophelie][q-map] conservative remapping (not EM calibration): P_before="
+                  << book.p_euler_before_remap << " scale=" << book.remap_scale << " P_after="
+                  << book.p_euler_after_remap << std::endl;
+    }
+    logFrenchPowerMapBook(book);
+    state.last_power = book;
+    state.reconstructed_glass_power_w = p_em_recon;
+    return true;
+}
+
 } // namespace
 
 int main(int ac, char *av[])
@@ -511,6 +604,7 @@ int main(int ac, char *av[])
 
     LocalCli local_cli;
     applyLocalCli(ac, av, local_cli);
+    stirring.french.target_joule_power = local_cli.literature.target_glass_absorbed_power_w;
     // Resolves the CAD placement and pushes the melt bbox into french.glass_* / coil stack.
     const StdVec<std::string> filtered = filterFrenchStirringCommandLine(ac, av, stirring);
     OphelieFrenchReducedCaseParams &french = stirring.french;
@@ -549,6 +643,7 @@ int main(int ac, char *av[])
     }
 
     printFrenchStirringCaseSummary(stirring);
+    logFrenchLiteratureParameters(local_cli.literature);
 
     const Real rho0 = physics.rho0_glass;
     const Real mu = physics.mu_glass;
@@ -572,6 +667,12 @@ int main(int ac, char *av[])
     UniquePtr<SolidBody> glass_em;
     UniquePtr<Inner<>> glass_em_inner;
     UniquePtr<RegisterOphelieGlassFields> register_glass_em;
+    OphelieGlassFieldNames glass_em_names;
+    ThermoEMCouplingState coupling_state;
+    FrenchCylindricalFrame cyl_frame = makeFrenchCylinderFrameFromGlass(
+        french.glass_center, french.glass_radius, french.glass_half_height, local_cli.literature.vertical_axis);
+    const bool periodic_coupling = local_cli.literature.coupling == ThermoEMCouplingMode::Periodic;
+    fs::create_directories("./output");
     {
         const BoundingBoxd bounds = frenchReducedDomainBounds(french, 3.0 * french.dp);
         em_system = makeUnique<SPHSystem>(bounds, french.dp);
@@ -590,23 +691,24 @@ int main(int ac, char *av[])
         em_system->initializeSystemConfigurations();
 
         OphelieGlassFieldNames glass_names;
-        register_glass_em = makeUnique<RegisterOphelieGlassFields>(*glass_em, glass_names);
+        glass_em_names = glass_names;
+        register_glass_em = makeUnique<RegisterOphelieGlassFields>(*glass_em, glass_em_names);
         glass_em_inner = makeUnique<Inner<>>(*glass_em);
-        StateDynamics<MainExecutionPolicy, AssignOphelieGlassSigmaCK> assign_sigma(*glass_em, glass_names,
+        StateDynamics<MainExecutionPolicy, AssignOphelieGlassSigmaCK> assign_sigma(*glass_em, glass_em_names,
                                                                                   params.sigma_glass_);
         assign_sigma.exec();
 
         OphelieFrenchEmJouleHeatOneWayResult probe;
         runFrenchReducedEmOrSelfInductionForThermalHandoff<MainExecutionPolicy>(
-            *glass_em, *glass_em_inner, glass_names, params, french, probe);
+            *glass_em, *glass_em_inner, glass_em_names, params, french, probe);
         (void)calibrateFrenchCoilCurrentToTargetPower(french, params, probe.joule_power_w);
         runFrenchReducedEmOrSelfInductionForThermalHandoff<MainExecutionPolicy>(
-            *glass_em, *glass_em_inner, glass_names, params, french, probe);
+            *glass_em, *glass_em_inner, glass_em_names, params, french, probe);
         p_joule = probe.joule_power_w;
         phi_eq = probe.phi_eq_res_vol;
 
         BaseParticles &particles = glass_em->getBaseParticles();
-        const std::string q_field = ophelieJouleHeatSourceFieldForThermal(glass_names, params);
+        const std::string q_field = ophelieJouleHeatSourceFieldForThermal(glass_em_names, params);
         syncVariableToHost<Real>(particles, q_field);
         syncVariableToHost<Vecd>(particles, "Position");
         syncVariableToHost<Real>(particles, "VolumetricMeasure");
@@ -629,10 +731,18 @@ int main(int ac, char *av[])
         q_grid.depositScalarCloudInCell(em_pos, em_q, em_vol);
         q_grid.finalizeFromAccumulators();
 
-        // Interpolation is not conservative, so renormalize the grid to the calibrated power.
         const Real p_sampled = rh200::hostSamplePowerFromScalarGrid(q_grid, em_pos, em_vol);
-        q_grid_scale = target_power / (p_sampled + TinyReal);
-        q_grid.scaleField(q_grid_scale);
+        q_grid_scale = 1.0;
+        std::cout << "[ophelie][stirring-em] Q map before remap: P_em=" << p_joule << " P_sampled=" << p_sampled
+                  << std::endl;
+        if (local_cli.q_conservative_remap && p_sampled > TinyReal && p_joule > TinyReal)
+        {
+            q_grid_scale = p_joule / (p_sampled + TinyReal);
+            q_grid.scaleField(q_grid_scale);
+            const Real p_after = rh200::hostSamplePowerFromScalarGrid(q_grid, em_pos, em_vol);
+            std::cout << "[ophelie][stirring-em] conservative remapping (not EM calibration): P_before=" << p_sampled
+                      << " scale=" << q_grid_scale << " P_after=" << p_after << std::endl;
+        }
 
         rh200::Rh200EmParticleDepositionHost em_host;
         em_host.position = em_pos;
@@ -646,6 +756,47 @@ int main(int ac, char *av[])
                   << "\n[ophelie][stirring-em] Q grid: " << q_grid.spec_.nx_ << "x" << q_grid.spec_.ny_ << "x"
                   << q_grid.spec_.nz_ << " h=" << q_grid.spec_.spacing_ << " P_sampled_W=" << p_sampled
                   << " scale=" << q_grid_scale << " rel_l2=" << q_sample_rel_l2 << " rel_max=" << rel_max << std::endl;
+
+        if (periodic_coupling)
+        {
+            cyl_frame = makeFrenchCylinderFrameFromGlass(gc, french.glass_radius, french.glass_half_height,
+                                                         local_cli.literature.vertical_axis);
+            coupling_state.generator_power_w = local_cli.literature.generator_power_w;
+            coupling_state.target_glass_absorbed_power_w = local_cli.literature.target_glass_absorbed_power_w;
+            coupling_state.coil_current_per_loop = french.coil.current_per_loop;
+            coupling_state.last_phi_eq_res = phi_eq;
+            coupling_state.sigma_rz.frame = cyl_frame;
+            coupling_state.q_rz.frame = cyl_frame;
+            azimuthalDeposit(coupling_state.q_rz, pos, q, vol, n_em);
+            fillEmptyAxisymmetricBins(coupling_state.q_rz, Real(0));
+            FrenchPowerMapBook book;
+            book.p_em_recon = p_joule;
+            book.p_axisymmetric_grid = integrateAxisymmetricPower(coupling_state.q_rz);
+            book.p_euler_sample = rh200::hostSamplePowerFromScalarGrid(q_grid, em_pos, em_vol);
+            book.p_sph_particles = hostParticlePower(q, vol, n_em);
+            book.remap_scale = q_grid_scale;
+            book.conservative_remap_applied = local_cli.q_conservative_remap;
+            logFrenchPowerMapBook(book);
+            coupling_state.last_power = book;
+            coupling_state.reconstructed_glass_power_w = p_joule;
+            syncVariableToHost<Real>(particles, glass_em_names.sigma);
+            const Real *sigma0 = particles.getVariableDataByName<Real>(glass_em_names.sigma);
+            azimuthalDeposit(coupling_state.sigma_rz, pos, sigma0, vol, n_em);
+            fillEmptyAxisymmetricBins(coupling_state.sigma_rz, params.sigma_glass_);
+            coupling_state.sigma_em.assign(sigma0, sigma0 + n_em);
+            sigmaFieldStats(coupling_state.sigma_em, vol, n_em, coupling_state.last_sigma_min,
+                            coupling_state.last_sigma_max, coupling_state.last_sigma_mean);
+            coupling_state.last_update_time = 0.0;
+            coupling_state.update_count = 1;
+            writeAxisymmetricCsv("output/french_sigma_rz.csv", coupling_state.sigma_rz, "sigma_Sm");
+            writeAxisymmetricCsv("output/french_q_rz.csv", coupling_state.q_rz, "Q_Wpm3");
+            writeThermoEMCouplingCsvHeader("output/french_thermo_em_coupling.csv");
+            appendThermoEMCouplingCsv("output/french_thermo_em_coupling.csv", coupling_state, Real(0),
+                                      local_cli.literature.em_control);
+            writeFrenchEnergyBudgetCsvHeader("output/french_energy_budget.csv");
+            std::cout << "[ophelie][thermo-em] initial coupling book written; mode="
+                      << emControlModeName(local_cli.literature.em_control) << std::endl;
+        }
     }
 
     //----------------------------------------------------------------------
@@ -712,7 +863,7 @@ int main(int ac, char *av[])
     OphelieThermalDiffusionOneWayOptions thermal_bc;
     thermal_bc.enable_french_natural_bc = true;
     thermal_bc.enable_cold_wall_dirichlet = false;
-    thermal_bc.enable_diffusion = false;
+    thermal_bc.enable_diffusion = local_cli.literature.enable_thermal_diffusion;
     thermal_bc.boundary_width_factor = params.phi_boundary_distance_factor_;
     thermal_bc.h_side = local_cli.h_side > Real(0) ? local_cli.h_side : physics.h_side;
     thermal_bc.h_bottom = local_cli.h_bottom > Real(0) ? local_cli.h_bottom : physics.h_bottom;
@@ -820,6 +971,8 @@ int main(int ac, char *av[])
     auto &t_mean_reduce = main_methods.addReduceDynamics<OphelieTemperatureMeanReduceCK>(glass);
     auto &t_max_reduce =
         main_methods.addReduceDynamics<OphelieThermalMaxTemperatureReduceCK>(glass, kOphelieTemperatureField);
+    auto &t_min_reduce =
+        main_methods.addReduceDynamics<OphelieThermalMinTemperatureReduceCK>(glass, kOphelieTemperatureField);
 
     StateDynamics<MainExecutionPolicy, rh200::SampleJouleHeatFromGridCK> sample_joule_heat(glass, q_grid_device);
     auto &out_of_grid_probe = main_methods.addReduceDynamics<rh200::OutOfGridJouleSampleReduceCK>(glass, q_grid_device);
@@ -829,6 +982,16 @@ int main(int ac, char *av[])
         thermal_bc);
     StateDynamics<MainExecutionPolicy, ClampTemperatureCK> clamp_temperature(glass, local_cli.t_min, local_cli.t_max,
                                                                              t0);
+    UniquePtr<InteractionDynamicsCK<MainExecutionPolicy, OpheliePairwiseLaplaceCK<Inner<>>>> laplace_temperature;
+    UniquePtr<StateDynamics<MainExecutionPolicy, ApplyLaplaceDiffusionDtCK>> apply_diffusion;
+    if (thermal_bc.enable_diffusion)
+    {
+        laplace_temperature = makeUnique<InteractionDynamicsCK<MainExecutionPolicy, OpheliePairwiseLaplaceCK<Inner<>>>>(
+            glass_inner, kOphelieTemperatureField, kOphelieThermalConductivityField, kOphelieThermalLaplaceTField,
+            thermal_bc.pair_weight_regularization);
+        apply_diffusion = makeUnique<StateDynamics<MainExecutionPolicy, ApplyLaplaceDiffusionDtCK>>(glass, rho0, cp,
+                                                                                                   k_th, t0);
+    }
 
     auto &glass_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(glass);
     glass_state_recorder.addToWrite<Vecd>(glass, "Velocity");
@@ -908,8 +1071,10 @@ int main(int ac, char *av[])
     fs::create_directories("./output");
     std::ofstream monitor("./output/french_stirring_em_monitor.csv");
     monitor << "advection_step,physical_time_s,revolutions,acoustic_dt_s,u_max_mps,t_mean_K,t_max_K,"
-               "rotor_tip_mps,rotor_r_tip_m,f_visc_N,f_pres_N,torque_z_Nm,wall_clock_s\n";
+               "rotor_tip_mps,rotor_r_tip_m,f_visc_N,f_pres_N,torque_z_Nm,wall_clock_s,t_min_K,P_joule,em_updates,"
+               "U_rms,U_theta_rms,U_z_rms,T_std,T_outer,T_center,T_bottom,T_top\n";
     monitor << std::setprecision(10);
+    writeFrenchSpatialStatsCsvHeader("output/french_spatial_stats.csv");
 
     if (local_cli.state_recording)
     {
@@ -933,9 +1098,11 @@ int main(int ac, char *av[])
               << " out_of_grid=" << n_out_of_grid << "\n"
               << "  rho=" << rho0 << " mu=" << mu << " cp=" << cp << " k=" << k_th << " beta=" << beta
               << " c0=" << local_cli.c0 << " U_ref=" << u_ref << " T0=" << t0 << " T_floor=" << local_cli.t_min
-              << "\n  paddle: rpm=" << rpm << " omega=" << omega << " rad/s r_tip=" << rotor0.r_tip
+              << " thermal_diffusion=" << (thermal_bc.enable_diffusion ? 1 : 0)
+              << " coupling=" << thermoEMCouplingModeName(local_cli.literature.coupling) << "\n"
+              << "  paddle: rpm=" << rpm << " omega=" << omega << " rad/s r_tip=" << rotor0.r_tip
               << " m U_tip=" << u_tip_expected << " m/s Re_imp=" << re_impeller
-              << " (creeping: swirl is weak, look at GlassBody Velocity glyphs)\n"
+              << " (creeping swirl: use U_rms/U_th on screen and output/french_spatial_stats.csv; VTP optional)\n"
               << std::endl;
 
     const auto wall_clock_start = std::chrono::steady_clock::now();
@@ -949,6 +1116,9 @@ int main(int ac, char *av[])
     bool budget_exhausted = false;
     bool diverged = false;
     Real acoustic_dt = 0.0;
+    Real prev_energy = hostThermalEnergy(glass_particles, rho0, cp);
+    Real prev_energy_time = 0.0;
+    const Real glass_h = frenchReducedGlassHeight(french);
     while (!time_stepper.isEndTime(local_cli.end_time))
     {
         acoustic_dt = time_stepper.incrementPhysicalTime(acoustic_time_step);
@@ -969,6 +1139,11 @@ int main(int ac, char *av[])
         acoustic_step_2nd_half.exec(acoustic_dt);
 
         apply_q.exec(acoustic_dt);
+        if (laplace_temperature && apply_diffusion)
+        {
+            laplace_temperature->exec();
+            apply_diffusion->exec(acoustic_dt);
+        }
         apply_natural_bc.exec(acoustic_dt);
         clamp_temperature.exec(acoustic_dt);
         boussinesq_force.exec();
@@ -1002,6 +1177,63 @@ int main(int ac, char *av[])
 
             // The melt has moved through the laboratory-fixed inductor field.
             sample_joule_heat.exec();
+            if (periodic_coupling)
+            {
+                const Real t_now = time_stepper.getPhysicalTime();
+                if (shouldUpdateEM(t_now, local_cli.literature.em_update_interval_s, coupling_state.last_update_time))
+                {
+                    syncVariableToHost<Real>(glass_particles, kOphelieTemperatureField);
+                    syncVariableToHost<Vecd>(glass_particles, "Position");
+                    syncVariableToHost<Real>(glass_particles, "VolumetricMeasure");
+                    const Real *t_host = glass_particles.getVariableDataByName<Real>(kOphelieTemperatureField);
+                    const Vecd *pos_f = glass_particles.getVariableDataByName<Vecd>("Position");
+                    const Real *vol_f = glass_particles.getVariableDataByName<Real>("VolumetricMeasure");
+                    const size_t n_f = glass_particles.TotalRealParticles();
+                    BaseParticles &em_particles = glass_em->getBaseParticles();
+                    syncVariableToHost<Vecd>(em_particles, "Position");
+                    syncVariableToHost<Real>(em_particles, "VolumetricMeasure");
+                    const Vecd *pos_em = em_particles.getVariableDataByName<Vecd>("Position");
+                    const Real *vol_em = em_particles.getVariableDataByName<Real>("VolumetricMeasure");
+                    const size_t n_em = em_particles.TotalRealParticles();
+                    StdVec<Real> sigma_on_em;
+                    std::string sigma_error;
+                    if (!mapFluidTemperatureToUnderRelaxedEmSigma(local_cli.literature, cyl_frame, pos_f, vol_f,
+                                                                  t_host, n_f, pos_em, vol_em, n_em, coupling_state,
+                                                                  sigma_on_em, sigma_error))
+                    {
+                        std::cerr << "[ophelie][thermo-em] abort: " << sigma_error << std::endl;
+                        return 1;
+                    }
+                    hostAssignSigmaField(em_particles, glass_em_names.sigma, sigma_on_em);
+                    OphelieFrenchEmJouleHeatOneWayResult probe;
+                    runFrenchReducedEmOrSelfInductionForThermalHandoff<MainExecutionPolicy>(
+                        *glass_em, *glass_em_inner, glass_em_names, params, french, probe);
+                    if (local_cli.literature.em_control == EMControlMode::FixedAbsorbedPower)
+                    {
+                        (void)calibrateFrenchCoilCurrentToTargetPower(french, params, probe.joule_power_w);
+                        runFrenchReducedEmOrSelfInductionForThermalHandoff<MainExecutionPolicy>(
+                            *glass_em, *glass_em_inner, glass_em_names, params, french, probe);
+                    }
+                    p_joule = probe.joule_power_w;
+                    phi_eq = probe.phi_eq_res_vol;
+                    coupling_state.coil_current_per_loop = french.coil.current_per_loop;
+                    coupling_state.last_phi_eq_res = phi_eq;
+                    depositEmQAndRecord(em_particles, glass_em_names, params, cyl_frame, local_cli.literature, q_grid,
+                                        coupling_state, p_joule);
+                    q_grid_device.upload(q_grid);
+                    sample_joule_heat.exec();
+                    coupling_state.last_update_time = t_now;
+                    ++coupling_state.update_count;
+                    writeAxisymmetricCsv("output/french_sigma_rz.csv", coupling_state.sigma_rz, "sigma_Sm");
+                    writeAxisymmetricCsv("output/french_q_rz.csv", coupling_state.q_rz, "Q_Wpm3");
+                    appendThermoEMCouplingCsv("output/french_thermo_em_coupling.csv", coupling_state, t_now,
+                                              local_cli.literature.em_control);
+                    std::cout << "[ophelie][thermo-em] update=" << coupling_state.update_count << " t=" << t_now
+                              << " reconstructed_glass_power=" << p_joule
+                              << " coil_current=" << coupling_state.coil_current_per_loop
+                              << " phi_eq_res_vol=" << phi_eq << std::endl;
+                }
+            }
             if (local_cli.bc_retag_every > 0 && advection_steps % static_cast<size_t>(local_cli.bc_retag_every) == 0)
             {
                 refreshMeltExtentFromParticles(glass_particles, french_thermal, melt_floor_z);
@@ -1018,15 +1250,44 @@ int main(int ac, char *av[])
                 const Real u_max_now = u_max_reduce.exec();
                 const Real t_mean_now = t_mean_reduce.exec();
                 const Real t_max_now = t_max_reduce.exec();
+                const Real t_min_now = t_min_reduce.exec();
                 const RotorLoadSnapshot rotor_load = hostRotorLoadSnapshot(
                     rotor.getBaseParticles(), stirring.rotation_center, stirring.rotation_axis,
                     stirring.rotation_speed_rad_s);
+                const FrenchMeltSpatialStats spatial =
+                    hostFrenchMeltSpatialStats(glass_particles, cyl_frame, kOphelieTemperatureField);
+                appendFrenchSpatialStatsCsv("output/french_spatial_stats.csv", t_now, spatial);
+                writeFluidTemperatureRzCsv("output/french_T_rz.csv", glass_particles, cyl_frame,
+                                           kOphelieTemperatureField);
+                Real side_w = 0, bottom_w = 0, free_conv_w = 0, free_rad_w = 0, total_loss_w = 0;
+                Real residual = 0.0;
+                if (periodic_coupling)
+                {
+                    const Real energy = hostThermalEnergy(glass_particles, rho0, cp);
+                    const Real dt_e = t_now - prev_energy_time;
+                    const Real dE_dt = dt_e > TinyReal ? (energy - prev_energy) / dt_e : Real(0);
+                    hostOphelieThermalFrenchNaturalHeatLossPowers(glass_particles, thermal_bc,
+                                                                  thermal_bc.boundary_shell_thickness, side_w,
+                                                                  bottom_w, free_conv_w, free_rad_w, total_loss_w);
+                    const Real dT_now = t_max_now - t_min_now;
+                    const Real u_buoy = frenchBuoyancySpeedScale(9.81, beta, dT_now, glass_h);
+                    residual = frenchEnergyResidual(dE_dt, p_joule, side_w, free_conv_w + free_rad_w, bottom_w);
+                    appendFrenchEnergyBudgetCsv("output/french_energy_budget.csv", t_now, energy, dE_dt, p_joule,
+                                                side_w, free_conv_w + free_rad_w, bottom_w, t_min_now, t_mean_now,
+                                                t_max_now, u_max_now, u_buoy,
+                                                thermal_bc.enable_diffusion ? 1 : 0);
+                    prev_energy = energy;
+                    prev_energy_time = t_now;
+                }
                 if (write_csv)
                 {
                     monitor << advection_steps << "," << t_now << "," << t_now / revolution_time << "," << acoustic_dt
                             << "," << u_max_now << "," << t_mean_now << "," << t_max_now << "," << rotor_load.tip_speed
                             << "," << rotor_load.r_tip << "," << rotor_load.f_visc << "," << rotor_load.f_pres
-                            << "," << rotor_load.torque_z << "," << elapsed_s() << "\n";
+                            << "," << rotor_load.torque_z << "," << elapsed_s() << "," << t_min_now << "," << p_joule
+                            << "," << coupling_state.update_count << "," << spatial.u_rms << "," << spatial.u_theta_rms
+                            << "," << spatial.u_z_rms << "," << spatial.t_std << "," << spatial.t_outer << ","
+                            << spatial.t_center << "," << spatial.t_bottom << "," << spatial.t_top << "\n";
                     monitor.flush();
                 }
                 if (write_screen)
@@ -1034,10 +1295,14 @@ int main(int ac, char *av[])
                     std::cout << std::fixed << std::setprecision(6) << "[ophelie][stirring-em] N=" << advection_steps
                               << " n_ac=" << acoustic_steps << " t=" << t_now << " dt=" << std::scientific
                               << acoustic_dt << std::fixed << " rev=" << t_now / revolution_time
-                              << " U_max=" << u_max_now << " U_tip=" << rotor_load.tip_speed
+                              << " U_max=" << u_max_now << " U_rms=" << spatial.u_rms << " U_th=" << spatial.u_theta_rms
+                              << " U_z=" << spatial.u_z_rms << " U_tip=" << rotor_load.tip_speed
                               << " Fv=" << rotor_load.f_visc << " Fp=" << rotor_load.f_pres
-                              << " Tz=" << rotor_load.torque_z << " T_mean=" << t_mean_now
-                              << " T_max=" << t_max_now << " wall=" << elapsed_s() / 3600.0 << " h" << std::endl;
+                              << " Tz=" << rotor_load.torque_z << " T_min=" << t_min_now << " T_mean=" << t_mean_now
+                              << " T_max=" << t_max_now << " T_std=" << spatial.t_std << " T_out=" << spatial.t_outer
+                              << " T_ctr=" << spatial.t_center << " em_updates=" << coupling_state.update_count
+                              << " wall=" << elapsed_s() / 3600.0 << " h" << std::endl;
+                    (void)residual;
                 }
             }
 
@@ -1058,30 +1323,43 @@ int main(int ac, char *av[])
     const Real u_max = u_max_reduce.exec();
     const Real t_mean = t_mean_reduce.exec();
     const Real t_max = t_max_reduce.exec();
+    const Real t_min = t_min_reduce.exec();
+    const FrenchMeltSpatialStats spatial_end =
+        hostFrenchMeltSpatialStats(glass_particles, cyl_frame, kOphelieTemperatureField);
+    writeFluidTemperatureRzCsv("output/french_T_rz.csv", glass_particles, cyl_frame, kOphelieTemperatureField);
     Real side_w = 0, bottom_w = 0, free_conv_w = 0, free_rad_w = 0, total_loss_w = 0;
     hostOphelieThermalFrenchNaturalHeatLossPowers(glass_particles, thermal_bc, thermal_bc.boundary_shell_thickness,
                                                   side_w, bottom_w, free_conv_w, free_rad_w, total_loss_w);
     monitor.close();
 
     const Real power_rel_err = std::abs(p_joule - target_power) / (target_power + TinyReal);
-    const bool em_ok = std::isfinite(p_joule) && power_rel_err < Real(1.0e-2);
+    const bool em_ok =
+        std::isfinite(p_joule) &&
+        (periodic_coupling ? std::isfinite(phi_eq) : (power_rel_err < Real(1.0e-2)));
     const bool grid_ok = std::isfinite(q_sample_rel_l2) && q_sample_rel_l2 < Real(0.2) && n_out_of_grid < Real(1);
     const bool flow_ok = !diverged && std::isfinite(u_max) && u_max > TinyReal && u_max <= local_cli.c0;
     const bool thermal_ok = std::isfinite(t_mean) && std::isfinite(t_max) && total_loss_w > TinyReal;
-    const bool passed = em_ok && grid_ok && flow_ok && thermal_ok;
+    const bool coupling_ok =
+        !periodic_coupling || (coupling_state.update_count >= 1 && std::isfinite(coupling_state.last_phi_eq_res));
+    const bool passed = em_ok && grid_ok && flow_ok && thermal_ok && coupling_ok;
 
     std::cout << "test_3d_ophelie_french_stirring_em"
               << " P_joule_W=" << p_joule << " power_rel_err=" << power_rel_err << " phi_eq_res_vol=" << phi_eq
               << " q_grid_rel_l2=" << q_sample_rel_l2 << " out_of_grid=" << n_out_of_grid
               << " physical_time_s=" << time_stepper.getPhysicalTime()
               << " revolutions=" << time_stepper.getPhysicalTime() / revolution_time
-              << " advection_steps=" << advection_steps << " U_max=" << u_max << " T_mean=" << t_mean
-              << " T_max=" << t_max << " wall_loss_side_W=" << side_w << " wall_loss_bottom_W=" << bottom_w
-              << " free_conv_loss_W=" << free_conv_w << " free_rad_loss_W=" << free_rad_w
-              << " total_heat_loss_W=" << total_loss_w << " bc_scale=" << bc_scale
+              << " advection_steps=" << advection_steps << " U_max=" << u_max << " U_rms=" << spatial_end.u_rms
+              << " U_th=" << spatial_end.u_theta_rms << " U_z=" << spatial_end.u_z_rms << " T_min=" << t_min
+              << " T_mean=" << t_mean << " T_max=" << t_max << " T_std=" << spatial_end.t_std
+              << " T_out=" << spatial_end.t_outer << " T_ctr=" << spatial_end.t_center
+              << " T_bot=" << spatial_end.t_bottom << " T_top=" << spatial_end.t_top << " wall_loss_side_W=" << side_w
+              << " wall_loss_bottom_W=" << bottom_w << " free_conv_loss_W=" << free_conv_w
+              << " free_rad_loss_W=" << free_rad_w << " total_heat_loss_W=" << total_loss_w << " bc_scale=" << bc_scale
               << " h_side_used=" << thermal_bc.h_side << " wall_clock_h=" << elapsed_s() / 3600.0
               << " acoustic_steps=" << acoustic_steps << " budget_exhausted=" << (budget_exhausted ? 1 : 0)
-              << " diverged=" << (diverged ? 1 : 0) << " em_ok=" << (em_ok ? 1 : 0)
+              << " diverged=" << (diverged ? 1 : 0) << " thermal_diffusion=" << (thermal_bc.enable_diffusion ? 1 : 0)
+              << " coupling=" << thermoEMCouplingModeName(local_cli.literature.coupling)
+              << " coupling_updates=" << coupling_state.update_count << " em_ok=" << (em_ok ? 1 : 0)
               << " grid_ok=" << (grid_ok ? 1 : 0) << " flow_ok=" << (flow_ok ? 1 : 0)
               << " thermal_ok=" << (thermal_ok ? 1 : 0) << " passed=" << (passed ? 1 : 0) << std::endl;
     return passed ? 0 : 1;

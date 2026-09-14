@@ -151,19 +151,27 @@ class OphelieFrenchCrucibleWallVisualShape : public ComplexShape
 class OphelieFrenchNaturalCrucibleWallShape : public ComplexShape
 {
   public:
+    /**
+     * Open-top cup: annular side wall + bottom. `rim_height` extends the side wall
+     * above the melt (still no lid). Default 0 keeps the historical flush rim.
+     */
     OphelieFrenchNaturalCrucibleWallShape(const std::string &shape_name, const OphelieFrenchReducedCaseParams &french,
-                                          Real wall_thickness, int mesh_resolution = 20)
+                                          Real wall_thickness, int mesh_resolution = 20, Real rim_height = 0.0)
         : ComplexShape(shape_name)
     {
         const Vecd &c = french.glass_center;
         const Real r_in = french.glass_radius;
         const Real r_out = french.glass_radius + wall_thickness;
         const Real half_h = french.glass_half_height;
-        const Vecd outer_center(c[0], c[1], c[2] - Real(0.5) * wall_thickness);
-        const Real outer_half_h = half_h + Real(0.5) * wall_thickness;
+        const Real rim = std::max(rim_height, Real(0));
+        const Vecd outer_center(c[0], c[1], c[2] + Real(0.5) * rim - Real(0.5) * wall_thickness);
+        const Real outer_half_h = half_h + Real(0.5) * rim + Real(0.5) * wall_thickness;
+        const Vecd inner_center(c[0], c[1], c[2] + Real(0.5) * rim);
+        const Real inner_half_h = half_h + Real(0.5) * rim;
         add<TriangleMeshShapeCylinder>(Vec3d(0, 0, 1), r_out, outer_half_h, mesh_resolution, outer_center,
                                        "OuterBoundary");
-        subtract<TriangleMeshShapeCylinder>(Vec3d(0, 0, 1), r_in, half_h, mesh_resolution, c, "InnerBoundary");
+        subtract<TriangleMeshShapeCylinder>(Vec3d(0, 0, 1), r_in, inner_half_h, mesh_resolution, inner_center,
+                                            "InnerBoundary");
     }
 };
 
