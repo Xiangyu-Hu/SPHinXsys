@@ -78,7 +78,7 @@ template <class ExecutionPolicy>
 class BodyDecomposition : public BaseDecomposition
 {
   public:
-    explicit BodyDecomposition(SPHBody &sph_body, int split_axis = -1)
+    explicit BodyDecomposition(SPHBody &sph_body)
         : body_(sph_body), particles_(sph_body.getBaseParticles()) {};
     virtual ~BodyDecomposition() {};
 
@@ -141,14 +141,11 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
      * The cut planes are balanced on the initial particle positions, so that a sph_body
      * occupying only part of the domain does not leave a subdomain empty.
      */
-    explicit BodyDecomposition(SPHBody &sph_body, int split_axis = -1)
+    explicit BodyDecomposition(SPHBody &sph_body)
         : body_(sph_body), particles_(sph_body.getBaseParticles()),
-          decomposition_(sph_body.getSPHSystem().getSystemDomainBounds(),
-                         sph_body.getSPHAdaptation().getKernel()->CutOffRadius(),
-                         execution::subdomain_runner.NumberOfSubdomains(), split_axis),
+          decomposition_(sph_body.getSPHSystem().getDecomposition()),
           dv_subdomain_id_(nullptr)
     {
-        // balanceOnInitialPositions();
         std::cout << "Body " << body_.Name() << " decomposition: " << decomposition_.describe();
         particles_.setSubdomainExchange(this);
     };
@@ -285,27 +282,9 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
     std::string describe() const { return decomposition_.describe(); };
 
   protected:
-    /** Iterate the one dimensional rebalance on the initial positions until the cut
-     *  planes settle. A full correction per iteration is fine here: no migration is
-     *  triggered before the scatter. */
-    void balanceOnInitialPositions()
-    {
-        const int number_of_subdomains = decomposition_.NumberOfSubdomains();
-        Vecd *position = particles_.dvParticlePosition()->Data();
-        const UnsignedInt total_particles = particles_.TotalRealParticles();
-        for (int iteration = 0; iteration < 100; ++iteration)
-        {
-            StdVec<UnsignedInt> counts(number_of_subdomains, 0);
-            for (UnsignedInt i = 0; i < total_particles; ++i)
-                counts[decomposition_.getSubdomainMap().subdomainOf(position[i])]++;
-            if (!decomposition_.rebalance(counts, Real(1)))
-                break;
-        }
-    };
-
     SPHBody &body_;
     BaseParticles &particles_;
-    SlabDecomposition decomposition_;
+    SlabDecomposition &decomposition_;
     DiscreteVariables exchange_variables_;
     DiscreteVariable<int> *dv_subdomain_id_;
 };

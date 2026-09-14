@@ -1,6 +1,7 @@
 #include "sph_system.hpp"
 
 #include "base_body_relation.h"
+#include "domain_decomposition.h"
 #include "geometric_shape.h"
 #include "io_environment.h"
 #include "predefined_bodies.h"
@@ -109,6 +110,16 @@ void SPHSystem::initializeSystemConfigurations()
             body_relations[i]->updateConfiguration();
         }
     }
+}
+SlabDecomposition &SPHSystem::getDecomposition()
+{
+    if (!slab_decomposition_keeper_.getPtr())
+    {
+        slab_decomposition_keeper_.createPtr<SlabDecomposition>(
+            system_bounds_, global_resolution_ * 4, number_of_subdomains_,
+            system_bounds_.MaximumDimensionIndex());
+    }
+    return *slab_decomposition_keeper_.getPtr();
 }
 //=================================================================================================//
 #ifdef BOOST_AVAILABLE
