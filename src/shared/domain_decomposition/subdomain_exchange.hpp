@@ -721,6 +721,7 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
 
     reserveBuffers(largestSendCount());
 
+    auto &migrate_variables = particles_.EvolvingVariables();
     // 2. Pack the departing particles, then remove them by filling their slots from
     //    the tail. Packing reads the departing slots and the filling overwrites them,
     //    so the order matters; no barrier is needed between the two, since the filling
@@ -730,7 +731,7 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
         [&]()
         {
             const int subdomain_id = execution::currentSubdomainID();
-            packOnCurrentSubdomain(variables_to_exchange_);
+            packOnCurrentSubdomain(migrate_variables);
 
             OperationOnDataAssemble<ExchangeBuffers, FillHolesFromTail<ExecutionPolicy>> fill_holes;
             const UnsignedInt *hole_index = dv_hole_index_->DelegatedData(ExecutionPolicy{});
@@ -756,7 +757,7 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
                 {
                     continue;
                 }
-                pull(exchange_buffers_, variables_to_exchange_, subdomain_id, neighbor,
+                pull(exchange_buffers_, migrate_variables, subdomain_id, neighbor,
                      SubdomainMap::oppositeSide(side), owned_particles, count);
                 owned_particles += count;
             }

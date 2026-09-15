@@ -90,6 +90,7 @@ class BaseLocalDynamics
     void addToBeInteractVariable(DiscreteVariable<DataType> *variable)
     {
         addVariableToList<DiscreteVariable, DataType>(to_be_interact_variables_, variable);
+        particles_->template addInteractVariable<DataType>(variable);
     };
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
