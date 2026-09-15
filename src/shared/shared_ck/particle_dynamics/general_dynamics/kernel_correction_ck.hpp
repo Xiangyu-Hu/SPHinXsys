@@ -12,7 +12,10 @@ LinearCorrectionMatrix<Base, RelationType<Parameters...>>::
     LinearCorrectionMatrix(DynamicsIdentifier &identifier)
     : Interaction<RelationType<Parameters...>>(identifier),
       dv_B_(this->particles_->template registerStateVariable<Matd>(
-          "LinearCorrectionMatrix", IdentityMatrix<Matd>::value)) {}
+          "LinearCorrectionMatrix", IdentityMatrix<Matd>::value))
+{
+    this->addToBeInteractVariable(dv_B_);
+}
 //=================================================================================================//
 template <typename... Parameters>
 template <class DynamicsIdentifier>

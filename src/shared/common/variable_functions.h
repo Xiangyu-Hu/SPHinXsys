@@ -103,6 +103,18 @@ struct PrepareVariablesToWrite
     };
 };
 
+struct RefreshVariablesVersion
+{
+    template <template <typename> class ContainerType, typename DataType>
+    void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables)
+    {
+        for (UnsignedInt i = 0; i != variables.size(); ++i)
+        {
+            variables[i]->refreshUpdateVersion();
+        }
+    };
+};
+
 template <template <typename> class ContainerType>
 struct FinalizeVariablesAfterRead
 {

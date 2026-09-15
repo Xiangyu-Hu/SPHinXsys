@@ -112,10 +112,15 @@ class Quantity
     void setName(const std::string &name) { name_ = name; };
     Real getScalingRef() const { return scaling_ref_; };
     void setScalingRef(Real scaling_ref) { scaling_ref_ = scaling_ref; };
+    void incrementCurrentVersion() { current_version_++; };
+    void refreshUpdateVersion() { update_version_++; };
+    bool isUpdated() const { return current_version_ == update_version_; };
 
   protected:
     std::string name_;
     Real scaling_ref_ = Real(1);
+    UnsignedInt update_version_ = 0;
+    UnsignedInt current_version_ = 0;
 };
 
 template <typename DataType>
@@ -373,7 +378,7 @@ class DiscreteVariable : public Quantity
 
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return data_; };
-    
+
     DataType *DelegatedData(const SYCLDevicePolicy &ex_policy)
     {
         return DelegatedOnDevice();

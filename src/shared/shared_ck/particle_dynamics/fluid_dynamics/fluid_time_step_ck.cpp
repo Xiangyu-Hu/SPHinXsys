@@ -1,8 +1,8 @@
 #include "fluid_time_step_ck.h"
 
 #include "adaptation.h"
-#include "viscosity.h"
 #include "base_body.hpp"
+#include "viscosity.h"
 
 namespace SPH
 {
@@ -39,12 +39,18 @@ AdvectionStepSetup::AdvectionStepSetup(SPHBody &sph_body)
       dv_Vol_(particles_->getVariableByName<Real>("VolumetricMeasure")),
       dv_mass_(particles_->getVariableByName<Real>("Mass")),
       dv_rho_(particles_->getVariableByName<Real>("Density")),
-      dv_dpos_(particles_->registerStateVariable<Vecd>("Displacement")) {}
+      dv_dpos_(particles_->registerStateVariable<Vecd>("Displacement"))
+{
+    addToBeInteractVariable(dv_Vol_);
+}
 //=================================================================================================//
 UpdateParticlePosition::UpdateParticlePosition(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")),
-      dv_dpos_(particles_->getVariableByName<Vecd>("Displacement")) {}
+      dv_dpos_(particles_->getVariableByName<Vecd>("Displacement"))
+{
+    addToBeInteractVariable(dv_pos_);
+}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

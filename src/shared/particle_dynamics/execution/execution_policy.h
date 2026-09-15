@@ -56,8 +56,11 @@ class SYCLDevicePolicy
 {
 };
 
+class DecomposedExecutionTag
+{
+};
 template <typename PolicyType>
-class DecomposedExecution : public PolicyType
+class DecomposedExecution : public PolicyType, public DecomposedExecutionTag
 {
 };
 

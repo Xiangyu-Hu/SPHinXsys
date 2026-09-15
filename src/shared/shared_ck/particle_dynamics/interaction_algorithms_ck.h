@@ -138,6 +138,16 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Paramet
 
   protected:
     void runInteraction(Real dt);
+
+    virtual void setupDynamics(Real dt = 0.0) override
+    {
+        LocalDynamicsType::setupDynamics(dt);
+        if constexpr (std::is_base_of_v<DecomposedExecutionTag, ExecutionPolicy>)
+        {
+            OperationOnDataAssemble<DiscreteVariables, RefreshVariablesVersion> refresh_variable_version_;
+            refresh_variable_version_(this->to_be_interact_variables_);
+        }
+    };
 };
 
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
@@ -157,6 +167,16 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Param
 
   protected:
     void runInteraction(Real dt);
+
+    virtual void setupDynamics(Real dt = 0.0) override
+    {
+        LocalDynamicsType::setupDynamics(dt);
+        if constexpr (std::is_base_of_v<DecomposedExecutionTag, ExecutionPolicy>)
+        {
+            OperationOnDataAssemble<DiscreteVariables, RefreshVariablesVersion> refresh_variable_version_;
+            refresh_variable_version_(this->to_be_interact_variables_);
+        }
+    };
 };
 
 template <class ExecutionPolicy, template <typename...> class InteractionType,
@@ -170,6 +190,7 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<Parame
     template <typename... Args>
     InteractionDynamicsCK(Args &&...args);
     virtual ~InteractionDynamicsCK() {};
+
     virtual void exec(Real dt = 0.0) override;
     virtual void runInteractionStep(Real dt = 0.0) override;
 };

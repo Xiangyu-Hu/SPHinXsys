@@ -73,7 +73,7 @@ class BaseLocalDynamics
     {
       public:
         template <class EncloserType>
-        FinishDynamics(EncloserType &encloser){};
+        FinishDynamics(EncloserType &encloser) {};
         void operator()() {};
     };
 
@@ -83,7 +83,14 @@ class BaseLocalDynamics
     SPHBody *sph_body_;
     SPHAdaptation *sph_adaptation_;
     BaseParticles *particles_;
+    DiscreteVariables to_be_interact_variables_;
     std::shared_ptr<spdlog::logger> logger_;
+
+    template <typename DataType>
+    void addToBeInteractVariable(DiscreteVariable<DataType> *variable)
+    {
+        addVariableToList<DiscreteVariable, DataType>(to_be_interact_variables_, variable);
+    };
 };
 using LocalDynamics = BaseLocalDynamics<SPHBody>;
 
@@ -113,7 +120,7 @@ class BaseLocalDynamicsReduce : public BaseLocalDynamics<DynamicsIdentifier>
       public:
         using OutputType = ReturnType;
         template <class EncloserType>
-        FinishDynamics(EncloserType &encloser){};
+        FinishDynamics(EncloserType &encloser) {};
         ReturnType Result(ReturnType reduced_value)
         {
             return reduced_value;
@@ -138,7 +145,7 @@ class Average : public ReduceSumType
   public:
     template <class DynamicsIdentifier, typename... Args>
     Average(DynamicsIdentifier &identifier, Args &&...args)
-        : ReduceSumType(identifier, std::forward<Args>(args)...){};
+        : ReduceSumType(identifier, std::forward<Args>(args)...) {};
     virtual ~Average() {};
     using ReturnType = typename ReduceSumType::ReturnType;
 
@@ -199,7 +206,7 @@ class ComplexInteraction<LocalDynamicsName<FirstInteraction, OtherInteractions..
     explicit ComplexInteraction(FirstParameterSet &&first_parameter_set,
                                 OtherParameterSets &&...other_parameter_sets)
         : LocalDynamicsName<FirstInteraction, CommonParameters...>(first_parameter_set),
-          other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...){};
+          other_interactions_(std::forward<OtherParameterSets>(other_parameter_sets)...) {};
 
     void interaction(size_t index_i, Real dt = 0.0)
     {

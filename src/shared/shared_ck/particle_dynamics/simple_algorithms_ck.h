@@ -49,6 +49,16 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
     KernelImplementation kernel_implementation_;
     FinishDynamics finish_dynamics_;
 
+    virtual void setupDynamics(Real dt = 0.0) override
+    {
+        UpdateType::setupDynamics(dt);
+        if constexpr (std::is_base_of_v<DecomposedExecutionTag, ExecutionPolicy>)
+        {
+            OperationOnDataAssemble<DiscreteVariables, RefreshVariablesVersion> refresh_variable_version_;
+            refresh_variable_version_(this->to_be_interact_variables_);
+        }
+    };
+
   public:
     template <typename... Args>
     StateDynamics(Args &&...args)
