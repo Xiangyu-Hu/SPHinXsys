@@ -156,7 +156,6 @@ class SubdomainExchange
      *  through BaseParticles::refreshHalo(), which the interaction algorithms call with
      *  their interact variables before every interaction step. */
     void refreshHalo(DiscreteVariables &variables);
-    void refreshHalo() { refreshHalo(variables_to_exchange_); };
     /** Transfer ownership of the particles that crossed a cut plane.
      *
      *  The departing particles are packed into the send buffers first, then removed
