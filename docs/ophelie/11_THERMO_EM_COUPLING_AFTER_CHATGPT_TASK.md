@@ -279,6 +279,7 @@ Copy (KB, not VTP): `output/french_spatial_stats.csv`, `french_thermo_em_couplin
 | `docs/ophelie/09_FRENCH_LITERATURE_REPRODUCTION_STATUS_2026-09.md` | Pre-task status vs CES 2008 |
 | `docs/ophelie/10_THERMO_EM_COUPLING_ROUND1.md` | Round-1 audit, CLI, early commands |
 | `docs/ophelie/11_THERMO_EM_COUPLING_AFTER_CHATGPT_TASK.md` | This close-out |
+| `docs/ophelie/12_THERMO_EM_COUPLING_CHATGPT_DISCUSSION_2026-09.md` | Shorter paste pack for ChatGPT (questions at end) |
 | `tests/.../test_3d_ophelie_french_natural_convection_frozen_q/README.md` | Natural flags |
 | `tests/.../test_3d_ophelie_french_stirring_em/README.md` | Stirring flags |
 
