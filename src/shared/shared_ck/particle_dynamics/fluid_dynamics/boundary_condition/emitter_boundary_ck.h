@@ -53,7 +53,7 @@ class EmitterInflowConditionCK : public BaseLocalDynamics<OrientedBoxPartType>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         OrientedBox *oriented_box_;
@@ -83,7 +83,7 @@ class EmitterInflowInjectionCK : public BaseLocalDynamics<OrientedBoxPartType>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         OrientedBox *oriented_box_;
@@ -123,7 +123,7 @@ class WithinDisposerIndication : public BaseLocalDynamics<OrientedBoxByCell>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         OrientedBox *oriented_box_;

@@ -85,7 +85,7 @@ class RadixSort
                        DiscreteVariable<UnsignedInt> *dv_sequence,
                        DiscreteVariable<UnsignedInt> *dv_index_permutation)
         : dv_sequence_(dv_sequence), dv_index_permutation_(dv_index_permutation) {};
-    void sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size, UnsignedInt start_index = 0);
+    void sort(const SYCLDevicePolicy &ex_policy, UnsignedInt size, UnsignedInt start_index = 0);
 
   protected:
     DiscreteVariable<UnsignedInt> *dv_sequence_;
@@ -94,7 +94,7 @@ class RadixSort
 };
 
 template <typename T, typename Op>
-T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
+T exclusive_scan(const SYCLDevicePolicy &par_policy, T *first, T *d_first, UnsignedInt d_size, Op op)
 {
 #if !SPHINXSYS_USE_ONEDPL
     execution_instance.getQueue()
@@ -122,7 +122,7 @@ T exclusive_scan(const ParallelDevicePolicy &par_policy, T *first, T *d_first, U
 }
 
 template <class UnaryFunc>
-void generic_for(const ParallelDevicePolicy &par_device,
+void generic_for(const SYCLDevicePolicy &sycl_device,
                  const IndexRange &index_range,
                  const UnaryFunc &unary_func)
 {

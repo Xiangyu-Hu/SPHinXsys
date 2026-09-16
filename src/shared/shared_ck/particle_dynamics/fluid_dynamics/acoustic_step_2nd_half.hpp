@@ -32,7 +32,7 @@ AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    InitializeKernel::initialize(size_t index_i, Real dt)
+    InitializeKernel::compute(size_t index_i, Real dt)
 {
     dpos_[index_i] += vel_[index_i] * dt * 0.5;
 }
@@ -52,7 +52,7 @@ AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Real divergence_sum(0);
     Vecd p_dissipation = Vecd::Zero();
@@ -82,7 +82,7 @@ AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    UpdateKernel::update(size_t index_i, Real dt)
+    UpdateKernel::compute(size_t index_i, Real dt)
 {
     compression_[index_i] += 0.5 * dt * compression_rate_[index_i];
     rho_[index_i] = compression_[index_i] * eos_.getReferenceDensity(index_i);
@@ -115,7 +115,7 @@ AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Real divergence_sum(0);
     Vecd p_dissipation = Vecd::Zero();
@@ -171,7 +171,7 @@ AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters.
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Real divergence_sum(0);
     Vecd p_dissipation = Vecd::Zero();

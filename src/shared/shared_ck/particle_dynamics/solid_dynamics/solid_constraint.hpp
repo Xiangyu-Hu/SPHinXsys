@@ -51,7 +51,7 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::UpdateKernel::
       simbody_state_(encloser.sv_simbody_state_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class DynamicsIdentifier>
-void ConstraintBySimBodyCK<DynamicsIdentifier>::UpdateKernel::update(size_t index_i, Real dt)
+void ConstraintBySimBodyCK<DynamicsIdentifier>::UpdateKernel::compute(size_t index_i, Real dt)
 {
     Vec3d pos, vel, acc, n;
     simbody_state_->findStationLocationVelocityAndAccelerationInGround(
