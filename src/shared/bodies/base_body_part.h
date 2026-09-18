@@ -119,6 +119,8 @@ class BodyPartByParticle : public BodyPart
     template <typename TagCriteria>
     BodyPartByParticle(SPHBody &sph_body, TagCriteria criteria);
     virtual ~BodyPartByParticle() {};
+    /** Rebuild the particle list from the restored group bitmask after a restart. */
+    void rebuildFromParticleGroups();
 
   protected:
     DiscreteVariable<UnsignedInt> *dv_particle_list_;

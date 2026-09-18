@@ -166,6 +166,12 @@ void RestartIOCK<ExecutionPolicy>::readFromFile(size_t iteration_step)
     {
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
         finalize_variables_after_read_(base_particles.EvolvingVariables(), ExecutionPolicy{});
+
+        for (BodyPartByParticle *body_part : base_particles.getBodyPartsByParticle())
+        {
+            body_part->rebuildFromParticleGroups();
+            body_part->dvParticleList()->finalizeLoadIn(ExecutionPolicy{});
+        }
     }
 }
 //=================================================================================================//

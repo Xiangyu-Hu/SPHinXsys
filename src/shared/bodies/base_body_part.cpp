@@ -66,6 +66,25 @@ void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_me
         part_id_name_ + "_Size", body_part_particles_.size());
 }
 //=================================================================================================//
+void BodyPartByParticle::rebuildFromParticleGroups()
+{
+    GroupManager &group_manager = getParticleGroupManager();
+    auto part_mask = group_manager.createHostMaskKernel(part_id_name_);
+
+    body_part_particles_.clear();
+    UnsignedInt *particle_list = dv_particle_list_->Data();
+    UnsignedInt list_size = 0;
+    for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
+    {
+        if (part_mask.check(i) && list_size != dv_particle_list_->getSize())
+        {
+            body_part_particles_.push_back(i);
+            particle_list[list_size++] = i;
+        }
+    }
+    sv_range_size_->setValue(list_size);
+}
+//=================================================================================================//
 BodyPartByCell::BodyPartByCell(RealBody &real_body)
     : BodyPart(real_body), cell_linked_list_(real_body.getCellLinkedList()),
       dv_cell_list_(nullptr),
