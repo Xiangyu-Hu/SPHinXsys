@@ -157,6 +157,7 @@ template <typename DataType, typename... Args>
 void BaseParticles::addVariableToWrite(Args &&...args)
 {
     addDiscreteVariableToList<DataType>(variables_to_write_, std::forward<Args>(args)...);
+    addDiscreteVariableToList<DataType>(particle_attributes_to_write_, std::forward<Args>(args)...);
 }
 //===============================================================================
 template <typename DataType>
