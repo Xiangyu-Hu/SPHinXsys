@@ -48,7 +48,7 @@ class FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         int *indicator_;
@@ -94,7 +94,7 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         int *previous_surface_indicator_;
@@ -114,7 +114,7 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         int *previous_surface_indicator_;
@@ -152,7 +152,7 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *contact_Vol_;

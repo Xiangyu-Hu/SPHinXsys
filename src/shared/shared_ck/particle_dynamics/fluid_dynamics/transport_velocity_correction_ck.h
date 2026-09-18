@@ -24,7 +24,7 @@ class TransportVelocityCorrectionCK : public BaseLocalDynamics<DynamicsIdentifie
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real squared_h_ref_, correction_scaling_; ///< typically coefficient * h_ref^2

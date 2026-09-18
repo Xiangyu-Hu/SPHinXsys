@@ -35,11 +35,11 @@ GravityForceCK<GravityType>::UpdateKernel::
       mass_(encloser.dv_mass_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class GravityType>
-void GravityForceCK<GravityType>::UpdateKernel::update(size_t index_i, Real dt)
+void GravityForceCK<GravityType>::UpdateKernel::compute(size_t index_i, Real dt)
 {
     this->current_force_[index_i] =
         mass_[index_i] * gravity_.InducedAcceleration(pos_[index_i], *physical_time_);
-    ForcePriorCK::UpdateKernel::update(index_i, dt);
+    ForcePriorCK::UpdateKernel::compute(index_i, dt);
 }
 //=================================================================================================//
 } // namespace SPH

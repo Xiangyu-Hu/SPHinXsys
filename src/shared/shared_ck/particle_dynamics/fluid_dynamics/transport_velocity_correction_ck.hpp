@@ -37,7 +37,7 @@ TransportVelocityCorrectionCK<DynamicsIdentifier, LimiterType, ParticleScopes...
 //=================================================================================================//
 template <class DynamicsIdentifier, class LimiterType, typename... ParticleScopes>
 void TransportVelocityCorrectionCK<DynamicsIdentifier, LimiterType, ParticleScopes...>::
-    UpdateKernel::update(size_t index_i, Real dt)
+    UpdateKernel::compute(size_t index_i, Real dt)
 {
     if (this->within_scope_(index_i))
     {

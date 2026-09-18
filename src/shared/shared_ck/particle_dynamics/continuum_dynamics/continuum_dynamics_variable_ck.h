@@ -47,7 +47,7 @@ class VonMisesStressCK : public BaseDerivedVariable<Real>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *p_, *derived_variable_;
@@ -69,7 +69,7 @@ class VerticalStressCK : public BaseDerivedVariable<Real>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Mat3d *stress_tensor_3D_;
@@ -97,7 +97,7 @@ class AccDeviatoricPlasticStrainCK : public BaseDerivedVariable<Real>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         ConstituteKernel constitute_;

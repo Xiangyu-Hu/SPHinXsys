@@ -14,7 +14,7 @@ VonMisesStressCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, E
       derived_variable_(encloser.dv_derived_variable_->DelegatedData(ex_policy)),
       shear_stress_(encloser.dv_shear_stress_->DelegatedData(ex_policy)) {}
 //=============================================================================================//
-inline void VonMisesStressCK::UpdateKernel::update(size_t index_i, Real dt)
+inline void VonMisesStressCK::UpdateKernel::compute(size_t index_i, Real dt)
 {
     Matd stress_tensor = shear_stress_[index_i] - p_[index_i] * Matd::Identity();
     derived_variable_[index_i] = getVonMisesStressFromMatrix(stress_tensor);
@@ -25,7 +25,7 @@ VerticalStressCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &ex_policy, E
     : stress_tensor_3D_(encloser.dv_stress_tensor_3D_->DelegatedData(ex_policy)),
       derived_variable_(encloser.dv_derived_variable_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-inline void VerticalStressCK::UpdateKernel::update(size_t index_i, Real dt)
+inline void VerticalStressCK::UpdateKernel::compute(size_t index_i, Real dt)
 {
     derived_variable_[index_i] = stress_tensor_3D_[index_i](1, 1);
 }
@@ -38,7 +38,7 @@ AccDeviatoricPlasticStrainCK::UpdateKernel::UpdateKernel(const ExecutionPolicy &
       derived_variable_(encloser.dv_derived_variable_->DelegatedData(ex_policy)),
       E_(encloser.E_), nu_(encloser.nu_) {}
 //=================================================================================================//
-inline void AccDeviatoricPlasticStrainCK::UpdateKernel::update(size_t index_i, Real dt)
+inline void AccDeviatoricPlasticStrainCK::UpdateKernel::compute(size_t index_i, Real dt)
 {
     Mat3d deviatoric_stress = stress_tensor_3D_[index_i] - (1.0 / 3.0) * stress_tensor_3D_[index_i].trace() * Mat3d::Identity();
     Real hydrostatic_pressure = (1.0 / 3.0) * stress_tensor_3D_[index_i].trace();

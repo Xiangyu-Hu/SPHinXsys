@@ -95,7 +95,7 @@ class PositionRelaxationCK : public BaseLocalDynamics<DynamicIdentifier>
               residual_(encloser.residual_->DelegatedData(ex_policy)),
               h_ratio_(ex_policy, encloser.adaptation_){};
 
-        void update(size_t index_i, Real dt_square)
+        void compute(size_t index_i, Real dt_square)
         {
             pos_[index_i] += residual_[index_i] * dt_square * 0.5 / h_ratio_(index_i);
         };
@@ -139,7 +139,7 @@ class UpdateSmoothingLengthRatio : public BaseLocalDynamics<DynamicIdentifier>
               local_spacing_(ex_policy, encloser.local_spacing_method_),
               reference_spacing_(encloser.reference_spacing_){};
 
-        void update(size_t index_i, Real dt = 0.0)
+        void compute(size_t index_i, Real dt = 0.0)
         {
             Real local_spacing = local_spacing_(pos_[index_i]);
             h_ratio_[index_i] = reference_spacing_ / local_spacing;

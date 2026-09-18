@@ -93,7 +93,7 @@ class ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionT
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         OneSideViscosity one_side_viscosity_;
@@ -145,7 +145,7 @@ class PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrec
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Vecd *acc_ave_, *n_;
