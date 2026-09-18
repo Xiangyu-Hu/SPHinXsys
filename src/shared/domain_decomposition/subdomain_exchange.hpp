@@ -133,7 +133,7 @@ struct PackVariablesToSendBuffer
         for (std::size_t k = 0; k != buffers.size(); ++k)
         {
             auto variable = buffers[k]->Variable();
-            if (variable->isSynced() || !isSelectedVariable(selected, variable))
+            if (!variable->isDirty() || !isSelectedVariable(selected, variable))
             {
                 continue;
             }
@@ -169,7 +169,7 @@ struct PullVariablesFromNeighbor
         for (std::size_t k = 0; k != buffers.size(); ++k)
         {
             auto variable = buffers[k]->Variable();
-            if (variable->isSynced() || !isSelectedVariable(selected, variable))
+            if (!variable->isDirty() || !isSelectedVariable(selected, variable))
             {
                 continue;
             }
@@ -589,9 +589,9 @@ void SubdomainExchange<ExecutionPolicy>::updateHaloPlan()
     execution::fanOutOverSubdomains(ExecutionPolicy{}, [&]()
                                     { publishLocalCountOnCurrentSubdomain(); });
 
-    auto &evolving_variables = particles_.EvolvingVariables();                                
-    OperationOnDataAssemble<DiscreteVariables, RefreshVariablesVersion> refresh_variable_version_;
-    refresh_variable_version_(evolving_variables);
+    auto &evolving_variables = particles_.EvolvingVariables();
+    OperationOnDataAssemble<DiscreteVariables, SetVariablesDirty> set_variables_dirty;
+    set_variables_dirty(evolving_variables);
     refreshHalo(evolving_variables);
 }
 //=================================================================================================//
@@ -603,8 +603,8 @@ void SubdomainExchange<ExecutionPolicy>::refreshHalo(DiscreteVariables &variable
     // Barrier: all send buffers are complete before anyone reads a neighbor's.
     execution::fanOutOverSubdomains(ExecutionPolicy{}, [&]()
                                     { pullFromNeighborsOnCurrentSubdomain(variables); });
-    OperationOnDataAssemble<DiscreteVariables, SyncVariablesVersion> sync_variable_version_;
-    sync_variable_version_(variables);
+    OperationOnDataAssemble<DiscreteVariables, SetVariablesClean> set_variables_clean;
+    set_variables_clean(variables);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -729,6 +729,8 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
     reserveBuffers(largestSendCount());
 
     auto &migrate_variables = particles_.EvolvingVariables();
+    OperationOnDataAssemble<DiscreteVariables, SetVariablesDirty> set_variables_dirty;
+    set_variables_dirty(migrate_variables);
     // 2. Pack the departing particles, then remove them by filling their slots from
     //    the tail. Packing reads the departing slots and the filling overwrites them,
     //    so the order matters; no barrier is needed between the two, since the filling
@@ -746,8 +748,7 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
             fill_holes(exchange_buffers_, hole_index, donor_index, fill_count_[subdomain_id]);
         });
     // Barrier: every send buffer holds the migrants before anyone pulls.
-    OperationOnDataAssemble<DiscreteVariables, RefreshVariablesVersion> refresh_variable_version_;
-    refresh_variable_version_(migrate_variables);
+
     // 3. Append the arrivals after the staying particles; they become owned.
     execution::fanOutOverSubdomains(
         ExecutionPolicy{},
@@ -774,8 +775,9 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
             particles_.svTotalRealParticles()->setValue(owned_particles);
             particles_.svTotalLocalParticles()->setValue(owned_particles);
         });
-    OperationOnDataAssemble<DiscreteVariables, SyncVariablesVersion> sync_variable_version_;
-    sync_variable_version_(migrate_variables);
+        
+    OperationOnDataAssemble<DiscreteVariables, SetVariablesClean> set_variables_clean;
+    set_variables_clean(migrate_variables);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>

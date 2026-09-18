@@ -112,15 +112,14 @@ class Quantity
     void setName(const std::string &name) { name_ = name; };
     Real getScalingRef() const { return scaling_ref_; };
     void setScalingRef(Real scaling_ref) { scaling_ref_ = scaling_ref; };
-    void syncCurrentVersion() { current_version_ = update_version_; };
-    void refreshUpdateVersion() { update_version_++; };
-    bool isSynced() const { return current_version_ == update_version_; };
+    void clean() { dirty_ = false; };
+    void setDirty() { dirty_ = true; };
+    bool isDirty() const { return dirty_; };
 
   protected:
     std::string name_;
     Real scaling_ref_ = Real(1);
-    UnsignedInt update_version_ = 0;
-    UnsignedInt current_version_ = 0;
+    bool dirty_ = false;
 };
 
 template <typename DataType>

@@ -144,8 +144,8 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Paramet
         LocalDynamicsType::setupDynamics(dt);
         if constexpr (std::is_base_of_v<DecomposedExecutionTag, ExecutionPolicy>)
         {
-            OperationOnDataAssemble<DiscreteVariables, RefreshVariablesVersion> refresh_variable_version_;
-            refresh_variable_version_(this->to_be_interact_variables_);
+            OperationOnDataAssemble<DiscreteVariables, SetVariablesDirty> set_variables_dirty;
+            set_variables_dirty(this->to_be_interact_variables_);
         }
     };
 };
@@ -173,8 +173,8 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Param
         LocalDynamicsType::setupDynamics(dt);
         if constexpr (std::is_base_of_v<DecomposedExecutionTag, ExecutionPolicy>)
         {
-            OperationOnDataAssemble<DiscreteVariables, RefreshVariablesVersion> refresh_variable_version_;
-            refresh_variable_version_(this->to_be_interact_variables_);
+            OperationOnDataAssemble<DiscreteVariables, SetVariablesDirty> set_variables_dirty;
+            set_variables_dirty(this->to_be_interact_variables_);
         }
     };
 };
