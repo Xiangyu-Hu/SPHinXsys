@@ -112,9 +112,9 @@ class Quantity
     void setName(const std::string &name) { name_ = name; };
     Real getScalingRef() const { return scaling_ref_; };
     void setScalingRef(Real scaling_ref) { scaling_ref_ = scaling_ref; };
-    void incrementCurrentVersion() { current_version_++; };
+    void syncCurrentVersion() { current_version_ = update_version_; };
     void refreshUpdateVersion() { update_version_++; };
-    bool isUpdated() const { return current_version_ == update_version_; };
+    bool isSynced() const { return current_version_ == update_version_; };
 
   protected:
     std::string name_;
