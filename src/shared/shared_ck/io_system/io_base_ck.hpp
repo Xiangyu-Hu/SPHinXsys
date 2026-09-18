@@ -169,7 +169,6 @@ void RestartIOCK<ExecutionPolicy>::readFromFile(size_t iteration_step)
 
         for (BodyPartByParticle *body_part : base_particles.getBodyPartsByParticle())
         {
-            body_part->rebuildFromParticleGroups();
             body_part->dvParticleList()->finalizeLoadIn(ExecutionPolicy{});
         }
     }

@@ -3,6 +3,7 @@
 #include "base_dynamics.h"
 #include "io_environment.h"
 #include "sph_system.h"
+#include "base_body_part.h"
 
 namespace SPH
 {
@@ -174,6 +175,10 @@ void RestartIO::readFromFile(size_t restart_step)
             {
                 found = true;
                 base_particles.readParticlesFromXml(restart_xml, body_element);
+                for (BodyPartByParticle *body_part : base_particles.getBodyPartsByParticle())
+                {
+                    body_part->rebuildFromParticleGroups();
+                }
                 std::cout << "\n Total real particles of body " << body_name
                           << " read from restart: " << base_particles.TotalRealParticles() << "\n";
                 break;

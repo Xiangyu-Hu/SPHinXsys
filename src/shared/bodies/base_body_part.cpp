@@ -76,7 +76,7 @@ void BodyPartByParticle::rebuildFromParticleGroups()
     UnsignedInt list_size = 0;
     for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
     {
-        if (part_mask.check(i) && list_size != dv_particle_list_->getSize())
+        if (part_mask.check(i))
         {
             body_part_particles_.push_back(i);
             particle_list[list_size++] = i;
