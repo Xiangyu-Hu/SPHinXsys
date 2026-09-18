@@ -138,11 +138,6 @@ int main(int ac, char *av[])
     auto &water_decomposition = main_methods.getDecomposition(water_block);
     auto &water_migrate_particles = main_methods.addGeneralDynamics<MigrateParticlesCK>(water_decomposition);
     auto &water_update_halo = main_methods.addGeneralDynamics<UpdateHaloCK>(water_decomposition);
-    auto &water_sync_volume = main_methods.addGeneralDynamics<SyncHaloStateCK>(water_decomposition);
-    water_sync_volume.addVariable<Real>("VolumetricMeasure");
-    auto &water_sync_correction = main_methods.addGeneralDynamics<SyncHaloStateCK>(water_decomposition);
-    water_sync_correction.addVariable<Matd>("LinearCorrectionMatrix");
-
     auto &wall_decomposition = main_methods.getDecomposition(wall_boundary);
     auto &wall_update_halo = main_methods.addGeneralDynamics<UpdateHaloCK>(wall_decomposition);
     //----------------------------------------------------------------------
@@ -181,9 +176,7 @@ int main(int ac, char *av[])
 
     fluid_density_regularization.exec();
     water_advection_step_setup.exec();
-    water_sync_volume.exec();
     fluid_linear_correction_matrix.exec();
-    water_sync_correction.exec();
     //----------------------------------------------------------------------
     //	First output before the integration loop.
     //----------------------------------------------------------------------
@@ -264,9 +257,7 @@ int main(int ac, char *av[])
             time_instance = TickCount::now();
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
-            water_sync_volume.exec(); // the volume is read at the neighbors by the steps below
             fluid_linear_correction_matrix.exec();
-            water_sync_correction.exec(); // the correction matrix likewise
             interval_advection_step += TickCount::now() - time_instance;
         }
     }

@@ -32,9 +32,6 @@ AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
     this->particles_->template addEvolvingVariable<Vecd>("ForcePrior");
     this->particles_->template addEvolvingVariable<Real>("Compression");
     this->particles_->template addEvolvingVariable<Real>("CompressionRate");
-    // The force carries state across an advection step: the second half step assigns
-    // it and the next first half step accumulates onto it. It must therefore follow
-    // its particle through the sort, as it does in fluid_integration.hpp.
     this->particles_->template addEvolvingVariable<Vecd>("Force");
     //----------------------------------------------------------------------
     //		add output particle data
@@ -57,6 +54,7 @@ AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Par
     // add interact variables
     //----------------------------------------------------------------------
     this->addToBeInteractVariable(this->dv_p_);
+    this->addToBeInteractVariable(this->dv_vel_);
     this->addInteractVariable(this->dv_p_);
     this->template addInteractVariable<Matd>(kernel_correction_);
 }

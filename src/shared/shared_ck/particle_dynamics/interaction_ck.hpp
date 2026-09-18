@@ -12,7 +12,10 @@ template <typename... Parameters>
 Interaction<Inner<Parameters...>>::Interaction(InnerRelationType &inner_relation)
     : BaseLocalDynamicsType(inner_relation.getDynamicsIdentifier()),
       inner_relation_(&inner_relation),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")) {}
+      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure"))
+{
+    addInteractVariable(dv_Vol_);
+}
 //=================================================================================================//
 template <typename... Parameters>
 template <typename DataType>

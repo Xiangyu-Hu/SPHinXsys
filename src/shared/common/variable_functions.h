@@ -115,6 +115,18 @@ struct RefreshVariablesVersion
     };
 };
 
+struct SyncVariablesVersion
+{
+    template <template <typename> class ContainerType, typename DataType>
+    void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables)
+    {
+        for (UnsignedInt i = 0; i != variables.size(); ++i)
+        {
+            variables[i]->syncCurrentVersion();
+        }
+    };
+};
+
 template <template <typename> class ContainerType>
 struct FinalizeVariablesAfterRead
 {

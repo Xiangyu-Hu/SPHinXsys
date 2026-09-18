@@ -132,12 +132,13 @@ struct PackVariablesToSendBuffer
         }
         for (std::size_t k = 0; k != buffers.size(); ++k)
         {
-            if (!isSelectedVariable(selected, buffers[k]->Variable()))
+            auto variable = buffers[k]->Variable();
+            if (variable->isSynced() || !isSelectedVariable(selected, variable))
             {
                 continue;
             }
-            const UnsignedInt width = buffers[k]->Variable()->getWidth();
-            DataType *source = buffers[k]->Variable()->DelegatedData(ExecutionPolicy{});
+            const UnsignedInt width = variable->getWidth();
+            DataType *source = variable->DelegatedData(ExecutionPolicy{});
             DataType *destination = buffers[k]->SendBuffer(subdomain_id, side);
             particle_for(ExecutionPolicy{}, IndexRange(0, count),
                          [=](std::size_t i)
@@ -167,12 +168,13 @@ struct PullVariablesFromNeighbor
         }
         for (std::size_t k = 0; k != buffers.size(); ++k)
         {
-            if (!isSelectedVariable(selected, buffers[k]->Variable()))
+            auto variable = buffers[k]->Variable();
+            if (variable->isSynced() || !isSelectedVariable(selected, variable))
             {
                 continue;
             }
-            const UnsignedInt width = buffers[k]->Variable()->getWidth();
-            DataType *destination = buffers[k]->Variable()->DelegatedData(ExecutionPolicy{}) +
+            const UnsignedInt width = variable->getWidth();
+            DataType *destination = variable->DelegatedData(ExecutionPolicy{}) +
                                     destination_offset * width;
             DataType *source = buffers[k]->SendBuffer(neighbor_subdomain, neighbor_side);
             // The only backend specific call of the exchange.
@@ -587,7 +589,10 @@ void SubdomainExchange<ExecutionPolicy>::updateHaloPlan()
     execution::fanOutOverSubdomains(ExecutionPolicy{}, [&]()
                                     { publishLocalCountOnCurrentSubdomain(); });
 
-    refreshHalo(variables_to_exchange_);
+    auto &evolving_variables = particles_.EvolvingVariables();                                
+    OperationOnDataAssemble<DiscreteVariables, RefreshVariablesVersion> refresh_variable_version_;
+    refresh_variable_version_(evolving_variables);
+    refreshHalo(evolving_variables);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -598,6 +603,8 @@ void SubdomainExchange<ExecutionPolicy>::refreshHalo(DiscreteVariables &variable
     // Barrier: all send buffers are complete before anyone reads a neighbor's.
     execution::fanOutOverSubdomains(ExecutionPolicy{}, [&]()
                                     { pullFromNeighborsOnCurrentSubdomain(variables); });
+    OperationOnDataAssemble<DiscreteVariables, SyncVariablesVersion> sync_variable_version_;
+    sync_variable_version_(variables);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -739,7 +746,8 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
             fill_holes(exchange_buffers_, hole_index, donor_index, fill_count_[subdomain_id]);
         });
     // Barrier: every send buffer holds the migrants before anyone pulls.
-
+    OperationOnDataAssemble<DiscreteVariables, RefreshVariablesVersion> refresh_variable_version_;
+    refresh_variable_version_(migrate_variables);
     // 3. Append the arrivals after the staying particles; they become owned.
     execution::fanOutOverSubdomains(
         ExecutionPolicy{},
@@ -766,6 +774,8 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
             particles_.svTotalRealParticles()->setValue(owned_particles);
             particles_.svTotalLocalParticles()->setValue(owned_particles);
         });
+    OperationOnDataAssemble<DiscreteVariables, SyncVariablesVersion> sync_variable_version_;
+    sync_variable_version_(migrate_variables);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
