@@ -42,16 +42,16 @@ class VariablesWriteHelper
 
   public:
     template <class PolicyType>
-    void prepareToWrite(BaseParticles &base_particles, DiscreteVariables &discrete_variables, const PolicyType &ex_policy);
+    void prepareToWrite(SPHBody *sph_body, DiscreteVariables &discrete_variables, const PolicyType &ex_policy);
 
     template <class PolicyType>
-    void prepareToWrite(BaseParticles &base_particles, DiscreteVariables &discrete_variables, const DecomposedExecution<PolicyType> &ex_policy);
+    void prepareToWrite(SPHBody *sph_body, DiscreteVariables &discrete_variables, const DecomposedExecution<PolicyType> &ex_policy);
 
     template <class PolicyType>
-    void finishWrite(BaseParticles &base_particles, const PolicyType &ex_policy) {};
+    void finishWrite(SPHBody *sph_body, const PolicyType &ex_policy) {};
 
     template <class PolicyType>
-    void finishWrite(BaseParticles &base_particles, const DecomposedExecution<PolicyType> &ex_policy);
+    void finishWrite(SPHBody *sph_body, const DecomposedExecution<PolicyType> &ex_policy);
 };
 
 template <class ExecutionPolicy>

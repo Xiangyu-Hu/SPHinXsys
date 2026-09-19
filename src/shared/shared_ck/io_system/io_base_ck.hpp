@@ -10,24 +10,26 @@ namespace SPH
 //=================================================================================================//
 template <class PolicyType>
 void VariablesWriteHelper::prepareToWrite(
-    BaseParticles &base_particles, DiscreteVariables &discrete_variables, const PolicyType &ex_policy)
+    SPHBody *sph_body, DiscreteVariables &discrete_variables, const PolicyType &ex_policy)
 {
     prepare_variable_to_write_(discrete_variables, ex_policy);
 }
 //=================================================================================================//
 template <class PolicyType>
 void VariablesWriteHelper::prepareToWrite(
-    BaseParticles &base_particles, DiscreteVariables &discrete_variables,
+    SPHBody *sph_body, DiscreteVariables &discrete_variables,
     const DecomposedExecution<PolicyType> &ex_policy)
 {
-    base_particles.gatherToHost(discrete_variables);
+    auto &exchange = sph_body->getDecomposition<DecomposedExecution<PolicyType>>().getExchange();
+    exchange.gatherToHost(discrete_variables);
 }
 //=================================================================================================//
 template <class PolicyType>
 void VariablesWriteHelper::finishWrite(
-    BaseParticles &base_particles, const DecomposedExecution<PolicyType> &ex_policy)
+    SPHBody *sph_body, const DecomposedExecution<PolicyType> &ex_policy)
 {
-    base_particles.finishHostAccess();
+    auto &exchange = sph_body->getDecomposition<DecomposedExecution<PolicyType>>().getExchange();
+    exchange.finishHostAccess();
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -39,13 +41,12 @@ void BodyStatesRecordingToVtpCK<ExecutionPolicy>::writeToFile()
         {
             BaseParticles &base_particles = bodies_[i]->getBaseParticles();
             variable_write_helper_.prepareToWrite(
-                base_particles, base_particles.VariablesToWrite(), ExecutionPolicy{});
+                bodies_[i], base_particles.VariablesToWrite(), ExecutionPolicy{});
         }
         BodyStatesRecordingToVtp::writeToFile();
         for (size_t i = 0; i < bodies_.size(); ++i)
         {
-            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-            variable_write_helper_.finishWrite(base_particles, ExecutionPolicy{});
+            variable_write_helper_.finishWrite(bodies_[i], ExecutionPolicy{});
         }
     }
 }
@@ -59,13 +60,12 @@ void BodyStatesRecordingToVtpCK<ExecutionPolicy>::writeToFile(size_t iteration_s
         {
             BaseParticles &base_particles = bodies_[i]->getBaseParticles();
             variable_write_helper_.prepareToWrite(
-                base_particles, base_particles.VariablesToWrite(), ExecutionPolicy{});
+                bodies_[i], base_particles.VariablesToWrite(), ExecutionPolicy{});
         }
         BodyStatesRecordingToVtp::writeToFile(iteration_step);
         for (size_t i = 0; i < bodies_.size(); ++i)
         {
-            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-            variable_write_helper_.finishWrite(base_particles, ExecutionPolicy{});
+            variable_write_helper_.finishWrite(bodies_[i], ExecutionPolicy{});
         }
     }
 }
@@ -140,13 +140,12 @@ void RestartIOCK<ExecutionPolicy>::writeToFile(size_t iteration_step)
     {
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
         variable_write_helper_.prepareToWrite(
-            base_particles, base_particles.EvolvingVariables(), ExecutionPolicy{});
+            real_bodies_[i], base_particles.EvolvingVariables(), ExecutionPolicy{});
     }
     RestartIO::writeToFile(iteration_step);
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
-        BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
-        variable_write_helper_.finishWrite(base_particles, ExecutionPolicy{});
+        variable_write_helper_.finishWrite(real_bodies_[i], ExecutionPolicy{});
     }
 
     if (summary_enabled_)

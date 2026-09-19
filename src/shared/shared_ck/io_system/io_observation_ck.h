@@ -90,7 +90,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_->getValueWithScalingRef() << "   ";
         observation_method_.exec();
-        variable_write_helper_.prepareToWrite(base_particles_, observe_variables_, ExecutionPolicy{});
+        variable_write_helper_.prepareToWrite(&observer_, observe_variables_, ExecutionPolicy{});
         for (size_t i = 0; i != number_of_observe_; ++i)
         {
             plt_engine_.writeAQuantity(
@@ -98,7 +98,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
         }
         out_file << "\n";
         out_file.close();
-        variable_write_helper_.finishWrite(base_particles_, ExecutionPolicy{});
+        variable_write_helper_.finishWrite(&observer_, ExecutionPolicy{});
     };
 
     DataType *getObservedQuantity()
