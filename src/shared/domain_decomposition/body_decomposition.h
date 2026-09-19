@@ -36,8 +36,8 @@
  *          The exchange set, that is the variables a particle carries when it
  *          migrates and the variables staged to the host for output, is fixed when
  *          the object is constructed: the evolving variables of the sph_body and the
- *          variables registered for output at that time, plus whatever the case adds
- *          with addExchangeVariable(). Construct it after every dynamics and after
+ *          variables registered for output at that time. 
+ *          Construct it after every dynamics and after
  *          the output variables are registered.
  * @author  Niki Loppi, Xiangyu Hu
  */
@@ -83,8 +83,6 @@ class BodyDecomposition : public BaseDecomposition
     virtual ~BodyDecomposition() {};
 
     BaseParticles &getParticles() { return particles_; };
-    template <typename DataType>
-    BodyDecomposition &addExchangeVariable(const std::string &name) { return *this; };
     template <class RecorderType>
     void addSubdomainIDToWrite(RecorderType &recorder) {};
 
@@ -134,13 +132,6 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
     std::unique_ptr<SubdomainExchange<ExecutionPolicy>> exchange_;
 
   public:
-    /**
-     * @param sph_body        the sph_body to decompose; its particles must be generated
-     * @param split_axis  axis to cut along; by default the longest one
-     *
-     * The cut planes are balanced on the initial particle positions, so that a sph_body
-     * occupying only part of the domain does not leave a subdomain empty.
-     */
     explicit BodyDecomposition(SPHBody &sph_body)
         : body_(sph_body), particles_(sph_body.getBaseParticles()),
           decomposition_(sph_body.getSPHSystem().getDecomposition()),
@@ -164,18 +155,6 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
                 decomposition_, particles_, exchange_variables_);
         }
         return *exchange_;
-    };
-
-    /** Add a variable to the exchange set, for instance one that is read at the
-     *  neighbors by an interaction but is neither evolving nor written out. Must be
-     *  called before scatterFromHost(). */
-    template <typename DataType>
-    BodyDecomposition &addExchangeVariable(const std::string &name)
-    {
-        auto &exchange = getExchange();
-        exchange.template addExchangeVariable<DataType>(
-            particles_.template getVariableByName<DataType>(name));
-        return *this;
     };
 
     /** Write the owning subdomain of every particle as the variable "SubdomainID".

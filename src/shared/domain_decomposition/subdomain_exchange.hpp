@@ -334,20 +334,6 @@ SubdomainExchange<ExecutionPolicy>::SubdomainExchange(
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-template <typename DataType>
-void SubdomainExchange<ExecutionPolicy>::addExchangeVariable(DiscreteVariable<DataType> *variable)
-{
-    if (particles_.template addDiscreteVariableToList<DataType>(variables_to_exchange_, variable) == nullptr)
-    {
-        return; // already in the set
-    }
-    using BufferType = VariableExchangeBuffer<ExecutionPolicy, DataType>;
-    auto &keeper = std::get<DataContainerUniquePtrKeeper<BufferType>>(exchange_buffer_ptrs_);
-    auto &buffer_list = std::get<DataContainerAddressKeeper<BufferType>>(exchange_buffers_);
-    buffer_list.push_back(keeper.template createPtr<BufferType>(variable, buffer_capacity_));
-}
-//=================================================================================================//
-template <class ExecutionPolicy>
 UnsignedInt SubdomainExchange<ExecutionPolicy>::TotalOwnedParticles() const
 {
     return std::accumulate(owned_count_.begin(), owned_count_.end(), UnsignedInt(0));

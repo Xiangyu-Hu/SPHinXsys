@@ -130,12 +130,6 @@ class SubdomainExchange
                       DiscreteVariables &variables_to_exchange);
     virtual ~SubdomainExchange() {};
 
-    /** Add a variable to the exchange set, with its send buffers. Skips a variable
-     *  already in the set. Must precede scatterFromHost(), which permutes the host
-     *  arrays of the set only. */
-    template <typename DataType>
-    void addExchangeVariable(DiscreteVariable<DataType> *variable);
-
     /** Distribute an initially global particle set over the subdomains. Called once,
      *  after particle generation, from the host thread. */
     void scatterFromHost();
