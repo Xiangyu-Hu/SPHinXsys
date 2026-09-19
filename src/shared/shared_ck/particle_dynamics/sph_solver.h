@@ -79,7 +79,7 @@ class TimeStepper
     UnsignedInt getIterationStep() const { return iteration_step_; }
     void setRestartStep(UnsignedInt restart_step);
     bool isFirstComputingStep() const { return iteration_step_ == first_computing_step_; }
-    UnsignedInt incrementIterationStep() { return ++iteration_step_; }
+    UnsignedInt incrementIterationStep();
     UnsignedInt getScreeningInterval() const { return screening_interval_; }
     UnsignedInt getObservationInterval() const { return observation_interval_; }
     void setScreeningInterval(UnsignedInt interval) { screening_interval_ = interval; }
@@ -175,6 +175,7 @@ class TimeStepper
     StdVec<TriggerByInterval *> interval_executers_;
     StdVec<TriggerByPhysicalTime *> physical_time_executers_;
     Real global_dt_;
+    SPHSystem &sph_system_;
     SingleVariable<Real> *sv_physical_time_;
     UnsignedInt iteration_step_{0};
     UnsignedInt first_computing_step_{0};

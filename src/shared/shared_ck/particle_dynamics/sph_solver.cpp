@@ -33,7 +33,7 @@ bool EventScheduler::Event::operator<(const Event &other) const
 }
 //=================================================================================================//
 TimeStepper::TimeStepper(SPHSystem &sph_system)
-    : global_dt_(0.0), sv_physical_time_(&sph_system.svPhysicalTime()) {}
+    : global_dt_(0.0), sph_system_(sph_system), sv_physical_time_(&sph_system.svPhysicalTime()) {}
 //=================================================================================================//
 void TimeStepper::setRestartStep(UnsignedInt restart_step)
 {
@@ -110,6 +110,11 @@ Real TimeStepper::incrementPhysicalTime(Real global_time_step)
         interval_executor->incrementPresentTime(global_dt_);
     }
     return global_dt_;
+}
+//=================================================================================================//
+UnsignedInt TimeStepper::incrementIterationStep()
+{
+    return ++iteration_step_;
 }
 //=================================================================================================//
 Real TimeStepper::incrementPhysicalTime(BaseDynamics<Real> &step_evaluator)

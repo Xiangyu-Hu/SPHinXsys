@@ -596,6 +596,12 @@ void SubdomainExchange<ExecutionPolicy>::refreshHalo(DiscreteVariables &variable
 template <class ExecutionPolicy>
 void SubdomainExchange<ExecutionPolicy>::migrateParticles()
 {
+    auto dv_pos = particles_.dvParticlePosition();
+    if (!dv_pos->isDirty())
+    {
+        return;
+    }
+
     const SubdomainMap map = decomposition_.getSubdomainMap();
 
     // 1. Split the owned particles into those that stay and those that leave. A
@@ -608,7 +614,7 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
         {
             const int subdomain_id = execution::currentSubdomainID();
             const UnsignedInt owned_particles = owned_count_[subdomain_id];
-            Vecd *position = particles_.dvParticlePosition()->DelegatedData(ExecutionPolicy{});
+            Vecd *position = dv_pos->DelegatedData(ExecutionPolicy{});
             UnsignedInt *send_flag = dv_send_flag_->DelegatedData(ExecutionPolicy{});
             UnsignedInt *send_scan = dv_send_scan_->DelegatedData(ExecutionPolicy{});
             UnsignedInt *hole_index = dv_hole_index_->DelegatedData(ExecutionPolicy{});
@@ -761,7 +767,7 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
             particles_.svTotalRealParticles()->setValue(owned_particles);
             particles_.svTotalLocalParticles()->setValue(owned_particles);
         });
-        
+
     OperationOnDataAssemble<DiscreteVariables, SetVariablesClean> set_variables_clean;
     set_variables_clean(migrate_variables);
 }
