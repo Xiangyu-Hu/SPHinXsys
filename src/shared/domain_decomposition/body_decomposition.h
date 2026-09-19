@@ -84,7 +84,7 @@ struct AddVariablesToExchangeSet
  * @brief Decomposed run: slab cut planes plus the halo and migration exchange of the sph_body.
  */
 template <class PolicyType>
-class BodyDecomposition<DecomposedExecution<PolicyType>> : public BaseDecomposition
+class BodyDecomposition : public BaseDecomposition
 {
     using ExecutionPolicy = DecomposedExecution<PolicyType>;
     std::unique_ptr<SubdomainExchange<ExecutionPolicy>> exchange_;
