@@ -182,6 +182,32 @@ using DensitySummationFreeSurfaceComplexAdaptive = BaseDensitySummationComplex<I
 using DensitySummationFreeStreamComplex = BaseDensitySummationComplex<Inner<NearFreeStream>, Contact<>>;
 using DensitySummationFreeStreamComplexAdaptive = BaseDensitySummationComplex<Inner<NearFreeStream, AdaptiveSmoothingLength>, Contact<AdaptiveSmoothingLength>>;
 using DensitySummationNotNearSurfaceComplex = BaseDensitySummationComplex<Inner<NotNearSurface>, Contact<>>;
+
+/**
+ * @class ShepardDensityRegularizationWithWall
+ * @brief Zeroth-order consistent density regularization for a fluid with solid walls.
+ * @details The density is reconstructed from the current fluid density field with
+ * a normalized SPH interpolant. Solid-wall particles complete the denominator
+ * with their reference volume and use a zero-normal-gradient extension of the
+ * target fluid density. Applying the same expression to every real fluid
+ * particle avoids a discontinuous switch at the edge of the wall contact list.
+ */
+class ShepardDensityRegularizationWithWall
+    : public LocalDynamics, public DataDelegateInner, public DataDelegateContact
+{
+  public:
+    ShepardDensityRegularizationWithWall(BaseInnerRelation &inner_relation,
+                                         BaseContactRelation &wall_contact_relation);
+    virtual ~ShepardDensityRegularizationWithWall() {};
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Real *rho_, *mass_, *rho_sum_, *Vol_;
+    Real W0_;
+    StdVec<Real> contact_inv_rho0_;
+    StdVec<Real *> contact_mass_;
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // DENSITY_SUMMATION_INNER_H
