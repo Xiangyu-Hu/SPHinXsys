@@ -83,7 +83,7 @@ inline bool isSelectedVariable(DiscreteVariables &selected, DiscreteVariable<Dat
     auto &selected_list = std::get<DataContainerAddressKeeper<DiscreteVariable<DataType>>>(selected);
     return std::find(selected_list.begin(), selected_list.end(), variable) != selected_list.end();
 }
-
+//=================================================================================================//
 template <class ExecutionPolicy>
 struct CreateExchangeBuffers
 {
@@ -102,7 +102,7 @@ struct CreateExchangeBuffers
         }
     }
 };
-
+//=================================================================================================//
 template <class ExecutionPolicy>
 struct ReserveExchangeBuffers
 {
@@ -116,7 +116,7 @@ struct ReserveExchangeBuffers
         }
     }
 };
-
+//=================================================================================================//
 /** Gather the flagged particles of the current subdomain into its send buffer. */
 template <class ExecutionPolicy>
 struct PackVariablesToSendBuffer
@@ -152,7 +152,7 @@ struct PackVariablesToSendBuffer
         }
     }
 };
-
+//=================================================================================================//
 /** Copy the neighbors' packed values into the destination slots of this subdomain. */
 template <class ExecutionPolicy>
 struct PullVariablesFromNeighbor
@@ -183,7 +183,7 @@ struct PullVariablesFromNeighbor
         }
     }
 };
-
+//=================================================================================================//
 /** Remove the departing particles by moving staying particles from the tail into
  *  their slots. Holes lie below the new owned count and donors at or above it, so no
  *  slot is both read and written and the copies are independent. Every exchanged
@@ -216,7 +216,7 @@ struct FillHolesFromTail
         }
     }
 };
-
+//=================================================================================================//
 /** Reorder the host arrays so that each subdomain's particles are contiguous. */
 struct PermuteHostVariables
 {
@@ -241,7 +241,7 @@ struct PermuteHostVariables
         }
     }
 };
-
+//=================================================================================================//
 /** Copy one contiguous slice of the host arrays into a subdomain's replica, or back. */
 template <class ExecutionPolicy>
 struct StageHostSlice
