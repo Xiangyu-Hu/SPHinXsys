@@ -151,8 +151,6 @@ int main(int ac, char *av[])
     {
         restart_io.readRestartFiles(sph_system.RestartStep());
     }
-    water_decomposition.scatterFromHost(); // distributes the global particle set over the subdomains
-    wall_decomposition.scatterFromHost();  // distributes the global particle set over the subdomains
     //----------------------------------------------------------------------
     //	Setup for advection-step based time-stepping control
     //----------------------------------------------------------------------

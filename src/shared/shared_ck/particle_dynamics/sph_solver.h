@@ -189,6 +189,7 @@ class SPHSolver
     UniquePtrKeeper<MainMethods> main_methods_keeper_;
     UniquePtrKeeper<HostMethods> host_methods_keeper_;
     UniquePtrKeeper<SequenceMethods> seq_methods_keeper_;
+    UniquePtrKeeper<TimeStepper> time_stepper_keeper_;
 
   public:
     SPHSolver(SPHSystem &sph_system) : sph_system_(sph_system), time_stepper_(sph_system) {};
@@ -196,7 +197,7 @@ class SPHSolver
     MainMethods &getMainMethodContainer();
     HostMethods &getHostMethodContainer();
     SequenceMethods &getSequenceMethodContainer();
-    TimeStepper &getTimeStepper() { return time_stepper_; };
+    TimeStepper &getTimeStepper();
 
   protected:
     SPHSystem &sph_system_;

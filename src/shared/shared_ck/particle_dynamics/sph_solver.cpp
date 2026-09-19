@@ -177,7 +177,7 @@ MainMethods &SPHSolver::getMainMethodContainer()
         MainMethods &main_methods = *main_methods_keeper_.createPtr<MainMethods>(par_ck);
         for (auto *body : sph_system_.getSPHBodies())
         {
-           main_methods.addDecomposition(*body);
+            main_methods.addDecomposition(*body);
         }
         return main_methods;
     }
@@ -200,6 +200,25 @@ SequenceMethods &SPHSolver::getSequenceMethodContainer()
         return *seq_methods_keeper_.createPtr<SequenceMethods>(seq);
     }
     return *seq_methods_keeper_.getPtr();
+}
+//=================================================================================================//
+TimeStepper &SPHSolver::getTimeStepper()
+{
+    if (time_stepper_keeper_.getPtr() == nullptr)
+    {
+        if constexpr (std::is_base_of_v<DecomposedExecutionTag, MainMethods::ExPolicy>)
+        {
+            auto sph_bodies = sph_system_.getSPHBodies();
+            for (auto *body : sph_bodies)
+            {
+                auto &exchange = body->getDecomposition<MainMethods::ExPolicy>().getExchange();
+                exchange.scatterFromHost();
+            }
+        }
+
+        return *time_stepper_keeper_.createPtr<TimeStepper>(sph_system_);
+    }
+    return time_stepper_;
 }
 //=================================================================================================//
 } // namespace SPH
