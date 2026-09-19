@@ -72,19 +72,23 @@ void BodyPartByParticle::rebuildFromParticleGroups()
     auto part_mask = group_manager.createHostMaskKernel(part_id_name_);
 
     body_part_particles_.clear();
+    UnsignedInt *particle_list = dv_particle_list_->Data();
+    UnsignedInt list_size = 0;
     for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
     {
         if (part_mask.check(i))
         {
             body_part_particles_.push_back(i);
+            particle_list[list_size++] = i;
         }
     }
 
-    dv_particle_list_ = unique_variable_ptrs_.createPtr<DiscreteVariable<UnsignedInt>>(
-        part_id_name_, body_part_particles_.size(), [&](size_t i)
-        { return body_part_particles_[i]; });
-    sv_range_size_ = unique_variable_ptrs_.createPtr<SingleVariable<UnsignedInt>>(
-        part_id_name_ + "_Size", body_part_particles_.size());
+    if (list_size != sv_range_size_->getValue())
+    {
+        std::cout << "\n Error: rebuild BodyPartByParticle should be the same size as before. \n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
 }
 //=================================================================================================//
 BodyPartByCell::BodyPartByCell(RealBody &real_body)
