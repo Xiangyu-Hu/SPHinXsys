@@ -52,10 +52,33 @@ class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax<Real>>
 
   protected:
     Fluid &fluid_;
-    Real *rho_, *p_;
-    Vecd *vel_;
+    Real *rho_, *p_, *mass_;
+    Vecd *vel_, *force_, *force_prior_;
     Real h_min_;
     Real acousticCFL_;
+};
+/**
+ * @class WallAccelerationTimeStep
+ * @brief Computing a time step from the relative normal acceleration at fluid-wall contacts.
+ * @details This bounds the acceleration term used by the wall Riemann integration when the
+ * wall is moving or accelerating relative to the fluid.
+ */
+class WallAccelerationTimeStep
+    : public LocalDynamicsReduce<ReduceMax<Real>>, public DataDelegateContact
+{
+  public:
+    explicit WallAccelerationTimeStep(BaseContactRelation &wall_contact_relation,
+                                      Real wallCFL = 0.25);
+    virtual ~WallAccelerationTimeStep() {};
+    Real reduce(size_t index_i, Real dt = 0.0);
+    virtual Real outputResult(Real reduced_value) override;
+
+  protected:
+    Real *mass_;
+    Vecd *force_prior_;
+    StdVec<Vecd *> wall_acc_ave_;
+    Real h_min_;
+    Real wallCFL_;
 };
 /**
  * @class SurfaceTensionTimeStep
@@ -79,8 +102,7 @@ class AdvectionTimeStep
     : public LocalDynamicsReduce<ReduceMax<Real>>
 {
   protected:
-    Real *mass_;
-    Vecd *vel_, *force_, *force_prior_;
+    Vecd *vel_;
     Real h_min_;
     Real speed_ref_, advectionCFL_;
 

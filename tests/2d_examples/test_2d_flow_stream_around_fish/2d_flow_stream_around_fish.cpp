@@ -122,6 +122,7 @@ int main(int ac, char *av[])
 
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
     ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
+    ReduceDynamics<fluid_dynamics::WallAccelerationTimeStep> get_wall_acceleration_time_step_size(water_block_contact);
 
     OrientedBoxByParticle emitter(water_block, OrientedBox(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer);
@@ -242,7 +243,8 @@ int main(int ac, char *av[])
             Real relaxation_time = 0.0;
             while (relaxation_time < Dt)
             {
-                Real dt = get_fluid_time_step_size.exec();
+                Real dt = SMIN(get_fluid_time_step_size.exec(),
+                               get_wall_acceleration_time_step_size.exec());
                 /** Fluid pressure relaxation, first half. */
                 pressure_relaxation.exec(dt);
                 /** FSI for fluid force on solid body. */
