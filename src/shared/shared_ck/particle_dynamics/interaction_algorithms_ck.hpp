@@ -100,10 +100,12 @@ template <class ExecutionPolicy, template <typename...> class InteractionType, t
 void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Parameters...>>>::
     runInteraction(Real dt)
 {
-    // The interaction reads the interact variables at the neighbors, which may be halo
-    // copies in a decomposed run; the preceding step's loop is a barrier over the
-    // subdomains, so every owner has finished writing them by now.
-    this->particles_->refreshHalo(this->interact_variables_);
+    if constexpr (std::is_base_of_v<DecomposedExecutionTag, ExecutionPolicy>)
+    {
+        auto &exchange = this->sph_body_->template getDecomposition<ExecutionPolicy>().getExchange();
+        exchange.refreshHalo(this->to_be_interact_variables_);
+    }
+
     particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                  kernel_implementation_, dt);
 
@@ -127,8 +129,12 @@ template <class ExecutionPolicy, template <typename...> class InteractionType, t
 void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parameters...>>>::
     runInteraction(Real dt)
 {
-    // A no-op unless the contact body is itself decomposed.
-    this->contact_particles_->refreshHalo(this->contact_interact_variables_);
+    if constexpr (std::is_base_of_v<DecomposedExecutionTag, ExecutionPolicy>)
+    {
+        auto &exchange = this->contact_body_->template getDecomposition<ExecutionPolicy>().getExchange();
+        exchange.refreshHalo(this->contact_interact_variables_);
+    }
+
     particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
                  contact_kernel_implementation_, dt);
 
