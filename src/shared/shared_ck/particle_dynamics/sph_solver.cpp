@@ -114,6 +114,14 @@ Real TimeStepper::incrementPhysicalTime(Real global_time_step)
 //=================================================================================================//
 UnsignedInt TimeStepper::incrementIterationStep()
 {
+    if constexpr (std::is_base_of_v<DecomposedExecutionTag, MainMethods::ExPolicy>)
+    {
+        for (auto *body : sph_system_.getSPHBodies())
+        {
+            body->getDecomposition<MainMethods::ExPolicy>().migrateParticles();
+        }
+    }
+
     return ++iteration_step_;
 }
 //=================================================================================================//

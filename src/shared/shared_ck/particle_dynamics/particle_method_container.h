@@ -219,12 +219,6 @@ class ParticleMethodContainer
         return sph_body.addDecomposition<ExecutionPolicy>(std::forward<Args>(args)...);
     };
 
-    template <typename... Args>
-    BodyDecomposition<ExecutionPolicy> &getDecomposition(SPHBody &sph_body)
-    {
-        return sph_body.getDecomposition<ExecutionPolicy>();
-    };
-
     ParticleDynamicsGroup &addParticleDynamicsGroup()
     {
         return *particle_dynamics_keeper_.createPtr<ParticleDynamicsGroup>();

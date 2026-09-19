@@ -130,14 +130,6 @@ int main(int ac, char *av[])
     auto &fluid_observer_pressure = main_methods.addObserveRegression<
         RegressionTestDynamicTimeWarping, Real>(fluid_observer_contact, "Pressure");
     //----------------------------------------------------------------------
-    //	Domain decomposition of the water body, effective when the main execution
-    //	policy is decomposed (built with SPHINXSYS_DECOMPOSITION, run with --subdomains=N)
-    //	and a no-op otherwise. Defined after every dynamics and output variable of the
-    //	body, since that fixes the set of variables a migrating particle carries.
-    //----------------------------------------------------------------------
-    auto &water_decomposition = main_methods.getDecomposition(water_block);
-    auto &water_migrate_particles = main_methods.addGeneralDynamics<MigrateParticlesCK>(water_decomposition);
-    //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
     TimeStepper &time_stepper = sph_solver.getTimeStepper();
@@ -236,9 +228,7 @@ int main(int ac, char *av[])
             }
             interval_output += TickCount::now() - time_instance;
 
-            /** Particle migration and sort, update cell linked list and configuration. */
             time_instance = TickCount::now();
-            water_migrate_particles.exec(); // ownership follows the new positions
             time_stepper.incrementIterationStep();
             if (time_stepper.getIterationStep() % 100 == 0)
             {
