@@ -70,11 +70,24 @@ class BodyStatesRecordingToVtpCK : public BodyStatesRecordingToVtp
     BodyStatesRecording &addDerivedVariableToWrite(DynamicsIdentifier &identifier, Args &&...args);
 };
 
+class VariablesReadHelper
+{
+    OperationOnDataAssemble<DiscreteVariables, FinalizeVariablesAfterRead<DiscreteVariable>> finalize_variables_after_read_;
+
+  public:
+    template <class PolicyType>
+    void finalizeAfterRead(SPHBody *sph_body, DiscreteVariables &discrete_variables, const PolicyType &ex_policy);
+
+    template <class PolicyType>
+    void finalizeAfterRead(SPHBody *sph_body, DiscreteVariables &discrete_variables, const DecomposedExecution<PolicyType> &ex_policy);
+};
+
 template <class ExecutionPolicy>
 class RestartIOCK : public RestartIO
 {
     UniquePtrsKeeper<AbstractDynamics> particle_dynamics_keeper_;
     VariablesWriteHelper variable_write_helper_;
+    VariablesReadHelper variable_read_helper_;
 
   public:
     template <typename... Args>
@@ -87,8 +100,6 @@ class RestartIOCK : public RestartIO
   protected:
     StdVec<StdVec<BaseDynamics<std::pair<Real, UnsignedInt>> *>> output_evolving_variables_bounds_[3];
     StdVec<StdVec<std::string>> evolving_variables_names_[3];
-    OperationOnDataAssemble<DiscreteVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
-    OperationOnDataAssemble<DiscreteVariables, FinalizeVariablesAfterRead<DiscreteVariable>> finalize_variables_after_read_;
 };
 
 template <class ExecutionPolicy>

@@ -133,6 +133,22 @@ RestartIOCK<ExecutionPolicy>::RestartIOCK(Args &&...args)
     }
 }
 //=================================================================================================//
+template <class PolicyType>
+void VariablesReadHelper::finalizeAfterRead(
+    SPHBody *sph_body, DiscreteVariables &discrete_variables, const PolicyType &ex_policy)
+{
+    finalize_variables_after_read_(discrete_variables, ex_policy);
+}
+//=================================================================================================//
+template <class PolicyType>
+void VariablesReadHelper::finalizeAfterRead(
+    SPHBody *sph_body, DiscreteVariables &discrete_variables,
+    const DecomposedExecution<PolicyType> &ex_policy)
+{
+    auto &exchange = sph_body->getDecomposition<DecomposedExecution<PolicyType>>().getExchange();
+    exchange.scatterFromHost();
+}
+//=================================================================================================//
 template <class ExecutionPolicy>
 void RestartIOCK<ExecutionPolicy>::writeToFile(size_t iteration_step)
 {
@@ -198,7 +214,8 @@ void RestartIOCK<ExecutionPolicy>::readFromFile(size_t iteration_step)
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
-        finalize_variables_after_read_(base_particles.EvolvingVariables(), ExecutionPolicy{});
+        variable_read_helper_.finalizeAfterRead(
+            real_bodies_[i], base_particles.EvolvingVariables(), ExecutionPolicy{});
     }
 }
 //=================================================================================================//
