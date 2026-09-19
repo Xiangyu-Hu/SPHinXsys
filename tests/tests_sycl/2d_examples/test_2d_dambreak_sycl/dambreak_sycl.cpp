@@ -146,17 +146,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     if (sph_system.RestartStep() != 0)
     {
+        time_stepper.setRestartStep(sph_system.RestartStep());
         restart_io.readRestartFiles(sph_system.RestartStep());
     }
     //----------------------------------------------------------------------
     //	Setup for advection-step based time-stepping control
     //----------------------------------------------------------------------
     auto &advection_step = time_stepper.addTriggerByInterval(fluid_advection_time_step.exec());
-    size_t advection_steps = sph_system.RestartStep() + 1;
     int screening_interval = 100;
     int observation_interval = screening_interval * 2;
     int restart_output_interval = screening_interval * 10;
     auto &state_recording = time_stepper.addTriggerByInterval(0.1);
+    time_stepper.setScreeningInterval(screening_interval);
+    time_stepper.setObservationInterval(observation_interval);
+    time_stepper.setRestartWriteInterval(restart_output_interval);
     //----------------------------------------------------------------------
     //	Prepare for the time integration loop.
     //----------------------------------------------------------------------
@@ -174,8 +177,8 @@ int main(int ac, char *av[])
     //	First output before the integration loop.
     //----------------------------------------------------------------------
     body_state_recorder.writeToFile();
-    record_water_mechanical_energy.writeToFile(advection_steps);
-    fluid_observer_pressure.writeToFile(advection_steps);
+    record_water_mechanical_energy.writeToFile(time_stepper.getIterationStep());
+    fluid_observer_pressure.writeToFile(time_stepper.getIterationStep());
     //----------------------------------------------------------------------
     //	Statistics for the computing time information
     //----------------------------------------------------------------------
@@ -202,30 +205,29 @@ int main(int ac, char *av[])
         //----------------------------------------------------------------------
         if (advection_step(fluid_advection_time_step))
         {
-            advection_steps++;
             water_update_particle_position.exec();
 
             /** Output body state during the simulation according output_interval. */
             time_instance = TickCount::now();
             /** screen output, write body observables and restart files  */
-            if (advection_steps % screening_interval == 0)
+            if (time_stepper.isFirstComputingStep() || time_stepper.isScreeningStep())
             {
-                std::cout << std::fixed << std::setprecision(9) << "N=" << advection_steps
+                std::cout << std::fixed << std::setprecision(9) << "N=" << time_stepper.getIterationStep()
                           << "	Time = " << time_stepper.getPhysicalTime() << "	"
                           << "	advection_dt = " << advection_step.getInterval()
                           << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
             }
 
-            if (advection_steps % observation_interval == 0)
+            if (time_stepper.isObservationStep())
             {
-                record_water_mechanical_energy.writeToFile(advection_steps);
+                record_water_mechanical_energy.writeToFile(time_stepper.getIterationStep());
                 fluid_observer_contact_relation.exec();
-                fluid_observer_pressure.writeToFile(advection_steps);
+                fluid_observer_pressure.writeToFile(time_stepper.getIterationStep());
             }
 
-            if (advection_steps % restart_output_interval == 0)
+            if (time_stepper.isRestartWriteStep())
             {
-                restart_io.writeToFile(advection_steps);
+                restart_io.writeToFile(time_stepper.getIterationStep());
             }
 
             if (state_recording())
@@ -237,7 +239,8 @@ int main(int ac, char *av[])
             /** Particle migration and sort, update cell linked list and configuration. */
             time_instance = TickCount::now();
             water_migrate_particles.exec(); // ownership follows the new positions
-            if (advection_steps % 100)
+            time_stepper.incrementIterationStep();
+            if (time_stepper.getIterationStep() % 100 == 0)
             {
                 particle_sort.exec();
             }

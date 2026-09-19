@@ -84,8 +84,10 @@ class TimeStepper
     UnsignedInt getObservationInterval() const { return observation_interval_; }
     void setScreeningInterval(UnsignedInt interval) { screening_interval_ = interval; }
     void setObservationInterval(UnsignedInt interval) { observation_interval_ = interval; }
+    void setRestartWriteInterval(UnsignedInt interval) { restart_write_interval_ = interval; }
     bool isScreeningStep() const { return (iteration_step_ % screening_interval_ == 0); }
-    bool isObservationStep() const { return (iteration_step_ % observation_interval_ == 0); }
+    bool isObservationStep() const;
+    bool isRestartWriteStep() const;
 
     template <class Integrator>
     UnsignedInt integrateMatchedTimeInterval( // designed to avoid too small last step
@@ -178,6 +180,7 @@ class TimeStepper
     UnsignedInt first_computing_step_{0};
     UnsignedInt screening_interval_{100};
     UnsignedInt observation_interval_{200};
+    UnsignedInt restart_write_interval_{1000};
 };
 
 using MainMethods = ParticleMethodContainer<MainExecutionPolicy>;

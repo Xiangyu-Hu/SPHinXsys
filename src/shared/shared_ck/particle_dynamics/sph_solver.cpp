@@ -41,6 +41,16 @@ void TimeStepper::setRestartStep(UnsignedInt restart_step)
     iteration_step_ = restart_step;
 }
 //=================================================================================================//
+bool TimeStepper::isObservationStep() const
+{
+    return (iteration_step_ % observation_interval_ == 0 && !isFirstComputingStep());
+}
+//=================================================================================================//
+bool TimeStepper::isRestartWriteStep() const
+{
+    return (iteration_step_ % restart_write_interval_ == 0 && !isFirstComputingStep());
+}
+//=================================================================================================//
 TimeStepper::TriggerByPhysicalTime::
     TriggerByPhysicalTime(TimeStepper &time_stepper, Real trigger_time)
     : sv_physical_time_(time_stepper.sv_physical_time_),
