@@ -36,7 +36,7 @@
  *          The exchange set, that is the variables a particle carries when it
  *          migrates and the variables staged to the host for output, is fixed when
  *          the object is constructed: the evolving variables of the sph_body and the
- *          variables registered for output at that time. 
+ *          variables registered for output at that time.
  *          Construct it after every dynamics and after
  *          the output variables are registered.
  * @author  Niki Loppi, Xiangyu Hu
@@ -65,47 +65,6 @@ class BaseDecomposition
     virtual ~BaseDecomposition() {};
 };
 
-/**
- * @class BodyDecomposition
- * @brief Non-decomposed run: the single global particle set is the only "subdomain".
- * @details The recorders gather a decomposed sph_body to the host themselves, through the
- *          SubdomainExchangeInterface the decomposed specialization installs on the
- *          particles; a case therefore only places scatterFromHost() and the loop
- *          dynamics. The gather and finish methods stay public for host side work a
- *          case does on its own.
- */
-template <class ExecutionPolicy>
-class BodyDecomposition : public BaseDecomposition
-{
-  public:
-    explicit BodyDecomposition(SPHBody &sph_body)
-        : body_(sph_body), particles_(sph_body.getBaseParticles()) {};
-    virtual ~BodyDecomposition() {};
-
-    BaseParticles &getParticles() { return particles_; };
-    template <class RecorderType>
-    void addSubdomainIDToWrite(RecorderType &recorder) {};
-
-    void scatterFromHost() {};
-    void gatherToHost(DiscreteVariables &variables) {};
-    void finishHostAccess() {};
-    void updateHaloPlan() {};
-    void refreshHalo(DiscreteVariables &variables) {};
-    void migrateParticles() {};
-    bool rebalance(Real relaxation) { return false; };
-
-    int NumberOfSubdomains() const { return 1; };
-    StdVec<UnsignedInt> OwnedParticlesPerSubdomain() { return {particles_.TotalRealParticles()}; };
-    UnsignedInt TotalOwnedParticles() { return particles_.TotalRealParticles(); };
-    Real HaloLoadFactor() const { return Real(0); };
-    std::string checkConsistency() const { return std::string(); };
-    std::string describe() const { return "Body " + body_.Name() + " is not decomposed\n"; };
-
-  protected:
-    SPHBody &body_;
-    BaseParticles &particles_;
-};
-
 /** Append every variable of one data assemble to an exchange set, skipping duplicates. */
 struct AddVariablesToExchangeSet
 {
@@ -125,8 +84,7 @@ struct AddVariablesToExchangeSet
  * @brief Decomposed run: slab cut planes plus the halo and migration exchange of the sph_body.
  */
 template <class PolicyType>
-class BodyDecomposition<DecomposedExecution<PolicyType>>
-    : public BaseDecomposition, public SubdomainExchangeInterface
+class BodyDecomposition<DecomposedExecution<PolicyType>> : public BaseDecomposition
 {
     using ExecutionPolicy = DecomposedExecution<PolicyType>;
     std::unique_ptr<SubdomainExchange<ExecutionPolicy>> exchange_;
@@ -138,7 +96,6 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
           dv_subdomain_id_(nullptr)
     {
         std::cout << "Body " << body_.Name() << " decomposition: " << decomposition_.describe();
-        particles_.setSubdomainExchange(this);
     };
     virtual ~BodyDecomposition() {};
 
@@ -173,32 +130,19 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
         exchange.scatterFromHost();
     };
 
-    virtual void gatherToHost(DiscreteVariables &variables) override
+    void gatherToHost(DiscreteVariables &variables)
     {
         auto &exchange = getExchange();
         exchange.gatherToHost(variables);
-
-        if (dv_subdomain_id_ != nullptr)
-        {
-            int *subdomain_id = dv_subdomain_id_->Data();
-            UnsignedInt offset = 0;
-            const StdVec<UnsignedInt> owned = exchange.OwnedParticlesPerSubdomain();
-            for (int s = 0; s < decomposition_.NumberOfSubdomains(); ++s)
-            {
-                for (UnsignedInt i = offset; i < offset + owned[s]; ++i)
-                    subdomain_id[i] = s;
-                offset += owned[s];
-            }
-        }
     };
 
-    virtual void finishHostAccess() override
+    void finishHostAccess()
     {
         auto &exchange = getExchange();
         exchange.finishHostAccess();
     };
 
-    virtual int subdomainOf(const Vecd &position) const override
+    int subdomainOf(const Vecd &position) const
     {
         return decomposition_.getSubdomainMap().subdomainOf(position);
     };
@@ -209,7 +153,7 @@ class BodyDecomposition<DecomposedExecution<PolicyType>>
         exchange.updateHaloPlan();
     };
 
-    virtual void refreshHalo(DiscreteVariables &variables) override
+    void refreshHalo(DiscreteVariables &variables)
     {
         auto &exchange = getExchange();
         exchange.refreshHalo(variables);

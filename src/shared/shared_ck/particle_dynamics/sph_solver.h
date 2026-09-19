@@ -192,8 +192,8 @@ class SPHSolver
     UniquePtrKeeper<TimeStepper> time_stepper_keeper_;
 
   public:
-    SPHSolver(SPHSystem &sph_system) : sph_system_(sph_system), time_stepper_(sph_system) {};
-    virtual ~SPHSolver() {};
+    SPHSolver(SPHSystem &sph_system);
+    virtual ~SPHSolver();
     MainMethods &getMainMethodContainer();
     HostMethods &getHostMethodContainer();
     SequenceMethods &getSequenceMethodContainer();

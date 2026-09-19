@@ -1,5 +1,6 @@
 #include "sph_solver.h"
 
+#include "body_decomposition.h"
 #include "sph_system.h"
 
 namespace SPH
@@ -170,6 +171,10 @@ Real TimeStepper::getGlobalTimeStepSizeWithScalingRef()
     return getGlobalTimeStepSize() * sv_physical_time_->getScalingRef();
 }
 //=================================================================================================//
+SPHSolver::SPHSolver(SPHSystem &sph_system) : sph_system_(sph_system), time_stepper_(sph_system) {};
+//=================================================================================================//
+SPHSolver::~SPHSolver() = default;
+//=================================================================================================//
 MainMethods &SPHSolver::getMainMethodContainer()
 {
     if (main_methods_keeper_.getPtr() == nullptr)
@@ -211,8 +216,7 @@ TimeStepper &SPHSolver::getTimeStepper()
             auto sph_bodies = sph_system_.getSPHBodies();
             for (auto *body : sph_bodies)
             {
-                auto &exchange = body->getDecomposition<MainMethods::ExPolicy>().getExchange();
-                exchange.scatterFromHost();
+                body->getDecomposition<MainMethods::ExPolicy>().scatterFromHost();
             }
         }
 

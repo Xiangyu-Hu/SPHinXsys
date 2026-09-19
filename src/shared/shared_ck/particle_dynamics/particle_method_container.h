@@ -32,7 +32,6 @@
 
 #include "base_body.hpp"
 #include "complex_algorithms_ck.h"
-#include "domain_decomposition_dynamics.h"
 #include "interaction_algorithms_ck.h"
 #include "io_base.h"
 #include "io_observation_ck.h"
@@ -204,12 +203,11 @@ class ParticleMethodContainer
     UniquePtrsKeeper<AbstractDynamics> particle_dynamics_keeper_;
     UniquePtrsKeeper<BodyStatesRecording> state_recorders_keeper_;
     UniquePtrsKeeper<BaseIO> other_io_keeper_;
-    UniquePtrsKeeper<BodyDecomposition<ExecutionPolicy>> decomposition_keeper_;
 
   public:
     typedef ExecutionPolicy ExPolicy;
     ParticleMethodContainer(const ExecutionPolicy &ex_policy) {};
-    virtual ~ParticleMethodContainer() {};
+    virtual ~ParticleMethodContainer() = default;
 
     /** The decomposition of a body over the subdomains; a no-op object unless the
      *  policy is a DecomposedExecution<>. Define it after every dynamics of the body

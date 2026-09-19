@@ -3,6 +3,7 @@
 
 #include "io_base_ck.h"
 
+#include "body_decomposition.h"
 #include "general_reduce_ck.hpp"
 
 namespace SPH
@@ -20,16 +21,14 @@ void VariablesWriteHelper::prepareToWrite(
     SPHBody *sph_body, DiscreteVariables &discrete_variables,
     const DecomposedExecution<PolicyType> &ex_policy)
 {
-    auto &exchange = sph_body->getDecomposition<DecomposedExecution<PolicyType>>().getExchange();
-    exchange.gatherToHost(discrete_variables);
+    sph_body->getDecomposition<DecomposedExecution<PolicyType>>().gatherToHost(discrete_variables);
 }
 //=================================================================================================//
 template <class PolicyType>
 void VariablesWriteHelper::finishWrite(
     SPHBody *sph_body, const DecomposedExecution<PolicyType> &ex_policy)
 {
-    auto &exchange = sph_body->getDecomposition<DecomposedExecution<PolicyType>>().getExchange();
-    exchange.finishHostAccess();
+    sph_body->getDecomposition<DecomposedExecution<PolicyType>>().finishHostAccess();
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -145,8 +144,7 @@ void VariablesReadHelper::finalizeAfterRead(
     SPHBody *sph_body, DiscreteVariables &discrete_variables,
     const DecomposedExecution<PolicyType> &ex_policy)
 {
-    auto &exchange = sph_body->getDecomposition<DecomposedExecution<PolicyType>>().getExchange();
-    exchange.scatterFromHost();
+    sph_body->getDecomposition<DecomposedExecution<PolicyType>>().scatterFromHost();
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
