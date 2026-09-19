@@ -75,9 +75,11 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::ComputingKernel:
 template <class ExecutionPolicy, typename DynamicsIdentifier>
 void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::exec(Real dt)
 {
-    // The cell linked list is built over the local particles, i.e. the ones owned by
-    // this device plus the halo received from its neighbors, so that the neighbor
-    // search of a particle close to a cut plane still finds a complete support.
+    if constexpr (std::is_base_of_v<DecomposedExecutionTag, ExecutionPolicy>)
+    {
+        this->sph_body_->template getDecomposition<ExecutionPolicy>().updateHaloPlan();
+    }
+
     execution::fanOutOverSubdomains(
         ExecutionPolicy{}, [&]()
         { this->buildOnCurrentDevice(); });

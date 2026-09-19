@@ -137,9 +137,6 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &water_decomposition = main_methods.getDecomposition(water_block);
     auto &water_migrate_particles = main_methods.addGeneralDynamics<MigrateParticlesCK>(water_decomposition);
-    auto &water_update_halo = main_methods.addGeneralDynamics<UpdateHaloCK>(water_decomposition);
-    auto &wall_decomposition = main_methods.getDecomposition(wall_boundary);
-    auto &wall_update_halo = main_methods.addGeneralDynamics<UpdateHaloCK>(wall_decomposition);
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
@@ -165,9 +162,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     constant_gravity.exec();
 
-    water_update_halo.exec(); // halo plan of the subdomains, before the cell linked list
     water_cell_linked_list.exec();
-    wall_update_halo.exec(); // halo plan of the subdomains, before the cell linked list
     wall_cell_linked_list.exec();
     water_block_update_complex_relation.exec();
     fluid_observer_contact_relation.exec();
@@ -246,7 +241,6 @@ int main(int ac, char *av[])
             {
                 particle_sort.exec();
             }
-            water_update_halo.exec(); // new halo plan and full refresh, before the cell linked list
             water_cell_linked_list.exec();
             water_block_update_complex_relation.exec();
             interval_updating_configuration += TickCount::now() - time_instance;

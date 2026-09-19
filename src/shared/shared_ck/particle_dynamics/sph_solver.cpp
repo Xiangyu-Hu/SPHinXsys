@@ -180,10 +180,15 @@ MainMethods &SPHSolver::getMainMethodContainer()
     if (main_methods_keeper_.getPtr() == nullptr)
     {
         MainMethods &main_methods = *main_methods_keeper_.createPtr<MainMethods>(par_ck);
-        for (auto *body : sph_system_.getSPHBodies())
+
+        if constexpr (std::is_base_of_v<DecomposedExecutionTag, MainMethods::ExPolicy>)
         {
-            main_methods.addDecomposition(*body);
+            for (auto *body : sph_system_.getSPHBodies())
+            {
+                main_methods.addDecomposition(*body);
+            }
         }
+
         return main_methods;
     }
     return *main_methods_keeper_.getPtr();
@@ -213,10 +218,12 @@ TimeStepper &SPHSolver::getTimeStepper()
     {
         if constexpr (std::is_base_of_v<DecomposedExecutionTag, MainMethods::ExPolicy>)
         {
-            auto sph_bodies = sph_system_.getSPHBodies();
-            for (auto *body : sph_bodies)
+            if (sph_system_.RestartStep() == 0)
             {
-                body->getDecomposition<MainMethods::ExPolicy>().scatterFromHost();
+                for (auto *body : sph_system_.getSPHBodies())
+                {
+                    body->getDecomposition<MainMethods::ExPolicy>().scatterFromHost();
+                }
             }
         }
 
