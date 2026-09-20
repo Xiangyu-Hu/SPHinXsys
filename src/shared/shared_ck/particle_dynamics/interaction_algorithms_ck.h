@@ -138,6 +138,16 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Paramet
 
   protected:
     void runInteraction(Real dt);
+
+    virtual void setupDynamics(Real dt = 0.0) override
+    {
+        LocalDynamicsType::setupDynamics(dt);
+        if constexpr (std::is_base_of_v<DecomposedExecutionTag, ExecutionPolicy>)
+        {
+            OperationOnDataAssemble<DiscreteVariables, SetVariablesDirty> set_variables_dirty;
+            set_variables_dirty(this->to_be_interact_variables_);
+        }
+    };
 };
 
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
@@ -148,8 +158,7 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Param
     using RangeIdentifier = typename LocalDynamicsType::RangeIdentifier;
     using InteractKernel = typename LocalDynamicsType::InteractKernel;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
-    UniquePtrKeeper<KernelImplementation> contact_kernel_implementation_ptr_;
-    KernelImplementation *contact_kernel_implementation_;
+    KernelImplementation contact_kernel_implementation_;
 
   public:
     template <typename... Args>
@@ -158,6 +167,16 @@ class InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Param
 
   protected:
     void runInteraction(Real dt);
+
+    virtual void setupDynamics(Real dt = 0.0) override
+    {
+        LocalDynamicsType::setupDynamics(dt);
+        if constexpr (std::is_base_of_v<DecomposedExecutionTag, ExecutionPolicy>)
+        {
+            OperationOnDataAssemble<DiscreteVariables, SetVariablesDirty> set_variables_dirty;
+            set_variables_dirty(this->to_be_interact_variables_);
+        }
+    };
 };
 
 template <class ExecutionPolicy, template <typename...> class InteractionType,
@@ -171,6 +190,7 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<RelationType<Parame
     template <typename... Args>
     InteractionDynamicsCK(Args &&...args);
     virtual ~InteractionDynamicsCK() {};
+
     virtual void exec(Real dt = 0.0) override;
     virtual void runInteractionStep(Real dt = 0.0) override;
 };

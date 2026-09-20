@@ -28,7 +28,8 @@ void DiscreteVariable<DataType>::synchronizeWithDevice()
 {
     if (isDataDelegated())
     {
-        copyFromDevice(data_, device_only_variable_->DeviceOnlyDataField(), getTotalSize());
+        copyFromDevice(data_, device_only_variable_[currentSubdomainID()]->DeviceOnlyDataField(),
+                       getTotalSize());
     }
 }
 //=================================================================================================//
@@ -37,18 +38,19 @@ void DiscreteVariable<DataType>::synchronizeToDevice()
 {
     if (isDataDelegated())
     {
-        copyToDevice(data_, device_only_variable_->DeviceOnlyDataField(), getTotalSize());
+        copyToDevice(data_, device_only_variable_[currentSubdomainID()]->DeviceOnlyDataField(),
+                     getTotalSize());
     }
 }
 //=================================================================================================//
 template <typename DataType>
 DeviceOnlyDiscreteVariable<DataType>::
     DeviceOnlyDiscreteVariable(DiscreteVariable<DataType> *host_variable)
-    : Quantity(host_variable->Name()), device_only_data_(nullptr)
+    : Quantity(host_variable->Name()), device_only_data_(nullptr),
+      total_size_(host_variable->getTotalSize())
 {
-    UnsignedInt total_size = host_variable->getTotalSize();
-    device_only_data_ = allocateDeviceOnly<DataType>(total_size);
-    copyToDevice(host_variable->Data(), device_only_data_, total_size);
+    device_only_data_ = allocateDeviceOnly<DataType>(total_size_);
+    copyToDevice(host_variable->Data(), device_only_data_, total_size_);
 }
 //=================================================================================================//
 template <typename DataType>
@@ -61,28 +63,51 @@ template <typename DataType>
 void DeviceOnlyDiscreteVariable<DataType>::
     reallocateData(DiscreteVariable<DataType> *host_variable)
 {
+    // Staged through the host: the old contents are copied back, the new allocation
+    // made, and the contents copied in again. Rare enough (a neighbor list growth)
+    // for the round trip not to matter.
+    const UnsignedInt new_total_size = host_variable->getTotalSize();
+    const UnsignedInt kept_size = std::min(total_size_, new_total_size);
+    StdVec<DataType> kept(kept_size);
+    copyFromDevice(kept.data(), device_only_data_, kept_size);
     freeDeviceData(device_only_data_);
-    UnsignedInt new_host_variable_size = host_variable->getTotalSize();
-    device_only_data_ = allocateDeviceOnly<DataType>(new_host_variable_size);
+    device_only_data_ = allocateDeviceOnly<DataType>(new_total_size);
+    copyToDevice(kept.data(), device_only_data_, kept_size);
+    total_size_ = new_total_size;
 }
 //=================================================================================================//
 template <typename DataType>
 DataType *DiscreteVariable<DataType>::DelegatedOnDevice()
 {
+    const int device_id = currentSubdomainID();
     if (!isDataDelegated())
-    {
-        device_only_variable_ =
-            device_only_variable_keeper_
-                .createPtr<DeviceOnlyDiscreteVariable<DataType>>(this);
+    { // the allocation lands on the device bound to the calling thread, because
+      // allocateDeviceOnly() resolves the queue through currentSubdomainID() as well
+        std::lock_guard<std::mutex> lock(execution::replicaCreationMutex());
+        if (!isDataDelegated())
+        {
+            device_only_variable_[device_id] =
+                subdomain_replica_keeper_
+                    .template createPtr<DeviceOnlyDiscreteVariable<DataType>>(this);
+        }
     }
-    return device_only_variable_->DeviceOnlyDataField();
+    return device_only_variable_[device_id]->DeviceOnlyDataField();
 }
 //=================================================================================================//
 template <typename DataType>
 void DiscreteVariable<DataType>::reallocateDataOnDevice(UnsignedInt tentative_size)
 {
     reallocateData(tentative_size);
-    device_only_variable_->reallocateData(this);
+    // Every replica is grown, so that the host staging buffer stays a valid
+    // destination for any of them.
+    for (int device_id = 0; device_id < numberOfSubdomains(); ++device_id)
+    {
+        if (device_only_variable_[device_id] != nullptr)
+        {
+            execution::SubdomainScope scope(device_id);
+            device_only_variable_[device_id]->reallocateData(this);
+        }
+    }
 }
 //=================================================================================================//
 } // namespace SPH

@@ -12,7 +12,10 @@ LinearCorrectionMatrix<Base, RelationType<Parameters...>>::
     LinearCorrectionMatrix(DynamicsIdentifier &identifier)
     : Interaction<RelationType<Parameters...>>(identifier),
       dv_B_(this->particles_->template registerStateVariable<Matd>(
-          "LinearCorrectionMatrix", IdentityMatrix<Matd>::value)) {}
+          "LinearCorrectionMatrix", IdentityMatrix<Matd>::value))
+{
+    this->addToBeInteractVariable(dv_B_);
+}
 //=================================================================================================//
 template <typename... Parameters>
 template <class DynamicsIdentifier>
@@ -36,7 +39,7 @@ LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename... Parameters>
 void LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     B_[index_i] = Matd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -55,7 +58,7 @@ LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>::UpdateKernel::
 //=================================================================================================//
 template <typename... Parameters>
 void LinearCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
-    UpdateKernel::update(size_t index_i, Real dt)
+    UpdateKernel::compute(size_t index_i, Real dt)
 {
     Real determinant = B_[index_i].determinant();
     Real det_sqr = SMAX(alpha_ - determinant, Real(0));
@@ -79,7 +82,7 @@ LinearCorrectionMatrix<Contact<Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename... Parameters>
 void LinearCorrectionMatrix<Contact<Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
@@ -106,7 +109,7 @@ LinearCorrectionMatrixScope<DynamicsIdentifier, ParticleScope>::UpdateKernel::
 //=================================================================================================//
 template <class DynamicsIdentifier, class ParticleScope>
 void LinearCorrectionMatrixScope<DynamicsIdentifier, ParticleScope>::UpdateKernel::
-    update(size_t index_i, Real dt)
+    compute(size_t index_i, Real dt)
 {
     if (!within_scope_(index_i))
     {

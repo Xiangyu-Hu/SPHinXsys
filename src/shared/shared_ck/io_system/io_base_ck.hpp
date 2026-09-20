@@ -3,22 +3,32 @@
 
 #include "io_base_ck.h"
 
+#include "body_decomposition.h"
 #include "general_reduce_ck.hpp"
 
 namespace SPH
 {
 //=================================================================================================//
-template <class ExecutionPolicy>
-void BodyStatesRecordingToVtpCK<ExecutionPolicy>::prepareToWrite()
+template <class PolicyType>
+void VariablesWriteHelper::prepareToWrite(
+    SPHBody *sph_body, DiscreteVariables &discrete_variables, const PolicyType &ex_policy)
 {
-    for (size_t i = 0; i < bodies_.size(); ++i)
-    {
-        if (bodies_[i]->checkNewlyUpdated())
-        {
-            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-            prepare_variable_to_write_(base_particles.VariablesToWrite(), ExecutionPolicy{});
-        }
-    }
+    prepare_variable_to_write_(discrete_variables, ex_policy);
+}
+//=================================================================================================//
+template <class PolicyType>
+void VariablesWriteHelper::prepareToWrite(
+    SPHBody *sph_body, DiscreteVariables &discrete_variables,
+    const DecomposedExecution<PolicyType> &ex_policy)
+{
+    sph_body->getDecomposition<DecomposedExecution<PolicyType>>().gatherToHost(discrete_variables);
+}
+//=================================================================================================//
+template <class PolicyType>
+void VariablesWriteHelper::finishWrite(
+    SPHBody *sph_body, const DecomposedExecution<PolicyType> &ex_policy)
+{
+    sph_body->getDecomposition<DecomposedExecution<PolicyType>>().finishHostAccess();
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -26,8 +36,17 @@ void BodyStatesRecordingToVtpCK<ExecutionPolicy>::writeToFile()
 {
     if (state_recording_)
     {
-        prepareToWrite();
+        for (size_t i = 0; i < bodies_.size(); ++i)
+        {
+            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+            variable_write_helper_.prepareToWrite(
+                bodies_[i], base_particles.VariablesToWrite(), ExecutionPolicy{});
+        }
         BodyStatesRecordingToVtp::writeToFile();
+        for (size_t i = 0; i < bodies_.size(); ++i)
+        {
+            variable_write_helper_.finishWrite(bodies_[i], ExecutionPolicy{});
+        }
     }
 }
 //=================================================================================================//
@@ -36,8 +55,17 @@ void BodyStatesRecordingToVtpCK<ExecutionPolicy>::writeToFile(size_t iteration_s
 {
     if (state_recording_)
     {
-        prepareToWrite();
+        for (size_t i = 0; i < bodies_.size(); ++i)
+        {
+            BaseParticles &base_particles = bodies_[i]->getBaseParticles();
+            variable_write_helper_.prepareToWrite(
+                bodies_[i], base_particles.VariablesToWrite(), ExecutionPolicy{});
+        }
         BodyStatesRecordingToVtp::writeToFile(iteration_step);
+        for (size_t i = 0; i < bodies_.size(); ++i)
+        {
+            variable_write_helper_.finishWrite(bodies_[i], ExecutionPolicy{});
+        }
     }
 }
 //=================================================================================================//
@@ -104,15 +132,35 @@ RestartIOCK<ExecutionPolicy>::RestartIOCK(Args &&...args)
     }
 }
 //=================================================================================================//
+template <class PolicyType>
+void VariablesReadHelper::finalizeAfterRead(
+    SPHBody *sph_body, DiscreteVariables &discrete_variables, const PolicyType &ex_policy)
+{
+    finalize_variables_after_read_(discrete_variables, ex_policy);
+}
+//=================================================================================================//
+template <class PolicyType>
+void VariablesReadHelper::finalizeAfterRead(
+    SPHBody *sph_body, DiscreteVariables &discrete_variables,
+    const DecomposedExecution<PolicyType> &ex_policy)
+{
+    sph_body->getDecomposition<DecomposedExecution<PolicyType>>().scatterFromHost();
+}
+//=================================================================================================//
 template <class ExecutionPolicy>
 void RestartIOCK<ExecutionPolicy>::writeToFile(size_t iteration_step)
 {
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
-        prepare_variable_to_write_(base_particles.EvolvingVariables(), ExecutionPolicy{});
+        variable_write_helper_.prepareToWrite(
+            real_bodies_[i], base_particles.EvolvingVariables(), ExecutionPolicy{});
     }
     RestartIO::writeToFile(iteration_step);
+    for (size_t i = 0; i < real_bodies_.size(); ++i)
+    {
+        variable_write_helper_.finishWrite(real_bodies_[i], ExecutionPolicy{});
+    }
 
     if (summary_enabled_)
     {
@@ -164,7 +212,8 @@ void RestartIOCK<ExecutionPolicy>::readFromFile(size_t iteration_step)
     for (size_t i = 0; i < real_bodies_.size(); ++i)
     {
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
-        finalize_variables_after_read_(base_particles.EvolvingVariables(), ExecutionPolicy{});
+        variable_read_helper_.finalizeAfterRead(
+            real_bodies_[i], base_particles.EvolvingVariables(), ExecutionPolicy{});
     }
 }
 //=================================================================================================//
@@ -174,9 +223,14 @@ void ReloadParticleIOCK<ExecutionPolicy>::writeToFile(size_t iteration_step)
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
         BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-        prepare_variable_to_reload_(base_particles.EvolvingVariables(), ExecutionPolicy{});
+        variable_write_helper_.prepareToWrite(
+            bodies_[i], base_particles.EvolvingVariables(), ExecutionPolicy{});
     }
     ReloadParticleIO::writeToFile(iteration_step);
+    for (size_t i = 0; i < bodies_.size(); ++i)
+    {
+        variable_write_helper_.finishWrite(bodies_[i], ExecutionPolicy{});
+    }
 }
 //=================================================================================================//
 } // namespace SPH

@@ -36,14 +36,20 @@ namespace SPH
 
 class RadixSort;
 template <>
-struct SortMethod<ParallelDevicePolicy>
+struct SortMethod<SYCLDevicePolicy>
 {
     typedef RadixSort type;
 };
 
 template <>
-struct PlusUnsignedInt<ParallelDevicePolicy>
+struct PlusUnsignedInt<SYCLDevicePolicy>
 {
+    typedef sycl::plus<UnsignedInt> type;
+};
+
+template <>
+struct PlusUnsignedInt<MultiDevicePolicy>
+{ // the scan itself is per device, only the fan-out differs
     typedef sycl::plus<UnsignedInt> type;
 };
 } // namespace SPH

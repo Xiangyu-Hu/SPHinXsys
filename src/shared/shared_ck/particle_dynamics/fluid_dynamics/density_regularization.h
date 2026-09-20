@@ -73,7 +73,7 @@ class CompressionSummation<Inner<Parameters...>>
       public:
         template <class ExecutionPolicy, class Encloser>
         InteractKernel(const ExecutionPolicy &ex_policy, Encloser &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Vecd zero_;
@@ -98,7 +98,7 @@ class CompressionSummation<Contact<Parameters...>>
       public:
         template <class ExecutionPolicy, class Encloser>
         InteractKernel(const ExecutionPolicy &ex_policy, Encloser &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         DataView<Real> compression_sum_, contact_Vol_ref_;
@@ -162,7 +162,7 @@ class DensityRegularization : public BaseLocalDynamics<DynamicsIdentifier>
       public:
         template <class ExecutionPolicy, class Encloser>
         UpdateKernel(const ExecutionPolicy &ex_policy, Encloser &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         EosKernel eos_;

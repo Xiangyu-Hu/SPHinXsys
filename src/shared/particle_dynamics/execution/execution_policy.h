@@ -30,6 +30,8 @@
 #ifndef EXECUTION_POLICY_H
 #define EXECUTION_POLICY_H
 
+#include "subdomain_scope.h"
+
 namespace SPH
 {
 namespace execution
@@ -50,37 +52,45 @@ class ParallelUnsequencedPolicy
 {
 };
 
-template <typename...>
-class DeviceExecution;
-
-template <>
-class DeviceExecution<>
+class SYCLDevicePolicy
 {
 };
 
+class DecomposedExecutionTag
+{
+};
 template <typename PolicyType>
-class DeviceExecution<PolicyType>
-    : public DeviceExecution<>, public PolicyType
+class DecomposedExecution : public PolicyType, public DecomposedExecutionTag
 {
 };
 
-using ParallelDevicePolicy = DeviceExecution<ParallelPolicy>;
-using SequencedDevicePolicy = DeviceExecution<SequencedPolicy>;
+using MultiDevicePolicy = DecomposedExecution<SYCLDevicePolicy>;
+using MultiHostPolicy = DecomposedExecution<ParallelPolicy>;
+using SequencedMultiHostPolicy = DecomposedExecution<SequencedPolicy>;
 
 inline constexpr auto seq = SequencedPolicy{};
 inline constexpr auto unseq = UnsequencedPolicy{};
 inline constexpr auto par_host = ParallelPolicy{};
 inline constexpr auto par_unseq = ParallelUnsequencedPolicy{};
-inline constexpr auto par_device = ParallelDevicePolicy{};
-inline constexpr auto seq_device = SequencedDevicePolicy{};
+inline constexpr auto multi_device = MultiDevicePolicy{};
+inline constexpr auto multi_host = MultiHostPolicy{};
+inline constexpr auto seq_multi_host = SequencedMultiHostPolicy{};
 
+/** The backend is chosen by SPHINXSYS_USE_SYCL. SPHINXSYS_DECOMPOSITION then wraps
+ *  that backend in DecomposedExecution, so the same option gives the multi-GPU run
+ *  with SYCL and the multi-subdomain host run without it. */
 #if SPHINXSYS_USE_SYCL
-using MainExecutionPolicy = ParallelDevicePolicy;
-inline constexpr auto par_ck = ParallelDevicePolicy{};
+using BackendExecutionPolicy = SYCLDevicePolicy;
 #else
-using MainExecutionPolicy = ParallelPolicy;
-inline constexpr auto par_ck = ParallelPolicy{};
+using BackendExecutionPolicy = ParallelPolicy;
 #endif // SPHINXSYS_USE_SYCL
+
+#if SPHINXSYS_DECOMPOSITION
+using MainExecutionPolicy = DecomposedExecution<BackendExecutionPolicy>;
+#else
+using MainExecutionPolicy = BackendExecutionPolicy;
+#endif // SPHINXSYS_DECOMPOSITION
+inline constexpr auto par_ck = MainExecutionPolicy{};
 
 } // namespace execution
 } // namespace SPH

@@ -57,6 +57,8 @@
 #include "sph_system.hpp"
 #include "sphinxsys_entity.h"
 
+#include "domain_decomposition_dynamics.h"
+
 #include "tbb/tick_count.h"
 typedef tbb::tick_count TickCount;
 typedef tbb::tick_count::interval_t TimeInterval;

@@ -132,6 +132,8 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     UpdateRelation(Inner<Parameters...> &inner_relation);
     virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
+    /** Body of exec(), executed once per device inside the fan-out. */
+    void updateOnCurrentDevice(Real dt);
 
   protected:
     class InteractKernel : public NeighborList
@@ -186,6 +188,8 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     UpdateRelation(ContactRelationType &contact_relation);
     virtual ~UpdateRelation() {};
     virtual void exec(Real dt = 0.0) override;
+    /** Body of exec(), executed once per device inside the fan-out. */
+    void updateOnCurrentDevice(Real dt);
 
   protected:
     class InteractKernel : public NeighborList

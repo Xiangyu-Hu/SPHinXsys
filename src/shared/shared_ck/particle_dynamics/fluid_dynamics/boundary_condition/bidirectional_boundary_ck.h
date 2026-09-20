@@ -53,7 +53,7 @@ class BufferIndicationCK : public BaseLocalDynamics<OrientedBoxByCell>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         int part_id_;
@@ -97,7 +97,7 @@ class BufferInflowInjectionCK : public BaseLocalDynamics<OrientedBoxByCell>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       private:
         int part_id_;
@@ -151,7 +151,7 @@ class BufferOutflowIndication : public BaseLocalDynamics<OrientedBoxByCell>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         OrientedBox *oriented_box_;
@@ -184,7 +184,7 @@ class OutflowParticleDeletion : public LocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(UnsignedInt index_i, Real dt = 0.0);
+        void compute(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
         RemoveRealParticleKernel remove_real_particle_;
@@ -212,7 +212,7 @@ class PressureVelocityCondition : public BaseLocalDynamics<OrientedBoxByCell>,
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         OrientedBox *oriented_box_;
@@ -246,7 +246,7 @@ class SupplementaryCondition : public BaseLocalDynamics<OrientedBoxByCell>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         OrientedBox *oriented_box_;

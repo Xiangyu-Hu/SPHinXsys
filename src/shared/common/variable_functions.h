@@ -103,6 +103,30 @@ struct PrepareVariablesToWrite
     };
 };
 
+struct SetVariablesDirty
+{
+    template <template <typename> class ContainerType, typename DataType>
+    void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables)
+    {
+        for (UnsignedInt i = 0; i != variables.size(); ++i)
+        {
+            variables[i]->setDirty();
+        }
+    };
+};
+
+struct SetVariablesClean
+{
+    template <template <typename> class ContainerType, typename DataType>
+    void operator()(DataContainerAddressKeeper<ContainerType<DataType>> &variables)
+    {
+        for (UnsignedInt i = 0; i != variables.size(); ++i)
+        {
+            variables[i]->clean();
+        }
+    };
+};
+
 template <template <typename> class ContainerType>
 struct FinalizeVariablesAfterRead
 {

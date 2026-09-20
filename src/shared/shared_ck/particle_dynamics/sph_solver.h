@@ -79,13 +79,15 @@ class TimeStepper
     UnsignedInt getIterationStep() const { return iteration_step_; }
     void setRestartStep(UnsignedInt restart_step);
     bool isFirstComputingStep() const { return iteration_step_ == first_computing_step_; }
-    UnsignedInt incrementIterationStep() { return ++iteration_step_; }
+    UnsignedInt incrementIterationStep();
     UnsignedInt getScreeningInterval() const { return screening_interval_; }
     UnsignedInt getObservationInterval() const { return observation_interval_; }
     void setScreeningInterval(UnsignedInt interval) { screening_interval_ = interval; }
     void setObservationInterval(UnsignedInt interval) { observation_interval_ = interval; }
+    void setRestartWriteInterval(UnsignedInt interval) { restart_write_interval_ = interval; }
     bool isScreeningStep() const { return (iteration_step_ % screening_interval_ == 0); }
-    bool isObservationStep() const { return (iteration_step_ % observation_interval_ == 0); }
+    bool isObservationStep() const;
+    bool isRestartWriteStep() const;
 
     template <class Integrator>
     UnsignedInt integrateMatchedTimeInterval( // designed to avoid too small last step
@@ -173,11 +175,13 @@ class TimeStepper
     StdVec<TriggerByInterval *> interval_executers_;
     StdVec<TriggerByPhysicalTime *> physical_time_executers_;
     Real global_dt_;
+    SPHSystem &sph_system_;
     SingleVariable<Real> *sv_physical_time_;
     UnsignedInt iteration_step_{0};
     UnsignedInt first_computing_step_{0};
     UnsignedInt screening_interval_{100};
     UnsignedInt observation_interval_{200};
+    UnsignedInt restart_write_interval_{1000};
 };
 
 using MainMethods = ParticleMethodContainer<MainExecutionPolicy>;
@@ -189,14 +193,15 @@ class SPHSolver
     UniquePtrKeeper<MainMethods> main_methods_keeper_;
     UniquePtrKeeper<HostMethods> host_methods_keeper_;
     UniquePtrKeeper<SequenceMethods> seq_methods_keeper_;
+    UniquePtrKeeper<TimeStepper> time_stepper_keeper_;
 
   public:
-    SPHSolver(SPHSystem &sph_system) : sph_system_(sph_system), time_stepper_(sph_system) {};
-    virtual ~SPHSolver() {};
+    SPHSolver(SPHSystem &sph_system);
+    virtual ~SPHSolver();
     MainMethods &getMainMethodContainer();
     HostMethods &getHostMethodContainer();
     SequenceMethods &getSequenceMethodContainer();
-    TimeStepper &getTimeStepper() { return time_stepper_; };
+    TimeStepper &getTimeStepper();
 
   protected:
     SPHSystem &sph_system_;

@@ -32,7 +32,13 @@ UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
       target_particle_mask_method_(inner_relation_.getDynamicsIdentifier()),
       cell_linked_list_(DynamicCast<CellLinkedList<CellLinkedListIdentifier>>(
           this, inner_relation_.getDynamicsIdentifier().getCellLinkedList())),
-      kernel_implementation_(*this) {}
+      kernel_implementation_(*this)
+{
+    // Registered like the interaction kernels, so that a growth of the neighbor list
+    // by one subdomain invalidates the update kernels of the other subdomains as well;
+    // they hold pointers into the replicas the growth reallocates.
+    inner_relation_.registerComputingKernel(&kernel_implementation_);
+}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 template <class EncloserType>
@@ -107,16 +113,32 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
 {
-    UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
+    // Neighbor lists are built for the owned particles only. Their neighbors may well
+    // be halo particles, whose indices live past the owned range of the local arrays.
+    execution::fanOutOverSubdomains(
+        ExecutionPolicy{}, [&]()
+        { this->updateOnCurrentDevice(dt); });
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename... Parameters>
+void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::updateOnCurrentDevice(Real dt)
+{
+    // The inner relation is one-sided: a pair (i, j) is registered from the side of
+    // the smaller index into the lists of both particles. Halo particles occupy the
+    // slots past the owned range, so an owned particle next to a cut plane writes
+    // into the list of a halo particle. The lists, the offsets and the scan therefore
+    // cover the local (owned plus halo) range; outside a decomposed run the two
+    // counts are equal and nothing changes.
+    UnsignedInt total_local_particles = this->particles_->TotalLocalParticles(ex_policy_);
     InteractKernel *computing_kernel = kernel_implementation_.getComputingKernel();
 
     particle_for(ex_policy_,
-                 IndexRange(0, total_real_particles),
+                 IndexRange(0, total_local_particles),
                  [=](size_t i)
                  { computing_kernel->clearNeighborSize(i); });
 
     particle_for(ex_policy_,
-                 IndexRange(0, total_real_particles),
+                 IndexRange(0, total_local_particles),
                  [=](size_t i)
                  { computing_kernel->incrementNeighborSize(i); });
 
@@ -127,7 +149,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
     auto *dv_particle_offset = this->inner_relation_.dvParticleOffset();
     UnsignedInt *neighbor_index = dv_neighbor_index->DelegatedData(ex_policy_);
     UnsignedInt *particle_offset = dv_particle_offset->DelegatedData(ex_policy_);
-    UnsignedInt current_offset_list_size = total_real_particles + 1;
+    UnsignedInt current_offset_list_size = total_local_particles + 1;
     UnsignedInt current_neighbor_index_size =
         exclusive_scan(ex_policy_, neighbor_index, particle_offset, current_offset_list_size,
                        typename PlusUnsignedInt<ExecutionPolicy>::type());
@@ -145,7 +167,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::exec(Real dt)
     }
 
     particle_for(ex_policy_,
-                 IndexRange(0, total_real_particles),
+                 IndexRange(0, total_local_particles),
                  [=](size_t i)
                  { computing_kernel->updateNeighborList(i); });
 
@@ -164,7 +186,10 @@ UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
           DynamicCast<CellLinkedList<CellLinkedListIdentifier>>(
               this, &contact_relation.getTargetIdentifier().getCellLinkedList())),
       contact_kernel_implementation_(
-          contact_kernel_implementation_ptr_.template createPtr<KernelImplementation>(*this)) {}
+          contact_kernel_implementation_ptr_.template createPtr<KernelImplementation>(*this))
+{
+    contact_relation_.registerComputingKernel(contact_kernel_implementation_); // see the inner relation
+}
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 template <class EncloserType>
@@ -222,6 +247,14 @@ void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::
 //=================================================================================================//
 template <class ExecutionPolicy, typename... Parameters>
 void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::exec(Real dt)
+{
+    execution::fanOutOverSubdomains(
+        ExecutionPolicy{}, [&]()
+        { this->updateOnCurrentDevice(dt); });
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename... Parameters>
+void UpdateRelation<ExecutionPolicy, Contact<Parameters...>>::updateOnCurrentDevice(Real dt)
 {
     UnsignedInt total_real_particles = this->particles_->TotalRealParticles();
 
