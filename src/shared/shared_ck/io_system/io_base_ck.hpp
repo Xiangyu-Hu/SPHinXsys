@@ -224,13 +224,12 @@ void ReloadParticleIOCK<ExecutionPolicy>::writeToFile(size_t iteration_step)
     {
         BaseParticles &base_particles = bodies_[i]->getBaseParticles();
         variable_write_helper_.prepareToWrite(
-            base_particles, base_particles.EvolvingVariables(), ExecutionPolicy{});
+            bodies_[i], base_particles.EvolvingVariables(), ExecutionPolicy{});
     }
     ReloadParticleIO::writeToFile(iteration_step);
     for (size_t i = 0; i < bodies_.size(); ++i)
     {
-        BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-        variable_write_helper_.finishWrite(base_particles, ExecutionPolicy{});
+        variable_write_helper_.finishWrite(bodies_[i], ExecutionPolicy{});
     }
 }
 //=================================================================================================//

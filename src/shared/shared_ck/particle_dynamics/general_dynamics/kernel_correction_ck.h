@@ -206,7 +206,7 @@ class LinearCorrectionWithinScopeCK : public KernelCorrection
             std::is_base_of<WithinScope, ScopeMethod>::value,
             "WithinScope is not the base of ParticleScope!");
     }
-    DiscreteVariable<Matd> *getDiscreteVariable() { return dv_B_; };
+    DiscreteVariable<Matd> *getDiscreteVariable() const { return dv_B_; };
 
     class ComputingKernel : public BaseParameter
     {
