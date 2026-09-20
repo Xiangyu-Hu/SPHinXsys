@@ -129,7 +129,7 @@ void UpdateRelation<ExecutionPolicy, Inner<Parameters...>>::updateOnCurrentDevic
     // into the list of a halo particle. The lists, the offsets and the scan therefore
     // cover the local (owned plus halo) range; outside a decomposed run the two
     // counts are equal and nothing changes.
-    UnsignedInt total_local_particles = this->particles_->TotalLocalParticles();
+    UnsignedInt total_local_particles = this->particles_->TotalLocalParticles(ex_policy_);
     InteractKernel *computing_kernel = kernel_implementation_.getComputingKernel();
 
     particle_for(ex_policy_,

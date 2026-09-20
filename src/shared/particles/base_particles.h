@@ -118,7 +118,10 @@ class BaseParticles
     SingleVariable<UnsignedInt> *svTotalRealParticles() { return sv_total_real_particles_; };
     UnsignedInt TotalRealParticles() { return sv_total_real_particles_->getValue(); };
     SingleVariable<UnsignedInt> *svTotalLocalParticles() { return sv_total_local_particles_; };
-    UnsignedInt TotalLocalParticles() { return sv_total_local_particles_->getValue(); };
+    template <class PolicyType>
+    UnsignedInt TotalLocalParticles(const PolicyType &ex_policy);
+    template <class PolicyType>
+    UnsignedInt TotalLocalParticles(const DecomposedExecution<PolicyType> &ex_policy);
     UnsignedInt ParticlesBound() { return particles_bound_; };
     GroupManager &getParticleGroupManager();
     void initializeAllParticlesBounds(UnsignedInt total_real_particles);
@@ -160,10 +163,10 @@ class BaseParticles
     // Particle data for sorting
     //----------------------------------------------------------------------
   protected:
-    UnsignedInt *original_id_;                                 /**< the original ids assigned just after particle is generated. */
-    UnsignedInt *sorted_id_;                                   /**< the current sorted particle ids of particles from original ids. */
-    DiscreteVariables evolving_variables_;                     // particle variables which evolving during simulation
-    DiscreteVariables all_interact_variables_;              // particle variables which are used in interaction dynamics
+    UnsignedInt *original_id_;                 /**< the original ids assigned just after particle is generated. */
+    UnsignedInt *sorted_id_;                   /**< the current sorted particle ids of particles from original ids. */
+    DiscreteVariables evolving_variables_;     // particle variables which evolving during simulation
+    DiscreteVariables all_interact_variables_; // particle variables which are used in interaction dynamics
 
   public:
     DiscreteVariables &VariablesToWrite() { return variables_to_write_; };
@@ -172,7 +175,7 @@ class BaseParticles
     DiscreteVariables &AllInteractVariables() { return all_interact_variables_; };
     StdVec<std::string> &ParticleGroupsToWrite() { return particle_groups_to_write_; };
     void addParticleGroupToWrite(const std::string &name);
-    
+
     template <typename DataType, typename... Args>
     void addEvolvingVariable(Args &&...args);
 

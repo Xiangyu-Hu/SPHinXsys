@@ -88,7 +88,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::exec(Real dt)
 template <class ExecutionPolicy, typename DynamicsIdentifier>
 void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::buildOnCurrentDevice()
 {
-    UnsignedInt total_local_particles = this->particles_->TotalLocalParticles();
+    UnsignedInt total_local_particles = this->particles_->TotalLocalParticles(ExecutionPolicy{});
     ComputingKernel *computing_kernel = kernel_implementation_.getComputingKernel();
 
     particle_for(ExecutionPolicy{},

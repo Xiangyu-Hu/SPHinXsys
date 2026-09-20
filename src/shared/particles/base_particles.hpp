@@ -8,6 +8,18 @@
 namespace SPH
 {
 //=================================================================================================//
+template <class PolicyType>
+UnsignedInt BaseParticles::TotalLocalParticles(const PolicyType &ex_policy)
+{
+    return sv_total_real_particles_->getValue();
+}
+//=================================================================================================//
+template <class PolicyType>
+UnsignedInt BaseParticles::TotalLocalParticles(const DecomposedExecution<PolicyType> &ex_policy)
+{
+    return sv_total_local_particles_->getValue();
+}
+//=================================================================================================//
 template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::getVariableByName(const std::string &name)
 {
