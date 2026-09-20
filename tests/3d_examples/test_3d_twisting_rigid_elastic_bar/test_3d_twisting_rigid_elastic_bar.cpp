@@ -106,7 +106,7 @@ struct rigid_algs
         : matter(MBsystem),
           forces(MBsystem),
           rigid_multibody(body, rigid_shape),
-          rigid_info(*rigid_multibody.body_part_mass_properties_),
+          rigid_info(rigid_multibody.getSimTKMassProperties()),
           rigidMBody(matter.Ground(), SimTK::Transform(EigenToSimTK(get_central_position(rigid_shape->getBounds()))), rigid_info, SimTK::Transform(SimTKVec3(0))),
           force_on_bodies(forces, matter),
           state(MBsystem.realizeTopology()),
