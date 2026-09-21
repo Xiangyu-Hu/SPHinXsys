@@ -48,7 +48,7 @@ class Neighbor<Base>
     Neighbor(SharedPtr<Kernel> base_kernel,
              DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos);
     Neighbor(SharedPtr<Kernel> base_kernel);
-    ~Neighbor() {};
+    virtual ~Neighbor() {};
 
     class SmoothingKernel : public KernelTabulatedCK
     {

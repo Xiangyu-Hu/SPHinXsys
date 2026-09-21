@@ -66,6 +66,31 @@ void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_me
         part_id_name_ + "_Size", body_part_particles_.size());
 }
 //=================================================================================================//
+void BodyPartByParticle::rebuildFromParticleGroups()
+{
+    GroupManager &group_manager = getParticleGroupManager();
+    auto part_mask = group_manager.createHostMaskKernel(part_id_name_);
+
+    body_part_particles_.clear();
+    UnsignedInt *particle_list = dv_particle_list_->Data();
+    UnsignedInt list_size = 0;
+    for (size_t i = 0; i != base_particles_.TotalRealParticles(); ++i)
+    {
+        if (part_mask.check(i))
+        {
+            body_part_particles_.push_back(i);
+            particle_list[list_size++] = i;
+        }
+    }
+
+    if (list_size != sv_range_size_->getValue())
+    {
+        std::cout << "\n Error: rebuild BodyPartByParticle should be the same size as before. \n";
+        std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+        exit(1);
+    }
+}
+//=================================================================================================//
 BodyPartByCell::BodyPartByCell(RealBody &real_body)
     : BodyPart(real_body), cell_linked_list_(real_body.getCellLinkedList()),
       dv_cell_list_(nullptr),

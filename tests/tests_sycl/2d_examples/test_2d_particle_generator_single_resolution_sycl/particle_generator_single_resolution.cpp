@@ -38,8 +38,9 @@ int main(int ac, char *av[])
     auto &input_shape = sph_system.addShape<ComplexShape>("SPHInXsysLogo");
     MultiPolygon original_logo;
     original_logo.addPolygonFromFile(input_body, GeometricOps::add);
-    input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * global_resolution, original_logo);
-    input_shape.subtract<MultiPolygonShape>(original_logo);
+    MultiPolygonShape &inner_shape = sph_system.addShape<MultiPolygonShape>(original_logo);
+    input_shape.add<ExtrudeShape>(inner_shape, 4.0 * global_resolution);
+    input_shape.subtract(&inner_shape);
     auto &input_body = sph_system.addBody<RealBody>(input_shape);
     LevelSetShape &level_set_shape = input_body.defineBodyLevelSetShape(par_ck, 2.0)
                                          .addPackageVariableToWrite<Real>("KernelWeight")
