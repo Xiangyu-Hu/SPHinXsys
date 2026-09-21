@@ -144,17 +144,17 @@ class AdvectionStepSetup : public LocalDynamics
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            Vol_[index_i] = mass_[index_i] / rho_[index_i];
+            Vol_[index_i] = Vol_ref_[index_i] / compression_[index_i];
             dpos_[index_i] = Vecd::Zero();
         };
 
       protected:
-        Real *Vol_, *mass_, *rho_;
+        Real *Vol_, *Vol_ref_, *compression_;
         Vecd *dpos_;
     };
 
   protected:
-    DiscreteVariable<Real> *dv_Vol_, *dv_mass_, *dv_rho_;
+    DiscreteVariable<Real> *dv_Vol_, *dv_Vol_ref_, *dv_compression_;
     DiscreteVariable<Vecd> *dv_dpos_;
 };
 

@@ -66,8 +66,8 @@ template <class ExecutionPolicy>
 AdvectionStepSetup::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepSetup &encloser)
     : Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+      Vol_ref_(encloser.dv_Vol_ref_->DelegatedData(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedData(ex_policy)),
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy>
