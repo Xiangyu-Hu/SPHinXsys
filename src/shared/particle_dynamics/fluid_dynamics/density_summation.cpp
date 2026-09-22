@@ -96,7 +96,7 @@ ShepardDensityRegularizationWithWall::ShepardDensityRegularizationWithWall(
       DataDelegateContact(wall_contact_relation),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       mass_(particles_->getVariableDataByName<Real>("Mass")),
-      rho_sum_(particles_->registerStateVariableData<Real>("DensitySummation")),
+      rho_regularized_(particles_->registerStateVariableData<Real>("ShepardDensity")),
       Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
       W0_(getSPHAdaptation().getKernel()->W0(ZeroVecd))
 {
@@ -138,12 +138,12 @@ void ShepardDensityRegularizationWithWall::interaction(size_t index_i, Real dt)
     }
     denominator += wall_denominator;
     numerator += rho_[index_i] * wall_denominator;
-    rho_sum_[index_i] = numerator / denominator;
+    rho_regularized_[index_i] = numerator / denominator;
 }
 //=================================================================================================//
 void ShepardDensityRegularizationWithWall::update(size_t index_i, Real dt)
 {
-    rho_[index_i] = rho_sum_[index_i];
+    rho_[index_i] = rho_regularized_[index_i];
     Vol_[index_i] = mass_[index_i] / rho_[index_i];
 }
 //=================================================================================================//
