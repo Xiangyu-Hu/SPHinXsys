@@ -120,8 +120,10 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(water_block_inner, water_block_contact);
     InteractionWithUpdate<fluid_dynamics::TransportVelocityCorrectionComplex<BulkParticles>> transport_velocity_correction(water_block_inner, water_block_contact);
 
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(water_block, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(water_block);
+    // Opt in to the acceleration-aware acoustic scheme for this moving-wall case.
+    // Other CPU examples retain their existing outer-step acceleration criterion.
+    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStepWithoutAcceleration> get_fluid_advection_time_step_size(water_block, U_f);
+    ReduceDynamics<fluid_dynamics::AcousticTimeStepWithAcceleration> get_fluid_time_step_size(water_block);
     ReduceDynamics<fluid_dynamics::WallAccelerationTimeStep> get_wall_acceleration_time_step_size(water_block_contact);
 
     OrientedBoxByParticle emitter(water_block, OrientedBox(xAxis, Transform(Vec2d(emitter_translation)), emitter_halfsize));

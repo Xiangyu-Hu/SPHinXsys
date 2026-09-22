@@ -52,10 +52,31 @@ class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax<Real>>
 
   protected:
     Fluid &fluid_;
-    Real *rho_, *p_, *mass_;
-    Vecd *vel_, *force_, *force_prior_;
+    Real *rho_, *p_;
+    Vecd *vel_;
     Real h_min_;
     Real acousticCFL_;
+};
+/**
+ * @class AcousticTimeStepWithAcceleration
+ * @brief Opt-in acoustic bound including the current fluid acceleration.
+ * @details The default CPU AcousticTimeStep and AdvectionTimeStep keep their
+ * existing criteria. Moving the acceleration criterion to acoustic substeps
+ * is a different dual-time-stepping scheme, not an interchangeable default:
+ * the outer step also sets the neighbor-configuration and density-update
+ * interval. Use the WithoutAcceleration advection variants only after
+ * validating that interval for the application, and evaluate this bound at
+ * every acoustic substep.
+ */
+class AcousticTimeStepWithAcceleration : public AcousticTimeStep
+{
+  public:
+    explicit AcousticTimeStepWithAcceleration(SPHBody &sph_body, Real acousticCFL = 0.6);
+    Real reduce(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Real *mass_;
+    Vecd *force_, *force_prior_;
 };
 /**
  * @class WallAccelerationTimeStep
@@ -102,7 +123,8 @@ class AdvectionTimeStep
     : public LocalDynamicsReduce<ReduceMax<Real>>
 {
   protected:
-    Vecd *vel_;
+    Real *mass_;
+    Vecd *vel_, *force_, *force_prior_;
     Real h_min_;
     Real speed_ref_, advectionCFL_;
 
@@ -122,6 +144,28 @@ class AdvectionViscousTimeStep : public AdvectionTimeStep
   public:
     AdvectionViscousTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
     virtual ~AdvectionViscousTimeStep() {};
+    Real reduce(size_t index_i, Real dt = 0.0);
+};
+/**
+ * @class AdvectionTimeStepWithoutAcceleration
+ * @brief Opt-in velocity-only outer step, paired with AcousticTimeStepWithAcceleration.
+ * @details Neighbor configurations are held over this interval. Existing CPU
+ * cases should retain AdvectionTimeStep unless this alternative is validated.
+ */
+class AdvectionTimeStepWithoutAcceleration : public AdvectionTimeStep
+{
+  public:
+    using AdvectionTimeStep::AdvectionTimeStep;
+    Real reduce(size_t index_i, Real dt = 0.0);
+};
+/**
+ * @class AdvectionViscousTimeStepWithoutAcceleration
+ * @brief Opt-in velocity/viscosity outer step for the acceleration-aware acoustic scheme.
+ */
+class AdvectionViscousTimeStepWithoutAcceleration : public AdvectionViscousTimeStep
+{
+  public:
+    using AdvectionViscousTimeStep::AdvectionViscousTimeStep;
     Real reduce(size_t index_i, Real dt = 0.0);
 };
 } // namespace fluid_dynamics

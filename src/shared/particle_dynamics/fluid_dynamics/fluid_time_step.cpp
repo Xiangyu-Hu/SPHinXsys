@@ -14,19 +14,13 @@ AcousticTimeStep::AcousticTimeStep(SPHBody &sph_body, Real acousticCFL)
       fluid_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial())),
       rho_(particles_->getVariableDataByName<Real>("Density")),
       p_(particles_->getVariableDataByName<Real>("Pressure")),
-      mass_(particles_->getVariableDataByName<Real>("Mass")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
-      force_(particles_->getVariableDataByName<Vecd>("Force")),
-      force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
       h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       acousticCFL_(acousticCFL) {}
 //=================================================================================================//
 Real AcousticTimeStep::reduce(size_t index_i, Real dt)
 {
-    Real force_norm = (force_[index_i] + force_prior_[index_i]).norm();
-    Real acceleration_scale = sqrt(4.0 * h_min_ * force_norm / mass_[index_i]);
-    return SMAX(fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm(),
-                acceleration_scale);
+    return fluid_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
 }
 //=================================================================================================//
 Real AcousticTimeStep::outputResult(Real reduced_value)
@@ -34,6 +28,19 @@ Real AcousticTimeStep::outputResult(Real reduced_value)
     // since the particle does not change its configuration in pressure relaxation step
     // I chose a time-step size according to Eulerian method
     return acousticCFL_ * h_min_ / (reduced_value + TinyReal);
+}
+//=================================================================================================//
+AcousticTimeStepWithAcceleration::AcousticTimeStepWithAcceleration(SPHBody &sph_body, Real acousticCFL)
+    : AcousticTimeStep(sph_body, acousticCFL),
+      mass_(particles_->getVariableDataByName<Real>("Mass")),
+      force_(particles_->getVariableDataByName<Vecd>("Force")),
+      force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")) {}
+//=================================================================================================//
+Real AcousticTimeStepWithAcceleration::reduce(size_t index_i, Real dt)
+{
+    Real force_norm = (force_[index_i] + force_prior_[index_i]).norm();
+    Real acceleration_scale = sqrt(4.0 * h_min_ * force_norm / mass_[index_i]);
+    return SMAX(AcousticTimeStep::reduce(index_i, dt), acceleration_scale);
 }
 //=================================================================================================//
 WallAccelerationTimeStep::WallAccelerationTimeStep(
@@ -93,13 +100,18 @@ Real SurfaceTensionTimeStep::outputResult(Real reduced_value)
 AdvectionTimeStep::
     AdvectionTimeStep(SPHBody &sph_body, Real U_ref, Real advectionCFL)
     : LocalDynamicsReduce<ReduceMax<Real>>(sph_body),
+      mass_(particles_->getVariableDataByName<Real>("Mass")),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
+      force_(particles_->getVariableDataByName<Vecd>("Force")),
+      force_prior_(particles_->getVariableDataByName<Vecd>("ForcePrior")),
       h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       speed_ref_(U_ref), advectionCFL_(advectionCFL) {}
 //=================================================================================================//
 Real AdvectionTimeStep::reduce(size_t index_i, Real dt)
 {
-    return vel_[index_i].squaredNorm();
+    Real acceleration_scale = 4.0 * h_min_ *
+                              (force_[index_i] + force_prior_[index_i]).norm() / mass_[index_i];
+    return SMAX(vel_[index_i].squaredNorm(), acceleration_scale);
 }
 //=================================================================================================//
 Real AdvectionTimeStep::outputResult(Real reduced_value)
@@ -120,6 +132,16 @@ AdvectionViscousTimeStep::AdvectionViscousTimeStep(SPHBody &sph_body, Real U_ref
 Real AdvectionViscousTimeStep::reduce(size_t index_i, Real dt)
 {
     return AdvectionTimeStep::reduce(index_i, dt);
+}
+//=================================================================================================//
+Real AdvectionTimeStepWithoutAcceleration::reduce(size_t index_i, Real dt)
+{
+    return vel_[index_i].squaredNorm();
+}
+//=================================================================================================//
+Real AdvectionViscousTimeStepWithoutAcceleration::reduce(size_t index_i, Real dt)
+{
+    return vel_[index_i].squaredNorm();
 }
 //=================================================================================================//
 } // namespace fluid_dynamics
