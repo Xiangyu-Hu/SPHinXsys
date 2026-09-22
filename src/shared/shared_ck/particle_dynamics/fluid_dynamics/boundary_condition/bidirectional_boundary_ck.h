@@ -232,8 +232,11 @@ class PressureVelocityCondition : public BaseLocalDynamics<OrientedBoxByCell>,
     DiscreteVariable<Vecd> *dv_kernel_gradient_integral_;
 };
 
+template <typename...>
+class SupplementaryCondition;
 template <typename ConditionType>
-class SupplementaryCondition : public BaseLocalDynamics<OrientedBoxByCell>
+class SupplementaryCondition<OrientedBoxByCell, ConditionType>
+    : public BaseLocalDynamics<OrientedBoxByCell>
 {
     using ConditionKernel = typename ConditionType::ComputingKernel;
 

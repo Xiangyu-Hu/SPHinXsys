@@ -166,7 +166,7 @@ void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
 //=================================================================================================//
 template <typename ConditionType>
 template <typename... Args>
-SupplementaryCondition<ConditionType>::SupplementaryCondition(
+SupplementaryCondition<OrientedBoxByCell, ConditionType>::SupplementaryCondition(
     OrientedBoxByCell &oriented_box_part, Args &&...args)
     : BaseLocalDynamics<OrientedBoxByCell>(oriented_box_part),
       sv_oriented_box_(oriented_box_part.svOrientedBox()),
@@ -175,14 +175,15 @@ SupplementaryCondition<ConditionType>::SupplementaryCondition(
 //=================================================================================================//
 template <typename ConditionType>
 template <class ExecutionPolicy, class EncloserType>
-SupplementaryCondition<ConditionType>::UpdateKernel::UpdateKernel(
+SupplementaryCondition<OrientedBoxByCell, ConditionType>::UpdateKernel::UpdateKernel(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : oriented_box_(encloser.sv_oriented_box_->DelegatedData(ex_policy)),
       condition_(ex_policy, encloser.condition_method_),
       pos_(encloser.dv_pos_->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
 template <typename ConditionType>
-void SupplementaryCondition<ConditionType>::UpdateKernel::update(size_t index_i, Real dt)
+void SupplementaryCondition<OrientedBoxByCell, ConditionType>::UpdateKernel::update(
+    size_t index_i, Real dt)
 {
     if (oriented_box_->checkContain(pos_[index_i]))
     {
