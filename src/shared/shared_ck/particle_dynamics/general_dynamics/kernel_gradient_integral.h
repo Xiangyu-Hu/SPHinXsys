@@ -66,7 +66,7 @@ class KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         CorrectionKernel correction_;
@@ -95,7 +95,7 @@ class KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters.
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         CorrectionKernel correction_;

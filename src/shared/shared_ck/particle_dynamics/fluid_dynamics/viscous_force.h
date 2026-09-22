@@ -80,7 +80,7 @@ class ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Para
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         InterParticleViscosity inter_particle_viscosity_;
@@ -110,7 +110,7 @@ class ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Paramete
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         OneSideViscosity one_side_viscosity_;

@@ -35,7 +35,7 @@
 namespace SPH
 {
 template <class UnaryFunc>
-void particle_for(const ParallelDevicePolicy &par_device,
+void particle_for(const SYCLDevicePolicy &sycl_device,
                   const IndexRange &particles_range,
                   const UnaryFunc &unary_func)
 {
@@ -49,38 +49,28 @@ void particle_for(const ParallelDevicePolicy &par_device,
         .wait_and_throw();
 }
 
-template <class Identifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<SequencedDevicePolicy, Identifier> &loop_range,
-                  const UnaryFunc &unary_func)
+template <class Identifier, class KernelImplementationType>
+void particle_for(const LoopRangeCK<SYCLDevicePolicy, Identifier> &loop_range,
+                  KernelImplementationType &implementation, Real dt)
 {
-    auto &sycl_queue = execution_instance.getQueue();
-    const size_t loop_bound = loop_range.LoopBound();
-    sycl_queue.submit([&](sycl::handler &cgh)
-                      { cgh.single_task([=]()
-                                        {
-                                for (int i = 0; i != loop_bound; i++)
-                                    loop_range.computeUnit(unary_func, i); }); })
-        .wait_and_throw();
-}
-
-template <class Identifier, class UnaryFunc>
-void particle_for(const LoopRangeCK<ParallelDevicePolicy, Identifier> &loop_range,
-                  const UnaryFunc &unary_func)
-{
+    auto kernel = implementation.getComputingKernel();
     auto &sycl_queue = execution_instance.getQueue();
     const size_t loop_bound = loop_range.LoopBound();
     sycl_queue.submit([&](sycl::handler &cgh)
                       { cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), [=](sycl::nd_item<1> index)
                                          {
                                  if(index.get_global_id(0) < loop_bound)
-                                     loop_range.computeUnit(unary_func, index.get_global_id(0)); }); })
+                                     loop_range.computeUnit(
+                                         [=](size_t i){ kernel->compute(i, dt); }, 
+                                        index.get_global_id(0)); }); })
         .wait_and_throw();
 }
 
-template <typename Operation, class Identifier, class ReturnType, class UnaryFunc>
-ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, Identifier> &loop_range,
-                           ReturnType temp, const UnaryFunc &unary_func)
+template <typename Operation, class Identifier, class ReturnType, class KernelImplementationType>
+ReturnType particle_reduce(const LoopRangeCK<SYCLDevicePolicy, Identifier> &loop_range,
+                           ReturnType temp, KernelImplementationType &implementation, Real dt)
 {
+    auto reduce_kernel = implementation.getComputingKernel();
     auto &sycl_queue = execution_instance.getQueue();
     const size_t loop_bound = loop_range.LoopBound();
     ReturnType temp0 = temp;
@@ -97,7 +87,35 @@ ReturnType particle_reduce(const LoopRangeCK<ParallelDevicePolicy, Identifier> &
                                                  {
                                                      if (item.get_global_id() < loop_bound)
                                                          reduction.combine(loop_range.computeUnit(
-                                                             acc[0], operation, unary_func, item.get_global_id(0)));
+                                                             acc[0], operation, 
+                                                             [=](size_t i){ return reduce_kernel->reduce(i, dt); }, 
+                                                             item.get_global_id(0)));
+                                                 }); })
+            .wait_and_throw();
+    } // buffer_result goes out of scope, so the result (of temp) is updated
+    return temp;
+}
+
+template <typename Operation, class ReturnType, class UnaryFunc>
+ReturnType particle_reduce(const SYCLDevicePolicy &sycl_device, const IndexRange &particles_range,
+                           ReturnType temp, const UnaryFunc &unary_func)
+{
+   auto &sycl_queue = execution_instance.getQueue();
+    const size_t loop_bound = particles_range.size();
+    ReturnType temp0 = temp;
+    {
+        sycl::buffer<ReturnType> buffer_result(&temp, 1);
+        sycl::buffer<ReturnType> buffer_reference(&temp0, 1);
+        sycl_queue.submit([&](sycl::handler &cgh)
+                          {
+                                Operation operation;
+                                sycl::accessor acc(buffer_reference, cgh, sycl::read_only);
+                                auto reduction_operator = sycl::reduction(buffer_result, cgh, operation);
+                                cgh.parallel_for(execution_instance.getUniformNdRange(loop_bound), reduction_operator,
+                                                 [=](sycl::nd_item<1> item, auto &reduction)
+                                                 {
+                                                     if (item.get_global_id() < loop_bound)
+                                                         reduction.combine(unary_func(item.get_global_id(0)));
                                                  }); })
             .wait_and_throw();
     } // buffer_result goes out of scope, so the result (of temp) is updated

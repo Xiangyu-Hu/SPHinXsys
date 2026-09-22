@@ -53,17 +53,15 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
     template <typename... Args>
     StateDynamics(Args &&...args)
         : UpdateType(std::forward<Args>(args)...),
-          BaseDynamics<void>(), kernel_implementation_(*this), finish_dynamics_(*this){};
+          BaseDynamics<void>(), kernel_implementation_(*this), finish_dynamics_(*this) {};
     virtual ~StateDynamics() {};
 
     virtual void exec(Real dt = 0.0) override
     {
         this->setUpdated(this->identifier_->getSPHBody());
         this->setupDynamics(dt);
-        UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
-                     [=](size_t i)
-                     { update_kernel->update(i, dt); });
+                     kernel_implementation_, dt);
 
         finish_dynamics_();
 
@@ -96,7 +94,7 @@ class ReduceDynamicsCK : public ReduceType,
     ReduceDynamicsCK(Args &&...args)
         : ReduceType(std::forward<Args>(args)...),
           BaseDynamics<OutputType>(), kernel_implementation_(*this),
-          reduced_value_(this->reference_), finish_dynamics_(*this){};
+          reduced_value_(this->reference_), finish_dynamics_(*this) {};
     virtual ~ReduceDynamicsCK() {};
     std::string QuantityName() { return this->quantity_name_; };
     ReduceReturnType ReducedValue() { return reduced_value_; };
@@ -104,12 +102,9 @@ class ReduceDynamicsCK : public ReduceType,
     virtual OutputType exec(Real dt = 0.0) override
     {
         this->setupDynamics(dt);
-        ReduceKernel *reduce_kernel = kernel_implementation_.getComputingKernel();
         reduced_value_ = particle_reduce<Operation>(
             LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
-            this->reference_,
-            [=](size_t i)
-            { return reduce_kernel->reduce(i, dt); });
+            this->reference_, kernel_implementation_, dt);
 
         this->logger_->debug(
             "ReduceDynamicsCK::exec() for {} at {}",
