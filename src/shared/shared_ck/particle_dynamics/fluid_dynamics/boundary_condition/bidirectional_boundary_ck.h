@@ -232,37 +232,6 @@ class PressureVelocityCondition : public BaseLocalDynamics<OrientedBoxByCell>,
     DiscreteVariable<Vecd> *dv_kernel_gradient_integral_;
 };
 
-template <typename...>
-class SupplementaryCondition;
-template <typename ConditionType>
-class SupplementaryCondition<OrientedBoxByCell, ConditionType>
-    : public BaseLocalDynamics<OrientedBoxByCell>
-{
-    using ConditionKernel = typename ConditionType::ComputingKernel;
-
-  public:
-    template <typename... Args>
-    SupplementaryCondition(OrientedBoxByCell &oriented_box_part, Args &&...args);
-
-    class UpdateKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
-
-      protected:
-        OrientedBox *oriented_box_;
-        ConditionKernel condition_;
-        DataView<Vecd> pos_;
-    };
-
-  protected:
-    SingleVariable<OrientedBox> *sv_oriented_box_;
-    ConditionType condition_method_;
-    DiscreteVariable<Vecd> *dv_pos_;
-};
-
 class AbstractBidirectionalBoundary : public AbstractDynamics
 {
 
