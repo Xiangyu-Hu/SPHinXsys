@@ -55,7 +55,7 @@ class ConstantConstraintCK : public BaseLocalDynamics<DynamicsIdentifier>
             : variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
               constrained_value_(encloser.constrained_value_){};
 
-        void update(size_t index_i, Real dt = 0.0)
+        void compute(size_t index_i, Real dt = 0.0)
         {
             variable_[index_i] = constrained_value_;
         };
@@ -94,7 +94,7 @@ class FixConstraintCK : public MotionConstraintCK<DynamicsIdentifier>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Vecd *pos_, *pos0_, *vel_;

@@ -5,7 +5,7 @@
 namespace SPH
 {
 //=================================================================================================//
-void RadixSort::sort(const ParallelDevicePolicy &ex_policy, UnsignedInt size, UnsignedInt start_index)
+void RadixSort::sort(const SYCLDevicePolicy &ex_policy, UnsignedInt size, UnsignedInt start_index)
 {
     UnsignedInt *index_permutation = dv_index_permutation_->DelegatedData(ex_policy);
     UnsignedInt *begin = dv_sequence_->DelegatedData(ex_policy) + start_index;

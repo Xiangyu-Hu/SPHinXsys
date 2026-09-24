@@ -32,7 +32,7 @@ HessianCorrectionMatrix<Base, RelationType<Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename... Parameters>
 void DisplacementMatrixGradient<Inner<Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     VecMatGrad grad_displacement_matrix = VecMatGrad::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -54,7 +54,7 @@ DisplacementMatrixGradient<Contact<Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 void DisplacementMatrixGradient<Contact<Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     VecMatGrad grad_displacement_matrix = VecMatGrad::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -71,7 +71,7 @@ void DisplacementMatrixGradient<Contact<Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     MatTend summation = MatTend::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -92,7 +92,7 @@ void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 void HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>::
-    UpdateKernel::update(size_t index_i, Real dt)
+    UpdateKernel::compute(size_t index_i, Real dt)
 {
     Real det_sqr = math::pow(this->M_[index_i].determinant(), Real(2));
     Real min_det_sqr = SMAX(alpha_ - det_sqr, Real(0));
@@ -110,7 +110,7 @@ HessianCorrectionMatrix<Contact<Parameters...>>::
 //=================================================================================================//
 template <typename... Parameters>
 void HessianCorrectionMatrix<Contact<Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     MatTend summation = MatTend::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
