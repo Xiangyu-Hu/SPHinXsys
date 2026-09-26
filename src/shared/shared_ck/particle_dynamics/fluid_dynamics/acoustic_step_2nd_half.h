@@ -50,9 +50,14 @@ class AcousticStep2ndHalfTag
 {
 };
 
+template <>
+class AcousticStep2ndHalf<> : public AcousticStep2ndHalfTag
+{
+};
+
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>
-    : public AcousticStep<Interaction<Inner<Parameters...>>>, public AcousticStep2ndHalfTag
+    : public AcousticStep<Interaction<Inner<Parameters...>>>
 {
     using FluidType = typename RiemannSolverType::SourceFluid;
     using EosKernel = typename FluidType::EosKernel;
