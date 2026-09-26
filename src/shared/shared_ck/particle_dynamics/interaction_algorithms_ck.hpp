@@ -55,28 +55,30 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
-template <template <typename...> class GeneralDynamicsType, typename... Parameters,
-          class DynamicsIdentifier, typename... Args>
+template <template <typename...> class GeneralInteractionType, typename... ControlParameters,
+          template <typename...> class RelationType, typename... RelationParameters, typename... Args>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addGeneralPostDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    addGeneralPostInteraction(RelationType<RelationParameters...> &relation, Args &&...args)
 {
     this->post_processes_.push_back(
-        supplementary_dynamics_keeper_.template createPtr<
-            GeneralDynamicsType<ExecutionPolicy, Parameters...>>(
-            identifier, std::forward<Args>(args)...));
+        supplementary_dynamics_keeper_.template createPtr<InteractionDynamicsCK<
+            ExecutionPolicy,
+            GeneralInteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
+            relation, std::forward<Args>(args)...));
     return *this;
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
-template <template <typename...> class GeneralDynamicsType, typename... Parameters,
-          class DynamicsIdentifier, typename... Args>
+template <template <typename...> class GeneralInteractionType, typename... ControlParameters,
+          template <typename...> class RelationType, typename... RelationParameters, typename... Args>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addGeneralPreDynamics(DynamicsIdentifier &identifier, Args &&...args)
+    addGeneralPreInteraction(RelationType<RelationParameters...> &relation, Args &&...args)
 {
     this->pre_processes_.push_back(
-        supplementary_dynamics_keeper_.template createPtr<
-            GeneralDynamicsType<ExecutionPolicy, Parameters...>>(
-            identifier, std::forward<Args>(args)...));
+        supplementary_dynamics_keeper_.template createPtr<InteractionDynamicsCK<
+            ExecutionPolicy,
+            GeneralInteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
+            relation, std::forward<Args>(args)...));
     return *this;
 }
 //=================================================================================================//

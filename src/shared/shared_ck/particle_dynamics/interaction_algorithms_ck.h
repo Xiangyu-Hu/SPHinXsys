@@ -114,13 +114,13 @@ class InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>
     template <class UpdateType, typename... Args>
     auto &addPreStateDynamics(Args &&...args);
 
-    template <template <typename...> class GeneralDynamicsType, typename... Parameters,
-              class DynamicsIdentifier, typename... Args>
-    auto &addGeneralPostDynamics(DynamicsIdentifier &identifier, Args &&...args);
+    template <template <typename...> class GeneralInteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addGeneralPostInteraction(RelationType<RelationParameters...> &relation, Args &&...args);
 
-    template <template <typename...> class GeneralDynamicsType, typename... Parameters,
-              class DynamicsIdentifier, typename... Args>
-    auto &addGeneralPreDynamics(DynamicsIdentifier &identifier, Args &&...args);
+    template <template <typename...> class GeneralInteractionType, typename... ControlParameters,
+              template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+    auto &addGeneralPreInteraction(RelationType<RelationParameters...> &relation, Args &&...args);
 };
 
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
