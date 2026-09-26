@@ -46,9 +46,13 @@ namespace fluid_dynamics
 template <typename...>
 class AcousticStep2ndHalf;
 
+class AcousticStep2ndHalfTag
+{
+};
+
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>
-    : public AcousticStep<Interaction<Inner<Parameters...>>>
+    : public AcousticStep<Interaction<Inner<Parameters...>>>, public AcousticStep2ndHalfTag
 {
     using FluidType = typename RiemannSolverType::SourceFluid;
     using EosKernel = typename FluidType::EosKernel;
