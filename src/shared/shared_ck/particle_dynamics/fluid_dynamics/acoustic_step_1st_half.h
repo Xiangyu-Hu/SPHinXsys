@@ -57,6 +57,11 @@ class AcousticStep : public BaseInteractionType
 template <typename...>
 class AcousticStep1stHalf;
 
+template <>
+class AcousticStep1stHalf<>
+{
+};
+
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 class AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>
     : public AcousticStep<Interaction<Inner<Parameters...>>>
