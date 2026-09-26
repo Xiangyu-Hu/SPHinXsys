@@ -136,7 +136,7 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -174,7 +174,7 @@ class AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -198,6 +198,9 @@ using AcousticStep1stHalfWithWallRiemannCK =
                         Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>;
 using AcousticStep1stHalfWithWallRiemannCorrectionCK =
     AcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>,
+                        Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>>;
+using AcousticStep1stHalfWithWallRiemannCorrectionForOpenBoundaryFlowCK =
+    AcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolverCK, LinearCorrectionWithinScopeCK<BulkParticles>>,
                         Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>>;
 } // namespace fluid_dynamics
 } // namespace SPH

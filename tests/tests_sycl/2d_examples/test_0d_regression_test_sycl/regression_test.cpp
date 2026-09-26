@@ -146,7 +146,7 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     Inner<> diffusion_body_inner(diffusion_body);
-    Contact<> observer_contact(temperature_observer, {&diffusion_body});
+    Contact<> observer_contact(temperature_observer, diffusion_body);
     //----------------------------------------------------------------------
     // Define SPH solver with particle methods and execution policies.
     //----------------------------------------------------------------------

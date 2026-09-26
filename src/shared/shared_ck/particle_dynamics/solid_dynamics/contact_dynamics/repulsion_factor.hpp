@@ -21,24 +21,17 @@ template <typename... Parameters>
 template <class DynamicsIdentifier>
 RepulsionFactor<Contact<Parameters...>>::
     RepulsionFactor(DynamicsIdentifier &identifier)
-    : BaseInteractionType(identifier, "RepulsionFactor")
-{
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        Real rho0 = this->contact_bodies_[k]->getMatterMaterial().ReferenceDensity();
-        contact_inv_rho0_.push_back(1.0 / rho0);
-        dv_contact_mass_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Mass"));
-    }
-}
+    : BaseInteractionType(identifier, "RepulsionFactor"),
+    dv_contact_Vol_ref_(this->contact_particles_->template registerStateVariableFrom<Real>(
+        "VolumetricMeasureRef", "VolumetricMeasure")){}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 RepulsionFactor<Contact<Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index)
-    : BaseInteractionType::InteractKernel(ex_policy, encloser, contact_index),
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseInteractionType::InteractKernel(ex_policy, encloser),
       repulsion_factor_(encloser.dv_repulsion_factor_->DelegatedData(ex_policy)),
-      contact_inv_rho0_(encloser.contact_inv_rho0_[contact_index]),
-      contact_mass_(encloser.dv_contact_mass_[contact_index]->DelegatedData(ex_policy)) {}
+      contact_Vol_ref_(encloser.dv_contact_Vol_ref_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
 void RepulsionFactor<Contact<Parameters...>>::InteractKernel::
@@ -48,7 +41,7 @@ void RepulsionFactor<Contact<Parameters...>>::InteractKernel::
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        sigma += this->W_ij(index_i, index_j) * contact_inv_rho0_ * contact_mass_[index_j];
+        sigma += this->W_ij(index_i, index_j) * contact_Vol_ref_[index_j];
     }
     repulsion_factor_[index_i] = sigma;
 }

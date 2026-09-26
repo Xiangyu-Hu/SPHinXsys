@@ -37,8 +37,8 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     Inner<> fish_inner(fish_body, ConfigType::Lagrangian);
     Inner<> water_block_inner(water_block);
-    Contact<> water_block_contact(water_block, {&fish_body}); // fish as stationary wall
-    Contact<> fish_contact(fish_body, {&water_block});
+    Contact<> water_block_contact(water_block, fish_body); // fish as stationary wall
+    Contact<> fish_contact(fish_body, water_block);
     //----------------------------------------------------------------------
     //	Define SPH solver — all operators via ParticleMethodContainer.
     //----------------------------------------------------------------------

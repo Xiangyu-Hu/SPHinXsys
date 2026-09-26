@@ -58,22 +58,17 @@ template <class DynamicsIdentifier>
 CompressionSummation<Contact<Parameters...>>::CompressionSummation(DynamicsIdentifier &identifier)
     : BaseInteraction(identifier)
 {
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        BaseParticles *contact_particles = this->contact_particles_[k];
-        dv_contact_Vol_ref_.push_back(
-            contact_particles->template registerStateVariableFrom<Real>(
-                "VolumetricMeasureRef", "VolumetricMeasure"));
-    }
+    dv_contact_Vol_ref_ = this->contact_particles_->template registerStateVariableFrom<Real>(
+        "VolumetricMeasureRef", "VolumetricMeasure");
 }
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class Encloser>
 CompressionSummation<Contact<Parameters...>>::InteractKernel::InteractKernel(
-    const ExecutionPolicy &ex_policy, Encloser &encloser, size_t contact_index)
-    : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+    const ExecutionPolicy &ex_policy, Encloser &encloser)
+    : BaseInteraction::InteractKernel(ex_policy, encloser),
       compression_sum_(encloser.dv_compression_sum_->DelegatedDataView(ex_policy)),
-      contact_Vol_ref_(encloser.dv_contact_Vol_ref_[contact_index]->DelegatedDataView(ex_policy)),
+      contact_Vol_ref_(encloser.dv_contact_Vol_ref_->DelegatedDataView(ex_policy)),
       compression_inv_ref_(encloser.sv_compression_inv_ref_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>

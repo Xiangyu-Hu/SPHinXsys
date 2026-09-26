@@ -8,32 +8,23 @@ namespace SPH
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier>
 Relation<SourceIdentifier, TargetIdentifier>::Relation(
-    SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, ConfigType config_type)
-    : RelationBase(), sph_body_(&source_identifier.getSPHBody()),
-      particles_(&sph_body_->getBaseParticles()),
+    SourceIdentifier &src_identifier, TargetIdentifier &tgt_identifier, ConfigType config_type)
+    : RelationBase(src_identifier.Name(), tgt_identifier.Name()),
+      sph_body_(&src_identifier.getSPHBody()), particles_(&sph_body_->getBaseParticles()),
       dv_source_pos_(this->assignConfigPosition(*particles_, config_type)),
       dv_neighbor_size_(particles_->registerDiscreteVariable<UnsignedInt>(
           "NeighborSize", particles_->ParticlesBound())),
       offset_list_size_(particles_->ParticlesBound() + 1)
 {
-    for (size_t k = 0; k != contact_identifiers.size(); ++k)
-    {
-        SPHBody &contact_body = contact_identifiers[k]->getSPHBody();
-        std::string source_name = source_identifier.Name();
-        std::string target_name = contact_identifiers[k]->Name();
-        std::string name = source_name == target_name ? source_name : source_name + target_name;
-        names_.push_back(name); // default name is the combination of source and target identifier names
-        BaseParticles &contact_particles = contact_body.getBaseParticles();
-        dv_target_pos_.push_back(assignConfigPosition(contact_particles, config_type));
-        dv_target_neighbor_index_.push_back(addRelationVariable<UnsignedInt>(
-            name + "NeighborIndex", offset_list_size_));
-        dv_target_particle_offset_.push_back(addRelationVariable<UnsignedInt>(
-            name + "ParticleOffset", offset_list_size_));
-        neighborhoods_.push_back(
-            neighborhood_ptrs_.template createPtr<NeighborhoodType>(
-                source_identifier, *contact_identifiers[k], dv_source_pos_, dv_target_pos_.back()));
-    }
-    registered_computing_kernels_.resize(contact_identifiers.size());
+    SPHBody &tgt_body = tgt_identifier.getSPHBody();
+    BaseParticles &tgt_particles = tgt_body.getBaseParticles();
+    dv_target_pos_ = assignConfigPosition(tgt_particles, config_type);
+    dv_target_neighbor_index_ = addRelationVariable<UnsignedInt>(
+        name_ + "NeighborIndex", offset_list_size_);
+    dv_target_particle_offset_ = addRelationVariable<UnsignedInt>(
+        name_ + "ParticleOffset", offset_list_size_);
+    neighborhood_ = neighborhood_ptr_.template createPtr<NeighborhoodType>(
+        src_identifier, tgt_identifier, dv_source_pos_, dv_target_pos_);
 }
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier>
@@ -61,109 +52,43 @@ DiscreteVariable<DataType> *Relation<SourceIdentifier, TargetIdentifier>::
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier>
 void Relation<SourceIdentifier, TargetIdentifier>::registerComputingKernel(
-    execution::Implementation<Base> *implementation, UnsignedInt target_index)
+    execution::Implementation<Base> *implementation)
 {
-    registered_computing_kernels_[target_index].push_back(implementation);
+    registered_computing_kernels_.push_back(implementation);
 }
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier>
-void Relation<SourceIdentifier, TargetIdentifier>::
-    resetComputingKernelUpdated(UnsignedInt target_index)
+void Relation<SourceIdentifier, TargetIdentifier>::resetComputingKernelUpdated()
 {
-    auto &computing_kernels = registered_computing_kernels_[target_index];
-    for (size_t k = 0; k != computing_kernels.size(); ++k)
+    for (size_t k = 0; k != registered_computing_kernels_.size(); ++k)
     {
-        computing_kernels[k]->resetUpdated();
+        registered_computing_kernels_[k]->resetUpdated();
     }
 }
 //=================================================================================================//
 template <class SourceIdentifier, class TargetIdentifier>
 template <class ExecutionPolicy, class EncloserType>
 Relation<SourceIdentifier, TargetIdentifier>::NeighborList::NeighborList(
-    const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt target_index)
-    : neighbor_index_(encloser.dv_target_neighbor_index_[target_index]->DelegatedData(ex_policy)),
-      particle_offset_(encloser.dv_target_particle_offset_[target_index]->DelegatedData(ex_policy)) {}
+    const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : neighbor_index_(encloser.dv_target_neighbor_index_->DelegatedData(ex_policy)),
+      particle_offset_(encloser.dv_target_particle_offset_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DynamicsIdentifier>
 template <typename... Args>
 Inner<Relation<DynamicsIdentifier>>::
     Inner(DynamicsIdentifier &identifier, Args &&...args)
     : Relation<DynamicsIdentifier, DynamicsIdentifier>(
-          identifier, StdVec<DynamicsIdentifier *>{&identifier}, std::forward<Args>(args)...),
+          identifier, identifier, std::forward<Args>(args)...),
       identifier_(&identifier) {}
 //=================================================================================================//
 template <typename SourceIdentifier, class TargetIdentifier>
 Contact<Relation<SourceIdentifier, TargetIdentifier>>::Contact(
-    SourceIdentifier &source_identifier, StdVec<TargetIdentifier *> contact_identifiers, ConfigType config_type)
-    : Relation<SourceIdentifier, TargetIdentifier>(source_identifier, contact_identifiers, config_type),
-      source_identifier_(&source_identifier), contact_identifiers_(contact_identifiers)
-{
-    for (size_t k = 0; k != contact_identifiers.size(); ++k)
-    {
-        SPHBody *contact_body = &contact_identifiers[k]->getSPHBody();
-        contact_bodies_.push_back(contact_body);
-        contact_particles_.push_back(&contact_body->getBaseParticles());
-        contact_adaptations_.push_back(&contact_body->getSPHAdaptation());
-    }
-}
-//=================================================================================================//
-template <typename... Parameters>
-RelationView<Contact<Parameters...>>::RelationView(Contact<Parameters...> &contact_relation)
-    : contact_relation_(&contact_relation),
-      contact_bodies_(contact_relation.getContactBodies()),
-      contact_particles_(contact_relation.getContactParticles()),
-      contact_adaptations_(contact_relation.getContactAdaptations())
-{
-    for (size_t k = 0; k != contact_bodies_.size(); ++k)
-    {
-        contact_target_indices_.push_back(k);
-    }
-}
-//=================================================================================================//
-template <typename... Parameters>
-template <class TargetIdentifier>
-RelationView<Contact<Parameters...>>::RelationView(
-    Contact<Parameters...> &contact_relation, StdVec<TargetIdentifier *> contact_identifiers)
-    : contact_relation_(&contact_relation)
-{
-    StdVec<SPHBody *> all_contact_bodies = contact_relation.getContactBodies();
-    StdVec<BaseParticles *> all_contact_particles = contact_relation.getContactParticles();
-    StdVec<SPHAdaptation *> all_contact_adaptations = contact_relation.getContactAdaptations();
-    for (size_t k = 0; k != contact_identifiers.size(); ++k)
-    {
-        TargetIdentifier *target_identifier = contact_identifiers[k];
-        for (size_t j = 0; j != all_contact_bodies.size(); ++j)
-        {
-            if (all_contact_bodies[j]->Name() == target_identifier->Name())
-            {
-                contact_bodies_.push_back(all_contact_bodies[j]);
-                contact_particles_.push_back(all_contact_particles[j]);
-                contact_adaptations_.push_back(all_contact_adaptations[j]);
-                contact_target_indices_.push_back(j);
-                break;
-            }
-        }
-    }
-}
-//=================================================================================================//
-template <typename... Parameters>
-template <class TargetIdentifier>
-RelationView<Contact<Parameters...>>::RelationView(
-    Contact<Parameters...> &contact_relation, TargetIdentifier &contact_identifiers)
-    : RelationView(contact_relation, StdVec<TargetIdentifier *>{&contact_identifiers}) {}
-//=================================================================================================//
-template <typename... Parameters>
-void RelationView<Contact<Parameters...>>::registerComputingKernel(
-    execution::Implementation<Base> *implementation, UnsignedInt target_index)
-{
-    contact_relation_->registerComputingKernel(implementation, contact_target_indices_[target_index]);
-}
-//=================================================================================================//
-template <typename... Parameters>
-void RelationView<Contact<Parameters...>>::resetComputingKernelUpdated(UnsignedInt target_index)
-{
-    contact_relation_->resetComputingKernelUpdated(contact_target_indices_[target_index]);
-}
+    SourceIdentifier &src_identifier, TargetIdentifier &tgt_identifier, ConfigType config_type)
+    : Relation<SourceIdentifier, TargetIdentifier>(src_identifier, tgt_identifier, config_type),
+      src_identifier_(&src_identifier), tgt_identifier_(&tgt_identifier),
+      contact_body_(&tgt_identifier.getSPHBody()),
+      contact_particles_(&contact_body_->getBaseParticles()),
+      contact_adaptation_(&contact_body_->getSPHAdaptation()) {}
 //=================================================================================================//
 } // namespace SPH
 #endif // RELATION_CK_HPP

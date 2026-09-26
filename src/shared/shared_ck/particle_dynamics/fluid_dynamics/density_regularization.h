@@ -97,7 +97,7 @@ class CompressionSummation<Contact<Parameters...>>
     {
       public:
         template <class ExecutionPolicy, class Encloser>
-        InteractKernel(const ExecutionPolicy &ex_policy, Encloser &encloser, size_t contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, Encloser &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -106,7 +106,7 @@ class CompressionSummation<Contact<Parameters...>>
     };
 
   protected:
-    StdVec<DiscreteVariable<Real> *> dv_contact_Vol_ref_;
+    DiscreteVariable<Real> *dv_contact_Vol_ref_;
 };
 
 class AverageCompression : public BaseLocalDynamicsReduce<ReduceSum<Sample<Real>>, SPHBody>

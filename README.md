@@ -16,19 +16,6 @@
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
 [![QQ](https://img.shields.io/badge/QQ_Group-blue?logo=tencentqq&logoColor=white)](https://qm.qq.com/q/BZDAqz70Iw)
 
-## Newest update for SPHinXsim: interactive visualization and particle generation
-
-Welcome to check the newest development from the repository: https://github.com/Xiangyu-Hu/SPHinXsim.
-
-Now, with persistent visualization, one can modify the settings of the simulation (geometry, bodies and boundary condition, etc.)
-either by directly change the Jason configuration file or using LLM interface. The new settings will be update with `preview` function.
-Furthermore, after all settings are considered as settled, one can generate SPH particles and have a final check before the simulation
-is really carried out. Also note that, the modification will automatically validated by the specially designed schema, before each `preview` command,
-to ensure meaningful settings. 
-
-<a href="https://xiangyu-hu.github.io/SPHinXsim/visualization">
-<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/img/visualization.png" height="600px"></a>
-
 ## Repository Description
 
 SPHinXsys (pronunciation: s'fink-sis) is an acronym from **S**moothed **P**article **H**ydrodynamics for **in**dustrial comple**X** **sys**tems.
@@ -36,6 +23,8 @@ The multi-physics library uses SPH (smoothed particle hydrodynamics) as the unde
 for both particle-based and mesh-based discretization.
 Due to the unified computational framework, SPHinXsys is able to carry out simulation and optimization at the same time.
 For more information on the SPHinXsys project, please check the project website: <https://www.sphinxsys.org>.
+
+You are also welcomed to check [SPHinXsim](https://github.com/Xiangyu-Hu/SPHinXsim), which is an multi-physics simulator based on SPHinXsys with interactive visualization and particle generation. SPHinXsim provides independent C++, Python and large language model (LLM) user interfaces.
 
 ## Examples at a glance
 
@@ -84,7 +73,7 @@ for a thermal domain problem targeting minimum average temperature.
 Note that the physical solution of the thermal domain (right) and the optimal distribution of conductivity (left)
 are obtained at the same time when optimization is finished.
 Also note that the entire optimization process is very fast and
-only several times slower than that for a single physical solution with given conductivity distribution.  
+only several times slower than that for a single physical solution with given conductivity distribution.
 
 ## Python interface
 
@@ -100,10 +89,10 @@ for the usage.
 Main publication on the library:
 
 1. C. Zhang, M. Rezavand, Y. Zhu, Y. Yu, D. Wu, W. Zhang, J. Wang, X. Hu,
-"SPHinXsys: an open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics",
-Computer Physics Communications, 267, 108066, 2021.  
-[![Main Publication](https://img.shields.io/badge/doi-10.1016%2Fj.cpc.2021.108066-d45815.svg)](https://doi.org/10.1016/j.cpc.2021.108066)  
-[Google Scholar citations](https://scholar.google.com/scholar?cites=696006064513647619&as_sdt=2005&sciodt=0,5&hl=en)
+   "SPHinXsys: an open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics",
+   Computer Physics Communications, 267, 108066, 2021.  
+   [![Main Publication](https://img.shields.io/badge/doi-10.1016%2Fj.cpc.2021.108066-d45815.svg)](https://doi.org/10.1016/j.cpc.2021.108066)  
+   [Google Scholar citations](https://scholar.google.com/scholar?cites=696006064513647619&as_sdt=2005&sciodt=0,5&hl=en)
 
 The numerical methods and computational algorithms in SPHinXsys are based on the following [publications](assets/publication.md).
 
@@ -126,10 +115,10 @@ We value each feedback.
 
 Your input is crucial to us. We encourage you to report any issues you encounter with the library, including:
 
-* Bug reports
-* Poorly written code or algorithm designs
-* Benchmark test issues, whether within the library or from literature, especially those highlighting potential deficiencies
-* Other issues
+- Bug reports
+- Poorly written code or algorithm designs
+- Benchmark test issues, whether within the library or from literature, especially those highlighting potential deficiencies
+- Other issues
 
 We particularly appreciate feedback stemming from practical simulations or projects, as these insights are essential for improving SPHinXsys.
 
@@ -137,10 +126,17 @@ We particularly appreciate feedback stemming from practical simulations or proje
 
 If you don't have a GitHub account yet, please register for one. Fork the SPHinXsys repository to add new features or improve existing ones. Once your changes are ready, commit them and initiate a pull request to have your contributions merged into the main repository.
 
-To ensure efficient and effective development, we prioritize addressing issues raised by active contributors—whether through code, documentation, or other means. We welcome any interaction with SPHinXsys and our team.
+We’re a small team maintaining this library in the open, and we love seeing the creative ways people extend or adapt it. To make the best use of everyone’s time, we ask for your help in shaping the conversation.
 
-You can also join us as a collaborator, enabling you to branch directly within the main repository and review pull requests.
+**If you have a quick question**—a documentation gap, a conceptual doubt, or a short “is this a bug?”—feel free to open a Discussion or Issue. We’ll answer as we can.
 
-Together, we can build a leading-edge multi-physics library open for all!
+**If you need in-depth technical guidance on your own fork or customization**—for example, code review, design feedback, or help debugging an extension you’re building—we’ll be far more effective if we can see the code in context.
+In those cases, please open a **Draft Pull Request** against the main repository. A draft PR gives us a concrete, shared workspace where we can comment line-by-line and iterate on ideas together. It’s completely fine if the code is rough, untested, or just an experiment—draft PRs exist precisely for that.
+
+This approach isn’t about forcing contributions (though we’re delighted when that happens). It’s about making sure that any deep technical investment we make feeds back into the project and remains visible to the whole community. If your solution turns out to be a great fit for upstream, merging it becomes seamless. If it remains a one-off exploration, the record of the discussion still helps others who might follow a similar path.
+
+We’re genuinely excited to collaborate. Turning a help request into a draft PR is the fastest way to get our focused attention—and often the start of a longer-term contribution journey.
+
+You are also welcomed to join us as a formal **collaborator**, enabling you to branch directly within the main repository and review pull requests.
 
 If you have any further question, please contact <xiangyu.hu@tum.de>.

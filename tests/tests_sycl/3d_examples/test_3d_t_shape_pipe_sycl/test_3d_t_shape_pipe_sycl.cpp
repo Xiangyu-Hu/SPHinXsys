@@ -300,7 +300,7 @@ void run_t_shape_pipe(Parameters &params, bool run_relaxation, bool reload_parti
 
     // --- Section 8: Define Body Relations and Cell Linking ---
     Inner<> water_body_inner(water_block);
-    Contact<> water_wall_contact(water_block, {&wall_boundary});
+    Contact<> water_wall_contact(water_block, wall_boundary);
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> water_cell_linked_list(water_block);
     UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_cell_linked_list(wall_boundary);
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> water_body_update_relation(water_body_inner, water_wall_contact);
