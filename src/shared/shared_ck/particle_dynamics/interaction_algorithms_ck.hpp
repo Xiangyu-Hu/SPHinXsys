@@ -62,7 +62,7 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
 {
     this->post_processes_.push_back(
         supplementary_dynamics_keeper_.template createPtr<
-            GeneralDynamicsType<ExecutionPolicy, Parameters..., DynamicsIdentifier>>(
+            GeneralDynamicsType<ExecutionPolicy, Parameters...>>(
             identifier, std::forward<Args>(args)...));
     return *this;
 }
@@ -75,7 +75,7 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
 {
     this->pre_processes_.push_back(
         supplementary_dynamics_keeper_.template createPtr<
-            GeneralDynamicsType<ExecutionPolicy, Parameters..., DynamicsIdentifier>>(
+            GeneralDynamicsType<ExecutionPolicy, Parameters...>>(
             identifier, std::forward<Args>(args)...));
     return *this;
 }
