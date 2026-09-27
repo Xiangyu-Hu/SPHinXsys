@@ -39,7 +39,8 @@ void SolidBodyPartForSimbody::initialize()
     Iyy /= body_part_volume;
     Ixy /= body_part_volume;
 
-    Real Izz = Ixx + Iyy; // For 2D, Izz = Ixx + Iyy
+    Real body_part_mass = body_part_volume * rho0_;
+    Real Izz = Ixx + Iyy - body_part_mass * Eps / 6.0; // For 2D, Izz = Ixx + Iyy
     SimTK::UnitInertia unit_inertia(
         Ixx, Iyy, Izz, // diagonal moments
         Ixy, 0.0, 0.0  // products of inertia
