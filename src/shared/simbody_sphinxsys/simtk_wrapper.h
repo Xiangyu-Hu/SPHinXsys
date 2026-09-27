@@ -29,6 +29,7 @@
 #define SIMTK_WRAPPER_H
 
 #include "base_data_type.h"
+#include "ownership.h"
 #include "simbody_middle.h"
 
 namespace SPH
@@ -105,60 +106,80 @@ struct SimbodyState
     Vec3d angular_velocity_, angular_acceleration_;
     Mat3d rotation_;
 
-    SimbodyState()
-        : initial_origin_location_(Vec3d::Zero()),
-          origin_location_(Vec3d::Zero()),
-          origin_velocity_(Vec3d::Zero()),
-          origin_acceleration_(Vec3d::Zero()),
-          angular_velocity_(Vec3d::Zero()),
-          angular_acceleration_(Vec3d::Zero()),
-          rotation_(Mat3d::Identity()) {}
-    SimbodyState(const SimTKVec3 &sim_tk_initial_origin_location, SimTK::MobilizedBody &mobod, const SimTK::State &state)
-        : initial_origin_location_(SimTKToEigen(sim_tk_initial_origin_location)),
-          origin_location_(SimTKToEigen(mobod.getBodyOriginLocation(state))),
-          origin_velocity_(SimTKToEigen(mobod.getBodyOriginVelocity(state))),
-          origin_acceleration_(SimTKToEigen(mobod.getBodyOriginAcceleration(state))),
-          angular_velocity_(SimTKToEigen(mobod.getBodyAngularVelocity(state))),
-          angular_acceleration_(SimTKToEigen(mobod.getBodyAngularAcceleration(state))),
-          rotation_(SimTKToEigen(mobod.getBodyRotation(state))) {};
+    SimbodyState();
+    SimbodyState(
+        const SimTKVec3 &sim_tk_initial_origin_location,
+        SimTK::MobilizedBody &mobod, const SimTK::State &state);
 
     // implemented according to the Simbody API function with the same name
     void findStationLocationVelocityAndAccelerationInGround(
-        const Vec3d &initial_location,
-        const Vec3d &initial_normal,
-        Vec3d &locationOnGround,
-        Vec3d &velocityInGround,
-        Vec3d &accelerationInGround,
-        Vec3d &normalInGround)
-    {
-        Vec3d temp_location = rotation_ * (initial_location - initial_origin_location_);
-        locationOnGround = origin_location_ + temp_location;
+        const Vec3d &initial_location, const Vec3d &initial_normal,
+        Vec3d &locationOnGround, Vec3d &velocityInGround,
+        Vec3d &accelerationInGround, Vec3d &normalInGround);
 
-        Vec3d temp_velocity = angular_velocity_.cross(temp_location);
-        velocityInGround = origin_velocity_ + temp_velocity;
-        accelerationInGround = origin_acceleration_ +
-                               angular_acceleration_.cross(temp_location) +
-                               angular_velocity_.cross(temp_velocity);
-        normalInGround = rotation_ * initial_normal;
-    };
-
-    void printSimbodyState()
-    {
-        std::cout << "initial_origin_location_: " << initial_origin_location_.transpose() << std::endl;
-        std::cout << "origin_location_: " << origin_location_.transpose() << std::endl;
-        std::cout << "origin_velocity_: " << origin_velocity_.transpose() << std::endl;
-        std::cout << "origin_acceleration_: " << origin_acceleration_.transpose() << std::endl;
-        std::cout << "angular_velocity_: " << angular_velocity_.transpose() << std::endl;
-        std::cout << "angular_acceleration_: " << angular_acceleration_.transpose() << std::endl;
-        std::cout << "rotation_: \n"
-                  << rotation_ << std::endl;
-    }
+    void printSimbodyState();
 };
 
 template <>
 struct ZeroData<SimbodyState>
 {
     static inline const SimbodyState value = SimbodyState();
+};
+
+class SimbodyStateEngine;
+
+class SimbodySystem
+{
+    UniquePtrKeeper<SimbodyStateEngine> state_engine_keeper_;
+    UniquePtrsKeeper<SimTK::Body::Rigid> rigid_bodies_keeper_;
+    UniquePtrsKeeper<SimTK::MobilizedBody> mobilized_bodies_keeper_;
+
+  public:
+    SimbodySystem();
+    SimTK::MultibodySystem &getMultibodySystem() { return MBsystem_; };
+    SimTK::SimbodyMatterSubsystem &getSimbodyMatterSubsystem() { return simbody_matter_; };
+    SimTK::RungeKuttaMersonIntegrator &getSimbodyIntegrator() { return integ_; };
+    SimbodyStateEngine &getSimbodyStateEngine();
+
+    SimTK::Body::Rigid &createRigidBody(
+        const std::string &name, const SimTK::MassProperties &mass_properties);
+    SimTK::Body::Rigid &getRigidBody(const std::string &name);
+
+    template <class MobilizedBodyType, class ParentBodyType>
+    MobilizedBodyType &createMobilizedBody(
+        const std::string &name, ParentBodyType &parent_mobod,
+        const SimTK::Transform &X_PF, const SimTK::Body::Rigid &body,
+        const SimTK::Transform &X_BM)
+    {
+        mobilized_bodies_names_.push_back(name);
+        MobilizedBodyType *mobilized_body =
+            mobilized_bodies_keeper_.createPtr<MobilizedBodyType>(
+                parent_mobod, X_PF, body, X_BM);
+        return *mobilized_body;
+    };
+
+    template <class MobilizedBodyType>
+    MobilizedBodyType &getMobilizedBody(const std::string &name)
+    {
+        for (size_t i = 0; i < mobilized_bodies_names_.size(); ++i)
+        {
+            if (mobilized_bodies_names_[i] == name)
+            {
+                return dynamic_cast<MobilizedBodyType &>(*mobilized_bodies_[i]);
+            }
+        }
+        std::cerr << "\n Error: Mobilized body " << name << " not found!" << std::endl;
+        throw std::runtime_error("Error: Mobilized body not found!");
+    };
+
+  protected:
+    SimTK::MultibodySystem MBsystem_;
+    SimTK::SimbodyMatterSubsystem simbody_matter_;
+    SimTK::RungeKuttaMersonIntegrator integ_;
+    StdVec<SimTK::Body::Rigid *> rigid_bodies_;
+    StdVec<std::string> rigid_bodies_names_;
+    StdVec<SimTK::MobilizedBody *> mobilized_bodies_;
+    StdVec<std::string> mobilized_bodies_names_;
 };
 } // namespace SPH
 #endif // SIMTK_WRAPPER_H

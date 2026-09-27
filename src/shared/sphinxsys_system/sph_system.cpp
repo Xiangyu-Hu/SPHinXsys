@@ -4,6 +4,8 @@
 #include "geometric_shape.h"
 #include "io_environment.h"
 #include "predefined_bodies.h"
+#include "simtk_wrapper.h"
+#include "state_engine.h"
 
 #define TBB_PREVIEW_GLOBAL_CONTROL 1
 #include "tbb/global_control.h"
@@ -216,6 +218,15 @@ SPHSystem *SPHSystem::handleCommandlineOptions(int ac, char *av[])
     return this;
 }
 #endif
+//=================================================================================================//
+SimbodySystem &SPHSystem::getSimbodySystem()
+{
+    if (!simbody_system_keeper_.getPtr())
+    {
+        simbody_system_keeper_.createPtr<SimbodySystem>();
+    }
+    return *simbody_system_keeper_.getPtr();
+}
 //=================================================================================================//
 RelaxationSystem::RelaxationSystem(
     BoundingBoxd system_domain_bounds, Real global_resolution, size_t number_of_threads)
