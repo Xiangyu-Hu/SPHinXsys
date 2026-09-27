@@ -52,7 +52,7 @@ void SimbodyState::printSimbodyState()
 }
 //=================================================================================================//
 SimbodySystem::SimbodySystem()
-    : MBsystem_(), simbody_matter_(MBsystem_), integ_(MBsystem_)
+    : simbody_matter_(MBsystem_), integ_(MBsystem_)
 {
     state_engine_keeper_.createPtr<SimbodyStateEngine>(MBsystem_);
 }
@@ -65,17 +65,19 @@ SimbodyStateEngine &SimbodySystem::getSimbodyStateEngine()
 SimTK::Body::Rigid &SimbodySystem::createRigidBody(
     const std::string &name, const SimTK::MassProperties &mass_properties)
 {
-    rigid_bodies_names_.push_back(name);
-    return *rigid_bodies_keeper_.createPtr<SimTK::Body::Rigid>(mass_properties);
+    SimTK::Body::Rigid *rigid_body =
+        rigid_bodies_keeper_.createPtr<SimTK::Body::Rigid>(mass_properties);
+    rigid_bodies_.push_back(std::make_pair(name, rigid_body));
+    return *rigid_body;
 }
 //=================================================================================================//
 SimTK::Body::Rigid &SimbodySystem::getRigidBody(const std::string &name)
 {
-    for (size_t i = 0; i < rigid_bodies_names_.size(); ++i)
+    for (size_t i = 0; i < rigid_bodies_.size(); ++i)
     {
-        if (rigid_bodies_names_[i] == name)
+        if (rigid_bodies_[i].first == name)
         {
-            return *rigid_bodies_[i];
+            return *rigid_bodies_[i].second;
         }
     }
     throw std::runtime_error("SimbodySystem::getRigidBody: Rigid body with name " + name + " not found.");
