@@ -46,6 +46,15 @@ SimbodyStateEngine &SimbodySystem::getSimbodyStateEngine()
     return *state_engine_keeper_.getPtr();
 }
 //=================================================================================================//
+SimTK::RungeKuttaMersonIntegrator &SimbodySystem::getSimbodyIntegrator()
+{
+    if (!integrator_keeper_.getPtr())
+    {
+        integrator_keeper_.createPtr<SimTK::RungeKuttaMersonIntegrator>(MBsystem_);
+    }
+    return *integrator_keeper_.getPtr();
+}
+//=================================================================================================//
 SimTK::Body::Rigid &SimbodySystem::createRigidBody(
     const std::string &name, const SimTK::MassProperties &mass_properties)
 {

@@ -143,6 +143,7 @@ class SimbodyStateEngine;
 class SimbodySystem
 {
     UniquePtrKeeper<SimbodyStateEngine> state_engine_keeper_;
+    UniquePtrKeeper<SimTK::RungeKuttaMersonIntegrator> integrator_keeper_;
     UniquePtrsKeeper<SimTK::Body::Rigid> rigid_bodies_keeper_;
     UniquePtrsKeeper<SimTK::MobilizedBody> mobilized_bodies_keeper_;
 
@@ -150,7 +151,7 @@ class SimbodySystem
     SimbodySystem();
     SimTK::MultibodySystem &getMultibodySystem() { return MBsystem_; };
     SimTK::SimbodyMatterSubsystem &getSimbodyMatterSubsystem() { return simbody_matter_; };
-    SimTK::RungeKuttaMersonIntegrator &getSimbodyIntegrator() { return integ_; };
+    SimTK::RungeKuttaMersonIntegrator &getSimbodyIntegrator();
     SimbodyStateEngine &getSimbodyStateEngine();
 
     SimTK::Body::Rigid &createRigidBody(
