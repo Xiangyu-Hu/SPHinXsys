@@ -39,7 +39,7 @@ void SolidBodyPartForSimbody::initialize()
     Iyy /= body_part_volume;
     Ixy /= body_part_volume;
 
-    Real Izz = Ixx + Iyy; // For 2D, Izz = Ixx + Iyy
+    Real Izz = Ixx + Iyy - min_spacing_sqr_ / 6.0; // assume a small thickness
     SimTK::UnitInertia unit_inertia(
         Ixx, Iyy, Izz, // diagonal moments
         Ixy, 0.0, 0.0  // products of inertia
