@@ -103,7 +103,7 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
     for (SPHBody *body : bodies_)
     {
         BaseParticles &particles = body->getBaseParticles();
-        DiscreteVariables &variables_to_write = particles.VariablesToWrite();
+        DiscreteVariables &variables_to_write = particles.ParticleAttributesToWrite();
         if (body->checkNewlyUpdated())
         {
             if (state_recording_)
