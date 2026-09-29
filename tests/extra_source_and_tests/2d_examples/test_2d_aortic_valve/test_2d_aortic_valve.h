@@ -1,7 +1,20 @@
+/**
+ * @file 	test_2d_aortic_valve.h
+ * @brief 	2D aortic valve example
+ * @details This is the one test case for the 2D shell immersed in fluid.
+ * Reference: Ryan T. Black, George Ilhwan Park, https://doi.org/10.1016/j.cma.2024.117634.
+ * An immersed fluid–structure interaction method targeted for heart valve applications
+ * @author 	Weiyi Kong (Virtonomy GmbH) and Xiangyu Hu
+ */
+
+#include "fluid_shell_interaction.h"
 #include "sphinxsys.h"
 #include <unsupported/Eigen/Splines>
 using namespace SPH;
 
+//----------------------------------------------------------------------
+//	Parameters
+//----------------------------------------------------------------------
 constexpr Real cm_to_m = 1e-2;
 constexpr Real g_to_kg = 1e-3;
 constexpr Real poise = 0.1;
@@ -41,6 +54,9 @@ const Real time_flow_init = 0;
 const Real time_cycle = 1.0;
 const size_t num_cycles = 2;
 
+//----------------------------------------------------------------------
+//	Shell particle generator
+//----------------------------------------------------------------------
 namespace SPH
 {
 class Shell;
@@ -79,37 +95,6 @@ class ParticleGenerator<SurfaceParticles, Shell> : public ParticleGenerator<Surf
     }
 };
 } // namespace SPH
-
-class ShellFluidMixtureMass : public LocalDynamics
-{
-  private:
-    Real rho_f0_; // assume the density of fluid is constant for now
-    Real dp_;     // initial particle spacing
-    Real *thickness_;
-    Real *mass_;
-    Real *Vol_;
-
-  public:
-    ShellFluidMixtureMass(SPHBody &shell_body, Real rho_f0)
-        : LocalDynamics(shell_body),
-          rho_f0_(rho_f0),
-          dp_(shell_body.getSPHAdaptation().ReferenceSpacing()),
-          thickness_(shell_body.getBaseParticles().getVariableDataByName<Real>("Thickness")),
-          mass_(shell_body.getBaseParticles().getVariableDataByName<Real>("Mass")),
-          Vol_(shell_body.getBaseParticles().getVariableDataByName<Real>("VolumetricMeasure"))
-    {
-    }
-
-    void update(size_t index_i, Real)
-    {
-        Real dp_m_t = dp_ - thickness_[index_i];
-        if (dp_m_t < 0)
-            throw std::runtime_error("Error: In ShellFluidMixtureMass, dp - thickness < 0!");
-        Real V_f = Vol_[index_i] * dp_m_t; // fluid volume
-        Real mass_f = V_f * rho_f0_;
-        mass_[index_i] += mass_f;
-    }
-};
 
 //----------------------------------------------------------------------
 //	inflow velocity definition.
@@ -162,7 +147,9 @@ struct OutflowVelocity
     }
 };
 
-// Shell wrappers
+//----------------------------------------------------------------------
+//	Shell related algorithms
+//----------------------------------------------------------------------
 inline Real get_physical_viscosity()
 {
     return 0.4 / 4.0 * std::sqrt(rho0_s * youngs_modulus) * shell_thickness * shell_thickness;
@@ -203,8 +190,6 @@ struct ShellObject
         body_.defineAdaptation<SPHAdaptation>(1.15, dp_fluid / dp_shell);
         body_.defineMatterMaterial<NeoHookeanSolid>(rho0_s, youngs_modulus, poisson);
         body_.generateParticles<SurfaceParticles, Shell>(positions, normals, dp_shell, shell_thickness);
-        SimpleDynamics<ShellFluidMixtureMass> reset_shell_mass(body_, rho0_f);
-        reset_shell_mass.exec();
         algs_ = std::make_unique<ShellAlgorithms>(body_);
     }
 };
@@ -221,7 +206,11 @@ struct ShellFluidAlgorithms
         : contact_relation_(shell_body, fluid_bodies),
           average_velocity_and_acceleration_(shell_body),
           viscous_force_from_fluid_(contact_relation_),
-          pressure_force_from_fluid_(contact_relation_) {}
+          pressure_force_from_fluid_(contact_relation_)
+    {
+        SimpleDynamics<ShellFluidMixtureMass> reset_shell_mass(shell_body, rho0_f);
+        reset_shell_mass.exec();
+    }
 };
 
 // Real reference data

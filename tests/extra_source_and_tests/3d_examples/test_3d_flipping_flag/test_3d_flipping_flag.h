@@ -1,10 +1,25 @@
+/**
+ * @file 	test_3d_flipping_flag.h
+ * @brief 	3D flipping flag example
+ * @details This is the one test case for the 3D shell immersed in fluid.
+ * Reference: Tianrun Gao, Lin Fu, https://doi.org/10.1016/j.cma.2024.117179.
+ * A three-dimensional meshless fluid–shell interaction framework based on smoothed particle hydrodynamics coupled with semi-meshless thin shell
+ * HUANG W-X, SUNG HJ. doi:10.1017/S0022112010000248
+ * Three-dimensional simulation of a flapping flag in a uniform flow. Journal of Fluid Mechanics.
+ * @author 	Weiyi Kong (Virtonomy GmbH) and Xiangyu Hu
+ */
+#include "fluid_shell_interaction.h"
 #include "sphinxsys.h"
 using namespace SPH;
 
+//----------------------------------------------------------------------
+//	Parameters
+//----------------------------------------------------------------------
 // geometry
 const Real L = 1;
 const Real inclination_angle = Pi / 10.0;
 const Real plate_thickness = 0.01 * L;
+// The domain is shrank to save computational cost.
 const Real L_x_before = L;
 const Real L_x_after = 4 * L;
 const Real L_y = 2 * L;
@@ -24,42 +39,16 @@ const Real poisson = 0.4;                                                       
 const Real youngs_modulus = 0.0001 * 12.0 * (1 - poisson * poisson) * rho0_f * U_f * U_f * std::pow(L / plate_thickness, 3); /**< Youngs modulus.*/
 
 // Cycle
-const Real flow_init_time = 0;
+const Real flow_init_time = 3.0;
 const Real fsi_start_time = flow_init_time + 0;
-const Real end_time = fsi_start_time + 10.0;
+const Real end_time = fsi_start_time + 7.0;
 
-// Classes
-class ShellFluidMixtureMass : public LocalDynamics
-{
-  private:
-    Real rho_f0_; // assume the density of fluid is constant for now
-    Real dp_;     // initial particle spacing
-    Real *thickness_;
-    Real *mass_;
-    Real *Vol_;
-
-  public:
-    ShellFluidMixtureMass(SPHBody &shell_body, Real rho_f0)
-        : LocalDynamics(shell_body),
-          rho_f0_(rho_f0),
-          dp_(shell_body.getSPHAdaptation().ReferenceSpacing()),
-          thickness_(shell_body.getBaseParticles().getVariableDataByName<Real>("Thickness")),
-          mass_(shell_body.getBaseParticles().getVariableDataByName<Real>("Mass")),
-          Vol_(shell_body.getBaseParticles().getVariableDataByName<Real>("VolumetricMeasure"))
-    {
-    }
-
-    void update(size_t index_i, Real)
-    {
-        Real dp_m_t = dp_ - thickness_[index_i];
-        if (dp_m_t < 0)
-            throw std::runtime_error("Error: In ShellFluidMixtureMass, dp - thickness < 0!");
-        Real V_f = Vol_[index_i] * dp_m_t; // fluid volume
-        Real mass_f = V_f * rho_f0_;
-        mass_[index_i] += mass_f;
-    }
-};
-
+// Reference solution, Huang et al.
+const Real A_dL_ref = 0.78; // amplitude/L
+const Real St_ref = 0.260;  // Strouhal number
+//----------------------------------------------------------------------
+//	Boundary conditions
+//----------------------------------------------------------------------
 struct LeftInflowPressure
 {
     template <class BoundaryConditionType>
@@ -98,7 +87,9 @@ struct InflowVelocity
     }
 };
 
-// Shell structure
+//----------------------------------------------------------------------
+//	Shell particle generator
+//----------------------------------------------------------------------
 namespace SPH
 {
 class Shell;
@@ -138,6 +129,9 @@ class ParticleGenerator<SurfaceParticles, Shell> : public ParticleGenerator<Surf
 };
 } // namespace SPH
 
+//----------------------------------------------------------------------
+//	Shell algorithms
+//----------------------------------------------------------------------
 inline Real get_physical_viscosity()
 {
     return 0.4 / 4.0 * std::sqrt(rho0_s * youngs_modulus) * plate_thickness * plate_thickness;
@@ -206,52 +200,15 @@ struct ShellFluidAlgorithms
         : contact_relation_(shell_body, fluid_bodies),
           average_velocity_and_acceleration_(shell_body),
           viscous_force_from_fluid_(contact_relation_),
-          pressure_force_from_fluid_(contact_relation_) {}
-};
-
-inline void relax_solid(RealBody &body, BaseInnerRelation &inner, BaseContactRelation *contact = nullptr)
-{
-    //----------------------------------------------------------------------
-    //	Methods used for particle relaxation.
-    //----------------------------------------------------------------------
-    using namespace relax_dynamics;
-    SimpleDynamics<RandomizeParticlePosition> random_particles(body);
-    std::unique_ptr<RelaxationStepLevelSetCorrectionInner> relaxation_step_inner;
-    std::unique_ptr<RelaxationStepLevelSetCorrectionComplex> relaxation_step_complex;
-    if (contact == nullptr)
-        relaxation_step_inner = std::make_unique<RelaxationStepLevelSetCorrectionInner>(inner);
-    else
-        relaxation_step_complex = std::make_unique<RelaxationStepLevelSetCorrectionComplex>(inner, *contact);
-    ReloadParticleIO write_particle_reload_files(body);
-    //----------------------------------------------------------------------
-    //	Particle relaxation starts here.
-    //----------------------------------------------------------------------
-    random_particles.exec(0.25);
-    if (contact == nullptr)
-        relaxation_step_inner->SurfaceBounding().exec();
-    else
-        relaxation_step_complex->SurfaceBounding().exec();
-    body.updateCellLinkedList();
-    //----------------------------------------------------------------------
-    //	Relax particles of the insert body.
-    //----------------------------------------------------------------------
-    int ite_p = 0;
-    while (ite_p < 1000)
+          pressure_force_from_fluid_(contact_relation_)
     {
-        if (contact == nullptr)
-            relaxation_step_inner->exec();
-        else
-            relaxation_step_complex->exec();
-        ite_p += 1;
-        if (ite_p % 100 == 0)
-        {
-            std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-        }
+        SimpleDynamics<ShellFluidMixtureMass> reset_shell_mass(shell_body, rho0_f);
+        reset_shell_mass.exec();
     }
-    std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
-    write_particle_reload_files.writeToFile(0);
-}
-
+};
+//----------------------------------------------------------------------
+//	Fluid algorithms
+//----------------------------------------------------------------------
 namespace SPH
 {
 class FreeSlipWall;

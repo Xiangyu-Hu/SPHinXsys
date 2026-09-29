@@ -10,144 +10,26 @@
 #include "density_correction.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
+#include <gtest/gtest.h>
 
-void run_shell_solver(size_t res_factor = 1);
-void run_fsi(size_t res_factor = 1, size_t res_ratio = 1);
+void run_fsi(Real res_factor = 1, Real res_ratio = 1);
 
 int main(int ac, char *av[])
 {
-    for (auto res_factor : {1, 2, 3})
-    {
-        run_fsi(res_factor, 1);
-    }
+    testing::InitGoogleTest(&ac, av);
+    return RUN_ALL_TESTS();
 }
-//----------------------------------------------------------------------
-void run_shell_solver(size_t res_factor)
+
+TEST(fluid_shell_interaction, flipping_flag)
 {
-    const Real dp_s = L / 10.0 / Real(res_factor);
-    //----------------------------------------------------------------------
-    //	Build up SPHSystem and IO environment.
-    //----------------------------------------------------------------------
-    SPHSystem sph_system(BoundingBoxd{}, dp_s);
-    //----------------------------------------------------------------------
-    //	Creating body, materials and particles.
-    //----------------------------------------------------------------------
-    FlagObject shell_object(sph_system, dp_s);
-    //----------------------------------------------------------------------
-    // Define the numerical methods used in the simulation.
-    //----------------------------------------------------------------------
-    // Boundary condition for the shell structure
-    FlagPinCondition shell_constraint(shell_object.body_);
-
-    // gravity
-    const Vec3d gravity = 1.0 * Vec3d::UnitX();
-    Gravity constant_gravity(gravity);
-    SimpleDynamics<GravityForce<Gravity>> flag_constant_gravity(shell_object.body_, constant_gravity);
-    //----------------------------------------------------------------------
-    //	Define the methods for I/O operations and observations of the simulation.
-    //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    write_real_body_states.addToWrite<Vec3d>(shell_object.body_, "ForcePrior");
-    write_real_body_states.addToWrite<Vec3d>(shell_object.body_, "Velocity");
-    write_real_body_states.addToWrite<Vec3d>(shell_object.body_, "NormalDirection");
-    write_real_body_states.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_object.body_);
-    write_real_body_states.writeToFile();
-    //----------------------------------------------------------------------
-    //	Define the methods for I/O operations and observations of the simulation.
-    //----------------------------------------------------------------------
-    ObserverBody beam_observer(sph_system, "BeamObserver");
-    beam_observer.generateParticles<ObserverParticles>(beam_observation_location);
-    ContactRelation beam_observer_contact(beam_observer, {&shell_object.body_});
-    ObservedQuantityRecording<Vec3d> write_tip_displacement("Position", beam_observer_contact);
-    //----------------------------------------------------------------------
-    //	Prepare the simulation with cell linked list, configuration
-    //	and case specified initial condition if necessary.
-    //----------------------------------------------------------------------
-    /** initialize cell linked lists for all bodies. */
-    sph_system.initializeSystemCellLinkedLists();
-    /** initialize configurations for all bodies. */
-    sph_system.initializeSystemConfigurations();
-    /** computing linear reproducing configuration for the insert body. */
-    shell_object.algs_->corrected_configuration_.exec();
-    InteractionDynamics<CorrectInterpolationKernelWeights>{beam_observer_contact}.exec();
-    flag_constant_gravity.exec();
-    //----------------------------------------------------------------------
-    //	Setup for time-stepping control
-    //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
-    size_t number_of_iterations = 0;
-    int screen_output_interval = 500;
-    Real output_interval = end_time / 50.0; // output 50 frames per cycle
-    //----------------------------------------------------------------------
-    //	Statistics for CPU time
-    //----------------------------------------------------------------------
-    TickCount t1 = TickCount::now();
-    TimeInterval interval;
-    //----------------------------------------------------------------------
-    //	Main loop starts here.
-    //----------------------------------------------------------------------
-    Real dt_s = 0.0;
-    const Real dt_s_ref = shell_object.algs_->shell_computing_time_step_size_.exec();
-    std::cout << "The reference shell time step size is " << dt_s_ref << std::endl;
-    auto run_simulation = [&]()
-    {
-        while (physical_time < end_time)
-        {
-            Real integration_time = 0.0;
-            /** Integrate time (loop) until the next output time. */
-            while (integration_time < output_interval)
-            {
-                dt_s = 0.25 * shell_object.algs_->shell_computing_time_step_size_.exec();
-                if (dt_s < dt_s_ref / 100.0)
-                    throw std::runtime_error("Error: The shell time step size is too small! dt_s = " + std::to_string(dt_s));
-                shell_object.algs_->stress_relaxation_first_half_.exec(dt_s);
-                shell_constraint.exec();
-                shell_object.algs_->stress_relaxation_second_half_.exec(dt_s);
-                shell_object.algs_->update_normal_.exec();
-
-                integration_time += dt_s;
-                physical_time += dt_s;
-
-                if (number_of_iterations % screen_output_interval == 0)
-                {
-                    std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-                              << physical_time
-                              << "	dt_s = " << dt_s
-                              << "\n";
-                }
-                number_of_iterations++;
-            }
-
-            TickCount t2 = TickCount::now();
-            /** write run-time observation into file */
-            write_tip_displacement.writeToFile();
-            write_real_body_states.writeToFile();
-            TickCount t3 = TickCount::now();
-            interval += t3 - t2;
-        }
-        TickCount t4 = TickCount::now();
-
-        TimeInterval tt;
-        tt = t4 - t1 - interval;
-        std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-    };
-
-    try
-    {
-        run_simulation();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "An error occurred during the simulation: " << e.what() << std::endl;
-        write_real_body_states.writeToFile();
-    }
+    run_fsi(1.5, 1);
 }
 
 //----------------------------------------------------------------------
-void run_fsi(size_t res_factor, size_t res_ratio)
+void run_fsi(Real res_factor, Real res_ratio)
 {
-    const Real dp_s = L / 10.0 / Real(res_factor);
-    const Real dp_f = dp_s * Real(res_ratio);
+    const Real dp_s = L / 10.0 / res_factor;
+    const Real dp_f = dp_s * res_ratio;
     std::cout << "dp_f = " << dp_f << ", dp_s = " << dp_s << std::endl;
     std::cout << "dp_shell/thickness = " << dp_s / plate_thickness << std::endl;
 
@@ -212,8 +94,6 @@ void run_fsi(size_t res_factor, size_t res_ratio)
 
     // Shell
     FlagObject shell_object(sph_system, dp_s);
-    SimpleDynamics<ShellFluidMixtureMass> reset_shell_mass(shell_object.body_, rho0_f);
-    reset_shell_mass.exec();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -293,6 +173,17 @@ void run_fsi(size_t res_factor, size_t res_ratio)
     beam_observer.generateParticles<ObserverParticles>(beam_observation_location);
     ContactRelation beam_observer_contact(beam_observer, {&shell_object.body_});
     ObservedQuantityRecording<Vec3d> write_tip_displacement("Position", beam_observer_contact);
+    std::vector<Real> time_vec;
+    std::vector<Real> z_vec;
+    auto record_z = [&](Real current_time)
+    {
+        Real time = current_time - fsi_start_time;
+        if (time < 0)
+            return;
+        const auto &pos = write_tip_displacement.getObservedQuantity()[0];
+        time_vec.push_back(time);
+        z_vec.push_back(pos[zAxis]);
+    };
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -431,12 +322,6 @@ void run_fsi(size_t res_factor, size_t res_ratio)
                             dt_s = SMIN(dt_s, dt - dt_s_sum);
                             shell_object.algs_->stress_relaxation_first_half_.exec(dt_s);
                             shell_constraint.exec();
-                            // if (physical_time < 2.0)
-                            // {
-                            //     shell_object.algs_->shell_position_damping_.exec(dt_s);
-                            //     shell_object.algs_->shell_rotation_damping_.exec(dt_s);
-                            //     shell_constraint.exec();
-                            // }
                             shell_object.algs_->stress_relaxation_second_half_.exec(dt_s);
                             dt_s_sum += dt_s;
                         }
@@ -486,6 +371,7 @@ void run_fsi(size_t res_factor, size_t res_ratio)
 
                 TickCount t2 = TickCount::now();
                 write_tip_displacement.writeToFile();
+                record_z(physical_time);
                 TickCount t3 = TickCount::now();
                 interval += t3 - t2;
             }
@@ -505,13 +391,35 @@ void run_fsi(size_t res_factor, size_t res_ratio)
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     };
 
-    try
+    EXPECT_NO_THROW(run_simulation());
+
+    // Gtest
+    // Find the two valleys and one peak in the recorded z-displacement data.
+    std::vector<size_t> peak_indices;
+    std::vector<size_t> valley_indices;
+    for (size_t i = 1; i < z_vec.size() - 1; i++)
     {
-        run_simulation();
+        // Only check time > time_fsi + 1s
+        if (time_vec[i] <= 1.0)
+            continue;
+        if (z_vec[i] > z_vec[i - 1] && z_vec[i] > z_vec[i + 1])
+            peak_indices.push_back(i);
+        if (z_vec[i] < z_vec[i - 1] && z_vec[i] < z_vec[i + 1])
+            valley_indices.push_back(i);
     }
-    catch (const std::exception &e)
-    {
-        std::cerr << "An error occurred during the simulation: " << e.what() << std::endl;
-        write_real_body_states.writeToFile();
-    }
+    EXPECT_EQ(peak_indices.size(), 1);
+    EXPECT_EQ(valley_indices.size(), 2);
+
+    size_t peak_index = peak_indices.front();
+    size_t valley1_index = valley_indices.front();
+    size_t valley2_index = valley_indices.size() > 1 ? valley_indices[1] : valley_indices.front();
+
+    Real A_dL = (z_vec[peak_index] - 0.5 * (z_vec[valley1_index] + z_vec[valley2_index])) / L;
+    Real St = 1 / abs(time_vec[valley1_index] - time_vec[valley2_index]) * L / U_f;
+    Real amplitude_error = std::abs(A_dL - A_dL_ref) / A_dL_ref;
+    Real strouhal_error = std::abs(St - St_ref) / St_ref;
+    std::cout << "A/L: " << A_dL << ", A/L reference: " << A_dL_ref << ", error: " << amplitude_error * 1e2 << "%" << std::endl;
+    std::cout << "St: " << St << ", St reference: " << St_ref << ", error: " << strouhal_error * 1e2 << "%" << std::endl;
+    EXPECT_LT(amplitude_error, 15.0e-2);
+    EXPECT_LT(strouhal_error, 10.0e-2);
 }

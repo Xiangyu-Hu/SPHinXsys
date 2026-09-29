@@ -489,15 +489,8 @@ return_data run_fsi2()
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
     };
 
-    try
-    {
-        run_fsi();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "An error occurred during the simulation: " << e.what() << std::endl;
-        write_real_body_states.writeToFile();
-    }
+    EXPECT_NO_THROW(run_fsi());
+
     write_data_to_csv("./return_data.csv", data);
     return data;
 }
