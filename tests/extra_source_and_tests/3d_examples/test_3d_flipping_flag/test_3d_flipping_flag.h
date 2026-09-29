@@ -3,73 +3,32 @@ using namespace SPH;
 
 // geometry
 const Real L = 1;
-const Vec3d domain_lower_bound(3 * L, 2 * L, 0 * L);
-const Vec3d domain_upper_bound(10 * L, 5.6 * L, 5 * L);
-const auto plate_tip_pos = Vec3d(7 * L, 3.3 * L, 0 * L);
-const Real plate_width = L;
-const Real plate_height = L;
-const Real plate_y = L / 4.0;
-const Real plate_z = L / 2.0;
+const Real inclination_angle = Pi / 10.0;
 const Real plate_thickness = 0.01 * L;
+const Real L_x_before = L;
+const Real L_x_after = 4 * L;
+const Real L_y = 2 * L;
+const Real L_z = 3 * L;
+const auto beam_observation_location = StdVec<Vec3d>{Vec3d(L * cos(inclination_angle), -0.5 * L, L *sin(inclination_angle))};
 
 // material
-// fluid
-const Real rho0_f = 1.0;
-const Real U_f = 5.48;
-const Real Re = 200;
-const Real mu_f = rho0_f * U_f * L / Re;
-const Real c_f = 10.0 * U_f;
+const Real rho0_f = 1.0;                 /**< Reference density of fluid.*/
+const Real U_f = 1.0;                    /**< Reference velocity of fluid. */
+const Real Re = 200;                     /**< Reynolds number. */
+const Real mu_f = rho0_f * U_f * L / Re; /**< Dynamic viscosity of fluid. */
+const Real c_f = 25.0;                   /**< Reference sound speed of fluid. */
 
 // solid
-const Real rho0_s = 1200;          /**< Reference density.*/
-const Real youngs_modulus = 3.5e9; /**< Youngs modulus.*/
-const Real poisson = 0.32;         /**< Poisson ratio.*/
+const Real rho0_s = 100 * rho0_f;                                                                                            /**< Reference density.*/
+const Real poisson = 0.4;                                                                                                    /**< Poisson ratio.*/
+const Real youngs_modulus = 0.0001 * 12.0 * (1 - poisson * poisson) * rho0_f * U_f * U_f * std::pow(L / plate_thickness, 3); /**< Youngs modulus.*/
 
 // Cycle
-const Real flow_init_time = 0.5;
-const Real fsi_start_time = 2.0;
-const Real end_time = fsi_start_time + 2.0;
+const Real flow_init_time = 0;
+const Real fsi_start_time = flow_init_time + 0;
+const Real end_time = fsi_start_time + 10.0;
 
-// Shell structure
-namespace SPH
-{
-class Shell;
-template <>
-class ParticleGenerator<SurfaceParticles, Shell> : public ParticleGenerator<SurfaceParticles>
-{
-    const StdVec<Vec3d> &positions_;
-    const StdVec<Vec3d> &normals_;
-    Real dp_;
-    Real thickness_;
-
-  public:
-    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
-                               const StdVec<Vec3d> &positions,
-                               const StdVec<Vec3d> &normals,
-                               Real dp,
-                               Real thickness)
-        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
-          positions_(positions), normals_(normals), dp_(dp), thickness_(thickness)
-    {
-        if (positions_.size() != normals_.size())
-        {
-            std::cout << "Error: In ParticleGenerator<Shell>, positions size is not equal to normals size!" << std::endl;
-            exit(1);
-        }
-    };
-    void prepareGeometricData() override
-    {
-        const auto particle_number = positions_.size();
-        // generate particles for the elastic gate
-        for (size_t i = 0; i < particle_number; i++)
-        {
-            addPositionAndVolumetricMeasure(positions_[i], dp_ * dp_);
-            addSurfaceProperties(normals_[i], thickness_);
-        }
-    }
-};
-} // namespace SPH
-
+// Classes
 class ShellFluidMixtureMass : public LocalDynamics
 {
   private:
@@ -139,6 +98,46 @@ struct InflowVelocity
     }
 };
 
+// Shell structure
+namespace SPH
+{
+class Shell;
+template <>
+class ParticleGenerator<SurfaceParticles, Shell> : public ParticleGenerator<SurfaceParticles>
+{
+    const StdVec<Vec3d> &positions_;
+    const StdVec<Vec3d> &normals_;
+    Real dp_;
+    Real thickness_;
+
+  public:
+    explicit ParticleGenerator(SPHBody &sph_body, SurfaceParticles &surface_particles,
+                               const StdVec<Vec3d> &positions,
+                               const StdVec<Vec3d> &normals,
+                               Real dp,
+                               Real thickness)
+        : ParticleGenerator<SurfaceParticles>(sph_body, surface_particles),
+          positions_(positions), normals_(normals), dp_(dp), thickness_(thickness)
+    {
+        if (positions_.size() != normals_.size())
+        {
+            std::cout << "Error: In ParticleGenerator<Shell>, positions size is not equal to normals size!" << std::endl;
+            exit(1);
+        }
+    };
+    void prepareGeometricData() override
+    {
+        const auto particle_number = positions_.size();
+        // generate particles for the elastic gate
+        for (size_t i = 0; i < particle_number; i++)
+        {
+            addPositionAndVolumetricMeasure(positions_[i], dp_ * dp_);
+            addSurfaceProperties(normals_[i], thickness_);
+        }
+    }
+};
+} // namespace SPH
+
 inline Real get_physical_viscosity()
 {
     return 0.4 / 4.0 * std::sqrt(rho0_s * youngs_modulus) * plate_thickness * plate_thickness;
@@ -165,7 +164,19 @@ struct ShellAlgorithms
           shell_position_damping_(0.2, inner_, "Velocity", get_physical_viscosity()),
           shell_rotation_damping_(0.2, inner_, "AngularVelocity", get_physical_viscosity())
     {
+        body.updateCellLinkedList();
+        inner_.updateConfiguration();
+        corrected_configuration_.exec();
     }
+};
+
+struct shell_inputs
+{
+    std::string name;
+    StdVec<Vec3d> positions;
+    StdVec<Vec3d> normals;
+    Real dp;
+    Real thickness;
 };
 
 struct ShellObject
@@ -173,14 +184,12 @@ struct ShellObject
     SolidBody body_;
     std::unique_ptr<ShellAlgorithms> algs_;
 
-    ShellObject(SPHSystem &sph_system, const std::string &name, const StdVec<Vec3d> &positions, const StdVec<Vec3d> &normals, Real dp, Real thickness)
-        : body_(sph_system, makeShared<DefaultShape>(name))
+    ShellObject(SPHSystem &sph_system, const shell_inputs &inputs)
+        : body_(sph_system, makeShared<DefaultShape>(inputs.name))
     {
-        body_.defineAdaptation<SPHAdaptation>(1.15, sph_system.GlobalResolution() / dp);
+        body_.defineAdaptation<SPHAdaptation>(1.15, sph_system.GlobalResolution() / inputs.dp);
         body_.defineMatterMaterial<LinearElasticSolid>(rho0_s, youngs_modulus, poisson);
-        body_.generateParticles<SurfaceParticles, Shell>(positions, normals, dp, thickness);
-        // SimpleDynamics<ShellFluidMixtureMass> reset_shell_mass(body_, rho0_f);
-        // reset_shell_mass.exec();
+        body_.generateParticles<SurfaceParticles, Shell>(inputs.positions, inputs.normals, inputs.dp, inputs.thickness);
         algs_ = std::make_unique<ShellAlgorithms>(body_);
     }
 };
@@ -200,20 +209,28 @@ struct ShellFluidAlgorithms
           pressure_force_from_fluid_(contact_relation_) {}
 };
 
-inline void relax_solid(RealBody &body, BaseInnerRelation &inner)
+inline void relax_solid(RealBody &body, BaseInnerRelation &inner, BaseContactRelation *contact = nullptr)
 {
     //----------------------------------------------------------------------
     //	Methods used for particle relaxation.
     //----------------------------------------------------------------------
     using namespace relax_dynamics;
     SimpleDynamics<RandomizeParticlePosition> random_particles(body);
-    RelaxationStepLevelSetCorrectionInner relaxation_step_inner(inner);
+    std::unique_ptr<RelaxationStepLevelSetCorrectionInner> relaxation_step_inner;
+    std::unique_ptr<RelaxationStepLevelSetCorrectionComplex> relaxation_step_complex;
+    if (contact == nullptr)
+        relaxation_step_inner = std::make_unique<RelaxationStepLevelSetCorrectionInner>(inner);
+    else
+        relaxation_step_complex = std::make_unique<RelaxationStepLevelSetCorrectionComplex>(inner, *contact);
     ReloadParticleIO write_particle_reload_files(body);
     //----------------------------------------------------------------------
     //	Particle relaxation starts here.
     //----------------------------------------------------------------------
     random_particles.exec(0.25);
-    relaxation_step_inner.SurfaceBounding().exec();
+    if (contact == nullptr)
+        relaxation_step_inner->SurfaceBounding().exec();
+    else
+        relaxation_step_complex->SurfaceBounding().exec();
     body.updateCellLinkedList();
     //----------------------------------------------------------------------
     //	Relax particles of the insert body.
@@ -221,7 +238,10 @@ inline void relax_solid(RealBody &body, BaseInnerRelation &inner)
     int ite_p = 0;
     while (ite_p < 1000)
     {
-        relaxation_step_inner.exec();
+        if (contact == nullptr)
+            relaxation_step_inner->exec();
+        else
+            relaxation_step_complex->exec();
         ite_p += 1;
         if (ite_p % 100 == 0)
         {
@@ -326,33 +346,62 @@ class ViscousForce<Contact<FreeSlipWall>, ViscosityType, KernelCorrectionType>
 } // namespace fluid_dynamics
 } // namespace SPH
 
-class PressureFunctionForceOnShell : public solid_dynamics::LoadingForce
+struct FlagObject : public ShellObject
 {
-  private:
-    std::function<Real(Vecd, Real)> pressure_;
-    Vec3d *pos_;
-    Real *Vol_;
-    Vecd *n_;
-    Real *physical_time_;
-
-  public:
-    PressureFunctionForceOnShell(SPHBody &sph_body, std::function<Real(Vecd, Real)> pressure)
-        : solid_dynamics::LoadingForce(sph_body, "PressureForceOnShell"),
-          pressure_(std::move(pressure)),
-          pos_(particles_->getVariableDataByName<Vec3d>("Position")),
-          Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
-          n_(particles_->getVariableDataByName<Vecd>("NormalDirection")),
-          physical_time_(sph_system_->svPhysicalTime().Data()) {}
-    void update(size_t index_i, Real dt = 0.0)
+    auto get_inputs(Real dp) const
     {
-        loading_force_[index_i] = -pressure_(pos_[index_i], *physical_time_) * Vol_[index_i] * n_[index_i];
-        solid_dynamics::LoadingForce::update(index_i, dt);
+        Real cos_theta = cos(inclination_angle);
+        Real sin_theta = sin(inclination_angle);
+        StdVec<Vec3d> positions;
+        StdVec<Vec3d> normals;
+        {
+            Real y = 0.5 * L - 0.5 * dp;
+            while (y > -0.5 * L)
+            {
+                Real r = 0.5 * dp;
+                while (r < L)
+                {
+                    Real x = r * cos_theta;
+                    Real z = r * sin_theta;
+                    positions.emplace_back(x, y, z);
+                    normals.emplace_back(sin_theta, 0.0, -cos_theta);
+                    r += dp;
+                }
+                y -= dp;
+            }
+        };
+        return shell_inputs{.name = "flag", .positions = positions, .normals = normals, .dp = dp, .thickness = plate_thickness};
     }
+    FlagObject(SPHSystem &sph_system, Real dp_s)
+        : ShellObject(sph_system, get_inputs(dp_s)) {}
 };
 
-struct result_data
+struct FlagPinCondition
 {
-    size_t fluid_particle_number = std::numeric_limits<size_t>::quiet_NaN();
-    size_t shell_particle_number = std::numeric_limits<size_t>::quiet_NaN();
-    Real computational_time = std::numeric_limits<Real>::quiet_NaN();
+    BodyPartByParticle part;
+    SimpleDynamics<FixBodyPartConstraint> constraint;
+
+    explicit FlagPinCondition(SPHBody &sph_body)
+        : part(sph_body), constraint(part)
+    {
+        Real dp = sph_body.getSPHBodyResolutionRef();
+        auto clamp_id = [&, dp2 = dp * dp]()
+        {
+            IndexVector ids;
+            const auto *pos = sph_body.getBaseParticles().getVariableDataByName<Vec3d>("Position");
+            for (size_t i = 0; i < sph_body.getBaseParticles().TotalRealParticles(); ++i)
+            {
+                Real r2 = pos[i].x() * pos[i].x() + pos[i].z() * pos[i].z();
+                if (r2 < dp2)
+                    ids.push_back(i);
+            }
+            return ids;
+        }();
+        part.body_part_particles_ = clamp_id;
+    }
+
+    void exec()
+    {
+        constraint.exec();
+    }
 };

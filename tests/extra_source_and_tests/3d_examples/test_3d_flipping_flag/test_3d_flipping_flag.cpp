@@ -4,7 +4,7 @@
  * @details We consider a flow with one inlet and two outlets in a T - shaped pipe in 2D.
  * @author Xiangyu Hu,Shuoguo Zhang
  */
-#include "test_3d_flipping_L_plate.h" // case file to setup the test case
+#include "test_3d_flipping_flag.h" // case file to setup the test case
 #include "bidirectional_buffer.h"
 #include "density_correction.h"
 #include "density_correction.hpp"
@@ -12,62 +12,19 @@
 #include "kernel_summation.hpp"
 
 void run_shell_solver(size_t res_factor = 1);
-result_data run_fsi2(size_t res_factor = 1, size_t res_ratio = 1);
+void run_fsi(size_t res_factor = 1, size_t res_ratio = 1);
 
 int main(int ac, char *av[])
 {
-    run_shell_solver(2);
-    // std::vector<result_data> results;
-    // results.reserve(3);
-    // for (auto res_factor : {8})
-    // {
-    //     auto data = run_fsi2(res_factor, 1);
-    //     results.push_back(data);
-    // }
-    // for (const auto &data : results)
-    // {
-    //     std::cout << "Fluid particle number: " << data.fluid_particle_number << std::endl;
-    //     std::cout << "Shell particle number: " << data.shell_particle_number << std::endl;
-    //     std::cout << "Computational time: " << data.computational_time << std::endl;
-    // }
+    for (auto res_factor : {1, 2, 3})
+    {
+        run_fsi(res_factor, 1);
+    }
 }
 //----------------------------------------------------------------------
 void run_shell_solver(size_t res_factor)
 {
-    const Real dp_s = plate_y / 4.0 / Real(res_factor);
-    std::cout << "dp_s = " << dp_s << std::endl;
-    std::cout << "dp_shell/thickness = " << dp_s / plate_thickness << std::endl;
-    const Real end_time_shell = 2;
-
-    // create shape
-    // shell
-    StdVec<Vec3d> positions_shell;
-    {
-        Real z = domain_lower_bound.z() - 1.0 * dp_s;
-        while (z < plate_z)
-        {
-            Real y = 0.5 * dp_s;
-            while (y < plate_y)
-            {
-                Vec3d pos = plate_tip_pos + Vec3d(0.0, y, z);
-                positions_shell.emplace_back(pos);
-                y += dp_s;
-            }
-            z += dp_s;
-        }
-        while (z < plate_height)
-        {
-            Real y = 0.5 * dp_s;
-            while (y < plate_width)
-            {
-                Vec3d pos = plate_tip_pos + Vec3d(0.0, y, z);
-                positions_shell.emplace_back(pos);
-                y += dp_s;
-            }
-            z += dp_s;
-        }
-    };
-    StdVec<Vec3d> normals_shell(positions_shell.size(), Vec3d::UnitX());
+    const Real dp_s = L / 10.0 / Real(res_factor);
     //----------------------------------------------------------------------
     //	Build up SPHSystem and IO environment.
     //----------------------------------------------------------------------
@@ -75,49 +32,23 @@ void run_shell_solver(size_t res_factor)
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
-    ShellObject shell_object(sph_system, "L_plate", positions_shell, normals_shell, dp_s, plate_thickness);
+    FlagObject shell_object(sph_system, dp_s);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
-    // Note that there may be data dependence on the sequence of constructions.
-    // Generally, the geometric models or simple objects without data dependencies,
-    // such as gravity, should be initiated first.
-    // Then the major physical particle dynamics model should be introduced.
-    // Finally, the auxiliary models such as time step estimator, initial condition,
-    // boundary condition and other constraints should be defined.
-    // For typical fluid-structure interaction, we first define structure dynamics,
-    // Then fluid dynamics and the corresponding coupling dynamics.
-    // The coupling with multi-body dynamics will be introduced at last.
     //----------------------------------------------------------------------
     // Boundary condition for the shell structure
-    auto clamp_id = [&, z_min = domain_lower_bound.z()]()
-    {
-        IndexVector ids;
-        const auto *pos = shell_object.body_.getBaseParticles().getVariableDataByName<Vec3d>("Position");
-        for (size_t i = 0; i < shell_object.body_.getBaseParticles().TotalRealParticles(); ++i)
-        {
-            if (pos[i].z() < z_min + 0.5 * dp_s)
-                ids.push_back(i);
-        }
-        return ids;
-    }();
-    BodyPartByParticle clamped_part(shell_object.body_);
-    clamped_part.body_part_particles_ = clamp_id;
-    SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> shell_constraint(clamped_part);
-    // Pressure force
-    Real pressure = -50;
-    auto get_pressure = [pressure](Vec3d, Real time)
-    {
-        // if (time > 1e-3)
-        //     return 0.0;
-        return pressure;
-    };
-    SimpleDynamics<PressureFunctionForceOnShell> pressure_bc(shell_object.body_, get_pressure);
+    FlagPinCondition shell_constraint(shell_object.body_);
+
+    // gravity
+    const Vec3d gravity = 1.0 * Vec3d::UnitX();
+    Gravity constant_gravity(gravity);
+    SimpleDynamics<GravityForce<Gravity>> flag_constant_gravity(shell_object.body_, constant_gravity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_real_body_states(sph_system);
-    write_real_body_states.addToWrite<Vec3d>(shell_object.body_, "Velocity");
     write_real_body_states.addToWrite<Vec3d>(shell_object.body_, "ForcePrior");
+    write_real_body_states.addToWrite<Vec3d>(shell_object.body_, "Velocity");
     write_real_body_states.addToWrite<Vec3d>(shell_object.body_, "NormalDirection");
     write_real_body_states.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_object.body_);
     write_real_body_states.writeToFile();
@@ -125,7 +56,6 @@ void run_shell_solver(size_t res_factor)
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     ObserverBody beam_observer(sph_system, "BeamObserver");
-    StdVec<Vec3d> beam_observation_location = {plate_tip_pos + Vec3d(0.0, plate_width, plate_height)};
     beam_observer.generateParticles<ObserverParticles>(beam_observation_location);
     ContactRelation beam_observer_contact(beam_observer, {&shell_object.body_});
     ObservedQuantityRecording<Vec3d> write_tip_displacement("Position", beam_observer_contact);
@@ -139,15 +69,15 @@ void run_shell_solver(size_t res_factor)
     sph_system.initializeSystemConfigurations();
     /** computing linear reproducing configuration for the insert body. */
     shell_object.algs_->corrected_configuration_.exec();
-    // InteractionDynamics<CorrectInterpolationKernelWeights>{beam_observer_contact}.exec();
-    pressure_bc.exec();
+    InteractionDynamics<CorrectInterpolationKernelWeights>{beam_observer_contact}.exec();
+    flag_constant_gravity.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
-    int screen_output_interval = 10000;
-    Real output_interval = end_time_shell / 50.0; // output 50 frames per cycle
+    int screen_output_interval = 500;
+    Real output_interval = end_time / 50.0; // output 50 frames per cycle
     //----------------------------------------------------------------------
     //	Statistics for CPU time
     //----------------------------------------------------------------------
@@ -157,20 +87,19 @@ void run_shell_solver(size_t res_factor)
     //	Main loop starts here.
     //----------------------------------------------------------------------
     Real dt_s = 0.0;
-    Real dt_s_ref = shell_object.algs_->shell_computing_time_step_size_.exec();
+    const Real dt_s_ref = shell_object.algs_->shell_computing_time_step_size_.exec();
     std::cout << "The reference shell time step size is " << dt_s_ref << std::endl;
-    auto run_fsi = [&]()
+    auto run_simulation = [&]()
     {
-        while (physical_time < end_time_shell)
+        while (physical_time < end_time)
         {
             Real integration_time = 0.0;
             /** Integrate time (loop) until the next output time. */
             while (integration_time < output_interval)
             {
-                pressure_bc.exec();
-                dt_s = 0.5 * shell_object.algs_->shell_computing_time_step_size_.exec();
-                if (dt_s < dt_s_ref / 20.0)
-                    throw std::runtime_error("Error: The shell time step size is too small!");
+                dt_s = 0.25 * shell_object.algs_->shell_computing_time_step_size_.exec();
+                if (dt_s < dt_s_ref / 100.0)
+                    throw std::runtime_error("Error: The shell time step size is too small! dt_s = " + std::to_string(dt_s));
                 shell_object.algs_->stress_relaxation_first_half_.exec(dt_s);
                 shell_constraint.exec();
                 shell_object.algs_->stress_relaxation_second_half_.exec(dt_s);
@@ -205,7 +134,7 @@ void run_shell_solver(size_t res_factor)
 
     try
     {
-        run_fsi();
+        run_simulation();
     }
     catch (const std::exception &e)
     {
@@ -213,19 +142,14 @@ void run_shell_solver(size_t res_factor)
         write_real_body_states.writeToFile();
     }
 }
-//----------------------------------------------------------------------
-result_data run_fsi2(size_t res_factor, size_t res_ratio)
-{
-    bool run_relaxation = true;
-    bool reload_particles = false;
 
-    const Real dp_f = plate_y / Real(res_factor);
-    const Real dp_s = dp_f / Real(res_ratio);
+//----------------------------------------------------------------------
+void run_fsi(size_t res_factor, size_t res_ratio)
+{
+    const Real dp_s = L / 10.0 / Real(res_factor);
+    const Real dp_f = dp_s * Real(res_ratio);
     std::cout << "dp_f = " << dp_f << ", dp_s = " << dp_s << std::endl;
     std::cout << "dp_shell/thickness = " << dp_s / plate_thickness << std::endl;
-    std::cout << "U_f = " << U_f << std::endl;
-    const Real nu_f = mu_f / rho0_f;
-    std::cout << "The kinematic viscosity is " << nu_f << std::endl;
 
     const Real dp_wall = dp_f;
     const Real wall_thickness = 4 * dp_f;
@@ -234,11 +158,13 @@ result_data run_fsi2(size_t res_factor, size_t res_ratio)
     // fluid shape
     std::cout << "Creating fluid shape ... " << std::endl;
     auto fluid_shape = makeShared<ComplexShape>("fluid");
-    Vec3d fluid_halfsize = 0.5 * (domain_upper_bound - domain_lower_bound);
-    Vec3d fluid_translation = 0.5 * (domain_upper_bound + domain_lower_bound);
+    Vec3d fluid_halfsize = 0.5 * Vec3d(L_x_before + L_x_after, L_y, L_z);
+    Vec3d fluid_translation = (fluid_halfsize.x() - L_x_before) * Vec3d::UnitX();
     fluid_shape->add<GeometricShapeBox>(Transform(fluid_translation), fluid_halfsize);
     std::cout << "Creating fluid shape - done. " << std::endl;
     auto bbox_fluid = fluid_shape->getBounds();
+    Real z_min = bbox_fluid.lower_.z();
+    Real z_max = bbox_fluid.upper_.z();
 
     // wall shape
     std::cout << "Creating wall shape ... " << std::endl;
@@ -246,49 +172,16 @@ result_data run_fsi2(size_t res_factor, size_t res_ratio)
 
     // create the lower wall
     auto lower_wall_shape = makeShared<ComplexShape>("lower_wall");
-    auto wall_lower_translation = Vec3d(fluid_translation.x(), fluid_translation.y(), domain_lower_bound.z() - 0.5 * wall_thickness);
+    auto wall_lower_translation = Vec3d(fluid_translation.x(), fluid_translation.y(), z_min - 0.5 * wall_thickness);
     lower_wall_shape->add<GeometricShapeBox>(Transform(wall_lower_translation), wall_halfsize);
-    // subtract the plate base from the wall
-    Vec3d plate_base_halfsize = 0.5 * Vec3d(dp_s, plate_y, wall_thickness);
-    Vec3d plate_base_translation = plate_tip_pos + 0.5 * Vec3d(0, plate_y, -wall_thickness);
-    lower_wall_shape->subtract<GeometricShapeBox>(Transform(plate_base_translation), plate_base_halfsize);
     auto bbox_lower_wall = lower_wall_shape->getBounds();
 
     // create the upper wall
     auto upper_wall_shape = makeShared<ComplexShape>("upper_wall");
-    auto wall_upper_translation = Vec3d(fluid_translation.x(), fluid_translation.y(), domain_upper_bound.z() + 0.5 * wall_thickness);
+    auto wall_upper_translation = Vec3d(fluid_translation.x(), fluid_translation.y(), z_max + 0.5 * wall_thickness);
     upper_wall_shape->add<GeometricShapeBox>(Transform(wall_upper_translation), wall_halfsize);
     std::cout << "Creating wall shape - done. " << std::endl;
     auto bbox_upper_wall = upper_wall_shape->getBounds();
-
-    // shell
-    StdVec<Vec3d> positions_shell;
-    {
-        Real z = bbox_lower_wall.lower_.z() + 0.5 * dp_s;
-        while (z < plate_z)
-        {
-            Real y = 0.5 * dp_s;
-            while (y < plate_y)
-            {
-                Vec3d pos = plate_tip_pos + Vec3d(0.0, y, z);
-                positions_shell.emplace_back(pos);
-                y += dp_s;
-            }
-            z += dp_s;
-        }
-        while (z < plate_height)
-        {
-            Real y = 0.5 * dp_s;
-            while (y < plate_width)
-            {
-                Vec3d pos = plate_tip_pos + Vec3d(0.0, y, z);
-                positions_shell.emplace_back(pos);
-                y += dp_s;
-            }
-            z += dp_s;
-        }
-    };
-    StdVec<Vec3d> normals_shell(positions_shell.size(), Vec3d::UnitX());
     //----------------------------------------------------------------------
     //	Build up SPHSystem and IO environment.
     //----------------------------------------------------------------------
@@ -296,8 +189,6 @@ result_data run_fsi2(size_t res_factor, size_t res_ratio)
     SPHSystem sph_system(bbox, dp_f);
     auto &io_environment = IO::getEnvironment();
     io_environment.resetOutputFolder("./output_" + std::to_string(res_factor) + "_" + std::to_string(res_ratio), true);
-    sph_system.setRunParticleRelaxation(run_relaxation); // Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(reload_particles);     // Tag for computation with save particles distribution
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
@@ -311,32 +202,18 @@ result_data run_fsi2(size_t res_factor, size_t res_ratio)
     wall_lower_boundary.defineAdaptation<SPHAdaptation>(1.15, dp_f / dp_wall);
     wall_lower_boundary.defineBodyLevelSetShape();
     wall_lower_boundary.defineMatterMaterial<Solid>();
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_lower_boundary.generateParticles<BaseParticles, Reload>(wall_lower_boundary.Name())
-        : wall_lower_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_lower_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_upper_boundary(sph_system, upper_wall_shape);
     wall_upper_boundary.defineAdaptation<SPHAdaptation>(1.15, dp_f / dp_wall);
     wall_upper_boundary.defineBodyLevelSetShape();
     wall_upper_boundary.defineMatterMaterial<Solid>();
-    (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_upper_boundary.generateParticles<BaseParticles, Reload>(wall_upper_boundary.Name())
-        : wall_upper_boundary.generateParticles<BaseParticles, Lattice>();
+    wall_upper_boundary.generateParticles<BaseParticles, Lattice>();
 
-    // run relaxation
-    InnerRelation wall_lower_boundary_inner(wall_lower_boundary);
-    InnerRelation wall_upper_boundary_inner(wall_upper_boundary);
-    if (sph_system.RunParticleRelaxation())
-    {
-        relax_solid(wall_lower_boundary, wall_lower_boundary_inner);
-        relax_solid(wall_upper_boundary, wall_upper_boundary_inner);
-    }
-
-    ShellObject shell_object(sph_system, "L_plate", positions_shell, normals_shell, dp_s, plate_thickness);
-
-    std::cout << "fluid number: " << fluid_body.getBaseParticles().TotalRealParticles() << std::endl;
-    std::cout << "shell number: " << shell_object.body_.getBaseParticles().TotalRealParticles() << std::endl;
-    exit(0);
+    // Shell
+    FlagObject shell_object(sph_system, dp_s);
+    SimpleDynamics<ShellFluidMixtureMass> reset_shell_mass(shell_object.body_, rho0_f);
+    reset_shell_mass.exec();
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -354,42 +231,20 @@ result_data run_fsi2(size_t res_factor, size_t res_ratio)
     ComplexRelation fluid_body_complex(fluid_inner, {&fluid_lower_wall_contact, &fluid_upper_wall_contact, &fluid_shell_contact});
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
-    // Note that there may be data dependence on the sequence of constructions.
-    // Generally, the geometric models or simple objects without data dependencies,
-    // such as gravity, should be initiated first.
-    // Then the major physical particle dynamics model should be introduced.
-    // Finally, the auxiliary models such as time step estimator, initial condition,
-    // boundary condition and other constraints should be defined.
-    // For typical fluid-structure interaction, we first define structure dynamics,
-    // Then fluid dynamics and the corresponding coupling dynamics.
-    // The coupling with multi-body dynamics will be introduced at last.
     //----------------------------------------------------------------------
     SimpleDynamics<NormalDirectionFromBodyShape> wall_lower_boundary_normal_direction(wall_lower_boundary);
     SimpleDynamics<NormalDirectionFromBodyShape> wall_upper_boundary_normal_direction(wall_upper_boundary);
     // Boundary condition for the shell structure
-    auto clamp_id = [&, z_min = domain_lower_bound.z()]()
-    {
-        IndexVector ids;
-        const auto *pos = shell_object.body_.getBaseParticles().getVariableDataByName<Vec3d>("Position");
-        for (size_t i = 0; i < shell_object.body_.getBaseParticles().TotalRealParticles(); ++i)
-        {
-            if (pos[i].z() < z_min)
-                ids.push_back(i);
-        }
-        return ids;
-    }();
-    BodyPartByParticle clamped_part(shell_object.body_);
-    clamped_part.body_part_particles_ = clamp_id;
-    SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegion> shell_constraint(clamped_part);
+    FlagPinCondition shell_constraint(shell_object.body_);
     //----------------------------------------------------------------------
     //	Algorithms of fluid dynamics.
     //----------------------------------------------------------------------
     InteractionDynamics<ComplexInteraction<NablaWV<Inner<>, Contact<>, Contact<>, Contact<>>>> kernel_summation(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
     InteractionWithUpdate<ComplexInteraction<FreeSurfaceIndication<Inner<SpatialTemporal>, Contact<>, Contact<>, Contact<>>>> boundary_indicator(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
     Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration1stHalf<Inner<>, Contact<Wall>, Contact<Wall>, Contact<Wall>>, AcousticRiemannSolver, NoKernelCorrection>> pressure_relaxation(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
-    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<Wall>, Contact<FreeSlipWall>, Contact<Wall>>, AcousticRiemannSolver>> density_relaxation(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
+    Dynamics1Level<ComplexInteraction<fluid_dynamics::Integration2ndHalf<Inner<>, Contact<FreeSlipWall>, Contact<FreeSlipWall>, Contact<Wall>>, AcousticRiemannSolver>> density_relaxation(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
     InteractionWithUpdate<ComplexInteraction<fluid_dynamics::TransportVelocityCorrection<Inner<SPHAdaptation, NoLimiter>, Contact<Boundary>, Contact<Boundary>, Contact<Boundary>>, NoKernelCorrection, BulkParticles>> transport_correction(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
-    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<Wall>, Contact<FreeSlipWall>, Contact<Wall>>, fluid_dynamics::FixedViscosity, NoKernelCorrection>> viscous_force(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
+    InteractionWithUpdate<ComplexInteraction<fluid_dynamics::ViscousForce<Inner<>, Contact<FreeSlipWall>, Contact<FreeSlipWall>, Contact<Wall>>, fluid_dynamics::FixedViscosity, NoKernelCorrection>> viscous_force(fluid_inner, fluid_lower_wall_contact, fluid_upper_wall_contact, fluid_shell_contact);
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_inner);
 
     ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(fluid_body, U_f);
@@ -429,12 +284,12 @@ result_data run_fsi2(size_t res_factor, size_t res_ratio)
     write_real_body_states.addToWrite<int>(fluid_body, "Indicator");
     write_real_body_states.addToWrite<int>(fluid_body, "BufferIndicator");
     write_real_body_states.addToWrite<Vec3d>(shell_object.body_, "NormalDirection");
+    write_real_body_states.addToWrite<Vec3d>(shell_object.body_, "Velocity");
     write_real_body_states.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_object.body_);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
     ObserverBody beam_observer(sph_system, "BeamObserver");
-    StdVec<Vec3d> beam_observation_location = {plate_tip_pos + Vec3d(0.0, plate_width, plate_height)};
     beam_observer.generateParticles<ObserverParticles>(beam_observation_location);
     ContactRelation beam_observer_contact(beam_observer, {&shell_object.body_});
     ObservedQuantityRecording<Vec3d> write_tip_displacement("Position", beam_observer_contact);
@@ -460,7 +315,6 @@ result_data run_fsi2(size_t res_factor, size_t res_ratio)
     wall_upper_boundary_normal_direction.exec();
     /** computing linear reproducing configuration for the insert body. */
     shell_object.algs_->corrected_configuration_.exec();
-    InteractionDynamics<CorrectInterpolationKernelWeights>{beam_observer_contact}.exec();
     //----------------------------------------------------------------------
     // initial relaxation of fluid body
     //----------------------------------------------------------------------
@@ -515,7 +369,7 @@ result_data run_fsi2(size_t res_factor, size_t res_ratio)
     std::cout << "The reference fluid advection time step size is " << Dt_ref << std::endl;
     std::cout << "The reference fluid time step size is " << dt_ref << std::endl;
     std::cout << "The reference shell time step size is " << dt_s_ref << std::endl;
-    auto run_fsi = [&]()
+    auto run_simulation = [&]()
     {
         while (physical_time < end_time)
         {
@@ -577,6 +431,12 @@ result_data run_fsi2(size_t res_factor, size_t res_ratio)
                             dt_s = SMIN(dt_s, dt - dt_s_sum);
                             shell_object.algs_->stress_relaxation_first_half_.exec(dt_s);
                             shell_constraint.exec();
+                            // if (physical_time < 2.0)
+                            // {
+                            //     shell_object.algs_->shell_position_damping_.exec(dt_s);
+                            //     shell_object.algs_->shell_rotation_damping_.exec(dt_s);
+                            //     shell_constraint.exec();
+                            // }
                             shell_object.algs_->stress_relaxation_second_half_.exec(dt_s);
                             dt_s_sum += dt_s;
                         }
@@ -643,19 +503,15 @@ result_data run_fsi2(size_t res_factor, size_t res_ratio)
         TimeInterval tt;
         tt = t4 - t1 - interval;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-        return tt.seconds();
     };
 
-    result_data result{.fluid_particle_number = fluid_body.getBaseParticles().TotalRealParticles(), .shell_particle_number = shell_object.body_.getBaseParticles().TotalRealParticles()};
     try
     {
-        auto computational_time = run_fsi();
-        result.computational_time = computational_time;
+        run_simulation();
     }
     catch (const std::exception &e)
     {
         std::cerr << "An error occurred during the simulation: " << e.what() << std::endl;
         write_real_body_states.writeToFile();
     }
-    return result;
 }
