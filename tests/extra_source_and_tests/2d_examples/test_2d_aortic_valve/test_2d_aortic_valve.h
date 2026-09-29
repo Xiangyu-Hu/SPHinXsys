@@ -9,7 +9,6 @@
 
 #include "fluid_shell_interaction.h"
 #include "sphinxsys.h"
-#include <unsupported/Eigen/Splines>
 using namespace SPH;
 
 //----------------------------------------------------------------------
