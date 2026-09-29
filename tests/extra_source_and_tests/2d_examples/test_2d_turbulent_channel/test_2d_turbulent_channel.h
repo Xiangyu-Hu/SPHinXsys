@@ -76,11 +76,14 @@ std::vector<Vecd> createWaterBlockShape()
 }
 class WaterBlock : public ComplexShape
 {
+    UniquePtrKeeper<Shape> shape_ptr;
+
   public:
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
         MultiPolygon computational_domain(createWaterBlockShape());
-        add<ExtrudeShape<MultiPolygonShape>>(-offset_distance, computational_domain, "ComputationalDomain");
+        MultiPolygonShape *original_shape = shape_ptr.createPtr<MultiPolygonShape>(computational_domain);
+        add<ExtrudeShape>(*original_shape, -offset_distance, "ComputationalDomain");
     }
 };
 
@@ -112,14 +115,20 @@ std::vector<Vecd> createInnerWallShape()
  */
 class WallBoundary : public ComplexShape
 {
+    UniquePtrsKeeper<Shape> shape_ptrs;
+
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
         MultiPolygon outer_dummy_boundary(createOuterWallShape());
-        add<ExtrudeShape<MultiPolygonShape>>(-offset_distance + BW, outer_dummy_boundary, "OuterDummyBoundary");
+        MultiPolygonShape *outer_shape = shape_ptrs.createPtr<MultiPolygonShape>(
+            outer_dummy_boundary, "OuterDummyBoundary");
+        add<ExtrudeShape>(*outer_shape, -offset_distance + BW);
 
         MultiPolygon inner_dummy_boundary(createInnerWallShape());
-        subtract<ExtrudeShape<MultiPolygonShape>>(-offset_distance, inner_dummy_boundary, "InnerDummyBoundary");
+        MultiPolygonShape *inner_shape = shape_ptrs.createPtr<MultiPolygonShape>(
+            inner_dummy_boundary, "InnerDummyBoundary");
+        subtract<ExtrudeShape>(*inner_shape, -offset_distance);
     }
 };
 
