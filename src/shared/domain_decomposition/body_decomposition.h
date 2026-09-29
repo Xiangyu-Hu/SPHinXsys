@@ -125,20 +125,17 @@ class BodyDecomposition : public BaseDecomposition
 
     void scatterFromHost()
     {
-        auto &exchange = getExchange();
-        exchange.scatterFromHost();
+        getExchange().scatterFromHost();
     };
 
     void gatherToHost(DiscreteVariables &variables)
     {
-        auto &exchange = getExchange();
-        exchange.gatherToHost(variables);
+        getExchange().gatherToHost(variables);
     };
 
     void finishHostAccess()
     {
-        auto &exchange = getExchange();
-        exchange.finishHostAccess();
+        getExchange().finishHostAccess();
     };
 
     int subdomainOf(const Vecd &position) const
@@ -148,20 +145,17 @@ class BodyDecomposition : public BaseDecomposition
 
     void updateHaloPlan()
     {
-        auto &exchange = getExchange();
-        exchange.updateHaloPlan();
+        getExchange().updateHaloPlan();
     };
 
     void refreshHalo(DiscreteVariables &variables)
     {
-        auto &exchange = getExchange();
-        exchange.refreshHalo(variables);
+        getExchange().refreshHalo(variables);
     };
 
     void migrateParticles()
     {
-        auto &exchange = getExchange();
-        exchange.migrateParticles();
+        getExchange().migrateParticles();
     };
 
     /** Move the cut planes towards equal owned counts; migrates when a plane moved. */
@@ -177,28 +171,25 @@ class BodyDecomposition : public BaseDecomposition
     };
 
     int NumberOfSubdomains() const { return decomposition_.NumberOfSubdomains(); };
+    
     StdVec<UnsignedInt> OwnedParticlesPerSubdomain()
     {
-        auto &exchange = getExchange();
-        return exchange.OwnedParticlesPerSubdomain();
+        return getExchange().OwnedParticlesPerSubdomain();
     };
 
     UnsignedInt TotalOwnedParticles()
     {
-        auto &exchange = getExchange();
-        return exchange.TotalOwnedParticles();
+        return getExchange().TotalOwnedParticles();
     };
 
     Real HaloLoadFactor() const
     {
-        auto &exchange = getExchange();
-        return exchange.HaloLoadFactor();
+        return getExchange().HaloLoadFactor();
     };
 
     std::string checkConsistency() const
     {
-        auto &exchange = getExchange();
-        return exchange.checkConsistency();
+        return getExchange().checkConsistency();
     };
 
     std::string describe() const { return decomposition_.describe(); };
