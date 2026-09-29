@@ -245,6 +245,11 @@ class MaxSmoothingLengthContactRelation : public ContactRelationCrossResolution
     StdVec<MaxSmoothingLengthNeighborBuilder *> get_contact_neighbors_;
 };
 
+/**
+ * @class ContactRelationFSI2
+ * @brief Used for the contact between a fluid body and an immersed solid body.
+ * The area of a surface particle is transformed into an equivalent volume.
+ */
 class ContactRelationFSI2 : public ContactRelationCrossResolution
 {
   private:
@@ -258,6 +263,11 @@ class ContactRelationFSI2 : public ContactRelationCrossResolution
     StdVec<NeighborBuilderContactFS2 *> get_contact_neighbors_;
 };
 
+/**
+ * @class ContactRelationSFI2
+ * @brief Used for the contact between an immersed solid body and a fluid body.
+ * The area of a surface particle is transformed into an equivalent volume.
+ */
 class ContactRelationSFI2 : public ContactRelationCrossResolution
 {
   private:
