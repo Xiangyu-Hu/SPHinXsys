@@ -21,7 +21,7 @@ template <typename... Parameters>
 template <class DynamicsIdentifier>
 RepulsionFactor<Contact<Parameters...>>::
     RepulsionFactor(DynamicsIdentifier &identifier)
-    : BaseInteractionType(identifier, "RepulsionFactor"),
+    : BaseInteractionType(identifier, "RepulsionFactor" + identifier.Name()),
     dv_contact_Vol_ref_(this->contact_particles_->template registerStateVariableFrom<Real>(
         "VolumetricMeasureRef", "VolumetricMeasure")){}
 //=================================================================================================//
