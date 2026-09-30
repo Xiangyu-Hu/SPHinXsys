@@ -327,7 +327,7 @@ struct FlagObject : public ShellObject
                 y -= dp;
             }
         };
-        return shell_inputs{.name = "flag", .positions = positions, .normals = normals, .dp = dp, .thickness = plate_thickness};
+        return shell_inputs{"flag", positions, normals, dp, plate_thickness};
     }
     FlagObject(SPHSystem &sph_system, Real dp_s)
         : ShellObject(sph_system, get_inputs(dp_s)) {}
