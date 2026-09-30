@@ -34,6 +34,7 @@
 #include "diffusion_reaction.h"
 #include "elastic_solid.h"
 #include "general_continuum.hpp"
+#include "hjc_solid.h"
 #include "inelastic_solid.hpp"
 #include "viscosity.h"
 #include "weakly_compressible_fluid.h"
