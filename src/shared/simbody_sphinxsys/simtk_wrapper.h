@@ -50,6 +50,15 @@ inline SimTKVec3 EigenToSimTK(const Vec3d &eigen_vector)
     return SimTKVec3((double)eigen_vector[0], (double)eigen_vector[1], (double)eigen_vector[2]);
 }
 
+inline SimTK::Transform EigenToSimTK(const Transform3d &transform)
+{
+    Rotation3d aa = transform.getRotation();
+    Vec3d translation = transform.getTranslation();
+    SimTK::Rotation R(aa.angle(), SimTK::UnitVec3(aa.axis()[0], aa.axis()[1], aa.axis()[2]));
+    SimTK::Vec3 t(translation(0), translation(1), translation(2));
+    return SimTK::Transform(R, t);
+}
+
 inline Vec2d SimTKToEigen(const SimTKVec2 &simTK_vector)
 {
     return Vec2d((Real)simTK_vector[0], (Real)simTK_vector[1]);
@@ -136,61 +145,6 @@ template <>
 struct ZeroData<SimbodyState>
 {
     static inline const SimbodyState value = SimbodyState();
-};
-
-class SimbodyStateEngine;
-
-class SimbodySystem
-{
-    UniquePtrKeeper<SimbodyStateEngine> state_engine_keeper_;
-    UniquePtrKeeper<SimTK::RungeKuttaMersonIntegrator> integrator_keeper_;
-    UniquePtrsKeeper<SimTK::Body::Rigid> rigid_bodies_keeper_;
-    UniquePtrsKeeper<SimTK::MobilizedBody> mobilized_bodies_keeper_;
-
-  public:
-    SimbodySystem();
-    SimTK::MultibodySystem &getMultibodySystem() { return MBsystem_; };
-    SimTK::SimbodyMatterSubsystem &getSimbodyMatterSubsystem() { return simbody_matter_; };
-    SimTK::RungeKuttaMersonIntegrator &getSimbodyIntegrator();
-    SimbodyStateEngine &getSimbodyStateEngine();
-
-    SimTK::Body::Rigid &createRigidBody(
-        const std::string &name, const SimTK::MassProperties &mass_properties);
-    SimTK::Body::Rigid &getRigidBody(const std::string &name);
-
-    template <class MobilizedBodyType, class ParentBodyType>
-    MobilizedBodyType &createMobilizedBody(
-        const std::string &name, ParentBodyType &parent_mobod,
-        const SimTK::Transform &X_PF, const SimTK::Body::Rigid &body,
-        const SimTK::Transform &X_BM)
-    {
-        MobilizedBodyType *mobilized_body =
-            mobilized_bodies_keeper_.createPtr<MobilizedBodyType>(
-                parent_mobod, X_PF, body, X_BM);
-        mobilized_bodies_.push_back(std::make_pair(name, mobilized_body));
-        return *mobilized_body;
-    };
-
-    template <class MobilizedBodyType>
-    MobilizedBodyType &getMobilizedBody(const std::string &name)
-    {
-        for (size_t i = 0; i < mobilized_bodies_.size(); ++i)
-        {
-            if (mobilized_bodies_[i].first == name)
-            {
-                return *DynamicCast<MobilizedBodyType>(this, mobilized_bodies_[i].second);
-            }
-        }
-        std::cerr << "\n Error: Mobilized body " << name << " not found!" << std::endl;
-        throw std::runtime_error("Error: Mobilized body not found!");
-    };
-
-  protected:
-    SimTK::MultibodySystem MBsystem_;
-    SimTK::SimbodyMatterSubsystem simbody_matter_;
-    SimTK::RungeKuttaMersonIntegrator integ_;
-    StdVec<std::pair<std::string, SimTK::Body::Rigid *>> rigid_bodies_;
-    StdVec<std::pair<std::string, SimTK::MobilizedBody *>> mobilized_bodies_;
 };
 } // namespace SPH
 #endif // SIMTK_WRAPPER_H

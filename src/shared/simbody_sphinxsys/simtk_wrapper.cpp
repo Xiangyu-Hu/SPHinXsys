@@ -34,46 +34,5 @@ void SimbodyState::printSimbodyState()
     std::cout << "rotation_: \n"
               << rotation_ << std::endl;
 }
-//=================================================================================================//
-SimbodySystem::SimbodySystem()
-    : simbody_matter_(MBsystem_), integ_(MBsystem_)
-{
-    state_engine_keeper_.createPtr<SimbodyStateEngine>(MBsystem_);
-}
-//=================================================================================================//
-SimbodyStateEngine &SimbodySystem::getSimbodyStateEngine()
-{
-    return *state_engine_keeper_.getPtr();
-}
-//=================================================================================================//
-SimTK::RungeKuttaMersonIntegrator &SimbodySystem::getSimbodyIntegrator()
-{
-    if (!integrator_keeper_.getPtr())
-    {
-        integrator_keeper_.createPtr<SimTK::RungeKuttaMersonIntegrator>(MBsystem_);
-    }
-    return *integrator_keeper_.getPtr();
-}
-//=================================================================================================//
-SimTK::Body::Rigid &SimbodySystem::createRigidBody(
-    const std::string &name, const SimTK::MassProperties &mass_properties)
-{
-    SimTK::Body::Rigid *rigid_body =
-        rigid_bodies_keeper_.createPtr<SimTK::Body::Rigid>(mass_properties);
-    rigid_bodies_.push_back(std::make_pair(name, rigid_body));
-    return *rigid_body;
-}
-//=================================================================================================//
-SimTK::Body::Rigid &SimbodySystem::getRigidBody(const std::string &name)
-{
-    for (size_t i = 0; i < rigid_bodies_.size(); ++i)
-    {
-        if (rigid_bodies_[i].first == name)
-        {
-            return *rigid_bodies_[i].second;
-        }
-    }
-    throw std::runtime_error("SimbodySystem::getRigidBody: Rigid body with name " + name + " not found.");
-}
 //=============================================================================================//
 } // namespace SPH

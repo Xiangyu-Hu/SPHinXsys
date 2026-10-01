@@ -4,7 +4,7 @@
 #include "geometric_shape.h"
 #include "io_environment.h"
 #include "predefined_bodies.h"
-#include "simtk_wrapper.h"
+#include "simbody_system.h"
 #include "state_engine.h"
 
 #define TBB_PREVIEW_GLOBAL_CONTROL 1
