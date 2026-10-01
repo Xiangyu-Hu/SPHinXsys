@@ -14,9 +14,13 @@ NormalFromBodyShapeCK::NormalFromBodyShapeCK(SPHBody &sph_body)
       dv_n_(particles_->registerStateVariable<Vecd>("NormalDirection")),
       dv_n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       dv_phi_(particles_->registerStateVariable<Real>("SignedDistance")),
-      dv_phi0_(particles_->registerStateVariableFrom<Real>("InitialSignedDistance", "SignedDistance")) {}
+      dv_phi0_(particles_->registerStateVariableFrom<Real>("InitialSignedDistance", "SignedDistance"))
+{
+    particles_->addEvolvingVariable<Vecd>(dv_n_);
+    particles_->addEvolvingVariable<Real>(dv_phi_);
+}
 //=============================================================================================//
-void NormalFromBodyShapeCK::UpdateKernel::update(size_t index_i, Real dt)
+void NormalFromBodyShapeCK::UpdateKernel::compute(size_t index_i, Real dt)
 {
     Vecd normal_direction = initial_shape_->findNormalDirection(pos_[index_i]);
     n_[index_i] = normal_direction;
@@ -34,13 +38,17 @@ NormalFromSubShapeAndOpCK::NormalFromSubShapeAndOpCK(
       dv_n_(particles_->registerStateVariable<Vecd>("NormalDirection")),
       dv_n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       dv_phi_(particles_->registerStateVariable<Real>("SignedDistance")),
-      dv_phi0_(particles_->registerStateVariableFrom<Real>("InitialSignedDistance", "SignedDistance")) {}
+      dv_phi0_(particles_->registerStateVariableFrom<Real>("InitialSignedDistance", "SignedDistance"))
+{
+    particles_->addEvolvingVariable<Vecd>(dv_n_);
+    particles_->addEvolvingVariable<Real>(dv_phi_);
+}
 //=================================================================================================//
 NormalFromSubShapeAndOpCK::NormalFromSubShapeAndOpCK(SPHBody &sph_body, const std::string &shape_name)
     : NormalFromSubShapeAndOpCK(
           sph_body, DynamicCast<ComplexShape>(this, sph_body.getInitialShape()), shape_name) {}
 //=================================================================================================//
-void NormalFromSubShapeAndOpCK::UpdateKernel::update(size_t index_i, Real /*dt*/)
+void NormalFromSubShapeAndOpCK::UpdateKernel::compute(size_t index_i, Real /*dt*/)
 {
     Vecd normal_direction = switch_sign_ * shape_->findNormalDirection(pos_[index_i]);
     n_[index_i] = normal_direction;
@@ -57,7 +65,7 @@ SurfaceIndicationFromBodyShape::SurfaceIndicationFromBodyShape(SPHBody &sph_body
       dv_indicator_(particles_->registerStateVariable<int>("SurfaceIndicator")),
       dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
 //=============================================================================================//
-void SurfaceIndicationFromBodyShape::UpdateKernel::update(size_t index_i, Real dt)
+void SurfaceIndicationFromBodyShape::UpdateKernel::compute(size_t index_i, Real dt)
 {
     Real signed_distance = initial_shape_->findSignedDistance(pos_[index_i]);
     indicator_[index_i] = signed_distance > -spacing_ref_ ? 1 : 0;
@@ -67,7 +75,7 @@ RandomizeParticlePositionCK::RandomizeParticlePositionCK(SPHBody &sph_body, Real
     : LocalDynamics(sph_body), dv_pos_(particles_->getVariableByName<Vecd>("Position")),
       randomize_scale_(sph_body.getSPHAdaptation().MinimumSpacing() * randomize_factor) {}
 //=============================================================================================//
-void RandomizeParticlePositionCK::UpdateKernel::update(size_t index_i, Real dt)
+void RandomizeParticlePositionCK::UpdateKernel::compute(size_t index_i, Real dt)
 {
     for (int k = 0; k != Dimensions; ++k)
     {

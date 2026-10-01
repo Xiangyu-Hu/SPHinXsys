@@ -32,6 +32,7 @@
 #include "base_body.h"
 #include "base_body_part.h"
 #include "base_particles.h"
+#include "execution_policy.h"
 
 namespace SPH
 {
@@ -113,6 +114,59 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByCell>
     UnsignedInt *loop_bound_;
     UnsignedInt *particle_index_;
     UnsignedInt *cell_offset_;
+};
+/**
+ * @class DeferredLoopRangeCK
+ * @brief The loop range of a decomposed run: one range per subdomain, built on demand.
+ * @details A LoopRangeCK<PolicyType, ...> calls DelegatedData() in its constructor, which
+ *          resolves to the replica of the subdomain bound to the calling thread. The CK
+ *          algorithms construct their range on the host thread, before the fan-out, so a
+ *          range built there would bind every subdomain to the replica of subdomain 0.
+ *          This range therefore only keeps the identifier, and particle_for() builds the
+ *          base policy's range inside the fan-out, once per subdomain. It serves the host
+ *          and the device decomposition alike, since the inner range is that of the base
+ *          policy (ParallelPolicy, SequencedPolicy or SYCLDevicePolicy).
+ *
+ *          The LoopRangeCK specializations below are spelled out per identifier, since a
+ *          partial specialization on DecomposedExecution<PolicyType> alone would be
+ *          ambiguous with the per-identifier specializations above.
+ */
+template <class PolicyType, class Identifier>
+class DeferredLoopRangeCK
+{
+  public:
+    explicit DeferredLoopRangeCK(Identifier &identifier) : identifier_(identifier) {};
+    LoopRangeCK<PolicyType, Identifier> onCurrentSubdomain() const
+    {
+        return LoopRangeCK<PolicyType, Identifier>(identifier_);
+    };
+
+  protected:
+    Identifier &identifier_;
+};
+
+template <class PolicyType>
+class LoopRangeCK<DecomposedExecution<PolicyType>, SPHBody>
+    : public DeferredLoopRangeCK<PolicyType, SPHBody>
+{
+  public:
+    using DeferredLoopRangeCK<PolicyType, SPHBody>::DeferredLoopRangeCK;
+};
+
+template <class PolicyType>
+class LoopRangeCK<DecomposedExecution<PolicyType>, BodyPartByParticle>
+    : public DeferredLoopRangeCK<PolicyType, BodyPartByParticle>
+{
+  public:
+    using DeferredLoopRangeCK<PolicyType, BodyPartByParticle>::DeferredLoopRangeCK;
+};
+
+template <class PolicyType>
+class LoopRangeCK<DecomposedExecution<PolicyType>, BodyPartByCell>
+    : public DeferredLoopRangeCK<PolicyType, BodyPartByCell>
+{
+  public:
+    using DeferredLoopRangeCK<PolicyType, BodyPartByCell>::DeferredLoopRangeCK;
 };
 } // namespace SPH
 #endif // LOOP_RANGE_H

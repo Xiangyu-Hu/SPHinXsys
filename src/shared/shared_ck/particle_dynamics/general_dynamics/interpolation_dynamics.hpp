@@ -35,7 +35,7 @@ Interpolation<Contact<DataType, Parameters...>>::InteractKernel::
       contact_data_(encloser.dv_contact_data_->DelegatedEntryView(ex_policy, encloser.entry_)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
-void Interpolation<Contact<DataType, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
+void Interpolation<Contact<DataType, Parameters...>>::InteractKernel::compute(size_t index_i, Real dt)
 {
     DataType interpolated_quantity(zero_value_);
     Real ttl_weight(0);
@@ -63,7 +63,7 @@ Interpolation<Contact<DataType, RestoringCorrection, Parameters...>>::InteractKe
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 void Interpolation<Contact<DataType, RestoringCorrection, Parameters...>>::InteractKernel::
-    interact(size_t index_i, Real dt)
+    compute(size_t index_i, Real dt)
 {
     PredictVecd prediction = zero_prediction_;
     RestoreMatd restoring_matrix = Eps * RestoreMatd::Identity();

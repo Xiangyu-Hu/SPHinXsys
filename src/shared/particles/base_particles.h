@@ -51,6 +51,7 @@ class GroupManager;
 
 /** Generalized particle data type */
 typedef DataContainerAssemble<AllocatedData> ParticleData;
+
 /**
  * @class BaseParticles
  * @brief Particles with essential (geometric and matter) data.
@@ -99,6 +100,13 @@ class BaseParticles
     //----------------------------------------------------------------------
   protected:
     SingleVariable<UnsignedInt> *sv_total_real_particles_;
+    /** Real particles plus the halo copies received from neighboring subdomains.
+     *  Equal to sv_total_real_particles_ outside a domain decomposed run. The two
+     *  counts differ in what they are used for: physics is integrated over the real
+     *  (owned) particles only, whereas the cell linked list and hence the neighbor
+     *  search must also see the halo, or particles near a cut plane would lose part
+     *  of their support. */
+    SingleVariable<UnsignedInt> *sv_total_local_particles_;
     UnsignedInt particles_bound_;
 
   public:
@@ -109,6 +117,11 @@ class BaseParticles
     //----------------------------------------------------------------------
     SingleVariable<UnsignedInt> *svTotalRealParticles() { return sv_total_real_particles_; };
     UnsignedInt TotalRealParticles() { return sv_total_real_particles_->getValue(); };
+    SingleVariable<UnsignedInt> *svTotalLocalParticles() { return sv_total_local_particles_; };
+    template <class PolicyType>
+    UnsignedInt TotalLocalParticles(const PolicyType &ex_policy);
+    template <class PolicyType>
+    UnsignedInt TotalLocalParticles(const DecomposedExecution<PolicyType> &ex_policy);
     UnsignedInt ParticlesBound() { return particles_bound_; };
     GroupManager &getParticleGroupManager();
     void initializeAllParticlesBounds(UnsignedInt total_real_particles);
@@ -150,18 +163,25 @@ class BaseParticles
     // Particle data for sorting
     //----------------------------------------------------------------------
   protected:
-    UnsignedInt *original_id_;             /**< the original ids assigned just after particle is generated. */
-    UnsignedInt *sorted_id_;               /**< the current sorted particle ids of particles from original ids. */
-    DiscreteVariables evolving_variables_; // particle variables which evolving during simulation
+    UnsignedInt *original_id_;                 /**< the original ids assigned just after particle is generated. */
+    UnsignedInt *sorted_id_;                   /**< the current sorted particle ids of particles from original ids. */
+    DiscreteVariables evolving_variables_;     // particle variables which evolving during simulation
+    DiscreteVariables all_interact_variables_; // particle variables which are used in interaction dynamics
 
   public:
     DiscreteVariables &VariablesToWrite() { return variables_to_write_; };
     DiscreteVariables &EvolvingVariables() { return evolving_variables_; };
     DiscreteVariables &ParticleAttributesToWrite() { return particle_attributes_to_write_; };
+    DiscreteVariables &AllInteractVariables() { return all_interact_variables_; };
     StdVec<std::string> &ParticleGroupsToWrite() { return particle_groups_to_write_; };
     void addParticleGroupToWrite(const std::string &name);
+
     template <typename DataType, typename... Args>
     void addEvolvingVariable(Args &&...args);
+
+    template <typename DataType, typename... Args>
+    void addInteractVariable(Args &&...args);
+
     template <typename DataType, typename... Args>
     void addVariableToWrite(Args &&...args);
     //----------------------------------------------------------------------
@@ -188,7 +208,7 @@ class BaseParticles
     XmlParser &reload_xml_parser_;
     DiscreteVariables all_discrete_variables_;
     SingleVariables all_singular_variables_;
-    DiscreteVariables variables_to_write_; // position is included
+    DiscreteVariables variables_to_write_;           // position is included
     DiscreteVariables particle_attributes_to_write_; // position is excluded
     StdVec<std::string> particle_groups_to_write_;
 

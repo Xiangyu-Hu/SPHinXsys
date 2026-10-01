@@ -50,7 +50,7 @@ FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename... Parameters>
 void FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::InteractKernel::
-    interact(size_t index_i, Real dt)
+    compute(size_t index_i, Real dt)
 {
     Real pos_div = 0.0;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -94,7 +94,7 @@ FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
 //=================================================================================================//
 template <typename... Parameters>
 void FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
-    update(size_t index_i, Real dt)
+    compute(size_t index_i, Real dt)
 {
     this->indicator_[index_i] = 1;
     if (this->pos_div_[index_i] > this->threshold_by_dimensions_ && !isVeryNearFreeSurface(index_i))
@@ -139,7 +139,7 @@ FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename... Parameters>
 void FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::
-    interact(size_t index_i, Real dt)
+    compute(size_t index_i, Real dt)
 {
     Real pos_div = 0.0;
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)

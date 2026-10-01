@@ -91,7 +91,7 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrecti
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(UnsignedInt index_i, Real dt = 0.0);
+        void compute(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
         CorrectionKernel correction_;
@@ -127,7 +127,7 @@ class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(UnsignedInt index_i, Real dt = 0.0);
+        void compute(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
         CorrectionKernel correction_;
@@ -161,7 +161,7 @@ class DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionPara
       public:
         template <class ExecutionPolicy, class EncloserType>
         InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void initialize(UnsignedInt index_i, Real dt = 0.0);
+        void compute(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
         MultiEntryView<Real> species_dt_;
@@ -172,7 +172,7 @@ class DiffusionRelaxationCK<RelationType<OneLevel, ForwardEuler, InteractionPara
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(UnsignedInt index_i, Real dt = 0.0);
+        void compute(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
         MultiEntryView<Real> species_, species_dt_;
@@ -199,7 +199,7 @@ class DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta1stStage, Interacti
       public:
         template <class ExecutionPolicy, class EncloserType>
         InitializeKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void initialize(UnsignedInt index_i, Real dt = 0.0);
+        void compute(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
         MultiEntryView<Real> species_, species_s_;
@@ -225,7 +225,7 @@ class DiffusionRelaxationCK<RelationType<OneLevel, RungeKutta2ndStage, Interacti
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(UnsignedInt index_i, Real dt = 0.0);
+        void compute(UnsignedInt index_i, Real dt = 0.0);
 
       protected:
         MultiEntryView<Real> species_, species_s_;

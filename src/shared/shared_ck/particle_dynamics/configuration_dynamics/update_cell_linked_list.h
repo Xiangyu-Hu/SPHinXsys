@@ -79,6 +79,9 @@ class UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>
     virtual void exec(Real dt = 0.0) override;
 
   protected:
+    /** Body of exec(), executed once per device inside the fan-out. */
+    void buildOnCurrentDevice();
+
     DynamicsIdentifier &identifier_;
     Implementation<ExecutionPolicy, EncloserType, ComputingKernel> kernel_implementation_;
 };

@@ -61,7 +61,7 @@ RepulsionForceCK<Contact<WithUpdate, Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename... Parameters>
 void RepulsionForceCK<Contact<WithUpdate, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -105,7 +105,7 @@ RepulsionForceCK<Contact<WithUpdate, Wall, Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename... Parameters>
 void RepulsionForceCK<Contact<WithUpdate, Wall, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)

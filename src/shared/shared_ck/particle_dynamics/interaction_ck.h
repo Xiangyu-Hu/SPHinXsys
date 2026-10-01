@@ -85,6 +85,13 @@ class Interaction<Inner<Parameters...>>
   protected:
     InnerRelationType *inner_relation_;
     DiscreteVariable<Real> *dv_Vol_;
+    DiscreteVariables interact_variables_;
+
+    template <typename DataType>
+    void addInteractVariable(DiscreteVariable<DataType> *variable);
+
+    template <typename DataType, class KernelMethodType>
+    void addInteractVariable(const KernelMethodType &kernel_method);
 };
 
 template <typename... Parameters>
@@ -125,6 +132,13 @@ class Interaction<Contact<Parameters...>>
     SPHAdaptation *contact_adaptation_;
     DiscreteVariable<Real> *dv_Vol_;
     DiscreteVariable<Real> *dv_contact_Vol_;
+    DiscreteVariables contact_interact_variables_;
+
+    template <typename DataType>
+    void addContactInteractVariable(DiscreteVariable<DataType> *contact_variable);
+
+    template <typename DataType, class KernelMethodType>
+    void addContactInteractVariable(const KernelMethodType &kernel_method);
 };
 
 template <>

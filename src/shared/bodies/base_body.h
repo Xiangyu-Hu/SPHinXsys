@@ -52,6 +52,10 @@ class MatterMaterial;
 class SPHSystem;
 class BaseCellLinkedList;
 
+class BaseDecomposition;
+template <class ExecutionPolicy>
+class BodyDecomposition;
+
 /**
  * @class SPHBody
  * @brief SPHBody is a base body with basic data and functions.
@@ -65,6 +69,7 @@ class SPHBody
     SharedPtrKeeper<Shape> shape_keeper_;
     UniquePtrKeeper<SPHAdaptation> sph_adaptation_keeper_;
     UniquePtrKeeper<BaseParticles> base_particles_keeper_;
+    UniquePtrKeeper<BaseDecomposition> decomposition_keeper_;
     UniquePtrKeeper<BaseMaterial> matter_keeper_;
     UniquePtrsKeeper<BaseMaterial> material_properties_keeper_;
 
@@ -171,6 +176,12 @@ class SPHBody
     // Buffer or ghost particles can be generated together with real particles
     template <class ParticleType, typename... Parameters, class ReserveType, typename... Args>
     ParticleType &generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args);
+
+    template <class ExecutionPolicy, typename... Args>
+    BodyDecomposition<ExecutionPolicy> &addDecomposition(Args &&...args);
+
+    template <class ExecutionPolicy>
+    BodyDecomposition<ExecutionPolicy> &getDecomposition();
 };
 
 /**

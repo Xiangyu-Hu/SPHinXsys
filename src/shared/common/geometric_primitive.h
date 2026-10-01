@@ -152,6 +152,20 @@ class BoundingBox
     {
         return BoundSize().cwiseAbs().minCoeff();
     };
+
+    int MinimumDimensionIndex() const
+    {
+        Eigen::Index index;
+        BoundSize().cwiseAbs().minCoeff(&index);
+        return index;
+    };
+
+    int MaximumDimensionIndex() const
+    {
+        Eigen::Index index;
+        BoundSize().cwiseAbs().maxCoeff(&index);
+        return index;
+    };
 };
 /** Operator define. */
 template <template <int> typename BoundType, int N>

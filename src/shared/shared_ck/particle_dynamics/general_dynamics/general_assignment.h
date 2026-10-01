@@ -51,7 +51,7 @@ class VariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(UnsignedInt index_i, Real dt = 0.0) { assign_(index_i); };
+        void compute(UnsignedInt index_i, Real dt = 0.0) { assign_(index_i); };
 
       protected:
         Assign assign_;

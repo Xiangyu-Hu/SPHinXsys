@@ -42,7 +42,7 @@ CompressionSummation<Inner<Parameters...>>::InteractKernel::InteractKernel(
 //=================================================================================================//
 template <typename... Parameters>
 void CompressionSummation<Inner<Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     compression_sum_[index_i] = this->W0(index_i, zero_) * Vol_ref_[index_i];
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -73,7 +73,7 @@ CompressionSummation<Contact<Parameters...>>::InteractKernel::InteractKernel(
 //=================================================================================================//
 template <typename... Parameters>
 void CompressionSummation<Contact<Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
@@ -122,7 +122,7 @@ DensityRegularization<DynamicsIdentifier, FluidType, FlowType, ParticleScopes...
 //=================================================================================================//
 template <class DynamicsIdentifier, class FluidType, class FlowType, typename... ParticleScopes>
 void DensityRegularization<DynamicsIdentifier, FluidType, FlowType, ParticleScopes...>::
-    UpdateKernel::update(size_t index_i, Real dt)
+    UpdateKernel::compute(size_t index_i, Real dt)
 {
     if (this->particle_scope_(index_i))
     {

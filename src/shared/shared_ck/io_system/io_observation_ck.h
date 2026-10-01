@@ -29,10 +29,11 @@
 #ifndef IO_OBSERVATION_CK_H
 #define IO_OBSERVATION_CK_H
 
-#include "io_observation.h"
-
 #include "execution_policy.h"
 #include "interpolation_dynamics.hpp"
+#include "io_base_ck.hpp"
+#include "io_observation.h"
+#include "subdomain_fan_out.h"
 
 namespace SPH
 {
@@ -43,9 +44,12 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
   protected:
     SPHBody &observer_;
     BaseParticles &base_particles_;
+    BaseParticles &contact_particles_;
     ObservingQuantityCK<ExecutionPolicy, DataType, Parameters...> observation_method_;
     DiscreteVariable<DataType> *dv_interpolated_quantities_;
     size_t number_of_observe_;
+    VariablesWriteHelper variable_write_helper_;
+    DiscreteVariables observe_variables_;
 
   public:
     DataType type_indicator_; /*< this is an indicator to identify the variable type. */
@@ -57,11 +61,13 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
               contact_relation.getSPHBody().getSPHSystem(), contact_relation.getSPHBody().Name()),
           observer_(contact_relation.getSPHBody()),
           base_particles_(observer_.getBaseParticles()),
+          contact_particles_(contact_relation.getContactParticles()),
           observation_method_(contact_relation, std::forward<Args>(args)...),
           dv_interpolated_quantities_(observation_method_.dvInterpolatedQuantities()),
           number_of_observe_(base_particles_.TotalRealParticles())
     {
         setFullPath(dv_interpolated_quantities_->Name());
+        base_particles_.addDiscreteVariableToList<DataType>(observe_variables_, dv_interpolated_quantities_);
     };
     virtual ~ObservedQuantityRecording() {};
 
@@ -84,7 +90,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
         std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
         out_file << sv_physical_time_->getValueWithScalingRef() << "   ";
         observation_method_.exec();
-        dv_interpolated_quantities_->prepareForOutput(ExecutionPolicy{});
+        variable_write_helper_.prepareToWrite(&observer_, observe_variables_, ExecutionPolicy{});
         for (size_t i = 0; i != number_of_observe_; ++i)
         {
             plt_engine_.writeAQuantity(
@@ -92,6 +98,7 @@ class ObservedQuantityRecording<ExecutionPolicy, DataType, Parameters...>
         }
         out_file << "\n";
         out_file.close();
+        variable_write_helper_.finishWrite(&observer_, ExecutionPolicy{});
     };
 
     DataType *getObservedQuantity()

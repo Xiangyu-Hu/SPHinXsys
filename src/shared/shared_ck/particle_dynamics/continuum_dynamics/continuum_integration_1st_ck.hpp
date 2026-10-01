@@ -74,7 +74,7 @@ PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTy
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    InitializeKernel::initialize(size_t index_i, Real dt)
+    InitializeKernel::compute(size_t index_i, Real dt)
 {
     compression_[index_i] += 0.5 * dt * compression_rate_[index_i];
     rho_[index_i] = compression_[index_i] * eos_.getReferenceDensity(index_i);
@@ -100,7 +100,7 @@ PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTy
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
     Real compression_dissipation(0);
@@ -129,7 +129,7 @@ PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionTy
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PlasticAcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    UpdateKernel::update(size_t index_i, Real dt)
+    UpdateKernel::compute(size_t index_i, Real dt)
 {
     vel_[index_i] += (force_prior_[index_i] + force_[index_i]) / mass_[index_i] * dt;
 }
@@ -164,7 +164,7 @@ PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PlasticAcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Vecd force = Vecd::Zero();
     Real compression_dissipation(0);

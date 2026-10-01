@@ -39,7 +39,7 @@ RepulsionFactor<Contact<Parameters...>>::InteractKernel::
 //=================================================================================================//
 template <typename... Parameters>
 void RepulsionFactor<Contact<Parameters...>>::InteractKernel::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Real sigma(0);
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)

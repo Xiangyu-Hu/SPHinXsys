@@ -9,11 +9,33 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename... Parameters>
-Interaction<Inner<Parameters...>>::
-    Interaction(InnerRelationType &inner_relation)
+Interaction<Inner<Parameters...>>::Interaction(InnerRelationType &inner_relation)
     : BaseLocalDynamicsType(inner_relation.getDynamicsIdentifier()),
       inner_relation_(&inner_relation),
-      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")) {}
+      dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure"))
+{
+    addInteractVariable(dv_Vol_);
+}
+//=================================================================================================//
+template <typename... Parameters>
+template <typename DataType>
+void Interaction<Inner<Parameters...>>::addInteractVariable(DiscreteVariable<DataType> *variable)
+{
+    addVariableToList<DiscreteVariable, DataType>(interact_variables_, variable);
+    this->particles_->template addInteractVariable<DataType>(variable);
+}
+//=================================================================================================//
+template <typename... Parameters>
+template <typename DataType, class KernelMethodType>
+void Interaction<Inner<Parameters...>>::addInteractVariable(
+    const KernelMethodType &kernel_method)
+{
+    DiscreteVariable<DataType> *variable = kernel_method.getDiscreteVariable();
+    if (variable != nullptr)
+    {
+        addInteractVariable(variable);
+    }
+}
 //=================================================================================================//
 template <typename... Parameters>
 void Interaction<Inner<Parameters...>>::
@@ -46,6 +68,27 @@ Interaction<Contact<Parameters...>>::Interaction(Contact<Parameters...> &contact
       dv_contact_Vol_(
           contact_particles_->template getVariableByName<Real>("VolumetricMeasure")) {}
 //=================================================================================================//
+template <typename... Parameters>
+template <typename DataType>
+void Interaction<Contact<Parameters...>>::addContactInteractVariable(
+    DiscreteVariable<DataType> *contact_variable)
+{
+    addVariableToList<DiscreteVariable, DataType>(contact_interact_variables_, contact_variable);
+    contact_particles_->template addInteractVariable<DataType>(contact_variable);
+}
+//=================================================================================================//
+template <typename... Parameters>
+template <typename DataType, class KernelMethodType>
+void Interaction<Contact<Parameters...>>::addContactInteractVariable(const KernelMethodType &kernel_method)
+{
+    DiscreteVariable<DataType> *variable = kernel_method.getDiscreteVariable();
+    if (variable != nullptr)
+    {
+        addContactInteractVariable(variable);
+    }
+}
+//=================================================================================================//
+
 template <typename... Parameters>
 void Interaction<Contact<Parameters...>>::registerComputingKernel(Implementation<Base> *implementation)
 {

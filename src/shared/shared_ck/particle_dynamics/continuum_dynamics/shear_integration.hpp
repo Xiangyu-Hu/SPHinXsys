@@ -46,7 +46,7 @@ ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::InitializeKernel
 //====================================================================================//
 template <class MaterialType, typename... Parameters>
 void ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
-    InitializeKernel::initialize(size_t index_i, Real dt)
+    InitializeKernel::compute(size_t index_i, Real dt)
 {
     Matd strain_rate = 0.5 * (vel_gradient_[index_i] + vel_gradient_[index_i].transpose());
     strain_tensor_[index_i] += strain_rate * dt;
@@ -79,7 +79,7 @@ ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::InteractKernel::
 //====================================================================================//
 template <class MaterialType, typename... Parameters>
 void ShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Vecd sum_shear = Vecd::Zero();
     Vecd sum_hourglass = Vecd::Zero();
@@ -137,7 +137,7 @@ InelasticShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::Initial
 //====================================================================================//
 template <class MaterialType, typename... Parameters>
 void InelasticShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
-    InitializeKernel::initialize(size_t index_i, Real dt)
+    InitializeKernel::compute(size_t index_i, Real dt)
 {
     Matd strain_rate = 0.5 * (vel_gradient_[index_i] + vel_gradient_[index_i].transpose());
     strain_tensor_[index_i] += strain_rate * dt;
@@ -171,7 +171,7 @@ InelasticShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::Interac
 //====================================================================================//
 template <class MaterialType, typename... Parameters>
 void InelasticShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Vecd sum_shear = Vecd::Zero();
     Vecd sum_hourglass = Vecd::Zero();
@@ -206,7 +206,7 @@ InelasticShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::UpdateK
 //====================================================================================//
 template <class MaterialType, typename... Parameters>
 void InelasticShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
-    UpdateKernel::update(size_t index_i, Real dt)
+    UpdateKernel::compute(size_t index_i, Real dt)
 {
     Vecd conservative_force = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -220,7 +220,7 @@ void InelasticShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
                               vec_r_ij.transpose() * dW_ijV_j * e_ij;
     }
     shear_force_[index_i] += conservative_force * Vol_[index_i];
-    ForcePriorCK::UpdateKernel::update(index_i, dt);
+    ForcePriorCK::UpdateKernel::compute(index_i, dt);
 }
 //=================================================================================================//
 } // namespace continuum_dynamics

@@ -48,7 +48,7 @@ class FreeStreamCondition : public LocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         ConditionFunction free_stream_velocity_;

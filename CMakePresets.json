@@ -133,6 +133,27 @@
       }
     },
     {
+      "name": "Linux GNU Release with Domain Decomposition",
+      "displayName": "SPHinXsys GNU Release with Domain Decomposition",
+      "description": "Sets Ninja generator, build and install directory with Domain Decomposition",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_TOOLCHAIN_FILE": "'${sourceDir}/../vcpkg/scripts/buildsystems/vcpkg.cmake'",
+        "SPHINXSYS_DECOMPOSITION": "ON",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
+      }
+    },
+    {
       "name": "Multi-platform Clang Release",
       "displayName": "Multi-platform SPHinXsys Clang Release",
       "description": "Sets Ninja generator, build and install directory",

@@ -67,7 +67,7 @@ void mesh_for(const execution::SequencedPolicy &seq, const MeshRange &mesh_range
 };
 
 template <typename LocalFunction, typename... Args>
-void mesh_for(const execution::ParallelPolicy &par_host, const MeshRange &mesh_range,
+void mesh_for(const execution::ParallelPolicy &ex_policy, const MeshRange &mesh_range,
               const LocalFunction &local_function, Args &&...args)
 {
     mesh_parallel_for(mesh_range, local_function, std::forward<Args>(args)...);
@@ -82,7 +82,7 @@ void package_for(const execution::SequencedPolicy &seq, UnsignedInt start_index,
 }
 
 template <typename FunctionOnData>
-void package_for(const execution::ParallelPolicy &par_host, UnsignedInt start_index,
+void package_for(const execution::ParallelPolicy &ex_policy, UnsignedInt start_index,
                  UnsignedInt end_index, const FunctionOnData &function)
 {
     tbb::parallel_for(IndexRange(start_index, end_index), [&](const IndexRange &r)
@@ -93,8 +93,23 @@ void package_for(const execution::ParallelPolicy &par_host, UnsignedInt start_in
                     } }, ap);
 }
 
+/** Host side decomposition policies iterate like the host policy they derive from. */
+template <typename PolicyType, typename LocalFunction, typename... Args>
+void mesh_for(const execution::DecomposedExecution<PolicyType> &ex_policy, const MeshRange &mesh_range,
+              const LocalFunction &local_function, Args &&...args)
+{
+    mesh_for(static_cast<const PolicyType &>(ex_policy), mesh_range, local_function, std::forward<Args>(args)...);
+};
+
+template <typename PolicyType, typename FunctionOnData>
+void package_for(const execution::DecomposedExecution<PolicyType> &ex_policy, UnsignedInt start_index,
+                 UnsignedInt end_index, const FunctionOnData &function)
+{
+    package_for(static_cast<const PolicyType &>(ex_policy), start_index, end_index, function);
+};
+
 template <typename FunctionOnData>
-void package_for(const execution::ParallelDevicePolicy &par_device,
+void package_for(const execution::SYCLDevicePolicy &sycl_device,
                  UnsignedInt start_index, UnsignedInt end_index,
                  const FunctionOnData &function);
 } // namespace SPH

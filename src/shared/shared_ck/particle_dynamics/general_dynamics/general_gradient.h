@@ -135,7 +135,7 @@ class LinearGradient<Inner<DataType, Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseDynamicsType::InteractKernel(ex_policy, encloser){};
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
     };
 };
 
@@ -158,7 +158,7 @@ class LinearGradient<Contact<DataType, Parameters...>>
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *contact_Vol_;
@@ -216,7 +216,7 @@ class Hessian<Inner<DataType, Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseDynamicsType::InteractKernel(ex_policy, encloser){};
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
     };
 };
 
@@ -236,7 +236,7 @@ class Hessian<Contact<DataType, Parameters...>>
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *contact_Vol_;
@@ -267,7 +267,7 @@ class SecondOrderGradient<Inner<DataType, Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseDynamicsType::InteractKernel(ex_policy, encloser){};
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
     };
 };
 
@@ -287,7 +287,7 @@ class SecondOrderGradient<Contact<DataType, Parameters...>>
       public:
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *contact_Vol_;

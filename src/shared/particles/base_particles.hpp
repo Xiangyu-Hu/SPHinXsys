@@ -8,6 +8,18 @@
 namespace SPH
 {
 //=================================================================================================//
+template <class PolicyType>
+UnsignedInt BaseParticles::TotalLocalParticles(const PolicyType &ex_policy)
+{
+    return sv_total_real_particles_->getValue();
+}
+//=================================================================================================//
+template <class PolicyType>
+UnsignedInt BaseParticles::TotalLocalParticles(const DecomposedExecution<PolicyType> &ex_policy)
+{
+    return sv_total_local_particles_->getValue();
+}
+//=================================================================================================//
 template <typename DataType>
 DiscreteVariable<DataType> *BaseParticles::getVariableByName(const std::string &name)
 {
@@ -151,6 +163,12 @@ void BaseParticles::addEvolvingVariable(Args &&...args)
         DataType *data_field = new_sortable->Data();
         std::get<type_index>(evolving_variables_data_).push_back(data_field);
     }
+}
+//=================================================================================================//
+template <typename DataType, typename... Args>
+void BaseParticles::addInteractVariable(Args &&...args)
+{
+    addDiscreteVariableToList<DataType>(all_interact_variables_, std::forward<Args>(args)...);
 }
 //=================================================================================================//
 template <typename DataType, typename... Args>

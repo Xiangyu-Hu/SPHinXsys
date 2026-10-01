@@ -30,6 +30,7 @@
 #ifndef PARTICLE_METHOD_CONTAINER_H
 #define PARTICLE_METHOD_CONTAINER_H
 
+#include "base_body.hpp"
 #include "complex_algorithms_ck.h"
 #include "interaction_algorithms_ck.h"
 #include "io_base.h"
@@ -206,7 +207,17 @@ class ParticleMethodContainer
   public:
     typedef ExecutionPolicy ExPolicy;
     ParticleMethodContainer(const ExecutionPolicy &ex_policy) {};
-    virtual ~ParticleMethodContainer() {};
+    virtual ~ParticleMethodContainer() = default;
+
+    /** The decomposition of a body over the subdomains; a no-op object unless the
+     *  policy is a DecomposedExecution<>. Define it after every dynamics of the body
+     *  and after its output variables, since that fixes the exchange set. The loop
+     *  entries are then added as addGeneralDynamics<UpdateHaloCK>(decomposition), etc. */
+    template <typename... Args>
+    BodyDecomposition<ExecutionPolicy> &addDecomposition(SPHBody &sph_body, Args &&...args)
+    {
+        return sph_body.addDecomposition<ExecutionPolicy>(std::forward<Args>(args)...);
+    };
 
     ParticleDynamicsGroup &addParticleDynamicsGroup()
     {

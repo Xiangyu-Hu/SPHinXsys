@@ -54,6 +54,20 @@ void particle_for(const ExecutionPolicy &execution_policy, const DynamicsRange &
 };
 
 /**
+ * Host side decomposition policies iterate exactly like the host policy they derive
+ * from; only the data they address differs, and that is resolved by DelegatedData().
+ * The forwarding is explicit because the generic template above is an exact match
+ * for DecomposedExecution<...> and would otherwise be chosen over the ParallelPolicy
+ * or SequencedPolicy overloads, which need a derived-to-base conversion.
+ */
+template <class PolicyType, typename DynamicsRange, class LocalDynamicsFunction>
+inline void particle_for(const DecomposedExecution<PolicyType> &ex_policy, const DynamicsRange &dynamics_range,
+                         const LocalDynamicsFunction &local_dynamics_function)
+{
+    particle_for(static_cast<const PolicyType &>(ex_policy), dynamics_range, local_dynamics_function);
+};
+
+/**
  * Range-wise iterators (for sequential and parallel computing).
  */
 
@@ -66,7 +80,7 @@ inline void particle_for(const SequencedPolicy &seq, const IndexRange &particles
 };
 
 template <class LocalDynamicsFunction>
-inline void particle_for(const ParallelPolicy &par_host, const IndexRange &particles_range,
+inline void particle_for(const ParallelPolicy &ex_policy, const IndexRange &particles_range,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
     tbb::parallel_for(
@@ -93,7 +107,7 @@ inline void particle_for(const SequencedPolicy &seq, const IndexVector &body_par
 };
 
 template <class LocalDynamicsFunction>
-inline void particle_for(const ParallelPolicy &par_host, const IndexVector &body_part_particles,
+inline void particle_for(const ParallelPolicy &ex_policy, const IndexVector &body_part_particles,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
     tbb::parallel_for(
@@ -125,7 +139,7 @@ inline void particle_for(const SequencedPolicy &seq, const ConcurrentCellLists &
 }
 
 template <class LocalDynamicsFunction>
-inline void particle_for(const ParallelPolicy &par_host, const ConcurrentCellLists &body_part_cells,
+inline void particle_for(const ParallelPolicy &ex_policy, const ConcurrentCellLists &body_part_cells,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
     tbb::parallel_for(
@@ -155,7 +169,7 @@ inline void particle_for(const SequencedPolicy &seq, const DataListsInCells &bod
 };
 
 template <class LocalDynamicsFunction>
-inline void particle_for(const ParallelPolicy &par_host, const DataListsInCells &body_part_cells,
+inline void particle_for(const ParallelPolicy &ex_policy, const DataListsInCells &body_part_cells,
                          const LocalDynamicsFunction &local_dynamics_function)
 {
     tbb::parallel_for(
@@ -180,6 +194,16 @@ void particle_reduce(const ExecutionPolicy &execution_policy, const DynamicsRang
     exit(1);
 };
 
+/** Host side decomposition policies reduce like the host policy they derive from. */
+template <class ReturnType, typename Operation, class PolicyType, typename DynamicsRange, class LocalDynamicsFunction>
+inline ReturnType particle_reduce(const DecomposedExecution<PolicyType> &ex_policy, const DynamicsRange &dynamics_range,
+                                  ReturnType temp, Operation &&operation,
+                                  const LocalDynamicsFunction &local_dynamics_function)
+{
+    return particle_reduce(static_cast<const PolicyType &>(ex_policy), dynamics_range, temp,
+                           std::forward<Operation>(operation), local_dynamics_function);
+};
+
 /**
  * Body-wise reduce iterators (for sequential and parallel computing).
  */
@@ -196,7 +220,7 @@ inline ReturnType particle_reduce(const SequencedPolicy &seq, const IndexRange &
 }
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-inline ReturnType particle_reduce(const ParallelPolicy &par_host, const IndexRange &particles_range,
+inline ReturnType particle_reduce(const ParallelPolicy &ex_policy, const IndexRange &particles_range,
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {
@@ -230,7 +254,7 @@ inline ReturnType particle_reduce(const SequencedPolicy &seq, const IndexVector 
 }
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-inline ReturnType particle_reduce(const ParallelPolicy &par_host, const IndexVector &body_part_particles,
+inline ReturnType particle_reduce(const ParallelPolicy &ex_policy, const IndexVector &body_part_particles,
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {
@@ -272,7 +296,7 @@ inline ReturnType particle_reduce(const SequencedPolicy &seq, const ConcurrentCe
 }
 
 template <class ReturnType, typename Operation, class LocalDynamicsFunction>
-inline ReturnType particle_reduce(const ParallelPolicy &par_host, const ConcurrentCellLists &body_part_cells,
+inline ReturnType particle_reduce(const ParallelPolicy &ex_policy, const ConcurrentCellLists &body_part_cells,
                                   ReturnType temp, Operation &&operation,
                                   const LocalDynamicsFunction &local_dynamics_function)
 {

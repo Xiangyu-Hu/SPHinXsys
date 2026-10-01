@@ -35,7 +35,7 @@ KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>::InteractKern
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 void KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Vecd inconsistency = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
@@ -70,7 +70,7 @@ KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>::
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 void KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters...>>::
-    InteractKernel::interact(size_t index_i, Real dt)
+    InteractKernel::compute(size_t index_i, Real dt)
 {
     Vecd inconsistency = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
