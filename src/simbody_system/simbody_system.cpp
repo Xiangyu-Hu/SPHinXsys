@@ -2,8 +2,10 @@
 
 #include "adaptation.h"
 #include "base_body.h"
+#include "base_body_part.h"
 #include "base_geometry.h"
 #include "base_material.h"
+#include "base_particles.hpp"
 #include "ownership.h"
 #include "simtk_wrapper.h"
 #include "sphinxsys_entity.h"
