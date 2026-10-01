@@ -54,7 +54,8 @@ if(SPHINXSYS_2D)
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_compile_options(simbody_system_2d PRIVATE)
     endif()
-    target_link_libraries(simbody_system_2d PUBLIC sphinxsys_core)
+    find_package(Eigen3 CONFIG REQUIRED)
+    target_link_libraries(simbody_system_2d PRIVATE sphinxsys_core)
 
     foreach(DIR ${SPHINXSYS_2D_INCLUDE_DIRS})
         target_include_directories(sphinxsys_2d PUBLIC $<BUILD_INTERFACE:${DIR}>)
@@ -62,7 +63,7 @@ if(SPHINXSYS_2D)
 
     target_include_directories(sphinxsys_2d PUBLIC $<INSTALL_INTERFACE:include/sphinxsys_2d>)
     
-    target_link_libraries(sphinxsys_2d PUBLIC sphinxsys_core)
+    target_link_libraries(sphinxsys_2d PUBLIC sphinxsys_lib)
     target_link_libraries(sphinxsys_2d PRIVATE simbody_system_2d)
     target_compile_definitions(sphinxsys_2d PUBLIC SPH_NDIM=2)
 endif()
@@ -108,12 +109,13 @@ if(SPHINXSYS_3D)
         target_include_directories(simbody_system_3d PRIVATE ${DIR})
     endforeach()
 
+
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
         target_compile_options(simbody_system_3d PRIVATE -fp-model=precise -fno-fast-math)
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_compile_options(simbody_system_3d PRIVATE)
     endif()
-    target_link_libraries(simbody_system_3d PUBLIC sphinxsys_core)
+    target_link_libraries(simbody_system_3d PRIVATE sphinxsys_core)
 
 
     foreach(DIR ${SPHINXSYS_3D_INCLUDE_DIRS})
@@ -121,7 +123,7 @@ if(SPHINXSYS_3D)
     endforeach()
     target_include_directories(sphinxsys_3d PUBLIC $<INSTALL_INTERFACE:include/sphinxsys_3d>)
 
-    target_link_libraries(sphinxsys_3d PUBLIC sphinxsys_core)
+    target_link_libraries(sphinxsys_3d PUBLIC sphinxsys_lib)
     target_link_libraries(sphinxsys_3d PRIVATE simbody_system_3d)
     target_compile_definitions(sphinxsys_3d PUBLIC SPH_NDIM=3)
 endif()
