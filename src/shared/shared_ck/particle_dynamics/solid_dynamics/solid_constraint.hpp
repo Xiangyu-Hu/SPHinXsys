@@ -10,36 +10,27 @@ namespace solid_dynamics
 //=================================================================================================//
 template <class DynamicsIdentifier>
 ConstraintBySimBodyCK<DynamicsIdentifier>::
-    ConstraintBySimBodyCK(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
-                          SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ)
+    ConstraintBySimBodyCK(DynamicsIdentifier &identifier, SimbodySystem &simbody_system)
     : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-      MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
+      simbody_system_(simbody_system), body_index_(simbody_system.getBodyIndexByName(identifier.Name())),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
       dv_pos0_(this->particles_->template registerStateVariableFrom<Vecd>("InitialPosition", "Position")),
       dv_vel_(this->particles_->template registerStateVariable<Vecd>("Velocity")),
       dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection")),
       dv_n0_(this->particles_->template registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       dv_acc_(this->particles_->template registerStateVariable<Vecd>("Acceleration")),
-      sv_simbody_state_(this->particles_->template addUniqueSingleVariable<SimbodyState>("SimbodyState"))
+      sv_simbody_state_(this->particles_->template addUniqueSingleVariable<SimbodyState>("SimbodyState")),
+      initial_origin_location_(simbody_system_.getSimbodyOriginLocation(body_index_))
 {
     this->particles_->template addEvolvingVariable<Vecd>("Velocity");
     this->particles_->template addEvolvingVariable<Vecd>("Acceleration");
     this->particles_->template addEvolvingVariable<Vecd>("NormalDirection");
-    const SimTK::State &state = MBsystem.getDefaultState();
-    MBsystem_.realize(state);
-    sim_tk_initial_origin_location_ = mobod_.getBodyOriginLocation(state);
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>
 void ConstraintBySimBodyCK<DynamicsIdentifier>::setupDynamics(Real dt)
 {
-    // SimTK State copy constructor allocates fresh (uninitialized) cache buffers while
-    // copying the stage metadata, so MBsystem_.realize() would be a no-op on a plain copy.
-    // Invalidating the dynamics cache forces the acceleration to be freshly computed.
-    SimTK::State state = integ_.getState();
-    state.invalidateAllCacheAtOrAbove(SimTK::Stage::Dynamics);
-    MBsystem_.realize(state);
-    sv_simbody_state_->setValue(SimbodyState(sim_tk_initial_origin_location_, mobod_, state));
+    sv_simbody_state_->setValue(simbody_system_.getSimbodyState(initial_origin_location_, body_index_));
 };
 //=================================================================================================//
 template <class DynamicsIdentifier>
@@ -68,16 +59,14 @@ void ConstraintBySimBodyCK<DynamicsIdentifier>::UpdateKernel::update(size_t inde
 //=================================================================================================//
 template <class DynamicsIdentifier>
 TotalForceForSimBodyCK<DynamicsIdentifier>::
-    TotalForceForSimBodyCK(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
-                           SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ)
+    TotalForceForSimBodyCK(DynamicsIdentifier &identifier, SimbodySystem &simbody_system)
     : BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>(identifier),
-      MBsystem_(MBsystem), mobod_(mobod), integ_(integ),
+      simbody_system_(simbody_system), body_index_(simbody_system.getBodyIndexByName(identifier.Name())),
       dv_force_(this->particles_->template registerStateVariable<Vecd>("Force")),
       dv_force_prior_(this->particles_->template getVariableByName<Vecd>("ForcePrior")),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
-      sv_current_origin_location_(
-          this->particles_->template addUniqueSingleVariable<Vec3d>(
-              identifier.Name() + "OriginLocation"))
+      sv_current_origin_location_(this->particles_->template addUniqueSingleVariable<Vec3d>(
+          identifier.Name() + "OriginLocation"))
 {
     this->quantity_name_ = "TotalForceForSimBody";
 }
@@ -85,8 +74,7 @@ TotalForceForSimBodyCK<DynamicsIdentifier>::
 template <class DynamicsIdentifier>
 void TotalForceForSimBodyCK<DynamicsIdentifier>::setupDynamics(Real dt)
 {
-    const SimTK::State &state = integ_.getState();
-    sv_current_origin_location_->setValue(SimTKToEigen(mobod_.getBodyOriginLocation(state)));
+    sv_current_origin_location_->setValue(simbody_system_.getSimbodyOriginLocation(body_index_));
 }
 //=================================================================================================//
 template <class DynamicsIdentifier>

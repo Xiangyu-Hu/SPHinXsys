@@ -30,10 +30,9 @@
 #ifndef SOLID_CONSTRAINT_H
 #define SOLID_CONSTRAINT_H
 
-#include "body_part_for_simbody.h"
 #include "general_constraint_ck.h"
 #include "general_reduce_ck.h"
-
+#include "simbody_system.h"
 namespace SPH
 {
 namespace solid_dynamics
@@ -42,8 +41,7 @@ template <class DynamicsIdentifier>
 class ConstraintBySimBodyCK : public BaseLocalDynamics<DynamicsIdentifier>
 {
   public:
-    explicit ConstraintBySimBodyCK(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
-                                   SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
+    explicit ConstraintBySimBodyCK(DynamicsIdentifier &identifier, SimbodySystem &simbody_system);
     virtual ~ConstraintBySimBodyCK() {};
     virtual void setupDynamics(Real dt = 0.0) override;
     SingleVariable<SimbodyState> *svSimbodyState() { return sv_simbody_state_; };
@@ -62,13 +60,12 @@ class ConstraintBySimBodyCK : public BaseLocalDynamics<DynamicsIdentifier>
     };
 
   protected:
-    SimTK::MultibodySystem &MBsystem_;
-    SimTK::MobilizedBody &mobod_;
-    SimTK::RungeKuttaMersonIntegrator &integ_;
+    SimbodySystem &simbody_system_;
+    UnsignedInt body_index_;
     DiscreteVariable<Vecd> *dv_pos_, *dv_pos0_, *dv_vel_;
     DiscreteVariable<Vecd> *dv_n_, *dv_n0_, *dv_acc_;
     SingleVariable<SimbodyState> *sv_simbody_state_;
-    SimTKVec3 sim_tk_initial_origin_location_;
+    Vec3d initial_origin_location_;
 };
 using ConstraintBodyBySimBodyCK = ConstraintBySimBodyCK<SPHBody>;
 using ConstraintBodyPartBySimBodyCK = ConstraintBySimBodyCK<BodyPartByParticle>;
@@ -79,8 +76,7 @@ class TotalForceForSimBodyCK
 {
 
   public:
-    TotalForceForSimBodyCK(DynamicsIdentifier &identifier, SimTK::MultibodySystem &MBsystem,
-                           SimTK::MobilizedBody &mobod, SimTK::RungeKuttaMersonIntegrator &integ);
+    TotalForceForSimBodyCK(DynamicsIdentifier &identifier, SimbodySystem &simbody_system);
 
     virtual ~TotalForceForSimBodyCK() {};
     virtual void setupDynamics(Real dt = 0.0) override;
@@ -98,9 +94,8 @@ class TotalForceForSimBodyCK
     };
 
   protected:
-    SimTK::MultibodySystem &MBsystem_;
-    SimTK::MobilizedBody &mobod_;
-    SimTK::RungeKuttaMersonIntegrator &integ_;
+    SimbodySystem &simbody_system_;
+    UnsignedInt body_index_;
     DiscreteVariable<Vecd> *dv_force_, *dv_force_prior_, *dv_pos_;
     SingleVariable<Vec3d> *sv_current_origin_location_;
 };

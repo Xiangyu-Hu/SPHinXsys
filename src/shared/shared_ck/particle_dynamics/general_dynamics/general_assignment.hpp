@@ -3,6 +3,9 @@
 
 #include "general_assignment.h"
 
+#include "base_body_part.h"
+#include "complex_geometry.h"
+
 namespace SPH
 {
 //=================================================================================================//
@@ -18,6 +21,33 @@ template <class ExecutionPolicy, class EncloserType>
 VariableAssignment<DynamicsIdentifier, AssignmentFunctionType>::UpdateKernel::UpdateKernel(
     const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : assign_(ex_policy, encloser.assignment_method_) {}
+//=================================================================================================//
+template <typename ConditionType>
+template <typename... Args>
+VariableAssignment<OrientedBoxByCell, ConditionType>::VariableAssignment(
+    OrientedBoxByCell &oriented_box_part, Args &&...args)
+    : BaseLocalDynamics<OrientedBoxByCell>(oriented_box_part),
+      sv_oriented_box_(oriented_box_part.svOrientedBox()),
+      assignment_method_(this->particles_, std::forward<Args>(args)...),
+      dv_pos_(particles_->getVariableByName<Vecd>("Position")) {}
+//=================================================================================================//
+template <typename ConditionType>
+template <class ExecutionPolicy, class EncloserType>
+VariableAssignment<OrientedBoxByCell, ConditionType>::UpdateKernel::UpdateKernel(
+    const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : oriented_box_(encloser.sv_oriented_box_->DelegatedData(ex_policy)),
+      assign_(ex_policy, encloser.assignment_method_),
+      pos_(encloser.dv_pos_->DelegatedDataView(ex_policy)) {}
+//=================================================================================================//
+template <typename ConditionType>
+void VariableAssignment<OrientedBoxByCell, ConditionType>::UpdateKernel::update(
+    size_t index_i, Real dt)
+{
+    if (oriented_box_->checkContain(pos_[index_i]))
+    {
+        assign_(index_i);
+    }
+}
 //=================================================================================================//
 template <typename DistributionType>
 template <typename... Args>

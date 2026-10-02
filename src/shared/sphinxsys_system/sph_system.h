@@ -42,6 +42,7 @@ class RealBody;
 class RelationBase;
 class Shape;
 class Quantity;
+class SimbodySystem;
 using SPHBodyVector = StdVec<SPHBody *>;
 /**
  * @class SPHSystem
@@ -54,6 +55,7 @@ class SPHSystem
     UniquePtrsKeeper<SPHBody> sph_bodies_keeper_;
     UniquePtrsKeeper<Shape> shapes_keeper_;
     UniquePtrsKeeper<RelationBase> relations_keeper_;
+    UniquePtrKeeper<SimbodySystem> simbody_system_keeper_;
 
   public:
     SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution,
@@ -90,6 +92,7 @@ class SPHSystem
     void addObservationBody(SPHBody *sph_body) { observation_bodies_.push_back(sph_body); };
     BoundingBoxd getSystemDomainBounds() { return system_bounds_; };
     void setSystemDomainBounds(const BoundingBoxd &domain_bounds) { system_bounds_ = domain_bounds; };
+    SimbodySystem &getSimbodySystem();
 
     template <typename DataType>
     SingleVariable<DataType> *registerSystemVariable(
@@ -112,9 +115,6 @@ class SPHSystem
 
     template <class DynamicIdentifier, typename... Args>
     auto &addInnerRelation(DynamicIdentifier &identifier, Args &&...args);
-
-    template <class SourceIdentifier, class TargetIdentifier, typename... Args>
-    auto &addContactRelation(SourceIdentifier &src_identifier, StdVec<TargetIdentifier *> tar_identifiers, Args &&...args);
 
     template <class SourceIdentifier, class TargetIdentifier, typename... Args>
     auto &addContactRelation(SourceIdentifier &src_identifier, TargetIdentifier &tar_identifiers, Args &&...args);

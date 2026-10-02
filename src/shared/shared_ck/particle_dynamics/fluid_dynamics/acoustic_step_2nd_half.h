@@ -46,6 +46,15 @@ namespace fluid_dynamics
 template <typename...>
 class AcousticStep2ndHalf;
 
+class AcousticStep2ndHalfTag
+{
+};
+
+template <>
+class AcousticStep2ndHalf<> : public AcousticStep2ndHalfTag
+{
+};
+
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 class AcousticStep2ndHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType, Parameters...>>
     : public AcousticStep<Interaction<Inner<Parameters...>>>
@@ -122,7 +131,7 @@ class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -162,7 +171,7 @@ class AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:

@@ -32,11 +32,12 @@
 
 #include "base_kernel.h"
 #include "base_local_dynamics.h"
-#include "body_part_for_simbody.h"
 #include "dynamics_algorithms.h"
 #include "elastic_solid.h"
 #include "general_constraint.h"
 #include "general_reduce.h"
+#include "simbody_system.h"
+#include "simtk_wrapper.h"
 
 namespace SPH
 {

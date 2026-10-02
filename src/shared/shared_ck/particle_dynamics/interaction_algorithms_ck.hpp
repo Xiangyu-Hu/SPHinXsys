@@ -20,35 +20,6 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
-template <typename... ControlParameters, typename... RelationParameters, typename... Args>
-auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addPostContactInteraction(RelationView<Contact<RelationParameters...>> &contact_relation_view, Args &&...args)
-{
-    this->post_processes_.push_back(
-        supplementary_dynamics_keeper_.template createPtr<
-            InteractionDynamicsCK<
-                ExecutionPolicy, InteractionType<Contact<ControlParameters..., RelationParameters...>>>>(
-            contact_relation_view, std::forward<Args>(args)...));
-    return *this;
-}
-//=================================================================================================//
-template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
-auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addPostContactInteraction(BaseDynamics<void> &contact_interaction)
-{
-    this->post_processes_.push_back(&contact_interaction);
-    return *this;
-}
-//=================================================================================================//
-template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
-auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addPreContactInteraction(BaseDynamics<void> &contact_interaction)
-{
-    this->pre_processes_.push_back(&contact_interaction);
-    return *this;
-}
-//=================================================================================================//
-template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
 template <class UpdateType, typename... Args>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
     addPostStateDynamics(Args &&...args)
@@ -73,14 +44,6 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
-auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addPostStateDynamics(BaseDynamics<void> &state_dynamics)
-{
-    this->post_processes_.push_back(&state_dynamics);
-    return *this;
-}
-//=================================================================================================//
-template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
 template <class UpdateType, typename... Args>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
     addPreStateDynamics(Args &&...args)
@@ -92,10 +55,30 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+template <template <typename...> class GeneralInteractionType, typename... ControlParameters,
+          template <typename...> class RelationType, typename... RelationParameters, typename... Args>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addPreStateDynamics(BaseDynamics<void> &state_dynamics)
+    addGeneralPostInteraction(RelationType<RelationParameters...> &relation, Args &&...args)
 {
-    this->pre_processes_.push_back(&state_dynamics);
+    this->post_processes_.push_back(
+        supplementary_dynamics_keeper_.template createPtr<InteractionDynamicsCK<
+            ExecutionPolicy,
+            GeneralInteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
+            relation, std::forward<Args>(args)...));
+    return *this;
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+template <template <typename...> class GeneralInteractionType, typename... ControlParameters,
+          template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
+    addGeneralPreInteraction(RelationType<RelationParameters...> &relation, Args &&...args)
+{
+    this->pre_processes_.push_back(
+        supplementary_dynamics_keeper_.template createPtr<InteractionDynamicsCK<
+            ExecutionPolicy,
+            GeneralInteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
+            relation, std::forward<Args>(args)...));
     return *this;
 }
 //=================================================================================================//
@@ -130,35 +113,26 @@ InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parameters.
     InteractionDynamicsCK(Args &&...args)
     : InteractionType<Contact<Parameters...>>(std::forward<Args>(args)...)
 {
-    for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
-    {
-        contact_kernel_implementation_.push_back(
-            contact_kernel_implementation_ptrs_
-                .template createPtr<KernelImplementation>(*this));
-        this->registerComputingKernel(contact_kernel_implementation_.back(), k);
-    }
+    contact_kernel_implementation_ =
+        contact_kernel_implementation_ptr_.template createPtr<KernelImplementation>(*this);
+    this->registerComputingKernel(contact_kernel_implementation_);
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType, typename... Parameters>
 void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parameters...>>>::
     runInteraction(Real dt)
 {
-    for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
-    {
-        InteractKernel *interact_kernel =
-            contact_kernel_implementation_[k]->getComputingKernel(k);
+    InteractKernel *interact_kernel = contact_kernel_implementation_->getComputingKernel();
+    particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
+                 [=](size_t i)
+                 {
+                     interact_kernel->interact(i, dt);
+                 });
 
-        particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
-                     [=](size_t i)
-                     {
-                         interact_kernel->interact(i, dt);
-                     });
-
-        this->logger_->debug(
-            "InteractionDynamicsCK::runInteraction() for {} at {}",
-            type_name<InteractionType<Contact<Parameters...>>>(),
-            this->sph_body_->Name());
-    }
+    this->logger_->debug(
+        "InteractionDynamicsCK::runInteraction() for {} at {}",
+        type_name<InteractionType<Contact<Parameters...>>>(),
+        this->sph_body_->Name());
 }
 //=================================================================================================//
 template <class ExecutionPolicy, template <typename...> class InteractionType,

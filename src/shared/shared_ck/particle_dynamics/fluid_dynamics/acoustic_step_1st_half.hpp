@@ -100,7 +100,7 @@ void AcousticStep1stHalf<Inner<OneLevel, RiemannSolverType, KernelCorrectionType
 
         force_sum -= riemann_.AverageP(
                          index_i, index_j,
-                         static_cast<CorrectionDataType>(correction_(index_j) * p_[index_i]),
+                         static_cast<CorrectionDataType>(correction_(index_j, index_i) * p_[index_i]),
                          static_cast<CorrectionDataType>(correction_(index_i) * p_[index_j])) *
                      2.0 * dW_ijV_j * e_ij;
         compression_dissipation +=
@@ -138,9 +138,8 @@ AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    InteractKernel::InteractKernel(
-        const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+    InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_),
       riemann_(ex_policy, encloser.riemann_solver_),
       Vol_(encloser.dv_Vol_->DelegatedDataView(ex_policy)),
@@ -151,8 +150,8 @@ AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
       compression_rate_(encloser.dv_compression_rate_->DelegatedDataView(ex_policy)),
       force_(encloser.dv_force_->DelegatedDataView(ex_policy)),
       force_prior_(encloser.dv_force_prior_->DelegatedDataView(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedDataView(ex_policy)),
-      wall_acc_ave_(encloser.dv_wall_acc_ave_[contact_index]->DelegatedDataView(ex_policy)) {}
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedDataView(ex_policy)),
+      wall_acc_ave_(encloser.dv_wall_acc_ave_->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -165,7 +164,7 @@ void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
         UnsignedInt index_j = this->neighbor_index_[n];
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
         Vecd e_ij = this->e_ij(index_i, index_j);
-        Real r_ij = this->vec_r_ij(index_i, index_j).norm();
+        Real r_ij = this->vec_r_ij(index_i, index_j).dot(e_ij);
 
         Real face_wall_external_acceleration =
             (force_prior_[index_i] / mass_[index_i] - wall_acc_ave_[index_j]).dot(-e_ij);
@@ -202,18 +201,18 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class ExecutionPolicy, class EncloserType>
 AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters...>>::
     InteractKernel::InteractKernel(
-        const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : BaseInteraction::InteractKernel(ex_policy, encloser, contact_index),
+        const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_),
-      contact_correction_(ex_policy, encloser.contact_kernel_corrections_[contact_index]),
-      riemann_(ex_policy, encloser.riemann_solvers_[contact_index]),
+      contact_correction_(ex_policy, encloser.contact_kernel_corrections_),
+      riemann_(ex_policy, encloser.riemann_solvers_),
       Vol_(encloser.dv_Vol_->DelegatedDataView(ex_policy)),
       p_(encloser.dv_p_->DelegatedDataView(ex_policy)),
       compression_(encloser.dv_compression_->DelegatedDataView(ex_policy)),
       compression_rate_(encloser.dv_compression_rate_->DelegatedDataView(ex_policy)),
       force_(encloser.dv_force_->DelegatedDataView(ex_policy)),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedDataView(ex_policy)),
-      contact_p_(encloser.dv_contact_p_[contact_index]->DelegatedDataView(ex_policy)) {}
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedDataView(ex_policy)),
+      contact_p_(encloser.dv_contact_p_->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters...>>::

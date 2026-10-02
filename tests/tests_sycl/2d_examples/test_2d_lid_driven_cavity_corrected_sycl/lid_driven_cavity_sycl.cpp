@@ -156,9 +156,9 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     Inner<> water_block_inner(water_body);
-    Contact<> water_wall_contact(water_body, {&wall_boundary});
-    Contact<> horizontal_observer_contact(horizontal_observer, {&water_body});
-    Contact<> vertical_observer_contact(vertical_observer, {&water_body});
+    Contact<> water_wall_contact(water_body, wall_boundary);
+    Contact<> horizontal_observer_contact(horizontal_observer, water_body);
+    Contact<> vertical_observer_contact(vertical_observer, water_body);
     // ComplexRelation water_block_complex(water_block_inner, water_wall_contact);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.

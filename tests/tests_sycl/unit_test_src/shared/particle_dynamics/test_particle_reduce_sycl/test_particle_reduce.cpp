@@ -24,13 +24,14 @@ TEST(particle_reduce, test_sycl)
                               rand_uniform(-1.0, 1.0));
     }
 
-    SimTK::SpatialVec sum = particle_reduce(SequencedPolicy{}, IndexRange(0, torques.size()),
-                                            ZeroData<SimTK::SpatialVec>::value, ReduceSum<SimTK::SpatialVec>(),
-                                            [&](size_t i)
-                                            {
-                                                SimTKVec3 a = SimTK::cross(torques[i], forces[i]);
-                                                return SimTK::SpatialVec(a, forces[i]);
-                                            });
+    SimTK::SpatialVec sum = particle_reduce(
+        SequencedPolicy{}, IndexRange(0, torques.size()),
+        ZeroData<SimTK::SpatialVec>::value, ReduceSum<SimTK::SpatialVec>(),
+        [&](size_t i)
+        {
+            SimTKVec3 a = SimTK::cross(torques[i], forces[i]);
+            return SimTK::SpatialVec(a, forces[i]);
+        });
 
     DiscreteVariable<SimTKVec3> dv_torque("Torque", torques.size());
     DiscreteVariable<SimTKVec3> dv_force("Force", forces.size());

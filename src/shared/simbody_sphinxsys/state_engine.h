@@ -70,12 +70,15 @@ class SimbodyStateEngine
       public:
         /** Constructor and destructor. */
         StateVariable()
-            : name_(""), owner_(nullptr), subsysindex_(SimTK::InvalidIndex), varindex_(SimTK::InvalidIndex), sysyindex_(SimTK::InvalidIndex)
+            : name_(""), owner_(nullptr), subsysindex_(SimTK::InvalidIndex),
+              varindex_(SimTK::InvalidIndex), sysyindex_(SimTK::InvalidIndex)
         {
         }
 
-        explicit StateVariable(std::string &name, SimbodyStateEngine &owner, SimTK::SubsystemIndex subsys, int varindex)
-            : name_(name), owner_(&owner), subsysindex_(subsys), varindex_(varindex), sysyindex_(SimTK::InvalidIndex)
+        explicit StateVariable(std::string &name, SimbodyStateEngine &owner,
+                               SimTK::SubsystemIndex subsys, int varindex)
+            : name_(name), owner_(&owner), subsysindex_(subsys), varindex_(varindex),
+              sysyindex_(SimTK::InvalidIndex)
         {
         }
 
@@ -135,11 +138,12 @@ class SimbodyStateEngine
         /** Convenience constructor for defining a SimbodyStateEngine added state variable */
         explicit AddedStateVariable(std::string &name, /**< state var name. */
                                     SimbodyStateEngine &owner,
-                                    SimTK::Stage invalidatestage) : /**< stage this variable invalidates. */
-                                                                    StateVariable(name, owner,
-                                                                                  SimTK::SubsystemIndex(SimTK::InvalidIndex),
-                                                                                  SimTK::InvalidIndex),
-                                                                    invalidatestage_(SimTK::Stage::Empty)
+                                    SimTK::Stage invalidatestage)
+            : /**< stage this variable invalidates. */
+              StateVariable(name, owner,
+                            SimTK::SubsystemIndex(SimTK::InvalidIndex),
+                            SimTK::InvalidIndex),
+              invalidatestage_(SimTK::Stage::Empty)
         {
         }
 
