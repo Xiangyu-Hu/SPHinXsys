@@ -73,7 +73,7 @@ struct SimbodyState
     Mat3d rotation_;
 
     SimbodyState();
-    SimbodyState(SimTK::MobilizedBody &mobod, const SimTK::State &state);
+    SimbodyState(const Vec3d &initial_origin_location, SimTK::MobilizedBody &mobod, const SimTK::State &state);
 
     // implemented according to the Simbody API function with the same name
     void findStationLocationVelocityAndAccelerationInGround(
@@ -116,8 +116,8 @@ class SimbodySystem
     UnsignedInt getBodyIndexByName(const std::string &body_name);
     void realizeState();
     void initializeStateForIntegrator();
-    void checkSimbodyState(const std::string &body_name);
-    SimbodyState getSimbodyState(UnsignedInt body_index);
+    void checkInitialSimbodyState(const std::string &body_name);
+    SimbodyState getSimbodyState(const Vec3d &initial_origin_location, UnsignedInt body_index);
     Vec3d getSimbodyOriginLocation(UnsignedInt body_index);
     Real getSimbodySystemTime();
     void stepSimbodySystemTo(Real time);

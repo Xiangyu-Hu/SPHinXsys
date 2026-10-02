@@ -215,8 +215,9 @@ SimbodyState::SimbodyState()
       angular_velocity_(Vec3d::Zero()), angular_acceleration_(Vec3d::Zero()),
       rotation_(Mat3d::Identity()) {}
 //=================================================================================================//
-SimbodyState::SimbodyState(SimTK::MobilizedBody &mobod, const SimTK::State &state)
-    : initial_origin_location_(SimTKToEigen(mobod.getBodyOriginLocation(state))),
+SimbodyState::SimbodyState(
+    const Vec3d &initial_origin_location, SimTK::MobilizedBody &mobod, const SimTK::State &state)
+    : initial_origin_location_(initial_origin_location),
       origin_location_(SimTKToEigen(mobod.getBodyOriginLocation(state))),
       origin_velocity_(SimTKToEigen(mobod.getBodyOriginVelocity(state))),
       origin_acceleration_(SimTKToEigen(mobod.getBodyOriginAcceleration(state))),
@@ -296,13 +297,14 @@ void SimbodySystem::initializeStateForIntegrator()
     impl_->getSimbodyIntegrator().initialize(state);
 }
 //=================================================================================================//
-SimbodyState SimbodySystem::getSimbodyState(UnsignedInt body_index)
+SimbodyState SimbodySystem::getSimbodyState(
+    const Vec3d &initial_origin_location, UnsignedInt body_index)
 {
     auto &MBsystem = impl_->getMultibodySystem();
     const SimTK::State &state = impl_->getSimbodyIntegrator().getState();
     MBsystem.realize(state);
     auto &mobilized_body = impl_->getMobilizedBody(body_index);
-    return SimbodyState(mobilized_body, state);
+    return SimbodyState(initial_origin_location, mobilized_body, state);
 }
 //=================================================================================================//
 UnsignedInt SimbodySystem::getBodyIndexByName(const std::string &body_name)
@@ -328,7 +330,7 @@ void SimbodySystem::stepSimbodySystemTo(Real time)
     integ.stepTo(time);
 }
 //=================================================================================================//
-void SimbodySystem::checkSimbodyState(const std::string &body_name)
+void SimbodySystem::checkInitialSimbodyState(const std::string &body_name)
 {
     auto &MBsystem = impl_->getMultibodySystem();
     auto &mobilized_body = impl_->getMobilizedBody(body_name);
@@ -344,7 +346,8 @@ void SimbodySystem::checkSimbodyState(const std::string &body_name)
     auto &integ = impl_->getSimbodyIntegrator();
     SimTK::State state = integ.getState(); // copy to allow cache invalidation
     MBsystem.realize(state);
-    SimbodyState test_simbody_state(mobilized_body, state);
+    Vec3d initial_origin_location = SimTKToEigen(mobilized_body.getBodyOriginLocation(state));
+    SimbodyState test_simbody_state(initial_origin_location, mobilized_body, state);
     test_simbody_state.printSimbodyState();
 }
 //=================================================================================================//

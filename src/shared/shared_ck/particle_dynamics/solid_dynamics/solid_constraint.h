@@ -65,6 +65,7 @@ class ConstraintBySimBodyCK : public BaseLocalDynamics<DynamicsIdentifier>
     DiscreteVariable<Vecd> *dv_pos_, *dv_pos0_, *dv_vel_;
     DiscreteVariable<Vecd> *dv_n_, *dv_n0_, *dv_acc_;
     SingleVariable<SimbodyState> *sv_simbody_state_;
+    Vec3d initial_origin_location_;
 };
 using ConstraintBodyBySimBodyCK = ConstraintBySimBodyCK<SPHBody>;
 using ConstraintBodyPartBySimBodyCK = ConstraintBySimBodyCK<BodyPartByParticle>;

@@ -19,7 +19,8 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::
       dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection")),
       dv_n0_(this->particles_->template registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       dv_acc_(this->particles_->template registerStateVariable<Vecd>("Acceleration")),
-      sv_simbody_state_(this->particles_->template addUniqueSingleVariable<SimbodyState>("SimbodyState"))
+      sv_simbody_state_(this->particles_->template addUniqueSingleVariable<SimbodyState>("SimbodyState")),
+      initial_origin_location_(simbody_system_.getSimbodyOriginLocation(body_index_))
 {
     this->particles_->template addEvolvingVariable<Vecd>("Velocity");
     this->particles_->template addEvolvingVariable<Vecd>("Acceleration");
@@ -29,7 +30,7 @@ ConstraintBySimBodyCK<DynamicsIdentifier>::
 template <class DynamicsIdentifier>
 void ConstraintBySimBodyCK<DynamicsIdentifier>::setupDynamics(Real dt)
 {
-    sv_simbody_state_->setValue(simbody_system_.getSimbodyState(body_index_));
+    sv_simbody_state_->setValue(simbody_system_.getSimbodyState(initial_origin_location_, body_index_));
 };
 //=================================================================================================//
 template <class DynamicsIdentifier>
@@ -64,9 +65,8 @@ TotalForceForSimBodyCK<DynamicsIdentifier>::
       dv_force_(this->particles_->template registerStateVariable<Vecd>("Force")),
       dv_force_prior_(this->particles_->template getVariableByName<Vecd>("ForcePrior")),
       dv_pos_(this->particles_->template getVariableByName<Vecd>("Position")),
-      sv_current_origin_location_(
-          this->particles_->template addUniqueSingleVariable<Vec3d>(
-              identifier.Name() + "OriginLocation"))
+      sv_current_origin_location_(this->particles_->template addUniqueSingleVariable<Vec3d>(
+          identifier.Name() + "OriginLocation"))
 {
     this->quantity_name_ = "TotalForceForSimBody";
 }
