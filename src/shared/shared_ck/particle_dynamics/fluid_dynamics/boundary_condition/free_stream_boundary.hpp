@@ -31,7 +31,7 @@ FreeStreamCondition<ConditionFunction>::UpdateKernel::UpdateKernel(
       physical_time_(encloser.sv_physical_time_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename ConditionFunction>
-void FreeStreamCondition<ConditionFunction>::UpdateKernel::update(size_t index_i, Real dt)
+void FreeStreamCondition<ConditionFunction>::UpdateKernel::compute(size_t index_i, Real dt)
 {
     if (indicator_[index_i] == 1)
     {

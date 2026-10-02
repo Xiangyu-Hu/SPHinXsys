@@ -70,7 +70,7 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
         template <class EncloserType>
         UpdateBodyPartByParticle(const ExecutionPolicy &ex_policy,
                                  EncloserType &encloser, UnsignedInt body_part_i);
-        void update(UnsignedInt index_i);
+        void compute(UnsignedInt index_i);
 
       protected:
         UnsignedInt *particle_list_, *original_id_list_;

@@ -231,12 +231,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     wall_boundary_normal_direction.exec(); // run particle dynamics on CPU first
+    solid_initial_condition.exec(); // run particle dynamics on CPU first
     water_cell_linked_list.exec();
     wall_cell_linked_list.exec();
     water_block_update_complex_relation.exec();
     horizontal_observer_contact_relation.exec();
     vertical_observer_contact_relation.exec();
-    solid_initial_condition.exec();
     fluid_linear_correction_matrix.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control

@@ -31,7 +31,7 @@ EmitterInflowConditionCK<OrientedBoxPartType, ConditionFunction>::UpdateKernel::
 //=================================================================================================//
 template <class OrientedBoxPartType, class ConditionFunction>
 void EmitterInflowConditionCK<OrientedBoxPartType, ConditionFunction>::
-    UpdateKernel::update(size_t index_i, Real dt)
+    UpdateKernel::compute(size_t index_i, Real dt)
 {
     int aligned_axis = oriented_box_->ReferenceAxis();
     Transform &transform = oriented_box_->getTransform();
@@ -80,7 +80,7 @@ EmitterInflowInjectionCK<OrientedBoxPartType>::UpdateKernel::
       p_(encloser.dv_p_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename OrientedBoxPartType>
-void EmitterInflowInjectionCK<OrientedBoxPartType>::UpdateKernel::update(size_t index_i, Real dt)
+void EmitterInflowInjectionCK<OrientedBoxPartType>::UpdateKernel::compute(size_t index_i, Real dt)
 {
     if (oriented_box_->checkUpperBound(pos_[index_i]))
     {
@@ -100,7 +100,7 @@ WithinDisposerIndication::UpdateKernel::
       mask_(ex_policy, encloser.particle_group_manager_, encloser.life_status_),
       total_real_particles_(encloser.sv_total_real_particles_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-inline void WithinDisposerIndication::UpdateKernel::update(size_t index_i, Real dt)
+inline void WithinDisposerIndication::UpdateKernel::compute(size_t index_i, Real dt)
 {
     if (oriented_box_->checkContain(pos_[index_i]) && index_i < *total_real_particles_)
     {
