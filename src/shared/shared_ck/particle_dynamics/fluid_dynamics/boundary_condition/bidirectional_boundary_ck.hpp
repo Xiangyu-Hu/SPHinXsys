@@ -19,7 +19,7 @@ BufferIndicationCK::UpdateKernel::
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       buffer_indicator_(encloser.dv_buffer_indicator_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
-inline void BufferIndicationCK::UpdateKernel::update(size_t index_i, Real dt)
+inline void BufferIndicationCK::UpdateKernel::compute(size_t index_i, Real dt)
 {
     if (oriented_box_->checkContain(pos_[index_i]))
     {
@@ -64,7 +64,7 @@ BufferInflowInjectionCK<ConditionType>::
       upper_bound_fringe_(encloser.upper_bound_fringe_) {}
 //=================================================================================================//
 template <class ConditionType>
-void BufferInflowInjectionCK<ConditionType>::UpdateKernel::update(size_t index_i, Real dt)
+void BufferInflowInjectionCK<ConditionType>::UpdateKernel::compute(size_t index_i, Real dt)
 {
     if (!oriented_box_->checkInBounds(pos_[index_i]))
     {
@@ -97,7 +97,7 @@ inline bool BufferOutflowIndication::UpdateKernel::IsDeletable::operator()(size_
            oriented_box_->checkLowerBound(pos_[index_i]);
 }
 //=================================================================================================//
-inline void BufferOutflowIndication::UpdateKernel::update(size_t index_i, Real dt)
+inline void BufferOutflowIndication::UpdateKernel::compute(size_t index_i, Real dt)
 {
     if (!oriented_box_->checkInBounds(pos_[index_i]))
     {
@@ -114,7 +114,7 @@ OutflowParticleDeletion::UpdateKernel::
     : remove_real_particle_(ex_policy, encloser.remove_real_particle_method_),
       life_status_mask_(ex_policy, encloser.particle_group_manager_, encloser.life_status_) {}
 //=================================================================================================//
-inline void OutflowParticleDeletion::UpdateKernel::update(UnsignedInt index_i, Real dt)
+inline void OutflowParticleDeletion::UpdateKernel::compute(UnsignedInt index_i, Real dt)
 {
     if (life_status_mask_.check(index_i)) // to delete
     {
@@ -148,7 +148,7 @@ PressureVelocityCondition<KernelCorrectionType, ConditionType>::UpdateKernel::
 //=================================================================================================//
 template <class KernelCorrectionType, typename ConditionType>
 void PressureVelocityCondition<KernelCorrectionType, ConditionType>::
-    UpdateKernel::update(size_t index_i, Real dt)
+    UpdateKernel::compute(size_t index_i, Real dt)
 {
     if (oriented_box_->checkContain(pos_[index_i]))
     {
@@ -182,7 +182,7 @@ SupplementaryCondition<ConditionType>::UpdateKernel::UpdateKernel(
       pos_(encloser.dv_pos_->DelegatedDataView(ex_policy)) {}
 //=================================================================================================//
 template <typename ConditionType>
-void SupplementaryCondition<ConditionType>::UpdateKernel::update(size_t index_i, Real dt)
+void SupplementaryCondition<ConditionType>::UpdateKernel::compute(size_t index_i, Real dt)
 {
     if (oriented_box_->checkContain(pos_[index_i]))
     {

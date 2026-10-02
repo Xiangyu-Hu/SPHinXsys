@@ -92,7 +92,7 @@ class DisplacementMatrixGradient<Inner<Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseDynamicsType::InteractKernel(ex_policy, encloser){};
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
     };
 };
 
@@ -114,7 +114,7 @@ class DisplacementMatrixGradient<Contact<Parameters...>>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseDynamicsType::InteractKernel(ex_policy, encloser),
               contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)){};
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *contact_Vol_;
@@ -142,7 +142,7 @@ class HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseDynamicsType::InteractKernel(ex_policy, encloser){};
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
     };
 
     class UpdateKernel : public BaseDynamicsType::InteractKernel
@@ -151,7 +151,7 @@ class HessianCorrectionMatrix<Inner<WithUpdate, Parameters...>>
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseDynamicsType::InteractKernel(ex_policy, encloser), alpha_(encloser.alpha_){};
-        void update(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real alpha_;
@@ -180,7 +180,7 @@ class HessianCorrectionMatrix<Contact<Parameters...>>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : BaseDynamicsType::InteractKernel(ex_policy, encloser),
               contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)){};
-        void interact(size_t index_i, Real dt = 0.0);
+        void compute(size_t index_i, Real dt = 0.0);
 
       protected:
         Real *contact_Vol_;
