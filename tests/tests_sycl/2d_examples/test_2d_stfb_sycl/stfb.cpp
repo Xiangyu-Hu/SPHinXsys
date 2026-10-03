@@ -221,8 +221,6 @@ int main(int ac, char *av[])
     SimTK::MultibodySystem &MBsystem = simbody_system.getMultibodySystem();
     SimTK::SimbodyMatterSubsystem &matter = simbody_system.getSimbodyMatterSubsystem();
     SimTK::GeneralForceSubsystem &forces = simbody_system.getSimbodyForceSubsystem();
-    SimbodyStateEngine &simbody_state_engine = simbody_system.getSimbodyStateEngine();
-
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
@@ -327,12 +325,11 @@ int main(int ac, char *av[])
     size_t restart_step = sph_system.RestartStep();
     if (restart_step != 0)
     {
-        Real restart_time = restart_io.readRestartFiles(restart_step);
+        restart_io.readRestartFiles(restart_step);
         structure_cell_linked_list.exec();
         advection_steps = restart_step;
 
-        simbody_state_engine.readStateFromXml(restart_step, simbody_state);
-        simbody_state.setTime(Real(restart_time));
+        simbody_system.readStateFromXml(restart_step);
     }
     integ.setAccuracy(1e-3);
     integ.setAllowInterpolation(false);
@@ -413,7 +410,7 @@ int main(int ac, char *av[])
             if (advection_steps % restart_interval == 0)
             {
                 restart_io.writeToFile(advection_steps);
-                simbody_state_engine.writeStateToXml(advection_steps, integ);
+                simbody_system.writeStateToXml(advection_steps);
             }
 
             if (trigger_FSI() && state_recording())
