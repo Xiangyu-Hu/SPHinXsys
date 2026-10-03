@@ -41,7 +41,6 @@ namespace SPH
 class RealBody;
 class Shape;
 class SimbodySystem;
-class SolidBodyPartForSimbodyCK;
 
 class SolidBodyPartForSimbodyCK : public BodyRegionByParticle
 {

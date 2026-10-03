@@ -3,6 +3,7 @@
  * @brief 	This is the test of wave interaction with Oscillating Wave Surge Converter (OWSC)
  * @author   Chi Zhang and Xiangyu Hu
  */
+#include "all_simbody.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;
 #include "owsc.h" //header for this case

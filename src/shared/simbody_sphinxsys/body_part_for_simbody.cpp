@@ -76,4 +76,9 @@ SimTK::Vec3 SolidBodyPartForSimbody::getSimTKMassCenter() const
     return initial_mass_center_;
 }
 //=================================================================================================//
+Vecd SolidBodyPartForSimbody::getMassCenter() const
+{
+    return downToVecd(SimTKToEigen(initial_mass_center_), ZeroData<Vecd>::value);
+}
+//=================================================================================================//
 } // namespace SPH

@@ -3,6 +3,7 @@
  * @brief 	This is the test for 2D still floating body using compute kernel.
  * @author   Nicolò Salis and Xiangyu Hu
  */
+#include "all_simbody.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------

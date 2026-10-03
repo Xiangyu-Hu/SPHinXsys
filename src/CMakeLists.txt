@@ -43,7 +43,7 @@ if(SPHINXSYS_2D)
 
     list(REMOVE_DUPLICATES SPHINXSYS_2D_INCLUDE_DIRS)
  
-    add_library(simbody_system_2d STATIC ${SIMBODY_SYSTEM_SOURCES})
+    add_library(simbody_system_2d OBJECT ${SIMBODY_SYSTEM_SOURCES})
 
     foreach(DIR ${SPHINXSYS_2D_INCLUDE_DIRS})
         target_include_directories(simbody_system_2d PRIVATE ${DIR})
@@ -64,7 +64,7 @@ if(SPHINXSYS_2D)
     target_include_directories(sphinxsys_2d PUBLIC $<INSTALL_INTERFACE:include/sphinxsys_2d>)
     
     target_link_libraries(sphinxsys_2d PUBLIC sphinxsys_lib)
-    target_link_libraries(sphinxsys_2d PRIVATE simbody_system_2d)
+    target_sources(sphinxsys_2d PRIVATE $<TARGET_OBJECTS:simbody_system_2d>)
     target_compile_definitions(sphinxsys_2d PUBLIC SPH_NDIM=2)
 endif()
 
@@ -103,7 +103,7 @@ if(SPHINXSYS_3D)
 
     list(REMOVE_DUPLICATES SPHINXSYS_3D_INCLUDE_DIRS)
 
-    add_library(simbody_system_3d STATIC ${SIMBODY_SYSTEM_SOURCES})
+    add_library(simbody_system_3d OBJECT ${SIMBODY_SYSTEM_SOURCES})
 
     foreach(DIR ${SPHINXSYS_3D_INCLUDE_DIRS})
         target_include_directories(simbody_system_3d PRIVATE ${DIR})
@@ -124,6 +124,6 @@ if(SPHINXSYS_3D)
     target_include_directories(sphinxsys_3d PUBLIC $<INSTALL_INTERFACE:include/sphinxsys_3d>)
 
     target_link_libraries(sphinxsys_3d PUBLIC sphinxsys_lib)
-    target_link_libraries(sphinxsys_3d PRIVATE simbody_system_3d)
+    target_sources(sphinxsys_3d PRIVATE $<TARGET_OBJECTS:simbody_system_3d>)
     target_compile_definitions(sphinxsys_3d PUBLIC SPH_NDIM=3)
 endif()

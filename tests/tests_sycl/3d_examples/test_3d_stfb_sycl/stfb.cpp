@@ -3,6 +3,7 @@
  * @brief 	 This is the case file for 3D still floating body using computing kernel.
  * @author   Nicolò Salis and Xiangyu Hu
  */
+#include "all_simbody.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;
 //----------------------------------------------------------------------

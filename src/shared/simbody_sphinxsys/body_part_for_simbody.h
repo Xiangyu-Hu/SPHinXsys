@@ -42,7 +42,7 @@ class SolidBodyPartForSimbody : public BodyRegionByParticle
     SimTK::MassProperties &getSimTKMassProperties() const;
     SimTK::Vec3 getSimTKMassCenter() const;
     SimTK::Transform getSimTKTransform() const { return SimTKVec3(0.0); }
-    Vecd getMassCenter() const { return initial_mass_center_; };
+    Vecd getMassCenter() const;
 
     SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape);
     SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);

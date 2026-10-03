@@ -6,6 +6,7 @@
  *          especially when coupled with the wetting.
  * @author  Shuoguo Zhang and Xiangyu Hu
  */
+#include "all_simbody.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
