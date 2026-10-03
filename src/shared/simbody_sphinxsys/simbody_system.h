@@ -33,14 +33,19 @@
 
 namespace SimTK
 {
+class MultibodySystem;
+class SimbodyMatterSubsystem;
+class GeneralForceSubsystem;
 class MobilizedBody;
 class State;
+class RungeKuttaMersonIntegrator;
 } // namespace SimTK
 namespace SPH
 {
 class RealBody;
 class Shape;
 class SimbodySystem;
+class SimbodyStateEngine;
 
 class SolidBodyPartForSimbodyCK : public BodyRegionByParticle
 {
@@ -123,9 +128,17 @@ class SimbodySystem
     Vec3d getInitialSimbodyOriginLocation(UnsignedInt body_index);
     Vec3d getSimbodyOriginLocation(UnsignedInt body_index);
     Real getSimbodySystemTime();
-    void setSimbodySystemTime(Real time);
     void stepSimbodySystemTo(Real time);
     void stepSimbodySystemBy(Real dt);
+
+    // functions for testing and debugging
+    SimTK::MultibodySystem &getMultibodySystem();
+    SimTK::SimbodyMatterSubsystem &getSimbodyMatterSubsystem();
+    SimTK::GeneralForceSubsystem &getSimbodyForceSubsystem();
+    SimTK::RungeKuttaMersonIntegrator &getSimbodyIntegrator();
+    SimbodyStateEngine &getSimbodyStateEngine();
+    SimTK::State &getSimbodyState();
+    SimTK::State getDefaultSimbodyState();
 
   protected:
     class Impl;

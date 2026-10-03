@@ -137,7 +137,7 @@ ForceType &SimbodySystem::Impl::addForce(const std::string &name, Args &&...args
         force_system_, matter_, std::forward<Args>(args)...);
     config_manager_.addEntity<ForceType>(name, force);
     forces_.push_back(std::make_pair(name, force));
-    setState(MBsystem_.realizeTopology());
+    state_ = MBsystem_.realizeTopology();
     return *force;
 }
 //=================================================================================================//
@@ -201,7 +201,7 @@ MobilizedBodyType &SimbodySystem::Impl::createMobilizedBody(
             rigid_body, SimTK::Transform());
     config_manager_.addEntity<MobilizedBodyType>(name, mobilized_body);
     mobilized_bodies_.push_back(std::make_pair(name, mobilized_body));
-    setState(MBsystem_.realizeTopology());
+    state_ = MBsystem_.realizeTopology();
     return *mobilized_body;
 }
 //=================================================================================================//
@@ -278,7 +278,10 @@ void SimbodySystem::writeStateToXml(UnsignedInt iteration_step)
 //=================================================================================================//
 void SimbodySystem::readStateFromXml(UnsignedInt iteration_step)
 {
-    impl_->getSimbodyStateEngine().readStateFromXml(iteration_step, impl_->getState());
+    SimTK::State state = impl_->getMultibodySystem().realizeTopology();
+    impl_->getSimbodyStateEngine().readStateFromXml(iteration_step, state);
+    impl_->getMultibodySystem().realize(state);
+    impl_->getSimbodyIntegrator().initialize(state);
 }
 //=================================================================================================//
 std::string SimbodySystem::createRigidBody(SolidBodyPartForSimbodyCK &simbody_part)
@@ -337,7 +340,8 @@ void SimbodySystem::realizeState()
 //=================================================================================================//
 void SimbodySystem::initializeStateForIntegrator()
 {
-    SimTK::State &state = impl_->getState();
+    SimTK::State state = impl_->getMultibodySystem().realizeTopology();
+    impl_->getMultibodySystem().realize(state);
     impl_->getSimbodyIntegrator().initialize(state);
 }
 //=================================================================================================//
@@ -377,11 +381,6 @@ Real SimbodySystem::getSimbodySystemTime()
     return impl_->getSimbodyIntegrator().getState().getTime();
 }
 //=================================================================================================//
-void SimbodySystem::setSimbodySystemTime(Real time)
-{
-    impl_->setTime(time);
-}
-//=================================================================================================//
 void SimbodySystem::stepSimbodySystemTo(Real time)
 {
     auto &integ = impl_->getSimbodyIntegrator();
@@ -413,6 +412,35 @@ void SimbodySystem::checkInitialSimbodyState(const std::string &body_name)
     Vec3d initial_origin_location = SimTKToEigen(mobilized_body.getBodyOriginLocation(state));
     SimbodyState test_simbody_state(initial_origin_location, mobilized_body, state);
     test_simbody_state.printSimbodyState();
+}
+//=================================================================================================//
+SimTK::MultibodySystem &SimbodySystem::getMultibodySystem()
+{
+    return impl_->getMultibodySystem();
+}
+SimTK::SimbodyMatterSubsystem &SimbodySystem::getSimbodyMatterSubsystem()
+{
+    return impl_->getSimbodyMatterSubsystem();
+}
+SimTK::GeneralForceSubsystem &SimbodySystem::getSimbodyForceSubsystem()
+{
+    return impl_->getSimbodyForceSubsystem();
+}
+SimTK::RungeKuttaMersonIntegrator &SimbodySystem::getSimbodyIntegrator()
+{
+    return impl_->getSimbodyIntegrator();
+}
+SimbodyStateEngine &SimbodySystem::getSimbodyStateEngine()
+{
+    return impl_->getSimbodyStateEngine();
+}
+SimTK::State &SimbodySystem::getSimbodyState()
+{
+    return impl_->getState();
+}
+SimTK::State SimbodySystem::getDefaultSimbodyState()
+{
+    return impl_->getMultibodySystem().realizeTopology();
 }
 //=================================================================================================//
 } // namespace SPH

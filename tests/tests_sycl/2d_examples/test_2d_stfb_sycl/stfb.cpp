@@ -4,6 +4,7 @@
  * @author   Nicolò Salis and Xiangyu Hu
  */
 #include "all_simbody.h"
+#include "simbody_system.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -216,10 +217,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
-    SimTK::MultibodySystem MBsystem;
-    SimTK::SimbodyMatterSubsystem matter(MBsystem);    // the bodies or matter of the system
-    SimTK::GeneralForceSubsystem forces(MBsystem);     // the forces of the system
-    SimbodyStateEngine simbody_state_engine(MBsystem); // the state engine of the system
+    SimbodySystem simbody_system;
+    SimTK::MultibodySystem &MBsystem = simbody_system.getMultibodySystem();
+    SimTK::SimbodyMatterSubsystem &matter = simbody_system.getSimbodyMatterSubsystem();
+    SimTK::GeneralForceSubsystem &forces = simbody_system.getSimbodyForceSubsystem();
+    SimbodyStateEngine &simbody_state_engine = simbody_system.getSimbodyStateEngine();
 
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
     /** Mass properties of the constrained spot.
@@ -266,9 +268,9 @@ int main(int ac, char *av[])
     /** discrete forces acting on the bodies. */
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
     /** Time stepping method for multibody system.*/
-    SimTK::State simbody_state = MBsystem.realizeTopology();
-    SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
-    integ.initialize(simbody_state);
+    SimTK::State simbody_state = simbody_system.getDefaultSimbodyState();
+    SimTK::RungeKuttaMersonIntegrator &integ = simbody_system.getSimbodyIntegrator();
+    simbody_system.initializeStateForIntegrator();
     //----------------------------------------------------------------------
     //	Coupling between SimBody and SPH
     //----------------------------------------------------------------------
