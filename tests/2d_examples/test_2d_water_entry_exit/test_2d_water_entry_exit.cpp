@@ -320,14 +320,14 @@ int main(int ac, char *av[])
     SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1.0, SimTKVec3(0), SimTK::UnitInertia(1)));
     SolidBodyPartForSimbody cylinder_constraint_area(cylinder, makeShared<MultiPolygonShape>(createSimbodyConstrainShape(cylinder), "cylinder"));
     /** Mass properties of the constrained spot. */
-    SimTK::Body::Rigid tethered_spot_info(*cylinder_constraint_area.body_part_mass_properties_);
+    SimTK::Body::Rigid tethered_spot_info(cylinder_constraint_area.getSimTKMassProperties());
     /** Mobility of the fixed spot. */
     SimTK::MobilizedBody::Weld fixed_spot(matter.Ground(), SimTK::Transform(SimTKVec3(tethering_point[0], tethering_point[1], 0.0)),
                                           fixed_spot_info, SimTK::Transform(SimTKVec3(0)));
     /** Mobility of the tethered spot.
      * Set the mass center as the origin location of the planar mobilizer
      */
-    Vecd displacement0 = cylinder_constraint_area.initial_mass_center_ - tethering_point;
+    Vecd displacement0 = cylinder_constraint_area.getMassCenter() - tethering_point;
     SimTK::MobilizedBody::Planar tethered_spot(fixed_spot,
                                                SimTK::Transform(SimTKVec3(displacement0[0], displacement0[1], 0.0)),
                                                tethered_spot_info, SimTK::Transform(SimTKVec3(0)));

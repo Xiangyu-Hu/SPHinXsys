@@ -112,7 +112,7 @@ int main(int ac, char *av[])
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
-    SimTK::Body::Rigid structure_info(*structure_multibody.body_part_mass_properties_);
+    SimTK::Body::Rigid structure_info(structure_multibody.getSimTKMassProperties());
 
     SimTK::MobilizedBody::Planar tethered_spot(matter.Ground(), SimTK::Transform(SimTK::Vec3(G[0], G[1], 0.0)),
                                                structure_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
@@ -124,11 +124,11 @@ int main(int ac, char *av[])
                                            fixed_spot_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
 
     // A SEASIDE PILLAR; B PORTSIDE PILLAR
-    Vecd disp_cable_endA = cable_endA - structure_multibody.initial_mass_center_;
+    Vecd disp_cable_endA = cable_endA - structure_multibody.getMassCenter();
     SimTK::CablePath tethering_lineA(cables, fixed_spotA, SimTK::Vec3(0.0, 0.0, 0.0), tethered_spot,
                                      SimTK::Vec3(disp_cable_endA[0], disp_cable_endA[1], 0.0));
     /*-----------------------------------------------------------------------------*/
-    Vecd disp_cable_endB = cable_endB - structure_multibody.initial_mass_center_;
+    Vecd disp_cable_endB = cable_endB - structure_multibody.getMassCenter();
     SimTK::CablePath tethering_lineB(cables, fixed_spotB, SimTK::Vec3(0.0, 0.0, 0.0), tethered_spot,
                                      SimTK::Vec3(disp_cable_endB[0], disp_cable_endB[1], 0.0));
 
@@ -147,8 +147,8 @@ int main(int ac, char *av[])
     std::cout << "MASS CENTER GOAL"
               << " " << G[0] << " " << G[1] << std::endl;
     std::cout << "MASS CENTER SIMBODY"
-              << " " << structure_multibody.initial_mass_center_[0] << " "
-              << structure_multibody.initial_mass_center_[1] << std::endl;
+              << " " << structure_multibody.getMassCenter()[0] << " "
+              << structure_multibody.getMassCenter()[1] << std::endl;
     std::cout << "INERTIA " << Ix << " " << Iy << " " << Iz << std::endl;
     //----------------------------------------------------------------------
     integ.setAccuracy(1e-3);
