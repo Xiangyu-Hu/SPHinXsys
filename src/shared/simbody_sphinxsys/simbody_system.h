@@ -41,13 +41,13 @@ namespace SPH
 class RealBody;
 class Shape;
 class SimbodySystem;
-class SolidBodyPartForSimbody;
+class SolidBodyPartForSimbodyCK;
 
-class SolidBodyPartForSimbody : public BodyRegionByParticle
+class SolidBodyPartForSimbodyCK : public BodyRegionByParticle
 {
   public:
-    SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape);
-    virtual ~SolidBodyPartForSimbody() {};
+    SolidBodyPartForSimbodyCK(SPHBody &body, Shape &body_part_shape);
+    virtual ~SolidBodyPartForSimbodyCK() {};
 
     Vec3d getInitialMassCenter() const { return initial_mass_center_; };
     Vec3d getInertiaMoments() const { return inertia_moments_; };
@@ -108,7 +108,7 @@ class SimbodySystem
     virtual ~SimbodySystem();
     void writeStateToXml(UnsignedInt iteration_step);
     void readStateFromXml(UnsignedInt iteration_step);
-    std::string createRigidBody(SolidBodyPartForSimbody &simbody_part);
+    std::string createRigidBody(SolidBodyPartForSimbodyCK &simbody_part);
     std::string createFirstMobilizedPlanar(const std::string &body_name);
     std::string createFirstMobilizedPin(const std::string &body_name);
     void setUForMobilizedPlanar(const std::string &body_name, const Vec2d &velocity, Real angular_velocity);

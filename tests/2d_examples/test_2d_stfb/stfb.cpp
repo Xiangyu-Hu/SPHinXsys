@@ -4,6 +4,7 @@
  * @author   Nicolò Salis
  */
 #include "sphinxsys.h" //SPHinXsys Library.
+#include "all_simbody.h" //SPHinXsys Library.
 using namespace SPH;
 #include "stfb.h" //header for this case
 
@@ -96,7 +97,7 @@ int main(int ac, char *av[])
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
-    SimTK::Body::Rigid structure_info(*structure_multibody.body_part_mass_properties_);
+    SimTK::Body::Rigid structure_info(structure_multibody.getSimTKMassProperties());
     /**
      * @brief  ** Create a %Planar mobilizer between an existing parent (inboard) body P
      *	and a new child (outboard) body B created by copying the given \a bodyInfo

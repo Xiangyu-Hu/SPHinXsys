@@ -21,17 +21,39 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file    all_simbody.h
- * @brief   headers for SimBody engine.
- * @author	Chi Zhang and Xiangyu Hu
+ * @file    body_part_for_simbody.h
+ * @brief 	This is the class for bodies used for solid BCs or Elastic structure.
+ * @author	Xiangyu Hu
  */
 
-#ifndef ALL_SIMBODY_H
-#define ALL_SIMBODY_H
+#ifndef BODY_PART_FOR_SIMBODY_H
+#define BODY_PART_FOR_SIMBODY_H
 
-#include "body_part_for_simbody.h"
-#include "simbody_middle.h"
+#include "base_body_part.h"
 #include "simtk_wrapper.h"
-#include "state_engine.h"
-#include "xml_engine.h"
-#endif // ALL_SIMBODY_H
+namespace SPH
+{
+class SolidBodyPartForSimbody : public BodyRegionByParticle
+{
+  protected:
+    UniquePtrKeeper<SimTK::MassProperties> mass_properties_keeper_;
+
+  public:
+    SimTK::MassProperties &getSimTKMassProperties() const;
+    SimTK::Vec3 getSimTKMassCenter() const;
+    SimTK::Transform getSimTKTransform() const { return SimTKVec3(0.0); }
+
+    SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape);
+    SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);
+    virtual ~SolidBodyPartForSimbody() {};
+
+  protected:
+    Real min_spacing_sqr_;
+    SimTK::Vec3 initial_mass_center_;
+    SimTK::MassProperties *body_part_mass_properties_;
+    Real rho0_;
+    Real *Vol_;
+    Vecd *pos_;
+};
+} // namespace SPH
+#endif // BODY_PART_FOR_SIMBODY_H

@@ -15,8 +15,8 @@
 namespace SPH
 {
 //=================================================================================================//
-SolidBodyPartForSimbody::
-    SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape)
+SolidBodyPartForSimbodyCK::
+    SolidBodyPartForSimbodyCK(SPHBody &body, Shape &body_part_shape)
     : BodyRegionByParticle(body, body_part_shape),
       min_spacing_sqr_(pow(body.getSPHAdaptation().MinimumSpacing(), 2)),
       total_mass_(0), initial_mass_center_(ZeroData<Vec3d>::value),
@@ -77,7 +77,7 @@ class SimbodySystem::Impl
     SimTK::State state_;
     UniquePtrsKeeper<SimTK::Body::Rigid> rigid_bodies_keeper_;
     UniquePtrsKeeper<SimTK::MobilizedBody> mobilized_bodies_keeper_;
-    StdVec<std::pair<std::string, SolidBodyPartForSimbody *>> body_parts_;
+    StdVec<std::pair<std::string, SolidBodyPartForSimbodyCK *>> body_parts_;
     StdVec<std::pair<std::string, SimTK::Body::Rigid *>> rigid_bodies_;
     StdVec<std::pair<std::string, SimTK::MobilizedBody *>> mobilized_bodies_;
     EntityManager config_manager_;
@@ -89,9 +89,9 @@ class SimbodySystem::Impl
     SimbodyStateEngine &getSimbodyStateEngine() { return state_engine_; }
     SimTK::State &getState() { return state_; }
     void setState(const SimTK::State &state) { state_ = state; }
-    std::string createRigidBody(SolidBodyPartForSimbody &simbody_part);
+    std::string createRigidBody(SolidBodyPartForSimbodyCK &simbody_part);
     SimTK::Body::Rigid &getRigidBody(const std::string &name);
-    SolidBodyPartForSimbody &getSimbodyPart(const std::string &name);
+    SolidBodyPartForSimbodyCK &getSimbodyPart(const std::string &name);
     UnsignedInt getBodyIndexByName(const std::string &body_name);
 
     template <class MobilizedBodyType, class ParentBodyType>
@@ -104,7 +104,7 @@ class SimbodySystem::Impl
     SimTK::MobilizedBody &getMobilizedBody(UnsignedInt body_index);
 };
 //=================================================================================================//
-std::string SimbodySystem::Impl::createRigidBody(SolidBodyPartForSimbody &simbody_part)
+std::string SimbodySystem::Impl::createRigidBody(SolidBodyPartForSimbodyCK &simbody_part)
 {
     std::string part_name = simbody_part.Name();
     body_parts_.push_back(std::make_pair(part_name, &simbody_part));
@@ -120,7 +120,7 @@ std::string SimbodySystem::Impl::createRigidBody(SolidBodyPartForSimbody &simbod
     return part_name;
 }
 //=================================================================================================//
-SolidBodyPartForSimbody &SimbodySystem::Impl::getSimbodyPart(const std::string &name)
+SolidBodyPartForSimbodyCK &SimbodySystem::Impl::getSimbodyPart(const std::string &name)
 {
     for (size_t i = 0; i < body_parts_.size(); ++i)
     {
@@ -162,7 +162,7 @@ template <class MobilizedBodyType, class ParentBodyType>
 MobilizedBodyType &SimbodySystem::Impl::createMobilizedBody(
     const std::string &name, ParentBodyType &parent_mobod)
 {
-    SolidBodyPartForSimbody &simbody_part = getSimbodyPart(name);
+    SolidBodyPartForSimbodyCK &simbody_part = getSimbodyPart(name);
     SimTK::Body::Rigid &rigid_body = getRigidBody(name);
     MobilizedBodyType *mobilized_body =
         mobilized_bodies_keeper_.createPtr<MobilizedBodyType>(
@@ -251,7 +251,7 @@ void SimbodySystem::readStateFromXml(UnsignedInt iteration_step)
     impl_->getSimbodyStateEngine().readStateFromXml(iteration_step, impl_->getState());
 }
 //=================================================================================================//
-std::string SimbodySystem::createRigidBody(SolidBodyPartForSimbody &simbody_part)
+std::string SimbodySystem::createRigidBody(SolidBodyPartForSimbodyCK &simbody_part)
 {
     return impl_->createRigidBody(simbody_part);
 }
