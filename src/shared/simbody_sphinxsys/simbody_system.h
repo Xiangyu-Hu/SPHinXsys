@@ -100,6 +100,7 @@ struct ZeroData<SimbodyState>
     static inline const SimbodyState value = SimbodyState();
 };
 
+using TorqueAndForce = std::pair<Vec3d, Vec3d>;
 class SimbodySystem
 {
   public:
@@ -108,6 +109,8 @@ class SimbodySystem
     void writeStateToXml(UnsignedInt iteration_step);
     void readStateFromXml(UnsignedInt iteration_step);
     std::string createRigidBody(SolidBodyPartForSimbodyCK &simbody_part);
+    std::string addUniformGravity(const Vec3d &gravity_vector);
+    void updateForceOnBody(UnsignedInt body_index, const TorqueAndForce &torque_and_force);
     std::string createFirstMobilizedPlanar(const std::string &body_name);
     std::string createFirstMobilizedPin(const std::string &body_name);
     void setUForMobilizedPlanar(const std::string &body_name, const Vec2d &velocity, Real angular_velocity);
@@ -117,9 +120,12 @@ class SimbodySystem
     void initializeStateForIntegrator();
     void checkInitialSimbodyState(const std::string &body_name);
     SimbodyState getSimbodyState(const Vec3d &initial_origin_location, UnsignedInt body_index);
+    Vec3d getInitialSimbodyOriginLocation(UnsignedInt body_index);
     Vec3d getSimbodyOriginLocation(UnsignedInt body_index);
     Real getSimbodySystemTime();
+    void setSimbodySystemTime(Real time);
     void stepSimbodySystemTo(Real time);
+    void stepSimbodySystemBy(Real dt);
 
   protected:
     class Impl;

@@ -72,12 +72,16 @@ class SimbodySystem::Impl
 {
     SimTK::MultibodySystem MBsystem_;
     SimTK::SimbodyMatterSubsystem matter_{MBsystem_};
+    SimTK::GeneralForceSubsystem force_system_{MBsystem_};
+    SimTK::Force::DiscreteForces force_on_bodies_{force_system_, matter_};
     SimTK::RungeKuttaMersonIntegrator integ_{MBsystem_};
     SimbodyStateEngine state_engine_{MBsystem_};
     SimTK::State state_;
     UniquePtrsKeeper<SimTK::Body::Rigid> rigid_bodies_keeper_;
+    UniquePtrsKeeper<SimTK::Force> forces_keeper_;
     UniquePtrsKeeper<SimTK::MobilizedBody> mobilized_bodies_keeper_;
     StdVec<std::pair<std::string, SolidBodyPartForSimbodyCK *>> body_parts_;
+    StdVec<std::pair<std::string, SimTK::Force *>> forces_;
     StdVec<std::pair<std::string, SimTK::Body::Rigid *>> rigid_bodies_;
     StdVec<std::pair<std::string, SimTK::MobilizedBody *>> mobilized_bodies_;
     EntityManager config_manager_;
@@ -85,14 +89,20 @@ class SimbodySystem::Impl
   public:
     SimTK::MultibodySystem &getMultibodySystem() { return MBsystem_; }
     SimTK::SimbodyMatterSubsystem &getSimbodyMatterSubsystem() { return matter_; }
+    SimTK::GeneralForceSubsystem &getSimbodyForceSubsystem() { return force_system_; }
     SimTK::RungeKuttaMersonIntegrator &getSimbodyIntegrator() { return integ_; }
     SimbodyStateEngine &getSimbodyStateEngine() { return state_engine_; }
     SimTK::State &getState() { return state_; }
     void setState(const SimTK::State &state) { state_ = state; }
+    void setTime(Real time) { state_.setTime(time); }
     std::string createRigidBody(SolidBodyPartForSimbodyCK &simbody_part);
     SimTK::Body::Rigid &getRigidBody(const std::string &name);
     SolidBodyPartForSimbodyCK &getSimbodyPart(const std::string &name);
     UnsignedInt getBodyIndexByName(const std::string &body_name);
+
+    template <class ForceType, typename... Args>
+    ForceType &addForce(const std::string &name, Args &&...args);
+    void updateForceOnBody(UnsignedInt body_index, const SimTK::SpatialVec &spatial_force);
 
     template <class MobilizedBodyType, class ParentBodyType>
     MobilizedBodyType &createMobilizedBody(const std::string &name, ParentBodyType &parent_mobod);
@@ -118,6 +128,26 @@ std::string SimbodySystem::Impl::createRigidBody(SolidBodyPartForSimbodyCK &simb
         inertia));
     rigid_bodies_.push_back(std::make_pair(part_name, rigid_body));
     return part_name;
+}
+//=================================================================================================//
+template <class ForceType, typename... Args>
+ForceType &SimbodySystem::Impl::addForce(const std::string &name, Args &&...args)
+{
+    ForceType *force = forces_keeper_.createPtr<ForceType>(
+        force_system_, matter_, std::forward<Args>(args)...);
+    config_manager_.addEntity<ForceType>(name, force);
+    forces_.push_back(std::make_pair(name, force));
+    setState(MBsystem_.realizeTopology());
+    return *force;
+}
+//=================================================================================================//
+void SimbodySystem::Impl::updateForceOnBody(
+    UnsignedInt body_index, const SimTK::SpatialVec &spatial_force)
+{
+    SimTK::State &state_for_update = integ_.updAdvancedState();
+    force_on_bodies_.clearAllBodyForces(state_for_update);
+    auto &mobilized_body = getMobilizedBody(body_index);
+    force_on_bodies_.setOneBodyForce(state_for_update, mobilized_body, spatial_force);
 }
 //=================================================================================================//
 SolidBodyPartForSimbodyCK &SimbodySystem::Impl::getSimbodyPart(const std::string &name)
@@ -256,6 +286,20 @@ std::string SimbodySystem::createRigidBody(SolidBodyPartForSimbodyCK &simbody_pa
     return impl_->createRigidBody(simbody_part);
 }
 //=================================================================================================//
+std::string SimbodySystem::addUniformGravity(const Vec3d &gravity_vector)
+{
+    std::string force_name = "UniformGravity";
+    impl_->addForce<SimTK::Force::UniformGravity>(force_name, EigenToSimTK(gravity_vector));
+    return force_name;
+}
+//=================================================================================================//
+void SimbodySystem::updateForceOnBody(UnsignedInt body_index, const TorqueAndForce &torque_and_force)
+{
+    SimTK::SpatialVec spatial_force(
+        EigenToSimTK(torque_and_force.first), EigenToSimTK(torque_and_force.second));
+    impl_->updateForceOnBody(body_index, spatial_force);
+}
+//=================================================================================================//
 std::string SimbodySystem::createFirstMobilizedPlanar(const std::string &body_name)
 {
     auto &parent_body = impl_->getSimbodyMatterSubsystem().Ground();
@@ -319,15 +363,35 @@ Vec3d SimbodySystem::getSimbodyOriginLocation(UnsignedInt body_index)
     return SimTKToEigen(mobilized_body.getBodyOriginLocation(state));
 }
 //=================================================================================================//
+Vec3d SimbodySystem::getInitialSimbodyOriginLocation(UnsignedInt body_index)
+{
+    auto &MBsystem = impl_->getMultibodySystem();
+    const SimTK::State &state = MBsystem.getDefaultState();
+    MBsystem.realize(state);
+    auto &mobilized_body = impl_->getMobilizedBody(body_index);
+    return SimTKToEigen(mobilized_body.getBodyOriginLocation(state));
+}
+//=================================================================================================//
 Real SimbodySystem::getSimbodySystemTime()
 {
     return impl_->getSimbodyIntegrator().getState().getTime();
+}
+//=================================================================================================//
+void SimbodySystem::setSimbodySystemTime(Real time)
+{
+    impl_->setTime(time);
 }
 //=================================================================================================//
 void SimbodySystem::stepSimbodySystemTo(Real time)
 {
     auto &integ = impl_->getSimbodyIntegrator();
     integ.stepTo(time);
+}
+//=================================================================================================//
+void SimbodySystem::stepSimbodySystemBy(Real dt)
+{
+    auto &integ = impl_->getSimbodyIntegrator();
+    integ.stepBy(dt);
 }
 //=================================================================================================//
 void SimbodySystem::checkInitialSimbodyState(const std::string &body_name)
