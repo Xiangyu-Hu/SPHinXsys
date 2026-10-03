@@ -122,7 +122,7 @@ class SimbodySystem
     void setUForMobilizedPin(const std::string &body_name, Real angular_velocity);
     UnsignedInt getBodyIndexByName(const std::string &body_name);
     void realizeState();
-    void initializeStateForIntegrator();
+    void initializeStateForIntegrator(Real accuracy = 1e-3, bool allow_interpolation = false);
     void checkInitialSimbodyState(const std::string &body_name);
     SimbodyState getSimbodyState(const Vec3d &initial_origin_location, UnsignedInt body_index);
     Vec3d getInitialSimbodyOriginLocation(UnsignedInt body_index);

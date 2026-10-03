@@ -266,7 +266,6 @@ int main(int ac, char *av[])
     /** discrete forces acting on the bodies. */
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
     /** Time stepping method for multibody system.*/
-    SimTK::State simbody_state = simbody_system.getDefaultSimbodyState();
     SimTK::RungeKuttaMersonIntegrator &integ = simbody_system.getSimbodyIntegrator();
     simbody_system.initializeStateForIntegrator();
     //----------------------------------------------------------------------
@@ -331,9 +330,6 @@ int main(int ac, char *av[])
 
         simbody_system.readStateFromXml(restart_step);
     }
-    integ.setAccuracy(1e-3);
-    integ.setAllowInterpolation(false);
-    integ.initialize(simbody_state);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

@@ -338,11 +338,14 @@ void SimbodySystem::realizeState()
     impl_->getMultibodySystem().realize(state);
 }
 //=================================================================================================//
-void SimbodySystem::initializeStateForIntegrator()
+void SimbodySystem::initializeStateForIntegrator(Real accuracy, bool allow_interpolation)
 {
     SimTK::State state = impl_->getMultibodySystem().realizeTopology();
     impl_->getMultibodySystem().realize(state);
-    impl_->getSimbodyIntegrator().initialize(state);
+    auto &integ = impl_->getSimbodyIntegrator();
+    integ.initialize(state);
+    integ.setAccuracy(accuracy);
+    integ.setAllowInterpolation(allow_interpolation);
 }
 //=================================================================================================//
 SimbodyState SimbodySystem::getSimbodyState(
