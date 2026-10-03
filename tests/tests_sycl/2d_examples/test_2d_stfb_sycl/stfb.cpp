@@ -189,16 +189,11 @@ int main(int ac, char *av[])
 
     auto &fluid_acoustic_step_2nd_half =
         main_methods.addInteractionDynamicsOneLevel<
-            fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner);
-    auto &fluid_acoustic_step_2nd_half_with_wall =
-        main_methods.addInteractionDynamics<
-            fluid_dynamics::AcousticStep2ndHalf, Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(fluid_wall_contact);
-    auto &fluid_acoustic_step_2nd_half_with_structure =
-        main_methods.addInteractionDynamics<
-            fluid_dynamics::AcousticStep2ndHalf, Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(fluid_structure_contact);
-
-    fluid_acoustic_step_2nd_half.addPostContactInteraction(fluid_acoustic_step_2nd_half_with_wall)
-        .addPostContactInteraction(fluid_acoustic_step_2nd_half_with_structure);
+                        fluid_dynamics::AcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(water_block_inner)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(fluid_wall_contact)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(fluid_structure_contact)
+            .addGeneralPostInteraction<FSI::PressureForceFromFluid, WithUpdate, AcousticRiemannSolverCK, NoKernelCorrectionCK>(
+                structure_contact);
 
     auto &fluid_density_regularization =
         main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(water_block_inner)
@@ -206,25 +201,18 @@ int main(int ac, char *av[])
             .addPostContactInteraction(fluid_structure_contact)
             .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeSurface>(water_block);
 
-    auto &fluid_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(water_block, U_f);
-    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(water_block);
+    auto &fluid_advection_time_step = main_methods.addReduceDynamics<
+        fluid_dynamics::AdvectionTimeStepCK>(water_block, U_f);
+    auto &fluid_acoustic_time_step = main_methods.addReduceDynamics<
+        fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(water_block);
 
-    auto &fluid_viscous_force = main_methods.addInteractionDynamicsWithUpdate<
-        fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(water_block_inner);
-    auto &fluid_viscous_force_from_wall =
-        main_methods.addInteractionDynamics<fluid_dynamics::ViscousForceCK, Wall, Viscosity, NoKernelCorrectionCK>(fluid_wall_contact);
-    auto &fluid_viscous_force_from_structure =
-        main_methods.addInteractionDynamics<fluid_dynamics::ViscousForceCK, Wall, Viscosity, NoKernelCorrectionCK>(fluid_structure_contact);
-
-    fluid_viscous_force.addPostContactInteraction(fluid_viscous_force_from_wall)
-        .addPostContactInteraction(fluid_viscous_force_from_structure);
-
-    auto &viscous_force_on_structure =
+    auto &fluid_viscous_force =
         main_methods.addInteractionDynamicsWithUpdate<
-            FSI::ViscousForceFromFluid, std::remove_reference_t<decltype(fluid_viscous_force_from_wall)>>(structure_contact);
-    auto &pressure_force_on_structure =
-        main_methods.addInteractionDynamicsWithUpdate<
-            FSI::PressureForceFromFluid, std::remove_reference_t<decltype(fluid_acoustic_step_2nd_half_with_structure)>>(structure_contact);
+                        fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(water_block_inner)
+            .addPostContactInteraction<Wall, Viscosity, NoKernelCorrectionCK>(fluid_wall_contact)
+            .addPostContactInteraction<Wall, Viscosity, NoKernelCorrectionCK>(fluid_structure_contact)
+            .addGeneralPostInteraction<FSI::ViscousForceFromFluid, WithUpdate, Viscosity, NoKernelCorrectionCK>(
+                structure_contact);
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
@@ -280,13 +268,18 @@ int main(int ac, char *av[])
     /** Time stepping method for multibody system.*/
     SimTK::State simbody_state = MBsystem.realizeTopology();
     SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
+    integ.initialize(simbody_state);
     //----------------------------------------------------------------------
     //	Coupling between SimBody and SPH
     //----------------------------------------------------------------------
-    auto &force_on_structure = main_methods.addReduceDynamics<
-        solid_dynamics::TotalForceOnBodyPartForSimBodyCK>(structure_multibody, MBsystem, structure_mob, integ);
-    auto &constraint_on_structure = main_methods.addStateDynamics<
-        solid_dynamics::ConstraintBodyPartBySimBodyCK>(structure_multibody, MBsystem, structure_mob, integ);
+    // auto &force_on_structure = main_methods.addReduceDynamics<
+    //    solid_dynamics::TotalForceOnBodyPartForSimBodyCK>(structure_multibody, MBsystem, structure_mob, integ);
+    // auto &constraint_on_structure = main_methods.addStateDynamics<
+    //    solid_dynamics::ConstraintBodyPartBySimBodyCK>(structure_multibody, MBsystem, structure_mob, integ);
+    ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
+        force_on_structure(structure_multibody, MBsystem, structure_mob, integ);
+    SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
+        constraint_on_structure(structure_multibody, MBsystem, structure_mob, integ);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -380,7 +373,6 @@ int main(int ac, char *av[])
         time_instance = TickCount::now();
         if (trigger_FSI())
         {
-            pressure_force_on_structure.exec();
             SimTK::State &state_for_update = integ.updAdvancedState();
             force_on_bodies.clearAllBodyForces(state_for_update);
             sv_action_on_structure.setValue(force_on_structure.exec());
@@ -444,10 +436,6 @@ int main(int ac, char *av[])
             fluid_density_regularization.exec();
             water_advection_step_setup.exec();
             fluid_viscous_force.exec();
-            if (trigger_FSI())
-            {
-                viscous_force_on_structure.exec();
-            };
             interval_advection_step += TickCount::now() - time_instance;
         }
     }
