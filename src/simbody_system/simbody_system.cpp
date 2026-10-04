@@ -97,9 +97,7 @@ class SimbodySystem::Impl
     SimTK::State &getInitialStateForIntegrator() { return initial_state_for_integrator_; }
     void setInitialStateForIntegrator(const SimTK::State &state) { initial_state_for_integrator_ = state; }
 
-    std::string createRigidBody(SolidBodyPartForSimbodyCK &simbody_part);
     SimTK::Body &createRigidBody(const std::string &name, SimTK::MassProperties mass_properties);
-
     SimTK::Body::Rigid &getRigidBody(const std::string &name);
     SolidBodyPartForSimbodyCK &getSimbodyPart(const std::string &name);
     UnsignedInt getBodyIndexByName(const std::string &body_name);
@@ -120,22 +118,6 @@ class SimbodySystem::Impl
 SimbodySystem::Impl::Impl() : initial_state_for_integrator_(MBsystem_.realizeTopology())
 {
     mobilized_bodies_.push_back(std::make_pair("Ground", &matter_.Ground()));
-}
-//=================================================================================================//
-std::string SimbodySystem::Impl::createRigidBody(SolidBodyPartForSimbodyCK &simbody_part)
-{
-    std::string part_name = simbody_part.Name();
-    body_parts_.push_back(std::make_pair(part_name, &simbody_part));
-    SimTK::UnitInertia inertia(
-        EigenToSimTK(simbody_part.getInertiaMoments()),
-        EigenToSimTK(simbody_part.getInertiaProducts()));
-    SimTK::Body::Rigid *rigid_body = rigid_bodies_keeper_.createPtr<
-        SimTK::Body::Rigid>(SimTK::MassProperties(
-        simbody_part.getTotalMass(),
-        EigenToSimTK(simbody_part.getInitialMassCenter()),
-        inertia));
-    rigid_bodies_.push_back(std::make_pair(part_name, rigid_body));
-    return part_name;
 }
 //=================================================================================================//
 SimTK::Body &SimbodySystem::Impl::createRigidBody(
@@ -287,7 +269,14 @@ void SimbodySystem::readStateFromXml(UnsignedInt iteration_step)
 //=================================================================================================//
 std::string SimbodySystem::createRigidBody(SolidBodyPartForSimbodyCK &simbody_part)
 {
-    return impl_->createRigidBody(simbody_part);
+    std::string part_name = simbody_part.Name();
+    config_manager_.addEntity<SolidBodyPartForSimbodyCK>(part_name, &simbody_part);
+    SimTK::MassProperties mass_properties(
+        simbody_part.getTotalMass(), EigenToSimTK(simbody_part.getInitialMassCenter()),
+        SimTK::UnitInertia(EigenToSimTK(simbody_part.getInertiaMoments()),
+                           EigenToSimTK(simbody_part.getInertiaProducts())));
+    impl_->createRigidBody(part_name, mass_properties);
+    return part_name;
 }
 //=================================================================================================//
 void SimbodySystem::addUniformGravity(const Vec3d &gravity_vector)
@@ -422,30 +411,24 @@ SimTK::State SimbodySystem::getDefaultSimbodyState()
 {
     return impl_->getMultibodySystem().realizeTopology();
 }
-std::string SimbodySystem::createSimbodyBody(SolidBodyPartForSimbody &simbody_part)
-{
-    std::string part_name = simbody_part.Name();
-    config_manager_.addEntity<SolidBodyPartForSimbody>(part_name, &simbody_part);
-    impl_->createRigidBody(part_name, simbody_part.getSimTKMassProperties());
-    return part_name;
-}
 SimTK::MobilizedBody &SimbodySystem::createMobilizedBody(
     const std::string &body_name, const std::string &parent_name, const std::string &mobilizer_type)
 {
     auto &parent_mobod = impl_->getMobilizedBody(parent_name);
-    auto &body_part = config_manager_.getEntity<SolidBodyPartForSimbody>(body_name);
-
+    auto &body_part = config_manager_.getEntity<SolidBodyPartForSimbodyCK>(body_name);
+    SimTK::Vec3 initial_mass_center = EigenToSimTK(body_part.getInitialMassCenter());
+    
     if (mobilizer_type == "Planar")
     {
         auto &mobilized_body = impl_->createMobilizedBody<SimTK::MobilizedBody::Planar>(
-            body_name, parent_mobod, SimTK::Transform(body_part.getSimTKMassCenter()), SimTK::Transform());
+            body_name, parent_mobod, SimTK::Transform(initial_mass_center), SimTK::Transform());
         config_manager_.addEntity<SimTK::MobilizedBody::Planar>(body_name, &mobilized_body);
         return mobilized_body;
     }
     else if (mobilizer_type == "Pin")
     {
         auto &mobilized_body = impl_->createMobilizedBody<SimTK::MobilizedBody::Pin>(
-            body_name, parent_mobod, SimTK::Transform(body_part.getSimTKMassCenter()), SimTK::Transform());
+            body_name, parent_mobod, SimTK::Transform(initial_mass_center), SimTK::Transform());
         config_manager_.addEntity<SimTK::MobilizedBody::Pin>(body_name, &mobilized_body);
         return mobilized_body;
     }

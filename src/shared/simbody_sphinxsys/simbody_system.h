@@ -138,7 +138,6 @@ class SimbodySystem
     SimTK::RungeKuttaMersonIntegrator &getSimbodyIntegrator();
     SimbodyStateEngine &getSimbodyStateEngine();
     SimTK::State getDefaultSimbodyState();
-    std::string createSimbodyBody(SolidBodyPartForSimbody &simbody_part);
     SimTK::MobilizedBody &createMobilizedBody(
         const std::string &body_name, const std::string &parent_name, const std::string &mobilizer_type);
     void updateForceOnBody(SimTK::MobilizedBody &mobilized_body, const TorqueAndForce &torque_and_force);

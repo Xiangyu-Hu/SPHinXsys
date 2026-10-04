@@ -218,8 +218,8 @@ int main(int ac, char *av[])
     //	Define the multi-body system
     //----------------------------------------------------------------------
     SimbodySystem simbody_system;
-    StructureSystemForSimbody structure_multibody(structure, structure_shape);
-    std::string structure_name = simbody_system.createSimbodyBody(structure_multibody);
+    SolidBodyPartForSimbodyCK structure_multibody(structure, structure_shape);
+    std::string structure_name = simbody_system.createRigidBody(structure_multibody);
     SimTK::MobilizedBody &structure_mob = simbody_system.createMobilizedBody(structure_name, "Ground", "Planar");
     simbody_system.addUniformGravity(Vec3d(0.0, -gravity_g, 0.0));
     simbody_system.initializeStateForIntegrator();
