@@ -224,31 +224,7 @@ int main(int ac, char *av[])
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
     std::string structure_name = simbody_system.createSimbodyBody(structure_multibody);
     SimTK::MobilizedBody &structure_mob = simbody_system.createMobilizedBody(structure_name, "Ground", "Planar");
-    /**
-     * @details Add gravity to mb body.
-     * @param[in,out] forces, The subsystem to which this force should be added.
-     * @param[in]     matter, The subsystem containing the bodies that will be affected.
-     * @param[in]    gravity, The default gravity vector v, interpreted as v=g*d where g=|\a gravity| is
-     *				a positive scalar and d is the "down" direction unit vector d=\a gravity/g.
-     * @param[in]  zeroHeight This is an optional specification of the default value for the height
-     *				up the gravity vector that is considered to be "zero" for purposes of
-     *				calculating the gravitational potential energy. The default is
-     *				\a zeroHeight == 0, i.e., a body's potential energy is defined to be zero
-     *				when the height of its mass center is the same as the height of the Ground
-     *				origin. The zero height will have the value specified here unless
-     *				explicitly changed within a particular State use the setZeroHeight()
-     *			method.
-     * @par Force Each body B that has not been explicitly excluded will experience a force
-     *		fb = mb*g*d, applied to its center of mass, where mb is the mass of body B.
-     * @par Potential Energy
-     *		Gravitational potential energy for a body B is mb*g*hb where hb is the height of
-     *		body B's mass center over an arbitrary "zero" height hz (default is hz=0),
-     *		measured along the "up" direction -d. If pb is the Ground frame vector giving
-     *		the position of body B's mass center, its height over or under hz is
-     *		hb=pb*(-d) - hz. Note that this is a signed quantity so the potential energy is
-     *		also signed. 0.475
-     */
-    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(0.0, -gravity_g, 0.0), 0.0);
+    simbody_system.addUniformGravity(Vec3d(0.0, -gravity_g, 0.0));
     /** discrete forces acting on the bodies. */
     SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
     /** Time stepping method for multibody system.*/
@@ -355,7 +331,6 @@ int main(int ac, char *av[])
         if (trigger_FSI())
         {
             SimTK::State &state_for_update = integ.updAdvancedState();
-            force_on_bodies.clearAllBodyForces(state_for_update);
             sv_action_on_structure.setValue(force_on_structure.exec());
             force_on_bodies.setOneBodyForce(state_for_update, structure_mob, sv_action_on_structure.getValue());
             integ.stepBy(acoustic_dt);

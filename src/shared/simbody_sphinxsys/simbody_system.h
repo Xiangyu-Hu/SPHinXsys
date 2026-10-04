@@ -117,7 +117,7 @@ class SimbodySystem
     void writeStateToXml(UnsignedInt iteration_step);
     void readStateFromXml(UnsignedInt iteration_step);
     std::string createRigidBody(SolidBodyPartForSimbodyCK &simbody_part);
-    std::string addUniformGravity(const Vec3d &gravity_vector);
+    void addUniformGravity(const Vec3d &gravity_vector);
     void updateForceOnBody(UnsignedInt body_index, const TorqueAndForce &torque_and_force);
     void setUForMobilizedPlanar(const std::string &body_name, const Vec2d &velocity, Real angular_velocity);
     void setUForMobilizedPin(const std::string &body_name, Real angular_velocity);

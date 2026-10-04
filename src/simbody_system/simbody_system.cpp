@@ -290,11 +290,11 @@ std::string SimbodySystem::createRigidBody(SolidBodyPartForSimbodyCK &simbody_pa
     return impl_->createRigidBody(simbody_part);
 }
 //=================================================================================================//
-std::string SimbodySystem::addUniformGravity(const Vec3d &gravity_vector)
+void SimbodySystem::addUniformGravity(const Vec3d &gravity_vector)
 {
     std::string force_name = "UniformGravity";
-    impl_->addForce<SimTK::Force::UniformGravity>(force_name, EigenToSimTK(gravity_vector));
-    return force_name;
+    auto &gravity = impl_->addForce<SimTK::Force::UniformGravity>(force_name, EigenToSimTK(gravity_vector));
+    config_manager_.addEntity<SimTK::Force::UniformGravity>(force_name, &gravity);
 }
 //=================================================================================================//
 void SimbodySystem::updateForceOnBody(UnsignedInt body_index, const TorqueAndForce &torque_and_force)
