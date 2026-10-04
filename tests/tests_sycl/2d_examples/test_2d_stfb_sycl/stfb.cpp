@@ -219,16 +219,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SimbodySystem simbody_system;
     SimTK::MultibodySystem &MBsystem = simbody_system.getMultibodySystem();
-    SimTK::SimbodyMatterSubsystem &matter = simbody_system.getSimbodyMatterSubsystem();
-    SimTK::GeneralForceSubsystem &forces = simbody_system.getSimbodyForceSubsystem();
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
     std::string structure_name = simbody_system.createSimbodyBody(structure_multibody);
     SimTK::MobilizedBody &structure_mob = simbody_system.createMobilizedBody(structure_name, "Ground", "Planar");
-    simbody_system.addUniformGravity(Vec3d(0.0, -gravity_g, 0.0));
-    /** discrete forces acting on the bodies. */
-    SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
-    /** Time stepping method for multibody system.*/
     SimTK::RungeKuttaMersonIntegrator &integ = simbody_system.getSimbodyIntegrator();
+    simbody_system.addUniformGravity(Vec3d(0.0, -gravity_g, 0.0));
     simbody_system.initializeStateForIntegrator();
     //----------------------------------------------------------------------
     //	Coupling between SimBody and SPH
@@ -330,9 +325,10 @@ int main(int ac, char *av[])
         time_instance = TickCount::now();
         if (trigger_FSI())
         {
-            SimTK::State &state_for_update = integ.updAdvancedState();
-            sv_action_on_structure.setValue(force_on_structure.exec());
-            force_on_bodies.setOneBodyForce(state_for_update, structure_mob, sv_action_on_structure.getValue());
+            SimTK::SpatialVec spatial_force = force_on_structure.exec();
+            sv_action_on_structure.setValue(spatial_force);
+            TorqueAndForce torque_and_force = std::make_pair(SimTKToEigen(spatial_force[0]), SimTKToEigen(spatial_force[1]));
+            simbody_system.updateForceOnBody(structure_mob, torque_and_force);
             integ.stepBy(acoustic_dt);
             constraint_on_structure.exec();
         }

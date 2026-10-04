@@ -91,6 +91,7 @@ class SimbodySystem::Impl
     SimTK::MultibodySystem &getMultibodySystem() { return MBsystem_; }
     SimTK::SimbodyMatterSubsystem &getSimbodyMatterSubsystem() { return matter_; }
     SimTK::GeneralForceSubsystem &getSimbodyForceSubsystem() { return force_system_; }
+    SimTK::Force::DiscreteForces &getSimbodyForceOnBodies() { return force_on_bodies_; }
     SimTK::RungeKuttaMersonIntegrator &getSimbodyIntegrator() { return integ_; }
     SimbodyStateEngine &getSimbodyStateEngine() { return state_engine_; }
     SimTK::State &getState() { return state_; }
@@ -464,6 +465,16 @@ SimTK::MobilizedBody &SimbodySystem::createMobilizedBody(
         throw std::runtime_error(
             "SimbodySystem::createMobilizedBody: Unsupported mobilizer type " + mobilizer_type);
     }
+}
+//=================================================================================================//
+void SimbodySystem::updateForceOnBody(
+    SimTK::MobilizedBody &mobilized_body, const TorqueAndForce &torque_and_force)
+{
+    SimTK::State &state_for_update = impl_->getSimbodyIntegrator().updAdvancedState();
+    auto &force_on_bodies = impl_->getSimbodyForceOnBodies();
+    SimTK::SpatialVec spatial_force(
+        EigenToSimTK(torque_and_force.first), EigenToSimTK(torque_and_force.second));
+    force_on_bodies.setOneBodyForce(state_for_update, mobilized_body, spatial_force);
 }
 //=================================================================================================//
 } // namespace SPH
