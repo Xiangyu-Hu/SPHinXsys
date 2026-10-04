@@ -72,7 +72,7 @@ using ConstraintBodyPartBySimBodyCK = ConstraintBySimBodyCK<BodyPartByParticle>;
 
 template <class DynamicsIdentifier>
 class TotalForceForSimBodyCK
-    : public BaseLocalDynamicsReduce<ReduceSum<SimTK::SpatialVec>, DynamicsIdentifier>
+    : public BaseLocalDynamicsReduce<ReduceSum<TorqueAndForce>, DynamicsIdentifier>
 {
 
   public:
@@ -86,7 +86,7 @@ class TotalForceForSimBodyCK
       public:
         template <class ExecutionPolicy, class EncloserType>
         ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
-        SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0);
+        TorqueAndForce reduce(size_t index_i, Real dt = 0.0);
 
       protected:
         Vecd *force_, *force_prior_, *pos_;
