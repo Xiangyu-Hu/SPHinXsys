@@ -218,24 +218,22 @@ int main(int ac, char *av[])
     //	Define the multi-body system
     //----------------------------------------------------------------------
     SimbodySystem simbody_system;
-    SimTK::MultibodySystem &MBsystem = simbody_system.getMultibodySystem();
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
     std::string structure_name = simbody_system.createSimbodyBody(structure_multibody);
     SimTK::MobilizedBody &structure_mob = simbody_system.createMobilizedBody(structure_name, "Ground", "Planar");
-    SimTK::RungeKuttaMersonIntegrator &integ = simbody_system.getSimbodyIntegrator();
     simbody_system.addUniformGravity(Vec3d(0.0, -gravity_g, 0.0));
     simbody_system.initializeStateForIntegrator();
     //----------------------------------------------------------------------
     //	Coupling between SimBody and SPH
     //----------------------------------------------------------------------
-    // auto &force_on_structure = main_methods.addReduceDynamics<
-    //    solid_dynamics::TotalForceOnBodyPartForSimBodyCK>(structure_multibody, MBsystem, structure_mob, integ);
-    // auto &constraint_on_structure = main_methods.addStateDynamics<
-    //    solid_dynamics::ConstraintBodyPartBySimBodyCK>(structure_multibody, MBsystem, structure_mob, integ);
-    ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
-        force_on_structure(structure_multibody, MBsystem, structure_mob, integ);
-    SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
-        constraint_on_structure(structure_multibody, MBsystem, structure_mob, integ);
+    auto &force_on_structure = main_methods.addReduceDynamics<
+        solid_dynamics::TotalForceOnBodyPartForSimBodyCK>(structure_multibody, simbody_system);
+    auto &constraint_on_structure = main_methods.addStateDynamics<
+        solid_dynamics::ConstraintBodyPartBySimBodyCK>(structure_multibody, simbody_system);
+    // ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
+    //     force_on_structure(structure_multibody, MBsystem, structure_mob, integ);
+    // SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
+    //     constraint_on_structure(structure_multibody, MBsystem, structure_mob, integ);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -325,11 +323,12 @@ int main(int ac, char *av[])
         time_instance = TickCount::now();
         if (trigger_FSI())
         {
-            SimTK::SpatialVec spatial_force = force_on_structure.exec();
+            TorqueAndForce torque_and_force = force_on_structure.exec();
+            SimTK::SpatialVec spatial_force(
+                EigenToSimTK(torque_and_force.first), EigenToSimTK(torque_and_force.second));
             sv_action_on_structure.setValue(spatial_force);
-            TorqueAndForce torque_and_force = std::make_pair(SimTKToEigen(spatial_force[0]), SimTKToEigen(spatial_force[1]));
             simbody_system.updateForceOnBody(structure_mob, torque_and_force);
-            integ.stepBy(acoustic_dt);
+            simbody_system.stepSimbodySystemBy(acoustic_dt);
             constraint_on_structure.exec();
         }
         interval_FSI += TickCount::now() - time_instance;
