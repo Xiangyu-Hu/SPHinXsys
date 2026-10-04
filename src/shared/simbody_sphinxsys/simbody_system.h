@@ -30,12 +30,14 @@
 
 #include "base_body_part.h"
 #include "base_data_type.h"
+#include "sphinxsys_entity.h"
 
 namespace SimTK
 {
 class MultibodySystem;
 class SimbodyMatterSubsystem;
 class GeneralForceSubsystem;
+class Body;
 class MobilizedBody;
 class State;
 class RungeKuttaMersonIntegrator;
@@ -46,6 +48,7 @@ class RealBody;
 class Shape;
 class SimbodySystem;
 class SimbodyStateEngine;
+class SolidBodyPartForSimbody;
 
 class SolidBodyPartForSimbodyCK : public BodyRegionByParticle
 {
@@ -116,8 +119,6 @@ class SimbodySystem
     std::string createRigidBody(SolidBodyPartForSimbodyCK &simbody_part);
     std::string addUniformGravity(const Vec3d &gravity_vector);
     void updateForceOnBody(UnsignedInt body_index, const TorqueAndForce &torque_and_force);
-    std::string createFirstMobilizedPlanar(const std::string &body_name);
-    std::string createFirstMobilizedPin(const std::string &body_name);
     void setUForMobilizedPlanar(const std::string &body_name, const Vec2d &velocity, Real angular_velocity);
     void setUForMobilizedPin(const std::string &body_name, Real angular_velocity);
     UnsignedInt getBodyIndexByName(const std::string &body_name);
@@ -139,10 +140,14 @@ class SimbodySystem
     SimbodyStateEngine &getSimbodyStateEngine();
     SimTK::State &getSimbodyState();
     SimTK::State getDefaultSimbodyState();
+    SimTK::Body &createSimbodyBody(SolidBodyPartForSimbody &simbody_part);
+    SimTK::MobilizedBody &createMobilizedBody(
+        const std::string &body_name, const std::string &parent_name, const std::string &mobilizer_type);
 
   protected:
     class Impl;
     std::unique_ptr<Impl> impl_;
+    EntityManager config_manager_;
 };
 } // namespace SPH
 #endif // SIMBODY_SYSTEM_H

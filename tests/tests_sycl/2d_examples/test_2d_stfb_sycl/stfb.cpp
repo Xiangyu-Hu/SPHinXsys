@@ -222,10 +222,7 @@ int main(int ac, char *av[])
     SimTK::SimbodyMatterSubsystem &matter = simbody_system.getSimbodyMatterSubsystem();
     SimTK::GeneralForceSubsystem &forces = simbody_system.getSimbodyForceSubsystem();
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
-    /** Mass properties of the constrained spot.
-     * SimTK::MassProperties(mass, center of mass, inertia)
-     */
-    SimTK::Body::Rigid structure_info(structure_multibody.getSimTKMassProperties());
+    SimTK::Body &structure_info = simbody_system.createSimbodyBody(structure_multibody);
     /**
      * @brief  ** Create a %Planar mobilizer between an existing parent (inboard) body P
      *	and a new child (outboard) body B created by copying the given \a bodyInfo

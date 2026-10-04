@@ -8,9 +8,10 @@
 #include "base_particles.hpp"
 #include "ownership.h"
 #include "simtk_wrapper.h"
-#include "sphinxsys_entity.h"
 #include "state_engine.h"
 #include "vector_functions.h"
+
+#include "body_part_for_simbody.h"
 
 namespace SPH
 {
@@ -84,9 +85,9 @@ class SimbodySystem::Impl
     StdVec<std::pair<std::string, SimTK::Force *>> forces_;
     StdVec<std::pair<std::string, SimTK::Body::Rigid *>> rigid_bodies_;
     StdVec<std::pair<std::string, SimTK::MobilizedBody *>> mobilized_bodies_;
-    EntityManager config_manager_;
 
   public:
+    Impl();
     SimTK::MultibodySystem &getMultibodySystem() { return MBsystem_; }
     SimTK::SimbodyMatterSubsystem &getSimbodyMatterSubsystem() { return matter_; }
     SimTK::GeneralForceSubsystem &getSimbodyForceSubsystem() { return force_system_; }
@@ -95,7 +96,10 @@ class SimbodySystem::Impl
     SimTK::State &getState() { return state_; }
     void setState(const SimTK::State &state) { state_ = state; }
     void setTime(Real time) { state_.setTime(time); }
+
     std::string createRigidBody(SolidBodyPartForSimbodyCK &simbody_part);
+    SimTK::Body &createRigidBody(const std::string &name, SimTK::MassProperties mass_properties);
+
     SimTK::Body::Rigid &getRigidBody(const std::string &name);
     SolidBodyPartForSimbodyCK &getSimbodyPart(const std::string &name);
     UnsignedInt getBodyIndexByName(const std::string &body_name);
@@ -104,15 +108,19 @@ class SimbodySystem::Impl
     ForceType &addForce(const std::string &name, Args &&...args);
     void updateForceOnBody(UnsignedInt body_index, const SimTK::SpatialVec &spatial_force);
 
-    template <class MobilizedBodyType, class ParentBodyType>
-    MobilizedBodyType &createMobilizedBody(const std::string &name, ParentBodyType &parent_mobod);
-
     template <class MobilizedBodyType>
-    MobilizedBodyType &getMobilizedBody(const std::string &name);
+    MobilizedBodyType &createMobilizedBody(
+        const std::string &name, SimTK::MobilizedBody &parent_mobod,
+        const SimTK::Transform &X_PF, const SimTK::Transform &X_BM);
 
     SimTK::MobilizedBody &getMobilizedBody(const std::string &name);
     SimTK::MobilizedBody &getMobilizedBody(UnsignedInt body_index);
 };
+//=================================================================================================//
+SimbodySystem::Impl::Impl() : state_(MBsystem_.realizeTopology())
+{
+    mobilized_bodies_.push_back(std::make_pair("Ground", &matter_.Ground()));
+}
 //=================================================================================================//
 std::string SimbodySystem::Impl::createRigidBody(SolidBodyPartForSimbodyCK &simbody_part)
 {
@@ -130,12 +138,20 @@ std::string SimbodySystem::Impl::createRigidBody(SolidBodyPartForSimbodyCK &simb
     return part_name;
 }
 //=================================================================================================//
+SimTK::Body &SimbodySystem::Impl::createRigidBody(
+    const std::string &name, SimTK::MassProperties mass_properties)
+{
+    SimTK::Body::Rigid *rigid_body = rigid_bodies_keeper_.createPtr<
+        SimTK::Body::Rigid>(mass_properties);
+    rigid_bodies_.push_back(std::make_pair(name, rigid_body));
+    return *rigid_body;
+}
+//=================================================================================================//
 template <class ForceType, typename... Args>
 ForceType &SimbodySystem::Impl::addForce(const std::string &name, Args &&...args)
 {
     ForceType *force = forces_keeper_.createPtr<ForceType>(
         force_system_, matter_, std::forward<Args>(args)...);
-    config_manager_.addEntity<ForceType>(name, force);
     forces_.push_back(std::make_pair(name, force));
     state_ = MBsystem_.realizeTopology();
     return *force;
@@ -188,32 +204,17 @@ UnsignedInt SimbodySystem::Impl::getBodyIndexByName(const std::string &body_name
         "SimbodySystem::getBodyIndexByName: Mobilized body with name " + body_name + " not found.");
 }
 //=================================================================================================//
-template <class MobilizedBodyType, class ParentBodyType>
+template <class MobilizedBodyType>
 MobilizedBodyType &SimbodySystem::Impl::createMobilizedBody(
-    const std::string &name, ParentBodyType &parent_mobod)
+    const std::string &name, SimTK::MobilizedBody &parent_mobod,
+    const SimTK::Transform &X_PF, const SimTK::Transform &X_BM)
 {
-    SolidBodyPartForSimbodyCK &simbody_part = getSimbodyPart(name);
     SimTK::Body::Rigid &rigid_body = getRigidBody(name);
-    MobilizedBodyType *mobilized_body =
-        mobilized_bodies_keeper_.createPtr<MobilizedBodyType>(
-            getSimbodyMatterSubsystem().Ground(),
-            EigenToSimTK(simbody_part.getInitialMassCenter()),
-            rigid_body, SimTK::Transform());
-    config_manager_.addEntity<MobilizedBodyType>(name, mobilized_body);
+    MobilizedBodyType *mobilized_body = mobilized_bodies_keeper_.createPtr<
+        MobilizedBodyType>(parent_mobod, X_PF, rigid_body, X_BM);
     mobilized_bodies_.push_back(std::make_pair(name, mobilized_body));
     state_ = MBsystem_.realizeTopology();
     return *mobilized_body;
-}
-//=================================================================================================//
-template <class MobilizedBodyType>
-MobilizedBodyType &SimbodySystem::Impl::getMobilizedBody(const std::string &name)
-{
-    if (config_manager_.hasEntity<MobilizedBodyType>(name))
-    {
-        return config_manager_.getEntity<MobilizedBodyType>(name);
-    }
-    throw std::runtime_error(
-        "SimbodySystem::getMobilizedBody: Mobilized body with name " + name + " not found.");
 }
 //=================================================================================================//
 SimTK::MobilizedBody &SimbodySystem::Impl::getMobilizedBody(const std::string &name)
@@ -303,31 +304,17 @@ void SimbodySystem::updateForceOnBody(UnsignedInt body_index, const TorqueAndFor
     impl_->updateForceOnBody(body_index, spatial_force);
 }
 //=================================================================================================//
-std::string SimbodySystem::createFirstMobilizedPlanar(const std::string &body_name)
-{
-    auto &parent_body = impl_->getSimbodyMatterSubsystem().Ground();
-    impl_->createMobilizedBody<SimTK::MobilizedBody::Planar>(body_name, parent_body);
-    return body_name;
-}
-//=================================================================================================//
-std::string SimbodySystem::createFirstMobilizedPin(const std::string &body_name)
-{
-    auto &parent_body = impl_->getSimbodyMatterSubsystem().Ground();
-    impl_->createMobilizedBody<SimTK::MobilizedBody::Pin>(body_name, parent_body);
-    return body_name;
-}
-//=================================================================================================//
 void SimbodySystem::setUForMobilizedPlanar(
     const std::string &body_name, const Vec2d &velocity, Real angular_velocity)
 {
-    auto &mobilized_body = impl_->getMobilizedBody<SimTK::MobilizedBody::Planar>(body_name);
+    auto &mobilized_body = config_manager_.getEntity<SimTK::MobilizedBody::Planar>(body_name);
     SimTK::State &state = impl_->getState();
     mobilized_body.setU(state, SimTKVec3(angular_velocity, velocity[0], velocity[1]));
 }
 //=================================================================================================//
 void SimbodySystem::setUForMobilizedPin(const std::string &body_name, Real angular_velocity)
 {
-    auto &mobilized_body = impl_->getMobilizedBody<SimTK::MobilizedBody::Pin>(body_name);
+    auto &mobilized_body = config_manager_.getEntity<SimTK::MobilizedBody::Pin>(body_name);
     SimTK::State &state = impl_->getState();
     mobilized_body.setU(state, angular_velocity);
 }
@@ -444,6 +431,37 @@ SimTK::State &SimbodySystem::getSimbodyState()
 SimTK::State SimbodySystem::getDefaultSimbodyState()
 {
     return impl_->getMultibodySystem().realizeTopology();
+}
+SimTK::Body &SimbodySystem::createSimbodyBody(SolidBodyPartForSimbody &simbody_part)
+{
+    config_manager_.addEntity<SolidBodyPartForSimbody>(simbody_part.Name(), &simbody_part);
+    return impl_->createRigidBody(simbody_part.Name(), simbody_part.getSimTKMassProperties());
+}
+SimTK::MobilizedBody &SimbodySystem::createMobilizedBody(
+    const std::string &body_name, const std::string &parent_name, const std::string &mobilizer_type)
+{
+    auto &parent_mobod = impl_->getMobilizedBody(parent_name);
+    auto &body_part = config_manager_.getEntity<SolidBodyPartForSimbody>(body_name);
+
+    if (mobilizer_type == "Planar")
+    {
+        auto &mobilized_body = impl_->createMobilizedBody<SimTK::MobilizedBody::Planar>(
+            body_name, parent_mobod, SimTK::Transform(body_part.getSimTKMassCenter()), SimTK::Transform());
+        config_manager_.addEntity<SimTK::MobilizedBody::Planar>(body_name, &mobilized_body);
+        return mobilized_body;
+    }
+    else if (mobilizer_type == "Pin")
+    {
+        auto &mobilized_body = impl_->createMobilizedBody<SimTK::MobilizedBody::Pin>(
+            body_name, parent_mobod, SimTK::Transform(body_part.getSimTKMassCenter()), SimTK::Transform());
+        config_manager_.addEntity<SimTK::MobilizedBody::Pin>(body_name, &mobilized_body);
+        return mobilized_body;
+    }
+    else
+    {
+        throw std::runtime_error(
+            "SimbodySystem::createMobilizedBody: Unsupported mobilizer type " + mobilizer_type);
+    }
 }
 //=================================================================================================//
 } // namespace SPH
