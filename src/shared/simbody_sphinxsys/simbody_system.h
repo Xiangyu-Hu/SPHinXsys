@@ -122,7 +122,6 @@ class SimbodySystem
     void setUForMobilizedPlanar(const std::string &body_name, const Vec2d &velocity, Real angular_velocity);
     void setUForMobilizedPin(const std::string &body_name, Real angular_velocity);
     UnsignedInt getBodyIndexByName(const std::string &body_name);
-    void realizeState();
     void initializeStateForIntegrator(Real accuracy = 1e-3, bool allow_interpolation = false);
     void checkInitialSimbodyState(const std::string &body_name);
     SimbodyState getSimbodyState(const Vec3d &initial_origin_location, UnsignedInt body_index);
@@ -138,7 +137,6 @@ class SimbodySystem
     SimTK::GeneralForceSubsystem &getSimbodyForceSubsystem();
     SimTK::RungeKuttaMersonIntegrator &getSimbodyIntegrator();
     SimbodyStateEngine &getSimbodyStateEngine();
-    SimTK::State &getSimbodyState();
     SimTK::State getDefaultSimbodyState();
     std::string createSimbodyBody(SolidBodyPartForSimbody &simbody_part);
     SimTK::MobilizedBody &createMobilizedBody(

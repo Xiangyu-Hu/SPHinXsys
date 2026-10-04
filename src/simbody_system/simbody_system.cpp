@@ -77,7 +77,7 @@ class SimbodySystem::Impl
     SimTK::Force::DiscreteForces force_on_bodies_{force_system_, matter_};
     SimTK::RungeKuttaMersonIntegrator integ_{MBsystem_};
     SimbodyStateEngine state_engine_{MBsystem_};
-    SimTK::State state_;
+    SimTK::State initial_state_for_integrator_;
     UniquePtrsKeeper<SimTK::Body::Rigid> rigid_bodies_keeper_;
     UniquePtrsKeeper<SimTK::Force> forces_keeper_;
     UniquePtrsKeeper<SimTK::MobilizedBody> mobilized_bodies_keeper_;
@@ -94,9 +94,8 @@ class SimbodySystem::Impl
     SimTK::Force::DiscreteForces &getSimbodyForceOnBodies() { return force_on_bodies_; }
     SimTK::RungeKuttaMersonIntegrator &getSimbodyIntegrator() { return integ_; }
     SimbodyStateEngine &getSimbodyStateEngine() { return state_engine_; }
-    SimTK::State &getState() { return state_; }
-    void setState(const SimTK::State &state) { state_ = state; }
-    void setTime(Real time) { state_.setTime(time); }
+    SimTK::State &getInitialStateForIntegrator() { return initial_state_for_integrator_; }
+    void setInitialStateForIntegrator(const SimTK::State &state) { initial_state_for_integrator_ = state; }
 
     std::string createRigidBody(SolidBodyPartForSimbodyCK &simbody_part);
     SimTK::Body &createRigidBody(const std::string &name, SimTK::MassProperties mass_properties);
@@ -118,7 +117,7 @@ class SimbodySystem::Impl
     SimTK::MobilizedBody &getMobilizedBody(UnsignedInt body_index);
 };
 //=================================================================================================//
-SimbodySystem::Impl::Impl() : state_(MBsystem_.realizeTopology())
+SimbodySystem::Impl::Impl() : initial_state_for_integrator_(MBsystem_.realizeTopology())
 {
     mobilized_bodies_.push_back(std::make_pair("Ground", &matter_.Ground()));
 }
@@ -154,7 +153,7 @@ ForceType &SimbodySystem::Impl::addForce(const std::string &name, Args &&...args
     ForceType *force = forces_keeper_.createPtr<ForceType>(
         force_system_, matter_, std::forward<Args>(args)...);
     forces_.push_back(std::make_pair(name, force));
-    state_ = MBsystem_.realizeTopology();
+    initial_state_for_integrator_ = MBsystem_.realizeTopology();
     return *force;
 }
 //=================================================================================================//
@@ -214,7 +213,7 @@ MobilizedBodyType &SimbodySystem::Impl::createMobilizedBody(
     MobilizedBodyType *mobilized_body = mobilized_bodies_keeper_.createPtr<
         MobilizedBodyType>(parent_mobod, X_PF, rigid_body, X_BM);
     mobilized_bodies_.push_back(std::make_pair(name, mobilized_body));
-    state_ = MBsystem_.realizeTopology();
+    initial_state_for_integrator_ = MBsystem_.realizeTopology();
     return *mobilized_body;
 }
 //=================================================================================================//
@@ -309,26 +308,20 @@ void SimbodySystem::setUForMobilizedPlanar(
     const std::string &body_name, const Vec2d &velocity, Real angular_velocity)
 {
     auto &mobilized_body = config_manager_.getEntity<SimTK::MobilizedBody::Planar>(body_name);
-    SimTK::State &state = impl_->getState();
+    SimTK::State &state = impl_->getInitialStateForIntegrator();
     mobilized_body.setU(state, SimTKVec3(angular_velocity, velocity[0], velocity[1]));
 }
 //=================================================================================================//
 void SimbodySystem::setUForMobilizedPin(const std::string &body_name, Real angular_velocity)
 {
     auto &mobilized_body = config_manager_.getEntity<SimTK::MobilizedBody::Pin>(body_name);
-    SimTK::State &state = impl_->getState();
+    SimTK::State &state = impl_->getInitialStateForIntegrator();
     mobilized_body.setU(state, angular_velocity);
-}
-//=================================================================================================//
-void SimbodySystem::realizeState()
-{
-    SimTK::State &state = impl_->getState();
-    impl_->getMultibodySystem().realize(state);
 }
 //=================================================================================================//
 void SimbodySystem::initializeStateForIntegrator(Real accuracy, bool allow_interpolation)
 {
-    SimTK::State state = impl_->getMultibodySystem().realizeTopology();
+    SimTK::State state = impl_->getInitialStateForIntegrator();
     impl_->getMultibodySystem().realize(state);
     auto &integ = impl_->getSimbodyIntegrator();
     integ.initialize(state);
@@ -424,10 +417,6 @@ SimTK::RungeKuttaMersonIntegrator &SimbodySystem::getSimbodyIntegrator()
 SimbodyStateEngine &SimbodySystem::getSimbodyStateEngine()
 {
     return impl_->getSimbodyStateEngine();
-}
-SimTK::State &SimbodySystem::getSimbodyState()
-{
-    return impl_->getState();
 }
 SimTK::State SimbodySystem::getDefaultSimbodyState()
 {
