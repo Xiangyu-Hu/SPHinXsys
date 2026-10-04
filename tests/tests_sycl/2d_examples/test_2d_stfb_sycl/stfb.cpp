@@ -244,8 +244,8 @@ int main(int ac, char *av[])
     auto &write_structure_position = main_methods.addObserveRegression<
         RegressionTestDynamicTimeWarping, Vecd>(observer_contact, "Position");
 
-    SingleVariable<SimTK::SpatialVec> sv_action_on_structure("ActionOnStructure", SimTK::SpatialVec(0));
-    SingleVariableRecording<SimTK::SpatialVec> action_on_structure_recording(sph_system, &sv_action_on_structure);
+    SingleVariable<TorqueAndForce> sv_action_on_structure("ActionOnStructure");
+    SingleVariableRecording<TorqueAndForce> action_on_structure_recording(sph_system, &sv_action_on_structure);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -324,9 +324,7 @@ int main(int ac, char *av[])
         if (trigger_FSI())
         {
             TorqueAndForce torque_and_force = force_on_structure.exec();
-            SimTK::SpatialVec spatial_force(
-                EigenToSimTK(torque_and_force.first), EigenToSimTK(torque_and_force.second));
-            sv_action_on_structure.setValue(spatial_force);
+            sv_action_on_structure.setValue(torque_and_force);
             simbody_system.updateForceOnBody(structure_mob, torque_and_force);
             simbody_system.stepSimbodySystemBy(acoustic_dt);
             constraint_on_structure.exec();
