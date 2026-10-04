@@ -143,7 +143,6 @@ void SimbodySystem::Impl::updateForceOnBody(
     UnsignedInt body_index, const SimTK::SpatialVec &spatial_force)
 {
     SimTK::State &state_for_update = integ_.updAdvancedState();
-    force_on_bodies_.clearAllBodyForces(state_for_update);
     auto &mobilized_body = getMobilizedBody(body_index);
     force_on_bodies_.setOneBodyForce(state_for_update, mobilized_body, spatial_force);
 }
@@ -286,6 +285,44 @@ void SimbodySystem::addUniformGravity(const Vec3d &gravity_vector)
     config_manager_.addEntity<SimTK::Force::UniformGravity>(force_name, &gravity);
 }
 //=================================================================================================//
+SimTK::MobilizedBody &SimbodySystem::createMobilizedBody(
+    const std::string &body_name, const std::string &parent_name, const std::string &mobilizer_type)
+{
+    auto &parent_mobod = impl_->getMobilizedBody(parent_name);
+    auto &body_part = config_manager_.getEntity<SolidBodyPartForSimbodyCK>(body_name);
+    SimTK::Vec3 initial_mass_center = EigenToSimTK(body_part.getInitialMassCenter());
+    
+    if (mobilizer_type == "Planar")
+    {
+        auto &mobilized_body = impl_->createMobilizedBody<SimTK::MobilizedBody::Planar>(
+            body_name, parent_mobod, SimTK::Transform(initial_mass_center), SimTK::Transform());
+        config_manager_.addEntity<SimTK::MobilizedBody::Planar>(body_name, &mobilized_body);
+        return mobilized_body;
+    }
+    else if (mobilizer_type == "Pin")
+    {
+        auto &mobilized_body = impl_->createMobilizedBody<SimTK::MobilizedBody::Pin>(
+            body_name, parent_mobod, SimTK::Transform(initial_mass_center), SimTK::Transform());
+        config_manager_.addEntity<SimTK::MobilizedBody::Pin>(body_name, &mobilized_body);
+        return mobilized_body;
+    }
+    else
+    {
+        throw std::runtime_error(
+            "SimbodySystem::createMobilizedBody: Unsupported mobilizer type " + mobilizer_type);
+    }
+}
+//=================================================================================================//
+void SimbodySystem::updateForceOnBody(
+    SimTK::MobilizedBody &mobilized_body, const TorqueAndForce &torque_and_force)
+{
+    SimTK::State &state_for_update = impl_->getSimbodyIntegrator().updAdvancedState();
+    auto &force_on_bodies = impl_->getSimbodyForceOnBodies();
+    SimTK::SpatialVec spatial_force(
+        EigenToSimTK(torque_and_force.first), EigenToSimTK(torque_and_force.second));
+    force_on_bodies.setOneBodyForce(state_for_update, mobilized_body, spatial_force);
+}
+//=================================================================================================//
 void SimbodySystem::updateForceOnBody(UnsignedInt body_index, const TorqueAndForce &torque_and_force)
 {
     SimTK::SpatialVec spatial_force(
@@ -385,68 +422,6 @@ void SimbodySystem::checkInitialSimbodyState(const std::string &body_name)
     Vec3d initial_origin_location = SimTKToEigen(mobilized_body.getBodyOriginLocation(state));
     SimbodyState test_simbody_state(initial_origin_location, mobilized_body, state);
     test_simbody_state.printSimbodyState();
-}
-//=================================================================================================//
-SimTK::MultibodySystem &SimbodySystem::getMultibodySystem()
-{
-    return impl_->getMultibodySystem();
-}
-SimTK::SimbodyMatterSubsystem &SimbodySystem::getSimbodyMatterSubsystem()
-{
-    return impl_->getSimbodyMatterSubsystem();
-}
-SimTK::GeneralForceSubsystem &SimbodySystem::getSimbodyForceSubsystem()
-{
-    return impl_->getSimbodyForceSubsystem();
-}
-SimTK::RungeKuttaMersonIntegrator &SimbodySystem::getSimbodyIntegrator()
-{
-    return impl_->getSimbodyIntegrator();
-}
-SimbodyStateEngine &SimbodySystem::getSimbodyStateEngine()
-{
-    return impl_->getSimbodyStateEngine();
-}
-SimTK::State SimbodySystem::getDefaultSimbodyState()
-{
-    return impl_->getMultibodySystem().realizeTopology();
-}
-SimTK::MobilizedBody &SimbodySystem::createMobilizedBody(
-    const std::string &body_name, const std::string &parent_name, const std::string &mobilizer_type)
-{
-    auto &parent_mobod = impl_->getMobilizedBody(parent_name);
-    auto &body_part = config_manager_.getEntity<SolidBodyPartForSimbodyCK>(body_name);
-    SimTK::Vec3 initial_mass_center = EigenToSimTK(body_part.getInitialMassCenter());
-    
-    if (mobilizer_type == "Planar")
-    {
-        auto &mobilized_body = impl_->createMobilizedBody<SimTK::MobilizedBody::Planar>(
-            body_name, parent_mobod, SimTK::Transform(initial_mass_center), SimTK::Transform());
-        config_manager_.addEntity<SimTK::MobilizedBody::Planar>(body_name, &mobilized_body);
-        return mobilized_body;
-    }
-    else if (mobilizer_type == "Pin")
-    {
-        auto &mobilized_body = impl_->createMobilizedBody<SimTK::MobilizedBody::Pin>(
-            body_name, parent_mobod, SimTK::Transform(initial_mass_center), SimTK::Transform());
-        config_manager_.addEntity<SimTK::MobilizedBody::Pin>(body_name, &mobilized_body);
-        return mobilized_body;
-    }
-    else
-    {
-        throw std::runtime_error(
-            "SimbodySystem::createMobilizedBody: Unsupported mobilizer type " + mobilizer_type);
-    }
-}
-//=================================================================================================//
-void SimbodySystem::updateForceOnBody(
-    SimTK::MobilizedBody &mobilized_body, const TorqueAndForce &torque_and_force)
-{
-    SimTK::State &state_for_update = impl_->getSimbodyIntegrator().updAdvancedState();
-    auto &force_on_bodies = impl_->getSimbodyForceOnBodies();
-    SimTK::SpatialVec spatial_force(
-        EigenToSimTK(torque_and_force.first), EigenToSimTK(torque_and_force.second));
-    force_on_bodies.setOneBodyForce(state_for_update, mobilized_body, spatial_force);
 }
 //=================================================================================================//
 } // namespace SPH

@@ -48,7 +48,6 @@ class RealBody;
 class Shape;
 class SimbodySystem;
 class SimbodyStateEngine;
-class SolidBodyPartForSimbody;
 
 class SolidBodyPartForSimbodyCK : public BodyRegionByParticle
 {
@@ -117,7 +116,10 @@ class SimbodySystem
     void writeStateToXml(UnsignedInt iteration_step);
     void readStateFromXml(UnsignedInt iteration_step);
     std::string createRigidBody(SolidBodyPartForSimbodyCK &simbody_part);
+    SimTK::MobilizedBody &createMobilizedBody(
+        const std::string &body_name, const std::string &parent_name, const std::string &mobilizer_type);
     void addUniformGravity(const Vec3d &gravity_vector);
+    void updateForceOnBody(SimTK::MobilizedBody &mobilized_body, const TorqueAndForce &torque_and_force);
     void updateForceOnBody(UnsignedInt body_index, const TorqueAndForce &torque_and_force);
     void setUForMobilizedPlanar(const std::string &body_name, const Vec2d &velocity, Real angular_velocity);
     void setUForMobilizedPin(const std::string &body_name, Real angular_velocity);
@@ -130,17 +132,6 @@ class SimbodySystem
     Real getSimbodySystemTime();
     void stepSimbodySystemTo(Real time);
     void stepSimbodySystemBy(Real dt);
-
-    // functions for testing and debugging
-    SimTK::MultibodySystem &getMultibodySystem();
-    SimTK::SimbodyMatterSubsystem &getSimbodyMatterSubsystem();
-    SimTK::GeneralForceSubsystem &getSimbodyForceSubsystem();
-    SimTK::RungeKuttaMersonIntegrator &getSimbodyIntegrator();
-    SimbodyStateEngine &getSimbodyStateEngine();
-    SimTK::State getDefaultSimbodyState();
-    SimTK::MobilizedBody &createMobilizedBody(
-        const std::string &body_name, const std::string &parent_name, const std::string &mobilizer_type);
-    void updateForceOnBody(SimTK::MobilizedBody &mobilized_body, const TorqueAndForce &torque_and_force);
 
   protected:
     class Impl;

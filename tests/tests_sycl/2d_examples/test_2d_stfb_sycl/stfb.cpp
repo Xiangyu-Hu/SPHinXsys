@@ -3,7 +3,6 @@
  * @brief 	This is the test for 2D still floating body using compute kernel.
  * @author   Nicolò Salis and Xiangyu Hu
  */
-#include "all_simbody.h"
 #include "simbody_system.h"
 #include "sphinxsys.h"
 using namespace SPH;
@@ -62,22 +61,6 @@ Vec2d structure_translation = Vec2d(0.0, H);
 //------------------------------------------------------------------------------
 // geometric shape elements used in the case
 //------------------------------------------------------------------------------
-class StructureSystemForSimbody : public SolidBodyPartForSimbody
-{
-  public:
-    StructureSystemForSimbody(SPHBody &sph_body, Shape &shape)
-        : SolidBodyPartForSimbody(sph_body, shape)
-    {
-        // Vec2d mass_center(G[0], G[1]);
-        // initial_mass_center_ = SimTKVec3(mass_center[0], mass_center[1], 0.0);
-        body_part_mass_properties_ =
-            mass_properties_keeper_
-                .createPtr<SimTK::MassProperties>(StructureMass, SimTKVec3(0.0), SimTK::UnitInertia(Ix, Iy, Iz));
-    }
-};
-//----------------------------------------------------------------------
-//	Dependent geometries.
-//----------------------------------------------------------------------
 class WallBoundary : public ComplexShape
 {
   public:
@@ -230,10 +213,6 @@ int main(int ac, char *av[])
         solid_dynamics::TotalForceOnBodyPartForSimBodyCK>(structure_multibody, simbody_system);
     auto &constraint_on_structure = main_methods.addStateDynamics<
         solid_dynamics::ConstraintBodyPartBySimBodyCK>(structure_multibody, simbody_system);
-    // ReduceDynamics<solid_dynamics::TotalForceOnBodyPartForSimBody>
-    //     force_on_structure(structure_multibody, MBsystem, structure_mob, integ);
-    // SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody>
-    //     constraint_on_structure(structure_multibody, MBsystem, structure_mob, integ);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
