@@ -222,19 +222,8 @@ int main(int ac, char *av[])
     SimTK::SimbodyMatterSubsystem &matter = simbody_system.getSimbodyMatterSubsystem();
     SimTK::GeneralForceSubsystem &forces = simbody_system.getSimbodyForceSubsystem();
     StructureSystemForSimbody structure_multibody(structure, structure_shape);
-    SimTK::Body &structure_info = simbody_system.createSimbodyBody(structure_multibody);
-    /**
-     * @brief  ** Create a %Planar mobilizer between an existing parent (inboard) body P
-     *	and a new child (outboard) body B created by copying the given \a bodyInfo
-     *	into a privately-owned Body within the constructed %MobilizedBody object.
-     *	Specify the mobilizer frames F fixed to parent P and M fixed to child B.
-     * @param[in] inboard(SimTKVec3) Defines the location of the joint point relative to the parent body.
-     * @param[in] outboard(SimTKVec3) Defines the body's origin location to the joint point.
-     * @note	The body's origin location can be the mass center, the the center of mass should be SimTKVec3(0)
-     * 			in SimTK::MassProperties(mass, com, inertia)
-     */
-    SimTK::MobilizedBody::Planar structure_mob(matter.Ground(), SimTK::Transform(SimTKVec3(G[0], G[1], 0.0)),
-                                               structure_info, SimTK::Transform(SimTKVec3(0.0, 0.0, 0.0)));
+    std::string structure_name = simbody_system.createSimbodyBody(structure_multibody);
+    SimTK::MobilizedBody &structure_mob = simbody_system.createMobilizedBody(structure_name, "Ground", "Planar");
     /**
      * @details Add gravity to mb body.
      * @param[in,out] forces, The subsystem to which this force should be added.

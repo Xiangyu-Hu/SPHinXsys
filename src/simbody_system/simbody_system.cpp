@@ -432,10 +432,12 @@ SimTK::State SimbodySystem::getDefaultSimbodyState()
 {
     return impl_->getMultibodySystem().realizeTopology();
 }
-SimTK::Body &SimbodySystem::createSimbodyBody(SolidBodyPartForSimbody &simbody_part)
+std::string SimbodySystem::createSimbodyBody(SolidBodyPartForSimbody &simbody_part)
 {
-    config_manager_.addEntity<SolidBodyPartForSimbody>(simbody_part.Name(), &simbody_part);
-    return impl_->createRigidBody(simbody_part.Name(), simbody_part.getSimTKMassProperties());
+    std::string part_name = simbody_part.Name();
+    config_manager_.addEntity<SolidBodyPartForSimbody>(part_name, &simbody_part);
+    impl_->createRigidBody(part_name, simbody_part.getSimTKMassProperties());
+    return part_name;
 }
 SimTK::MobilizedBody &SimbodySystem::createMobilizedBody(
     const std::string &body_name, const std::string &parent_name, const std::string &mobilizer_type)

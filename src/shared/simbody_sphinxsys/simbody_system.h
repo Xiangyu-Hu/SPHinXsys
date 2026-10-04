@@ -140,7 +140,7 @@ class SimbodySystem
     SimbodyStateEngine &getSimbodyStateEngine();
     SimTK::State &getSimbodyState();
     SimTK::State getDefaultSimbodyState();
-    SimTK::Body &createSimbodyBody(SolidBodyPartForSimbody &simbody_part);
+    std::string createSimbodyBody(SolidBodyPartForSimbody &simbody_part);
     SimTK::MobilizedBody &createMobilizedBody(
         const std::string &body_name, const std::string &parent_name, const std::string &mobilizer_type);
 
