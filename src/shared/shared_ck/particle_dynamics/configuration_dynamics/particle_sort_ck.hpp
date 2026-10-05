@@ -36,13 +36,6 @@ void ParticleSortCK<ExecutionPolicy>::ComputingKernel::
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
-void ParticleSortCK<ExecutionPolicy>::ComputingKernel::
-    updateSortedID(UnsignedInt index_i)
-{
-    sorted_id_[original_id_[index_i]] = index_i;
-}
-//=================================================================================================//
-template <class ExecutionPolicy>
 void ParticleSortCK<ExecutionPolicy>::exec(Real dt)
 {
     // Only the owned particles are sorted; the halo occupies the slots past them and

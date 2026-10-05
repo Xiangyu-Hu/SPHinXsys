@@ -118,6 +118,7 @@ if(SPHINXSYS_USE_SYCL)
     endif()
 endif()
 target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_USE_FLOAT=$<BOOL:${SPHINXSYS_USE_FLOAT}>)
+target_compile_definitions(sphinxsys_core INTERFACE SPHINXSYS_DECOMPOSITION=$<BOOL:${SPHINXSYS_DECOMPOSITION}>)
 
 add_library(sphinxsys_lib INTERFACE)
 target_link_libraries(sphinxsys_lib INTERFACE sphinxsys_core) 
