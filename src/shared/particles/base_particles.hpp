@@ -81,13 +81,10 @@ DiscreteVariable<DataType> *BaseParticles::registerStateVariableFromReload(const
 {
     DiscreteVariable<DataType> *new_variable = registerStateVariable<DataType>(name);
     DataType *data_field = new_variable->Data();
-    UnsignedInt index = 0;
-    for (auto child = reload_xml_parser_.first_element_->FirstChildElement();
-         child; child = child->NextSiblingElement())
-    {
-        reload_xml_parser_.queryAttributeValue(child, name, data_field[index]);
-        index++;
-    }
+    reload_xml_parser_.queryColumnFromElement<DataType>(
+        reload_xml_parser_.first_element_, name, TotalRealParticles(),
+        [&](size_t index, const DataType &value)
+        { data_field[index] = value; });
     return new_variable;
 }
 //=================================================================================================//
@@ -183,16 +180,12 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, Xm
 {
     for (UnsignedInt i = 0; i != variables.size(); ++i)
     {
-        UnsignedInt index = 0;
         MultiEntryView<DataType> view = variables[i]->getMultiEntryView();
-        for (auto child = element_->FirstChildElement(); child; child = child->NextSiblingElement())
-        {
-            for (UnsignedInt entry = 0; entry != view.Width(); entry++)
-            {
-                xml_parser.setAttributeToElement(child, variables[i]->Name(), view[index][entry]);
-            }
-            index++;
-        }
+        UnsignedInt width = view.Width();
+        xml_parser.setColumnToElement<DataType>(
+            element_, variables[i]->Name(), number_of_particles_ * width,
+            [&](size_t item) -> const DataType &
+            { return view[item / width][item % width]; });
     }
 }
 //=================================================================================================//
@@ -203,16 +196,12 @@ operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables,
 {
     for (UnsignedInt i = 0; i != variables.size(); ++i)
     {
-        UnsignedInt index = 0;
         MultiEntryView<DataType> view = variables[i]->getMultiEntryView();
-        for (auto child = element_->FirstChildElement(); child; child = child->NextSiblingElement())
-        {
-            for (UnsignedInt entry = 0; entry != view.Width(); entry++)
-            {
-                xml_parser.queryAttributeValue(child, variables[i]->Name(), view[index][entry]);
-            }
-            index++;
-        }
+        UnsignedInt width = view.Width();
+        xml_parser.queryColumnFromElement<DataType>(
+            element_, variables[i]->Name(), number_of_particles_ * width,
+            [&](size_t item, const DataType &value)
+            { view[item / width][item % width] = value; });
     }
 }
 //=================================================================================================//
