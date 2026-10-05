@@ -49,7 +49,6 @@
 #include "all_particles.h"
 #include "all_physical_dynamics.h"
 #include "all_regression_test_methods.h"
-#include "all_simbody.h"
 #include "base_body_part.hpp"
 #include "parameterization.h"
 #include "particle_method_container.h"

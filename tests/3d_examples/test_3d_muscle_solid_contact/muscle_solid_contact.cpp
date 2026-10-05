@@ -4,6 +4,7 @@
  * @details A soft body is in contact with rigid moving plate coupled with simbody.
  * @author 	Chi Zhang and Xiangyu Hu
  */
+#include "all_simbody.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------

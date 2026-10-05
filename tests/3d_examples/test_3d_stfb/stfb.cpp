@@ -3,6 +3,7 @@
  * @brief 	 This is the case file for 3D still floating body.
  * @author   Nicolò Salis
  */
+#include "all_simbody.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;
 #include "stfb.h" //header for this case

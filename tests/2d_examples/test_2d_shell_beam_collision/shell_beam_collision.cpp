@@ -4,6 +4,7 @@
  * @details This is a case to test shell contact formulations in a reverse way (shell to elastic solid).
  * @author 	Massoud Rezavand, Virtonomy GmbH and Xiangyu Hu
  */
+#include "all_simbody.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------

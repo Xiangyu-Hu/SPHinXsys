@@ -62,7 +62,7 @@ class StateDynamics : public UpdateType, public BaseDynamics<void>
         this->setupDynamics(dt);
         UpdateKernel *update_kernel = kernel_implementation_.getComputingKernel();
         particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
-                     [=](size_t i)
+                     [=](UnsignedInt i)
                      { update_kernel->update(i, dt); });
 
         finish_dynamics_();
@@ -108,7 +108,7 @@ class ReduceDynamicsCK : public ReduceType,
         reduced_value_ = particle_reduce<Operation>(
             LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
             this->reference_,
-            [=](size_t i)
+            [=](UnsignedInt i)
             { return reduce_kernel->reduce(i, dt); });
 
         this->logger_->debug(

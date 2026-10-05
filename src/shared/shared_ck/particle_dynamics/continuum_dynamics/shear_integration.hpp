@@ -208,18 +208,16 @@ template <class MaterialType, typename... Parameters>
 void InelasticShearIntegration<Inner<OneLevel, MaterialType, Parameters...>>::
     UpdateKernel::update(size_t index_i, Real dt)
 {
-    Vecd conservative_force = Vecd::Zero();
+    Vecd hourglass_force = Vecd::Zero();
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
-        Vecd e_ij = this->e_ij(index_i, index_j);
-        Vecd vec_r_ij = this->vec_r_ij(index_i, index_j);
+        Real r_ij = this->vec_r_ij(index_i, index_j).dot(this->e_ij(index_i, index_j));
         // reformulate the hourglass force for local conservation
-        conservative_force -= (hourglass_div_[index_i] - hourglass_div_[index_j]) *
-                              vec_r_ij.transpose() * dW_ijV_j * e_ij;
+        hourglass_force -= (hourglass_div_[index_i] - hourglass_div_[index_j]) * r_ij * dW_ijV_j;
     }
-    shear_force_[index_i] += conservative_force * Vol_[index_i];
+    shear_force_[index_i] += hourglass_force * Vol_[index_i];
     ForcePriorCK::UpdateKernel::update(index_i, dt);
 }
 //=================================================================================================//

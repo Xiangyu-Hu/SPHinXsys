@@ -3,7 +3,8 @@
  * @brief 	This is the case file for 2D still floating body.
  * @author   Nicolò Salis
  */
-#include "sphinxsys.h" //SPHinXsys Library.
+#include "all_simbody.h"
+#include "sphinxsys.h"   //SPHinXsys Library.
 using namespace SPH;
 #include "stfb.h" //header for this case
 
