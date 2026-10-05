@@ -4,8 +4,7 @@ namespace SPH
 {
 //=================================================================================================//
 ExtrudeShape::ExtrudeShape(Shape &base_shape, Real thickness, const std::string &shape_name)
-    : Shape(shape_name),
-      thickness_(thickness), thickness_sqr_(thickness * thickness),
+    : Shape(shape_name), thickness_(thickness), thickness_sqr_(thickness * thickness),
       base_shape_(base_shape) {};
 //=================================================================================================//
 Vecd ExtrudeShape::getShift(const Vecd &probe_point, const Vecd &original_closest_point)

@@ -3,6 +3,7 @@
  * @brief 	 This is the case file for 3D still floating body using computing kernel.
  * @author   Nicolò Salis and Xiangyu Hu
  */
+#include "simbody_system.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -61,20 +62,6 @@ class FloatingStructure : public ComplexShape
     explicit FloatingStructure(const std::string &shape_name) : ComplexShape(shape_name)
     {
         add<GeometricShapeBox>(Transform(translation_str), halfsize_structure);
-    }
-};
-
-class StructureSystemForSimbody : public SolidBodyPartForSimbody
-{
-  public:
-    StructureSystemForSimbody(SPHBody &sph_body, Shape &shape)
-        : SolidBodyPartForSimbody(sph_body, shape)
-    {
-        // Vec2d mass_center(G[0], G[1]);
-        // initial_mass_center_ = SimTKVec3(mass_center[0], mass_center[1], 0.0);
-        body_part_mass_properties_ =
-            mass_properties_keeper_
-                .createPtr<SimTK::MassProperties>(StructureMass, SimTKVec3(0.0), SimTK::UnitInertia(Ix, Iy, Iz));
     }
 };
 //----------------------------------------------------------------------
@@ -209,21 +196,18 @@ int main(int ac, char *av[])
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalf<Inner<OneLevel, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>
         fluid_acoustic_step_1st_half(water_block_inner);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalf<Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>
-        fluid_acoustic_step_1st_half_with_wall(fluid_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalf<Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>
-        fluid_acoustic_step_1st_half_with_structure(fluid_structure_contact);
-    fluid_acoustic_step_1st_half.addPostContactInteraction(fluid_acoustic_step_1st_half_with_wall)
-        .addPostContactInteraction(fluid_acoustic_step_1st_half_with_structure);        
+    fluid_acoustic_step_1st_half
+        .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(fluid_wall_contact)
+        .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(fluid_structure_contact);
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalf<Inner<OneLevel, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>
         fluid_acoustic_step_2nd_half(water_block_inner);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalf<Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>
-        fluid_acoustic_step_2nd_half_with_wall(fluid_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalf<Contact<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>>>
-        fluid_acoustic_step_2nd_half_with_structure(fluid_structure_contact);
-    fluid_acoustic_step_2nd_half.addPostContactInteraction(fluid_acoustic_step_2nd_half_with_wall)
-        .addPostContactInteraction(fluid_acoustic_step_2nd_half_with_structure);
+
+    fluid_acoustic_step_2nd_half
+        .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(fluid_wall_contact)
+        .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(fluid_structure_contact)
+        .addGeneralPostInteraction<FSI::PressureForceFromFluid, WithUpdate, AcousticRiemannSolverCK, NoKernelCorrectionCK>(
+            structure_contact);
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>, Contact<>>>
         fluid_density_summation(water_block_inner, fluid_wall_contact, fluid_structure_contact);
@@ -232,17 +216,11 @@ int main(int ac, char *av[])
 
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceCK<Inner<WithUpdate, Viscosity, NoKernelCorrectionCK>>>
         fluid_viscous_force(water_block_inner);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceCK<Contact<Wall, Viscosity, NoKernelCorrectionCK>>>
-        fluid_viscous_force_from_wall(fluid_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceCK<Contact<Wall, Viscosity, NoKernelCorrectionCK>>>
-        fluid_viscous_force_from_structure(fluid_structure_contact);
-    fluid_viscous_force.addPostContactInteraction(fluid_viscous_force_from_wall)
-        .addPostContactInteraction(fluid_viscous_force_from_structure);
-
-    InteractionDynamicsCK<MainExecutionPolicy, FSI::ViscousForceOnStructure<decltype(fluid_viscous_force_from_wall)>>
-        viscous_force_on_structure(structure_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, FSI::PressureForceOnStructure<decltype(fluid_acoustic_step_2nd_half_with_wall)>>
-        pressure_force_on_structure(structure_contact);
+    fluid_viscous_force
+        .addPostContactInteraction<Wall, Viscosity, NoKernelCorrectionCK>(fluid_wall_contact)
+        .addPostContactInteraction<Wall, Viscosity, NoKernelCorrectionCK>(fluid_structure_contact)
+        .addGeneralPostInteraction<FSI::ViscousForceFromFluid, WithUpdate, Viscosity, NoKernelCorrectionCK>(
+            structure_contact);
 
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_f);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>> fluid_acoustic_time_step(water_block);
@@ -260,71 +238,20 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
-    /** set up the multi body system. */
-    SimTK::MultibodySystem MBsystem;
-    /** the bodies or matter of the system. */
-    SimTK::SimbodyMatterSubsystem matter(MBsystem);
-    /** the forces of the system. */
-    SimTK::GeneralForceSubsystem forces(MBsystem);
-    /** mass properties of the fixed spot. */
+    SimbodySystem simbody_system;
     GeometricShapeBox fix_spot_shape(Transform(translation_str), halfsize_structure);
-    StructureSystemForSimbody structure_multibody(structure, fix_spot_shape);
-    /** Mass properties of the constrained spot.
-     * SimTK::MassProperties(mass, center of mass, inertia)
-     */
-    SimTK::Body::Rigid structure_info(*structure_multibody.body_part_mass_properties_);
-    /**
-     * @brief  ** Create a %Planar mobilizer between an existing parent (inboard) body P
-     *	and a new child (outboard) body B created by copying the given \a bodyInfo
-     *	into a privately-owned Body within the constructed %MobilizedBody object.
-     *	Specify the mobilizer frames F fixed to parent P and M fixed to child B.
-     * @param[in] inboard(SimTKVec3) Defines the location of the joint point relative to the parent body.
-     * @param[in] outboard(SimTKVec3) Defines the body's origin location to the joint point.
-     * @note	The body's origin location can be the mass center, the the center of mass should be SimTKVec3(0)
-     * 			in SimTK::MassProperties(mass, com, inertia)
-     */
-    SimTK::MobilizedBody::Planar structure_mob(matter.Ground(), SimTK::Transform(SimTKVec3(G[0], G[1], G[2])),
-                                               structure_info, SimTK::Transform(SimTKVec3(0.0, 0.0, 0.0)));
-    /**
-     * @details Add gravity to mb body.
-     * @param[in,out] forces, The subsystem to which this force should be added.
-     * @param[in]     matter, The subsystem containing the bodies that will be affected.
-     * @param[in]    gravity, The default gravity vector v, interpreted as v=g*d where g=|\a gravity| is
-     *				a positive scalar and d is the "down" direction unit vector d=\a gravity/g.
-     * @param[in]  zeroHeight This is an optional specification of the default value for the height
-     *				up the gravity vector that is considered to be "zero" for purposes of
-     *				calculating the gravitational potential energy. The default is
-     *				\a zeroHeight == 0, i.e., a body's potential energy is defined to be zero
-     *				when the height of its mass center is the same as the height of the Ground
-     *				origin. The zero height will have the value specified here unless
-     *				explicitly changed within a particular State use the setZeroHeight()
-     *			method.
-     * @par Force Each body B that has not been explicitly excluded will experience a force
-     *		fb = mb*g*d, applied to its center of mass, where mb is the mass of body B.
-     * @par Potential Energy
-     *		Gravitational potential energy for a body B is mb*g*hb where hb is the height of
-     *		body B's mass center over an arbitrary "zero" height hz (default is hz=0),
-     *		measured along the "up" direction -d. If pb is the Ground frame vector giving
-     *		the position of body B's mass center, its height over or under hz is
-     *		hb=pb*(-d) - hz. Note that this is a signed quantity so the potential energy is
-     *		also signed. 0.475
-     */
-    SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTKVec3(0.0, 0.0, -gravity_g), 0.0);
-    /** discrete forces acting on the bodies. */
-    SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
-    /** Time stepping method for multibody system.*/
-    SimTK::State state = MBsystem.realizeTopology();
-    SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
-    integ.setAccuracy(1e-3);
-    integ.setAllowInterpolation(false);
-    integ.initialize(state);
+    SolidBodyPartForSimbodyCK structure_multibody(structure, fix_spot_shape);
+    std::string structure_name = simbody_system.createRigidBody(structure_multibody);
+    SimTK::MobilizedBody &structure_mob = simbody_system.createMobilizedBody(structure_name, "Ground", "Planar");
+    simbody_system.addUniformGravity(Vec3d(0.0, 0.0, -gravity_g));
+    simbody_system.initializeStateForIntegrator();
     //----------------------------------------------------------------------
     //	Coupling between SimBody and SPH
     //----------------------------------------------------------------------
     ReduceDynamicsCK<MainExecutionPolicy, solid_dynamics::TotalForceOnBodyPartForSimBodyCK>
-        force_on_structure(structure_multibody, MBsystem, structure_mob, integ);
+        force_on_structure(structure_multibody, simbody_system);
     StateDynamics<MainExecutionPolicy, solid_dynamics::ConstraintBodyPartBySimBodyCK>
-        constraint_on_structure(structure_multibody, MBsystem, structure_mob, integ);
+        constraint_on_structure(structure_multibody, simbody_system);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -385,7 +312,6 @@ int main(int ac, char *av[])
             water_advection_step_setup.exec();
             Real advection_dt = fluid_advection_time_step.exec();
             fluid_viscous_force.exec();
-            viscous_force_on_structure.exec();
 
             Real relaxation_time = 0.0;
             Real acoustic_dt = 0.0;
@@ -393,16 +319,15 @@ int main(int ac, char *av[])
             {
                 acoustic_dt = fluid_acoustic_time_step.exec();
                 fluid_acoustic_step_1st_half.exec(acoustic_dt);
-                pressure_force_on_structure.exec();
+                fluid_acoustic_step_2nd_half.exec(acoustic_dt);
+
                 if (total_time >= relax_time) // coupled rigid body dynamics.
                 {
-                    SimTK::State &state_for_update = integ.updAdvancedState();
-                    force_on_bodies.clearAllBodyForces(state_for_update);
-                    force_on_bodies.setOneBodyForce(state_for_update, structure_mob, force_on_structure.exec());
-                    integ.stepBy(acoustic_dt);
+                    TorqueAndForce torque_and_force = force_on_structure.exec();
+                    simbody_system.updateForceOnBody(structure_mob, torque_and_force);
+                    simbody_system.stepSimbodySystemBy(acoustic_dt);
                     constraint_on_structure.exec();
                 }
-                fluid_acoustic_step_2nd_half.exec(acoustic_dt);
 
                 relaxation_time += acoustic_dt;
                 integral_time += acoustic_dt;

@@ -5,6 +5,7 @@
  * 			of Tanguy Davin.Coding is based on the programm filling_tank.cpp of Dr. Xiangyu Hu at TUM.
  * @author 	Lirong Zhuang
  */
+#include "all_simbody.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------
@@ -470,7 +471,7 @@ int main(int ac, char *av[])
     SimTK::GeneralForceSubsystem forces(MBsystem);
     /** Mass properties of the rigid shell box. */
     SolidBodyPartForSimbody rotor_multibody(rotor, makeShared<RotorBoundary>("Rotor"));
-    SimTK::Body::Rigid rigid_info(*rotor_multibody.body_part_mass_properties_);
+    SimTK::Body::Rigid rigid_info(rotor_multibody.getSimTKMassProperties());
     SimTK::MobilizedBody::Pin
         Rotor_Pin(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3(0)));
     /** Initial angle of rotation. */

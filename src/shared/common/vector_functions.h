@@ -41,6 +41,12 @@ namespace SPH
 Vec2d FirstAxisVector(const Vec2d &zero_vector);
 Vec3d FirstAxisVector(const Vec3d &zero_vector);
 
+inline Vec3d downToVecd(const Vec3d &input, const Vec3d &zero_vector) { return input; };
+inline Vec2d downToVecd(const Vec3d &input, const Vec2d &zero_vector)
+{
+    return Vec2d(input[0], input[1]);
+};
+
 inline Vec3d upgradeToVec3d(const Real &input)
 {
     return Vec3d(input, 0.0, 0.0);

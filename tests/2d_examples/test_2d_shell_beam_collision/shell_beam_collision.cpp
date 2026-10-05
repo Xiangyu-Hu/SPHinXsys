@@ -4,6 +4,7 @@
  * @details This is a case to test shell contact formulations in a reverse way (shell to elastic solid).
  * @author 	Massoud Rezavand, Virtonomy GmbH and Xiangyu Hu
  */
+#include "all_simbody.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
@@ -210,7 +211,7 @@ int main(int ac, char *av[])
     SimTK::GeneralForceSubsystem forces(MBsystem);
     /** Mass properties of the rigid shell box. */
     SolidBodyPartForSimbody shell_multibody(shell, makeShared<Shell>("Shell"));
-    SimTK::Body::Rigid rigid_info(*shell_multibody.body_part_mass_properties_);
+    SimTK::Body::Rigid rigid_info(shell_multibody.getSimTKMassProperties());
     SimTK::MobilizedBody::Slider
         shellMBody(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3(0)));
     /** Gravity. */

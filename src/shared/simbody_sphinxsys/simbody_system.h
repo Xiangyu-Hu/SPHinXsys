@@ -30,24 +30,30 @@
 
 #include "base_body_part.h"
 #include "base_data_type.h"
+#include "sphinxsys_entity.h"
 
 namespace SimTK
 {
+class MultibodySystem;
+class SimbodyMatterSubsystem;
+class GeneralForceSubsystem;
+class Body;
 class MobilizedBody;
 class State;
+class RungeKuttaMersonIntegrator;
 } // namespace SimTK
 namespace SPH
 {
 class RealBody;
 class Shape;
 class SimbodySystem;
-class SolidBodyPartForSimbody;
+class SimbodyStateEngine;
 
-class SolidBodyPartForSimbody : public BodyRegionByParticle
+class SolidBodyPartForSimbodyCK : public BodyRegionByParticle
 {
   public:
-    SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape);
-    virtual ~SolidBodyPartForSimbody() {};
+    SolidBodyPartForSimbodyCK(SPHBody &body, Shape &body_part_shape);
+    virtual ~SolidBodyPartForSimbodyCK() {};
 
     Vec3d getInitialMassCenter() const { return initial_mass_center_; };
     Vec3d getInertiaMoments() const { return inertia_moments_; };
@@ -101,6 +107,7 @@ struct ZeroData<SimbodyState>
     static inline const SimbodyState value = SimbodyState();
 };
 
+using TorqueAndForce = std::pair<Vec3d, Vec3d>;
 class SimbodySystem
 {
   public:
@@ -108,23 +115,28 @@ class SimbodySystem
     virtual ~SimbodySystem();
     void writeStateToXml(UnsignedInt iteration_step);
     void readStateFromXml(UnsignedInt iteration_step);
-    std::string createRigidBody(SolidBodyPartForSimbody &simbody_part);
-    std::string createFirstMobilizedPlanar(const std::string &body_name);
-    std::string createFirstMobilizedPin(const std::string &body_name);
+    std::string createRigidBody(SolidBodyPartForSimbodyCK &simbody_part);
+    SimTK::MobilizedBody &createMobilizedBody(
+        const std::string &body_name, const std::string &parent_name, const std::string &mobilizer_type);
+    void addUniformGravity(const Vec3d &gravity_vector);
+    void updateForceOnBody(SimTK::MobilizedBody &mobilized_body, const TorqueAndForce &torque_and_force);
+    void updateForceOnBody(UnsignedInt body_index, const TorqueAndForce &torque_and_force);
     void setUForMobilizedPlanar(const std::string &body_name, const Vec2d &velocity, Real angular_velocity);
     void setUForMobilizedPin(const std::string &body_name, Real angular_velocity);
     UnsignedInt getBodyIndexByName(const std::string &body_name);
-    void realizeState();
-    void initializeStateForIntegrator();
+    void initializeStateForIntegrator(Real accuracy = 1e-3, bool allow_interpolation = false);
     void checkInitialSimbodyState(const std::string &body_name);
     SimbodyState getSimbodyState(const Vec3d &initial_origin_location, UnsignedInt body_index);
+    Vec3d getInitialSimbodyOriginLocation(UnsignedInt body_index);
     Vec3d getSimbodyOriginLocation(UnsignedInt body_index);
     Real getSimbodySystemTime();
     void stepSimbodySystemTo(Real time);
+    void stepSimbodySystemBy(Real dt);
 
   protected:
     class Impl;
     std::unique_ptr<Impl> impl_;
+    EntityManager config_manager_;
 };
 } // namespace SPH
 #endif // SIMBODY_SYSTEM_H

@@ -16,7 +16,6 @@ void BodyStatesRecordingToVtpCK<ExecutionPolicy>::prepareToWrite()
         if (bodies_[i]->checkNewlyUpdated())
         {
             BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-            base_particles.dvParticlePosition()->prepareForOutput(ExecutionPolicy{});
             prepare_variable_to_write_(base_particles.VariablesToWrite(), ExecutionPolicy{});
         }
     }
@@ -166,6 +165,11 @@ void RestartIOCK<ExecutionPolicy>::readFromFile(size_t iteration_step)
     {
         BaseParticles &base_particles = real_bodies_[i]->getBaseParticles();
         finalize_variables_after_read_(base_particles.EvolvingVariables(), ExecutionPolicy{});
+
+        for (BodyPartByParticle *body_part : base_particles.getBodyPartsByParticle())
+        {
+            body_part->dvParticleList()->finalizeLoadIn(ExecutionPolicy{});
+        }
     }
 }
 //=================================================================================================//

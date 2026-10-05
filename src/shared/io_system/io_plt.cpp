@@ -1,4 +1,3 @@
-
 #include "io_plt.h"
 
 #include "base_body.h"
@@ -28,6 +27,18 @@ void PltEngine::writeAQuantityHeader(
         out_file << "\"" << force << "[" << i << "]\"" << "   ";
 }
 //=============================================================================================//
+void PltEngine::writeAQuantityHeader(
+    std::ofstream &out_file, const TorqueAndForce &quantity, const std::string &quantity_name)
+{
+    std::string torque = quantity_name + "Torque";
+    for (int i = 0; i != 3; ++i)
+        out_file << "\"" << torque << "[" << i << "]\"" << "   ";
+
+    std::string force = quantity_name + "Force";
+    for (int i = 0; i != 3; ++i)
+        out_file << "\"" << force << "[" << i << "]\"" << "   ";
+}
+//=============================================================================================//
 void PltEngine::writeAQuantity(std::ofstream &out_file, const Real &quantity)
 {
     out_file << std::fixed << std::setprecision(9) << quantity << "   ";
@@ -40,7 +51,14 @@ void PltEngine::writeAQuantity(std::ofstream &out_file, const SimTK::SpatialVec 
     for (int i = 0; i < 3; ++i)
         out_file << std::fixed << std::setprecision(9) << quantity[1][i] << "   ";
 }
-
+//=============================================================================================//
+void PltEngine::writeAQuantity(std::ofstream &out_file, const TorqueAndForce &quantity)
+{
+    for (int i = 0; i < 3; ++i)
+        out_file << std::fixed << std::setprecision(9) << quantity.first[i] << "   ";
+    for (int i = 0; i < 3; ++i)
+        out_file << std::fixed << std::setprecision(9) << quantity.second[i] << "   ";
+}
 //=================================================================================================//
 void BodyStatesRecordingToPlt::writePltFileHeader(
     std::ofstream &output_file, DiscreteVariables &variables_to_write)
