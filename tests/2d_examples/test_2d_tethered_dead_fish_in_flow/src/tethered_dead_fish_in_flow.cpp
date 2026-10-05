@@ -3,6 +3,7 @@
  * @brief   fish flapping passively in flow
  * @author  Xiangyu Hu and Chi Zhang
  */
+#include "all_simbody.h"
 #include "sphinxsys.h"
 /**
  * Create the shapes for fish and bones.

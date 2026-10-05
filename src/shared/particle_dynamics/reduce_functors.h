@@ -53,25 +53,29 @@ struct ReduceReference<ReduceSum<DataType>>
     static inline const DataType value = ZeroData<DataType>::value;
 };
 
-template <typename DataType>
-using Sample = std::pair<DataType, Real>;
-
-template <typename DataType>
-struct ReduceSum<Sample<DataType>> : ReturnFunction<Sample<DataType>>
+template <typename FistDataType, typename SecondDataType>
+struct ReduceSum<std::pair<FistDataType, SecondDataType>>
+    : ReturnFunction<std::pair<FistDataType, SecondDataType>>
 {
-    using PairType = Sample<DataType>;
+    using PairType = std::pair<FistDataType, SecondDataType>;
     PairType operator()(const PairType &x, const PairType &y) const
     {
         return PairType(x.first + y.first, x.second + y.second);
     };
 };
 
-template <typename DataType>
-struct ReduceReference<ReduceSum<Sample<DataType>>>
+template <typename FistDataType, typename SecondDataType>
+struct ReduceReference<ReduceSum<std::pair<FistDataType, SecondDataType>>>
 {
-    using PairType = Sample<DataType>;
-    static inline const PairType value = ZeroData<PairType>::value;
+    using PairType = std::pair<FistDataType, SecondDataType>;
+    static inline const PairType value =
+        PairType(ZeroData<FistDataType>::value, ZeroData<SecondDataType>::value);
 };
+
+template <typename DataType>
+using Sample = std::pair<DataType, Real>;
+
+using TorqueAndForce = std::pair<Vec3d, Vec3d>;
 
 template <typename DataType>
 struct ReduceMax : ReturnFunction<DataType>

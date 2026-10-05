@@ -53,7 +53,6 @@ template <typename T>
 class DiscreteVariable;
 template <typename T>
 class SingleVariable;
-class GroupManager;
 
 template <typename T>
 using ConcurrentVec = tbb::concurrent_vector<T>;
@@ -80,7 +79,6 @@ class BodyPart
     SingleVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
     SPHAdaptation &getSPHAdaptation() { return sph_adaptation_; };
     BaseCellLinkedList &getCellLinkedList();
-    GroupManager &getParticleGroupManager() { return base_particles_.getParticleGroupManager(); };
 
   protected:
     SPHBody &sph_body_;
@@ -119,10 +117,12 @@ class BodyPartByParticle : public BodyPart
     template <typename TagCriteria>
     BodyPartByParticle(SPHBody &sph_body, TagCriteria criteria);
     virtual ~BodyPartByParticle() {};
-    /** Rebuild the particle list from the restored group bitmask after a restart. */
-    void rebuildFromParticleGroups();
+    GroupManager &getParticleGroupManager() { return group_manager_; };
+    UnsignedInt getPartMask() { return part_mask_; };
 
   protected:
+    GroupManager &group_manager_;
+    UnsignedInt part_mask_;
     DiscreteVariable<UnsignedInt> *dv_particle_list_;
     typedef std::function<bool(size_t)> TaggingParticleMethod;
     void tagParticles(TaggingParticleMethod &tagging_particle_method);

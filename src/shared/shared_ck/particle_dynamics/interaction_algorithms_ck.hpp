@@ -20,22 +20,6 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
-auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addPostContactInteraction(BaseDynamics<void> &contact_interaction)
-{
-    this->post_processes_.push_back(&contact_interaction);
-    return *this;
-}
-//=================================================================================================//
-template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
-auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addPreContactInteraction(BaseDynamics<void> &contact_interaction)
-{
-    this->pre_processes_.push_back(&contact_interaction);
-    return *this;
-}
-//=================================================================================================//
-template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
 template <class UpdateType, typename... Args>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
     addPostStateDynamics(Args &&...args)
@@ -60,14 +44,6 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
-auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addPostStateDynamics(BaseDynamics<void> &state_dynamics)
-{
-    this->post_processes_.push_back(&state_dynamics);
-    return *this;
-}
-//=================================================================================================//
-template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
 template <class UpdateType, typename... Args>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
     addPreStateDynamics(Args &&...args)
@@ -79,10 +55,30 @@ auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
 }
 //=================================================================================================//
 template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+template <template <typename...> class GeneralInteractionType, typename... ControlParameters,
+          template <typename...> class RelationType, typename... RelationParameters, typename... Args>
 auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
-    addPreStateDynamics(BaseDynamics<void> &state_dynamics)
+    addGeneralPostInteraction(RelationType<RelationParameters...> &relation, Args &&...args)
 {
-    this->pre_processes_.push_back(&state_dynamics);
+    this->post_processes_.push_back(
+        supplementary_dynamics_keeper_.template createPtr<InteractionDynamicsCK<
+            ExecutionPolicy,
+            GeneralInteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
+            relation, std::forward<Args>(args)...));
+    return *this;
+}
+//=================================================================================================//
+template <class ExecutionPolicy, typename AlgorithmType, template <typename...> class InteractionType>
+template <template <typename...> class GeneralInteractionType, typename... ControlParameters,
+          template <typename...> class RelationType, typename... RelationParameters, typename... Args>
+auto &InteractionDynamicsCK<ExecutionPolicy, InteractionType<AlgorithmType>>::
+    addGeneralPreInteraction(RelationType<RelationParameters...> &relation, Args &&...args)
+{
+    this->pre_processes_.push_back(
+        supplementary_dynamics_keeper_.template createPtr<InteractionDynamicsCK<
+            ExecutionPolicy,
+            GeneralInteractionType<RelationType<ControlParameters..., RelationParameters...>>>>(
+            relation, std::forward<Args>(args)...));
     return *this;
 }
 //=================================================================================================//

@@ -37,8 +37,10 @@ AdvectionViscousTimeStepCK::AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U
 AdvectionStepSetup::AdvectionStepSetup(SPHBody &sph_body)
     : LocalDynamics(sph_body),
       dv_Vol_(particles_->getVariableByName<Real>("VolumetricMeasure")),
-      dv_mass_(particles_->getVariableByName<Real>("Mass")),
-      dv_rho_(particles_->getVariableByName<Real>("Density")),
+      dv_Vol_ref_(this->particles_->template registerStateVariableFrom<Real>(
+          "VolumetricMeasureRef", "VolumetricMeasure")),
+      dv_compression_(this->particles_->template registerStateVariable<Real>(
+          "Compression", Real(1))),
       dv_dpos_(particles_->registerStateVariable<Vecd>("Displacement"))
 {
     addToBeInteractVariable(dv_Vol_);

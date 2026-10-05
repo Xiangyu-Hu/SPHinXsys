@@ -36,8 +36,14 @@
 
 namespace SPH
 {
+class OrientedBoxByCell;
+  
+template <typename...>
+class VariableAssignment;
+
 template <class DynamicsIdentifier, typename AssignmentFunctionType>
-class VariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
+class VariableAssignment<DynamicsIdentifier, AssignmentFunctionType>
+    : public BaseLocalDynamics<DynamicsIdentifier>
 {
     using Assign = typename AssignmentFunctionType::ComputingKernel;
 
@@ -59,6 +65,35 @@ class VariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
 
   protected:
     AssignmentFunctionType assignment_method_;
+};
+
+template <typename AssignmentFunctionType>
+class VariableAssignment<OrientedBoxByCell, AssignmentFunctionType>
+    : public BaseLocalDynamics<OrientedBoxByCell>
+{
+    using Assign = typename AssignmentFunctionType::ComputingKernel;
+
+  public:
+    template <typename... Args>
+    VariableAssignment(OrientedBoxByCell &oriented_box_part, Args &&...args);
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        OrientedBox *oriented_box_;
+        Assign assign_;
+        DataView<Vecd> pos_;
+    };
+
+  protected:
+    SingleVariable<OrientedBox> *sv_oriented_box_;
+    AssignmentFunctionType assignment_method_;
+    DiscreteVariable<Vecd> *dv_pos_;
 };
 
 template <typename...>

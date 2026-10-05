@@ -5,6 +5,7 @@
  * 			of Tanguy Davin.Coding is based on the programm filling_tank.cpp of Dr. Xiangyu Hu at TUM.
  * @author 	Lirong Zhuang
  */
+#include "all_simbody.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------

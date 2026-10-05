@@ -16,37 +16,8 @@ ParticleSortCK<ExecutionPolicy>::ParticleSortCK(RealBody &real_body)
           "Sequence", particles_->ParticlesBound())),
       dv_index_permutation_(particles_->registerDiscreteVariable<UnsignedInt>(
           "IndexPermutation", particles_->ParticlesBound())),
-      dv_original_id_(particles_->getVariableByName<UnsignedInt>("OriginalID")),
-      dv_sorted_id_(particles_->getVariableByName<UnsignedInt>("SortedID")),
       sort_method_(ExecutionPolicy{}, dv_sequence_, dv_index_permutation_),
-      kernel_implementation_(*this)
-{
-    particles_->addEvolvingVariable<UnsignedInt>("OriginalID");
-
-    body_parts_by_particle_ = particles_->getBodyPartsByParticle();
-    for (size_t i = 0; i != body_parts_by_particle_.size(); ++i)
-    {
-        DiscreteVariable<UnsignedInt> *dv_particle_list =
-            body_parts_by_particle_[i]->dvParticleList();
-        dv_particle_lists_.push_back(dv_particle_list);
-        DiscreteVariable<UnsignedInt> *original_id_list =
-            particles_->addUniqueDiscreteVariable<UnsignedInt>(
-                dv_particle_list->Name() + "Initial", dv_particle_list->getSize());
-        original_id_list->fill([&](UnsignedInt index)
-                               { return dv_particle_list->getValue(index); },
-                               0, dv_particle_list->getSize());
-        dv_original_id_lists_.push_back(original_id_list);
-    }
-
-    for (size_t i = 0; i != body_parts_by_particle_.size(); ++i)
-    {
-        UpdateBodyPartParticleImplementation *update_body_part_by_particle_implementation =
-            update_body_part_by_particle_implementation_ptrs_
-                .template createPtr<UpdateBodyPartParticleImplementation>(*this);
-        update_body_part_by_particle_implementations_.push_back(
-            update_body_part_by_particle_implementation);
-    }
-}
+      kernel_implementation_(*this) {}
 //=================================================================================================//
 template <class ExecutionPolicy>
 ParticleSortCK<ExecutionPolicy>::ComputingKernel::
@@ -54,9 +25,7 @@ ParticleSortCK<ExecutionPolicy>::ComputingKernel::
     : mesh_(encloser.cell_linked_list_.getSortSequenceMesh()),
       pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
       sequence_(encloser.dv_sequence_->DelegatedData(ex_policy)),
-      index_permutation_(encloser.dv_index_permutation_->DelegatedData(ex_policy)),
-      original_id_(encloser.dv_original_id_->DelegatedData(ex_policy)),
-      sorted_id_(encloser.dv_sorted_id_->DelegatedData(ex_policy)) {}
+      index_permutation_(encloser.dv_index_permutation_->DelegatedData(ex_policy)){}
 //=================================================================================================//
 template <class ExecutionPolicy>
 void ParticleSortCK<ExecutionPolicy>::ComputingKernel::

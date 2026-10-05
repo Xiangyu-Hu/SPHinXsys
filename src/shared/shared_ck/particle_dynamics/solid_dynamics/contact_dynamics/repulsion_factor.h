@@ -50,7 +50,7 @@ class RepulsionFactor<Base, Contact<Parameters...>> : public Interaction<Contact
   public:
     template <class DynamicsIdentifier>
     explicit RepulsionFactor(DynamicsIdentifier &identifier, const std::string &factor_name);
-    virtual ~RepulsionFactor(){};
+    virtual ~RepulsionFactor() {};
 
   protected:
     DiscreteVariable<Real> *dv_repulsion_factor_;
@@ -65,7 +65,7 @@ class RepulsionFactor<Contact<Parameters...>>
   public:
     template <class DynamicsIdentifier>
     explicit RepulsionFactor(DynamicsIdentifier &identifier);
-    virtual ~RepulsionFactor(){};
+    virtual ~RepulsionFactor() {};
 
     class InteractKernel : public BaseInteractionType::InteractKernel
     {
@@ -76,13 +76,11 @@ class RepulsionFactor<Contact<Parameters...>>
 
       protected:
         Real *repulsion_factor_;
-        Real contact_inv_rho0_;
-        Real *contact_mass_;
+        Real *contact_Vol_ref_;
     };
 
   protected:
-    Real contact_inv_rho0_;
-    DiscreteVariable<Real> *dv_contact_mass_;
+    DiscreteVariable<Real> *dv_contact_Vol_ref_;
 };
 } // namespace solid_dynamics
 } // namespace SPH

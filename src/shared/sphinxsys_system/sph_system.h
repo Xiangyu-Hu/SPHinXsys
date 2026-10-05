@@ -44,6 +44,7 @@ class RealBody;
 class RelationBase;
 class Shape;
 class Quantity;
+class SimbodySystem;
 using SPHBodyVector = StdVec<SPHBody *>;
 class SlabDecomposition;
 /**
@@ -58,6 +59,7 @@ class SPHSystem
     UniquePtrsKeeper<Shape> shapes_keeper_;
     UniquePtrsKeeper<RelationBase> relations_keeper_;
     UniquePtrKeeper<SlabDecomposition> slab_decomposition_keeper_;
+    UniquePtrKeeper<SimbodySystem> simbody_system_keeper_;
 
   public:
     SPHSystem(BoundingBoxd system_domain_bounds, Real global_resolution,
@@ -102,6 +104,7 @@ class SPHSystem
     void addObservationBody(SPHBody *sph_body) { observation_bodies_.push_back(sph_body); };
     BoundingBoxd getSystemDomainBounds() { return system_bounds_; };
     void setSystemDomainBounds(const BoundingBoxd &domain_bounds) { system_bounds_ = domain_bounds; };
+    SimbodySystem &getSimbodySystem();
     SlabDecomposition &getDecomposition();
 
     template <typename DataType>

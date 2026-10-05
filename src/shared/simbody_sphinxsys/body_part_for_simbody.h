@@ -33,12 +33,6 @@
 #include "simtk_wrapper.h"
 namespace SPH
 {
-/**
- * @class SolidBodyPartForSimbody
- * @brief A SolidBodyPart for coupling with Simbody.
- * The mass, origin, and unit inertial matrix are computed.
- * Note: In Simbody, all spatial vectors are three dimensional.
- */
 class SolidBodyPartForSimbody : public BodyRegionByParticle
 {
   protected:
@@ -48,21 +42,19 @@ class SolidBodyPartForSimbody : public BodyRegionByParticle
     SimTK::MassProperties &getSimTKMassProperties() const;
     SimTK::Vec3 getSimTKMassCenter() const;
     SimTK::Transform getSimTKTransform() const { return SimTKVec3(0.0); }
-    Vecd getMassCenter() const { return initial_mass_center_; };
+    Vecd getMassCenter() const;
 
     SolidBodyPartForSimbody(SPHBody &body, Shape &body_part_shape);
     SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);
     virtual ~SolidBodyPartForSimbody() {};
 
   protected:
-    Vecd initial_mass_center_;
+    Real min_spacing_sqr_;
+    SimTK::Vec3 initial_mass_center_;
     SimTK::MassProperties *body_part_mass_properties_;
     Real rho0_;
     Real *Vol_;
     Vecd *pos_;
-
-  private:
-    void initialize();
 };
 } // namespace SPH
 #endif // BODY_PART_FOR_SIMBODY_H
