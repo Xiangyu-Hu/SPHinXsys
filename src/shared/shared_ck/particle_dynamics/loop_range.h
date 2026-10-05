@@ -32,6 +32,7 @@
 #include "base_body.h"
 #include "base_body_part.h"
 #include "base_particles.h"
+#include "sphinxsys_bitmask.h"
 
 namespace SPH
 {
@@ -59,21 +60,34 @@ class LoopRangeCK<ExecutionPolicy, SPHBody>
 template <class ExecutionPolicy>
 class LoopRangeCK<ExecutionPolicy, BodyPartByParticle>
 {
+    using MaskKernel = typename GroupManager::MaskKernel;
+
   public:
     LoopRangeCK(BodyPartByParticle &body_part)
-        : particle_list_(body_part.dvParticleList()->DelegatedData(ExecutionPolicy{})),
-          loop_bound_(body_part.svRangeSize()->DelegatedData(ExecutionPolicy{})) {};
+        : body_part_mask_(ExecutionPolicy{}, body_part.getParticleGroupManager(), body_part.getPartMask()),
+          loop_bound_(body_part.getBaseParticles().svTotalRealParticles()->DelegatedData(ExecutionPolicy{})) {};
+
     template <class UnaryFunc>
-    void computeUnit(const UnaryFunc &f, UnsignedInt i) const { f(particle_list_[i]); };
+    void computeUnit(const UnaryFunc &f, UnsignedInt i) const
+    {
+        if (body_part_mask_.check(i))
+        {
+            f(i);
+        }
+    };
     template <class ReturnType, class BinaryFunc, class UnaryFunc>
     ReturnType computeUnit(ReturnType temp, const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const
     {
-        return uf(particle_list_[i]);
+        if (body_part_mask_.check(i))
+        {
+            temp = bf(temp, uf(i));
+        }
+        return temp;
     };
     UnsignedInt LoopBound() const { return *loop_bound_; };
 
   protected:
-    UnsignedInt *particle_list_;
+    MaskKernel body_part_mask_;
     UnsignedInt *loop_bound_;
 };
 
