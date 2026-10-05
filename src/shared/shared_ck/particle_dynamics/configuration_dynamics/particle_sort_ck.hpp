@@ -65,37 +65,6 @@ void ParticleSortCK<ExecutionPolicy>::sortOnCurrentDevice(Real dt)
     sort_method_.sort(ex_policy_, total_real_particles);
     update_variables_to_sort_(particles_->EvolvingVariables(), ex_policy_,
                               0, total_real_particles, dv_index_permutation_);
-
-    particle_for(ex_policy_, IndexRange(0, total_real_particles),
-                 [=](size_t i)
-                 { computing_kernel->updateSortedID(i); });
-
-    for (size_t k = 0; k != body_parts_by_particle_.size(); ++k)
-    {
-        UnsignedInt total_particles = body_parts_by_particle_[k]->svRangeSize()->getValue();
-        UpdateBodyPartByParticle *update_body_part_by_particle =
-            update_body_part_by_particle_implementations_[k]->getComputingKernel(k);
-
-        particle_for(ex_policy_, IndexRange(0, total_particles),
-                     [=](size_t i)
-                     { update_body_part_by_particle->compute(i); });
-    }
-}
-//=================================================================================================//
-template <class ExecutionPolicy>
-template <class EncloserType>
-ParticleSortCK<ExecutionPolicy>::UpdateBodyPartByParticle::
-    UpdateBodyPartByParticle(const ExecutionPolicy &ex_policy,
-                             EncloserType &encloser, UnsignedInt body_part_i)
-    : particle_list_(encloser.dv_particle_lists_[body_part_i]->DelegatedData(ex_policy)),
-      original_id_list_(encloser.dv_original_id_lists_[body_part_i]->DelegatedData(ex_policy)),
-      sorted_id_(encloser.dv_sorted_id_->DelegatedData(ex_policy)) {}
-//=================================================================================================//
-template <class ExecutionPolicy>
-void ParticleSortCK<ExecutionPolicy>::UpdateBodyPartByParticle::
-    compute(UnsignedInt index_i)
-{
-    particle_list_[index_i] = sorted_id_[original_id_list_[index_i]];
 }
 //=================================================================================================//
 } // namespace SPH
