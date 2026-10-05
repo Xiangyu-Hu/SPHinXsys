@@ -1,456 +1,270 @@
-# Domain decomposition in SPHinXsys: multi-GPU, and a CPU path to debug it
+# Domain decomposition
 
-**Status: draft.** The parts that can be built without the project's dependencies are
-built and tested here (see §11); the rest — anything touching particles, SYCL or Eigen —
-is a reviewed design sketch with the plumbing written out, not tested code. This machine
-has neither a SYCL toolchain nor Simbody/TBB/Eigen. §10 lists what is stubbed and what
-is likely to break first.
+This document describes the domain-decomposition design and its implementation in
+SPHinXsys. It is the current reference for the feature; it intentionally omits the
+development and review chronology.
 
-## 1. Two backends, one implementation
+## Purpose and scope
 
-There are two decomposed execution policies, and they share essentially all of their
-code:
+Domain decomposition assigns particles to subdomains so that their physics can be
+computed independently, with neighboring particle data exchanged through halos.
+The same policy-generic implementation supports a host execution path and a SYCL
+device path:
 
-| | `MultiDevicePolicy` = `DecomposedExecution<SYCLDevicePolicy>` | `MultiHostPolicy` = `DecomposedExecution<ParallelPolicy>` |
+| Backend | Decomposed policy | Subdomain execution |
 | --- | --- | --- |
-| a subdomain is | one GPU | one host thread, or one pass of a loop |
-| replicas live in | SYCL USM, shared context | ordinary host memory |
-| a copy between them is | `queue.memcpy` | `std::copy` |
-| purpose | the actual speedup | **debugging vehicle for the left column** |
+| Host | `DecomposedExecution<ParallelPolicy>` (`MultiHostPolicy`) | Sequential host runner by default; a threaded runner is also available |
+| SYCL | `DecomposedExecution<SYCLDevicePolicy>` (`MultiDevicePolicy`) | One device per subdomain |
 
-Everything else — the decomposition geometry, the halo plan, the pack/pull protocol,
-migration, load balancing, the fan-out points in every algorithm's `exec()` — is one
-piece of code, instantiated on both. The only backend-specific call in the exchange is
-`execution::copyBetweenSubdomains`.
+The host path is useful for debugging the decomposition and exchange logic without
+requiring SYCL hardware. The device path uses a shared SYCL context for its device
+queues and cross-device copies. This is a single-process, single-node design; it is
+not an MPI or multi-node implementation.
 
-That is deliberate. A decomposition bug reproduced on the CPU path is *the same bug*,
-reachable in a debugger, on a laptop, with no device toolchain, and with deterministic
-ordering. Chasing it on eight GPUs is not a good use of anyone's time.
+The decomposition is selected by the execution policy, not by case-level
+preprocessor branches. `SPHINXSYS_USE_SYCL` selects the backend, and
+`SPHINXSYS_DECOMPOSITION` determines whether `MainExecutionPolicy` wraps it in
+`DecomposedExecution`.
 
-### Why queues per device rather than MPI (for the GPU path)
+| `SPHINXSYS_USE_SYCL` | `SPHINXSYS_DECOMPOSITION` | `MainExecutionPolicy` |
+| --- | --- | --- |
+| OFF | OFF | `ParallelPolicy` |
+| OFF | ON | `DecomposedExecution<ParallelPolicy>` |
+| ON | OFF | `SYCLDevicePolicy` |
+| ON | ON | `DecomposedExecution<SYCLDevicePolicy>` |
 
-For a single node, one process driving N devices avoids everything that makes MPI
-expensive to introduce here: no separate ranks, no duplicated `SPHSystem`, no
-serialization layer, no launcher change. The decisive point is that all devices can be
-placed in **one `sycl::context`**, so a USM pointer allocated for device A is a legal
-argument on device B's queue: the halo exchange is a plain `memcpy`, using the peer link
-when there is one and staging through the host when there is not, with no second code
-path. The cost is that it does not scale past one node.
+## Build and run configuration
 
-## 2. The central idea: thread-local subdomain scope
+The decomposition option is disabled by default:
 
-Every subdomain is driven by a host thread that announces itself with an
-`execution::SubdomainScope`, setting a thread-local id. Every per-subdomain resource is
-then resolved implicitly through `currentSubdomainID()`:
-
-| Resource | Where it is resolved |
-| --- | --- |
-| `sycl::queue` | `ExecutionInstance::getQueue()` → `DeviceEnvironment::getCurrentQueue()` |
-| device replica of a `DiscreteVariable` | `DiscreteVariable::DelegatedOnDevice()` |
-| **host replica** of a `DiscreteVariable` | `DiscreteVariable::DelegatedOnHostSubdomain()` |
-| replica of a `SingleVariable` | `SingleVariable::DelegatedOn{Device,HostSubdomain}()` |
-| computing kernel | `Implementation<...>::getComputingKernel()` |
-| freshness flag | `Implementation<Base>::isUpdated()` |
-| loop range | `LoopRangeCK<DecomposedExecution<P>, ...>`, built per subdomain inside `particle_for` |
-
-The consequence is that **the physics code does not change at all**. A computing
-kernel's constructor calls `DelegatedData()` on the variables it reads; run that
-constructor inside `SubdomainScope(2)` and every pointer in it addresses subdomain 2's
-replica. `AcousticStep1stHalf`, `LinearCorrectionMatrix` and the rest are untouched.
-
-`HostOnlyDiscreteVariable` is deliberately shaped exactly like
-`DeviceOnlyDiscreteVariable`, including the rule that the replicas hold disjoint
-particle sets and `data_` is only I/O staging. Symmetry is the point: if the host path
-diverged in its aliasing rules, a bug found there would not be the bug you have.
-
-When `numberOfSubdomains() == 1`, `currentSubdomainID()` is always 0, every array has
-one live entry, and behavior is identical to the current single-GPU / single-CPU path.
-
-### Where the fan-out lives
-
-Parallelism over subdomains is expressed **inside `particle_for` / `particle_reduce`**, in the
-overloads for `LoopRangeCK<DecomposedExecution<P>, ...>` (`particle_iterators_ck.h`). The
-algorithms' `exec()` bodies are the plain single-domain ones:
-
-```cpp
-// StateDynamics::exec(), unchanged for every policy
-particle_for(LoopRangeCK<ExecutionPolicy, RangeIdentifier>(*this->identifier_),
-             kernel_implementation_, dt);
-
-// the decomposed overload
-template <class PolicyType, class Identifier, class KernelImplementationType>
-void particle_for(const LoopRangeCK<DecomposedExecution<PolicyType>, Identifier> &loop_range,
-                  KernelImplementationType &implementation, Real dt)
-{
-    fanOutOverSubdomains(DecomposedExecution<PolicyType>{}, [&]()
-                         { particle_for(loop_range.onCurrentSubdomain(), implementation, dt); });
-}
+```sh
+cmake -DSPHINXSYS_DECOMPOSITION=ON ...
+cmake -DSPHINXSYS_USE_SYCL=ON -DSPHINXSYS_DECOMPOSITION=ON ...
 ```
 
-Two things make this possible. The computing kernel is fetched *inside* the loop function
-(`implementation.getComputingKernel()`, resolved on `currentSubdomainID()`), so each subdomain
-gets its own kernel. And the loop range of a decomposed policy is deferred
-(`DeferredLoopRangeCK` in `loop_range.h`): it only stores the identifier, and
-`onCurrentSubdomain()` builds the base policy's range inside the fan-out, where
-`DelegatedData()` addresses that subdomain's replica. A range built on the host thread would
-bind every subdomain to the replica of subdomain 0.
+The first command selects host subdomains; the second selects the SYCL device path.
+The runtime subdomain count is limited by `execution::MaxSubdomains` (currently 8).
+Set it before creating bodies or particle variables, since the count determines the
+number of replicas:
 
-`DecomposedExecution<P>` means "P, plus a fan-out" and nothing else: every other operation
-(`DelegatedData`, kernel allocation, `exclusive_scan`, `particle_for` on an `IndexRange`, the
-copy between subdomains) is forwarded to `P` by a one-line overload on
-`DecomposedExecution<P>`. Those forwarders are not optional: a catch-all template
-`foo(const ExecutionPolicy &)` is an exact match for `DecomposedExecution<SYCLDevicePolicy>` and
-would otherwise win over `foo(const SYCLDevicePolicy &)`, silently running the host branch.
-
-Reductions take the symmetric route: `reduceOverSubdomains<Operation>` runs the body per
-subdomain and combines the partials in subdomain order. A global reduction therefore
-differs from the non-decomposed result by floating-point association — the same caveat
-as an MPI reduction. **Measure that difference on the CPU path first**; it tells you how
-much of a multi-GPU regression failure is expected before you go looking for a bug.
-
-Dynamics compose (an interaction runs its pre- and post-processes, themselves dynamics
-with their own `exec()`), so a nested fan-out must degenerate to a plain call.
-`insideFanOut()` handles that; it is covered by a unit test, because getting it wrong is
-either a deadlock or a silent N× duplication of work.
-
-## 3. The CPU path's two modes
-
-`SubdomainRunner` runs the fan-out in one of two modes, and running both is the intended
-workflow:
-
-- **Sequential** (default) — subdomains visited one after another on the calling thread.
-  Deterministic, single-threaded, steppable in a debugger, bit-reproducible. Barriers are
-  trivially satisfied, so a data race cannot mask a logic error.
-- **Threaded** — one persistent host thread per subdomain, with the same barrier
-  structure as the multi-GPU path. Meant to be run under ThreadSanitizer.
-
-The diagnostic value is in the difference:
-
-> A difference between **1 and N subdomains** is a decomposition bug.
-> A difference between **sequential and threaded** is a synchronization bug.
-
-Separating those two questions is the single biggest reason this path is worth having.
-
-## 4. Particle data layout
-
-Each subdomain holds a **local particle set**, not a copy of the global one:
-
+```sh
+simulation --subdomains=2
 ```
+
+Alternatively, call `SPHSystem::setNumberOfSubdomains(N)` before creating bodies.
+For host builds, that API and the command-line option select the sequential runner
+by default. The threaded host runner can be selected through
+`execution::subdomain_runner.initialize(N, SubdomainRunner::Mode::Threaded)`.
+Do not change the subdomain count after variables have allocated replicas.
+
+When the library is built without `SPHINXSYS_DECOMPOSITION`, requesting more than
+one subdomain emits a warning; the main execution policy remains non-decomposed.
+
+## Execution model
+
+`execution::SubdomainScope` binds a host thread to a subdomain using a thread-local
+ID. Particle variables, counters, computing kernels, freshness flags, and device
+queues resolve their per-subdomain replica through that ID. Physics kernels can
+therefore use the same variable access pattern for decomposed and non-decomposed
+policies.
+
+CK loops use deferred `LoopRangeCK` specializations for decomposed policies. The
+range and computing kernel are resolved only after a subdomain has been bound.
+`particle_for` fans out over subdomains; `particle_reduce` computes per-subdomain
+partial results and combines them in subdomain order. Calls nested inside an
+existing fan-out execute on the already-bound subdomain instead of starting another
+fan-out.
+
+Other operations, including index-range loops, scans, and computing-kernel
+allocation, forward to the wrapped backend policy. These forwarders are important:
+generic overloads can otherwise match `DecomposedExecution<P>` more closely than
+backend-specific overloads.
+
+For the host backend, sequential mode visits subdomains in order on the calling
+thread. Threaded mode uses persistent worker threads and barriers at fan-out
+boundaries. A difference between one and multiple subdomains points to a
+decomposition or exchange issue; a difference between sequential and threaded
+execution points to a synchronization issue. Floating-point reductions can differ
+from a non-decomposed run because the association order changes.
+
+## Decomposition geometry
+
+The current geometry is a one-dimensional slab decomposition. Cut planes are normal
+to one axis; by default, the longest domain extent is selected to reduce interface
+area. A `SubdomainMap` stores the cut planes and provides owner, neighbor, and halo
+queries. A subdomain has at most two neighbors. Positions outside the system bounds
+are assigned to the first or last subdomain rather than becoming unowned.
+
+The initial slabs are equally spaced. `SlabDecomposition::rebalance()` moves interior
+cut planes towards equal owned-particle counts using a relaxed correction. This
+estimates the position of a balanced cut assuming density is locally uniform along
+the split axis; it does not build a particle histogram. The minimum slab thickness
+is twice the halo width, preserving the adjacent-neighbor halo assumption. The
+constructor warns if the requested subdomain count makes the initial slabs thinner
+than this minimum.
+
+## Particle layout and exchange
+
+Each subdomain stores its own particle replicas:
+
+```text
 [0, n_owned)                 particles owned by this subdomain
-[n_owned, n_local)           halo copies, authored by a neighbor
-[n_local, particles_bound)   spare capacity
+[n_owned, n_local)           read-only halo copies from neighbors
+[n_local, particle_bound)    spare capacity
 ```
 
-Indices are local. There is no global index; the original id already carried by the
-particles is what survives migration and what output uses to reassemble a global order.
+`TotalRealParticles()` is the owned count. Physics loops, reductions, and particle
+sorting use owned particles. `TotalLocalParticles()` includes halo copies and is
+used where neighbor construction must see the halo. Outside a decomposed run, the
+two counts are equal.
 
-Two counters are needed, and `BaseParticles` carries both:
+The exchange protocol is a pack-then-pull operation:
 
-- `TotalRealParticles()` — the **owned** particles. All physics, all reductions,
-  particle sorting and the relation build loop over this.
-- `TotalLocalParticles()` — owned **plus** halo. Only `UpdateCellLinkedList` uses it. If
-  the cell linked list saw only the owned particles, a particle next to a cut plane
-  would lose part of its support and the interaction would be silently wrong there.
+1. Each subdomain packs its outbound particle data into its own send buffers.
+2. A fan-out boundary ensures all send buffers are ready.
+3. Each subdomain pulls data from neighboring send buffers into its own arrays.
+4. A second fan-out boundary completes the exchange.
 
-Outside a decomposed run the two are equal, which is why the change is invisible to
-existing code paths.
+Each subdomain writes only its own destination arrays. Host copies use ordinary
+memory copies; SYCL copies use the device environment. Send-buffer replicas are
+created before exchange so cross-subdomain reads do not race with lazy allocation.
 
-## 5. What had to change in shared code
+The halo plan and halo values are separate:
 
-Each of these is a no-op when one subdomain is used.
-
-| File | Change |
-| --- | --- |
-| `execution/subdomain_scope.h` | new: `MaxSubdomains`, thread-local id, `SubdomainScope`, fan-out guard |
-| `execution/subdomain_runner.{h,cpp}` | new: worker pool and the sequential/threaded runner |
-| `execution/subdomain_fan_out.h` | new: `fanOutOverSubdomains` / `reduceOverSubdomains` / `copyBetweenSubdomains` |
-| `execution/execution_policy.h` | `DecomposedExecution<P>`, with `MultiDevicePolicy`, `MultiHostPolicy`, `SequencedMultiHostPolicy` |
-| `execution/base_implementation.h` | `is_updated_` becomes one flag per subdomain |
-| `execution/implementation.h` | computing kernel and staging keeper become per-subdomain arrays |
-| `common/sphinxsys_variable.h` | per-subdomain delegates; new `HostOnlyDiscreteVariable` |
-| `particles/base_particles.{h,cpp}` | second counter `TotalLocalParticles` |
-| `loop_range.h`, `particle_iterators_ck.h` | deferred loop range and the loop-level fan-out for `DecomposedExecution<P>` |
-| `update_cell_linked_list.hpp`, `update_body_relation.hpp`, `particle_sort_ck.hpp` | `exec()` bodies wrapped in the fan-out (loops on an `IndexRange` with a captured kernel) |
-| `particles/base_particles.h`, `interaction_algorithms_ck.hpp` | `HaloRefresher` hook; interactions refresh their interact variables before the interaction step |
-| `implementation_sycl.h` | `ExecutionInstance` becomes a facade over `DeviceEnvironment` |
-| `sphinxsys_variable_sycl.hpp` | per-device allocation and staging |
-
-New files:
-
-```
-shared/domain_decomposition/domain_decomposition.{h,cpp}          slab geometry, load balancing
-shared/domain_decomposition/subdomain_exchange.{h,hpp}            halo + migration, policy generic
-shared/domain_decomposition/domain_decomposition_dynamics.h       time loop entries
-src_sycl/shared/common/device_environment_sycl.{h,cpp}            devices, shared context, queues
-tests/unit_tests_src/for_2D_build/domain_decomposition/...        the tests of §11
-```
-
-One build option, default `OFF`. Which decomposition it selects follows from the backend:
-
-```
-cmake -DSPHINXSYS_USE_SYCL=ON -DSPHINXSYS_DECOMPOSITION=ON       # multi-GPU
-cmake -DSPHINXSYS_DECOMPOSITION=ON                               # CPU debugging path
-```
-
-`SPHINXSYS_DECOMPOSITION` wraps the backend policy (`SYCLDevicePolicy` with SYCL,
-`ParallelPolicy` otherwise) in `DecomposedExecution<>` to form `MainExecutionPolicy`.
-Headers are globbed, so no `CMakeLists.txt` edits are needed for the new sources.
-
-## 6. Decomposition
-
-A **slab decomposition**: cut planes normal to one axis (by default the longest, which
-minimizes interface area), one slab per subdomain, so a subdomain has at most two
-neighbors. `SubdomainMap` is a small trivially-copyable struct holding the cut planes,
-captured by value into kernels rather than reached through a pointer.
-
-Load balancing (`SlabDecomposition::rebalance`) moves the interior planes towards an
-equal particle count, assuming the density is locally uniform along the split axis —
-which is what makes a 1-D rebalance cheap: only per-subdomain counts are needed, no
-histogram. A relaxation factor damps the oscillation a fully applied correction would
-cause. A slab is never allowed to become thinner than twice the halo width, below which
-a halo would reach past the adjacent subdomain and break the two-neighbor assumption.
-
-**Known cost:** every subdomain currently allocates the cell-linked-list mesh for the
-*whole* domain, most of it empty. This keeps cell indices identical across subdomains
-and avoids any mesh remapping — the right trade for a first implementation — but it is
-O(total cells) memory per subdomain. `Mesh::setLinearCellIndexOffset()` is the hook for
-giving each subdomain only its own cells plus halo. First optimization after
-correctness.
-
-## 7. Exchange protocol
-
-Halo exchange and migration use one mechanism, with two barriers over the subdomains
-(each `fanOutOverSubdomains` call is itself a barrier):
-
-1. every subdomain packs what it must send into its own send buffers;
-2. **barrier**;
-3. every subdomain *pulls* from its neighbors' send buffers into its own arrays;
-4. **barrier**.
-
-The pull direction is deliberate: a subdomain only ever writes memory it owns, so the
-exchange needs no cross-subdomain atomics and no locks. The barriers alone order it —
-and under the sequential runner they are satisfied trivially, which is exactly the
-configuration to debug the *logic* in, before turning on the threaded runner to debug
-the *synchronization*.
-
-Packing is a gather per (variable, side); the send index lists come from a flag kernel
-plus `exclusive_scan`, with a sentinel entry at `n_owned` so the scan returns the total.
-Buffers are plain `DiscreteVariable`s — per-subdomain replication for free — and are
-pre-touched at construction so a `DelegatedData()` from a neighbor's thread cannot race
-with a lazy allocation. Halo slots are contiguous per side, so the pull writes directly
-into the particle arrays at `n_owned + offset`: no receive buffer, no unpack kernel.
-
-### Plan versus refresh
-
-Separated because their costs differ by an order of magnitude:
-
-- **`updateHaloPlan()`** — recompute which particles fall in a neighbor's halo band, the
-  counts, the offsets and `n_local`. A scan plus a capacity check. Once per
-  configuration update, right after the cell linked list is rebuilt.
-- **`refreshHalo(variables)`** — re-send values along the existing plan. A pack plus a
-  copy. After every stage that writes a state variable the next interaction reads.
-
-`SyncHaloStateCK` takes a named subset precisely so a per-stage refresh moves only what
-the next interaction needs.
+- `updateHaloPlan()` rebuilds send indices, counts, offsets, and the local-particle
+  count after particle positions or ownership have changed. It then refreshes the
+  evolving variables.
+- `refreshHalo(variables)` copies only the specified variable set through the
+  existing plan. The exchange buffers are created from evolving and registered
+  interaction variables when the exchange is first created; explicit refreshes can
+  select from that exchange set. Interaction dynamics invoke this for their
+  registered interaction variables before the interaction loop.
 
 ### Migration
 
-Ownership transfer, needed only at the advection step:
+Migration transfers ownership when particles cross a cut plane. The implementation
+flags departing particles, packs their state, fills the resulting holes from
+staying particles at the tail of the owned range, and pulls arrivals from
+neighboring send buffers. The state that must follow a particle across an ownership
+change must be included in `EvolvingVariables()`, because that is the set migrated
+and sorted.
 
-1. flag departing particles per destination side; from the same flags derive the new
-   owned count `n_new`, the list of departing slots below `n_new` (the holes) and the
-   list of staying particles at or above `n_new` (the donors), both ascending. There
-   are exactly as many donors as holes;
-2. pack the departing ones;
-3. remove them by copying the k-th donor into the k-th hole. This is the "swap with
-   the last real particle" used by particle deletion, driven by scans instead of an
-   atomic counter, so it is deterministic and costs O(departing) rather than a full
-   compaction; no slot is both read and written;
-4. **barrier**;
-5. pull arrivals into the slots after `n_new`, where they become owned. This is the
-   particle generation side of the exchange: the state of a new particle comes from
-   the neighbor's send buffer rather than from another particle of the same array.
+A particle is expected to move by no more than one adjacent subdomain in a step.
+Larger jumps violate the current slab-neighbor exchange assumption and should be
+prevented by the timestep and slab sizing.
 
-Packing must precede the removal (packing reads the departing slots, the removal
-overwrites them), but no barrier is needed between them since the removal touches
-only local memory.
+## Particle-variable responsibilities
 
-`SubdomainExchange::checkConsistency()` verifies the invariants — counts within bounds,
-and every owned particle actually inside its own slab. On the host path it reads the
-replicas directly; that check catching a missed migration, immediately rather than as a
-slow physics drift, is most of the value of the CPU path.
+The current `BodyDecomposition` initializes the exchange-variable set lazily from
+the body's evolving variables and registered interaction variables
+(`AllInteractVariables()`). Variables needed at neighboring particles must be
+registered as interaction variables or included in an explicit halo refresh.
 
-## 8. Placement in the time loop
+Output-only variables have a different role. They do not need to be scattered or
+exchanged merely because they are written to output; they must be included in the
+host-side gather when their values are needed there. If a per-particle value must
+follow a particle during sorting or migration, it is not output-only in the
+ownership sense and must be managed as particle state accordingly.
 
-```
-advection step:
-    water_update_particle_position.exec();
-    migrate_particles.exec();              // ownership follows the positions
-    particle_sort.exec();                  // optional, per subdomain
-    update_halo.exec();                    // new plan + full state refresh; publishes n_local
-    water_cell_linked_list.exec();         // over owned + halo
-    water_block_update_complex_relation.exec();
-    ... rebalance every few hundred steps ...
+## Setup and lifecycle
 
-acoustic step:
-    fluid_acoustic_step_1st_half.exec(dt); // refreshes the halo pressure itself, before
-    fluid_acoustic_step_2nd_half.exec(dt); // its interaction step; the velocity likewise
-```
+The intended lifecycle is:
 
-Setup. The subdomain runner must be initialized before any particles are generated,
-since that fixes how many replicas each variable allocates. The number of subdomains is
-a run time choice of the `SPHSystem`: the command line option `--subdomains=N`, or
-`sph_system.setNumberOfSubdomains(N)` right after construction; both initialize the
-runner in its sequential mode. The threaded host runner is selected by calling
-`execution::subdomain_runner.initialize(N, SubdomainRunner::Mode::Threaded)` at the same
-point. On the SYCL path the device environment is initialized there as well
-(`execution::device_environment.initialize(0)`, 0 = all visible GPUs).
+1. Select the execution policy through the build configuration.
+2. Set the runtime subdomain count before creating bodies or particle variables.
+3. Create all bodies and construct the relevant dynamics so their interaction
+   variables are registered.
+4. Ensure each body has its `BodyDecomposition` and finalize exchange state only
+   after the required methods and variables are known.
+5. Scatter the initial host particle data before the first decomposed dynamics.
+6. Run dynamics, migration, halo-plan updates, and output with the ordering
+   appropriate to the case.
 
-The case then drives everything through one `BodyDecomposition<MainExecutionPolicy>` and
-the dynamics built on it (`body_decomposition.h`, `domain_decomposition_dynamics.h`). All
-of them are no-ops when the policy is not a `DecomposedExecution<>`, so the same source
-serves the decomposed and the plain build:
+The case should not need to select decomposition separately: the main execution
+policy is the decomposition choice. In the current solver/container path,
+`SPHSolver::getMainMethodContainer()` attaches decompositions to bodies already
+registered with the `SPHSystem`; exchange state is created later on first use.
+`SPHSolver::getTimeStepper()` scatters initial particles for a non-restart run.
+Restart loading uses the I/O helper's scatter after reading host data.
 
-```cpp
-// after every dynamics of the body and after its output variables: fixes the exchange set
-auto &decomposition = main_methods.addDecomposition(water_block, 0 /* split axis */);
-decomposition.addExchangeVariable<Real>("Pressure");             // read at the neighbors,
-decomposition.addExchangeVariable<Matd>("LinearCorrectionMatrix"); // neither evolving nor written
-decomposition.addSubdomainIDToWrite(body_state_recorder);        // optional owner tag in the vtp
-auto &update_halo = main_methods.addGeneralDynamics<UpdateHaloCK>(decomposition);
-auto &migrate_particles = main_methods.addGeneralDynamics<MigrateParticlesCK>(decomposition);
-auto &sync_volume = main_methods.addGeneralDynamics<SyncHaloStateCK>(decomposition);
-sync_volume.addVariable<Real>("VolumetricMeasure");
+**Lifecycle limitation:** direct construction of a dynamics method can bypass the
+main-method container. In that path, the current automatic attachment is not
+guaranteed to have created the body's decomposition before the method runs.
+Likewise, the exchange set must not be finalized before all relevant methods have
+registered their interaction variables. The desired invariant is that all bodies
+and relevant methods are registered, and all decomposition state is ready, before
+the first dynamics execute. A policy-driven initialization path shared by container
+and directly constructed methods is needed to guarantee that invariant generally.
 
-decomposition.scatterFromHost();   // once, before the first dynamics on the body
-...
-decomposition.gatherToHost();      // around every host side access: output, restart
-body_state_recorder.writeToFile();
-decomposition.finishHostAccess();
+## Typical ordering in a simulation
+
+For a case that changes particle positions during advection, the decomposition
+operations must preserve this dependency order:
+
+```text
+update particle positions
+    -> migrate ownership
+    -> sort owned particles, if required
+    -> update halo plan and refresh the full evolving state
+    -> update cell linked list over owned plus halo particles
+    -> rebuild body relations
+    -> run interaction stages (refresh their registered interaction variables)
 ```
 
-The exchange set of a `BodyDecomposition` is the evolving variables plus the variables
-registered for output when it is constructed, plus `addExchangeVariable()` calls made
-before `scatterFromHost()`.
+Rebalancing is optional and should be done infrequently; if it moves cut planes,
+particles must be migrated before subsequent use.
 
-The per-stage refresh is the dominant new cost and follows from a halo one cut-off deep:
-a halo particle has an incomplete neighborhood, so its own update is untrustworthy and
-must be replaced by the owner's value before the next stage reads it.
+## I/O and restart
 
-The alternative is a **deeper halo**: with a halo `k` cut-offs deep, `k` stages can run
-between exchanges, at the cost of redundant computation on halo particles. Which wins
-depends on particles per subdomain and on the interconnect. `halo_width` is a
-constructor argument of `SlabDecomposition`, so the experiment is supported — but the
-"compute on halo, then discard" variant additionally needs the dynamics loop bound
-switched from owned to local, which is *not* wired up.
+Host-side output must gather each requested variable from the owned particle ranges;
+halo duplicates must not be emitted as additional particles. The gather publishes
+the global owned-particle count for the host reader. `finishHostAccess()` restores
+the subdomain-local counter and must be called before the next decomposed fan-out.
+The CK VTP and restart writers use `VariablesWriteHelper` to bracket host access.
+Reloading restart data scatters host particle state back to the subdomains.
 
-## 9. Correctness notes
+`addSubdomainIDToWrite()` is an optional API intended to write the owner subdomain
+for each particle. Its implementation currently registers the `SubdomainID`
+variable, but the gather path does not populate that variable. Treat this output
+feature as unimplemented and unverified until the owner IDs are assigned in the
+gathered particle order and a test confirms the output.
 
-- **Reductions** differ from the non-decomposed result by floating-point association.
-  Regression tolerances need revisiting; quantify the effect on the CPU path first.
-- **One-sided inner relation.** `UpdateRelation<Inner<...>>::incrementNeighborSize`
-  registers the reverse neighbor of each pair, writing `neighbor_index_[tar_index]` for
-  a target that may be a halo particle. The lists, the offsets and the scan therefore
-  cover the local range `[0, n_local]` (`UpdateRelation<Inner>::updateOnCurrentDevice`);
-  outside a decomposed run the two counts are equal and nothing changes.
-- **State that survives an advection step must be an evolving variable.** The particle
-  sort permutes the evolving variables only. `Force` is assigned by the second acoustic
-  half step and accumulated onto by the next first half step, across the sort, and was
-  not evolving in the CK acoustic step; a single domain scrambles it deterministically,
-  two subdomains scramble it differently, and the runs diverge at the first sort. It is
-  evolving now. The same reasoning applies to any variable a case adds: whatever a
-  particle carries from one advection step to the next has to be in the evolving set,
-  which is also the set that migrates.
-- **Halo refresh points.** Each quantity read at the neighbors is refreshed right after
-  the stage that writes it. The pressure and the velocity are refreshed by the acoustic
-  steps themselves: an interaction algorithm calls `BaseParticles::refreshHalo()` with
-  its `interact_variables_` right before its interaction step (a no-op unless a
-  `SubdomainExchange` installed itself as the `HaloRefresher` of that body). The volume
-  and the correction matrix change once per advection step and are refreshed there by the
-  case (`SyncHaloStateCK`), rather than being listed as interact variables and re-sent
-  every acoustic step.
-- **Contact relations to a non-decomposed body** (walls, observers) work only if that
-  body is fully replicated on every subdomain. Replication is right for small static
-  bodies, but the draft does not distinguish replicated from decomposed bodies, and that
-  distinction needs adding to `SubdomainExchange`.
-- **Observers and I/O** run host-side and need `gatherToHost()` first.
-- **Particles leaving the domain** are clamped to the end subdomains, never unowned.
-- **A particle may only move to an adjacent subdomain per step.** A larger jump means
-  the time step or the slab thickness is wrong; `checkConsistency()` detects the result.
+## Current limitations and validation
 
-## 10. What is stubbed
+- The cell-linked-list mesh is currently allocated for the whole domain on each
+  subdomain. This avoids mesh remapping but scales mesh memory with the number of
+  subdomains.
+- Threaded host execution is available, but replica growth/reallocation and its
+  synchronization need dedicated validation before relying on it for production.
+- The SYCL decomposed path requires validation with a supported IntelLLVM/SYCL
+  toolchain and device hardware. Host success alone does not establish device
+  correctness.
+- Contact interactions, including static walls and observer bodies, must be
+  validated for the body's chosen decomposition and replication behavior; there
+  is not a general documented replicated-body mode in the current API.
+- Reduction association can change numerical results. Independently, the
+  one-sided inner relation can append neighbors using atomic counters, so
+  run-to-run ordering and trajectories may vary.
+- `addSubdomainIDToWrite()` is not yet a verified output path, as noted above.
 
-| Item | State |
-| --- | --- |
-| Replicated (non-decomposed) bodies | not distinguished from decomposed ones |
-| Threaded host runner | lazy replica creation is serialized (`replicaCreationMutex()`), but `DiscreteVariable::reallocateData` grows the shared capacity and every subdomain's replica from whichever subdomain thread triggers it, while the other threads still hold the old pointers in their computing kernels. Neighbor list growth during a threaded run therefore crashes; use the sequential runner until capacities are per replica |
-| Per-subdomain cell mesh | full-domain mesh per subdomain |
-| Restart with a decomposition | works: the restart output gathers to the host, the restart read precedes `scatterFromHost()` |
-| NUMA placement on the host path | none; first-touch is incidental, `tbb::task_arena` constraints would be the fix if this path ever needs to be fast |
+The repository has focused unit tests for slab geometry, rebalance, and host
+fan-out semantics in
+[`tests/unit_tests_src/for_2D_build/domain_decomposition/test_2d_domain_decomposition/test_2d_domain_decomposition.cpp`](../tests/unit_tests_src/for_2D_build/domain_decomposition/test_2d_domain_decomposition/test_2d_domain_decomposition.cpp).
+When `SPHINXSYS_DECOMPOSITION` is enabled, the SYCL dambreak test configuration
+adds two-subdomain and decomposed-restart CTest entries in
+[`tests/tests_sycl/2d_examples/test_2d_dambreak_sycl/CMakeLists.txt`](../tests/tests_sycl/2d_examples/test_2d_dambreak_sycl/CMakeLists.txt).
+The presence of those tests does not imply they have been run for the current
+checkout or with every backend.
 
-`scatterFromHost()` and `gatherToHost()` are now implemented (they were stubs in the
-first draft): scatter groups the host arrays by owner and stages one contiguous slice
-per subdomain; gather reverses it over the owned ranges only, so halo duplicates are not
-written out twice.
+## Implementation map
 
-## 11. What is actually tested
-
-Built and run on this machine, under AddressSanitizer, UndefinedBehaviorSanitizer and
-ThreadSanitizer, all clean:
-
-- **Fan-out semantics**, in both runner modes: body runs once per subdomain; nested
-  fan-out collapses onto the bound subdomain rather than deadlocking or duplicating;
-  reduction combines partials correctly; exceptions propagate out of a worker; the
-  thread binding is restored afterwards; a non-decomposed policy runs the body once.
-- **Decomposition geometry**: ownership is an exact partition over 8000 sample positions
-  (no gaps, no overlaps); positions outside the domain stay owned; halo bands match the
-  slab widened by the cut-off; a particle in a neighbor's halo band is still owned by
-  us; end subdomains have one neighbor.
-- **Load balancing**: from a 3.86× imbalance, `rebalance` converges to 1.0005× in 40
-  iterations while keeping the cut planes monotone, the outer planes pinned, and every
-  slab at or above the minimum thickness even under a degenerate load.
-
-These live in `tests/unit_tests_src/for_2D_build/domain_decomposition/` as GTest cases.
-The geometry tests were additionally run here against a stub of the Eigen-backed types,
-since Eigen is not installed on this machine; in the repo they compile against the real
-`Vecd`/`BoundingBoxd`.
-
-**Not tested:** anything touching `BaseParticles`, the variable replication, the
-exchange itself, or SYCL. That needs the real dependencies.
-
-Since then, with the real dependencies (2026-09-10): `test_2d_dambreak_sycl` itself runs
-decomposed, `--subdomains=2` in a `SPHINXSYS_DECOMPOSITION=ON` build, through
-`BodyDecomposition` and the loop dynamics of §8, with its observer, its restart output
-and both of its dynamic time warping regression tests passing, and a restart from the
-files of the decomposed run completing. The corresponding ctest entries exist in that
-build. The plain build is unchanged: with one subdomain, or without the option, the
-energy record matches the plain run bit for bit for as long as the plain run is itself
-reproducible (about two seconds of physical time; the one-sided inner relation appends
-neighbors with atomic counters, so the summation order and, from there, the trajectory
-varies from run to run, on this branch and independently of the decomposition).
-
-Two defects found on the way, both only visible once a subdomain grows its neighbor
-list after the others have built theirs in the same step: replica reallocation used to
-discard the contents of every replica, and the relation update dynamics did not
-register its kernel with the relation, so the other subdomains kept pointers into the
-freed replica. Both are fixed; the host and the device replicas now keep their contents
-on growth, and the update kernels are invalidated like the interaction kernels.
-
-## 12. Bring-up order and where it stands
-
-1. Build with the option `OFF`, confirm existing tests unchanged. Every edit in §5 is
-   designed to be a no-op there; this is the regression gate for the whole refactor.
-   **Done.**
-2. `SPHINXSYS_DECOMPOSITION=ON` (without SYCL) with **1** subdomain. Exercises the fan-out, the
-   per-subdomain arrays and the host replicas while the answer must still match step 1.
-   **Done**, on `test_2d_dambreak_sycl --subdomains=1`.
-3. Same, **2 subdomains, sequential**, on `dambreak`. First real decomposition.
-   **Done**, `--subdomains=2`, regression tests and restart included (§11).
-4. Same, **threaded**, under ThreadSanitizer. Any difference from step 3 is a
-   synchronization bug, and the barrier structure of §7 is where to look. Open; the
-   threaded runner is still restricted by the reallocation issue of §10.
-5. `SPHINXSYS_USE_SYCL=ON -DSPHINXSYS_DECOMPOSITION=ON`, one GPU, then two. By this point the decomposition logic
-   is already known good, so a failure here is device-specific: USM lifetime, queue
-   ordering, or peer access. Open; no SYCL compiler on the development machine.
-6. Then: per-subdomain mesh, deeper halos, and overlapping the exchange with interior
-   computation — the barrier structure already isolates where that overlap goes.
+- Policy selection: `src/shared/particle_dynamics/execution/execution_policy.h`
+- Subdomain scope and runner: `src/shared/particle_dynamics/execution/`
+- Slab geometry: `src/shared/domain_decomposition/domain_decomposition.{h,cpp}`
+- Per-body decomposition: `src/shared/domain_decomposition/body_decomposition.h`
+- Halo exchange and migration: `src/shared/domain_decomposition/subdomain_exchange.{h,hpp}`
+- Loop integration: `src/shared/shared_ck/particle_dynamics/loop_range.h` and
+  `particle_iterators_ck.h`
+- Automatic interaction refresh: `src/shared/shared_ck/particle_dynamics/interaction_algorithms_ck.hpp`
+- Host I/O and restart hooks: `src/shared/shared_ck/io_system/io_base_ck.hpp`
+- Main-method setup: `src/shared/shared_ck/particle_dynamics/sph_solver.cpp`
