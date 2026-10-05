@@ -196,6 +196,122 @@ and relevant methods are registered, and all decomposition state is ready, befor
 the first dynamics execute. A policy-driven initialization path shared by container
 and directly constructed methods is needed to guarantee that invariant generally.
 
+## Dirty-flag and refresh semantics
+
+Halo refresh is controlled by two independent pieces of information:
+
+- **Which particles move** is fixed by the halo plan. `updateHaloPlan()` builds
+  per-side send index lists containing only owned particles inside a neighbor's
+  halo band. Packing and pulling loop only over these lists.
+- **Which variables move** is selected by the per-variable dirty flag. Pack and
+  pull skip a variable unless it is dirty and in the requested set.
+
+A refresh therefore transfers halo-band particles of dirty, requested variables,
+not whole arrays. No per-particle dirty tracking is needed.
+
+The dirty flag is a single flag per variable object, shared by all subdomains.
+Decomposition runs the same operation on different data, so all replicas of a
+variable become dirty and clean together. The flag is host-only state:
+
+- Marking happens in the host-side `setupDynamics` of `StateDynamics` and
+  `InteractionDynamicsCK` (decomposed policies only), on
+  `to_be_interact_variables_`, before any per-subdomain fan-out.
+- `updateHaloPlan()` and `migrateParticles()` mark the evolving variables dirty.
+- `refreshHalo()` and `migrateParticles()` clean the variables once, after the
+  pull barrier. Fan-out bodies only read the flag.
+
+Dirty means "needs publishing"; the registered interaction set means "needed by
+the consumer". A refresh handles the intersection and cleans what it published;
+a dirty variable outside the requested set stays dirty for a later refresh.
+
+`migrateParticles()` returns early unless the position variable is dirty. The
+migration trigger therefore relies on position being marked dirty after
+advection; the ordering of migration relative to the cell-list update (which
+calls `updateHaloPlan()` and cleans the flags) is called out in
+`TimeStepper::incrementIterationStep()` and has not been verified here.
+
+## Comparison with common single-domain decomposition approaches
+
+Sources: LAMMPS documentation (partitioning, communication, neighbor lists,
+`comm_modify`, `balance`) and AMReX particle documentation. The OpenFPM primary
+paper, DualSPHysics multi-GPU pages and LIGGGHTS documentation could not be
+retrieved; no claims are made about them, and any DEM remarks are inferred from
+LAMMPS. The periodic-boundary observation covers only this module.
+
+### Partitioning
+
+LAMMPS defaults to a regular 3-D brick grid (up to 6 neighbors), with `tiled`
+communication and recursive coordinate bisection (RCB) for non-uniform density.
+AMReX uses an arbitrary `BoxArray` plus `DistributionMapping`. The slab here is
+the simplest member of the family: a 1-D cut with at most two neighbors, chosen
+on purpose behind the `SubdomainMap` interface so that it can be replaced later.
+It corresponds to forcing a 1xNx1 processor grid in LAMMPS, which its
+documentation calls suboptimal because thin slices increase communication.
+Expect worse scaling than brick or tiled schemes as the subdomain count grows or
+for domains elongated across the split axis.
+
+### Owned plus halo layout
+
+`[0, n_owned)` owned and `[n_owned, n_local)` halo matches the LAMMPS owned-then-
+ghost array. `inHaloBandOf()` plays the role of the cutoff-widened ghost region.
+Unlike LAMMPS, ghosts are not used for periodic boundaries; positions outside the
+domain are clamped to the end subdomains.
+
+### Exchange protocol
+
+LAMMPS performs forward (owner to ghost) and reverse (ghost to owner, for example
+summed forces) communication in staged axis sweeps over reusable send lists. Here
+the exchange is pack, barrier, pull, barrier over send lists built by
+`updateHaloPlan()`.
+
+- Single exchange axis: no corner double-communication to handle.
+- Pull instead of push: a subdomain writes only memory it owns, so no atomics or
+  locks are needed. This suits shared memory and one SYCL context, and avoids the
+  buffer-ownership races of a naive MPI-style push port.
+- Selectivity: LAMMPS restricts communication by field set and, with
+  `comm_modify mode multi`, by cutoff collection. Here the halo plan selects the
+  particles and the per-variable dirty flag selects the variables (see the
+  dirty-flag section). The two are comparable in kind.
+- No reverse communication exists. Any dynamics that writes into halo particles
+  and expects the owner to receive the result would need one.
+
+### Migration
+
+LAMMPS migrates atoms only on reneighboring steps and applies periodic wrap at the
+same time. AMReX `Redistribute()` has a local mode for bounded movement and a
+global mode for arbitrary jumps. `migrateParticles()` uses hole-fill from the tail
+plus appended arrivals. It is local only: a particle that skips a subdomain is
+detected by `checkConsistency()` as a count mismatch, not handled, and there is no
+global fallback, for example after a large rebalance move or an aggressive time
+step.
+
+### Ordering and load balancing
+
+Migrate, rebuild spatial index, refresh halo, then interact is the standard order
+in both systems, with infrequent rebalancing. `rebalance()` moves cut planes from
+cumulative counts, assuming uniform density inside each slab, with damping. This
+is equivalent to LAMMPS `balance shift`, the weaker of its two dynamic tiers, but
+it has no intra-slab histogram and no escalation to RCB. It is weakest for voids
+and fronts such as free surfaces and dam-break fronts.
+
+### Spatial index
+
+LAMMPS stores only the neighbor bins overlapping the local subdomain extended by
+the cutoff. Here the cell mesh covers the whole domain on every subdomain, so
+mesh memory and per-cell update cost do not shrink with subdomain count. This is
+the clearest gap relative to established practice.
+
+### Lessons
+
+1. Per-subdomain cell mesh limited to slab plus halo band.
+2. A reverse-communication audit, and an explicit rule for halo writes.
+3. A safety net for multi-hop migration: an explicit check, or a global mode.
+4. Cost-aware balancing, with an intra-slab density profile or RCB if slabs prove
+   too coarse.
+5. Periodic ghost images if periodic boundaries must work with decomposition.
+6. Keep pull-based, barrier-ordered exchange; it is a strength in the
+   shared-memory context.
+
 ## Typical ordering in a simulation
 
 For a case that changes particle positions during advection, the decomposition
