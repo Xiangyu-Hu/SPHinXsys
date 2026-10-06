@@ -15,12 +15,14 @@ mkdir impact && cd impact
 ```
 
 The cylinder is 10 mm in diameter and 20 mm long. Its initial surface gap is
-0.5 mm and its axial speed is 30 m/s. The default particle spacing is 0.5 mm,
+the larger of 0.5 mm and one particle spacing, and its axial speed is 30 m/s.
+The default particle spacing and gap are both 0.5 mm,
 the acoustic CFL is 0.2, and the simulation lasts 60 microseconds. For a time
 step comparison, run again in another directory with `--cfl=0.1`. `--spacing`,
 `--speed` and `--end-time` accept values in metres, metres/second and seconds.
-The coarse CTest case uses 1 mm spacing. It compares total kinetic energy and
-mean damage at 31 fixed times against the stored regression data, using the
+The coarse CTest case uses 1 mm spacing and a 1 mm gap, placing both cylinder
+end faces between lattice layers. It has 1,600 concrete particles and compares
+total kinetic energy and mean damage at 31 fixed times against the stored regression data, using the
 library's ensemble-average test and its 1% relative standard-deviation floor.
 It also checks that contact and damage occur, deformation determinants stay
 positive, and damage remains bounded and irreversible. The parameters are
@@ -67,6 +69,7 @@ python /path/to/test_3d_taylor_bar_hjc/plot.py impact --compare impact_half_dt
 ```
 
 The plotter reads the generated `case.json` for particle spacing and CFL.
+This file also records the initial gap and concrete particle count.
 Use `--times` to select saved times in microseconds and `--output` for the
 destination directory.
 

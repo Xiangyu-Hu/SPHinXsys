@@ -36,13 +36,15 @@ int main(int argc, char *argv[])
                             cfl != Real(.2) || end_time != Real(6e-5)))
         throw std::invalid_argument("Regression test requires spacing=0.001, speed=30, cfl=0.2 and end-time=0.00006");
     const Real radius = .005, length = .020, wall_depth = 4 * spacing;
+    // Keep the coarse lattice off the cylinder end faces.
+    const Real gap = std::max(Real(.0005), spacing);
     SPHSystem system(BoundingBoxd(Vecd(-.02, -.02, -wall_depth), Vecd(.02, .02, .04)), spacing);
 #ifdef BOOST_AVAILABLE
     system.handleCommandlineOptions(int(system_args.size()), system_args.data());
 #endif
     auto shape = makeShared<ComplexShape>("Concrete");
     shape->add<TriangleMeshShapeCylinder>(Vec3d::UnitZ(), radius, length / 2, 48,
-                                          Vecd(0, 0, length / 2 + .0005));
+                                          Vecd(0, 0, length / 2 + gap));
     SolidBody column(system, shape);
     HJCParameters parameters{2.417e10, .29, 2.06, .0013, .866, 1.19e8, 8.2e6, 1, .01, 5,
                              4e7, .00124, 1.2e9, .011, .04, 1, 1.287e10, 1.631e10, 6.495e10};
@@ -90,7 +92,8 @@ int main(int argc, char *argv[])
     Real &time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     std::ofstream metadata("case.json");
     metadata << std::setprecision(16) << "{\"spacing\":" << spacing << ",\"cfl\":" << cfl
-             << ",\"speed\":" << speed << ",\"end_time\":" << end_time << "}\n";
+             << ",\"speed\":" << speed << ",\"end_time\":" << end_time
+             << ",\"initial_gap\":" << gap << ",\"particles\":" << particles.TotalRealParticles() << "}\n";
     std::ofstream history("history.csv");
     history << "time,force_z,mean_velocity_z,mean_damage,max_damage,min_J,kinetic_energy,max_pressure\n" << std::setprecision(16);
     Real last_mean_damage = 0, peak_force = 0;
