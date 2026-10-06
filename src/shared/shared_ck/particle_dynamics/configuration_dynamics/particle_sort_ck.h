@@ -52,7 +52,6 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
         ComputingKernel(const ExecutionPolicy &ex_policy,
                         ParticleSortCK<ExecutionPolicy> &encloser);
         void prepareSequence(UnsignedInt index_i);
-        void updateSortedID(UnsignedInt index_i);
 
       protected:
         Mesh mesh_;
@@ -60,21 +59,6 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
         Vecd *pos_;
         UnsignedInt *sequence_;
         UnsignedInt *index_permutation_;
-        UnsignedInt *original_id_;
-        UnsignedInt *sorted_id_;
-    };
-
-    class UpdateBodyPartByParticle
-    {
-      public:
-        template <class EncloserType>
-        UpdateBodyPartByParticle(const ExecutionPolicy &ex_policy,
-                                 EncloserType &encloser, UnsignedInt body_part_i);
-        void update(UnsignedInt index_i);
-
-      protected:
-        UnsignedInt *particle_list_, *original_id_list_;
-        UnsignedInt *sorted_id_;
     };
 
     virtual void exec(Real dt = 0.0) override;
@@ -86,18 +70,9 @@ class ParticleSortCK : public LocalDynamics, public BaseDynamics<void>
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<UnsignedInt> *dv_sequence_;
     DiscreteVariable<UnsignedInt> *dv_index_permutation_;
-    DiscreteVariable<UnsignedInt> *dv_original_id_;
-    DiscreteVariable<UnsignedInt> *dv_sorted_id_;
     OperationOnDataAssemble<DiscreteVariables, UpdateSortableVariables<DiscreteVariable>> update_variables_to_sort_;
     SortMethodType sort_method_;
     Implementation<ExecutionPolicy, LocalDynamicsType, ComputingKernel> kernel_implementation_;
-
-    StdVec<BodyPartByParticle *> body_parts_by_particle_;
-    StdVec<DiscreteVariable<UnsignedInt> *> dv_particle_lists_, dv_original_id_lists_;
-    using UpdateBodyPartParticleImplementation =
-        Implementation<ExecutionPolicy, LocalDynamicsType, UpdateBodyPartByParticle>;
-    UniquePtrsKeeper<UpdateBodyPartParticleImplementation> update_body_part_by_particle_implementation_ptrs_;
-    StdVec<UpdateBodyPartParticleImplementation *> update_body_part_by_particle_implementations_;
 };
 } // namespace SPH
 #endif // PARTICLE_SORT_H

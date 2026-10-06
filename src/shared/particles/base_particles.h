@@ -215,7 +215,9 @@ class BaseParticles
     struct WriteParticleVariableToXmlElement
     {
         TinyXMLElement *element_;
-        WriteParticleVariableToXmlElement(TinyXMLElement *element) : element_(element) {}
+        UnsignedInt number_of_particles_;
+        WriteParticleVariableToXmlElement(TinyXMLElement *element, UnsignedInt number_of_particles)
+            : element_(element), number_of_particles_(number_of_particles) {}
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, XmlParser &xml_parser);
     };
@@ -223,7 +225,9 @@ class BaseParticles
     struct ReadParticleVariableFromXmlElement
     {
         TinyXMLElement *element_;
-        ReadParticleVariableFromXmlElement(TinyXMLElement *element) : element_(element) {}
+        UnsignedInt number_of_particles_;
+        ReadParticleVariableFromXmlElement(TinyXMLElement *element, UnsignedInt number_of_particles)
+            : element_(element), number_of_particles_(number_of_particles) {}
         template <typename DataType>
         void operator()(DataContainerAddressKeeper<DiscreteVariable<DataType>> &variables, BaseParticles *base_particles, XmlParser &xml_parser);
     };

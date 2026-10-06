@@ -179,11 +179,6 @@ void RestartIO::readFromFile(size_t restart_step)
                 std::cout << "\n Total real particles of body " << body_name
                           << " read from restart: " << base_particles.TotalRealParticles() << "\n";
 
-                for (BodyPartByParticle *body_part : base_particles.getBodyPartsByParticle())
-                {
-                    body_part->rebuildFromParticleGroups();
-                }
-                
                 break;
             }
 
