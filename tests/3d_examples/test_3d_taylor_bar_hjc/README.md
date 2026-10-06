@@ -1,4 +1,4 @@
-# HJC concrete impact
+# Taylor-bar impact with HJC concrete
 
 A concrete cylinder impacts a fixed wall, following the geometry and contact
 workflow of the Taylor-bar examples. `HJCSolid` adds pressure-dependent strength,
@@ -8,10 +8,10 @@ dynamics framework. The example outputs VTP fields and a `history.csv` file.
 Build with 3D examples and unit tests enabled, then run in a separate directory:
 
 ```sh
-cmake --build build --target test_hjc test_3d_hjc_impact
-ctest --test-dir build -R 'HJC\.|^test_3d_hjc_impact$' --output-on-failure
+cmake --build build --target test_hjc test_3d_taylor_bar_hjc
+ctest --test-dir build -R 'HJC\.|^test_3d_taylor_bar_hjc$' --output-on-failure
 mkdir impact && cd impact
-../build/tests/3d_examples/test_3d_hjc_impact/bin/test_3d_hjc_impact
+../build/tests/3d_examples/test_3d_taylor_bar_hjc/bin/test_3d_taylor_bar_hjc
 ```
 
 The cylinder is 10 mm in diameter and 20 mm long. Its initial surface gap is
@@ -35,7 +35,7 @@ To regenerate the references, start from the repository root with a fresh
 working directory:
 
 ```sh
-exe="$(pwd)/build/tests/3d_examples/test_3d_hjc_impact/bin/test_3d_hjc_impact"
+exe="$(pwd)/build/tests/3d_examples/test_3d_taylor_bar_hjc/bin/test_3d_taylor_bar_hjc"
 mkdir -p reference_run/input && cd reference_run
 for run in 1 2 3 4 5 6; do
     "$exe" --regression-test --spacing=0.001 --speed=30 --cfl=0.2 \
@@ -62,7 +62,7 @@ uses the same 0–1 scale in every frame. The wall is drawn as a gray slab.
 Reproduce both figures with NumPy, Matplotlib and VTK installed:
 
 ```sh
-python /path/to/test_3d_hjc_impact/plot.py impact --compare impact_half_dt
+python /path/to/test_3d_taylor_bar_hjc/plot.py impact --compare impact_half_dt
 # On a headless X11-based VTK build, prefix the command with xvfb-run -a.
 ```
 
