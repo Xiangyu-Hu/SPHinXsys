@@ -40,7 +40,8 @@ namespace SPH
 {
 using MainMethods = ParticleMethodContainer<MainExecutionPolicy>;
 using HostMethods = ParticleMethodContainer<ParallelPolicy>;
-using SequenceMethods = ParticleMethodContainer<SequencedPolicy>;  
+using SequenceMethods = ParticleMethodContainer<SequencedPolicy>;
+class SPHSolver;
 class EventScheduler
 {
   public:
@@ -67,7 +68,6 @@ class EventScheduler
 class TimeStepper
 {
   public:
-    TimeStepper(SPHSystem &sph_system);
     ~TimeStepper() {};
 
     EventScheduler &getEventScheduler() { return event_scheduler_; }
@@ -174,6 +174,8 @@ class TimeStepper
     UniquePtrsKeeper<TriggerByPhysicalTime> execution_by_physical_time_keeper_;
 
   protected:
+    friend class UniquePtrKeeper<TimeStepper>;
+    TimeStepper(SPHSystem &sph_system);
     EventScheduler event_scheduler_;
     StdVec<TriggerByInterval *> interval_executers_;
     StdVec<TriggerByPhysicalTime *> physical_time_executers_;
