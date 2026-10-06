@@ -38,6 +38,9 @@
 
 namespace SPH
 {
+using MainMethods = ParticleMethodContainer<MainExecutionPolicy>;
+using HostMethods = ParticleMethodContainer<ParallelPolicy>;
+using SequenceMethods = ParticleMethodContainer<SequencedPolicy>;  
 class EventScheduler
 {
   public:
@@ -184,10 +187,6 @@ class TimeStepper
     UnsignedInt restart_write_interval_{1000};
 };
 
-using MainMethods = ParticleMethodContainer<MainExecutionPolicy>;
-using HostMethods = ParticleMethodContainer<ParallelPolicy>;
-using SequenceMethods = ParticleMethodContainer<SequencedPolicy>;
-
 class SPHSolver
 {
     UniquePtrKeeper<MainMethods> main_methods_keeper_;
@@ -205,7 +204,6 @@ class SPHSolver
 
   protected:
     SPHSystem &sph_system_;
-    TimeStepper time_stepper_;
 };
 } // namespace SPH
 #endif // SPH_SOLVER_H
