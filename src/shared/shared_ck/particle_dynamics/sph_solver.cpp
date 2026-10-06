@@ -33,7 +33,19 @@ bool EventScheduler::Event::operator<(const Event &other) const
 }
 //=================================================================================================//
 TimeStepper::TimeStepper(SPHSystem &sph_system)
-    : global_dt_(0.0), sph_system_(sph_system), sv_physical_time_(&sph_system.svPhysicalTime()) {}
+    : global_dt_(0.0), sph_system_(sph_system), sv_physical_time_(&sph_system.svPhysicalTime())
+{
+    if constexpr (std::is_base_of_v<DecomposedExecutionTag, MainMethods::ExPolicy>)
+    {
+        if (sph_system_.RestartStep() == 0)
+        {
+            for (auto *body : sph_system_.getSPHBodies())
+            {
+                body->getBodyDecomposition<MainMethods::ExPolicy>().scatterFromHost();
+            }
+        }
+    }
+}
 //=================================================================================================//
 void TimeStepper::setRestartStep(UnsignedInt restart_step)
 {
@@ -118,7 +130,7 @@ UnsignedInt TimeStepper::incrementIterationStep()
     {
         for (auto *body : sph_system_.getSPHBodies())
         {
-            body->getDecomposition<MainMethods::ExPolicy>().migrateParticles();
+            body->getBodyDecomposition<MainMethods::ExPolicy>().migrateParticles();
         }
     }
 
@@ -194,7 +206,7 @@ Real TimeStepper::getGlobalTimeStepSizeWithScalingRef()
     return getGlobalTimeStepSize() * sv_physical_time_->getScalingRef();
 }
 //=================================================================================================//
-SPHSolver::SPHSolver(SPHSystem &sph_system) : sph_system_(sph_system), time_stepper_(sph_system) {};
+SPHSolver::SPHSolver(SPHSystem &sph_system) : sph_system_(sph_system) {};
 //=================================================================================================//
 SPHSolver::~SPHSolver() = default;
 //=================================================================================================//
@@ -202,17 +214,7 @@ MainMethods &SPHSolver::getMainMethodContainer()
 {
     if (main_methods_keeper_.getPtr() == nullptr)
     {
-        MainMethods &main_methods = *main_methods_keeper_.createPtr<MainMethods>(par_ck);
-
-        if constexpr (std::is_base_of_v<DecomposedExecutionTag, MainMethods::ExPolicy>)
-        {
-            for (auto *body : sph_system_.getSPHBodies())
-            {
-                main_methods.addDecomposition(*body);
-            }
-        }
-
-        return main_methods;
+        return *main_methods_keeper_.createPtr<MainMethods>(par_ck);
     }
     return *main_methods_keeper_.getPtr();
 }
@@ -239,20 +241,9 @@ TimeStepper &SPHSolver::getTimeStepper()
 {
     if (time_stepper_keeper_.getPtr() == nullptr)
     {
-        if constexpr (std::is_base_of_v<DecomposedExecutionTag, MainMethods::ExPolicy>)
-        {
-            if (sph_system_.RestartStep() == 0)
-            {
-                for (auto *body : sph_system_.getSPHBodies())
-                {
-                    body->getDecomposition<MainMethods::ExPolicy>().scatterFromHost();
-                }
-            }
-        }
-
         return *time_stepper_keeper_.createPtr<TimeStepper>(sph_system_);
     }
-    return time_stepper_;
+    return *time_stepper_keeper_.getPtr();
 }
 //=================================================================================================//
 } // namespace SPH

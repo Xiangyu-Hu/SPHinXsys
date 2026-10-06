@@ -50,7 +50,6 @@
 #include "base_particles.hpp"
 #include "domain_decomposition.h"
 #include "execution_policy.h"
-#include "sph_system.h"
 #include "subdomain_exchange.hpp"
 #include "subdomain_runner.h"
 
@@ -89,10 +88,9 @@ class BodyDecomposition : public BaseDecomposition
     std::unique_ptr<SubdomainExchange<ExecutionPolicy>> exchange_;
 
   public:
-    explicit BodyDecomposition(SPHBody &sph_body)
+    explicit BodyDecomposition(SPHBody &sph_body, SlabDecomposition &decomposition)
         : body_(sph_body), particles_(sph_body.getBaseParticles()),
-          decomposition_(sph_body.getSPHSystem().getDecomposition()),
-          dv_subdomain_id_(nullptr)
+          decomposition_(decomposition), dv_subdomain_id_(nullptr)
     {
         std::cout << "Body " << body_.Name() << " decomposition: " << decomposition_.describe();
     };
@@ -171,7 +169,7 @@ class BodyDecomposition : public BaseDecomposition
     };
 
     int NumberOfSubdomains() const { return decomposition_.NumberOfSubdomains(); };
-    
+
     StdVec<UnsignedInt> OwnedParticlesPerSubdomain()
     {
         return getExchange().OwnedParticlesPerSubdomain();

@@ -114,7 +114,7 @@ void SPHSystem::initializeSystemConfigurations()
     }
 }
 //=================================================================================================//
-SlabDecomposition &SPHSystem::getDecomposition()
+SlabDecomposition &SPHSystem::getDomainDecomposition()
 {
     if (!slab_decomposition_keeper_.getPtr())
     {

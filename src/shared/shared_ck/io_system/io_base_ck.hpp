@@ -21,14 +21,14 @@ void VariablesWriteHelper::prepareToWrite(
     SPHBody *sph_body, DiscreteVariables &discrete_variables,
     const DecomposedExecution<PolicyType> &ex_policy)
 {
-    sph_body->getDecomposition<DecomposedExecution<PolicyType>>().gatherToHost(discrete_variables);
+    sph_body->getBodyDecomposition<DecomposedExecution<PolicyType>>().gatherToHost(discrete_variables);
 }
 //=================================================================================================//
 template <class PolicyType>
 void VariablesWriteHelper::finishWrite(
     SPHBody *sph_body, const DecomposedExecution<PolicyType> &ex_policy)
 {
-    sph_body->getDecomposition<DecomposedExecution<PolicyType>>().finishHostAccess();
+    sph_body->getBodyDecomposition<DecomposedExecution<PolicyType>>().finishHostAccess();
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -144,7 +144,7 @@ void VariablesReadHelper::finalizeAfterRead(
     SPHBody *sph_body, DiscreteVariables &discrete_variables,
     const DecomposedExecution<PolicyType> &ex_policy)
 {
-    sph_body->getDecomposition<DecomposedExecution<PolicyType>>().scatterFromHost();
+    sph_body->getBodyDecomposition<DecomposedExecution<PolicyType>>().scatterFromHost();
 }
 //=================================================================================================//
 template <class ExecutionPolicy>

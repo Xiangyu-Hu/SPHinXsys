@@ -177,11 +177,8 @@ class SPHBody
     template <class ParticleType, typename... Parameters, class ReserveType, typename... Args>
     ParticleType &generateParticlesWithReserve(ReserveType &particle_reserve, Args &&...args);
 
-    template <class ExecutionPolicy, typename... Args>
-    BodyDecomposition<ExecutionPolicy> &addDecomposition(Args &&...args);
-
     template <class ExecutionPolicy>
-    BodyDecomposition<ExecutionPolicy> &getDecomposition();
+    BodyDecomposition<ExecutionPolicy> &getBodyDecomposition();
 };
 
 /**

@@ -4,10 +4,11 @@
 #include "base_body.h"
 
 #include "adaptation.h"
-#include "body_decomposition.h"
 #include "base_material.h"
 #include "base_particle_generator.h"
+#include "body_decomposition.h"
 #include "complex_geometry.h"
+#include "sph_system.h"
 
 namespace SPH
 {
@@ -143,17 +144,14 @@ ParticleType &SPHBody::generateParticlesWithReserve(ReserveType &particle_reserv
         particle_reserve, std::forward<Args>(args)...);
 }
 //=================================================================================================//
-template <class ExecutionPolicy, typename... Args>
-BodyDecomposition<ExecutionPolicy> &SPHBody::addDecomposition(Args &&...args)
-{
-    return *decomposition_keeper_.template createPtr<BodyDecomposition<ExecutionPolicy>>(
-        *this, std::forward<Args>(args)...);
-}
-//=================================================================================================//
 template <class ExecutionPolicy>
-BodyDecomposition<ExecutionPolicy> &SPHBody::getDecomposition()
+BodyDecomposition<ExecutionPolicy> &SPHBody::getBodyDecomposition()
 {
-    checkPointer(decomposition_keeper_.getPtr(), "body decomposition", body_name_);
+    if (!decomposition_keeper_.getPtr())
+    {
+        return *decomposition_keeper_.createPtr<BodyDecomposition<ExecutionPolicy>>(
+            *this, sph_system_.getDomainDecomposition());
+    }
     return DynamicCast<BodyDecomposition<ExecutionPolicy>>(this, *decomposition_keeper_.getPtr());
 }
 //=================================================================================================//

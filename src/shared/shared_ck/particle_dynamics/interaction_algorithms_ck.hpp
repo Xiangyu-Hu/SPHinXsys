@@ -98,7 +98,7 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Inner<Paramete
 {
     if constexpr (std::is_base_of_v<DecomposedExecutionTag, ExecutionPolicy>)
     {
-        auto &exchange = this->sph_body_->template getDecomposition<ExecutionPolicy>().getExchange();
+        auto &exchange = this->sph_body_->template getBodyDecomposition<ExecutionPolicy>().getExchange();
         exchange.refreshHalo(this->to_be_interact_variables_);
     }
 
@@ -127,7 +127,7 @@ void InteractionDynamicsCK<ExecutionPolicy, Base, InteractionType<Contact<Parame
 {
     if constexpr (std::is_base_of_v<DecomposedExecutionTag, ExecutionPolicy>)
     {
-        auto &exchange = this->contact_body_->template getDecomposition<ExecutionPolicy>().getExchange();
+        auto &exchange = this->contact_body_->template getBodyDecomposition<ExecutionPolicy>().getExchange();
         exchange.refreshHalo(this->contact_interact_variables_);
     }
 

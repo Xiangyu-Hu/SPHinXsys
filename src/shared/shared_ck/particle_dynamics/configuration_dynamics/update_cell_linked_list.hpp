@@ -77,7 +77,7 @@ void UpdateCellLinkedList<ExecutionPolicy, DynamicsIdentifier>::exec(Real dt)
 {
     if constexpr (std::is_base_of_v<DecomposedExecutionTag, ExecutionPolicy>)
     {
-        this->sph_body_->template getDecomposition<ExecutionPolicy>().updateHaloPlan();
+        this->sph_body_->template getBodyDecomposition<ExecutionPolicy>().updateHaloPlan();
     }
 
     execution::fanOutOverSubdomains(

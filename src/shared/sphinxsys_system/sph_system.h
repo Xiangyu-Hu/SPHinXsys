@@ -105,7 +105,7 @@ class SPHSystem
     BoundingBoxd getSystemDomainBounds() { return system_bounds_; };
     void setSystemDomainBounds(const BoundingBoxd &domain_bounds) { system_bounds_ = domain_bounds; };
     SimbodySystem &getSimbodySystem();
-    SlabDecomposition &getDecomposition();
+    SlabDecomposition &getDomainDecomposition();
 
     template <typename DataType>
     SingleVariable<DataType> *registerSystemVariable(
