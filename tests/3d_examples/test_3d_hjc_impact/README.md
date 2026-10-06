@@ -19,9 +19,35 @@ The cylinder is 10 mm in diameter and 20 mm long. Its initial surface gap is
 the acoustic CFL is 0.2, and the simulation lasts 60 microseconds. For a time
 step comparison, run again in another directory with `--cfl=0.1`. `--spacing`,
 `--speed` and `--end-time` accept values in metres, metres/second and seconds.
-The coarse CTest case uses 1 mm spacing and checks that contact and damage
-occur, all deformation determinants stay positive, and damage remains bounded
-and irreversible. The parameters are illustrative, not an experimental fit.
+The coarse CTest case uses 1 mm spacing. It compares total kinetic energy and
+mean damage at 31 fixed times against the stored regression data, using the
+library's ensemble-average test and its 1% relative standard-deviation floor.
+It also checks that contact and damage occur, deformation determinants stay
+positive, and damage remains bounded and irreversible. The parameters are
+illustrative, not an experimental fit.
+
+`--regression-test` selects this check and requires 1 mm spacing, 30 m/s,
+CFL 0.2 and 60 microseconds. CMake copies the reference files into the CTest
+working directory. Normal example runs use no reference files, so spacing,
+speed, CFL and duration can still be varied.
+
+To regenerate the references, start from the repository root with a fresh
+working directory:
+
+```sh
+exe="$(pwd)/build/tests/3d_examples/test_3d_hjc_impact/bin/test_3d_hjc_impact"
+mkdir -p reference_run/input && cd reference_run
+for run in 1 2 3 4 5 6; do
+    "$exe" --regression-test --spacing=0.001 --speed=30 --cfl=0.2 \
+        --end-time=0.00006 --regression=true --state_recording=false || break
+done
+```
+
+Both `input/*_runtimes.dat` files must begin with `true`; repeat if needed.
+Copy those two files and the two `*_ensemble_averaged_mean_variance.xml` files
+into this example's `regression_test_tool` directory, then reconfigure CMake.
+The `1e-3` arguments to `generateDataBase` control convergence of the reference
+statistics; the comparison uses the stored variance and the library's floor.
 
 ![Damage and equivalent stress at 20, 40 and 60 microseconds](impact.png)
 

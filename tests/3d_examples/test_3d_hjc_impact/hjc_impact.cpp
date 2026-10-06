@@ -3,6 +3,7 @@
 #include "sphinxsys.h"
 #include <fstream>
 #include <iomanip>
+#include <memory>
 #include <stdexcept>
 
 using namespace SPH;
@@ -10,11 +11,14 @@ using namespace SPH;
 int main(int argc, char *argv[])
 {
     Real spacing = .0005, speed = 30, cfl = .2, end_time = 6e-5;
+    bool regression_test = false;
     std::vector<char *> system_args{argv[0]};
     for (int i = 1; i < argc; ++i)
     {
         std::string arg(argv[i]);
-        if (arg.rfind("--spacing=", 0) == 0)
+        if (arg == "--regression-test")
+            regression_test = true;
+        else if (arg.rfind("--spacing=", 0) == 0)
             spacing = std::stod(arg.substr(10));
         else if (arg.rfind("--speed=", 0) == 0)
             speed = std::stod(arg.substr(8));
@@ -28,6 +32,9 @@ int main(int argc, char *argv[])
     if (!(spacing > 0 && spacing <= .001 && speed > 0 && std::isfinite(speed) &&
           cfl > 0 && cfl <= .2 && end_time > 0 && std::isfinite(end_time)))
         throw std::invalid_argument("Require 0 < spacing <= 0.001 m, speed > 0, 0 < CFL <= 0.2 and end-time > 0");
+    if (regression_test && (spacing != Real(.001) || speed != Real(30) ||
+                            cfl != Real(.2) || end_time != Real(6e-5)))
+        throw std::invalid_argument("Regression test requires spacing=0.001, speed=30, cfl=0.2 and end-time=0.00006");
     const Real radius = .005, length = .020, wall_depth = 4 * spacing;
     SPHSystem system(BoundingBoxd(Vecd(-.02, -.02, -wall_depth), Vecd(.02, .02, .04)), spacing);
 #ifdef BOOST_AVAILABLE
@@ -58,6 +65,16 @@ int main(int argc, char *argv[])
     BodyStatesRecordingToVtp states(system);
     for (const char *name : {"HJCDamage", "Pressure", "VonMisesStress", "HJCPlasticStrain", "HJCPlasticVolume"})
         states.addToWrite<Real>(column, name);
+
+    using EnergyRegression = RegressionTestEnsembleAverage<ReducedQuantityRecording<TotalKineticEnergy>>;
+    using DamageRegression = RegressionTestEnsembleAverage<ReducedQuantityRecording<Average<QuantitySummation<Real>>>>;
+    std::unique_ptr<EnergyRegression> energy_regression;
+    std::unique_ptr<DamageRegression> damage_regression;
+    if (regression_test)
+    {
+        energy_regression = std::make_unique<EnergyRegression>(column);
+        damage_regression = std::make_unique<DamageRegression>(column, "HJCDamage");
+    }
 
     system.initializeSystemCellLinkedLists();
     system.initializeSystemConfigurations();
@@ -104,6 +121,11 @@ int main(int argc, char *argv[])
     };
     record();
     states.writeToFile(0);
+    if (regression_test)
+    {
+        energy_regression->writeToFile(0);
+        damage_regression->writeToFile(0);
+    }
     size_t step = 0;
     for (int frame = 1; frame <= 30; ++frame)
     {
@@ -124,10 +146,28 @@ int main(int argc, char *argv[])
             record();
         }
         states.writeToFile(frame);
+        if (regression_test)
+        {
+            energy_regression->writeToFile(frame);
+            damage_regression->writeToFile(frame);
+        }
         history.flush();
         std::cout << "t=" << time << " steps=" << step << " mean damage=" << last_mean_damage << '\n';
     }
     if (end_time >= 2e-5 && (peak_force <= 0 || last_mean_damage <= 0))
         throw std::runtime_error("Impact did not exercise contact and HJC damage");
+    if (regression_test)
+    {
+        if (system.GenerateRegressionData())
+        {
+            energy_regression->generateDataBase(1e-3, 1e-3);
+            damage_regression->generateDataBase(1e-3, 1e-3);
+        }
+        else
+        {
+            energy_regression->testResult();
+            damage_regression->testResult();
+        }
+    }
     return 0;
 }
