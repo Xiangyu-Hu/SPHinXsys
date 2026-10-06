@@ -1,13 +1,13 @@
 # Domain decomposition
 
 This document describes the domain-decomposition design and its implementation in
-SPHinXsys. It is an  updated reference for the present feature.
+SPHinXsys. It is an updated reference for the present feature.
 
 ## Purpose and scope
 
 Domain decomposition assigns particles to subdomains so that their physics can be
-computed independently, with neighboring particle data exchanged through halos.
-The same policy-generic implementation supports a host execution path and a SYCL
+computed independently, with neighboring particle data exchanged through halos. The
+same policy-generic implementation supports a host execution path and a SYCL
 device path:
 
 | Backend | Decomposed policy | Subdomain execution |
@@ -152,6 +152,88 @@ A particle is expected to move by no more than one adjacent subdomain in a step.
 Larger jumps violate the current slab-neighbor exchange assumption and should be
 prevented by the timestep and slab sizing.
 
+## Decomposed mesh
+
+The cell-linked-list mesh is currently allocated for the whole domain on every
+subdomain. A decomposed mesh would instead allocate each subdomain's mesh only over
+the region it needs to see: its slab plus the halo band in the split direction, and
+the full extent in the transverse directions. Adjacent subdomain meshes then
+overlap by twice the halo width in the split direction, so the cell-index space is
+an overlapping cover rather than a partition.
+
+### Motivation
+
+The whole-domain mesh does not consume much cell-specific memory. The cell-based
+storage is a per-cell count/offset array and a `uint32` mask (up to 32 independent
+masks), so it is `O(N_cells)` per subdomain and independent of the local particle
+count. The particle-index array scales with the local particle set, not with the
+mesh. For dense SPH distributions with several particles per cell, the raw memory
+of the cell arrays is modest even across subdomains and does not by itself justify
+a decomposed mesh.
+
+The real cost is the cell-list build, and specifically the prefix sum. A parallel
+scan is the slowest phase of a GPU cell-list build. It is `O(N_cells)` regardless
+of how many cells are occupied: empty cells contribute zeros but are still read,
+added, and written. A bitmask lets traversal skip empty cells, but a conventional
+scan does not consult it; compacting non-empty cells first requires another
+scan-like pass over `N_cells`, so the `O(N_cells)` work is not avoided.
+
+Because the mesh is whole-domain, each subdomain scans the same `N_cells` as the
+non-decomposed run, even though it owns only about `1/S` of the particles. If
+`T_p` is the particle-side work and `T_c` the cell-side work of the non-decomposed
+build, the wall-clock per subdomain is `T_p / S + T_c`, and the achievable speedup
+is capped at `T_p / T_c + 1` as `S` grows. On GPU, where the scan makes `T_c`
+large, this cap is reached early and additional subdomains stop helping. The
+whole-domain mesh is therefore a scaling limitation, not a memory limitation.
+
+### Effect of a decomposed mesh
+
+With a mesh limited to the slab plus halo band, the per-subdomain cell count
+becomes approximately `N_cells / S + overlap_cells`, where `overlap_cells` is the
+halo band on both sides in the split direction. The clear, count, scan, and scatter
+all run over this local count, so the scan length scales with the subdomain's
+particle share and the speedup cap is removed. The overlap adds
+`2 * S * h_layers` cell layers in the split direction across all subdomains; for
+`S = 8` and two halo layers, that is 32 extra layers, a few percent when slabs are
+thick and a larger fraction when slabs are thin.
+
+### Cell-based scatter
+
+The host-to-subdomain scatter of particle state does not cover cell-based arrays.
+If a mask is host-derived — geometry regions, boundary tags, precomputed active
+sets — it must be scattered into the decomposed cell-index space. The mapping from
+a global cell to local cells is one-to-many in the overlap band: a global cell in
+the overlap belongs to two subdomains. Both copies come from the same host value,
+so they agree by construction. The scatter is a one-shot setup cost, not a
+per-step cost, and does not weigh against the decomposed mesh.
+
+If a mask is particle-derived — occupancy, particle type — each subdomain can build
+it locally from owned plus halo particles. In the overlap band both subdomains see
+the same particle set, one as owner and the other as halo, so the masks agree as
+long as the mask depends only on state in the halo exchange set. If it depends on
+particle state that is not exchanged, the halo copy can be stale and the two
+subdomains' masks can disagree in the overlap band. Such a dependency must either
+be added to the exchange set or the mask must be recomputed from geometry instead
+of particle state. No host scatter is needed for a locally buildable mask.
+
+### Index mapping
+
+For regular slabs the global-to-local cell index is affine:
+`local_index = global_index - offset_s`, with a per-subdomain offset. No stored map
+is needed and there is no per-step mapping cost. A stored map would only be needed
+for non-uniform meshes or irregular slab boundaries, which are not the current
+case.
+
+### Interface requirements
+
+`SubdomainMap` currently provides owner, neighbor, and halo queries. A decomposed
+mesh additionally needs the per-subdomain mesh extent so the cell list can be
+allocated and indexed correctly, and, for host-derived masks, a global-to-local
+cell mapping that handles the overlap. The local mesh must extend at least the
+cutoff into the halo band so that neighbor search near a slab boundary is complete;
+this is the same condition as the existing halo-width requirement, applied to the
+mesh extent.
+
 ## Particle-variable responsibilities
 
 The current `BodyDecomposition` initializes the exchange-variable set lazily from
@@ -232,11 +314,12 @@ calls `updateHaloPlan()` and cleans the flags) is called out in
 ## Comparison with common single-domain decomposition approaches
 
 Sources: LAMMPS documentation (partitioning, communication, neighbor lists,
-`comm_modify`, `balance`) and AMReX particle documentation. 
-Note that the decomposed computing is handled based on MPI framework not the single-node one used in SPHInXsys. The OpenFPM primary
-paper, DualSPHysics multi-GPU pages and LIGGGHTS documentation could not be
-retrieved; no claims are made about them, and any DEM remarks are inferred from
-LAMMPS. The periodic-boundary observation covers only this module.
+`comm_modify`, `balance`) and AMReX particle documentation.
+Note that the decomposed computing is handled based on MPI framework not the
+single-node one used in SPHinXsys. The OpenFPM primary paper, DualSPHysics
+multi-GPU pages and LIGGGHTS documentation could not be retrieved; no claims are
+made about them, and any DEM remarks are inferred from LAMMPS. The
+periodic-boundary observation covers only this module.
 
 ### Partitioning
 
@@ -254,8 +337,9 @@ for domains elongated across the split axis.
 
 `[0, n_owned)` owned and `[n_owned, n_local)` halo matches the LAMMPS owned-then-
 ghost array. `inHaloBandOf()` plays the role of the cutoff-widened ghost region.
-Unlike LAMMPS, ghosts are not used for periodic boundaries (currently not implemented in SPHinXsys SYCL backend); positions outside the
-domain are clamped to the end subdomains.
+Unlike LAMMPS, ghosts are not used for periodic boundaries (currently not
+implemented in SPHinXsys SYCL backend); positions outside the domain are clamped
+to the end subdomains.
 
 ### Exchange protocol
 
@@ -297,13 +381,21 @@ and fronts such as free surfaces and dam-break fronts.
 ### Spatial index
 
 LAMMPS stores only the neighbor bins overlapping the local subdomain extended by
-the cutoff. Here the cell mesh covers the whole domain on every subdomain, so
-mesh memory and per-cell update cost do not shrink with subdomain count. This is
-the clearest gap relative to established practice.
+the cutoff. Here the cell mesh covers the whole domain on every subdomain. The
+cell-specific storage is only a per-cell count/offset array and a `uint32` mask,
+so its raw memory is `O(N_cells)` per subdomain and modest for dense
+distributions. The consequential difference is not memory but the cell-list build:
+clearing, counting, prefix-summing, and scattering run over the whole-domain
+`N_cells` on every subdomain. The prefix sum in particular is `O(N_cells)`
+regardless of occupancy, and on GPU it is the slowest phase of the build. With
+`S` subdomains the per-subdomain cell work does not shrink, capping parallel
+speedup at roughly `T_p / T_c + 1`. This is the clearest scaling gap relative to
+established practice, and the decomposed mesh described above is the direct fix.
 
 ### Lessons
 
-1. Per-subdomain cell mesh limited to slab plus halo band.
+1. Per-subdomain cell mesh limited to slab plus halo band, to make the cell-list
+   build and its prefix sum scale with the subdomain's particle share.
 2. A reverse-communication audit, and an explicit rule for halo writes.
 3. A safety net for multi-hop migration: an explicit check, or a global mode.
 4. Cost-aware balancing, with an intra-slab density profile or RCB if slabs prove
@@ -311,6 +403,9 @@ the clearest gap relative to established practice.
 5. Periodic ghost images if periodic boundaries must work with decomposition.
 6. Keep pull-based, barrier-ordered exchange; it is a strength in the
    shared-memory context.
+7. For a decomposed mesh, keep the host-derived mask scatter one-shot, and either
+   build particle-derived masks locally from the exchange set or recompute them
+   from geometry.
 
 ## Typical ordering in a simulation
 
@@ -348,8 +443,16 @@ gathered particle order and a test confirms the output.
 ## Current limitations and validation
 
 - The cell-linked-list mesh is currently allocated for the whole domain on each
-  subdomain. This avoids mesh remapping but scales mesh memory with the number of
-  subdomains.
+  subdomain. The cell-specific storage — a per-cell count/offset array and a
+  `uint32` mask — is `O(N_cells)` per subdomain and modest for dense
+  distributions, so raw memory is not the main cost. The main cost is that the
+  cell-list build, and in particular the prefix sum, runs over the whole-domain
+  `N_cells` on every subdomain regardless of occupancy. On GPU the scan is the
+  slowest phase of the build, and with `S` subdomains the cell work per subdomain
+  does not shrink, capping parallel speedup. A decomposed mesh limited to the
+  slab plus halo band removes this cap at the cost of overlap cells, a one-shot
+  host scatter for host-derived masks, and a mesh-extent query in
+  `SubdomainMap`. See the decomposed-mesh section.
 - Threaded host execution is available, but replica growth/reallocation and its
   synchronization need dedicated validation before relying on it for production.
 - The SYCL decomposed path requires validation with a supported IntelLLVM/SYCL
@@ -361,6 +464,10 @@ gathered particle order and a test confirms the output.
 - Reduction association can change numerical results. Independently, the
   one-sided inner relation can append neighbors using atomic counters, so
   run-to-run ordering and trajectories may vary.
+- A particle-derived mask built locally on a decomposed mesh can disagree across
+  the overlap band if it depends on particle state that is not in the halo
+  exchange set. Such a dependency must be added to the exchange set or the mask
+  must be recomputed from geometry.
 - `addSubdomainIDToWrite()` is not yet a verified output path, as noted above.
 
 The repository has focused unit tests for slab geometry, rebalance, and host
