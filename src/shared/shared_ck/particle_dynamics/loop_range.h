@@ -94,37 +94,43 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByParticle>
 template <class ExecutionPolicy>
 class LoopRangeCK<ExecutionPolicy, BodyPartByCell>
 {
+    using MaskKernel = typename GroupManager::MaskKernel;
+
   public:
     LoopRangeCK(BodyPartByCell &body_part)
-        : cell_list_(body_part.dvCellList()->DelegatedData(ExecutionPolicy{})),
-          loop_bound_(body_part.svRangeSize()->DelegatedData(ExecutionPolicy{})),
+        : body_part_mask_(ExecutionPolicy{}, body_part.getCellGroupManager(), body_part.getPartMask()),
+          loop_bound_(body_part.getCellLinkedList().TotalNumberOfCells()),
           particle_index_(body_part.dvParticleIndex()->DelegatedData(ExecutionPolicy{})),
           cell_offset_(body_part.dvCellOffset()->DelegatedData(ExecutionPolicy{})) {};
     template <class UnaryFunc>
     void computeUnit(const UnaryFunc &uf, UnsignedInt i) const
     {
-        UnsignedInt cell_index = cell_list_[i];
-        for (size_t k = cell_offset_[cell_index]; k != cell_offset_[cell_index + 1]; ++k)
+        if (body_part_mask_.check(i))
         {
-            uf(particle_index_[k]);
+            for (size_t k = cell_offset_[i]; k != cell_offset_[i + 1]; ++k)
+            {
+                uf(particle_index_[k]);
+            }
         }
     };
 
     template <class ReturnType, class BinaryFunc, class UnaryFunc>
     ReturnType computeUnit(ReturnType temp, const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const
     {
-        UnsignedInt cell_index = cell_list_[i];
-        for (size_t k = cell_offset_[cell_index]; k != cell_offset_[cell_index + 1]; ++k)
+        if (body_part_mask_.check(i))
         {
-            temp = bf(temp, uf(particle_index_[k]));
+            for (size_t k = cell_offset_[i]; k != cell_offset_[i + 1]; ++k)
+            {
+                temp = bf(temp, uf(particle_index_[k]));
+            }
         }
         return temp;
     };
-    UnsignedInt LoopBound() const { return *loop_bound_; };
+    UnsignedInt LoopBound() const { return loop_bound_; };
 
   protected:
-    UnsignedInt *cell_list_;
-    UnsignedInt *loop_bound_;
+    MaskKernel body_part_mask_;
+    UnsignedInt loop_bound_;
     UnsignedInt *particle_index_;
     UnsignedInt *cell_offset_;
 };
