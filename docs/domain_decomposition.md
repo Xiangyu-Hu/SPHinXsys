@@ -1,8 +1,7 @@
 # Domain decomposition
 
 This document describes the domain-decomposition design and its implementation in
-SPHinXsys. It is the current reference for the feature; it intentionally omits the
-development and review chronology.
+SPHinXsys. It is an  updated reference for the present feature.
 
 ## Purpose and scope
 
@@ -233,7 +232,8 @@ calls `updateHaloPlan()` and cleans the flags) is called out in
 ## Comparison with common single-domain decomposition approaches
 
 Sources: LAMMPS documentation (partitioning, communication, neighbor lists,
-`comm_modify`, `balance`) and AMReX particle documentation. The OpenFPM primary
+`comm_modify`, `balance`) and AMReX particle documentation. 
+Note that the decomposed computing is handled based on MPI framework not the single-node one used in SPHInXsys. The OpenFPM primary
 paper, DualSPHysics multi-GPU pages and LIGGGHTS documentation could not be
 retrieved; no claims are made about them, and any DEM remarks are inferred from
 LAMMPS. The periodic-boundary observation covers only this module.
@@ -254,7 +254,7 @@ for domains elongated across the split axis.
 
 `[0, n_owned)` owned and `[n_owned, n_local)` halo matches the LAMMPS owned-then-
 ghost array. `inHaloBandOf()` plays the role of the cutoff-widened ghost region.
-Unlike LAMMPS, ghosts are not used for periodic boundaries; positions outside the
+Unlike LAMMPS, ghosts are not used for periodic boundaries (currently not implemented in SPHinXsys SYCL backend); positions outside the
 domain are clamped to the end subdomains.
 
 ### Exchange protocol
