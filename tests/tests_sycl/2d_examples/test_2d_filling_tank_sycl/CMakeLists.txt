@@ -25,3 +25,13 @@ set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "emitter, free surface")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 target_link_libraries(${PROJECT_NAME} sphinxsys_2d)
+
+if(SPHINXSYS_DECOMPOSITION)
+    # The same binary run domain decomposed: two subdomains, then a restart from the
+    # files the first test wrote. The regression tests must pass unchanged.
+    add_test(NAME ${PROJECT_NAME}_2subdomains COMMAND ${PROJECT_NAME} --subdomains=2 --state_recording=${TEST_STATE_RECORDING}
+        WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+    add_test(NAME ${PROJECT_NAME}_2subdomains_restart COMMAND ${PROJECT_NAME} --subdomains=2 --restart_step=4000 --state_recording=${TEST_STATE_RECORDING}
+        WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+    set_tests_properties(${PROJECT_NAME}_2subdomains_restart PROPERTIES DEPENDS ${PROJECT_NAME}_2subdomains)
+endif()

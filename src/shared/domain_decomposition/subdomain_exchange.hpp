@@ -564,8 +564,18 @@ void SubdomainExchange<ExecutionPolicy>::pullFromNeighborsOnCurrentSubdomain(
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
+void SubdomainExchange<ExecutionPolicy>::syncOwnedCountsFromParticles()
+{
+    for (int subdomain_id = 0; subdomain_id < execution::numberOfSubdomains(); ++subdomain_id)
+    {
+        owned_count_[subdomain_id] = particles_.svTotalRealParticles()->getValue(subdomain_id);
+    }
+}
+//=================================================================================================//
+template <class ExecutionPolicy>
 void SubdomainExchange<ExecutionPolicy>::updateHaloPlan()
 {
+    syncOwnedCountsFromParticles();
     execution::fanOutOverSubdomains(ExecutionPolicy{}, [&]()
                                     { buildSendListsOnCurrentSubdomain(); });
     // Barrier: every send count is now visible to the neighbors.
@@ -596,6 +606,7 @@ void SubdomainExchange<ExecutionPolicy>::refreshHalo(DiscreteVariables &variable
 template <class ExecutionPolicy>
 void SubdomainExchange<ExecutionPolicy>::migrateParticles()
 {
+    syncOwnedCountsFromParticles();
     auto dv_pos = particles_.dvParticlePosition();
     if (!dv_pos->isDirty())
     {

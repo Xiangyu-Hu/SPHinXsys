@@ -162,6 +162,11 @@ class SubdomainExchange
      *  the particle generation side: their state comes from the neighbor's buffer. */
     void migrateParticles();
 
+    /** Particle creation or removal (emitter, bidirectional boundary) changes only the
+     *  per-subdomain particle counter. Read it back into the owned counts, which the
+     *  halo plan and the migration are built on. Called on entry of both. */
+    void syncOwnedCountsFromParticles();
+
     UnsignedInt OwnedParticles(int subdomain_id) const { return owned_count_[subdomain_id]; };
     StdVec<UnsignedInt> OwnedParticlesPerSubdomain() const { return owned_count_; };
     UnsignedInt TotalOwnedParticles() const;
