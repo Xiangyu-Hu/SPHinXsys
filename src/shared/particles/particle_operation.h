@@ -47,11 +47,13 @@ class SpawnRealParticle
 {
     using MaskKernel = typename GroupManager::MaskKernel;
     DiscreteVariables &evolving_variables_;
-    VariableArrayAssemble copyable_states_;
+    UniquePtrKeeper<VariableArrayAssemble> copyable_states_keeper_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
     GroupManager &group_manager_;
     SingleVariable<UnsignedInt> *sv_total_real_particles_;
     UnsignedInt particles_bound_;
+
+    VariableArrayAssemble &getCopyableStates();
 
   public:
     SpawnRealParticle(BaseParticles *particles);

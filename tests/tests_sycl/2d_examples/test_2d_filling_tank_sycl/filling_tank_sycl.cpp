@@ -128,7 +128,7 @@ int main(int ac, char *av[])
     auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall);
     auto &water_body_update_complex_relation = main_methods.addRelationDynamics(water_body_inner, water_wall_contact);
     auto &fluid_observer_contact_relation = main_methods.addRelationDynamics(fluid_observer_contact);
-//    auto &particle_sort = main_methods.addSortDynamics(water_body);
+    auto &particle_sort = main_methods.addSortDynamics(water_body);
 
     Gravity gravity(Vecd(0.0, -gravity_g));
     auto &constant_gravity = main_methods.addStateDynamics<GravityForceCK<Gravity>>(water_body, gravity);
@@ -274,7 +274,7 @@ int main(int ac, char *av[])
             time_stepper.incrementIterationStep();
             if (time_stepper.getIterationStep() % 100 == 0)
             {
-//                particle_sort.exec();
+                particle_sort.exec();
             }
             water_cell_linked_list.exec();
             water_body_update_complex_relation.exec();
