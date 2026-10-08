@@ -75,6 +75,7 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByParticle>
             f(i);
         }
     };
+
     template <class ReturnType, class BinaryFunc, class UnaryFunc>
     ReturnType computeUnit(ReturnType temp, const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const
     {
@@ -84,6 +85,7 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByParticle>
         }
         return temp;
     };
+
     UnsignedInt LoopBound() const { return *loop_bound_; };
 
   protected:
@@ -99,9 +101,10 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByCell>
   public:
     LoopRangeCK(BodyPartByCell &body_part)
         : body_part_mask_(ExecutionPolicy{}, body_part.getCellGroupManager(), body_part.getPartMask()),
-          loop_bound_(body_part.getCellLinkedList().TotalNumberOfCells()),
+          loop_bound_(body_part.getTotalNumberOfCells()),
           particle_index_(body_part.dvParticleIndex()->DelegatedData(ExecutionPolicy{})),
           cell_offset_(body_part.dvCellOffset()->DelegatedData(ExecutionPolicy{})) {};
+
     template <class UnaryFunc>
     void computeUnit(const UnaryFunc &uf, UnsignedInt i) const
     {
@@ -126,6 +129,7 @@ class LoopRangeCK<ExecutionPolicy, BodyPartByCell>
         }
         return temp;
     };
+    
     UnsignedInt LoopBound() const { return loop_bound_; };
 
   protected:

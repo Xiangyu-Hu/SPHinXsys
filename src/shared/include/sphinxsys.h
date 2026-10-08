@@ -34,7 +34,6 @@
 #include "mesh_iterators_sycl.hpp"
 #include "particle_iterators_sycl.h"
 #include "sphinxsys_constant_sycl.hpp"
-#include "sphinxsys_variable_array_sycl.hpp"
 #include "sphinxsys_variable_sycl.hpp"
 #endif // SPHINXSYS_USE_SYCL
 

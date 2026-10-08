@@ -178,6 +178,7 @@ class BodyPartByCell : public BodyPart
     DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
     BaseCellLinkedList &getCellLinkedList() { return cell_linked_list_; };
+    UnsignedInt getTotalNumberOfCells();
     GroupManager &getCellGroupManager() { return cell_group_manager_; };
     UnsignedInt getPartMask() { return part_mask_; };
 

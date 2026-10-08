@@ -31,7 +31,7 @@ BaseCellLinkedList &BodyPart::getCellLinkedList()
 //=================================================================================================//
 SPHSystem &BodyPart::getSPHSystem() { return sph_body_.getSPHSystem(); }
 //=================================================================================================//
-BodyPartByID::BodyPartByID(SPHBody &sph_body) : BodyPart(sph_body){}
+BodyPartByID::BodyPartByID(SPHBody &sph_body) : BodyPart(sph_body) {}
 //=================================================================================================//
 BodyPartByParticle::BodyPartByParticle(SPHBody &sph_body)
     : BodyPart(sph_body), group_manager_(base_particles_.getParticleGroupManager()),
@@ -70,6 +70,11 @@ size_t BodyPartByCell::SizeOfLoopRange()
         size_of_loop_range += body_part_cells_[i]->size();
     }
     return size_of_loop_range;
+}
+//=============================================================================================//
+UnsignedInt BodyPartByCell::getTotalNumberOfCells()
+{
+    return getCellLinkedList().TotalNumberOfCells();
 }
 //=================================================================================================//
 void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
