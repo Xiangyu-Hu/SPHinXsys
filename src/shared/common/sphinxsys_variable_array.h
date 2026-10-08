@@ -57,65 +57,66 @@ class VariableArrayView
 };
 
 template <typename DataType>
-class DeviceOnlyVariableArray : public Quantity
+class DelegatedVariableArray : public Quantity
 {
   public:
-    template <class PolicyType>
-    DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
-                            VariableArray<DataType> *host_variable_array);
-    ~DeviceOnlyVariableArray();
-    MultiEntryView<DataType> *DeviceOnlyMultiEntryView() { return device_only_multi_entry_view_; };
+    template <class ExecutionPolicy>
+    DelegatedVariableArray(const ExecutionPolicy &ex_policy, VariableArray<DataType> *host_variable_array)
+        : Quantity(host_variable_array->Name()), delegated_multi_entry_view_(nullptr)
+    {
+        StdVec<DiscreteVariable<DataType> *> variables = host_variable_array->getVariables();
+        size_t data_size = host_variable_array->getArraySize();
+        delegated_multi_entry_view_ = new MultiEntryView<DataType>[data_size];
+        StdVec<MultiEntryView<DataType>> temporary_views;
+        for (size_t i = 0; i != data_size; ++i)
+        {
+            delegated_multi_entry_view_[i] = MultiEntryView<DataType>(
+                variables[i]->DelegatedData(ex_policy), variables[i]->getWidth());
+        }
+    };
+    ~DelegatedVariableArray() { delete[] delegated_multi_entry_view_; };
+    MultiEntryView<DataType> *DelegatedMultiEntryView() { return delegated_multi_entry_view_; };
 
   protected:
-    MultiEntryView<DataType> *device_only_multi_entry_view_;
+    MultiEntryView<DataType> *delegated_multi_entry_view_;
 };
 
 template <typename DataType>
 class VariableArray : public Quantity
 {
-    UniquePtrKeeper<Quantity> device_only_variable_array_keeper_;
+    UniquePtrKeeper<Quantity> delegation_keeper_;
 
   public:
     VariableArray(StdVec<DiscreteVariable<DataType> *> variables)
         : Quantity("VariableArray"), variables_(variables),
-          array_size_(variables.size()),
-          multi_entry_view_(static_cast<MultiEntryView<DataType> *>(
-              std::malloc(variables.size() * sizeof(MultiEntryView<DataType>))))
-    {
-        for (size_t i = 0; i != variables.size(); ++i)
-        {
-            multi_entry_view_[i] = MultiEntryView<DataType>(
-                variables[i]->Data(), variables[i]->getWidth());
-        }
-    };
-
-    ~VariableArray() { free(multi_entry_view_); };
+          array_size_(variables.size()) {};
+    ~VariableArray() {};
     StdVec<DiscreteVariable<DataType> *> getVariables() { return variables_; };
     size_t getArraySize() { return array_size_; }
-    MultiEntryView<DataType> *getArrayData() { return multi_entry_view_; };
 
     template <class ExecutionPolicy>
     VariableArrayView<DataType> DelegatedVariableArrayView(const ExecutionPolicy &ex_policy)
     {
-        return VariableArrayView<DataType>(multi_entry_view_, array_size_);
-    };
-
-    template <class PolicyType>
-    VariableArrayView<DataType> DelegatedVariableArrayView(const DeviceExecution<PolicyType> &ex_policy)
-    {
-        return VariableArrayView<DataType>(DelegatedOnDevice<PolicyType>(), array_size_);
+        return VariableArrayView<DataType>(DelegatedMultiEntryView(ex_policy), array_size_);
     };
 
   protected:
     StdVec<DiscreteVariable<DataType> *> variables_;
     UnsignedInt array_size_;
-    MultiEntryView<DataType> *multi_entry_view_ = nullptr;
-    DeviceOnlyVariableArray<DataType> *device_only_variable_array_ = nullptr;
-    friend class DeviceOnlyVariableArray<DataType>;
+    DelegatedVariableArray<DataType> *delegated_variable_array_ = nullptr;
 
-    template <class PolicyType>
-    MultiEntryView<DataType> *DelegatedOnDevice();
-    bool isVariableArrayViewDelegated() { return device_only_variable_array_ != nullptr; };
+    bool isVariableArrayViewDelegated() { return delegation_keeper_.getPtr() != nullptr; };
+
+    template <class ExecutionPolicy>
+    MultiEntryView<DataType> *DelegatedMultiEntryView(const ExecutionPolicy &ex_policy)
+    {
+        if (!isVariableArrayViewDelegated())
+        {
+            delegated_variable_array_ = delegation_keeper_.createPtr<
+                DelegatedVariableArray<DataType>>(ex_policy, this);
+        }
+        return delegated_variable_array_->DelegatedMultiEntryView();
+    }
 };
 
 typedef DataAssemble<TypeAlias, VariableArrayView> VariableArrayViewAssemble;
