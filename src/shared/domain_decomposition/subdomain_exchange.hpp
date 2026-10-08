@@ -576,7 +576,6 @@ template <class ExecutionPolicy>
 void SubdomainExchange<ExecutionPolicy>::updateHaloPlan()
 {
     syncOwnedCountsFromParticles();
-    { static int c = 0; if (particles_.getBodyName() == "WaterBody" && (c++ % 50 == 0)) std::cerr << "DBGOWN " << c << " " << owned_count_[0] << " " << owned_count_[1] << "\n"; } // TEMP
     execution::fanOutOverSubdomains(ExecutionPolicy{}, [&]()
                                     { buildSendListsOnCurrentSubdomain(); });
     // Barrier: every send count is now visible to the neighbors.
