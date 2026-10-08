@@ -90,7 +90,9 @@ void BaseParticles::initializeAllParticlesBounds(UnsignedInt number_of_particles
 //=================================================================================================//
 void BaseParticles::initializeAllParticlesBoundsFromReload()
 {
-    initializeAllParticlesBounds(reload_xml_parser_.Size(reload_xml_parser_.first_element_));
+    UnsignedInt number_of_particles = 0;
+    reload_xml_parser_.queryAttributeValue(reload_xml_parser_.first_element_, "particle_number", number_of_particles);
+    initializeAllParticlesBounds(number_of_particles);
 }
 //=================================================================================================//
 void BaseParticles::increaseParticlesBounds(UnsignedInt extra_size)
@@ -198,29 +200,22 @@ void BaseParticles::readReloadXmlFile(const std::string &filefullpath, const std
 //=================================================================================================//
 void BaseParticles::writeParticlesToXml(XmlParser &xml_parser, TinyXMLElement *body_element)
 {
-    // Resize the body element to have the correct number of particle children
     UnsignedInt total_real_particles = TotalRealParticles();
-    UnsignedInt total_elements = xml_parser.Size(body_element);
+    xml_parser.setAttributeToElement(body_element, "particle_number", total_real_particles);
 
-    if (total_elements != total_real_particles)
-    {
-        xml_parser.resize(body_element, total_real_particles, "particle");
-    }
-
-    // Write all evolving variables to the body element's particle children
     OperationOnDataAssemble<DiscreteVariables, WriteParticleVariableToXmlElement>
-        write_variable_to_element(body_element);
+        write_variable_to_element(body_element, total_real_particles);
     write_variable_to_element(evolving_variables_, xml_parser);
 }
 //=================================================================================================//
 void BaseParticles::readParticlesFromXml(XmlParser &xml_parser, TinyXMLElement *body_element)
 {
-    // Reset total real particles from the body element's particle count
-    sv_total_real_particles_->setValue(xml_parser.Size(body_element));
+    UnsignedInt total_real_particles = 0;
+    xml_parser.queryAttributeValue(body_element, "particle_number", total_real_particles);
+    sv_total_real_particles_->setValue(total_real_particles);
 
-    // Read all evolving variables from the body element's particle children
     OperationOnDataAssemble<DiscreteVariables, ReadParticleVariableFromXmlElement>
-        read_variable_from_element(body_element);
+        read_variable_from_element(body_element, total_real_particles);
     read_variable_from_element(evolving_variables_, this, xml_parser);
 }
 //=================================================================================================//

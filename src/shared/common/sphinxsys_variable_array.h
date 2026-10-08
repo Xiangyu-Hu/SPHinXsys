@@ -57,123 +57,86 @@ class VariableArrayView
 };
 
 template <typename DataType>
-class HostOnlyVariableArray : public Quantity
+class DelegatedVariableArray : public Quantity
 {
   public:
-    template <class PolicyType>
-    HostOnlyVariableArray(
-        const DecomposedExecution<PolicyType> &ex_policy, VariableArray<DataType> *host_variable_array)
-        : Quantity(host_variable_array->Name()), host_only_multi_entry_view_(nullptr)
+    template <class ExecutionPolicy>
+    DelegatedVariableArray(const ExecutionPolicy &ex_policy, VariableArray<DataType> *host_variable_array)
+        : Quantity(host_variable_array->Name()), delegated_multi_entry_view_(nullptr)
     {
-        StdVec<DiscreteVariable<DataType> *> host_variables = host_variable_array->getVariables();
+        StdVec<DiscreteVariable<DataType> *> variables = host_variable_array->getVariables();
         size_t data_size = host_variable_array->getArraySize();
-        host_only_multi_entry_view_ = new MultiEntryView<DataType>[data_size];
-        StdVec<MultiEntryView<DataType>> host_only_multi_entry_view_copy;
+        delegated_multi_entry_view_ = new MultiEntryView<DataType>[data_size];
+        StdVec<MultiEntryView<DataType>> temporary_views;
         for (size_t i = 0; i != data_size; ++i)
         {
-            host_only_multi_entry_view_copy.push_back(MultiEntryView<DataType>(
-                host_variables[i]->DelegatedData(ex_policy), host_variables[i]->getWidth()));
+            delegated_multi_entry_view_[i] = MultiEntryView<DataType>(
+                variables[i]->DelegatedData(ex_policy), variables[i]->getWidth());
         }
-        std::copy(host_only_multi_entry_view_copy.data(),
-                  host_only_multi_entry_view_copy.data() + data_size,
-                  host_only_multi_entry_view_);
     };
-    ~HostOnlyVariableArray() { delete[] host_only_multi_entry_view_; };
-    MultiEntryView<DataType> *HostOnlyMultiEntryView() { return host_only_multi_entry_view_; };
+    ~DelegatedVariableArray() { delete[] delegated_multi_entry_view_; };
+    MultiEntryView<DataType> *DelegatedMultiEntryView() { return delegated_multi_entry_view_; };
 
   protected:
-    MultiEntryView<DataType> *host_only_multi_entry_view_;
-};
-
-template <typename DataType>
-class DeviceOnlyVariableArray : public Quantity
-{
-  public:
-    DeviceOnlyVariableArray(const SYCLDevicePolicy &ex_policy,
-                            VariableArray<DataType> *host_variable_array);
-    ~DeviceOnlyVariableArray();
-    MultiEntryView<DataType> *DeviceOnlyMultiEntryView() { return device_only_multi_entry_view_; };
-
-  protected:
-    MultiEntryView<DataType> *device_only_multi_entry_view_;
+    MultiEntryView<DataType> *delegated_multi_entry_view_;
 };
 
 template <typename DataType>
 class VariableArray : public Quantity
 {
-    UniquePtrKeeper<Quantity> device_only_variable_array_keeper_;
-    UniquePtrsKeeper<Quantity> variable_array_subdomains_keeper_;
+    UniquePtrKeeper<Quantity> delegation_keeper_;
+    UniquePtrsKeeper<Quantity> decomposed_delegation_keeper_;
 
   public:
     VariableArray(StdVec<DiscreteVariable<DataType> *> variables)
         : Quantity("VariableArray"), variables_(variables),
-          array_size_(variables.size()),
-          multi_entry_view_(static_cast<MultiEntryView<DataType> *>(
-              std::malloc(variables.size() * sizeof(MultiEntryView<DataType>))))
-    {
-        for (size_t i = 0; i != variables.size(); ++i)
-        {
-            multi_entry_view_[i] = MultiEntryView<DataType>(
-                variables[i]->Data(), variables[i]->getWidth());
-        }
-    };
-
-    ~VariableArray() { free(multi_entry_view_); };
+          array_size_(variables.size()) {};
+    ~VariableArray() {};
     StdVec<DiscreteVariable<DataType> *> getVariables() { return variables_; };
     size_t getArraySize() { return array_size_; }
-    MultiEntryView<DataType> *getArrayData() { return multi_entry_view_; };
 
     template <class ExecutionPolicy>
     VariableArrayView<DataType> DelegatedVariableArrayView(const ExecutionPolicy &ex_policy)
     {
-        return VariableArrayView<DataType>(multi_entry_view_, array_size_);
-    };
-
-    VariableArrayView<DataType> DelegatedVariableArrayView(const SYCLDevicePolicy &ex_policy)
-    {
-        return VariableArrayView<DataType>(DelegatedOnDevice(), array_size_);
-    };
-    /** A decomposed policy delegates like its base policy. */
-    template <class PolicyType>
-    VariableArrayView<DataType> DelegatedVariableArrayView(const DecomposedExecution<PolicyType> &ex_policy)
-    {
-        return VariableArrayView<DataType>(DelegatedOnHostSubdomain(PolicyType{}), array_size_);
+        return VariableArrayView<DataType>(DelegatedMultiEntryView(ex_policy), array_size_);
     };
 
   protected:
     StdVec<DiscreteVariable<DataType> *> variables_;
     UnsignedInt array_size_;
-    MultiEntryView<DataType> *multi_entry_view_ = nullptr;
-    std::array<HostOnlyVariableArray<DataType> *, MaxSubdomains> host_only_variable_array_{};
-    DeviceOnlyVariableArray<DataType> *device_only_variable_array_ = nullptr;
-    friend class DeviceOnlyVariableArray<DataType>;
-    friend class HostOnlyVariableArray<DataType>;
+    DelegatedVariableArray<DataType> *delegated_variable_array_ = nullptr;
+    std::array<DelegatedVariableArray<DataType> *, MaxSubdomains> decomposed_delegated_variable_array_{};
+
+    bool isVariableArrayViewDelegated() { return delegation_keeper_.getPtr() != nullptr; };
+
+    template <class ExecutionPolicy>
+    MultiEntryView<DataType> *DelegatedMultiEntryView(const ExecutionPolicy &ex_policy)
+    {
+        if (!isVariableArrayViewDelegated())
+        {
+            delegated_variable_array_ = delegation_keeper_.createPtr<
+                DelegatedVariableArray<DataType>>(ex_policy, this);
+        }
+        return delegated_variable_array_->DelegatedMultiEntryView();
+    }
 
     template <class PolicyType>
-    MultiEntryView<DataType> *DelegatedOnHostSubdomain(const PolicyType &ex_policy)
+    MultiEntryView<DataType> *DelegatedMultiEntryView(const DecomposedExecution<PolicyType> &ex_policy)
     {
         const int subdomain_id = currentSubdomainID();
-        if (host_only_variable_array_[subdomain_id] == nullptr)
+        if (!isVariableArrayViewDelegated(subdomain_id))
         {
-            std::lock_guard<std::mutex> lock(execution::replicaCreationMutex());
-            if (host_only_variable_array_[subdomain_id] == nullptr)
-            {
-                host_only_variable_array_[subdomain_id] =
-                    variable_array_subdomains_keeper_
-                        .template createPtr<HostOnlyVariableArray<DataType>>(
-                            DecomposedExecution<PolicyType>{}, this);
-            }
+            decomposed_delegated_variable_array_[subdomain_id] =
+                decomposed_delegation_keeper_
+                    .template createPtr<DelegatedVariableArray<DataType>>(ex_policy, this);
         }
-        return host_only_variable_array_[subdomain_id]->HostOnlyMultiEntryView();
+        return decomposed_delegated_variable_array_[subdomain_id]->DelegatedMultiEntryView();
     };
 
     bool isVariableArrayViewDelegated(int subdomain_id)
     {
-        return host_only_variable_array_[subdomain_id] != nullptr;
+        return decomposed_delegated_variable_array_[subdomain_id] != nullptr;
     };
-
-    MultiEntryView<DataType> *DelegatedOnDevice();
-    bool isVariableArrayViewDelegated() { return device_only_variable_array_ != nullptr; };
 };
 
 typedef DataAssemble<TypeAlias, VariableArrayView> VariableArrayViewAssemble;

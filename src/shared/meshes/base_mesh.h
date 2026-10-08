@@ -126,12 +126,14 @@ class BaseMeshField
 template <typename DataType>
 using CellVariable = DiscreteVariable<DataType>;
 typedef DataContainerAddressAssemble<CellVariable> CellVariableAssemble;
+class GroupManager;
 
 template <class MeshType>
 class MultiResolutionMeshField : public BaseMeshField
 {
     DataContainerUniquePtrAssemble<DiscreteVariable> cell_variable_ptrs_;
     UniquePtrsKeeper<Quantity> unique_entity_ptrs_;
+    UniquePtrKeeper<GroupManager> cell_group_manager_ptr_;
 
   public:
     MultiResolutionMeshField(
@@ -147,6 +149,7 @@ class MultiResolutionMeshField : public BaseMeshField
     ConstantArray<MeshType> &caMeshes() { return ca_meshes_; };
     UnsignedInt ResolutionLevels() { return resolution_levels_; };
     UnsignedInt TotalNumberOfCells() { return total_number_of_cells_; };
+    GroupManager &getCellGroupManager();
 
     template <typename DataType, typename... Args>
     CellVariable<DataType> *registerCellVariable(const std::string &variable_name, Args &&...args);
