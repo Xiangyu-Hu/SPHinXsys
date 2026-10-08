@@ -44,7 +44,7 @@ class HostKernel
     {
         // not implemented for device policy due to virtual function call in initial_shape_,
         // which is not allowed in device code
-        static_assert(!std::is_base_of<execution::DeviceExecution<>, ExecutionPolicy>::value,
+        static_assert(!std::is_base_of<execution::SYCLDevicePolicy, ExecutionPolicy>::value,
                       "This compute kernel is not designed for execution on device!");
     }
 };
