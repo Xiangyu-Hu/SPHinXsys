@@ -31,8 +31,8 @@ SpawnRealParticle::ComputingKernel::
         VariableArrayAssemble, VariableArrayViewAssemble, VariableArrayViewAssembleInitialization>
         initialize_variable_array_view;
 
-    initialize_variable_array_view(encloser.getCopyableStates(),
-                                   copyable_state_data_arrays_, ex_policy);
+    initialize_variable_array_view(
+        encloser.getCopyableStates(), copyable_state_data_arrays_, ex_policy);
 }
 //=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
@@ -42,12 +42,12 @@ RemoveRealParticle::ComputingKernel::
       original_id_(encloser.dv_original_id_->DelegatedData(ex_policy)),
       life_status_mask_(ex_policy, encloser.group_manager_, encloser.life_status_)
 {
-    OperationBetweenDataAssembles<DiscreteVariables, VariableArrayAssemble, VariableArrayAssembleInitialization>
-        initialize_discrete_variable_array;
-    initialize_discrete_variable_array(encloser.evolving_variables_, encloser.copyable_states_);
-    OperationBetweenDataAssembles<VariableArrayAssemble, VariableArrayViewAssemble, VariableArrayViewAssembleInitialization>
+    OperationBetweenDataAssembles<
+        VariableArrayAssemble, VariableArrayViewAssemble, VariableArrayViewAssembleInitialization>
         initialize_variable_array_view;
-    initialize_variable_array_view(encloser.copyable_states_, copyable_state_data_arrays_, ex_policy);
+
+    initialize_variable_array_view(
+        encloser.getCopyableStates(), copyable_state_data_arrays_, ex_policy);
 }
 } // namespace SPH
 #endif // PARTICLE_OPERATION_HPP

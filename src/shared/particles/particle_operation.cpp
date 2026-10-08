@@ -3,14 +3,10 @@
 namespace SPH
 {
 //=================================================================================================//
-SpawnRealParticle::SpawnRealParticle(BaseParticles *particles)
-    : evolving_variables_(particles->EvolvingVariables()),
-      dv_original_id_(particles->getVariableByName<UnsignedInt>("OriginalID")),
-      group_manager_(particles->getParticleGroupManager()),
-      sv_total_real_particles_(particles->svTotalRealParticles()),
-      particles_bound_(particles->ParticlesBound()) {}
+BaseParticlesOperation::BaseParticlesOperation(BaseParticles *particles)
+    : evolving_variables_(particles->EvolvingVariables()) {}
 //=================================================================================================//
-VariableArrayAssemble &SpawnRealParticle::getCopyableStates()
+VariableArrayAssemble &BaseParticlesOperation::getCopyableStates()
 {
 
     if (!copyable_states_keeper_.getPtr())
@@ -26,9 +22,15 @@ VariableArrayAssemble &SpawnRealParticle::getCopyableStates()
     return *copyable_states_keeper_.getPtr();
 }
 //=================================================================================================//
+SpawnRealParticle::SpawnRealParticle(BaseParticles *particles)
+    : BaseParticlesOperation(particles),
+      dv_original_id_(particles->getVariableByName<UnsignedInt>("OriginalID")),
+      group_manager_(particles->getParticleGroupManager()),
+      sv_total_real_particles_(particles->svTotalRealParticles()),
+      particles_bound_(particles->ParticlesBound()) {}
+//=================================================================================================//
 RemoveRealParticle::RemoveRealParticle(BaseParticles *particles)
-    : evolving_variables_(particles->EvolvingVariables()),
-      copyable_states_(),
+    : BaseParticlesOperation(particles),
       dv_original_id_(particles->getVariableByName<UnsignedInt>("OriginalID")),
       group_manager_(particles->getParticleGroupManager()),
       life_status_(group_manager_.getGroupMask("LifeStatus")),

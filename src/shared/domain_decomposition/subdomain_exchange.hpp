@@ -774,7 +774,6 @@ void SubdomainExchange<ExecutionPolicy>::migrateParticles()
                 owned_particles += count;
             }
 
-            if (owned_particles != keep_count_[subdomain_id]) { std::cerr << "DBGMIG " << particles_.getBodyName() << " sd=" << subdomain_id << " keep=" << keep_count_[subdomain_id] << " new_owned=" << owned_particles << " holes=" << fill_count_[subdomain_id] << "\n"; } // TEMP
             owned_count_[subdomain_id] = owned_particles;
             particles_.svTotalRealParticles()->setValue(owned_particles);
             particles_.svTotalLocalParticles()->setValue(owned_particles);
