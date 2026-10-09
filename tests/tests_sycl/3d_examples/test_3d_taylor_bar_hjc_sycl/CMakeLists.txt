@@ -1,0 +1,13 @@
+project(test_3d_taylor_bar_hjc_sycl)
+add_executable(${PROJECT_NAME} taylor_bar_hjc_sycl.cpp)
+target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/input)
+if(SPHINXSYS_USE_FLOAT)
+    set(HJC_REFERENCE_PRECISION float)
+else()
+    set(HJC_REFERENCE_PRECISION double)
+endif()
+file(COPY regression_test_tool/${HJC_REFERENCE_PRECISION}/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/input)
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --spacing=0.001 --regression-test --state_recording=${TEST_STATE_RECORDING}
+         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "solid_dynamics; contact")

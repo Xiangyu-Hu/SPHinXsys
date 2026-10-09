@@ -53,7 +53,7 @@ class TotalKineticEnergyCK
         ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         Real reduce(UnsignedInt index_i, Real dt = 0.0)
         {
-            return 0.5 * mass_[index_i] * vel_[index_i].squaredNorm();
+            return Real(0.5) * mass_[index_i] * vel_[index_i].squaredNorm();
         };
 
       protected:
