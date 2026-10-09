@@ -29,6 +29,8 @@ def main():
             raise ValueError(f'CPU and device cases differ in {key}')
     args.output.mkdir(parents=True, exist_ok=True)
     end_us = float(f'{cpu_metadata["end_time"] * 1e6:.6g}')
+    device_history = np.genfromtxt(args.device / 'history.csv', delimiter=',', names=True)
+    times = device_history['time']
     fig, axes = plt.subplots(1, 3, figsize=(11, 3.1))
     for case, label, color, style in [(args.cpu, args.labels[0], '#3564a5', '-'),
                                     (args.device, args.labels[1], '#ba413e', '--')]:
@@ -36,7 +38,10 @@ def main():
         for ax, name, scale, ylabel in zip(axes,
                 ['force_z', 'kinetic_energy', 'mean_damage'], [1e-3, 1, 1],
                 ['Contact force / kN', 'Kinetic energy / J', 'Mean damage']):
-            ax.plot(data['time'] * 1e6, data[name] * scale, style,
+            # The classic CPU example also records intermediate integration steps.
+            # Compare both curves at the device's saved physical times.
+            values = np.interp(times, data['time'], data[name])
+            ax.plot(times * 1e6, values * scale, style,
                     color=color, lw=1.5, label=label)
             ax.set(xlabel='Time / µs', ylabel=ylabel, xlim=(0, end_us))
             ax.spines[['top', 'right']].set_visible(False)

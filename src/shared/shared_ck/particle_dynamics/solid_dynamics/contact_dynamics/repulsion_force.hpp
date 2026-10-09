@@ -116,7 +116,7 @@ void RepulsionForceCK<Contact<WithUpdate, Wall, Parameters...>>::
         Vecd e_ij = this->e_ij(index_i, index_j);
 
         Real p = stiffness_ * repulsion_factor_[index_i];
-        Real impedance_p = Real(0.5) * numerical_damping_ * impedance_ *
+        Real impedance_p = 0.5 * numerical_damping_ * impedance_ *
                            (vel_[index_i] - contact_vel_[index_j]).dot(-e_ij);
         // contact force to mimic pressure but pointing to the wall normal direction
         force -= 2.0 * (p + impedance_p) * contact_n_[index_j] *

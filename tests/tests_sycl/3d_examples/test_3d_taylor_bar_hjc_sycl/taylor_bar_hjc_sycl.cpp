@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /** HJC Taylor-bar impact using the shared CPU/SYCL computing kernels. */
 #include "sphinxsys.h"
+#include "classic_wall_contact.hpp"
 #include <fstream>
 #include <iomanip>
 #include <stdexcept>
@@ -53,13 +54,14 @@ int main(int argc, char *argv[])
     HJCParameters parameters{Real(2.417e10), Real(.29), Real(2.06), Real(.0013), Real(.866),
         Real(1.19e8), Real(8.2e6), 1, Real(.01), 5, Real(4e7), Real(.00124), Real(1.2e9),
         Real(.011), Real(.04), 1, Real(1.287e10), Real(1.631e10), Real(6.495e10)};
-    column.defineMatterMaterial<HJCSolid>(2700, parameters);
+    auto &material = column.defineMatterMaterial<HJCSolid>(2700, parameters);
     auto &particles = column.generateParticles<BaseParticles, Lattice>();
     auto &wall = system.addBody<SolidBody>(wall_shape);
-    wall.defineMatterMaterial<Solid>();
+    wall.defineMatterMaterial<SaintVenantKirchhoffSolid>(2700, material.YoungsModulus(), material.PoissonRatio());
     wall.generateParticles<BaseParticles, Lattice>();
 
     auto &inner = system.addInnerRelation(column, ConfigType::Lagrangian);
+    BodySurfaceLayer column_surface(column);
     auto &contact = system.addContactRelation(column, wall);
     SPHSolver solver(system);
     auto &host = solver.getHostMethodContainer();
@@ -68,12 +70,10 @@ int main(int argc, char *argv[])
     auto &column_cells = methods.addCellLinkedListDynamics(column);
     auto &inner_configuration = methods.addRelationDynamics(inner);
     auto &contact_configuration = methods.addRelationDynamics(contact);
-    host.addStateDynamics<NormalFromBodyShapeCK>(wall).exec();
     auto &correction = methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(inner);
     auto &first_half = methods.addInteractionDynamicsOneLevel<solid_dynamics::HJCIntegration1stHalfCK>(inner);
     auto &second_half = methods.addInteractionDynamicsOneLevel<solid_dynamics::StructureIntegration2ndHalf>(inner);
-    auto &contact_factor = methods.addInteractionDynamics<solid_dynamics::RepulsionFactor>(contact);
-    auto &contact_force = methods.addInteractionDynamicsWithUpdate<solid_dynamics::RepulsionForceCK, Wall>(contact);
+    auto &contact_force = methods.addInteractionDynamicsWithUpdate<solid_dynamics::ClassicWallContactForceCK>(contact, column_surface);
     auto &time_step = methods.addReduceDynamics<solid_dynamics::HJCAcousticTimeStepCK>(column, cfl);
     using StatusReduction = QuantityReduce<SPHBody, ReduceMax<int>, SimpleEvaluation<DirectValue<int>>>;
     auto &integration_status = methods.addReduceDynamics<StatusReduction>(column, "HJCIntegrationStatus");
@@ -166,7 +166,6 @@ int main(int argc, char *argv[])
         while (time < next_output)
         {
             TickCount start = TickCount::now();
-            contact_factor.exec();
             contact_force.exec();
             Real dt = std::min(time_step.exec(), next_output - time);
             if (!(dt > 0 && std::isfinite(dt)) || time + dt <= time)

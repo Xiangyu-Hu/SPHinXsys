@@ -3,8 +3,8 @@
 A concrete cylinder strikes a fixed wall at 30 m/s. The geometry, material
 parameters and 60 microsecond duration follow the
 [CPU HJC example](../../../3d_examples/test_3d_taylor_bar_hjc/README.md).
-This example uses the same HJC constitutive update on the host and device,
-with the library's CK particle interactions and wall contact.
+This example uses the same HJC constitutive update on the host and device.
+Its CK wall contact reproduces the surface-contact law of the CPU example.
 
 ## Build and run
 
@@ -22,9 +22,10 @@ cmake -S . -B build-sycl -DCMAKE_BUILD_TYPE=Release \
 cmake --build build-sycl --target test_3d_taylor_bar_hjc_sycl test_hjc_sycl
 ```
 
-SPHinXsys uses single precision for SYCL. A CPU build of the same example
-can be configured with `SPHINXSYS_USE_SYCL=OFF` and
-`SPHINXSYS_USE_FLOAT=ON` for a comparison at the same precision.
+SPHinXsys uses single precision for SYCL. Configure a CPU build with
+`SPHINXSYS_USE_SYCL=OFF` and `SPHINXSYS_USE_FLOAT=ON` for a comparison at
+the same precision. Build `test_3d_taylor_bar_hjc` for the classic CPU
+reference and `test_3d_taylor_bar_hjc_sycl` for the CK CPU calculation.
 
 Run each calculation in its own directory:
 
@@ -46,36 +47,49 @@ ctest --test-dir build-sycl -R '^(test_hjc_sycl|test_3d_taylor_bar_hjc_sycl)$' -
 python tests/tests_sycl/3d_examples/test_3d_taylor_bar_hjc_sycl/plot.py impact-cpu impact-gpu --output figures
 ```
 
-The impact regression uses 1 mm spacing with the included energy and mean
-damage reference data. CMake selects the single- or double-precision data
-to match the build. The single-precision references include native CPU and
-GPU runs with Level Zero and OpenCL, generated using the library's ensemble
-regression procedure. Ordinary runs do not require the reference files.
+The impact regression uses 1 mm spacing and the classic CPU example's energy
+and mean-damage reference data. CMake copies that existing baseline and changes
+only the damage recording name to match the CK recorder. Reference values,
+variances and run counts are unchanged. CPU single- and double-precision runs
+and both GPU backends were checked against this same baseline. Ordinary runs
+do not require the reference files.
 The material tests compare prescribed loading paths with the CPU material
 interface and check rigid rotation, irreversible history and invalid inputs.
 
 ## Response and particle fields
 
 The figures use 0.5 mm spacing (12,640 concrete particles), single precision,
-and the Level Zero GPU backend. The CPU comparison runs the same CK example.
+and the Level Zero GPU backend. The CPU comparison uses the classic CPU example.
 The OpenCL GPU backend was checked separately. The differences below describe
-these runs; they are not accuracy bounds for other devices or loading paths.
+these runs at 31 common output times; they are not accuracy bounds for other
+devices or loading paths. The classic CPU history also contains intermediate
+integration steps, which the plotter samples at the device output times.
 
 | Largest sampled CPU/GPU difference | Level Zero | OpenCL |
 | --- | ---: | ---: |
-| Contact force | 1.24 N | 1.05 N |
-| Kinetic energy | 4.89e-5 J | 5.68e-5 J |
-| Mean damage | 3.38e-4 | 1.66e-4 |
+| Contact force | 4.78 N | 5.17 N |
+| Kinetic energy | 1.27e-4 J | 1.30e-4 J |
+| Mean damage | 2.52e-4 | 1.76e-4 |
 
 ![CPU and GPU response curves](response.png)
 
 ![GPU damage and equivalent stress at 20, 40 and 60 microseconds](impact.png)
 
-The cutaway shows particle values without smoothing. Local damage is more
-sensitive than the global response: at 60 microseconds, its particlewise
-CPU/GPU RMS difference is 0.010–0.015, with maximum differences of 0.20–0.31
-across the two backends. Similar mean damage does not establish pointwise
-agreement or convergence of a fracture pattern.
+The cutaway shows particle values without smoothing, using damage 0–1 and
+equivalent stress 0–250 MPa, as in the classic CPU illustration. Initial
+particle identities and positions were checked before comparing fields.
+At 60 microseconds, the single-precision CPU/GPU damage RMS difference is
+0.022–0.026, with a maximum difference of about 0.48 across the two backends.
+The larger differences develop after softening; small differences in global
+curves do not establish pointwise agreement or convergence of a fracture pattern.
+
+A separate double-precision classic CPU/CK CPU comparison isolates the
+implementation change: the largest sampled force difference is 0.74 N and
+mean-damage difference is 5.15e-5. Final particlewise damage differs by
+0.00136 RMS and 0.024 maximum. CK's tabulated inner kernel and neighbor
+summation order differ from the classic implementation, so bitwise equality
+is not expected. Changing precision also affects local damage in the classic
+CPU calculation; the results here do not establish identical local fields.
 
 ## Numerical details
 
@@ -84,10 +98,13 @@ objective stress rotation, total Lagrangian force and pair damping used by
 the CPU HJC implementation. `HJCAcousticTimeStepCK` accounts for the evolving
 EOS modulus. The second half step uses `StructureIntegration2ndHalf`.
 
-The wall uses `RepulsionFactor` and `RepulsionForceCK<Wall>` with their
-standard settings. This contact force uses the wall normal and contact
-damping; the original CPU example uses a different contact discretization.
-CPU/device comparisons should therefore use this same CK example.
+`ClassicWallContactForceCK` uses the CPU surface-contact law: the analytic
+Wendland C2 kernel at the mean smoothing length, the kernel offset at the mean
+particle spacing, force along the particle-pair direction, and no velocity
+impedance term. A copied mask retains the initial `BodySurfaceLayer` selection
+of three particle layers. The helper supports one fixed wall with uniform,
+isotropic Wendland C2 adaptations; it does not change `RepulsionForceCK`.
+The same geometry and initial gap therefore reproduce the CPU contact timing.
 
 Device updates write `HJCIntegrationStatus`. The example checks it after
 every first half step and stops on an invalid constitutive state. An invalid
