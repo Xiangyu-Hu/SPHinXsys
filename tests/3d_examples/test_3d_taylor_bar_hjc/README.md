@@ -151,8 +151,9 @@ strength and remain in the discretization. It does not prescribe crack opening,
 erosion, fragmentation, fracture-energy regularization or thermal effects.
 Pure hydrostatic tension is capped; a separate tensile cracking law is not
 included. Localized damage therefore needs spatial-resolution and calibration
-studies before quantitative fracture predictions. This addition targets CPU
-solid dynamics; it does not add a device constitutive kernel.
+studies before quantitative fracture predictions. This example uses CPU solid
+dynamics; a [CK/SYCL example](../../tests_sycl/3d_examples/test_3d_taylor_bar_hjc_sycl/README.md)
+is also available.
 
 ## References
 

@@ -29,8 +29,8 @@ int main(int argc, char *argv[])
         else
             system_args.push_back(argv[i]);
     }
-    if (!(spacing > 0 && spacing <= .001 && speed > 0 && std::isfinite(speed) &&
-          cfl > 0 && cfl <= .2 && end_time > 0 && std::isfinite(end_time)))
+    if (!(spacing > 0 && spacing <= Real(.001) && speed > 0 && std::isfinite(speed) &&
+          cfl > 0 && cfl <= Real(.2) && end_time > 0 && std::isfinite(end_time)))
         throw std::invalid_argument("Require 0 < spacing <= 0.001 m, speed > 0, 0 < CFL <= 0.2 and end-time > 0");
     if (regression_test && (spacing != Real(.001) || speed != Real(30) ||
                             cfl != Real(.2) || end_time != Real(6e-5)))
