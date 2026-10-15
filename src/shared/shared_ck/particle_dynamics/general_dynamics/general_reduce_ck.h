@@ -44,7 +44,7 @@ class TotalKineticEnergyCK
 
   public:
     explicit TotalKineticEnergyCK(SPHBody &sph_body);
-    virtual ~TotalKineticEnergyCK() {};
+    virtual ~TotalKineticEnergyCK(){};
 
     class ReduceKernel
     {
@@ -71,7 +71,7 @@ class TotalMechanicalEnergyCK : public TotalKineticEnergyCK
 
   public:
     explicit TotalMechanicalEnergyCK(SPHBody &sph_body, Gravity &gravity);
-    virtual ~TotalMechanicalEnergyCK() {};
+    virtual ~TotalMechanicalEnergyCK(){};
 
     class ReduceKernel : public TotalKineticEnergyCK::ReduceKernel
     {
@@ -104,7 +104,7 @@ class QuantityReduce : public BaseLocalDynamicsReduce<ReturnFunctionType, Dynami
   public:
     template <typename... Args>
     QuantityReduce(DynamicsIdentifier &identifier, Args &&...args);
-    virtual ~QuantityReduce() {};
+    virtual ~QuantityReduce(){};
 
     class ReduceKernel
     {
@@ -134,7 +134,7 @@ class SimpleEvaluation
 
   public:
     SimpleEvaluation(BaseParticles *particles, const std::string &variable_name)
-        : dv_variable_(particles->template getVariableByName<InputType>(variable_name)) {};
+        : dv_variable_(particles->template getVariableByName<InputType>(variable_name)){};
     class ComputingKernel
     {
       public:
@@ -178,14 +178,14 @@ class QuantityAverage : public BaseLocalDynamicsReduce<ReduceSum<Sample<DataType
 
   public:
     QuantityAverage(DynamicsIdentifier &identifier, const std::string &variable_name);
-    virtual ~QuantityAverage() {};
+    virtual ~QuantityAverage(){};
 
     class FinishDynamics
     {
       public:
         using OutputType = DataType;
         template <class EncloserType>
-        FinishDynamics(EncloserType &encloser) {};
+        FinishDynamics(EncloserType &encloser){};
         OutputType Result(const ReduceReturnType &reduced_value)
         {
             return reduced_value.first / reduced_value.second;
@@ -219,7 +219,7 @@ class MaximumNorm : public BaseLocalDynamicsReduce<IndexedMax, DynamicsIdentifie
 
   public:
     MaximumNorm(DynamicsIdentifier &identifier, const std::string &variable_name);
-    virtual ~MaximumNorm() {};
+    virtual ~MaximumNorm(){};
 
     class ReduceKernel
     {
@@ -245,7 +245,7 @@ class UpperFrontInAxisDirectionCK : public BaseLocalDynamicsReduce<ReduceMax<Rea
 {
   public:
     UpperFrontInAxisDirectionCK(DynamicsIdentifier &identifier, const std::string &name, int axis = lastAxis);
-    virtual ~UpperFrontInAxisDirectionCK() {};
+    virtual ~UpperFrontInAxisDirectionCK(){};
 
     class ReduceKernel
     {

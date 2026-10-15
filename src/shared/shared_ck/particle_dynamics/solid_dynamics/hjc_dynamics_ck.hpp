@@ -2,20 +2,21 @@
 #ifndef HJC_DYNAMICS_CK_HPP
 #define HJC_DYNAMICS_CK_HPP
 
-#include "hjc_dynamics_ck.h"
 #include "adaptation.h"
+#include "hjc_dynamics_ck.h"
 
 namespace SPH
 {
 namespace solid_dynamics
 {
+//=================================================================================================//
 template <typename... Parameters>
 template <class DynamicsIdentifier>
 HJCIntegration1stHalfCK<Inner<OneLevel, Parameters...>>::HJCIntegration1stHalfCK(DynamicsIdentifier &identifier)
     : BaseInteraction(identifier), BaseStructureIntegration1stHalf(this->particles_),
       material_(DynamicCast<HJCSolid>(this, this->sph_body_->getMatterMaterial())),
       h_ref_(this->sph_body_->getSPHAdaptation().ReferenceSmoothingLength()) {}
-
+//=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 HJCIntegration1stHalfCK<Inner<OneLevel, Parameters...>>::InitializeKernel::InitializeKernel(
@@ -28,7 +29,7 @@ HJCIntegration1stHalfCK<Inner<OneLevel, Parameters...>>::InitializeKernel::Initi
       F_(encloser.dv_F_->DelegatedData(ex_policy)),
       dF_dt_(encloser.dv_dF_dt_->DelegatedData(ex_policy)),
       stress_on_particle_(encloser.dv_stress_on_particle_->DelegatedData(ex_policy)) {}
-
+//=================================================================================================//
 template <typename... Parameters>
 void HJCIntegration1stHalfCK<Inner<OneLevel, Parameters...>>::InitializeKernel::initialize(size_t i, Real dt)
 {
@@ -42,7 +43,7 @@ void HJCIntegration1stHalfCK<Inner<OneLevel, Parameters...>>::InitializeKernel::
     rho_[i] = rho0_ / J;
     stress_on_particle_[i] = J * stress * F_[i].inverse().transpose() * B_[i].transpose();
 }
-
+//=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 HJCIntegration1stHalfCK<Inner<OneLevel, Parameters...>>::InteractKernel::InteractKernel(
@@ -56,7 +57,7 @@ HJCIntegration1stHalfCK<Inner<OneLevel, Parameters...>>::InteractKernel::Interac
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
       F_(encloser.dv_F_->DelegatedData(ex_policy)),
       stress_on_particle_(encloser.dv_stress_on_particle_->DelegatedData(ex_policy)) {}
-
+//=================================================================================================//
 template <typename... Parameters>
 void HJCIntegration1stHalfCK<Inner<OneLevel, Parameters...>>::InteractKernel::interact(size_t i, Real dt)
 {
@@ -76,7 +77,7 @@ void HJCIntegration1stHalfCK<Inner<OneLevel, Parameters...>>::InteractKernel::in
     }
     force_[i] = Vol0_[i] * sum;
 }
-
+//=================================================================================================//
 inline HJCAcousticTimeStepCK::HJCAcousticTimeStepCK(SPHBody &body, Real acousticCFL)
     : LocalDynamicsReduce<ReduceMin<Real>>(body),
       h_ref_(body.getSPHAdaptation().ReferenceSmoothingLength()), acousticCFL_(acousticCFL),
@@ -86,7 +87,7 @@ inline HJCAcousticTimeStepCK::HJCAcousticTimeStepCK(SPHBody &body, Real acoustic
       dv_vel_(particles_->getVariableByName<Vecd>("Velocity")),
       dv_force_(particles_->getVariableByName<Vecd>("Force")),
       dv_force_prior_(particles_->getVariableByName<Vecd>("ForcePrior")) {}
-
+//=================================================================================================//
 template <class ExecutionPolicy, class EncloserType>
 HJCAcousticTimeStepCK::ReduceKernel::ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : h_ref_(encloser.h_ref_), acousticCFL_(encloser.acousticCFL_),
@@ -96,13 +97,14 @@ HJCAcousticTimeStepCK::ReduceKernel::ReduceKernel(const ExecutionPolicy &ex_poli
       vel_(encloser.dv_vel_->DelegatedData(ex_policy)),
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
       force_prior_(encloser.dv_force_prior_->DelegatedData(ex_policy)) {}
-
+//=================================================================================================//
 inline Real HJCAcousticTimeStepCK::ReduceKernel::reduce(size_t i, Real dt)
 {
     Real acceleration = (force_[i] + force_prior_[i]).norm() / mass_[i];
     return acousticCFL_ * SMIN(math::sqrt(h_ref_ / (acceleration + TinyReal)),
-        h_ref_ / (math::sqrt(modulus_[i] / rho_[i]) + vel_[i].norm()));
+                               h_ref_ / (math::sqrt(modulus_[i] / rho_[i]) + vel_[i].norm()));
 }
+//=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH
-#endif
+#endif // HJC_DYNAMICS_CK_HPP

@@ -2,9 +2,9 @@
 #ifndef CLASSIC_WALL_CONTACT_H
 #define CLASSIC_WALL_CONTACT_H
 
+#include "base_body_part.h"
 #include "force_prior_ck.hpp"
 #include "interaction_ck.hpp"
-#include "base_body_part.h"
 
 namespace SPH
 {

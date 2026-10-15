@@ -8,13 +8,14 @@
 
 namespace SPH
 {
+//=================================================================================================//
 inline Real HJCConstitutiveModel::DensePressure(Real compression) const
 {
     const auto &p = parameters_;
     Real mu = (compression - p.lock_strain) / (Real(1) + p.lock_strain);
     return mu < Real(0) ? p.K1 * mu : mu * (p.K1 + mu * (p.K2 + mu * p.K3));
 }
-
+//=================================================================================================//
 inline Real HJCConstitutiveModel::Pressure(Real compression, HJCState &state) const
 {
     const auto &p = parameters_;
@@ -31,14 +32,14 @@ inline Real HJCConstitutiveModel::Pressure(Real compression, HJCState &state) co
     Real unloading_modulus = peak_pressure / (peak - state.plastic_volume);
     return unloading_modulus * (compression - state.plastic_volume);
 }
-
+//=================================================================================================//
 inline Real HJCConstitutiveModel::FractureStrain(Real pressure) const
 {
     const auto &p = parameters_;
     return math::max(p.minimum_fracture_strain,
                      p.D1 * math::pow(math::max(Real(0), (pressure + p.tensile_strength) / p.compressive_strength), p.D2));
 }
-
+//=================================================================================================//
 inline Real HJCConstitutiveModel::YieldStrength(Real pressure, Real damage, Real strain_rate) const
 {
     const auto &p = parameters_;
@@ -49,7 +50,7 @@ inline Real HJCConstitutiveModel::YieldStrength(Real pressure, Real damage, Real
     Real rate_factor = Real(1) + p.C * math::log(math::max(Real(1), strain_rate / p.reference_strain_rate));
     return p.compressive_strength * math::min(p.maximum_strength, strength * rate_factor);
 }
-
+//=================================================================================================//
 inline HJCIntegrationStatus HJCConstitutiveModel::Integrate(
     const Mat3d &increment, Real compression, Real dt, HJCState &state) const
 {
@@ -79,7 +80,7 @@ inline HJCIntegrationStatus HJCConstitutiveModel::Integrate(
     state = next;
     return HJCIntegrationStatus::success;
 }
-
+//=================================================================================================//
 inline Real HJCConstitutiveModel::AcousticModulus(Real compression) const
 {
     const auto &p = parameters_;
@@ -87,7 +88,7 @@ inline Real HJCConstitutiveModel::AcousticModulus(Real compression) const
     Real dense_tangent = (p.K1 + Real(2) * p.K2 * eta + Real(3) * p.K3 * eta * eta) / (Real(1) + p.lock_strain);
     return (Real(1) + math::max(compression, Real(0))) * math::max(K0_, dense_tangent) + Real(4) * G0_ / Real(3);
 }
-
+//=================================================================================================//
 inline HJCIntegrationStatus HJCConstitutiveModel::UpdateStress(
     const Matd &F, const Matd &previous_deformation, Real dt, HJCState &state) const
 {
@@ -121,7 +122,7 @@ inline HJCIntegrationStatus HJCConstitutiveModel::UpdateStress(
     state = next;
     return HJCIntegrationStatus::success;
 }
-
+//=================================================================================================//
 template <typename ExecutionPolicy>
 HJCSolid::ConstituteKernel::ConstituteKernel(const ExecutionPolicy &ex_policy, HJCSolid &encloser)
     : model_(encloser.ConstitutiveModel()),
@@ -135,7 +136,7 @@ HJCSolid::ConstituteKernel::ConstituteKernel(const ExecutionPolicy &ex_policy, H
       equivalent_stress_(encloser.dv_equivalent_stress_->DelegatedData(ex_policy)),
       acoustic_modulus_(encloser.dv_acoustic_modulus_->DelegatedData(ex_policy)),
       status_(encloser.dv_status_->DelegatedData(ex_policy)) {}
-
+//=================================================================================================//
 inline Matd HJCSolid::ConstituteKernel::UpdateStress(const Matd &F, size_t i, Real dt)
 {
     HJCState state{stress_[i], damage_[i], plastic_strain_[i], plastic_volume_[i], maximum_compression_[i]};
@@ -162,5 +163,6 @@ inline Matd HJCSolid::ConstituteKernel::UpdateStress(const Matd &F, size_t i, Re
     acoustic_modulus_[i] = modulus;
     return stress_[i].template topLeftCorner<Dimensions, Dimensions>();
 }
+//=================================================================================================//
 } // namespace SPH
 #endif // HJC_SOLID_HPP

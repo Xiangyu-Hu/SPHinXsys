@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /** HJC Taylor-bar impact using the shared CPU/SYCL computing kernels. */
-#include "sphinxsys.h"
 #include "classic_wall_contact.hpp"
+#include "sphinxsys.h"
 #include <fstream>
 #include <iomanip>
 #include <stdexcept>
@@ -11,8 +11,7 @@ using namespace SPH;
 int main(int argc, char *argv[])
 {
 #if SPHINXSYS_USE_SYCL
-    std::cout << "Device: " << execution::execution_instance.getQueue().get_device()
-        .get_info<sycl::info::device::name>() << '\n';
+    std::cout << "Device: " << execution::execution_instance.getQueue().get_device().get_info<sycl::info::device::name>() << '\n';
 #endif
     Real spacing = Real(.0005), speed = 30, cfl = Real(.2), end_time = Real(6e-5);
     bool regression_test = false;
@@ -52,8 +51,8 @@ int main(int argc, char *argv[])
         Vecd(.012, .012, wall_depth / 2), 4, Vecd(0, 0, -wall_depth / 2), "Wall");
     auto &column = system.addBody<SolidBody>(column_shape);
     HJCParameters parameters{Real(2.417e10), Real(.29), Real(2.06), Real(.0013), Real(.866),
-        Real(1.19e8), Real(8.2e6), 1, Real(.01), 5, Real(4e7), Real(.00124), Real(1.2e9),
-        Real(.011), Real(.04), 1, Real(1.287e10), Real(1.631e10), Real(6.495e10)};
+                             Real(1.19e8), Real(8.2e6), 1, Real(.01), 5, Real(4e7), Real(.00124), Real(1.2e9),
+                             Real(.011), Real(.04), 1, Real(1.287e10), Real(1.631e10), Real(6.495e10)};
     auto &material = column.defineMatterMaterial<HJCSolid>(2700, parameters);
     auto &particles = column.generateParticles<BaseParticles, Lattice>();
     auto &wall = system.addBody<SolidBody>(wall_shape);
@@ -106,7 +105,8 @@ int main(int argc, char *argv[])
     metadata.close();
     std::ofstream history("history.csv");
     history.exceptions(std::ios::failbit | std::ios::badbit);
-    history << "time,force_z,mean_velocity_z,mean_damage,max_damage,min_J,kinetic_energy,max_pressure\n" << std::setprecision(16);
+    history << "time,force_z,mean_velocity_z,mean_damage,max_damage,min_J,kinetic_energy,max_pressure\n"
+            << std::setprecision(16);
     double last_mean_damage = 0, peak_force = 0;
     auto record = [&]()
     {

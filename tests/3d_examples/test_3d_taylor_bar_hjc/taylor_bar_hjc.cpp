@@ -95,7 +95,8 @@ int main(int argc, char *argv[])
              << ",\"speed\":" << speed << ",\"end_time\":" << end_time
              << ",\"initial_gap\":" << gap << ",\"particles\":" << particles.TotalRealParticles() << "}\n";
     std::ofstream history("history.csv");
-    history << "time,force_z,mean_velocity_z,mean_damage,max_damage,min_J,kinetic_energy,max_pressure\n" << std::setprecision(16);
+    history << "time,force_z,mean_velocity_z,mean_damage,max_damage,min_J,kinetic_energy,max_pressure\n"
+            << std::setprecision(16);
     Real last_mean_damage = 0, peak_force = 0;
     auto record = [&]()
     {

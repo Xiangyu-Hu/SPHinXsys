@@ -15,6 +15,7 @@ namespace SPH
 {
 namespace solid_dynamics
 {
+//=================================================================================================//
 template <typename... Parameters>
 template <class DynamicsIdentifier>
 ClassicWallContactForceCK<Contact<WithUpdate, Parameters...>>::
@@ -43,9 +44,9 @@ ClassicWallContactForceCK<Contact<WithUpdate, Parameters...>>::
     this->particles_->template addEvolvingVariable<int>(dv_surface_mask_);
 
     const Real h = Real(0.5) * (this->sph_adaptation_->ReferenceSmoothingLength() +
-                               this->contact_adaptation_->ReferenceSmoothingLength());
+                                this->contact_adaptation_->ReferenceSmoothingLength());
     const Real spacing = Real(0.5) * (this->sph_adaptation_->ReferenceSpacing() +
-                                     this->contact_adaptation_->ReferenceSpacing());
+                                      this->contact_adaptation_->ReferenceSpacing());
     const KernelWendlandC2 kernel(h);
     const Vecd zero = Vecd::Zero();
     inv_h_ = Real(1) / h;
@@ -54,7 +55,7 @@ ClassicWallContactForceCK<Contact<WithUpdate, Parameters...>>::
     offset_W_ = kernel.W(spacing, zero);
     cutoff_ = kernel.CutOffRadius();
 }
-
+//=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 ClassicWallContactForceCK<Contact<WithUpdate, Parameters...>>::InteractKernel::
@@ -67,7 +68,7 @@ ClassicWallContactForceCK<Contact<WithUpdate, Parameters...>>::InteractKernel::
       contact_factor_(encloser.dv_contact_factor_->DelegatedData(ex_policy)),
       contact_force_(encloser.getCurrentForce()->DelegatedData(ex_policy)),
       surface_mask_(encloser.dv_surface_mask_->DelegatedData(ex_policy)) {}
-
+//=================================================================================================//
 template <typename... Parameters>
 void ClassicWallContactForceCK<Contact<WithUpdate, Parameters...>>::InteractKernel::
     interact(size_t index_i, Real dt)
@@ -111,6 +112,7 @@ void ClassicWallContactForceCK<Contact<WithUpdate, Parameters...>>::InteractKern
     }
     contact_force_[index_i] = force * Vol_[index_i];
 }
+//=================================================================================================//
 } // namespace solid_dynamics
 } // namespace SPH
 #endif // CLASSIC_WALL_CONTACT_HPP

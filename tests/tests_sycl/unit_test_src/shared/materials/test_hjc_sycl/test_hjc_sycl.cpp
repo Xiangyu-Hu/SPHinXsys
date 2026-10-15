@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-#include "sphinxsys.h"
 #include "hjc_solid.hpp"
-#include <gtest/gtest.h>
+#include "sphinxsys.h"
 #include <array>
+#include <gtest/gtest.h>
 #include <limits>
 
 using namespace SPH;
@@ -96,9 +96,9 @@ class HJCKernelTest : public ::testing::Test
   protected:
     SPHSystem system_{BoundingBoxd(Vecd::Constant(-1), Vecd::Constant(1)), Real(.5)};
     SolidBody device_body_{system_, makeShared<GeometricShapeBox>(
-        BoundingBoxd(Vecd::Constant(-.5), Vecd::Constant(.5)), "KernelPoints")};
+                                        BoundingBoxd(Vecd::Constant(-.5), Vecd::Constant(.5)), "KernelPoints")};
     SolidBody reference_body_{system_, makeShared<GeometricShapeBox>(
-        BoundingBoxd(Vecd::Constant(-.5), Vecd::Constant(.5)), "ReferencePoints")};
+                                           BoundingBoxd(Vecd::Constant(-.5), Vecd::Constant(.5)), "ReferencePoints")};
     HJCSolid &device_material_ = device_body_.defineMatterMaterial<HJCSolid>(2700, parameters());
     HJCSolid &reference_material_ = reference_body_.defineMatterMaterial<HJCSolid>(2700, parameters());
     BaseParticles &device_particles_ = device_body_.generateParticles<BaseParticles, Lattice>();
@@ -146,7 +146,8 @@ class HJCKernelTest : public ::testing::Test
             {
                 SCOPED_TRACE(scalar_names[k]);
                 EXPECT_TRUE(std::isfinite(actual[i].values[k]));
-                Real floor = k < 4 ? Real(.01) : k == 7 ? Real(2700) : parameters().compressive_strength;
+                Real floor = k < 4 ? Real(.01) : k == 7 ? Real(2700)
+                                                        : parameters().compressive_strength;
                 Real tolerance = relative * std::max(floor, std::abs(expected[i].values[k]));
                 // Allow small single-precision differences in accumulated damage near zero.
                 if (sizeof(Real) == sizeof(float) && k == 0)
@@ -165,7 +166,7 @@ TEST_F(HJCKernelTest, LoadingUnloadingAndRateDependence)
     {
         Real fraction = Real(step <= 24 ? step : 48 - step) / Real(24);
         advance([&](size_t i)
-        {
+                {
             Matd F = Matd::Identity();
             if (i % 4 == 0)
                 F *= std::pow(Real(1) + Real(.15) * fraction, Real(-1) / Real(3));
@@ -173,8 +174,9 @@ TEST_F(HJCKernelTest, LoadingUnloadingAndRateDependence)
                 F(0, 1) = Real(.008) * fraction;
             else
                 F *= std::exp(Real(.001) * fraction);
-            return F;
-        }, [](size_t i) { return i % 4 == 3 ? Real(1e-8) : Real(1e-4); });
+            return F; },
+                [](size_t i)
+                { return i % 4 == 3 ? Real(1e-8) : Real(1e-4); });
         compare_reference();
         auto current = snapshots(device_particles_, par_ck);
         for (size_t i = 0; i != current.size(); ++i)
@@ -191,7 +193,7 @@ TEST_F(HJCKernelTest, LoadingUnloadingAndRateDependence)
             EXPECT_GT(current[1].values[0], Real(0));
             EXPECT_GT(current[3].values[5], current[1].values[5]);
             EXPECT_LE(-current[2].values[4], parameters().tensile_strength *
-                      (Real(1) - current[2].values[0]) * Real(1.001));
+                                                 (Real(1) - current[2].values[0]) * Real(1.001));
         }
         previous = current;
     }
@@ -212,15 +214,19 @@ TEST_F(HJCKernelTest, RotationPreservesStressAndUndamagedHistory)
         }
         return F;
     };
-    advance(initial_deformation, [](size_t) { return Real(1e-5); });
+    advance(initial_deformation, [](size_t)
+            { return Real(1e-5); });
     const auto initial = snapshots(device_particles_, par_ck);
     Matd rotation = Matd::Identity();
     for (int step = 1; step <= 32; ++step)
     {
         rotation = Eigen::AngleAxis<Real>(Real(step) * Real(.06),
-            Vec3d(Real(1), Real(2), Real(3)).normalized()).toRotationMatrix();
-        advance([&](size_t i) { return Matd(rotation * initial_deformation(i)); },
-                [](size_t) { return Real(1e-5); });
+                                          Vec3d(Real(1), Real(2), Real(3)).normalized())
+                       .toRotationMatrix();
+        advance([&](size_t i)
+                { return Matd(rotation * initial_deformation(i)); },
+                [](size_t)
+                { return Real(1e-5); });
     }
     compare_reference();
     const auto actual = snapshots(device_particles_, par_ck);
@@ -238,37 +244,42 @@ TEST_F(HJCKernelTest, RotationPreservesStressAndUndamagedHistory)
 TEST_F(HJCKernelTest, InvalidUpdatesLeaveHistoryUnchanged)
 {
     advance([](size_t)
-    {
+            {
         Matd F = Real(.99) * Matd::Identity();
         F(0, 1) = Real(.004);
-        return F;
-    }, [](size_t) { return Real(1e-6); });
+        return F; },
+            [](size_t)
+            { return Real(1e-6); });
     auto *previous = device_particles_.getVariableByName<Matd>("HJCPreviousDeformation");
     previous->prepareForOutput(par_ck);
     previous->Data()[6] = Matd::Zero();
     previous->finalizeLoadIn(par_ck);
     const auto before = snapshots(device_particles_, par_ck);
     advance([](size_t i)
-    {
+            {
         Matd F = Real(.98) * Matd::Identity();
         if (i == 0) F(0, 0) *= Real(-1);
         if (i == 1) F.setZero();
         if (i == 2) F(0, 0) = std::numeric_limits<Real>::quiet_NaN();
-        return F;
-    }, [](size_t i)
-    {
-        if (i == 3) return Real(-1e-6);
-        if (i == 4) return std::numeric_limits<Real>::infinity();
-        if (i == 5) return Real(0);
-        return Real(1e-6);
-    }, false);
+        return F; },
+            [](size_t i)
+            {
+                if (i == 3)
+                    return Real(-1e-6);
+                if (i == 4)
+                    return std::numeric_limits<Real>::infinity();
+                if (i == 5)
+                    return Real(0);
+                return Real(1e-6);
+            },
+            false);
     const auto after = snapshots(device_particles_, par_ck);
     for (size_t i = 0; i != 7; ++i)
     {
         SCOPED_TRACE(i);
-        HJCIntegrationStatus expected = i < 3 ? HJCIntegrationStatus::invalid_deformation :
-            i < 5 ? HJCIntegrationStatus::invalid_increment :
-            i == 5 ? HJCIntegrationStatus::success : HJCIntegrationStatus::singular_increment;
+        HJCIntegrationStatus expected = i < 3 ? HJCIntegrationStatus::invalid_deformation : i < 5 ? HJCIntegrationStatus::invalid_increment
+                                                                                        : i == 5  ? HJCIntegrationStatus::success
+                                                                                                  : HJCIntegrationStatus::singular_increment;
         EXPECT_EQ(after[i].status, static_cast<int>(expected));
         EXPECT_EQ((after[i].stress - before[i].stress).norm(), Real(0));
         EXPECT_EQ((after[i].previous - before[i].previous).norm(), Real(0));
