@@ -120,17 +120,17 @@ class AdvectionTimeStepCK : public LocalDynamicsReduce<ReduceMax<Real>>
     DiscreteVariable<Vecd> *dv_vel_;
 };
 
-class ViscousTimeStep : public BaseDynamics<Real>
+class ViscousDominance : public BaseDynamics<bool>
 {
   public:
-    ViscousTimeStep(SPHBody &sph_body);
-    virtual ~ViscousTimeStep() {};
+    ViscousDominance(SPHBody &sph_body, Real U_max);
+    virtual ~ViscousDominance() {};
 
-    virtual Real exec(Real dt = 0.0) override { return viscous_time_step_; };
+    virtual bool exec(Real dt = 0.0) override { return is_viscous_dominance_; };
 
   protected:
     Real h_min_;
-    Real viscous_time_step_;
+    bool is_viscous_dominance_;
 };
 
 /**

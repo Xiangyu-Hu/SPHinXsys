@@ -25,15 +25,15 @@ Real AdvectionTimeStepCK::FinishDynamics::Result(Real reduced_value)
     return advectionCFL_ * h_min_ / (SMAX(std::sqrt(reduced_value), speed_ref_) + TinyReal);
 }
 //=================================================================================================//
-ViscousTimeStep::ViscousTimeStep(SPHBody &sph_body)
-    : BaseDynamics<Real>(),
+ViscousDominance::ViscousDominance(SPHBody &sph_body, Real U_max)
+    : BaseDynamics<bool>(),
       h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
-      viscous_time_step_(0.0)
+      is_viscous_dominance_(false)
 {
     auto &material = sph_body.getMatterMaterial();
     Viscosity &viscosity = sph_body.getMaterialProperty<Viscosity>();
     Real viscous_speed = viscosity.ReferenceViscosity() / material.ReferenceDensity() / h_min_;
-    viscous_time_step_ = 0.5 * h_min_ / (viscous_speed + TinyReal) / Real(Dimensions);
+    is_viscous_dominance_ = viscous_speed > 0.5 * U_max;
 }
 //=================================================================================================//
 AdvectionViscousTimeStepCK::AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL)
