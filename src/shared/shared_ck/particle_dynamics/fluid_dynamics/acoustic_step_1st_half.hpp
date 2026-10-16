@@ -29,6 +29,7 @@ AcousticStep<BaseInteractionType>::AcousticStep(DynamicsIdentifier &identifier)
     //----------------------------------------------------------------------
     this->particles_->template addEvolvingVariable<Vecd>("Velocity");
     this->particles_->template addEvolvingVariable<Real>("Mass");
+    this->particles_->template addEvolvingVariable<Vecd>("Force");
     this->particles_->template addEvolvingVariable<Vecd>("ForcePrior");
     this->particles_->template addEvolvingVariable<Real>("Compression");
     this->particles_->template addEvolvingVariable<Real>("CompressionRate");
