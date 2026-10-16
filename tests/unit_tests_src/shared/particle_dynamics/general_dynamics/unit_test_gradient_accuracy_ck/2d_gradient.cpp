@@ -356,7 +356,9 @@ TEST(QuadraticField, SecondOrderGradientAndHessianAreExact)
     // The linearly corrected gradient is only first-order consistent, so it is not exact on
     // disordered particles. This also shows that the particle disorder is effective.
     if (jitter_ratio >= 0.2)
+    {
         EXPECT_GT(interior.linear_gradient.rms(), 100.0 * interior.second_order_gradient.rms());
+    }
 }
 TEST(SinusoidalField, SecondOrderGradientIsMoreAccurateOnDisorderedParticles)
 {
@@ -366,7 +368,9 @@ TEST(SinusoidalField, SecondOrderGradientIsMoreAccurateOnDisorderedParticles)
     EXPECT_LT(interior.second_order_gradient.rms(), interior.linear_gradient.rms());
     // at the default and finer resolutions the error is at least halved
     if (particle_spacing <= 0.0105)
+    {
         EXPECT_LT(interior.second_order_gradient.rms(), 0.5 * interior.linear_gradient.rms());
+    }
 }
 //----------------------------------------------------------------------
 //	Reads a real number from an environment variable. An invalid or out-of-range value stops the test.
