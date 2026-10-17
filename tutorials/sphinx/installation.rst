@@ -237,8 +237,21 @@ we need to install the corresponding plug-ins so that NVIDIA or AMD graphics car
 There is a detailed official document explaining how to install this plugin:
 "https://developer.codeplay.com/products/oneapi/nvidia/2024.0.0/guides/get-started-guide-nvidia"
 
-For old version of the plug, you can obtain it from a public file repository for SPHinXsys:
+Since Codeplay has changed the download link of the plugin, 
+we provide a direct download link for the plugin:
+you can obtain it from a public file repository for SPHinXsys:
 "https://github.com/Xiangyu-Hu/SPHinXsys-public-files/tree/master/file-exchange"
+
+..  code-block:: bash
+    sh oneapi-for-nvidia-gpus-2024.0.0-cuda-12.0-linux.sh
+
+The installer will search for an existing Intel oneAPI Toolkit version 2024.0.0 
+installation in common locations. 
+If you have installed an Intel oneAPI Toolkit in a custom location, 
+use --install-dir /path/to/intel/oneapi.
+
+If your Intel oneAPI Toolkit installation is outside your home directory, 
+you may be required to run this command with elevated privileges, e.g. sudo.
 
 The sign of successful installation is to open the terminal and enter "sycl-ls". 
 If it can detect your graphics card information, the installation is successful.
