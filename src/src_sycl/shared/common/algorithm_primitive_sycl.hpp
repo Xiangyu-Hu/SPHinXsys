@@ -139,7 +139,7 @@ sycl::event DeviceRadixSort<DataType>::sort_by_key(
                         local_output[rank] = number;
                         for (UnsignedInt b = 1; b < radix_bits; ++b) 
                         {   // sorting remaining bits
-                            item.barrier(sycl::access::fence_space::local_space);
+                            sycl::group_barrier(item.get_group());
                             number = local_output[item.get_local_id()];
                             radix_digit = get_digit(number.first, digit, radix_bits);
 
@@ -151,13 +151,13 @@ sycl::event DeviceRadixSort<DataType>::sort_by_key(
                         for (UnsignedInt r = 0; r < radix; ++r)
                             local_buckets[r] = 0;
 
-                        item.barrier(sycl::access::fence_space::local_space);
+                        sycl::group_barrier(item.get_group());
                         {
                             sycl::atomic_ref<UnsignedInt, sycl::memory_order_relaxed, sycl::memory_scope_work_group,
                                              sycl::access::address_space::local_space>
                                 bucket_r{local_buckets[radix_digit]};
                             ++bucket_r;
-                            item.barrier(sycl::access::fence_space::local_space);
+                            sycl::group_barrier(item.get_group());
                         }
 
                         // Save local buckets to global memory, with one row per work-group (in column-major order)
