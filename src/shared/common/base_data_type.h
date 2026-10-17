@@ -33,7 +33,13 @@
 #include <limits>
 
 #if SPHINXSYS_USE_SYCL
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
+
+// Provide a backward-compatibility bridge for older library structures
+namespace cl {
+    namespace sycl = ::sycl;
+}
+
 #define SYCL_DEVICE_ONLY
 #endif // SPHINXSYS_USE_SYCL
 
