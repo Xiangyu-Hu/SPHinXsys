@@ -122,6 +122,12 @@ Your input is crucial to us. We encourage you to report any issues you encounter
 
 We particularly appreciate feedback stemming from practical simulations or projects, as these insights are essential for improving SPHinXsys.
 
+#### For academic SPHinXsys users
+
+If you are using SPHinXsys in your research, we would be grateful if you could cite our work in your publications. 
+For this, we are happy to help you solve any issues you may encounter with SPHinXsys. 
+Please contact us at <xiangyu.hu@tum.de>.
+
 #### For SPHinXsys developers
 
 If you don't have a GitHub account yet, please register for one. Fork the SPHinXsys repository to add new features or improve existing ones. Once your changes are ready, commit them and initiate a pull request to have your contributions merged into the main repository.

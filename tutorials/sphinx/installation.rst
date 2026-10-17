@@ -183,7 +183,7 @@ Note that you need to activate the oneAPI environment every time you open a new 
 Or you can add the above command to the "~/.bashrc" file, 
 so that the oneAPI environment can be automatically activated when the terminal is opened.
 
-Second Step: Install the GPU driver and CUDA (for the NVIDIA GPU)
+Optional A: Install the GPU driver and CUDA (for the NVIDIA GPU)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 There are so many tutorials and ways to install NVIDIA driver and CUDA on the Internet, 
@@ -237,12 +237,62 @@ we need to install the corresponding plug-ins so that NVIDIA or AMD graphics car
 There is a detailed official document explaining how to install this plugin:
 "https://developer.codeplay.com/products/oneapi/nvidia/2024.0.0/guides/get-started-guide-nvidia"
 
-For old version of the plug, you can obtain it from a public file repository for SPHinXsys:
+Since Codeplay has changed the download link of the plugin, 
+we provide a direct download link for the plugin:
+you can obtain it from a public file repository for SPHinXsys:
 "https://github.com/Xiangyu-Hu/SPHinXsys-public-files/tree/master/file-exchange"
+
+..  code-block:: bash
+    sh oneapi-for-nvidia-gpus-2024.0.0-cuda-12.0-linux.sh
+
+The installer will search for an existing Intel oneAPI Toolkit version 2024.0.0 
+installation in common locations. 
+If you have installed an Intel oneAPI Toolkit in a custom location, 
+use --install-dir /path/to/intel/oneapi.
+
+If your Intel oneAPI Toolkit installation is outside your home directory, 
+you may be required to run this command with elevated privileges, e.g. sudo.
 
 The sign of successful installation is to open the terminal and enter "sycl-ls". 
 If it can detect your graphics card information, the installation is successful.
 (You need to activate the oneAPI environment first.)
+
+Optional B: Install the oneAPI Unified Runtime for NVIDIA GPU 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For new versions of Intel oneAPI >= 2025.3.0, 
+the Unified Runtime (UR) is required for using NVIDIA GPUs with SYCL.
+
+You install the oneAPI by following the instructions on the official Intel oneAPI website:
+
+..  code-block:: bash
+    wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \
+            | gpg --dearmor \
+            | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" \
+            | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt-get update
+          sudo apt-get install -y intel-cpp-essentials
+
+Then go to the official Intel oneAPI website to download the oneAPI Unified Runtime:
+"https://github.com/intel/llvm/releases".
+Find a relase for Linux, and download "sycl_linux.tar.gz" and exact the file by
+
+..  code-block:: bash
+    sudo mkdir -p /opt/ur-cuda
+    sudo tar -xzf sycl_linux.tar.gz -C /opt/ur-cuda --strip-components=2 --wildcards './lib/libur_adapter_cuda.so*'
+
+This will install the oneAPI Unified Runtime for NVIDIA GPU in the directory "/opt/ur-cuda".
+and then you need to add the following lines to the "~/.bashrc" file:
+
+..  code-block:: bash
+        export UR_ADAPTERS_SEARCH_PATH=/opt/ur-cuda
+        source /opt/intel/oneapi/setvars.sh --include-intel-llvm
+        export UR_ADAPTERS_SEARCH_PATH=/opt/ur-cuda
+
+Then, open the terminal and enter "source ~/.bashrc" to make the changes take effect.
+We export the environment variable UR_ADAPTERS_SEARCH_PATH to point to the directory 
+where the oneAPI Unified Runtime for NVIDIA GPU is installed.
 
 Final Step: Building SPHinXsys-SYCL
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
