@@ -149,8 +149,8 @@ For running a specific case, for example, the **2d_dambreak**:
     cd bin
     ./test_2d_dambreak
 
-Installing SYCL version on Ubuntu
----------------------------------------
+Installing SYCL version on Ubuntu within the framework of Intel oneAPI
+----------------------------------------------------------------------
 
 Note that since the current Windows Subsystem for Linux (WSL1 or WSL2) does not support Unified Shared Memory (USM), 
 the current SYCL version only runs on full Linux.
@@ -183,7 +183,7 @@ Note that you need to activate the oneAPI environment every time you open a new 
 Or you can add the above command to the "~/.bashrc" file, 
 so that the oneAPI environment can be automatically activated when the terminal is opened.
 
-Optional A: Install the GPU driver and CUDA (for the NVIDIA GPU)
+Second Step: Install the GPU driver and CUDA (for the NVIDIA GPU)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 There are so many tutorials and ways to install NVIDIA driver and CUDA on the Internet, 
@@ -229,7 +229,10 @@ Then, open the terminal and enter "source ~/.bashrc" to make the changes take ef
 The sign of successful installation is to open the terminal and enter "nvcc -V". 
 If the CUDA information can be printed correctly, the installation is successful.
 
-Third Step: Install the oneAPI Plugin for NVIDIA GPU 
+You have two options to use NVIDIA GPU within 
+the oneAPI DPC++ framework:
+
+Option A: Install the oneAPI Plugin for NVIDIA GPU 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Since oneAPI officially does not currently support graphics cards from other manufacturers, 
@@ -258,7 +261,7 @@ If it can detect your graphics card information, the installation is successful.
 (You need to activate the oneAPI environment first.)
 
 Optional B: Install the oneAPI Unified Runtime for NVIDIA GPU 
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For new versions of Intel oneAPI >= 2025.3.0, 
 the Unified Runtime (UR) is required for using NVIDIA GPUs with SYCL.
