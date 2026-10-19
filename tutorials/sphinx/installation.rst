@@ -246,6 +246,7 @@ you can obtain it from a public file repository for SPHinXsys:
 "https://github.com/Xiangyu-Hu/SPHinXsys-public-files/tree/master/file-exchange"
 
 ..  code-block:: bash
+    
     sh oneapi-for-nvidia-gpus-2024.0.0-cuda-12.0-linux.sh
 
 The installer will search for an existing Intel oneAPI Toolkit version 2024.0.0 
@@ -269,6 +270,7 @@ the Unified Runtime (UR) is required for using NVIDIA GPUs with SYCL.
 You install the oneAPI by following the instructions on the official Intel oneAPI website:
 
 ..  code-block:: bash
+    
     wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \
             | gpg --dearmor \
             | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
@@ -282,6 +284,7 @@ Then go to the official Intel oneAPI website to download the oneAPI Unified Runt
 Find a relase for Linux, and download "sycl_linux.tar.gz" and exact the file by
 
 ..  code-block:: bash
+    
     sudo mkdir -p /opt/ur-cuda
     sudo tar -xzf sycl_linux.tar.gz -C /opt/ur-cuda --strip-components=2 --wildcards './lib/libur_adapter_cuda.so*'
 
@@ -289,6 +292,7 @@ This will install the oneAPI Unified Runtime for NVIDIA GPU in the directory "/o
 and then you need to add the following lines to the "~/.bashrc" file:
 
 ..  code-block:: bash
+    
         export UR_ADAPTERS_SEARCH_PATH=/opt/ur-cuda
         source /opt/intel/oneapi/setvars.sh --include-intel-llvm
         export UR_ADAPTERS_SEARCH_PATH=/opt/ur-cuda
