@@ -24,6 +24,39 @@ struct HJCState
     Real damage = 0, plastic_strain = 0, plastic_volume = 0, maximum_compression = 0;
 };
 
+/** Device updates report errors for the host to check before advancing the step. */
+enum class HJCIntegrationStatus : int
+{
+    success = 0,
+    invalid_deformation = 1,
+    invalid_increment = 2,
+    singular_increment = 3,
+    nonfinite_state = 4
+};
+
+/** Value-only numerical model shared by the CPU and computing-kernel interfaces. */
+class HJCConstitutiveModel
+{
+  public:
+    HJCConstitutiveModel(const HJCParameters &parameters, Real bulk_modulus,
+                         Real shear_modulus, Real lock_compression, Real transition_slope)
+        : parameters_(parameters), K0_(bulk_modulus), G0_(shear_modulus),
+          lock_compression_(lock_compression), transition_slope_(transition_slope) {}
+
+    Real DensePressure(Real compression) const;
+    Real Pressure(Real compression, HJCState &state) const;
+    Real FractureStrain(Real pressure) const;
+    Real YieldStrength(Real pressure, Real damage, Real strain_rate) const;
+    HJCIntegrationStatus Integrate(const Mat3d &increment, Real compression, Real dt, HJCState &state) const;
+    HJCIntegrationStatus UpdateStress(const Matd &deformation, const Matd &previous_deformation,
+                                      Real dt, HJCState &state) const;
+    Real AcousticModulus(Real compression) const;
+
+  private:
+    HJCParameters parameters_;
+    Real K0_, G0_, lock_compression_, transition_slope_;
+};
+
 /** Holmquist-Johnson-Cook concrete, with a corotational incremental update.
  * Use with solid_dynamics::HJCIntegration1stHalf and Integration2ndHalf.
  * State-free elastic stress interfaces deliberately reject accidental use.
@@ -51,6 +84,23 @@ class HJCSolid : public ElasticSolid
     Real VolumetricKirchhoff(Real J) override;
     std::string getRelevantStressMeasureName() override { return "Cauchy"; }
 
+    class ConstituteKernel
+    {
+      public:
+        template <typename ExecutionPolicy>
+        ConstituteKernel(const ExecutionPolicy &ex_policy, HJCSolid &encloser);
+        Matd UpdateStress(const Matd &deformation, size_t index_i, Real dt);
+        int Status(size_t index_i) const { return status_[index_i]; }
+
+      private:
+        HJCConstitutiveModel model_;
+        Mat3d *stress_;
+        Matd *previous_deformation_;
+        Real *damage_, *plastic_strain_, *plastic_volume_, *maximum_compression_;
+        Real *pressure_, *equivalent_stress_, *acoustic_modulus_;
+        int *status_;
+    };
+
   private:
     HJCParameters parameters_;
     Real lock_compression_, transition_slope_;
@@ -58,6 +108,16 @@ class HJCSolid : public ElasticSolid
     Matd *previous_deformation_;
     Real *damage_, *plastic_strain_, *plastic_volume_, *maximum_compression_;
     Real *pressure_, *equivalent_stress_, *acoustic_modulus_;
+    DiscreteVariable<Mat3d> *dv_stress_ = nullptr;
+    DiscreteVariable<Matd> *dv_previous_deformation_ = nullptr;
+    DiscreteVariable<Real> *dv_damage_ = nullptr, *dv_plastic_strain_ = nullptr;
+    DiscreteVariable<Real> *dv_plastic_volume_ = nullptr, *dv_maximum_compression_ = nullptr;
+    DiscreteVariable<Real> *dv_pressure_ = nullptr, *dv_equivalent_stress_ = nullptr, *dv_acoustic_modulus_ = nullptr;
+    DiscreteVariable<int> *dv_status_ = nullptr;
+    HJCConstitutiveModel ConstitutiveModel() const
+    {
+        return HJCConstitutiveModel(parameters_, K0_, G0_, lock_compression_, transition_slope_);
+    }
     Real DensePressure(Real compression) const;
 };
 } // namespace SPH

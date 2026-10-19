@@ -29,8 +29,8 @@ int main(int argc, char *argv[])
         else
             system_args.push_back(argv[i]);
     }
-    if (!(spacing > 0 && spacing <= .001 && speed > 0 && std::isfinite(speed) &&
-          cfl > 0 && cfl <= .2 && end_time > 0 && std::isfinite(end_time)))
+    if (!(spacing > 0 && spacing <= Real(.001) && speed > 0 && std::isfinite(speed) &&
+          cfl > 0 && cfl <= Real(.2) && end_time > 0 && std::isfinite(end_time)))
         throw std::invalid_argument("Require 0 < spacing <= 0.001 m, speed > 0, 0 < CFL <= 0.2 and end-time > 0");
     if (regression_test && (spacing != Real(.001) || speed != Real(30) ||
                             cfl != Real(.2) || end_time != Real(6e-5)))
@@ -95,7 +95,8 @@ int main(int argc, char *argv[])
              << ",\"speed\":" << speed << ",\"end_time\":" << end_time
              << ",\"initial_gap\":" << gap << ",\"particles\":" << particles.TotalRealParticles() << "}\n";
     std::ofstream history("history.csv");
-    history << "time,force_z,mean_velocity_z,mean_damage,max_damage,min_J,kinetic_energy,max_pressure\n" << std::setprecision(16);
+    history << "time,force_z,mean_velocity_z,mean_damage,max_damage,min_J,kinetic_energy,max_pressure\n"
+            << std::setprecision(16);
     Real last_mean_damage = 0, peak_force = 0;
     auto record = [&]()
     {

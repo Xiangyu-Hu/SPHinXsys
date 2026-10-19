@@ -28,5 +28,6 @@
 
 #include "all_contact_dynamics_ck.h"
 #include "derived_solid_state.h"
+#include "hjc_dynamics_ck.hpp"
 #include "solid_constraint.hpp"
 #include "structure_dynamics.hpp"
