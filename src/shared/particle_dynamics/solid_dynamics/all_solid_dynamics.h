@@ -33,6 +33,7 @@
 #include "constraint_dynamics.hpp"
 #include "fluid_structure_interaction.hpp"
 #include "general_solid_dynamics.h"
+#include "hjc_dynamics.h"
 #include "inelastic_dynamics.h"
 #include "loading_dynamics.h"
 #include "solid_dynamics_variable.h"

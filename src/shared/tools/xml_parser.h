@@ -261,6 +261,57 @@ class XmlParser
     };
 
     //----------------------------------------------------------------------
+    //	Column-wise data: a child element named after the variable holds the
+    //	values of all items as text, separated by ";".
+    //----------------------------------------------------------------------
+    template <typename DataType, typename GetValue>
+    void setColumnToElement(TinyXMLElement *base_ele, const std::string &column_name,
+                            size_t number_of_items, const GetValue &get_value)
+    {
+        std::string text;
+        for (size_t i = 0; i != number_of_items; ++i)
+        {
+            if (i != 0)
+                text += "; ";
+            text += DataToString(get_value(i));
+        }
+        TinyXMLElement *column = base_ele->FirstChildElement(column_name.c_str());
+        if (column == nullptr)
+            column = base_ele->InsertNewChildElement(column_name.c_str());
+        column->SetText(text.c_str());
+    };
+
+    template <typename DataType, typename SetValue>
+    void queryColumnFromElement(TinyXMLElement *base_ele, const std::string &column_name,
+                                size_t number_of_items, const SetValue &set_value)
+    {
+        TinyXMLElement *column = base_ele->FirstChildElement(column_name.c_str());
+        if (column == nullptr || column->GetText() == nullptr)
+        {
+            std::cout << "\n Error: column " << column_name << " not found in xml file." << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+        std::istringstream text_stream(column->GetText());
+        size_t i = 0;
+        std::string item;
+        while (i != number_of_items && std::getline(text_stream, item, ';'))
+        {
+            DataType value;
+            StringToData(item, value);
+            set_value(i, value);
+            ++i;
+        }
+        if (i != number_of_items)
+        {
+            std::cout << "\n Error: column " << column_name << " has " << i
+                      << " items but " << number_of_items << " are expected." << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+    };
+
+    //----------------------------------------------------------------------
     //	Get the required attribute value of an element.
     //----------------------------------------------------------------------
     template <typename T>
