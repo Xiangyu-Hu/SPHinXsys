@@ -128,6 +128,8 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(water_block_inner)
             .addPostContactInteraction(water_block_contact)
             .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeStream>(water_block);
+    auto &average_compression =
+        main_methods.addReduceDynamics<fluid_dynamics::AverageCompression>(water_block);
 
     // Transport velocity correction (cylinder pattern):
     // KernelGradientIntegral feeds TransportVelocityCorrectionCK.
@@ -229,6 +231,9 @@ int main(int ac, char *av[])
     fish_inner_build.exec();
     fish_contact_relation.exec();
     fish_body_corrected_configuration.exec();
+    // reference compression from the initial particle distribution
+    fluid_density_regularization.exec();
+    average_compression.exec();
 
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
