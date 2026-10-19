@@ -234,6 +234,8 @@ int main(int ac, char *av[])
     // reference compression from the initial particle distribution
     fluid_density_regularization.exec();
     average_compression.exec();
+    // Force is carried over to the next acoustic step
+    water_block.getBaseParticles().addEvolvingVariable<Vecd>("Force");
 
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
@@ -252,6 +254,8 @@ int main(int ac, char *av[])
         fish_contact_relation.exec();
         // rebuild B-matrix from restored fish positions
         fish_body_corrected_configuration.exec();
+        // deformed normal from restored deformation gradient
+        fish_body_update_normal.exec();
         // repopulate density from restored positions
         fluid_density_regularization.exec();
         number_of_iterations = sph_system.RestartStep();
@@ -263,7 +267,9 @@ int main(int ac, char *av[])
     water_advection_step_setup.exec();
     transport_correction.exec();
     fluid_viscous_force.exec();
-    viscous_force_from_fluid.exec();
+    // restored in ForcePrior otherwise
+    if (sph_system.RestartStep() == 0)
+        viscous_force_from_fluid.exec();
 
     body_state_recorder.writeToFile();
     write_water_mechanical_energy.writeToFile(number_of_iterations);
