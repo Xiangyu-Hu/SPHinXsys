@@ -2,6 +2,7 @@
 #define BASE_MESH_HXX
 
 #include "base_mesh.h"
+#include "sphinxsys_bitmask.h"
 
 namespace SPH
 {
@@ -125,6 +126,18 @@ void MultiResolutionMeshField<MeshType>::writeMeshFieldToPlt(
         writeCellVariablesToPltByMesh(l, out_file);
         out_file.close();
     }
+}
+//=================================================================================================//
+template <class MeshType>
+GroupManager &MultiResolutionMeshField<MeshType>::getCellGroupManager()
+{
+    if (cell_group_manager_ptr_.getPtr() == nullptr)
+    {
+        DiscreteVariable<UnsignedInt> *group_variable =
+            registerCellVariable<UnsignedInt>("ParticleGroups");
+        cell_group_manager_ptr_.createPtr<GroupManager>(group_variable);
+    }
+    return *cell_group_manager_ptr_.getPtr();
 }
 //=============================================================================================//
 template <class MeshType>
