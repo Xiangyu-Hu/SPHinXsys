@@ -128,6 +128,8 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(water_block_inner)
             .addPostContactInteraction(water_block_contact)
             .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeStream>(water_block);
+    auto &average_compression =
+        main_methods.addReduceDynamics<fluid_dynamics::AverageCompression>(water_block);
 
     // Transport velocity correction (cylinder pattern):
     // KernelGradientIntegral feeds TransportVelocityCorrectionCK.
@@ -229,6 +231,11 @@ int main(int ac, char *av[])
     fish_inner_build.exec();
     fish_contact_relation.exec();
     fish_body_corrected_configuration.exec();
+    // reference compression from the initial particle distribution
+    fluid_density_regularization.exec();
+    average_compression.exec();
+    // Force is carried over to the next acoustic step
+    water_block.getBaseParticles().addEvolvingVariable<Vecd>("Force");
 
     //----------------------------------------------------------------------
     //	Load restart file if necessary.
@@ -247,6 +254,8 @@ int main(int ac, char *av[])
         fish_contact_relation.exec();
         // rebuild B-matrix from restored fish positions
         fish_body_corrected_configuration.exec();
+        // deformed normal from restored deformation gradient
+        fish_body_update_normal.exec();
         // repopulate density from restored positions
         fluid_density_regularization.exec();
         number_of_iterations = sph_system.RestartStep();
@@ -258,7 +267,9 @@ int main(int ac, char *av[])
     water_advection_step_setup.exec();
     transport_correction.exec();
     fluid_viscous_force.exec();
-    viscous_force_from_fluid.exec();
+    // restored in ForcePrior otherwise
+    if (sph_system.RestartStep() == 0)
+        viscous_force_from_fluid.exec();
 
     body_state_recorder.writeToFile();
     write_water_mechanical_energy.writeToFile(number_of_iterations);
