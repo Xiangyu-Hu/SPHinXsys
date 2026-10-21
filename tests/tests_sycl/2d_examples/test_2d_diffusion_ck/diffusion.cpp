@@ -1,7 +1,7 @@
 /**
  * @file 	diffusion.cpp
  * @brief 	This is the first test using splitting solver.
- * @author 	sphinxsim
+ * @author 	sphinxsim@einsimo.com
  */
 #include "sphinxsys.h"
 #include <gtest/gtest.h>
