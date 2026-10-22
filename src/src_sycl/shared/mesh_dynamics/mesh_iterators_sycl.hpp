@@ -8,7 +8,7 @@ namespace SPH
 {
 //=================================================================================================//
 template <typename FunctionOnData>
-void package_for(const ParallelDevicePolicy &par_device, UnsignedInt start_index,
+void package_for(const SYCLDevicePolicy &sycl_device, UnsignedInt start_index,
                  UnsignedInt end_index, const FunctionOnData &function)
 {
     UnsignedInt operations = end_index - start_index;
