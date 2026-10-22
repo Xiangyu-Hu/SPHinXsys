@@ -1,1 +1,2 @@
 add_subdirectory(test_hjc_sycl)
+add_subdirectory(test_johnson_cook_sycl)
