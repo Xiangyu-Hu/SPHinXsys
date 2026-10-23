@@ -59,8 +59,8 @@ class NeckingGripReactionCK : public LocalDynamicsReduce<ReduceSum<Vec2d>>
     explicit NeckingGripReactionCK(SPHBody &body)
         : LocalDynamicsReduce<ReduceSum<Vec2d>>(body),
           dv_force_(particles_->getVariableByName<Vecd>("Force")),
-          dv_mass_(particles_->getVariableByName<Real>("Mass")),
-          dv_pos0_(particles_->getVariableByName<Vecd>("InitialPosition")) {}
+          dv_pos0_(particles_->getVariableByName<Vecd>("InitialPosition")),
+          dv_mass_(particles_->getVariableByName<Real>("Mass")) {}
 
     class ReduceKernel
     {
@@ -68,8 +68,8 @@ class NeckingGripReactionCK : public LocalDynamicsReduce<ReduceSum<Vec2d>>
         template <class ExecutionPolicy, class EncloserType>
         ReduceKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
             : force_(encloser.dv_force_->DelegatedData(ex_policy)),
-              mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
-              pos0_(encloser.dv_pos0_->DelegatedData(ex_policy)) {}
+              pos0_(encloser.dv_pos0_->DelegatedData(ex_policy)),
+              mass_(encloser.dv_mass_->DelegatedData(ex_policy)) {}
 
         Vec2d reduce(size_t i, Real acceleration)
         {
