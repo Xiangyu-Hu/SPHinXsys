@@ -72,7 +72,7 @@ target_link_libraries(sphinxsys_core INTERFACE Threads::Threads)
 set(Boost_NO_WARN_NEW_VERSIONS TRUE) # In case your CMake version is older than the release of Boost found
 
 # Boost geometry and program-options are old enough to afford skipping this warning
-find_package(Boost REQUIRED)
+find_package(Boost CONFIG REQUIRED)
 find_path(BOOST_INCLUDE_DIR boost/geometry) # Header-only Boost libraries are not components
 
 if(NOT BOOST_INCLUDE_DIR)
@@ -81,7 +81,7 @@ endif()
 
 target_link_libraries(sphinxsys_core INTERFACE Boost::boost)
 target_include_directories(sphinxsys_core INTERFACE ${Boost_INCLUDE_DIRS})
-find_package(Boost QUIET COMPONENTS program_options)
+find_package(Boost CONFIG QUIET COMPONENTS program_options)
 
 if(TARGET Boost::program_options)
     target_compile_definitions(sphinxsys_core INTERFACE BOOST_AVAILABLE)
