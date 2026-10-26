@@ -83,13 +83,13 @@ class ConstantArray : public Quantity
     DataType *Data() { return data_; };
     template <class ExecutionPolicy>
     DataType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
-    template <class PolicyType>
-    DataType *DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy);
-    template <class PolicyType>
-    DataType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy)
+    DataType *DelegatedOnDevice(const SYCLDevicePolicy &ex_policy);
+
+    DataType *DelegatedData(const SYCLDevicePolicy &ex_policy)
     {
         return DelegatedOnDevice(ex_policy);
     };
+
     template <class ExecutionPolicy>
     ArrayView<DataType> DelegatedArrayView(const ExecutionPolicy &ex_policy)
     {
@@ -108,8 +108,7 @@ template <typename DataType>
 class DeviceOnlyConstantArray : public Quantity
 {
   public:
-    template <class PolicyType>
-    DeviceOnlyConstantArray(const DeviceExecution<PolicyType> &ex_policy,
+    DeviceOnlyConstantArray(const SYCLDevicePolicy &ex_policy,
                             ConstantArray<DataType> *host_constant);
     ~DeviceOnlyConstantArray();
 
@@ -140,10 +139,8 @@ class ComputingKernelArray : public Quantity
     StdVec<GeneratorType *> getGenerators() { return generators_; }
     template <class ExecutionPolicy>
     ComputingKernelType *DelegatedData(const ExecutionPolicy &ex_policy) { return delegated_; };
-    template <class PolicyType>
-    ComputingKernelType *DelegatedOnDevice(const DeviceExecution<PolicyType> &ex_policy);
-    template <class PolicyType>
-    ComputingKernelType *DelegatedData(const DeviceExecution<PolicyType> &ex_policy)
+    ComputingKernelType *DelegatedOnDevice(const SYCLDevicePolicy &ex_policy);
+    ComputingKernelType *DelegatedData(const SYCLDevicePolicy &ex_policy)
     {
         return DelegatedOnDevice(ex_policy);
     };
@@ -165,9 +162,8 @@ template <typename GeneratorType, typename ComputingKernelType>
 class DeviceOnlyComputingKernelArray : public Quantity
 {
   public:
-    template <class PolicyType>
     DeviceOnlyComputingKernelArray(
-        const DeviceExecution<PolicyType> &ex_policy,
+        const SYCLDevicePolicy &ex_policy,
         ComputingKernelArray<GeneratorType, ComputingKernelType> *host_constant);
     ~DeviceOnlyComputingKernelArray();
 

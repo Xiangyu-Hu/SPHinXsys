@@ -43,11 +43,21 @@ struct CopyParticleStateCK
     void operator()(VariableArrayView<DataType> &variable_array_view, UnsignedInt index, UnsignedInt another_index);
 };
 
-class SpawnRealParticle
+class BaseParticlesOperation
+{
+  public:
+    BaseParticlesOperation(BaseParticles *particles);
+    virtual ~BaseParticlesOperation() {};
+
+  protected:
+    DiscreteVariables &evolving_variables_;
+    UniquePtrKeeper<VariableArrayAssemble> copyable_states_keeper_;
+    VariableArrayAssemble &getCopyableStates();
+};
+
+class SpawnRealParticle : public BaseParticlesOperation
 {
     using MaskKernel = typename GroupManager::MaskKernel;
-    DiscreteVariables &evolving_variables_;
-    VariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
     GroupManager &group_manager_;
     SingleVariable<UnsignedInt> *sv_total_real_particles_;
@@ -85,11 +95,9 @@ class SpawnRealParticle
     };
 };
 
-class RemoveRealParticle
+class RemoveRealParticle : public BaseParticlesOperation
 {
     using MaskKernel = typename GroupManager::MaskKernel;
-    DiscreteVariables &evolving_variables_;
-    VariableArrayAssemble copyable_states_;
     DiscreteVariable<UnsignedInt> *dv_original_id_;
     GroupManager &group_manager_;
     UnsignedInt life_status_;
