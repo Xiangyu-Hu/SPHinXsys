@@ -43,6 +43,7 @@ class RelationBase;
 class Shape;
 class Quantity;
 class SimbodySystem;
+class BodyStatesRecording;
 using SPHBodyVector = StdVec<SPHBody *>;
 /**
  * @class SPHSystem
@@ -131,6 +132,12 @@ class SPHSystem
     template <typename RelationType>
     StdVec<RelationType *> collectRelations();
 
+    template <class MainMethodsType>
+    void setBodyStatesRecording(MainMethodsType &main_methods);
+
+    template <typename BodyStatesRecordingType>
+    BodyStatesRecordingType &getBodyStatesRecording();
+
   protected:
     std::string system_name_;          /**< name of the system. */
     BoundingBoxd system_bounds_;       /**< Lower and Upper domain bounds. */
@@ -148,6 +155,7 @@ class SPHSystem
     int log_level_ = 2;                /**< Log level, 0: trace, 1: debug, 2: info, 3: warning, 4: error, 5: critical, 6: off */
     SingleVariables all_system_variables_;
     SingleVariable<Real> *sv_physical_time_; /**< global physical time of the SPH system. */
+    BodyStatesRecording *body_states_recording_ = nullptr;
 
     SPHSystem(bool is_physical, BoundingBoxd system_domain_bounds, Real global_resolution,
               size_t number_of_threads = std::thread::hardware_concurrency());
