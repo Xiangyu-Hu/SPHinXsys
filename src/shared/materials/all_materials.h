@@ -36,5 +36,6 @@
 #include "general_continuum.hpp"
 #include "hjc_solid.h"
 #include "inelastic_solid.hpp"
+#include "johnson_cook_solid.h"
 #include "viscosity.h"
 #include "weakly_compressible_fluid.h"

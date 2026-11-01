@@ -139,27 +139,20 @@ template <class RiemannSolverType, class KernelCorrectionType, typename... Param
 template <class DynamicsIdentifier>
 AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters...>>::
     AcousticStep2ndHalf(DynamicsIdentifier &identifier)
-    : BaseInteraction(identifier), kernel_correction_(this->particles_)
-{
-    SourceFluidType &source_fluid =
-        DynamicCast<SourceFluidType>(this, this->sph_body_->getMatterMaterial());
-    for (size_t k = 0; k != this->contact_bodies_.size(); ++k)
-    {
-        TargetFluidType &target_fluid =
-            DynamicCast<TargetFluidType>(this, this->contact_bodies_[k]->getMatterMaterial());
-        riemann_solvers_.push_back(RiemannSolverType(source_fluid, target_fluid));
-        dv_contact_vel_.push_back(
-            this->contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));
-    }
-}
+    : BaseInteraction(identifier), kernel_correction_(this->particles_),
+      contact_kernel_correction_(this->contact_particles_),
+      source_fluid_(DynamicCast<SourceFluidType>(this, this->sph_body_->getMatterMaterial())),
+      target_fluid_(DynamicCast<TargetFluidType>(this, this->contact_body_->getMatterMaterial())),
+      riemann_solvers_(source_fluid_, target_fluid_),
+      dv_contact_vel_(this->contact_particles_->template getVariableByName<Vecd>("Velocity")) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Parameters...>>::
-    InteractKernel::InteractKernel(
-        const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_),
+      contact_correction_(ex_policy, encloser.contact_kernel_correction_),
       riemann_(ex_policy, encloser.riemann_solvers_),
       Vol_(encloser.dv_Vol_->DelegatedDataView(ex_policy)),
       compression_(encloser.dv_compression_->DelegatedDataView(ex_policy)),

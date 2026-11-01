@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
-#include "hjc_solid.h"
+#include "hjc_solid.hpp"
 #include "base_particles.hpp"
-#include <Eigen/Eigenvalues>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -9,7 +8,8 @@
 namespace SPH
 {
 HJCSolid::HJCSolid(Real rho0, const HJCParameters &p)
-    : ElasticSolid(rho0), parameters_(p), stress_(nullptr), previous_deformation_(nullptr),
+    : ElasticSolid(rho0), parameters_(p), lock_compression_(0), transition_slope_(0),
+      stress_(nullptr), previous_deformation_(nullptr),
       damage_(nullptr), plastic_strain_(nullptr), plastic_volume_(nullptr),
       maximum_compression_(nullptr), pressure_(nullptr), equivalent_stress_(nullptr), acoustic_modulus_(nullptr)
 {
@@ -55,121 +55,100 @@ HJCSolid::HJCSolid(Real rho0, const HJCParameters &p)
 
 Real HJCSolid::DensePressure(Real compression) const
 {
-    const auto &p = parameters_;
-    Real mu = (compression - p.lock_strain) / (1 + p.lock_strain);
-    return mu < 0 ? p.K1 * mu : mu * (p.K1 + mu * (p.K2 + mu * p.K3));
+    return ConstitutiveModel().DensePressure(compression);
 }
 
 Real HJCSolid::Pressure(Real compression, HJCState &state) const
 {
-    const auto &p = parameters_;
-    state.maximum_compression = std::max(state.maximum_compression, compression);
-    Real peak = std::min(state.maximum_compression, lock_compression_);
-    Real fraction = std::clamp((peak - p.crush_strain) / (lock_compression_ - p.crush_strain), Real(0), Real(1));
-    state.plastic_volume = p.lock_strain * fraction;
-    if (state.maximum_compression >= lock_compression_)
-        return DensePressure(compression);
-    if (peak <= p.crush_strain)
-        return K0_ * compression;
-    Real peak_pressure = p.crush_pressure + transition_slope_ * (peak - p.crush_strain);
-    Real unloading_modulus = peak_pressure / (peak - state.plastic_volume);
-    return unloading_modulus * (compression - state.plastic_volume);
+    return ConstitutiveModel().Pressure(compression, state);
 }
 
 Real HJCSolid::FractureStrain(Real pressure) const
 {
-    const auto &p = parameters_;
-    return std::max(p.minimum_fracture_strain,
-                    p.D1 * std::pow(std::max(Real(0), (pressure + p.tensile_strength) / p.compressive_strength), p.D2));
+    return ConstitutiveModel().FractureStrain(pressure);
 }
 
 Real HJCSolid::YieldStrength(Real pressure, Real damage, Real strain_rate) const
 {
-    const auto &p = parameters_;
-    Real strength = pressure < 0
-                        ? p.A * std::max(Real(0), 1 - damage + pressure / p.tensile_strength)
-                        : p.A * (1 - damage) + p.B * std::pow(pressure / p.compressive_strength, p.N);
-    // The reference rate defines the quasi-static floor.
-    Real rate_factor = 1 + p.C * std::log(std::max(Real(1), strain_rate / p.reference_strain_rate));
-    return p.compressive_strength * std::min(p.maximum_strength, strength * rate_factor);
+    return ConstitutiveModel().YieldStrength(pressure, damage, strain_rate);
 }
 
 void HJCSolid::Integrate(const Mat3d &increment, Real compression, Real dt, HJCState &state) const
 {
-    if (!(dt > 0 && std::isfinite(dt)) || !increment.allFinite() ||
-        !(compression > -1 && std::isfinite(compression)))
+    HJCIntegrationStatus status = ConstitutiveModel().Integrate(increment, compression, dt, state);
+    if (status == HJCIntegrationStatus::invalid_increment)
         throw std::invalid_argument("HJC requires finite increments, positive J and a positive timestep");
-    const auto &p = parameters_;
-    Mat3d dev = increment - increment.trace() / 3 * Mat3d::Identity();
-    Mat3d trial = state.stress - state.stress.trace() / 3 * Mat3d::Identity() + 2 * G0_ * dev;
-    Real q = std::sqrt(1.5 * trial.squaredNorm());
-    Real old_plastic_volume = state.plastic_volume;
-    Real pressure = std::max(Pressure(compression, state), -p.tensile_strength * (1 - state.damage));
-    Real rate = std::sqrt(Real(2) / 3 * dev.squaredNorm()) / dt;
-    Real strength = YieldStrength(pressure, state.damage, rate);
-    Real scale = q > strength ? strength / q : 1;
-    Real plastic_increment = (1 - scale) * q / (3 * G0_);
-    state.plastic_strain += plastic_increment;
-    state.damage = std::min(Real(1), state.damage +
-        (plastic_increment + state.plastic_volume - old_plastic_volume) / FractureStrain(pressure));
-    // Damage is explicit in the deviatoric return; enforce the current tensile cutoff.
-    pressure = std::max(pressure, -p.tensile_strength * (1 - state.damage));
-    state.stress = scale * trial - pressure * Mat3d::Identity();
+    if (status != HJCIntegrationStatus::success)
+        throw std::domain_error("HJC stress update produced a non-finite state");
 }
 
 Real HJCSolid::AcousticModulus(Real compression) const
 {
-    const auto &p = parameters_;
-    Real eta = std::max(Real(0), (compression - p.lock_strain) / (1 + p.lock_strain));
-    Real dense_tangent = (p.K1 + 2 * p.K2 * eta + 3 * p.K3 * eta * eta) / (1 + p.lock_strain);
-    return (1 + std::max(compression, Real(0))) * std::max(K0_, dense_tangent) + 4 * G0_ / 3;
+    return ConstitutiveModel().AcousticModulus(compression);
 }
 
 void HJCSolid::initializeLocalParameters(BaseParticles *particles)
 {
     ElasticSolid::initializeLocalParameters(particles);
-    stress_ = particles->registerStateVariableData<Mat3d>("StressCauchy");
-    previous_deformation_ = particles->registerStateVariableData<Matd>("HJCPreviousDeformation", IdentityMatrix<Matd>::value);
-    damage_ = particles->registerStateVariableData<Real>("HJCDamage");
-    plastic_strain_ = particles->registerStateVariableData<Real>("HJCPlasticStrain");
-    plastic_volume_ = particles->registerStateVariableData<Real>("HJCPlasticVolume");
-    maximum_compression_ = particles->registerStateVariableData<Real>("HJCMaximumCompression");
-    pressure_ = particles->registerStateVariableData<Real>("Pressure");
-    equivalent_stress_ = particles->registerStateVariableData<Real>("VonMisesStress");
-    acoustic_modulus_ = particles->registerStateVariableData<Real>("HJCAcousticModulus", AcousticModulus(0));
+    dv_stress_ = particles->registerStateVariable<Mat3d>("StressCauchy");
+    dv_previous_deformation_ = particles->registerStateVariable<Matd>("HJCPreviousDeformation", IdentityMatrix<Matd>::value);
+    dv_damage_ = particles->registerStateVariable<Real>("HJCDamage");
+    dv_plastic_strain_ = particles->registerStateVariable<Real>("HJCPlasticStrain");
+    dv_plastic_volume_ = particles->registerStateVariable<Real>("HJCPlasticVolume");
+    dv_maximum_compression_ = particles->registerStateVariable<Real>("HJCMaximumCompression");
+    dv_pressure_ = particles->registerStateVariable<Real>("Pressure");
+    dv_equivalent_stress_ = particles->registerStateVariable<Real>("VonMisesStress");
+    dv_acoustic_modulus_ = particles->registerStateVariable<Real>("HJCAcousticModulus", AcousticModulus(0));
+    dv_status_ = particles->registerStateVariable<int>("HJCIntegrationStatus");
+    stress_ = dv_stress_->Data();
+    previous_deformation_ = dv_previous_deformation_->Data();
+    damage_ = dv_damage_->Data();
+    plastic_strain_ = dv_plastic_strain_->Data();
+    plastic_volume_ = dv_plastic_volume_->Data();
+    maximum_compression_ = dv_maximum_compression_->Data();
+    pressure_ = dv_pressure_->Data();
+    equivalent_stress_ = dv_equivalent_stress_->Data();
+    acoustic_modulus_ = dv_acoustic_modulus_->Data();
     particles->addEvolvingVariable<Mat3d>("StressCauchy");
     particles->addEvolvingVariable<Matd>("HJCPreviousDeformation");
     for (const char *name : {"HJCDamage", "HJCPlasticStrain", "HJCPlasticVolume", "HJCMaximumCompression",
-                                    "Pressure", "VonMisesStress", "HJCAcousticModulus"})
+                             "Pressure", "VonMisesStress", "HJCAcousticModulus"})
         particles->addEvolvingVariable<Real>(name);
+    particles->addEvolvingVariable<int>("HJCIntegrationStatus");
 }
 
 Matd HJCSolid::UpdateStress(const Matd &F, size_t i, Real dt)
 {
-    Real J = F.determinant();
-    if (!(J > 0) || !std::isfinite(J))
+    HJCState state{stress_[i], damage_[i], plastic_strain_[i], plastic_volume_[i], maximum_compression_[i]};
+    HJCIntegrationStatus status = ConstitutiveModel().UpdateStress(F, previous_deformation_[i], dt, state);
+    dv_status_->Data()[i] = static_cast<int>(status);
+    if (status == HJCIntegrationStatus::invalid_deformation)
         throw std::domain_error("HJC requires positive finite deformation determinant");
+    if (status == HJCIntegrationStatus::invalid_increment)
+        throw std::invalid_argument("HJC requires finite increments, positive J and a positive timestep");
+    if (status == HJCIntegrationStatus::singular_increment)
+        throw std::domain_error("HJC incremental stretch is singular");
+    if (status != HJCIntegrationStatus::success)
+        throw std::domain_error("HJC stress update produced a non-finite state");
     if (dt == 0)
         return stress_[i].template topLeftCorner<Dimensions, Dimensions>();
-    Mat3d delta = Mat3d::Identity();
-    delta.template topLeftCorner<Dimensions, Dimensions>() = F * previous_deformation_[i].inverse();
-    Eigen::SelfAdjointEigenSolver<Mat3d> solver(delta.transpose() * delta);
-    if (solver.info() != Eigen::Success || solver.eigenvalues().minCoeff() <= 0)
-        throw std::domain_error("HJC incremental stretch is singular");
-    Mat3d U = solver.eigenvectors();
-    Mat3d rotation = delta * U * solver.eigenvalues().cwiseSqrt().cwiseInverse().asDiagonal() * U.transpose();
-    Mat3d increment = U * (Real(0.5) * solver.eigenvalues().array().log()).matrix().asDiagonal() * U.transpose();
-    HJCState state{stress_[i], damage_[i], plastic_strain_[i], plastic_volume_[i], maximum_compression_[i]};
-    Integrate(increment, 1 / J - 1, dt, state);
-    stress_[i] = rotation * state.stress * rotation.transpose();
+    Real pressure = -state.stress.trace() / Real(3);
+    Real equivalent_stress = math::sqrt(Real(1.5) * (state.stress + pressure * Mat3d::Identity()).squaredNorm());
+    Real modulus = AcousticModulus(math::max(Real(1) / F.determinant() - Real(1), state.maximum_compression));
+    if (!std::isfinite(pressure) || !std::isfinite(equivalent_stress) || !std::isfinite(modulus))
+    {
+        dv_status_->Data()[i] = static_cast<int>(HJCIntegrationStatus::nonfinite_state);
+        throw std::domain_error("HJC stress update produced a non-finite state");
+    }
+    stress_[i] = state.stress;
     previous_deformation_[i] = F;
     damage_[i] = state.damage;
     plastic_strain_[i] = state.plastic_strain;
     plastic_volume_[i] = state.plastic_volume;
     maximum_compression_[i] = state.maximum_compression;
-    pressure_[i] = -stress_[i].trace() / 3;
-    equivalent_stress_[i] = std::sqrt(1.5 * (stress_[i] + pressure_[i] * Mat3d::Identity()).squaredNorm());
-    acoustic_modulus_[i] = AcousticModulus(std::max(1 / J - 1, state.maximum_compression));
+    pressure_[i] = pressure;
+    equivalent_stress_[i] = equivalent_stress;
+    acoustic_modulus_[i] = modulus;
     return stress_[i].template topLeftCorner<Dimensions, Dimensions>();
 }
 

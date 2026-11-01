@@ -151,6 +151,33 @@ void FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::
     this->pos_div_[index_i] += pos_div;
 }
 //=================================================================================================//
+template <typename... Parameters>
+IsolationFactor<Inner<Parameters...>>::IsolationFactor(Inner<Parameters...> &inner_relation)
+    : Interaction<Inner<Parameters...>>(inner_relation),
+      dv_isolation_factor_(this->particles_->template registerStateVariable<Real>("IsolationFactor")) {}
+//=================================================================================================//
+template <typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+IsolationFactor<Inner<Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : Interaction<Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
+      isolation_factor_(encloser.dv_isolation_factor_->DelegatedData(ex_policy)),
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename... Parameters>
+void IsolationFactor<Inner<Parameters...>>::InteractKernel::
+    interact(size_t index_i, Real dt)
+{
+    Real pos_div = 0.0;
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Real r_ij = this->vec_r_ij(index_i, index_j).norm();
+        pos_div -= this->dW_ij(index_i, index_j) * Vol_[index_j] * r_ij;
+    }
+    isolation_factor_[index_i] = pos_div;
+}
+//=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // SURFACE_INDICATION_CK_HPP

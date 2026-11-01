@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<meanvariance>
+    <Mean_Element>
+        <Snapshot_0 TotalKineticEnergy_0="0" />
+        <Snapshot_1 TotalKineticEnergy_0="0.0044265964534133673" />
+        <Snapshot_2 TotalKineticEnergy_0="0.0050808824598789215" />
+        <Snapshot_3 TotalKineticEnergy_0="0.0049948405940085649" />
+        <Snapshot_4 TotalKineticEnergy_0="0.005323442630469799" />
+    </Mean_Element>
+    <Variance_Element>
+        <Snapshot_0 TotalKineticEnergy_0="0" />
+        <Snapshot_1 TotalKineticEnergy_0="1.9594756161371801e-09" />
+        <Snapshot_2 TotalKineticEnergy_0="2.581536657110528e-09" />
+        <Snapshot_3 TotalKineticEnergy_0="2.494843255955584e-09" />
+        <Snapshot_4 TotalKineticEnergy_0="2.8339041439903211e-09" />
+    </Variance_Element>
+</meanvariance>

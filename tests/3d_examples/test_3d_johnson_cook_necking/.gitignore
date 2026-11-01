@@ -1,0 +1,10 @@
+output/
+input/
+reload/
+restart/
+figures/
+__pycache__/
+history.csv
+case.json
+summary.json
+*.log

@@ -193,9 +193,11 @@ class AcousticStep1stHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
 
   protected:
     KernelCorrectionType kernel_correction_;
-    StdVec<KernelCorrectionType> contact_kernel_corrections_;
-    StdVec<RiemannSolverType> riemann_solvers_;
-    StdVec<DiscreteVariable<Real> *> dv_contact_p_;
+    KernelCorrectionType contact_kernel_correction_;
+    SourceFluidType &source_fluid_;
+    TargetFluidType &target_fluid_;
+    RiemannSolverType riemann_solvers_;
+    DiscreteVariable<Real> *dv_contact_p_;
 };
 
 using AcousticStep1stHalfWithWallRiemannCK =

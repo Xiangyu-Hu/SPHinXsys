@@ -176,8 +176,9 @@ class AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
 
       protected:
         CorrectionKernel correction_;
+        CorrectionKernel contact_correction_;
         RiemannKernel riemann_;
-        DataView<Real> Vol_, rho_, compression_, compression_rate_;
+        DataView<Real> Vol_, compression_, compression_rate_;
         DataView<Vecd> vel_, force_;
         DataView<Real> contact_Vol_;
         DataView<Vecd> contact_vel_;
@@ -185,8 +186,11 @@ class AcousticStep2ndHalf<Contact<RiemannSolverType, KernelCorrectionType, Param
 
   protected:
     KernelCorrectionType kernel_correction_;
-    StdVec<RiemannSolverType> riemann_solvers_;
-    StdVec<DiscreteVariable<Vecd> *> dv_contact_vel_;
+    KernelCorrectionType contact_kernel_correction_;
+    SourceFluidType &source_fluid_;
+    TargetFluidType &target_fluid_;
+    RiemannSolverType riemann_solvers_;
+    DiscreteVariable<Vecd> *dv_contact_vel_;
 };
 
 using AcousticStep2ndHalfWithWallNoRiemannCK =

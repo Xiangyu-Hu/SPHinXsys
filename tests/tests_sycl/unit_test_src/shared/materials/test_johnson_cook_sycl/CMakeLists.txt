@@ -1,0 +1,6 @@
+if(SPHINXSYS_3D)
+    add_executable(test_johnson_cook_sycl test_johnson_cook_sycl.cpp)
+    target_link_libraries(test_johnson_cook_sycl PRIVATE sphinxsys_3d GTest::gtest_main)
+    add_test(NAME test_johnson_cook_sycl COMMAND test_johnson_cook_sycl)
+    set_tests_properties(test_johnson_cook_sycl PROPERTIES LABELS "material;solid_dynamics;computing_kernel")
+endif()

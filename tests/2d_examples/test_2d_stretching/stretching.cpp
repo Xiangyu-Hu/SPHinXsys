@@ -176,7 +176,7 @@ int main(int ac, char *av[])
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
-    system.setReloadParticles(true);
+    system.setReloadParticles(false);
     system.setGenerateRegressionData(false);
     system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
@@ -317,7 +317,7 @@ int main(int ac, char *av[])
             Real refer_total_kinetic_energy = 10000.0;
             while (relaxation_time < Dt)
             {
-                if (refer_total_kinetic_energy > 0.005)
+                if (refer_total_kinetic_energy > 0.005 && stress_ite < 50)
                 {
                     stress_relaxation_first_half.exec(dt);
                     constrain_beam_end.exec(dt);
@@ -336,7 +336,7 @@ int main(int ac, char *av[])
                         std::cout << "N=" << ite << " Time: "
                                   << physical_time
                                   << "	Dt: " << Dt << "	dt: " << dt
-                                  << "	Dt:dt = " << Dt / dt << "\n";
+                                  << "	stress_ite: " << stress_ite << "\n";
                     }
 
                     if (ite != 0 && ite % observation_sample_interval == 0)

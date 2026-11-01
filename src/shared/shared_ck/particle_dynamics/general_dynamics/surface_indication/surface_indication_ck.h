@@ -158,12 +158,34 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
         Real *contact_Vol_;
     };
 };
-
-//------------------------------------------------------------------------------------------//
-// Common type alias for complex free-surface indication (inner + contact).
 using FreeSurfaceIndicationComplexSpatialTemporalCK = FreeSurfaceIndicationCK<Inner<WithUpdate>, Contact<>>;
-//------------------------------------------------------------------------------------------//
 
+template <typename...>
+class IsolationFactor;
+
+template <typename... Parameters>
+class IsolationFactor<Inner<Parameters...>>
+    : public Interaction<Inner<Parameters...>>
+{
+  public:
+    explicit IsolationFactor(Inner<Parameters...> &inner_relation);
+    virtual ~IsolationFactor() {}
+
+    class InteractKernel : public Interaction<Inner<Parameters...>>::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *isolation_factor_;
+        Real *Vol_;
+    };
+
+  protected:
+    DiscreteVariable<Real> *dv_isolation_factor_;
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 
